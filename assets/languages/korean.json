@@ -1,0 +1,2296 @@
+{
+  "headerGreetings": {
+    "hi": "안녕하세요!",
+    "goodMorning": "좋은 아침입니다",
+    "goodAfternoon": "안녕하세요",
+    "goodEvening": "좋은 저녁입니다"
+  },
+  "mainNavBar": {
+    "exploreText": "앱 탐색",
+    "investmentProfile": "투자 프로필",
+    "transfer": "송금",
+    "agent": "에이전트",
+    "stock": "주식",
+    "eWallet": "전자지갑",
+    "bankingService": "은행 서비스",
+    "trading": "거래",
+    "travelProtection": "여행 보호",
+    "task": "작업"
+  },
+  "newSectionCarousel": {
+    "whatsNewTitle": "새로운 소식",
+    "exploreButton": "탐색"
+  },
+  "task": {
+    "header": {
+      "title": "작업"
+    },
+    "title": "작업 관리",
+    "subtitle": "작업 및 활동 관리",
+    "accumulatedPoints": "누적 포인트",
+    "myTasks": "내 작업",
+    "noTasks": "사용 가능한 작업이 없습니다",
+    "loadingTasks": "작업을 불러오는 중...",
+    "completed": "완료",
+    "taskDetails": "작업 세부정보",
+    "loadingTask": "작업을 불러오는 중...",
+    "taskNotFound": "작업을 찾을 수 없습니다",
+    "untitled": "제목 없는 작업",
+    "points": "포인트",
+    "description": "설명",
+    "instructions": "지침",
+    "link": "링크",
+    "doTask": "작업 수행",
+    "claimPoints": "포인트 받기",
+    "claiming": "받는 중...",
+    "pointsClaimed": "포인트 받음!",
+    "success": "성공!",
+    "claimedSuccessfully": "성공적으로 받았습니다",
+    "pointsClaimedTitle": "포인트 받음!",
+    "pointsClaimedMessage": "획득했습니다",
+    "pointsForTask": "포인트, 작업 완료:",
+    "earnedFrom": "작업에서 획득:",
+    "error": "오류",
+    "noLink": "이 작업에 사용 가능한 링크가 없습니다",
+    "invalidLink": "이 링크를 열 수 없습니다",
+    "linkError": "링크를 여는데 실패했습니다",
+    "notLoggedIn": "포인트를 받으려면 로그인해야 합니다",
+    "noPoints": "이 작업에는 받을 포인트가 없습니다",
+    "claimError": "포인트를 받는데 실패했습니다. 다시 시도해주세요."
+  },
+  "accumulatedPoints": {
+    "header": {
+      "title": "누적 포인트"
+    },
+    "yourBalance": "잔액",
+    "points": "포인트",
+    "withdraw": "포인트 인출",
+    "transactionHistory": "거래 내역",
+    "loadingTransactions": "거래를 불러오는 중...",
+    "noTransactions": "아직 거래가 없습니다",
+    "transaction": "거래",
+    "balance": "잔액",
+    "error": "오류",
+    "noPointsToWithdraw": "인출할 포인트가 없습니다",
+    "withdrawTitle": "포인트 인출",
+    "withdrawMessage": "정말 인출하시겠습니까",
+    "cancel": "취소",
+    "confirm": "확인",
+    "withdrawalDescription": "포인트 인출",
+    "withdrawalSuccessTitle": "인출 성공",
+    "withdrawnMessage": "인출했습니다",
+    "success": "성공!",
+    "withdrawnSuccessfully": "성공적으로 인출했습니다",
+    "withdrawalError": "인출 처리에 실패했습니다. 다시 시도해주세요.",
+    "withdrawPoints": "포인트 인출",
+    "conversionNote": "1 포인트 = ₱1 페소",
+    "selectAmount": "금액 선택",
+    "paymentMethod": "결제 방법",
+    "mobileNumber": "휴대폰 번호",
+    "submit": "제출",
+    "insufficientPoints": "포인트 부족",
+    "selectPaymentMethod": "결제 방법을 선택해주세요",
+    "enterValidMobile": "유효한 휴대폰 번호를 입력해주세요",
+    "withdrawalTo": "인출 대상",
+    "withdrawalRequestTitle": "인출 요청 제출됨",
+    "withdrawalRequestMessage": "인출 요청",
+    "pointsTo": "포인트",
+    "hasBeenSubmitted": "제출되었습니다",
+    "successTitle": "인출 제출 완료!",
+    "successMessage": "인출 요청이 성공적으로 제출되었습니다. 1-3시간 내에 결제를 받게 됩니다.",
+    "ok": "확인"
+  },
+  "transactionHistory": {
+    "loadingText": "거래 내역을 불러오는 중...",
+    "errorText": "오류:",
+    "noTransactionsText": "거래 내역을 찾을 수 없습니다",
+    "headerTitle": "거래 내역",
+    "pageInfo": "페이지 {currentPage} / {totalPages} (총 {total}개)",
+    "labels": {
+      "type": "유형",
+      "date": "날짜",
+      "amount": "금액",
+      "status": "상태",
+      "description": "설명",
+      "reference": "참조번호",
+      "fee": "수수료",
+      "balanceAfter": "거래 후 잔액"
+    },
+    "pagination": {
+      "first": "첫 페이지",
+      "previous": "‹",
+      "next": "›",
+      "last": "마지막"
+    },
+    "modal": {
+      "title": "거래 개요",
+      "closeButton": "닫기"
+    }
+  },
+  "mainDashboard": {
+    "cardHeaderText": "당신의 영감 카드",
+    "timeDepositTitle": "정기 예금",
+    "amountWalletTitle": "지갑 금액",
+    "newSupportMessage": "새로운 지원 메시지가 있습니다! 탭하여 보기.",
+    "accountDeletion": {
+      "title": "계정 삭제가 필요합니다",
+      "message": "시스템에서 사용자 데이터를 찾을 수 없습니다. 이는 일반적으로 데이터 동기화 문제가 있을 때 발생합니다. 계정이 삭제되며 앱을 계속 사용하려면 다시 등록해야 합니다.",
+      "confirmText": "계정 삭제 및 재등록"
+    },
+    "errors": {
+      "failedToUpdateInvestment": "투자 데이터 업데이트에 실패했습니다",
+      "failedToListenToInvestment": "투자 업데이트 수신에 실패했습니다",
+      "failedToDeleteAccount": "계정 삭제에 실패했습니다. 지원팀에 문의하세요.",
+      "failedToCheckPresence": "상태 확인에 실패했습니다"
+    },
+    "presenceStatus": {
+      "title": "상태",
+      "noDataFound": "상태 데이터를 찾을 수 없습니다"
+    }
+  },
+  "depoWithdrawButton": {
+    "deposit": "입금",
+    "withdraw": "출금"
+  },
+  "categorizedSettings": {
+    "categories": {
+      "services": "서비스",
+      "inspireBalances": "영감 잔액",
+      "playAndEarn": "플레이 앤 얼른",
+      "security": "보안",
+      "customerRelationship": "고객 관계"
+    },
+    "items": {
+      "transfer": "송금",
+      "inspireCards": "영감 카드",
+      "buyCards": "카드 구매",
+      "eWallet": "전자 지갑",
+      "bankingServices": "은행 서비스",
+      "travelProtection": "여행 보호",
+      "investmentProfile": "투자 프로필",
+      "stockHolder": "주주",
+      "agent": "에이전트",
+      "specialCampaign": "특별 캠페인",
+      "inspireSecureGrowth": "영감 보안 성장",
+      "trading": "거래",
+      "depositViaCrypto": "암호화폐로 입금",
+      "passcode": "패스코드",
+      "aboutUs": "회사 소개",
+      "agentRequest": "에이전트 요청",
+      "helpCenter": "도움말 센터",
+      "privacyPolicy": "개인정보 보호정책",
+      "termsAndCondition": "이용약관"
+    },
+    "badges": {
+      "soon": "곧 출시",
+      "premium": "프리미엄",
+      "registered": "등록됨",
+      "timeDeposit": "₱200K"
+    },
+    "modals": {
+      "underMaintenance": {
+        "title": "점검 중",
+        "message": "이 기능은 현재 점검 중입니다. 나중에 다시 시도해 주세요."
+      },
+      "insufficientTimeDeposit": {
+        "title": "정기 예금 부족",
+        "message": "{feature}에 액세스하려면 최소 ₱200,000의 정기 예금이 필요합니다. 현재 정기 예금은 ₱{currentAmount}입니다. 먼저 정기 예금을 늘려주세요."
+      },
+      "alreadyAnAgent": {
+        "title": "이미 에이전트",
+        "message": "이미 에이전트로 등록되어 있습니다. 에이전트 액세스를 다시 요청할 필요가 없습니다."
+      },
+      "premiumFeature": {
+        "title": "프리미엄 기능",
+        "message": "이 기능은 프리미엄 계정에서만 사용할 수 있습니다. 액세스하려면 업그레이드하세요.",
+        "upgradeButton": "업그레이드"
+      },
+      "agentAccess": {
+        "title": "에이전트 액세스 필요",
+        "message": "이 기능은 등록된 에이전트 전용입니다. 에이전트가 되시겠습니까?",
+        "cancelButton": "취소",
+        "requestButton": "액세스 요청"
+      }
+    }
+  },
+  "settings": {
+    "title": "설정",
+    "deleteAccount": "계정 삭제",
+    "logOut": "로그아웃",
+    "loggingOut": "로그아웃 중...",
+    "confirmLogout": {
+      "title": "로그아웃 확인",
+      "message": "정말로 로그아웃하시겠습니까? 계정에 액세스하려면 다시 로그인해야 합니다.",
+      "confirmText": "로그아웃",
+      "cancelText": "취소"
+    },
+    "buttonTest": {
+      "title": "버튼 테스트",
+      "message": "버튼이 성공적으로 눌렸습니다!"
+    },
+    "navigationError": {
+      "title": "네비게이션 오류",
+      "message": "오류: {errorMessage}"
+    }
+  },
+  "personal": {
+    "header": {
+      "title": "개인 정보"
+    },
+    "loading": {
+      "text": "로딩 중..."
+    },
+    "cards": {
+      "accountDetails": {
+        "title": "계정 세부 정보"
+      },
+      "accountStatus": {
+        "title": "계정 상태"
+      }
+    },
+    "fields": {
+      "name": "이름",
+      "emailAddress": "이메일 주소",
+      "accountNumber": "계정 번호",
+      "accountType": "계정 유형",
+      "accountLevel": "계정 레벨",
+      "agentNumber": "에이전트 번호",
+      "agentReferrer": "추천 에이전트",
+      "language": "언어",
+      "status": "상태",
+      "memberSince": "가입일"
+    },
+    "values": {
+      "notProvided": "제공되지 않음",
+      "notAvailable": "사용할 수 없음",
+      "notFound": "찾을 수 없음",
+      "active": "활성",
+      "basic": "기본",
+      "premium": "프리미엄",
+      "masterAgent": "마스터 에이전트",
+      "consultantAgent": "컨설턴트",
+      "consultantAgentNote": "이 추천인도 컨설턴트 에이전트입니다"
+    },
+    "buttons": {
+      "save": "저장",
+      "cancel": "취소",
+      "verify": "인증",
+      "editName": "이름 편집",
+      "selectLanguage": "언어 선택",
+      "changing": "변경 중..."
+    },
+    "messages": {
+      "success": {
+        "nameUpdated": "이름이 성공적으로 업데이트되었습니다.",
+        "languageUpdated": "언어 설정이 성공적으로 업데이트되었습니다.",
+        "copied": "계정 번호가 클립보드에 복사되었습니다."
+      },
+      "error": {
+        "nameUpdateFailed": "이름 업데이트에 실패했습니다. 다시 시도해 주세요.",
+        "languageUpdateFailed": "언어 설정 업데이트에 실패했습니다. 다시 시도해 주세요.",
+        "copyFailed": "계정 번호를 클립보드에 복사하는데 실패했습니다."
+      },
+      "warning": {
+        "noAccountNumber": "복사할 계정 번호가 없습니다."
+      },
+      "titles": {
+        "success": "성공!",
+        "error": "오류",
+        "copied": "복사 완료!",
+        "noAccountNumber": "계정 번호 없음"
+      }
+    },
+    "placeholders": {
+      "firstName": "이름",
+      "lastName": "성"
+    }
+  },
+  "kyc": {
+    "header": {
+      "title": "KYC 인증",
+      "premiumAccount": "프리미엄 계정",
+      "premiumFeatures": "프리미엄 기능"
+    },
+    "loading": {
+      "text": "로딩 중..."
+    },
+    "progress": {
+      "step": "단계 {current} / {total}"
+    },
+    "steps": {
+      "personalInfo": {
+        "title": "개인 정보",
+        "description": "개인 세부 정보를 입력해 주세요"
+      },
+      "addressInfo": {
+        "title": "주소 정보",
+        "description": "주소 세부 정보를 입력해 주세요"
+      },
+      "documents": {
+        "title": "문서 업로드",
+        "description": "신분증 앞뒤와 셀카 사진을 업로드해 주세요"
+      },
+      "review": {
+        "title": "검토 및 제출",
+        "description": "제출하기 전에 정보를 검토해 주세요"
+      }
+    },
+    "fields": {
+      "firstName": "이름",
+      "lastName": "성",
+      "birthday": "생년월일",
+      "gender": "성별",
+      "nationality": "국적",
+      "sourceOfIncome": "수입원",
+      "monthlyIncome": "월 수입 (PHP)",
+      "country": "국가",
+      "fullAddress": "전체 주소",
+      "postalCode": "우편번호",
+      "idFront": "정부 발급 신분증 앞면",
+      "idBack": "정부 발급 신분증 뒷면",
+      "selfiePhoto": "셀카 사진"
+    },
+    "placeholders": {
+      "firstName": "이름을 입력하세요",
+      "lastName": "성을 입력하세요",
+      "monthlyIncome": "월 수입을 입력하세요",
+      "fullAddress": "전체 주소를 입력하세요",
+      "postalCode": "우편번호를 입력하세요",
+      "searchNationality": "국적 검색...",
+      "searchCountry": "국가 검색..."
+    },
+    "hints": {
+      "idFront": "정부 발급 신분증 앞면의 선명한 사진을 업로드하세요",
+      "idBack": "정부 발급 신분증 뒷면의 선명한 사진을 업로드하세요",
+      "selfiePhoto": "인증을 위한 선명한 셀카 사진을 촬영하세요"
+    },
+    "options": {
+      "gender": {
+        "male": "남성",
+        "female": "여성",
+        "other": "기타",
+        "preferNotToSay": "답변하지 않음"
+      },
+      "incomeSource": {
+        "employment": "고용",
+        "business": "사업",
+        "investment": "투자",
+        "freelance": "프리랜서",
+        "pension": "연금",
+        "other": "기타"
+      }
+    },
+    "buttons": {
+      "next": "다음",
+      "previous": "이전",
+      "submit": "KYC 제출",
+      "edit": "편집",
+      "takePhoto": "사진 촬영",
+      "chooseFromGallery": "갤러리에서 선택",
+      "startKYC": "KYC 프로세스 시작",
+      "completeKYC": "KYC 프로세스 완료",
+      "contactSupport": "지원팀 문의"
+    },
+    "messages": {
+      "ageRequirement": "KYC 인증을 진행하려면 18세 이상이어야 합니다",
+      "kycSubmitted": "KYC 신청이 제출되었습니다. 문서를 검토하고 2-3영업일 내에 알려드리겠습니다.",
+      "submissionFailed": "KYC 신청 제출 중 오류가 발생했습니다. 나중에 다시 시도해 주세요.",
+      "uploadingDocuments": "신분증 앞뒤와 셀카 사진을 업로드하는 중입니다. 잠시만 기다려 주세요...",
+      "savingInformation": "KYC 정보를 저장하는 중입니다. 잠시만 기다려 주세요..."
+    },
+    "modals": {
+      "selectGender": "성별 선택",
+      "selectNationality": "국적 선택",
+      "selectIncomeSource": "수입원 선택",
+      "selectCountry": "국가 선택"
+    },
+    "premium": {
+      "upgradeMessage": "계정을 프리미엄으로 업그레이드하고 독점 기능을 잠금 해제하려면 KYC(고객 확인) 프로세스를 통해 신원을 확인해야 합니다.",
+      "premiumFeatures": "프리미엄 기능:",
+      "premiumFeaturesPending": "프리미엄 기능 (KYC 대기 중):",
+      "yourPremiumFeatures": "귀하의 프리미엄 기능:",
+      "congratulations": "축하합니다! 인증된 KYC가 있는 프리미엄 계정을 보유하고 있습니다. 모든 프리미엄 기능에 액세스할 수 있습니다.",
+      "pendingKYC": "프리미엄 계정을 보유하고 있지만 KYC 인증이 아직 대기 중입니다. 모든 프리미엄 기능을 잠금 해제하려면 KYC 프로세스를 완료해 주세요.",
+      "features": {
+        "cryptoTrading": "암호화폐 거래",
+        "inspireCards": "영감 카드",
+        "advancedInvestment": "고급 투자 옵션",
+        "prioritySupport": "우선 지원"
+      }
+    },
+    "summary": {
+      "personalInfo": "개인 정보",
+      "addressInfo": "주소 정보",
+      "documents": "문서",
+      "name": "이름:",
+      "birthday": "생년월일:",
+      "gender": "성별:",
+      "nationality": "국적:",
+      "incomeSource": "수입원:",
+      "monthlyIncome": "월 수입:",
+      "country": "국가:",
+      "address": "주소:",
+      "postalCode": "우편번호:",
+      "idFront": "신분증 앞면",
+      "idBack": "신분증 뒷면",
+      "selfiePhoto": "셀카 사진"
+    },
+    "status": {
+      "uploading": "문서 업로드 중",
+      "saving": "정보 저장 중",
+      "success": "KYC 제출 성공!",
+      "error": "제출 실패"
+    }
+  },
+  "transfer": {
+    "header": {
+      "title": "송금",
+      "subtitle": "다른 사용자에게 자금 이체"
+    },
+    "guide": {
+      "title": "빠른 가이드",
+      "step1": "계좌번호로 수신인 검색",
+      "step2": "이체할 금액 입력",
+      "step3": "잔액 유형 선택"
+    },
+    "sections": {
+      "recipient": "수신인 계좌번호",
+      "amount": "금액",
+      "balanceType": "잔액 유형 선택",
+      "description": "설명 (선택사항)"
+    },
+    "placeholders": {
+      "accountNumber": "수신인의 계좌번호를 입력...",
+      "amount": "0.00",
+      "description": "이 이체에 대한 메모 추가..."
+    },
+    "buttons": {
+      "change": "변경",
+      "sendTransfer": "이체 보내기",
+      "selectRecipient": "수신인 선택",
+      "enterAmount": "금액 입력",
+      "selectBalanceType": "잔액 유형 선택",
+      "cannotTransferToSelf": "자신에게 이체할 수 없음",
+      "insufficientAvailableBalance": "사용 가능한 잔액 부족",
+      "insufficientAgentWallet": "에이전트 지갑 부족",
+      "enterValidAmount": "유효한 금액 입력",
+      "insufficientFunds": "자금 부족"
+    },
+    "balanceTypes": {
+      "available": "사용 가능한 잔액",
+      "agent": "에이전트 지갑",
+      "chooseBalanceType": "잔액 유형 선택"
+    },
+    "validation": {
+      "selfTransfer": "자신에게 돈을 이체할 수 없습니다. 다른 계좌번호를 입력하세요.",
+      "userNotFound": "사용자를 찾을 수 없습니다. 계좌번호를 확인하세요.",
+      "invalidAccountNumber": "유효한 계좌번호를 입력하세요 (최소 6자리).",
+      "insufficientBalance": "이체하기 전에 {balanceType}에 자금을 추가하세요",
+      "useBalance": "이 이체에 {balanceType} 사용"
+    },
+    "modals": {
+      "selectBalanceType": "잔액 유형 선택",
+      "close": "✕"
+    },
+    "messages": {
+      "missingInformation": "수신인을 선택하고 금액을 입력하세요",
+      "selectBalanceType": "이 이체에 사용할 잔액을 선택하세요",
+      "invalidTransfer": "자신에게 돈을 이체할 수 없습니다. 다른 수신인을 선택하세요.",
+      "insufficientBalance": "귀하의 {balanceType}이 비어 있습니다. 이체하기 전에 자금을 추가하세요.",
+      "insufficientFunds": "충분한 자금이 없습니다. 귀하의 {balanceType}은 ₱{currentBalance}이지만 ₱{transferAmount}를 보내려고 합니다.",
+      "invalidAmount": "0보다 큰 유효한 금액을 입력하세요.",
+      "accessRestricted": "이 기능은 프리미엄 계정이 필요합니다. 귀하의 현재 계정 유형은: {accountType}입니다. 이체 기능에 액세스하려면 프리미엄으로 업그레이드하세요.",
+      "unableToVerify": "계정 권한을 확인할 수 없습니다. 다시 시도하세요.",
+      "transferSuccessful": "이체가 성공적으로 완료되었습니다!",
+      "transferSuccessfulDelayed": "이체가 성공적으로 완료되었습니다 (알림이 지연될 수 있음)",
+      "transferFailed": "이체를 완료할 수 없습니다. 다시 시도하세요.",
+      "authenticationError": "계속하려면 다시 로그인하세요.",
+      "insufficientBalanceSelected": "선택한 잔액에 충분한 자금이 없습니다."
+    },
+    "titles": {
+      "accessRestricted": "액세스 제한",
+      "error": "오류",
+      "missingInformation": "정보 부족",
+      "selectBalanceType": "잔액 유형 선택",
+      "invalidTransfer": "잘못된 이체",
+      "insufficientBalance": "잔액 부족",
+      "invalidAmount": "잘못된 금액",
+      "transferSuccessful": "이체 성공",
+      "transferFailed": "이체 실패",
+      "authenticationError": "인증 오류"
+    },
+    "characterCount": "{current}/{max}",
+    "currencySymbol": "₱"
+  },
+  "buyCards": {
+    "header": {
+      "title": "카드 디자인 선택",
+      "subtitle": "일반 디자인(₱250) 또는 VIP 컬렉션 카드 중에서 선택하세요"
+    },
+    "navigation": {
+      "headerTitle": "카드 구매"
+    },
+    "sections": {
+      "availableBalance": "사용 가능한 잔액",
+      "cardPreview": "카드 미리보기",
+      "vipCollection": "VIP 컬렉션",
+      "designCollection": "디자인 컬렉션",
+      "yourCollection": "카드 컬렉션"
+    },
+    "descriptions": {
+      "vipCards": "👑 VIP 카드 - 10,000,000 페소 정기예금 필요",
+      "designCards": "🎨 디자인 카드 - ₱250",
+      "collectionHelp": "✨ 카드를 탭하여 현재 디자인으로 활성화하세요"
+    },
+    "cardStatus": {
+      "owned": "소유함",
+      "preview": "미리보기",
+      "vipOnly": "VIP 전용",
+      "depositRequired": "예금 필요",
+      "tapToClaim": "클릭하여 받기",
+      "claimed": "받음",
+      "monthlySubscription": "월간 구독",
+      "tapToBuy": "클릭하여 구매",
+      "active": "활성",
+      "currentlyActive": "현재 활성"
+    },
+    "subscriptionStatus": {
+      "expired": "만료됨",
+      "daysLeft": "일 남음",
+      "active": "활성"
+    },
+    "buttons": {
+      "preview": "미리보기",
+      "cancel": "취소",
+      "close": "닫기",
+      "gotIt": "알겠습니다",
+      "claim": "받기"
+    },
+    "messages": {
+      "welcomeGiftDefaultCard": "환영 선물 - 기존 사용자에게 기본 카드 제공",
+      "claimedVipCard": "VIP 카드 획득",
+      "vipCardPurchase": "VIP 카드 구매",
+      "cardPurchase": "카드 구매",
+      "autoRenewalPayment": "자동 갱신 결제",
+      "freeDefaultCard": "무료 기본 카드",
+      "removedVipCard": "제거된 VIP 카드",
+      "migrationComplete": "마이그레이션 완료",
+      "migrationCompleteDetails": "{processedCount}명의 사용자를 처리했습니다.\n{grantedCards}명의 사용자에게 기본 카드를 제공했습니다.\n{alreadyHadCards}명의 사용자는 이미 카드를 가지고 있었습니다.",
+      "migrationFailed": "마이그레이션 실패",
+      "vipCardClaimedDescription": "VIP 카드 - 적격 예금 금액(₱10,000,000+)으로 획득",
+      "vipCardRemovedDescription": "VIP 카드 - 부족한 정기 예금 금액(< ₱10,000,000)으로 제거됨",
+      "insufficientBalanceForAutoRenewal": "잔액 부족",
+      "failedToProcessAutoRenewal": "자동 갱신 처리에 실패했습니다. 잔액을 확인하고 다시 시도하세요.",
+      "unableToCancelSubscription": "구독을 취소할 수 없습니다",
+      "failedToCancelSubscription": "구독 취소에 실패했습니다. 다시 시도하세요.",
+      "unableToProcessAutoRenewal": "자동 갱신을 처리할 수 없습니다",
+      "unableToToggleAutoRenewal": "자동 갱신을 전환할 수 없습니다",
+      "failedToToggleAutoRenewal": "자동 갱신 전환에 실패했습니다. 다시 시도하세요.",
+      "failedToRemoveExpired": "만료된 구독을 제거하는데 실패했습니다. 다시 시도하세요.",
+      "accessRestricted": "이 기능은 프리미엄 계정이 필요합니다. 귀하의 현재 계정 유형은: {accountType}입니다. 카드 구매에 액세스하려면 프리미엄으로 업그레이드하세요.",
+      "unableToVerify": "계정 권한을 확인할 수 없습니다. 다시 시도해 주세요.",
+      "userNotAuthenticated": "사용자가 인증되지 않았습니다",
+      "userDataNotFound": "사용자 데이터를 찾을 수 없습니다",
+      "failedToFetchData": "사용자 데이터를 가져오는데 실패했습니다",
+      "timeDepositRequired": "이 카드는 ₱10,000,000+ 정기예금이 필요합니다. 계정을 업그레이드하려면 지원팀에 문의하세요.",
+      "cardCannotBePurchased": "이 카드는 현재 구매할 수 없습니다.",
+      "notQualified": "이 카드를 받으려면 ₱10,000,000+ 정기예금이 필요합니다.",
+      "alreadyClaimed": "이미 이 VIP 카드를 받았습니다.",
+      "vipCardClaimed": "VIP 카드를 성공적으로 받았습니다!",
+      "failedToClaimVip": "VIP 카드를 받는데 실패했습니다. 다시 시도해 주세요.",
+      "purchaseSuccessful": "{cardName}을(를) ₱{price}에 성공적으로 구매했습니다!",
+      "purchaseFailed": "구매 처리에 실패했습니다: {error}",
+      "cardActivated": "{cardName}이(가) 이제 활성 카드입니다!",
+      "failedToSwitchCard": "카드 전환에 실패했습니다. 다시 시도해 주세요.",
+      "subscriptionCancelled": "구독이 취소되었습니다. 환불은 제공되지 않습니다.",
+      "autoRenewalFailed": "자동 갱신을 위한 잔액이 부족합니다. 구독이 만료되었습니다.",
+      "autoRenewalEnabled": "구독이 이제 매월 자동으로 갱신됩니다.",
+      "autoRenewalDisabled": "구독이 만료되고 자동으로 갱신되지 않습니다.",
+      "subscriptionExpired": "{cardName} 구독이 만료되어 컬렉션에서 제거되었습니다."
+    },
+    "titles": {
+      "accessRestricted": "액세스 제한",
+      "error": "오류",
+      "success": "성공",
+      "warning": "경고",
+      "info": "정보",
+      "purchaseSuccessful": "구매 성공",
+      "cardActivated": "카드 활성화됨",
+      "subscriptionCancelled": "구독 취소됨",
+      "autoRenewalFailed": "자동 갱신 실패",
+      "autoRenewalEnabled": "자동 갱신 활성화됨",
+      "autoRenewalDisabled": "자동 갱신 비활성화됨",
+      "subscriptionExpired": "구독 만료됨",
+      "timeDepositRequired": "정기예금 필요",
+      "notQualified": "자격 없음",
+      "alreadyClaimed": "이미 받음"
+    },
+    "modals": {
+      "vipCardInfo": {
+        "title": "VIP 카드 - 다이아몬드 엘리트",
+        "subtitle": "독점 수령 가능 카드",
+        "howToGet": "이 카드를 받는 방법",
+        "howToGetDescription": "이 독점 VIP 카드는 ₱10,000,000 이상의 정기예금을 가진 사용자가 받을 수 있습니다. \"받기\" 버튼을 클릭하여 컬렉션에 추가하세요.",
+        "requirements": "요구사항",
+        "requirementsList": [
+          "정기예금 금액: ₱10,000,000+",
+          "\"받기\" 버튼을 클릭하여 컬렉션에 추가",
+          "구매 불필요"
+        ],
+        "yourStatus": "귀하의 상태",
+        "qualified": "이 카드에 대한 자격이 있습니다! '받기'를 클릭하여 받으세요.",
+        "notQualified": "₱10,000,000+ 정기예금이 필요합니다",
+        "alreadyClaimed": "이미 이 카드를 받았습니다!",
+        "warning": "⚠️ 정기예금이 ₱10,000,000 미만으로 떨어지면 VIP 카드가 제거됩니다",
+        "claimButton": "VIP 카드 받기"
+      },
+      "purchase": {
+        "title": "카드 구매",
+        "vipTitle": "VIP 카드 구매",
+        "subtitle": "선택사항을 미리보기하고 확인하세요",
+        "cardPreview": "카드 미리보기",
+        "cardDetails": "카드 세부사항",
+        "price": "가격",
+        "balanceCheck": "잔액 확인",
+        "availableBalance": "사용 가능한 잔액",
+        "sufficientBalance": "충분한 잔액이 있습니다",
+        "insufficientBalance": "{amount} 더 필요합니다",
+        "vipStatusCheck": "VIP 상태 확인",
+        "timeDepositRequired": "정기예금 필요",
+        "vipStatusMet": "정기예금 요구사항 충족 - 이 카드에 대한 자격이 있습니다",
+        "vipStatusNotMet": "이 독점 카드에 대한 자격을 얻으려면 ₱10,000,000+ 정기예금이 필요합니다",
+        "subscriptionInfo": "구독 정보",
+        "subscriptionType": "구독 유형",
+        "monthly": "월간",
+        "duration": "기간: {days}일",
+        "autoRenewal": "자동 갱신: 수동 (매월 갱신)",
+        "accessExpires": "액세스는 {days}일 후 만료됩니다",
+        "actionButtons": {
+          "cancel": "취소",
+          "purchase": "카드 구매",
+          "purchaseVip": "VIP 카드 구매",
+          "subscribe": "{type} 구독",
+          "insufficientBalance": "잔액 부족",
+          "vipRequired": "VIP 필요"
+        }
+      },
+      "subscription": {
+        "title": "구독 세부사항",
+        "subtitle": "월간 구독",
+        "daysLeft": "일 남음",
+        "subscriptionDetails": "구독 세부사항",
+        "totalRenewals": "총 갱신",
+        "totalPaid": "총 지불",
+        "lastRenewal": "마지막 갱신",
+        "autoRenewal": "자동 갱신",
+        "autoRenewalActive": "활성 - 매월 ₱10,000에 자동 갱신",
+        "autoRenewalDisabled": "비활성 - 만료되고 자동으로 갱신되지 않음",
+        "expirationWarning": "구독이 {days}일 후 만료되고 컬렉션에서 제거됩니다.",
+        "actionButtons": {
+          "cancelSubscription": "구독 취소",
+          "close": "닫기"
+        },
+        "common": {
+          "loading": "로딩 중...",
+          "accountTypes": {
+            "basic": "기본",
+            "premium": "프리미엄"
+          }
+        }
+      }
+    },
+    "cardTypes": {
+      "default": "기본 카드",
+      "diamondElite": "다이아몬드 엘리트",
+      "royalCurve": "로얄 커브",
+      "goldenElite": "골든 엘리트",
+      "silverElite": "오렌지 엘리트",
+      "redPrestige": "썬 프레스티지",
+      "vip": "VIP",
+      "unknown": "카드"
+    }
+  },
+  "inspireCards": {
+    "header": {
+      "title": "영감 카드",
+      "supportTitle": "영감 카드 신청",
+      "subtitle": "실물 영감 카드를 집 앞까지 배송받으세요"
+    },
+    "content": {
+      "availableBalance": "사용 가능한 잔액:"
+    },
+    "navigation": {
+      "headerTitle": "영감 카드"
+    },
+    "steps": {
+      "step1": {
+        "title": "연락처 정보",
+        "description": "연락 가능한 이메일 주소를 입력해 주세요",
+        "info": "카드 신청 업데이트를 이 이메일로 보내드립니다"
+      },
+      "step2": {
+        "title": "배송 주소",
+        "description": "영감 카드를 어디로 보내드릴까요?",
+        "info": "도로명, 시/군/구, 우편번호를 포함한 전체 주소를 입력해 주세요"
+      },
+      "step3": {
+        "title": "검토 및 제출",
+        "description": "제출하기 전에 정보를 검토해 주세요"
+      }
+    },
+    "review": {
+      "personalInfo": "개인 정보",
+      "deliveryAddress": "배송 주소",
+      "name": "이름"
+    },
+    "instructions": {
+      "title": "문의사항 제출",
+      "text": "영감 카드에 대한 도움이 필요하신가요? 아래 양식을 작성해 주시면 지원팀이 최대한 빨리 연락드리겠습니다."
+    },
+    "form": {
+      "contactInfo": "연락처 정보",
+      "howToReach": "어떻게 연락할 수 있나요?",
+      "emailLabel": "이메일 주소",
+      "emailPlaceholder": "your.email@example.com",
+      "concernDetails": "문의사항에 대해 알려주세요",
+      "addressLabel": "전체 배송 주소",
+      "addressPlaceholder": "도로명, 동/읍/면, 시/군/구, 도/특별시/광역시, 우편번호"
+    },
+    "disclaimer": {
+      "title": "처리 시간",
+      "text": "카드 신청은 영업일 기준 5-7일 이내에 처리됩니다. 카드가 발송되면 이메일로 확인 메시지를 보내드립니다."
+    },
+    "buttons": {
+      "submit": "요청 제출",
+      "sending": "전송 중...",
+      "next": "다음",
+      "back": "뒤로"
+    },
+    "messages": {
+      "accessRestricted": "이 기능은 프리미엄 계정이 필요합니다. 귀하의 현재 계정 유형은: {accountType}입니다. 영감 카드에 액세스하려면 프리미엄으로 업그레이드하세요.",
+      "timeDepositRequired": "영감 카드에 액세스하려면 활성 정기예금이 필요합니다. 먼저 정기예금을 설정해 주세요.",
+      "missingInformation": "필수 항목을 모두 입력해 주세요.",
+      "emailRequired": "계속하려면 이메일 주소를 입력해 주세요.",
+      "addressRequired": "계속하려면 전체 배송 주소를 입력해 주세요.",
+      "requestSubmitted": "카드 신청이 성공적으로 제출되었습니다! 업데이트 내용을 이메일로 보내드리겠습니다.",
+      "submissionFailed": "요청을 전송할 수 없습니다. 나중에 다시 시도해 주세요.",
+      "unableToVerify": "계정 권한을 확인할 수 없습니다. 다시 시도해 주세요.",
+      "fetchDataFailed": "사용자 데이터를 가져오는데 실패했습니다. 나중에 다시 시도해 주세요."
+    },
+    "titles": {
+      "accessRestricted": "액세스 제한",
+      "error": "오류",
+      "missingInformation": "정보 부족",
+      "requestSubmitted": "요청 제출됨",
+      "submissionFailed": "제출 실패"
+    }
+  },
+  "termsAndCondition": {
+    "header": {
+      "title": "이용약관"
+    },
+    "content": {
+      "welcome": "Inspire Wallet에 오신 것을 환영합니다. 자료, 정보, 제품 또는 서비스에 액세스, 사용 또는 획득하기 전에 이러한 이용약관을 주의 깊게 읽어주세요. Inspire Wallet(통칭 \"앱\")에 액세스함으로써 이러한 이용약관(\"약관\") 및 개인정보 보호정책에 구속되는 것에 동의한 것으로 간주됩니다. 이 약관에서 \"우리\", \"저희\", \"저희의\" 및 \"Inspire Wallet\"은 Inspire Wallet을 지칭하며, \"나\", \"당신\", \"당신의\"는 앱 사용자인 당신을 지칭합니다.",
+      "eligibility": {
+        "title": "자격 요건",
+        "content": "최소 18세 이상이어야 하며 계약을 체결할 법적 능력을 가져야 합니다. 앱을 사용함으로써 요구사항을 충족한다고 진술한 것으로 간주됩니다. 투자 서비스가 제한된 관할권에 있는 경우 앱을 사용할 수 없습니다."
+      },
+      "accountRegistration": {
+        "title": "계정 등록",
+        "content": "앱의 최대 용량에 액세스하려면 계정을 생성해야 합니다. 다음에 동의합니다:",
+        "bulletPoints": {
+          "accurateInfo": "정확하고 완전한 정보 제공",
+          "passwordSecurity": "비밀번호 보안 유지",
+          "unauthorizedUse": "계정의 무단 사용이 있는 경우 즉시 알려주세요"
+        }
+      },
+      "servicesProvided": {
+        "title": "제공되는 서비스",
+        "content": "Inspire Wallet은 주식과 투자를 추적하고 출금 전후의 돈을 모니터링할 수 있게 해줍니다. 모든 거래는 은행과 직접이 아닌 이메일을 통해 이루어집니다. Inspire Alliance Fund Group이 거래를 처리하며, 앱 자체가 아닙니다. 프로세스는 약 5-7 영업일이 소요되어 Inspire Wallet 계정에 반영됩니다."
+      },
+      "feesAndCharges": {
+        "title": "수수료 및 요금",
+        "content": "거래, 계정 유지 및 기타 서비스와 관련된 수수료에 대한 세부사항은 앱 내에서 제공되며 때때로 변경될 수 있습니다."
+      },
+      "userResponsibilities": {
+        "title": "사용자 책임",
+        "content": "앱을 합법적인 목적으로 사용하고 적용 가능한 모든 법률 및 규정을 준수하는 것에 동의합니다. 계정과 투자 결정에 대해 책임을 집니다."
+      },
+      "intellectualProperty": {
+        "title": "지적 재산권",
+        "content": "관련된 모든 콘텐츠, 상표 및 소프트웨어는 Inspire Alliance Fund Group 또는 그 라이선서가 소유합니다. 개인적인 목적으로 앱을 사용할 수 있는 제한적이고 비독점적인 라이선스가 부여됩니다."
+      },
+      "privacyPolicy": {
+        "title": "개인정보 보호정책",
+        "content": "앱 사용은 개인정보를 수집, 사용 및 보호하는 방법을 자세히 설명하는 개인정보 보호정책에 의해서도 관리됩니다. 앱은 이름, 이메일 주소 및 은행 세부정보와 같은 데이터만 수집합니다."
+      },
+      "changesToTerms": {
+        "title": "약관 변경",
+        "content": "언제든지 이러한 약관을 수정할 수 있습니다. 앱 또는 이메일을 통해 중요한 변경사항을 알려드립니다. 변경 후 앱의 계속 사용은 새로운 약관의 수락을 구성합니다."
+      },
+      "contactDetails": {
+        "title": "연락처 정보",
+        "content": "이러한 약관에 대한 질문이나 우려사항이 있으시면 다음으로 연락해 주세요",
+        "contactInfo": "inspireholdings 85963671"
+      },
+      "agreement": "저는 이용약관을 읽고 완전히 이해했으며 위의 진술에 구속되는 것에 동의한다는 것을 여기서 진술합니다."
+    }
+  },
+  "privacy": {
+    "header": {
+      "title": "개인정보 보호정책"
+    },
+    "content": {
+      "introduction": {
+        "title": "소개",
+        "content": "저희는 귀하의 개인정보를 소중히 여깁니다. 이 정책은 앱 \"Inspire Wallet\"을 사용할 때 정보를 수집, 사용 및 보호하는 방법을 설명합니다."
+      },
+      "informationCollection": {
+        "title": "수집하는 정보",
+        "content": "다음 유형의 데이터를 수집합니다:",
+        "bulletPoints": {
+          "personalInfo": "개인정보: 귀하의 이름, 이메일 주소 및 제공하는 기타 세부정보.",
+          "usageData": "사용 데이터: 디바이스 유형, IP 주소 및 앱 사용 방법과 같은 정보."
+        }
+      },
+      "informationUsage": {
+        "title": "정보 사용 방법",
+        "content": "귀하의 정보를 다음 목적으로 사용합니다:",
+        "bulletPoints": {
+          "provideServices": "서비스를 제공하고 개선하기 위해.",
+          "contactUpdates": "업데이트나 중요한 알림으로 연락하기 위해.",
+          "monitorUsage": "앱 사용 방법을 모니터링하여 성능을 향상시키기 위해."
+        }
+      },
+      "informationSharing": {
+        "title": "정보 공유",
+        "content": "다음과 같은 경우 데이터를 공유할 수 있습니다:",
+        "bulletPoints": {
+          "serviceProviders": "앱 운영을 도와주는 서비스 제공업체.",
+          "businessPartners": "비즈니스 파트너 또는 제휴사.",
+          "authorities": "법률에 의해 요구되는 경우 당국."
+        }
+      },
+      "dataSecurity": {
+        "title": "데이터 보안",
+        "content": "정보를 보호하기 위한 조치를 취하지만, 100% 안전한 시스템은 없습니다. 온라인에서 데이터를 공유할 때는 항상 주의하세요."
+      },
+      "childrensPrivacy": {
+        "title": "아동 개인정보 보호",
+        "content": "13세 미만의 어린이로부터는 데이터를 수집하지 않습니다. 귀하의 자녀가 데이터를 공유했다고 생각되면 삭제를 위해 연락해 주세요."
+      },
+      "yourRights": {
+        "title": "귀하의 권리",
+        "content": "계정에 로그인하거나 저희에게 연락하여 개인 데이터를 업데이트하거나 삭제할 수 있습니다."
+      },
+      "policyChanges": {
+        "title": "이 정책의 변경",
+        "content": "이 정책을 업데이트할 수 있습니다. 최신 버전은 이 페이지를 확인하세요."
+      },
+      "contactUs": {
+        "title": "문의하기",
+        "content": "질문이 있으시면 다음으로 이메일을 보내주세요",
+        "email": "info@inspireholdings.ph"
+      }
+    }
+  },
+  "about": {
+    "header": {
+      "title": "회사 소개"
+    },
+    "content": {
+      "ourCompany": {
+        "title": "우리 회사",
+        "content": "Inspire Alliance Fund Group Inc.에서는 강력한 목적으로 추진됩니다: 꿈을 실현하고 의미 있는 변화를 일으키는 것입니다. 지속적인 진보는 기회에서 시작된다는 신념에 기반하여 설립되었으며, 우리는 차이를 만들 준비가 된 개인들을 지원하기 위해 존재합니다—그들 자신의 삶뿐만 아니라 주변 커뮤니티에서도요. 우리는 전통적인 자금 조달을 넘어섭니다. 우리는 열정적인 비전가들을 아이디어를 지속적인 영향으로 바꾸는 데 필요한 지원, 신뢰, 자원과 연결하는 역동적인 운동입니다."
+      },
+      "ourMission": {
+        "title": "우리의 미션",
+        "content": "Inspire Alliance Fund Group Inc.에서는 꿈을 실현함으로써 변화를 일으키는 것이 우리의 미션입니다. 진정한 진보는 개인들이 자신뿐만 아니라 커뮤니티와 그 너머에 더 나은 미래를 구축하기 위해 필요한 자원, 신뢰, 기회를 받았을 때 시작된다고 믿습니다. 우리는 단순한 자금 조달 플랫폼이 아닙니다; 아이디어를 영향으로 바꾸는 데 필요한 지원으로 목적 지향적인 사람들을 연결하는 운동입니다. 인간의 잠재력에 투자함으로써, 우리는 삶을 지원하고 경제를 강화하며 희망과 혁신이 함께 번영하는 미래를 형성하는 파급 효과를 육성합니다."
+      },
+      "inspireWallet": {
+        "title": "Inspire Wallet",
+        "content": "Inspire Investors를 위한 플래그십 앱인 Inspire Wallet은 이 비전을 구현합니다. 올인원 금융 동반자로 설계된 Inspire Wallet을 통해 다음이 가능합니다:",
+        "bulletPoints": {
+          "investments": "투자 현황을 파악하세요",
+          "stocks": "주식을 관리하세요",
+          "withdrawals": "출금을 추적하세요",
+          "transactions": "모든 금융 거래의 명확한 기록을 유지하세요"
+        },
+        "conclusion": "경험 많은 투자자든 막 시작하는 사람이든, 우리 앱은 포트폴리오를 쉽고 자신 있게 관리하는 데 필요한 모든 도구를 제공합니다."
+      },
+      "callToAction": "Inspire Alliance Fund Group Incorporated에 참여하여 함께 번영하는 미래를 만들어가세요. 오늘 Inspire Wallet을 다운로드하고 금융 여정을 통제하세요!"
+    }
+  },
+  "agentRequest": {
+    "header": {
+      "title": "에이전트 요청"
+    },
+    "content": {
+      "headerTitle": "에이전트 요청",
+      "headerSubtitle": "에이전트 신청서 제출",
+      "requestInformation": {
+        "title": "요청 정보",
+        "text": "📋 아래 양식을 작성하여 에이전트 권한을 요청하세요\n🔍 선택적으로 연결할 기존 에이전트를 검색하세요\n🎯 계정용 고유한 에이전트 번호를 생성하세요\n⏳ 요청은 관리자에 의해 검토 및 승인됩니다"
+      },
+      "form": {
+        "title": "에이전트 요청 양식",
+        "personalInformation": {
+          "title": "개인 정보",
+          "fullNameLabel": "전체 이름"
+        },
+        "agentNumber": {
+          "title": "에이전트 번호",
+          "generateLabel": "에이전트 번호 생성 *",
+          "placeholder": "클릭하여 에이전트 번호 생성",
+          "generateButton": "생성",
+          "hint": "생성 버튼을 클릭하여 5자리 고유한 에이전트 번호를 만드세요"
+        },
+        "parentAgent": {
+          "title": "상위 에이전트 선택 (선택사항)",
+          "searchLabel": "에이전트 검색 (선택사항)",
+          "searchPlaceholder": "정확한 에이전트 번호를 입력하세요...",
+          "searchHint": "정확한 에이전트 번호를 입력하여 에이전트를 자동으로 찾고 선택하세요",
+          "selectedAgent": "선택된 에이전트",
+          "parentAgentCode": "상위 에이전트 코드:",
+          "yourAgentCode": "귀하의 에이전트 코드:",
+          "noResults": "에이전트 번호 \"{query}\"로 에이전트를 찾을 수 없습니다"
+        }
+      },
+      "submitButton": {
+        "submit": "에이전트 요청 제출",
+        "submitting": "요청 제출 중..."
+      }
+    },
+    "modals": {
+      "accessRestricted": {
+        "title": "액세스 제한",
+        "message": "이 기능은 프리미엄 계정이 필요합니다. 현재 계정 유형은: {accountType}. 에이전트 요청 기능에 액세스하려면 프리미엄으로 업그레이드하세요."
+      },
+      "alreadyAgent": {
+        "title": "이미 에이전트",
+        "message": "이미 에이전트로 등록되어 있습니다. 에이전트 액세스를 다시 요청할 필요가 없습니다."
+      },
+      "authenticationRequired": {
+        "title": "인증 필요",
+        "message": "에이전트 요청을 제출하려면 로그인하세요."
+      },
+      "userNotFound": {
+        "title": "사용자를 찾을 수 없음",
+        "message": "사용자 데이터를 찾을 수 없습니다. 다시 로그인해 주세요."
+      },
+      "error": {
+        "title": "오류",
+        "message": "계정 권한을 확인할 수 없습니다. 다시 시도해 주세요.",
+        "loadDataFailed": "사용자 데이터를 로드하는데 실패했습니다. 다시 시도해 주세요.",
+        "searchFailed": "사용자 검색에 실패했습니다. 다시 시도해 주세요.",
+        "generationFailed": "고유한 에이전트 코드를 생성할 수 없습니다. 다시 시도해 주세요.",
+        "submitFailed": "요청 제출 중 오류가 발생했습니다. 다시 시도해 주세요."
+      },
+      "agentNumberGenerated": {
+        "title": "에이전트 번호가 생성되었습니다",
+        "message": "귀하의 고유한 에이전트 번호는: {agentNumber}"
+      },
+      "agentFound": {
+        "title": "에이전트를 찾았습니다!",
+        "message": "에이전트를 성공적으로 찾았습니다: {firstName} {lastName}\n에이전트 번호: {agentNumber}"
+      },
+      "agentCodeGenerated": {
+        "title": "에이전트 코드가 생성되었습니다",
+        "message": "에이전트 코드: {agentCode}\n유형: {type}\n추천인: {referrerName}"
+      },
+      "missingAgentNumber": {
+        "title": "에이전트 번호 누락",
+        "message": "먼저 에이전트 번호를 생성하세요."
+      },
+      "requestSubmitted": {
+        "title": "요청이 성공적으로 제출되었습니다!",
+        "message": "에이전트 요청이 제출되었으며 승인을 기다리고 있습니다.\n\n요청 ID: {requestId}"
+      }
+    }
+  },
+  "passcode": {
+    "header": {
+      "title": "패스코드"
+    },
+    "content": {
+      "step": "{total}단계 중 {current}단계",
+      "subtitle": "아래 키패드를 사용하여 패스코드를 입력하세요",
+      "instructions": {
+        "enterCurrent": "현재 4자리 패스코드를 입력하세요",
+        "enterNew": "새로운 4자리 패스코드를 입력하세요",
+        "confirmNew": "새로운 4자리 패스코드를 확인하세요"
+      },
+      "errors": {
+        "mustBe4Digits": "패스코드는 4자리여야 합니다.",
+        "incorrectPasscode": "패스코드가 올바르지 않습니다. 다시 시도해 주세요.",
+        "passcodesDoNotMatch": "패스코드가 일치하지 않습니다. 다시 시도해 주세요."
+      },
+      "success": {
+        "passcodeChanged": "패스코드가 성공적으로 변경되었습니다!"
+      },
+      "buttons": {
+        "ok": "확인"
+      }
+    }
+  },
+  "depositCrypto": {
+    "header": {
+      "title": "암호화폐로 입금"
+    },
+    "content": {
+      "headerTitle": "암호화폐 입금",
+      "headerSubtitle": "비트코인, 이더리움 또는 USDT로 입금",
+      "accountHolder": "계좌 소유자:",
+      "email": "이메일:",
+      "instructions": {
+        "title": "입금 방법",
+        "step1": "아래 지갑 주소로 {crypto}를 보내세요",
+        "walletAddressLabel": "지갑 주소:",
+        "walletAddressCopied": "지갑 주소가 복사되었습니다",
+        "walletAddressCopiedMessage": "지갑 주소가 클립보드에 복사되었습니다",
+        "step2": "아래에 거래 영수증/스크린샷을 업로드하세요",
+        "note": "참고: 거래 영수증이 확인되면 입금이 처리됩니다.",
+        "btcNote": "참고: 이것은 네이티브 SegWit (bech32) 주소입니다. 지원되는 지갑: 바이낸스, 코인베이스/코인베이스 월렛, 트러스트 월렛, 레저, 트레저, OKX, 바이빗, 쿠코인, 크라켄, 비트스탬프, 비트파이넥스, 엑소더스, 블루월렛, 뮤운, 피닉스 월렛, 브리즈, 일렉트럼 (최신 버전), 스패로우 월렛, 와사비 월렛.",
+        "ethNote": "참고: 이 주소는 메타마스크 및 기타 이더리움 호환 지갑용입니다."
+      },
+      "form": {
+        "selectCrypto": "암호화폐 선택 *",
+        "amount": "금액 *",
+        "amountPlaceholder": "금액 입력",
+        "uploadReceipt": "영수증 업로드 *",
+        "uploadReceiptText": "영수증 업로드",
+        "uploadReceiptSubtext": "탭하여 이미지 선택"
+      },
+      "loading": {
+        "fetchingRates": "환율 조회 중...",
+        "uploading": "업로드 중..."
+      },
+      "submitButton": {
+        "submit": "입금 요청 제출",
+        "submitting": "제출 중..."
+      }
+    },
+    "modals": {
+      "imagePickerError": {
+        "title": "이미지 선택 오류",
+        "message": "이미지 선택에 실패했습니다"
+      },
+      "copyError": {
+        "title": "복사 실패",
+        "message": "지갑 주소를 클립보드에 복사하는데 실패했습니다. 다시 시도해주세요."
+      },
+      "missingInformation": {
+        "title": "정보 누락",
+        "message": "모든 필수 필드를 입력하고 영수증을 업로드하세요."
+      },
+      "requestSubmitted": {
+        "title": "요청 제출됨",
+        "message": "암호화폐 입금 요청이 성공적으로 제출되었습니다! 확인을 위해 이메일을 확인하세요.",
+        "messageWithEmailDelay": "암호화폐 입금 요청이 성공적으로 제출되었습니다! 이메일 알림이 지연될 수 있습니다."
+      },
+      "submissionFailed": {
+        "title": "제출 실패",
+        "message": "요청 제출에 실패했습니다. 다시 시도해 주세요."
+      }
+    }
+  },
+  "crypto": {
+    "header": {
+      "title": "거래"
+    },
+    "content": {
+      "availableBalance": "사용 가능한 잔액:",
+      "cryptoBalances": "암호화폐 잔액:",
+      "forexBalances": "외환 잔액:",
+      "crypto": "암호화폐",
+      "forex": "외환",
+      "currentPrice": "현재 가격:",
+      "currentRate": "현재 환율:",
+      "buy": "매수",
+      "sell": "매도",
+      "processing": "처리 중...",
+      "amountInPHP": "PHP 금액",
+      "amountOf": "금액",
+      "percentageOfBalance": "% 사용 가능한 잔액",
+      "percentageOfAsset": "% 사용 가능",
+      "retry": "다시 시도",
+      "testApi": "API 테스트",
+      "noPriceData": "가격 데이터를 사용할 수 없습니다"
+    },
+    "instructions": {
+      "title": "거래 안내",
+      "cryptoTrading": {
+        "title": "암호화폐 거래",
+        "step1": "유형 선택기에서 \"암호화폐\"를 선택하세요",
+        "step2": "선호하는 암호화폐를 선택하세요 (BTC, ETH 또는 USDT)",
+        "buySteps": "매수하려면:",
+        "buyStep1": "• 지출하고 싶은 PHP 금액을 입력하세요",
+        "buyStep2": "• \"매수\"를 클릭하여 선택한 암호화폐를 구매하세요",
+        "sellSteps": "매도하려면:",
+        "sellStep1": "• 매도하고 싶은 암호화폐 수량을 입력하세요",
+        "sellStep2": "• \"매도\"를 클릭하여 PHP로 변환하세요"
+      },
+      "forexTrading": {
+        "title": "외환 거래",
+        "step1": "유형 선택기에서 \"외환\"을 선택하세요",
+        "step2": "선호하는 통화를 선택하세요 (USD 또는 JPY)",
+        "buySteps": "매수하려면:",
+        "buyStep1": "• 지출하고 싶은 PHP 금액을 입력하세요",
+        "buyStep2": "• \"매수\"를 클릭하여 선택한 통화를 구매하세요",
+        "sellSteps": "매도하려면:",
+        "sellStep1": "• 매도하고 싶은 통화 수량을 입력하세요",
+        "sellStep2": "• \"매도\"를 클릭하여 PHP로 변환하세요"
+      },
+      "generalTips": {
+        "title": "일반 팁",
+        "tip1": "• 차트를 사용하여 가격 변동을 모니터링하세요",
+        "tip2": "• 다양한 시간 범위(24시간, 7일, 30일)를 사용하여 트렌드를 분석하세요",
+        "tip3": "• 암호화폐와 외환 잔액을 모두 추적하세요"
+      }
+    },
+    "modals": {
+      "accessRestricted": {
+        "title": "액세스 제한",
+        "message": "이 기능은 프리미엄 계정이 필요합니다. 현재 계정 유형은: {accountType}. 암호화폐 거래에 액세스하려면 프리미엄으로 업그레이드하세요."
+      },
+      "apiConnectionError": {
+        "title": "API 연결 오류",
+        "message": "CoinGecko API에 연결할 수 없습니다. 인터넷 연결을 확인하고 다시 시도해 주세요."
+      },
+      "error": {
+        "title": "오류",
+        "message": "계정 권한을 확인할 수 없습니다. 다시 시도해 주세요."
+      },
+      "invalidAmount": {
+        "title": "잘못된 금액",
+        "message": "PHP로 유효한 금액을 입력하세요"
+      },
+      "insufficientBalance": {
+        "title": "잔액 부족",
+        "message": "₱{required}가 필요하지만 잔액은 ₱{available}입니다"
+      },
+      "insufficientCryptoBalance": {
+        "title": "잔액 부족",
+        "message": "{asset}는 {amount}만 있습니다"
+      },
+      "success": {
+        "title": "성공",
+        "message": "구매가 성공했습니다! ₱{cost}에 {asset} {amount}를 구매했습니다"
+      },
+      "saleSuccess": {
+        "title": "성공",
+        "message": "판매가 성공했습니다! 잔액에 ₱{amount}가 추가되었습니다"
+      },
+      "purchaseError": {
+        "title": "오류",
+        "message": "구매 완료에 실패했습니다"
+      },
+      "saleError": {
+        "title": "오류",
+        "message": "판매 완료에 실패했습니다"
+      }
+    }
+  },
+  "bdo": {
+    "header": {
+      "title": "은행 계좌 서비스"
+    },
+    "content": {
+      "headerTitle": "은행 계좌 서비스",
+      "headerSubtitle": "전문적인 은행 솔루션",
+      "instructionTitle": "계좌 개설 요청",
+      "instructionText": "파트너 은행 서비스에서 계좌 개설을 요청하려면 다음 양식을 작성해 주세요. 신청서는 5-7 영업일 내에 처리됩니다.",
+      "sectionTitle": "은행 정보",
+      "selectBank": "은행 선택",
+      "preferredBank": "선호 은행",
+      "chooseBank": "선호 은행을 선택하세요",
+      "contactDetails": "연락처 세부사항",
+      "emailAddress": "이메일 주소",
+      "emailPlaceholder": "your.email@example.com",
+      "mobileNumber": "휴대폰 번호",
+      "mobilePlaceholder": "+63 9XX XXX XXXX",
+      "landlineNumber": "유선 전화 번호",
+      "landlinePlaceholder": "(02) XXXX XXXX",
+      "personalDetails": "개인 세부사항",
+      "gender": "성별",
+      "selectGender": "성별을 선택하세요",
+      "dateOfBirth": "생년월일",
+      "selectBirthdate": "생년월일을 선택하세요",
+      "civilStatus": "혼인 상태",
+      "selectCivilStatus": "혼인 상태를 선택하세요",
+      "citizenship": "국적",
+      "citizenshipPlaceholder": "필리핀인",
+      "addressInformation": "주소 정보",
+      "completeAddress": "완전한 주소",
+      "addressPlaceholder": "집/유닛 번호, 거리, 바랑가이, 도시, 주, 우편번호",
+      "financialInformation": "재정 정보",
+      "sourceOfFund": "자금 출처",
+      "sourcePlaceholder": "예: 고용, 사업, 투자",
+      "grossMonthlyIncome": "월 총 소득",
+      "incomePlaceholder": "₱ 50,000",
+      "processingInfo": "처리 정보",
+      "processingText": "이 세부사항을 제출하면 신청 상태 확인 이메일을 보내드립니다. 선택된 은행의 검토 및 승인에는 약 5-7 영업일이 소요됩니다.",
+      "submitApplication": "신청서 제출",
+      "processing": "처리 중...",
+      "selectBankModal": "은행 선택",
+      "selectGenderModal": "성별 선택",
+      "selectCivilStatusModal": "혼인 상태 선택",
+      "male": "남성",
+      "female": "여성",
+      "preferNotToSay": "말하고 싶지 않음",
+      "single": "미혼",
+      "married": "기혼",
+      "legallySeparated": "법적 별거",
+      "divorced": "이혼",
+      "annulled": "무효",
+      "widow": "과부/과부",
+      "bdoUnibank": "BDO 유니뱅크",
+      "securityBank": "시큐리티 뱅크",
+      "ctbcBank": "CTBC 뱅크",
+      "unionBank": "유니온 뱅크",
+      "documentUpload": "문서 업로드",
+      "passportUpload": "여권 사진",
+      "driverLicenseUpload": "운전면허 사진",
+      "selectPassport": "여권 사진 선택",
+      "changePassport": "여권 사진 변경",
+      "selectDriverLicense": "운전면허 사진 선택",
+      "changeDriverLicense": "운전면허 사진 변경",
+      "uploadingDocuments": "문서 업로드 중...",
+      "processingApplication": "신청서 처리 중",
+      "uploadingSubtitle": "문서를 안전한 저장소에 업로드하는 동안 잠시만 기다려 주세요",
+      "processingSubtitle": "신청서를 저장하고 확인을 보내는 중입니다",
+      "uploadingStep": "업로드 중",
+      "savingStep": "저장 중"
+    },
+    "steps": {
+      "bankSelection": {
+        "title": "은행 선택",
+        "description": "계좌 개설을 위해 선호하는 은행을 선택하세요. 이는 사용할 수 있는 은행 서비스와 기능을 결정합니다."
+      },
+      "contactInfo": {
+        "title": "연락처 정보",
+        "description": "신청 상태 및 계좌 업데이트와 관련하여 연락할 수 있도록 연락처 세부사항을 제공해 주세요."
+      },
+      "personalDetails": {
+        "title": "개인 정보",
+        "description": "자신에 대해 알려주세요. 이 정보는 신원 확인 및 규정 준수를 위해 필요합니다."
+      },
+      "addressInfo": {
+        "title": "주소 정보",
+        "description": "확인 및 계좌 설정을 위해 완전한 주소를 제공해 주세요."
+      },
+      "financialInfo": {
+        "title": "재정 정보",
+        "description": "은행 요구사항을 이해하고 규정 준수를 보장하기 위해 재정 세부사항을 공유해 주세요."
+      },
+      "documentUpload": {
+        "title": "문서 업로드",
+        "description": "신원 확인 및 계좌 개설 과정을 위해 필요한 문서를 업로드하세요."
+      }
+    },
+    "validation": {
+      "selectBank": "은행을 선택해 주세요",
+      "emailRequired": "이메일 주소가 필요합니다",
+      "mobileRequired": "휴대폰 번호가 필요합니다",
+      "genderRequired": "성별을 선택해 주세요",
+      "birthdateRequired": "생년월일을 선택해 주세요",
+      "civilStatusRequired": "혼인 상태를 선택해 주세요",
+      "citizenshipRequired": "국적이 필요합니다",
+      "addressRequired": "완전한 주소가 필요합니다",
+      "sourceFundRequired": "자금 출처가 필요합니다",
+      "incomeRequired": "월 소득이 필요합니다",
+      "passportRequired": "여권 사진이 필요합니다",
+      "driverLicenseRequired": "운전면허 사진이 필요합니다"
+    },
+    "modals": {
+      "accessRestricted": {
+        "title": "액세스 제한",
+        "message": "이 기능은 프리미엄 계정이 필요합니다. 현재 계정 유형은 {accountType}입니다. 은행 계좌 서비스에 액세스하려면 프리미엄으로 업그레이드하세요."
+      },
+      "timeDepositInsufficient": {
+        "title": "액세스 제한",
+        "message": "은행 계좌를 개설하려면 최소 ₱200,000의 정기 예금이 필요합니다. 현재 정기 예금은 ₱{amount}입니다. 먼저 정기 예금을 늘려주세요."
+      },
+      "error": {
+        "title": "오류",
+        "message": "계정 권한을 확인할 수 없습니다. 다시 시도해 주세요."
+      },
+      "fetchError": {
+        "title": "오류",
+        "message": "사용자 데이터를 가져오는데 실패했습니다. 나중에 다시 시도해 주세요."
+      },
+      "missingInformation": {
+        "title": "정보 부족",
+        "message": "제출하기 전에 모든 필수 필드를 입력해 주세요."
+      },
+      "authenticationError": {
+        "title": "인증 오류",
+        "message": "신청서를 제출하려면 로그인해 주세요."
+      },
+      "success": {
+        "title": "성공",
+        "message": "성공적으로 전송되었습니다"
+      },
+      "partialSuccess": {
+        "title": "부분적 성공",
+        "message": "신청서는 저장되었지만 이메일 알림을 보낼 수 없었습니다. 이메일 주소를 확인해 주세요."
+      },
+      "submissionFailed": {
+        "title": "제출 실패",
+        "message": "신청서를 제출할 수 없습니다. 나중에 다시 시도해 주세요. 오류: {error}"
+      }
+    }
+  },
+  "accountDeletion": {
+    "header": {
+      "title": "계정 삭제"
+    },
+    "content": {
+      "headerTitle": "계정 삭제",
+      "headerSubtitle": "계정 삭제 요청",
+      "importantNotice": "중요 공지",
+      "warningText": "⚠️ 계정 삭제는 영구적이며 되돌릴 수 없습니다\n🗑️ 모든 데이터, 거래 및 기록이 영구적으로 제거됩니다\n💰 삭제 요청 전에 모든 자금을 인출하세요\n📋 삭제 후에는 계정이나 데이터를 복구할 수 없습니다",
+      "deletionRequestProcess": "삭제 요청 프로세스",
+      "instructionText": "계정 삭제를 요청하려면 아래 양식을 작성하세요. 저희 팀이 2-3 영업일 내에 요청을 검토하고 처리합니다. 계정이 영구적으로 삭제되면 이메일로 확인을 받게 됩니다.",
+      "accountInformation": "계정 정보",
+      "personalDetails": "개인 세부사항",
+      "firstName": "이름",
+      "firstNamePlaceholder": "이름을 입력하세요",
+      "lastName": "성",
+      "lastNamePlaceholder": "성을 입력하세요",
+      "emailAddress": "이메일 주소",
+      "emailPlaceholder": "your.email@example.com",
+      "deletionReason": "삭제 이유",
+      "reasonForDeletion": "계정 삭제 이유",
+      "helperText": "계정을 삭제하고 싶은 이유를 설명해 주세요. 이는 저희 서비스 개선에 도움이 됩니다.",
+      "reasonPlaceholder": "계정 삭제에 대한 자세한 이유를 제공해 주세요. 예: 개인정보 보호 우려, 서비스 불필요, 다른 플랫폼으로 전환 등.",
+      "whatHappensNext": "다음에 무엇이 일어나나요?",
+      "processText": "삭제 요청을 제출한 후:\n📧 이메일 확인을 받게 됩니다\n🔍 저희 팀이 2-3 영업일 내에 요청을 검토합니다\n✅ 영구 삭제 전에 최종 확인이 전송됩니다\n🗑️ 계정과 모든 데이터가 영구적으로 제거됩니다",
+      "submitDeletionRequest": "삭제 요청 제출",
+      "submitting": "제출 중..."
+    },
+    "modals": {
+      "missingInformation": {
+        "title": "정보 부족",
+        "message": "제출하기 전에 모든 필수 필드를 입력해 주세요."
+      },
+      "confirmAccountDeletion": {
+        "title": "계정 삭제 확인",
+        "message": "계정 삭제를 요청하시겠습니까? 이 작업은 되돌릴 수 없으며 모든 데이터가 영구적으로 제거됩니다."
+      },
+      "requestSubmitted": {
+        "title": "요청 제출됨",
+        "message": "계정 삭제 요청이 성공적으로 제출되었습니다."
+      },
+      "submissionFailed": {
+        "title": "제출 실패",
+        "message": "요청 제출에 실패했습니다. 다시 시도해 주세요."
+      }
+    }
+  },
+  "agentDashboard": {
+    "header": {
+      "title": "에이전트 대시보드"
+    },
+    "content": {
+      "agentProfile": "에이전트 프로필",
+      "name": "이름",
+      "agentNumber": "에이전트 번호",
+      "agentWalletAmount": "에이전트 지갑 금액",
+      "transfer": "이체",
+      "loading": "로딩 중..."
+    },
+    "modals": {
+      "accessRestricted": {
+        "title": "액세스 제한",
+        "message": "이 기능은 프리미엄 계정이 필요합니다. 현재 계정 유형은 {accountType}입니다. 에이전트 대시보드에 액세스하려면 프리미엄으로 업그레이드하세요."
+      },
+      "accessDenied": {
+        "title": "액세스 거부",
+        "message": "이 페이지에 액세스하려면 에이전트여야 합니다."
+      },
+      "dataError": {
+        "title": "데이터 오류",
+        "message": "사용자 데이터를 찾을 수 없습니다. 다시 시도해 주세요."
+      },
+      "error": {
+        "title": "오류",
+        "message": "계정 권한을 확인할 수 없습니다. 다시 시도해 주세요."
+      }
+    }
+  },
+  "deposit": {
+    "header": {
+      "title": "입금 요청"
+    },
+    "content": {
+      "investmentDeposit": "투자 입금",
+      "growYourWealth": "우리와 함께 자산을 늘려보세요",
+      "depositRequest": "입금 요청",
+      "depositInstructions": "입금을 요청하려면 아래 양식을 작성하세요. 보장된 수익을 위한 정기예금(최소 ₱50,000) 또는 시장 기회를 위한 주식 투자(최소 ₱2,000,000) 중에서 선택하세요.",
+      "investmentDetails": "투자 세부사항",
+      "investmentType": "투자 유형",
+      "selectInvestmentType": "투자 유형 선택 *",
+      "chooseInvestmentType": "투자 유형을 선택하세요",
+      "contractPeriod": "계약 기간 *",
+      "selectContractDuration": "계약 기간 선택",
+      "address": "주소",
+      "enterAddress": "완전한 주소를 입력하세요",
+      "addressRequired": "주소가 필요합니다",
+      "investmentAmount": "투자 금액",
+      "amount": "금액 *",
+      "enterInvestmentAmount": "투자 금액 입력",
+      "phpEquivalent": "PHP 상당액",
+      "calculating": "계산 중...",
+      "rate": "환율: 1 {currency} = ₱{rate}",
+      "contactInformation": "연락처 정보",
+      "emailAddress": "이메일 주소",
+      "accountHolder": "계좌 소유자: {firstName} {lastName}",
+      "processingInformation": "처리 정보",
+      "processingText": "입금 요청을 제출한 후 이메일로 은행 계좌 세부사항을 보내드립니다. 입금 요청 작업은 평일(월요일부터 금요일)에 운영됩니다. Inspire Wallet에서 거래 완료까지 하루가 걸릴 수 있습니다. 입금이 처리되면 확인을 받게 됩니다.",
+      "submitDepositRequest": "입금 요청 제출",
+      "submitting": "제출 중...",
+      "rateUnavailable": "환율 사용 불가",
+      "minimumStock": "주식 최소 ₱2,000,000",
+      "minimumTimeDeposit": "정기예금 최소 ₱50,000",
+      "minimum": "최소: {amount}",
+      "selectCurrency": "통화 선택",
+      "selectInvestmentTypeModal": "투자 유형 선택",
+      "selectContractPeriod": "계약 기간 선택",
+      "timeDeposit": "정기예금",
+      "stockInvestment": "주식 투자",
+      "sixMonthsContract": "6개월 계약",
+      "oneYearContract": "1년 계약",
+      "twoYearsContract": "2년 계약"
+    },
+    "modals": {
+      "missingInformation": {
+        "title": "정보 부족",
+        "message": "모든 필수 필드를 입력해 주세요."
+      },
+      "exchangeRateUnavailable": {
+        "title": "환율 사용 불가",
+        "message": "선택한 통화의 환율이 현재 사용할 수 없습니다. 나중에 다시 시도하거나 다른 통화를 선택해 주세요."
+      },
+      "minimumInvestmentNotMet": {
+        "title": "최소 투자액 미달",
+        "message": "{type} 투자는 최소 ₱{amount}가 필요합니다. 금액을 늘려 주세요."
+      },
+      "requestSubmitted": {
+        "title": "요청 제출됨",
+        "message": "입금 요청이 성공적으로 제출되었습니다! 은행 계좌 세부사항은 이메일을 확인해 주세요."
+      },
+      "submissionFailed": {
+        "title": "제출 실패",
+        "message": "요청 제출에 실패했습니다. 다시 시도해 주세요."
+      }
+    }
+  },
+  "maya": {
+    "header": {
+      "title": "전자지갑 계좌 개설"
+    },
+    "content": {
+      "ewalletAccountOpening": "전자지갑 계좌 개설",
+      "digitalBankingMadeSimple": "디지털 뱅킹을 간단하게",
+      "accountOpeningRequest": "계좌 개설 요청",
+      "accountOpeningInstructions": "선호하는 전자지갑 제공업체에서 계좌 개설을 요청하려면 아래 양식을 작성해 주세요. 신청서는 5-7 영업일 내에 처리됩니다.",
+      "personalInformation": "개인 정보",
+      "ewalletSelection": "전자지갑 선택",
+      "selectEwalletProvider": "전자지갑 제공업체 선택 *",
+      "selectPreferredEwallet": "선호하는 전자지갑을 선택하세요",
+      "contactDetails": "연락처 세부사항",
+      "emailAddress": "이메일 주소 *",
+      "emailPlaceholder": "your.email@example.com",
+      "mobileNumber": "휴대폰 번호 *",
+      "mobilePlaceholder": "+63 9XX XXX XXXX",
+      "landlineNumber": "유선 전화 번호",
+      "landlinePlaceholder": "(02) XXXX XXXX",
+      "personalDetails": "개인 세부사항",
+      "gender": "성별 *",
+      "selectGender": "성별을 선택하세요",
+      "dateOfBirth": "생년월일 *",
+      "selectBirthdate": "생년월일을 선택하세요",
+      "civilStatus": "혼인 상태 *",
+      "citizenship": "국적 *",
+      "citizenshipPlaceholder": "필리핀인",
+      "addressInformation": "주소 정보",
+      "completeAddress": "완전한 주소 *",
+      "addressPlaceholder": "집/유닛 번호, 거리, 바랑가이, 도시, 주, 우편번호",
+      "financialInformation": "재정 정보",
+      "sourceOfFund": "자금 출처 *",
+      "sourcePlaceholder": "예: 고용, 사업, 투자",
+      "grossMonthlyIncome": "월 총소득 *",
+      "incomePlaceholder": "₱ 50,000",
+      "processingInformation": "처리 정보",
+      "processingText": "이 세부사항을 제출하면 신청 상태 확인 이메일을 보내드립니다. 이 과정은 검토 및 승인에 약 5-7 영업일이 소요됩니다.",
+      "submitApplication": "신청서 제출",
+      "processing": "처리 중...",
+      "selectGenderModal": "성별 선택",
+      "selectCivilStatusModal": "혼인 상태 선택",
+      "selectEwalletTypeModal": "전자지갑 유형 선택",
+      "male": "남성",
+      "female": "여성",
+      "preferNotToSay": "말하고 싶지 않음",
+      "single": "미혼",
+      "married": "기혼",
+      "legallySeparated": "법적으로 별거",
+      "divorced": "이혼",
+      "annulled": "무효",
+      "widowEer": "과부/과부",
+      "maya": "마야",
+      "gCash": "지캐시"
+    },
+    "steps": {
+      "ewalletSelection": {
+        "title": "전자지갑 제공업체 선택",
+        "description": "계좌 개설을 위해 선호하는 전자지갑 제공업체를 선택하세요. 이는 사용 가능한 디지털 뱅킹 서비스를 결정합니다."
+      },
+      "contactInfo": {
+        "title": "연락처 정보",
+        "description": "신청 상태 및 계좌 업데이트와 관련하여 연락할 수 있도록 연락처 정보를 제공해 주세요."
+      },
+      "personalDetails": {
+        "title": "개인 정보",
+        "description": "자신에 대해 알려주세요. 이 정보는 신원 확인 및 규정 준수 목적으로 필요합니다."
+      },
+      "addressInfo": {
+        "title": "주소 정보",
+        "description": "확인 및 계좌 설정 목적으로 완전한 주소를 제공해 주세요."
+      },
+      "financialInfo": {
+        "title": "금융 정보",
+        "description": "뱅킹 요구사항을 이해하고 규정 준수를 보장하기 위해 금융 세부정보를 공유해 주세요."
+      }
+    },
+    "validation": {
+      "selectEwallet": "전자지갑 제공업체를 선택해 주세요",
+      "emailRequired": "이메일 주소가 필요합니다",
+      "mobileRequired": "휴대폰 번호가 필요합니다",
+      "genderRequired": "성별을 선택해 주세요",
+      "birthdateRequired": "생년월일을 선택해 주세요",
+      "civilStatusRequired": "혼인 상태를 선택해 주세요",
+      "citizenshipRequired": "국적이 필요합니다",
+      "addressRequired": "완전한 주소가 필요합니다",
+      "sourceFundRequired": "자금 출처가 필요합니다",
+      "incomeRequired": "월 소득이 필요합니다"
+    },
+    "modals": {
+      "accessRestricted": {
+        "title": "액세스 제한",
+        "message": "이 기능은 프리미엄 계정이 필요합니다. 현재 계정 유형은 {accountType}입니다. 전자지갑 계좌 서비스에 액세스하려면 프리미엄으로 업그레이드하세요."
+      },
+      "timeDepositInsufficient": {
+        "title": "액세스 제한",
+        "message": "전자지갑 계좌를 개설하려면 최소 ₱200,000의 정기예금이 필요합니다. 현재 정기예금은 ₱{amount}입니다. 먼저 정기예금을 늘려 주세요."
+      },
+      "error": {
+        "title": "오류",
+        "message": "계정 권한을 확인할 수 없습니다. 다시 시도해 주세요."
+      },
+      "dataError": {
+        "title": "오류",
+        "message": "사용자 데이터를 가져오지 못했습니다. 나중에 다시 시도해 주세요."
+      },
+      "missingInformation": {
+        "title": "정보 부족",
+        "message": "제출하기 전에 모든 필수 필드를 입력해 주세요."
+      },
+      "authenticationError": {
+        "title": "인증 오류",
+        "message": "신청서를 제출하려면 로그인해 주세요."
+      },
+      "applicationSubmitted": {
+        "title": "신청서가 성공적으로 제출되었습니다!",
+        "message": "{ewalletType} 계좌 개설 요청이 제출되어 데이터베이스에 저장되었습니다. 곧 확인 이메일을 받게 됩니다. 신청서 ID: {applicationId}"
+      },
+      "partialSuccess": {
+        "title": "부분적 성공",
+        "message": "신청서는 저장되었지만 이메일 알림을 보낼 수 없었습니다. 이메일 주소를 확인해 주세요."
+      },
+      "submissionFailed": {
+        "title": "제출 실패",
+        "message": "신청서를 제출할 수 없습니다. 나중에 다시 시도해 주세요. 오류: {error}"
+      }
+    }
+  },
+  "stockholder": {
+    "header": {
+      "title": "주주 대시보드"
+    },
+    "content": {
+      "stockholderAmount": "주주 금액",
+      "buy": "구매",
+      "transfer": "이체",
+      "sell": "판매"
+    },
+    "modals": {
+      "dataError": {
+        "title": "데이터 오류",
+        "message": "사용자 데이터를 찾을 수 없습니다. 다시 시도해 주세요."
+      }
+    }
+  },
+  "stockTransfer": {
+    "header": {
+      "title": "주식 이체",
+      "subtitle": "다른 사용자에게 주식 금액 이체"
+    },
+    "balanceLabel": "사용 가능한 주식 금액",
+    "guide": {
+      "title": "빠른 가이드",
+      "step1": "계좌번호로 수신자 검색",
+      "step2": "이체할 주식 금액 입력",
+      "step3": "확인 및 전송"
+    },
+    "sections": {
+      "recipient": "수신자 계좌번호",
+      "amount": "주식 금액"
+    },
+    "placeholders": {
+      "accountNumber": "수신자의 계좌번호를 입력하세요...",
+      "amount": "0.00"
+    },
+    "buttons": {
+      "change": "변경",
+      "sendTransfer": "주식 이체 전송",
+      "selectRecipient": "수신자 선택",
+      "enterAmount": "금액 입력",
+      "cannotTransferToSelf": "자신에게 이체할 수 없습니다",
+      "insufficientStock": "주식 금액 부족",
+      "enterValidAmount": "유효한 금액을 입력하세요"
+    },
+    "validation": {
+      "selfTransfer": "자신에게 주식을 이체할 수 없습니다. 다른 계좌번호를 입력해 주세요.",
+      "userNotFound": "사용자를 찾을 수 없습니다. 계좌번호를 확인해 주세요.",
+      "invalidAccountNumber": "유효한 계좌번호를 입력해 주세요 (최소 6자리).",
+      "insufficientBalance": "이체할 주식 금액이 충분하지 않습니다"
+    },
+    "titles": {
+      "transferSuccessful": "이체 성공",
+      "transferFailed": "이체 실패",
+      "error": "오류"
+    },
+    "messages": {
+      "transferSuccessful": "주식 이체가 성공적으로 완료되었습니다",
+      "transferFailed": "주식 이체 처리에 실패했습니다. 다시 시도해 주세요."
+    },
+    "currencySymbol": "₱"
+  },
+  "inspireAuto": {
+    "header": {
+      "title": "투자 프로필"
+    },
+    "content": {
+      "loadingText": "투자 프로필 로딩 중...",
+      "totalDeposits": "총 예금",
+      "active": "활성",
+      "completed": "완료",
+      "totalInvested": "총 투자액",
+      "activeDeposits": "활성 예금",
+      "completedDeposits": "완료된 예금",
+      "noActiveDeposits": "활성 예금이 없습니다",
+      "noActiveDepositsSubtext": "활성 투자가 여기에 표시됩니다",
+      "noCompletedDeposits": "완료된 예금이 없습니다",
+      "noCompletedDepositsSubtext": "완료된 투자가 여기에 표시됩니다",
+      "amount": "금액:",
+      "investmentRate": "투자율:",
+      "contractType": "계약 유형:",
+      "avgMonth": "평균/월:",
+      "avgMinute": "평균/분:",
+      "expectedEarnings": "예상 수익:",
+      "completionDate": "완료일:",
+      "totalEarned": "총 수익:",
+      "earningsBreakdown": "수익 분석:",
+      "sixMonthGross": "6개월 총액:",
+      "tax": "세금 (20%):",
+      "sixMonthNet": "6개월 순액:",
+      "cycleCompleted": "완료된 사이클:",
+      "currentEarnings": "현재 수익:",
+      "cycle": "사이클",
+      "requestCopy": "사본 요청",
+      "processing": "처리 중...",
+      "contract": "계약",
+      "retry": "다시 시도"
+    },
+    "modals": {
+      "accessRestricted": {
+        "title": "액세스 제한",
+        "message": "이 기능은 프리미엄 계정이 필요합니다. 현재 계정 유형: {accountType}. 투자 프로필에 액세스하려면 프리미엄으로 업그레이드하세요.",
+        "timeDepositMessage": "투자 프로필에 액세스하려면 활성 정기예금이 필요합니다. 먼저 정기예금을 설정하세요."
+      },
+      "error": {
+        "title": "오류",
+        "message": "사용자 데이터를 찾을 수 없습니다. 나중에 다시 시도해 주세요.",
+        "loadingError": "예금 데이터 로딩에 실패했습니다. 다시 시도해 주세요.",
+        "updateFailed": "Firestore 업데이트에 실패했습니다. 다시 시도해 주세요.",
+        "authenticationError": "인증된 사용자를 찾을 수 없습니다. 다시 로그인해 주세요.",
+        "userDataNotFound": "사용자 데이터를 찾을 수 없습니다. 지원팀에 문의하세요.",
+        "emailNotFound": "사용자 이메일을 찾을 수 없습니다. 지원팀에 문의하세요.",
+        "depositDataNotFound": "예금 데이터를 찾을 수 없습니다. 지원팀에 문의하세요.",
+        "emailError": "계약을 찾았지만 이메일 전송에 실패했습니다. 다시 시도해 주세요.",
+        "requestCopyError": "계약 사본 요청에 실패했습니다. 다시 시도해 주세요.",
+        "copyFailed": "예금 ID 복사에 실패했습니다. 다시 시도해 주세요."
+      },
+      "success": {
+        "title": "성공",
+        "contractSent": "계약 사본이 {email}로 전송되었습니다",
+        "copied": "복사됨!",
+        "copiedMessage": "예금 ID \"{depositId}\"가 클립보드에 복사되었습니다."
+      },
+      "warning": {
+        "title": "계약을 사용할 수 없음",
+        "message": "죄송합니다. 디지털 계약을 현재 사용할 수 없습니다. info@inspireholdings.ph의 담당자에게 사본을 요청해 주세요."
+      }
+    }
+  },
+  "forgotPassword": {
+    "header": {
+      "title": "비밀번호 복구"
+    },
+    "content": {
+      "title": "비밀번호 복구",
+      "subtitle": "비밀번호 재설정",
+      "howItWorks": "작동 방식",
+      "instructions": "📧 아래에 이메일 주소를 입력하세요\n🔗 안전한 재설정 링크를 보내드립니다\n✅ 받은 편지함을 확인하고 링크를 클릭하세요\n🔑 새 비밀번호를 만들면 완료입니다!",
+      "resetPassword": "비밀번호 재설정",
+      "emailAddress": "이메일 주소",
+      "emailLabel": "등록된 이메일 주소를 입력하세요 *",
+      "emailPlaceholder": "your.email@example.com",
+      "securityInfo": "보안 정보",
+      "securityText": "🔒 보안을 위해 비밀번호 재설정 링크는 1시간 후 만료됩니다\n📱 이메일이 보이지 않으면 스팸/정크 폴더를 확인하세요\n🛡️ 이 링크로 비밀번호를 재설정할 수 있는 것은 당신뿐입니다\n⚡ 프로세스는 즉시이고 안전합니다",
+      "sendResetLink": "재설정 링크 보내기",
+      "sending": "전송 중...",
+      "emailSentTitle": "이메일이 성공적으로 전송되었습니다!",
+      "emailSentMessage": "비밀번호 재설정 링크를 다음으로 보냈습니다:",
+      "emailSentInstructions": "받은 편지함을 확인하고 비밀번호를 재설정하기 위한 지침을 따르세요. 보안상의 이유로 링크는 1시간 후 만료됩니다.",
+      "returnToLogin": "로그인으로 돌아가기"
+    },
+    "alerts": {
+      "missingInfo": "정보 누락",
+      "enterEmail": "이메일 주소를 입력하세요",
+      "error": "오류",
+      "sendFailed": "비밀번호 재설정 이메일 전송에 실패했습니다. 다시 시도해 주세요."
+    }
+  },
+  "helpCenter": {
+    "header": {
+      "title": "고객센터"
+    },
+    "content": {
+      "title": "고객센터",
+      "subtitle": "도움을 드리겠습니다",
+      "submitRequestTitle": "요청 제출",
+      "instructions": "도움이 필요하신가요? 이 양식을 작성해 주시면 지원팀이 최대한 빨리 연락드리겠습니다. 도움을 드리겠습니다!",
+      "contactInfo": "연락처 정보",
+      "yourDetails": "귀하의 세부사항",
+      "firstName": "이름 *",
+      "firstNamePlaceholder": "이름을 입력하세요",
+      "lastName": "성 *",
+      "lastNamePlaceholder": "성을 입력하세요",
+      "emailAddress": "이메일 주소 *",
+      "emailPlaceholder": "your.email@example.com",
+      "ticketDetails": "티켓 세부사항",
+      "ticketTitle": "티켓 제목 *",
+      "ticketTitlePlaceholder": "문제를 간단히 설명하는 제목",
+      "priorityLevel": "우선순위 *",
+      "selectPriority": "우선순위 선택",
+      "highPriority": "🔴 높은 우선순위",
+      "mediumPriority": "🟡 중간 우선순위",
+      "lowPriority": "🟢 낮은 우선순위",
+      "category": "카테고리 *",
+      "selectCategory": "카테고리 선택",
+      "paymentIssues": "💳 결제 문제",
+      "withdrawalIssues": "💰 출금 문제",
+      "accountVerification": "✅ 계정 인증",
+      "securityConcerns": "🔐 보안 우려",
+      "appTechnicalIssues": "📱 앱 기술적 문제",
+      "generalSupport": "📞 일반 지원",
+      "other": "📋 기타",
+      "howCanWeHelp": "어떻게 도와드릴까요?",
+      "describeConcern": "우려사항을 설명해 주세요 *",
+      "describePlaceholder": "우려사항이나 질문을 자세히 설명해 주세요. 더 나은 지원을 위해 관련 정보를 포함해 주세요.",
+      "whatHappensNext": "다음에 무엇이 일어나나요?",
+      "disclaimerText": "이 양식을 제출하면 이메일로 도움 요청을 받게 됩니다. 지원팀이 우려사항을 검토하고 영업일 기준 24-48시간 내에 응답드리겠습니다. 연락해 주셔서 감사합니다!",
+      "submitRequest": "요청 제출",
+      "sending": "전송 중...",
+      "activeSupportTickets": "활성 지원 티켓",
+      "noActiveTickets": "활성 티켓이 없습니다",
+      "noActiveTicketsSubtext": "지원팀과 함께 새로운 도움 요청을 제출하세요",
+      "submitNewRequest": "새 요청 제출",
+      "messages": "메시지"
+    },
+    "modals": {
+      "selectPriority": "우선순위 선택",
+      "selectCategory": "카테고리 선택",
+      "missingInfo": "정보 누락",
+      "fillAllFields": "모든 필수 필드를 입력해 주세요.",
+      "authenticationError": "인증 오류",
+      "loginToSubmit": "도움 요청을 제출하려면 로그인해 주세요.",
+      "submittedSuccessfully": "도움 티켓이 성공적으로 제출되었습니다!",
+      "submittedMessage": "도움 티켓이 제출되어 데이터베이스에 저장되었습니다. 곧 이메일 확인을 받으실 것입니다. 티켓 ID: {ticketId}",
+      "partialSuccess": "부분적 성공",
+      "savedButEmailFailed": "도움 티켓은 저장되었지만 이메일 알림을 보낼 수 없었습니다. 이메일 주소를 확인해 주세요.",
+      "submissionFailed": "제출 실패",
+      "unableToSubmit": "도움 티켓을 제출할 수 없습니다. 나중에 다시 시도해 주세요. 오류: {error}",
+      "sendMessageError": "오류",
+      "sendMessageFailed": "메시지 전송에 실패했습니다. 다시 시도해 주세요.",
+      "translatedTo": "번역 대상",
+      "translationOptions": "번역 옵션",
+      "translateTo": "번역 대상:",
+      "translateAll": "모두 번역",
+      "clearAll": "모두 지우기"
+    }
+  },
+  "travelProtection": {
+    "header": {
+      "title": "여행 보호"
+    },
+    "content": {
+      "title": "여행 보호",
+      "subtitle": "여행을 안전하게",
+      "instructionTitle": "여행 보험 신청",
+      "instructionText": "이 양식을 작성하여 여행 보호 서비스에 가입하세요. 결제 확인 후 5-7 영업일 내에 신청이 처리됩니다.",
+      "protectionFee": "보호 수수료",
+      "discountedRate": "기존 고객을 위한 할인 요금",
+      "standardRate": "표준 보호 요금",
+      "applicationDetails": "신청 세부사항",
+      "contactInformation": "연락처 정보",
+      "personalDetails": "개인 세부사항",
+      "financialInformation": "재정 정보",
+      "travelDetails": "여행 세부사항",
+      "requiredDocuments": "필요 서류",
+      "emailAddress": "이메일 주소 *",
+      "emailPlaceholder": "your.email@example.com",
+      "mobileNumber": "휴대폰 번호 *",
+      "mobilePlaceholder": "+63 9XX XXX XXXX",
+      "landlineNumber": "유선 전화 번호",
+      "landlinePlaceholder": "(02) XXXX XXXX",
+      "gender": "성별 *",
+      "selectGender": "성별을 선택하세요",
+      "dateOfBirth": "생년월일 *",
+      "selectBirthdate": "생년월일을 선택하세요",
+      "civilStatus": "혼인 상태 *",
+      "selectCivilStatus": "혼인 상태를 선택하세요",
+      "citizenship": "국적 *",
+      "citizenshipPlaceholder": "필리핀인",
+      "homeAddress": "집 주소 *",
+      "addressPlaceholder": "집/유닛 번호, 거리, 바랑가이, 도시, 주, 우편번호",
+      "sourceOfFund": "자금 출처 *",
+      "sourcePlaceholder": "예: 고용, 사업, 투자",
+      "grossMonthlyIncome": "월 총소득 *",
+      "incomePlaceholder": "₱ 50,000",
+      "cashOnHand": "현금 보유 *",
+      "cashPlaceholder": "₱ 10,000",
+      "destinationAddress": "목적지 주소 *",
+      "destinationPlaceholder": "숙박할 호텔/숙박 시설 주소",
+      "checkInDate": "체크인 날짜 *",
+      "selectCheckInDate": "숙박 날짜를 선택하세요",
+      "duration": "기간 (일) *",
+      "durationPlaceholder": "7",
+      "airline": "항공사 *",
+      "airlinePlaceholder": "필리핀 항공, 세부 퍼시픽 등",
+      "departureTime": "출발 시간 *",
+      "selectDepartureTime": "출발 시간을 선택하세요",
+      "arrivalTime": "도착 시간 *",
+      "selectArrivalTime": "도착 시간을 선택하세요",
+      "passportNumber": "여권 번호 *",
+      "passportPlaceholder": "P1234567",
+      "purposeOfTravel": "여행 목적 *",
+      "purposePlaceholder": "여행 목적을 설명하세요 (비즈니스, 휴가, 가족 방문 등)",
+      "passportPhoto": "여권 사진 *",
+      "uploadPassport": "여권 업로드",
+      "tapToSelect": "탭하여 이미지 선택",
+      "governmentId": "정부 발급 신분증 *",
+      "uploadGovernmentId": "정부 발급 신분증 업로드",
+      "idTypes": "운전면허증, SSS 등",
+      "importantInformation": "중요한 정보",
+      "disclaimerText": "이 신청을 제출함으로써 제공된 모든 정보가 정확함을 확인합니다. 결제는 PayPal을 통해 안전하게 처리됩니다. 성공적인 결제 및 서류 확인 후 5-7 영업일 내에 여행 보호 보장이 활성화됩니다.",
+      "applyForProtection": "보호 신청하기",
+      "processing": "처리 중...",
+      "male": "남성",
+      "female": "여성",
+      "preferNotToSay": "말하고 싶지 않음",
+      "single": "미혼",
+      "married": "기혼",
+      "legallySeparated": "법적 별거",
+      "divorced": "이혼",
+      "annulled": "무효",
+      "widow": "과부/과부",
+      "formProgress": "신청 진행률",
+      "contactDescription": "연락처 정보를 제공해 주세요",
+      "personalDescription": "개인 정보를 제공해 주세요",
+      "financialDescription": "재정 정보를 제공해 주세요",
+      "travelDescription": "여행 정보를 제공해 주세요",
+      "documentsDescription": "필요한 서류를 업로드해 주세요",
+      "reviewAndSubmit": "검토 및 제출",
+      "reviewDescription": "제출하기 전에 정보를 검토해 주세요"
+    },
+    "modals": {
+      "accessRestricted": "액세스 제한",
+      "premiumRequired": "이 기능은 프리미엄 계정이 필요합니다. 현재 계정 유형은 {accountType}입니다. 여행 보호에 액세스하려면 프리미엄으로 업그레이드하세요.",
+      "error": "오류",
+      "noUserData": "사용자 데이터를 찾을 수 없습니다",
+      "errorMessage": "계정 권한을 확인할 수 없습니다. 다시 시도해 주세요.",
+      "selectImageFirst": "먼저 이미지를 선택해 주세요.",
+      "loginRequired": "이미지를 업로드하려면 로그인해야 합니다.",
+      "uploadFailed": "이미지 업로드에 실패했습니다. 다시 시도해 주세요.",
+      "orderCreated": "주문이 생성되었습니다",
+      "confirmPayment": "결제를 확인하려면 확인을 클릭하세요",
+      "confirm": "확인",
+      "orderFailed": "주문 생성에 실패했습니다",
+      "captureFailed": "결제 캡처에 실패했습니다",
+      "success": "성공",
+      "successfullySent": "성공적으로 전송되었습니다",
+      "failure": "실패",
+      "unsuccessfullySent": "성공적으로 전송되지 않았습니다",
+      "missingInformation": "정보 누락",
+      "fillAllFields": "제출하기 전에 모든 필수 필드를 작성하고 여권 사진과 정부 발급 신분증을 모두 업로드해 주세요.",
+      "authenticationError": "인증 오류",
+      "loginToSubmit": "신청을 제출하려면 로그인해 주세요.",
+      "uploadError": "업로드 오류",
+      "passportUploadFailed": "여권 사진 업로드에 실패했습니다. 다시 시도해 주세요.",
+      "govtIdUploadFailed": "정부 발급 신분증 업로드에 실패했습니다. 다시 시도해 주세요.",
+      "applicationSubmitted": "신청이 성공적으로 제출되었습니다!",
+      "applicationMessage": "여행 보호 신청이 제출되어 데이터베이스에 저장되었습니다. 곧 이메일 확인을 받으실 것입니다. 신청 ID: {applicationId}",
+      "partialSuccess": "부분적 성공",
+      "savedButEmailFailed": "신청은 저장되었지만 이메일 알림을 보낼 수 없었습니다. 이메일 주소를 확인해 주세요.",
+      "submissionFailed": "제출 실패",
+      "unableToSubmit": "신청을 제출할 수 없습니다. 나중에 다시 시도해 주세요. 오류: {error}",
+      "selectGender": "성별을 선택하세요",
+      "selectCivilStatus": "혼인 상태를 선택하세요",
+      "contactRequired": "진행하기 전에 모든 연락처 정보 필드를 입력해 주세요.",
+      "personalRequired": "진행하기 전에 모든 개인 세부사항을 입력해 주세요.",
+      "financialRequired": "진행하기 전에 모든 재정 정보를 입력해 주세요.",
+      "travelRequired": "진행하기 전에 모든 여행 세부사항을 입력해 주세요.",
+      "documentsRequired": "진행하기 전에 여권 사진과 정부 발급 신분증을 모두 업로드해 주세요."
+    },
+    "buttons": {
+      "back": "뒤로",
+      "next": "다음"
+    }
+  },
+  "withdrawalRequest": {
+    "header": {
+      "title": "출금 요청"
+    },
+    "content": {
+      "title": "출금 요청",
+      "subtitle": "자금에 안전하게 액세스",
+      "instructionTitle": "출금 요청",
+      "instructionText": "출금을 요청하려면 아래 양식을 작성하세요. 출금 유형을 선택하고 안전한 이체를 위해 은행 계좌 세부정보를 제공하세요.",
+      "withdrawalDetails": "출금 세부사항",
+      "withdrawalType": "출금 유형",
+      "selectWithdrawalType": "출금 유형 선택 *",
+      "chooseWithdrawalType": "출금 유형 선택",
+      "availableBalance": "사용 가능한 잔액",
+      "agentWithdrawal": "에이전트 출금",
+      "withdrawalAmount": "출금액 (₱) *",
+      "enterWithdrawalAmount": "출금액 입력",
+      "availableBalanceInfo": "사용 가능한 잔액: ₱{amount}",
+      "agentWalletBalanceInfo": "에이전트 지갑 잔액: ₱{amount}",
+      "contactInformation": "연락처 정보",
+      "emailAddress": "이메일 주소 *",
+      "emailPlaceholder": "your.email@example.com",
+      "accountHolder": "계좌 소유자: {firstName} {lastName}",
+      "bankingInformation": "은행 정보",
+      "bankAccountNumber": "은행 계좌 번호 *",
+      "bankAccountNumberPlaceholder": "은행 계좌 번호를 입력하세요",
+      "accountHolderName": "계좌 소유자 이름 *",
+      "accountHolderNamePlaceholder": "계좌 소유자 이름을 입력하세요 (은행 기록에 따라)",
+      "bankName": "은행명 *",
+      "bankNamePlaceholder": "은행명을 입력하세요 (예: BDO, BPI, Metrobank)",
+      "branchName": "지점명 *",
+      "branchNamePlaceholder": "은행 지점명을 입력하세요",
+      "securityProcessing": "보안 및 처리",
+      "securityText": "🔒 은행 정보는 암호화되어 안전합니다\n⏱️ 처리 시간: 1-2 영업일\n📧 확인 이메일이 발송됩니다\n✅ 모든 출금은 처리 전에 검증됩니다",
+      "submitWithdrawalRequest": "출금 요청 제출",
+      "submitting": "제출 중...",
+      "insufficientBalance": "잔액 부족"
+    },
+    "modals": {
+      "accessRestricted": "액세스 제한",
+      "premiumRequired": "이 기능은 프리미엄 계정이 필요합니다. 현재 계정 유형은 {accountType}입니다. 출금 기능에 액세스하려면 프리미엄으로 업그레이드하세요.",
+      "error": "오류",
+      "errorMessage": "계정 권한을 확인할 수 없습니다. 다시 시도해 주세요.",
+      "missingInformation": "정보 누락",
+      "fillAllFields": "제출하기 전에 모든 필수 필드를 입력해 주세요.",
+      "authenticationError": "인증 오류",
+      "loginToSubmit": "출금 요청을 제출하려면 로그인해 주세요.",
+      "invalidAmount": "유효하지 않은 금액",
+      "enterValidAmount": "0보다 큰 유효한 출금액을 입력해 주세요.",
+      "insufficientBalance": "잔액 부족",
+      "insufficientBalanceMessage": "사용 가능한 잔액은 ₱{amount}입니다. 사용 가능한 잔액을 초과하여 출금할 수 없습니다.",
+      "insufficientAgentBalance": "에이전트 잔액 부족",
+      "insufficientAgentBalanceMessage": "에이전트 지갑 잔액은 ₱{amount}입니다. 에이전트 지갑 잔액을 초과하여 출금할 수 없습니다.",
+      "submittedSuccessfully": "출금 요청이 성공적으로 제출되었습니다!",
+      "submittedMessage": "출금 요청이 제출되어 데이터베이스에 저장되었습니다. 곧 이메일 확인을 받으실 것입니다. 요청 ID: {requestId}",
+      "partialSuccess": "부분적 성공",
+      "savedButEmailFailed": "출금 요청은 저장되었지만 이메일 알림을 보낼 수 없었습니다. 이메일 주소를 확인해 주세요.",
+      "submissionFailed": "제출 실패",
+      "unableToSubmit": "출금 요청을 제출할 수 없습니다. 나중에 다시 시도해 주세요. 오류: {error}",
+      "selectWithdrawalType": "출금 유형 선택"
+    }
+  },
+  "contractRequestModal": {
+    "content": {
+      "title": "계약 요청",
+      "subtitle": "워터마크 없는 원본 계약서 사본 요청",
+      "contractId": "계약 ID *",
+      "contractIdPlaceholder": "계약 ID를 입력하세요",
+      "emailAddress": "이메일 주소 *",
+      "emailAddressPlaceholder": "이메일 주소를 입력하세요",
+      "fullName": "전체 이름 *",
+      "fullNamePlaceholder": "전체 이름을 입력하세요",
+      "infoText": "원본 계약서는 제공된 이메일 주소로 1-2 영업일 내에 발송됩니다.",
+      "sendRequest": "요청 보내기",
+      "sending": "보내는 중...",
+      "cancel": "취소"
+    },
+    "validation": {
+      "contractIdRequired": "계약 ID는 필수입니다",
+      "emailRequired": "이메일 주소는 필수입니다",
+      "emailInvalid": "유효한 이메일 주소를 입력해 주세요",
+      "fullNameRequired": "전체 이름은 필수입니다"
+    },
+    "alerts": {
+      "error": "오류",
+      "loginRequired": "계약서 사본을 요청하려면 로그인이 필요합니다.",
+      "requestFailed": "요청 실패",
+      "requestFailedMessage": "계약 요청 전송에 실패했습니다. 다시 시도해 주세요. 오류: {error}",
+      "unableToSubmit": "계약 요청을 제출할 수 없습니다. 나중에 다시 시도해 주세요.",
+      "successMessage": "계약 요청이 성공적으로 제출되었습니다! 계약 ID: {contractId}에 대한 요청을 처리하고 1-2 영업일 내에 {emailAddress}로 원본 계약서를 발송합니다."
+    }
+  },
+  "agentTransaction": {
+    "content": {
+      "loadingText": "에이전트 거래 로딩 중...",
+      "errorText": "오류: {error}",
+      "emptyText": "에이전트 거래를 찾을 수 없습니다",
+      "headerText": "에이전트 거래 내역",
+      "pageInfo": "페이지 {currentPage} / {totalPages} (총 {total})",
+      "client": "클라이언트",
+      "type": "유형",
+      "date": "날짜",
+      "amount": "금액",
+      "commission": "수수료",
+      "gross": "총액",
+      "tax": "세금",
+      "firstPage": "첫 페이지",
+      "previousPage": "‹",
+      "nextPage": "›",
+      "lastPage": "마지막",
+      "close": "닫기"
+    },
+    "modal": {
+      "title": "에이전트 거래 개요",
+      "date": "날짜:",
+      "typeOfTransaction": "거래 유형:",
+      "amount": "금액:",
+      "grossAmount": "총액:",
+      "taxApplied": "적용된 세금:",
+      "commission": "수수료:",
+      "referralName": "추천인 이름:"
+    }
+  },
+  "notifications": {
+    "title": "알림",
+    "loadingText": "알림을 불러오는 중...",
+    "errorTitle": "알림 로드 오류",
+    "errorMessage": "알림 로드에 실패했습니다",
+    "retryButton": "다시 시도",
+    "emptyTitle": "알림 없음",
+    "emptyMessage": "아직 알림이 없습니다. 나중에 업데이트를 확인해 주세요.",
+    "noTitle": "제목 없음",
+    "noMessage": "메시지 내용을 사용할 수 없습니다.",
+    "invalidDate": "잘못된 날짜",
+    "detailTitle": "알림 세부사항",
+    "backToNotifications": "알림으로 돌아가기"
+  },
+  "investments": {
+    "loadingText": "투자를 불러오는 중...",
+    "loadingSubtext": "데이터를 가져오는 동안 잠시 기다려 주세요",
+    "emptyText": "투자를 찾을 수 없습니다",
+    "emptySubtextMonthly": "월간 캠페인 투자는 사용 가능할 때 여기에 표시됩니다.",
+    "emptySubtextThreeMonth": "3개월 캠페인 투자는 사용 가능할 때 여기에 표시됩니다.",
+    "pullToRefresh": "당겨서 새로고침",
+    "labels": {
+      "amount": "금액",
+      "rate": "이율",
+      "payoutDay": "지급일",
+      "expectedIncome": "예상 수입",
+      "completion": "완료",
+      "status": "상태",
+      "cycleCompleted": "완료된 사이클",
+      "progress": "진행률",
+      "expected": "예상"
+    },
+    "status": {
+      "active": "활성",
+      "completed": "완료"
+    },
+    "errors": {
+      "failedToLoadMonthly": "월간 캠페인 로드에 실패했습니다",
+      "failedToLoadThreeMonth": "3개월 캠페인 로드에 실패했습니다",
+      "failedToSetupConnection": "실시간 데이터 연결 설정에 실패했습니다",
+      "failedToFetch": "캠페인 가져오기에 실패했습니다"
+    }
+  },
+  "agentChat": {
+    "title": "에이전트 지원",
+    "supportOnline": "지원이 온라인입니다",
+    "supportTeam": "지원팀",
+    "loadingMessages": "메시지를 불러오는 중...",
+    "welcomeTitle": "👋 에이전트 지원에 오신 것을 환영합니다",
+    "welcomeSubtext": "지원팀과 연결되었습니다.\n메시지를 보내 대화를 시작하세요.",
+    "typeMessage": "메시지를 입력하세요...",
+    "supportTyping": "지원팀이 입력 중입니다",
+    "shareFile": "파일 공유",
+    "chooseOption": "옵션을 선택하세요:",
+    "chooseFromGallery": "갤러리에서 선택",
+    "chooseDocuments": "문서 선택",
+    "cancel": "취소",
+    "translate": "번역",
+    "hideTranslation": "번역 숨기기",
+    "noNewMessages": "번역할 새로운 에이전트 메시지가 없습니다",
+    "allTranslationsCleared": "모든 번역이 지워졌습니다",
+    "success": "성공",
+    "info": "정보",
+    "failedToPickImage": "이미지 선택에 실패했습니다",
+    "failedToPickDocument": "문서 선택에 실패했습니다",
+    "grantCameraPermissions": "사진을 공유하려면 카메라 롤 권한을 허용해 주세요.",
+    "user": "사용자"
+  },
+  "loadingScreens": {
+    "transfer": {
+      "title": "송금 중",
+      "subtitle": "송금 처리 중...",
+      "status": "송금을 처리하는 동안 잠시 기다려 주세요...",
+      "from": "보내는 곳",
+      "to": "받는 곳"
+    },
+    "simple": {
+      "default": "로딩 중..."
+    },
+    "travelProtection": {
+      "title": "여행 보호 신청 중",
+      "subtitle": "Inspire Wallet으로 여행을 안전하게 보호",
+      "status": "여행 보호 신청을 처리하는 중...",
+      "features": {
+        "medical": "의료 보장",
+        "baggage": "수하물 보호",
+        "cancellation": "여행 취소"
+      }
+    },
+    "inspireCards": {
+      "title": "카드 처리 중",
+      "subtitle": "Inspire 카드를 설정하는 중...",
+      "status": "카드를 준비하는 동안 잠시 기다려 주세요"
+    },
+    "bank": {
+      "title": "은행 신청서 처리 중",
+      "subtitle": "은행 계좌를 설정하는 중...",
+      "status": "신청서를 처리하는 동안 잠시만 기다려 주세요",
+      "features": {
+        "secure": "안전",
+        "fast": "빠름",
+        "reliable": "신뢰할 수 있음"
+      }
+    },
+    "general": {
+      "login": {
+        "title": "로그인 중",
+        "subtitle": "Inspire Wallet에 접속 중",
+        "status": "잠시 기다려 주세요..."
+      },
+      "register": {
+        "title": "계정 생성 중",
+        "subtitle": "Inspire Wallet 설정 중",
+        "status": "잠시 기다려 주세요..."
+      },
+      "default": {
+        "title": "로딩 중...",
+        "subtitle": "잠시 기다려 주세요",
+        "status": "처리 중..."
+      }
+    },
+    "ewallet": {
+      "title": "전자지갑 계정 개설 중",
+      "subtitle": "필리핀 디지털 뱅킹 설정 중",
+      "status": "전자지갑 신청을 처리하는 중...",
+      "features": {
+        "mobile": "모바일 결제",
+        "cards": "디지털 카드",
+        "cashless": "무현금 거래"
+      }
+    }
+  },
+  "investmentTracker": {
+    "monthly": {
+      "title": "투자 추적기",
+      "subtitle": "월간 캠페인",
+      "headerTitle": "월간 캠페인 투자",
+      "headerSubtitle": "개 투자 추적 중 • 날짜순 정렬 (최신순)",
+      "headerSubtitlePlural": "개 투자 추적 중 • 날짜순 정렬 (최신순)",
+      "campaignType": "랠리 캠페인",
+      "labels": {
+        "amount": "금액",
+        "rate": "이율",
+        "payoutDay": "지급일",
+        "expectedIncome": "예상 수입",
+        "completion": "완료일",
+        "status": "상태",
+        "cycleCompleted": "완료된 사이클",
+        "expected": "예상"
+      },
+      "status": {
+        "active": "활성"
+      },
+      "subtexts": {
+        "afterTax": "20% 세금 후",
+        "nextPayout": "다음:"
+      }
+    },
+    "threeMonth": {
+      "title": "투자 추적기",
+      "subtitle": "3개월 캠페인",
+      "headerTitle": "3개월 캠페인 투자",
+      "headerSubtitle": "개 투자 추적 중 • 날짜순 정렬 (최신순)",
+      "headerSubtitlePlural": "개 투자 추적 중 • 날짜순 정렬 (최신순)",
+      "campaignType": "3개월 캠페인",
+      "labels": {
+        "amount": "금액",
+        "rate": "이율",
+        "payoutDay": "지급일",
+        "expectedIncome": "예상 수입",
+        "completion": "완료일",
+        "status": "상태",
+        "progress": "진행률",
+        "expected": "예상",
+        "totalEarned": "총 수익"
+      },
+      "status": {
+        "active": "활성"
+      },
+      "subtexts": {
+        "perQuarter": "분기당 (20% 세금 후)",
+        "nextPayout": "다음:"
+      }
+    },
+    "common": {
+      "loadingText": "투자 로딩 중",
+      "loadingSubtext": "캠페인 데이터를 가져오는 중...",
+      "emptyText": "투자를 찾을 수 없음",
+      "emptySubtextMonthly": "아직 월간 캠페인을 시작하지 않았습니다. 첫 투자를 만들어 시작하세요!",
+      "emptySubtextThreeMonth": "아직 3개월 캠페인을 시작하지 않았습니다. 첫 투자를 만들어 시작하세요!",
+      "pullToRefresh": "당겨서 새로고침",
+      "retry": "다시 시도",
+      "errors": {
+        "failedToLoadMonthly": "월간 캠페인 로드 실패",
+        "failedToLoadThreeMonth": "3개월 캠페인 로드 실패",
+        "failedToFetch": "데이터 가져오기 실패",
+        "failedToSetupConnection": "연결 설정 실패"
+      }
+    }
+  }
+}

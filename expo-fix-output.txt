@@ -1,0 +1,89 @@
+env: load .env
+env: export EXPO_PUBLIC_API_KEY EXPO_PUBLIC_SERVICE_ID EXPO_PUBLIC_TEMPLATE_ID EXPO_PUBLIC_CRYPTO_DEPOSIT_TEMPLATE_ID EXPO_PUBLIC_TRANSFER_TEMPLATE_ID EXPO_PUBLIC_OTP_TEMPLATE_ID EXPO_PUBLIC_CRYPTO_API_KEY EXPO_PUBLIC_ALPHA_VANTAGE_API_KEY EXPO_PUBLIC_FIREBASE_API_KEY EXPO_PUBLIC_NATIVENOTIFY_API_KEY EXPO_PUBLIC_DEPOSIT_TEMPLATE_ID EXPO_PUBLIC_CONTRACT_REQUEST_TEMPLATE_ID EXPO_PUBLIC_CONTRACT_REQUEST_ORIG_TEMPLATE_ID EXPO_PUBLIC_INSPIRE_FOREX_BASE_URL EXPO_PUBLIC_INSPIRE_FOREX_API_KEY EXPO_PUBLIC_INSPIRE_AGENT_BASE_URL EXPO_PUBLIC_INSPIRE_AGENT_API_KEY EXPO_PUBLIC_GOOGLE_TRANSLATE_API_KEY
+The following packages should be updated for best compatibility with the installed expo version:
+  @expo/vector-icons@14.0.4 - expected version: ^14.1.0
+  @react-native-async-storage/async-storage@1.23.1 - expected version: 2.1.2
+  @react-native-community/datetimepicker@8.2.0 - expected version: 8.4.1
+  @react-native-community/slider@4.5.5 - expected version: 4.5.6
+  @shopify/react-native-skia@1.5.0 - expected version: v2.0.0-next.4
+  expo-audio@0.3.5 - expected version: ~0.4.9
+  expo-blur@14.0.3 - expected version: ~14.1.5
+  expo-build-properties@0.13.3 - expected version: ~0.14.8
+  expo-camera@16.0.18 - expected version: ~16.1.11
+  expo-constants@17.0.8 - expected version: ~17.1.8
+  expo-crypto@14.0.2 - expected version: ~14.1.5
+  expo-dev-client@5.0.20 - expected version: ~5.2.4
+  expo-device@7.0.3 - expected version: ~7.1.4
+  expo-document-picker@13.0.3 - expected version: ~13.1.6
+  expo-file-system@18.0.12 - expected version: ~18.1.11
+  expo-font@13.0.4 - expected version: ~13.3.2
+  expo-image-picker@16.0.6 - expected version: ~16.1.4
+  expo-linear-gradient@14.0.2 - expected version: ~14.1.5
+  expo-linking@7.0.5 - expected version: ~7.1.7
+  expo-local-authentication@15.0.2 - expected version: ~16.0.5
+  expo-notifications@0.29.14 - expected version: ~0.31.4
+  expo-router@4.0.21 - expected version: ~5.1.10
+  expo-sharing@13.0.1 - expected version: ~13.1.5
+  expo-splash-screen@0.29.24 - expected version: ~0.30.10
+  expo-status-bar@2.0.1 - expected version: ~2.2.3
+  expo-system-ui@4.0.9 - expected version: ~5.0.11
+  expo-updates@0.27.4 - expected version: ~0.28.17
+  expo-web-browser@14.0.2 - expected version: ~14.2.0
+  react@18.3.1 - expected version: 19.0.0
+  react-dom@18.3.1 - expected version: 19.0.0
+  react-native@0.76.9 - expected version: 0.79.6
+  react-native-gesture-handler@2.20.2 - expected version: ~2.24.0
+  react-native-reanimated@3.16.7 - expected version: ~3.17.4
+  react-native-safe-area-context@4.12.0 - expected version: 5.4.0
+  react-native-screens@4.4.0 - expected version: ~4.11.1
+  react-native-svg@15.8.0 - expected version: 15.11.2
+  react-native-web@0.19.13 - expected version: ^0.20.0
+  @types/react@18.3.23 - expected version: ~19.0.10
+  eslint-config-expo@8.0.1 - expected version: ~9.2.0
+  jest-expo@52.0.6 - expected version: ~53.0.13
+  typescript@5.9.2 - expected version: ~5.8.3
+Your project may not work correctly until you install the expected versions of the packages.
+ΓÇ║ Installing 41 SDK 53.0.0 compatible native modules using npm
+> npm install
+npm error code ERESOLVE
+npm error ERESOLVE could not resolve
+npm error
+npm error While resolving: inspirewallet@1.0.0
+npm error Found: @react-native-community/datetimepicker@8.2.0
+npm error node_modules/@react-native-community/datetimepicker
+npm error   @react-native-community/datetimepicker@"8.4.1" from the root project
+npm error
+npm error Could not resolve dependency:
+npm error @react-native-community/datetimepicker@"8.4.1" from the root project
+npm error
+npm error Conflicting peer dependency: react@19.0.0
+npm error node_modules/react
+npm error   peer react@"^19.0.0" from react-native@0.79.6
+npm error   node_modules/react-native
+npm error     react-native@"0.79.6" from the root project
+npm error     peer react-native@"*" from @react-native-community/datetimepicker@8.4.1
+npm error     node_modules/@react-native-community/datetimepicker
+npm error       @react-native-community/datetimepicker@"8.4.1" from the root project
+npm error     4 more (expo, @expo/dom-webview, @expo/metro-runtime, react-native-webview)
+npm error
+npm error Fix the upstream dependency conflict, or retry
+npm error this command with --force or --legacy-peer-deps
+npm error to accept an incorrect (and potentially broken) dependency resolution.
+npm error
+npm error
+npm error For a full report see:
+npm error C:\Users\JHUN DAREL ELLI\AppData\Local\npm-cache\_logs\2025-12-16T07_33_46_652Z-eresolve-report.txt
+npm error A complete log of this run can be found in: C:\Users\JHUN DAREL ELLI\AppData\Local\npm-cache\_logs\2025-12-16T07_33_46_652Z-debug-0.log
+Error: npm install exited with non-zero code: 1
+Error: npm install exited with non-zero code: 1
+    at ChildProcess.completionListener (C:\Projects\companyprojects\inspirewallet\node_modules\@expo\spawn-async\build\spawnAsync.js:42:23)
+    at Object.onceWrapper (node:events:639:26)
+    at ChildProcess.emit (node:events:524:28)
+    at cp.emit (C:\Projects\companyprojects\inspirewallet\node_modules\cross-spawn\lib\enoent.js:34:29)
+    at maybeClose (node:internal/child_process:1101:16)
+    at ChildProcess._handle.onexit (node:internal/child_process:304:5)
+    ...
+    at spawnAsync (C:\Projects\companyprojects\inspirewallet\node_modules\@expo\spawn-async\build\spawnAsync.js:7:23)
+    at NpmPackageManager.runAsync (C:\Projects\companyprojects\inspirewallet\node_modules\@expo\package-manager\build\node\BasePackageManager.js:41:42)
+    at C:\Projects\companyprojects\inspirewallet\node_modules\@expo\package-manager\build\node\NpmPackageManager.js:36:20
+    at C:\Projects\companyprojects\inspirewallet\node_modules\@expo\package-manager\build\utils\spawn.js:14:34

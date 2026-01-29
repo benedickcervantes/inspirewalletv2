@@ -1,0 +1,24 @@
+{
+  "items": [
+    {
+      "image": "new4",
+      "title": "Change Language App",
+      "explore": "/personal"
+    },
+    {
+      "image": "new3",
+      "title": "Deposit via Crypto",
+      "explore": "/depositcrypto"
+    },
+    {
+      "image": "new1",
+      "title": "CryptoCurrency",
+      "explore": "/crypto"
+    },
+    {
+      "image": "new2",
+      "title": "Buy your Inspire Cards",
+      "explore": "/buycards"
+    }
+  ]
+}

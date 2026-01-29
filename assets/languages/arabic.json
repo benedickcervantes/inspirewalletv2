@@ -1,0 +1,2296 @@
+{
+  "headerGreetings": {
+    "hi": "مرحباً!",
+    "goodMorning": "صباح الخير",
+    "goodAfternoon": "مساء الخير",
+    "goodEvening": "مساء الخير"
+  },
+  "mainNavBar": {
+    "exploreText": "استكشف التطبيق",
+    "investmentProfile": "ملف الاستثمار",
+    "transfer": "تحويل",
+    "agent": "وكيل",
+    "stock": "أسهم",
+    "eWallet": "محفظة إلكترونية",
+    "bankingService": "خدمة مصرفية",
+    "trading": "تداول",
+    "travelProtection": "حماية السفر",
+    "task": "مهمة"
+  },
+  "newSectionCarousel": {
+    "whatsNewTitle": "ما الجديد",
+    "exploreButton": "استكشاف"
+  },
+  "task": {
+    "header": {
+      "title": "المهام"
+    },
+    "title": "إدارة المهام",
+    "subtitle": "إدارة مهامك وأنشطتك",
+    "accumulatedPoints": "النقاط المتراكمة",
+    "myTasks": "مهامي",
+    "noTasks": "لا توجد مهام متاحة",
+    "loadingTasks": "جاري تحميل المهام...",
+    "completed": "مكتمل",
+    "taskDetails": "تفاصيل المهمة",
+    "loadingTask": "جاري تحميل المهمة...",
+    "taskNotFound": "لم يتم العثور على المهمة",
+    "untitled": "مهمة بدون عنوان",
+    "points": "نقاط",
+    "description": "الوصف",
+    "instructions": "التعليمات",
+    "link": "الرابط",
+    "doTask": "تنفيذ المهمة",
+    "claimPoints": "احصل على نقاطك",
+    "claiming": "جاري المطالبة...",
+    "pointsClaimed": "تم المطالبة بالنقاط!",
+    "success": "نجح!",
+    "claimedSuccessfully": "لقد طالبت بنجاح",
+    "pointsClaimedTitle": "تم المطالبة بالنقاط!",
+    "pointsClaimedMessage": "لقد حصلت على",
+    "pointsForTask": "نقاط لإكمال المهمة:",
+    "earnedFrom": "حصلت عليها من المهمة:",
+    "error": "خطأ",
+    "noLink": "لا يوجد رابط متاح لهذه المهمة",
+    "invalidLink": "لا يمكن فتح هذا الرابط",
+    "linkError": "فشل فتح الرابط",
+    "notLoggedIn": "يجب عليك تسجيل الدخول للمطالبة بالنقاط",
+    "noPoints": "هذه المهمة ليس لديها نقاط للمطالبة",
+    "claimError": "فشل في المطالبة بالنقاط. يرجى المحاولة مرة أخرى."
+  },
+  "accumulatedPoints": {
+    "header": {
+      "title": "النقاط المتراكمة"
+    },
+    "yourBalance": "رصيدك",
+    "points": "نقاط",
+    "withdraw": "سحب النقاط",
+    "transactionHistory": "سجل المعاملات",
+    "loadingTransactions": "جاري تحميل المعاملات...",
+    "noTransactions": "لا توجد معاملات بعد",
+    "transaction": "معاملة",
+    "balance": "الرصيد",
+    "error": "خطأ",
+    "noPointsToWithdraw": "ليس لديك أي نقاط للسحب",
+    "withdrawTitle": "سحب النقاط",
+    "withdrawMessage": "هل أنت متأكد أنك تريد سحب",
+    "cancel": "إلغاء",
+    "confirm": "تأكيد",
+    "withdrawalDescription": "سحب النقاط",
+    "withdrawalSuccessTitle": "تم السحب بنجاح",
+    "withdrawnMessage": "لقد سحبت",
+    "success": "نجح!",
+    "withdrawnSuccessfully": "تم السحب بنجاح",
+    "withdrawalError": "فشل في معالجة السحب. يرجى المحاولة مرة أخرى.",
+    "withdrawPoints": "سحب النقاط",
+    "conversionNote": "1 نقطة = ₱1 بيسو",
+    "selectAmount": "اختر المبلغ",
+    "paymentMethod": "طريقة الدفع",
+    "mobileNumber": "رقم الجوال",
+    "submit": "إرسال",
+    "insufficientPoints": "نقاط غير كافية",
+    "selectPaymentMethod": "يرجى اختيار طريقة الدفع",
+    "enterValidMobile": "يرجى إدخال رقم جوال صالح",
+    "withdrawalTo": "السحب إلى",
+    "withdrawalRequestTitle": "تم تقديم طلب السحب",
+    "withdrawalRequestMessage": "طلب السحب الخاص بك لـ",
+    "pointsTo": "نقاط إلى",
+    "hasBeenSubmitted": "تم تقديمه",
+    "successTitle": "تم تقديم السحب!",
+    "successMessage": "تم تقديم طلب السحب الخاص بك بنجاح. ستستلم دفعتك خلال 1-3 ساعات.",
+    "ok": "حسناً"
+  },
+  "transactionHistory": {
+    "loadingText": "جاري تحميل المعاملات...",
+    "errorText": "خطأ:",
+    "noTransactionsText": "لم يتم العثور على معاملات",
+    "headerTitle": "سجل المعاملات",
+    "pageInfo": "صفحة {currentPage} من {totalPages} ({total} إجمالي)",
+    "labels": {
+      "type": "النوع",
+      "date": "التاريخ",
+      "amount": "المبلغ",
+      "status": "الحالة",
+      "description": "الوصف",
+      "reference": "المرجع",
+      "fee": "الرسوم",
+      "balanceAfter": "الرصيد بعد المعاملة"
+    },
+    "pagination": {
+      "first": "الأولى",
+      "previous": "‹",
+      "next": "›",
+      "last": "الأخيرة"
+    },
+    "modal": {
+      "title": "نظرة عامة على المعاملة",
+      "closeButton": "إغلاق"
+    }
+  },
+  "mainDashboard": {
+    "cardHeaderText": "بطاقة إلهامك",
+    "timeDepositTitle": "الوديعة لأجل",
+    "amountWalletTitle": "مبلغ المحفظة",
+    "newSupportMessage": "لديك رسالة دعم جديدة! اضغط للعرض.",
+    "accountDeletion": {
+      "title": "حذف الحساب مطلوب",
+      "message": "لم يتم العثور على بيانات المستخدم في نظامنا. يحدث هذا عادة عندما تكون هناك مشكلة في مزامنة البيانات. سيتم حذف حسابك وستحتاج إلى التسجيل مرة أخرى لمتابعة استخدام التطبيق.",
+      "confirmText": "حذف الحساب والتسجيل"
+    },
+    "errors": {
+      "failedToUpdateInvestment": "فشل في تحديث بيانات الاستثمار",
+      "failedToListenToInvestment": "فشل في الاستماع لتحديثات الاستثمار",
+      "failedToDeleteAccount": "فشل في حذف الحساب. يرجى الاتصال بالدعم للمساعدة.",
+      "failedToCheckPresence": "فشل في التحقق من حالة الحضور"
+    },
+    "presenceStatus": {
+      "title": "حالة الحضور",
+      "noDataFound": "لم يتم العثور على بيانات الحضور"
+    }
+  },
+  "depoWithdrawButton": {
+    "deposit": "إيداع",
+    "withdraw": "سحب"
+  },
+  "categorizedSettings": {
+    "categories": {
+      "services": "الخدمات",
+      "inspireBalances": "أرصدة إلهام",
+      "playAndEarn": "اللعب والربح",
+      "security": "الأمان",
+      "customerRelationship": "علاقات العملاء"
+    },
+    "items": {
+      "transfer": "تحويل",
+      "inspireCards": "بطاقات إلهام",
+      "buyCards": "شراء البطاقات",
+      "eWallet": "المحفظة الإلكترونية",
+      "bankingServices": "الخدمات المصرفية",
+      "travelProtection": "حماية السفر",
+      "investmentProfile": "ملف الاستثمار",
+      "stockHolder": "حامل الأسهم",
+      "agent": "الوكيل",
+      "specialCampaign": "حملة خاصة",
+      "inspireSecureGrowth": "نمو إلهام الآمن",
+      "trading": "التداول",
+      "depositViaCrypto": "إيداع عبر العملة المشفرة",
+      "passcode": "كود المرور",
+      "aboutUs": "معلومات عنا",
+      "agentRequest": "طلب وكيل",
+      "helpCenter": "مركز المساعدة",
+      "privacyPolicy": "سياسة الخصوصية",
+      "termsAndCondition": "الشروط والأحكام"
+    },
+    "badges": {
+      "soon": "قريباً",
+      "premium": "مميز",
+      "registered": "مسجل",
+      "timeDeposit": "₱200K"
+    },
+    "modals": {
+      "underMaintenance": {
+        "title": "تحت الصيانة",
+        "message": "هذه الميزة تحت الصيانة حالياً. يرجى المحاولة مرة أخرى لاحقاً."
+      },
+      "insufficientTimeDeposit": {
+        "title": "وديعة لأجل غير كافية",
+        "message": "تحتاج إلى حد أدنى من الوديعة لأجل ₱200,000 للوصول إلى {feature}. وديعتك الحالية لأجل هي ₱{currentAmount}. يرجى زيادة وديعتك لأجل أولاً."
+      },
+      "alreadyAnAgent": {
+        "title": "وكيل بالفعل",
+        "message": "أنت مسجل بالفعل كوكيل. لا تحتاج إلى طلب وصول الوكيل مرة أخرى."
+      },
+      "premiumFeature": {
+        "title": "ميزة مميزة",
+        "message": "هذه الميزة متاحة فقط للحسابات المميزة. يرجى الترقية للوصول إليها.",
+        "upgradeButton": "ترقية"
+      },
+      "agentAccess": {
+        "title": "وصول الوكيل مطلوب",
+        "message": "هذه الميزة متاحة حصرياً للوكلاء المسجلين. هل تريد أن تكون وكيلاً؟",
+        "cancelButton": "إلغاء",
+        "requestButton": "طلب الوصول"
+      }
+    }
+  },
+  "settings": {
+    "title": "الإعدادات",
+    "deleteAccount": "حذف الحساب",
+    "logOut": "تسجيل الخروج",
+    "loggingOut": "جاري تسجيل الخروج...",
+    "confirmLogout": {
+      "title": "تأكيد تسجيل الخروج",
+      "message": "هل أنت متأكد من أنك تريد تسجيل الخروج؟ ستحتاج إلى تسجيل الدخول مرة أخرى للوصول إلى حسابك.",
+      "confirmText": "تسجيل الخروج",
+      "cancelText": "إلغاء"
+    },
+    "buttonTest": {
+      "title": "اختبار الزر",
+      "message": "تم الضغط على الزر بنجاح!"
+    },
+    "navigationError": {
+      "title": "خطأ في التنقل",
+      "message": "خطأ: {errorMessage}"
+    }
+  },
+  "personal": {
+    "header": {
+      "title": "المعلومات الشخصية"
+    },
+    "loading": {
+      "text": "جاري التحميل..."
+    },
+    "cards": {
+      "accountDetails": {
+        "title": "تفاصيل الحساب"
+      },
+      "accountStatus": {
+        "title": "حالة الحساب"
+      }
+    },
+    "fields": {
+      "name": "الاسم",
+      "emailAddress": "عنوان البريد الإلكتروني",
+      "accountNumber": "رقم الحساب",
+      "accountType": "نوع الحساب",
+      "accountLevel": "مستوى الحساب",
+      "agentNumber": "رقم الوكيل",
+      "agentReferrer": "الوكيل المحيل",
+      "language": "اللغة",
+      "status": "الحالة",
+      "memberSince": "عضو منذ"
+    },
+    "values": {
+      "notProvided": "غير متوفر",
+      "notAvailable": "غير متاح",
+      "notFound": "غير موجود",
+      "active": "نشط",
+      "basic": "أساسي",
+      "premium": "مميز",
+      "masterAgent": "وكيل رئيسي",
+      "consultantAgent": "استشاري",
+      "consultantAgentNote": "هذا المحيل هو أيضًا وكيل استشاري"
+    },
+    "buttons": {
+      "save": "حفظ",
+      "cancel": "إلغاء",
+      "verify": "تحقق",
+      "editName": "تعديل الاسم",
+      "selectLanguage": "اختر اللغة",
+      "changing": "جاري التغيير..."
+    },
+    "messages": {
+      "success": {
+        "nameUpdated": "تم تحديث اسمك بنجاح.",
+        "languageUpdated": "تم تحديث تفضيل اللغة بنجاح.",
+        "copied": "تم نسخ رقم الحساب إلى الحافظة."
+      },
+      "error": {
+        "nameUpdateFailed": "فشل في تحديث اسمك. يرجى المحاولة مرة أخرى.",
+        "languageUpdateFailed": "فشل في تحديث تفضيل اللغة. يرجى المحاولة مرة أخرى.",
+        "copyFailed": "فشل في نسخ رقم الحساب إلى الحافظة."
+      },
+      "warning": {
+        "noAccountNumber": "رقم الحساب غير متاح للنسخ."
+      },
+      "titles": {
+        "success": "نجح!",
+        "error": "خطأ",
+        "copied": "تم النسخ!",
+        "noAccountNumber": "لا يوجد رقم حساب"
+      }
+    },
+    "placeholders": {
+      "firstName": "الاسم الأول",
+      "lastName": "اسم العائلة"
+    }
+  },
+  "kyc": {
+    "header": {
+      "title": "التحقق من الهوية",
+      "premiumAccount": "الحساب المميز",
+      "premiumFeatures": "الميزات المميزة"
+    },
+    "loading": {
+      "text": "جاري التحميل..."
+    },
+    "progress": {
+      "step": "الخطوة {current} من {total}"
+    },
+    "steps": {
+      "personalInfo": {
+        "title": "المعلومات الشخصية",
+        "description": "يرجى تقديم تفاصيلك الشخصية"
+      },
+      "addressInfo": {
+        "title": "معلومات العنوان",
+        "description": "يرجى تقديم تفاصيل عنوانك"
+      },
+      "documents": {
+        "title": "رفع المستندات",
+        "description": "يرجى رفع الوجه الأمامي والخلفي لهويتك وصورة سيلفي"
+      },
+      "review": {
+        "title": "المراجعة والتقديم",
+        "description": "يرجى مراجعة معلوماتك قبل التقديم"
+      }
+    },
+    "fields": {
+      "firstName": "الاسم الأول",
+      "lastName": "اسم العائلة",
+      "birthday": "تاريخ الميلاد",
+      "gender": "الجنس",
+      "nationality": "الجنسية",
+      "sourceOfIncome": "مصدر الدخل",
+      "monthlyIncome": "الدخل الشهري (PHP)",
+      "country": "البلد",
+      "fullAddress": "العنوان الكامل",
+      "postalCode": "الرمز البريدي",
+      "idFront": "الهوية الأمامية",
+      "idBack": "الهوية الخلفية",
+      "selfiePhoto": "صورة سيلفي"
+    },
+    "placeholders": {
+      "firstName": "أدخل اسمك الأول",
+      "lastName": "أدخل اسم العائلة",
+      "monthlyIncome": "أدخل دخلك الشهري",
+      "fullAddress": "أدخل عنوانك الكامل",
+      "postalCode": "أدخل الرمز البريدي",
+      "searchNationality": "البحث عن الجنسية...",
+      "searchCountry": "البحث عن البلد..."
+    },
+    "hints": {
+      "idFront": "ارفع صورة واضحة للوجه الأمامي لهويتك الحكومية",
+      "idBack": "ارفع صورة واضحة للوجه الخلفي لهويتك الحكومية",
+      "selfiePhoto": "التقط صورة سيلفي واضحة للتحقق"
+    },
+    "options": {
+      "gender": {
+        "male": "ذكر",
+        "female": "أنثى",
+        "other": "آخر",
+        "preferNotToSay": "أفضل عدم الإجابة"
+      },
+      "incomeSource": {
+        "employment": "توظيف",
+        "business": "أعمال",
+        "investment": "استثمار",
+        "freelance": "عمل حر",
+        "pension": "معاش",
+        "other": "آخر"
+      }
+    },
+    "buttons": {
+      "next": "التالي",
+      "previous": "السابق",
+      "submit": "تقديم KYC",
+      "edit": "تعديل",
+      "takePhoto": "التقط صورة",
+      "chooseFromGallery": "اختر من المعرض",
+      "startKYC": "بدء عملية KYC",
+      "completeKYC": "إكمال عملية KYC",
+      "contactSupport": "اتصل بالدعم"
+    },
+    "messages": {
+      "ageRequirement": "يجب أن تكون 18 عامًا أو أكثر للمتابعة مع التحقق من الهوية",
+      "kycSubmitted": "تم تقديم طلب KYC الخاص بك. سنراجع مستنداتك ونخطرك خلال 2-3 أيام عمل.",
+      "submissionFailed": "حدث خطأ في تقديم طلب KYC الخاص بك. يرجى المحاولة مرة أخرى لاحقًا.",
+      "uploadingDocuments": "يرجى الانتظار بينما نقوم برفع الهوية الأمامية والخلفية وصورة السيلفي...",
+      "savingInformation": "يرجى الانتظار بينما نقوم بحفظ معلومات KYC الخاصة بك..."
+    },
+    "modals": {
+      "selectGender": "اختر الجنس",
+      "selectNationality": "اختر الجنسية",
+      "selectIncomeSource": "اختر مصدر الدخل",
+      "selectCountry": "اختر البلد"
+    },
+    "premium": {
+      "upgradeMessage": "لترقية حسابك إلى المميز وإلغاء قفل الميزات الحصرية، نحتاج إلى التحقق من هويتك من خلال عملية KYC (اعرف عميلك).",
+      "premiumFeatures": "الميزات المميزة تشمل:",
+      "premiumFeaturesPending": "الميزات المميزة (في انتظار KYC):",
+      "yourPremiumFeatures": "ميزاتك المميزة:",
+      "congratulations": "تهانينا! لديك حساب مميز مع KYC مُتحقق منه. لديك إمكانية الوصول إلى جميع الميزات المميزة.",
+      "pendingKYC": "لديك حساب مميز، لكن التحقق من KYC الخاص بك لا يزال معلقًا. يرجى إكمال عملية KYC لإلغاء قفل جميع الميزات المميزة.",
+      "features": {
+        "cryptoTrading": "تداول العملات المشفرة",
+        "inspireCards": "بطاقات إلهام",
+        "advancedInvestment": "خيارات الاستثمار المتقدمة",
+        "prioritySupport": "دعم ذو أولوية"
+      }
+    },
+    "summary": {
+      "personalInfo": "المعلومات الشخصية",
+      "addressInfo": "معلومات العنوان",
+      "documents": "المستندات",
+      "name": "الاسم:",
+      "birthday": "تاريخ الميلاد:",
+      "gender": "الجنس:",
+      "nationality": "الجنسية:",
+      "incomeSource": "مصدر الدخل:",
+      "monthlyIncome": "الدخل الشهري:",
+      "country": "البلد:",
+      "address": "العنوان:",
+      "postalCode": "الرمز البريدي:",
+      "idFront": "الهوية الأمامية",
+      "idBack": "الهوية الخلفية",
+      "selfiePhoto": "صورة سيلفي"
+    },
+    "status": {
+      "uploading": "رفع المستندات",
+      "saving": "حفظ المعلومات",
+      "success": "تم تقديم KYC بنجاح!",
+      "error": "فشل التقديم"
+    }
+  },
+  "transfer": {
+    "header": {
+      "title": "إرسال الأموال",
+      "subtitle": "تحويل الأموال إلى مستخدمين آخرين"
+    },
+    "guide": {
+      "title": "دليل سريع",
+      "step1": "البحث عن المستلم برقم الحساب",
+      "step2": "إدخال المبلغ المراد تحويله",
+      "step3": "اختيار نوع الرصيد"
+    },
+    "sections": {
+      "recipient": "رقم حساب المستلم",
+      "amount": "المبلغ",
+      "balanceType": "اختر نوع الرصيد",
+      "description": "الوصف (اختياري)"
+    },
+    "placeholders": {
+      "accountNumber": "أدخل رقم حساب المستلم...",
+      "amount": "0.00",
+      "description": "أضف ملاحظة لهذا التحويل..."
+    },
+    "buttons": {
+      "change": "تغيير",
+      "sendTransfer": "إرسال التحويل",
+      "selectRecipient": "اختر المستلم",
+      "enterAmount": "أدخل المبلغ",
+      "selectBalanceType": "اختر نوع الرصيد",
+      "cannotTransferToSelf": "لا يمكن التحويل إلى نفسك",
+      "insufficientAvailableBalance": "الرصيد المتاح غير كافي",
+      "insufficientAgentWallet": "محفظة الوكيل غير كافية",
+      "enterValidAmount": "أدخل مبلغاً صحيحاً",
+      "insufficientFunds": "الأموال غير كافية"
+    },
+    "balanceTypes": {
+      "available": "الرصيد المتاح",
+      "agent": "محفظة الوكيل",
+      "chooseBalanceType": "اختر نوع الرصيد"
+    },
+    "validation": {
+      "selfTransfer": "لا يمكنك تحويل الأموال إلى نفسك. يرجى إدخال رقم حساب مختلف.",
+      "userNotFound": "لم يتم العثور على المستخدم. يرجى التحقق من رقم الحساب.",
+      "invalidAccountNumber": "يرجى إدخال رقم حساب صحيح (الحد الأدنى 6 أرقام).",
+      "insufficientBalance": "أضف الأموال إلى {balanceType} قبل التحويل",
+      "useBalance": "استخدم {balanceType} لهذا التحويل"
+    },
+    "modals": {
+      "selectBalanceType": "اختر نوع الرصيد",
+      "close": "✕"
+    },
+    "messages": {
+      "missingInformation": "يرجى اختيار المستلم وإدخال المبلغ",
+      "selectBalanceType": "يرجى اختيار الرصيد الذي تريد استخدامه لهذا التحويل",
+      "invalidTransfer": "لا يمكنك تحويل الأموال إلى نفسك. يرجى اختيار مستلم مختلف.",
+      "insufficientBalance": "رصيدك في {balanceType} فارغ. يرجى إضافة الأموال قبل إجراء التحويل.",
+      "insufficientFunds": "ليس لديك أموال كافية. رصيدك في {balanceType} هو ₱{currentBalance} ولكنك تحاول إرسال ₱{transferAmount}.",
+      "invalidAmount": "يرجى إدخال مبلغ صحيح أكبر من 0.",
+      "accessRestricted": "هذه الميزة تتطلب حساباً مميزاً. نوع حسابك الحالي هو: {accountType}. يرجى الترقية إلى المميز للوصول إلى وظائف التحويل.",
+      "unableToVerify": "غير قادر على التحقق من صلاحيات الحساب. يرجى المحاولة مرة أخرى.",
+      "transferSuccessful": "تم إكمال التحويل بنجاح!",
+      "transferSuccessfulDelayed": "تم إكمال التحويل بنجاح (قد تتأخر الإشعارات)",
+      "transferFailed": "غير قادر على إكمال التحويل. يرجى المحاولة مرة أخرى.",
+      "authenticationError": "يرجى تسجيل الدخول مرة أخرى للمتابعة.",
+      "insufficientBalanceSelected": "ليس لديك أموال كافية في الرصيد المحدد."
+    },
+    "titles": {
+      "accessRestricted": "الوصول مقيد",
+      "error": "خطأ",
+      "missingInformation": "معلومات ناقصة",
+      "selectBalanceType": "اختر نوع الرصيد",
+      "invalidTransfer": "تحويل غير صحيح",
+      "insufficientBalance": "رصيد غير كافي",
+      "invalidAmount": "مبلغ غير صحيح",
+      "transferSuccessful": "التحويل ناجح",
+      "transferFailed": "فشل التحويل",
+      "authenticationError": "خطأ في المصادقة"
+    },
+    "characterCount": "{current}/{max}",
+    "currencySymbol": "₱"
+  },
+  "buyCards": {
+    "header": {
+      "title": "اختر تصميم بطاقتك",
+      "subtitle": "اختر من التصاميم العادية (₱250) أو بطاقات مجموعة VIP"
+    },
+    "navigation": {
+      "headerTitle": "شراء البطاقات"
+    },
+    "sections": {
+      "availableBalance": "الرصيد المتاح",
+      "cardPreview": "معاينة البطاقة",
+      "vipCollection": "مجموعة VIP",
+      "designCollection": "مجموعة التصميم",
+      "yourCollection": "مجموعة بطاقاتك"
+    },
+    "descriptions": {
+      "vipCards": "👑 بطاقات VIP - مطلوب إيداع 10,000,000 بيزو",
+      "designCards": "🎨 بطاقات التصميم - ₱250",
+      "collectionHelp": "✨ اضغط على البطاقة لتفعيلها كتصميمك الحالي"
+    },
+    "cardStatus": {
+      "owned": "مملوكة",
+      "preview": "معاينة",
+      "vipOnly": "VIP فقط",
+      "depositRequired": "الإيداع مطلوب",
+      "tapToClaim": "اضغط للحصول عليها",
+      "claimed": "تم الحصول عليها",
+      "monthlySubscription": "الاشتراك الشهري",
+      "tapToBuy": "اضغط للشراء",
+      "active": "نشطة",
+      "currentlyActive": "نشطة حالياً"
+    },
+    "subscriptionStatus": {
+      "expired": "منتهية الصلاحية",
+      "daysLeft": "أيام متبقية",
+      "active": "نشطة"
+    },
+    "buttons": {
+      "preview": "معاينة",
+      "cancel": "إلغاء",
+      "close": "إغلاق",
+      "gotIt": "فهمت",
+      "claim": "الحصول عليها"
+    },
+    "messages": {
+      "welcomeGiftDefaultCard": "هدية ترحيب - تم منح بطاقة افتراضية للمستخدم الموجود",
+      "claimedVipCard": "تم الحصول على بطاقة VIP",
+      "vipCardPurchase": "شراء بطاقة VIP",
+      "cardPurchase": "شراء بطاقة",
+      "autoRenewalPayment": "دفع التجديد التلقائي",
+      "freeDefaultCard": "بطاقة افتراضية مجانية",
+      "removedVipCard": "تمت إزالة بطاقة VIP",
+      "migrationComplete": "اكتمل النقل",
+      "migrationCompleteDetails": "تمت معالجة {processedCount} مستخدم.\nتم منح بطاقات افتراضية لـ {grantedCards} مستخدم.\n{grantedCards} مستخدم لديهم بطاقات بالفعل.",
+      "migrationFailed": "فشل النقل",
+      "vipCardClaimedDescription": "بطاقة VIP - تم الحصول عليها بمبلغ إيداع مؤهل (₱10,000,000+)",
+      "vipCardRemovedDescription": "بطاقة VIP - تمت إزالتها بسبب عدم كفاية مبلغ الإيداع الثابت (< ₱10,000,000)",
+      "insufficientBalanceForAutoRenewal": "رصيد غير كافي",
+      "failedToProcessAutoRenewal": "فشل في معالجة التجديد التلقائي. يرجى التحقق من رصيدك والمحاولة مرة أخرى.",
+      "unableToCancelSubscription": "غير قادر على إلغاء الاشتراك",
+      "failedToCancelSubscription": "فشل في إلغاء الاشتراك. يرجى المحاولة مرة أخرى.",
+      "unableToProcessAutoRenewal": "غير قادر على معالجة التجديد التلقائي",
+      "unableToToggleAutoRenewal": "غير قادر على تبديل التجديد التلقائي",
+      "failedToToggleAutoRenewal": "فشل في تبديل التجديد التلقائي. يرجى المحاولة مرة أخرى.",
+      "failedToRemoveExpired": "فشل في إزالة الاشتراك منتهي الصلاحية. يرجى المحاولة مرة أخرى.",
+      "accessRestricted": "هذه الميزة تتطلب حساباً مميزاً. نوع حسابك الحالي هو: {accountType}. يرجى الترقية إلى المميز للوصول إلى شراء البطاقات.",
+      "unableToVerify": "غير قادر على التحقق من صلاحيات الحساب. يرجى المحاولة مرة أخرى.",
+      "userNotAuthenticated": "المستخدم غير مصادق عليه",
+      "userDataNotFound": "بيانات المستخدم غير موجودة",
+      "failedToFetchData": "فشل في جلب بيانات المستخدم",
+      "timeDepositRequired": "هذه البطاقة تتطلب إيداع زمني ₱10,000,000+. يرجى الاتصال بالدعم لترقية حسابك.",
+      "cardCannotBePurchased": "لا يمكن شراء هذه البطاقة في الوقت الحالي.",
+      "notQualified": "تحتاج إلى إيداع زمني ₱10,000,000+ للحصول على هذه البطاقة.",
+      "alreadyClaimed": "لقد حصلت بالفعل على بطاقة VIP هذه.",
+      "vipCardClaimed": "تم الحصول على بطاقة VIP بنجاح!",
+      "failedToClaimVip": "فشل في الحصول على بطاقة VIP. يرجى المحاولة مرة أخرى.",
+      "purchaseSuccessful": "تم شراء {cardName} بنجاح مقابل ₱{price}!",
+      "purchaseFailed": "فشل في معالجة الشراء: {error}",
+      "cardActivated": "{cardName} هي الآن بطاقتك النشطة!",
+      "failedToSwitchCard": "فشل في تبديل البطاقة. يرجى المحاولة مرة أخرى.",
+      "subscriptionCancelled": "تم إلغاء اشتراكك. لن يتم تقديم استرداد.",
+      "autoRenewalFailed": "رصيد غير كافٍ للتجديد التلقائي. انتهت صلاحية اشتراكك.",
+      "autoRenewalEnabled": "سيتم تجديد اشتراكك تلقائياً كل شهر.",
+      "autoRenewalDisabled": "سينتهي اشتراكك ولن يتم تجديده تلقائياً.",
+      "subscriptionExpired": "انتهت صلاحية اشتراك {cardName} وتم إزالته من مجموعتك."
+    },
+    "titles": {
+      "accessRestricted": "الوصول مقيد",
+      "error": "خطأ",
+      "success": "نجح",
+      "warning": "تحذير",
+      "info": "معلومات",
+      "purchaseSuccessful": "الشراء ناجح",
+      "cardActivated": "تم تفعيل البطاقة",
+      "subscriptionCancelled": "تم إلغاء الاشتراك",
+      "autoRenewalFailed": "فشل التجديد التلقائي",
+      "autoRenewalEnabled": "تم تفعيل التجديد التلقائي",
+      "autoRenewalDisabled": "تم تعطيل التجديد التلقائي",
+      "subscriptionExpired": "انتهت صلاحية الاشتراك",
+      "timeDepositRequired": "الإيداع الزمني مطلوب",
+      "notQualified": "غير مؤهل",
+      "alreadyClaimed": "تم الحصول عليها بالفعل"
+    },
+    "modals": {
+      "vipCardInfo": {
+        "title": "بطاقة VIP - النخبة الماسية",
+        "subtitle": "بطاقة حصرية قابلة للحصول عليها",
+        "howToGet": "كيفية الحصول على هذه البطاقة",
+        "howToGetDescription": "بطاقة VIP الحصرية هذه يمكن الحصول عليها من قبل المستخدمين الذين لديهم إيداع زمني ₱10,000,000 أو أكثر. اضغط على زر \"الحصول عليها\" لإضافتها إلى مجموعتك.",
+        "requirements": "المتطلبات",
+        "requirementsList": [
+          "مبلغ الإيداع الزمني: ₱10,000,000+",
+          "اضغط على زر \"الحصول عليها\" لإضافتها إلى مجموعتك",
+          "الشراء غير مطلوب"
+        ],
+        "yourStatus": "حالتك",
+        "qualified": "أنت مؤهل لهذه البطاقة! اضغط على 'الحصول عليها' للحصول عليها.",
+        "notQualified": "تحتاج إلى إيداع زمني ₱10,000,000+",
+        "alreadyClaimed": "لقد حصلت على هذه البطاقة بالفعل!",
+        "warning": "⚠️ ستتم إزالة بطاقة VIP الخاصة بك إذا انخفض إيداعك إلى أقل من ₱10,000,000",
+        "claimButton": "الحصول على بطاقة VIP"
+      },
+      "purchase": {
+        "title": "شراء البطاقة",
+        "vipTitle": "شراء بطاقة VIP",
+        "subtitle": "معاينة وتأكيد اختيارك",
+        "cardPreview": "معاينة البطاقة",
+        "cardDetails": "تفاصيل البطاقة",
+        "price": "السعر",
+        "balanceCheck": "فحص الرصيد",
+        "availableBalance": "الرصيد المتاح",
+        "sufficientBalance": "الرصيد كافٍ",
+        "insufficientBalance": "تحتاج {amount} أكثر",
+        "vipStatusCheck": "فحص حالة VIP",
+        "timeDepositRequired": "الإيداع الزمني مطلوب",
+        "vipStatusMet": "تم استيفاء متطلبات الإيداع الزمني - أنت مؤهل لهذه البطاقة",
+        "vipStatusNotMet": "مطلوب إيداع زمني ₱10,000,000+ للتأهل لهذه البطاقة الحصرية",
+        "subscriptionInfo": "معلومات الاشتراك",
+        "subscriptionType": "نوع الاشتراك",
+        "monthly": "شهري",
+        "duration": "المدة: {days} يوم",
+        "autoRenewal": "التجديد التلقائي: يدوي (تجديد شهري)",
+        "accessExpires": "ينتهي الوصول بعد {days} يوم",
+        "actionButtons": {
+          "cancel": "إلغاء",
+          "purchase": "شراء البطاقة",
+          "purchaseVip": "شراء بطاقة VIP",
+          "subscribe": "الاشتراك في {type}",
+          "insufficientBalance": "الرصيد غير كافٍ",
+          "vipRequired": "VIP مطلوب"
+        }
+      },
+      "subscription": {
+        "title": "تفاصيل الاشتراك",
+        "subtitle": "الاشتراك الشهري",
+        "daysLeft": "أيام متبقية",
+        "subscriptionDetails": "تفاصيل الاشتراك",
+        "totalRenewals": "إجمالي التجديدات",
+        "totalPaid": "إجمالي المدفوع",
+        "lastRenewal": "آخر تجديد",
+        "autoRenewal": "التجديد التلقائي",
+        "autoRenewalActive": "نشط - يتم التجديد تلقائياً شهرياً مقابل ₱10,000",
+        "autoRenewalDisabled": "معطل - ينتهي ولن يتم التجديد تلقائياً",
+        "expirationWarning": "سينتهي اشتراكك في {days} يوم وستتم إزالته من مجموعتك.",
+        "actionButtons": {
+          "cancelSubscription": "إلغاء الاشتراك",
+          "close": "إغلاق"
+        },
+        "common": {
+          "loading": "جاري التحميل...",
+          "accountTypes": {
+            "basic": "أساسي",
+            "premium": "مميز"
+          }
+        }
+      }
+    },
+    "cardTypes": {
+      "default": "البطاقة الافتراضية",
+      "diamondElite": "النخبة الماسية",
+      "royalCurve": "المنحنى الملكي",
+      "goldenElite": "النخبة الذهبية",
+      "silverElite": "النخبة البرتقالية",
+      "redPrestige": "برستيج الشمس",
+      "vip": "VIP",
+      "unknown": "بطاقة"
+    }
+  },
+  "inspireCards": {
+    "header": {
+      "title": "بطاقات الإلهام",
+      "supportTitle": "اطلب بطاقة الإلهام الخاصة بك",
+      "subtitle": "احصل على بطاقة الإلهام المادية الخاصة بك مسلمة إلى عتبة داركم"
+    },
+    "content": {
+      "availableBalance": "الرصيد المتاح:"
+    },
+    "navigation": {
+      "headerTitle": "بطاقات الإلهام"
+    },
+    "steps": {
+      "step1": {
+        "title": "معلومات الاتصال",
+        "description": "يرجى تقديم عنوان بريدك الإلكتروني حتى نتمكن من الوصول إليك",
+        "info": "سنستخدم هذا البريد الإلكتروني لإرسال تحديثات حول طلب بطاقتك"
+      },
+      "step2": {
+        "title": "عنوان التسليم",
+        "description": "أين يجب أن نرسل بطاقة الإلهام الخاصة بك؟",
+        "info": "يرجى تقديم عنوانك الكامل بما في ذلك الشارع والمدينة والرمز البريدي"
+      },
+      "step3": {
+        "title": "المراجعة والإرسال",
+        "description": "يرجى مراجعة معلوماتك قبل الإرسال"
+      }
+    },
+    "review": {
+      "personalInfo": "المعلومات الشخصية",
+      "deliveryAddress": "عنوان التسليم",
+      "name": "الاسم"
+    },
+    "instructions": {
+      "title": "أرسل استفسارك",
+      "text": "هل تحتاج إلى مساعدة في بطاقات الإلهام؟ يرجى ملء النموذج أدناه وسيرد فريق الدعم عليك في أقرب وقت ممكن."
+    },
+    "form": {
+      "contactInfo": "معلومات الاتصال",
+      "howToReach": "كيف يمكننا الوصول إليك؟",
+      "emailLabel": "عنوان البريد الإلكتروني",
+      "emailPlaceholder": "your.email@example.com",
+      "concernDetails": "أخبرنا عن استفسارك",
+      "addressLabel": "عنوان التسليم الكامل",
+      "addressPlaceholder": "الشارع، الحي، المدينة، المحافظة، الرمز البريدي"
+    },
+    "disclaimer": {
+      "title": "وقت المعالجة",
+      "text": "سيتم معالجة طلب بطاقتك خلال 5-7 أيام عمل. سنرسل لك رسالة تأكيد عبر البريد الإلكتروني بمجرد شحن بطاقتك."
+    },
+    "buttons": {
+      "submit": "إرسال الطلب",
+      "sending": "جاري الإرسال...",
+      "next": "التالي",
+      "back": "رجوع"
+    },
+    "messages": {
+      "accessRestricted": "هذه الميزة تتطلب حساباً مميزاً. نوع حسابك الحالي هو: {accountType}. يرجى الترقية إلى المميز للوصول إلى بطاقات الإلهام.",
+      "timeDepositRequired": "تحتاج إلى أن يكون لديك إيداع زمني نشط للوصول إلى بطاقات الإلهام. يرجى إعداد إيداع زمني أولاً.",
+      "missingInformation": "يرجى ملء جميع الحقول المطلوبة.",
+      "emailRequired": "يرجى إدخال عنوان بريدك الإلكتروني للمتابعة.",
+      "addressRequired": "يرجى إدخال عنوان التسليم الكامل للمتابعة.",
+      "requestSubmitted": "تم إرسال طلب بطاقتك بنجاح! سنتواصل معك عبر البريد الإلكتروني بالتحديثات.",
+      "submissionFailed": "غير قادر على إرسال طلبك. يرجى المحاولة مرة أخرى لاحقًا.",
+      "unableToVerify": "غير قادر على التحقق من صلاحيات الحساب. يرجى المحاولة مرة أخرى.",
+      "fetchDataFailed": "فشل في جلب بيانات المستخدم. يرجى المحاولة مرة أخرى لاحقًا."
+    },
+    "titles": {
+      "accessRestricted": "الوصول مقيد",
+      "error": "خطأ",
+      "missingInformation": "معلومات ناقصة",
+      "requestSubmitted": "تم إرسال الطلب",
+      "submissionFailed": "فشل الإرسال"
+    }
+  },
+  "termsAndCondition": {
+    "header": {
+      "title": "الشروط والأحكام"
+    },
+    "content": {
+      "welcome": "مرحباً بك في محفظة إنسباير. يرجى قراءة هذه الشروط والأحكام بعناية قبل الوصول أو الاستخدام أو الحصول على أي مواد أو معلومات أو منتجات أو خدمات. من خلال الوصول إلى محفظة إنسباير (مجتمعة، \"التطبيق\")، فإنك توافق على الالتزام بهذه الشروط والأحكام (\"الشروط\") وسياسة الخصوصية الخاصة بنا. في هذه الشروط، \"نحن\" و\"لنا\" و\"محفظة إنسباير\" تشير إلى محفظة إنسباير، و\"أنا\" و\"أنت\" و\"خاصتك\" تشير إليك، مستخدم التطبيق.",
+      "eligibility": {
+        "title": "الأهلية",
+        "content": "يجب أن تكون عمرك 18 عاماً على الأقل وأن تكون لديك الأهلية القانونية لإبرام العقود. باستخدامك للتطبيق، فإنك تؤكد أنك تستوفي المتطلبات. إذا كنت موجوداً في ولاية قضائية حيث الخدمات الاستثمارية مقيدة، فقد لا تستخدم التطبيق."
+      },
+      "accountRegistration": {
+        "title": "تسجيل الحساب",
+        "content": "للوصول إلى الحد الأقصى من قدرة التطبيق، يجب عليك إنشاء حساب. أنت توافق على:",
+        "bulletPoints": {
+          "accurateInfo": "تقديم معلومات دقيقة وكاملة",
+          "passwordSecurity": "الحفاظ على أمان كلمة المرور الخاصة بك",
+          "unauthorizedUse": "في حالة أي استخدام غير مصرح به لحسابك، يرجى إبلاغنا فوراً"
+        }
+      },
+      "servicesProvided": {
+        "title": "الخدمات المقدمة",
+        "content": "محفظة إنسباير تتبع أسهمك واستثماراتك وتتيح لك مراقبة أموالك قبل وبعد السحب. كل معاملة ستتم عبر البريد الإلكتروني وليس مباشرة مع البنك. مجموعة صندوق تحالف إنسباير ستقوم بمعالجة معاملتك، وليس التطبيق نفسه. قد تستغرق العملية ما يقرب من خمسة (5) إلى سبعة (7) أيام عمل لتنعكس على حساب محفظة إنسباير الخاص بك."
+      },
+      "feesAndCharges": {
+        "title": "الرسوم والرسوم",
+        "content": "سيتم توفير تفاصيل الرسوم المرتبطة بالمعاملات وصيانة الحساب والخدمات الأخرى في التطبيق وقد تتغير من وقت لآخر."
+      },
+      "userResponsibilities": {
+        "title": "مسؤوليات المستخدم",
+        "content": "أنت توافق على استخدام التطبيق لأغراض قانونية والالتزام بجميع القوانين واللوائح المعمول بها. أنت مسؤول عن حسابك وقرارات الاستثمار."
+      },
+      "intellectualProperty": {
+        "title": "الملكية الفكرية",
+        "content": "جميع المحتويات والعلامات التجارية والبرمجيات المتعلقة مملوكة لمجموعة صندوق تحالف إنسباير أو المرخصين لها. يتم منحك ترخيصاً محدوداً وغير حصري لاستخدام التطبيق للأغراض الشخصية."
+      },
+      "privacyPolicy": {
+        "title": "سياسة الخصوصية",
+        "content": "استخدامك للتطبيق يحكمه أيضاً سياسة الخصوصية الخاصة بنا، والتي تفصل كيفية جمعنا واستخدامنا وحماية معلوماتك الشخصية. التطبيق يجمع فقط بيانات مثل اسمك وعنوان بريدك الإلكتروني وتفاصيل البنك."
+      },
+      "changesToTerms": {
+        "title": "تغييرات الشروط",
+        "content": "قد نعدل هذه الشروط في أي وقت. سنخطرك بالتغييرات المهمة من خلال التطبيق أو عبر البريد الإلكتروني. استمرارك في استخدام التطبيق بعد التغييرات يشكل قبولاً للشروط الجديدة."
+      },
+      "contactDetails": {
+        "title": "تفاصيل الاتصال",
+        "content": "للأسئلة أو المخاوف المتعلقة بهذه الشروط، يرجى الاتصال بنا على",
+        "contactInfo": "إنسباير هولدينغز 85963671"
+      },
+      "agreement": "أوافق بموجب هذا على أنني قرأت وفهمت تماماً الشروط والأحكام وأوافق على الالتزام بالبيانات المذكورة أعلاه."
+    }
+  },
+  "privacy": {
+    "header": {
+      "title": "سياسة الخصوصية"
+    },
+    "content": {
+      "introduction": {
+        "title": "مقدمة",
+        "content": "نحن نقدر خصوصيتك. توضح هذه السياسة كيفية جمعنا واستخدامنا وحماية معلوماتك عند استخدام تطبيقنا \"محفظة إنسباير\"."
+      },
+      "informationCollection": {
+        "title": "ما هي المعلومات التي نجمعها",
+        "content": "نجمع الأنواع التالية من البيانات:",
+        "bulletPoints": {
+          "personalInfo": "المعلومات الشخصية: اسمك وعنوان بريدك الإلكتروني والتفاصيل الأخرى التي تقدمها.",
+          "usageData": "بيانات الاستخدام: معلومات مثل نوع جهازك وعنوان IP الخاص بك وكيفية استخدامك للتطبيق."
+        }
+      },
+      "informationUsage": {
+        "title": "كيف نستخدم معلوماتك",
+        "content": "نستخدم معلوماتك من أجل:",
+        "bulletPoints": {
+          "provideServices": "تقديم وتحسين خدماتنا.",
+          "contactUpdates": "التواصل معك بالتحديثات أو الإشعارات المهمة.",
+          "monitorUsage": "مراقبة كيفية استخدام التطبيق لتحسين الأداء."
+        }
+      },
+      "informationSharing": {
+        "title": "مشاركة معلوماتك",
+        "content": "قد نشارك بياناتك مع:",
+        "bulletPoints": {
+          "serviceProviders": "مقدمي الخدمات الذين يساعدوننا في تشغيل التطبيق.",
+          "businessPartners": "الشركاء التجاريين أو الشركات التابعة.",
+          "authorities": "السلطات إذا تطلب القانون ذلك."
+        }
+      },
+      "dataSecurity": {
+        "title": "أمان البيانات",
+        "content": "نتخذ خطوات لحماية معلوماتك، لكن لا يوجد نظام آمن بنسبة 100%. كن دائماً حذراً عند مشاركة البيانات عبر الإنترنت."
+      },
+      "childrensPrivacy": {
+        "title": "خصوصية الأطفال",
+        "content": "لا نجمع بيانات من أي شخص دون سن 13. إذا كنت تعتقد أن طفلك شارك بيانات معنا، اتصل بنا لإزالتها."
+      },
+      "yourRights": {
+        "title": "حقوقك",
+        "content": "يمكنك تحديث أو حذف بياناتك الشخصية عن طريق تسجيل الدخول إلى حسابك أو الاتصال بنا."
+      },
+      "policyChanges": {
+        "title": "تغييرات هذه السياسة",
+        "content": "قد نحدث هذه السياسة. تحقق من هذه الصفحة للحصول على أحدث إصدار."
+      },
+      "contactUs": {
+        "title": "اتصل بنا",
+        "content": "إذا كان لديك أي أسئلة، أرسل لنا بريداً إلكترونياً على",
+        "email": "info@inspireholdings.ph"
+      }
+    }
+  },
+  "about": {
+    "header": {
+      "title": "معلومات عنا"
+    },
+    "content": {
+      "ourCompany": {
+        "title": "شركتنا",
+        "content": "في مجموعة صندوق تحالف إنسباير المحدودة، نحن مدفوعون بغرض قوي: تمكين الأحلام وإشعال التغيير الهادف. تأسست على الاعتقاد بأن التقدم الدائم يبدأ بالفرصة، نحن موجودون لدعم الأفراد الذين هم مستعدون لإحداث فرق - ليس فقط في حياتهم الخاصة، ولكن في المجتمعات من حولهم. نحن نتجاوز التمويل التقليدي. نحن حركة ديناميكية تربط بين الرؤى المتحمسة والدعم والثقة والموارد التي يحتاجونها لتحويل الأفكار إلى تأثير دائم."
+      },
+      "ourMission": {
+        "title": "مهمتنا",
+        "content": "في مجموعة صندوق تحالف إنسباير المحدودة، مهمتنا هي إشعال التغيير من خلال تمكين الأحلام. نؤمن أن التقدم الحقيقي يبدأ عندما يُمنح الأفراد الموارد والثقة والفرص لبناء مستقبل أفضل ليس فقط لأنفسهم، ولكن لمجتمعاتهم وما بعدها. نحن أكثر من منصة تمويل؛ نحن حركة تربط الأشخاص ذوي الهدف بالدعم الذي يحتاجونه لتحويل الأفكار إلى تأثير. من خلال الاستثمار في الإمكانات البشرية، نزرع تأثيراً متتالياً يدعم الأرواح ويقوي الاقتصادات ويشكل مستقبلاً تزدهر فيه الأمل والابتكار معاً."
+      },
+      "inspireWallet": {
+        "title": "محفظة إنسباير",
+        "content": "محفظة إنسباير، تطبيقنا الرائد لمستثمري إنسباير، يجسد هذه الرؤية. مصممة كرفيقك المالي الشامل، تسمح لك محفظة إنسباير بـ:",
+        "bulletPoints": {
+          "investments": "البقاء على رأس استثماراتك",
+          "stocks": "إدارة الأسهم",
+          "withdrawals": "تتبع عمليات السحب",
+          "transactions": "الحفاظ على سجل واضح لجميع معاملاتك المالية"
+        },
+        "conclusion": "سواء كنت مستثمراً متمرساً أو بدأت للتو، يوفر تطبيقنا جميع الأدوات التي تحتاجها لإدارة محفظتك بسهولة وثقة."
+      },
+      "callToAction": "انضم إلينا في مجموعة صندوق تحالف إنسباير المدمجة معاً، دعنا نشكل مستقبلاً مزدهراً. حمل محفظة إنسباير اليوم وخذ زمام رحلتك المالية!"
+    }
+  },
+  "agentRequest": {
+    "header": {
+      "title": "طلب وكيل"
+    },
+    "content": {
+      "headerTitle": "طلب وكيل",
+      "headerSubtitle": "قدم طلب الوكيل الخاص بك",
+      "requestInformation": {
+        "title": "معلومات الطلب",
+        "text": "📋 املأ النموذج أدناه لطلب صلاحيات الوكيل\n🔍 ابحث اختيارياً عن وكيل موجود للارتباط به\n🎯 أنشئ رقم وكيل فريد لحسابك\n⏳ سيتم مراجعة طلبك والموافقة عليه من قبل المدراء"
+      },
+      "form": {
+        "title": "نموذج طلب الوكيل",
+        "personalInformation": {
+          "title": "المعلومات الشخصية",
+          "fullNameLabel": "الاسم الكامل"
+        },
+        "agentNumber": {
+          "title": "رقم الوكيل",
+          "generateLabel": "إنشاء رقم الوكيل *",
+          "placeholder": "انقر على إنشاء لإنشاء رقم الوكيل",
+          "generateButton": "إنشاء",
+          "hint": "انقر على زر الإنشاء لإنشاء رقم وكيل فريد من 5 أحرف"
+        },
+        "parentAgent": {
+          "title": "اختيار الوكيل الأب (اختياري)",
+          "searchLabel": "البحث عن الوكلاء (اختياري)",
+          "searchPlaceholder": "أدخل رقم الوكيل الدقيق...",
+          "searchHint": "أدخل رقم الوكيل الدقيق للعثور على الوكيل وتحديده تلقائياً",
+          "selectedAgent": "الوكيل المحدد",
+          "parentAgentCode": "رمز الوكيل الأب:",
+          "yourAgentCode": "رمز الوكيل الخاص بك:",
+          "noResults": "لم يتم العثور على وكلاء برقم الوكيل \"{query}\""
+        }
+      },
+      "submitButton": {
+        "submit": "إرسال طلب الوكيل",
+        "submitting": "جاري إرسال الطلب..."
+      }
+    },
+    "modals": {
+      "accessRestricted": {
+        "title": "الوصول مقيد",
+        "message": "هذه الميزة تتطلب حساباً مميزاً. نوع حسابك الحالي هو: {accountType}. يرجى الترقية إلى المميز للوصول إلى وظيفة طلب الوكيل."
+      },
+      "alreadyAgent": {
+        "title": "وكيل بالفعل",
+        "message": "أنت مسجل بالفعل كوكيل. لا تحتاج إلى طلب صلاحية الوكيل مرة أخرى."
+      },
+      "authenticationRequired": {
+        "title": "المصادقة مطلوبة",
+        "message": "يرجى تسجيل الدخول لإرسال طلب الوكيل."
+      },
+      "userNotFound": {
+        "title": "المستخدم غير موجود",
+        "message": "لم يتم العثور على بيانات المستخدم. يرجى المحاولة مرة أخرى بتسجيل الدخول."
+      },
+      "error": {
+        "title": "خطأ",
+        "message": "غير قادر على التحقق من صلاحيات الحساب. يرجى المحاولة مرة أخرى.",
+        "loadDataFailed": "فشل في تحميل بيانات المستخدم. يرجى المحاولة مرة أخرى.",
+        "searchFailed": "فشل في البحث عن المستخدمين. يرجى المحاولة مرة أخرى.",
+        "generationFailed": "غير قادر على إنشاء رمز وكيل فريد. يرجى المحاولة مرة أخرى.",
+        "submitFailed": "حدث خطأ أثناء إرسال طلبك. يرجى المحاولة مرة أخرى."
+      },
+      "agentNumberGenerated": {
+        "title": "تم إنشاء رقم الوكيل",
+        "message": "رقم الوكيل الفريد الخاص بك هو: {agentNumber}"
+      },
+      "agentFound": {
+        "title": "تم العثور على الوكيل!",
+        "message": "تم العثور على الوكيل بنجاح: {firstName} {lastName}\nرقم الوكيل: {agentNumber}"
+      },
+      "agentCodeGenerated": {
+        "title": "تم إنشاء رمز الوكيل",
+        "message": "رمز الوكيل: {agentCode}\nالنوع: {type}\nالمرجع: {referrerName}"
+      },
+      "missingAgentNumber": {
+        "title": "رقم الوكيل مفقود",
+        "message": "يرجى إنشاء رقم الوكيل أولاً."
+      },
+      "requestSubmitted": {
+        "title": "تم إرسال الطلب بنجاح!",
+        "message": "تم إرسال طلب الوكيل الخاص بك وهو في انتظار الموافقة.\n\nمعرف الطلب: {requestId}"
+      }
+    }
+  },
+  "passcode": {
+    "header": {
+      "title": "رمز المرور"
+    },
+    "content": {
+      "step": "الخطوة {current} من {total}",
+      "subtitle": "استخدم لوحة المفاتيح أدناه لإدخال رمز المرور",
+      "instructions": {
+        "enterCurrent": "أدخل رمز المرور الحالي المكون من 4 أرقام",
+        "enterNew": "أدخل رمز المرور الجديد المكون من 4 أرقام",
+        "confirmNew": "أكد رمز المرور الجديد المكون من 4 أرقام"
+      },
+      "errors": {
+        "mustBe4Digits": "يجب أن يكون رمز المرور مكوناً من 4 أرقام.",
+        "incorrectPasscode": "رمز المرور غير صحيح. حاول مرة أخرى.",
+        "passcodesDoNotMatch": "رموز المرور غير متطابقة. حاول مرة أخرى."
+      },
+      "success": {
+        "passcodeChanged": "تم تغيير رمز المرور بنجاح!"
+      },
+      "buttons": {
+        "ok": "موافق"
+      }
+    }
+  },
+  "depositCrypto": {
+    "header": {
+      "title": "إيداع عبر العملات المشفرة"
+    },
+    "content": {
+      "headerTitle": "إيداع العملات المشفرة",
+      "headerSubtitle": "إيداع عبر البيتكوين أو الإيثيريوم أو التيثر",
+      "accountHolder": "صاحب الحساب:",
+      "email": "البريد الإلكتروني:",
+      "instructions": {
+        "title": "كيفية الإيداع",
+        "step1": "أرسل {crypto} الخاص بك إلى عنوان المحفظة أدناه",
+        "walletAddressLabel": "عنوان المحفظة:",
+        "walletAddressCopied": "تم نسخ عنوان المحفظة",
+        "walletAddressCopiedMessage": "تم نسخ عنوان المحفظة إلى الحافظة",
+        "step2": "ارفع إيصال المعاملة أو لقطة الشاشة أدناه",
+        "note": "ملاحظة: سيتم معالجة إيداعك بمجرد التحقق من إيصال المعاملة.",
+        "btcNote": "ملاحظة: هذا عنوان SegWit الأصلي (bech32). مدعوم من: بينانس، كوينبيز/كوينبيز واليت، تراست واليت، ليدجر، تريزور، OKX، بايبت، كوكون، كراكن، بتستامب، بتفينكس، إكسودس، بلو واليت، مون، فينيكس واليت، بريز، إلكتروم (أحدث الإصدارات)، سبارو واليت، واسابي واليت.",
+        "ethNote": "ملاحظة: هذا العنوان لميتاماسك ومحافظ أخرى متوافقة مع الإيثريوم."
+      },
+      "form": {
+        "selectCrypto": "اختر العملة المشفرة *",
+        "amount": "المبلغ *",
+        "amountPlaceholder": "أدخل المبلغ",
+        "uploadReceipt": "رفع الإيصال *",
+        "uploadReceiptText": "رفع الإيصال",
+        "uploadReceiptSubtext": "اضغط لاختيار الصورة"
+      },
+      "loading": {
+        "fetchingRates": "جاري جلب الأسعار...",
+        "uploading": "جاري الرفع..."
+      },
+      "submitButton": {
+        "submit": "إرسال طلب الإيداع",
+        "submitting": "جاري الإرسال..."
+      }
+    },
+    "modals": {
+      "imagePickerError": {
+        "title": "خطأ في اختيار الصورة",
+        "message": "فشل في اختيار الصورة"
+      },
+      "copyError": {
+        "title": "فشل النسخ",
+        "message": "فشل نسخ عنوان المحفظة إلى الحافظة. يرجى المحاولة مرة أخرى."
+      },
+      "missingInformation": {
+        "title": "معلومات ناقصة",
+        "message": "يرجى ملء جميع الحقول المطلوبة ورفع الإيصال."
+      },
+      "requestSubmitted": {
+        "title": "تم إرسال الطلب",
+        "message": "تم إرسال طلب إيداع العملة المشفرة بنجاح! تحقق من بريدك الإلكتروني للحصول على التأكيد.",
+        "messageWithEmailDelay": "تم إرسال طلب إيداع العملة المشفرة بنجاح! قد يتأخر إشعار البريد الإلكتروني."
+      },
+      "submissionFailed": {
+        "title": "فشل الإرسال",
+        "message": "فشل في إرسال الطلب. يرجى المحاولة مرة أخرى."
+      }
+    }
+  },
+  "crypto": {
+    "header": {
+      "title": "التداول"
+    },
+    "content": {
+      "availableBalance": "الرصيد المتاح:",
+      "cryptoBalances": "أرصدة العملات المشفرة:",
+      "forexBalances": "أرصدة العملات الأجنبية:",
+      "crypto": "العملات المشفرة",
+      "forex": "العملات الأجنبية",
+      "currentPrice": "السعر الحالي:",
+      "currentRate": "المعدل الحالي:",
+      "buy": "شراء",
+      "sell": "بيع",
+      "processing": "جاري المعالجة...",
+      "amountInPHP": "المبلغ بالبيزو",
+      "amountOf": "مبلغ",
+      "percentageOfBalance": "% من الرصيد المتاح",
+      "percentageOfAsset": "% من المتاح",
+      "retry": "إعادة المحاولة",
+      "testApi": "اختبار API",
+      "noPriceData": "لا توجد بيانات أسعار متاحة"
+    },
+    "instructions": {
+      "title": "تعليمات التداول",
+      "cryptoTrading": {
+        "title": "تداول العملات المشفرة",
+        "step1": "اختر \"العملات المشفرة\" من محدد النوع",
+        "step2": "اختر العملة المشفرة المفضلة (BTC، ETH، أو USDT)",
+        "buySteps": "للشراء:",
+        "buyStep1": "• أدخل المبلغ بالبيزو الذي تريد إنفاقه",
+        "buyStep2": "• اضغط \"شراء\" لشراء العملة المشفرة المحددة",
+        "sellSteps": "للبيع:",
+        "sellStep1": "• أدخل كمية العملة المشفرة التي تريد بيعها",
+        "sellStep2": "• اضغط \"بيع\" للتحويل إلى بيزو"
+      },
+      "forexTrading": {
+        "title": "تداول العملات الأجنبية",
+        "step1": "اختر \"العملات الأجنبية\" من محدد النوع",
+        "step2": "اختر العملة المفضلة (USD أو JPY)",
+        "buySteps": "للشراء:",
+        "buyStep1": "• أدخل المبلغ بالبيزو الذي تريد إنفاقه",
+        "buyStep2": "• اضغط \"شراء\" لشراء العملة المحددة",
+        "sellSteps": "للبيع:",
+        "sellStep1": "• أدخل كمية العملة التي تريد بيعها",
+        "sellStep2": "• اضغط \"بيع\" للتحويل إلى بيزو"
+      },
+      "generalTips": {
+        "title": "نصائح عامة",
+        "tip1": "• راقب تغيرات الأسعار باستخدام الرسم البياني",
+        "tip2": "• استخدم نطاقات زمنية مختلفة (24 ساعة، 7 أيام، 30 يوم) لتحليل الاتجاهات",
+        "tip3": "• تابع أرصدتك في كل من العملات المشفرة والعملات الأجنبية"
+      }
+    },
+    "modals": {
+      "accessRestricted": {
+        "title": "الوصول مقيد",
+        "message": "هذه الميزة تتطلب حساب بريميوم. نوع حسابك الحالي هو: {accountType}. يرجى الترقية إلى بريميوم للوصول إلى تداول العملات المشفرة."
+      },
+      "apiConnectionError": {
+        "title": "خطأ في اتصال API",
+        "message": "غير قادر على الاتصال بـ CoinGecko API. يرجى التحقق من اتصالك بالإنترنت والمحاولة مرة أخرى."
+      },
+      "error": {
+        "title": "خطأ",
+        "message": "غير قادر على التحقق من أذونات الحساب. يرجى المحاولة مرة أخرى."
+      },
+      "invalidAmount": {
+        "title": "مبلغ غير صحيح",
+        "message": "يرجى إدخال مبلغ صحيح بالبيزو"
+      },
+      "insufficientBalance": {
+        "title": "رصيد غير كافٍ",
+        "message": "تحتاج إلى ₱{required} لكن رصيدك هو ₱{available}"
+      },
+      "insufficientCryptoBalance": {
+        "title": "رصيد غير كافٍ",
+        "message": "لديك فقط {amount} {asset}"
+      },
+      "success": {
+        "title": "نجح",
+        "message": "تم الشراء بنجاح! تم شراء {amount} {asset} مقابل ₱{cost}"
+      },
+      "saleSuccess": {
+        "title": "نجح",
+        "message": "تم البيع بنجاح! تم إضافة ₱{amount} إلى رصيدك"
+      },
+      "purchaseError": {
+        "title": "خطأ",
+        "message": "فشل في إتمام عملية الشراء"
+      },
+      "saleError": {
+        "title": "خطأ",
+        "message": "فشل في إتمام عملية البيع"
+      }
+    }
+  },
+  "bdo": {
+    "header": {
+      "title": "خدمات الحساب المصرفي"
+    },
+    "content": {
+      "headerTitle": "خدمات الحساب المصرفي",
+      "headerSubtitle": "حلول مصرفية مهنية",
+      "instructionTitle": "طلب فتح حساب",
+      "instructionText": "يرجى ملء النموذج التالي لطلب فتح حساب مع خدماتنا المصرفية الشريكة. سيتم معالجة طلبك خلال 5-7 أيام عمل.",
+      "sectionTitle": "معلومات مصرفية",
+      "selectBank": "اختر مصرفك",
+      "preferredBank": "المصرف المفضل",
+      "chooseBank": "اختر مصرفك المفضل",
+      "contactDetails": "تفاصيل الاتصال",
+      "emailAddress": "عنوان البريد الإلكتروني",
+      "emailPlaceholder": "your.email@example.com",
+      "mobileNumber": "رقم الهاتف المحمول",
+      "mobilePlaceholder": "+63 9XX XXX XXXX",
+      "landlineNumber": "رقم الهاتف الثابت",
+      "landlinePlaceholder": "(02) XXXX XXXX",
+      "personalDetails": "التفاصيل الشخصية",
+      "gender": "الجنس",
+      "selectGender": "اختر جنسك",
+      "dateOfBirth": "تاريخ الميلاد",
+      "selectBirthdate": "اختر تاريخ ميلادك",
+      "civilStatus": "الحالة الاجتماعية",
+      "selectCivilStatus": "اختر حالتك الاجتماعية",
+      "citizenship": "الجنسية",
+      "citizenshipPlaceholder": "فلبيني",
+      "addressInformation": "معلومات العنوان",
+      "completeAddress": "العنوان الكامل",
+      "addressPlaceholder": "رقم المنزل/الوحدة، الشارع، البارانجاي، المدينة، المقاطعة، الرمز البريدي",
+      "financialInformation": "المعلومات المالية",
+      "sourceOfFund": "مصدر الأموال",
+      "sourcePlaceholder": "مثل: التوظيف، الأعمال، الاستثمار",
+      "grossMonthlyIncome": "إجمالي الدخل الشهري",
+      "incomePlaceholder": "₱ 50,000",
+      "processingInfo": "معلومات المعالجة",
+      "processingText": "بإرسال هذه التفاصيل، سنرسل لك تأكيداً بالبريد الإلكتروني مع حالة طلبك. يرجى ملاحظة أن هذه العملية ستستغرق حوالي 5-7 أيام عمل للمراجعة والموافقة من قبل المصرف المختار.",
+      "submitApplication": "إرسال الطلب",
+      "processing": "جاري المعالجة...",
+      "selectBankModal": "اختر مصرفك",
+      "selectGenderModal": "اختر جنسك",
+      "selectCivilStatusModal": "اختر حالتك الاجتماعية",
+      "male": "ذكر",
+      "female": "أنثى",
+      "preferNotToSay": "أفضل عدم القول",
+      "single": "أعزب",
+      "married": "متزوج",
+      "legallySeparated": "منفصل قانونياً",
+      "divorced": "مطلق",
+      "annulled": "ملغي",
+      "widow": "أرمل/ة",
+      "bdoUnibank": "بنك BDO يونيبانك",
+      "securityBank": "بنك الأمان",
+      "ctbcBank": "بنك CTBC",
+      "unionBank": "يونيون بانك",
+      "documentUpload": "رفع المستندات",
+      "passportUpload": "صورة جواز السفر",
+      "driverLicenseUpload": "صورة رخصة القيادة",
+      "selectPassport": "اختر صورة جواز السفر",
+      "changePassport": "تغيير صورة جواز السفر",
+      "selectDriverLicense": "اختر صورة رخصة القيادة",
+      "changeDriverLicense": "تغيير صورة رخصة القيادة",
+      "uploadingDocuments": "جاري رفع المستندات...",
+      "processingApplication": "جاري معالجة الطلب",
+      "uploadingSubtitle": "يرجى الانتظار بينما نقوم برفع مستنداتك إلى التخزين الآمن",
+      "processingSubtitle": "جاري حفظ طلبك وإرسال التأكيد",
+      "uploadingStep": "رفع",
+      "savingStep": "حفظ"
+    },
+    "steps": {
+      "bankSelection": {
+        "title": "اختر مصرفك",
+        "description": "اختر مصرفك المفضل لفتح الحساب. سيحدد هذا الخدمات والميزات المصرفية المتاحة لك."
+      },
+      "contactInfo": {
+        "title": "معلومات الاتصال",
+        "description": "قدم تفاصيل الاتصال الخاصة بك حتى نتمكن من الوصول إليك بخصوص حالة طلبك وتحديثات الحساب."
+      },
+      "personalDetails": {
+        "title": "المعلومات الشخصية",
+        "description": "أخبرنا عن نفسك. هذه المعلومات مطلوبة للتحقق من الهوية وأغراض الامتثال."
+      },
+      "addressInfo": {
+        "title": "معلومات العنوان",
+        "description": "قدم عنوانك الكامل لأغراض التحقق وإعداد الحساب."
+      },
+      "financialInfo": {
+        "title": "المعلومات المالية",
+        "description": "شارك تفاصيلك المالية لمساعدتنا في فهم احتياجاتك المصرفية وضمان الامتثال."
+      },
+      "documentUpload": {
+        "title": "رفع المستندات",
+        "description": "ارفع المستندات المطلوبة لعملية التحقق من الهوية وفتح الحساب."
+      }
+    },
+    "validation": {
+      "selectBank": "يرجى اختيار مصرف",
+      "emailRequired": "عنوان البريد الإلكتروني مطلوب",
+      "mobileRequired": "رقم الهاتف المحمول مطلوب",
+      "genderRequired": "يرجى اختيار جنسك",
+      "birthdateRequired": "يرجى اختيار تاريخ ميلادك",
+      "civilStatusRequired": "يرجى اختيار حالتك الاجتماعية",
+      "citizenshipRequired": "الجنسية مطلوبة",
+      "addressRequired": "العنوان الكامل مطلوب",
+      "sourceFundRequired": "مصدر الأموال مطلوب",
+      "incomeRequired": "الدخل الشهري مطلوب",
+      "passportRequired": "صورة جواز السفر مطلوبة",
+      "driverLicenseRequired": "صورة رخصة القيادة مطلوبة"
+    },
+    "modals": {
+      "accessRestricted": {
+        "title": "الوصول مقيد",
+        "message": "هذه الميزة تتطلب حساباً مميزاً. نوع حسابك الحالي هو: {accountType}. يرجى الترقية إلى المميز للوصول إلى خدمات الحساب المصرفي."
+      },
+      "timeDepositInsufficient": {
+        "title": "الوصول مقيد",
+        "message": "تحتاج إلى إيداع لأجل بحد أدنى ₱200,000 لفتح حساب مصرفي. إيداعك الحالي لأجل هو ₱{amount}. يرجى زيادة إيداعك لأجل أولاً."
+      },
+      "error": {
+        "title": "خطأ",
+        "message": "غير قادر على التحقق من أذونات الحساب. يرجى المحاولة مرة أخرى."
+      },
+      "fetchError": {
+        "title": "خطأ",
+        "message": "فشل في جلب بيانات المستخدم. يرجى المحاولة مرة أخرى لاحقاً."
+      },
+      "missingInformation": {
+        "title": "معلومات ناقصة",
+        "message": "يرجى ملء جميع الحقول المطلوبة قبل الإرسال."
+      },
+      "authenticationError": {
+        "title": "خطأ في المصادقة",
+        "message": "يرجى تسجيل الدخول لإرسال طلبك."
+      },
+      "success": {
+        "title": "نجح",
+        "message": "تم الإرسال بنجاح"
+      },
+      "partialSuccess": {
+        "title": "نجح جزئياً",
+        "message": "تم حفظ طلبك لكن لم نتمكن من إرسال إشعار البريد الإلكتروني. يرجى التحقق من عنوان بريدك الإلكتروني."
+      },
+      "submissionFailed": {
+        "title": "فشل الإرسال",
+        "message": "غير قادر على إرسال طلبك. يرجى المحاولة مرة أخرى لاحقاً. خطأ: {error}"
+      }
+    }
+  },
+  "accountDeletion": {
+    "header": {
+      "title": "حذف الحساب"
+    },
+    "content": {
+      "headerTitle": "حذف الحساب",
+      "headerSubtitle": "طلب إزالة الحساب",
+      "importantNotice": "إشعار مهم",
+      "warningText": "⚠️ حذف الحساب دائم ولا يمكن التراجع عنه\n🗑️ سيتم حذف جميع بياناتك ومعاملاتك وتاريخك نهائياً\n💰 تأكد من سحب جميع الأموال قبل طلب الحذف\n📋 لن تتمكن من استرداد حسابك أو بياناتك بعد الحذف",
+      "deletionRequestProcess": "عملية طلب الحذف",
+      "instructionText": "أكمل النموذج أدناه لطلب حذف الحساب. سيقوم فريقنا بمراجعة طلبك ومعالجته خلال 2-3 أيام عمل. ستتلقى تأكيداً عبر البريد الإلكتروني بمجرد حذف حسابك نهائياً.",
+      "accountInformation": "معلومات الحساب",
+      "personalDetails": "التفاصيل الشخصية",
+      "firstName": "الاسم الأول",
+      "firstNamePlaceholder": "أدخل اسمك الأول",
+      "lastName": "اسم العائلة",
+      "lastNamePlaceholder": "أدخل اسم عائلتك",
+      "emailAddress": "عنوان البريد الإلكتروني",
+      "emailPlaceholder": "your.email@example.com",
+      "deletionReason": "سبب الحذف",
+      "reasonForDeletion": "سبب حذف الحساب",
+      "helperText": "يرجى توضيح سبب رغبتك في حذف حسابك. هذا يساعدنا في تحسين خدماتنا.",
+      "reasonPlaceholder": "يرجى تقديم سبب مفصل لحذف الحساب. على سبيل المثال: مخاوف الخصوصية، عدم الحاجة للخدمة، الانتقال إلى منصة أخرى، إلخ.",
+      "whatHappensNext": "ماذا يحدث بعد ذلك؟",
+      "processText": "بعد إرسال طلب الحذف:\n📧 ستتلقى تأكيداً عبر البريد الإلكتروني\n🔍 سيقوم فريقنا بمراجعة طلبك خلال 2-3 أيام عمل\n✅ سيتم إرسال تأكيد نهائي قبل الحذف الدائم\n🗑️ سيتم حذف حسابك وجميع البيانات نهائياً",
+      "submitDeletionRequest": "إرسال طلب الحذف",
+      "submitting": "جاري الإرسال..."
+    },
+    "modals": {
+      "missingInformation": {
+        "title": "معلومات ناقصة",
+        "message": "يرجى ملء جميع الحقول المطلوبة قبل الإرسال."
+      },
+      "confirmAccountDeletion": {
+        "title": "تأكيد حذف الحساب",
+        "message": "هل أنت متأكد من رغبتك في طلب حذف الحساب؟ لا يمكن التراجع عن هذا الإجراء وسيؤدي إلى إزالة جميع بياناتك نهائياً."
+      },
+      "requestSubmitted": {
+        "title": "تم إرسال الطلب",
+        "message": "تم إرسال طلب حذف حسابك بنجاح."
+      },
+      "submissionFailed": {
+        "title": "فشل الإرسال",
+        "message": "فشل في إرسال الطلب. يرجى المحاولة مرة أخرى."
+      }
+    }
+  },
+  "agentDashboard": {
+    "header": {
+      "title": "لوحة تحكم الوكيل"
+    },
+    "content": {
+      "agentProfile": "ملف الوكيل",
+      "name": "الاسم",
+      "agentNumber": "رقم الوكيل",
+      "agentWalletAmount": "مبلغ محفظة الوكيل",
+      "transfer": "تحويل",
+      "loading": "جاري التحميل..."
+    },
+    "modals": {
+      "accessRestricted": {
+        "title": "الوصول مقيد",
+        "message": "هذه الميزة تتطلب حساباً مميزاً. نوع حسابك الحالي هو: {accountType}. يرجى الترقية إلى المميز للوصول إلى لوحة تحكم الوكيل."
+      },
+      "accessDenied": {
+        "title": "الوصول مرفوض",
+        "message": "تحتاج إلى أن تكون وكيلاً للوصول إلى هذه الصفحة."
+      },
+      "dataError": {
+        "title": "خطأ في البيانات",
+        "message": "لم يتم العثور على بيانات المستخدم. يرجى المحاولة مرة أخرى."
+      },
+      "error": {
+        "title": "خطأ",
+        "message": "غير قادر على التحقق من أذونات الحساب. يرجى المحاولة مرة أخرى."
+      }
+    }
+  },
+  "deposit": {
+    "header": {
+      "title": "طلب الإيداع"
+    },
+    "content": {
+      "investmentDeposit": "إيداع الاستثمار",
+      "growYourWealth": "نمّ ثروتك معنا",
+      "depositRequest": "طلب الإيداع",
+      "depositInstructions": "أكمل النموذج أدناه لطلب إيداع. اختر بين إيداع لأجل لعوائد مضمونة (الحد الأدنى ₱50,000) أو استثمارات الأسهم لفرص السوق (الحد الأدنى ₱2,000,000).",
+      "investmentDetails": "تفاصيل الاستثمار",
+      "investmentType": "نوع الاستثمار",
+      "selectInvestmentType": "اختر نوع الاستثمار *",
+      "chooseInvestmentType": "اختر نوع استثمارك",
+      "contractPeriod": "فترة العقد *",
+      "selectContractDuration": "اختر مدة العقد",
+      "address": "العنوان",
+      "enterAddress": "أدخل عنوانك الكامل",
+      "addressRequired": "العنوان مطلوب",
+      "investmentAmount": "مبلغ الاستثمار",
+      "amount": "المبلغ *",
+      "enterInvestmentAmount": "أدخل مبلغ الاستثمار",
+      "phpEquivalent": "المعادل بالبيزو الفلبيني",
+      "calculating": "جاري الحساب...",
+      "rate": "السعر: 1 {currency} = ₱{rate}",
+      "contactInformation": "معلومات الاتصال",
+      "emailAddress": "عنوان البريد الإلكتروني",
+      "accountHolder": "صاحب الحساب: {firstName} {lastName}",
+      "processingInformation": "معلومات المعالجة",
+      "processingText": "بعد تقديم طلب الإيداع، سنرسل لك تفاصيل الحساب المصرفي عبر البريد الإلكتروني. يرجى ملاحظة أن عملية طلب الإيداع تعمل في أيام العمل من الاثنين إلى الجمعة. قد يستغرق الأمر يوم واحد لإكمال المعاملة في محفظة إنسباير. ستتلقى تأكيداً بمجرد معالجة إيداعك.",
+      "submitDepositRequest": "إرسال طلب الإيداع",
+      "submitting": "جاري الإرسال...",
+      "rateUnavailable": "السعر غير متوفر",
+      "minimumStock": "الحد الأدنى ₱2,000,000 للأسهم",
+      "minimumTimeDeposit": "الحد الأدنى ₱50,000 للإيداع لأجل",
+      "minimum": "الحد الأدنى: {amount}",
+      "selectCurrency": "اختر العملة",
+      "selectInvestmentTypeModal": "اختر نوع الاستثمار",
+      "selectContractPeriod": "اختر فترة العقد",
+      "timeDeposit": "إيداع لأجل",
+      "stockInvestment": "استثمار الأسهم",
+      "sixMonthsContract": "عقد 6 أشهر",
+      "oneYearContract": "عقد سنة واحدة",
+      "twoYearsContract": "عقد سنتين"
+    },
+    "modals": {
+      "missingInformation": {
+        "title": "معلومات ناقصة",
+        "message": "يرجى ملء جميع الحقول المطلوبة."
+      },
+      "exchangeRateUnavailable": {
+        "title": "سعر الصرف غير متوفر",
+        "message": "سعر الصرف للعملة المختارة غير متوفر حالياً. يرجى المحاولة مرة أخرى لاحقاً أو اختيار عملة مختلفة."
+      },
+      "minimumInvestmentNotMet": {
+        "title": "لم يتم استيفاء الحد الأدنى للاستثمار",
+        "message": "استثمارات {type} تتطلب حداً أدنى من ₱{amount}. يرجى زيادة مبلغك."
+      },
+      "requestSubmitted": {
+        "title": "تم إرسال الطلب",
+        "message": "تم إرسال طلب الإيداع بنجاح! يرجى التحقق من بريدك الإلكتروني للحصول على تفاصيل الحساب المصرفي."
+      },
+      "submissionFailed": {
+        "title": "فشل الإرسال",
+        "message": "فشل في إرسال الطلب. يرجى المحاولة مرة أخرى."
+      }
+    }
+  },
+  "maya": {
+    "header": {
+      "title": "فتح حساب المحفظة الإلكترونية"
+    },
+    "content": {
+      "ewalletAccountOpening": "فتح حساب المحفظة الإلكترونية",
+      "digitalBankingMadeSimple": "الخدمات المصرفية الرقمية مبسطة",
+      "accountOpeningRequest": "طلب فتح حساب",
+      "accountOpeningInstructions": "يرجى ملء النموذج التالي لطلب فتح حساب مع مزود المحفظة الإلكترونية المفضل لديك. سيتم معالجة طلبك خلال 5-7 أيام عمل.",
+      "personalInformation": "المعلومات الشخصية",
+      "ewalletSelection": "اختيار المحفظة الإلكترونية",
+      "selectEwalletProvider": "اختر مزود المحفظة الإلكترونية *",
+      "selectPreferredEwallet": "اختر المحفظة الإلكترونية المفضلة لديك",
+      "contactDetails": "تفاصيل الاتصال",
+      "emailAddress": "عنوان البريد الإلكتروني *",
+      "emailPlaceholder": "your.email@example.com",
+      "mobileNumber": "رقم الهاتف المحمول *",
+      "mobilePlaceholder": "+63 9XX XXX XXXX",
+      "landlineNumber": "رقم الهاتف الثابت",
+      "landlinePlaceholder": "(02) XXXX XXXX",
+      "personalDetails": "التفاصيل الشخصية",
+      "gender": "الجنس *",
+      "selectGender": "اختر جنسك",
+      "dateOfBirth": "تاريخ الميلاد *",
+      "selectBirthdate": "اختر تاريخ ميلادك",
+      "civilStatus": "الحالة الاجتماعية *",
+      "citizenship": "الجنسية *",
+      "citizenshipPlaceholder": "فلبيني",
+      "addressInformation": "معلومات العنوان",
+      "completeAddress": "العنوان الكامل *",
+      "addressPlaceholder": "رقم المنزل/الوحدة، الشارع، البارانجاي، المدينة، المقاطعة، الرمز البريدي",
+      "financialInformation": "المعلومات المالية",
+      "sourceOfFund": "مصدر الأموال *",
+      "sourcePlaceholder": "مثل: التوظيف، الأعمال، الاستثمار",
+      "grossMonthlyIncome": "إجمالي الدخل الشهري *",
+      "incomePlaceholder": "₱ 50,000",
+      "processingInformation": "معلومات المعالجة",
+      "processingText": "بإرسال هذه التفاصيل، سنرسل لك تأكيداً عبر البريد الإلكتروني مع حالة طلبك. يرجى ملاحظة أن هذه العملية ستستغرق حوالي 5-7 أيام عمل للمراجعة والموافقة.",
+      "submitApplication": "إرسال الطلب",
+      "processing": "جاري المعالجة...",
+      "selectGenderModal": "اختر الجنس",
+      "selectCivilStatusModal": "اختر الحالة الاجتماعية",
+      "selectEwalletTypeModal": "اختر نوع المحفظة الإلكترونية",
+      "male": "ذكر",
+      "female": "أنثى",
+      "preferNotToSay": "أفضل عدم الإفصاح",
+      "single": "أعزب",
+      "married": "متزوج",
+      "legallySeparated": "منفصل قانونياً",
+      "divorced": "مطلق",
+      "annulled": "ملغي",
+      "widowEer": "أرمل/ة",
+      "maya": "مايا",
+      "gCash": "جي كاش"
+    },
+    "steps": {
+      "ewalletSelection": {
+        "title": "اختر مزود المحفظة الإلكترونية",
+        "description": "اختر مزود المحفظة الإلكترونية المفضل لديك لفتح الحساب. سيحدد هذا الخدمات المصرفية الرقمية المتاحة لك."
+      },
+      "contactInfo": {
+        "title": "معلومات الاتصال",
+        "description": "قدم تفاصيل الاتصال الخاصة بك حتى نتمكن من الوصول إليك بخصوص حالة طلبك وتحديثات الحساب."
+      },
+      "personalDetails": {
+        "title": "المعلومات الشخصية",
+        "description": "أخبرنا عن نفسك. هذه المعلومات مطلوبة للتحقق من الهوية وأغراض الامتثال."
+      },
+      "addressInfo": {
+        "title": "معلومات العنوان",
+        "description": "قدم عنوانك الكامل لأغراض التحقق وإعداد الحساب."
+      },
+      "financialInfo": {
+        "title": "المعلومات المالية",
+        "description": "شارك تفاصيلك المالية لمساعدتنا في فهم احتياجاتك المصرفية وضمان الامتثال."
+      }
+    },
+    "validation": {
+      "selectEwallet": "يرجى اختيار مزود المحفظة الإلكترونية",
+      "emailRequired": "عنوان البريد الإلكتروني مطلوب",
+      "mobileRequired": "رقم الهاتف المحمول مطلوب",
+      "genderRequired": "يرجى اختيار جنسك",
+      "birthdateRequired": "يرجى اختيار تاريخ ميلادك",
+      "civilStatusRequired": "يرجى اختيار حالتك الاجتماعية",
+      "citizenshipRequired": "الجنسية مطلوبة",
+      "addressRequired": "العنوان الكامل مطلوب",
+      "sourceFundRequired": "مصدر الأموال مطلوب",
+      "incomeRequired": "الدخل الشهري مطلوب"
+    },
+    "modals": {
+      "accessRestricted": {
+        "title": "الوصول مقيد",
+        "message": "هذه الميزة تتطلب حساباً مميزاً. نوع حسابك الحالي هو: {accountType}. يرجى الترقية إلى المميز للوصول إلى خدمات حساب المحفظة الإلكترونية."
+      },
+      "timeDepositInsufficient": {
+        "title": "الوصول مقيد",
+        "message": "تحتاج إلى إيداع لأجل بحد أدنى ₱200,000 لفتح حساب محفظة إلكترونية. إيداعك الحالي لأجل هو ₱{amount}. يرجى زيادة إيداعك لأجل أولاً."
+      },
+      "error": {
+        "title": "خطأ",
+        "message": "غير قادر على التحقق من أذونات الحساب. يرجى المحاولة مرة أخرى."
+      },
+      "dataError": {
+        "title": "خطأ",
+        "message": "فشل في جلب بيانات المستخدم. يرجى المحاولة مرة أخرى لاحقاً."
+      },
+      "missingInformation": {
+        "title": "معلومات ناقصة",
+        "message": "يرجى ملء جميع الحقول المطلوبة قبل الإرسال."
+      },
+      "authenticationError": {
+        "title": "خطأ في المصادقة",
+        "message": "يرجى تسجيل الدخول لإرسال طلبك."
+      },
+      "applicationSubmitted": {
+        "title": "تم إرسال الطلب بنجاح!",
+        "message": "تم إرسال طلب فتح حساب {ewalletType} وحفظه في قاعدة البيانات الخاصة بنا. ستتلقى تأكيداً عبر البريد الإلكتروني قريباً. معرف الطلب: {applicationId}"
+      },
+      "partialSuccess": {
+        "title": "نجاح جزئي",
+        "message": "تم حفظ طلبك ولكن لم نتمكن من إرسال إشعار البريد الإلكتروني. يرجى التحقق من عنوان بريدك الإلكتروني."
+      },
+      "submissionFailed": {
+        "title": "فشل الإرسال",
+        "message": "غير قادر على إرسال طلبك. يرجى المحاولة مرة أخرى لاحقاً. خطأ: {error}"
+      }
+    }
+  },
+  "stockholder": {
+    "header": {
+      "title": "لوحة تحكم المساهم"
+    },
+    "content": {
+      "stockholderAmount": "مبلغ المساهم",
+      "buy": "شراء",
+      "transfer": "تحويل",
+      "sell": "بيع"
+    },
+    "modals": {
+      "dataError": {
+        "title": "خطأ في البيانات",
+        "message": "لم يتم العثور على بيانات المستخدم. يرجى المحاولة مرة أخرى."
+      }
+    }
+  },
+  "stockTransfer": {
+    "header": {
+      "title": "تحويل الأسهم",
+      "subtitle": "تحويل مبلغ الأسهم إلى مستخدمين آخرين"
+    },
+    "balanceLabel": "مبلغ الأسهم المتاح",
+    "guide": {
+      "title": "دليل سريع",
+      "step1": "البحث عن المستلم برقم الحساب",
+      "step2": "أدخل مبلغ الأسهم المراد تحويله",
+      "step3": "تأكيد وإرسال"
+    },
+    "sections": {
+      "recipient": "رقم حساب المستلم",
+      "amount": "مبلغ الأسهم"
+    },
+    "placeholders": {
+      "accountNumber": "أدخل رقم حساب المستلم...",
+      "amount": "0.00"
+    },
+    "buttons": {
+      "change": "تغيير",
+      "sendTransfer": "إرسال تحويل الأسهم",
+      "selectRecipient": "اختر المستلم",
+      "enterAmount": "أدخل المبلغ",
+      "cannotTransferToSelf": "لا يمكن التحويل إلى نفسك",
+      "insufficientStock": "مبلغ الأسهم غير كافٍ",
+      "enterValidAmount": "أدخل مبلغاً صحيحاً"
+    },
+    "validation": {
+      "selfTransfer": "لا يمكنك تحويل الأسهم إلى نفسك. يرجى إدخال رقم حساب مختلف.",
+      "userNotFound": "المستخدم غير موجود. يرجى التحقق من رقم الحساب.",
+      "invalidAccountNumber": "يرجى إدخال رقم حساب صحيح (6 أرقام على الأقل).",
+      "insufficientBalance": "ليس لديك مبلغ أسهم كافٍ للتحويل"
+    },
+    "titles": {
+      "transferSuccessful": "تم التحويل بنجاح",
+      "transferFailed": "فشل التحويل",
+      "error": "خطأ"
+    },
+    "messages": {
+      "transferSuccessful": "تم إكمال تحويل الأسهم بنجاح",
+      "transferFailed": "فشل في معالجة تحويل الأسهم. يرجى المحاولة مرة أخرى."
+    },
+    "currencySymbol": "₱"
+  },
+  "inspireAuto": {
+    "header": {
+      "title": "ملف الاستثمار"
+    },
+    "content": {
+      "loadingText": "جاري تحميل ملف الاستثمار...",
+      "totalDeposits": "إجمالي الودائع",
+      "active": "نشط",
+      "completed": "مكتمل",
+      "totalInvested": "إجمالي المستثمر",
+      "activeDeposits": "الودائع النشطة",
+      "completedDeposits": "الودائع المكتملة",
+      "noActiveDeposits": "لا توجد ودائع نشطة",
+      "noActiveDepositsSubtext": "ستظهر استثماراتك النشطة هنا",
+      "noCompletedDeposits": "لا توجد ودائع مكتملة",
+      "noCompletedDepositsSubtext": "ستظهر استثماراتك المكتملة هنا",
+      "amount": "المبلغ:",
+      "investmentRate": "معدل الاستثمار:",
+      "contractType": "نوع العقد:",
+      "avgMonth": "متوسط/شهر:",
+      "avgMinute": "متوسط/دقيقة:",
+      "expectedEarnings": "الأرباح المتوقعة:",
+      "completionDate": "تاريخ الإكمال:",
+      "totalEarned": "إجمالي الأرباح:",
+      "earningsBreakdown": "تفصيل الأرباح:",
+      "sixMonthGross": "الإجمالي لـ 6 أشهر:",
+      "tax": "الضريبة (20%):",
+      "sixMonthNet": "الصافي لـ 6 أشهر:",
+      "cycleCompleted": "الدورة المكتملة:",
+      "currentEarnings": "الأرباح الحالية:",
+      "cycle": "دورة",
+      "requestCopy": "طلب نسخة",
+      "processing": "جاري المعالجة...",
+      "contract": "عقد",
+      "retry": "إعادة المحاولة"
+    },
+    "modals": {
+      "accessRestricted": {
+        "title": "الوصول مقيد",
+        "message": "هذه الميزة تتطلب حساب مميز. نوع حسابك الحالي هو: {accountType}. يرجى الترقية إلى المميز للوصول إلى ملفات الاستثمار.",
+        "timeDepositMessage": "تحتاج إلى إيداع آجل نشط للوصول إلى ملف الاستثمار. يرجى إعداد إيداع آجل أولاً."
+      },
+      "error": {
+        "title": "خطأ",
+        "message": "لم يتم العثور على بيانات المستخدم. يرجى المحاولة مرة أخرى لاحقاً.",
+        "loadingError": "فشل في تحميل بيانات الودائع. يرجى المحاولة مرة أخرى.",
+        "updateFailed": "فشل في تحديث Firestore. يرجى المحاولة مرة أخرى.",
+        "authenticationError": "لم يتم العثور على مستخدم مصادق عليه. يرجى تسجيل الدخول مرة أخرى.",
+        "userDataNotFound": "لم يتم العثور على بيانات المستخدم. يرجى الاتصال بالدعم.",
+        "emailNotFound": "لم يتم العثور على بريد المستخدم الإلكتروني. يرجى الاتصال بالدعم.",
+        "depositDataNotFound": "لم يتم العثور على بيانات الوديعة. يرجى الاتصال بالدعم.",
+        "emailError": "تم العثور على العقد ولكن فشل في إرسال البريد الإلكتروني. يرجى المحاولة مرة أخرى.",
+        "requestCopyError": "فشل في طلب نسخة العقد. يرجى المحاولة مرة أخرى.",
+        "copyFailed": "فشل في نسخ معرف الوديعة. يرجى المحاولة مرة أخرى."
+      },
+      "success": {
+        "title": "نجح",
+        "contractSent": "تم إرسال نسخة العقد إلى {email}",
+        "copied": "تم النسخ!",
+        "copiedMessage": "تم نسخ معرف الوديعة \"{depositId}\" إلى الحافظة."
+      },
+      "warning": {
+        "title": "العقد غير متوفر",
+        "message": "نعتذر، العقد الرقمي غير متوفر في الوقت الحالي. يرجى طلب نسخة من ممثلنا على info@inspireholdings.ph"
+      }
+    }
+  },
+  "forgotPassword": {
+    "header": {
+      "title": "استرداد كلمة المرور"
+    },
+    "content": {
+      "title": "استرداد كلمة المرور",
+      "subtitle": "إعادة تعيين كلمة المرور",
+      "howItWorks": "كيف يعمل",
+      "instructions": "📧 أدخل عنوان بريدك الإلكتروني أدناه\n🔗 سنرسل لك رابط إعادة تعيين آمن\n✅ تحقق من صندوق الوارد واضغط على الرابط\n🔑 أنشئ كلمة مرور جديدة وستكون جاهزاً!",
+      "resetPassword": "إعادة تعيين كلمة المرور",
+      "emailAddress": "عنوان البريد الإلكتروني",
+      "emailLabel": "أدخل عنوان بريدك الإلكتروني المسجل *",
+      "emailPlaceholder": "your.email@example.com",
+      "securityInfo": "معلومات الأمان",
+      "securityText": "🔒 تنتهي صلاحية روابط إعادة تعيين كلمة المرور خلال ساعة واحدة للأمان\n📱 تحقق من مجلد الرسائل المزعجة إذا لم تر البريد الإلكتروني\n🛡️ يمكنك فقط إعادة تعيين كلمة المرور باستخدام هذا الرابط\n⚡ العملية فورية وآمنة",
+      "sendResetLink": "إرسال رابط الإعادة",
+      "sending": "جاري الإرسال...",
+      "emailSentTitle": "تم إرسال البريد الإلكتروني بنجاح!",
+      "emailSentMessage": "لقد أرسلنا رابط إعادة تعيين كلمة المرور إلى:",
+      "emailSentInstructions": "يرجى التحقق من صندوق الوارد واتباع التعليمات لإعادة تعيين كلمة المرور. سينتهي الرابط خلال ساعة واحدة لأسباب أمنية.",
+      "returnToLogin": "العودة إلى تسجيل الدخول"
+    },
+    "alerts": {
+      "missingInfo": "معلومات مفقودة",
+      "enterEmail": "يرجى إدخال عنوان بريدك الإلكتروني",
+      "error": "خطأ",
+      "sendFailed": "فشل في إرسال بريد إعادة تعيين كلمة المرور. يرجى المحاولة مرة أخرى."
+    }
+  },
+  "helpCenter": {
+    "header": {
+      "title": "مركز المساعدة"
+    },
+    "content": {
+      "title": "مركز المساعدة",
+      "subtitle": "نحن هنا لمساعدتك",
+      "submitRequestTitle": "إرسال طلبك",
+      "instructions": "تحتاج مساعدة في شيء ما؟ املأ هذا النموذج وسيعود فريق الدعم إليك في أقرب وقت ممكن. نحن هنا للمساعدة!",
+      "contactInfo": "معلومات الاتصال",
+      "yourDetails": "تفاصيلك",
+      "firstName": "الاسم الأول *",
+      "firstNamePlaceholder": "أدخل اسمك الأول",
+      "lastName": "اسم العائلة *",
+      "lastNamePlaceholder": "أدخل اسم عائلتك",
+      "emailAddress": "عنوان البريد الإلكتروني *",
+      "emailPlaceholder": "your.email@example.com",
+      "ticketDetails": "تفاصيل التذكرة",
+      "ticketTitle": "عنوان التذكرة *",
+      "ticketTitlePlaceholder": "عنوان مختصر يصف مشكلتك",
+      "priorityLevel": "مستوى الأولوية *",
+      "selectPriority": "اختر مستوى الأولوية",
+      "highPriority": "🔴 أولوية عالية",
+      "mediumPriority": "🟡 أولوية متوسطة",
+      "lowPriority": "🟢 أولوية منخفضة",
+      "category": "الفئة *",
+      "selectCategory": "اختر الفئة",
+      "paymentIssues": "💳 مشاكل الدفع",
+      "withdrawalIssues": "💰 مشاكل السحب",
+      "accountVerification": "✅ التحقق من الحساب",
+      "securityConcerns": "🔐 مخاوف الأمان",
+      "appTechnicalIssues": "📱 مشاكل تقنية في التطبيق",
+      "generalSupport": "📞 دعم عام",
+      "other": "📋 أخرى",
+      "howCanWeHelp": "كيف يمكننا المساعدة؟",
+      "describeConcern": "اوصف مخاوفك *",
+      "describePlaceholder": "يرجى وصف مخاوفك أو سؤالك بالتفصيل. أدرج أي معلومات ذات صلة ستساعدنا على مساعدتك بشكل أفضل.",
+      "whatHappensNext": "ماذا يحدث بعد ذلك؟",
+      "disclaimerText": "بإرسال هذا النموذج، سنتلقى طلب المساعدة الخاص بك عبر البريد الإلكتروني. سيراجع فريق الدعم مخاوفك ويستجيب خلال 24-48 ساعة خلال أيام العمل. شكراً لتواصلك معنا!",
+      "submitRequest": "إرسال الطلب",
+      "sending": "جاري الإرسال...",
+      "activeSupportTickets": "تذاكر الدعم النشطة",
+      "noActiveTickets": "لا توجد تذاكر نشطة",
+      "noActiveTicketsSubtext": "أرسل طلب مساعدة جديد للبدء مع فريق الدعم",
+      "submitNewRequest": "إرسال طلب جديد",
+      "messages": "رسائل"
+    },
+    "modals": {
+      "selectPriority": "اختر مستوى الأولوية",
+      "selectCategory": "اختر الفئة",
+      "missingInfo": "معلومات مفقودة",
+      "fillAllFields": "يرجى ملء جميع الحقول المطلوبة.",
+      "authenticationError": "خطأ في المصادقة",
+      "loginToSubmit": "يرجى تسجيل الدخول لإرسال طلب المساعدة.",
+      "submittedSuccessfully": "تم إرسال تذكرة المساعدة بنجاح!",
+      "submittedMessage": "تم إرسال تذكرة المساعدة وحفظها في قاعدة البيانات. ستتلقى تأكيداً بالبريد الإلكتروني قريباً. معرف التذكرة: {ticketId}",
+      "partialSuccess": "نجح جزئياً",
+      "savedButEmailFailed": "تم حفظ تذكرة المساعدة ولكن لم نتمكن من إرسال إشعار البريد الإلكتروني. يرجى التحقق من عنوان بريدك الإلكتروني.",
+      "submissionFailed": "فشل الإرسال",
+      "unableToSubmit": "غير قادر على إرسال تذكرة المساعدة. يرجى المحاولة مرة أخرى لاحقاً. خطأ: {error}",
+      "sendMessageError": "خطأ",
+      "sendMessageFailed": "فشل في إرسال الرسالة. يرجى المحاولة مرة أخرى.",
+      "translatedTo": "مترجم إلى",
+      "translationOptions": "خيارات الترجمة",
+      "translateTo": "ترجمة إلى:",
+      "translateAll": "ترجمة الكل",
+      "clearAll": "مسح الكل"
+    }
+  },
+  "travelProtection": {
+    "header": {
+      "title": "حماية السفر"
+    },
+    "content": {
+      "title": "حماية السفر",
+      "subtitle": "أمن رحلتك",
+      "instructionTitle": "طلب تأمين السفر",
+      "instructionText": "أكمل هذا النموذج للاشتراك في خدمة حماية السفر. سيتم معالجة طلبك خلال 5-7 أيام عمل بعد تأكيد الدفع.",
+      "protectionFee": "رسوم الحماية",
+      "discountedRate": "سعر مخفض للعملاء الحاليين",
+      "standardRate": "سعر الحماية القياسي",
+      "applicationDetails": "تفاصيل الطلب",
+      "contactInformation": "معلومات الاتصال",
+      "personalDetails": "التفاصيل الشخصية",
+      "financialInformation": "المعلومات المالية",
+      "travelDetails": "تفاصيل السفر",
+      "requiredDocuments": "الوثائق المطلوبة",
+      "emailAddress": "عنوان البريد الإلكتروني *",
+      "emailPlaceholder": "your.email@example.com",
+      "mobileNumber": "رقم الهاتف المحمول *",
+      "mobilePlaceholder": "+63 9XX XXX XXXX",
+      "landlineNumber": "رقم الهاتف الأرضي",
+      "landlinePlaceholder": "(02) XXXX XXXX",
+      "gender": "الجنس *",
+      "selectGender": "اختر جنسك",
+      "dateOfBirth": "تاريخ الميلاد *",
+      "selectBirthdate": "اختر تاريخ ميلادك",
+      "civilStatus": "الحالة المدنية *",
+      "selectCivilStatus": "اختر حالتك المدنية",
+      "citizenship": "الجنسية *",
+      "citizenshipPlaceholder": "فلبيني",
+      "homeAddress": "عنوان المنزل *",
+      "addressPlaceholder": "رقم المنزل/الوحدة، الشارع، البارانجاي، المدينة، المقاطعة، الرمز البريدي",
+      "sourceOfFund": "مصدر الأموال *",
+      "sourcePlaceholder": "مثل: العمل، الأعمال، الاستثمار",
+      "grossMonthlyIncome": "إجمالي الدخل الشهري *",
+      "incomePlaceholder": "₱ 50,000",
+      "cashOnHand": "النقد المتاح *",
+      "cashPlaceholder": "₱ 10,000",
+      "destinationAddress": "عنوان الوجهة *",
+      "destinationPlaceholder": "عنوان الفندق/الإقامة حيث ستقيم",
+      "checkInDate": "تاريخ الوصول *",
+      "selectCheckInDate": "اختر تاريخ الإقامة",
+      "duration": "المدة (أيام) *",
+      "durationPlaceholder": "7",
+      "airline": "شركة الطيران *",
+      "airlinePlaceholder": "الخطوط الجوية الفلبينية، سيبو باسيفيك، إلخ",
+      "departureTime": "وقت المغادرة *",
+      "selectDepartureTime": "اختر وقت المغادرة",
+      "arrivalTime": "وقت الوصول *",
+      "selectArrivalTime": "اختر وقت الوصول",
+      "passportNumber": "رقم جواز السفر *",
+      "passportPlaceholder": "P1234567",
+      "purposeOfTravel": "الغرض من السفر *",
+      "purposePlaceholder": "اوصف الغرض من سفرك (عمل، إجازة، زيارة عائلية، إلخ)",
+      "passportPhoto": "صورة جواز السفر *",
+      "uploadPassport": "رفع جواز السفر",
+      "tapToSelect": "اضغط لاختيار الصورة",
+      "governmentId": "الهوية الحكومية *",
+      "uploadGovernmentId": "رفع الهوية الحكومية",
+      "idTypes": "رخصة القيادة، SSS، إلخ",
+      "importantInformation": "معلومات مهمة",
+      "disclaimerText": "بإرسال هذا الطلب، تؤكد أن جميع المعلومات المقدمة دقيقة. سيتم معالجة الدفع بأمان من خلال PayPal. سيتم تفعيل تغطية حماية السفر خلال 5-7 أيام عمل بعد الدفع الناجح والتحقق من الوثائق.",
+      "applyForProtection": "التقدم للحماية",
+      "processing": "جاري المعالجة...",
+      "male": "ذكر",
+      "female": "أنثى",
+      "preferNotToSay": "أفضل عدم القول",
+      "single": "أعزب",
+      "married": "متزوج",
+      "legallySeparated": "منفصل قانونياً",
+      "divorced": "مطلق",
+      "annulled": "ملغي",
+      "widow": "أرمل/ة",
+      "formProgress": "تقدم الطلب",
+      "contactDescription": "يرجى تقديم معلومات الاتصال الخاصة بك",
+      "personalDescription": "يرجى تقديم معلوماتك الشخصية",
+      "financialDescription": "يرجى تقديم معلوماتك المالية",
+      "travelDescription": "يرجى تقديم معلومات السفر الخاصة بك",
+      "documentsDescription": "يرجى رفع الوثائق المطلوبة",
+      "reviewAndSubmit": "مراجعة وإرسال",
+      "reviewDescription": "يرجى مراجعة معلوماتك قبل الإرسال"
+    },
+    "modals": {
+      "accessRestricted": "الوصول مقيد",
+      "premiumRequired": "هذه الميزة تتطلب حساب بريميوم. نوع حسابك الحالي هو: {accountType}. يرجى الترقية إلى بريميوم للوصول إلى حماية السفر.",
+      "error": "خطأ",
+      "noUserData": "لم يتم العثور على بيانات المستخدم",
+      "errorMessage": "غير قادر على التحقق من أذونات الحساب. يرجى المحاولة مرة أخرى.",
+      "selectImageFirst": "يرجى اختيار صورة أولاً.",
+      "loginRequired": "يجب أن تكون مسجلاً للدخول لرفع صورة.",
+      "uploadFailed": "فشل في رفع الصورة. يرجى المحاولة مرة أخرى.",
+      "orderCreated": "تم إنشاء الطلب",
+      "confirmPayment": "يرجى النقر على تأكيد لتأكيد الدفع",
+      "confirm": "تأكيد",
+      "orderFailed": "فشل في إنشاء الطلب",
+      "captureFailed": "فشل في التقاط الدفع",
+      "success": "نجح",
+      "successfullySent": "تم الإرسال بنجاح",
+      "failure": "فشل",
+      "unsuccessfullySent": "لم يتم الإرسال بنجاح",
+      "missingInformation": "معلومات مفقودة",
+      "fillAllFields": "يرجى ملء جميع الحقول المطلوبة ورفع صورة جواز السفر والهوية الحكومية قبل الإرسال.",
+      "authenticationError": "خطأ في المصادقة",
+      "loginToSubmit": "يرجى تسجيل الدخول لإرسال طلبك.",
+      "uploadError": "خطأ في الرفع",
+      "passportUploadFailed": "فشل في رفع صورة جواز السفر. يرجى المحاولة مرة أخرى.",
+      "govtIdUploadFailed": "فشل في رفع الهوية الحكومية. يرجى المحاولة مرة أخرى.",
+      "applicationSubmitted": "تم إرسال الطلب بنجاح!",
+      "applicationMessage": "تم إرسال طلب حماية السفر وحفظه في قاعدة البيانات. ستتلقى تأكيداً بالبريد الإلكتروني قريباً. معرف الطلب: {applicationId}",
+      "partialSuccess": "نجح جزئياً",
+      "savedButEmailFailed": "تم حفظ طلبك ولكن لم نتمكن من إرسال إشعار البريد الإلكتروني. يرجى التحقق من عنوان بريدك الإلكتروني.",
+      "submissionFailed": "فشل الإرسال",
+      "unableToSubmit": "غير قادر على إرسال طلبك. يرجى المحاولة مرة أخرى لاحقاً. خطأ: {error}",
+      "selectGender": "اختر جنسك",
+      "selectCivilStatus": "اختر حالتك المدنية",
+      "contactRequired": "يرجى ملء جميع حقول معلومات الاتصال قبل المتابعة.",
+      "personalRequired": "يرجى ملء جميع التفاصيل الشخصية قبل المتابعة.",
+      "financialRequired": "يرجى ملء جميع المعلومات المالية قبل المتابعة.",
+      "travelRequired": "يرجى ملء جميع تفاصيل السفر قبل المتابعة.",
+      "documentsRequired": "يرجى رفع صورة جواز السفر والهوية الحكومية قبل المتابعة."
+    },
+    "buttons": {
+      "back": "رجوع",
+      "next": "التالي"
+    }
+  },
+  "withdrawalRequest": {
+    "header": {
+      "title": "طلب السحب"
+    },
+    "content": {
+      "title": "طلب السحب",
+      "subtitle": "الوصول إلى أموالك بأمان",
+      "instructionTitle": "طلب السحب",
+      "instructionText": "أكمل النموذج أدناه لطلب سحب. اختر نوع السحب وقدم تفاصيل حسابك المصرفي للتحويل الآمن.",
+      "withdrawalDetails": "تفاصيل السحب",
+      "withdrawalType": "نوع السحب",
+      "selectWithdrawalType": "اختر نوع السحب *",
+      "chooseWithdrawalType": "اختر نوع السحب",
+      "availableBalance": "الرصيد المتاح",
+      "agentWithdrawal": "سحب الوكيل",
+      "withdrawalAmount": "مبلغ السحب (₱) *",
+      "enterWithdrawalAmount": "أدخل مبلغ السحب",
+      "availableBalanceInfo": "الرصيد المتاح: ₱{amount}",
+      "agentWalletBalanceInfo": "رصيد محفظة الوكيل: ₱{amount}",
+      "contactInformation": "معلومات الاتصال",
+      "emailAddress": "عنوان البريد الإلكتروني *",
+      "emailPlaceholder": "your.email@example.com",
+      "accountHolder": "صاحب الحساب: {firstName} {lastName}",
+      "bankingInformation": "المعلومات المصرفية",
+      "bankAccountNumber": "رقم الحساب المصرفي *",
+      "bankAccountNumberPlaceholder": "أدخل رقم حسابك المصرفي",
+      "accountHolderName": "اسم صاحب الحساب *",
+      "accountHolderNamePlaceholder": "أدخل اسم صاحب الحساب (حسب السجلات المصرفية)",
+      "bankName": "اسم البنك *",
+      "bankNamePlaceholder": "أدخل اسم البنك (مثل BDO، BPI، Metrobank)",
+      "branchName": "اسم الفرع *",
+      "branchNamePlaceholder": "أدخل اسم فرع البنك",
+      "securityProcessing": "الأمان والمعالجة",
+      "securityText": "🔒 معلوماتك المصرفية مشفرة وآمنة\n⏱️ وقت المعالجة: 1-2 أيام عمل\n📧 سيتم إرسال التأكيد إلى بريدك الإلكتروني\n✅ جميع عمليات السحب يتم التحقق منها قبل المعالجة",
+      "submitWithdrawalRequest": "إرسال طلب السحب",
+      "submitting": "جاري الإرسال...",
+      "insufficientBalance": "رصيد غير كاف"
+    },
+    "modals": {
+      "accessRestricted": "الوصول مقيد",
+      "premiumRequired": "هذه الميزة تتطلب حساب بريميوم. نوع حسابك الحالي هو: {accountType}. يرجى الترقية إلى بريميوم للوصول إلى وظيفة السحب.",
+      "error": "خطأ",
+      "errorMessage": "غير قادر على التحقق من أذونات الحساب. يرجى المحاولة مرة أخرى.",
+      "missingInformation": "معلومات مفقودة",
+      "fillAllFields": "يرجى ملء جميع الحقول المطلوبة قبل الإرسال.",
+      "authenticationError": "خطأ في المصادقة",
+      "loginToSubmit": "يرجى تسجيل الدخول لإرسال طلب السحب.",
+      "invalidAmount": "مبلغ غير صالح",
+      "enterValidAmount": "يرجى إدخال مبلغ سحب صالح أكبر من 0.",
+      "insufficientBalance": "رصيد غير كاف",
+      "insufficientBalanceMessage": "رصيدك المتاح هو ₱{amount}. لا يمكنك سحب أكثر من رصيدك المتاح.",
+      "insufficientAgentBalance": "رصيد الوكيل غير كاف",
+      "insufficientAgentBalanceMessage": "رصيد محفظة الوكيل هو ₱{amount}. لا يمكنك سحب أكثر من رصيد محفظة الوكيل.",
+      "submittedSuccessfully": "تم إرسال طلب السحب بنجاح!",
+      "submittedMessage": "تم إرسال طلب السحب وحفظه في قاعدة البيانات. ستتلقى تأكيداً بالبريد الإلكتروني قريباً. معرف الطلب: {requestId}",
+      "partialSuccess": "نجح جزئياً",
+      "savedButEmailFailed": "تم حفظ طلب السحب ولكن لم نتمكن من إرسال إشعار البريد الإلكتروني. يرجى التحقق من عنوان بريدك الإلكتروني.",
+      "submissionFailed": "فشل الإرسال",
+      "unableToSubmit": "غير قادر على إرسال طلب السحب. يرجى المحاولة مرة أخرى لاحقاً. خطأ: {error}",
+      "selectWithdrawalType": "اختر نوع السحب"
+    }
+  },
+  "contractRequestModal": {
+    "content": {
+      "title": "طلب العقد",
+      "subtitle": "طلب نسخة أصلية من العقد بدون علامات مائية",
+      "contractId": "معرف العقد *",
+      "contractIdPlaceholder": "أدخل معرف العقد",
+      "emailAddress": "عنوان البريد الإلكتروني *",
+      "emailAddressPlaceholder": "أدخل عنوان بريدك الإلكتروني",
+      "fullName": "الاسم الكامل *",
+      "fullNamePlaceholder": "أدخل اسمك الكامل",
+      "infoText": "سيتم إرسال العقد الأصلي إلى عنوان البريد الإلكتروني المقدم خلال 1-2 أيام عمل.",
+      "sendRequest": "إرسال الطلب",
+      "sending": "جاري الإرسال...",
+      "cancel": "إلغاء"
+    },
+    "validation": {
+      "contractIdRequired": "معرف العقد مطلوب",
+      "emailRequired": "عنوان البريد الإلكتروني مطلوب",
+      "emailInvalid": "يرجى إدخال عنوان بريد إلكتروني صالح",
+      "fullNameRequired": "الاسم الكامل مطلوب"
+    },
+    "alerts": {
+      "error": "خطأ",
+      "loginRequired": "يجب عليك تسجيل الدخول لطلب نسخة من العقد.",
+      "requestFailed": "فشل الطلب",
+      "requestFailedMessage": "فشل في إرسال طلب العقد. يرجى المحاولة مرة أخرى. خطأ: {error}",
+      "unableToSubmit": "غير قادر على إرسال طلب العقد. يرجى المحاولة مرة أخرى لاحقاً.",
+      "successMessage": "تم إرسال طلب العقد بنجاح! سنقوم بمعالجة طلبك لمعرف العقد: {contractId} وإرسال العقد الأصلي إلى {emailAddress} خلال 1-2 أيام عمل."
+    }
+  },
+  "agentTransaction": {
+    "content": {
+      "loadingText": "جاري تحميل معاملات الوكيل...",
+      "errorText": "خطأ: {error}",
+      "emptyText": "لم يتم العثور على معاملات وكيل",
+      "headerText": "تاريخ معاملات الوكيل",
+      "pageInfo": "صفحة {currentPage} من {totalPages} ({total} إجمالي)",
+      "client": "العميل",
+      "type": "النوع",
+      "date": "التاريخ",
+      "amount": "المبلغ",
+      "commission": "العمولة",
+      "gross": "الإجمالي",
+      "tax": "الضريبة",
+      "firstPage": "الأولى",
+      "previousPage": "‹",
+      "nextPage": "›",
+      "lastPage": "الأخيرة",
+      "close": "إغلاق"
+    },
+    "modal": {
+      "title": "نظرة عامة على معاملة الوكيل",
+      "date": "التاريخ:",
+      "typeOfTransaction": "نوع المعاملة:",
+      "amount": "المبلغ:",
+      "grossAmount": "المبلغ الإجمالي:",
+      "taxApplied": "الضريبة المطبقة:",
+      "commission": "العمولة:",
+      "referralName": "اسم الإحالة:"
+    }
+  },
+  "notifications": {
+    "title": "الإشعارات",
+    "loadingText": "جاري تحميل الإشعارات...",
+    "errorTitle": "خطأ في تحميل الإشعارات",
+    "errorMessage": "فشل في تحميل الإشعارات",
+    "retryButton": "حاول مرة أخرى",
+    "emptyTitle": "لا توجد إشعارات",
+    "emptyMessage": "ليس لديك أي إشعارات بعد. تحقق لاحقاً للحصول على التحديثات.",
+    "noTitle": "لا يوجد عنوان",
+    "noMessage": "محتوى الرسالة غير متوفر.",
+    "invalidDate": "تاريخ غير صحيح",
+    "detailTitle": "تفاصيل الإشعار",
+    "backToNotifications": "العودة إلى الإشعارات"
+  },
+  "investments": {
+    "loadingText": "جاري تحميل الاستثمارات...",
+    "loadingSubtext": "يرجى الانتظار بينما نجلب بياناتك",
+    "emptyText": "لم يتم العثور على استثمارات",
+    "emptySubtextMonthly": "ستظهر استثمارات حملتك الشهرية هنا عند توفرها.",
+    "emptySubtextThreeMonth": "ستظهر استثمارات حملتك لمدة ثلاثة أشهر هنا عند توفرها.",
+    "pullToRefresh": "اسحب للتحديث",
+    "labels": {
+      "amount": "المبلغ",
+      "rate": "المعدل",
+      "payoutDay": "يوم الدفع",
+      "expectedIncome": "الدخل المتوقع",
+      "completion": "الإكمال",
+      "status": "الحالة",
+      "cycleCompleted": "الدورة المكتملة",
+      "progress": "التقدم",
+      "expected": "المتوقع"
+    },
+    "status": {
+      "active": "نشط",
+      "completed": "مكتمل"
+    },
+    "errors": {
+      "failedToLoadMonthly": "فشل في تحميل الحملات الشهرية",
+      "failedToLoadThreeMonth": "فشل في تحميل حملات الثلاثة أشهر",
+      "failedToSetupConnection": "فشل في إعداد اتصال البيانات في الوقت الفعلي",
+      "failedToFetch": "فشل في جلب الحملات"
+    }
+  },
+  "agentChat": {
+    "title": "دعم الوكيل",
+    "supportOnline": "الدعم متصل",
+    "supportTeam": "فريق الدعم",
+    "loadingMessages": "جاري تحميل الرسائل...",
+    "welcomeTitle": "👋 مرحباً بك في دعم الوكيل",
+    "welcomeSubtext": "أنت متصل بفريق الدعم.\nأرسل رسالة لبدء المحادثة.",
+    "typeMessage": "اكتب رسالتك...",
+    "supportTyping": "الدعم يكتب",
+    "shareFile": "مشاركة ملف",
+    "chooseOption": "اختر خياراً:",
+    "chooseFromGallery": "اختر من المعرض",
+    "chooseDocuments": "اختر المستندات",
+    "cancel": "إلغاء",
+    "translate": "ترجمة",
+    "hideTranslation": "إخفاء الترجمة",
+    "noNewMessages": "لا توجد رسائل جديدة من الوكيل للترجمة",
+    "allTranslationsCleared": "تم مسح جميع الترجمات",
+    "success": "نجح",
+    "info": "معلومات",
+    "failedToPickImage": "فشل في اختيار الصورة",
+    "failedToPickDocument": "فشل في اختيار المستند",
+    "grantCameraPermissions": "يرجى منح أذونات الكاميرا لمشاركة الصور.",
+    "user": "مستخدم"
+  },
+  "loadingScreens": {
+    "transfer": {
+      "title": "تحويل الأموال",
+      "subtitle": "معالجة التحويل...",
+      "status": "يرجى الانتظار بينما نعالج تحويلك...",
+      "from": "من",
+      "to": "إلى"
+    },
+    "simple": {
+      "default": "جاري التحميل..."
+    },
+    "travelProtection": {
+      "title": "التقدم بطلب حماية السفر",
+      "subtitle": "تأمين رحلتك مع Inspire Wallet",
+      "status": "معالجة طلب حماية السفر...",
+      "features": {
+        "medical": "التغطية الطبية",
+        "baggage": "حماية الأمتعة",
+        "cancellation": "إلغاء الرحلة"
+      }
+    },
+    "inspireCards": {
+      "title": "معالجة بطاقتك",
+      "subtitle": "إعداد بطاقة Inspire الخاصة بك...",
+      "status": "يرجى الانتظار بينما نعد بطاقتك"
+    },
+    "bank": {
+      "title": "معالجة طلب البنك",
+      "subtitle": "إعداد حسابك المصرفي...",
+      "status": "يرجى الانتظار بينما نعالج طلبك",
+      "features": {
+        "secure": "آمن",
+        "fast": "سريع",
+        "reliable": "موثوق"
+      }
+    },
+    "general": {
+      "login": {
+        "title": "تسجيل الدخول",
+        "subtitle": "الوصول إلى Inspire Wallet",
+        "status": "يرجى الانتظار..."
+      },
+      "register": {
+        "title": "إنشاء حسابك",
+        "subtitle": "إعداد Inspire Wallet",
+        "status": "يرجى الانتظار..."
+      },
+      "default": {
+        "title": "جاري التحميل...",
+        "subtitle": "يرجى الانتظار",
+        "status": "معالجة..."
+      }
+    },
+    "ewallet": {
+      "title": "فتح حساب المحفظة الإلكترونية",
+      "subtitle": "إعداد الخدمات المصرفية الرقمية في الفلبين",
+      "status": "معالجة طلب المحفظة الإلكترونية...",
+      "features": {
+        "mobile": "المدفوعات المحمولة",
+        "cards": "البطاقات الرقمية",
+        "cashless": "المعاملات غير النقدية"
+      }
+    }
+  },
+  "investmentTracker": {
+    "monthly": {
+      "title": "متتبع الاستثمارات",
+      "subtitle": "حملات شهرية",
+      "headerTitle": "استثمارات الحملات الشهرية",
+      "headerSubtitle": "استثمار متتبع • مرتب حسب التاريخ (الأحدث أولاً)",
+      "headerSubtitlePlural": "استثمار متتبع • مرتب حسب التاريخ (الأحدث أولاً)",
+      "campaignType": "حملة رالي",
+      "labels": {
+        "amount": "المبلغ",
+        "rate": "المعدل",
+        "payoutDay": "يوم الدفع",
+        "expectedIncome": "الدخل المتوقع",
+        "completion": "الاكتمال",
+        "status": "الحالة",
+        "cycleCompleted": "الدورة المكتملة",
+        "expected": "متوقع"
+      },
+      "status": {
+        "active": "نشط"
+      },
+      "subtexts": {
+        "afterTax": "بعد 20% ضريبة",
+        "nextPayout": "التالي:"
+      }
+    },
+    "threeMonth": {
+      "title": "متتبع الاستثمارات",
+      "subtitle": "حملات ثلاثة أشهر",
+      "headerTitle": "استثمارات حملات ثلاثة أشهر",
+      "headerSubtitle": "استثمار متتبع • مرتب حسب التاريخ (الأحدث أولاً)",
+      "headerSubtitlePlural": "استثمار متتبع • مرتب حسب التاريخ (الأحدث أولاً)",
+      "campaignType": "حملة ثلاثة أشهر",
+      "labels": {
+        "amount": "المبلغ",
+        "rate": "المعدل",
+        "payoutDay": "يوم الدفع",
+        "expectedIncome": "الدخل المتوقع",
+        "completion": "الاكتمال",
+        "status": "الحالة",
+        "progress": "التقدم",
+        "expected": "متوقع",
+        "totalEarned": "إجمالي الأرباح"
+      },
+      "status": {
+        "active": "نشط"
+      },
+      "subtexts": {
+        "perQuarter": "كل ربع سنة (بعد 20% ضريبة)",
+        "nextPayout": "التالي:"
+      }
+    },
+    "common": {
+      "loadingText": "تحميل الاستثمارات",
+      "loadingSubtext": "جلب بيانات الحملة...",
+      "emptyText": "لم يتم العثور على استثمارات",
+      "emptySubtextMonthly": "لم تبدأ أي حملات شهرية بعد. أنشئ استثمارك الأول للبدء!",
+      "emptySubtextThreeMonth": "لم تبدأ أي حملات لثلاثة أشهر بعد. أنشئ استثمارك الأول للبدء!",
+      "pullToRefresh": "اسحب للتحديث",
+      "retry": "إعادة المحاولة",
+      "errors": {
+        "failedToLoadMonthly": "فشل في تحميل الحملات الشهرية",
+        "failedToLoadThreeMonth": "فشل في تحميل حملات ثلاثة أشهر",
+        "failedToFetch": "فشل في جلب البيانات",
+        "failedToSetupConnection": "فشل في إعداد الاتصال"
+      }
+    }
+  }
+}

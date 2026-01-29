@@ -1,0 +1,2343 @@
+{
+  "headerGreetings": {
+    "hi": "Hi!",
+    "goodMorning": "Good Morning",
+    "goodAfternoon": "Good Afternoon",
+    "goodEvening": "Good Evening"
+  },
+  "mainNavBar": {
+    "exploreText": "Explore the App",
+    "investmentProfile": "Investment Profile",
+    "transfer": "Transfer",
+    "agent": "Agent",
+    "stock": "Stock",
+    "eWallet": "E-Wallet",
+    "bankingService": "Banking Service",
+    "trading": "Trading",
+    "travelProtection": "Travel Protection",
+    "task": "Task"
+  },
+  "newSectionCarousel": {
+    "whatsNewTitle": "What's New",
+    "exploreButton": "EXPLORE"
+  },
+  "task": {
+    "header": {
+      "title": "Tasks"
+    },
+    "title": "Task Management",
+    "subtitle": "Manage your tasks and activities",
+    "accumulatedPoints": "Accumulated Points",
+    "myTasks": "My Tasks",
+    "noTasks": "No tasks available",
+    "loadingTasks": "Loading tasks...",
+    "completed": "Completed",
+    "taskDetails": "Task Details",
+    "loadingTask": "Loading task...",
+    "taskNotFound": "Task not found",
+    "untitled": "Untitled Task",
+    "points": "points",
+    "description": "Description",
+    "instructions": "Instructions",
+    "link": "Link",
+    "doTask": "Do the Task",
+    "claimPoints": "Claim Your Points",
+    "claiming": "Claiming...",
+    "pointsClaimed": "Points Claimed!",
+    "success": "Success!",
+    "claimedSuccessfully": "You have successfully claimed",
+    "pointsClaimedTitle": "Points Claimed!",
+    "pointsClaimedMessage": "You have earned",
+    "pointsForTask": "points for completing the task:",
+    "earnedFrom": "Earned from task:",
+    "error": "Error",
+    "noLink": "No link available for this task",
+    "invalidLink": "Cannot open this link",
+    "linkError": "Failed to open link",
+    "notLoggedIn": "You must be logged in to claim points",
+    "noPoints": "This task has no points to claim",
+    "claimError": "Failed to claim points. Please try again."
+  },
+  "accumulatedPoints": {
+    "header": {
+      "title": "Accumulated Points"
+    },
+    "yourBalance": "Your Balance",
+    "points": "points",
+    "withdraw": "Withdraw Points",
+    "transactionHistory": "Transaction History",
+    "loadingTransactions": "Loading transactions...",
+    "noTransactions": "No transactions yet",
+    "transaction": "Transaction",
+    "balance": "Balance",
+    "error": "Error",
+    "noPointsToWithdraw": "You don't have any points to withdraw",
+    "withdrawTitle": "Withdraw Points",
+    "withdrawMessage": "Are you sure you want to withdraw",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "withdrawalDescription": "Points withdrawal",
+    "withdrawalSuccessTitle": "Withdrawal Successful",
+    "withdrawnMessage": "You have withdrawn",
+    "success": "Success!",
+    "withdrawnSuccessfully": "Successfully withdrawn",
+    "withdrawalError": "Failed to process withdrawal. Please try again.",
+    "withdrawPoints": "Withdraw Points",
+    "conversionNote": "1 Point = ₱1 Peso",
+    "selectAmount": "Select Amount",
+    "paymentMethod": "Payment Method",
+    "mobileNumber": "Mobile Number",
+    "submit": "Submit",
+    "insufficientPoints": "Insufficient points",
+    "selectPaymentMethod": "Please select a payment method",
+    "enterValidMobile": "Please enter a valid mobile number",
+    "withdrawalTo": "Withdrawal to",
+    "withdrawalRequestTitle": "Withdrawal Request Submitted",
+    "withdrawalRequestMessage": "Your withdrawal request for",
+    "pointsTo": "points to",
+    "hasBeenSubmitted": "has been submitted",
+    "successTitle": "Withdrawal Submitted!",
+    "successMessage": "Your withdrawal request has been submitted successfully. You will receive your payment within 1-3 hours.",
+    "ok": "OK"
+  },
+  "transactionHistory": {
+    "loadingText": "Loading transactions...",
+    "errorText": "Error:",
+    "noTransactionsText": "No transactions found",
+    "headerTitle": "Transaction History",
+    "pageInfo": "Page {currentPage} of {totalPages} ({total} total)",
+    "labels": {
+      "type": "Type",
+      "date": "Date",
+      "amount": "Amount",
+      "status": "Status",
+      "description": "Description",
+      "reference": "Reference",
+      "fee": "Fee",
+      "balanceAfter": "Balance After"
+    },
+    "pagination": {
+      "first": "1st",
+      "previous": "‹",
+      "next": "›",
+      "last": "Last"
+    },
+    "modal": {
+      "title": "Transaction Overview",
+      "closeButton": "Close"
+    }
+  },
+  "mainDashboard": {
+    "cardHeaderText": "Your Inspire Card",
+    "timeDepositTitle": "Time Deposit",
+    "amountWalletTitle": "Amount Wallet",
+    "newSupportMessage": "You have a new support message! Tap to view.",
+    "accountDeletion": {
+      "title": "Account Deletion Required",
+      "message": "No user data was found in our system. This usually happens when there's a data synchronization issue. Your account will be deleted and you'll need to register again to continue using the app.",
+      "confirmText": "Delete Account & Register"
+    },
+    "errors": {
+      "failedToUpdateInvestment": "Failed to update investment data",
+      "failedToListenToInvestment": "Failed to listen to investment updates",
+      "failedToDeleteAccount": "Failed to delete account. Please contact support for assistance.",
+      "failedToCheckPresence": "Failed to check presence status"
+    },
+    "presenceStatus": {
+      "title": "Presence Status",
+      "noDataFound": "No presence data found"
+    }
+  },
+  "depoWithdrawButton": {
+    "deposit": "DEPOSIT",
+    "withdraw": "WITHDRAW"
+  },
+  "categorizedSettings": {
+    "categories": {
+      "services": "Services",
+      "inspireBalances": "Inspire Balances",
+      "playAndEarn": "Play and Earn",
+      "security": "Security",
+      "customerRelationship": "Customer Relationship"
+    },
+    "items": {
+      "transfer": "Transfer",
+      "inspireCards": "Inspire Cards",
+      "buyCards": "Buy Cards",
+      "eWallet": "E-Wallet",
+      "bankingServices": "Banking Services",
+      "travelProtection": "Travel Protection",
+      "investmentProfile": "Investment Profile",
+      "stockHolder": "StockHolder",
+      "agent": "Agent",
+      "specialCampaign": "Special Campaign",
+      "inspireSecureGrowth": "Inspire Secure Growth",
+      "trading": "Trading",
+      "depositViaCrypto": "Deposit via Crypto",
+      "passcode": "Passcode",
+      "aboutUs": "About US",
+      "agentRequest": "Agent Request",
+      "helpCenter": "Help Center",
+      "privacyPolicy": "Privacy Policy",
+      "termsAndCondition": "Terms and Condition"
+    },
+    "badges": {
+      "soon": "SOON",
+      "premium": "PREMIUM",
+      "registered": "REGISTERED",
+      "timeDeposit": "₱200K"
+    },
+    "modals": {
+      "underMaintenance": {
+        "title": "Under Maintenance",
+        "message": "This feature is currently under maintenance. Please try again later."
+      },
+      "insufficientTimeDeposit": {
+        "title": "Insufficient Time Deposit",
+        "message": "You need a minimum time deposit of ₱200,000 to access {feature}. Your current time deposit is ₱{currentAmount}. Please increase your time deposit first."
+      },
+      "alreadyAnAgent": {
+        "title": "Already an Agent",
+        "message": "You are already registered as an agent. You don't need to request agent access again."
+      },
+      "premiumFeature": {
+        "title": "Premium Feature",
+        "message": "This feature is only available for Premium accounts. Please upgrade to access it.",
+        "upgradeButton": "Upgrade"
+      },
+      "agentAccess": {
+        "title": "Agent Access Required",
+        "message": "This feature is exclusively available for registered agents. Would you like to be Agent?",
+        "cancelButton": "Cancel",
+        "requestButton": "Request Access"
+      }
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "deleteAccount": "DELETE ACCOUNT",
+    "logOut": "LOG OUT",
+    "loggingOut": "LOGGING OUT...",
+    "confirmLogout": {
+      "title": "Confirm Logout",
+      "message": "Are you sure you want to log out? You will need to sign in again to access your account.",
+      "confirmText": "Logout",
+      "cancelText": "Cancel"
+    },
+    "buttonTest": {
+      "title": "Button Test",
+      "message": "Button pressed successfully!"
+    },
+    "navigationError": {
+      "title": "Navigation Error",
+      "message": "Error: {errorMessage}"
+    }
+  },
+  "personal": {
+    "header": {
+      "title": "Personal Information"
+    },
+    "loading": {
+      "text": "Loading..."
+    },
+    "cards": {
+      "accountDetails": {
+        "title": "Account Details"
+      },
+      "accountStatus": {
+        "title": "Account Status"
+      }
+    },
+    "fields": {
+      "name": "Name",
+      "emailAddress": "Email Address",
+      "accountNumber": "Account Number",
+      "accountType": "Account Type",
+      "accountLevel": "Account Level",
+      "agentNumber": "Agent Number",
+      "agentReferrer": "Agent Referrer",
+      "language": "Language",
+      "status": "Status",
+      "memberSince": "Member Since"
+    },
+    "values": {
+      "notProvided": "Not provided",
+      "notAvailable": "Not available",
+      "notFound": "Not found",
+      "active": "Active",
+      "basic": "Basic",
+      "premium": "Premium",
+      "masterAgent": "Master Agent",
+      "consultantAgent": "Consultant",
+      "consultantAgentNote": "This referrer is also a Consultant Agent"
+    },
+    "buttons": {
+      "save": "Save",
+      "cancel": "Cancel",
+      "verify": "Verify",
+      "editName": "Edit Name",
+      "selectLanguage": "Select Language",
+      "changing": "Changing..."
+    },
+    "messages": {
+      "success": {
+        "nameUpdated": "Your name has been updated successfully.",
+        "languageUpdated": "Your language preference has been updated successfully.",
+        "copied": "Account number has been copied to clipboard."
+      },
+      "error": {
+        "nameUpdateFailed": "Failed to update your name. Please try again.",
+        "languageUpdateFailed": "Failed to update your language preference. Please try again.",
+        "copyFailed": "Failed to copy account number to clipboard."
+      },
+      "warning": {
+        "noAccountNumber": "Account number is not available to copy."
+      },
+      "titles": {
+        "success": "Success!",
+        "error": "Error",
+        "copied": "Copied!",
+        "noAccountNumber": "No Account Number"
+      }
+    },
+    "placeholders": {
+      "firstName": "First Name",
+      "lastName": "Last Name"
+    }
+  },
+  "kyc": {
+    "header": {
+      "title": "KYC Verification",
+      "premiumAccount": "Premium Account",
+      "premiumFeatures": "Premium Features"
+    },
+    "loading": {
+      "text": "Loading..."
+    },
+    "progress": {
+      "step": "Step {current} of {total}"
+    },
+    "steps": {
+      "personalInfo": {
+        "title": "Personal Information",
+        "description": "Please provide your personal details"
+      },
+      "addressInfo": {
+        "title": "Address Information",
+        "description": "Please provide your address details"
+      },
+      "documents": {
+        "title": "Document Upload",
+        "description": "Please upload the front and back of your ID and a selfie photo"
+      },
+      "review": {
+        "title": "Review & Submit",
+        "description": "Please review your information before submitting"
+      }
+    },
+    "fields": {
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "birthday": "Birthday",
+      "gender": "Gender",
+      "nationality": "Nationality",
+      "sourceOfIncome": "Source of Income",
+      "monthlyIncome": "Monthly Income (PHP)",
+      "country": "Country",
+      "fullAddress": "Full Address",
+      "postalCode": "Postal Code",
+      "idFront": "Government ID Front",
+      "idBack": "Government ID Back",
+      "selfiePhoto": "Selfie Photo"
+    },
+    "placeholders": {
+      "firstName": "Enter your first name",
+      "lastName": "Enter your last name",
+      "monthlyIncome": "Enter your monthly income",
+      "fullAddress": "Enter your complete address",
+      "postalCode": "Enter your postal code",
+      "searchNationality": "Search nationality...",
+      "searchCountry": "Search country..."
+    },
+    "hints": {
+      "idFront": "Upload a clear photo of the front of your government-issued ID",
+      "idBack": "Upload a clear photo of the back of your government-issued ID",
+      "selfiePhoto": "Take a clear selfie photo for verification"
+    },
+    "options": {
+      "gender": {
+        "male": "Male",
+        "female": "Female",
+        "other": "Other",
+        "preferNotToSay": "Prefer not to say"
+      },
+      "incomeSource": {
+        "employment": "Employment",
+        "business": "Business",
+        "investment": "Investment",
+        "freelance": "Freelance",
+        "pension": "Pension",
+        "other": "Other"
+      }
+    },
+    "buttons": {
+      "next": "Next",
+      "previous": "Previous",
+      "submit": "Submit KYC",
+      "edit": "Edit",
+      "takePhoto": "Take Photo",
+      "chooseFromGallery": "Choose from Gallery",
+      "startKYC": "Start KYC Process",
+      "completeKYC": "Complete KYC Process",
+      "contactSupport": "Contact Support"
+    },
+    "messages": {
+      "ageRequirement": "You must be 18 years old or above to proceed with KYC verification",
+      "kycSubmitted": "Your KYC application has been submitted. We will review your documents and notify you within 2-3 business days.",
+      "submissionFailed": "There was an error submitting your KYC application. Please try again later.",
+      "uploadingDocuments": "Please wait while we upload your ID front, ID back, and selfie photos...",
+      "savingInformation": "Please wait while we save your KYC information..."
+    },
+    "modals": {
+      "selectGender": "Select Gender",
+      "selectNationality": "Select Nationality",
+      "selectIncomeSource": "Select Income Source",
+      "selectCountry": "Select Country"
+    },
+    "premium": {
+      "upgradeMessage": "To upgrade your account to Premium and unlock exclusive features, we need to verify your identity through our KYC (Know Your Customer) process.",
+      "premiumFeatures": "Premium Features Include:",
+      "premiumFeaturesPending": "Premium Features (Pending KYC):",
+      "yourPremiumFeatures": "Your Premium Features:",
+      "congratulations": "Congratulations! You have a Premium account with verified KYC. You have access to all premium features.",
+      "pendingKYC": "You have a Premium account, but your KYC verification is still pending. Please complete the KYC process to unlock all premium features.",
+      "features": {
+        "cryptoTrading": "Crypto Trading",
+        "inspireCards": "Inspire Cards",
+        "advancedInvestment": "Advanced Investment Options",
+        "prioritySupport": "Priority Support"
+      }
+    },
+    "summary": {
+      "personalInfo": "Personal Information",
+      "addressInfo": "Address Information",
+      "documents": "Documents",
+      "name": "Name:",
+      "birthday": "Birthday:",
+      "gender": "Gender:",
+      "nationality": "Nationality:",
+      "incomeSource": "Income Source:",
+      "monthlyIncome": "Monthly Income:",
+      "country": "Country:",
+      "address": "Address:",
+      "postalCode": "Postal Code:",
+      "idFront": "ID Front",
+      "idBack": "ID Back",
+      "selfiePhoto": "Selfie Photo"
+    },
+    "status": {
+      "uploading": "Uploading Documents",
+      "saving": "Saving Information",
+      "success": "KYC Submitted Successfully!",
+      "error": "Submission Failed"
+    }
+  },
+  "transfer": {
+    "header": {
+      "title": "Send Money",
+      "subtitle": "Transfer funds to other users"
+    },
+    "guide": {
+      "title": "Quick Guide",
+      "step1": "Search recipient by account number",
+      "step2": "Enter amount to transfer",
+      "step3": "Choose balance type"
+    },
+    "sections": {
+      "recipient": "Recipient Account Number",
+      "amount": "Amount",
+      "balanceType": "Select Balance Type",
+      "description": "Description (Optional)"
+    },
+    "placeholders": {
+      "accountNumber": "Enter recipient's account number...",
+      "amount": "0.00",
+      "description": "Add a note for this transfer..."
+    },
+    "buttons": {
+      "change": "Change",
+      "sendTransfer": "Send Transfer",
+      "selectRecipient": "Select Recipient",
+      "enterAmount": "Enter Amount",
+      "selectBalanceType": "Select Balance Type",
+      "cannotTransferToSelf": "Cannot Transfer to Self",
+      "insufficientAvailableBalance": "Insufficient Available Balance",
+      "insufficientAgentWallet": "Insufficient Agent Wallet",
+      "enterValidAmount": "Enter Valid Amount",
+      "insufficientFunds": "Insufficient Funds"
+    },
+    "balanceTypes": {
+      "available": "Available Balance",
+      "agent": "Agent Wallet",
+      "chooseBalanceType": "Choose Balance Type"
+    },
+    "validation": {
+      "selfTransfer": "You cannot transfer money to yourself. Please enter a different account number.",
+      "userNotFound": "User not found. Please check the account number.",
+      "invalidAccountNumber": "Please enter a valid account number (minimum 6 digits).",
+      "insufficientBalance": "Add funds to your {balanceType} before transferring",
+      "useBalance": "Use your {balanceType} for this transfer"
+    },
+    "modals": {
+      "selectBalanceType": "Select Balance Type",
+      "close": "✕"
+    },
+    "messages": {
+      "missingInformation": "Please select a recipient and enter an amount",
+      "selectBalanceType": "Please select which balance to use for this transfer",
+      "invalidTransfer": "You cannot transfer money to yourself. Please select a different recipient.",
+      "insufficientBalance": "Your {balanceType} is empty. Please add funds before making a transfer.",
+      "insufficientFunds": "You don't have enough funds. Your {balanceType} is ₱{currentBalance} but you're trying to send ₱{transferAmount}.",
+      "invalidAmount": "Please enter a valid amount greater than 0.",
+      "accessRestricted": "This feature requires a Premium account. Your current account type is: {accountType}. Please upgrade to Premium to access Transfer functionality.",
+      "unableToVerify": "Unable to verify account permissions. Please try again.",
+      "transferSuccessful": "Transfer completed successfully!",
+      "transferSuccessfulDelayed": "Transfer completed successfully (notifications may be delayed)",
+      "transferFailed": "Unable to complete the transfer. Please try again.",
+      "authenticationError": "Please log in again to continue.",
+      "insufficientBalanceSelected": "You don't have enough funds in the selected balance."
+    },
+    "titles": {
+      "accessRestricted": "Access Restricted",
+      "error": "Error",
+      "missingInformation": "Missing Information",
+      "selectBalanceType": "Select Balance Type",
+      "invalidTransfer": "Invalid Transfer",
+      "insufficientBalance": "Insufficient Balance",
+      "invalidAmount": "Invalid Amount",
+      "transferSuccessful": "Transfer Successful",
+      "transferFailed": "Transfer Failed",
+      "authenticationError": "Authentication Error"
+    },
+    "characterCount": "{current}/{max}",
+    "currencySymbol": "₱"
+  },
+  "buyCards": {
+    "header": {
+      "title": "Choose Your Card Design",
+      "subtitle": "Select from regular designs (₱250) or VIP collection cards"
+    },
+    "navigation": {
+      "headerTitle": "Buy Cards"
+    },
+    "sections": {
+      "availableBalance": "Available Balance",
+      "cardPreview": "Card Preview",
+      "vipCollection": "VIP Collection",
+      "designCollection": "Design Collection",
+      "yourCollection": "Your Card Collection"
+    },
+    "descriptions": {
+      "vipCards": "👑 VIP cards - 10,000,000 pesos deposit required",
+      "designCards": "🎨 Design cards - ₱250 each",
+      "collectionHelp": "✨ Tap a card to activate it as your current design"
+    },
+    "cardStatus": {
+      "owned": "OWNED",
+      "preview": "Preview",
+      "vipOnly": "VIP Only",
+      "depositRequired": "Deposit Required",
+      "tapToClaim": "Tap to Claim",
+      "claimed": "Claimed",
+      "monthlySubscription": "Monthly Subscription",
+      "tapToBuy": "Tap to Buy",
+      "active": "ACTIVE",
+      "currentlyActive": "Currently Active"
+    },
+    "subscriptionStatus": {
+      "expired": "Expired",
+      "daysLeft": "days left",
+      "active": "Active"
+    },
+    "buttons": {
+      "preview": "Preview",
+      "cancel": "Cancel",
+      "close": "Close",
+      "gotIt": "Got It",
+      "claim": "Claim"
+    },
+    "messages": {
+      "welcomeGiftDefaultCard": "Welcome gift - Default Card granted to existing user",
+      "claimedVipCard": "Claimed VIP Card",
+      "vipCardPurchase": "VIP Card Purchase",
+      "cardPurchase": "Card Purchase",
+      "autoRenewalPayment": "Auto-Renewal Payment",
+      "freeDefaultCard": "Free Default Card",
+      "removedVipCard": "Removed VIP Card",
+      "migrationComplete": "Migration Complete",
+      "migrationCompleteDetails": "Processed {processedCount} users.\nGranted default cards to {grantedCards} users.\n{alreadyHadCards} users already had cards.",
+      "migrationFailed": "Migration Failed",
+      "vipCardClaimedDescription": "VIP Card claimed for qualifying deposit amount (₱10,000,000+)",
+      "vipCardRemovedDescription": "VIP Card removed due to insufficient time deposit amount (< ₱10,000,000)",
+      "insufficientBalanceForAutoRenewal": "Insufficient balance",
+      "failedToProcessAutoRenewal": "Failed to process auto-renewal. Please check your balance and try again.",
+      "unableToCancelSubscription": "Unable to cancel subscription",
+      "failedToCancelSubscription": "Failed to cancel subscription. Please try again.",
+      "unableToProcessAutoRenewal": "Unable to process auto-renewal",
+      "unableToToggleAutoRenewal": "Unable to toggle auto-renewal",
+      "failedToToggleAutoRenewal": "Failed to toggle auto-renewal. Please try again.",
+      "failedToRemoveExpired": "Failed to remove expired subscription. Please try again.",
+      "accessRestricted": "This feature requires a Premium account. Your current account type is: {accountType}. Please upgrade to Premium to access Buy Cards.",
+      "unableToVerify": "Unable to verify account permissions. Please try again.",
+      "userNotAuthenticated": "User not authenticated",
+      "userDataNotFound": "User data not found",
+      "failedToFetchData": "Failed to fetch user data",
+      "timeDepositRequired": "This card requires ₱10,000,000+ in time deposits. Please contact support to upgrade your account.",
+      "cardCannotBePurchased": "This card cannot be purchased at this time.",
+      "notQualified": "You need ₱10,000,000+ in time deposits to claim this card.",
+      "alreadyClaimed": "You have already claimed this VIP card.",
+      "vipCardClaimed": "VIP Card claimed successfully!",
+      "failedToClaimVip": "Failed to claim VIP card. Please try again.",
+      "purchaseSuccessful": "Successfully purchased {cardName} for ₱{price}!",
+      "purchaseFailed": "Failed to process purchase: {error}",
+      "cardActivated": "{cardName} is now your active card!",
+      "failedToSwitchCard": "Failed to switch card. Please try again.",
+      "subscriptionCancelled": "Your subscription has been cancelled. No refund will be provided.",
+      "autoRenewalFailed": "Insufficient balance for auto-renewal. Your subscription has expired.",
+      "autoRenewalEnabled": "Your subscription will now automatically renew each month.",
+      "autoRenewalDisabled": "Your subscription will expire and not renew automatically.",
+      "subscriptionExpired": "{cardName} subscription has expired and been removed from your collection."
+    },
+    "titles": {
+      "accessRestricted": "Access Restricted",
+      "error": "Error",
+      "success": "Success",
+      "warning": "Warning",
+      "info": "Info",
+      "purchaseSuccessful": "Purchase Successful",
+      "cardActivated": "Card Activated",
+      "subscriptionCancelled": "Subscription Cancelled",
+      "autoRenewalFailed": "Auto-Renewal Failed",
+      "autoRenewalEnabled": "Auto-Renewal Enabled",
+      "autoRenewalDisabled": "Auto-Renewal Disabled",
+      "subscriptionExpired": "Subscription Expired",
+      "timeDepositRequired": "Time Deposit Required",
+      "notQualified": "Not Qualified",
+      "alreadyClaimed": "Already Claimed"
+    },
+    "modals": {
+      "vipCardInfo": {
+        "title": "VIP Card - Diamond Elite",
+        "subtitle": "Exclusive Claimable Card",
+        "howToGet": "How to Get This Card",
+        "howToGetDescription": "This exclusive VIP card can be claimed by users with ₱10,000,000 or more in time deposits. Click the \"Claim\" button to add it to your collection.",
+        "requirements": "Requirements",
+        "requirementsList": [
+          "Time Deposit Amount: ₱10,000,000+",
+          "Click \"Claim\" button to add to your collection",
+          "No purchase required"
+        ],
+        "yourStatus": "Your Status",
+        "qualified": "You qualify for this card! Click 'Claim' to get it.",
+        "notQualified": "You need ₱10,000,000+ in time deposits",
+        "alreadyClaimed": "You have claimed this card!",
+        "warning": "⚠️ Your VIP card will be removed if your deposit drops below ₱10,000,000",
+        "claimButton": "Claim VIP Card"
+      },
+      "purchase": {
+        "title": "Card Purchase",
+        "vipTitle": "VIP Card Purchase",
+        "subtitle": "Preview and confirm your selection",
+        "cardPreview": "Card Preview",
+        "cardDetails": "Card Details",
+        "price": "Price",
+        "balanceCheck": "Balance Check",
+        "availableBalance": "Available Balance",
+        "sufficientBalance": "Sufficient balance available",
+        "insufficientBalance": "Need {amount} more",
+        "vipStatusCheck": "VIP Status Check",
+        "timeDepositRequired": "Time Deposit Required",
+        "vipStatusMet": "Time deposit requirement met - You qualify for this card",
+        "vipStatusNotMet": "₱10,000,000+ time deposit required to qualify for this exclusive card",
+        "subscriptionInfo": "Subscription Information",
+        "subscriptionType": "Subscription Type",
+        "monthly": "Monthly",
+        "duration": "Duration: {days} days",
+        "autoRenewal": "Auto-renewal: Manual (renew each month)",
+        "accessExpires": "Access expires after {days} days",
+        "actionButtons": {
+          "cancel": "Cancel",
+          "purchase": "Purchase Card",
+          "purchaseVip": "Purchase VIP Card",
+          "subscribe": "Subscribe for {type}",
+          "insufficientBalance": "Insufficient Balance",
+          "vipRequired": "VIP Required"
+        }
+      },
+      "subscription": {
+        "title": "Subscription Details",
+        "subtitle": "Monthly Subscription",
+        "daysLeft": "days left",
+        "subscriptionDetails": "Subscription Details",
+        "totalRenewals": "Total Renewals",
+        "totalPaid": "Total Paid",
+        "lastRenewal": "Last Renewal",
+        "autoRenewal": "Auto-Renewal",
+        "autoRenewalActive": "Active - Automatically renews for ₱10,000/month",
+        "autoRenewalDisabled": "Disabled - Will expire and not renew",
+        "expirationWarning": "Your subscription will expire in {days} days and will be removed from your collection.",
+        "actionButtons": {
+          "cancelSubscription": "Cancel Subscription",
+          "close": "Close"
+        }
+      }
+    },
+    "cardTypes": {
+      "default": "Default Card",
+      "diamondElite": "Diamond Elite",
+      "royalCurve": "Royal Curve",
+      "goldenElite": "Golden Elite",
+      "silverElite": "Orange Elite",
+      "redPrestige": "Sun Prestige",
+      "vip": "VIP",
+      "unknown": "Card"
+    },
+    "common": {
+      "loading": "Loading...",
+      "accountTypes": {
+        "basic": "Basic",
+        "premium": "Premium"
+      }
+    }
+  },
+  "inspireCards": {
+    "header": {
+      "title": "Inspire Cards",
+      "supportTitle": "Request Your Inspire Card",
+      "subtitle": "Get your physical Inspire Card delivered to your doorstep"
+    },
+    "content": {
+      "availableBalance": "Available Balance:"
+    },
+    "navigation": {
+      "headerTitle": "Inspire Cards"
+    },
+    "steps": {
+      "step1": {
+        "title": "Contact Information",
+        "description": "Please provide your email address so we can reach you",
+        "info": "We'll use this email to send you updates about your card request"
+      },
+      "step2": {
+        "title": "Delivery Address",
+        "description": "Where should we send your Inspire Card?",
+        "info": "Please provide your complete address including street, city, and postal code"
+      },
+      "step3": {
+        "title": "Review & Submit",
+        "description": "Please review your information before submitting"
+      }
+    },
+    "review": {
+      "personalInfo": "Personal Information",
+      "deliveryAddress": "Delivery Address",
+      "name": "Name"
+    },
+    "instructions": {
+      "title": "Submit Your Concern",
+      "text": "Need assistance with your Inspire Cards? Please fill out the form below and our support team will get back to you as soon as possible."
+    },
+    "form": {
+      "contactInfo": "Contact Information",
+      "howToReach": "How Can We Reach You?",
+      "emailLabel": "Email Address",
+      "emailPlaceholder": "your.email@example.com",
+      "concernDetails": "Tell Us About Your Concern",
+      "addressLabel": "Complete Delivery Address",
+      "addressPlaceholder": "Street, Barangay, City, Province, Postal Code"
+    },
+    "disclaimer": {
+      "title": "Processing Time",
+      "text": "Your card request will be processed within 5-7 business days. We'll send you an email confirmation once your card has been shipped."
+    },
+    "buttons": {
+      "submit": "Submit Request",
+      "sending": "Sending...",
+      "next": "Next",
+      "back": "Back"
+    },
+    "messages": {
+      "accessRestricted": "This feature requires a Premium account. Your current account type is: {accountType}. Please upgrade to Premium to access Inspire Cards.",
+      "timeDepositRequired": "You need to have an active time deposit to access Inspire Cards. Please set up a time deposit first.",
+      "missingInformation": "Please fill in all required fields.",
+      "emailRequired": "Please enter your email address to continue.",
+      "addressRequired": "Please enter your complete delivery address to continue.",
+      "requestSubmitted": "Your card request has been submitted successfully! We'll contact you via email with updates.",
+      "submissionFailed": "Unable to send your request. Please try again later.",
+      "unableToVerify": "Unable to verify account permissions. Please try again.",
+      "fetchDataFailed": "Failed to fetch user data. Please try again later."
+    },
+    "titles": {
+      "accessRestricted": "Access Restricted",
+      "error": "Error",
+      "missingInformation": "Missing Information",
+      "requestSubmitted": "Request Submitted",
+      "submissionFailed": "Submission Failed"
+    }
+  },
+  "termsAndCondition": {
+    "header": {
+      "title": "Terms and Condition"
+    },
+    "content": {
+      "welcome": "Welcome to Inspire Wallet. Please read these terms and conditions carefully before accessing, using, or obtaining any materials, information, products or services. By accessing the Inspire Wallet (collectively, \"The app\"), you agree to be bound by these terms and conditions (\"Terms\") and our Privacy Policy. In these Terms \"we\", \"us\", \"our\" and \"Inspire Wallet\" refers to Inspire Wallet, and\"I\", \"you\", and \"your\" refers to you, the user of our application.",
+      "eligibility": {
+        "title": "Eligibility",
+        "content": "You must be at least 18 years old and have the legal capacity to enter into contracts. By using our app, you represent that you meet the requirements. If you are located in a jurisdiction where investment services are restricted, you may not use the app."
+      },
+      "accountRegistration": {
+        "title": "Account Registration",
+        "content": "To access the maximum capacity of the app, you must create an account. You agree to:",
+        "bulletPoints": {
+          "accurateInfo": "Provide accurate and complete information",
+          "passwordSecurity": "Maintain the security of your password",
+          "unauthorizedUse": "In case of any unauthorized use of your account, kindly notify us immediately"
+        }
+      },
+      "servicesProvided": {
+        "title": "Services Provided",
+        "content": "Inspire Wallet tracks your stocks and investment and lets you monitor your money before and after withdrawal. Every transaction shall be made through email and not directly with the bank. Inspire Alliance Fund Group will process your transaction, not the app itself. The process could take approximately five (5) to seven (7) working days to reflect on your Inspire Wallet account."
+      },
+      "feesAndCharges": {
+        "title": "Fees and Charges",
+        "content": "Details about fees associated with transactions, account maintenance, and other services will be provided in-app and may change from time to time."
+      },
+      "userResponsibilities": {
+        "title": "User Responsibilities",
+        "content": "You agree to use the app for lawful purposes and to abide by all applicable laws and regulations. You are responsible for your account and investment decisions."
+      },
+      "intellectualProperty": {
+        "title": "Intellectual Property",
+        "content": "All content, trademarks, and software related to are owned by Inspire Alliance Fund Group or its licensors. You are granted a limited, non-exclusive license to use the app for personal purposes."
+      },
+      "privacyPolicy": {
+        "title": "Privacy Policy",
+        "content": "Your use of the app is also governed by our Privacy Policy, which details how we collect, use, and protect your personal information. The app only collects data such as your name, email address and bank details."
+      },
+      "changesToTerms": {
+        "title": "Changes to Terms",
+        "content": "We may modify these terms at any time. We will notify you of significant changes through the app or via email. Your continued use of the app after changes constitutes acceptance of the new terms."
+      },
+      "contactDetails": {
+        "title": "Contact Details",
+        "content": "For questions or concerns regarding these terms, please contact us at",
+        "contactInfo": "inspireholdings 85963671"
+      },
+      "agreement": "I hereby agree that I have read and fully understood the Terms and conditions and agree to be bound by the statements above."
+    }
+  },
+  "privacy": {
+    "header": {
+      "title": "Privacy Policy"
+    },
+    "content": {
+      "introduction": {
+        "title": "Introduction",
+        "content": "We value your privacy. This policy explains how we collect, use, and protect your information when you use our app, \"Inspire Wallet.\""
+      },
+      "informationCollection": {
+        "title": "What Information We Collect",
+        "content": "We collect the following types of data:",
+        "bulletPoints": {
+          "personalInfo": "Personal Information: Your name, email address, and other details you provide.",
+          "usageData": "Usage Data: Information like your device type, IP address, and how you use the app."
+        }
+      },
+      "informationUsage": {
+        "title": "How We Use Your Information",
+        "content": "We use your information to:",
+        "bulletPoints": {
+          "provideServices": "Provide and improve our services.",
+          "contactUpdates": "Contact you with updates or important notices.",
+          "monitorUsage": "Monitor how the app is used to enhance performance."
+        }
+      },
+      "informationSharing": {
+        "title": "Sharing Your Information",
+        "content": "We may share your data with:",
+        "bulletPoints": {
+          "serviceProviders": "Service providers who help us run the app.",
+          "businessPartners": "Business partners or affiliates.",
+          "authorities": "Authorities if required by law."
+        }
+      },
+      "dataSecurity": {
+        "title": "Data Security",
+        "content": "We take steps to protect your information, but no system is 100% secure. Always be cautious when sharing data online."
+      },
+      "childrensPrivacy": {
+        "title": "Children's Privacy",
+        "content": "We do not collect data from anyone under 13. If you believe your child has shared data with us, contact us to remove it."
+      },
+      "yourRights": {
+        "title": "Your Rights",
+        "content": "You can update or delete your personal data by logging into your account or contacting us."
+      },
+      "policyChanges": {
+        "title": "Changes to This Policy",
+        "content": "We may update this policy. Check this page for the latest version."
+      },
+      "contactUs": {
+        "title": "Contact Us",
+        "content": "If you have any questions, email us at",
+        "email": "info@inspireholdings.ph"
+      }
+    }
+  },
+  "about": {
+    "header": {
+      "title": "About Us"
+    },
+    "content": {
+      "ourCompany": {
+        "title": "Our Company",
+        "content": "At Inspire Alliance Fund Group Inc., we are driven by a powerful purpose: to empower dreams and ignite meaningful change. Founded on the belief that lasting progress begins with opportunity, we exist to support individuals who are ready to make a difference—not just in their own lives, but in the communities around them. We go beyond traditional funding. We are a dynamic movement that bridges passionate visionaries with the support, trust, and resources they need to transform ideas into lasting impact."
+      },
+      "ourMission": {
+        "title": "Our Mission",
+        "content": "At Inspire Alliance Fund Group Inc., our mission is to ignite change by empowering dreams. We believe that real progress begins when individuals are given the resources, trust, and opportunities to build a better future not just for themselves, but for their communities and beyond. We are more than a funding platform; we are a movement that connects purpose-driven people with the support they need to turn ideas into impact. By investing in human potential, we cultivate a ripple effect supporting lives, strengthening economies, and shaping a future where hope and innovation thrive together."
+      },
+      "inspireWallet": {
+        "title": "Inspire Wallet",
+        "content": "Inspire Wallet, our flagship app for Inspire Investors, embodies this vision. Designed as your all-in-one financial companion, Inspire Wallet allows you to:",
+        "bulletPoints": {
+          "investments": "Stay on top of your investments",
+          "stocks": "Manage stocks",
+          "withdrawals": "Track withdrawals",
+          "transactions": "Keep a clear record of all your financial transactions"
+        },
+        "conclusion": "Whether you're a seasoned investor or just getting started, our app provides all the tools you need to manage your portfolio with ease and confidence."
+      },
+      "callToAction": "Join us at Inspire Alliance Fund Group Incorporated and together, let's shape a prosperous future. Download Inspire Wallet today and take control of your financial journey!"
+    }
+  },
+  "agentRequest": {
+    "header": {
+      "title": "Agent Request"
+    },
+    "content": {
+      "headerTitle": "Agent Request",
+      "headerSubtitle": "Submit your agent application",
+      "requestInformation": {
+        "title": "Request Information",
+        "text": "📋 Fill out the form below to request agent privileges\n🔍 Optionally search for an existing agent to be associated with\n🎯 Generate a unique agent number for your account\n⏳ Your request will be reviewed and approved by administrators"
+      },
+      "form": {
+        "title": "Agent Request Form",
+        "personalInformation": {
+          "title": "Personal Information",
+          "fullNameLabel": "Full Name"
+        },
+        "agentNumber": {
+          "title": "Agent Number",
+          "generateLabel": "Generate Agent Number *",
+          "placeholder": "Click generate to create agent number",
+          "generateButton": "Generate",
+          "hint": "Click the generate button to create a unique 5-character agent number"
+        },
+        "parentAgent": {
+          "title": "Select Parent Agent (Optional)",
+          "searchLabel": "Search for Agents (Optional)",
+          "searchPlaceholder": "Enter exact agent number...",
+          "searchHint": "Enter the exact agent number to automatically find and select the agent",
+          "selectedAgent": "Selected Agent",
+          "parentAgentCode": "Parent Agent Code:",
+          "yourAgentCode": "Your Agent Code:",
+          "noResults": "No agents found with agent number \"{query}\""
+        }
+      },
+      "submitButton": {
+        "submit": "Submit Agent Request",
+        "submitting": "Submitting Request..."
+      }
+    },
+    "modals": {
+      "accessRestricted": {
+        "title": "Access Restricted",
+        "message": "This feature requires a Premium account. Your current account type is: {accountType}. Please upgrade to Premium to access Agent Request functionality."
+      },
+      "alreadyAgent": {
+        "title": "Already an Agent",
+        "message": "You are already registered as an agent. You don't need to request agent access again."
+      },
+      "authenticationRequired": {
+        "title": "Authentication Required",
+        "message": "Please log in to submit an agent request."
+      },
+      "userNotFound": {
+        "title": "User Not Found",
+        "message": "User data not found. Please try logging in again."
+      },
+      "error": {
+        "title": "Error",
+        "message": "Unable to verify account permissions. Please try again.",
+        "loadDataFailed": "Failed to load user data. Please try again.",
+        "searchFailed": "Failed to search users. Please try again.",
+        "generationFailed": "Unable to generate a unique agent code. Please try again.",
+        "submitFailed": "An error occurred while submitting your request. Please try again."
+      },
+      "agentNumberGenerated": {
+        "title": "Agent Number Generated",
+        "message": "Your unique agent Number is: {agentNumber}"
+      },
+      "agentFound": {
+        "title": "Agent Found!",
+        "message": "Successfully found agent: {firstName} {lastName}\nAgent Number: {agentNumber}"
+      },
+      "agentCodeGenerated": {
+        "title": "Agent Code Generated",
+        "message": "Agent Code: {agentCode}\nType: {type}\nReferrer: {referrerName}"
+      },
+      "missingAgentNumber": {
+        "title": "Missing Agent Number",
+        "message": "Please generate an agent number first."
+      },
+      "requestSubmitted": {
+        "title": "Request Submitted Successfully!",
+        "message": "Your agent request has been submitted and is pending approval.\n\nRequest ID: {requestId}"
+      }
+    }
+  },
+  "passcode": {
+    "header": {
+      "title": "Passcode"
+    },
+    "content": {
+      "step": "Step {current} of {total}",
+      "subtitle": "Use the keypad below to enter your passcode",
+      "instructions": {
+        "enterCurrent": "Enter your current 4-digit passcode",
+        "enterNew": "Enter your new 4-digit passcode",
+        "confirmNew": "Confirm your new 4-digit passcode"
+      },
+      "errors": {
+        "mustBe4Digits": "Passcode must be 4 digits.",
+        "incorrectPasscode": "Incorrect passcode. Try again.",
+        "passcodesDoNotMatch": "Passcodes do not match. Try again."
+      },
+      "success": {
+        "passcodeChanged": "Passcode successfully changed!"
+      },
+      "buttons": {
+        "ok": "OK"
+      }
+    }
+  },
+  "depositCrypto": {
+    "header": {
+      "title": "Deposit via Crypto"
+    },
+    "content": {
+      "headerTitle": "Crypto Deposit",
+      "headerSubtitle": "Deposit via Bitcoin, Ethereum, or USDT",
+      "accountHolder": "Account Holder:",
+      "email": "Email:",
+      "instructions": {
+        "title": "How to Deposit",
+        "step1": "Send your {crypto} to the wallet address below",
+        "walletAddressLabel": "Wallet Address:",
+        "walletAddressCopied": "Wallet Address Copied",
+        "walletAddressCopiedMessage": "Wallet address copied to clipboard",
+        "step2": "Upload the transaction receipt/screenshot below",
+        "note": "Note: Your deposit will be processed once we verify the transaction receipt.",
+        "btcNote": "Note: This is a native SegWit (bech32) address. Supported by: Binance, Coinbase/Coinbase Wallet, Trust Wallet, Ledger, Trezor, OKX, Bybit, KuCoin, Kraken, Bitstamp, Bitfinex, Exodus, BlueWallet, Muun, Phoenix Wallet, Breez, Electrum (latest versions), Sparrow Wallet, Wasabi Wallet.",
+        "ethNote": "Note: This address is for MetaMask and other Ethereum-compatible wallets."
+      },
+      "form": {
+        "selectCrypto": "Select Crypto *",
+        "amount": "Amount *",
+        "amountPlaceholder": "Enter amount",
+        "uploadReceipt": "Upload Receipt *",
+        "uploadReceiptText": "Upload Receipt",
+        "uploadReceiptSubtext": "Tap to select image"
+      },
+      "loading": {
+        "fetchingRates": "Fetching rates...",
+        "uploading": "Uploading..."
+      },
+      "submitButton": {
+        "submit": "Submit Deposit Request",
+        "submitting": "Submitting..."
+      }
+    },
+    "modals": {
+      "imagePickerError": {
+        "title": "Image Picker Error",
+        "message": "Failed to pick image"
+      },
+      "copyError": {
+        "title": "Copy Failed",
+        "message": "Failed to copy wallet address to clipboard. Please try again."
+      },
+      "missingInformation": {
+        "title": "Missing Information",
+        "message": "Please fill in all required fields and upload a receipt."
+      },
+      "requestSubmitted": {
+        "title": "Request Submitted",
+        "message": "Your crypto deposit request has been submitted successfully! Check your email for confirmation.",
+        "messageWithEmailDelay": "Your crypto deposit request has been submitted successfully! Email notification may be delayed."
+      },
+      "submissionFailed": {
+        "title": "Submission Failed",
+        "message": "Failed to submit request. Please try again."
+      }
+    }
+  },
+  "crypto": {
+    "header": {
+      "title": "Trading"
+    },
+    "content": {
+      "availableBalance": "Available Balance:",
+      "cryptoBalances": "Crypto Balances:",
+      "forexBalances": "Forex Balances:",
+      "crypto": "Crypto",
+      "forex": "Forex",
+      "currentPrice": "Current Price:",
+      "currentRate": "Current Rate:",
+      "buy": "Buy",
+      "sell": "Sell",
+      "processing": "Processing...",
+      "amountInPHP": "Amount in PHP",
+      "amountOf": "Amount of",
+      "percentageOfBalance": "% of available balance",
+      "percentageOfAsset": "% of available",
+      "retry": "Retry",
+      "testApi": "Test API",
+      "noPriceData": "No price data available"
+    },
+    "instructions": {
+      "title": "Trading Instructions",
+      "cryptoTrading": {
+        "title": "Crypto Trading",
+        "step1": "Select \"Crypto\" from the type selector",
+        "step2": "Choose your preferred cryptocurrency (BTC, ETH, or USDT)",
+        "buySteps": "To Buy:",
+        "buyStep1": "• Enter the amount in PHP you want to spend",
+        "buyStep2": "• Click \"Buy\" to purchase the selected crypto",
+        "sellSteps": "To Sell:",
+        "sellStep1": "• Enter the amount of crypto you want to sell",
+        "sellStep2": "• Click \"Sell\" to convert to PHP"
+      },
+      "forexTrading": {
+        "title": "Forex Trading",
+        "step1": "Select \"Forex\" from the type selector",
+        "step2": "Choose your preferred currency (USD or JPY)",
+        "buySteps": "To Buy:",
+        "buyStep1": "• Enter the amount in PHP you want to spend",
+        "buyStep2": "• Click \"Buy\" to purchase the selected currency",
+        "sellSteps": "To Sell:",
+        "sellStep1": "• Enter the amount of currency you want to sell",
+        "sellStep2": "• Click \"Sell\" to convert to PHP"
+      },
+      "generalTips": {
+        "title": "General Tips",
+        "tip1": "• Monitor price changes using the chart",
+        "tip2": "• Use different time ranges (24h, 7d, 30d) to analyze trends",
+        "tip3": "• Keep track of your balances in both crypto and forex"
+      }
+    },
+    "modals": {
+      "accessRestricted": {
+        "title": "Access Restricted",
+        "message": "This feature requires a Premium account. Your current account type is: {accountType}. Please upgrade to Premium to access Crypto Trading."
+      },
+      "apiConnectionError": {
+        "title": "API Connection Error",
+        "message": "Unable to connect to CoinGecko API. Please check your internet connection and try again."
+      },
+      "error": {
+        "title": "Error",
+        "message": "Unable to verify account permissions. Please try again."
+      },
+      "invalidAmount": {
+        "title": "Invalid Amount",
+        "message": "Please enter a valid amount in PHP"
+      },
+      "insufficientBalance": {
+        "title": "Insufficient Balance",
+        "message": "You need ₱{required} but your balance is ₱{available}"
+      },
+      "insufficientCryptoBalance": {
+        "title": "Insufficient Balance",
+        "message": "You only have {amount} {asset}"
+      },
+      "success": {
+        "title": "Success",
+        "message": "Purchase successful! Bought {amount} {asset} for ₱{cost}"
+      },
+      "saleSuccess": {
+        "title": "Success",
+        "message": "Sale successful! Added ₱{amount} to your balance"
+      },
+      "purchaseError": {
+        "title": "Error",
+        "message": "Failed to complete purchase"
+      },
+      "saleError": {
+        "title": "Error",
+        "message": "Failed to complete sale"
+      }
+    }
+  },
+  "bdo": {
+    "header": {
+      "title": "Bank Account Services"
+    },
+    "content": {
+      "headerTitle": "Bank Account Services",
+      "headerSubtitle": "Professional Banking Solutions",
+      "instructionTitle": "Account Opening Request",
+      "instructionText": "Please fill up the following form to request an account opening with our partner banking services. Your application will be processed within 5-7 working days.",
+      "sectionTitle": "Banking Information",
+      "selectBank": "Select Your Bank",
+      "preferredBank": "Preferred Bank",
+      "chooseBank": "Choose your preferred bank",
+      "contactDetails": "Contact Details",
+      "emailAddress": "Email Address",
+      "emailPlaceholder": "your.email@example.com",
+      "mobileNumber": "Mobile Number",
+      "mobilePlaceholder": "+63 9XX XXX XXXX",
+      "landlineNumber": "Landline Number",
+      "landlinePlaceholder": "(02) XXXX XXXX",
+      "personalDetails": "Personal Details",
+      "gender": "Gender",
+      "selectGender": "Select your gender",
+      "dateOfBirth": "Date of Birth",
+      "selectBirthdate": "Select your birthdate",
+      "civilStatus": "Civil Status",
+      "selectCivilStatus": "Select civil status",
+      "citizenship": "Citizenship",
+      "citizenshipPlaceholder": "Filipino",
+      "addressInformation": "Address Information",
+      "completeAddress": "Complete Address",
+      "addressPlaceholder": "House/Unit No., Street, Barangay, City, Province, ZIP Code",
+      "financialInformation": "Financial Information",
+      "sourceOfFund": "Source of Fund",
+      "sourcePlaceholder": "e.g., Employment, Business, Investment",
+      "grossMonthlyIncome": "Gross Monthly Income",
+      "incomePlaceholder": "₱ 50,000",
+      "processingInfo": "Processing Information",
+      "processingText": "By submitting these details, we will send you an email confirmation with your application status. Please note that this process will take approximately 5–7 working days for review and approval by the selected bank.",
+      "submitApplication": "Submit Application",
+      "processing": "Processing...",
+      "selectBankModal": "Select Your Bank",
+      "selectGenderModal": "Select Your Gender",
+      "selectCivilStatusModal": "Select Your Civil Status",
+      "male": "Male",
+      "female": "Female",
+      "preferNotToSay": "Prefer not to say",
+      "single": "Single",
+      "married": "Married",
+      "legallySeparated": "Legally Separated",
+      "divorced": "Divorced",
+      "annulled": "Annulled",
+      "widow": "Widow/er",
+      "bdoUnibank": "BDO Unibank",
+      "securityBank": "Security Bank",
+      "ctbcBank": "CTBC Bank",
+      "unionBank": "UnionBank",
+      "documentUpload": "Document Upload",
+      "passportUpload": "Passport Photo",
+      "driverLicenseUpload": "Driver's License Photo",
+      "selectPassport": "Select Passport Photo",
+      "changePassport": "Change Passport Photo",
+      "selectDriverLicense": "Select Driver's License Photo",
+      "changeDriverLicense": "Change Driver's License Photo",
+      "uploadingDocuments": "Uploading documents...",
+      "processingApplication": "Processing Application",
+      "uploadingSubtitle": "Please wait while we upload your documents to secure storage",
+      "processingSubtitle": "Saving your application and sending confirmation",
+      "uploadingStep": "Uploading",
+      "savingStep": "Saving"
+    },
+    "steps": {
+      "bankSelection": {
+        "title": "Choose Your Bank",
+        "description": "Select your preferred bank for account opening. This will determine which banking services and features you'll have access to."
+      },
+      "contactInfo": {
+        "title": "Contact Information",
+        "description": "Provide your contact details so we can reach you regarding your application status and account updates."
+      },
+      "personalDetails": {
+        "title": "Personal Information",
+        "description": "Tell us about yourself. This information is required for identity verification and compliance purposes."
+      },
+      "addressInfo": {
+        "title": "Address Information",
+        "description": "Provide your complete address for verification and account setup purposes."
+      },
+      "financialInfo": {
+        "title": "Financial Information",
+        "description": "Share your financial details to help us understand your banking needs and ensure compliance."
+      },
+      "documentUpload": {
+        "title": "Document Upload",
+        "description": "Upload required documents for identity verification and account opening process."
+      }
+    },
+    "validation": {
+      "selectBank": "Please select a bank",
+      "emailRequired": "Email address is required",
+      "mobileRequired": "Mobile number is required",
+      "genderRequired": "Please select your gender",
+      "birthdateRequired": "Please select your birthdate",
+      "civilStatusRequired": "Please select your civil status",
+      "citizenshipRequired": "Citizenship is required",
+      "addressRequired": "Complete address is required",
+      "sourceFundRequired": "Source of fund is required",
+      "incomeRequired": "Monthly income is required",
+      "passportRequired": "Passport photo is required",
+      "driverLicenseRequired": "Driver's license photo is required"
+    },
+    "modals": {
+      "accessRestricted": {
+        "title": "Access Restricted",
+        "message": "This feature requires a Premium account. Your current account type is: {accountType}. Please upgrade to Premium to access Bank Account Services."
+      },
+      "timeDepositInsufficient": {
+        "title": "Access Restricted",
+        "message": "You need to have a minimum time deposit of ₱200,000 to open a bank account. Your current time deposit is ₱{amount}. Please increase your time deposit first."
+      },
+      "error": {
+        "title": "Error",
+        "message": "Unable to verify account permissions. Please try again."
+      },
+      "fetchError": {
+        "title": "Error",
+        "message": "Failed to fetch user data. Please try again later."
+      },
+      "missingInformation": {
+        "title": "Missing Information",
+        "message": "Please fill in all required fields before submitting."
+      },
+      "authenticationError": {
+        "title": "Authentication Error",
+        "message": "Please log in to submit your application."
+      },
+      "success": {
+        "title": "SUCCESS",
+        "message": "It is successfully sent"
+      },
+      "partialSuccess": {
+        "title": "Partial Success",
+        "message": "Your application was saved but we couldn't send the email notification. Please check your email address."
+      },
+      "submissionFailed": {
+        "title": "Submission Failed",
+        "message": "Unable to submit your application. Please try again later. Error: {error}"
+      },
+      "imagePickerError": {
+        "title": "Image Selection Error",
+        "message": "Failed to select image. Please try again."
+      },
+      "documentUploadError": {
+        "title": "Document Upload Error",
+        "message": "Failed to upload documents. Please check your internet connection and try again."
+      },
+      "permissionDenied": {
+        "title": "Permission Required",
+        "message": "Camera roll access is required to select photos. Please grant permission in your device settings."
+      }
+    }
+  },
+  "accountDeletion": {
+    "header": {
+      "title": "Account Deletion"
+    },
+    "content": {
+      "headerTitle": "Account Deletion",
+      "headerSubtitle": "Request Account Removal",
+      "importantNotice": "Important Notice",
+      "warningText": "⚠️ Account deletion is permanent and irreversible\n🗑️ All your data, transactions, and history will be permanently removed\n💰 Ensure all funds are withdrawn before requesting deletion\n📋 You will not be able to recover your account or data after deletion",
+      "deletionRequestProcess": "Deletion Request Process",
+      "instructionText": "Complete the form below to request account deletion. Our team will review your request and process it within 2-3 working days. You will receive confirmation via email once your account has been permanently deleted.",
+      "accountInformation": "Account Information",
+      "personalDetails": "Personal Details",
+      "firstName": "First Name",
+      "firstNamePlaceholder": "Enter your first name",
+      "lastName": "Last Name",
+      "lastNamePlaceholder": "Enter your last name",
+      "emailAddress": "Email Address",
+      "emailPlaceholder": "your.email@example.com",
+      "deletionReason": "Deletion Reason",
+      "reasonForDeletion": "Reason for Account Deletion",
+      "helperText": "Please explain why you want to delete your account. This helps us improve our services.",
+      "reasonPlaceholder": "Please provide a detailed reason for account deletion. For example: privacy concerns, no longer need the service, switching to another platform, etc.",
+      "whatHappensNext": "What Happens Next?",
+      "processText": "After submitting your deletion request:\n📧 You will receive an email confirmation\n🔍 Our team will review your request within 2-3 working days\n✅ Final confirmation will be sent before permanent deletion\n🗑️ Your account and all data will be permanently removed",
+      "submitDeletionRequest": "Submit Deletion Request",
+      "submitting": "Submitting..."
+    },
+    "modals": {
+      "missingInformation": {
+        "title": "Missing Information",
+        "message": "Please fill in all required fields before submitting."
+      },
+      "confirmAccountDeletion": {
+        "title": "Confirm Account Deletion",
+        "message": "Are you sure you want to request account deletion? This action cannot be undone and will permanently remove all your data."
+      },
+      "requestSubmitted": {
+        "title": "Request Submitted",
+        "message": "Your account deletion request has been submitted successfully."
+      },
+      "submissionFailed": {
+        "title": "Submission Failed",
+        "message": "Failed to submit request. Please try again."
+      }
+    }
+  },
+  "agentDashboard": {
+    "header": {
+      "title": "Agent Dashboard"
+    },
+    "content": {
+      "agentProfile": "Agent Profile",
+      "name": "Name",
+      "agentNumber": "Agent Number",
+      "agentWalletAmount": "Agent Wallet Amount",
+      "transfer": "TRANSFER",
+      "loading": "Loading..."
+    },
+    "modals": {
+      "accessRestricted": {
+        "title": "Access Restricted",
+        "message": "This feature requires a Premium account. Your current account type is: {accountType}. Please upgrade to Premium to access Agent Dashboard."
+      },
+      "accessDenied": {
+        "title": "Access Denied",
+        "message": "You need to be an agent to access this page."
+      },
+      "dataError": {
+        "title": "Data Error",
+        "message": "No user data found. Please try again."
+      },
+      "error": {
+        "title": "Error",
+        "message": "Unable to verify account permissions. Please try again."
+      }
+    }
+  },
+  "agentTransfer": {
+    "modals": {
+      "accessRestricted": {
+        "title": "Access Restricted",
+        "message": "This feature requires a Premium account. Your current account type is: {accountType}. Please upgrade to Premium to access Agent Transfer."
+      },
+      "accessDenied": {
+        "title": "Access Denied",
+        "message": "You need to be an agent to access this page."
+      },
+      "dataError": {
+        "title": "Data Error",
+        "message": "No user data found. Please try again."
+      },
+      "error": {
+        "title": "Error",
+        "message": "Unable to verify account permissions. Please try again."
+      },
+      "authenticationError": {
+        "title": "Authentication Error",
+        "message": "Please log in again to continue."
+      },
+      "transferSuccessful": {
+        "title": "Transfer Successful",
+        "message": "Your transfer has been completed successfully!"
+      },
+      "transferSuccessfulDelayed": {
+        "message": "Your transfer has been completed successfully! Email notification may be delayed."
+      },
+      "transferFailed": {
+        "title": "Transfer Failed",
+        "message": "Unable to process transfer. Please try again."
+      }
+    }
+  },
+  "deposit": {
+    "header": {
+      "title": "Deposit Request"
+    },
+    "content": {
+      "investmentDeposit": "Investment Deposit",
+      "growYourWealth": "Grow Your Wealth With Us",
+      "depositRequest": "Deposit Request",
+      "depositInstructions": "Complete the form below to request a deposit. Choose between Time Deposit for guaranteed returns (minimum ₱50,000) or Stock investments for market opportunities (minimum ₱2,000,000).",
+      "investmentDetails": "Investment Details",
+      "investmentType": "Investment Type",
+      "selectInvestmentType": "Select Investment Type *",
+      "chooseInvestmentType": "Choose your investment type",
+      "contractPeriod": "Contract Period *",
+      "selectContractDuration": "Select contract duration",
+      "address": "Address",
+      "enterAddress": "Enter your complete address",
+      "addressRequired": "Address Required",
+      "investmentAmount": "Investment Amount",
+      "amount": "Amount *",
+      "enterInvestmentAmount": "Enter investment amount",
+      "phpEquivalent": "PHP Equivalent",
+      "calculating": "Calculating...",
+      "rate": "Rate: 1 {currency} = ₱{rate}",
+      "contactInformation": "Contact Information",
+      "emailAddress": "Email Address",
+      "accountHolder": "Account Holder: {firstName} {lastName}",
+      "processingInformation": "Processing Information",
+      "processingText": "After submitting your deposit request, we will send you bank account details via email. Please note that the deposit request operation is operating in working days Monday to Friday. It could take one day process to complete the transaction in the Inspire Wallet. You will receive confirmation once your deposit is processed.",
+      "submitDepositRequest": "Submit Deposit Request",
+      "submitting": "Submitting...",
+      "rateUnavailable": "Rate Unavailable",
+      "minimumStock": "Minimum ₱2,000,000 for Stock",
+      "minimumTimeDeposit": "Minimum ₱50,000 for Time Deposit",
+      "minimum": "Minimum: {amount}",
+      "selectCurrency": "Select Currency",
+      "selectInvestmentTypeModal": "Select Investment Type",
+      "selectContractPeriod": "Select Contract Period",
+      "timeDeposit": "Time Deposit",
+      "stockInvestment": "Stock Investment",
+      "sixMonthsContract": "6 Months Contract",
+      "oneYearContract": "1 Year Contract",
+      "twoYearsContract": "2 Years Contract"
+    },
+    "modals": {
+      "missingInformation": {
+        "title": "Missing Information",
+        "message": "Please fill in all required fields."
+      },
+      "exchangeRateUnavailable": {
+        "title": "Exchange Rate Unavailable",
+        "message": "The exchange rate for the selected currency is currently unavailable. Please try again later or select a different currency."
+      },
+      "minimumInvestmentNotMet": {
+        "title": "Minimum Investment Not Met",
+        "message": "{type} investments require a minimum of ₱{amount}. Please increase your amount."
+      },
+      "requestSubmitted": {
+        "title": "Request Submitted",
+        "message": "Your deposit request has been submitted successfully! Please check your email for bank account details."
+      },
+      "submissionFailed": {
+        "title": "Submission Failed",
+        "message": "Failed to submit request. Please try again."
+      }
+    }
+  },
+  "maya": {
+    "header": {
+      "title": "E-Wallet Account Opening"
+    },
+    "content": {
+      "ewalletAccountOpening": "E-Wallet Account Opening",
+      "digitalBankingMadeSimple": "Digital Banking Made Simple",
+      "accountOpeningRequest": "Account Opening Request",
+      "accountOpeningInstructions": "Please fill up the following form to request an account opening with your preferred E-Wallet provider. Your application will be processed within 5-7 working days.",
+      "personalInformation": "Personal Information",
+      "ewalletSelection": "E-Wallet Selection",
+      "selectEwalletProvider": "Select E-Wallet Provider *",
+      "selectPreferredEwallet": "Select your preferred E-Wallet",
+      "contactDetails": "Contact Details",
+      "emailAddress": "Email Address *",
+      "emailPlaceholder": "your.email@example.com",
+      "mobileNumber": "Mobile Number *",
+      "mobilePlaceholder": "+63 9XX XXX XXXX",
+      "landlineNumber": "Landline Number",
+      "landlinePlaceholder": "(02) XXXX XXXX",
+      "personalDetails": "Personal Details",
+      "gender": "Gender *",
+      "selectGender": "Select your gender",
+      "dateOfBirth": "Date of Birth *",
+      "selectBirthdate": "Select your birthdate",
+      "civilStatus": "Civil Status *",
+      "citizenship": "Citizenship *",
+      "citizenshipPlaceholder": "Filipino",
+      "addressInformation": "Address Information",
+      "completeAddress": "Complete Address *",
+      "addressPlaceholder": "House/Unit No., Street, Barangay, City, Province, ZIP Code",
+      "financialInformation": "Financial Information",
+      "sourceOfFund": "Source of Fund *",
+      "sourcePlaceholder": "e.g., Employment, Business, Investment",
+      "grossMonthlyIncome": "Gross Monthly Income *",
+      "incomePlaceholder": "₱ 50,000",
+      "processingInformation": "Processing Information",
+      "processingText": "By submitting these details, we will send you an email confirmation with your application status. Please note that this process will take approximately 5–7 working days for review and approval.",
+      "submitApplication": "Submit Application",
+      "processing": "Processing...",
+      "selectGenderModal": "Select Gender",
+      "selectCivilStatusModal": "Select Civil Status",
+      "selectEwalletTypeModal": "Select E-Wallet Type",
+      "male": "Male",
+      "female": "Female",
+      "preferNotToSay": "Prefer not to say",
+      "single": "Single",
+      "married": "Married",
+      "legallySeparated": "Legally Separated",
+      "divorced": "Divorced",
+      "annulled": "Annulled",
+      "widowEer": "Widow/er",
+      "maya": "Maya",
+      "gCash": "GCash"
+    },
+    "steps": {
+      "ewalletSelection": {
+        "title": "Choose Your E-Wallet Provider",
+        "description": "Select your preferred e-wallet provider for account opening. This will determine which digital banking services you'll have access to."
+      },
+      "contactInfo": {
+        "title": "Contact Information",
+        "description": "Provide your contact details so we can reach you regarding your application status and account updates."
+      },
+      "personalDetails": {
+        "title": "Personal Information",
+        "description": "Tell us about yourself. This information is required for identity verification and compliance purposes."
+      },
+      "addressInfo": {
+        "title": "Address Information",
+        "description": "Provide your complete address for verification and account setup purposes."
+      },
+      "financialInfo": {
+        "title": "Financial Information",
+        "description": "Share your financial details to help us understand your banking needs and ensure compliance."
+      }
+    },
+    "validation": {
+      "selectEwallet": "Please select an e-wallet provider",
+      "emailRequired": "Email address is required",
+      "mobileRequired": "Mobile number is required",
+      "genderRequired": "Please select your gender",
+      "birthdateRequired": "Please select your birthdate",
+      "civilStatusRequired": "Please select your civil status",
+      "citizenshipRequired": "Citizenship is required",
+      "addressRequired": "Complete address is required",
+      "sourceFundRequired": "Source of fund is required",
+      "incomeRequired": "Monthly income is required"
+    },
+    "modals": {
+      "accessRestricted": {
+        "title": "Access Restricted",
+        "message": "This feature requires a Premium account. Your current account type is: {accountType}. Please upgrade to Premium to access E-Wallet Account Services."
+      },
+      "timeDepositInsufficient": {
+        "title": "Access Restricted",
+        "message": "You need to have a minimum time deposit of ₱200,000 to open an E-Wallet account. Your current time deposit is ₱{amount}. Please increase your time deposit first."
+      },
+      "error": {
+        "title": "Error",
+        "message": "Unable to verify account permissions. Please try again."
+      },
+      "dataError": {
+        "title": "Error",
+        "message": "Failed to fetch user data. Please try again later."
+      },
+      "missingInformation": {
+        "title": "Missing Information",
+        "message": "Please fill in all required fields before submitting."
+      },
+      "authenticationError": {
+        "title": "Authentication Error",
+        "message": "Please log in to submit your application."
+      },
+      "applicationSubmitted": {
+        "title": "Application Submitted Successfully!",
+        "message": "Your {ewalletType} account opening request has been submitted and saved to our database. You will receive an email confirmation shortly. Application ID: {applicationId}"
+      },
+      "partialSuccess": {
+        "title": "Partial Success",
+        "message": "Your application was saved but we couldn't send the email notification. Please check your email address."
+      },
+      "submissionFailed": {
+        "title": "Submission Failed",
+        "message": "Unable to submit your application. Please try again later. Error: {error}"
+      }
+    }
+  },
+  "stockholder": {
+    "header": {
+      "title": "Stockholder Dashboard"
+    },
+    "content": {
+      "stockholderAmount": "Stockholder Amount",
+      "buy": "BUY",
+      "transfer": "TRANSFER",
+      "sell": "SELL"
+    },
+    "modals": {
+      "dataError": {
+        "title": "Data Error",
+        "message": "No user data found. Please try again."
+      }
+    }
+  },
+  "stockTransfer": {
+    "header": {
+      "title": "Transfer Stocks",
+      "subtitle": "Transfer stock amount to other users"
+    },
+    "balanceLabel": "Available Stock Amount",
+    "guide": {
+      "title": "Quick Guide",
+      "step1": "Search recipient by account number",
+      "step2": "Enter stock amount to transfer",
+      "step3": "Confirm and send"
+    },
+    "sections": {
+      "recipient": "Recipient Account Number",
+      "amount": "Stock Amount"
+    },
+    "placeholders": {
+      "accountNumber": "Enter recipient's account number...",
+      "amount": "0.00"
+    },
+    "buttons": {
+      "change": "Change",
+      "sendTransfer": "Send Stock Transfer",
+      "selectRecipient": "Select Recipient",
+      "enterAmount": "Enter Amount",
+      "cannotTransferToSelf": "Cannot Transfer to Self",
+      "insufficientStock": "Insufficient Stock Amount",
+      "enterValidAmount": "Enter Valid Amount"
+    },
+    "validation": {
+      "selfTransfer": "You cannot transfer stocks to yourself. Please enter a different account number.",
+      "userNotFound": "User not found. Please check the account number.",
+      "invalidAccountNumber": "Please enter a valid account number (minimum 6 digits).",
+      "insufficientBalance": "You don't have enough stock amount to transfer"
+    },
+    "titles": {
+      "transferSuccessful": "Transfer Successful",
+      "transferFailed": "Transfer Failed",
+      "error": "Error"
+    },
+    "messages": {
+      "transferSuccessful": "Stock transfer completed successfully",
+      "transferFailed": "Failed to process stock transfer. Please try again."
+    },
+    "currencySymbol": "₱"
+  },
+  "inspireAuto": {
+    "header": {
+      "title": "Investment Profile"
+    },
+    "content": {
+      "loadingText": "Loading Investment Profile...",
+      "totalDeposits": "Total Deposits",
+      "active": "Active",
+      "completed": "Completed",
+      "totalInvested": "Total Invested",
+      "activeDeposits": "Active Deposits",
+      "completedDeposits": "Completed Deposits",
+      "noActiveDeposits": "No active deposits",
+      "noActiveDepositsSubtext": "Your active investments will appear here",
+      "noCompletedDeposits": "No completed deposits",
+      "noCompletedDepositsSubtext": "Your completed investments will appear here",
+      "amount": "Amount:",
+      "investmentRate": "Investment Rate:",
+      "contractType": "Contract Type:",
+      "avgMonth": "Avg/Month:",
+      "avgMinute": "Avg/Minute:",
+      "expectedEarnings": "Expected Earnings:",
+      "completionDate": "Completion Date:",
+      "totalEarned": "Total Earned:",
+      "earningsBreakdown": "Earnings Breakdown:",
+      "sixMonthGross": "6-Month Gross:",
+      "tax": "Tax (20%):",
+      "sixMonthNet": "6-Month Net:",
+      "cycleCompleted": "Cycle Completed:",
+      "currentEarnings": "Current Earnings:",
+      "cycle": "Cycle",
+      "requestCopy": "Request Copy",
+      "processing": "Processing...",
+      "contract": "Contract",
+      "retry": "Retry"
+    },
+    "modals": {
+      "accessRestricted": {
+        "title": "Access Restricted",
+        "message": "This feature requires a Premium account. Your current account type is: {accountType}. Please upgrade to Premium to access Investment Profiles.",
+        "timeDepositMessage": "You need to have an active time deposit to access Investment Profile. Please set up a time deposit first."
+      },
+      "error": {
+        "title": "Error",
+        "message": "User data not found. Please try again later.",
+        "loadingError": "Failed to load deposit data. Please try again.",
+        "updateFailed": "Failed to update Firestore. Please try again.",
+        "authenticationError": "No authenticated user found. Please log in again.",
+        "userDataNotFound": "User data not found. Please contact support.",
+        "emailNotFound": "User email not found. Please contact support.",
+        "depositDataNotFound": "Deposit data not found. Please contact support.",
+        "emailError": "Contract found but failed to send email. Please try again.",
+        "requestCopyError": "Failed to request contract copy. Please try again.",
+        "copyFailed": "Failed to copy deposit ID. Please try again."
+      },
+      "success": {
+        "title": "Success",
+        "contractSent": "Contract copy has been sent to {email}",
+        "copied": "Copied!",
+        "copiedMessage": "Deposit ID \"{depositId}\" has been copied to clipboard."
+      },
+      "warning": {
+        "title": "Contract Unavailable",
+        "message": "We apologize, the digital contract is unavailable at the moment. Please request a copy from our Representative at info@inspireholdings.ph"
+      }
+    }
+  },
+  "forgotPassword": {
+    "header": {
+      "title": "Password Recovery"
+    },
+    "content": {
+      "title": "Password Recovery",
+      "subtitle": "Reset Your Password",
+      "howItWorks": "How It Works",
+      "instructions": "📧 Enter your email address below\n🔗 We'll send you a secure reset link\n✅ Check your inbox and click the link\n🔑 Create a new password and you're all set!",
+      "resetPassword": "Reset Password",
+      "emailAddress": "Email Address",
+      "emailLabel": "Enter your registered email address *",
+      "emailPlaceholder": "your.email@example.com",
+      "securityInfo": "Security Information",
+      "securityText": "🔒 Password reset links expire in 1 hour for security\n📱 Check your spam/junk folder if you don't see the email\n🛡️ Only you can reset your password with this link\n⚡ The process is instant and secure",
+      "sendResetLink": "Send Reset Link",
+      "sending": "Sending...",
+      "emailSentTitle": "Email Sent Successfully!",
+      "emailSentMessage": "We've sent a password reset link to:",
+      "emailSentInstructions": "Please check your inbox and follow the instructions to reset your password. The link will expire in 1 hour for security reasons.",
+      "returnToLogin": "Return to Login"
+    },
+    "alerts": {
+      "missingInfo": "MISSING INFORMATION",
+      "enterEmail": "Please enter your email address",
+      "error": "ERROR",
+      "sendFailed": "Failed to send password reset email. Please try again."
+    }
+  },
+  "helpCenter": {
+    "header": {
+      "title": "Help Center"
+    },
+    "content": {
+      "title": "Help Center",
+      "subtitle": "We're Here to Assist You",
+      "submitRequestTitle": "Submit Your Request",
+      "instructions": "Need help with something? Fill out this form and our support team will get back to you as soon as possible. We're here to help!",
+      "contactInfo": "Contact Information",
+      "yourDetails": "Your Details",
+      "firstName": "First Name *",
+      "firstNamePlaceholder": "Enter your first name",
+      "lastName": "Last Name *",
+      "lastNamePlaceholder": "Enter your last name",
+      "emailAddress": "Email Address *",
+      "emailPlaceholder": "your.email@example.com",
+      "ticketDetails": "Ticket Details",
+      "ticketTitle": "Ticket Title *",
+      "ticketTitlePlaceholder": "Brief title describing your issue",
+      "priorityLevel": "Priority Level *",
+      "selectPriority": "Select priority level",
+      "highPriority": "🔴 High Priority",
+      "mediumPriority": "🟡 Medium Priority",
+      "lowPriority": "🟢 Low Priority",
+      "category": "Category *",
+      "selectCategory": "Select category",
+      "paymentIssues": "💳 Payment Issues",
+      "withdrawalIssues": "💰 Withdrawal Issues",
+      "accountVerification": "✅ Account Verification",
+      "securityConcerns": "🔐 Security Concerns",
+      "appTechnicalIssues": "📱 App Technical Issues",
+      "generalSupport": "📞 General Support",
+      "other": "📋 Other",
+      "howCanWeHelp": "How Can We Help?",
+      "describeConcern": "Describe Your Concern *",
+      "describePlaceholder": "Please describe your concern or question in detail. Include any relevant information that will help us assist you better.",
+      "whatHappensNext": "What Happens Next?",
+      "disclaimerText": "By submitting this form, we will receive your help request via email. Our support team will review your concern and respond within 24-48 hours during business days. Thank you for reaching out to us!",
+      "submitRequest": "Submit Request",
+      "sending": "Sending...",
+      "activeSupportTickets": "Active Support Tickets",
+      "noActiveTickets": "No Active Tickets",
+      "noActiveTicketsSubtext": "Submit a new help request to get started with our support team",
+      "submitNewRequest": "Submit New Request",
+      "messages": "messages"
+    },
+    "modals": {
+      "selectPriority": "Select Priority Level",
+      "selectCategory": "Select Category",
+      "missingInfo": "Missing Information",
+      "fillAllFields": "Please fill in all required fields.",
+      "authenticationError": "Authentication Error",
+      "loginToSubmit": "Please log in to submit your help request.",
+      "submittedSuccessfully": "Help Ticket Submitted Successfully!",
+      "submittedMessage": "Your help ticket has been submitted and saved to our database. You will receive an email confirmation shortly. Ticket ID: {ticketId}",
+      "partialSuccess": "Partial Success",
+      "savedButEmailFailed": "Your help ticket was saved but we couldn't send the email notification. Please check your email address.",
+      "submissionFailed": "Submission Failed",
+      "unableToSubmit": "Unable to submit your help ticket. Please try again later. Error: {error}",
+      "sendMessageError": "Error",
+      "sendMessageFailed": "Failed to send message. Please try again.",
+      "translatedTo": "Translated to",
+      "translationOptions": "Translation Options",
+      "translateTo": "Translate to:",
+      "translateAll": "Translate All",
+      "clearAll": "Clear All"
+    }
+  },
+  "travelProtection": {
+    "header": {
+      "title": "Travel Protection"
+    },
+    "content": {
+      "title": "Travel Protection",
+      "subtitle": "Secure Your Journey",
+      "instructionTitle": "Travel Insurance Application",
+      "instructionText": "Complete this form to subscribe to our Travel Protection service. Your application will be processed within 5-7 working days after payment confirmation.",
+      "protectionFee": "Protection Fee",
+      "discountedRate": "Discounted rate for existing customers",
+      "standardRate": "Standard protection rate",
+      "applicationDetails": "Application Details",
+      "contactInformation": "Contact Information",
+      "personalDetails": "Personal Details",
+      "financialInformation": "Financial Information",
+      "travelDetails": "Travel Details",
+      "requiredDocuments": "Required Documents",
+      "emailAddress": "Email Address *",
+      "emailPlaceholder": "your.email@example.com",
+      "mobileNumber": "Mobile Number *",
+      "mobilePlaceholder": "+63 9XX XXX XXXX",
+      "landlineNumber": "Landline Number",
+      "landlinePlaceholder": "(02) XXXX XXXX",
+      "gender": "Gender *",
+      "selectGender": "Select your gender",
+      "dateOfBirth": "Date of Birth *",
+      "selectBirthdate": "Select your birthdate",
+      "civilStatus": "Civil Status *",
+      "selectCivilStatus": "Select civil status",
+      "citizenship": "Citizenship *",
+      "citizenshipPlaceholder": "Filipino",
+      "homeAddress": "Home Address *",
+      "addressPlaceholder": "House/Unit No., Street, Barangay, City, Province, ZIP Code",
+      "sourceOfFund": "Source of Fund *",
+      "sourcePlaceholder": "e.g., Employment, Business, Investment",
+      "grossMonthlyIncome": "Gross Monthly Income *",
+      "incomePlaceholder": "₱ 50,000",
+      "cashOnHand": "Cash on Hand *",
+      "cashPlaceholder": "₱ 10,000",
+      "destinationAddress": "Destination Address *",
+      "destinationPlaceholder": "Hotel/Accommodation address where you'll be staying",
+      "checkInDate": "Check-in Date *",
+      "selectCheckInDate": "Select stay-in date",
+      "duration": "Duration (Days) *",
+      "durationPlaceholder": "7",
+      "airline": "Airline *",
+      "airlinePlaceholder": "Philippine Airlines, Cebu Pacific, etc.",
+      "departureTime": "Departure Time *",
+      "selectDepartureTime": "Select departure time",
+      "arrivalTime": "Arrival Time *",
+      "selectArrivalTime": "Select arrival time",
+      "passportNumber": "Passport Number *",
+      "passportPlaceholder": "P1234567",
+      "purposeOfTravel": "Purpose of Travel *",
+      "purposePlaceholder": "Describe the purpose of your travel (business, vacation, family visit, etc.)",
+      "passportPhoto": "Passport Photo *",
+      "uploadPassport": "Upload Passport",
+      "tapToSelect": "Tap to select image",
+      "governmentId": "Government ID *",
+      "uploadGovernmentId": "Upload Government ID",
+      "idTypes": "Driver's License, SSS, etc.",
+      "importantInformation": "Important Information",
+      "disclaimerText": "By submitting this application, you confirm that all information provided is accurate. Payment will be processed securely through PayPal. Your travel protection coverage will be activated within 5-7 working days after successful payment and document verification.",
+      "applyForProtection": "Apply for Protection",
+      "processing": "Processing...",
+      "male": "Male",
+      "female": "Female",
+      "preferNotToSay": "Prefer not to say",
+      "single": "Single",
+      "married": "Married",
+      "legallySeparated": "Legally Separated",
+      "divorced": "Divorced",
+      "annulled": "Annulled",
+      "widow": "Widow/er",
+      "formProgress": "Application Progress",
+      "contactDescription": "Please provide your contact information",
+      "personalDescription": "Please provide your personal information",
+      "financialDescription": "Please provide your financial information",
+      "travelDescription": "Please provide your travel information",
+      "documentsDescription": "Please upload your required documents",
+      "reviewAndSubmit": "Review & Submit",
+      "reviewDescription": "Please review your information before submitting"
+    },
+    "modals": {
+      "accessRestricted": "Access Restricted",
+      "premiumRequired": "This feature requires a Premium account. Your current account type is: {accountType}. Please upgrade to Premium to access Travel Protection.",
+      "error": "Error",
+      "noUserData": "No user data found",
+      "errorMessage": "Unable to verify account permissions. Please try again.",
+      "selectImageFirst": "Please select an image first.",
+      "loginRequired": "You must be logged in to upload an image.",
+      "uploadFailed": "Failed to upload image. Please try again.",
+      "orderCreated": "Order Created",
+      "confirmPayment": "Please click CONFIRM to confirm the payment",
+      "confirm": "CONFIRM",
+      "orderFailed": "Failed to create order",
+      "captureFailed": "Failed to capture payment",
+      "success": "SUCCESS",
+      "successfullySent": "It is successfully sent",
+      "failure": "FAILURE",
+      "unsuccessfullySent": "It is unsuccessfully sent",
+      "missingInformation": "Missing Information",
+      "fillAllFields": "Please fill in all required fields and upload both passport photo and government ID before submitting.",
+      "authenticationError": "Authentication Error",
+      "loginToSubmit": "Please log in to submit your application.",
+      "uploadError": "Upload Error",
+      "passportUploadFailed": "Failed to upload passport photo. Please try again.",
+      "govtIdUploadFailed": "Failed to upload government ID. Please try again.",
+      "applicationSubmitted": "Application Submitted Successfully!",
+      "applicationMessage": "Your travel protection application has been submitted and saved to our database. You will receive an email confirmation shortly. Application ID: {applicationId}",
+      "partialSuccess": "Partial Success",
+      "savedButEmailFailed": "Your application was saved but we couldn't send the email notification. Please check your email address.",
+      "submissionFailed": "Submission Failed",
+      "unableToSubmit": "Unable to submit your application. Please try again later. Error: {error}",
+      "selectGender": "Select Your Gender",
+      "selectCivilStatus": "Select Your Civil Status",
+      "contactRequired": "Please fill in all contact information fields before proceeding.",
+      "personalRequired": "Please fill in all personal details before proceeding.",
+      "financialRequired": "Please fill in all financial information before proceeding.",
+      "travelRequired": "Please fill in all travel details before proceeding.",
+      "documentsRequired": "Please upload both passport photo and government ID before proceeding."
+    },
+    "buttons": {
+      "back": "Back",
+      "next": "Next"
+    }
+  },
+  "withdrawalRequest": {
+    "header": {
+      "title": "Withdrawal Request"
+    },
+    "content": {
+      "title": "Withdrawal Request",
+      "subtitle": "Access Your Funds Securely",
+      "instructionTitle": "Withdrawal Request",
+      "instructionText": "Complete the form below to request a withdrawal. Choose your withdrawal type and provide your bank account details for secure transfer.",
+      "withdrawalDetails": "Withdrawal Details",
+      "withdrawalType": "Withdrawal Type",
+      "selectWithdrawalType": "Select Withdrawal Type *",
+      "chooseWithdrawalType": "Choose withdrawal type",
+      "availableBalance": "Available Balance",
+      "agentWithdrawal": "Agent Withdrawal",
+      "withdrawalAmount": "Withdrawal Amount (₱) *",
+      "enterWithdrawalAmount": "Enter withdrawal amount",
+      "availableBalanceInfo": "Available Balance: ₱{amount}",
+      "agentWalletBalanceInfo": "Agent Wallet Balance: ₱{amount}",
+      "contactInformation": "Contact Information",
+      "emailAddress": "Email Address *",
+      "emailPlaceholder": "your.email@example.com",
+      "accountHolder": "Account Holder: {firstName} {lastName}",
+      "bankingInformation": "Banking Information",
+      "bankAccountNumber": "Bank Account Number *",
+      "bankAccountNumberPlaceholder": "Enter your bank account number",
+      "accountHolderName": "Account Holder Name *",
+      "accountHolderNamePlaceholder": "Enter account holder name (as per bank records)",
+      "bankName": "Bank Name *",
+      "bankNamePlaceholder": "Enter your bank name (e.g., BDO, BPI, Metrobank)",
+      "branchName": "Branch Name *",
+      "branchNamePlaceholder": "Enter your bank branch name",
+      "securityProcessing": "Security & Processing",
+      "securityText": "🔒 Your banking information is encrypted and secure\n⏱️ Processing time: 1-2 working days\n📧 Confirmation will be sent to your email\n✅ All withdrawals are verified before processing",
+      "submitWithdrawalRequest": "Submit Withdrawal Request",
+      "submitting": "Submitting...",
+      "insufficientBalance": "Insufficient Balance"
+    },
+    "modals": {
+      "accessRestricted": "Access Restricted",
+      "premiumRequired": "This feature requires a Premium account. Your current account type is: {accountType}. Please upgrade to Premium to access Withdraw functionality.",
+      "error": "Error",
+      "errorMessage": "Unable to verify account permissions. Please try again.",
+      "missingInformation": "Missing Information",
+      "fillAllFields": "Please fill in all required fields before submitting.",
+      "authenticationError": "Authentication Error",
+      "loginToSubmit": "Please log in to submit your withdrawal request.",
+      "invalidAmount": "Invalid Amount",
+      "enterValidAmount": "Please enter a valid withdrawal amount greater than 0.",
+      "insufficientBalance": "Insufficient Balance",
+      "insufficientBalanceMessage": "Your available balance is ₱{amount}. You cannot withdraw more than your available balance.",
+      "insufficientAgentBalance": "Insufficient Agent Balance",
+      "insufficientAgentBalanceMessage": "Your agent wallet balance is ₱{amount}. You cannot withdraw more than your agent wallet balance.",
+      "submittedSuccessfully": "Withdrawal Request Submitted Successfully!",
+      "submittedMessage": "Your withdrawal request has been submitted and saved to our database. You will receive an email confirmation shortly. Request ID: {requestId}",
+      "partialSuccess": "Partial Success",
+      "savedButEmailFailed": "Your withdrawal request was saved but we couldn't send the email notification. Please check your email address.",
+      "submissionFailed": "Submission Failed",
+      "unableToSubmit": "Unable to submit your withdrawal request. Please try again later. Error: {error}",
+      "selectWithdrawalType": "Select Withdrawal Type"
+    }
+  },
+  "contractRequestModal": {
+    "content": {
+      "title": "Contract Request",
+      "subtitle": "Request an original contract copy without watermarks",
+      "contractId": "Contract ID *",
+      "contractIdPlaceholder": "Enter your contract ID",
+      "emailAddress": "Email Address *",
+      "emailAddressPlaceholder": "Enter your email address",
+      "fullName": "Full Name *",
+      "fullNamePlaceholder": "Enter your full name",
+      "infoText": "Your original contract will be sent to the provided email address within 1-2 business days.",
+      "sendRequest": "Send Request",
+      "sending": "Sending...",
+      "cancel": "Cancel"
+    },
+    "validation": {
+      "contractIdRequired": "Contract ID is required",
+      "emailRequired": "Email address is required",
+      "emailInvalid": "Please enter a valid email address",
+      "fullNameRequired": "Full name is required"
+    },
+    "alerts": {
+      "error": "Error",
+      "loginRequired": "You must be logged in to request a contract copy.",
+      "requestFailed": "Request Failed",
+      "requestFailedMessage": "Failed to send contract request. Please try again. Error: {error}",
+      "unableToSubmit": "Unable to submit your contract request. Please try again later.",
+      "successMessage": "Your contract request has been submitted successfully! We will process your request for Contract ID: {contractId} and send the original contract to {emailAddress} within 1-2 business days."
+    }
+  },
+  "agentTransaction": {
+    "content": {
+      "loadingText": "Loading agent transactions...",
+      "errorText": "Error: {error}",
+      "emptyText": "No agent transactions found",
+      "headerText": "Agent Transaction History",
+      "pageInfo": "Page {currentPage} of {totalPages} ({total} total)",
+      "client": "Client",
+      "type": "Type",
+      "date": "Date",
+      "amount": "Amount",
+      "commission": "Commission",
+      "gross": "Gross",
+      "tax": "Tax",
+      "firstPage": "1st",
+      "previousPage": "‹",
+      "nextPage": "›",
+      "lastPage": "Last",
+      "close": "Close"
+    },
+    "modal": {
+      "title": "Agent Transaction Overview",
+      "date": "Date:",
+      "typeOfTransaction": "Type of Transaction:",
+      "amount": "Amount:",
+      "grossAmount": "Gross Amount:",
+      "taxApplied": "Tax Applied:",
+      "commission": "Commission:",
+      "referralName": "Referral Name:"
+    }
+  },
+  "notifications": {
+    "title": "Notifications",
+    "loadingText": "Loading notifications...",
+    "errorTitle": "Error Loading Notifications",
+    "errorMessage": "Failed to load notifications",
+    "retryButton": "Try Again",
+    "emptyTitle": "No Notifications",
+    "emptyMessage": "You don't have any notifications yet. Check back later for updates.",
+    "noTitle": "No Title",
+    "noMessage": "No message content available.",
+    "invalidDate": "Invalid Date",
+    "detailTitle": "Notification Details",
+    "backToNotifications": "Back to Notifications"
+  },
+  "investments": {
+    "loadingText": "Loading investments...",
+    "loadingSubtext": "Please wait while we fetch your data",
+    "emptyText": "No investments found",
+    "emptySubtextMonthly": "Your monthly campaign investments will appear here when available.",
+    "emptySubtextThreeMonth": "Your three-month campaign investments will appear here when available.",
+    "pullToRefresh": "Pull to refresh",
+    "labels": {
+      "amount": "Amount",
+      "rate": "Rate",
+      "payoutDay": "Payout Day",
+      "expectedIncome": "Expected Income",
+      "completion": "Completion",
+      "status": "Status",
+      "cycleCompleted": "Cycle Completed",
+      "progress": "Progress",
+      "expected": "Expected"
+    },
+    "status": {
+      "active": "Active",
+      "completed": "Completed"
+    },
+    "errors": {
+      "failedToLoadMonthly": "Failed to load monthly campaigns",
+      "failedToLoadThreeMonth": "Failed to load three-month campaigns",
+      "failedToSetupConnection": "Failed to setup real-time data connection",
+      "failedToFetch": "Failed to fetch campaigns"
+    }
+  },
+  "agentChat": {
+    "title": "Agent Support",
+    "supportOnline": "Support is online",
+    "supportTeam": "Support team",
+    "loadingMessages": "Loading messages...",
+    "welcomeTitle": "👋 Welcome to Agent Support",
+    "welcomeSubtext": "You're connected with our support team.\nSend a message to start the conversation.",
+    "typeMessage": "Type your message...",
+    "supportTyping": "Support is typing",
+    "shareFile": "Share File",
+    "chooseOption": "Choose an option:",
+    "chooseFromGallery": "Choose from Gallery",
+    "chooseDocuments": "Choose Documents",
+    "cancel": "Cancel",
+    "translate": "Translate",
+    "hideTranslation": "Hide Translation",
+    "noNewMessages": "No new agent messages to translate",
+    "allTranslationsCleared": "All translations cleared",
+    "success": "Success",
+    "info": "Info",
+    "failedToPickImage": "Failed to pick image",
+    "failedToPickDocument": "Failed to pick document",
+    "grantCameraPermissions": "Please grant camera roll permissions to share photos.",
+    "user": "User"
+  },
+  "loadingScreens": {
+    "transfer": {
+      "title": "Transferring Money",
+      "subtitle": "Processing transfer...",
+      "status": "Please wait while we process your transfer...",
+      "from": "From",
+      "to": "To"
+    },
+    "simple": {
+      "default": "Loading..."
+    },
+    "travelProtection": {
+      "title": "Applying for Travel Protection",
+      "subtitle": "Securing your journey with Inspire Wallet",
+      "status": "Processing travel protection application...",
+      "features": {
+        "medical": "Medical Coverage",
+        "baggage": "Baggage Protection",
+        "cancellation": "Trip Cancellation"
+      }
+    },
+    "inspireCards": {
+      "title": "Processing Your Card",
+      "subtitle": "Setting up your Inspire Card...",
+      "status": "Please wait while we prepare your card"
+    },
+    "bank": {
+      "title": "Processing Bank Application",
+      "subtitle": "Setting up your bank account...",
+      "status": "Please wait while we process your application",
+      "features": {
+        "secure": "Secure",
+        "fast": "Fast",
+        "reliable": "Reliable"
+      }
+    },
+    "general": {
+      "login": {
+        "title": "Signing You In",
+        "subtitle": "Accessing your Inspire Wallet",
+        "status": "Please wait..."
+      },
+      "register": {
+        "title": "Creating Your Account",
+        "subtitle": "Setting up your Inspire Wallet",
+        "status": "Please wait..."
+      },
+      "default": {
+        "title": "Loading...",
+        "subtitle": "Please wait",
+        "status": "Processing..."
+      }
+    },
+    "ewallet": {
+      "title": "Opening Your E-Wallet Account",
+      "subtitle": "Setting up your digital banking in the Philippines",
+      "status": "Processing your e-wallet application...",
+      "features": {
+        "mobile": "Mobile Payments",
+        "cards": "Digital Cards",
+        "cashless": "Cashless Transactions"
+      }
+    }
+  },
+  "investmentTracker": {
+    "monthly": {
+      "title": "Investment Tracker",
+      "subtitle": "Monthly campaigns",
+      "headerTitle": "Monthly Campaign Investments",
+      "headerSubtitle": "investment tracked • Sorted by date (newest first)",
+      "headerSubtitlePlural": "investments tracked • Sorted by date (newest first)",
+      "campaignType": "Rally Campaign",
+      "labels": {
+        "amount": "Amount",
+        "rate": "Rate",
+        "payoutDay": "Payout Day",
+        "expectedIncome": "Expected Income",
+        "completion": "Completion",
+        "status": "Status",
+        "cycleCompleted": "Cycle Completed",
+        "expected": "Expected"
+      },
+      "status": {
+        "active": "Active"
+      },
+      "subtexts": {
+        "afterTax": "After 20% tax",
+        "nextPayout": "Next:"
+      }
+    },
+    "threeMonth": {
+      "title": "Investment Tracker",
+      "subtitle": "Three month campaigns",
+      "headerTitle": "Three Month Campaign Investments",
+      "headerSubtitle": "investment tracked • Sorted by date (newest first)",
+      "headerSubtitlePlural": "investments tracked • Sorted by date (newest first)",
+      "campaignType": "Three Month Campaign",
+      "labels": {
+        "amount": "Amount",
+        "rate": "Rate",
+        "payoutDay": "Payout Day",
+        "expectedIncome": "Expected Income",
+        "completion": "Completion",
+        "status": "Status",
+        "progress": "Progress",
+        "expected": "Expected",
+        "totalEarned": "Total Earned"
+      },
+      "status": {
+        "active": "Active"
+      },
+      "subtexts": {
+        "perQuarter": "Per quarter (after 20% tax)",
+        "nextPayout": "Next:"
+      }
+    },
+    "common": {
+      "loadingText": "Loading Investments",
+      "loadingSubtext": "Fetching your campaign data...",
+      "emptyText": "No Investments Found",
+      "emptySubtextMonthly": "You haven't started any monthly campaigns yet. Create your first investment to get started!",
+      "emptySubtextThreeMonth": "You haven't started any three-month campaigns yet. Create your first investment to get started!",
+      "pullToRefresh": "Pull to refresh",
+      "retry": "Retry",
+      "errors": {
+        "failedToLoadMonthly": "Failed to load monthly campaigns",
+        "failedToLoadThreeMonth": "Failed to load three-month campaigns",
+        "failedToFetch": "Failed to fetch data",
+        "failedToSetupConnection": "Failed to setup connection"
+      }
+    }
+  }
+}

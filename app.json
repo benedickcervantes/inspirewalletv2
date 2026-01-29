@@ -1,0 +1,131 @@
+{
+  "expo": {
+    "name": "Inspire Wallet",
+    "slug": "investor-wallet",
+    "version": "2.1.9",
+    "orientation": "portrait",
+    "icon": "./assets/images/applogo.png",
+    "scheme": "inspirewallet",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/images/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.inspire.inspirewallet",
+      "buildNumber": "95",
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "remote-notification"
+        ],
+        "NSLocationWhenInUseUsageDescription": "We need access to your location to provide personalized services.",
+        "NSCameraUsageDescription": "We need access to your camera to enable photo features.",
+        "NSPhotoLibraryUsageDescription": "We need access to your photo library to upload and share photos.",
+        "NSPhotoLibraryAddUsageDescription": "We need access to your photo library to save photos.",
+        "NSMicrophoneUsageDescription": "We need access to your microphone for voice features.",
+        "NSContactsUsageDescription": "We need access to your contacts to help you share the app with friends.",
+        "NSFaceIDUsageDescription": "We use Face ID for secure authentication.",
+        "NSCalendarsUsageDescription": "We need access to your calendar to schedule reminders.",
+        "NSRemindersUsageDescription": "We need access to your reminders to help you stay organized.",
+        "ITSAppUsesNonExemptEncryption": false,
+        "CFBundleDisplayName": "Inspire Wallet",
+        "CFBundleName": "Inspire Wallet"
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/applogo.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.inspire.inspirewallet",
+      "versionCode": 95,
+      "googleServicesFile": "./google-services.json",
+      "permissions": [
+        "INTERNET",
+        "NOTIFICATIONS",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "POST_NOTIFICATIONS",
+        "CAMERA"
+      ],
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "inspirewallet",
+              "host": "*"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
+      ]
+    },
+    "web": {
+      "bundler": "metro",
+      "favicon": "./assets/images/applogo.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow Inspire Wallet to access your camera to scan QR codes for quick transfers."
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "compileSdkVersion": 35,
+            "targetSdkVersion": 35,
+            "buildToolsVersion": "35.0.0",
+            "useLegacyPackaging": false,
+            "extraProguardRules": "-keep class com.facebook.hermes.unicode.** { *; }\n-keep class com.facebook.jni.** { *; }",
+            "ndkVersion": "27.1.12297006"
+          }
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/applogo.png",
+          "color": "#ffffff"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "We need access to your photo library to upload and share photos.",
+          "cameraPermission": "We need access to your camera to enable photo features."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "81d5c41e-b862-48d6-a14d-21246b09c564"
+      }
+    },
+    "owner": "amurobrian18",
+    "runtimeVersion": "2.1.9",
+    "updates": {
+      "url": "https://u.expo.dev/81d5c41e-b862-48d6-a14d-21246b09c564",
+      "enabled": true,
+      "fallbackToCacheTimeout": 0
+    }
+  }
+}

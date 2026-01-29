@@ -1,0 +1,2294 @@
+{
+  "headerGreetings": {
+    "hi": " ",
+    "goodMorning": "おはようございます",
+    "goodAfternoon": "こんにちは",
+    "goodEvening": "こんばんは"
+  },
+  "mainNavBar": {
+    "exploreText": "アプリを探索",
+    "investmentProfile": "投資プロフィール",
+    "transfer": "送金",
+    "agent": "エージェント",
+    "stock": "株式",
+    "eWallet": "電子ウォレット",
+    "bankingService": "銀行サービス",
+    "trading": "トレーディング",
+    "travelProtection": "旅行保護",
+    "task": "タスク"
+  },
+  "newSectionCarousel": {
+    "whatsNewTitle": "新着情報",
+    "exploreButton": "探索"
+  },
+  "task": {
+    "header": {
+      "title": "タスク"
+    },
+    "title": "タスク管理",
+    "subtitle": "タスクとアクティビティを管理",
+    "accumulatedPoints": "累積ポイント",
+    "myTasks": "マイタスク",
+    "noTasks": "利用可能なタスクはありません",
+    "loadingTasks": "タスクを読み込み中...",
+    "completed": "完了",
+    "taskDetails": "タスク詳細",
+    "loadingTask": "タスクを読み込み中...",
+    "taskNotFound": "タスクが見つかりません",
+    "untitled": "無題のタスク",
+    "points": "ポイント",
+    "description": "説明",
+    "instructions": "手順",
+    "link": "リンク",
+    "doTask": "タスクを実行",
+    "claimPoints": "ポイントを獲得",
+    "claiming": "獲得中...",
+    "pointsClaimed": "ポイント獲得済み!",
+    "success": "成功!",
+    "claimedSuccessfully": "正常に獲得しました",
+    "pointsClaimedTitle": "ポイント獲得!",
+    "pointsClaimedMessage": "獲得しました",
+    "pointsForTask": "ポイント、タスク完了:",
+    "earnedFrom": "タスクから獲得:",
+    "error": "エラー",
+    "noLink": "このタスクにはリンクがありません",
+    "invalidLink": "このリンクを開けません",
+    "linkError": "リンクを開けませんでした",
+    "notLoggedIn": "ポイントを獲得するにはログインが必要です",
+    "noPoints": "このタスクには獲得できるポイントがありません",
+    "claimError": "ポイントの獲得に失敗しました。もう一度お試しください。"
+  },
+  "accumulatedPoints": {
+    "header": {
+      "title": "累積ポイント"
+    },
+    "yourBalance": "残高",
+    "points": "ポイント",
+    "withdraw": "ポイントを引き出す",
+    "transactionHistory": "取引履歴",
+    "loadingTransactions": "取引を読み込み中...",
+    "noTransactions": "取引はまだありません",
+    "transaction": "取引",
+    "balance": "残高",
+    "error": "エラー",
+    "noPointsToWithdraw": "引き出すポイントがありません",
+    "withdrawTitle": "ポイントを引き出す",
+    "withdrawMessage": "本当に引き出しますか",
+    "cancel": "キャンセル",
+    "confirm": "確認",
+    "withdrawalDescription": "ポイント引き出し",
+    "withdrawalSuccessTitle": "引き出し成功",
+    "withdrawnMessage": "引き出しました",
+    "success": "成功!",
+    "withdrawnSuccessfully": "正常に引き出しました",
+    "withdrawalError": "引き出しの処理に失敗しました。もう一度お試しください。",
+    "withdrawPoints": "ポイントを引き出す",
+    "conversionNote": "1 ポイント = ₱1 ペソ",
+    "selectAmount": "金額を選択",
+    "paymentMethod": "支払い方法",
+    "mobileNumber": "携帯電話番号",
+    "submit": "送信",
+    "insufficientPoints": "ポイント不足",
+    "selectPaymentMethod": "支払い方法を選択してください",
+    "enterValidMobile": "有効な携帯電話番号を入力してください",
+    "withdrawalTo": "引き出し先",
+    "withdrawalRequestTitle": "引き出しリクエスト送信済み",
+    "withdrawalRequestMessage": "引き出しリクエスト",
+    "pointsTo": "ポイント to",
+    "hasBeenSubmitted": "送信されました",
+    "successTitle": "引き出し送信完了!",
+    "successMessage": "引き出しリクエストが正常に送信されました。1〜3時間以内にお支払いを受け取ります。",
+    "ok": "OK"
+  },
+  "transactionHistory": {
+    "loadingText": "取引履歴を読み込み中...",
+    "errorText": "エラー:",
+    "noTransactionsText": "取引履歴が見つかりません",
+    "headerTitle": "取引履歴",
+    "pageInfo": "ページ {currentPage} / {totalPages} (合計 {total} 件)",
+    "labels": {
+      "type": "種類",
+      "date": "日付",
+      "amount": "金額",
+      "status": "ステータス",
+      "description": "説明",
+      "reference": "参照番号",
+      "fee": "手数料",
+      "balanceAfter": "取引後残高"
+    },
+    "pagination": {
+      "first": "最初",
+      "previous": "‹",
+      "next": "›",
+      "last": "最後"
+    },
+    "modal": {
+      "title": "取引詳細",
+      "closeButton": "閉じる"
+    }
+  },
+  "mainDashboard": {
+    "cardHeaderText": "あなたのインスパイアカード",
+    "timeDepositTitle": "定期預金",
+    "amountWalletTitle": "ウォレット金額",
+    "newSupportMessage": "新しいサポートメッセージがあります！タップして表示。",
+    "accountDeletion": {
+      "title": "アカウント削除が必要です",
+      "message": "システムにユーザーデータが見つかりませんでした。これは通常、データ同期の問題が発生した場合に起こります。アカウントが削除され、アプリを続けて使用するには再度登録する必要があります。",
+      "confirmText": "アカウント削除＆再登録"
+    },
+    "errors": {
+      "failedToUpdateInvestment": "投資データの更新に失敗しました",
+      "failedToListenToInvestment": "投資更新の監視に失敗しました",
+      "failedToDeleteAccount": "アカウントの削除に失敗しました。サポートにお問い合わせください。",
+      "failedToCheckPresence": "プレゼンスステータスの確認に失敗しました"
+    },
+    "presenceStatus": {
+      "title": "プレゼンスステータス",
+      "noDataFound": "プレゼンスデータが見つかりません"
+    }
+  },
+  "depoWithdrawButton": {
+    "deposit": "入金",
+    "withdraw": "出金"
+  },
+  "categorizedSettings": {
+    "categories": {
+      "services": "サービス",
+      "inspireBalances": "インスパイア残高",
+      "playAndEarn": "プレイ&アーン",
+      "security": "セキュリティ",
+      "customerRelationship": "カスタマーリレーション"
+    },
+    "items": {
+      "transfer": "送金",
+      "inspireCards": "インスパイアカード",
+      "buyCards": "カード購入",
+      "eWallet": "電子ウォレット",
+      "bankingServices": "銀行サービス",
+      "travelProtection": "旅行保護",
+      "investmentProfile": "投資プロフィール",
+      "stockHolder": "株主",
+      "agent": "エージェント",
+      "specialCampaign": "特別キャンペーン",
+      "inspireSecureGrowth": "インスパイアセキュア成長",
+      "trading": "トレーディング",
+      "depositViaCrypto": "暗号通貨で入金",
+      "passcode": "パスコード",
+      "aboutUs": "私たちについて",
+      "agentRequest": "エージェント申請",
+      "helpCenter": "ヘルプセンター",
+      "privacyPolicy": "プライバシーポリシー",
+      "termsAndCondition": "利用規約"
+    },
+    "badges": {
+      "soon": "近日公開",
+      "premium": "プレミアム",
+      "registered": "登録済み",
+      "timeDeposit": "₱200K"
+    },
+    "modals": {
+      "underMaintenance": {
+        "title": "メンテナンス中",
+        "message": "この機能は現在メンテナンス中です。後でもう一度お試しください。"
+      },
+      "insufficientTimeDeposit": {
+        "title": "定期預金不足",
+        "message": "{feature}にアクセスするには最低₱200,000の定期預金が必要です。現在の定期預金は₱{currentAmount}です。まず定期預金を増やしてください。"
+      },
+      "alreadyAnAgent": {
+        "title": "既にエージェント",
+        "message": "あなたは既にエージェントとして登録されています。再度エージェントアクセスを申請する必要はありません。"
+      },
+      "premiumFeature": {
+        "title": "プレミアム機能",
+        "message": "この機能はプレミアムアカウントでのみ利用可能です。アクセスするにはアップグレードしてください。",
+        "upgradeButton": "アップグレード"
+      },
+      "agentAccess": {
+        "title": "エージェントアクセスが必要",
+        "message": "この機能は登録済みエージェント専用です。エージェントになりませんか？",
+        "cancelButton": "キャンセル",
+        "requestButton": "アクセス申請"
+      }
+    }
+  },
+  "settings": {
+    "title": "設定",
+    "deleteAccount": "アカウント削除",
+    "logOut": "ログアウト",
+    "loggingOut": "ログアウト中...",
+    "confirmLogout": {
+      "title": "ログアウトの確認",
+      "message": "本当にログアウトしますか？アカウントにアクセスするには再度サインインする必要があります。",
+      "confirmText": "ログアウト",
+      "cancelText": "キャンセル"
+    },
+    "buttonTest": {
+      "title": "ボタンテスト",
+      "message": "ボタンが正常に押されました！"
+    },
+    "navigationError": {
+      "title": "ナビゲーションエラー",
+      "message": "エラー: {errorMessage}"
+    }
+  },
+  "personal": {
+    "header": {
+      "title": "個人情報"
+    },
+    "loading": {
+      "text": "読み込み中..."
+    },
+    "cards": {
+      "accountDetails": {
+        "title": "アカウント詳細"
+      },
+      "accountStatus": {
+        "title": "アカウント状況"
+      }
+    },
+    "fields": {
+      "name": "名前",
+      "emailAddress": "メールアドレス",
+      "accountNumber": "アカウント番号",
+      "accountType": "アカウントタイプ",
+      "accountLevel": "アカウントレベル",
+      "agentNumber": "エージェント番号",
+      "agentReferrer": "エージェント紹介者",
+      "language": "言語",
+      "status": "状況",
+      "memberSince": "メンバー登録日"
+    },
+    "values": {
+      "notProvided": "提供されていません",
+      "notAvailable": "利用できません",
+      "notFound": "見つかりません",
+      "active": "アクティブ",
+      "basic": "ベーシック",
+      "premium": "プレミアム",
+      "masterAgent": "マスターエージェント",
+      "consultantAgent": "コンサルタント",
+      "consultantAgentNote": "この紹介者もコンサルタントエージェントです"
+    },
+    "buttons": {
+      "save": "保存",
+      "cancel": "キャンセル",
+      "verify": "認証",
+      "editName": "名前を編集",
+      "selectLanguage": "言語を選択",
+      "changing": "変更中..."
+    },
+    "messages": {
+      "success": {
+        "nameUpdated": "名前が正常に更新されました。",
+        "languageUpdated": "言語設定が正常に更新されました。",
+        "copied": "アカウント番号がクリップボードにコピーされました。"
+      },
+      "error": {
+        "nameUpdateFailed": "名前の更新に失敗しました。もう一度お試しください。",
+        "languageUpdateFailed": "言語設定の更新に失敗しました。もう一度お試しください。",
+        "copyFailed": "アカウント番号のクリップボードへのコピーに失敗しました。"
+      },
+      "warning": {
+        "noAccountNumber": "コピーするアカウント番号がありません。"
+      },
+      "titles": {
+        "success": "成功！",
+        "error": "エラー",
+        "copied": "コピー完了！",
+        "noAccountNumber": "アカウント番号なし"
+      }
+    },
+    "placeholders": {
+      "firstName": "名",
+      "lastName": "姓"
+    }
+  },
+  "kyc": {
+    "header": {
+      "title": "KYC認証",
+      "premiumAccount": "プレミアムアカウント",
+      "premiumFeatures": "プレミアム機能"
+    },
+    "loading": {
+      "text": "読み込み中..."
+    },
+    "progress": {
+      "step": "ステップ {current} / {total}"
+    },
+    "steps": {
+      "personalInfo": {
+        "title": "個人情報",
+        "description": "個人の詳細を入力してください"
+      },
+      "addressInfo": {
+        "title": "住所情報",
+        "description": "住所の詳細を入力してください"
+      },
+      "documents": {
+        "title": "書類アップロード",
+        "description": "身分証明書の表裏とセルフィー写真をアップロードしてください"
+      },
+      "review": {
+        "title": "確認・提出",
+        "description": "提出前に情報を確認してください"
+      }
+    },
+    "fields": {
+      "firstName": "名",
+      "lastName": "姓",
+      "birthday": "生年月日",
+      "gender": "性別",
+      "nationality": "国籍",
+      "sourceOfIncome": "収入源",
+      "monthlyIncome": "月収（PHP）",
+      "country": "国",
+      "fullAddress": "住所",
+      "postalCode": "郵便番号",
+      "idFront": "身分証明書（表面）",
+      "idBack": "身分証明書（裏面）",
+      "selfiePhoto": "セルフィー写真"
+    },
+    "placeholders": {
+      "firstName": "名を入力してください",
+      "lastName": "姓を入力してください",
+      "monthlyIncome": "月収を入力してください",
+      "fullAddress": "完全な住所を入力してください",
+      "postalCode": "郵便番号を入力してください",
+      "searchNationality": "国籍を検索...",
+      "searchCountry": "国を検索..."
+    },
+    "hints": {
+      "idFront": "政府発行の身分証明書の表面の鮮明な写真をアップロードしてください",
+      "idBack": "政府発行の身分証明書の裏面の鮮明な写真をアップロードしてください",
+      "selfiePhoto": "認証用の鮮明なセルフィー写真を撮影してください"
+    },
+    "options": {
+      "gender": {
+        "male": "男性",
+        "female": "女性",
+        "other": "その他",
+        "preferNotToSay": "回答したくない"
+      },
+      "incomeSource": {
+        "employment": "雇用",
+        "business": "事業",
+        "investment": "投資",
+        "freelance": "フリーランス",
+        "pension": "年金",
+        "other": "その他"
+      }
+    },
+    "buttons": {
+      "next": "次へ",
+      "previous": "前へ",
+      "submit": "KYC提出",
+      "edit": "編集",
+      "takePhoto": "写真撮影",
+      "chooseFromGallery": "ギャラリーから選択",
+      "startKYC": "KYCプロセス開始",
+      "completeKYC": "KYCプロセス完了",
+      "contactSupport": "サポートに連絡"
+    },
+    "messages": {
+      "ageRequirement": "KYC認証を進めるには18歳以上である必要があります",
+      "kycSubmitted": "KYC申請が提出されました。書類を確認し、2-3営業日以内に通知いたします。",
+      "submissionFailed": "KYC申請の提出中にエラーが発生しました。後でもう一度お試しください。",
+      "uploadingDocuments": "身分証明書の表裏とセルフィー写真をアップロード中です。お待ちください...",
+      "savingInformation": "KYC情報を保存中です。お待ちください..."
+    },
+    "modals": {
+      "selectGender": "性別を選択",
+      "selectNationality": "国籍を選択",
+      "selectIncomeSource": "収入源を選択",
+      "selectCountry": "国を選択"
+    },
+    "premium": {
+      "upgradeMessage": "アカウントをプレミアムにアップグレードし、独占機能をアンロックするには、KYC（本人確認）プロセスを通じて身元を確認する必要があります。",
+      "premiumFeatures": "プレミアム機能：",
+      "premiumFeaturesPending": "プレミアム機能（KYC保留中）：",
+      "yourPremiumFeatures": "あなたのプレミアム機能：",
+      "congratulations": "おめでとうございます！認証済みKYCのプレミアムアカウントをお持ちです。すべてのプレミアム機能にアクセスできます。",
+      "pendingKYC": "プレミアムアカウントをお持ちですが、KYC認証がまだ保留中です。すべてのプレミアム機能をアンロックするには、KYCプロセスを完了してください。",
+      "features": {
+        "cryptoTrading": "暗号通貨取引",
+        "inspireCards": "インスパイアカード",
+        "advancedInvestment": "高度な投資オプション",
+        "prioritySupport": "優先サポート"
+      }
+    },
+    "summary": {
+      "personalInfo": "個人情報",
+      "addressInfo": "住所情報",
+      "documents": "書類",
+      "name": "名前：",
+      "birthday": "生年月日：",
+      "gender": "性別：",
+      "nationality": "国籍：",
+      "incomeSource": "収入源：",
+      "monthlyIncome": "月収：",
+      "country": "国：",
+      "address": "住所：",
+      "postalCode": "郵便番号：",
+      "idFront": "身分証明書（表面）",
+      "idBack": "身分証明書（裏面）",
+      "selfiePhoto": "セルフィー写真"
+    },
+    "status": {
+      "uploading": "書類アップロード中",
+      "saving": "情報保存中",
+      "success": "KYC提出完了！",
+      "error": "提出失敗"
+    }
+  },
+  "transfer": {
+    "header": {
+      "title": "送金",
+      "subtitle": "他のユーザーに資金を送金"
+    },
+    "guide": {
+      "title": "クイックガイド",
+      "step1": "口座番号で受取人を検索",
+      "step2": "送金額を入力",
+      "step3": "残高タイプを選択"
+    },
+    "sections": {
+      "recipient": "受取人口座番号",
+      "amount": "金額",
+      "balanceType": "残高タイプを選択",
+      "description": "説明（任意）"
+    },
+    "placeholders": {
+      "accountNumber": "受取人の口座番号を入力...",
+      "amount": "0.00",
+      "description": "この送金のメモを追加..."
+    },
+    "buttons": {
+      "change": "変更",
+      "sendTransfer": "送金",
+      "selectRecipient": "受取人を選択",
+      "enterAmount": "金額を入力",
+      "selectBalanceType": "残高タイプを選択",
+      "cannotTransferToSelf": "自分への送金はできません",
+      "insufficientAvailableBalance": "利用可能残高不足",
+      "insufficientAgentWallet": "エージェントウォレット不足",
+      "enterValidAmount": "有効な金額を入力",
+      "insufficientFunds": "資金不足"
+    },
+    "balanceTypes": {
+      "available": "利用可能残高",
+      "agent": "エージェントウォレット",
+      "chooseBalanceType": "残高タイプを選択"
+    },
+    "validation": {
+      "selfTransfer": "自分にお金を送金することはできません。別の口座番号を入力してください。",
+      "userNotFound": "ユーザーが見つかりません。口座番号を確認してください。",
+      "invalidAccountNumber": "有効な口座番号を入力してください（最低6桁）。",
+      "insufficientBalance": "送金前に{balanceType}に資金を追加してください",
+      "useBalance": "この送金に{balanceType}を使用"
+    },
+    "modals": {
+      "selectBalanceType": "残高タイプを選択",
+      "close": "✕"
+    },
+    "messages": {
+      "missingInformation": "受取人を選択し、金額を入力してください",
+      "selectBalanceType": "この送金に使用する残高を選択してください",
+      "invalidTransfer": "自分にお金を送金することはできません。別の受取人を選択してください。",
+      "insufficientBalance": "あなたの{balanceType}は空です。送金前に資金を追加してください。",
+      "insufficientFunds": "十分な資金がありません。あなたの{balanceType}は₱{currentBalance}ですが、₱{transferAmount}を送ろうとしています。",
+      "invalidAmount": "0より大きい有効な金額を入力してください。",
+      "accessRestricted": "この機能にはプレミアムアカウントが必要です。あなたの現在のアカウントタイプは：{accountType}です。送金機能にアクセスするにはプレミアムにアップグレードしてください。",
+      "unableToVerify": "アカウント権限を確認できません。もう一度お試しください。",
+      "transferSuccessful": "送金が正常に完了しました！",
+      "transferSuccessfulDelayed": "送金が正常に完了しました（通知が遅れる場合があります）",
+      "transferFailed": "送金を完了できません。もう一度お試しください。",
+      "authenticationError": "続行するには再度ログインしてください。",
+      "insufficientBalanceSelected": "選択した残高に十分な資金がありません。"
+    },
+    "titles": {
+      "accessRestricted": "アクセス制限",
+      "error": "エラー",
+      "missingInformation": "情報不足",
+      "selectBalanceType": "残高タイプを選択",
+      "invalidTransfer": "無効な送金",
+      "insufficientBalance": "残高不足",
+      "invalidAmount": "無効な金額",
+      "transferSuccessful": "送金成功",
+      "transferFailed": "送金失敗",
+      "authenticationError": "認証エラー"
+    },
+    "characterCount": "{current}/{max}",
+    "currencySymbol": "₱"
+  },
+  "buyCards": {
+    "header": {
+      "title": "カードデザインを選択",
+      "subtitle": "通常のデザイン（₱250）またはVIPコレクションカードから選択してください"
+    },
+    "navigation": {
+      "headerTitle": "カード購入"
+    },
+    "sections": {
+      "availableBalance": "利用可能残高",
+      "cardPreview": "カードプレビュー",
+      "vipCollection": "VIPコレクション",
+      "designCollection": "デザインコレクション",
+      "yourCollection": "カードコレクション"
+    },
+    "descriptions": {
+      "vipCards": "👑 VIPカード - 10,000,000ペソの定期預金が必要",
+      "designCards": "🎨 デザインカード - ₱250",
+      "collectionHelp": "✨ カードをタップして現在のデザインとしてアクティブにしてください"
+    },
+    "cardStatus": {
+      "owned": "所有済み",
+      "preview": "プレビュー",
+      "vipOnly": "VIP専用",
+      "depositRequired": "預金必要",
+      "tapToClaim": "タップして受け取り",
+      "claimed": "受け取り済み",
+      "monthlySubscription": "月額サブスクリプション",
+      "tapToBuy": "タップして購入",
+      "active": "アクティブ",
+      "currentlyActive": "現在アクティブ"
+    },
+    "subscriptionStatus": {
+      "expired": "期限切れ",
+      "daysLeft": "日残り",
+      "active": "アクティブ"
+    },
+    "buttons": {
+      "preview": "プレビュー",
+      "cancel": "キャンセル",
+      "close": "閉じる",
+      "gotIt": "了解",
+      "claim": "受け取り"
+    },
+    "messages": {
+      "welcomeGiftDefaultCard": "ウェルカムギフト - 既存ユーザーにデフォルトカードを提供",
+      "claimedVipCard": "VIPカード獲得",
+      "vipCardPurchase": "VIPカード購入",
+      "cardPurchase": "カード購入",
+      "autoRenewalPayment": "自動更新支払い",
+      "freeDefaultCard": "無料デフォルトカード",
+      "removedVipCard": "削除されたVIPカード",
+      "migrationComplete": "移行完了",
+      "migrationCompleteDetails": "{processedCount}人のユーザーを処理しました。\n{grantedCards}人のユーザーにデフォルトカードを提供しました。\n{alreadyHadCards}人のユーザーは既にカードを持っていました。",
+      "migrationFailed": "移行失敗",
+      "vipCardClaimedDescription": "VIPカード - 適格定期預金額（₱10,000,000+）で獲得",
+      "vipCardRemovedDescription": "VIPカード - 不十分な定期預金額（< ₱10,000,000）で削除",
+      "insufficientBalanceForAutoRenewal": "残高不足",
+      "failedToProcessAutoRenewal": "自動更新の処理に失敗しました。残高を確認して再試行してください。",
+      "unableToCancelSubscription": "サブスクリプションをキャンセルできません",
+      "failedToCancelSubscription": "サブスクリプションのキャンセルに失敗しました。再試行してください。",
+      "unableToProcessAutoRenewal": "自動更新を処理できません",
+      "unableToToggleAutoRenewal": "自動更新を切り替えできません",
+      "failedToToggleAutoRenewal": "自動更新の切り替えに失敗しました。再試行してください。",
+      "failedToRemoveExpired": "期限切れサブスクリプションの削除に失敗しました。再試行してください。",
+      "accessRestricted": "この機能にはプレミアムアカウントが必要です。あなたの現在のアカウントタイプは：{accountType}です。カード購入にアクセスするにはプレミアムにアップグレードしてください。",
+      "unableToVerify": "アカウント権限を確認できません。もう一度お試しください。",
+      "userNotAuthenticated": "ユーザーが認証されていません",
+      "userDataNotFound": "ユーザーデータが見つかりません",
+      "failedToFetchData": "ユーザーデータの取得に失敗しました",
+      "timeDepositRequired": "このカードには₱10,000,000+の定期預金が必要です。アカウントをアップグレードするにはサポートにお問い合わせください。",
+      "cardCannotBePurchased": "このカードは現在購入できません。",
+      "notQualified": "このカードを受け取るには₱10,000,000+の定期預金が必要です。",
+      "alreadyClaimed": "すでにこのVIPカードを受け取っています。",
+      "vipCardClaimed": "VIPカードが正常に受け取られました！",
+      "failedToClaimVip": "VIPカードの受け取りに失敗しました。もう一度お試しください。",
+      "purchaseSuccessful": "{cardName}を₱{price}で正常に購入しました！",
+      "purchaseFailed": "購入の処理に失敗しました：{error}",
+      "cardActivated": "{cardName}が今あなたのアクティブカードです！",
+      "failedToSwitchCard": "カードの切り替えに失敗しました。もう一度お試しください。",
+      "subscriptionCancelled": "サブスクリプションがキャンセルされました。返金は提供されません。",
+      "autoRenewalFailed": "自動更新のための残高が不足しています。サブスクリプションが期限切れになりました。",
+      "autoRenewalEnabled": "サブスクリプションが今月額で自動更新されます。",
+      "autoRenewalDisabled": "サブスクリプションが期限切れになり、自動更新されません。",
+      "subscriptionExpired": "{cardName}サブスクリプションが期限切れになり、コレクションから削除されました。"
+    },
+    "titles": {
+      "accessRestricted": "アクセス制限",
+      "error": "エラー",
+      "success": "成功",
+      "warning": "警告",
+      "info": "情報",
+      "purchaseSuccessful": "購入成功",
+      "cardActivated": "カードアクティブ化",
+      "subscriptionCancelled": "サブスクリプションキャンセル",
+      "autoRenewalFailed": "自動更新失敗",
+      "autoRenewalEnabled": "自動更新有効",
+      "autoRenewalDisabled": "自動更新無効",
+      "subscriptionExpired": "サブスクリプション期限切れ",
+      "timeDepositRequired": "定期預金必要",
+      "notQualified": "資格なし",
+      "alreadyClaimed": "すでに受け取り済み"
+    },
+    "modals": {
+      "vipCardInfo": {
+        "title": "VIPカード - ダイヤモンドエリート",
+        "subtitle": "独占受取可能カード",
+        "howToGet": "このカードを取得する方法",
+        "howToGetDescription": "この独占VIPカードは₱10,000,000以上の定期預金を持つユーザーが受け取ることができます。「受け取り」ボタンをクリックしてコレクションに追加してください。",
+        "requirements": "要件",
+        "requirementsList": [
+          "定期預金金額：₱10,000,000+",
+          "「受け取り」ボタンをクリックしてコレクションに追加",
+          "購入不要"
+        ],
+        "yourStatus": "あなたの状況",
+        "qualified": "このカードの資格があります！「受け取り」をクリックして取得してください。",
+        "notQualified": "₱10,000,000+の定期預金が必要です",
+        "alreadyClaimed": "すでにこのカードを受け取っています！",
+        "warning": "⚠️ 預金が₱10,000,000未満に下がるとVIPカードが削除されます",
+        "claimButton": "VIPカードを受け取る"
+      },
+      "purchase": {
+        "title": "カード購入",
+        "vipTitle": "VIPカード購入",
+        "subtitle": "選択をプレビューして確認してください",
+        "cardPreview": "カードプレビュー",
+        "cardDetails": "カード詳細",
+        "price": "価格",
+        "balanceCheck": "残高確認",
+        "availableBalance": "利用可能残高",
+        "sufficientBalance": "十分な残高があります",
+        "insufficientBalance": "{amount}さらに必要です",
+        "vipStatusCheck": "VIP状況確認",
+        "timeDepositRequired": "定期預金必要",
+        "vipStatusMet": "定期預金要件を満たしています - このカードの資格があります",
+        "vipStatusNotMet": "この独占カードの資格を得るには₱10,000,000+の定期預金が必要です",
+        "subscriptionInfo": "サブスクリプション情報",
+        "subscriptionType": "サブスクリプションタイプ",
+        "monthly": "月額",
+        "duration": "期間：{days}日",
+        "autoRenewal": "自動更新：手動（月額更新）",
+        "accessExpires": "アクセスは{days}日後に期限切れになります",
+        "actionButtons": {
+          "cancel": "キャンセル",
+          "purchase": "カード購入",
+          "purchaseVip": "VIPカード購入",
+          "subscribe": "{type}サブスクリプション",
+          "insufficientBalance": "残高不足",
+          "vipRequired": "VIP必要"
+        }
+      },
+      "subscription": {
+        "title": "サブスクリプション詳細",
+        "subtitle": "月額サブスクリプション",
+        "daysLeft": "日残り",
+        "subscriptionDetails": "サブスクリプション詳細",
+        "totalRenewals": "総更新回数",
+        "totalPaid": "総支払額",
+        "lastRenewal": "最終更新",
+        "autoRenewal": "自動更新",
+        "autoRenewalActive": "アクティブ - 月額₱10,000で自動更新",
+        "autoRenewalDisabled": "無効 - 期限切れになり自動更新されません",
+        "expirationWarning": "サブスクリプションが{days}日後に期限切れになり、コレクションから削除されます。",
+        "actionButtons": {
+          "cancelSubscription": "サブスクリプションキャンセル",
+          "close": "閉じる"
+        },
+        "common": {
+          "loading": "読み込み中...",
+          "accountTypes": {
+            "basic": "ベーシック",
+            "premium": "プレミアム"
+          }
+        }
+      }
+    },
+    "cardTypes": {
+      "default": "デフォルトカード",
+      "diamondElite": "ダイヤモンドエリート",
+      "royalCurve": "ロイヤルカーブ",
+      "goldenElite": "ゴールデンエリート",
+      "silverElite": "オレンジエリート",
+      "redPrestige": "サンプレステージ",
+      "vip": "VIP",
+      "unknown": "カード"
+    }
+  },
+  "inspireCards": {
+    "header": {
+      "title": "インスパイアカード",
+      "supportTitle": "インスパイアカードをリクエスト",
+      "subtitle": "物理的なインスパイアカードをご自宅にお届けします"
+    },
+    "content": {
+      "availableBalance": "利用可能残高:"
+    },
+    "navigation": {
+      "headerTitle": "インスパイアカード"
+    },
+    "steps": {
+      "step1": {
+        "title": "連絡先情報",
+        "description": "ご連絡先のメールアドレスを入力してください",
+        "info": "カードリクエストの更新情報をこのメールアドレスに送信します"
+      },
+      "step2": {
+        "title": "配送先住所",
+        "description": "インスパイアカードをどちらに送付しますか？",
+        "info": "番地、市区町村、郵便番号を含む完全な住所を入力してください"
+      },
+      "step3": {
+        "title": "確認と送信",
+        "description": "送信前に情報をご確認ください"
+      }
+    },
+    "review": {
+      "personalInfo": "個人情報",
+      "deliveryAddress": "配送先住所",
+      "name": "お名前"
+    },
+    "instructions": {
+      "title": "お問い合わせを送信",
+      "text": "インスパイアカードについてサポートが必要ですか？下記のフォームに記入してください。サポートチームができるだけ早く対応いたします。"
+    },
+    "form": {
+      "contactInfo": "連絡先情報",
+      "howToReach": "どのように連絡できますか？",
+      "emailLabel": "メールアドレス",
+      "emailPlaceholder": "your.email@example.com",
+      "concernDetails": "お問い合わせ内容について教えてください",
+      "addressLabel": "完全な配送先住所",
+      "addressPlaceholder": "番地、地区、市区町村、都道府県、郵便番号"
+    },
+    "disclaimer": {
+      "title": "処理時間",
+      "text": "カードリクエストは5〜7営業日以内に処理されます。カードが発送されましたら、メールで確認をお送りします。"
+    },
+    "buttons": {
+      "submit": "リクエストを送信",
+      "sending": "送信中...",
+      "next": "次へ",
+      "back": "戻る"
+    },
+    "messages": {
+      "accessRestricted": "この機能にはプレミアムアカウントが必要です。あなたの現在のアカウントタイプは：{accountType}です。インスパイアカードにアクセスするにはプレミアムにアップグレードしてください。",
+      "timeDepositRequired": "インスパイアカードにアクセスするには、アクティブな定期預金が必要です。まず定期預金を設定してください。",
+      "missingInformation": "必須項目をすべて入力してください。",
+      "emailRequired": "続行するにはメールアドレスを入力してください。",
+      "addressRequired": "続行するには完全な配送先住所を入力してください。",
+      "requestSubmitted": "カードリクエストが正常に送信されました！更新情報はメールでお知らせします。",
+      "submissionFailed": "リクエストを送信できません。後でもう一度お試しください。",
+      "unableToVerify": "アカウント権限を確認できません。もう一度お試しください。",
+      "fetchDataFailed": "ユーザーデータの取得に失敗しました。後でもう一度お試しください。"
+    },
+    "titles": {
+      "accessRestricted": "アクセス制限",
+      "error": "エラー",
+      "missingInformation": "情報不足",
+      "requestSubmitted": "リクエスト送信完了",
+      "submissionFailed": "送信失敗"
+    }
+  },
+  "termsAndCondition": {
+    "header": {
+      "title": "利用規約"
+    },
+    "content": {
+      "welcome": "Inspire Walletへようこそ。資料、情報、製品、サービスにアクセス、使用、または取得する前に、これらの利用規約を注意深くお読みください。Inspire Wallet（総称して「アプリ」）にアクセスすることで、これらの利用規約（「規約」）およびプライバシーポリシーに拘束されることに同意したものとみなされます。これらの規約において、「私たち」「私たちの」「Inspire Wallet」はInspire Walletを指し、「私」「あなた」「あなたの」はアプリのユーザーであるあなたを指します。",
+      "eligibility": {
+        "title": "利用資格",
+        "content": "18歳以上で、契約を締結する法的能力を持っている必要があります。アプリを使用することで、要件を満たしていることを表明したものとみなされます。投資サービスが制限されている管轄区域にいる場合、アプリを使用することはできません。"
+      },
+      "accountRegistration": {
+        "title": "アカウント登録",
+        "content": "アプリの最大容量にアクセスするには、アカウントを作成する必要があります。以下に同意するものとします：",
+        "bulletPoints": {
+          "accurateInfo": "正確で完全な情報を提供する",
+          "passwordSecurity": "パスワードのセキュリティを維持する",
+          "unauthorizedUse": "アカウントの不正使用があった場合は、すぐに通知する"
+        }
+      },
+      "servicesProvided": {
+        "title": "提供されるサービス",
+        "content": "Inspire Walletは、株式と投資を追跡し、出金前後のお金を監視できます。すべての取引は銀行と直接ではなく、メールを通じて行われます。Inspire Alliance Fund Groupが取引を処理し、アプリ自体ではありません。プロセスには約5〜7営業日かかり、Inspire Walletアカウントに反映されます。"
+      },
+      "feesAndCharges": {
+        "title": "手数料と料金",
+        "content": "取引、アカウント維持、その他のサービスに関連する手数料の詳細は、アプリ内で提供され、随時変更される場合があります。"
+      },
+      "userResponsibilities": {
+        "title": "ユーザーの責任",
+        "content": "アプリを合法的な目的で使用し、適用されるすべての法律および規制を遵守することに同意します。アカウントと投資決定について責任を負います。"
+      },
+      "intellectualProperty": {
+        "title": "知的財産",
+        "content": "関連するすべてのコンテンツ、商標、ソフトウェアは、Inspire Alliance Fund Groupまたはそのライセンサーが所有しています。個人的な目的でアプリを使用するための限定された非独占的ライセンスが付与されます。"
+      },
+      "privacyPolicy": {
+        "title": "プライバシーポリシー",
+        "content": "アプリの使用は、個人情報の収集、使用、保護方法を詳述するプライバシーポリシーによっても管理されます。アプリは、名前、メールアドレス、銀行詳細などのデータのみを収集します。"
+      },
+      "changesToTerms": {
+        "title": "規約の変更",
+        "content": "これらの規約はいつでも変更する場合があります。アプリまたはメールを通じて重要な変更をお知らせします。変更後のアプリの継続使用は、新しい規約の受諾を構成します。"
+      },
+      "contactDetails": {
+        "title": "連絡先詳細",
+        "content": "これらの規約に関する質問や懸念については、以下までお問い合わせください",
+        "contactInfo": "inspireholdings 85963671"
+      },
+      "agreement": "私は、利用規約を読み、完全に理解し、上記の声明に拘束されることに同意することをここに表明します。"
+    }
+  },
+  "privacy": {
+    "header": {
+      "title": "プライバシーポリシー"
+    },
+    "content": {
+      "introduction": {
+        "title": "はじめに",
+        "content": "私たちはあなたのプライバシーを大切にしています。このポリシーは、アプリ「Inspire Wallet」を使用する際に、どのように情報を収集、使用、保護するかを説明しています。"
+      },
+      "informationCollection": {
+        "title": "収集する情報",
+        "content": "以下のタイプのデータを収集します：",
+        "bulletPoints": {
+          "personalInfo": "個人情報：お名前、メールアドレス、その他提供いただく詳細情報。",
+          "usageData": "使用データ：デバイスの種類、IPアドレス、アプリの使用方法などの情報。"
+        }
+      },
+      "informationUsage": {
+        "title": "情報の使用方法",
+        "content": "あなたの情報を以下の目的で使用します：",
+        "bulletPoints": {
+          "provideServices": "サービスを提供し、改善するため。",
+          "contactUpdates": "更新や重要な通知でお客様に連絡するため。",
+          "monitorUsage": "アプリの使用方法を監視し、パフォーマンスを向上させるため。"
+        }
+      },
+      "informationSharing": {
+        "title": "情報の共有",
+        "content": "以下の場合にデータを共有する場合があります：",
+        "bulletPoints": {
+          "serviceProviders": "アプリの運営を支援するサービスプロバイダー。",
+          "businessPartners": "ビジネスパートナーや関連会社。",
+          "authorities": "法律で要求される場合の当局。"
+        }
+      },
+      "dataSecurity": {
+        "title": "データセキュリティ",
+        "content": "情報を保護するための措置を講じていますが、100%安全なシステムはありません。オンラインでデータを共有する際は常に注意してください。"
+      },
+      "childrensPrivacy": {
+        "title": "子供のプライバシー",
+        "content": "13歳未満の方からはデータを収集しません。お子様がデータを共有したと思われる場合は、削除のためにご連絡ください。"
+      },
+      "yourRights": {
+        "title": "あなたの権利",
+        "content": "アカウントにログインするか、お問い合わせいただくことで、個人データを更新または削除できます。"
+      },
+      "policyChanges": {
+        "title": "このポリシーの変更",
+        "content": "このポリシーを更新する場合があります。最新版についてはこのページをご確認ください。"
+      },
+      "contactUs": {
+        "title": "お問い合わせ",
+        "content": "ご質問がございましたら、以下までメールでお問い合わせください",
+        "email": "info@inspireholdings.ph"
+      }
+    }
+  },
+  "about": {
+    "header": {
+      "title": "私たちについて"
+    },
+    "content": {
+      "ourCompany": {
+        "title": "私たちの会社",
+        "content": "Inspire Alliance Fund Group Inc.では、強力な目的に駆動されています：夢を実現し、意味のある変化を起こすことです。持続的な進歩は機会から始まるとの信念に基づいて設立され、私たちは違いを生み出す準備ができている個人をサポートするために存在します—彼ら自身の生活だけでなく、周囲のコミュニティでも。私たちは従来の資金調達を超えています。私たちは情熱的なビジョナリーを、アイデアを持続的な影響に変えるために必要なサポート、信頼、リソースと結びつけるダイナミックな運動です。"
+      },
+      "ourMission": {
+        "title": "私たちのミッション",
+        "content": "Inspire Alliance Fund Group Inc.では、夢を実現することで変化を起こすことが私たちのミッションです。真の進歩は、個人が自分自身だけでなく、コミュニティやその先により良い未来を築くために必要なリソース、信頼、機会を与えられたときに始まると信じています。私たちは単なる資金調達プラットフォームではありません；アイデアを影響に変えるために必要なサポートで目的志向の人々を結びつける運動です。人間の可能性に投資することで、生活をサポートし、経済を強化し、希望と革新が共に繁栄する未来を形作る波及効果を育成します。"
+      },
+      "inspireWallet": {
+        "title": "Inspire Wallet",
+        "content": "Inspire Investors向けのフラッグシップアプリであるInspire Walletは、このビジョンを体現しています。オールインワンの金融コンパニオンとして設計されたInspire Walletでは、以下が可能です：",
+        "bulletPoints": {
+          "investments": "投資の最新状況を把握する",
+          "stocks": "株式を管理する",
+          "withdrawals": "出金を追跡する",
+          "transactions": "すべての金融取引の明確な記録を保持する"
+        },
+        "conclusion": "経験豊富な投資家でも初心者でも、私たちのアプリはポートフォリオを簡単かつ自信を持って管理するために必要なすべてのツールを提供します。"
+      },
+      "callToAction": "Inspire Alliance Fund Group Incorporatedに参加し、一緒に繁栄する未来を形作りましょう。今日Inspire Walletをダウンロードして、あなたの金融の旅をコントロールしてください！"
+    }
+  },
+  "agentRequest": {
+    "header": {
+      "title": "エージェント申請"
+    },
+    "content": {
+      "headerTitle": "エージェント申請",
+      "headerSubtitle": "エージェント申請を提出",
+      "requestInformation": {
+        "title": "申請情報",
+        "text": "📋 下記のフォームに記入してエージェント権限を申請\n🔍 関連付ける既存のエージェントをオプションで検索\n🎯 アカウント用のユニークなエージェント番号を生成\n⏳ 申請は管理者によって審査・承認されます"
+      },
+      "form": {
+        "title": "エージェント申請フォーム",
+        "personalInformation": {
+          "title": "個人情報",
+          "fullNameLabel": "フルネーム"
+        },
+        "agentNumber": {
+          "title": "エージェント番号",
+          "generateLabel": "エージェント番号を生成 *",
+          "placeholder": "クリックしてエージェント番号を作成",
+          "generateButton": "生成",
+          "hint": "生成ボタンをクリックして5文字のユニークなエージェント番号を作成"
+        },
+        "parentAgent": {
+          "title": "親エージェントを選択（オプション）",
+          "searchLabel": "エージェントを検索（オプション）",
+          "searchPlaceholder": "正確なエージェント番号を入力...",
+          "searchHint": "正確なエージェント番号を入力してエージェントを自動的に見つけて選択",
+          "selectedAgent": "選択されたエージェント",
+          "parentAgentCode": "親エージェントコード:",
+          "yourAgentCode": "あなたのエージェントコード:",
+          "noResults": "エージェント番号「{query}」でエージェントが見つかりませんでした"
+        }
+      },
+      "submitButton": {
+        "submit": "エージェント申請を提出",
+        "submitting": "申請を提出中..."
+      }
+    },
+    "modals": {
+      "accessRestricted": {
+        "title": "アクセス制限",
+        "message": "この機能にはプレミアムアカウントが必要です。現在のアカウントタイプは: {accountType}。エージェント申請機能にアクセスするにはプレミアムにアップグレードしてください。"
+      },
+      "alreadyAgent": {
+        "title": "既にエージェント",
+        "message": "あなたは既にエージェントとして登録されています。エージェントアクセスを再度申請する必要はありません。"
+      },
+      "authenticationRequired": {
+        "title": "認証が必要",
+        "message": "エージェント申請を提出するにはログインしてください。"
+      },
+      "userNotFound": {
+        "title": "ユーザーが見つかりません",
+        "message": "ユーザーデータが見つかりません。再度ログインしてください。"
+      },
+      "error": {
+        "title": "エラー",
+        "message": "アカウント権限を確認できません。もう一度お試しください。",
+        "loadDataFailed": "ユーザーデータの読み込みに失敗しました。もう一度お試しください。",
+        "searchFailed": "ユーザーの検索に失敗しました。もう一度お試しください。",
+        "generationFailed": "ユニークなエージェントコードを生成できません。もう一度お試しください。",
+        "submitFailed": "申請の提出中にエラーが発生しました。もう一度お試しください。"
+      },
+      "agentNumberGenerated": {
+        "title": "エージェント番号が生成されました",
+        "message": "あなたのユニークなエージェント番号は: {agentNumber}"
+      },
+      "agentFound": {
+        "title": "エージェントが見つかりました！",
+        "message": "エージェントを正常に見つけました: {firstName} {lastName}\nエージェント番号: {agentNumber}"
+      },
+      "agentCodeGenerated": {
+        "title": "エージェントコードが生成されました",
+        "message": "エージェントコード: {agentCode}\nタイプ: {type}\n紹介者: {referrerName}"
+      },
+      "missingAgentNumber": {
+        "title": "エージェント番号が不足",
+        "message": "まずエージェント番号を生成してください。"
+      },
+      "requestSubmitted": {
+        "title": "申請が正常に提出されました！",
+        "message": "エージェント申請が提出され、承認待ちです。\n\n申請ID: {requestId}"
+      }
+    }
+  },
+  "passcode": {
+    "header": {
+      "title": "パスコード"
+    },
+    "content": {
+      "instructions": {
+        "enterCurrent": "現在の4桁のパスコードを入力してください",
+        "enterNew": "新しい4桁のパスコードを入力してください",
+        "confirmNew": "新しい4桁のパスコードを確認してください"
+      },
+      "errors": {
+        "mustBe4Digits": "パスコードは4桁である必要があります。",
+        "incorrectPasscode": "パスコードが正しくありません。もう一度お試しください。",
+        "passcodesDoNotMatch": "パスコードが一致しません。もう一度お試しください。"
+      },
+      "success": {
+        "passcodeChanged": "パスコードが正常に変更されました！"
+      },
+      "buttons": {
+        "ok": "OK"
+      }
+    }
+  },
+  "depositCrypto": {
+    "header": {
+      "title": "暗号通貨で入金"
+    },
+    "content": {
+      "headerTitle": "暗号通貨入金",
+      "headerSubtitle": "ビットコイン、イーサリアム、またはUSDTで入金",
+      "accountHolder": "口座名義人:",
+      "email": "メール:",
+      "instructions": {
+        "title": "入金方法",
+        "step1": "下記のウォレットアドレスに{crypto}を送信してください",
+        "walletAddressLabel": "ウォレットアドレス:",
+        "walletAddressCopied": "ウォレットアドレスをコピーしました",
+        "walletAddressCopiedMessage": "ウォレットアドレスをクリップボードにコピーしました",
+        "step2": "下記に取引レシート/スクリーンショットをアップロードしてください",
+        "note": "注意: 取引レシートが確認され次第、入金が処理されます。",
+        "btcNote": "注意: これはネイティブSegWit（bech32）アドレスです。対応ウォレット: バイナンス、コインベース/コインベースウォレット、トラストウォレット、レジャー、トレザー、OKX、バイビット、クーコイン、クラーケン、ビットスタンプ、ビットフィネックス、エクソダス、ブルーウォレット、ムーン、フェニックスウォレット、ブリーズ、エレクトラム（最新版）、スパロウウォレット、ワサビウォレット。",
+        "ethNote": "注意: このアドレスはメタマスクおよびその他のイーサリアム互換ウォレット用です。"
+      },
+      "form": {
+        "selectCrypto": "暗号通貨を選択 *",
+        "amount": "金額 *",
+        "amountPlaceholder": "金額を入力",
+        "uploadReceipt": "レシートをアップロード *",
+        "uploadReceiptText": "レシートをアップロード",
+        "uploadReceiptSubtext": "タップして画像を選択"
+      },
+      "loading": {
+        "fetchingRates": "レートを取得中...",
+        "uploading": "アップロード中..."
+      },
+      "submitButton": {
+        "submit": "入金リクエストを送信",
+        "submitting": "送信中..."
+      }
+    },
+    "modals": {
+      "imagePickerError": {
+        "title": "画像選択エラー",
+        "message": "画像の選択に失敗しました"
+      },
+      "copyError": {
+        "title": "コピー失敗",
+        "message": "ウォレットアドレスをクリップボードにコピーできませんでした。もう一度お試しください。"
+      },
+      "missingInformation": {
+        "title": "情報不足",
+        "message": "すべての必須フィールドを入力し、レシートをアップロードしてください。"
+      },
+      "requestSubmitted": {
+        "title": "リクエスト送信完了",
+        "message": "暗号通貨入金リクエストが正常に送信されました！確認のためメールをご確認ください。",
+        "messageWithEmailDelay": "暗号通貨入金リクエストが正常に送信されました！メール通知が遅れる場合があります。"
+      },
+      "submissionFailed": {
+        "title": "送信失敗",
+        "message": "リクエストの送信に失敗しました。もう一度お試しください。"
+      }
+    }
+  },
+  "crypto": {
+    "header": {
+      "title": "トレーディング"
+    },
+    "content": {
+      "availableBalance": "利用可能残高:",
+      "cryptoBalances": "暗号通貨残高:",
+      "forexBalances": "外国為替残高:",
+      "crypto": "暗号通貨",
+      "forex": "外国為替",
+      "currentPrice": "現在価格:",
+      "currentRate": "現在レート:",
+      "buy": "買い",
+      "sell": "売り",
+      "processing": "処理中...",
+      "amountInPHP": "PHPでの金額",
+      "amountOf": "金額",
+      "percentageOfBalance": "% の利用可能残高",
+      "percentageOfAsset": "% の利用可能",
+      "retry": "再試行",
+      "testApi": "APIテスト",
+      "noPriceData": "価格データが利用できません"
+    },
+    "instructions": {
+      "title": "トレーディング説明",
+      "cryptoTrading": {
+        "title": "暗号通貨トレーディング",
+        "step1": "タイプセレクターから「暗号通貨」を選択",
+        "step2": "希望の暗号通貨を選択（BTC、ETH、またはUSDT）",
+        "buySteps": "購入するには:",
+        "buyStep1": "• 支出したいPHP金額を入力",
+        "buyStep2": "• 「買い」をクリックして選択した暗号通貨を購入",
+        "sellSteps": "売却するには:",
+        "sellStep1": "• 売却したい暗号通貨の数量を入力",
+        "sellStep2": "• 「売り」をクリックしてPHPに変換"
+      },
+      "forexTrading": {
+        "title": "外国為替トレーディング",
+        "step1": "タイプセレクターから「外国為替」を選択",
+        "step2": "希望の通貨を選択（USDまたはJPY）",
+        "buySteps": "購入するには:",
+        "buyStep1": "• 支出したいPHP金額を入力",
+        "buyStep2": "• 「買い」をクリックして選択した通貨を購入",
+        "sellSteps": "売却するには:",
+        "sellStep1": "• 売却したい通貨の数量を入力",
+        "sellStep2": "• 「売り」をクリックしてPHPに変換"
+      },
+      "generalTips": {
+        "title": "一般的なヒント",
+        "tip1": "• チャートを使用して価格変動を監視",
+        "tip2": "• 異なる時間範囲（24時間、7日、30日）を使用してトレンドを分析",
+        "tip3": "• 暗号通貨と外国為替の両方の残高を追跡"
+      }
+    },
+    "modals": {
+      "accessRestricted": {
+        "title": "アクセス制限",
+        "message": "この機能にはプレミアムアカウントが必要です。現在のアカウントタイプは: {accountType}。暗号通貨トレーディングにアクセスするにはプレミアムにアップグレードしてください。"
+      },
+      "apiConnectionError": {
+        "title": "API接続エラー",
+        "message": "CoinGecko APIに接続できません。インターネット接続を確認してもう一度お試しください。"
+      },
+      "error": {
+        "title": "エラー",
+        "message": "アカウント権限を確認できません。もう一度お試しください。"
+      },
+      "invalidAmount": {
+        "title": "無効な金額",
+        "message": "PHPで有効な金額を入力してください"
+      },
+      "insufficientBalance": {
+        "title": "残高不足",
+        "message": "₱{required}が必要ですが、残高は₱{available}です"
+      },
+      "insufficientCryptoBalance": {
+        "title": "残高不足",
+        "message": "{asset}は{amount}しかありません"
+      },
+      "success": {
+        "title": "成功",
+        "message": "購入が成功しました！{asset}を₱{cost}で{amount}購入しました"
+      },
+      "saleSuccess": {
+        "title": "成功",
+        "message": "売却が成功しました！残高に₱{amount}が追加されました"
+      },
+      "purchaseError": {
+        "title": "エラー",
+        "message": "購入の完了に失敗しました"
+      },
+      "saleError": {
+        "title": "エラー",
+        "message": "売却の完了に失敗しました"
+      }
+    }
+  },
+  "bdo": {
+    "header": {
+      "title": "銀行口座サービス"
+    },
+    "content": {
+      "headerTitle": "銀行口座サービス",
+      "headerSubtitle": "プロフェッショナルな銀行ソリューション",
+      "instructionTitle": "口座開設リクエスト",
+      "instructionText": "パートナー銀行サービスでの口座開設をリクエストするには、以下のフォームに記入してください。お申し込みは5-7営業日以内に処理されます。",
+      "sectionTitle": "銀行情報",
+      "selectBank": "銀行を選択",
+      "preferredBank": "希望銀行",
+      "chooseBank": "希望銀行を選択してください",
+      "contactDetails": "連絡先詳細",
+      "emailAddress": "メールアドレス",
+      "emailPlaceholder": "your.email@example.com",
+      "mobileNumber": "携帯電話番号",
+      "mobilePlaceholder": "+63 9XX XXX XXXX",
+      "landlineNumber": "固定電話番号",
+      "landlinePlaceholder": "(02) XXXX XXXX",
+      "personalDetails": "個人詳細",
+      "gender": "性別",
+      "selectGender": "性別を選択してください",
+      "dateOfBirth": "生年月日",
+      "selectBirthdate": "生年月日を選択してください",
+      "civilStatus": "婚姻状況",
+      "selectCivilStatus": "婚姻状況を選択してください",
+      "citizenship": "国籍",
+      "citizenshipPlaceholder": "フィリピン人",
+      "addressInformation": "住所情報",
+      "completeAddress": "完全な住所",
+      "addressPlaceholder": "家/ユニット番号、通り、バランガイ、市、州、郵便番号",
+      "financialInformation": "財務情報",
+      "sourceOfFund": "資金源",
+      "sourcePlaceholder": "例：雇用、事業、投資",
+      "grossMonthlyIncome": "月収総額",
+      "incomePlaceholder": "₱ 50,000",
+      "processingInfo": "処理情報",
+      "processingText": "これらの詳細を送信すると、お申し込み状況の確認メールをお送りします。選択された銀行による審査と承認には約5-7営業日かかることにご注意ください。",
+      "submitApplication": "申し込みを送信",
+      "processing": "処理中...",
+      "selectBankModal": "銀行を選択",
+      "selectGenderModal": "性別を選択",
+      "selectCivilStatusModal": "婚姻状況を選択",
+      "male": "男性",
+      "female": "女性",
+      "preferNotToSay": "回答したくない",
+      "single": "独身",
+      "married": "既婚",
+      "legallySeparated": "法的に別居",
+      "divorced": "離婚",
+      "annulled": "無効",
+      "widow": "寡婦/寡夫",
+      "bdoUnibank": "BDOユニバンク",
+      "securityBank": "セキュリティバンク",
+      "ctbcBank": "CTBCバンク",
+      "unionBank": "ユニオンバンク",
+      "documentUpload": "書類アップロード",
+      "passportUpload": "パスポート写真",
+      "driverLicenseUpload": "運転免許証写真",
+      "selectPassport": "パスポート写真を選択",
+      "changePassport": "パスポート写真を変更",
+      "selectDriverLicense": "運転免許証写真を選択",
+      "changeDriverLicense": "運転免許証写真を変更",
+      "uploadingDocuments": "書類をアップロード中...",
+      "processingApplication": "申し込みを処理中",
+      "uploadingSubtitle": "書類を安全なストレージにアップロードしている間、お待ちください",
+      "processingSubtitle": "申し込みを保存し、確認を送信中です",
+      "uploadingStep": "アップロード中",
+      "savingStep": "保存中"
+    },
+    "steps": {
+      "bankSelection": {
+        "title": "銀行を選択",
+        "description": "口座開設のために希望する銀行を選択してください。これにより、利用可能な銀行サービスと機能が決まります。"
+      },
+      "contactInfo": {
+        "title": "連絡先情報",
+        "description": "申し込み状況と口座更新について連絡できるよう、連絡先詳細を提供してください。"
+      },
+      "personalDetails": {
+        "title": "個人情報",
+        "description": "あなた自身について教えてください。この情報は身元確認とコンプライアンスのために必要です。"
+      },
+      "addressInfo": {
+        "title": "住所情報",
+        "description": "確認と口座設定のために完全な住所を提供してください。"
+      },
+      "financialInfo": {
+        "title": "財務情報",
+        "description": "銀行ニーズを理解し、コンプライアンスを確保するために財務詳細を共有してください。"
+      },
+      "documentUpload": {
+        "title": "書類アップロード",
+        "description": "身元確認と口座開設プロセスのために必要な書類をアップロードしてください。"
+      }
+    },
+    "validation": {
+      "selectBank": "銀行を選択してください",
+      "emailRequired": "メールアドレスが必要です",
+      "mobileRequired": "携帯電話番号が必要です",
+      "genderRequired": "性別を選択してください",
+      "birthdateRequired": "生年月日を選択してください",
+      "civilStatusRequired": "婚姻状況を選択してください",
+      "citizenshipRequired": "国籍が必要です",
+      "addressRequired": "完全な住所が必要です",
+      "sourceFundRequired": "資金源が必要です",
+      "incomeRequired": "月収が必要です",
+      "passportRequired": "パスポート写真が必要です",
+      "driverLicenseRequired": "運転免許証写真が必要です"
+    },
+    "modals": {
+      "accessRestricted": {
+        "title": "アクセス制限",
+        "message": "この機能にはプレミアムアカウントが必要です。現在のアカウントタイプは：{accountType}です。銀行口座サービスにアクセスするにはプレミアムにアップグレードしてください。"
+      },
+      "timeDepositInsufficient": {
+        "title": "アクセス制限",
+        "message": "銀行口座を開設するには最低₱200,000の定期預金が必要です。現在の定期預金は₱{amount}です。まず定期預金を増やしてください。"
+      },
+      "error": {
+        "title": "エラー",
+        "message": "アカウント権限を確認できません。もう一度お試しください。"
+      },
+      "fetchError": {
+        "title": "エラー",
+        "message": "ユーザーデータの取得に失敗しました。後でもう一度お試しください。"
+      },
+      "missingInformation": {
+        "title": "情報不足",
+        "message": "送信前にすべての必須フィールドを入力してください。"
+      },
+      "authenticationError": {
+        "title": "認証エラー",
+        "message": "申し込みを送信するにはログインしてください。"
+      },
+      "success": {
+        "title": "成功",
+        "message": "正常に送信されました"
+      },
+      "partialSuccess": {
+        "title": "部分的成功",
+        "message": "申し込みは保存されましたが、メール通知を送信できませんでした。メールアドレスをご確認ください。"
+      },
+      "submissionFailed": {
+        "title": "送信失敗",
+        "message": "申し込みを送信できませんでした。後でもう一度お試しください。エラー：{error}"
+      }
+    }
+  },
+  "accountDeletion": {
+    "header": {
+      "title": "アカウント削除"
+    },
+    "content": {
+      "headerTitle": "アカウント削除",
+      "headerSubtitle": "アカウント削除リクエスト",
+      "importantNotice": "重要なお知らせ",
+      "warningText": "⚠️ アカウント削除は永続的で元に戻せません\n🗑️ すべてのデータ、取引、履歴が永続的に削除されます\n💰 削除リクエスト前にすべての資金を引き出してください\n📋 削除後はアカウントやデータを復元できません",
+      "deletionRequestProcess": "削除リクエストプロセス",
+      "instructionText": "アカウント削除をリクエストするには、以下のフォームに記入してください。チームが2-3営業日以内にリクエストを確認し、処理します。アカウントが永続的に削除されると、メールで確認が送信されます。",
+      "accountInformation": "アカウント情報",
+      "personalDetails": "個人詳細",
+      "firstName": "名",
+      "firstNamePlaceholder": "名を入力してください",
+      "lastName": "姓",
+      "lastNamePlaceholder": "姓を入力してください",
+      "emailAddress": "メールアドレス",
+      "emailPlaceholder": "your.email@example.com",
+      "deletionReason": "削除理由",
+      "reasonForDeletion": "アカウント削除の理由",
+      "helperText": "アカウントを削除したい理由を説明してください。これによりサービス改善に役立ちます。",
+      "reasonPlaceholder": "アカウント削除の詳細な理由を提供してください。例：プライバシーの懸念、サービスが不要、他のプラットフォームへの移行など。",
+      "whatHappensNext": "次に何が起こりますか？",
+      "processText": "削除リクエストを送信後：\n📧 メール確認が送信されます\n🔍 チームが2-3営業日以内にリクエストを確認します\n✅ 永続的削除前に最終確認が送信されます\n🗑️ アカウントとすべてのデータが永続的に削除されます",
+      "submitDeletionRequest": "削除リクエストを送信",
+      "submitting": "送信中..."
+    },
+    "modals": {
+      "missingInformation": {
+        "title": "情報不足",
+        "message": "送信前にすべての必須フィールドを入力してください。"
+      },
+      "confirmAccountDeletion": {
+        "title": "アカウント削除の確認",
+        "message": "アカウント削除をリクエストしてもよろしいですか？このアクションは元に戻せず、すべてのデータが永続的に削除されます。"
+      },
+      "requestSubmitted": {
+        "title": "リクエスト送信完了",
+        "message": "アカウント削除リクエストが正常に送信されました。"
+      },
+      "submissionFailed": {
+        "title": "送信失敗",
+        "message": "リクエストの送信に失敗しました。もう一度お試しください。"
+      }
+    }
+  },
+  "agentDashboard": {
+    "header": {
+      "title": "エージェントダッシュボード"
+    },
+    "content": {
+      "agentProfile": "エージェントプロフィール",
+      "name": "名前",
+      "agentNumber": "エージェント番号",
+      "agentWalletAmount": "エージェントウォレット金額",
+      "transfer": "転送",
+      "loading": "読み込み中..."
+    },
+    "modals": {
+      "accessRestricted": {
+        "title": "アクセス制限",
+        "message": "この機能にはプレミアムアカウントが必要です。現在のアカウントタイプは：{accountType}です。エージェントダッシュボードにアクセスするにはプレミアムにアップグレードしてください。"
+      },
+      "accessDenied": {
+        "title": "アクセス拒否",
+        "message": "このページにアクセスするにはエージェントである必要があります。"
+      },
+      "dataError": {
+        "title": "データエラー",
+        "message": "ユーザーデータが見つかりません。もう一度お試しください。"
+      },
+      "error": {
+        "title": "エラー",
+        "message": "アカウント権限を確認できません。もう一度お試しください。"
+      }
+    }
+  },
+  "deposit": {
+    "header": {
+      "title": "入金リクエスト"
+    },
+    "content": {
+      "investmentDeposit": "投資入金",
+      "growYourWealth": "私たちと一緒に資産を増やしましょう",
+      "depositRequest": "入金リクエスト",
+      "depositInstructions": "入金をリクエストするには、以下のフォームに記入してください。保証されたリターンのための定期預金（最低₱50,000）または市場機会のための株式投資（最低₱2,000,000）から選択してください。",
+      "investmentDetails": "投資詳細",
+      "investmentType": "投資タイプ",
+      "selectInvestmentType": "投資タイプを選択 *",
+      "chooseInvestmentType": "投資タイプを選択してください",
+      "contractPeriod": "契約期間 *",
+      "selectContractDuration": "契約期間を選択",
+      "address": "住所",
+      "enterAddress": "完全な住所を入力してください",
+      "addressRequired": "住所が必要です",
+      "investmentAmount": "投資金額",
+      "amount": "金額 *",
+      "enterInvestmentAmount": "投資金額を入力",
+      "phpEquivalent": "PHP相当額",
+      "calculating": "計算中...",
+      "rate": "レート: 1 {currency} = ₱{rate}",
+      "contactInformation": "連絡先情報",
+      "emailAddress": "メールアドレス",
+      "accountHolder": "口座名義人: {firstName} {lastName}",
+      "processingInformation": "処理情報",
+      "processingText": "入金リクエストを送信後、メールで銀行口座詳細をお送りします。入金リクエスト操作は平日（月曜日から金曜日）に運営されていることにご注意ください。Inspire Walletでの取引完了まで1日かかる場合があります。入金が処理されると確認メールが届きます。",
+      "submitDepositRequest": "入金リクエストを送信",
+      "submitting": "送信中...",
+      "rateUnavailable": "レート利用不可",
+      "minimumStock": "株式の最低₱2,000,000",
+      "minimumTimeDeposit": "定期預金の最低₱50,000",
+      "minimum": "最低: {amount}",
+      "selectCurrency": "通貨を選択",
+      "selectInvestmentTypeModal": "投資タイプを選択",
+      "selectContractPeriod": "契約期間を選択",
+      "timeDeposit": "定期預金",
+      "stockInvestment": "株式投資",
+      "sixMonthsContract": "6ヶ月契約",
+      "oneYearContract": "1年契約",
+      "twoYearsContract": "2年契約"
+    },
+    "modals": {
+      "missingInformation": {
+        "title": "情報不足",
+        "message": "すべての必須フィールドを入力してください。"
+      },
+      "exchangeRateUnavailable": {
+        "title": "為替レート利用不可",
+        "message": "選択された通貨の為替レートは現在利用できません。後でもう一度お試しいただくか、別の通貨を選択してください。"
+      },
+      "minimumInvestmentNotMet": {
+        "title": "最低投資額に達していません",
+        "message": "{type}投資には最低₱{amount}が必要です。金額を増やしてください。"
+      },
+      "requestSubmitted": {
+        "title": "リクエスト送信済み",
+        "message": "入金リクエストが正常に送信されました！銀行口座詳細についてはメールをご確認ください。"
+      },
+      "submissionFailed": {
+        "title": "送信失敗",
+        "message": "リクエストの送信に失敗しました。もう一度お試しください。"
+      }
+    }
+  },
+  "maya": {
+    "header": {
+      "title": "電子ウォレット口座開設"
+    },
+    "content": {
+      "ewalletAccountOpening": "電子ウォレット口座開設",
+      "digitalBankingMadeSimple": "デジタルバンキングをシンプルに",
+      "accountOpeningRequest": "口座開設リクエスト",
+      "accountOpeningInstructions": "お好みの電子ウォレットプロバイダーで口座開設をリクエストするには、以下のフォームに記入してください。お申し込みは5-7営業日以内に処理されます。",
+      "personalInformation": "個人情報",
+      "ewalletSelection": "電子ウォレット選択",
+      "selectEwalletProvider": "電子ウォレットプロバイダーを選択 *",
+      "selectPreferredEwallet": "お好みの電子ウォレットを選択",
+      "contactDetails": "連絡先詳細",
+      "emailAddress": "メールアドレス *",
+      "emailPlaceholder": "your.email@example.com",
+      "mobileNumber": "携帯電話番号 *",
+      "mobilePlaceholder": "+63 9XX XXX XXXX",
+      "landlineNumber": "固定電話番号",
+      "landlinePlaceholder": "(02) XXXX XXXX",
+      "personalDetails": "個人詳細",
+      "gender": "性別 *",
+      "selectGender": "性別を選択",
+      "dateOfBirth": "生年月日 *",
+      "selectBirthdate": "生年月日を選択",
+      "civilStatus": "婚姻状況 *",
+      "citizenship": "国籍 *",
+      "citizenshipPlaceholder": "フィリピン人",
+      "addressInformation": "住所情報",
+      "completeAddress": "完全な住所 *",
+      "addressPlaceholder": "家屋/ユニット番号、通り、バランガイ、市、州、郵便番号",
+      "financialInformation": "財務情報",
+      "sourceOfFund": "資金源 *",
+      "sourcePlaceholder": "例：雇用、事業、投資",
+      "grossMonthlyIncome": "月収総額 *",
+      "incomePlaceholder": "₱ 50,000",
+      "processingInformation": "処理情報",
+      "processingText": "これらの詳細を送信すると、お申し込み状況の確認メールをお送りします。このプロセスは審査と承認に約5-7営業日かかることにご注意ください。",
+      "submitApplication": "申し込みを送信",
+      "processing": "処理中...",
+      "selectGenderModal": "性別を選択",
+      "selectCivilStatusModal": "婚姻状況を選択",
+      "selectEwalletTypeModal": "電子ウォレットタイプを選択",
+      "male": "男性",
+      "female": "女性",
+      "preferNotToSay": "回答したくない",
+      "single": "独身",
+      "married": "既婚",
+      "legallySeparated": "法的に別居",
+      "divorced": "離婚",
+      "annulled": "無効",
+      "widowEer": "寡婦/寡夫",
+      "maya": "マヤ",
+      "gCash": "ジーキャッシュ"
+    },
+    "steps": {
+      "ewalletSelection": {
+        "title": "電子ウォレットプロバイダーを選択",
+        "description": "口座開設のために希望する電子ウォレットプロバイダーを選択してください。これにより、利用可能なデジタルバンキングサービスが決まります。"
+      },
+      "contactInfo": {
+        "title": "連絡先情報",
+        "description": "申請状況と口座更新について連絡できるよう、連絡先情報を提供してください。"
+      },
+      "personalDetails": {
+        "title": "個人情報",
+        "description": "あなた自身について教えてください。この情報は身元確認とコンプライアンス目的で必要です。"
+      },
+      "addressInfo": {
+        "title": "住所情報",
+        "description": "確認と口座設定の目的で完全な住所を提供してください。"
+      },
+      "financialInfo": {
+        "title": "金融情報",
+        "description": "バンキングニーズを理解し、コンプライアンスを確保するために金融詳細を共有してください。"
+      }
+    },
+    "validation": {
+      "selectEwallet": "電子ウォレットプロバイダーを選択してください",
+      "emailRequired": "メールアドレスが必要です",
+      "mobileRequired": "携帯電話番号が必要です",
+      "genderRequired": "性別を選択してください",
+      "birthdateRequired": "生年月日を選択してください",
+      "civilStatusRequired": "婚姻状況を選択してください",
+      "citizenshipRequired": "国籍が必要です",
+      "addressRequired": "完全な住所が必要です",
+      "sourceFundRequired": "資金源が必要です",
+      "incomeRequired": "月収が必要です"
+    },
+    "modals": {
+      "accessRestricted": {
+        "title": "アクセス制限",
+        "message": "この機能にはプレミアムアカウントが必要です。現在のアカウントタイプは：{accountType}です。電子ウォレット口座サービスにアクセスするにはプレミアムにアップグレードしてください。"
+      },
+      "timeDepositInsufficient": {
+        "title": "アクセス制限",
+        "message": "電子ウォレット口座を開設するには最低₱200,000の定期預金が必要です。現在の定期預金は₱{amount}です。まず定期預金を増やしてください。"
+      },
+      "error": {
+        "title": "エラー",
+        "message": "アカウント権限を確認できません。もう一度お試しください。"
+      },
+      "dataError": {
+        "title": "エラー",
+        "message": "ユーザーデータの取得に失敗しました。後でもう一度お試しください。"
+      },
+      "missingInformation": {
+        "title": "情報不足",
+        "message": "送信前にすべての必須フィールドを入力してください。"
+      },
+      "authenticationError": {
+        "title": "認証エラー",
+        "message": "申し込みを送信するにはログインしてください。"
+      },
+      "applicationSubmitted": {
+        "title": "申し込みが正常に送信されました！",
+        "message": "{ewalletType}口座開設リクエストが送信され、データベースに保存されました。まもなく確認メールが届きます。申し込みID：{applicationId}"
+      },
+      "partialSuccess": {
+        "title": "部分的成功",
+        "message": "申し込みは保存されましたが、メール通知を送信できませんでした。メールアドレスをご確認ください。"
+      },
+      "submissionFailed": {
+        "title": "送信失敗",
+        "message": "申し込みを送信できませんでした。後でもう一度お試しください。エラー：{error}"
+      }
+    }
+  },
+  "stockholder": {
+    "header": {
+      "title": "株主ダッシュボード"
+    },
+    "content": {
+      "stockholderAmount": "株主金額",
+      "buy": "購入",
+      "transfer": "送金",
+      "sell": "売却"
+    },
+    "modals": {
+      "dataError": {
+        "title": "データエラー",
+        "message": "ユーザーデータが見つかりません。もう一度お試しください。"
+      }
+    }
+  },
+  "stockTransfer": {
+    "header": {
+      "title": "株式送金",
+      "subtitle": "他のユーザーに株式金額を送金"
+    },
+    "balanceLabel": "利用可能な株式金額",
+    "guide": {
+      "title": "クイックガイド",
+      "step1": "口座番号で受信者を検索",
+      "step2": "送金する株式金額を入力",
+      "step3": "確認して送信"
+    },
+    "sections": {
+      "recipient": "受信者口座番号",
+      "amount": "株式金額"
+    },
+    "placeholders": {
+      "accountNumber": "受信者の口座番号を入力してください...",
+      "amount": "0.00"
+    },
+    "buttons": {
+      "change": "変更",
+      "sendTransfer": "株式送金を送信",
+      "selectRecipient": "受信者を選択",
+      "enterAmount": "金額を入力",
+      "cannotTransferToSelf": "自分に送金できません",
+      "insufficientStock": "株式金額が不足しています",
+      "enterValidAmount": "有効な金額を入力してください"
+    },
+    "validation": {
+      "selfTransfer": "自分に株式を送金することはできません。別の口座番号を入力してください。",
+      "userNotFound": "ユーザーが見つかりません。口座番号を確認してください。",
+      "invalidAccountNumber": "有効な口座番号を入力してください（最低6桁）。",
+      "insufficientBalance": "送金する株式金額が十分ではありません"
+    },
+    "titles": {
+      "transferSuccessful": "送金成功",
+      "transferFailed": "送金失敗",
+      "error": "エラー"
+    },
+    "messages": {
+      "transferSuccessful": "株式送金が正常に完了しました",
+      "transferFailed": "株式送金の処理に失敗しました。もう一度お試しください。"
+    },
+    "currencySymbol": "₱"
+  },
+  "inspireAuto": {
+    "header": {
+      "title": "投資プロファイル"
+    },
+    "content": {
+      "loadingText": "投資プロファイルを読み込み中...",
+      "totalDeposits": "総預金",
+      "active": "アクティブ",
+      "completed": "完了",
+      "totalInvested": "総投資額",
+      "activeDeposits": "アクティブ預金",
+      "completedDeposits": "完了預金",
+      "noActiveDeposits": "アクティブな預金がありません",
+      "noActiveDepositsSubtext": "アクティブな投資がここに表示されます",
+      "noCompletedDeposits": "完了した預金がありません",
+      "noCompletedDepositsSubtext": "完了した投資がここに表示されます",
+      "amount": "金額：",
+      "investmentRate": "投資率：",
+      "contractType": "契約タイプ：",
+      "avgMonth": "平均/月：",
+      "avgMinute": "平均/分：",
+      "expectedEarnings": "期待収益：",
+      "completionDate": "完了日：",
+      "totalEarned": "総収益：",
+      "earningsBreakdown": "収益内訳：",
+      "sixMonthGross": "6ヶ月総額：",
+      "tax": "税金（20%）：",
+      "sixMonthNet": "6ヶ月純額：",
+      "cycleCompleted": "完了サイクル：",
+      "currentEarnings": "現在の収益：",
+      "cycle": "サイクル",
+      "requestCopy": "コピーをリクエスト",
+      "processing": "処理中...",
+      "contract": "契約",
+      "retry": "再試行"
+    },
+    "modals": {
+      "accessRestricted": {
+        "title": "アクセス制限",
+        "message": "この機能にはプレミアムアカウントが必要です。現在のアカウントタイプは：{accountType}。投資プロファイルにアクセスするにはプレミアムにアップグレードしてください。",
+        "timeDepositMessage": "投資プロファイルにアクセスするには、アクティブな定期預金が必要です。まず定期預金を設定してください。"
+      },
+      "error": {
+        "title": "エラー",
+        "message": "ユーザーデータが見つかりません。後でもう一度お試しください。",
+        "loadingError": "預金データの読み込みに失敗しました。もう一度お試しください。",
+        "updateFailed": "Firestoreの更新に失敗しました。もう一度お試しください。",
+        "authenticationError": "認証されたユーザーが見つかりません。再度ログインしてください。",
+        "userDataNotFound": "ユーザーデータが見つかりません。サポートにお問い合わせください。",
+        "emailNotFound": "ユーザーのメールアドレスが見つかりません。サポートにお問い合わせください。",
+        "depositDataNotFound": "預金データが見つかりません。サポートにお問い合わせください。",
+        "emailError": "契約は見つかりましたが、メールの送信に失敗しました。もう一度お試しください。",
+        "requestCopyError": "契約コピーのリクエストに失敗しました。もう一度お試しください。",
+        "copyFailed": "預金IDのコピーに失敗しました。もう一度お試しください。"
+      },
+      "success": {
+        "title": "成功",
+        "contractSent": "契約コピーが{email}に送信されました",
+        "copied": "コピーしました！",
+        "copiedMessage": "預金ID「{depositId}」がクリップボードにコピーされました。"
+      },
+      "warning": {
+        "title": "契約が利用できません",
+        "message": "申し訳ございませんが、デジタル契約は現在利用できません。info@inspireholdings.phの担当者にコピーをご請求ください。"
+      }
+    }
+  },
+  "forgotPassword": {
+    "header": {
+      "title": "パスワード回復"
+    },
+    "content": {
+      "title": "パスワード回復",
+      "subtitle": "パスワードをリセット",
+      "howItWorks": "仕組み",
+      "instructions": "📧 下にメールアドレスを入力してください\n🔗 安全なリセットリンクをお送りします\n✅ 受信トレイを確認してリンクをクリックしてください\n🔑 新しいパスワードを作成して完了です！",
+      "resetPassword": "パスワードをリセット",
+      "emailAddress": "メールアドレス",
+      "emailLabel": "登録済みのメールアドレスを入力してください *",
+      "emailPlaceholder": "your.email@example.com",
+      "securityInfo": "セキュリティ情報",
+      "securityText": "🔒 セキュリティのため、パスワードリセットリンクは1時間で期限切れになります\n📱 メールが表示されない場合は、スパム/迷惑メールフォルダを確認してください\n🛡️ このリンクでパスワードをリセットできるのはあなただけです\n⚡ プロセスは瞬時で安全です",
+      "sendResetLink": "リセットリンクを送信",
+      "sending": "送信中...",
+      "emailSentTitle": "メールが正常に送信されました！",
+      "emailSentMessage": "パスワードリセットリンクを以下に送信しました：",
+      "emailSentInstructions": "受信トレイを確認し、パスワードをリセットするための指示に従ってください。セキュリティ上の理由により、リンクは1時間で期限切れになります。",
+      "returnToLogin": "ログインに戻る"
+    },
+    "alerts": {
+      "missingInfo": "情報不足",
+      "enterEmail": "メールアドレスを入力してください",
+      "error": "エラー",
+      "sendFailed": "パスワードリセットメールの送信に失敗しました。もう一度お試しください。"
+    }
+  },
+  "helpCenter": {
+    "header": {
+      "title": "ヘルプセンター"
+    },
+    "content": {
+      "title": "ヘルプセンター",
+      "subtitle": "お手伝いさせていただきます",
+      "submitRequestTitle": "リクエストを送信",
+      "instructions": "何かお困りですか？このフォームに記入していただければ、サポートチームができるだけ早くお返事いたします。お手伝いさせていただきます！",
+      "contactInfo": "連絡先情報",
+      "yourDetails": "お客様の詳細",
+      "firstName": "名 *",
+      "firstNamePlaceholder": "名を入力してください",
+      "lastName": "姓 *",
+      "lastNamePlaceholder": "姓を入力してください",
+      "emailAddress": "メールアドレス *",
+      "emailPlaceholder": "your.email@example.com",
+      "ticketDetails": "チケット詳細",
+      "ticketTitle": "チケットタイトル *",
+      "ticketTitlePlaceholder": "問題を簡潔に説明するタイトル",
+      "priorityLevel": "優先度 *",
+      "selectPriority": "優先度を選択",
+      "highPriority": "🔴 高優先度",
+      "mediumPriority": "🟡 中優先度",
+      "lowPriority": "🟢 低優先度",
+      "category": "カテゴリ *",
+      "selectCategory": "カテゴリを選択",
+      "paymentIssues": "💳 支払い問題",
+      "withdrawalIssues": "💰 出金問題",
+      "accountVerification": "✅ アカウント認証",
+      "securityConcerns": "🔐 セキュリティの懸念",
+      "appTechnicalIssues": "📱 アプリの技術的問題",
+      "generalSupport": "📞 一般的なサポート",
+      "other": "📋 その他",
+      "howCanWeHelp": "どのようにお手伝いできますか？",
+      "describeConcern": "ご懸念を説明してください *",
+      "describePlaceholder": "ご懸念やご質問を詳しく説明してください。より良いサポートのために、関連する情報も含めてください。",
+      "whatHappensNext": "次に何が起こりますか？",
+      "disclaimerText": "このフォームを送信すると、ヘルプリクエストをメールで受け取ります。サポートチームがご懸念を確認し、営業日24-48時間以内にお返事いたします。お問い合わせいただき、ありがとうございます！",
+      "submitRequest": "リクエストを送信",
+      "sending": "送信中...",
+      "activeSupportTickets": "アクティブなサポートチケット",
+      "noActiveTickets": "アクティブなチケットはありません",
+      "noActiveTicketsSubtext": "サポートチームとの新しいヘルプリクエストを送信してください",
+      "submitNewRequest": "新しいリクエストを送信",
+      "messages": "メッセージ"
+    },
+    "modals": {
+      "selectPriority": "優先度を選択",
+      "selectCategory": "カテゴリを選択",
+      "missingInfo": "情報不足",
+      "fillAllFields": "すべての必須フィールドを入力してください。",
+      "authenticationError": "認証エラー",
+      "loginToSubmit": "ヘルプリクエストを送信するにはログインしてください。",
+      "submittedSuccessfully": "ヘルプチケットが正常に送信されました！",
+      "submittedMessage": "ヘルプチケットが送信され、データベースに保存されました。まもなくメール確認を受け取ります。チケットID: {ticketId}",
+      "partialSuccess": "部分的成功",
+      "savedButEmailFailed": "ヘルプチケットは保存されましたが、メール通知を送信できませんでした。メールアドレスをご確認ください。",
+      "submissionFailed": "送信に失敗しました",
+      "unableToSubmit": "ヘルプチケットを送信できません。後でもう一度お試しください。エラー: {error}",
+      "sendMessageError": "エラー",
+      "sendMessageFailed": "メッセージの送信に失敗しました。もう一度お試しください。",
+      "translatedTo": "翻訳先",
+      "translationOptions": "翻訳オプション",
+      "translateTo": "翻訳先:",
+      "translateAll": "すべて翻訳",
+      "clearAll": "すべてクリア"
+    }
+  },
+  "travelProtection": {
+    "header": {
+      "title": "旅行保護"
+    },
+    "content": {
+      "title": "旅行保護",
+      "subtitle": "あなたの旅を安全に",
+      "instructionTitle": "旅行保険申請",
+      "instructionText": "このフォームに記入して旅行保護サービスにご加入ください。お支払い確認後、5-7営業日以内に申請が処理されます。",
+      "protectionFee": "保護料金",
+      "discountedRate": "既存のお客様向け割引料金",
+      "standardRate": "標準保護料金",
+      "applicationDetails": "申請詳細",
+      "contactInformation": "連絡先情報",
+      "personalDetails": "個人詳細",
+      "financialInformation": "財務情報",
+      "travelDetails": "旅行詳細",
+      "requiredDocuments": "必要書類",
+      "emailAddress": "メールアドレス *",
+      "emailPlaceholder": "your.email@example.com",
+      "mobileNumber": "携帯電話番号 *",
+      "mobilePlaceholder": "+63 9XX XXX XXXX",
+      "landlineNumber": "固定電話番号",
+      "landlinePlaceholder": "(02) XXXX XXXX",
+      "gender": "性別 *",
+      "selectGender": "性別を選択してください",
+      "dateOfBirth": "生年月日 *",
+      "selectBirthdate": "生年月日を選択してください",
+      "civilStatus": "配偶者の有無 *",
+      "selectCivilStatus": "配偶者の有無を選択してください",
+      "citizenship": "国籍 *",
+      "citizenshipPlaceholder": "フィリピン人",
+      "homeAddress": "自宅住所 *",
+      "addressPlaceholder": "家/ユニット番号、通り、バランガイ、市、州、郵便番号",
+      "sourceOfFund": "資金源 *",
+      "sourcePlaceholder": "例：雇用、事業、投資",
+      "grossMonthlyIncome": "月収総額 *",
+      "incomePlaceholder": "₱ 50,000",
+      "cashOnHand": "手持ち現金 *",
+      "cashPlaceholder": "₱ 10,000",
+      "destinationAddress": "目的地住所 *",
+      "destinationPlaceholder": "宿泊予定のホテル/宿泊施設の住所",
+      "checkInDate": "チェックイン日 *",
+      "selectCheckInDate": "宿泊日を選択してください",
+      "duration": "滞在期間（日数） *",
+      "durationPlaceholder": "7",
+      "airline": "航空会社 *",
+      "airlinePlaceholder": "フィリピン航空、セブパシフィックなど",
+      "departureTime": "出発時刻 *",
+      "selectDepartureTime": "出発時刻を選択してください",
+      "arrivalTime": "到着時刻 *",
+      "selectArrivalTime": "到着時刻を選択してください",
+      "passportNumber": "パスポート番号 *",
+      "passportPlaceholder": "P1234567",
+      "purposeOfTravel": "旅行の目的 *",
+      "purposePlaceholder": "旅行の目的を説明してください（ビジネス、休暇、家族訪問など）",
+      "passportPhoto": "パスポート写真 *",
+      "uploadPassport": "パスポートをアップロード",
+      "tapToSelect": "タップして画像を選択",
+      "governmentId": "政府発行身分証明書 *",
+      "uploadGovernmentId": "政府発行身分証明書をアップロード",
+      "idTypes": "運転免許証、SSSなど",
+      "importantInformation": "重要な情報",
+      "disclaimerText": "この申請を送信することで、提供されたすべての情報が正確であることを確認します。支払いはPayPalを通じて安全に処理されます。成功した支払いと書類確認後、5-7営業日以内に旅行保護カバレッジが有効になります。",
+      "applyForProtection": "保護に申請する",
+      "processing": "処理中...",
+      "male": "男性",
+      "female": "女性",
+      "preferNotToSay": "回答したくない",
+      "single": "独身",
+      "married": "既婚",
+      "legallySeparated": "法的に別居",
+      "divorced": "離婚",
+      "annulled": "無効",
+      "widow": "寡婦/夫",
+      "formProgress": "申請進捗",
+      "contactDescription": "連絡先情報を提供してください",
+      "personalDescription": "個人情報を提供してください",
+      "financialDescription": "財務情報を提供してください",
+      "travelDescription": "旅行情報を提供してください",
+      "documentsDescription": "必要な書類をアップロードしてください",
+      "reviewAndSubmit": "確認・提出",
+      "reviewDescription": "提出前に情報を確認してください"
+    },
+    "modals": {
+      "accessRestricted": "アクセス制限",
+      "premiumRequired": "この機能にはプレミアムアカウントが必要です。現在のアカウントタイプは：{accountType}です。旅行保護にアクセスするにはプレミアムにアップグレードしてください。",
+      "error": "エラー",
+      "noUserData": "ユーザーデータが見つかりません",
+      "errorMessage": "アカウント権限を確認できません。もう一度お試しください。",
+      "selectImageFirst": "まず画像を選択してください。",
+      "loginRequired": "画像をアップロードするにはログインする必要があります。",
+      "uploadFailed": "画像のアップロードに失敗しました。もう一度お試しください。",
+      "orderCreated": "注文が作成されました",
+      "confirmPayment": "支払いを確認するには確認をクリックしてください",
+      "confirm": "確認",
+      "orderFailed": "注文の作成に失敗しました",
+      "captureFailed": "支払いのキャプチャに失敗しました",
+      "success": "成功",
+      "successfullySent": "正常に送信されました",
+      "failure": "失敗",
+      "unsuccessfullySent": "正常に送信されませんでした",
+      "missingInformation": "情報不足",
+      "fillAllFields": "送信前にすべての必須フィールドを記入し、パスポート写真と政府発行身分証明書の両方をアップロードしてください。",
+      "authenticationError": "認証エラー",
+      "loginToSubmit": "申請を送信するにはログインしてください。",
+      "uploadError": "アップロードエラー",
+      "passportUploadFailed": "パスポート写真のアップロードに失敗しました。もう一度お試しください。",
+      "govtIdUploadFailed": "政府発行身分証明書のアップロードに失敗しました。もう一度お試しください。",
+      "applicationSubmitted": "申請が正常に送信されました！",
+      "applicationMessage": "旅行保護申請が送信され、データベースに保存されました。まもなくメール確認を受け取ります。申請ID：{applicationId}",
+      "partialSuccess": "部分的成功",
+      "savedButEmailFailed": "申請は保存されましたが、メール通知を送信できませんでした。メールアドレスをご確認ください。",
+      "submissionFailed": "送信に失敗しました",
+      "unableToSubmit": "申請を送信できません。後でもう一度お試しください。エラー：{error}",
+      "selectGender": "性別を選択してください",
+      "selectCivilStatus": "配偶者の有無を選択してください",
+      "contactRequired": "続行する前にすべての連絡先情報フィールドを入力してください。",
+      "personalRequired": "続行する前にすべての個人詳細を入力してください。",
+      "financialRequired": "続行する前にすべての財務情報を入力してください。",
+      "travelRequired": "続行する前にすべての旅行詳細を入力してください。",
+      "documentsRequired": "続行する前にパスポート写真と政府発行身分証明書の両方をアップロードしてください。"
+    },
+    "buttons": {
+      "back": "戻る",
+      "next": "次へ"
+    }
+  },
+  "withdrawalRequest": {
+    "header": {
+      "title": "出金リクエスト"
+    },
+    "content": {
+      "title": "出金リクエスト",
+      "subtitle": "資金に安全にアクセス",
+      "instructionTitle": "出金リクエスト",
+      "instructionText": "出金をリクエストするには、下記のフォームに記入してください。出金タイプを選択し、安全な送金のために銀行口座の詳細を提供してください。",
+      "withdrawalDetails": "出金詳細",
+      "withdrawalType": "出金タイプ",
+      "selectWithdrawalType": "出金タイプを選択 *",
+      "chooseWithdrawalType": "出金タイプを選択",
+      "availableBalance": "利用可能残高",
+      "agentWithdrawal": "エージェント出金",
+      "withdrawalAmount": "出金額 (₱) *",
+      "enterWithdrawalAmount": "出金額を入力",
+      "availableBalanceInfo": "利用可能残高: ₱{amount}",
+      "agentWalletBalanceInfo": "エージェントウォレット残高: ₱{amount}",
+      "contactInformation": "連絡先情報",
+      "emailAddress": "メールアドレス *",
+      "emailPlaceholder": "your.email@example.com",
+      "accountHolder": "口座名義人: {firstName} {lastName}",
+      "bankingInformation": "銀行情報",
+      "bankAccountNumber": "銀行口座番号 *",
+      "bankAccountNumberPlaceholder": "銀行口座番号を入力",
+      "accountHolderName": "口座名義人名 *",
+      "accountHolderNamePlaceholder": "口座名義人名を入力（銀行記録通り）",
+      "bankName": "銀行名 *",
+      "bankNamePlaceholder": "銀行名を入力（例：BDO、BPI、Metrobank）",
+      "branchName": "支店名 *",
+      "branchNamePlaceholder": "銀行支店名を入力",
+      "securityProcessing": "セキュリティと処理",
+      "securityText": "🔒 銀行情報は暗号化され安全です\n⏱️ 処理時間: 1-2営業日\n📧 確認メールが送信されます\n✅ すべての出金は処理前に検証されます",
+      "submitWithdrawalRequest": "出金リクエストを送信",
+      "submitting": "送信中...",
+      "insufficientBalance": "残高不足"
+    },
+    "modals": {
+      "accessRestricted": "アクセス制限",
+      "premiumRequired": "この機能にはプレミアムアカウントが必要です。現在のアカウントタイプは：{accountType}です。出金機能にアクセスするにはプレミアムにアップグレードしてください。",
+      "error": "エラー",
+      "errorMessage": "アカウント権限を確認できません。もう一度お試しください。",
+      "missingInformation": "情報不足",
+      "fillAllFields": "送信前にすべての必須フィールドを入力してください。",
+      "authenticationError": "認証エラー",
+      "loginToSubmit": "出金リクエストを送信するにはログインしてください。",
+      "invalidAmount": "無効な金額",
+      "enterValidAmount": "0より大きい有効な出金額を入力してください。",
+      "insufficientBalance": "残高不足",
+      "insufficientBalanceMessage": "利用可能残高は₱{amount}です。利用可能残高を超えて出金することはできません。",
+      "insufficientAgentBalance": "エージェント残高不足",
+      "insufficientAgentBalanceMessage": "エージェントウォレット残高は₱{amount}です。エージェントウォレット残高を超えて出金することはできません。",
+      "submittedSuccessfully": "出金リクエストが正常に送信されました！",
+      "submittedMessage": "出金リクエストが送信され、データベースに保存されました。まもなくメール確認を受け取ります。リクエストID：{requestId}",
+      "partialSuccess": "部分的成功",
+      "savedButEmailFailed": "出金リクエストは保存されましたが、メール通知を送信できませんでした。メールアドレスをご確認ください。",
+      "submissionFailed": "送信に失敗しました",
+      "unableToSubmit": "出金リクエストを送信できません。後でもう一度お試しください。エラー：{error}",
+      "selectWithdrawalType": "出金タイプを選択"
+    }
+  },
+  "contractRequestModal": {
+    "content": {
+      "title": "契約リクエスト",
+      "subtitle": "透かしなしのオリジナル契約書のコピーをリクエスト",
+      "contractId": "契約ID *",
+      "contractIdPlaceholder": "契約IDを入力してください",
+      "emailAddress": "メールアドレス *",
+      "emailAddressPlaceholder": "メールアドレスを入力してください",
+      "fullName": "フルネーム *",
+      "fullNamePlaceholder": "フルネームを入力してください",
+      "infoText": "オリジナル契約書は、提供されたメールアドレスに1-2営業日以内に送信されます。",
+      "sendRequest": "リクエスト送信",
+      "sending": "送信中...",
+      "cancel": "キャンセル"
+    },
+    "validation": {
+      "contractIdRequired": "契約IDは必須です",
+      "emailRequired": "メールアドレスは必須です",
+      "emailInvalid": "有効なメールアドレスを入力してください",
+      "fullNameRequired": "フルネームは必須です"
+    },
+    "alerts": {
+      "error": "エラー",
+      "loginRequired": "契約書のコピーをリクエストするにはログインが必要です。",
+      "requestFailed": "リクエスト失敗",
+      "requestFailedMessage": "契約リクエストの送信に失敗しました。もう一度お試しください。エラー: {error}",
+      "unableToSubmit": "契約リクエストを送信できません。後でもう一度お試しください。",
+      "successMessage": "契約リクエストが正常に送信されました！契約ID: {contractId}のリクエストを処理し、1-2営業日以内に{emailAddress}にオリジナル契約書を送信します。"
+    }
+  },
+  "agentTransaction": {
+    "content": {
+      "loadingText": "エージェント取引を読み込み中...",
+      "errorText": "エラー: {error}",
+      "emptyText": "エージェント取引が見つかりません",
+      "headerText": "エージェント取引履歴",
+      "pageInfo": "ページ {currentPage} / {totalPages} (合計 {total})",
+      "client": "クライアント",
+      "type": "タイプ",
+      "date": "日付",
+      "amount": "金額",
+      "commission": "コミッション",
+      "gross": "総額",
+      "tax": "税金",
+      "firstPage": "最初",
+      "previousPage": "‹",
+      "nextPage": "›",
+      "lastPage": "最後",
+      "close": "閉じる"
+    },
+    "modal": {
+      "title": "エージェント取引概要",
+      "date": "日付:",
+      "typeOfTransaction": "取引タイプ:",
+      "amount": "金額:",
+      "grossAmount": "総額:",
+      "taxApplied": "適用税金:",
+      "commission": "コミッション:",
+      "referralName": "紹介者名:"
+    }
+  },
+  "notifications": {
+    "title": "通知",
+    "loadingText": "通知を読み込み中...",
+    "errorTitle": "通知の読み込みエラー",
+    "errorMessage": "通知の読み込みに失敗しました",
+    "retryButton": "再試行",
+    "emptyTitle": "通知なし",
+    "emptyMessage": "まだ通知がありません。後で更新を確認してください。",
+    "noTitle": "タイトルなし",
+    "noMessage": "メッセージ内容が利用できません。",
+    "invalidDate": "無効な日付",
+    "detailTitle": "通知詳細",
+    "backToNotifications": "通知に戻る"
+  },
+  "investments": {
+    "loadingText": "投資を読み込み中...",
+    "loadingSubtext": "データを取得中です。お待ちください",
+    "emptyText": "投資が見つかりません",
+    "emptySubtextMonthly": "月次キャンペーン投資は利用可能になったらここに表示されます。",
+    "emptySubtextThreeMonth": "3ヶ月キャンペーン投資は利用可能になったらここに表示されます。",
+    "pullToRefresh": "引っ張って更新",
+    "labels": {
+      "amount": "金額",
+      "rate": "利率",
+      "payoutDay": "支払日",
+      "expectedIncome": "期待収入",
+      "completion": "完了",
+      "status": "ステータス",
+      "cycleCompleted": "完了サイクル",
+      "progress": "進捗",
+      "expected": "期待値"
+    },
+    "status": {
+      "active": "アクティブ",
+      "completed": "完了"
+    },
+    "errors": {
+      "failedToLoadMonthly": "月次キャンペーンの読み込みに失敗しました",
+      "failedToLoadThreeMonth": "3ヶ月キャンペーンの読み込みに失敗しました",
+      "failedToSetupConnection": "リアルタイムデータ接続の設定に失敗しました",
+      "failedToFetch": "キャンペーンの取得に失敗しました"
+    }
+  },
+  "agentChat": {
+    "title": "エージェントサポート",
+    "supportOnline": "サポートがオンラインです",
+    "supportTeam": "サポートチーム",
+    "loadingMessages": "メッセージを読み込み中...",
+    "welcomeTitle": "👋 エージェントサポートへようこそ",
+    "welcomeSubtext": "サポートチームと接続されました。\nメッセージを送信して会話を開始してください。",
+    "typeMessage": "メッセージを入力...",
+    "supportTyping": "サポートが入力中です",
+    "shareFile": "ファイルを共有",
+    "chooseOption": "オプションを選択:",
+    "chooseFromGallery": "ギャラリーから選択",
+    "chooseDocuments": "ドキュメントを選択",
+    "cancel": "キャンセル",
+    "translate": "翻訳",
+    "hideTranslation": "翻訳を非表示",
+    "noNewMessages": "翻訳する新しいエージェントメッセージがありません",
+    "allTranslationsCleared": "すべての翻訳がクリアされました",
+    "success": "成功",
+    "info": "情報",
+    "failedToPickImage": "画像の選択に失敗しました",
+    "failedToPickDocument": "ドキュメントの選択に失敗しました",
+    "grantCameraPermissions": "写真を共有するためにカメラロールの権限を許可してください。",
+    "user": "ユーザー"
+  },
+  "loadingScreens": {
+    "transfer": {
+      "title": "送金中",
+      "subtitle": "送金処理中...",
+      "status": "送金を処理している間、お待ちください...",
+      "from": "送信元",
+      "to": "送信先"
+    },
+    "simple": {
+      "default": "読み込み中..."
+    },
+    "travelProtection": {
+      "title": "旅行保護の申請中",
+      "subtitle": "Inspire Walletで旅を安全に保護",
+      "status": "旅行保護の申請を処理中...",
+      "features": {
+        "medical": "医療カバレッジ",
+        "baggage": "荷物保護",
+        "cancellation": "旅行キャンセル"
+      }
+    },
+    "inspireCards": {
+      "title": "カード処理中",
+      "subtitle": "Inspireカードを設定中...",
+      "status": "カードを準備している間、お待ちください"
+    },
+    "bank": {
+      "title": "銀行申し込み処理中",
+      "subtitle": "銀行口座を設定中...",
+      "status": "申し込みを処理している間、お待ちください",
+      "features": {
+        "secure": "安全",
+        "fast": "高速",
+        "reliable": "信頼性"
+      }
+    },
+    "general": {
+      "login": {
+        "title": "サインイン中",
+        "subtitle": "Inspire Walletにアクセス中",
+        "status": "お待ちください..."
+      },
+      "register": {
+        "title": "アカウント作成中",
+        "subtitle": "Inspire Walletをセットアップ中",
+        "status": "お待ちください..."
+      },
+      "default": {
+        "title": "読み込み中...",
+        "subtitle": "お待ちください",
+        "status": "処理中..."
+      }
+    },
+    "ewallet": {
+      "title": "電子ウォレットアカウント開設中",
+      "subtitle": "フィリピンのデジタルバンキングをセットアップ中",
+      "status": "電子ウォレットの申請を処理中...",
+      "features": {
+        "mobile": "モバイル決済",
+        "cards": "デジタルカード",
+        "cashless": "キャッシュレス取引"
+      }
+    }
+  },
+  "investmentTracker": {
+    "monthly": {
+      "title": "投資トラッカー",
+      "subtitle": "月次キャンペーン",
+      "headerTitle": "月次キャンペーン投資",
+      "headerSubtitle": "件の投資を追跡中 • 日付順（最新順）",
+      "headerSubtitlePlural": "件の投資を追跡中 • 日付順（最新順）",
+      "campaignType": "ラリーキャンペーン",
+      "labels": {
+        "amount": "金額",
+        "rate": "利率",
+        "payoutDay": "支払日",
+        "expectedIncome": "期待収入",
+        "completion": "完了日",
+        "status": "ステータス",
+        "cycleCompleted": "完了サイクル",
+        "expected": "期待値"
+      },
+      "status": {
+        "active": "アクティブ"
+      },
+      "subtexts": {
+        "afterTax": "20%税金後",
+        "nextPayout": "次回:"
+      }
+    },
+    "threeMonth": {
+      "title": "投資トラッカー",
+      "subtitle": "3ヶ月キャンペーン",
+      "headerTitle": "3ヶ月キャンペーン投資",
+      "headerSubtitle": "件の投資を追跡中 • 日付順（最新順）",
+      "headerSubtitlePlural": "件の投資を追跡中 • 日付順（最新順）",
+      "campaignType": "3ヶ月キャンペーン",
+      "labels": {
+        "amount": "金額",
+        "rate": "利率",
+        "payoutDay": "支払日",
+        "expectedIncome": "期待収入",
+        "completion": "完了日",
+        "status": "ステータス",
+        "progress": "進捗",
+        "expected": "期待値",
+        "totalEarned": "総収益"
+      },
+      "status": {
+        "active": "アクティブ"
+      },
+      "subtexts": {
+        "perQuarter": "四半期あたり（20%税金後）",
+        "nextPayout": "次回:"
+      }
+    },
+    "common": {
+      "loadingText": "投資を読み込み中",
+      "loadingSubtext": "キャンペーンデータを取得中...",
+      "emptyText": "投資が見つかりません",
+      "emptySubtextMonthly": "まだ月次キャンペーンを開始していません。最初の投資を作成して始めましょう！",
+      "emptySubtextThreeMonth": "まだ3ヶ月キャンペーンを開始していません。最初の投資を作成して始めましょう！",
+      "pullToRefresh": "引っ張って更新",
+      "retry": "再試行",
+      "errors": {
+        "failedToLoadMonthly": "月次キャンペーンの読み込みに失敗",
+        "failedToLoadThreeMonth": "3ヶ月キャンペーンの読み込みに失敗",
+        "failedToFetch": "データの取得に失敗",
+        "failedToSetupConnection": "接続の設定に失敗"
+      }
+    }
+  }
+}

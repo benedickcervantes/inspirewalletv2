@@ -1,0 +1,41 @@
+env: load .env
+env: export EXPO_PUBLIC_API_KEY EXPO_PUBLIC_SERVICE_ID EXPO_PUBLIC_TEMPLATE_ID EXPO_PUBLIC_CRYPTO_DEPOSIT_TEMPLATE_ID EXPO_PUBLIC_TRANSFER_TEMPLATE_ID EXPO_PUBLIC_OTP_TEMPLATE_ID EXPO_PUBLIC_CRYPTO_API_KEY EXPO_PUBLIC_ALPHA_VANTAGE_API_KEY EXPO_PUBLIC_FIREBASE_API_KEY EXPO_PUBLIC_NATIVENOTIFY_API_KEY EXPO_PUBLIC_DEPOSIT_TEMPLATE_ID EXPO_PUBLIC_CONTRACT_REQUEST_TEMPLATE_ID EXPO_PUBLIC_CONTRACT_REQUEST_ORIG_TEMPLATE_ID EXPO_PUBLIC_INSPIRE_FOREX_BASE_URL EXPO_PUBLIC_INSPIRE_FOREX_API_KEY EXPO_PUBLIC_INSPIRE_AGENT_BASE_URL EXPO_PUBLIC_INSPIRE_AGENT_API_KEY EXPO_PUBLIC_GOOGLE_TRANSLATE_API_KEY
+Running 17 checks on your project...
+13/17 checks passed. 4 checks failed. Possible issues detected:
+Use the --verbose flag to see more details about passed checks.
+
+Γ£û Check dependencies for packages that should not be installed directly
+The package "@expo/prebuild-config" should not be installed directly in your project. It is a dependency of other Expo packages, which will install it automatically as needed.
+The package "@expo/config-plugins" should not be installed directly in your project. You should instead use "expo/config-plugins" which is a sub-export of the expo package.
+If you installed "@expo/config-plugins" to fulfill a peer dependency for a config plugin, the plugin's maintainer should switch to the "expo/config-plugins" import, and you can ignore this warning.
+Advice:
+Remove these packages from your package.json.
+
+Γ£û Check that native modules use compatible support package versions for installed Expo SDK
+Expected package @expo/config-plugins@~10.1.1
+Found invalid:
+  @expo/config-plugins@54.0.4
+  (for more info, run: npm why @expo/config-plugins)
+Advice:
+Upgrade dependencies that are using the invalid package versions.
+
+Γ£û Validate packages against React Native Directory package metadata
+The following issues were found when validating your dependencies against React Native Directory:
+  Untested on New Architecture: react-native-keyboard-aware-scroll-view
+  Unmaintained: react-native-dropdown-picker, react-native-keyboard-aware-scroll-view
+  No metadata available: @babel/runtime, @emailjs/browser, @emailjs/react-native, firebase
+Advice:
+Use libraries that are actively maintained and support the New Architecture. Find alternative libraries with https://reactnative.directory.
+Add packages to expo.doctor.reactNativeDirectoryCheck.exclude in package.json to selectively skip validations, if the warning is not relevant.
+Update React Native Directory to include metadata for unknown packages. Alternatively, set expo.doctor.reactNativeDirectoryCheck.listUnknownPackages in package.json to false to skip warnings about packages with no metadata, if the warning is not relevant.
+
+Γ£û Check that packages match versions required by installed Expo SDK
+The following packages should be updated for best compatibility with the installed expo version:
+  expo-asset@12.0.11 - expected version: ~11.1.7
+Your project may not work correctly until you install the expected versions of the packages.
+Found outdated dependencies
+Advice:
+Use 'npx expo install --check' to review and upgrade your dependencies.
+To ignore specific packages, add them to "expo.install.exclude" in package.json. Learn more: https://expo.fyi/dependency-validation
+
+4 checks failed, indicating possible issues with the project.

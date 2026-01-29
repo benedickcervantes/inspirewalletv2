@@ -1,0 +1,106 @@
+Checking ELF alignment for 100 native libraries in:
+  C:\Projects\companyprojects\inspirewallet\sdk53-build.aab
+
+UNALIGNED  base/lib/arm64-v8a/libappmodules.so  [no PT_LOAD alignment data]  - Failed to extract from APK: spawnSync unzip ENOBUFS
+UNALIGNED  base/lib/arm64-v8a/libbarhopper_v3.so  [no PT_LOAD alignment data]  - Failed to extract from APK: spawnSync unzip ENOBUFS
+UNALIGNED  base/lib/arm64-v8a/libc++_shared.so  [no PT_LOAD alignment data]  - Failed to extract from APK: spawnSync unzip ENOBUFS
+UNALIGNED  base/lib/arm64-v8a/libexpo-modules-core.so  [no PT_LOAD alignment data]  - Failed to extract from APK: spawnSync unzip ENOBUFS
+OK         base/lib/arm64-v8a/libfbjni.so  [16384, 16384, 16384]
+OK         base/lib/arm64-v8a/libgesturehandler.so  [16384, 16384, 16384]
+OK         base/lib/arm64-v8a/libgifimage.so  [16384, 16384, 16384]
+UNALIGNED  base/lib/arm64-v8a/libhermes.so  [no PT_LOAD alignment data]  - Failed to extract from APK: spawnSync unzip ENOBUFS
+OK         base/lib/arm64-v8a/libhermestooling.so  [16384, 16384, 16384]
+OK         base/lib/arm64-v8a/libimage_processing_util_jni.so  [16384, 16384, 16384]
+OK         base/lib/arm64-v8a/libimagepipeline.so  [16384, 16384, 16384]
+OK         base/lib/arm64-v8a/libjsi.so  [16384, 16384, 16384]
+OK         base/lib/arm64-v8a/libnative-filters.so  [16384, 16384, 16384]
+OK         base/lib/arm64-v8a/libnative-imagetranscoder.so  [16384, 16384, 16384]
+OK         base/lib/arm64-v8a/libreact_codegen_RNCSlider.so  [16384, 16384, 16384]
+OK         base/lib/arm64-v8a/libreact_codegen_rnscreens.so  [16384, 16384, 16384]
+OK         base/lib/arm64-v8a/libreact_codegen_rnsvg.so  [16384, 16384, 16384]
+OK         base/lib/arm64-v8a/libreact_codegen_safeareacontext.so  [16384, 16384, 16384]
+UNALIGNED  base/lib/arm64-v8a/libreactnative.so  [no PT_LOAD alignment data]  - Failed to extract from APK: spawnSync unzip ENOBUFS
+OK         base/lib/arm64-v8a/libreanimated.so  [16384, 16384, 16384]
+OK         base/lib/arm64-v8a/librnscreens.so  [16384, 16384, 16384]
+UNALIGNED  base/lib/arm64-v8a/librnskia.so  [no PT_LOAD alignment data]  - Failed to extract from APK: spawnSync unzip ENOBUFS
+OK         base/lib/arm64-v8a/libstatic-webp.so  [16384, 16384, 16384]
+OK         base/lib/arm64-v8a/libsurface_util_jni.so  [16384, 16384]
+OK         base/lib/arm64-v8a/libworklets.so  [16384, 16384, 16384]
+UNALIGNED  base/lib/armeabi-v7a/libappmodules.so  [no PT_LOAD alignment data]  - Failed to extract from APK: spawnSync unzip ENOBUFS
+UNALIGNED  base/lib/armeabi-v7a/libbarhopper_v3.so  [no PT_LOAD alignment data]  - Failed to extract from APK: spawnSync unzip ENOBUFS
+UNALIGNED  base/lib/armeabi-v7a/libc++_shared.so  [4096, 4096, 4096, 4096]
+UNALIGNED  base/lib/armeabi-v7a/libexpo-modules-core.so  [4096, 4096, 4096]
+UNALIGNED  base/lib/armeabi-v7a/libfbjni.so  [4096, 4096, 4096]
+UNALIGNED  base/lib/armeabi-v7a/libgesturehandler.so  [4096, 4096]
+OK         base/lib/armeabi-v7a/libgifimage.so  [16384, 16384, 16384]
+UNALIGNED  base/lib/armeabi-v7a/libhermes.so  [no PT_LOAD alignment data]  - Failed to extract from APK: spawnSync unzip ENOBUFS
+UNALIGNED  base/lib/armeabi-v7a/libhermestooling.so  [4096, 4096, 4096]
+OK         base/lib/armeabi-v7a/libimage_processing_util_jni.so  [16384, 16384, 16384]
+OK         base/lib/armeabi-v7a/libimagepipeline.so  [16384, 16384, 16384]
+UNALIGNED  base/lib/armeabi-v7a/libjsi.so  [4096, 4096, 4096]
+OK         base/lib/armeabi-v7a/libnative-filters.so  [16384, 16384, 16384]
+OK         base/lib/armeabi-v7a/libnative-imagetranscoder.so  [16384, 16384, 16384]
+UNALIGNED  base/lib/armeabi-v7a/libreact_codegen_RNCSlider.so  [4096, 4096, 4096]
+UNALIGNED  base/lib/armeabi-v7a/libreact_codegen_rnscreens.so  [4096, 4096, 4096]
+UNALIGNED  base/lib/armeabi-v7a/libreact_codegen_rnsvg.so  [4096, 4096, 4096]
+UNALIGNED  base/lib/armeabi-v7a/libreact_codegen_safeareacontext.so  [4096, 4096, 4096]
+UNALIGNED  base/lib/armeabi-v7a/libreactnative.so  [no PT_LOAD alignment data]  - Failed to extract from APK: spawnSync unzip ENOBUFS
+UNALIGNED  base/lib/armeabi-v7a/libreanimated.so  [4096, 4096, 4096]
+UNALIGNED  base/lib/armeabi-v7a/librnscreens.so  [4096, 4096, 4096]
+UNALIGNED  base/lib/armeabi-v7a/librnskia.so  [no PT_LOAD alignment data]  - Failed to extract from APK: spawnSync unzip ENOBUFS
+OK         base/lib/armeabi-v7a/libstatic-webp.so  [16384, 16384, 16384]
+OK         base/lib/armeabi-v7a/libsurface_util_jni.so  [16384, 16384]
+UNALIGNED  base/lib/armeabi-v7a/libworklets.so  [4096, 4096, 4096]
+UNALIGNED  base/lib/x86/libappmodules.so  [no PT_LOAD alignment data]  - Failed to extract from APK: spawnSync unzip ENOBUFS
+UNALIGNED  base/lib/x86/libbarhopper_v3.so  [no PT_LOAD alignment data]  - Failed to extract from APK: spawnSync unzip ENOBUFS
+UNALIGNED  base/lib/x86/libc++_shared.so  [no PT_LOAD alignment data]  - Failed to extract from APK: spawnSync unzip ENOBUFS
+UNALIGNED  base/lib/x86/libexpo-modules-core.so  [no PT_LOAD alignment data]  - Failed to extract from APK: spawnSync unzip ENOBUFS
+UNALIGNED  base/lib/x86/libfbjni.so  [4096, 4096, 4096]
+UNALIGNED  base/lib/x86/libgesturehandler.so  [4096, 4096, 4096]
+OK         base/lib/x86/libgifimage.so  [16384, 16384, 16384]
+UNALIGNED  base/lib/x86/libhermes.so  [no PT_LOAD alignment data]  - Failed to extract from APK: spawnSync unzip ENOBUFS
+UNALIGNED  base/lib/x86/libhermestooling.so  [4096, 4096, 4096]
+OK         base/lib/x86/libimage_processing_util_jni.so  [16384, 16384, 16384]
+OK         base/lib/x86/libimagepipeline.so  [16384, 16384, 16384]
+UNALIGNED  base/lib/x86/libjsi.so  [4096, 4096, 4096]
+OK         base/lib/x86/libnative-filters.so  [16384, 16384, 16384]
+OK         base/lib/x86/libnative-imagetranscoder.so  [16384, 16384, 16384]
+UNALIGNED  base/lib/x86/libreact_codegen_RNCSlider.so  [4096, 4096, 4096]
+UNALIGNED  base/lib/x86/libreact_codegen_rnscreens.so  [4096, 4096, 4096]
+UNALIGNED  base/lib/x86/libreact_codegen_rnsvg.so  [4096, 4096, 4096]
+UNALIGNED  base/lib/x86/libreact_codegen_safeareacontext.so  [4096, 4096, 4096]
+UNALIGNED  base/lib/x86/libreactnative.so  [no PT_LOAD alignment data]  - Failed to extract from APK: spawnSync unzip ENOBUFS
+UNALIGNED  base/lib/x86/libreanimated.so  [4096, 4096, 4096]
+UNALIGNED  base/lib/x86/librnscreens.so  [4096, 4096, 4096]
+UNALIGNED  base/lib/x86/librnskia.so  [no PT_LOAD alignment data]  - Failed to extract from APK: spawnSync unzip ENOBUFS
+OK         base/lib/x86/libstatic-webp.so  [16384, 16384, 16384]
+OK         base/lib/x86/libsurface_util_jni.so  [16384, 16384]
+UNALIGNED  base/lib/x86/libworklets.so  [4096, 4096, 4096]
+UNALIGNED  base/lib/x86_64/libappmodules.so  [no PT_LOAD alignment data]  - Failed to extract from APK: spawnSync unzip ENOBUFS
+UNALIGNED  base/lib/x86_64/libbarhopper_v3.so  [no PT_LOAD alignment data]  - Failed to extract from APK: spawnSync unzip ENOBUFS
+UNALIGNED  base/lib/x86_64/libc++_shared.so  [no PT_LOAD alignment data]  - Failed to extract from APK: spawnSync unzip ENOBUFS
+UNALIGNED  base/lib/x86_64/libexpo-modules-core.so  [no PT_LOAD alignment data]  - Failed to extract from APK: spawnSync unzip ENOBUFS
+OK         base/lib/x86_64/libfbjni.so  [16384, 16384, 16384]
+OK         base/lib/x86_64/libgesturehandler.so  [16384, 16384, 16384]
+OK         base/lib/x86_64/libgifimage.so  [16384, 16384, 16384]
+UNALIGNED  base/lib/x86_64/libhermes.so  [no PT_LOAD alignment data]  - Failed to extract from APK: spawnSync unzip ENOBUFS
+OK         base/lib/x86_64/libhermestooling.so  [16384, 16384, 16384]
+OK         base/lib/x86_64/libimage_processing_util_jni.so  [16384, 16384, 16384]
+OK         base/lib/x86_64/libimagepipeline.so  [16384, 16384, 16384]
+OK         base/lib/x86_64/libjsi.so  [16384, 16384, 16384]
+OK         base/lib/x86_64/libnative-filters.so  [16384, 16384, 16384]
+OK         base/lib/x86_64/libnative-imagetranscoder.so  [16384, 16384, 16384]
+OK         base/lib/x86_64/libreact_codegen_RNCSlider.so  [16384, 16384, 16384]
+OK         base/lib/x86_64/libreact_codegen_rnscreens.so  [16384, 16384, 16384]
+OK         base/lib/x86_64/libreact_codegen_rnsvg.so  [16384, 16384, 16384]
+OK         base/lib/x86_64/libreact_codegen_safeareacontext.so  [16384, 16384, 16384]
+UNALIGNED  base/lib/x86_64/libreactnative.so  [no PT_LOAD alignment data]  - Failed to extract from APK: spawnSync unzip ENOBUFS
+OK         base/lib/x86_64/libreanimated.so  [16384, 16384, 16384]
+OK         base/lib/x86_64/librnscreens.so  [16384, 16384, 16384]
+UNALIGNED  base/lib/x86_64/librnskia.so  [no PT_LOAD alignment data]  - Failed to extract from APK: spawnSync unzip ENOBUFS
+OK         base/lib/x86_64/libstatic-webp.so  [16384, 16384, 16384]
+OK         base/lib/x86_64/libsurface_util_jni.so  [16384, 16384]
+OK         base/lib/x86_64/libworklets.so  [16384, 16384, 16384]
+
+Found 50 libraries with LOAD segment alignment < 16384 or unreadable ELF headers.
+These libraries may prevent full 16 KB page-size support on Google Play.
