@@ -37,7 +37,7 @@ export default function Index() {
   const router = useRouter();
   const [data, setUserData] = useState({});
   const [userId, setUserId] = useState();
-  const [userLanguage, setUserLanguage] = useState("english");
+  const [userLanguage, setUserLanguage] = useState("English");
   const { modalVisible, modalConfig, showModal, hideModal } = useModal();
 
   const STOCK_RATE = 2000000; // 1 stock = 2,000,000 PHP
@@ -86,7 +86,19 @@ export default function Index() {
         const userDocSnap = await getDoc(userDocRef);
         if (userDocSnap.exists()) {
           const data = userDocSnap.data();
-          setUserLanguage(data.preferredLanguage || "english");
+          // Normalize language name to match languageUtils mapping
+          const preferredLang = data.preferredLanguage || "English";
+          // Map common variations to correct format
+          const languageMap = {
+            "english": "English",
+            "japanese": "Japanese",
+            "saudi arabia": "Saudi Arabia",
+            "arabic": "Saudi Arabia",
+            "korea": "Korea",
+            "korean": "Korea"
+          };
+          const normalizedLang = languageMap[preferredLang.toLowerCase()] || preferredLang;
+          setUserLanguage(normalizedLang);
         }
       }
     } catch (error) {
@@ -106,6 +118,22 @@ export default function Index() {
         if (doc.exists()) {
           const userData = doc.data();
           setUserData(userData);
+
+          // Update language if it changed
+          if (userData.preferredLanguage) {
+            const languageMap = {
+              "english": "English",
+              "japanese": "Japanese",
+              "saudi arabia": "Saudi Arabia",
+              "arabic": "Saudi Arabia",
+              "korea": "Korea",
+              "korean": "Korea"
+            };
+            const normalizedLang = languageMap[userData.preferredLanguage.toLowerCase()] || userData.preferredLanguage;
+            if (normalizedLang !== userLanguage) {
+              setUserLanguage(normalizedLang);
+            }
+          }
 
           // Update stock count if stockAmount exists and stockCount doesn't match
           if (userData.stockAmount !== undefined) {
@@ -160,10 +188,10 @@ export default function Index() {
             </View>
             <View style={styles.stockRateTextContainer}>
               <Text style={[styles.stockRateLabel, getRTLStyles(userLanguage)]}>
-                Stock Rate
+                {t(userLanguage, "stockholder.content.stockRate")}
               </Text>
               <Text style={[styles.stockRateValue, getRTLStyles(userLanguage)]}>
-                1 Stock = ₱ {formatCurrency(STOCK_RATE)}
+                {t(userLanguage, "stockholder.content.stockRateValue").replace("{amount}", formatCurrency(STOCK_RATE))}
               </Text>
             </View>
           </View>
@@ -179,7 +207,7 @@ export default function Index() {
                 <Text
                   style={[styles.stockHeaderLabel, getRTLStyles(userLanguage)]}
                 >
-                  Your Stock Portfolio
+                  {t(userLanguage, "stockholder.content.yourStockPortfolio")}
                 </Text>
                 <View style={styles.stockCountRow}>
                   <Text
@@ -197,8 +225,8 @@ export default function Index() {
                   >
                     {(data.stockCount ||
                       (data.stockAmount || 0) / STOCK_RATE) === 1
-                      ? "Stock"
-                      : "Stocks"}
+                      ? t(userLanguage, "stockholder.content.stock")
+                      : t(userLanguage, "stockholder.content.stocks")}
                   </Text>
                 </View>
               </View>
@@ -211,7 +239,7 @@ export default function Index() {
                 <Text
                   style={[styles.totalValueLabel, getRTLStyles(userLanguage)]}
                 >
-                  Total Portfolio Value
+                  {t(userLanguage, "stockholder.content.totalPortfolioValue")}
                 </Text>
               </View>
               <Text
@@ -267,8 +295,8 @@ export default function Index() {
                 size={20}
                 color={Colors.redTheme.background}
               />
-              <Text style={styles.transactionHeaderText}>
-                Transaction History
+              <Text style={[styles.transactionHeaderText, getRTLStyles(userLanguage)]}>
+                {t(userLanguage, "stockholder.content.transactionHistory")}
               </Text>
             </View>
             <StockTransaction userId={userId} />

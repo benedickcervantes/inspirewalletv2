@@ -1,4 +1,4 @@
-import { firestore } from '../configs/firebase';
+import { firestore, auth } from '../configs/firebase';
 import { 
   doc, 
   setDoc, 
@@ -9,7 +9,8 @@ import {
   query,
   where,
   getDocs,
-  orderBy
+  orderBy,
+  getDoc
 } from 'firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
@@ -28,6 +29,13 @@ class PresenceService {
 
   async initializePresence(userId, userData = {}) {
     try {
+      // Check if user is authenticated
+      const currentUser = auth.currentUser;
+      if (!currentUser || currentUser.uid !== userId) {
+        console.warn('⚠️ Cannot initialize presence: User not authenticated');
+        return;
+      }
+
       this.userId = userId;
       this.presenceRef = doc(firestore, 'presence', userId);
       
@@ -37,11 +45,22 @@ class PresenceService {
       this.setupDisconnectHandler();
     } catch (error) {
       console.error('❌ Error initializing presence:', error);
+      // If permission denied, don't retry
+      if (error.code === 'permission-denied') {
+        console.warn('⚠️ Permission denied for presence initialization');
+      }
     }
   }
 
   async setUserOnline(userData = {}) {
     if (!this.presenceRef) return;
+
+    // Check if user is authenticated
+    const currentUser = auth.currentUser;
+    if (!currentUser || currentUser.uid !== this.userId) {
+      console.warn('⚠️ Cannot set user online: User not authenticated');
+      return;
+    }
 
     try {
       // Generate session ID and store it
@@ -87,12 +106,23 @@ class PresenceService {
 
     } catch (error) {
       console.error('❌ Error setting user online:', error);
+      // If permission denied, stop trying
+      if (error.code === 'permission-denied') {
+        console.warn('⚠️ Permission denied for setting user online');
+        this.stopHeartbeat();
+        if (this.unsubscribe) {
+          this.unsubscribe();
+          this.unsubscribe = null;
+        }
+      }
     }
   }
 
   async setUserOffline() {
     if (!this.presenceRef) return;
 
+    // Note: We don't check auth here because user might be logging out
+    // But we'll handle permission errors gracefully
     try {
       const presenceData = {
         status: 'offline',
@@ -104,17 +134,24 @@ class PresenceService {
 
       await updateDoc(this.presenceRef, presenceData);
       
-      const userRef = doc(firestore, 'users', this.userId);
-      await updateDoc(userRef, {
-        lastLogout: serverTimestamp(),
-        isOnline: false,
-        currentSession: null
-      });
+      if (this.userId) {
+        const userRef = doc(firestore, 'users', this.userId);
+        await updateDoc(userRef, {
+          lastLogout: serverTimestamp(),
+          isOnline: false,
+          currentSession: null
+        });
+      }
 
       // Notify backend about user going offline
       await this.notifyBackendOffline();
     } catch (error) {
-      console.error('Error setting user offline:', error);
+      // Handle permission errors gracefully during logout
+      if (error.code === 'permission-denied') {
+        console.warn('⚠️ Permission denied for setting user offline (user may have logged out)');
+      } else {
+        console.error('Error setting user offline:', error);
+      }
     }
   }
 
@@ -161,6 +198,14 @@ class PresenceService {
   async sendHeartbeat() {
     if (!this.presenceRef) return;
 
+    // Check if user is authenticated
+    const currentUser = auth.currentUser;
+    if (!currentUser || currentUser.uid !== this.userId) {
+      console.warn('⚠️ Cannot send heartbeat: User not authenticated');
+      this.stopHeartbeat();
+      return;
+    }
+
     try {
       this.lastHeartbeat = new Date();
       
@@ -184,7 +229,17 @@ class PresenceService {
       // Send heartbeat to backend API
       await this.sendHeartbeatToBackend();
     } catch (error) {
-      console.error('❌ Error sending heartbeat:', error);
+      // Handle permission errors gracefully
+      if (error.code === 'permission-denied') {
+        console.warn('⚠️ Permission denied for heartbeat, stopping heartbeat');
+        this.stopHeartbeat();
+        if (this.unsubscribe) {
+          this.unsubscribe();
+          this.unsubscribe = null;
+        }
+      } else {
+        console.error('❌ Error sending heartbeat:', error);
+      }
     }
   }
 
@@ -259,18 +314,57 @@ class PresenceService {
   setupPresenceListener() {
     if (!this.presenceRef) return;
 
-    this.unsubscribe = onSnapshot(this.presenceRef, (doc) => {
-      if (doc.exists()) {
-        const data = doc.data();
-        
-        // Check if user was marked as offline by disconnect handler
-        if (data.status === 'offline' && data.disconnectReason === 'force_closed') {
-          this.setUserOnline();
+    // Check if user is authenticated before setting up listener
+    const currentUser = auth.currentUser;
+    if (!currentUser || currentUser.uid !== this.userId) {
+      console.warn('⚠️ Cannot setup presence listener: User not authenticated');
+      return;
+    }
+
+    // Clean up existing listener if any
+    if (this.unsubscribe) {
+      this.unsubscribe();
+      this.unsubscribe = null;
+    }
+
+    this.unsubscribe = onSnapshot(
+      this.presenceRef,
+      (doc) => {
+        // Check authentication before processing
+        const currentUser = auth.currentUser;
+        if (!currentUser || currentUser.uid !== this.userId) {
+          console.warn('⚠️ User no longer authenticated, cleaning up presence listener');
+          if (this.unsubscribe) {
+            this.unsubscribe();
+            this.unsubscribe = null;
+          }
+          this.stopHeartbeat();
+          return;
+        }
+
+        if (doc.exists()) {
+          const data = doc.data();
+          
+          // Check if user was marked as offline by disconnect handler
+          if (data.status === 'offline' && data.disconnectReason === 'force_closed') {
+            this.setUserOnline();
+          }
+        }
+      },
+      (error) => {
+        // Handle permission errors gracefully
+        if (error.code === 'permission-denied') {
+          console.warn('⚠️ Permission denied for presence listener, cleaning up');
+          this.stopHeartbeat();
+          if (this.unsubscribe) {
+            this.unsubscribe();
+            this.unsubscribe = null;
+          }
+        } else {
+          console.error('Error in presence listener:', error);
         }
       }
-    }, (error) => {
-      console.error('Error in presence listener:', error);
-    });
+    );
   }
 
   async getDeviceInfo() {
@@ -302,6 +396,13 @@ class PresenceService {
   }
 
   async getOnlineUsers() {
+    // Check if user is authenticated
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      console.warn('⚠️ Cannot get online users: User not authenticated');
+      return [];
+    }
+
     try {
       const presenceRef = collection(firestore, 'presence');
       const q = query(
@@ -323,7 +424,11 @@ class PresenceService {
       
       return onlineUsers;
     } catch (error) {
-      console.error('Error getting online users:', error);
+      if (error.code === 'permission-denied') {
+        console.warn('⚠️ Permission denied for getting online users');
+      } else {
+        console.error('Error getting online users:', error);
+      }
       return [];
     }
   }
@@ -353,10 +458,16 @@ class PresenceService {
   async checkUserActivity() {
     if (!this.presenceRef) return false;
 
+    // Check if user is authenticated
+    const currentUser = auth.currentUser;
+    if (!currentUser || currentUser.uid !== this.userId) {
+      return false;
+    }
+
     try {
-      const doc = await getDocs(this.presenceRef);
-      if (doc.exists()) {
-        const data = doc.data();
+      const docSnap = await getDoc(this.presenceRef);
+      if (docSnap.exists()) {
+        const data = docSnap.data();
         const lastHeartbeat = data.lastHeartbeat?.toDate?.() || new Date(data.lastHeartbeat);
         const now = new Date();
         const timeDiff = now - lastHeartbeat;
@@ -366,7 +477,11 @@ class PresenceService {
       }
       return false;
     } catch (error) {
-      console.error('Error checking user activity:', error);
+      if (error.code === 'permission-denied') {
+        console.warn('⚠️ Permission denied for checking user activity');
+      } else {
+        console.error('Error checking user activity:', error);
+      }
       return false;
     }
   }
@@ -388,8 +503,14 @@ class PresenceService {
   async getUserStatusFromFirebase() {
     if (!this.userId || !this.presenceRef) return null;
 
+    // Check if user is authenticated
+    const currentUser = auth.currentUser;
+    if (!currentUser || currentUser.uid !== this.userId) {
+      return null;
+    }
+
     try {
-      const docSnap = await getDocs(this.presenceRef);
+      const docSnap = await getDoc(this.presenceRef);
       if (docSnap.exists()) {
         const data = docSnap.data();
         return {
@@ -402,7 +523,11 @@ class PresenceService {
       }
       return null;
     } catch (error) {
-      console.error('Error getting user status from Firebase:', error);
+      if (error.code === 'permission-denied') {
+        console.warn('⚠️ Permission denied for getting user status');
+      } else {
+        console.error('Error getting user status from Firebase:', error);
+      }
       return null;
     }
   }
@@ -424,8 +549,14 @@ class PresenceService {
       return null;
     }
 
+    // Check if user is authenticated
+    const currentUser = auth.currentUser;
+    if (!currentUser || currentUser.uid !== this.userId) {
+      return null;
+    }
+
     try {
-      const docSnap = await getDocs(this.presenceRef);
+      const docSnap = await getDoc(this.presenceRef);
       if (docSnap.exists()) {
         const data = docSnap.data();
         return data;
@@ -433,7 +564,11 @@ class PresenceService {
         return null;
       }
     } catch (error) {
-      console.error('❌ Error getting current presence status:', error);
+      if (error.code === 'permission-denied') {
+        console.warn('⚠️ Permission denied for getting current presence status');
+      } else {
+        console.error('❌ Error getting current presence status:', error);
+      }
       return null;
     }
   }
@@ -442,6 +577,13 @@ class PresenceService {
   async forceUpdateStatus(status) {
     if (!this.presenceRef) return;
 
+    // Check if user is authenticated
+    const currentUser = auth.currentUser;
+    if (!currentUser || currentUser.uid !== this.userId) {
+      console.warn('⚠️ Cannot update presence status: User not authenticated');
+      return;
+    }
+
     try {
       await updateDoc(this.presenceRef, {
         status: status,
@@ -449,7 +591,11 @@ class PresenceService {
         isActive: status === 'online'
       });
     } catch (error) {
-      console.error('❌ Error force updating status:', error);
+      if (error.code === 'permission-denied') {
+        console.warn('⚠️ Permission denied for updating presence status');
+      } else {
+        console.error('❌ Error force updating status:', error);
+      }
     }
   }
 }

@@ -53,7 +53,6 @@ import TransacHistory from "../../components/TransacHistory";
 import ProfessionalModal from "../../components/ProfessionalModal";
 import useModal from "../../components/useModal";
 import presenceService from "../../services/presenceService";
-import userService from "../../services/userService";
 import { Ionicons } from "@expo/vector-icons";
 import EventPopup from "../../components/EventPopup";
 
@@ -130,8 +129,6 @@ export default function Index() {
   const [showLanguageModal, setShowLanguageModal] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState("English");
   const [isUpdatingLanguage, setIsUpdatingLanguage] = useState(false);
-  const [mongoProfileLoaded, setMongoProfileLoaded] = useState(false);
-  const mongoProfileLoadedRef = useRef(false);
 
   // Animation refs for language modal
   const languageModalFadeAnim = useRef(new Animated.Value(0)).current;
@@ -172,39 +169,15 @@ export default function Index() {
     }
   }, [showLanguageModal]);
 
-  useEffect(() => {
-    mongoProfileLoadedRef.current = mongoProfileLoaded;
-  }, [mongoProfileLoaded]);
-
-  const loadMongoProfile = async () => {
-    try {
-      const profile = await userService.getUserProfile();
-      if (!profile) return;
-
-      setAvailableBalance(profile.availBalanceAmount || 0);
-      setTimeDepositTotal(profile.timeDepositAmount || 0);
-      setPredictedEarnings(profile.walletAmount || 0);
-      setMongoProfileLoaded(true);
-    } catch (error) {
-      console.error("Error fetching MongoDB profile:", error);
-    }
-  };
-
-  useEffect(() => {
-    loadMongoProfile();
-  }, []);
-
   // Function to fetch user language
   const fetchUserLanguage = async () => {
     try {
-      const user = auth.currentUser;
-      if (user) {
-        const userDocRef = doc(firestore, "users", user.uid);
-        const userDoc = await getDoc(userDocRef);
-        if (userDoc.exists()) {
-          const userData = userDoc.data();
-          setUserLanguage(userData.preferredLanguage || "english");
-        }
+      if (!currentUser) return;
+      const userDocRef = doc(firestore, "users", currentUser.uid);
+      const userDoc = await getDoc(userDocRef);
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        setUserLanguage(userData.preferredLanguage || "english");
       }
     } catch (error) {
       console.error("Error fetching user language:", error);
@@ -216,8 +189,7 @@ export default function Index() {
   const handleLanguageSelection = async () => {
     try {
       setIsUpdatingLanguage(true);
-      const user = auth.currentUser;
-      if (!user) return;
+      if (!currentUser) return;
 
       // Convert display language to lowercase for storage
       const languageMap = {
@@ -229,7 +201,7 @@ export default function Index() {
 
       const languageValue = languageMap[selectedLanguage] || "english";
 
-      const userRef = doc(firestore, "users", user.uid);
+      const userRef = doc(firestore, "users", currentUser.uid);
       await updateDoc(userRef, {
         preferredLanguage: languageValue,
       });
@@ -291,20 +263,44 @@ export default function Index() {
   ]);
 
   const [data, setUserData] = useState({}); // State to hold user data
+  const [authInitialized, setAuthInitialized] = useState(false); // Track if auth state has been determined
+  const [currentUser, setCurrentUser] = useState(null); // Store current user from auth state
 
-  // Authentication state monitoring
+  // Authentication state monitoring - wait for auth to be ready
   useEffect(() => {
+    let redirectTimer = null;
+    
     const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
+      setAuthInitialized(true);
+      
+      // Clear any pending redirect timer
+      if (redirectTimer) {
+        clearTimeout(redirectTimer);
+        redirectTimer = null;
+      }
+      
       if (!user) {
-        // User is not authenticated, redirect to login
-        console.log("🔐 User not authenticated, redirecting to login");
-        router.replace("/");
+        // User is not authenticated - wait a bit to allow Firebase to restore state
+        // This prevents false negatives when app resumes
+        redirectTimer = setTimeout(() => {
+          // Double-check after delay - Firebase might restore auth state
+          if (!auth.currentUser) {
+            console.log("🔐 User not authenticated after delay, redirecting to login");
+            router.replace("/");
+          }
+        }, 1000); // 1 second delay to allow auth restoration on app resume
       } else {
         console.log("✅ User authenticated:", user.uid);
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribe();
+      if (redirectTimer) {
+        clearTimeout(redirectTimer);
+      }
+    };
   }, [router]);
 
   // App state monitoring for presence
@@ -332,8 +328,8 @@ export default function Index() {
   // Comment out events related useEffect
 
   useEffect(() => {
-    const user = auth.currentUser;
-    if (!user) return;
+    // Wait for auth to be initialized before accessing user
+    if (!authInitialized || !currentUser) return;
 
     const eventsRef = collection(firestore, "events");
     const activeEventsQuery = query(eventsRef, where("status", "==", true));
@@ -344,7 +340,7 @@ export default function Index() {
 
       // Only show popup if there are active events, user data is loaded, and popup hasn't been shown yet in this session
       if (hasEvents && Object.keys(data).length > 0 && !popupShown) {
-        const popupKey = `eventPopupShown_${user.uid}_${sessionId}`;
+        const popupKey = `eventPopupShown_${currentUser.uid}_${sessionId}`;
         const hasShownPopup = await AsyncStorage.getItem(popupKey);
         if (!hasShownPopup) {
           setShowEventPopup(true);
@@ -355,246 +351,256 @@ export default function Index() {
     });
 
     return () => unsubscribe();
-  }, [data, popupShown]);
+  }, [data, popupShown, authInitialized, currentUser]);
 
   // Fetch user language on component mount and listen for real-time changes
   useEffect(() => {
+    if (!authInitialized || !currentUser) return;
+
     fetchUserLanguage();
 
     // Set up real-time listener for language changes
-    const user = auth.currentUser;
-    if (user) {
-      const userRef = doc(firestore, "users", user.uid);
-      const unsubscribeLanguage = onSnapshot(userRef, (userDoc) => {
-        if (userDoc.exists()) {
-          const userData = userDoc.data();
-          const newLanguage = userData.preferredLanguage || "english";
-          setUserLanguage((prevLanguage) => {
-            // Only update if the language actually changed
-            if (prevLanguage !== newLanguage) {
-              console.log(
-                `Language changed from ${prevLanguage} to ${newLanguage}`
-              );
-              return newLanguage;
-            }
-            return prevLanguage;
-          });
-        }
-      });
+    const userRef = doc(firestore, "users", currentUser.uid);
+    const unsubscribeLanguage = onSnapshot(userRef, (userDoc) => {
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        const newLanguage = userData.preferredLanguage || "english";
+        setUserLanguage((prevLanguage) => {
+          // Only update if the language actually changed
+          if (prevLanguage !== newLanguage) {
+            console.log(
+              `Language changed from ${prevLanguage} to ${newLanguage}`
+            );
+            return newLanguage;
+          }
+          return prevLanguage;
+        });
+      }
+    });
 
-      return () => unsubscribeLanguage();
-    }
-  }, []); // Remove userLanguage from dependencies to prevent infinite loop
+    return () => unsubscribeLanguage();
+  }, [authInitialized, currentUser]); // Wait for auth to be ready
 
   // Fetch user data on component mount with real-time updates
   useEffect(() => {
-    const user = auth.currentUser;
-    if (user) {
-      AsyncStorage.setItem("userid", user.uid);
-      const userRef = doc(firestore, "users", user.uid);
-      const unsubscribe = onSnapshot(
-        userRef,
-        (userDoc) => {
-          if (userDoc.exists()) {
-            const userData = userDoc.data();
-            setUserData(userData); // Update state with user data
+    // Wait for auth to be initialized
+    if (!authInitialized || !currentUser) return;
 
-            // Check if preferredLanguage field is missing and show language selection modal
-            if (!userData.preferredLanguage && !showLanguageModal) {
-              // Add a small delay to ensure the component is fully loaded
-              setTimeout(() => {
-                setShowLanguageModal(true);
-              }, 1000);
-            }
+    // User is authenticated, proceed with setup
+    try {
+        AsyncStorage.setItem("userid", currentUser.uid);
+        const userRef = doc(firestore, "users", currentUser.uid);
+        const unsubscribe = onSnapshot(
+          userRef,
+          (userDoc) => {
+            try {
+              if (userDoc.exists()) {
+                const userData = userDoc.data();
+                setUserData(userData); // Update state with user data
 
-            if (!mongoProfileLoadedRef.current) {
-              // Real-time sync of available balance from user document
-              if (userData.availBalanceAmount !== undefined) {
-                setAvailableBalance(userData.availBalanceAmount);
-                // console.log(
-                //   "🔄 Real-time available balance update:",
-                //   userData.availBalanceAmount
-                // );
-              }
-
-              // Real-time sync of time deposit amount from user document
-              if (userData.timeDepositAmount !== undefined) {
-                setTimeDepositTotal(userData.timeDepositAmount);
-                // console.log(
-                //   "🔄 Real-time time deposit update:",
-                //   userData.timeDepositAmount
-                // );
-              }
-
-              // Real-time sync of predicted earnings from user document
-              if (userData.walletAmount !== undefined) {
-                setPredictedEarnings(userData.walletAmount);
-                // console.log(
-                //   "🔄 Real-time predicted earnings update:",
-                //   userData.walletAmount
-                // );
-              }
-            }
-          } else {
-            // Show modal first, then delete account when user confirms
-            showModal({
-              title: t(userLanguage, "mainDashboard.accountDeletion.title"),
-              message: t(userLanguage, "mainDashboard.accountDeletion.message"),
-              type: "warning",
-              showCloseButton: true,
-              showCancelButton: false,
-              confirmText: t(
-                userLanguage,
-                "mainDashboard.accountDeletion.confirmText"
-              ),
-              onConfirm: async () => {
-                try {
-                  // Delete the user account from Firebase Authentication
-                  await deleteUser(user);
-
-                  // Navigate immediately after successful deletion
-                  try {
-                    router.push("/register");
-                  } catch (navigationError) {
-                    console.error("Navigation error:", navigationError);
-                    // Fallback: try to navigate using navigation prop
-                    if (navigation && navigation.navigate) {
-                      navigation.navigate("register");
-                    }
-                  }
-                } catch (error) {
-                  console.error("Error deleting user account:", error);
-                  showModal({
-                    title: "Error",
-                    message: t(
-                      userLanguage,
-                      "mainDashboard.errors.failedToDeleteAccount"
-                    ),
-                    type: "error",
-                    showCloseButton: true,
-                    showCancelButton: false,
-                    confirmText: "OK",
-                  });
+                // Check if preferredLanguage field is missing and show language selection modal
+                if (!userData.preferredLanguage && !showLanguageModal) {
+                  // Add a small delay to ensure the component is fully loaded
+                  setTimeout(() => {
+                    setShowLanguageModal(true);
+                  }, 1000);
                 }
-              },
+
+                // Real-time sync of available balance from user document
+                if (userData.availBalanceAmount !== undefined) {
+                  setAvailableBalance(userData.availBalanceAmount);
+                  // console.log(
+                  //   "🔄 Real-time available balance update:",
+                  //   userData.availBalanceAmount
+                  // );
+                }
+
+                // Real-time sync of time deposit amount from user document
+                if (userData.timeDepositAmount !== undefined) {
+                  setTimeDepositTotal(userData.timeDepositAmount);
+                  // console.log(
+                  //   "🔄 Real-time time deposit update:",
+                  //   userData.timeDepositAmount
+                  // );
+                }
+
+                // Real-time sync of predicted earnings from user document
+                if (userData.walletAmount !== undefined) {
+                  setPredictedEarnings(userData.walletAmount);
+                  // console.log(
+                  //   "🔄 Real-time predicted earnings update:",
+                  //   userData.walletAmount
+                  // );
+                }
+              } else {
+                // Show modal first, then delete account when user confirms
+                showModal({
+                  title: t(userLanguage, "mainDashboard.accountDeletion.title"),
+                  message: t(userLanguage, "mainDashboard.accountDeletion.message"),
+                  type: "warning",
+                  showCloseButton: true,
+                  showCancelButton: false,
+                  confirmText: t(
+                    userLanguage,
+                    "mainDashboard.accountDeletion.confirmText"
+                  ),
+                  onConfirm: async () => {
+                    try {
+                  // Delete the user account from Firebase Authentication
+                  await deleteUser(currentUser);
+
+                      // Navigate immediately after successful deletion
+                      try {
+                        router.push("/register");
+                      } catch (navigationError) {
+                        console.error("Navigation error:", navigationError);
+                        // Fallback: try to navigate using navigation prop
+                        if (navigation && navigation.navigate) {
+                          navigation.navigate("register");
+                        }
+                      }
+                    } catch (error) {
+                      console.error("Error deleting user account:", error);
+                      showModal({
+                        title: "Error",
+                        message: t(
+                          userLanguage,
+                          "mainDashboard.errors.failedToDeleteAccount"
+                        ),
+                        type: "error",
+                        showCloseButton: true,
+                        showCancelButton: false,
+                        confirmText: "OK",
+                      });
+                    }
+                  },
+                });
+              }
+            } catch (error) {
+              console.error("Error processing user document:", error);
+            }
+          },
+          (error) => {
+            console.error("Error in user document snapshot:", error);
+            showModal({
+              title: "Error",
+              message: error.message || "Failed to load user data",
+              type: "error",
             });
           }
-        },
-        (error) => {
-          showModal({
-            title: "Error",
-            message: error.message,
-            type: "error",
-          });
-        }
-      );
+        );
 
-      // Fetch active card from purchased cards subcollection
-      const fetchActiveCard = async () => {
-        try {
-          const purchasedCardsRef = collection(
-            firestore,
-            "users",
-            user.uid,
-            "purchasedCards"
-          );
-          const purchasedCardsSnap = await getDocs(purchasedCardsRef);
+        // Fetch active card from purchased cards subcollection
+        const fetchActiveCard = async () => {
+          try {
+            const purchasedCardsRef = collection(
+              firestore,
+              "users",
+              currentUser.uid,
+              "purchasedCards"
+            );
+            const purchasedCardsSnap = await getDocs(purchasedCardsRef);
 
-          // Find the active card
-          let activeCard = null;
-          purchasedCardsSnap.forEach((doc) => {
-            const cardData = doc.data();
-            if (cardData.isActive) {
-              activeCard = cardData;
+            // Find the active card
+            let activeCard = null;
+            purchasedCardsSnap.forEach((doc) => {
+              const cardData = doc.data();
+              if (cardData.isActive) {
+                activeCard = cardData;
+              }
+            });
+
+            if (activeCard) {
+              setActiveCardId(activeCard.purchaseCardsId);
+              // console.log("🎯 Active card found:", activeCard.purchaseCardsId);
+            } else {
+              // Default to "default" if no active card found
+              setActiveCardId("default");
+              // console.log("⚠️ No active card found, using default");
             }
-          });
-
-          if (activeCard) {
-            setActiveCardId(activeCard.purchaseCardsId);
-            // console.log("🎯 Active card found:", activeCard.purchaseCardsId);
-          } else {
-            // Default to "default" if no active card found
-            setActiveCardId("default");
-            // console.log("⚠️ No active card found, using default");
+          } catch (error) {
+            console.error("❌ Error fetching active card:", error);
+            setActiveCardId("default"); // Fallback to default
           }
-        } catch (error) {
-          // console.error("❌ Error fetching active card:", error);
-          setActiveCardId("default"); // Fallback to default
-        }
-      };
+        };
 
-      fetchActiveCard();
+        fetchActiveCard();
 
-      // Set up real-time listener for active card changes
-      const purchasedCardsRef = collection(
-        firestore,
-        "users",
-        user.uid,
-        "purchasedCards"
-      );
-      const unsubscribeCards = onSnapshot(
-        purchasedCardsRef,
-        (purchasedCardsSnap) => {
-          // Find the active card in real-time
-          let activeCard = null;
-          purchasedCardsSnap.forEach((doc) => {
-            const cardData = doc.data();
-            if (cardData.isActive) {
-              activeCard = cardData;
+        // Set up real-time listener for active card changes
+        const purchasedCardsRef = collection(
+          firestore,
+          "users",
+          currentUser.uid,
+          "purchasedCards"
+        );
+        const unsubscribeCards = onSnapshot(
+          purchasedCardsRef,
+          (purchasedCardsSnap) => {
+            try {
+              // Find the active card in real-time
+              let activeCard = null;
+              purchasedCardsSnap.forEach((doc) => {
+                const cardData = doc.data();
+                if (cardData.isActive) {
+                  activeCard = cardData;
+                }
+              });
+
+              if (activeCard) {
+                setActiveCardId(activeCard.purchaseCardsId);
+                // console.log(
+                //   "🔄 Active card updated in real-time:",
+                //   activeCard.purchaseCardsId
+                // );
+              } else {
+                setActiveCardId("default");
+              }
+            } catch (error) {
+              console.error("❌ Error processing card changes:", error);
             }
-          });
+          },
+          (error) => {
+            console.error("❌ Error listening to card changes:", error);
+          }
+        );
 
-          if (activeCard) {
-            setActiveCardId(activeCard.purchaseCardsId);
+        // Set up real-time listener for transactions
+        const transactionsRef = collection(
+          firestore,
+          "users",
+          currentUser.uid,
+          "transactions"
+        );
+        const unsubscribeTransactions = onSnapshot(
+          transactionsRef,
+          (transactionsSnap) => {
+            // Trigger re-render of transaction history component
+            setTransactionTrigger((prev) => prev + 1);
             // console.log(
-            //   "🔄 Active card updated in real-time:",
-            //   activeCard.purchaseCardsId
+            //   "🔄 Transactions updated in real-time, count:",
+            //   transactionsSnap.docs.length
             // );
-          } else {
-            setActiveCardId("default");
+          },
+          (error) => {
+            console.error("❌ Error listening to transaction changes:", error);
           }
-        },
-        (error) => {
-          // console.error("❌ Error listening to card changes:", error);
-        }
-      );
+        );
 
-      // Set up real-time listener for transactions
-      const transactionsRef = collection(
-        firestore,
-        "users",
-        user.uid,
-        "transactions"
-      );
-      const unsubscribeTransactions = onSnapshot(
-        transactionsRef,
-        (transactionsSnap) => {
-          // Trigger re-render of transaction history component
-          setTransactionTrigger((prev) => prev + 1);
-          // console.log(
-          //   "🔄 Transactions updated in real-time, count:",
-          //   transactionsSnap.docs.length
-          // );
-        },
-        (error) => {
-          // console.error("❌ Error listening to transaction changes:", error);
-        }
-      );
-
-      return () => {
-        unsubscribe();
-        unsubscribeCards();
-        unsubscribeTransactions();
-      };
-    }
-  }, []);
+        return () => {
+          unsubscribe();
+          unsubscribeCards();
+          unsubscribeTransactions();
+        };
+      } catch (error) {
+        console.error("Error setting up user listeners:", error);
+      }
+  }, [authInitialized, currentUser]);
 
   // Real-time listener for new support messages (helpcenter tickets)
   useEffect(() => {
-    const user = auth.currentUser;
-    if (!user) return;
+    if (!authInitialized || !currentUser) return;
 
-    const ticketsRef = collection(firestore, "users", user.uid, "tickets");
+    const ticketsRef = collection(firestore, "users", currentUser.uid, "tickets");
     const unsubscribe = onSnapshot(ticketsRef, async (snapshot) => {
       const lastVisitStr = await AsyncStorage.getItem("lastHelpCenterVisit");
       const lastVisit = lastVisitStr ? new Date(lastVisitStr) : new Date(0);
@@ -616,7 +622,7 @@ export default function Index() {
       setHasNewSupportMessage(foundNew);
     });
     return () => unsubscribe();
-  }, []);
+  }, [authInitialized, currentUser]);
 
   // Helper functions from investmentauto
   const calculateTotalEarnings = (principal, twoYearRate) => {
@@ -668,20 +674,19 @@ export default function Index() {
 
   // Add new useEffect for real-time investment profiles monitoring
   useEffect(() => {
-    const user = auth.currentUser;
-    if (!user) return;
+    if (!authInitialized || !currentUser) return;
 
     const investmentProfilesRef = collection(
       firestore,
       "users",
-      user.uid,
+      currentUser.uid,
       "investmentProfiles"
     );
 
     const inspireAutoRef = collection(
       firestore,
       "users",
-      user.uid,
+      currentUser.uid,
       "inspireAuto"
     );
 
@@ -693,7 +698,7 @@ export default function Index() {
           let totalExpectedEarnings = 0;
 
           // Get the current user's document
-          const userRef = doc(firestore, "users", user.uid);
+          const userRef = doc(firestore, "users", currentUser.uid);
           const userDoc = await getDoc(userRef);
           const userData = userDoc.data();
 
@@ -969,7 +974,7 @@ export default function Index() {
           // );
 
           // Get the current user's document
-          const userRef = doc(firestore, "users", user.uid);
+          const userRef = doc(firestore, "users", currentUser.uid);
 
           // Update both timeDepositAmount and walletAmount in Firestore
           try {
@@ -1013,7 +1018,7 @@ export default function Index() {
     const accountMovementsRef = collection(
       firestore,
       "users",
-      user.uid,
+      currentUser.uid,
       "accountMovements"
     );
     const unsubscribeAccountMovements = onSnapshot(
@@ -1036,7 +1041,7 @@ export default function Index() {
       unsubscribeInspireAuto();
       unsubscribeAccountMovements();
     };
-  }, []);
+  }, [authInitialized, currentUser]);
 
   // Set navigation options
   useEffect(() => {
@@ -1057,15 +1062,18 @@ export default function Index() {
     }
   };
 
-  // Auto-update when page loads
+  // Auto-update when page loads and when auth is ready
   useEffect(() => {
+    // Wait for auth to be initialized before triggering update
+    if (!authInitialized || !currentUser) return;
+
     // Trigger update after a short delay to ensure components are mounted
     const timer = setTimeout(() => {
       triggerInvestmentAutoUpdate();
     }, 2000); // 2 second delay
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [authInitialized, currentUser]);
 
   // Call this when user opens helpcenter (e.g., before navigating to helpcenter)
   const handleOpenHelpCenter = async () => {
@@ -1107,9 +1115,25 @@ export default function Index() {
     }
   };
 
-  // Don't render if no authenticated user
-  if (!auth.currentUser) {
-    return null;
+  // Don't render until auth state is determined - prevents blank screen
+  // CRITICAL: Show loading while waiting for auth, but don't redirect immediately
+  // This prevents blank screen when app resumes
+  if (!authInitialized) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#F8F6F0" }}>
+        <ActivityIndicator size="large" color={Colors.redTheme.background} />
+      </View>
+    );
+  }
+
+  // If auth is initialized but no user, show loading
+  // The redirect will be handled in the useEffect above with a delay
+  if (!currentUser) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#F8F6F0" }}>
+        <ActivityIndicator size="large" color={Colors.redTheme.background} />
+      </View>
+    );
   }
 
   return (
@@ -1264,7 +1288,7 @@ export default function Index() {
               <DepoWithdrawButton />
               <NewSectionCarousel />
               <TransacHistory
-                userId={auth.currentUser?.uid || ""}
+                userId={currentUser?.uid || ""}
                 trigger={transactionTrigger}
               />
             </View>

@@ -7,8 +7,9 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   Clipboard,
+  Platform,
 } from "react-native";
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import React, { useEffect, useState, useRef, useCallback, useLayoutEffect } from "react";
 import { useRouter, useNavigation } from "expo-router";
 import { auth, firestore } from "../../configs/firebase";
 import { getStorage, ref, getDownloadURL } from "firebase/storage";
@@ -825,15 +826,25 @@ export default function InspireAuto() {
     fetchUserLanguage();
   }, []);
 
+  // Set header with "Investment Profile" title
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerShown: true,
+      headerTitle: t(userLanguage, "inspireAuto.header.title") || "Investment Profile",
+      headerTransparent: true,
+      headerTintColor: Colors.redTheme.background,
+    });
+  }, [navigation, userLanguage]);
+
+  // Also update when userLanguage changes
   useEffect(() => {
     navigation.setOptions({
       headerShown: true,
-      headerTitle: t(userLanguage, "inspireAuto.header.title"),
+      headerTitle: t(userLanguage, "inspireAuto.header.title") || "Investment Profile",
       headerTransparent: true,
-      headerTintColor: Colors.redTheme.background, // This colors the default back button
-      // No headerLeft needed - React Navigation provides default back button
+      headerTintColor: Colors.redTheme.background,
     });
-  }, [userLanguage]);
+  }, [userLanguage, navigation]);
 
   const formatCurrency = (value) => {
     const numberValue = Number(value);
@@ -947,58 +958,9 @@ export default function InspireAuto() {
     <SafeAreaView style={styles.container}>
       <ScrollView
         style={styles.scrollView}
+        contentContainerStyle={styles.scrollViewContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header Section */}
-        <View style={styles.headerContainer}>
-          <View style={styles.headerBackground}>
-            <View style={styles.headerContent}>
-              <View style={styles.headerTextContainer}>
-                <Text style={[styles.headerTitle, getRTLStyles(userLanguage)]}>{t(userLanguage, "inspireAuto.header.title")}</Text>
-                <View style={styles.headerStats}>
-                  <View style={styles.statItem}>
-                    <Text style={styles.statValue}>{deposits.length}</Text>
-                    <Text style={[styles.statLabel, getRTLStyles(userLanguage)]}>{t(userLanguage, "inspireAuto.content.totalDeposits")}</Text>
-                  </View>
-                  <View style={styles.statDivider} />
-                  <View style={styles.statItem}>
-                    <Text style={styles.statValue}>
-                      {activeDeposits.length}
-                    </Text>
-                    <Text style={[styles.statLabel, getRTLStyles(userLanguage)]}>{t(userLanguage, "inspireAuto.content.active")}</Text>
-                  </View>
-                  <View style={styles.statDivider} />
-                  <View style={styles.statItem}>
-                    <Text style={styles.statValue}>
-                      {completedDeposits.length}
-                    </Text>
-                    <Text style={[styles.statLabel, getRTLStyles(userLanguage)]}>{t(userLanguage, "inspireAuto.content.completed")}</Text>
-                  </View>
-                </View>
-              </View>
-              <TouchableOpacity
-                style={[
-                  styles.updateButtonHeader,
-                  updating && styles.updateButtonDisabled,
-                ]}
-                onPress={handleUpdateFirestore}
-                disabled={updating}
-              >
-                {updating ? (
-                  <ActivityIndicator size="small" color="white" />
-                ) : (
-                  <Ionicons name="sync" size={20} color="white" />
-                )}
-              </TouchableOpacity>
-            </View>
-          </View>
-          {lastUpdated && (
-            <Text style={[styles.lastUpdatedText, getRTLStyles(userLanguage)]}>
-              Last updated: {formatDate(lastUpdated)}
-            </Text>
-          )}
-        </View>
-
         {/* Total Amount Card */}
         <View style={styles.totalAmountCard}>
           <View style={styles.totalAmountHeader}>
@@ -1639,7 +1601,10 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+  },
+  scrollViewContent: {
     padding: 16,
+    paddingTop: Platform.OS === "android" ? 80 : 16,
   },
   loadingContainer: {
     flex: 1,

@@ -6,13 +6,15 @@ import {
   SafeAreaView,
   ScrollView,
   TouchableOpacity,
+  Platform,
   Dimensions,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { doc, getDoc } from 'firebase/firestore';
+import { auth, firestore } from '../../configs/firebase';
 import { Colors } from '../../constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
 import { t } from '../../utils/languageUtils';
-import userService from "../../services/userService";
 
 const { width, height } = Dimensions.get('window');
 
@@ -29,8 +31,16 @@ const NotificationDetail = () => {
 
   const fetchUserLanguage = async () => {
     try {
-      const profile = await userService.getUserProfile();
-      setUserLanguage(profile?.preferredLanguage || 'English');
+      const user = auth.currentUser;
+      if (user) {
+        const userDocRef = doc(firestore, "users", user.uid);
+        const userDocSnap = await getDoc(userDocRef);
+        
+        if (userDocSnap.exists()) {
+          const data = userDocSnap.data();
+          setUserLanguage(data.preferredLanguage || 'English');
+        }
+      }
     } catch (error) {
       console.error("Error fetching user language:", error);
     }

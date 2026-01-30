@@ -196,39 +196,62 @@ class RealTimeCommunicationService {
 
       const adminPresenceRef = doc(firestore, 'presence', adminId);
 
-      const unsubscribe = onSnapshot(adminPresenceRef, (doc) => {
-        if (doc.exists()) {
-          const presenceData = doc.data();
+      const unsubscribe = onSnapshot(
+        adminPresenceRef,
+        (doc) => {
+          if (doc.exists()) {
+            const presenceData = doc.data();
 
-          // Calculate if admin is truly online
-          const now = new Date();
-          const lastHeartbeat = presenceData.lastHeartbeat?.toDate() || new Date(0);
-          const timeDiff = now - lastHeartbeat;
+            // Calculate if admin is truly online
+            const now = new Date();
+            const lastHeartbeat = presenceData.lastHeartbeat?.toDate() || new Date(0);
+            const timeDiff = now - lastHeartbeat;
 
-          const isReallyOnline = presenceData.status === 'online' &&
-                                presenceData.isActive &&
-                                timeDiff < 120000; // 2 minutes threshold
+            const isReallyOnline = presenceData.status === 'online' &&
+                                  presenceData.isActive &&
+                                  timeDiff < 120000; // 2 minutes threshold
 
-          callback({
-            adminId,
-            isOnline: isReallyOnline,
-            status: presenceData.status,
-            lastSeen: presenceData.lastSeen,
-            lastHeartbeat: presenceData.lastHeartbeat,
-            responseTime: this.calculateResponseTime(presenceData)
-          });
-        } else {
-          callback({
-            adminId,
-            isOnline: false,
-            status: 'offline',
-            lastSeen: null,
-            lastHeartbeat: null
-          });
+            callback({
+              adminId,
+              isOnline: isReallyOnline,
+              status: presenceData.status,
+              lastSeen: presenceData.lastSeen,
+              lastHeartbeat: presenceData.lastHeartbeat,
+              responseTime: this.calculateResponseTime(presenceData)
+            });
+          } else {
+            callback({
+              adminId,
+              isOnline: false,
+              status: 'offline',
+              lastSeen: null,
+              lastHeartbeat: null
+            });
+          }
+        },
+        (error) => {
+          // Handle permission errors gracefully
+          if (error.code === 'permission-denied') {
+            console.warn('⚠️ Permission denied for admin presence listener, cleaning up');
+            // Clean up listener on permission error
+            if (this.connectionListeners.has(listenerKey)) {
+              const unsubscribe = this.connectionListeners.get(listenerKey);
+              if (unsubscribe) unsubscribe();
+              this.connectionListeners.delete(listenerKey);
+            }
+            // Notify callback that admin is offline due to permission error
+            callback({
+              adminId,
+              isOnline: false,
+              status: 'offline',
+              lastSeen: null,
+              lastHeartbeat: null
+            });
+          } else {
+            console.error('❌ Error in admin presence listener:', error);
+          }
         }
-      }, (error) => {
-        console.error('❌ Error in admin presence listener:', error);
-      });
+      );
 
       this.connectionListeners.set(listenerKey, unsubscribe);
       return unsubscribe;

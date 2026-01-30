@@ -23,7 +23,7 @@ import {
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigation, useRouter } from "expo-router";
 import { auth, firestore } from "../../configs/firebase";
-import { createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
+import { createUserWithEmailAndPassword } from "firebase/auth";
 import {
   collection,
   doc,
@@ -48,8 +48,8 @@ import { BlurView } from "expo-blur";
 import axios from "axios";
 import RegistrationTutorial from "../../components/RegistrationTutorial";
 import InvestorTutorial from "../../components/InvestorTutorial";
+import { validatePhoneNumber, getMaxLength } from "../../utils/phoneValidationUtils";
 import AgentTutorial from "../../components/AgentTutorial";
-import authService from "../../services/authService";
 
 const { width } = Dimensions.get("window");
 
@@ -431,12 +431,31 @@ export default function Index() {
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [hasCompany, setHasCompany] = useState(false);
+  const [company, setCompany] = useState("");
   const [emailAddress, setEmailAddress] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPass, setConfirmPass] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPass, setShowConfirmPass] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [lineAccountLink, setLineAccountLink] = useState("");
+  // Contact number with country code support
+  const COUNTRY_OPTIONS = [
+    { code: "+81", label: "Japan", flag: "🇯🇵" },
+    { code: "+966", label: "Saudi Arabia", flag: "🇸🇦" },
+    { code: "+82", label: "Korea (South Korea)", flag: "🇰🇷" },
+    { code: "+1", label: "America (United States)", flag: "🇺🇸" },
+    { code: "+63", label: "Philippines", flag: "🇵🇭" },
+  ];
+
+  const [selectedCountryCode, setSelectedCountryCode] = useState(
+    COUNTRY_OPTIONS[4].code // Default to Philippines
+  );
+  const [localContactNumber, setLocalContactNumber] = useState("");
+  const [contactNumber, setContactNumber] = useState("");
+  const [contactNumberError, setContactNumberError] = useState("");
+  const [isCountryModalVisible, setIsCountryModalVisible] = useState(false);
 
   useEffect(() => {
     navigation.setOptions({
@@ -1016,6 +1035,30 @@ export default function Index() {
       return;
     }
 
+    // Validate contact information
+    if (!lineAccountLink.trim()) {
+      showModal({
+        title: "Missing Contact Information",
+        message: "Please provide your LINE account link.",
+        type: "warning",
+      });
+      return;
+    }
+
+    // Validate phone number if provided
+    if (localContactNumber.trim()) {
+      const validation = validatePhoneNumber(localContactNumber, selectedCountryCode);
+      if (!validation.isValid) {
+        setContactNumberError(validation.error);
+        showModal({
+          title: "Invalid Phone Number",
+          message: validation.error,
+          type: "error",
+        });
+        return;
+      }
+    }
+
     // Validate agent code if user is an agent
     if (isYesChecked && (!agentNumber || !hierarchicalAgentCode)) {
       showModal({
@@ -1029,22 +1072,21 @@ export default function Index() {
 
     setLoading(true);
 
-    let firebaseUser = null;
-    let mongoUser = null;
-
     try {
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         emailAddress,
         password
       );
-      firebaseUser = userCredential.user;
-
-      if (!firebaseUser) {
-        throw new Error("Failed to create Firebase account.");
-      }
-
+      const user = userCredential.user;
       let now = new Date();
+
+      // Generate unique account number
+      const accountNumber = await generateUniqueAccountNumber();
+
+      await AsyncStorage.clear();
+      await AsyncStorage.setItem("userEmail", emailAddress);
+      await AsyncStorage.setItem("userPassword", password);
 
       // Check if there's a referrer and store as pending
       const hasReferrer = isYesChecked && selectedUser;
@@ -1058,52 +1100,15 @@ export default function Index() {
         status: "pending"
       } : null;
 
-      const mongoRegister = await authService.register(
-        {
-          firstName,
-          lastName,
-          emailAddress,
-          password,
-          confirmPassword: confirmPass,
-          agent: isYesChecked,
-          agentNumber: isYesChecked ? agentNumber.trim() : "0",
-          agentCode: hasReferrer ? "pending" : (isYesChecked ? hierarchicalAgentCode : "0"),
-          refferedAgent:
-            isNoChecked && selectedUser ? selectedUser.agentNumber : "0",
-          pendingReferral: pendingReferralData,
-          userId: firebaseUser.uid,
-        },
-        { persistSession: false }
-      );
-
-      if (!mongoRegister.success) {
-        throw new Error(mongoRegister.error || "Registration failed.");
-      }
-
-      mongoUser = mongoRegister.user;
-      const accountNumber = mongoUser?.accountNumber;
-
-      if (!accountNumber) {
-        throw new Error("Account number missing from server.");
-      }
-
-      await AsyncStorage.clear();
-      await AsyncStorage.setItem("userEmail", emailAddress);
-      await AsyncStorage.setItem("userPassword", password);
-
-      const agentNumberValue = mongoUser?.agentNumber || (isYesChecked ? agentNumber.trim() : "0");
-      const agentCodeValue = mongoUser?.agentCode || (hasReferrer ? "pending" : (isYesChecked ? hierarchicalAgentCode : "0"));
-      const referredAgentValue = mongoUser?.refferedAgent ||
-        (isNoChecked && selectedUser ? selectedUser.agentNumber : "0");
-      const emailValue = mongoUser?.emailAddress || emailAddress;
-
-      await setDoc(doc(firestore, "users", firebaseUser.uid), {
+      await setDoc(doc(firestore, "users", user.uid), {
         firstName,
         lastName,
+        company: company.trim() || "",
         accountNumber: accountNumber,
-        agentNumber: agentNumberValue, // Store as string for consistency
-        agentCode: agentCodeValue, // Set to "pending" if awaiting referrer confirmation
-        refferedAgent: referredAgentValue, // Store as string for consistency
+        agentNumber: isYesChecked ? agentNumber.trim() : "0", // Store as string for consistency
+        agentCode: hasReferrer ? "pending" : (isYesChecked ? hierarchicalAgentCode : "0"), // Set to "pending" if awaiting referrer confirmation
+        refferedAgent:
+          isNoChecked && selectedUser ? selectedUser.agentNumber : "0", // Store as string for consistency
         stockAmount: 0,
         walletAmount: 0,
         kycApproved: false,
@@ -1112,7 +1117,9 @@ export default function Index() {
         agentWalletAmount: 0,
         usdtAmount: 0,
         availBalanceAmount: 0,
-        emailAddress: emailValue,
+        emailAddress: emailAddress,
+        lineAccountLink: lineAccountLink.trim(),
+        contactNumber: contactNumber.trim(),
         dollarDepositAmount: 0,
         dollarAvailBalanceAmount: 0,
         cryptoAvailBalanceAmount: 0,
@@ -1120,7 +1127,7 @@ export default function Index() {
         cryptoWalletAmount: 0,
         accumulatedPoints: 10,
         createdAt: now,
-        agent: mongoUser?.agent ?? isYesChecked,
+        agent: isYesChecked,
         lastSignedIn: now,
         stock: false,
         cryptoBalances: {
@@ -1135,14 +1142,14 @@ export default function Index() {
         ...(pendingReferralData && { pendingReferral: pendingReferralData })
       });
 
-      await addDoc(collection(firestore, "users", firebaseUser.uid, "transactions"), {
+      await addDoc(collection(firestore, "users", user.uid, "transactions"), {
         amount: 0,
         date: now,
         type: "Created Account",
       });
 
       await addDoc(
-        collection(firestore, "users", firebaseUser.uid, "agentTransactions"),
+        collection(firestore, "users", user.uid, "agentTransactions"),
         {
           amount: 0,
           date: now,
@@ -1151,7 +1158,7 @@ export default function Index() {
       );
 
       await addDoc(
-        collection(firestore, "users", firebaseUser.uid, "stockTransactions"),
+        collection(firestore, "users", user.uid, "stockTransactions"),
         {
           amount: 0,
           date: now,
@@ -1160,7 +1167,7 @@ export default function Index() {
       );
 
       await addDoc(
-        collection(firestore, "users", firebaseUser.uid, "investmentProfiles"),
+        collection(firestore, "users", user.uid, "investmentProfiles"),
         {
           amount: 0,
           dateOfMaturity: now,
@@ -1169,7 +1176,7 @@ export default function Index() {
       );
 
       // Add initialization of cryptoTrades collection
-      await addDoc(collection(firestore, "users", firebaseUser.uid, "cryptoTrades"), {
+      await addDoc(collection(firestore, "users", user.uid, "cryptoTrades"), {
         type: "INITIAL",
         asset: "SYSTEM",
         amount: 0,
@@ -1181,7 +1188,7 @@ export default function Index() {
 
       // Add default card to purchasedCards subcollection
       await setDoc(
-        doc(firestore, "users", firebaseUser.uid, "purchasedCards", "default"),
+        doc(firestore, "users", user.uid, "purchasedCards", "default"),
         {
           purchaseCardsId: "default",
           isActive: true, // First card is always active
@@ -1194,7 +1201,7 @@ export default function Index() {
       console.log("✅ Default card added to new user account");
 
       // Add transaction record for the free default card
-      await addDoc(collection(firestore, "users", firebaseUser.uid, "transactions"), {
+      await addDoc(collection(firestore, "users", user.uid, "transactions"), {
         amount: 0, // Free card
         date: now,
         type: "Free Default Card",
@@ -1217,7 +1224,7 @@ export default function Index() {
               type: "referral_request",
               createdAt: now,
               read: false,
-              newUserId: firebaseUser.uid,
+              newUserId: user.uid,
               newUserName: `${firstName} ${lastName}`,
               newUserEmail: emailAddress,
               newUserAgentNumber: agentNumber.trim(),
@@ -1266,7 +1273,7 @@ export default function Index() {
             // Update Firestore with the API-confirmed agent code if different
             if (apiResult.agentCode && apiResult.agentCode !== hierarchicalAgentCode) {
               console.log("📝 Updating agent code with API-confirmed value:", apiResult.agentCode);
-              await updateDoc(doc(firestore, "users", firebaseUser.uid), {
+              await updateDoc(doc(firestore, "users", user.uid), {
                 agentCode: apiResult.agentCode,
               });
               console.log("✅ Agent code updated in Firestore");
@@ -1353,7 +1360,7 @@ export default function Index() {
         successMessage = `Welcome to Inspire Wallet! Your account has been created successfully.\n\nYour Account Number: ${accountNumber}\n\nYour agent code is pending approval from your referrer. You'll receive a notification once confirmed.`;
       } else if (isYesChecked) {
         // Agent without referrer - root agent synced with API
-        successMessage = `Welcome to Inspire Wallet! Your account has been created successfully.\n\nYour Account Number: ${accountNumber}\nYour Agent Number: ${agentNumberValue}\nYour Agent Code: ${agentCodeValue}\n\nYour agent account has been synced with the system.`;
+        successMessage = `Welcome to Inspire Wallet! Your account has been created successfully.\n\nYour Account Number: ${accountNumber}\nYour Agent Number: ${agentNumber}\nYour Agent Code: ${hierarchicalAgentCode}\n\nYour agent account has been synced with the system.`;
       } else {
         // Regular investor
         successMessage = `Welcome to Inspire Wallet! Your account has been created successfully.\n\nYour Account Number: ${accountNumber}`;
@@ -1373,13 +1380,14 @@ export default function Index() {
           hideModal();
           setLoading(false);
 
+          // Redirect to create passcode page for new users
           // Use platform-specific navigation approach for iOS
           if (Platform.OS === "ios") {
             // For iOS, use a longer delay and try multiple navigation approaches
             setTimeout(() => {
               try {
-                // First try router.replace to ensure clean navigation
-                router.replace("/");
+                // Redirect to create passcode page
+                router.replace("/create-passcode");
               } catch (error) {
                 console.error(
                   "Router navigation failed, trying fallback:",
@@ -1387,12 +1395,12 @@ export default function Index() {
                 );
                 // Fallback: try router.push
                 try {
-                  router.push("/");
+                  router.push("/create-passcode");
                 } catch (pushError) {
                   console.error("Router push also failed:", pushError);
                   // Last resort: use navigation prop if available
                   if (navigation && navigation.navigate) {
-                    navigation.navigate("index");
+                    navigation.navigate("create-passcode");
                   }
                 }
               }
@@ -1400,10 +1408,10 @@ export default function Index() {
           } else {
             // For Android, use immediate navigation
             try {
-              router.replace("/");
+              router.replace("/create-passcode");
             } catch (error) {
               console.error("Android navigation failed:", error);
-              router.push("/");
+              router.push("/create-passcode");
             }
           }
         },
@@ -1430,21 +1438,21 @@ export default function Index() {
           
           // Register device with Native Notify
           await registerIndieID(
-            firebaseUser.uid.toString(),
+            user.uid.toString(),
             28259,
             process.env.EXPO_PUBLIC_NATIVENOTIFY_API_KEY
           );
-          console.log("Registered device with Native Notify for user:", firebaseUser.uid);
+          console.log("Registered device with Native Notify for user:", user.uid);
           
           // Send welcome notification
           await axios.post("https://app.nativenotify.com/api/indie/notification", {
-            subID: `${firebaseUser.uid}`,
+            subID: `${user.uid}`,
             appId: 28259,
             appToken: process.env.EXPO_PUBLIC_NATIVENOTIFY_API_KEY,
             title: "Welcome to Inspire Wallet",
             message: "Congratulations you successfully registered your account.",
           });
-          console.log("Sent welcome notification with subID:", firebaseUser.uid);
+          console.log("Sent welcome notification with subID:", user.uid);
         } else {
           console.warn("Notification permissions not granted, skipping device registration");
         }
@@ -1454,34 +1462,12 @@ export default function Index() {
       }
     } catch (error) {
       console.log(error);
-      if (firebaseUser && !mongoUser) {
-        try {
-          await deleteUser(firebaseUser);
-          console.log("Rolled back Firebase user after registration failure.");
-        } catch (deleteError) {
-          console.error("Error rolling back Firebase user:", deleteError);
-        }
-      }
-
-      const errorMessage = error?.message || "";
-      const normalizedError = errorMessage.toLowerCase();
-
-      if (
-        error.code === "auth/email-already-in-use" ||
-        normalizedError.includes("already registered")
-      ) {
+      if (error.code === "auth/email-already-in-use") {
         showModal({
           title: "Email Already Registered",
           message:
             "This email address is already in use. Please try a different email.",
           type: "error",
-        });
-      } else if (mongoUser) {
-        showModal({
-          title: "Setup Incomplete",
-          message:
-            "Your account was created, but setup could not be completed. Please log in again or contact support.",
-          type: "warning",
         });
       } else {
         showModal({
@@ -1588,13 +1574,13 @@ export default function Index() {
 
               {/* Personal Information Section */}
               <View style={styles.formSection}>
-                <Text style={styles.subsectionTitle}>Personal Information</Text>
+              <Text style={styles.subsectionTitle}>Personal Information</Text>
 
                 <View style={styles.inputGroup}>
                   <Text style={styles.inputLabel}>First Name *</Text>
                   <TextInput
                     style={styles.input}
-                    placeholder="Enter your first name"
+                    placeholder="e.g. John"
                     placeholderTextColor="#999"
                     value={firstName}
                     onChangeText={(value) => setFirstName(value)}
@@ -1605,11 +1591,124 @@ export default function Index() {
                   <Text style={styles.inputLabel}>Last Name *</Text>
                   <TextInput
                     style={styles.input}
-                    placeholder="Enter your last name"
+                    placeholder="e.g. Doe"
                     placeholderTextColor="#999"
                     value={lastName}
                     onChangeText={(value) => setLastName(value)}
                   />
+                </View>
+
+                <View style={styles.inputGroup}>
+                  <Pressable
+                    style={styles.checkboxContainer}
+                    onPress={() => {
+                      const newValue = !hasCompany;
+                      setHasCompany(newValue);
+                      if (!newValue) {
+                        setCompany(""); // Clear company field when unchecked
+                      }
+                    }}
+                  >
+                    <View
+                      style={[
+                        styles.checkbox,
+                        hasCompany && styles.checkedBox,
+                      ]}
+                    >
+                      {hasCompany && (
+                        <Ionicons name="checkmark" size={16} color="white" />
+                      )}
+                    </View>
+                    <Text style={styles.checkboxLabel}>
+                      I have a company
+                    </Text>
+                  </Pressable>
+                </View>
+
+                {hasCompany && (
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel}>Company Name *</Text>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Enter your company name"
+                      placeholderTextColor="#999"
+                      value={company}
+                      onChangeText={(value) => setCompany(value)}
+                    />
+                  </View>
+                )}
+              </View>
+
+              {/* Contact Information Section */}
+              <View style={styles.formSection}>
+                <Text style={styles.subsectionTitle}>Contact Information</Text>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>LINE Account Link *</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="https://line.me/ti/p/..."
+                    placeholderTextColor="#999"
+                    value={lineAccountLink}
+                    onChangeText={(value) => setLineAccountLink(value)}
+                    keyboardType="url"
+                    autoCapitalize="none"
+                  />
+                </View>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Contact Number *</Text>
+
+                  {/* Country selector + phone textbox in a single row */}
+                  <View style={styles.phoneRow}>
+                    {/* Country selector button */}
+                    <TouchableOpacity
+                      style={styles.countrySelectorButton}
+                      onPress={() => setIsCountryModalVisible(true)}
+                    >
+                      <Text style={styles.countrySelectorFlag}>
+                        {COUNTRY_OPTIONS.find(c => c.code === selectedCountryCode)?.flag}
+                      </Text>
+                      <Text style={styles.countrySelectorText}>
+                        {selectedCountryCode}
+                      </Text>
+                      <Ionicons
+                        name="chevron-down"
+                        size={16}
+                        color={Colors.redTheme.background}
+                      />
+                    </TouchableOpacity>
+
+                    {/* Local number textbox */}
+                    <TextInput
+                      style={styles.phoneInput}
+                      placeholder="9012345678"
+                      placeholderTextColor="#999"
+                      keyboardType="phone-pad"
+                      value={localContactNumber}
+                      maxLength={getMaxLength(selectedCountryCode)}
+                      onChangeText={(value) => {
+                        const sanitized = value.replace(/[^\d\s]/g, "");
+                        setLocalContactNumber(sanitized);
+                        const combined =
+                          selectedCountryCode +
+                          (sanitized ? " " + sanitized : "");
+                        setContactNumber(combined);
+                        
+                        // Real-time validation
+                        if (sanitized.trim()) {
+                          const validation = validatePhoneNumber(sanitized, selectedCountryCode);
+                          setContactNumberError(validation.error || "");
+                        } else {
+                          setContactNumberError("");
+                        }
+                      }}
+                    />
+                  </View>
+                  {/* Error message display */}
+                  {contactNumberError ? (
+                    <Text style={styles.errorText}>{contactNumberError}</Text>
+                  ) : null}
                 </View>
               </View>
 
@@ -1937,13 +2036,17 @@ export default function Index() {
               style={[
                 styles.submitButton,
                 (loading ||
-                  (isYesChecked && (!agentNumber || !hierarchicalAgentCode))) &&
+                  !!contactNumberError ||
+                  (isYesChecked && (!agentNumber || !hierarchicalAgentCode)) ||
+                  !lineAccountLink.trim()) &&
                   styles.submitButtonDisabled,
               ]}
               onPress={openTermsAndConditionsModal}
               disabled={
                 loading ||
-                (isYesChecked && (!agentNumber || !hierarchicalAgentCode))
+                !!contactNumberError ||
+                (isYesChecked && (!agentNumber || !hierarchicalAgentCode)) ||
+                !lineAccountLink.trim()
               }
             >
               <View style={styles.submitButtonContent}>
@@ -2007,6 +2110,47 @@ export default function Index() {
         }}
         onCancel={() => setShowTermsModal(false)}
       />
+
+      {/* Country picker modal */}
+      <Modal
+        transparent
+        animationType="fade"
+        visible={isCountryModalVisible}
+        onRequestClose={() => setIsCountryModalVisible(false)}
+      >
+        <View style={styles.countryModalOverlay}>
+          <View style={styles.countryModalContainer}>
+            <Text style={styles.countryModalTitle}>Select Country</Text>
+            {COUNTRY_OPTIONS.map((country) => (
+              <TouchableOpacity
+                key={country.code}
+                style={styles.countryOptionRow}
+                onPress={() => {
+                  setSelectedCountryCode(country.code);
+                  const combined =
+                    country.code +
+                    (localContactNumber ? " " + localContactNumber : "");
+                  setContactNumber(combined);
+                  setIsCountryModalVisible(false);
+                }}
+              >
+                <View style={styles.countryOptionContent}>
+                  <Text style={styles.countryFlag}>{country.flag}</Text>
+                  <Text style={styles.countryOptionName}>{country.label}</Text>
+                </View>
+                <Text style={styles.countryOptionCode}>{country.code}</Text>
+              </TouchableOpacity>
+            ))}
+
+            <TouchableOpacity
+              style={styles.countryModalCancelButton}
+              onPress={() => setIsCountryModalVisible(false)}
+            >
+              <Text style={styles.countryModalCancelText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </ImageBackground>
   );
 }
@@ -2312,6 +2456,14 @@ const styles = StyleSheet.create({
   inputGroup: {
     marginBottom: 16,
   },
+  nameRow: {
+    flexDirection: "row",
+    gap: 12,
+    marginBottom: 16,
+  },
+  nameColumn: {
+    flex: 1,
+  },
   inputLabel: {
     fontSize: 14,
     fontWeight: "600",
@@ -2331,6 +2483,111 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 2,
     elevation: 1,
+  },
+
+  // Phone + country selector row
+  phoneRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  countrySelectorButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: "#e0e0e0",
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    backgroundColor: "white",
+  },
+  countrySelectorFlag: {
+    fontSize: 20,
+    marginRight: 6,
+  },
+  countrySelectorText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: Colors.redTheme.background,
+    marginRight: 4,
+  },
+  phoneInput: {
+    flex: 1,
+    backgroundColor: "white",
+    borderWidth: 2,
+    borderColor: "#e0e0e0",
+    borderRadius: 12,
+    padding: 14,
+    fontSize: 16,
+    color: "#333",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+
+  // Country picker modal styles
+  countryModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 24,
+  },
+  countryModalContainer: {
+    width: "100%",
+    maxWidth: 360,
+    backgroundColor: "white",
+    borderRadius: 20,
+    paddingVertical: 20,
+    paddingHorizontal: 16,
+  },
+  countryModalTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#111827",
+    marginBottom: 12,
+    textAlign: "center",
+  },
+  countryOptionRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 10,
+    paddingHorizontal: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f3f4f6",
+  },
+  countryOptionContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  countryFlag: {
+    fontSize: 24,
+  },
+  countryOptionName: {
+    fontSize: 14,
+    color: "#111827",
+    fontWeight: "500",
+  },
+  countryOptionCode: {
+    fontSize: 14,
+    color: Colors.redTheme.background,
+    fontWeight: "600",
+  },
+  countryModalCancelButton: {
+    marginTop: 10,
+    paddingVertical: 12,
+    borderRadius: 12,
+    backgroundColor: "#f3f4f6",
+    alignItems: "center",
+  },
+  countryModalCancelText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#374151",
   },
 
   // Checkbox Styles
@@ -2361,6 +2618,28 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#333",
     fontWeight: "500",
+  },
+
+  // Radio Button Styles
+  radioButton: {
+    height: 24,
+    width: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: "#e0e0e0",
+    marginRight: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "white",
+  },
+  radioButtonChecked: {
+    borderColor: Colors.redTheme.background,
+  },
+  radioButtonInner: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: Colors.redTheme.background,
   },
 
   // Password Container
@@ -2755,5 +3034,12 @@ const styles = StyleSheet.create({
     color: "#92400E",
     fontWeight: "500",
     flex: 1,
+  },
+  errorText: {
+    fontSize: 12,
+    color: "#FF6B6B",
+    marginTop: 6,
+    marginLeft: 4,
+    fontWeight: "500",
   },
 });

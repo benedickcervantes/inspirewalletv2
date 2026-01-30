@@ -1,257 +1,203 @@
 import { useState, useEffect } from 'react';
-import authService from '../services/authService';
-import userService from '../services/userService';
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+  updateProfile
+} from 'firebase/auth';
+import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { auth, firestore as db } from '../configs/firebase';
 
-/**
- * Custom hook for MongoDB-backed authentication
- * Replaces Firebase Auth with JWT-based backend authentication
- */
 export const useMobileAuth = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Initialize authentication state on mount
   useEffect(() => {
-    initializeAuth();
-  }, []);
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        // Get additional user data from Firestore
+        const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+        const userData = userDoc.exists() ? userDoc.data() : {};
 
-  /**
-   * Initialize authentication - check for stored token and user
-   */
-  const initializeAuth = async () => {
-    try {
-      setLoading(true);
-
-      const token = await authService.getStoredToken();
-
-      if (token) {
-        // Validate token and get fresh user data
-        const userProfile = await authService.getCurrentUserProfile();
-
-        if (userProfile) {
-          setUser({
-            uid: userProfile._id,
-            id: userProfile._id,
-            email: userProfile.emailAddress,
-            emailAddress: userProfile.emailAddress,
-            displayName: `${userProfile.firstName} ${userProfile.lastName}`,
-            firstName: userProfile.firstName,
-            lastName: userProfile.lastName,
-            accountNumber: userProfile.accountNumber,
-            accountType: userProfile.accountType,
-            agent: userProfile.agent,
-            agentNumber: userProfile.agentNumber,
-            agentCode: userProfile.agentCode,
-            ...userProfile
-          });
-        } else {
-          // Token invalid, clear auth
-          await authService.logout();
-          setUser(null);
-        }
+        setUser({
+          uid: firebaseUser.uid,
+          email: firebaseUser.email,
+          displayName: firebaseUser.displayName,
+          ...userData
+        });
       } else {
         setUser(null);
       }
-    } catch (error) {
-      console.error('Auth initialization error:', error);
-      setUser(null);
-    } finally {
       setLoading(false);
-    }
-  };
+    });
 
-  /**
-   * Sign in with email and password
-   */
+    return unsubscribe;
+  }, []);
+
+  // Sign in with email and password
   const signIn = async (email, password) => {
     try {
       setError(null);
       setLoading(true);
 
-      const result = await authService.login(email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
 
-      if (result.success) {
-        // Set user state with formatted data
-        setUser({
-          uid: result.user._id,
-          id: result.user._id,
-          email: result.user.emailAddress,
-          emailAddress: result.user.emailAddress,
-          displayName: `${result.user.firstName} ${result.user.lastName}`,
-          firstName: result.user.firstName,
-          lastName: result.user.lastName,
-          accountNumber: result.user.accountNumber,
-          accountType: result.user.accountType,
-          agent: result.user.agent,
-          agentNumber: result.user.agentNumber,
-          agentCode: result.user.agentCode,
-          ...result.user
-        });
+      // Update last login time
+      await setDoc(doc(db, 'users', user.uid), {
+        lastLoginAt: serverTimestamp(),
+        platform: 'mobile'
+      }, { merge: true });
 
-        return { success: true, user: result.user };
-      }
-
-      if (result.needsMigration) {
-        const message = result.message || 'Migration required';
-        setError(message);
-        return { success: false, needsMigration: true, message, data: result.data };
-      }
-
-      setError(result.error);
-      return { success: false, error: result.error };
+      return { success: true, user };
     } catch (error) {
       console.error('Sign in error:', error);
-      const errorMessage = error.message || 'Sign in failed';
-      setError(errorMessage);
-      return { success: false, error: errorMessage };
+      
+      // Provide more specific error messages
+      let userMessage = error.message;
+      if (error.code === 'auth/invalid-credential') {
+        userMessage = 'Invalid email or password. Please check your credentials.';
+      } else if (error.code === 'auth/user-not-found') {
+        userMessage = 'No account found with this email address.';
+      } else if (error.code === 'auth/user-disabled') {
+        userMessage = 'This account has been disabled. Please contact support.';
+      } else if (error.code === 'auth/network-request-failed') {
+        userMessage = 'Network error. Please check your internet connection.';
+      } else if (error.code === 'auth/too-many-requests') {
+        userMessage = 'Too many failed login attempts. Please try again later.';
+      }
+      
+      setError(userMessage);
+      return { success: false, error: userMessage, code: error.code };
     } finally {
       setLoading(false);
     }
   };
 
-  /**
-   * Sign up with email and password
-   */
-  const signUp = async (email, password, firstName, lastName, additionalData = {}) => {
+  // Sign up with email and password
+  const signUp = async (email, password, displayName) => {
     try {
       setError(null);
       setLoading(true);
 
-      const userData = {
-        email,
-        emailAddress: email,
-        password,
-        confirmPassword: password, // Backend expects this
-        firstName,
-        lastName,
-        ...additionalData
-      };
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
 
-      const result = await authService.register(userData);
+      // Update profile with display name
+      await updateProfile(user, {
+        displayName: displayName
+      });
 
-      if (result.success) {
-        // Set user state with formatted data
-        setUser({
-          uid: result.user._id,
-          id: result.user._id,
-          email: result.user.emailAddress,
-          emailAddress: result.user.emailAddress,
-          displayName: `${result.user.firstName} ${result.user.lastName}`,
-          firstName: result.user.firstName,
-          lastName: result.user.lastName,
-          accountNumber: result.user.accountNumber,
-          accountType: result.user.accountType,
-          agent: result.user.agent,
-          agentNumber: result.user.agentNumber,
-          agentCode: result.user.agentCode,
-          ...result.user
-        });
+      // Create user document in Firestore
+      await setDoc(doc(db, 'users', user.uid), {
+        email: user.email,
+        displayName: displayName,
+        createdAt: serverTimestamp(),
+        lastLoginAt: serverTimestamp(),
+        platform: 'mobile',
+        isActive: true,
+        role: 'user'
+      });
 
-        return { success: true, user: result.user };
-      } else {
-        setError(result.error);
-        return { success: false, error: result.error };
-      }
+      // Initialize presence document
+      await setDoc(doc(db, 'presence', user.uid), {
+        isOnline: true,
+        lastSeen: serverTimestamp(),
+        platform: 'mobile'
+      });
+
+      return { success: true, user };
     } catch (error) {
       console.error('Sign up error:', error);
-      const errorMessage = error.message || 'Sign up failed';
-      setError(errorMessage);
-      return { success: false, error: errorMessage };
+      setError(error.message);
+      return { success: false, error: error.message };
     } finally {
       setLoading(false);
     }
   };
 
-  /**
-   * Sign out
-   */
+  // Sign out
   const logout = async () => {
     try {
       setError(null);
 
-      const result = await authService.logout();
-
-      if (result.success) {
-        setUser(null);
-        return { success: true };
-      } else {
-        setError(result.error);
-        return { success: false, error: result.error };
+      if (user) {
+        // Update presence to offline
+        await setDoc(doc(db, 'presence', user.uid), {
+          isOnline: false,
+          lastSeen: serverTimestamp(),
+          platform: 'mobile'
+        }, { merge: true });
       }
+
+      await signOut(auth);
+      return { success: true };
     } catch (error) {
       console.error('Sign out error:', error);
-      const errorMessage = error.message || 'Sign out failed';
-      setError(errorMessage);
-      return { success: false, error: errorMessage };
+      setError(error.message);
+      return { success: false, error: error.message };
     }
   };
 
-  /**
-   * Update user profile
-   */
+  // Update user profile
   const updateUserProfile = async (updates) => {
     try {
       if (!user) throw new Error('No user logged in');
 
       setError(null);
 
-      const result = await userService.updateUserProfile(updates);
-
-      if (result.success) {
-        // Update local user state
-        setUser(prev => ({
-          ...prev,
-          ...updates,
-          displayName: updates.firstName && updates.lastName
-            ? `${updates.firstName} ${updates.lastName}`
-            : prev.displayName
-        }));
-
-        return { success: true };
-      } else {
-        setError(result.error);
-        return { success: false, error: result.error };
+      // Update Firebase Auth profile if display name changed
+      if (updates.displayName) {
+        await updateProfile(auth.currentUser, {
+          displayName: updates.displayName
+        });
       }
+
+      // Update Firestore user document
+      await setDoc(doc(db, 'users', user.uid), {
+        ...updates,
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+
+      // Update local user state
+      setUser(prev => ({ ...prev, ...updates }));
+
+      return { success: true };
     } catch (error) {
       console.error('Profile update error:', error);
-      const errorMessage = error.message || 'Profile update failed';
-      setError(errorMessage);
-      return { success: false, error: errorMessage };
+      setError(error.message);
+      return { success: false, error: error.message };
     }
   };
 
-  /**
-   * Get user profile
-   */
-  const getUserProfile = async (userId = null) => {
+  // Get user profile
+  const getUserProfile = async (userId) => {
     try {
-      return await userService.getUserProfile(userId);
+      const userDoc = await getDoc(doc(db, 'users', userId));
+      return userDoc.exists() ? userDoc.data() : null;
     } catch (error) {
       console.error('Get user profile error:', error);
       return null;
     }
   };
 
-  /**
-   * Check if user is admin
-   */
+  // Check if user is admin
   const isAdmin = () => {
     return user?.role === 'admin' || user?.isAdmin === true;
   };
 
-  /**
-   * Set user online status (placeholder - implement with backend presence API)
-   */
+  // Set user online status
   const setOnlineStatus = async (isOnline) => {
     try {
       if (!user) return;
 
-      // TODO: Implement presence API when backend supports it
-      console.log('Presence status update:', isOnline);
-
-      // For now, just a placeholder
-      // await presenceService.updateStatus(user.id, isOnline);
+      await setDoc(doc(db, 'presence', user.uid), {
+        isOnline,
+        lastSeen: serverTimestamp(),
+        platform: 'mobile'
+      }, { merge: true });
     } catch (error) {
       console.error('Set online status error:', error);
     }
@@ -268,7 +214,6 @@ export const useMobileAuth = () => {
     getUserProfile,
     isAdmin,
     setOnlineStatus,
-    isAuthenticated: !!user,
-    refreshUser: initializeAuth, // Allow manual refresh
+    isAuthenticated: !!user
   };
 };

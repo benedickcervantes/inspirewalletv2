@@ -1,5 +1,5 @@
-import authService from "../services/authService";
-import userService from "../services/userService";
+import { auth, firestore } from "../configs/firebase";
+import { doc, getDoc } from "firebase/firestore";
 
 /**
  * Check if the current user has the required account type to access a feature
@@ -8,38 +8,39 @@ import userService from "../services/userService";
  */
 export const checkAccountTypeAccess = async (requiredType = "Premium") => {
   try {
-    const user = await authService.getStoredUser();
-
+    const user = auth.currentUser;
+    
     if (!user) {
       return { hasAccess: false, userAccountType: null };
     }
 
     // Check if the user is the specific user ID that should be restricted
-    // Note: This was previously a Firebase UID, may need updating for MongoDB _id
     const restrictedUserId = "JgJ3mmw2pOOEXwzdOghRic059gl1";
-
-    // Get fresh user data from backend
-    const userData = await userService.getUserProfile();
-
-    if (!userData) {
+    
+    // Get user data from Firestore
+    const userDocRef = doc(firestore, "users", user.uid);
+    const userDocSnap = await getDoc(userDocRef);
+    
+    if (!userDocSnap.exists()) {
       return { hasAccess: false, userAccountType: null };
     }
-
+    
+    const userData = userDocSnap.data();
     const userAccountType = userData.accountType || "Basic"; // Default to Basic if not set
-
+    
     // If the user is the restricted user and has Basic account type
-    if (user._id === restrictedUserId && userAccountType === "Basic") {
+    if (user.uid === restrictedUserId && userAccountType === "Basic") {
       return { hasAccess: false, userAccountType };
     }
-
+    
     // If the user is the restricted user but has Premium account type
-    if (user._id === restrictedUserId && userAccountType === "Premium") {
+    if (user.uid === restrictedUserId && userAccountType === "Premium") {
       return { hasAccess: true, userAccountType };
     }
-
+    
     // For all other users, allow access (existing behavior)
     return { hasAccess: true, userAccountType };
-
+    
   } catch (error) {
     console.error("Error checking account type access:", error);
     return { hasAccess: false, userAccountType: null };
@@ -61,13 +62,13 @@ export const isPremiumUser = async () => {
  */
 export const isRestrictedBasicUser = async () => {
   try {
-    const user = await authService.getStoredUser();
+    const user = auth.currentUser;
     const restrictedUserId = "JgJ3mmw2pOOEXwzdOghRic059gl1";
-
-    if (!user || user._id !== restrictedUserId) {
+    
+    if (!user || user.uid !== restrictedUserId) {
       return false;
     }
-
+    
     const { userAccountType } = await checkAccountTypeAccess();
     return userAccountType === "Basic";
   } catch (error) {

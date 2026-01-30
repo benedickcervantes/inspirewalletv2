@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Animated,
   Dimensions,
+  BackHandler,
   SafeAreaView,
   Platform,
   StatusBar,
@@ -17,10 +18,10 @@ import { Ionicons } from "@expo/vector-icons";
 import { router, useNavigation } from "expo-router";
 import { getAuth } from "firebase/auth";
 import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
-import { Colors } from "../../constants/Colors";
-import { t } from "../../utils/languageUtils";
-import { getRTLStyles } from "../../utils/rtlUtils";
-import LoadingScreen from "../../components/LoadingScreen";
+import { Colors } from "../constants/Colors";
+import { t } from "../utils/languageUtils";
+import { getRTLStyles } from "../utils/rtlUtils";
+import LoadingScreen from "../components/LoadingScreen";
 
 const { width } = Dimensions.get('window');
 
@@ -107,15 +108,10 @@ const PasscodeBoxIndicator = ({ passcode, error, userLanguage, success }) => {
   );
 };
 
-// StepIndicator Component
-const StepIndicator = ({ currentStep, userLanguage }) => {
+// StepIndicator Component (simplified for 2 steps)
+const StepIndicator = ({ currentStep }) => {
   const getStepNumber = () => {
-    switch (currentStep) {
-      case 'enterCurrent': return 1;
-      case 'enterNew': return 2;
-      case 'confirmNew': return 3;
-      default: return 1;
-    }
+    return currentStep === 'enterNew' ? 1 : 2;
   };
 
   const stepNumber = getStepNumber();
@@ -123,10 +119,10 @@ const StepIndicator = ({ currentStep, userLanguage }) => {
   return (
     <View style={styles.stepIndicatorContainer}>
       <Text style={styles.stepText}>
-        Step {stepNumber} of 3
+        Step {stepNumber} of 2
       </Text>
       <View style={styles.stepDots}>
-        {[1, 2, 3].map((step) => (
+        {[1, 2].map((step) => (
           <View
             key={step}
             style={[
@@ -186,11 +182,10 @@ const AnimatedKeypadButton = ({ value, onPress, userLanguage }) => {
   );
 };
 
-export default function Passcode() {
+export default function CreatePasscode() {
   const [passcode, setPasscode] = useState("");
   const [confirmPasscode, setConfirmPasscode] = useState(null);
-  const [currentPasscode, setCurrentPasscode] = useState(null);
-  const [step, setStep] = useState("check"); // check, enterCurrent, enterNew, confirmNew
+  const [step, setStep] = useState("enterNew"); // enterNew, confirmNew
   const [modalVisible, setModalVisible] = useState(false);
   const [successModalVisible, setSuccessModalVisible] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -207,19 +202,25 @@ export default function Passcode() {
   }, []);
 
   useEffect(() => {
+    // Remove header for create passcode page (not for passcode settings page)
     navigation.setOptions({
-      headerShown: true,
-      headerTransparent: true,
-      headerTitle: t(userLanguage, 'passcode.header.title'),
-      headerTintColor: Colors.redTheme.background,
-      headerTitleStyle: {
-        fontWeight: "bold",
-        fontSize: 18,
-      },
+      headerShown: false,
     });
-
-    checkExistingPasscode();
+    setLoading(false);
   }, [userLanguage]);
+
+  // Block back button on Android
+  useEffect(() => {
+    const backAction = () => {
+      // Prevent going back when creating new passcode
+      return true;
+    };
+    const backHandler = BackHandler.addEventListener(
+      "hardwareBackPress",
+      backAction
+    );
+    return () => backHandler.remove();
+  }, []);
 
   const fetchUserLanguage = async () => {
     try {
@@ -238,38 +239,13 @@ export default function Passcode() {
     }
   };
 
-  const checkExistingPasscode = async () => {
-    const user = auth.currentUser;
-    if (!user) {
-      console.error("User not authenticated.");
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const userDoc = await getDoc(doc(db, "users", user.uid));
-      if (userDoc.exists() && userDoc.data().passcode) {
-        setCurrentPasscode(userDoc.data().passcode);
-        setStep("enterCurrent");
-      } else {
-        // If user doesn't have passcode, redirect to create-passcode page
-        // This page is only for changing existing passcode
-        router.replace("/create-passcode");
-        return;
-      }
-    } catch (error) {
-      console.error("Error checking passcode:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const savePasscodeToFirestore = async (newPasscode) => {
     setProcessing(true);
     const user = auth.currentUser;
     if (!user) {
       console.error("User not authenticated.");
       setProcessing(false);
+      router.replace("/login");
       return;
     }
 
@@ -289,13 +265,13 @@ export default function Passcode() {
       setTimeout(() => {
         setProcessing(false);
         setSuccessModalVisible(true);
-        setStep("enterCurrent");
-        setCurrentPasscode(newPasscode); // Set the new passcode as current
         setShowSuccess(false);
       }, 1000);
     } catch (error) {
       console.error("Error saving passcode:", error);
       setProcessing(false);
+      setErrorMessage("Failed to save passcode. Please try again.");
+      setShowError(true);
     }
   };
 
@@ -313,37 +289,7 @@ export default function Passcode() {
       // Show loading screen when check mark is clicked
       setProcessing(true);
 
-      if (step === "enterCurrent") {
-        // Add a delay to show loading screen and validate
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        if (passcode === currentPasscode) {
-          // Keep loading visible during transition
-          // Slide animation to next step
-          Animated.timing(slideAnimation, {
-            toValue: -width,
-            duration: 300,
-            useNativeDriver: true,
-          }).start(() => {
-            setStep("enterNew");
-            setPasscode("");
-            slideAnimation.setValue(width);
-            Animated.timing(slideAnimation, {
-              toValue: 0,
-              duration: 300,
-              useNativeDriver: true,
-            }).start(() => {
-              // Hide loading screen after transition completes
-              setProcessing(false);
-            });
-          });
-        } else {
-          setProcessing(false);
-          setErrorMessage(t(userLanguage, 'passcode.content.errors.incorrectPasscode'));
-          setShowError(true);
-        }
-        setPasscode("");
-      } else if (step === "enterNew") {
+      if (step === "enterNew") {
         // Add a delay to show loading screen
         await new Promise(resolve => setTimeout(resolve, 1000));
         
@@ -397,7 +343,7 @@ export default function Passcode() {
 
   // Show loading screen when processing
   if (processing) {
-    return <LoadingScreen type="passcode" />;
+    return <LoadingScreen type="create-passcode" />;
   }
 
   return (
@@ -405,7 +351,8 @@ export default function Passcode() {
       colors={['#ffffff', '#f8f9fa']}
       style={styles.container}
     >
-      <StepIndicator currentStep={step} userLanguage={userLanguage} />
+      <SafeAreaView style={styles.safeArea} />
+      <StepIndicator currentStep={step} />
       
       <Animated.View 
         style={[
@@ -415,42 +362,40 @@ export default function Passcode() {
       >
         <View style={styles.contentWrapper}>
           <View style={styles.instructionContainer}>
-          <Text style={[styles.instructionTitle, getRTLStyles(userLanguage)]}>
-            {step === "enterCurrent"
-              ? t(userLanguage, 'passcode.content.instructions.enterCurrent')
-              : step === "enterNew"
-              ? t(userLanguage, 'passcode.content.instructions.enterNew')
-              : t(userLanguage, 'passcode.content.instructions.confirmNew')}
-          </Text>
-          <Text style={[styles.instructionSubtitle, getRTLStyles(userLanguage)]}>
-            {t(userLanguage, 'passcode.content.subtitle')}
-          </Text>
-        </View>
-
-        {loading ? (
-          <ActivityIndicator size="large" color={Colors.redTheme.background} />
-        ) : (
-          <View style={styles.passcodeSection}>
-            <PasscodeBoxIndicator 
-              passcode={passcode} 
-              error={showError} 
-              userLanguage={userLanguage}
-              success={showSuccess}
-            />
-            {showError && (
-              <Text style={[styles.errorText, getRTLStyles(userLanguage)]}>
-                {errorMessage}
-              </Text>
-            )}
+            <Text style={[styles.instructionTitle, getRTLStyles(userLanguage)]}>
+              {step === "enterNew"
+                ? t(userLanguage, 'passcode.content.instructions.enterNew')
+                : t(userLanguage, 'passcode.content.instructions.confirmNew')}
+            </Text>
+            <Text style={[styles.instructionSubtitle, getRTLStyles(userLanguage)]}>
+              {t(userLanguage, 'passcode.content.subtitle')}
+            </Text>
           </View>
-        )}
 
-        <View style={styles.keypad}>
-          <View style={styles.keypadRow}>{[1, 2, 3].map(renderButton)}</View>
-          <View style={styles.keypadRow}>{[4, 5, 6].map(renderButton)}</View>
-          <View style={styles.keypadRow}>{[7, 8, 9].map(renderButton)}</View>
-          <View style={styles.keypadRow}>{["Del", 0, "✓"].map(renderButton)}</View>
-        </View>
+          {loading ? (
+            <ActivityIndicator size="large" color={Colors.redTheme.background} />
+          ) : (
+            <View style={styles.passcodeSection}>
+              <PasscodeBoxIndicator 
+                passcode={passcode} 
+                error={showError} 
+                userLanguage={userLanguage}
+                success={showSuccess}
+              />
+              {showError && (
+                <Text style={[styles.errorText, getRTLStyles(userLanguage)]}>
+                  {errorMessage}
+                </Text>
+              )}
+            </View>
+          )}
+
+          <View style={styles.keypad}>
+            <View style={styles.keypadRow}>{[1, 2, 3].map(renderButton)}</View>
+            <View style={styles.keypadRow}>{[4, 5, 6].map(renderButton)}</View>
+            <View style={styles.keypadRow}>{[7, 8, 9].map(renderButton)}</View>
+            <View style={styles.keypadRow}>{["Del", 0, "✓"].map(renderButton)}</View>
+          </View>
         </View>
       </Animated.View>
 
@@ -487,7 +432,7 @@ export default function Passcode() {
             <TouchableOpacity
               onPress={() => {
                 setSuccessModalVisible(false);
-                router.push("/settings");
+                router.replace("/main");
               }}
               style={styles.modalButton}
             >
@@ -504,18 +449,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  safeArea: {
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight || 0 : 0,
+  },
   stepIndicatorContainer: {
-    position: 'absolute',
-    top: Platform.OS === 'ios' 
-      ? 100  // Status bar (~44px on notch devices) + header (44px) + spacing (12px)
-      : (StatusBar.currentHeight || 24) + 56 + 16, // Status bar + header (56px) + spacing (16px)
-    left: 0,
-    right: 0,
     alignItems: "center",
-    paddingTop: 8,
-    paddingBottom: 8,
-    zIndex: 1,
-    backgroundColor: 'transparent',
+    paddingTop: Platform.OS === 'ios' 
+      ? 60  // Safe area for iOS
+      : (StatusBar.currentHeight || 24) + 20, // Status bar + spacing for Android
+    paddingBottom: 20,
+    width: "100%",
   },
   stepText: {
     fontSize: 14,
@@ -538,7 +481,7 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     flex: 1,
-    alignItems: "center",
+    width: "100%",
     paddingHorizontal: 20,
   },
   contentWrapper: {
@@ -546,14 +489,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     width: "100%",
-    paddingTop: Platform.OS === 'ios' 
-      ? 100  // Space below StepIndicator (positioned at ~100px, height ~50px) + extra spacing to prevent overlap
-      : 90, // Reduced spacing for Android to make it more centered and professional
+    paddingTop: Platform.OS === 'ios' ? 20 : 10,
+    paddingBottom: Platform.OS === 'ios' ? 20 : 10,
   },
   instructionContainer: {
     alignItems: "center",
     marginBottom: 40,
-    marginTop: Platform.OS === 'ios' ? 20 : 10, // Reduced top margin for Android
+    width: "100%",
   },
   instructionTitle: {
     fontSize: 24,

@@ -16,7 +16,17 @@ import {
 import React, { useEffect, useState } from "react";
 import { useRouter, useNavigation } from "expo-router";
 import { auth, firestore } from "../../configs/firebase";
-import { doc, onSnapshot, getDoc } from "firebase/firestore";
+import {
+  doc,
+  onSnapshot,
+  setDoc,
+  addDoc,
+  collection,
+  getDoc,
+  updateDoc,
+  getFirestore,
+  getDocs,
+} from "firebase/firestore";
 import InvestmentProfileButtons from "../../components/InvestmentProfileButtons";
 import AmountContent from "../../components/AmountContent";
 import TransactionHistory from "../../components/TransactionHistory";
@@ -33,6 +43,7 @@ export default function Index() {
   const navigation = useNavigation();
   const router = useRouter();
   const [data, setUserData] = useState({});
+  const [userId, setUserId] = useState();
   const [walletAmount, setWalletAmount] = useState(0);
   const [availBalanceAmount, setAvailBalanceAmount] = useState(0); // Default to 0
   const { modalVisible, modalConfig, showModal, hideModal } = useModal();
@@ -40,6 +51,8 @@ export default function Index() {
   useEffect(() => {
     const user = auth.currentUser;
     if (user) {
+      setUserId(user.uid);
+
       // Real-time listener for user data
       const userDocRef = doc(firestore, "users", user.uid);
       const unsubscribeUser = onSnapshot(userDocRef, (doc) => {
@@ -153,7 +166,7 @@ export default function Index() {
                 </Text>
               </TouchableOpacity>
             </View>
-            <TransactionHistory />
+            <TransactionHistory userId={userId} />
           </View>
         </ScrollView>
       </TouchableWithoutFeedback>

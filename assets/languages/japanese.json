@@ -256,9 +256,12 @@
       "accountLevel": "アカウントレベル",
       "agentNumber": "エージェント番号",
       "agentReferrer": "エージェント紹介者",
+      "companyName": "会社名",
       "language": "言語",
       "status": "状況",
-      "memberSince": "メンバー登録日"
+      "memberSince": "メンバー登録日",
+      "lineAccountLink": "LINE Account Link",
+      "contactNumber": "Contact Number"
     },
     "values": {
       "notProvided": "提供されていません",
@@ -272,26 +275,35 @@
       "consultantAgentNote": "この紹介者もコンサルタントエージェントです"
     },
     "buttons": {
-      "save": "保存",
-      "cancel": "キャンセル",
+      "save": "変更を保存",
+      "cancel": "破棄",
       "verify": "認証",
       "editName": "名前を編集",
       "selectLanguage": "言語を選択",
-      "changing": "変更中..."
+      "changing": "更新中..."
     },
     "messages": {
       "success": {
         "nameUpdated": "名前が正常に更新されました。",
         "languageUpdated": "言語設定が正常に更新されました。",
-        "copied": "アカウント番号がクリップボードにコピーされました。"
+        "copied": "アカウント番号がクリップボードにコピーされました。",
+        "businessDocumentsUploaded": "ビジネス文書が正常にアップロードされました。会社のファイルは2〜3営業日以内に審査されます。提出されたすべての要件が有効で完全であることを確認してください。",
+        "lineUpdated": "Your LINE account link has been updated successfully.",
+        "contactUpdated": "Your contact number has been updated successfully."
       },
       "error": {
         "nameUpdateFailed": "名前の更新に失敗しました。もう一度お試しください。",
         "languageUpdateFailed": "言語設定の更新に失敗しました。もう一度お試しください。",
-        "copyFailed": "アカウント番号のクリップボードへのコピーに失敗しました。"
+        "copyFailed": "アカウント番号のクリップボードへのコピーに失敗しました。",
+        "lineUpdateFailed": "Failed to update your LINE account link. Please try again.",
+        "contactUpdateFailed": "Failed to update your contact number. Please try again."
       },
       "warning": {
-        "noAccountNumber": "コピーするアカウント番号がありません。"
+        "noAccountNumber": "コピーするアカウント番号がありません。",
+        "missingContactInfo": "Please provide both your LINE account link and contact number.",
+        "invalidPhoneFormat": "Invalid phone number format",
+        "phoneNumberNotOnlyDigits": "Phone number should contain only digits",
+        "invalidPhoneLength": "Phone number must match the required format for the selected country"
       },
       "titles": {
         "success": "成功！",
@@ -330,6 +342,14 @@
         "title": "書類アップロード",
         "description": "身分証明書の表裏とセルフィー写真をアップロードしてください"
       },
+      "personalDocuments": {
+        "title": "個人書類アップロード",
+        "description": "身元確認のため、政府発行の身分証明書（表面・裏面）とセルフィーをアップロードしてください。"
+      },
+      "businessDocuments": {
+        "title": "事業書類アップロード",
+        "description": "事業の商業登記簿、最新の銀行取引明細書、請求書証明をアップロードしてください。"
+      },
       "review": {
         "title": "確認・提出",
         "description": "提出前に情報を確認してください"
@@ -338,6 +358,7 @@
     "fields": {
       "firstName": "名",
       "lastName": "姓",
+      "companyName": "会社名",
       "birthday": "生年月日",
       "gender": "性別",
       "nationality": "国籍",
@@ -348,7 +369,10 @@
       "postalCode": "郵便番号",
       "idFront": "身分証明書（表面）",
       "idBack": "身分証明書（裏面）",
-      "selfiePhoto": "セルフィー写真"
+      "selfiePhoto": "セルフィー写真",
+      "commercialRegister": "商業登記簿",
+      "bankStatement": "銀行取引明細書",
+      "proofOfBilling": "請求書証明"
     },
     "placeholders": {
       "firstName": "名を入力してください",
@@ -362,7 +386,10 @@
     "hints": {
       "idFront": "政府発行の身分証明書の表面の鮮明な写真をアップロードしてください",
       "idBack": "政府発行の身分証明書の裏面の鮮明な写真をアップロードしてください",
-      "selfiePhoto": "認証用の鮮明なセルフィー写真を撮影してください"
+      "selfiePhoto": "認証用の鮮明なセルフィー写真を撮影してください",
+      "commercialRegister": "事業の商業登記簿書類の鮮明な写真またはスキャンをアップロードしてください。",
+      "bankStatement": "事業口座の詳細が記載された最新の銀行取引明細書をアップロードしてください。",
+      "proofOfBilling": "事業所住所が記載された最新の公共料金請求書または類似書類をアップロードしてください。"
     },
     "options": {
       "gender": {
@@ -422,6 +449,8 @@
       "personalInfo": "個人情報",
       "addressInfo": "住所情報",
       "documents": "書類",
+      "personalDocuments": "個人書類",
+      "businessDocuments": "事業書類",
       "name": "名前：",
       "birthday": "生年月日：",
       "gender": "性別：",
@@ -433,7 +462,10 @@
       "postalCode": "郵便番号：",
       "idFront": "身分証明書（表面）",
       "idBack": "身分証明書（裏面）",
-      "selfiePhoto": "セルフィー写真"
+      "selfiePhoto": "セルフィー写真",
+      "commercialRegister": "商業登記簿",
+      "bankStatement": "銀行取引明細書",
+      "proofOfBilling": "請求書証明"
     },
     "status": {
       "uploading": "書類アップロード中",
@@ -520,7 +552,92 @@
       "authenticationError": "認証エラー"
     },
     "characterCount": "{current}/{max}",
-    "currencySymbol": "₱"
+    "currencySymbol": "₱",
+    "steps": {
+      "step1": {
+        "title": "残高タイプを選択",
+        "subtitle": "送金に使用する残高を選択"
+      },
+      "step2": {
+        "title": "送金詳細",
+        "subtitle": "受取人と金額を入力"
+      },
+      "step3": {
+        "title": "送金確認",
+        "subtitle": "送金詳細を確認"
+      },
+      "progress": "ステップ {current}/3"
+    },
+    "balanceOptions": {
+      "available": {
+        "title": "利用可能残高",
+        "subtitle": "メインウォレット残高"
+      },
+      "agent": {
+        "title": "エージェントウォレット",
+        "subtitle": "コミッション収益"
+      },
+      "availableBadge": "利用可能",
+      "insufficientBadge": "不足"
+    },
+    "inputs": {
+      "recipientAccountNumber": "受取人口座番号",
+      "amount": "金額",
+      "description": "説明（任意）",
+      "descriptionPlaceholder": "メモを追加...",
+      "accountNumberPlaceholder": "口座番号を入力",
+      "availableBalance": "利用可能: PHP {amount}"
+    },
+    "confirmation": {
+      "to": "送信先",
+      "from": "送信元",
+      "amountToTransfer": "送金額",
+      "currentBalance": "現在の残高",
+      "transferAmount": "送金額",
+      "newBalance": "新しい残高"
+    },
+    "quickActions": {
+      "myQR": "マイQR",
+      "scanQR": "QRスキャン",
+      "contacts": "連絡先"
+    },
+    "qrModal": {
+      "title": "マイQRコード",
+      "subtitle": "このQRコードを共有して、他の人があなたにお金を送金できるようにします",
+      "shareButton": "QRコードを共有",
+      "note": "このQRコードには、送金を受信するためのアカウント情報が含まれています",
+      "secureTransferCode": "安全な送金コード"
+    },
+    "contacts": {
+      "title": "保存された連絡先",
+      "showContacts": "連絡先を非表示",
+      "hideContacts": "連絡先を表示",
+      "noContacts": "保存された連絡先はまだありません",
+      "noContactsSubtext": "連絡先は送金後に自動的に保存されます",
+      "deleteContact": "連絡先を削除",
+      "deleteConfirm": "{name}を削除してもよろしいですか？",
+      "deleteError": "連絡先の削除に失敗しました。もう一度お試しください。"
+    },
+    "errors": {
+      "selectBalanceType": "続行するには残高タイプを選択してください",
+      "enterAccountNumber": "口座番号を入力してください",
+      "invalidAccountNumberFormat": "無効な口座番号形式",
+      "cannotTransferToSelf": "自分のアカウントに送金することはできません",
+      "enterValidAmount": "有効な金額を入力してください",
+      "insufficientBalanceAvailable": "残高不足。利用可能: PHP {amount}",
+      "accountNotFound": "アカウントが見つかりません",
+      "contactAccountNotFound": "連絡先アカウントが見つかりません",
+      "errorLoadingContact": "連絡先の読み込みエラー",
+      "sharingNotAvailable": "共有が利用できません",
+      "sharingNotAvailableMessage": "このデバイスでは共有が利用できません。",
+      "shareFailed": "共有に失敗しました",
+      "shareFailedMessage": "QRコードを共有できません。もう一度お試しください。"
+    },
+    "navigation": {
+      "back": "戻る",
+      "continue": "続ける",
+      "confirmAndSend": "確認して送信"
+    }
   },
   "buyCards": {
     "header": {
@@ -1427,8 +1544,8 @@
       "depositRequest": "入金リクエスト",
       "depositInstructions": "入金をリクエストするには、以下のフォームに記入してください。保証されたリターンのための定期預金（最低₱50,000）または市場機会のための株式投資（最低₱2,000,000）から選択してください。",
       "investmentDetails": "投資詳細",
-      "investmentType": "投資タイプ",
-      "selectInvestmentType": "投資タイプを選択 *",
+      "investmentType": "入金タイプ",
+      "selectInvestmentType": "入金タイプを選択 *",
       "chooseInvestmentType": "投資タイプを選択してください",
       "contractPeriod": "契約期間 *",
       "selectContractDuration": "契約期間を選択",
@@ -1453,13 +1570,31 @@
       "minimumTimeDeposit": "定期預金の最低₱50,000",
       "minimum": "最低: {amount}",
       "selectCurrency": "通貨を選択",
-      "selectInvestmentTypeModal": "投資タイプを選択",
+      "selectInvestmentTypeModal": "入金タイプを選択",
       "selectContractPeriod": "契約期間を選択",
       "timeDeposit": "定期預金",
       "stockInvestment": "株式投資",
+      "topUpAvailableBalance": "利用可能残高の追加",
       "sixMonthsContract": "6ヶ月契約",
       "oneYearContract": "1年契約",
-      "twoYearsContract": "2年契約"
+      "twoYearsContract": "2年契約",
+      "depositMethod": "入金方法",
+      "requestAmount": "金額をリクエスト",
+      "useAvailableBalance": "利用可能残高を使用",
+      "availableBalance": "利用可能残高",
+      "enterAmountFromBalance": "利用可能残高から金額を入力",
+      "insufficientBalance": "金額が利用可能残高を超えています",
+      "step": "ステップ",
+      "of": "/",
+      "back": "戻る",
+      "continue": "続ける",
+      "confirmSubmit": "確認して送信",
+      "reviewConfirm": "確認と確認",
+      "reviewDetails": "入金詳細を確認してください",
+      "selectDepositMethod": "入金方法を選択してください",
+      "stockInvestmentStep2": "投資詳細を確認して続行",
+      "stockInvestmentTitle": "株式投資",
+      "stockInvestmentInfo": "株式投資の入金を行おうとしています。次のステップで投資金額を入力してください。"
     },
     "modals": {
       "missingInformation": {
@@ -1478,9 +1613,21 @@
         "title": "リクエスト送信済み",
         "message": "入金リクエストが正常に送信されました！銀行口座詳細についてはメールをご確認ください。"
       },
+      "depositRequestSubmitted": {
+        "title": "リクエスト送信済み",
+        "message": "入金リクエストが正常に送信されました！銀行口座詳細についてはメールをご確認ください。"
+      },
       "submissionFailed": {
         "title": "送信失敗",
         "message": "リクエストの送信に失敗しました。もう一度お試しください。"
+      },
+      "insufficientBalance": {
+        "title": "残高不足",
+        "message": "入力した金額が利用可能残高を超えています。より少ない金額を入力してください。"
+      },
+      "depositCreated": {
+        "title": "預金が作成されました",
+        "message": "利用可能残高を使用して定期預金が正常に作成されました！"
       }
     }
   },
@@ -1982,7 +2129,9 @@
       "selectWithdrawalType": "出金タイプを選択 *",
       "chooseWithdrawalType": "出金タイプを選択",
       "availableBalance": "利用可能残高",
+      "availableBalanceDesc": "利用可能残高から出金",
       "agentWithdrawal": "エージェント出金",
+      "agentWithdrawalDesc": "エージェントウォレットから出金",
       "withdrawalAmount": "出金額 (₱) *",
       "enterWithdrawalAmount": "出金額を入力",
       "availableBalanceInfo": "利用可能残高: ₱{amount}",
@@ -2004,7 +2153,32 @@
       "securityText": "🔒 銀行情報は暗号化され安全です\n⏱️ 処理時間: 1-2営業日\n📧 確認メールが送信されます\n✅ すべての出金は処理前に検証されます",
       "submitWithdrawalRequest": "出金リクエストを送信",
       "submitting": "送信中...",
-      "insufficientBalance": "残高不足"
+      "insufficientBalance": "残高不足",
+      "selectWithdrawalMethod": "出金方法を選択",
+      "chooseWithdrawalMethod": "出金方法を選択してください",
+      "localBank": "地銀",
+      "localBankDesc": "地銀口座に出金",
+      "eWallet": "電子ウォレット",
+      "eWalletDesc": "GCashまたはMayaに出金",
+      "selectEWalletType": "電子ウォレットタイプを選択",
+      "chooseEWalletType": "希望の電子ウォレットを選択",
+      "enterBankingDetails": "銀行情報を入力",
+      "enterAmountAndContact": "出金額と連絡先情報を入力",
+      "walletInformation": "ウォレット情報",
+      "enterWalletDetails": "電子ウォレットアカウントの詳細を入力",
+      "walletAccountNumber": "ウォレットアカウント番号",
+      "walletAccountNumberPlaceholder": "ウォレットアカウント番号を入力",
+      "walletAccountName": "ウォレットアカウント名",
+      "walletAccountNamePlaceholder": "ウォレットアカウント所有者名を入力",
+      "withdrawalMethod": "出金方法",
+      "eWalletType": "電子ウォレットタイプ",
+      "reviewConfirm": "確認と確認",
+      "reviewDetails": "出金詳細を確認",
+      "step": "ステップ",
+      "of": "の",
+      "back": "戻る",
+      "continue": "続行",
+      "confirmSubmit": "確認して送信"
     },
     "modals": {
       "accessRestricted": "アクセス制限",
@@ -2196,6 +2370,7 @@
       }
     },
     "general": {
+      "notAvailable": "該当なし",
       "login": {
         "title": "サインイン中",
         "subtitle": "Inspire Walletにアクセス中",
@@ -2205,6 +2380,16 @@
         "title": "アカウント作成中",
         "subtitle": "Inspire Walletをセットアップ中",
         "status": "お待ちください..."
+      },
+      "passcode": {
+        "title": "パスコード更新中",
+        "subtitle": "アカウントを保護中",
+        "status": "お待ちください..."
+      },
+      "createPasscode": {
+        "title": "パスコード作成中",
+        "subtitle": "パスコードを設定している間、お待ちください",
+        "status": "パスコード作成中..."
       },
       "default": {
         "title": "読み込み中...",

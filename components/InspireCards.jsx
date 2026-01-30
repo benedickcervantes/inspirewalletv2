@@ -26,6 +26,7 @@ export default function InspCard({ selectedCardId = "default" }) {
   const flipAnim = useRef(new Animated.Value(0)).current;
   const [isFlipped, setIsFlipped] = useState(false);
   const [userName, setUserName] = useState("");
+  const [companyName, setCompanyName] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
   const [availBalance, setAvailBalance] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -164,6 +165,7 @@ export default function InspCard({ selectedCardId = "default" }) {
     const user = auth.currentUser;
     if (!user) {
       setUserName("");
+      setCompanyName("");
       setAccountNumber("");
       setAvailBalance(0);
       setLoading(false);
@@ -183,6 +185,7 @@ export default function InspCard({ selectedCardId = "default" }) {
               (data.firstName || "") +
               (data.lastName ? ` ${data.lastName}` : "");
             setUserName(name.trim());
+            setCompanyName(data.company || "");
             setAccountNumber(data.accountNumber || "");
             setAvailBalance(data.availBalanceAmount ?? 0);
             // console.log("🎴 InspireCards real-time update:", {
@@ -193,12 +196,14 @@ export default function InspCard({ selectedCardId = "default" }) {
             // });
           } else {
             setUserName("");
+            setCompanyName("");
             setAccountNumber("");
             setAvailBalance(0);
           }
         } catch (e) {
           // console.error("❌ Error in InspireCards real-time listener:", e);
           setUserName("");
+          setCompanyName("");
           setAccountNumber("");
           setAvailBalance(0);
         } finally {
@@ -208,6 +213,7 @@ export default function InspCard({ selectedCardId = "default" }) {
       (error) => {
         // console.error("❌ InspireCards listener error:", error);
         setUserName("");
+        setCompanyName("");
         setAccountNumber("");
         setAvailBalance(0);
         setLoading(false);
@@ -522,6 +528,19 @@ export default function InspCard({ selectedCardId = "default" }) {
         marginBottom: spacing.nameMarginBottom,
         lineHeight: textSizes.nameSize * 1.1,
       },
+      overlayCompany: {
+        color: textColor,
+        fontWeight: Platform.OS === "ios" ? "700" : "bold",
+        fontSize: textSizes.nameSize,
+        fontFamily: "BebasNeue-Regular",
+        textTransform: "uppercase",
+        textShadowColor: textShadowColor,
+        textShadowOffset: { width: 2, height: 2 },
+        textShadowRadius: deviceType.includes("tablet") ? 6 : 3,
+        zIndex: 10,
+        marginBottom: spacing.nameMarginBottom,
+        lineHeight: textSizes.nameSize * 1.1,
+      },
       overlayBalanceName: {
         color: textColor,
         fontWeight: Platform.OS === "ios" ? "600" : "bold",
@@ -599,6 +618,10 @@ export default function InspCard({ selectedCardId = "default" }) {
                     )}
                     {/* Name above 'founder ceo' */}
                     <Text style={styles.overlayName}>{userName}</Text>
+                    {/* Company name below user name if exists */}
+                    {companyName && (
+                      <Text style={styles.overlayCompany}>{companyName}</Text>
+                    )}
                     {/* Balance above 'hello@reallygreatsite.com' */}
                     <Text style={[styles.overlayBalanceName, getRTLStyles(userLanguage)]}>
                       {t(userLanguage, "inspireCards.content.availableBalance")}

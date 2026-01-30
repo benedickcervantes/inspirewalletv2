@@ -540,9 +540,23 @@ const Crypto = () => {
     fetchUserLanguage();
   }, []);
 
+  // Set header options immediately - don't wait for async operations
+  useEffect(() => {
+    navigation.setOptions({
+      headerShown: true,
+      headerTitle: t(userLanguage, 'crypto.header.title'),
+      headerTransparent: true,
+      headerTintColor: Colors.redTheme.background,
+      headerTitleStyle: {
+        fontWeight: "bold",
+        fontSize: 18,
+      },
+    });
+  }, [navigation, userLanguage]);
+
   useEffect(() => {
     checkAccessAndInitialize();
-  }, [selectedCrypto, timeRange, navigation, userLanguage]);
+  }, [selectedCrypto, timeRange, userLanguage]);
 
   const fetchUserLanguage = async () => {
     try {
@@ -606,16 +620,6 @@ const Crypto = () => {
       fetchCryptoBalances();
       fetchForexBalances();
       fetchForexRates();
-      navigation.setOptions({
-        headerShown: true,
-        headerTitle: t(userLanguage, 'crypto.header.title'),
-        headerTransparent: true,
-        headerTintColor: Colors.redTheme.background,
-        headerTitleStyle: {
-          fontWeight: "bold",
-          fontSize: 18,
-        },
-      });
     } catch (error) {
       console.error("Error checking account access:", error);
       showModal({
@@ -1655,12 +1659,13 @@ const Crypto = () => {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <>
       <StatusBar barStyle="dark-content" />
       <ImageBackground
         source={require("../../assets/images/bg2.png")}
         style={styles.container}
       >
+        <SafeAreaView style={styles.androidSafeArea} />
         {renderInstructions()}
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -2187,29 +2192,29 @@ const Crypto = () => {
           cancelText={modalConfig.cancelText}
         />
       </ImageBackground>
-    </SafeAreaView>
+    </>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
   container: {
     flex: 1,
+  },
+  androidSafeArea: {
+    paddingTop: Platform.OS === "android" ? 80 : 0,
+    opacity: 0,
   },
   scrollView: {
     flex: 1,
   },
   scrollViewContent: {
-    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
+    flexGrow: 1,
     paddingBottom: 20,
   },
   // Modern Header Styles
   modernHeader: {
     padding: 20,
-    paddingTop: Platform.OS === "android" ? 20 : 10,
+    paddingTop: Platform.OS === "android" ? 20 : 20,
   },
   headerRow: {
     flexDirection: "row",

@@ -15,6 +15,7 @@ import {
   ScrollView,
   ActivityIndicator,
   Modal,
+  Dimensions,
 } from "react-native";
 import { useNavigation } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -38,6 +39,9 @@ import { t } from "../../utils/languageUtils";
 import { getRTLStyles } from "../../utils/rtlUtils";
 import { playWithdrawalSound } from "../../utils/soundUtils";
 
+const { width } = Dimensions.get("window");
+const isSmallDevice = width < 375;
+
 export default function Index() {
   const navigation = useNavigation();
   const db = getFirestore();
@@ -49,35 +53,66 @@ export default function Index() {
   });
   const [userLanguage, setUserLanguage] = useState("english");
   const [open, setOpen] = useState(false);
-  const [type, setType] = useState(null);
+  const [withdrawalType, setWithdrawalType] = useState(null); // "Available Balance" or "Agent Withdrawal"
+  const [withdrawalMethod, setWithdrawalMethod] = useState(null); // "Local Bank" or "EWallet"
+  const [ewalletType, setEwalletType] = useState(null); // "Gcash" or "Maya"
   const [loading, setLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isMaintenanceMode, setIsMaintenanceMode] = useState(false);
   const { modalVisible, modalConfig, showModal, hideModal } = useModal();
 
-  // Add modal state for withdrawal type
-  const [withdrawalTypeModalVisible, setWithdrawalTypeModalVisible] =
-    useState(false);
+  // Step-based navigation state
+  const [currentStep, setCurrentStep] = useState(1);
 
-  // Define withdrawal type options
+  // Define withdrawal type options (Step 1)
   const withdrawalTypeOptions = [
     {
       label: t(userLanguage, "withdrawalRequest.content.availableBalance"),
       value: "Available Balance",
-      icon: () => (
-        <Ionicons name="wallet" size={20} color={Colors.redTheme.background} />
+      icon: "wallet",
+      description: t(
+        userLanguage,
+        "withdrawalRequest.content.availableBalanceDesc"
       ),
     },
     {
       label: t(userLanguage, "withdrawalRequest.content.agentWithdrawal"),
       value: "Agent Withdrawal",
-      icon: () => (
-        <Ionicons
-          name="person-circle"
-          size={20}
-          color={Colors.redTheme.background}
-        />
+      icon: "person-circle",
+      description: t(
+        userLanguage,
+        "withdrawalRequest.content.agentWithdrawalDesc"
       ),
+    },
+  ];
+
+  // Define withdrawal method options (Step 2)
+  const withdrawalMethodOptions = [
+    {
+      label: t(userLanguage, "withdrawalRequest.content.localBank"),
+      value: "Local Bank",
+      icon: "business",
+      description: t(userLanguage, "withdrawalRequest.content.localBankDesc"),
+    },
+    {
+      label: t(userLanguage, "withdrawalRequest.content.eWallet"),
+      value: "EWallet",
+      icon: "wallet",
+      description: t(userLanguage, "withdrawalRequest.content.eWalletDesc"),
+    },
+  ];
+
+  // Define EWallet type options (Step 2 for EWallet)
+  const ewalletTypeOptions = [
+    {
+      label: "GCash",
+      value: "Gcash",
+      icon: "phone-portrait",
+    },
+    {
+      label: "Maya",
+      value: "Maya",
+      icon: "card",
     },
   ];
 
@@ -213,23 +248,148 @@ export default function Index() {
     }
   };
 
-  const [amount, setAmount] = useState();
-  const [emailAddress, setEmailAddress] = useState();
-  const [bankAccountNumber, setBankAccountNumber] = useState();
-  const [bankAccountName, setBankAccountName] = useState();
-  const [bankName, setBankName] = useState();
-  const [branchName, setBranchName] = useState();
+  const [amount, setAmount] = useState("");
+  const [emailAddress, setEmailAddress] = useState("");
+  const [bankAccountNumber, setBankAccountNumber] = useState("");
+  const [bankAccountName, setBankAccountName] = useState("");
+  const [bankName, setBankName] = useState("");
+  const [branchName, setBranchName] = useState("");
+  // EWallet fields
+  const [ewalletAccountNumber, setEwalletAccountNumber] = useState("");
+  const [ewalletAccountName, setEwalletAccountName] = useState("");
+
+  // Step navigation functions
+  const goToNextStep = () => {
+    if (currentStep === 1) {
+      // Step 1: Validate withdrawal type selection
+      if (!withdrawalType) {
+        showModal({
+          title: t(userLanguage, "withdrawalRequest.modals.missingInformation"),
+          message: t(userLanguage, "withdrawalRequest.modals.fillAllFields"),
+          type: "warning",
+        });
+        return;
+      }
+      setCurrentStep(2);
+    } else if (currentStep === 2) {
+      // Step 2: Validate withdrawal method selection
+      if (!withdrawalMethod) {
+        showModal({
+          title: t(userLanguage, "withdrawalRequest.modals.missingInformation"),
+          message: t(userLanguage, "withdrawalRequest.modals.fillAllFields"),
+          type: "warning",
+        });
+        return;
+      }
+      setCurrentStep(3);
+    } else if (currentStep === 3) {
+      // Step 3: Validate banking/wallet information
+      if (withdrawalMethod === "Local Bank") {
+        // Validate banking information
+        if (
+          !bankAccountNumber ||
+          !bankAccountName ||
+          !bankName ||
+          !branchName
+        ) {
+          showModal({
+            title: t(
+              userLanguage,
+              "withdrawalRequest.modals.missingInformation"
+            ),
+            message: t(userLanguage, "withdrawalRequest.modals.fillAllFields"),
+            type: "warning",
+          });
+          return;
+        }
+      } else if (withdrawalMethod === "EWallet") {
+        // Validate EWallet type selection and wallet account info
+        if (!ewalletType || !ewalletAccountNumber || !ewalletAccountName) {
+          showModal({
+            title: t(
+              userLanguage,
+              "withdrawalRequest.modals.missingInformation"
+            ),
+            message: t(userLanguage, "withdrawalRequest.modals.fillAllFields"),
+            type: "warning",
+          });
+          return;
+        }
+      }
+      setCurrentStep(4);
+    } else if (currentStep === 4) {
+      // Step 4: Validate amount and contact info (for both Local Bank and EWallet)
+      if (!amount || !emailAddress) {
+        showModal({
+          title: t(userLanguage, "withdrawalRequest.modals.missingInformation"),
+          message: t(userLanguage, "withdrawalRequest.modals.fillAllFields"),
+          type: "warning",
+        });
+        return;
+      }
+      setCurrentStep(5);
+    }
+  };
+
+  const goToPreviousStep = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  const resetForm = () => {
+    setWithdrawalType(null);
+    setWithdrawalMethod(null);
+    setEwalletType(null);
+    setAmount("");
+    setEmailAddress("");
+    setBankAccountNumber("");
+    setBankAccountName("");
+    setBankName("");
+    setBranchName("");
+    setEwalletAccountNumber("");
+    setEwalletAccountName("");
+    setCurrentStep(1);
+  };
 
   const onSubmit = async () => {
-    if (
-      !amount ||
-      !emailAddress ||
-      !bankAccountName ||
-      !bankAccountNumber ||
-      !bankName ||
-      !branchName ||
-      !type
-    ) {
+    // Validate based on withdrawal method
+    if (withdrawalMethod === "Local Bank") {
+      if (
+        !amount ||
+        !emailAddress ||
+        !bankAccountName ||
+        !bankAccountNumber ||
+        !bankName ||
+        !branchName ||
+        !withdrawalMethod ||
+        !withdrawalType
+      ) {
+        showModal({
+          title: t(userLanguage, "withdrawalRequest.modals.missingInformation"),
+          message: t(userLanguage, "withdrawalRequest.modals.fillAllFields"),
+          type: "warning",
+        });
+        return;
+      }
+    } else if (withdrawalMethod === "EWallet") {
+      if (
+        !amount ||
+        !emailAddress ||
+        !ewalletAccountNumber ||
+        !ewalletAccountName ||
+        !ewalletType ||
+        !withdrawalMethod ||
+        !withdrawalType
+      ) {
+        showModal({
+          title: t(userLanguage, "withdrawalRequest.modals.missingInformation"),
+          message: t(userLanguage, "withdrawalRequest.modals.fillAllFields"),
+          type: "warning",
+        });
+        return;
+      }
+    } else {
       showModal({
         title: t(userLanguage, "withdrawalRequest.modals.missingInformation"),
         message: t(userLanguage, "withdrawalRequest.modals.fillAllFields"),
@@ -265,8 +425,8 @@ export default function Index() {
         return;
       }
 
-      // Check available balance for "Available Balance" withdrawal type
-      if (type === "Available Balance") {
+      // Check balance based on withdrawal type
+      if (withdrawalType === "Available Balance") {
         const availableBalance = userData.availBalanceAmount || 0;
         if (withdrawalAmount > availableBalance) {
           showModal({
@@ -280,12 +440,10 @@ export default function Index() {
             ).replace("{amount}", availableBalance.toLocaleString()),
             type: "error",
           });
+          setIsSubmitting(false);
           return;
         }
-      }
-
-      // Check agent wallet balance for "Agent Withdrawal" type
-      if (type === "Agent Withdrawal") {
+      } else if (withdrawalType === "Agent Withdrawal") {
         const agentWalletBalance = userData.agentWalletAmount || 0;
         if (withdrawalAmount > agentWalletBalance) {
           showModal({
@@ -299,6 +457,7 @@ export default function Index() {
             ).replace("{amount}", agentWalletBalance.toLocaleString()),
             type: "error",
           });
+          setIsSubmitting(false);
           return;
         }
       }
@@ -311,18 +470,28 @@ export default function Index() {
         userEmail: user.email,
 
         // Withdrawal details
-        withdrawalType: type,
+        withdrawalType: withdrawalType, // "Available Balance" or "Agent Withdrawal"
+        withdrawalMethod: withdrawalMethod, // "Local Bank" or "EWallet"
+        ewalletType: withdrawalMethod === "EWallet" ? ewalletType : null, // "Gcash" or "Maya"
         amount: withdrawalAmount,
         currency: "PHP",
 
         // Contact information
         emailAddress: emailAddress,
 
-        // Banking information
-        bankAccountNumber: bankAccountNumber,
-        bankAccountName: bankAccountName,
-        bankName: bankName,
-        branchName: branchName,
+        // Banking information (for Local Bank)
+        bankAccountNumber:
+          withdrawalMethod === "Local Bank" ? bankAccountNumber : "",
+        bankAccountName:
+          withdrawalMethod === "Local Bank" ? bankAccountName : "",
+        bankName: withdrawalMethod === "Local Bank" ? bankName : "",
+        branchName: withdrawalMethod === "Local Bank" ? branchName : "",
+
+        // EWallet information (for EWallet)
+        ewalletAccountNumber:
+          withdrawalMethod === "EWallet" ? ewalletAccountNumber : "",
+        ewalletAccountName:
+          withdrawalMethod === "EWallet" ? ewalletAccountName : "",
 
         // Request metadata
         requestType: "Withdrawal Request",
@@ -355,16 +524,24 @@ export default function Index() {
       );
 
       // Send email notification
+      let emailMessage = `Name: ${userData.firstName} ${
+        userData.lastName
+      }\nAmount: ₱${withdrawalAmount.toLocaleString()}\nEmail Address: ${emailAddress}\nWithdrawal Type: ${withdrawalType}\nWithdrawal Method: ${withdrawalMethod}\n`;
+
+      if (withdrawalMethod === "Local Bank") {
+        emailMessage += `Bank Account Number: ${bankAccountNumber}\nBank Account Holder Name: ${bankAccountName}\nBank Name: ${bankName}\nBank Branch Name: ${branchName}\n`;
+      } else if (withdrawalMethod === "EWallet") {
+        emailMessage += `E-Wallet Type: ${ewalletType}\nE-Wallet Account Number: ${ewalletAccountNumber}\nE-Wallet Account Name: ${ewalletAccountName}\n`;
+      }
+
+      emailMessage += `Request ID: ${userWithdrawalRef.id}`;
+
       await send(
         process.env.EXPO_PUBLIC_SERVICE_ID,
         process.env.EXPO_PUBLIC_TEMPLATE_ID,
         {
           emailAddress,
-          message: `Name: ${userData.firstName} ${
-            userData.lastName
-          }\nAmount: ₱${withdrawalAmount.toLocaleString()}\nEmail Address: ${emailAddress}\nBank Account Number: ${bankAccountNumber}\nBank Account Holder Name: ${bankAccountName}\nBank Name: ${bankName}\nBank Branch Name: ${branchName}\nType: ${type}\nRequest ID: ${
-            userWithdrawalRef.id
-          }`,
+          message: emailMessage,
         },
         {
           publicKey: process.env.EXPO_PUBLIC_API_KEY,
@@ -386,13 +563,8 @@ export default function Index() {
       });
 
       // Reset form after successful submission
-      setAmount("");
-      setEmailAddress("");
-      setBankAccountNumber("");
-      setBankAccountName("");
-      setBankName("");
-      setBranchName("");
-      setType(null);
+      resetForm();
+      setIsSubmitting(false);
     } catch (err) {
       console.error("Error submitting withdrawal request:", err);
 
@@ -421,6 +593,867 @@ export default function Index() {
     }
   };
 
+  // Render Step Content
+  const renderStepContent = () => {
+    switch (currentStep) {
+      case 1:
+        // Step 1: Select Withdrawal Type (Available Balance or Agent Withdrawal)
+        return (
+          <View style={styles.stepContainer}>
+            <View style={styles.stepHeader}>
+              <View style={styles.stepIconCircle}>
+                <Ionicons name="wallet" size={32} color="white" />
+              </View>
+              <Text style={[styles.stepTitle, getRTLStyles(userLanguage)]}>
+                {t(
+                  userLanguage,
+                  "withdrawalRequest.content.selectWithdrawalType"
+                )}
+              </Text>
+              <Text style={[styles.stepSubtitle, getRTLStyles(userLanguage)]}>
+                {t(
+                  userLanguage,
+                  "withdrawalRequest.content.chooseWithdrawalType"
+                )}
+              </Text>
+            </View>
+
+            <View style={styles.investmentOptionsContainer}>
+              {withdrawalTypeOptions.map((option) => (
+                <TouchableOpacity
+                  key={option.value}
+                  style={[
+                    styles.investmentOption,
+                    withdrawalType === option.value &&
+                      styles.investmentOptionSelected,
+                  ]}
+                  onPress={() => setWithdrawalType(option.value)}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.investmentOptionContent}>
+                    <View style={styles.investmentOptionLeft}>
+                      <View
+                        style={[
+                          styles.investmentOptionIconContainer,
+                          withdrawalType === option.value &&
+                            styles.investmentOptionIconContainerSelected,
+                        ]}
+                      >
+                        <Ionicons
+                          name={option.icon}
+                          size={28}
+                          color={
+                            withdrawalType === option.value
+                              ? "white"
+                              : Colors.redTheme.background
+                          }
+                        />
+                      </View>
+                      <View style={styles.investmentOptionInfo}>
+                        <Text
+                          style={[
+                            styles.investmentOptionTitle,
+                            withdrawalType === option.value &&
+                              styles.investmentOptionTitleSelected,
+                            getRTLStyles(userLanguage),
+                          ]}
+                        >
+                          {option.label}
+                        </Text>
+                        <Text
+                          style={[
+                            styles.investmentOptionSubtitle,
+                            getRTLStyles(userLanguage),
+                          ]}
+                        >
+                          {option.description}
+                        </Text>
+                        {withdrawalType === option.value &&
+                          option.value === "Available Balance" && (
+                            <Text
+                              style={[
+                                styles.balanceInfoText,
+                                getRTLStyles(userLanguage),
+                                { marginTop: 8 },
+                              ]}
+                            >
+                              {t(
+                                userLanguage,
+                                "withdrawalRequest.content.availableBalanceInfo"
+                              ).replace(
+                                "{amount}",
+                                (
+                                  userData.availBalanceAmount || 0
+                                ).toLocaleString()
+                              )}
+                            </Text>
+                          )}
+                        {withdrawalType === option.value &&
+                          option.value === "Agent Withdrawal" && (
+                            <Text
+                              style={[
+                                styles.balanceInfoText,
+                                getRTLStyles(userLanguage),
+                                { marginTop: 8 },
+                              ]}
+                            >
+                              {t(
+                                userLanguage,
+                                "withdrawalRequest.content.agentWalletBalanceInfo"
+                              ).replace(
+                                "{amount}",
+                                (
+                                  userData.agentWalletAmount || 0
+                                ).toLocaleString()
+                              )}
+                            </Text>
+                          )}
+                      </View>
+                    </View>
+                    <View
+                      style={[
+                        styles.radioButton,
+                        withdrawalType === option.value &&
+                          styles.radioButtonSelected,
+                      ]}
+                    >
+                      {withdrawalType === option.value && (
+                        <Ionicons name="checkmark" size={16} color="white" />
+                      )}
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        );
+
+      case 2:
+        // Step 2: Select Withdrawal Method (Local Bank or EWallet)
+        return (
+          <View style={styles.stepContainer}>
+            <View style={styles.stepHeader}>
+              <View style={styles.stepIconCircle}>
+                <Ionicons name="card" size={32} color="white" />
+              </View>
+              <Text style={[styles.stepTitle, getRTLStyles(userLanguage)]}>
+                {t(
+                  userLanguage,
+                  "withdrawalRequest.content.selectWithdrawalMethod"
+                )}
+              </Text>
+              <Text style={[styles.stepSubtitle, getRTLStyles(userLanguage)]}>
+                {t(
+                  userLanguage,
+                  "withdrawalRequest.content.chooseWithdrawalMethod"
+                )}
+              </Text>
+            </View>
+
+            <View style={styles.investmentOptionsContainer}>
+              {withdrawalMethodOptions.map((option) => (
+                <TouchableOpacity
+                  key={option.value}
+                  style={[
+                    styles.investmentOption,
+                    withdrawalMethod === option.value &&
+                      styles.investmentOptionSelected,
+                  ]}
+                  onPress={() => setWithdrawalMethod(option.value)}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.investmentOptionContent}>
+                    <View style={styles.investmentOptionLeft}>
+                      <View
+                        style={[
+                          styles.investmentOptionIconContainer,
+                          withdrawalMethod === option.value &&
+                            styles.investmentOptionIconContainerSelected,
+                        ]}
+                      >
+                        <Ionicons
+                          name={option.icon}
+                          size={28}
+                          color={
+                            withdrawalMethod === option.value
+                              ? "white"
+                              : Colors.redTheme.background
+                          }
+                        />
+                      </View>
+                      <View style={styles.investmentOptionInfo}>
+                        <Text
+                          style={[
+                            styles.investmentOptionTitle,
+                            withdrawalMethod === option.value &&
+                              styles.investmentOptionTitleSelected,
+                            getRTLStyles(userLanguage),
+                          ]}
+                        >
+                          {option.label}
+                        </Text>
+                        <Text
+                          style={[
+                            styles.investmentOptionSubtitle,
+                            getRTLStyles(userLanguage),
+                          ]}
+                        >
+                          {option.description}
+                        </Text>
+                      </View>
+                    </View>
+                    <View
+                      style={[
+                        styles.radioButton,
+                        withdrawalMethod === option.value &&
+                          styles.radioButtonSelected,
+                      ]}
+                    >
+                      {withdrawalMethod === option.value && (
+                        <Ionicons name="checkmark" size={16} color="white" />
+                      )}
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        );
+
+      case 3:
+        // Step 2: Banking Information (Local Bank) OR EWallet Type Selection (EWallet)
+        if (withdrawalMethod === "Local Bank") {
+          return (
+            <View style={styles.stepContainer}>
+              <View style={styles.stepHeader}>
+                <Ionicons
+                  name="business-outline"
+                  size={48}
+                  color={Colors.redTheme.background}
+                />
+                <Text style={[styles.stepTitle, getRTLStyles(userLanguage)]}>
+                  {t(
+                    userLanguage,
+                    "withdrawalRequest.content.bankingInformation"
+                  )}
+                </Text>
+                <Text style={[styles.stepSubtitle, getRTLStyles(userLanguage)]}>
+                  {t(
+                    userLanguage,
+                    "withdrawalRequest.content.enterBankingDetails"
+                  )}
+                </Text>
+              </View>
+
+              <View style={styles.inputSection}>
+                <Text style={[styles.inputLabel, getRTLStyles(userLanguage)]}>
+                  <Ionicons
+                    name="card-outline"
+                    size={16}
+                    color={Colors.redTheme.background}
+                  />{" "}
+                  {t(
+                    userLanguage,
+                    "withdrawalRequest.content.bankAccountNumber"
+                  )}
+                </Text>
+                <TextInput
+                  style={[styles.input, getRTLStyles(userLanguage)]}
+                  placeholder={t(
+                    userLanguage,
+                    "withdrawalRequest.content.bankAccountNumberPlaceholder"
+                  )}
+                  placeholderTextColor="#999"
+                  keyboardType="numeric"
+                  value={bankAccountNumber}
+                  onChangeText={setBankAccountNumber}
+                />
+              </View>
+
+              <View style={styles.inputSection}>
+                <Text style={[styles.inputLabel, getRTLStyles(userLanguage)]}>
+                  <Ionicons
+                    name="person-outline"
+                    size={16}
+                    color={Colors.redTheme.background}
+                  />{" "}
+                  {t(
+                    userLanguage,
+                    "withdrawalRequest.content.accountHolderName"
+                  )}
+                </Text>
+                <TextInput
+                  style={[styles.input, getRTLStyles(userLanguage)]}
+                  placeholder={t(
+                    userLanguage,
+                    "withdrawalRequest.content.accountHolderNamePlaceholder"
+                  )}
+                  placeholderTextColor="#999"
+                  value={bankAccountName}
+                  onChangeText={setBankAccountName}
+                />
+              </View>
+
+              <View style={styles.inputSection}>
+                <Text style={[styles.inputLabel, getRTLStyles(userLanguage)]}>
+                  <Ionicons
+                    name="business-outline"
+                    size={16}
+                    color={Colors.redTheme.background}
+                  />{" "}
+                  {t(userLanguage, "withdrawalRequest.content.bankName")}
+                </Text>
+                <TextInput
+                  style={[styles.input, getRTLStyles(userLanguage)]}
+                  placeholder={t(
+                    userLanguage,
+                    "withdrawalRequest.content.bankNamePlaceholder"
+                  )}
+                  placeholderTextColor="#999"
+                  value={bankName}
+                  onChangeText={setBankName}
+                />
+              </View>
+
+              <View style={styles.inputSection}>
+                <Text style={[styles.inputLabel, getRTLStyles(userLanguage)]}>
+                  <Ionicons
+                    name="location-outline"
+                    size={16}
+                    color={Colors.redTheme.background}
+                  />{" "}
+                  {t(userLanguage, "withdrawalRequest.content.branchName")}
+                </Text>
+                <TextInput
+                  style={[styles.input, getRTLStyles(userLanguage)]}
+                  placeholder={t(
+                    userLanguage,
+                    "withdrawalRequest.content.branchNamePlaceholder"
+                  )}
+                  placeholderTextColor="#999"
+                  value={branchName}
+                  onChangeText={setBranchName}
+                />
+              </View>
+            </View>
+          );
+        } else if (withdrawalMethod === "EWallet") {
+          return (
+            <View style={styles.stepContainer}>
+              <View style={styles.stepHeader}>
+                <Ionicons
+                  name="wallet-outline"
+                  size={48}
+                  color={Colors.redTheme.background}
+                />
+                <Text style={[styles.stepTitle, getRTLStyles(userLanguage)]}>
+                  {t(
+                    userLanguage,
+                    "withdrawalRequest.content.walletInformation"
+                  )}
+                </Text>
+                <Text style={[styles.stepSubtitle, getRTLStyles(userLanguage)]}>
+                  {t(
+                    userLanguage,
+                    "withdrawalRequest.content.enterWalletDetails"
+                  )}
+                </Text>
+              </View>
+
+              {/* EWallet Type Selection */}
+              <View style={styles.inputSection}>
+                <Text style={[styles.inputLabel, getRTLStyles(userLanguage)]}>
+                  {t(
+                    userLanguage,
+                    "withdrawalRequest.content.selectEWalletType"
+                  )}
+                </Text>
+                <View style={styles.investmentOptionsContainer}>
+                  {ewalletTypeOptions.map((option) => (
+                    <TouchableOpacity
+                      key={option.value}
+                      style={[
+                        styles.investmentOption,
+                        ewalletType === option.value &&
+                          styles.investmentOptionSelected,
+                      ]}
+                      onPress={() => setEwalletType(option.value)}
+                      activeOpacity={0.7}
+                    >
+                      <View style={styles.investmentOptionContent}>
+                        <View style={styles.investmentOptionLeft}>
+                          <View
+                            style={[
+                              styles.investmentOptionIconContainer,
+                              ewalletType === option.value &&
+                                styles.investmentOptionIconContainerSelected,
+                            ]}
+                          >
+                            <Ionicons
+                              name={option.icon}
+                              size={28}
+                              color={
+                                ewalletType === option.value
+                                  ? "white"
+                                  : Colors.redTheme.background
+                              }
+                            />
+                          </View>
+                          <View style={styles.investmentOptionInfo}>
+                            <Text
+                              style={[
+                                styles.investmentOptionTitle,
+                                ewalletType === option.value &&
+                                  styles.investmentOptionTitleSelected,
+                                getRTLStyles(userLanguage),
+                              ]}
+                            >
+                              {option.label}
+                            </Text>
+                          </View>
+                        </View>
+                        <View
+                          style={[
+                            styles.radioButton,
+                            ewalletType === option.value &&
+                              styles.radioButtonSelected,
+                          ]}
+                        >
+                          {ewalletType === option.value && (
+                            <Ionicons
+                              name="checkmark"
+                              size={16}
+                              color="white"
+                            />
+                          )}
+                        </View>
+                      </View>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              {/* Wallet Account Number */}
+              <View style={styles.inputSection}>
+                <Text style={[styles.inputLabel, getRTLStyles(userLanguage)]}>
+                  <Ionicons
+                    name="phone-portrait-outline"
+                    size={16}
+                    color={Colors.redTheme.background}
+                  />{" "}
+                  {t(
+                    userLanguage,
+                    "withdrawalRequest.content.walletAccountNumber"
+                  )}
+                </Text>
+                <TextInput
+                  style={[styles.input, getRTLStyles(userLanguage)]}
+                  placeholder={t(
+                    userLanguage,
+                    "withdrawalRequest.content.walletAccountNumberPlaceholder"
+                  )}
+                  placeholderTextColor="#999"
+                  keyboardType="numeric"
+                  value={ewalletAccountNumber}
+                  onChangeText={setEwalletAccountNumber}
+                />
+              </View>
+
+              {/* Wallet Account Name */}
+              <View style={styles.inputSection}>
+                <Text style={[styles.inputLabel, getRTLStyles(userLanguage)]}>
+                  <Ionicons
+                    name="person-outline"
+                    size={16}
+                    color={Colors.redTheme.background}
+                  />{" "}
+                  {t(
+                    userLanguage,
+                    "withdrawalRequest.content.walletAccountName"
+                  )}
+                </Text>
+                <TextInput
+                  style={[styles.input, getRTLStyles(userLanguage)]}
+                  placeholder={t(
+                    userLanguage,
+                    "withdrawalRequest.content.walletAccountNamePlaceholder"
+                  )}
+                  placeholderTextColor="#999"
+                  value={ewalletAccountName}
+                  onChangeText={setEwalletAccountName}
+                />
+              </View>
+            </View>
+          );
+        }
+        return null;
+
+      case 4:
+        // Step 4: Amount & Contact Info (for both Local Bank and EWallet)
+        if (withdrawalMethod === "Local Bank") {
+          return (
+            <View style={styles.stepContainer}>
+              <View style={styles.stepHeader}>
+                <Ionicons
+                  name="cash-outline"
+                  size={48}
+                  color={Colors.redTheme.background}
+                />
+                <Text style={[styles.stepTitle, getRTLStyles(userLanguage)]}>
+                  {t(
+                    userLanguage,
+                    "withdrawalRequest.content.withdrawalAmount"
+                  )}
+                </Text>
+                <Text style={[styles.stepSubtitle, getRTLStyles(userLanguage)]}>
+                  {t(
+                    userLanguage,
+                    "withdrawalRequest.content.enterAmountAndContact"
+                  )}
+                </Text>
+              </View>
+
+              <View style={styles.inputSection}>
+                <Text style={[styles.inputLabel, getRTLStyles(userLanguage)]}>
+                  <Ionicons
+                    name="cash-outline"
+                    size={16}
+                    color={Colors.redTheme.background}
+                  />{" "}
+                  {t(
+                    userLanguage,
+                    "withdrawalRequest.content.withdrawalAmount"
+                  )}
+                </Text>
+                <View style={styles.amountInputContainer}>
+                  <Text style={styles.currencyPrefix}>₱</Text>
+                  <TextInput
+                    style={[
+                      styles.amountInputSeparated,
+                      getRTLStyles(userLanguage),
+                    ]}
+                    placeholder={t(
+                      userLanguage,
+                      "withdrawalRequest.content.enterWithdrawalAmount"
+                    )}
+                    placeholderTextColor="#999"
+                    keyboardType="numeric"
+                    value={amount}
+                    onChangeText={setAmount}
+                  />
+                </View>
+                <View style={styles.balanceInfoCard}>
+                  <Ionicons
+                    name={
+                      withdrawalType === "Available Balance"
+                        ? "wallet"
+                        : "person-circle"
+                    }
+                    size={16}
+                    color={Colors.redTheme.background}
+                  />
+                  <Text
+                    style={[styles.balanceInfoText, getRTLStyles(userLanguage)]}
+                  >
+                    {withdrawalType === "Available Balance"
+                      ? t(
+                          userLanguage,
+                          "withdrawalRequest.content.availableBalanceInfo"
+                        ).replace(
+                          "{amount}",
+                          (userData.availBalanceAmount || 0).toLocaleString()
+                        )
+                      : t(
+                          userLanguage,
+                          "withdrawalRequest.content.agentWalletBalanceInfo"
+                        ).replace(
+                          "{amount}",
+                          (userData.agentWalletAmount || 0).toLocaleString()
+                        )}
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.inputSection}>
+                <Text style={[styles.inputLabel, getRTLStyles(userLanguage)]}>
+                  <Ionicons
+                    name="mail-outline"
+                    size={16}
+                    color={Colors.redTheme.background}
+                  />{" "}
+                  {t(userLanguage, "withdrawalRequest.content.emailAddress")}
+                </Text>
+                <TextInput
+                  style={[styles.input, getRTLStyles(userLanguage)]}
+                  placeholder={t(
+                    userLanguage,
+                    "withdrawalRequest.content.emailPlaceholder"
+                  )}
+                  placeholderTextColor="#999"
+                  keyboardType="email-address"
+                  value={emailAddress}
+                  onChangeText={setEmailAddress}
+                />
+              </View>
+            </View>
+          );
+        } else if (withdrawalMethod === "EWallet") {
+          return (
+            <View style={styles.stepContainer}>
+              <View style={styles.stepHeader}>
+                <Ionicons
+                  name="cash-outline"
+                  size={48}
+                  color={Colors.redTheme.background}
+                />
+                <Text style={[styles.stepTitle, getRTLStyles(userLanguage)]}>
+                  {t(
+                    userLanguage,
+                    "withdrawalRequest.content.withdrawalAmount"
+                  )}
+                </Text>
+                <Text style={[styles.stepSubtitle, getRTLStyles(userLanguage)]}>
+                  {t(
+                    userLanguage,
+                    "withdrawalRequest.content.enterAmountAndContact"
+                  )}
+                </Text>
+              </View>
+
+              <View style={styles.inputSection}>
+                <Text style={[styles.inputLabel, getRTLStyles(userLanguage)]}>
+                  <Ionicons
+                    name="cash-outline"
+                    size={16}
+                    color={Colors.redTheme.background}
+                  />{" "}
+                  {t(
+                    userLanguage,
+                    "withdrawalRequest.content.withdrawalAmount"
+                  )}
+                </Text>
+                <View style={styles.amountInputContainer}>
+                  <Text style={styles.currencyPrefix}>₱</Text>
+                  <TextInput
+                    style={[
+                      styles.amountInputSeparated,
+                      getRTLStyles(userLanguage),
+                    ]}
+                    placeholder={t(
+                      userLanguage,
+                      "withdrawalRequest.content.enterWithdrawalAmount"
+                    )}
+                    placeholderTextColor="#999"
+                    keyboardType="numeric"
+                    value={amount}
+                    onChangeText={setAmount}
+                  />
+                </View>
+                <View style={styles.balanceInfoCard}>
+                  <Ionicons
+                    name={
+                      withdrawalType === "Available Balance"
+                        ? "wallet"
+                        : "person-circle"
+                    }
+                    size={16}
+                    color={Colors.redTheme.background}
+                  />
+                  <Text
+                    style={[styles.balanceInfoText, getRTLStyles(userLanguage)]}
+                  >
+                    {withdrawalType === "Available Balance"
+                      ? t(
+                          userLanguage,
+                          "withdrawalRequest.content.availableBalanceInfo"
+                        ).replace(
+                          "{amount}",
+                          (userData.availBalanceAmount || 0).toLocaleString()
+                        )
+                      : t(
+                          userLanguage,
+                          "withdrawalRequest.content.agentWalletBalanceInfo"
+                        ).replace(
+                          "{amount}",
+                          (userData.agentWalletAmount || 0).toLocaleString()
+                        )}
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.inputSection}>
+                <Text style={[styles.inputLabel, getRTLStyles(userLanguage)]}>
+                  <Ionicons
+                    name="mail-outline"
+                    size={16}
+                    color={Colors.redTheme.background}
+                  />{" "}
+                  {t(userLanguage, "withdrawalRequest.content.emailAddress")}
+                </Text>
+                <TextInput
+                  style={[styles.input, getRTLStyles(userLanguage)]}
+                  placeholder={t(
+                    userLanguage,
+                    "withdrawalRequest.content.emailPlaceholder"
+                  )}
+                  placeholderTextColor="#999"
+                  keyboardType="email-address"
+                  value={emailAddress}
+                  onChangeText={setEmailAddress}
+                />
+              </View>
+            </View>
+          );
+        }
+        return null;
+
+      case 5:
+        // Step 5: Review & Confirm
+        return (
+          <View style={styles.stepContainer}>
+            <View style={styles.stepHeader}>
+              <Ionicons
+                name="checkmark-circle"
+                size={48}
+                color={Colors.redTheme.background}
+              />
+              <Text style={[styles.stepTitle, getRTLStyles(userLanguage)]}>
+                {t(userLanguage, "withdrawalRequest.content.reviewConfirm")}
+              </Text>
+              <Text style={[styles.stepSubtitle, getRTLStyles(userLanguage)]}>
+                {t(userLanguage, "withdrawalRequest.content.reviewDetails")}
+              </Text>
+            </View>
+
+            <View style={styles.confirmationContainer}>
+              {/* Withdrawal Method Card */}
+              <View style={styles.confirmCard}>
+                <Text style={styles.confirmLabel}>
+                  {t(
+                    userLanguage,
+                    "withdrawalRequest.content.withdrawalMethod"
+                  )}
+                </Text>
+                <Text style={styles.confirmValue}>
+                  {withdrawalMethodOptions.find(
+                    (opt) => opt.value === withdrawalMethod
+                  )?.label || ""}
+                </Text>
+              </View>
+
+              {/* EWallet Type Card (if EWallet) */}
+              {withdrawalMethod === "EWallet" && ewalletType && (
+                <View style={styles.confirmCard}>
+                  <Text style={styles.confirmLabel}>
+                    {t(userLanguage, "withdrawalRequest.content.eWalletType")}
+                  </Text>
+                  <Text style={styles.confirmValue}>{ewalletType}</Text>
+                </View>
+              )}
+
+              {/* Banking/Wallet Information Card */}
+              <View style={styles.confirmCard}>
+                {withdrawalMethod === "Local Bank" ? (
+                  <>
+                    <View style={styles.confirmRow}>
+                      <Text style={styles.confirmLabel}>
+                        {t(
+                          userLanguage,
+                          "withdrawalRequest.content.bankAccountNumber"
+                        )}
+                      </Text>
+                      <Text style={styles.confirmValue}>
+                        {bankAccountNumber}
+                      </Text>
+                    </View>
+                    <View style={styles.confirmRow}>
+                      <Text style={styles.confirmLabel}>
+                        {t(
+                          userLanguage,
+                          "withdrawalRequest.content.accountHolderName"
+                        )}
+                      </Text>
+                      <Text style={styles.confirmValue}>{bankAccountName}</Text>
+                    </View>
+                    <View style={styles.confirmRow}>
+                      <Text style={styles.confirmLabel}>
+                        {t(userLanguage, "withdrawalRequest.content.bankName")}
+                      </Text>
+                      <Text style={styles.confirmValue}>{bankName}</Text>
+                    </View>
+                    <View style={styles.confirmRow}>
+                      <Text style={styles.confirmLabel}>
+                        {t(
+                          userLanguage,
+                          "withdrawalRequest.content.branchName"
+                        )}
+                      </Text>
+                      <Text style={styles.confirmValue}>{branchName}</Text>
+                    </View>
+                  </>
+                ) : (
+                  <>
+                    <View style={styles.confirmRow}>
+                      <Text style={styles.confirmLabel}>
+                        {t(
+                          userLanguage,
+                          "withdrawalRequest.content.walletAccountNumber"
+                        )}
+                      </Text>
+                      <Text style={styles.confirmValue}>
+                        {ewalletAccountNumber}
+                      </Text>
+                    </View>
+                    <View style={styles.confirmRow}>
+                      <Text style={styles.confirmLabel}>
+                        {t(
+                          userLanguage,
+                          "withdrawalRequest.content.walletAccountName"
+                        )}
+                      </Text>
+                      <Text style={styles.confirmValue}>
+                        {ewalletAccountName}
+                      </Text>
+                    </View>
+                  </>
+                )}
+              </View>
+
+              {/* Amount Card */}
+              <View style={styles.confirmAmountCard}>
+                <Text style={styles.confirmAmountLabel}>
+                  {t(
+                    userLanguage,
+                    "withdrawalRequest.content.withdrawalAmount"
+                  )}
+                </Text>
+                <Text style={styles.confirmAmountValue}>
+                  ₱
+                  {parseFloat(amount || 0).toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </Text>
+              </View>
+
+              {/* Email Card */}
+              <View style={styles.confirmCard}>
+                <View style={styles.confirmRow}>
+                  <Text style={styles.confirmLabel}>
+                    {t(userLanguage, "withdrawalRequest.content.emailAddress")}
+                  </Text>
+                  <Text style={styles.confirmValue}>{emailAddress}</Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        );
+
+      default:
+        return null;
+    }
+  };
+
   if (loading) {
     return <SimpleLoadingScreen message="Processing withdrawal..." />;
   }
@@ -431,432 +1464,76 @@ export default function Index() {
       style={styles.container}
     >
       <SafeAreaView style={styles.androidSafeArea}>
-        <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
-          <TouchableWithoutFeedback
-            onPress={Keyboard.dismiss}
-            accessible={false}
-          >
-            <ScrollView
-              contentContainerStyle={styles.scrollContainer}
-              keyboardShouldPersistTaps="handled"
-              showsVerticalScrollIndicator={false}
-            >
-              {/* Header Card */}
-              <View style={styles.headerCard}>
-                <View style={styles.headerContent}>
-                  <Ionicons
-                    name="trending-down"
-                    size={32}
-                    color={Colors.redTheme.background}
-                    style={styles.headerIcon}
-                  />
-                  <View style={styles.headerTextContainer}>
-                    <Text
-                      style={[styles.headerTitle, getRTLStyles(userLanguage)]}
-                    >
-                      {t(userLanguage, "withdrawalRequest.content.title")}
-                    </Text>
-                    <Text
-                      style={[
-                        styles.headerSubtitle,
-                        getRTLStyles(userLanguage),
-                      ]}
-                    >
-                      {t(userLanguage, "withdrawalRequest.content.subtitle")}
-                    </Text>
-                  </View>
-                </View>
-              </View>
-
-              {/* Instructions Card */}
-              <View style={styles.instructionCard}>
-                <View style={styles.instructionHeader}>
-                  <Ionicons
-                    name="information-circle"
-                    size={20}
-                    color={Colors.redTheme.background}
-                  />
-                  <Text
-                    style={[
-                      styles.instructionTitle,
-                      getRTLStyles(userLanguage),
-                    ]}
-                  >
-                    {t(
-                      userLanguage,
-                      "withdrawalRequest.content.instructionTitle"
-                    )}
-                  </Text>
-                </View>
-                <Text
-                  style={[styles.instructionText, getRTLStyles(userLanguage)]}
-                >
-                  {t(userLanguage, "withdrawalRequest.content.instructionText")}
-                </Text>
-              </View>
-
-              {/* Form Card */}
-              <View style={styles.formCard}>
-                <Text style={[styles.sectionTitle, getRTLStyles(userLanguage)]}>
-                  {t(
-                    userLanguage,
-                    "withdrawalRequest.content.withdrawalDetails"
-                  )}
-                </Text>
-
-                {/* Withdrawal Type Section */}
-                <View style={styles.formSection}>
-                  <Text
-                    style={[styles.subsectionTitle, getRTLStyles(userLanguage)]}
-                  >
-                    {t(
-                      userLanguage,
-                      "withdrawalRequest.content.withdrawalType"
-                    )}
-                  </Text>
-
-                  <View style={styles.inputGroup}>
-                    <Text
-                      style={[styles.inputLabel, getRTLStyles(userLanguage)]}
-                    >
-                      {t(
-                        userLanguage,
-                        "withdrawalRequest.content.selectWithdrawalType"
-                      )}
-                    </Text>
-                    <TouchableOpacity
-                      style={styles.modalSelector}
-                      onPress={() => setWithdrawalTypeModalVisible(true)}
-                      activeOpacity={0.7}
-                    >
-                      <Text
-                        style={[
-                          styles.modalSelectorText,
-                          getRTLStyles(userLanguage),
-                        ]}
-                      >
-                        {withdrawalTypeOptions.find((opt) => opt.value === type)
-                          ?.label ||
-                          t(
-                            userLanguage,
-                            "withdrawalRequest.content.chooseWithdrawalType"
-                          )}
-                      </Text>
-                      <Ionicons
-                        name="chevron-down"
-                        size={16}
-                        color={Colors.redTheme.background}
-                      />
-                    </TouchableOpacity>
-                  </View>
-
-                  <View style={styles.inputGroup}>
-                    <Text
-                      style={[styles.inputLabel, getRTLStyles(userLanguage)]}
-                    >
-                      {t(
-                        userLanguage,
-                        "withdrawalRequest.content.withdrawalAmount"
-                      )}
-                    </Text>
-                    <TextInput
-                      style={[styles.input, getRTLStyles(userLanguage)]}
-                      placeholder={t(
-                        userLanguage,
-                        "withdrawalRequest.content.enterWithdrawalAmount"
-                      )}
-                      placeholderTextColor="#999"
-                      keyboardType="numeric"
-                      value={amount}
-                      onChangeText={(value) => setAmount(value)}
-                    />
-                    {type === "Available Balance" && (
-                      <View style={styles.balanceInfoCard}>
-                        <Ionicons
-                          name="wallet"
-                          size={16}
-                          color={Colors.redTheme.background}
-                        />
-                        <Text
-                          style={[
-                            styles.balanceInfoText,
-                            getRTLStyles(userLanguage),
-                          ]}
-                        >
-                          {t(
-                            userLanguage,
-                            "withdrawalRequest.content.availableBalanceInfo"
-                          ).replace(
-                            "{amount}",
-                            (userData.availBalanceAmount || 0).toLocaleString()
-                          )}
-                        </Text>
-                      </View>
-                    )}
-                    {type === "Agent Withdrawal" && (
-                      <View style={styles.balanceInfoCard}>
-                        <Ionicons
-                          name="person-circle"
-                          size={16}
-                          color={Colors.redTheme.background}
-                        />
-                        <Text
-                          style={[
-                            styles.balanceInfoText,
-                            getRTLStyles(userLanguage),
-                          ]}
-                        >
-                          {t(
-                            userLanguage,
-                            "withdrawalRequest.content.agentWalletBalanceInfo"
-                          ).replace(
-                            "{amount}",
-                            (userData.agentWalletAmount || 0).toLocaleString()
-                          )}
-                        </Text>
-                      </View>
-                    )}
-                  </View>
-                </View>
-
-                {/* Contact Information Section */}
-                <View style={styles.formSection}>
-                  <Text
-                    style={[styles.subsectionTitle, getRTLStyles(userLanguage)]}
-                  >
-                    {t(
-                      userLanguage,
-                      "withdrawalRequest.content.contactInformation"
-                    )}
-                  </Text>
-
-                  <View style={styles.inputGroup}>
-                    <Text
-                      style={[styles.inputLabel, getRTLStyles(userLanguage)]}
-                    >
-                      {t(
-                        userLanguage,
-                        "withdrawalRequest.content.emailAddress"
-                      )}
-                    </Text>
-                    <TextInput
-                      style={[styles.input, getRTLStyles(userLanguage)]}
-                      placeholder={t(
-                        userLanguage,
-                        "withdrawalRequest.content.emailPlaceholder"
-                      )}
-                      placeholderTextColor="#999"
-                      keyboardType="email-address"
-                      value={emailAddress}
-                      onChangeText={(value) => setEmailAddress(value)}
-                    />
-                  </View>
-
-                  {userData.firstName && userData.lastName && (
-                    <View style={styles.userInfoCard}>
-                      <Ionicons
-                        name="person"
-                        size={20}
-                        color={Colors.redTheme.background}
-                      />
-                      <Text
-                        style={[
-                          styles.userInfoText,
-                          getRTLStyles(userLanguage),
-                        ]}
-                      >
-                        {t(
-                          userLanguage,
-                          "withdrawalRequest.content.accountHolder"
-                        )
-                          .replace("{firstName}", userData.firstName)
-                          .replace("{lastName}", userData.lastName)}
-                      </Text>
-                    </View>
-                  )}
-                </View>
-
-                {/* Banking Information Section */}
-                <View style={styles.formSection}>
-                  <Text
-                    style={[styles.subsectionTitle, getRTLStyles(userLanguage)]}
-                  >
-                    {t(
-                      userLanguage,
-                      "withdrawalRequest.content.bankingInformation"
-                    )}
-                  </Text>
-
-                  <View style={styles.inputGroup}>
-                    <Text
-                      style={[styles.inputLabel, getRTLStyles(userLanguage)]}
-                    >
-                      {t(
-                        userLanguage,
-                        "withdrawalRequest.content.bankAccountNumber"
-                      )}
-                    </Text>
-                    <TextInput
-                      style={[styles.input, getRTLStyles(userLanguage)]}
-                      placeholder={t(
-                        userLanguage,
-                        "withdrawalRequest.content.bankAccountNumberPlaceholder"
-                      )}
-                      placeholderTextColor="#999"
-                      keyboardType="numeric"
-                      value={bankAccountNumber}
-                      onChangeText={(value) => setBankAccountNumber(value)}
-                    />
-                  </View>
-
-                  <View style={styles.inputGroup}>
-                    <Text
-                      style={[styles.inputLabel, getRTLStyles(userLanguage)]}
-                    >
-                      {t(
-                        userLanguage,
-                        "withdrawalRequest.content.accountHolderName"
-                      )}
-                    </Text>
-                    <TextInput
-                      style={[styles.input, getRTLStyles(userLanguage)]}
-                      placeholder={t(
-                        userLanguage,
-                        "withdrawalRequest.content.accountHolderNamePlaceholder"
-                      )}
-                      placeholderTextColor="#999"
-                      value={bankAccountName}
-                      onChangeText={(value) => setBankAccountName(value)}
-                    />
-                  </View>
-
-                  <View style={styles.inputGroup}>
-                    <Text
-                      style={[styles.inputLabel, getRTLStyles(userLanguage)]}
-                    >
-                      {t(userLanguage, "withdrawalRequest.content.bankName")}
-                    </Text>
-                    <TextInput
-                      style={[styles.input, getRTLStyles(userLanguage)]}
-                      placeholder={t(
-                        userLanguage,
-                        "withdrawalRequest.content.bankNamePlaceholder"
-                      )}
-                      placeholderTextColor="#999"
-                      value={bankName}
-                      onChangeText={(value) => setBankName(value)}
-                    />
-                  </View>
-
-                  <View style={styles.inputGroup}>
-                    <Text
-                      style={[styles.inputLabel, getRTLStyles(userLanguage)]}
-                    >
-                      {t(userLanguage, "withdrawalRequest.content.branchName")}
-                    </Text>
-                    <TextInput
-                      style={[styles.input, getRTLStyles(userLanguage)]}
-                      placeholder={t(
-                        userLanguage,
-                        "withdrawalRequest.content.branchNamePlaceholder"
-                      )}
-                      placeholderTextColor="#999"
-                      value={branchName}
-                      onChangeText={(value) => setBranchName(value)}
-                    />
-                  </View>
-                </View>
-              </View>
-
-              {/* Security Notice Card */}
-              <View style={styles.securityCard}>
-                <View style={styles.securityHeader}>
-                  <Ionicons
-                    name="shield-checkmark"
-                    size={20}
-                    color={Colors.redTheme.background}
-                  />
-                  <Text
-                    style={[styles.securityTitle, getRTLStyles(userLanguage)]}
-                  >
-                    {t(
-                      userLanguage,
-                      "withdrawalRequest.content.securityProcessing"
-                    )}
-                  </Text>
-                </View>
-                <Text style={[styles.securityText, getRTLStyles(userLanguage)]}>
-                  {t(userLanguage, "withdrawalRequest.content.securityText")}
-                </Text>
-              </View>
-
-              {/* Submit Button */}
-              <TouchableOpacity
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.keyboardAvoidingView}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+        >
+          {/* Progress Indicator */}
+          <View style={styles.progressContainer}>
+            <View style={styles.progressBar}>
+              <View
                 style={[
-                  styles.submitButton,
-                  (isSubmitting ||
-                    (type === "Available Balance" &&
-                      parseFloat(amount || 0) >
-                        (userData.availBalanceAmount || 0)) ||
-                    (type === "Agent Withdrawal" &&
-                      parseFloat(amount || 0) >
-                        (userData.agentWalletAmount || 0))) &&
-                    styles.submitButtonDisabled,
+                  styles.progressFill,
+                  { width: `${(currentStep / 5) * 100}%` },
                 ]}
-                onPress={onSubmit}
-                disabled={
-                  isSubmitting ||
-                  (type === "Available Balance" &&
-                    parseFloat(amount || 0) >
-                      (userData.availBalanceAmount || 0)) ||
-                  (type === "Agent Withdrawal" &&
-                    parseFloat(amount || 0) > (userData.agentWalletAmount || 0))
-                }
-              >
-                <View style={styles.submitButtonContent}>
-                  {isSubmitting ? (
-                    <ActivityIndicator
-                      size="small"
-                      color="white"
-                      style={styles.loadingIcon}
-                    />
-                  ) : (
-                    <Ionicons
-                      name="send-outline"
-                      size={20}
-                      color="white"
-                      style={styles.submitIcon}
-                    />
-                  )}
-                  <Text
-                    style={[
-                      styles.submitButtonText,
-                      getRTLStyles(userLanguage),
-                    ]}
-                  >
-                    {isSubmitting
-                      ? t(userLanguage, "withdrawalRequest.content.submitting")
-                      : (type === "Available Balance" &&
-                          parseFloat(amount || 0) >
-                            (userData.availBalanceAmount || 0)) ||
-                        (type === "Agent Withdrawal" &&
-                          parseFloat(amount || 0) >
-                            (userData.agentWalletAmount || 0))
-                      ? t(
-                          userLanguage,
-                          "withdrawalRequest.content.insufficientBalance"
-                        )
-                      : t(
-                          userLanguage,
-                          "withdrawalRequest.content.submitWithdrawalRequest"
-                        )}
-                  </Text>
-                </View>
-              </TouchableOpacity>
+              />
+            </View>
+            <Text style={styles.progressText}>
+              {t(userLanguage, "withdrawalRequest.content.step")} {currentStep}{" "}
+              {t(userLanguage, "withdrawalRequest.content.of")} 5
+            </Text>
+          </View>
 
-              <View style={styles.bottomSpacing} />
-            </ScrollView>
-          </TouchableWithoutFeedback>
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollViewContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+          >
+            <View style={styles.mainContainer}>{renderStepContent()}</View>
+          </ScrollView>
+
+          {/* Navigation Buttons */}
+          <View style={styles.navigationContainer}>
+            {currentStep > 1 && (
+              <TouchableOpacity
+                style={styles.backButton}
+                onPress={goToPreviousStep}
+                activeOpacity={0.8}
+              >
+                <Ionicons
+                  name="arrow-back"
+                  size={20}
+                  color={Colors.redTheme.background}
+                />
+                <Text style={styles.backButtonText}>
+                  {t(userLanguage, "withdrawalRequest.content.back")}
+                </Text>
+              </TouchableOpacity>
+            )}
+
+            <TouchableOpacity
+              style={[styles.nextButton, currentStep === 1 && { flex: 1 }]}
+              onPress={currentStep === 5 ? onSubmit : goToNextStep}
+              activeOpacity={0.8}
+              disabled={isSubmitting}
+            >
+              <Text style={styles.nextButtonText}>
+                {currentStep === 5
+                  ? isSubmitting
+                    ? t(userLanguage, "withdrawalRequest.content.submitting")
+                    : t(userLanguage, "withdrawalRequest.content.confirmSubmit")
+                  : t(userLanguage, "withdrawalRequest.content.continue")}
+              </Text>
+              <Ionicons
+                name={currentStep === 5 ? "checkmark-circle" : "arrow-forward"}
+                size={20}
+                color="white"
+              />
+            </TouchableOpacity>
+          </View>
         </KeyboardAvoidingView>
       </SafeAreaView>
 
@@ -872,72 +1549,6 @@ export default function Index() {
         showCancelButton={modalConfig.showCancelButton}
         cancelText={modalConfig.cancelText}
       />
-
-      {/* Modal for withdrawal type selection */}
-      <Modal
-        visible={withdrawalTypeModalVisible}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setWithdrawalTypeModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, getRTLStyles(userLanguage)]}>
-                {t(
-                  userLanguage,
-                  "withdrawalRequest.modals.selectWithdrawalType"
-                )}
-              </Text>
-              <TouchableOpacity
-                onPress={() => setWithdrawalTypeModalVisible(false)}
-                style={styles.closeButton}
-              >
-                <Ionicons name="close" size={24} color="#666" />
-              </TouchableOpacity>
-            </View>
-            <View style={styles.optionList}>
-              <ScrollView showsVerticalScrollIndicator={false}>
-                {withdrawalTypeOptions.map((option) => (
-                  <TouchableOpacity
-                    key={option.value}
-                    style={[
-                      styles.optionItem,
-                      type === option.value && styles.selectedOption,
-                    ]}
-                    onPress={() => {
-                      setType(option.value);
-                      setWithdrawalTypeModalVisible(false);
-                    }}
-                    activeOpacity={0.8}
-                  >
-                    <View
-                      style={{ flexDirection: "row", alignItems: "center" }}
-                    >
-                      {option.icon()}
-                      <Text
-                        style={[
-                          styles.optionText,
-                          getRTLStyles(userLanguage),
-                          type === option.value && styles.selectedOptionText,
-                          { marginLeft: 12 },
-                        ]}
-                      >
-                        {option.label}
-                      </Text>
-                    </View>
-                    {type === option.value && (
-                      <View style={styles.checkmarkCircle}>
-                        <Ionicons name="checkmark" size={16} color="#fff" />
-                      </View>
-                    )}
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </View>
-          </View>
-        </View>
-      </Modal>
     </ImageBackground>
   );
 }
@@ -1321,5 +1932,351 @@ const styles = StyleSheet.create({
     height: 24,
     alignItems: "center",
     justifyContent: "center",
+  },
+  // Multi-step UI styles
+  progressContainer: {
+    paddingHorizontal: width * 0.05,
+    paddingTop: Platform.OS === "ios" ? 10 : 15,
+    paddingBottom: 12,
+    backgroundColor: "rgba(255, 255, 255, 0.95)",
+  },
+  progressBar: {
+    height: 4,
+    backgroundColor: "#E0E0E0",
+    borderRadius: 2,
+    overflow: "hidden",
+    marginBottom: 8,
+  },
+  progressFill: {
+    height: "100%",
+    backgroundColor: Colors.redTheme.background,
+    borderRadius: 2,
+  },
+  progressText: {
+    fontSize: 12,
+    color: Colors.redTheme.background,
+    fontWeight: "600",
+    textAlign: "center",
+  },
+  keyboardAvoidingView: {
+    flex: 1,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollViewContent: {
+    flexGrow: 1,
+    paddingBottom: 100,
+  },
+  mainContainer: {
+    flex: 1,
+    paddingHorizontal: width * 0.05,
+    paddingTop: 20,
+  },
+  stepContainer: {
+    flex: 1,
+  },
+  stepHeader: {
+    alignItems: "center",
+    marginBottom: 32,
+  },
+  stepIconCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: Colors.redTheme.background,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 16,
+    ...Platform.select({
+      ios: {
+        shadowColor: Colors.redTheme.background,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 6,
+      },
+    }),
+  },
+  stepTitle: {
+    fontSize: isSmallDevice ? 22 : 24,
+    fontWeight: "700",
+    color: "#1A1A1A",
+    marginBottom: 8,
+  },
+  stepSubtitle: {
+    fontSize: isSmallDevice ? 14 : 15,
+    color: "#666",
+    textAlign: "center",
+  },
+  investmentOptionsContainer: {
+    gap: 16,
+  },
+  investmentOption: {
+    backgroundColor: "white",
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 2,
+    borderColor: "#E5E7EB",
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
+  },
+  investmentOptionSelected: {
+    borderColor: Colors.redTheme.background,
+    borderWidth: 3,
+    backgroundColor: "white",
+    transform: [{ scale: 1.02 }],
+    ...Platform.select({
+      ios: {
+        shadowColor: Colors.redTheme.background,
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.3,
+        shadowRadius: 16,
+      },
+      android: {
+        elevation: 12,
+      },
+    }),
+  },
+  investmentOptionContent: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  investmentOptionLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+  },
+  investmentOptionIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: Colors.redTheme.background + "12",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 16,
+    borderWidth: 2,
+    borderColor: "transparent",
+  },
+  investmentOptionIconContainerSelected: {
+    backgroundColor: Colors.redTheme.background,
+    borderColor: Colors.redTheme.background + "30",
+  },
+  investmentOptionInfo: {
+    flex: 1,
+  },
+  investmentOptionTitle: {
+    fontSize: isSmallDevice ? 16 : 18,
+    fontWeight: "600",
+    color: "#1A1A1A",
+    marginBottom: 4,
+  },
+  investmentOptionTitleSelected: {
+    color: Colors.redTheme.background,
+    fontWeight: "700",
+  },
+  investmentOptionSubtitle: {
+    fontSize: 13,
+    color: "#666",
+  },
+  radioButton: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: "#D1D5DB",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  radioButtonSelected: {
+    backgroundColor: Colors.redTheme.background,
+    borderColor: Colors.redTheme.background,
+  },
+  inputSection: {
+    marginBottom: 24,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#1A1A1A",
+    marginBottom: 12,
+  },
+  input: {
+    backgroundColor: "white",
+    borderWidth: 2,
+    borderColor: "#E5E7EB",
+    borderRadius: 12,
+    padding: 14,
+    fontSize: 16,
+    color: "#333",
+  },
+  amountInputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "white",
+    borderWidth: 2,
+    borderColor: "#E5E7EB",
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  currencyPrefix: {
+    fontSize: 18,
+    color: Colors.redTheme.background,
+    fontWeight: "600",
+    marginRight: 8,
+  },
+  amountInputSeparated: {
+    flex: 1,
+    fontSize: 16,
+    color: "#1A1A1A",
+    fontWeight: "500",
+    paddingVertical: 16,
+  },
+  balanceInfoCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: Colors.redTheme.background + "08",
+    borderRadius: 8,
+    padding: 12,
+    marginTop: 12,
+    gap: 8,
+  },
+  balanceInfoText: {
+    fontSize: 13,
+    color: Colors.redTheme.background,
+    fontWeight: "500",
+  },
+  navigationContainer: {
+    flexDirection: "row",
+    paddingHorizontal: width * 0.05,
+    paddingVertical: 16,
+    backgroundColor: "rgba(255, 255, 255, 0.95)",
+    borderTopWidth: 1,
+    borderTopColor: "#F0F0F0",
+    gap: 12,
+  },
+  backButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "white",
+    borderRadius: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderWidth: 2,
+    borderColor: Colors.redTheme.background,
+    gap: 8,
+  },
+  backButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: Colors.redTheme.background,
+  },
+  nextButton: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: Colors.redTheme.background,
+    borderRadius: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    gap: 8,
+    ...Platform.select({
+      ios: {
+        shadowColor: Colors.redTheme.background,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 6,
+      },
+    }),
+  },
+  nextButtonText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "white",
+  },
+  confirmationContainer: {
+    gap: 16,
+  },
+  confirmCard: {
+    backgroundColor: "white",
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
+  },
+  confirmRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  confirmLabel: {
+    fontSize: 14,
+    color: "#666",
+    fontWeight: "500",
+  },
+  confirmValue: {
+    fontSize: 14,
+    color: "#1A1A1A",
+    fontWeight: "600",
+    flex: 1,
+    textAlign: "right",
+  },
+  confirmAmountCard: {
+    backgroundColor: Colors.redTheme.background + "08",
+    borderRadius: 16,
+    padding: 24,
+    borderWidth: 2,
+    borderColor: Colors.redTheme.background + "20",
+    alignItems: "center",
+  },
+  confirmAmountLabel: {
+    fontSize: 14,
+    color: Colors.redTheme.background,
+    fontWeight: "600",
+    marginBottom: 8,
+  },
+  confirmAmountValue: {
+    fontSize: isSmallDevice ? 28 : 32,
+    fontWeight: "700",
+    color: Colors.redTheme.background,
+  },
+  confirmAmountSubtext: {
+    fontSize: 14,
+    color: "#666",
+    marginTop: 4,
   },
 });
