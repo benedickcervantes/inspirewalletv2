@@ -7,10 +7,17 @@ import {
   StyleSheet,
   Dimensions,
 } from "react-native";
+import {
+  getFirestore,
+  collection,
+  query,
+  getDocs,
+  orderBy,
+} from "firebase/firestore";
+import { app } from "../configs/firebase"; // Adjust import path
 import { Colors } from "../constants/Colors";
-import userService from "../services/userService";
 
-const TransactionHistory = () => {
+const TransactionHistory = ({ userId }) => {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -40,34 +47,38 @@ const TransactionHistory = () => {
   useEffect(() => {
     const fetchTransactions = async () => {
       try {
-        const parseDate = (value) => {
-          if (!value) return new Date(0);
-          if (value instanceof Date) return value;
-          if (value?.toDate) return value.toDate();
-          const parsed = new Date(value);
-          return Number.isNaN(parsed.getTime()) ? new Date(0) : parsed;
-        };
+        const db = getFirestore(app);
+        // Fetch from the user's subcollection
+        const transactionsRef = collection(db, "users", userId, "transactions");
+        const q = query(transactionsRef, orderBy("date", "desc"));
+        const querySnapshot = await getDocs(q);
 
-        const items = await userService.getUserSubcollection("transactions", {
-          sortBy: "date",
-          sortOrder: "desc",
-          limit: 200
-        });
-        const mapped = items.map((item, index) => {
-          const date = parseDate(item.date || item.createdAt);
+        // console.log("Query Snapshot:", querySnapshot); // Debug log
+
+        const fetchedTransactions = [];
+        querySnapshot.forEach((doc) => {
+          // console.log("Fetched Document ID:", doc.id); // Debug log
+          const data = doc.data();
+
+          // Check if date field exists and is a timestamp
+          const date = data.date?.toDate
+            ? data.date.toDate()
+            : new Date(data.date);
           const amount =
-            typeof item.amount === "number"
-              ? item.amount
-              : parseFloat(item.amount) || 0;
-          return {
-            id: item._firebaseDocId || item.id || item._id || `tx-${index}`,
-            type: item.type,
-            date,
-            amount
-          };
+            typeof data.amount === "number"
+              ? data.amount
+              : parseFloat(data.amount) || 0;
+
+          fetchedTransactions.push({
+            id: doc.id,
+            type: data.type,
+            date: date,
+            amount: amount,
+          });
         });
 
-        setTransactions(mapped);
+        // console.log("Fetched Transactions:", fetchedTransactions); // Debug log
+        setTransactions(fetchedTransactions);
       } catch (err) {
         // console.error("Error fetching transactions:", err); // Debug log
         setError(err.message);
@@ -76,8 +87,10 @@ const TransactionHistory = () => {
       }
     };
 
-    fetchTransactions();
-  }, []);
+    if (userId) {
+      fetchTransactions();
+    }
+  }, [userId]);
 
   if (loading) {
     return <ActivityIndicator size="large" color="#0000ff" />;

@@ -34,7 +34,7 @@ export default function InspireKYC() {
   // Page and step management
   const [showKYC, setShowKYC] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
-  const totalSteps = 4;
+  const totalSteps = 5;
   
   // Form data
   const [formData, setFormData] = useState({
@@ -68,6 +68,8 @@ export default function InspireKYC() {
   const [submissionStatus, setSubmissionStatus] = useState(''); // 'uploading', 'saving', 'success', 'error'
   const [nationalities, setNationalities] = useState([]);
   const [filteredNationalities, setFilteredNationalities] = useState([]);
+  const [countries, setCountries] = useState([]);
+  const [filteredCountries, setFilteredCountries] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [kycButtonPressed, setKycButtonPressed] = useState(false);
   
@@ -75,6 +77,10 @@ export default function InspireKYC() {
   const [userData, setUserData] = useState(null);
   const [kycStatus, setKycStatus] = useState(false); // Default to false instead of null
   const [loading, setLoading] = useState(true);
+
+  // Derived flags
+  const hasCompany = !!(userData?.company && userData.company.trim() !== "" && userData.company.trim() !== t(userData?.preferredLanguage || 'English', 'general.notAvailable'));
+  const effectiveTotalSteps = totalSteps - 1;
   
   // Keyboard handling
   const scrollViewRef = useRef(null);
@@ -153,12 +159,214 @@ export default function InspireKYC() {
     }
   };
 
-  // Fetch nationalities from REST Countries API
+  // Comprehensive nationality mapping for all countries
+  const getNationalityFromCountry = (countryName, demonyms) => {
+    // Comprehensive mapping for countries that need special nationality handling
+    const nationalityMapping = {
+      'Philippines': 'Filipino',
+      'United States': 'American',
+      'United Kingdom': 'British',
+      'Netherlands': 'Dutch',
+      'New Zealand': 'New Zealander',
+      'South Korea': 'South Korean',
+      'North Korea': 'North Korean',
+      'Czech Republic': 'Czech',
+      'Czechia': 'Czech',
+      'United Arab Emirates': 'Emirati',
+      'Myanmar': 'Burmese',
+      'Brunei': 'Bruneian',
+      'Switzerland': 'Swiss',
+      'Belarus': 'Belarusian',
+      'Greece': 'Greek',
+      'Iceland': 'Icelander',
+      'Ireland': 'Irish',
+      'Luxembourg': 'Luxembourger',
+      'Monaco': 'Monégasque',
+      'San Marino': 'Sammarinese',
+      'Vatican City': 'Vatican',
+      'Liechtenstein': 'Liechtensteiner',
+      'Malta': 'Maltese',
+      'Andorra': 'Andorran',
+      'Cyprus': 'Cypriot',
+      'Denmark': 'Danish',
+      'Finland': 'Finnish',
+      'Poland': 'Polish',
+      'Sweden': 'Swedish',
+      'Turkey': 'Turkish',
+      'Thailand': 'Thai',
+      'Laos': 'Lao',
+      'Vietnam': 'Vietnamese',
+      'Cambodia': 'Cambodian',
+      'Indonesia': 'Indonesian',
+      'Malaysia': 'Malaysian',
+      'Singapore': 'Singaporean',
+      'Bangladesh': 'Bangladeshi',
+      'Nepal': 'Nepalese',
+      'Sri Lanka': 'Sri Lankan',
+      'Bhutan': 'Bhutanese',
+      'Maldives': 'Maldivian',
+      'Afghanistan': 'Afghan',
+      'Pakistan': 'Pakistani',
+      'Iran': 'Iranian',
+      'Iraq': 'Iraqi',
+      'Israel': 'Israeli',
+      'Jordan': 'Jordanian',
+      'Lebanon': 'Lebanese',
+      'Syria': 'Syrian',
+      'Yemen': 'Yemeni',
+      'Oman': 'Omani',
+      'Qatar': 'Qatari',
+      'Kuwait': 'Kuwaiti',
+      'Bahrain': 'Bahraini',
+      'Saudi Arabia': 'Saudi',
+      'Egypt': 'Egyptian',
+      'Sudan': 'Sudanese',
+      'Libya': 'Libyan',
+      'Tunisia': 'Tunisian',
+      'Algeria': 'Algerian',
+      'Morocco': 'Moroccan',
+      'Ethiopia': 'Ethiopian',
+      'Kenya': 'Kenyan',
+      'Tanzania': 'Tanzanian',
+      'Uganda': 'Ugandan',
+      'Rwanda': 'Rwandan',
+      'Ghana': 'Ghanaian',
+      'Nigeria': 'Nigerian',
+      'Senegal': 'Senegalese',
+      'Mali': 'Malian',
+      'Niger': 'Nigerien',
+      'Chad': 'Chadian',
+      'Cameroon': 'Cameroonian',
+      'Gabon': 'Gabonese',
+      'Congo': 'Congolese',
+      'Zambia': 'Zambian',
+      'Zimbabwe': 'Zimbabwean',
+      'Botswana': 'Motswana',
+      'Namibia': 'Namibian',
+      'Mozambique': 'Mozambican',
+      'Madagascar': 'Malagasy',
+      'Mauritius': 'Mauritian',
+      'Seychelles': 'Seychellois',
+      'Fiji': 'Fijian',
+      'Papua New Guinea': 'Papua New Guinean',
+      'Solomon Islands': 'Solomon Islander',
+      'Vanuatu': 'Ni-Vanuatu',
+      'Samoa': 'Samoan',
+      'Tonga': 'Tongan',
+      'Marshall Islands': 'Marshallese',
+      'Micronesia': 'Micronesian',
+      'Palau': 'Palauan',
+      'Nauru': 'Nauruan',
+      'Kiribati': 'I-Kiribati',
+      'Tuvalu': 'Tuvaluan',
+      'Chile': 'Chilean',
+      'Peru': 'Peruvian',
+      'Paraguay': 'Paraguayan',
+      'Uruguay': 'Uruguayan',
+      'Guyana': 'Guyanese',
+      'Suriname': 'Surinamese',
+      'Belize': 'Belizean',
+      'Guatemala': 'Guatemalan',
+      'Honduras': 'Honduran',
+      'El Salvador': 'Salvadoran',
+      'Nicaragua': 'Nicaraguan',
+      'Costa Rica': 'Costa Rican',
+      'Panama': 'Panamanian',
+      'Haiti': 'Haitian',
+      'Jamaica': 'Jamaican',
+      'Trinidad and Tobago': 'Trinidadian',
+      'Barbados': 'Barbadian',
+      'Bahamas': 'Bahamian',
+      'Dominica': 'Dominican',
+      'Saint Lucia': 'Saint Lucian',
+      'Saint Vincent and the Grenadines': 'Vincentian',
+      'Grenada': 'Grenadian',
+      'Antigua and Barbuda': 'Antiguan',
+      'Saint Kitts and Nevis': 'Kittitian',
+    };
+
+    // Check mapping first
+    if (nationalityMapping[countryName]) {
+      return nationalityMapping[countryName];
+    }
+
+    // Try to extract from demonyms API structure
+    if (demonyms?.eng) {
+      // Try male form first (most common)
+      if (demonyms.eng.m) {
+        return demonyms.eng.m;
+      }
+      // Try female form
+      if (demonyms.eng.f) {
+        return demonyms.eng.f;
+      }
+      // Try direct form
+      if (typeof demonyms.eng === 'string') {
+        return demonyms.eng;
+      }
+    }
+
+    // Fallback: try to generate from country name
+    // Remove common suffixes and add common nationality endings
+    const lowerName = countryName.toLowerCase();
+    if (lowerName.endsWith('ia')) {
+      return countryName.slice(0, -2) + 'ian';
+    }
+    if (lowerName.endsWith('land')) {
+      return countryName.slice(0, -4) + 'er';
+    }
+    if (lowerName.endsWith('stan')) {
+      return countryName.slice(0, -4) + 'i';
+    }
+    if (lowerName.endsWith('a')) {
+      return countryName.slice(0, -1) + 'an';
+    }
+    if (lowerName.endsWith('y')) {
+      return countryName.slice(0, -1) + 'ian';
+    }
+
+    // Last resort: return country name (will be filtered out if needed)
+    return countryName;
+  };
+
+  // Fetch nationalities and countries from REST Countries API
   const fetchNationalities = async () => {
     try {
-      const response = await fetch('https://restcountries.com/v3.1/all?fields=name');
-      const countries = await response.json();
-      const nationalityList = countries
+      const response = await fetch('https://restcountries.com/v3.1/all?fields=name,demonyms');
+      const countriesData = await response.json();
+      
+      // Create nationality list using proper nationality extraction
+      const nationalityMap = new Map();
+      
+      countriesData.forEach(country => {
+        const countryName = country.name.common;
+        const nationality = getNationalityFromCountry(countryName, country.demonyms);
+        
+        // Skip if nationality is invalid or equals country name
+        if (!nationality || nationality === countryName) {
+          return;
+        }
+        
+        // Normalize nationality (case-insensitive) for deduplication
+        const normalizedNationality = nationality.trim();
+        const lowerNationality = normalizedNationality.toLowerCase();
+        
+        // Only add if we haven't seen this nationality before
+        if (!nationalityMap.has(lowerNationality)) {
+          nationalityMap.set(lowerNationality, {
+            id: normalizedNationality,
+            label: normalizedNationality,
+            countryName: countryName
+          });
+        }
+      });
+      
+      // Convert map to array and sort
+      const nationalityList = Array.from(nationalityMap.values())
+        .sort((a, b) => a.label.localeCompare(b.label));
+      
+      // Create country list using country names
+      const countryList = countriesData
         .map(country => ({
           id: country.name.common,
           label: country.name.common
@@ -167,18 +375,29 @@ export default function InspireKYC() {
       
       setNationalities(nationalityList);
       setFilteredNationalities(nationalityList);
+      setCountries(countryList);
+      setFilteredCountries(countryList);
     } catch (error) {
       console.error('Error fetching nationalities:', error);
       // Fallback to basic list
       const fallbackNationalities = [
-        { id: 'philippine', label: 'Philippine' },
-        { id: 'american', label: 'American' },
-        { id: 'british', label: 'British' },
-        { id: 'chinese', label: 'Chinese' },
-        { id: 'japanese', label: 'Japanese' },
+        { id: 'filipino', label: 'Filipino', countryName: 'Philippines' },
+        { id: 'american', label: 'American', countryName: 'United States' },
+        { id: 'british', label: 'British', countryName: 'United Kingdom' },
+        { id: 'chinese', label: 'Chinese', countryName: 'China' },
+        { id: 'japanese', label: 'Japanese', countryName: 'Japan' },
+      ];
+      const fallbackCountries = [
+        { id: 'philippines', label: 'Philippines' },
+        { id: 'united states', label: 'United States' },
+        { id: 'united kingdom', label: 'United Kingdom' },
+        { id: 'china', label: 'China' },
+        { id: 'japan', label: 'Japan' },
       ];
       setNationalities(fallbackNationalities);
       setFilteredNationalities(fallbackNationalities);
+      setCountries(fallbackCountries);
+      setFilteredCountries(fallbackCountries);
     }
   };
   
@@ -192,6 +411,19 @@ export default function InspireKYC() {
         item.label.toLowerCase().includes(query.toLowerCase())
       );
       setFilteredNationalities(filtered);
+    }
+  };
+
+  // Filter countries based on search
+  const filterCountries = (query) => {
+    setSearchQuery(query);
+    if (query === '') {
+      setFilteredCountries(countries);
+    } else {
+      const filtered = countries.filter(item =>
+        item.label.toLowerCase().includes(query.toLowerCase())
+      );
+      setFilteredCountries(filtered);
     }
   };
   
@@ -239,7 +471,7 @@ export default function InspireKYC() {
   
   // Navigation functions
   const goToNextStep = () => {
-    if (currentStep < totalSteps) {
+    if (currentStep < effectiveTotalSteps) {
       setCurrentStep(currentStep + 1);
     }
   };
@@ -663,10 +895,10 @@ export default function InspireKYC() {
       {(showKYC || kycButtonPressed) && (
         <View style={styles.progressContainer}>
           <Text style={[styles.progressText, getRTLStyles(userData?.preferredLanguage || 'English')]}>
-            {t(userData?.preferredLanguage || 'English', 'kyc.progress.step').replace('{current}', currentStep).replace('{total}', totalSteps)}
+            {t(userData?.preferredLanguage || 'English', 'kyc.progress.step').replace('{current}', currentStep).replace('{total}', effectiveTotalSteps)}
           </Text>
           <View style={styles.progressBar}>
-            <View style={[styles.progressFill, { width: `${(currentStep / totalSteps) * 100}%` }]} />
+            <View style={[styles.progressFill, { width: `${(currentStep / effectiveTotalSteps) * 100}%` }]} />
           </View>
         </View>
       )}
@@ -704,33 +936,50 @@ export default function InspireKYC() {
         </View>
 
         <View style={styles.formContainer}>
-          {/* First Name */}
-          <View style={styles.inputGroup}>
-            <Text style={[styles.inputLabel, getRTLStyles(userData?.preferredLanguage || 'English')]}>
-              {t(userData?.preferredLanguage || 'English', 'kyc.fields.firstName')} *
-            </Text>
-            <TextInput
-              style={styles.textInput}
-              value={formData.firstName}
-              onChangeText={(text) => updateFormData('firstName', text)}
-              placeholder={t(userData?.preferredLanguage || 'English', 'kyc.placeholders.firstName')}
-              placeholderTextColor="#999"
-              onFocus={handleInputFocus}
-            />
+          {/* First Name and Last Name in Row */}
+          <View style={styles.nameRow}>
+            {/* First Name */}
+            <View style={[styles.inputGroup, styles.nameColumn]}>
+              <Text style={[styles.inputLabel, getRTLStyles(userData?.preferredLanguage || 'English')]}>
+                {t(userData?.preferredLanguage || 'English', 'kyc.fields.firstName')} *
+              </Text>
+              <TextInput
+                style={styles.textInput}
+                value={formData.firstName}
+                onChangeText={(text) => updateFormData('firstName', text)}
+                placeholder={t(userData?.preferredLanguage || 'English', 'kyc.placeholders.firstName')}
+                placeholderTextColor="#999"
+                onFocus={handleInputFocus}
+              />
+            </View>
+
+            {/* Last Name */}
+            <View style={[styles.inputGroup, styles.nameColumn]}>
+              <Text style={[styles.inputLabel, getRTLStyles(userData?.preferredLanguage || 'English')]}>
+                {t(userData?.preferredLanguage || 'English', 'kyc.fields.lastName')} *
+              </Text>
+              <TextInput
+                style={styles.textInput}
+                value={formData.lastName}
+                onChangeText={(text) => updateFormData('lastName', text)}
+                placeholder={t(userData?.preferredLanguage || 'English', 'kyc.placeholders.lastName')}
+                placeholderTextColor="#999"
+                onFocus={handleInputFocus}
+              />
+            </View>
           </View>
 
-          {/* Last Name */}
+          {/* Company Name - Read Only */}
           <View style={styles.inputGroup}>
             <Text style={[styles.inputLabel, getRTLStyles(userData?.preferredLanguage || 'English')]}>
-              {t(userData?.preferredLanguage || 'English', 'kyc.fields.lastName')} *
+              {t(userData?.preferredLanguage || 'English', 'kyc.fields.companyName')}
             </Text>
             <TextInput
-              style={styles.textInput}
-              value={formData.lastName}
-              onChangeText={(text) => updateFormData('lastName', text)}
-              placeholder={t(userData?.preferredLanguage || 'English', 'kyc.placeholders.lastName')}
+              style={[styles.textInput, styles.readOnlyInput]}
+              value={userData?.company || t(userData?.preferredLanguage || 'English', 'general.notAvailable')}
+              editable={false}
+              placeholder={t(userData?.preferredLanguage || 'English', 'general.notAvailable')}
               placeholderTextColor="#999"
-              onFocus={handleInputFocus}
             />
           </View>
 
@@ -966,10 +1215,10 @@ export default function InspireKYC() {
         <View style={styles.stepHeader}>
           <Ionicons name="document-text" size={40} color={Colors.newYearTheme.background} />
           <Text style={[styles.stepTitle, getRTLStyles(userData?.preferredLanguage || 'English')]}>
-            {t(userData?.preferredLanguage || 'English', 'kyc.steps.documents.title')}
+            {t(userData?.preferredLanguage || 'English', 'kyc.steps.personalDocuments.title')}
           </Text>
           <Text style={[styles.stepDescription, getRTLStyles(userData?.preferredLanguage || 'English')]}>
-            {t(userData?.preferredLanguage || 'English', 'kyc.steps.documents.description')}
+            {t(userData?.preferredLanguage || 'English', 'kyc.steps.personalDocuments.description')}
           </Text>
         </View>
 
@@ -1243,11 +1492,11 @@ export default function InspireKYC() {
             </View>
           </View>
 
-          {/* Documents Summary */}
+          {/* Personal Documents Summary */}
           <View style={styles.summarySection}>
             <View style={styles.summarySectionHeader}>
               <Text style={[styles.summarySectionTitle, getRTLStyles(userData?.preferredLanguage || 'English')]}>
-                {t(userData?.preferredLanguage || 'English', 'kyc.summary.documents')}
+                {t(userData?.preferredLanguage || 'English', 'kyc.summary.personalDocuments')}
               </Text>
               <TouchableOpacity onPress={() => setCurrentStep(3)}>
                 <Text style={styles.editButton}>
@@ -1255,27 +1504,39 @@ export default function InspireKYC() {
                 </Text>
               </TouchableOpacity>
             </View>
-            <View style={styles.documentsRow}>
+            <View style={styles.documentsGrid}>
               {formData.idFrontPhoto && (
-                <View style={styles.documentPreview}>
+                <View style={styles.documentCard}>
                   <Image source={{ uri: formData.idFrontPhoto.uri }} style={styles.documentImage} />
-                  <Text style={styles.documentLabel}>
+                  <Text
+                    style={styles.documentLabel}
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                  >
                     {t(userData?.preferredLanguage || 'English', 'kyc.summary.idFront')}
                   </Text>
                 </View>
               )}
               {formData.idBackPhoto && (
-                <View style={styles.documentPreview}>
+                <View style={styles.documentCard}>
                   <Image source={{ uri: formData.idBackPhoto.uri }} style={styles.documentImage} />
-                  <Text style={styles.documentLabel}>
+                  <Text
+                    style={styles.documentLabel}
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                  >
                     {t(userData?.preferredLanguage || 'English', 'kyc.summary.idBack')}
                   </Text>
                 </View>
               )}
               {formData.selfiePhoto && (
-                <View style={styles.documentPreview}>
+                <View style={styles.documentCard}>
                   <Image source={{ uri: formData.selfiePhoto.uri }} style={styles.documentImage} />
-                  <Text style={styles.documentLabel}>
+                  <Text
+                    style={styles.documentLabel}
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                  >
                     {t(userData?.preferredLanguage || 'English', 'kyc.summary.selfiePhoto')}
                   </Text>
                 </View>
@@ -1454,11 +1715,11 @@ export default function InspireKYC() {
                 style={styles.searchInput}
                 placeholder={t(userData?.preferredLanguage || 'English', 'kyc.placeholders.searchCountry')}
                 value={searchQuery}
-                onChangeText={filterNationalities}
+                onChangeText={filterCountries}
                 onFocus={handleInputFocus}
               />
               <FlatList
-                data={filteredNationalities}
+                data={filteredCountries}
                 keyExtractor={(item) => item.id}
                 renderItem={({ item }) => (
                   <TouchableOpacity
@@ -1467,7 +1728,7 @@ export default function InspireKYC() {
                       updateFormData('country', item.label);
                       setShowCountryModal(false);
                       setSearchQuery('');
-                      setFilteredNationalities(nationalities);
+                      setFilteredCountries(countries);
                     }}
                   >
                     <Text style={styles.modalItemText}>{item.label}</Text>
@@ -1755,6 +2016,15 @@ const styles = StyleSheet.create({
   formContainer: {
     gap: 20,
   },
+  nameRow: {
+    flexDirection: "row",
+    gap: 15,
+    marginBottom: 15,
+  },
+  nameColumn: {
+    flex: 1,
+    marginBottom: 0,
+  },
   inputGroup: {
     marginBottom: 15,
   },
@@ -1779,6 +2049,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Colors.newYearTheme.text,
     backgroundColor: "rgba(255, 255, 255, 0.9)",
+  },
+  readOnlyInput: {
+    backgroundColor: "rgba(255, 255, 255, 0.5)",
+    color: Colors.newYearTheme.text,
+    opacity: 0.7,
   },
   textAreaInput: {
     height: 80,
@@ -1950,6 +2225,16 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "rgba(254, 125, 72, 0.2)",
   },
+  summarySubsectionTitle: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: Colors.newYearTheme.text,
+    marginBottom: 8,
+    marginTop: 5,
+  },
+  summarySubsectionTitleSpacing: {
+    marginTop: 16,
+  },
   summarySectionTitle: {
     fontSize: 16,
     fontWeight: "bold",
@@ -1989,17 +2274,33 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   documentImage: {
-    width: 80,
-    height: 80,
+    width: 70,
+    height: 70,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: Colors.newYearTheme.text,
+    marginRight: 12,
   },
   documentLabel: {
     fontSize: 12,
     color: Colors.newYearTheme.text,
     fontWeight: "500",
     textAlign: "center",
+  },
+  documentsGrid: {
+    flexDirection: "column",
+    gap: 10,
+  },
+  documentCard: {
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    backgroundColor: "rgba(255, 255, 255, 0.08)",
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "rgba(254, 125, 72, 0.25)",
   },
   modalOverlay: {
     flex: 1,

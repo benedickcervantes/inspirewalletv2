@@ -250,6 +250,8 @@
     },
     "fields": {
       "name": "Name",
+      "companyName": "Company Name",
+      "editCompanyName": "Edit Company Name",
       "emailAddress": "Email Address",
       "accountNumber": "Account Number",
       "accountType": "Account Type",
@@ -258,7 +260,9 @@
       "agentReferrer": "Agent Referrer",
       "language": "Language",
       "status": "Status",
-      "memberSince": "Member Since"
+      "memberSince": "Member Since",
+      "lineAccountLink": "LINE Account Link",
+      "contactNumber": "Contact Number"
     },
     "values": {
       "notProvided": "Not provided",
@@ -272,26 +276,37 @@
       "consultantAgentNote": "This referrer is also a Consultant Agent"
     },
     "buttons": {
-      "save": "Save",
-      "cancel": "Cancel",
+      "save": "Save Changes",
+      "cancel": "Discard",
       "verify": "Verify",
       "editName": "Edit Name",
       "selectLanguage": "Select Language",
-      "changing": "Changing..."
+      "changing": "Updating..."
     },
     "messages": {
       "success": {
         "nameUpdated": "Your name has been updated successfully.",
+        "companyUpdated": "Your company name has been updated successfully.",
+        "lineUpdated": "Your LINE account link has been updated successfully.",
+        "contactUpdated": "Your contact number has been updated successfully.",
         "languageUpdated": "Your language preference has been updated successfully.",
-        "copied": "Account number has been copied to clipboard."
+        "copied": "Account number has been copied to clipboard.",
+        "businessDocumentsUploaded": "Your business documents have been uploaded successfully. Your company files will be reviewed within 2-3 working days. Please ensure all submitted requirements are valid and complete."
       },
       "error": {
         "nameUpdateFailed": "Failed to update your name. Please try again.",
+        "companyUpdateFailed": "Failed to update your company name. Please try again.",
+        "lineUpdateFailed": "Failed to update your LINE account link. Please try again.",
+        "contactUpdateFailed": "Failed to update your contact number. Please try again.",
         "languageUpdateFailed": "Failed to update your language preference. Please try again.",
         "copyFailed": "Failed to copy account number to clipboard."
       },
       "warning": {
-        "noAccountNumber": "Account number is not available to copy."
+        "noAccountNumber": "Account number is not available to copy.",
+        "missingContactInfo": "Please provide both your LINE account link and contact number.",
+        "invalidPhoneFormat": "Invalid phone number format",
+        "phoneNumberNotOnlyDigits": "Phone number should contain only digits",
+        "invalidPhoneLength": "Phone number must match the required format for the selected country"
       },
       "titles": {
         "success": "Success!",
@@ -302,7 +317,8 @@
     },
     "placeholders": {
       "firstName": "First Name",
-      "lastName": "Last Name"
+      "lastName": "Last Name",
+      "companyName": "Enter Company Name"
     }
   },
   "kyc": {
@@ -330,6 +346,14 @@
         "title": "Document Upload",
         "description": "Please upload the front and back of your ID and a selfie photo"
       },
+      "personalDocuments": {
+        "title": "Personal Document Upload",
+        "description": "Please upload your government ID (front and back) and a selfie for identity verification."
+      },
+      "businessDocuments": {
+        "title": "Business Document Upload",
+        "description": "Please upload your commercial register, recent bank statement, and proof of billing for your business."
+      },
       "review": {
         "title": "Review & Submit",
         "description": "Please review your information before submitting"
@@ -338,6 +362,7 @@
     "fields": {
       "firstName": "First Name",
       "lastName": "Last Name",
+      "companyName": "Company Name",
       "birthday": "Birthday",
       "gender": "Gender",
       "nationality": "Nationality",
@@ -348,7 +373,10 @@
       "postalCode": "Postal Code",
       "idFront": "Government ID Front",
       "idBack": "Government ID Back",
-      "selfiePhoto": "Selfie Photo"
+      "selfiePhoto": "Selfie Photo",
+      "commercialRegister": "Commercial Register",
+      "bankStatement": "Bank Statement",
+      "proofOfBilling": "Proof of Billing"
     },
     "placeholders": {
       "firstName": "Enter your first name",
@@ -362,7 +390,10 @@
     "hints": {
       "idFront": "Upload a clear photo of the front of your government-issued ID",
       "idBack": "Upload a clear photo of the back of your government-issued ID",
-      "selfiePhoto": "Take a clear selfie photo for verification"
+      "selfiePhoto": "Take a clear selfie photo for verification",
+      "commercialRegister": "Upload a clear photo or scan of your business commercial register document.",
+      "bankStatement": "Upload a recent bank statement showing your business account details.",
+      "proofOfBilling": "Upload a recent utility bill or similar document showing your business address."
     },
     "options": {
       "gender": {
@@ -422,6 +453,8 @@
       "personalInfo": "Personal Information",
       "addressInfo": "Address Information",
       "documents": "Documents",
+      "personalDocuments": "Personal Documents",
+      "businessDocuments": "Business Documents",
       "name": "Name:",
       "birthday": "Birthday:",
       "gender": "Gender:",
@@ -433,7 +466,10 @@
       "postalCode": "Postal Code:",
       "idFront": "ID Front",
       "idBack": "ID Back",
-      "selfiePhoto": "Selfie Photo"
+      "selfiePhoto": "Selfie Photo",
+      "commercialRegister": "Commercial Register",
+      "bankStatement": "Bank Statement",
+      "proofOfBilling": "Proof of Billing"
     },
     "status": {
       "uploading": "Uploading Documents",
@@ -520,7 +556,92 @@
       "authenticationError": "Authentication Error"
     },
     "characterCount": "{current}/{max}",
-    "currencySymbol": "₱"
+    "currencySymbol": "₱",
+    "steps": {
+      "step1": {
+        "title": "Select Balance Type",
+        "subtitle": "Choose which balance to use for transfer"
+      },
+      "step2": {
+        "title": "Transfer Details",
+        "subtitle": "Enter recipient and amount"
+      },
+      "step3": {
+        "title": "Confirm Transfer",
+        "subtitle": "Review your transfer details"
+      },
+      "progress": "Step {current} of 3"
+    },
+    "balanceOptions": {
+      "available": {
+        "title": "Available Balance",
+        "subtitle": "Main wallet balance"
+      },
+      "agent": {
+        "title": "Agent Wallet",
+        "subtitle": "Commission earnings"
+      },
+      "availableBadge": "Available",
+      "insufficientBadge": "Insufficient"
+    },
+    "inputs": {
+      "recipientAccountNumber": "Recipient Account Number",
+      "amount": "Amount",
+      "description": "Description (Optional)",
+      "descriptionPlaceholder": "Add a note...",
+      "accountNumberPlaceholder": "Enter account number",
+      "availableBalance": "Available: PHP {amount}"
+    },
+    "confirmation": {
+      "to": "To",
+      "from": "From",
+      "amountToTransfer": "Amount to Transfer",
+      "currentBalance": "Current Balance",
+      "transferAmount": "Transfer Amount",
+      "newBalance": "New Balance"
+    },
+    "quickActions": {
+      "myQR": "My QR",
+      "scanQR": "Scan QR",
+      "contacts": "Contacts"
+    },
+    "qrModal": {
+      "title": "My QR Code",
+      "subtitle": "Share this QR code for others to transfer money to you",
+      "shareButton": "Share QR Code",
+      "note": "This QR code contains your account information for receiving transfers",
+      "secureTransferCode": "Secure Transfer Code"
+    },
+    "contacts": {
+      "title": "Saved Contacts",
+      "showContacts": "Show Contacts",
+      "hideContacts": "Hide Contacts",
+      "noContacts": "No saved contacts yet",
+      "noContactsSubtext": "Contacts will be saved automatically after transfers",
+      "deleteContact": "Delete Contact",
+      "deleteConfirm": "Are you sure you want to delete {name}?",
+      "deleteError": "Failed to delete contact. Please try again."
+    },
+    "errors": {
+      "selectBalanceType": "Please select a balance type to continue",
+      "enterAccountNumber": "Please enter an account number",
+      "invalidAccountNumberFormat": "Invalid account number format",
+      "cannotTransferToSelf": "Cannot transfer to your own account",
+      "enterValidAmount": "Please enter a valid amount",
+      "insufficientBalanceAvailable": "Insufficient balance. Available: PHP {amount}",
+      "accountNotFound": "Account not found",
+      "contactAccountNotFound": "Contact account not found",
+      "errorLoadingContact": "Error loading contact",
+      "sharingNotAvailable": "Sharing Not Available",
+      "sharingNotAvailableMessage": "Sharing is not available on this device.",
+      "shareFailed": "Share Failed",
+      "shareFailedMessage": "Unable to share QR code. Please try again."
+    },
+    "navigation": {
+      "back": "Back",
+      "continue": "Continue",
+      "confirmAndSend": "Confirm & Send"
+    }
   },
   "buyCards": {
     "header": {
@@ -1476,8 +1597,8 @@
       "depositRequest": "Deposit Request",
       "depositInstructions": "Complete the form below to request a deposit. Choose between Time Deposit for guaranteed returns (minimum ₱50,000) or Stock investments for market opportunities (minimum ₱2,000,000).",
       "investmentDetails": "Investment Details",
-      "investmentType": "Investment Type",
-      "selectInvestmentType": "Select Investment Type *",
+      "investmentType": "Deposit Type",
+      "selectInvestmentType": "Select Deposit Type *",
       "chooseInvestmentType": "Choose your investment type",
       "contractPeriod": "Contract Period *",
       "selectContractDuration": "Select contract duration",
@@ -1502,13 +1623,31 @@
       "minimumTimeDeposit": "Minimum ₱50,000 for Time Deposit",
       "minimum": "Minimum: {amount}",
       "selectCurrency": "Select Currency",
-      "selectInvestmentTypeModal": "Select Investment Type",
+      "selectInvestmentTypeModal": "Select Deposit Type",
       "selectContractPeriod": "Select Contract Period",
       "timeDeposit": "Time Deposit",
       "stockInvestment": "Stock Investment",
+      "topUpAvailableBalance": "Top Up Available Balance",
       "sixMonthsContract": "6 Months Contract",
       "oneYearContract": "1 Year Contract",
-      "twoYearsContract": "2 Years Contract"
+      "twoYearsContract": "2 Years Contract",
+      "depositMethod": "Deposit Method",
+      "requestAmount": "Request Amount",
+      "useAvailableBalance": "Use Available Balance",
+      "availableBalance": "Available Balance",
+      "enterAmountFromBalance": "Enter amount from available balance",
+      "insufficientBalance": "Amount exceeds available balance",
+      "step": "Step",
+      "of": "of",
+      "back": "Back",
+      "continue": "Continue",
+      "confirmSubmit": "Confirm & Submit",
+      "reviewConfirm": "Review & Confirm",
+      "reviewDetails": "Review your deposit details",
+      "selectDepositMethod": "Choose how you want to deposit",
+      "stockInvestmentStep2": "Review investment details and proceed",
+      "stockInvestmentTitle": "Stock Investment",
+      "stockInvestmentInfo": "You are about to make a stock investment deposit. Please proceed to enter the investment amount in the next step."
     },
     "modals": {
       "missingInformation": {
@@ -1527,9 +1666,21 @@
         "title": "Request Submitted",
         "message": "Your deposit request has been submitted successfully! Please check your email for bank account details."
       },
+      "depositRequestSubmitted": {
+        "title": "Request Submitted",
+        "message": "Your deposit request has been submitted successfully! Please check your email for bank account details."
+      },
       "submissionFailed": {
         "title": "Submission Failed",
         "message": "Failed to submit request. Please try again."
+      },
+      "insufficientBalance": {
+        "title": "Insufficient Balance",
+        "message": "The amount you entered exceeds your available balance. Please enter a smaller amount."
+      },
+      "depositCreated": {
+        "title": "Deposit Created",
+        "message": "Your time deposit has been created successfully using your available balance!"
       }
     }
   },
@@ -1669,7 +1820,14 @@
       "stockholderAmount": "Stockholder Amount",
       "buy": "BUY",
       "transfer": "TRANSFER",
-      "sell": "SELL"
+      "sell": "SELL",
+      "stockRate": "Stock Rate",
+      "stockRateValue": "1 Stock = ₱ {amount}",
+      "yourStockPortfolio": "Your Stock Portfolio",
+      "stock": "Stock",
+      "stocks": "Stocks",
+      "totalPortfolioValue": "Total Portfolio Value",
+      "transactionHistory": "Transaction History"
     },
     "modals": {
       "dataError": {
@@ -2031,7 +2189,9 @@
       "selectWithdrawalType": "Select Withdrawal Type *",
       "chooseWithdrawalType": "Choose withdrawal type",
       "availableBalance": "Available Balance",
+      "availableBalanceDesc": "Withdraw from your available balance",
       "agentWithdrawal": "Agent Withdrawal",
+      "agentWithdrawalDesc": "Withdraw from your agent wallet",
       "withdrawalAmount": "Withdrawal Amount (₱) *",
       "enterWithdrawalAmount": "Enter withdrawal amount",
       "availableBalanceInfo": "Available Balance: ₱{amount}",
@@ -2053,7 +2213,32 @@
       "securityText": "🔒 Your banking information is encrypted and secure\n⏱️ Processing time: 1-2 working days\n📧 Confirmation will be sent to your email\n✅ All withdrawals are verified before processing",
       "submitWithdrawalRequest": "Submit Withdrawal Request",
       "submitting": "Submitting...",
-      "insufficientBalance": "Insufficient Balance"
+      "insufficientBalance": "Insufficient Balance",
+      "selectWithdrawalMethod": "Select Withdrawal Method",
+      "chooseWithdrawalMethod": "Choose how you want to withdraw",
+      "localBank": "Local Bank",
+      "localBankDesc": "Withdraw to your local bank account",
+      "eWallet": "E-Wallet",
+      "eWalletDesc": "Withdraw to GCash or Maya",
+      "selectEWalletType": "Select E-Wallet Type",
+      "chooseEWalletType": "Choose your preferred e-wallet",
+      "enterBankingDetails": "Enter your banking information",
+      "enterAmountAndContact": "Enter withdrawal amount and contact information",
+      "walletInformation": "Wallet Information",
+      "enterWalletDetails": "Enter your e-wallet account details",
+      "walletAccountNumber": "Wallet Account Number",
+      "walletAccountNumberPlaceholder": "Enter wallet account number",
+      "walletAccountName": "Wallet Account Name",
+      "walletAccountNamePlaceholder": "Enter wallet account holder name",
+      "withdrawalMethod": "Withdrawal Method",
+      "eWalletType": "E-Wallet Type",
+      "reviewConfirm": "Review & Confirm",
+      "reviewDetails": "Review your withdrawal details",
+      "step": "Step",
+      "of": "of",
+      "back": "Back",
+      "continue": "Continue",
+      "confirmSubmit": "Confirm & Submit"
     },
     "modals": {
       "accessRestricted": "Access Restricted",
@@ -2245,6 +2430,7 @@
       }
     },
     "general": {
+      "notAvailable": "N/A",
       "login": {
         "title": "Signing You In",
         "subtitle": "Accessing your Inspire Wallet",
@@ -2254,6 +2440,16 @@
         "title": "Creating Your Account",
         "subtitle": "Setting up your Inspire Wallet",
         "status": "Please wait..."
+      },
+      "passcode": {
+        "title": "Updating Passcode",
+        "subtitle": "Securing your account",
+        "status": "Please wait..."
+      },
+      "createPasscode": {
+        "title": "Creating Passcode",
+        "subtitle": "Please wait while we set up your passcode",
+        "status": "Creating Passcode..."
       },
       "default": {
         "title": "Loading...",

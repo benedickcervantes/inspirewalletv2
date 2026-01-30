@@ -256,9 +256,12 @@
       "accountLevel": "مستوى الحساب",
       "agentNumber": "رقم الوكيل",
       "agentReferrer": "الوكيل المحيل",
+      "companyName": "اسم الشركة",
       "language": "اللغة",
       "status": "الحالة",
-      "memberSince": "عضو منذ"
+      "memberSince": "عضو منذ",
+      "lineAccountLink": "LINE Account Link",
+      "contactNumber": "Contact Number"
     },
     "values": {
       "notProvided": "غير متوفر",
@@ -272,26 +275,35 @@
       "consultantAgentNote": "هذا المحيل هو أيضًا وكيل استشاري"
     },
     "buttons": {
-      "save": "حفظ",
-      "cancel": "إلغاء",
+      "save": "حفظ التغييرات",
+      "cancel": "تجاهل",
       "verify": "تحقق",
       "editName": "تعديل الاسم",
       "selectLanguage": "اختر اللغة",
-      "changing": "جاري التغيير..."
+      "changing": "جاري التحديث..."
     },
     "messages": {
       "success": {
         "nameUpdated": "تم تحديث اسمك بنجاح.",
         "languageUpdated": "تم تحديث تفضيل اللغة بنجاح.",
-        "copied": "تم نسخ رقم الحساب إلى الحافظة."
+        "copied": "تم نسخ رقم الحساب إلى الحافظة.",
+        "businessDocumentsUploaded": "تم تحميل مستندات عملك بنجاح. سيتم مراجعة ملفات شركتك خلال 2-3 أيام عمل. يرجى التأكد من أن جميع المتطلبات المقدمة صالحة ومكتملة.",
+        "lineUpdated": "Your LINE account link has been updated successfully.",
+        "contactUpdated": "Your contact number has been updated successfully."
       },
       "error": {
         "nameUpdateFailed": "فشل في تحديث اسمك. يرجى المحاولة مرة أخرى.",
         "languageUpdateFailed": "فشل في تحديث تفضيل اللغة. يرجى المحاولة مرة أخرى.",
-        "copyFailed": "فشل في نسخ رقم الحساب إلى الحافظة."
+        "copyFailed": "فشل في نسخ رقم الحساب إلى الحافظة.",
+        "lineUpdateFailed": "Failed to update your LINE account link. Please try again.",
+        "contactUpdateFailed": "Failed to update your contact number. Please try again."
       },
       "warning": {
-        "noAccountNumber": "رقم الحساب غير متاح للنسخ."
+        "noAccountNumber": "رقم الحساب غير متاح للنسخ.",
+        "missingContactInfo": "Please provide both your LINE account link and contact number.",
+        "invalidPhoneFormat": "Invalid phone number format",
+        "phoneNumberNotOnlyDigits": "Phone number should contain only digits",
+        "invalidPhoneLength": "Phone number must match the required format for the selected country"
       },
       "titles": {
         "success": "نجح!",
@@ -330,6 +342,14 @@
         "title": "رفع المستندات",
         "description": "يرجى رفع الوجه الأمامي والخلفي لهويتك وصورة سيلفي"
       },
+      "personalDocuments": {
+        "title": "رفع المستندات الشخصية",
+        "description": "يرجى رفع هويتك الحكومية (الوجه الأمامي والخلفي) وصورة سيلفي للتحقق من الهوية."
+      },
+      "businessDocuments": {
+        "title": "رفع مستندات الأعمال",
+        "description": "يرجى رفع السجل التجاري وكشف حساب البنك الحديث وإثبات الفوترة لأعمالك."
+      },
       "review": {
         "title": "المراجعة والتقديم",
         "description": "يرجى مراجعة معلوماتك قبل التقديم"
@@ -338,6 +358,7 @@
     "fields": {
       "firstName": "الاسم الأول",
       "lastName": "اسم العائلة",
+      "companyName": "اسم الشركة",
       "birthday": "تاريخ الميلاد",
       "gender": "الجنس",
       "nationality": "الجنسية",
@@ -348,7 +369,10 @@
       "postalCode": "الرمز البريدي",
       "idFront": "الهوية الأمامية",
       "idBack": "الهوية الخلفية",
-      "selfiePhoto": "صورة سيلفي"
+      "selfiePhoto": "صورة سيلفي",
+      "commercialRegister": "السجل التجاري",
+      "bankStatement": "كشف حساب البنك",
+      "proofOfBilling": "إثبات الفوترة"
     },
     "placeholders": {
       "firstName": "أدخل اسمك الأول",
@@ -362,7 +386,10 @@
     "hints": {
       "idFront": "ارفع صورة واضحة للوجه الأمامي لهويتك الحكومية",
       "idBack": "ارفع صورة واضحة للوجه الخلفي لهويتك الحكومية",
-      "selfiePhoto": "التقط صورة سيلفي واضحة للتحقق"
+      "selfiePhoto": "التقط صورة سيلفي واضحة للتحقق",
+      "commercialRegister": "ارفع صورة واضحة أو مسح ضوئي لوثيقة السجل التجاري لأعمالك.",
+      "bankStatement": "ارفع كشف حساب بنكي حديث يُظهر تفاصيل حساب أعمالك.",
+      "proofOfBilling": "ارفع فاتورة مرافق حديثة أو وثيقة مماثلة تُظهر عنوان أعمالك."
     },
     "options": {
       "gender": {
@@ -422,6 +449,8 @@
       "personalInfo": "المعلومات الشخصية",
       "addressInfo": "معلومات العنوان",
       "documents": "المستندات",
+      "personalDocuments": "المستندات الشخصية",
+      "businessDocuments": "مستندات الأعمال",
       "name": "الاسم:",
       "birthday": "تاريخ الميلاد:",
       "gender": "الجنس:",
@@ -433,7 +462,10 @@
       "postalCode": "الرمز البريدي:",
       "idFront": "الهوية الأمامية",
       "idBack": "الهوية الخلفية",
-      "selfiePhoto": "صورة سيلفي"
+      "selfiePhoto": "صورة سيلفي",
+      "commercialRegister": "السجل التجاري",
+      "bankStatement": "كشف حساب البنك",
+      "proofOfBilling": "إثبات الفوترة"
     },
     "status": {
       "uploading": "رفع المستندات",
@@ -520,7 +552,92 @@
       "authenticationError": "خطأ في المصادقة"
     },
     "characterCount": "{current}/{max}",
-    "currencySymbol": "₱"
+    "currencySymbol": "₱",
+    "steps": {
+      "step1": {
+        "title": "اختر نوع الرصيد",
+        "subtitle": "اختر الرصيد الذي تريد استخدامه للتحويل"
+      },
+      "step2": {
+        "title": "تفاصيل التحويل",
+        "subtitle": "أدخل المستلم والمبلغ"
+      },
+      "step3": {
+        "title": "تأكيد التحويل",
+        "subtitle": "راجع تفاصيل التحويل"
+      },
+      "progress": "الخطوة {current} من 3"
+    },
+    "balanceOptions": {
+      "available": {
+        "title": "الرصيد المتاح",
+        "subtitle": "رصيد المحفظة الرئيسية"
+      },
+      "agent": {
+        "title": "محفظة الوكيل",
+        "subtitle": "أرباح العمولة"
+      },
+      "availableBadge": "متاح",
+      "insufficientBadge": "غير كاف"
+    },
+    "inputs": {
+      "recipientAccountNumber": "رقم حساب المستلم",
+      "amount": "المبلغ",
+      "description": "الوصف (اختياري)",
+      "descriptionPlaceholder": "أضف ملاحظة...",
+      "accountNumberPlaceholder": "أدخل رقم الحساب",
+      "availableBalance": "متاح: PHP {amount}"
+    },
+    "confirmation": {
+      "to": "إلى",
+      "from": "من",
+      "amountToTransfer": "المبلغ المراد تحويله",
+      "currentBalance": "الرصيد الحالي",
+      "transferAmount": "مبلغ التحويل",
+      "newBalance": "الرصيد الجديد"
+    },
+    "quickActions": {
+      "myQR": "QR الخاص بي",
+      "scanQR": "مسح QR",
+      "contacts": "جهات الاتصال"
+    },
+    "qrModal": {
+      "title": "رمز QR الخاص بي",
+      "subtitle": "شارك رمز QR هذا للسماح للآخرين بتحويل الأموال إليك",
+      "shareButton": "مشاركة رمز QR",
+      "note": "يحتوي رمز QR هذا على معلومات حسابك لاستلام التحويلات",
+      "secureTransferCode": "رمز التحويل الآمن"
+    },
+    "contacts": {
+      "title": "جهات الاتصال المحفوظة",
+      "showContacts": "إخفاء جهات الاتصال",
+      "hideContacts": "إظهار جهات الاتصال",
+      "noContacts": "لا توجد جهات اتصال محفوظة بعد",
+      "noContactsSubtext": "سيتم حفظ جهات الاتصال تلقائياً بعد التحويلات",
+      "deleteContact": "حذف جهة الاتصال",
+      "deleteConfirm": "هل أنت متأكد أنك تريد حذف {name}؟",
+      "deleteError": "فشل في حذف جهة الاتصال. يرجى المحاولة مرة أخرى."
+    },
+    "errors": {
+      "selectBalanceType": "يرجى اختيار نوع الرصيد للمتابعة",
+      "enterAccountNumber": "يرجى إدخال رقم الحساب",
+      "invalidAccountNumberFormat": "تنسيق رقم الحساب غير صحيح",
+      "cannotTransferToSelf": "لا يمكن التحويل إلى حسابك الخاص",
+      "enterValidAmount": "يرجى إدخال مبلغ صحيح",
+      "insufficientBalanceAvailable": "الرصيد غير كاف. المتاح: PHP {amount}",
+      "accountNotFound": "لم يتم العثور على الحساب",
+      "contactAccountNotFound": "لم يتم العثور على حساب جهة الاتصال",
+      "errorLoadingContact": "خطأ في تحميل جهة الاتصال",
+      "sharingNotAvailable": "المشاركة غير متاحة",
+      "sharingNotAvailableMessage": "المشاركة غير متاحة على هذا الجهاز.",
+      "shareFailed": "فشلت المشاركة",
+      "shareFailedMessage": "غير قادر على مشاركة رمز QR. يرجى المحاولة مرة أخرى."
+    },
+    "navigation": {
+      "back": "رجوع",
+      "continue": "متابعة",
+      "confirmAndSend": "تأكيد وإرسال"
+    }
   },
   "buyCards": {
     "header": {
@@ -1429,8 +1546,8 @@
       "depositRequest": "طلب الإيداع",
       "depositInstructions": "أكمل النموذج أدناه لطلب إيداع. اختر بين إيداع لأجل لعوائد مضمونة (الحد الأدنى ₱50,000) أو استثمارات الأسهم لفرص السوق (الحد الأدنى ₱2,000,000).",
       "investmentDetails": "تفاصيل الاستثمار",
-      "investmentType": "نوع الاستثمار",
-      "selectInvestmentType": "اختر نوع الاستثمار *",
+      "investmentType": "نوع الإيداع",
+      "selectInvestmentType": "اختر نوع الإيداع *",
       "chooseInvestmentType": "اختر نوع استثمارك",
       "contractPeriod": "فترة العقد *",
       "selectContractDuration": "اختر مدة العقد",
@@ -1455,13 +1572,31 @@
       "minimumTimeDeposit": "الحد الأدنى ₱50,000 للإيداع لأجل",
       "minimum": "الحد الأدنى: {amount}",
       "selectCurrency": "اختر العملة",
-      "selectInvestmentTypeModal": "اختر نوع الاستثمار",
+      "selectInvestmentTypeModal": "اختر نوع الإيداع",
       "selectContractPeriod": "اختر فترة العقد",
       "timeDeposit": "إيداع لأجل",
       "stockInvestment": "استثمار الأسهم",
+      "topUpAvailableBalance": "تعبئة الرصيد المتاح",
       "sixMonthsContract": "عقد 6 أشهر",
       "oneYearContract": "عقد سنة واحدة",
-      "twoYearsContract": "عقد سنتين"
+      "twoYearsContract": "عقد سنتين",
+      "depositMethod": "طريقة الإيداع",
+      "requestAmount": "طلب مبلغ",
+      "useAvailableBalance": "استخدام الرصيد المتاح",
+      "availableBalance": "الرصيد المتاح",
+      "enterAmountFromBalance": "أدخل المبلغ من الرصيد المتاح",
+      "insufficientBalance": "المبلغ يتجاوز الرصيد المتاح",
+      "step": "الخطوة",
+      "of": "من",
+      "back": "رجوع",
+      "continue": "متابعة",
+      "confirmSubmit": "تأكيد وإرسال",
+      "reviewConfirm": "مراجعة وتأكيد",
+      "reviewDetails": "راجع تفاصيل الإيداع الخاصة بك",
+      "selectDepositMethod": "اختر كيف تريد الإيداع",
+      "stockInvestmentStep2": "راجع تفاصيل الاستثمار والمتابعة",
+      "stockInvestmentTitle": "استثمار الأسهم",
+      "stockInvestmentInfo": "أنت على وشك إجراء إيداع استثماري في الأسهم. يرجى المتابعة لإدخال مبلغ الاستثمار في الخطوة التالية."
     },
     "modals": {
       "missingInformation": {
@@ -1480,9 +1615,21 @@
         "title": "تم إرسال الطلب",
         "message": "تم إرسال طلب الإيداع بنجاح! يرجى التحقق من بريدك الإلكتروني للحصول على تفاصيل الحساب المصرفي."
       },
+      "depositRequestSubmitted": {
+        "title": "تم إرسال الطلب",
+        "message": "تم إرسال طلب الإيداع بنجاح! يرجى التحقق من بريدك الإلكتروني للحصول على تفاصيل الحساب المصرفي."
+      },
       "submissionFailed": {
         "title": "فشل الإرسال",
         "message": "فشل في إرسال الطلب. يرجى المحاولة مرة أخرى."
+      },
+      "insufficientBalance": {
+        "title": "رصيد غير كاف",
+        "message": "المبلغ الذي أدخلته يتجاوز رصيدك المتاح. يرجى إدخال مبلغ أصغر."
+      },
+      "depositCreated": {
+        "title": "تم إنشاء الإيداع",
+        "message": "تم إنشاء إيداعك لأجل بنجاح باستخدام رصيدك المتاح!"
       }
     }
   },
@@ -1622,7 +1769,14 @@
       "stockholderAmount": "مبلغ المساهم",
       "buy": "شراء",
       "transfer": "تحويل",
-      "sell": "بيع"
+      "sell": "بيع",
+      "stockRate": "سعر السهم",
+      "stockRateValue": "1 سهم = ₱ {amount}",
+      "yourStockPortfolio": "محفظة الأسهم الخاصة بك",
+      "stock": "سهم",
+      "stocks": "أسهم",
+      "totalPortfolioValue": "إجمالي قيمة المحفظة",
+      "transactionHistory": "سجل المعاملات"
     },
     "modals": {
       "dataError": {
@@ -1984,7 +2138,9 @@
       "selectWithdrawalType": "اختر نوع السحب *",
       "chooseWithdrawalType": "اختر نوع السحب",
       "availableBalance": "الرصيد المتاح",
+      "availableBalanceDesc": "السحب من رصيدك المتاح",
       "agentWithdrawal": "سحب الوكيل",
+      "agentWithdrawalDesc": "السحب من محفظة الوكيل الخاصة بك",
       "withdrawalAmount": "مبلغ السحب (₱) *",
       "enterWithdrawalAmount": "أدخل مبلغ السحب",
       "availableBalanceInfo": "الرصيد المتاح: ₱{amount}",
@@ -2006,7 +2162,32 @@
       "securityText": "🔒 معلوماتك المصرفية مشفرة وآمنة\n⏱️ وقت المعالجة: 1-2 أيام عمل\n📧 سيتم إرسال التأكيد إلى بريدك الإلكتروني\n✅ جميع عمليات السحب يتم التحقق منها قبل المعالجة",
       "submitWithdrawalRequest": "إرسال طلب السحب",
       "submitting": "جاري الإرسال...",
-      "insufficientBalance": "رصيد غير كاف"
+      "insufficientBalance": "رصيد غير كاف",
+      "selectWithdrawalMethod": "اختر طريقة السحب",
+      "chooseWithdrawalMethod": "اختر كيف تريد السحب",
+      "localBank": "بنك محلي",
+      "localBankDesc": "السحب إلى حسابك المصرفي المحلي",
+      "eWallet": "محفظة إلكترونية",
+      "eWalletDesc": "السحب إلى GCash أو Maya",
+      "selectEWalletType": "اختر نوع المحفظة الإلكترونية",
+      "chooseEWalletType": "اختر محفظتك الإلكترونية المفضلة",
+      "enterBankingDetails": "أدخل معلوماتك المصرفية",
+      "enterAmountAndContact": "أدخل مبلغ السحب ومعلومات الاتصال",
+      "walletInformation": "معلومات المحفظة",
+      "enterWalletDetails": "أدخل تفاصيل حساب محفظتك الإلكترونية",
+      "walletAccountNumber": "رقم حساب المحفظة",
+      "walletAccountNumberPlaceholder": "أدخل رقم حساب المحفظة",
+      "walletAccountName": "اسم حساب المحفظة",
+      "walletAccountNamePlaceholder": "أدخل اسم صاحب حساب المحفظة",
+      "withdrawalMethod": "طريقة السحب",
+      "eWalletType": "نوع المحفظة الإلكترونية",
+      "reviewConfirm": "مراجعة وتأكيد",
+      "reviewDetails": "راجع تفاصيل السحب",
+      "step": "الخطوة",
+      "of": "من",
+      "back": "رجوع",
+      "continue": "متابعة",
+      "confirmSubmit": "تأكيد وإرسال"
     },
     "modals": {
       "accessRestricted": "الوصول مقيد",
@@ -2198,6 +2379,7 @@
       }
     },
     "general": {
+      "notAvailable": "غير متاح",
       "login": {
         "title": "تسجيل الدخول",
         "subtitle": "الوصول إلى Inspire Wallet",
@@ -2207,6 +2389,16 @@
         "title": "إنشاء حسابك",
         "subtitle": "إعداد Inspire Wallet",
         "status": "يرجى الانتظار..."
+      },
+      "passcode": {
+        "title": "تحديث رمز المرور",
+        "subtitle": "تأمين حسابك",
+        "status": "يرجى الانتظار..."
+      },
+      "createPasscode": {
+        "title": "إنشاء رمز المرور",
+        "subtitle": "يرجى الانتظار بينما نقوم بإعداد رمز المرور الخاص بك",
+        "status": "إنشاء رمز المرور..."
       },
       "default": {
         "title": "جاري التحميل...",

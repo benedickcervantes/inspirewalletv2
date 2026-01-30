@@ -196,15 +196,7 @@ export default function Index() {
         fontWeight: "bold",
         fontSize: 18,
       },
-      headerLeft: () => (
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons
-            name="chevron-back"
-            size={24}
-            color={Colors.redTheme.background}
-          />
-        </TouchableOpacity>
-      ),
+      // No headerLeft needed - React Navigation provides default back button that works on both iOS and Android
     });
   }, [userLanguage]);
 
@@ -421,15 +413,15 @@ export default function Index() {
         source={require("../../assets/images/bg2.png")}
         style={styles.container}
       >
-        <SafeAreaView style={styles.androidSafeArea}>
-          <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
-            <ScrollView
-              contentContainerStyle={styles.scrollContainer}
-              keyboardShouldPersistTaps="handled"
-              showsVerticalScrollIndicator={false}
-            >
-              {/* Header */}
-              <View style={styles.headerCard}>
+        <SafeAreaView style={styles.androidSafeArea} />
+        <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
+          <ScrollView
+            contentContainerStyle={styles.scrollContainer}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            {/* Header */}
+            <View style={styles.headerCard}>
                 <View style={styles.headerContent}>
                   <Ionicons
                     name="trending-up"
@@ -690,7 +682,6 @@ export default function Index() {
               <View style={styles.bottomSpacing} />
             </ScrollView>
           </KeyboardAvoidingView>
-        </SafeAreaView>
 
         <ProfessionalModal
           visible={modalVisible}
@@ -711,8 +702,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#f8f9fa",
   },
   androidSafeArea: {
-    flex: 1,
-    paddingTop: Platform.OS === "android" ? 100 : 80,
+    paddingTop: Platform.OS === "android" ? 80 : 0,
+    opacity: 0,
   },
   scrollContainer: {
     padding: 16,

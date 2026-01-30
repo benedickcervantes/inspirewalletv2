@@ -13,8 +13,10 @@ import {
 import React from "react";
 import { useRouter, useNavigation } from "expo-router";
 import { useEffect, useState, useCallback } from "react";
-import { useMobileAuth } from "../../hooks/useMobileAuth";
-import userService from "../../services/userService";
+import { signOut } from "firebase/auth";
+import { auth, firestore } from "../../configs/firebase";
+import { doc, getDoc } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../../constants/Colors";
 import CategorizedSettings from "../../components/CategorizedSettings";
@@ -133,9 +135,15 @@ export default function Index() {
   // Function to fetch user language
   const fetchUserLanguage = async () => {
     try {
-      const userData = await userService.getUserProfile();
-      if (userData) {
-        setUserLanguage(userData.preferredLanguage || "english");
+      const auth = getAuth();
+      const user = auth.currentUser;
+      if (user) {
+        const userDocRef = doc(firestore, "users", user.uid);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          setUserLanguage(userData.preferredLanguage || "english");
+        }
       }
     } catch (error) {
       console.error("Error fetching user language:", error);
@@ -292,22 +300,23 @@ export default function Index() {
       // Clear any stored authentication data
       try {
         await AsyncStorage.removeItem("currentSession");
+        // Clear passcode login flag on logout
+        await AsyncStorage.removeItem("passcodeLoginComplete");
         console.log("✅ Stored data cleared");
       } catch (storageError) {
         console.error("❌ Storage cleanup error:", storageError);
       }
 
-      // Sign out from MongoDB backend with timeout
+      // Sign out from Firebase with timeout
       try {
-        const { logout } = await import("../../services/authService");
-        const backendTimeout = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error("Backend signout timeout")), 5000);
+        const firebaseTimeout = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error("Firebase signout timeout")), 5000);
         });
 
-        await Promise.race([logout.logout(), backendTimeout]);
-        console.log("✅ Backend signout completed");
-      } catch (backendError) {
-        console.error("❌ Backend signout error:", backendError);
+        await Promise.race([signOut(auth), firebaseTimeout]);
+        console.log("✅ Firebase signout completed");
+      } catch (firebaseError) {
+        console.error("❌ Firebase signout error:", firebaseError);
       }
 
       // Clear the main timeout since we're proceeding to navigation

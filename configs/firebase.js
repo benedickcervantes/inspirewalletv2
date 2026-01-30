@@ -1,9 +1,10 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getFirestore } from 'firebase/firestore';
+import { getFirestore, enableIndexedDbPersistence } from 'firebase/firestore';
 import { initializeAuth, getReactNativePersistence, getAuth } from "firebase/auth";
 import ReactNativeAsyncStorage from "@react-native-async-storage/async-storage";
 import { getStorage } from "firebase/storage";
+import Constants from 'expo-constants';
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -29,8 +30,17 @@ try {
         });
         firestore = getFirestore(app);
         storage = getStorage(app);
-        // Note: IndexedDB persistence is not supported in React Native
-        // Firebase will use memory cache automatically
+
+        // Enable offline persistence
+        enableIndexedDbPersistence(firestore).catch((err) => {
+            if (err.code === 'failed-precondition') {
+                // Multiple tabs open, persistence can only be enabled in one tab at a time.
+                console.warn('Firebase persistence failed: Multiple tabs open');
+            } else if (err.code === 'unimplemented') {
+                // The current browser doesn't support persistence
+                console.warn('Firebase persistence not supported on this platform');
+            }
+        });
     } else {
         app = getApp();
         auth = getAuth(app);
@@ -43,4 +53,4 @@ try {
     throw error;
 }
 
-export { app, auth, firestore, storage };
+export { app, auth, firestore, storage };  

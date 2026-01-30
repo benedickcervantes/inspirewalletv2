@@ -18,6 +18,7 @@ import React, {
 } from "react";
 import { useRouter, useNavigation } from "expo-router";
 import { auth, firestore } from "./../configs/firebase";
+import { onAuthStateChanged } from "firebase/auth";
 import {
   collection,
   getDocs,
@@ -212,6 +213,8 @@ export default forwardRef(function InspireAuto(props, ref) {
   const [activeSectionCollapsed, setActiveSectionCollapsed] = useState(false);
   const [completedSectionCollapsed, setCompletedSectionCollapsed] =
     useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [authReady, setAuthReady] = useState(false);
 
   // Modal state management
   const { modalVisible, modalConfig, showModal, hideModal } = useModal();
@@ -219,19 +222,30 @@ export default forwardRef(function InspireAuto(props, ref) {
   // Track processing state to prevent duplicate transactions
   const processingDepositsRef = useRef(new Set());
 
+  // Wait for auth state to be ready
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
+      setAuthReady(true);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
   // Expose functions to parent component
   useImperativeHandle(ref, () => ({
     handleUpdateFirestore: handleUpdateFirestore,
   }));
 
   useEffect(() => {
+    // Wait for auth to be ready before setting up listeners
+    if (!authReady) return;
+
     const setupRealtimeListener = () => {
       try {
         setLoading(true);
         const db = firestore;
-        const currentUser = auth.currentUser;
         if (!currentUser) {
-          // setError("No authenticated user found");
           setLoading(false);
           return;
         }
@@ -318,7 +332,7 @@ export default forwardRef(function InspireAuto(props, ref) {
         // console.log("[Real-time] Cleaned up Firestore listener");
       }
     };
-  }, []);
+  }, [authReady, currentUser]);
 
   // Note: updateTimeDepositAmount is now called directly in the real-time listener
 
@@ -326,7 +340,6 @@ export default forwardRef(function InspireAuto(props, ref) {
   const updateIsActiveStatus = async () => {
     try {
       const db = firestore;
-      const currentUser = auth.currentUser;
       if (!currentUser) {
         // console.error("No authenticated user found");
         return;
@@ -391,7 +404,6 @@ export default forwardRef(function InspireAuto(props, ref) {
   const initializeCycleCounts = async () => {
     try {
       const db = firestore;
-      const currentUser = auth.currentUser;
       if (!currentUser) {
         // console.error("No authenticated user found");
         return;
@@ -459,7 +471,6 @@ export default forwardRef(function InspireAuto(props, ref) {
 
       try {
         const db = firestore;
-        const currentUser = auth.currentUser;
         if (!currentUser) {
           // console.error("No authenticated user found");
           return;
@@ -578,7 +589,6 @@ export default forwardRef(function InspireAuto(props, ref) {
   const updateTimeDepositAmount = async (depositsData = deposits) => {
     try {
       const db = firestore;
-      const currentUser = auth.currentUser;
       if (!currentUser) {
         // console.error("No authenticated user found");
         return;
@@ -623,22 +633,8 @@ export default forwardRef(function InspireAuto(props, ref) {
     }
   };
 
-  useEffect(() => {
-    navigation.setOptions({
-      headerShown: true,
-      headerTitle: "Inspire Auto",
-      headerTransparent: true,
-      headerLeft: () => (
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons
-            name="chevron-back"
-            size={24}
-            color={Colors.redTheme.background}
-          />
-        </TouchableOpacity>
-      ),
-    });
-  }, []);
+  // Don't set header options - this component is hidden on dashboard
+  // Header is managed by the inspireauto page itself
 
   const formatCurrency = (value) => {
     const numberValue = Number(value);

@@ -23,64 +23,33 @@ export const useUnreadMessages = () => {
   // Listen to auth state changes
   useEffect(() => {
     console.log('🔵 Setting up auth listener');
-
-    // Guard against auth not being initialized
-    if (!auth) {
-      console.log('🔵 Firebase auth not initialized');
-      setUnreadCount(0);
-      return;
-    }
-
-    let unsubscribeAuth;
-    try {
-      unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
-        console.log('🔵 Auth state changed, user:', currentUser?.uid);
-        setUser(currentUser);
-        if (!currentUser) {
-          setUnreadCount(0);
-          setLastReadTimestamp(null);
-        }
-      });
-    } catch (error) {
-      console.error('🔵 Error setting up auth listener:', error);
-      setUnreadCount(0);
-      return;
-    }
-
-    return () => {
-      if (unsubscribeAuth) {
-        unsubscribeAuth();
+    const unsubscribeAuth = auth.onAuthStateChanged((currentUser) => {
+      console.log('🔵 Auth state changed, user:', currentUser?.uid);
+      setUser(currentUser);
+      if (!currentUser) {
+        setUnreadCount(0);
+        setLastReadTimestamp(null);
       }
-    };
+    });
+
+    return () => unsubscribeAuth();
   }, []);
 
   // Listen to user's last read timestamp
   useEffect(() => {
-    if (!user || !firestore) return;
+    if (!user) return;
 
-    let unsubscribeUser;
-    try {
-      const userRef = doc(firestore, 'users', user.uid);
-      unsubscribeUser = onSnapshot(userRef, (docSnap) => {
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          const lastRead = data.lastChatRead || null;
-          console.log('Last read timestamp updated:', lastRead);
-          setLastReadTimestamp(lastRead);
-        }
-      }, (error) => {
-        console.error('🔵 Error listening to user doc:', error);
-      });
-    } catch (error) {
-      console.error('🔵 Error setting up user listener:', error);
-      return;
-    }
-
-    return () => {
-      if (unsubscribeUser) {
-        unsubscribeUser();
+    const userRef = doc(firestore, 'users', user.uid);
+    const unsubscribeUser = onSnapshot(userRef, (doc) => {
+      if (doc.exists()) {
+        const data = doc.data();
+        const lastRead = data.lastChatRead || null;
+        console.log('Last read timestamp updated:', lastRead);
+        setLastReadTimestamp(lastRead);
       }
-    };
+    });
+
+    return () => unsubscribeUser();
   }, [user]);
 
   // Listen to messages and count unread

@@ -177,6 +177,18 @@ const LoadingScreen = ({ type = "register" }) => {
           sub: t(userLanguage, "loadingScreens.general.register.subtitle"),
           loading: t(userLanguage, "loadingScreens.general.register.status")
         };
+      case "passcode":
+        return {
+          main: t(userLanguage, "loadingScreens.general.passcode.title"),
+          sub: t(userLanguage, "loadingScreens.general.passcode.subtitle"),
+          loading: t(userLanguage, "loadingScreens.general.passcode.status")
+        };
+      case "create-passcode":
+        return {
+          main: t(userLanguage, "loadingScreens.general.createPasscode.title"),
+          sub: t(userLanguage, "loadingScreens.general.createPasscode.subtitle"),
+          loading: t(userLanguage, "loadingScreens.general.createPasscode.status")
+        };
       default:
         return {
           main: t(userLanguage, "loadingScreens.general.default.title"),

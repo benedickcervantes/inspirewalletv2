@@ -256,9 +256,12 @@
       "accountLevel": "계정 레벨",
       "agentNumber": "에이전트 번호",
       "agentReferrer": "추천 에이전트",
+      "companyName": "회사명",
       "language": "언어",
       "status": "상태",
-      "memberSince": "가입일"
+      "memberSince": "가입일",
+      "lineAccountLink": "LINE Account Link",
+      "contactNumber": "Contact Number"
     },
     "values": {
       "notProvided": "제공되지 않음",
@@ -272,26 +275,35 @@
       "consultantAgentNote": "이 추천인도 컨설턴트 에이전트입니다"
     },
     "buttons": {
-      "save": "저장",
+      "save": "변경사항 저장",
       "cancel": "취소",
       "verify": "인증",
       "editName": "이름 편집",
       "selectLanguage": "언어 선택",
-      "changing": "변경 중..."
+      "changing": "업데이트 중..."
     },
     "messages": {
       "success": {
         "nameUpdated": "이름이 성공적으로 업데이트되었습니다.",
         "languageUpdated": "언어 설정이 성공적으로 업데이트되었습니다.",
-        "copied": "계정 번호가 클립보드에 복사되었습니다."
+        "copied": "계정 번호가 클립보드에 복사되었습니다.",
+        "businessDocumentsUploaded": "비즈니스 문서가 성공적으로 업로드되었습니다. 회사 파일은 2-3 영업일 이내에 검토됩니다. 제출된 모든 요구사항이 유효하고 완전한지 확인하세요.",
+        "lineUpdated": "Your LINE account link has been updated successfully.",
+        "contactUpdated": "Your contact number has been updated successfully."
       },
       "error": {
         "nameUpdateFailed": "이름 업데이트에 실패했습니다. 다시 시도해 주세요.",
         "languageUpdateFailed": "언어 설정 업데이트에 실패했습니다. 다시 시도해 주세요.",
-        "copyFailed": "계정 번호를 클립보드에 복사하는데 실패했습니다."
+        "copyFailed": "계정 번호를 클립보드에 복사하는데 실패했습니다.",
+        "lineUpdateFailed": "Failed to update your LINE account link. Please try again.",
+        "contactUpdateFailed": "Failed to update your contact number. Please try again."
       },
       "warning": {
-        "noAccountNumber": "복사할 계정 번호가 없습니다."
+        "noAccountNumber": "복사할 계정 번호가 없습니다.",
+        "missingContactInfo": "Please provide both your LINE account link and contact number.",
+        "invalidPhoneFormat": "Invalid phone number format",
+        "phoneNumberNotOnlyDigits": "Phone number should contain only digits",
+        "invalidPhoneLength": "Phone number must match the required format for the selected country"
       },
       "titles": {
         "success": "성공!",
@@ -330,6 +342,14 @@
         "title": "문서 업로드",
         "description": "신분증 앞뒤와 셀카 사진을 업로드해 주세요"
       },
+      "personalDocuments": {
+        "title": "개인 문서 업로드",
+        "description": "신원 확인을 위해 정부 발급 신분증(앞면, 뒷면)과 셀카를 업로드해 주세요."
+      },
+      "businessDocuments": {
+        "title": "사업 문서 업로드",
+        "description": "사업자등록증, 최근 은행 거래내역서, 청구서 증명을 업로드해 주세요."
+      },
       "review": {
         "title": "검토 및 제출",
         "description": "제출하기 전에 정보를 검토해 주세요"
@@ -338,6 +358,7 @@
     "fields": {
       "firstName": "이름",
       "lastName": "성",
+      "companyName": "회사명",
       "birthday": "생년월일",
       "gender": "성별",
       "nationality": "국적",
@@ -348,7 +369,10 @@
       "postalCode": "우편번호",
       "idFront": "정부 발급 신분증 앞면",
       "idBack": "정부 발급 신분증 뒷면",
-      "selfiePhoto": "셀카 사진"
+      "selfiePhoto": "셀카 사진",
+      "commercialRegister": "사업자등록증",
+      "bankStatement": "은행 거래내역서",
+      "proofOfBilling": "청구서 증명"
     },
     "placeholders": {
       "firstName": "이름을 입력하세요",
@@ -362,7 +386,10 @@
     "hints": {
       "idFront": "정부 발급 신분증 앞면의 선명한 사진을 업로드하세요",
       "idBack": "정부 발급 신분증 뒷면의 선명한 사진을 업로드하세요",
-      "selfiePhoto": "인증을 위한 선명한 셀카 사진을 촬영하세요"
+      "selfiePhoto": "인증을 위한 선명한 셀카 사진을 촬영하세요",
+      "commercialRegister": "사업자등록증의 선명한 사진이나 스캔본을 업로드하세요.",
+      "bankStatement": "사업 계좌 세부 정보가 표시된 최근 은행 거래내역서를 업로드하세요.",
+      "proofOfBilling": "사업장 주소가 표시된 최근 공과금 청구서나 유사한 문서를 업로드하세요."
     },
     "options": {
       "gender": {
@@ -422,6 +449,8 @@
       "personalInfo": "개인 정보",
       "addressInfo": "주소 정보",
       "documents": "문서",
+      "personalDocuments": "개인 문서",
+      "businessDocuments": "사업 문서",
       "name": "이름:",
       "birthday": "생년월일:",
       "gender": "성별:",
@@ -433,7 +462,10 @@
       "postalCode": "우편번호:",
       "idFront": "신분증 앞면",
       "idBack": "신분증 뒷면",
-      "selfiePhoto": "셀카 사진"
+      "selfiePhoto": "셀카 사진",
+      "commercialRegister": "사업자등록증",
+      "bankStatement": "은행 거래내역서",
+      "proofOfBilling": "청구서 증명"
     },
     "status": {
       "uploading": "문서 업로드 중",
@@ -520,7 +552,92 @@
       "authenticationError": "인증 오류"
     },
     "characterCount": "{current}/{max}",
-    "currencySymbol": "₱"
+    "currencySymbol": "₱",
+    "steps": {
+      "step1": {
+        "title": "잔액 유형 선택",
+        "subtitle": "이체에 사용할 잔액 선택"
+      },
+      "step2": {
+        "title": "이체 세부 정보",
+        "subtitle": "수신인 및 금액 입력"
+      },
+      "step3": {
+        "title": "이체 확인",
+        "subtitle": "이체 세부 정보 검토"
+      },
+      "progress": "단계 {current}/3"
+    },
+    "balanceOptions": {
+      "available": {
+        "title": "사용 가능한 잔액",
+        "subtitle": "메인 지갑 잔액"
+      },
+      "agent": {
+        "title": "에이전트 지갑",
+        "subtitle": "수수료 수익"
+      },
+      "availableBadge": "사용 가능",
+      "insufficientBadge": "부족"
+    },
+    "inputs": {
+      "recipientAccountNumber": "수신인 계좌번호",
+      "amount": "금액",
+      "description": "설명 (선택사항)",
+      "descriptionPlaceholder": "메모 추가...",
+      "accountNumberPlaceholder": "계좌번호 입력",
+      "availableBalance": "사용 가능: PHP {amount}"
+    },
+    "confirmation": {
+      "to": "받는 사람",
+      "from": "보내는 사람",
+      "amountToTransfer": "이체할 금액",
+      "currentBalance": "현재 잔액",
+      "transferAmount": "이체 금액",
+      "newBalance": "새 잔액"
+    },
+    "quickActions": {
+      "myQR": "내 QR",
+      "scanQR": "QR 스캔",
+      "contacts": "연락처"
+    },
+    "qrModal": {
+      "title": "내 QR 코드",
+      "subtitle": "이 QR 코드를 공유하여 다른 사람이 귀하에게 돈을 이체할 수 있도록 합니다",
+      "shareButton": "QR 코드 공유",
+      "note": "이 QR 코드에는 이체를 받기 위한 계정 정보가 포함되어 있습니다",
+      "secureTransferCode": "안전한 이체 코드"
+    },
+    "contacts": {
+      "title": "저장된 연락처",
+      "showContacts": "연락처 숨기기",
+      "hideContacts": "연락처 표시",
+      "noContacts": "저장된 연락처가 아직 없습니다",
+      "noContactsSubtext": "연락처는 이체 후 자동으로 저장됩니다",
+      "deleteContact": "연락처 삭제",
+      "deleteConfirm": "{name}을(를) 삭제하시겠습니까?",
+      "deleteError": "연락처 삭제에 실패했습니다. 다시 시도해 주세요."
+    },
+    "errors": {
+      "selectBalanceType": "계속하려면 잔액 유형을 선택하세요",
+      "enterAccountNumber": "계좌번호를 입력하세요",
+      "invalidAccountNumberFormat": "잘못된 계좌번호 형식",
+      "cannotTransferToSelf": "자신의 계좌로 이체할 수 없습니다",
+      "enterValidAmount": "유효한 금액을 입력하세요",
+      "insufficientBalanceAvailable": "잔액 부족. 사용 가능: PHP {amount}",
+      "accountNotFound": "계좌를 찾을 수 없습니다",
+      "contactAccountNotFound": "연락처 계좌를 찾을 수 없습니다",
+      "errorLoadingContact": "연락처 로드 오류",
+      "sharingNotAvailable": "공유를 사용할 수 없음",
+      "sharingNotAvailableMessage": "이 기기에서는 공유를 사용할 수 없습니다.",
+      "shareFailed": "공유 실패",
+      "shareFailedMessage": "QR 코드를 공유할 수 없습니다. 다시 시도해 주세요."
+    },
+    "navigation": {
+      "back": "뒤로",
+      "continue": "계속",
+      "confirmAndSend": "확인 및 전송"
+    }
   },
   "buyCards": {
     "header": {
@@ -1429,8 +1546,8 @@
       "depositRequest": "입금 요청",
       "depositInstructions": "입금을 요청하려면 아래 양식을 작성하세요. 보장된 수익을 위한 정기예금(최소 ₱50,000) 또는 시장 기회를 위한 주식 투자(최소 ₱2,000,000) 중에서 선택하세요.",
       "investmentDetails": "투자 세부사항",
-      "investmentType": "투자 유형",
-      "selectInvestmentType": "투자 유형 선택 *",
+      "investmentType": "입금 유형",
+      "selectInvestmentType": "입금 유형 선택 *",
       "chooseInvestmentType": "투자 유형을 선택하세요",
       "contractPeriod": "계약 기간 *",
       "selectContractDuration": "계약 기간 선택",
@@ -1455,13 +1572,31 @@
       "minimumTimeDeposit": "정기예금 최소 ₱50,000",
       "minimum": "최소: {amount}",
       "selectCurrency": "통화 선택",
-      "selectInvestmentTypeModal": "투자 유형 선택",
+      "selectInvestmentTypeModal": "입금 유형 선택",
       "selectContractPeriod": "계약 기간 선택",
       "timeDeposit": "정기예금",
       "stockInvestment": "주식 투자",
+      "topUpAvailableBalance": "사용 가능한 잔액 충전",
       "sixMonthsContract": "6개월 계약",
       "oneYearContract": "1년 계약",
-      "twoYearsContract": "2년 계약"
+      "twoYearsContract": "2년 계약",
+      "depositMethod": "입금 방법",
+      "requestAmount": "금액 요청",
+      "useAvailableBalance": "사용 가능한 잔액 사용",
+      "availableBalance": "사용 가능한 잔액",
+      "enterAmountFromBalance": "사용 가능한 잔액에서 금액 입력",
+      "insufficientBalance": "금액이 사용 가능한 잔액을 초과합니다",
+      "step": "단계",
+      "of": "/",
+      "back": "뒤로",
+      "continue": "계속",
+      "confirmSubmit": "확인 및 제출",
+      "reviewConfirm": "검토 및 확인",
+      "reviewDetails": "입금 세부사항을 검토하세요",
+      "selectDepositMethod": "입금 방법을 선택하세요",
+      "stockInvestmentStep2": "투자 세부사항을 검토하고 진행",
+      "stockInvestmentTitle": "주식 투자",
+      "stockInvestmentInfo": "주식 투자 입금을 진행하려고 합니다. 다음 단계에서 투자 금액을 입력하세요."
     },
     "modals": {
       "missingInformation": {
@@ -1480,9 +1615,21 @@
         "title": "요청 제출됨",
         "message": "입금 요청이 성공적으로 제출되었습니다! 은행 계좌 세부사항은 이메일을 확인해 주세요."
       },
+      "depositRequestSubmitted": {
+        "title": "요청 제출됨",
+        "message": "입금 요청이 성공적으로 제출되었습니다! 은행 계좌 세부사항은 이메일을 확인해 주세요."
+      },
       "submissionFailed": {
         "title": "제출 실패",
         "message": "요청 제출에 실패했습니다. 다시 시도해 주세요."
+      },
+      "insufficientBalance": {
+        "title": "잔액 부족",
+        "message": "입력한 금액이 사용 가능한 잔액을 초과합니다. 더 작은 금액을 입력해 주세요."
+      },
+      "depositCreated": {
+        "title": "예금이 생성되었습니다",
+        "message": "사용 가능한 잔액을 사용하여 정기예금이 성공적으로 생성되었습니다!"
       }
     }
   },
@@ -1622,7 +1769,14 @@
       "stockholderAmount": "주주 금액",
       "buy": "구매",
       "transfer": "이체",
-      "sell": "판매"
+      "sell": "판매",
+      "stockRate": "주식 비율",
+      "stockRateValue": "1주 = ₱ {amount}",
+      "yourStockPortfolio": "귀하의 주식 포트폴리오",
+      "stock": "주식",
+      "stocks": "주식",
+      "totalPortfolioValue": "총 포트폴리오 가치",
+      "transactionHistory": "거래 내역"
     },
     "modals": {
       "dataError": {
@@ -1984,7 +2138,9 @@
       "selectWithdrawalType": "출금 유형 선택 *",
       "chooseWithdrawalType": "출금 유형 선택",
       "availableBalance": "사용 가능한 잔액",
+      "availableBalanceDesc": "사용 가능한 잔액에서 출금",
       "agentWithdrawal": "에이전트 출금",
+      "agentWithdrawalDesc": "에이전트 지갑에서 출금",
       "withdrawalAmount": "출금액 (₱) *",
       "enterWithdrawalAmount": "출금액 입력",
       "availableBalanceInfo": "사용 가능한 잔액: ₱{amount}",
@@ -2006,7 +2162,32 @@
       "securityText": "🔒 은행 정보는 암호화되어 안전합니다\n⏱️ 처리 시간: 1-2 영업일\n📧 확인 이메일이 발송됩니다\n✅ 모든 출금은 처리 전에 검증됩니다",
       "submitWithdrawalRequest": "출금 요청 제출",
       "submitting": "제출 중...",
-      "insufficientBalance": "잔액 부족"
+      "insufficientBalance": "잔액 부족",
+      "selectWithdrawalMethod": "출금 방법 선택",
+      "chooseWithdrawalMethod": "출금 방법을 선택하세요",
+      "localBank": "지역 은행",
+      "localBankDesc": "지역 은행 계좌로 출금",
+      "eWallet": "전자 지갑",
+      "eWalletDesc": "GCash 또는 Maya로 출금",
+      "selectEWalletType": "전자 지갑 유형 선택",
+      "chooseEWalletType": "선호하는 전자 지갑을 선택하세요",
+      "enterBankingDetails": "은행 정보 입력",
+      "enterAmountAndContact": "출금액 및 연락처 정보 입력",
+      "walletInformation": "지갑 정보",
+      "enterWalletDetails": "전자 지갑 계좌 세부정보 입력",
+      "walletAccountNumber": "지갑 계좌 번호",
+      "walletAccountNumberPlaceholder": "지갑 계좌 번호를 입력하세요",
+      "walletAccountName": "지갑 계좌 이름",
+      "walletAccountNamePlaceholder": "지갑 계좌 소유자 이름을 입력하세요",
+      "withdrawalMethod": "출금 방법",
+      "eWalletType": "전자 지갑 유형",
+      "reviewConfirm": "검토 및 확인",
+      "reviewDetails": "출금 세부사항을 검토하세요",
+      "step": "단계",
+      "of": "의",
+      "back": "뒤로",
+      "continue": "계속",
+      "confirmSubmit": "확인 및 제출"
     },
     "modals": {
       "accessRestricted": "액세스 제한",
@@ -2198,6 +2379,7 @@
       }
     },
     "general": {
+      "notAvailable": "해당 없음",
       "login": {
         "title": "로그인 중",
         "subtitle": "Inspire Wallet에 접속 중",
@@ -2207,6 +2389,16 @@
         "title": "계정 생성 중",
         "subtitle": "Inspire Wallet 설정 중",
         "status": "잠시 기다려 주세요..."
+      },
+      "passcode": {
+        "title": "비밀번호 업데이트 중",
+        "subtitle": "계정 보안 설정 중",
+        "status": "잠시 기다려 주세요..."
+      },
+      "createPasscode": {
+        "title": "비밀번호 생성 중",
+        "subtitle": "비밀번호를 설정하는 동안 잠시 기다려 주세요",
+        "status": "비밀번호 생성 중..."
       },
       "default": {
         "title": "로딩 중...",

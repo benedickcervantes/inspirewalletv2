@@ -121,7 +121,7 @@ const TransacHistory = ({ userId, trigger }) => {
         // console.error("❌ TransacHistory listener error:", error);
         setError(error.message);
         setLoading(false);
-      }
+      },
     );
 
     // Cleanup function
@@ -155,7 +155,7 @@ const TransacHistory = ({ userId, trigger }) => {
             // Only update if the language actually changed
             if (prevLanguage !== newLanguage) {
               console.log(
-                `TransacHistory: Language changed from ${prevLanguage} to ${newLanguage}`
+                `TransacHistory: Language changed from ${prevLanguage} to ${newLanguage}`,
               );
               return newLanguage;
             }
@@ -438,11 +438,13 @@ const TransacHistory = ({ userId, trigger }) => {
                           isPositiveTransaction(item.type)
                             ? "arrow-down-circle"
                             : item.type.toLowerCase().includes("sent") ||
-                              item.type.toLowerCase().includes("withdraw") ||
-                              item.type.toLowerCase().includes("cash out") ||
-                              item.type.toLowerCase().includes("transfer money")
-                            ? "arrow-up-circle"
-                            : "swap-horizontal"
+                                item.type.toLowerCase().includes("withdraw") ||
+                                item.type.toLowerCase().includes("cash out") ||
+                                item.type
+                                  .toLowerCase()
+                                  .includes("transfer money")
+                              ? "arrow-up-circle"
+                              : "swap-horizontal"
                         }
                         size={32}
                         color={
@@ -586,7 +588,7 @@ const TransacHistory = ({ userId, trigger }) => {
                       </Text>
                     </TouchableOpacity>
                   );
-                }
+                },
               )}
             </View>
 
@@ -853,7 +855,7 @@ const TransacHistory = ({ userId, trigger }) => {
                       >
                         {t(
                           userLanguage,
-                          "transactionHistory.labels.balanceAfter"
+                          "transactionHistory.labels.balanceAfter",
                         )}
                         :
                       </Text>

@@ -46,6 +46,7 @@ import { checkAccountTypeAccess } from "../../utils/accountTypeUtils";
 import { t } from "../../utils/languageUtils";
 import { getRTLStyles } from "../../utils/rtlUtils";
 import { playTransferSound } from "../../utils/soundUtils";
+import contactsService from "../../services/contactsService";
 
 const { width, height } = Dimensions.get("window");
 const isSmallDevice = width < 375;
@@ -72,6 +73,10 @@ export default function Transfer() {
   const [accountNumberError, setAccountNumberError] = useState("");
   const [amountError, setAmountError] = useState("");
   const [showQRModal, setShowQRModal] = useState(false);
+  const [contacts, setContacts] = useState([]);
+  const [showContacts, setShowContacts] = useState(false);
+  const [isLoadingContacts, setIsLoadingContacts] = useState(false);
+  const [showContactsModal, setShowContactsModal] = useState(false);
   const qrCodeRef = useRef();
 
   const formatCurrency = (amount) => {
@@ -88,6 +93,39 @@ export default function Transfer() {
   useEffect(() => {
     // This will trigger a re-render when userData.preferredLanguage changes
   }, [userData?.preferredLanguage]);
+
+  // Load contacts when user is authenticated
+  useEffect(() => {
+    const currentUser = auth.currentUser;
+    if (currentUser) {
+      loadContacts();
+      
+      // Subscribe to real-time contacts updates
+      const unsubscribe = contactsService.subscribeToContacts(
+        currentUser.uid,
+        (updatedContacts) => {
+          setContacts(updatedContacts);
+        }
+      );
+
+      return () => unsubscribe();
+    }
+  }, []);
+
+  const loadContacts = async () => {
+    try {
+      setIsLoadingContacts(true);
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        const userContacts = await contactsService.getContacts(currentUser.uid);
+        setContacts(userContacts);
+      }
+    } catch (error) {
+      console.error("Error loading contacts:", error);
+    } finally {
+      setIsLoadingContacts(false);
+    }
+  };
 
   const checkAccessAndInitialize = async () => {
     try {
@@ -549,7 +587,7 @@ export default function Transfer() {
             userData?.preferredLanguage || "English",
             "transfer.titles.missingInformation"
           ),
-          message: "Please select a balance type to continue",
+          message: t(userData?.preferredLanguage || "English", "transfer.errors.selectBalanceType"),
           type: "warning",
         });
         return;
@@ -558,22 +596,22 @@ export default function Transfer() {
     } else if (currentStep === 2) {
       // Validate account number and amount
       if (!searchQuery.trim()) {
-        setAccountNumberError("Please enter an account number");
+        setAccountNumberError(t(userData?.preferredLanguage || "English", "transfer.errors.enterAccountNumber"));
         return;
       }
 
       if (!validateAccountNumber(searchQuery.trim())) {
-        setAccountNumberError("Invalid account number format");
+        setAccountNumberError(t(userData?.preferredLanguage || "English", "transfer.errors.invalidAccountNumberFormat"));
         return;
       }
 
       if (searchQuery.trim() === currentUserAccountNumber) {
-        setAccountNumberError("Cannot transfer to your own account");
+        setAccountNumberError(t(userData?.preferredLanguage || "English", "transfer.errors.cannotTransferToSelf"));
         return;
       }
 
       if (!amount || parseFloat(amount) <= 0) {
-        setAmountError("Please enter a valid amount");
+        setAmountError(t(userData?.preferredLanguage || "English", "transfer.errors.enterValidAmount"));
         return;
       }
 
@@ -583,9 +621,7 @@ export default function Transfer() {
 
       if (transferAmount > currentBalance) {
         setAmountError(
-          `Insufficient balance. Available: PHP ${formatCurrency(
-            currentBalance
-          )}`
+          t(userData?.preferredLanguage || "English", "transfer.errors.insufficientBalanceAvailable").replace("{amount}", formatCurrency(currentBalance))
         );
         return;
       }
@@ -593,14 +629,89 @@ export default function Transfer() {
       // Check if user exists
       const user = await checkUserExists(searchQuery.trim());
       if (!user) {
-        setAccountNumberError("Account not found");
+        setAccountNumberError(t(userData?.preferredLanguage || "English", "transfer.errors.accountNotFound"));
         return;
       }
 
       setSelectedUser(user);
       setAccountNumberError("");
       setAmountError("");
+      
+      // Update or save contact
+      await saveOrUpdateContact(user);
+      
       setCurrentStep(3);
+    }
+  };
+
+  const saveOrUpdateContact = async (user) => {
+    try {
+      const currentUser = auth.currentUser;
+      if (!currentUser) return;
+
+      // Check if contact already exists
+      const existingContact = await contactsService.getContactByAccountNumber(
+        currentUser.uid,
+        user.accountNumber
+      );
+
+      if (existingContact) {
+        // Update last used timestamp
+        await contactsService.updateLastUsed(currentUser.uid, existingContact.id);
+      } else {
+        // Save new contact
+        await contactsService.addContact(currentUser.uid, {
+          accountNumber: user.accountNumber,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          emailAddress: user.emailAddress,
+        });
+      }
+    } catch (error) {
+      console.error("Error saving contact:", error);
+      // Don't block transfer if contact save fails
+    }
+  };
+
+  const handleContactSelect = async (contact) => {
+    try {
+      setSearchQuery(contact.accountNumber);
+      setAccountNumberError("");
+      setShowContacts(false);
+      setShowContactsModal(false);
+      
+      // Check if user still exists
+      const user = await checkUserExists(contact.accountNumber);
+      if (user) {
+        setSelectedUser(user);
+        // Update last used timestamp
+        await contactsService.updateLastUsed(
+          auth.currentUser.uid,
+          contact.id
+        );
+      } else {
+        setAccountNumberError(t(userData?.preferredLanguage || "English", "transfer.errors.contactAccountNotFound"));
+      }
+    } catch (error) {
+      console.error("Error selecting contact:", error);
+      setAccountNumberError(t(userData?.preferredLanguage || "English", "transfer.errors.errorLoadingContact"));
+    }
+  };
+
+  const handleDeleteContact = async (contactId) => {
+    try {
+      const currentUser = auth.currentUser;
+      if (!currentUser) return;
+
+      await contactsService.deleteContact(currentUser.uid, contactId);
+      // Contacts will update automatically via subscription
+    } catch (error) {
+      console.error("Error deleting contact:", error);
+      showModal({
+        title: t(userData?.preferredLanguage || "English", "transfer.titles.error"),
+        message: t(userData?.preferredLanguage || "English", "transfer.contacts.deleteError"),
+        type: "error",
+      });
     }
   };
 
@@ -650,16 +761,16 @@ export default function Transfer() {
         });
       } else {
         showModal({
-          title: "Sharing Not Available",
-          message: "Sharing is not available on this device.",
+          title: t(userData?.preferredLanguage || "English", "transfer.errors.sharingNotAvailable"),
+          message: t(userData?.preferredLanguage || "English", "transfer.errors.sharingNotAvailableMessage"),
           type: "warning",
         });
       }
     } catch (error) {
       console.error("Error sharing QR code:", error);
       showModal({
-        title: "Share Failed",
-        message: "Unable to share QR code. Please try again.",
+        title: t(userData?.preferredLanguage || "English", "transfer.errors.shareFailed"),
+        message: t(userData?.preferredLanguage || "English", "transfer.errors.shareFailedMessage"),
         type: "error",
       });
     }
@@ -765,6 +876,10 @@ export default function Transfer() {
       batch.set(mainTransactionRef, transactionData);
       // Commit the batch
       await batch.commit();
+      
+      // Save or update contact after successful transfer
+      await saveOrUpdateContact(selectedUser);
+      
       try {
         // Send email notification
         await sendTransferEmail(
@@ -849,7 +964,7 @@ export default function Transfer() {
   };
 
   if (isLoading) {
-    return <TransferLoadingScreen message="Processing transfer..." />;
+    return <TransferLoadingScreen message={t(userData?.preferredLanguage || "English", "loadingScreens.transfer.status")} />;
   }
 
   // Render Step Content
@@ -863,9 +978,11 @@ export default function Transfer() {
               <View style={styles.stepIconCircle}>
                 <Ionicons name="wallet" size={32} color="white" />
               </View>
-              <Text style={styles.stepTitle}>Select Balance Type</Text>
-              <Text style={styles.stepSubtitle}>
-                Choose which balance to use for transfer
+              <Text style={[styles.stepTitle, getRTLStyles(userData?.preferredLanguage || "English")]}>
+                {t(userData?.preferredLanguage || "English", "transfer.steps.step1.title")}
+              </Text>
+              <Text style={[styles.stepSubtitle, getRTLStyles(userData?.preferredLanguage || "English")]}>
+                {t(userData?.preferredLanguage || "English", "transfer.steps.step1.subtitle")}
               </Text>
             </View>
 
@@ -905,12 +1022,13 @@ export default function Transfer() {
                           styles.balanceOptionTitle,
                           selectedBalance === "available" &&
                             styles.balanceOptionTitleSelected,
+                          getRTLStyles(userData?.preferredLanguage || "English")
                         ]}
                       >
-                        Available Balance
+                        {t(userData?.preferredLanguage || "English", "transfer.balanceOptions.available.title")}
                       </Text>
-                      <Text style={styles.balanceOptionSubtitle}>
-                        Main wallet balance
+                      <Text style={[styles.balanceOptionSubtitle, getRTLStyles(userData?.preferredLanguage || "English")]}>
+                        {t(userData?.preferredLanguage || "English", "transfer.balanceOptions.available.subtitle")}
                       </Text>
                     </View>
                   </View>
@@ -950,13 +1068,15 @@ export default function Transfer() {
                         size={14}
                         color="#10B981"
                       />
-                      <Text style={styles.availableBadgeText}>Available</Text>
+                      <Text style={styles.availableBadgeText}>
+                        {t(userData?.preferredLanguage || "English", "transfer.balanceOptions.availableBadge")}
+                      </Text>
                     </View>
                   ) : (
                     <View style={styles.insufficientBadge}>
                       <Ionicons name="alert-circle" size={14} color="#FF6B6B" />
                       <Text style={styles.insufficientBadgeText}>
-                        Insufficient
+                        {t(userData?.preferredLanguage || "English", "transfer.balanceOptions.insufficientBadge")}
                       </Text>
                     </View>
                   )}
@@ -997,12 +1117,13 @@ export default function Transfer() {
                           styles.balanceOptionTitle,
                           selectedBalance === "agent" &&
                             styles.balanceOptionTitleSelected,
+                          getRTLStyles(userData?.preferredLanguage || "English")
                         ]}
                       >
-                        Agent Wallet
+                        {t(userData?.preferredLanguage || "English", "transfer.balanceOptions.agent.title")}
                       </Text>
-                      <Text style={styles.balanceOptionSubtitle}>
-                        Commission earnings
+                      <Text style={[styles.balanceOptionSubtitle, getRTLStyles(userData?.preferredLanguage || "English")]}>
+                        {t(userData?.preferredLanguage || "English", "transfer.balanceOptions.agent.subtitle")}
                       </Text>
                     </View>
                   </View>
@@ -1041,13 +1162,15 @@ export default function Transfer() {
                         size={14}
                         color="#10B981"
                       />
-                      <Text style={styles.availableBadgeText}>Available</Text>
+                      <Text style={styles.availableBadgeText}>
+                        {t(userData?.preferredLanguage || "English", "transfer.balanceOptions.availableBadge")}
+                      </Text>
                     </View>
                   ) : (
                     <View style={styles.insufficientBadge}>
                       <Ionicons name="alert-circle" size={14} color="#FF6B6B" />
                       <Text style={styles.insufficientBadgeText}>
-                        Insufficient
+                        {t(userData?.preferredLanguage || "English", "transfer.balanceOptions.insufficientBadge")}
                       </Text>
                     </View>
                   )}
@@ -1067,22 +1190,94 @@ export default function Transfer() {
                 size={48}
                 color={Colors.redTheme.background}
               />
-              <Text style={styles.stepTitle}>Transfer Details</Text>
-              <Text style={styles.stepSubtitle}>
-                Enter recipient and amount
+              <Text style={[styles.stepTitle, getRTLStyles(userData?.preferredLanguage || "English")]}>
+                {t(userData?.preferredLanguage || "English", "transfer.steps.step2.title")}
+              </Text>
+              <Text style={[styles.stepSubtitle, getRTLStyles(userData?.preferredLanguage || "English")]}>
+                {t(userData?.preferredLanguage || "English", "transfer.steps.step2.subtitle")}
               </Text>
             </View>
 
             {/* Account Number Input */}
             <View style={styles.inputSection}>
-              <Text style={styles.inputLabel}>
-                <Ionicons
-                  name="person-outline"
-                  size={16}
-                  color={Colors.redTheme.background}
-                />{" "}
-                Recipient Account Number
-              </Text>
+              <View style={styles.inputLabelRow}>
+                <Text style={[styles.inputLabel, getRTLStyles(userData?.preferredLanguage || "English")]}>
+                  <Ionicons
+                    name="person-outline"
+                    size={16}
+                    color={Colors.redTheme.background}
+                  />{" "}
+                  {t(userData?.preferredLanguage || "English", "transfer.inputs.recipientAccountNumber")}
+                </Text>
+                {contacts.length > 0 && (
+                  <TouchableOpacity
+                    onPress={() => setShowContacts(!showContacts)}
+                    style={styles.contactsToggleButton}
+                  >
+                    <Ionicons
+                      name={showContacts ? "chevron-up" : "chevron-down"}
+                      size={16}
+                      color={Colors.redTheme.background}
+                    />
+                    <Text style={[styles.contactsToggleText, getRTLStyles(userData?.preferredLanguage || "English")]}>
+                      {showContacts 
+                        ? t(userData?.preferredLanguage || "English", "transfer.contacts.hideContacts")
+                        : t(userData?.preferredLanguage || "English", "transfer.contacts.showContacts")} ({contacts.length})
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+
+              {/* Saved Contacts List */}
+              {showContacts && contacts.length > 0 && (
+                <View style={styles.contactsContainer}>
+                  {isLoadingContacts ? (
+                    <ActivityIndicator
+                      size="small"
+                      color={Colors.redTheme.background}
+                      style={styles.contactsLoading}
+                    />
+                  ) : (
+                    <ScrollView
+                      style={styles.contactsScrollView}
+                      nestedScrollEnabled={true}
+                      showsVerticalScrollIndicator={false}
+                    >
+                      {contacts.map((contact) => (
+                        <TouchableOpacity
+                          key={contact.id}
+                          style={styles.contactItem}
+                          onPress={() => handleContactSelect(contact)}
+                          activeOpacity={0.7}
+                        >
+                          <View style={styles.contactAvatar}>
+                            <Text style={styles.contactAvatarText}>
+                              {contact.firstName?.[0] || ""}
+                              {contact.lastName?.[0] || ""}
+                            </Text>
+                          </View>
+                          <View style={styles.contactInfo}>
+                            <Text style={styles.contactName}>
+                              {contact.nickname ||
+                                `${contact.firstName || ""} ${contact.lastName || ""}`.trim() ||
+                                "Unknown"}
+                            </Text>
+                            <Text style={styles.contactAccountNumber}>
+                              {contact.accountNumber}
+                            </Text>
+                          </View>
+                          <Ionicons
+                            name="chevron-forward"
+                            size={20}
+                            color="#999"
+                          />
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
+                  )}
+                </View>
+              )}
+
               <View
                 style={[
                   styles.inputContainer,
@@ -1096,12 +1291,18 @@ export default function Transfer() {
                   style={styles.inputIcon}
                 />
                 <TextInput
-                  placeholder="Enter account number"
-                  style={styles.input}
+                  placeholder={t(userData?.preferredLanguage || "English", "transfer.inputs.accountNumberPlaceholder")}
+                  style={[styles.input, getRTLStyles(userData?.preferredLanguage || "English")]}
                   value={searchQuery}
                   onChangeText={(text) => {
                     setSearchQuery(text);
                     setAccountNumberError("");
+                    setShowContacts(false);
+                  }}
+                  onFocus={() => {
+                    if (contacts.length > 0) {
+                      setShowContacts(true);
+                    }
                   }}
                   placeholderTextColor="#999"
                   keyboardType="numeric"
@@ -1115,13 +1316,13 @@ export default function Transfer() {
 
             {/* Amount Input */}
             <View style={styles.inputSection}>
-              <Text style={styles.inputLabel}>
+              <Text style={[styles.inputLabel, getRTLStyles(userData?.preferredLanguage || "English")]}>
                 <Ionicons
                   name="cash-outline"
                   size={16}
                   color={Colors.redTheme.background}
                 />{" "}
-                Amount
+                {t(userData?.preferredLanguage || "English", "transfer.inputs.amount")}
               </Text>
               <View
                 style={[
@@ -1145,29 +1346,28 @@ export default function Transfer() {
               {amountError ? (
                 <Text style={styles.errorText}>{amountError}</Text>
               ) : null}
-              <Text style={styles.balanceInfo}>
-                Available: PHP{" "}
-                {formatCurrency(
+              <Text style={[styles.balanceInfo, getRTLStyles(userData?.preferredLanguage || "English")]}>
+                {t(userData?.preferredLanguage || "English", "transfer.inputs.availableBalance").replace("{amount}", formatCurrency(
                   selectedBalance === "available"
                     ? availableBalance
                     : agentWalletBalance
-                )}
+                ))}
               </Text>
             </View>
 
             {/* Description (Optional) */}
             <View style={styles.inputSection}>
-              <Text style={styles.inputLabel}>
+              <Text style={[styles.inputLabel, getRTLStyles(userData?.preferredLanguage || "English")]}>
                 <Ionicons
                   name="document-text-outline"
                   size={16}
                   color={Colors.redTheme.background}
                 />{" "}
-                Description (Optional)
+                {t(userData?.preferredLanguage || "English", "transfer.inputs.description")}
               </Text>
               <TextInput
-                placeholder="Add a note..."
-                style={styles.descriptionInput}
+                placeholder={t(userData?.preferredLanguage || "English", "transfer.inputs.descriptionPlaceholder")}
+                style={[styles.descriptionInput, getRTLStyles(userData?.preferredLanguage || "English")]}
                 value={description}
                 onChangeText={setDescription}
                 maxLength={100}
@@ -1191,16 +1391,20 @@ export default function Transfer() {
                 size={48}
                 color={Colors.redTheme.background}
               />
-              <Text style={styles.stepTitle}>Confirm Transfer</Text>
-              <Text style={styles.stepSubtitle}>
-                Review your transfer details
+              <Text style={[styles.stepTitle, getRTLStyles(userData?.preferredLanguage || "English")]}>
+                {t(userData?.preferredLanguage || "English", "transfer.steps.step3.title")}
+              </Text>
+              <Text style={[styles.stepSubtitle, getRTLStyles(userData?.preferredLanguage || "English")]}>
+                {t(userData?.preferredLanguage || "English", "transfer.steps.step3.subtitle")}
               </Text>
             </View>
 
             <View style={styles.confirmationContainer}>
               {/* Recipient Card */}
               <View style={styles.confirmCard}>
-                <Text style={styles.confirmLabel}>To</Text>
+                <Text style={[styles.confirmLabel, getRTLStyles(userData?.preferredLanguage || "English")]}>
+                  {t(userData?.preferredLanguage || "English", "transfer.confirmation.to")}
+                </Text>
                 <View style={styles.confirmRecipientRow}>
                   <View style={styles.confirmAvatar}>
                     <Text style={styles.confirmAvatarText}>
@@ -1221,8 +1425,8 @@ export default function Transfer() {
 
               {/* Amount Card */}
               <View style={styles.confirmAmountCard}>
-                <Text style={styles.confirmAmountLabel}>
-                  Amount to Transfer
+                <Text style={[styles.confirmAmountLabel, getRTLStyles(userData?.preferredLanguage || "English")]}>
+                  {t(userData?.preferredLanguage || "English", "transfer.confirmation.amountToTransfer")}
                 </Text>
                 <Text style={styles.confirmAmountValue}>
                   PHP {formatCurrency(parseFloat(amount || 0))}
@@ -1232,17 +1436,21 @@ export default function Transfer() {
               {/* Details Card */}
               <View style={styles.confirmCard}>
                 <View style={styles.confirmRow}>
-                  <Text style={styles.confirmLabel}>From</Text>
-                  <Text style={styles.confirmValue}>
+                  <Text style={[styles.confirmLabel, getRTLStyles(userData?.preferredLanguage || "English")]}>
+                    {t(userData?.preferredLanguage || "English", "transfer.confirmation.from")}
+                  </Text>
+                  <Text style={[styles.confirmValue, getRTLStyles(userData?.preferredLanguage || "English")]}>
                     {selectedBalance === "available"
-                      ? "Available Balance"
-                      : "Agent Wallet"}
+                      ? t(userData?.preferredLanguage || "English", "transfer.balanceTypes.available")
+                      : t(userData?.preferredLanguage || "English", "transfer.balanceTypes.agent")}
                   </Text>
                 </View>
                 {description && (
                   <View style={styles.confirmRow}>
-                    <Text style={styles.confirmLabel}>Description</Text>
-                    <Text style={styles.confirmValue}>{description}</Text>
+                    <Text style={[styles.confirmLabel, getRTLStyles(userData?.preferredLanguage || "English")]}>
+                      {t(userData?.preferredLanguage || "English", "transfer.inputs.description")}
+                    </Text>
+                    <Text style={[styles.confirmValue, getRTLStyles(userData?.preferredLanguage || "English")]}>{description}</Text>
                   </View>
                 )}
               </View>
@@ -1250,7 +1458,9 @@ export default function Transfer() {
               {/* Summary Card */}
               <View style={styles.confirmSummaryCard}>
                 <View style={styles.summaryRow}>
-                  <Text style={styles.summaryLabel}>Current Balance</Text>
+                  <Text style={[styles.summaryLabel, getRTLStyles(userData?.preferredLanguage || "English")]}>
+                    {t(userData?.preferredLanguage || "English", "transfer.confirmation.currentBalance")}
+                  </Text>
                   <Text style={styles.summaryValue}>
                     PHP{" "}
                     {formatCurrency(
@@ -1262,14 +1472,18 @@ export default function Transfer() {
                 </View>
                 <View style={styles.summaryDivider} />
                 <View style={styles.summaryRow}>
-                  <Text style={styles.summaryLabel}>Transfer Amount</Text>
-                  <Text style={[styles.summaryValue, styles.summaryDebit]}>
+                  <Text style={[styles.summaryLabel, getRTLStyles(userData?.preferredLanguage || "English")]}>
+                    {t(userData?.preferredLanguage || "English", "transfer.confirmation.transferAmount")}
+                  </Text>
+                  <Text style={[styles.summaryValue, styles.summaryDebit, getRTLStyles(userData?.preferredLanguage || "English")]}>
                     - PHP {formatCurrency(parseFloat(amount || 0))}
                   </Text>
                 </View>
                 <View style={styles.summaryDivider} />
                 <View style={styles.summaryRow}>
-                  <Text style={styles.summaryLabelBold}>New Balance</Text>
+                  <Text style={[styles.summaryLabelBold, getRTLStyles(userData?.preferredLanguage || "English")]}>
+                    {t(userData?.preferredLanguage || "English", "transfer.confirmation.newBalance")}
+                  </Text>
                   <Text style={styles.summaryValueBold}>
                     PHP{" "}
                     {formatCurrency(
@@ -1306,11 +1520,13 @@ export default function Transfer() {
           <View style={styles.quickActionIconContainer}>
             <Ionicons
               name="qr-code"
-              size={24}
+              size={20}
               color={Colors.redTheme.background}
             />
           </View>
-          <Text style={styles.quickActionText}>My QR</Text>
+          <Text style={[styles.quickActionText, getRTLStyles(userData?.preferredLanguage || "English")]}>
+            {t(userData?.preferredLanguage || "English", "transfer.quickActions.myQR")}
+          </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -1321,12 +1537,33 @@ export default function Transfer() {
           <View style={styles.quickActionIconContainer}>
             <Ionicons
               name="scan"
-              size={24}
+              size={20}
               color={Colors.redTheme.background}
             />
           </View>
-          <Text style={styles.quickActionText}>Scan QR</Text>
+          <Text style={[styles.quickActionText, getRTLStyles(userData?.preferredLanguage || "English")]}>
+            {t(userData?.preferredLanguage || "English", "transfer.quickActions.scanQR")}
+          </Text>
         </TouchableOpacity>
+
+        {contacts.length > 0 && (
+          <TouchableOpacity
+            style={styles.quickActionButton}
+            onPress={() => setShowContactsModal(true)}
+            activeOpacity={0.7}
+          >
+            <View style={styles.quickActionIconContainer}>
+              <Ionicons
+                name="people"
+                size={20}
+                color={Colors.redTheme.background}
+              />
+            </View>
+            <Text style={[styles.quickActionText, getRTLStyles(userData?.preferredLanguage || "English")]}>
+              {t(userData?.preferredLanguage || "English", "transfer.quickActions.contacts")}
+            </Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* Progress Indicator */}
@@ -1339,7 +1576,9 @@ export default function Transfer() {
             ]}
           />
         </View>
-        <Text style={styles.progressText}>Step {currentStep} of 3</Text>
+        <Text style={[styles.progressText, getRTLStyles(userData?.preferredLanguage || "English")]}>
+          {t(userData?.preferredLanguage || "English", "transfer.steps.progress").replace("{current}", currentStep.toString())}
+        </Text>
       </View>
 
       <ScrollView
@@ -1364,7 +1603,9 @@ export default function Transfer() {
               size={20}
               color={Colors.redTheme.background}
             />
-            <Text style={styles.backButtonText}>Back</Text>
+            <Text style={[styles.backButtonText, getRTLStyles(userData?.preferredLanguage || "English")]}>
+              {t(userData?.preferredLanguage || "English", "transfer.navigation.back")}
+            </Text>
           </TouchableOpacity>
         )}
 
@@ -1377,8 +1618,10 @@ export default function Transfer() {
           }
           activeOpacity={0.8}
         >
-          <Text style={styles.nextButtonText}>
-            {currentStep === 3 ? "Confirm & Send" : "Continue"}
+          <Text style={[styles.nextButtonText, getRTLStyles(userData?.preferredLanguage || "English")]}>
+            {currentStep === 3 
+              ? t(userData?.preferredLanguage || "English", "transfer.navigation.confirmAndSend")
+              : t(userData?.preferredLanguage || "English", "transfer.navigation.continue")}
           </Text>
           <Ionicons
             name={currentStep === 3 ? "checkmark-circle" : "arrow-forward"}
@@ -1411,7 +1654,9 @@ export default function Transfer() {
         <View style={styles.qrModalOverlay}>
           <View style={styles.qrModalContent}>
             <View style={styles.qrModalHeader}>
-              <Text style={styles.qrModalTitle}>My QR Code</Text>
+              <Text style={[styles.qrModalTitle, getRTLStyles(userData?.preferredLanguage || "English")]}>
+                {t(userData?.preferredLanguage || "English", "transfer.qrModal.title")}
+              </Text>
               <TouchableOpacity
                 onPress={() => setShowQRModal(false)}
                 style={styles.qrModalCloseButton}
@@ -1420,8 +1665,8 @@ export default function Transfer() {
               </TouchableOpacity>
             </View>
 
-            <Text style={styles.qrModalSubtitle}>
-              Share this QR code for others to transfer money to you
+            <Text style={[styles.qrModalSubtitle, getRTLStyles(userData?.preferredLanguage || "English")]}>
+              {t(userData?.preferredLanguage || "English", "transfer.qrModal.subtitle")}
             </Text>
 
             <ViewShot
@@ -1459,8 +1704,8 @@ export default function Transfer() {
                         size={16}
                         color="#10B981"
                       />
-                      <Text style={styles.qrCodeFooterText}>
-                        Secure Transfer Code
+                      <Text style={[styles.qrCodeFooterText, getRTLStyles(userData?.preferredLanguage || "English")]}>
+                        {t(userData?.preferredLanguage || "English", "transfer.qrModal.secureTransferCode")}
                       </Text>
                     </View>
                   </>
@@ -1475,14 +1720,112 @@ export default function Transfer() {
                 activeOpacity={0.8}
               >
                 <Ionicons name="share-social" size={20} color="white" />
-                <Text style={styles.qrActionButtonText}>Share QR Code</Text>
+                <Text style={[styles.qrActionButtonText, getRTLStyles(userData?.preferredLanguage || "English")]}>
+                  {t(userData?.preferredLanguage || "English", "transfer.qrModal.shareButton")}
+                </Text>
               </TouchableOpacity>
             </View>
 
-            <Text style={styles.qrModalNote}>
-              <Ionicons name="information-circle" size={14} color="#666" /> This
-              QR code contains your account information for receiving transfers
+            <Text style={[styles.qrModalNote, getRTLStyles(userData?.preferredLanguage || "English")]}>
+              <Ionicons name="information-circle" size={14} color="#666" /> {t(userData?.preferredLanguage || "English", "transfer.qrModal.note")}
             </Text>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Contacts Management Modal */}
+      <Modal
+        visible={showContactsModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowContactsModal(false)}
+      >
+        <View style={styles.contactsModalOverlay}>
+          <View style={styles.contactsModalContent}>
+            <View style={styles.contactsModalHeader}>
+              <Text style={[styles.contactsModalTitle, getRTLStyles(userData?.preferredLanguage || "English")]}>
+                {t(userData?.preferredLanguage || "English", "transfer.contacts.title")}
+              </Text>
+              <TouchableOpacity
+                onPress={() => setShowContactsModal(false)}
+                style={styles.contactsModalCloseButton}
+              >
+                <Ionicons name="close" size={24} color="#666" />
+              </TouchableOpacity>
+            </View>
+
+            {contacts.length === 0 ? (
+              <View style={styles.emptyContactsContainer}>
+                <Ionicons
+                  name="people-outline"
+                  size={64}
+                  color="#CCC"
+                  style={styles.emptyContactsIcon}
+                />
+                <Text style={[styles.emptyContactsText, getRTLStyles(userData?.preferredLanguage || "English")]}>
+                  {t(userData?.preferredLanguage || "English", "transfer.contacts.noContacts")}
+                </Text>
+                <Text style={[styles.emptyContactsSubtext, getRTLStyles(userData?.preferredLanguage || "English")]}>
+                  {t(userData?.preferredLanguage || "English", "transfer.contacts.noContactsSubtext")}
+                </Text>
+              </View>
+            ) : (
+              <ScrollView
+                style={styles.contactsModalScrollView}
+                showsVerticalScrollIndicator={false}
+              >
+                {contacts.map((contact) => (
+                  <View key={contact.id} style={styles.contactsModalItem}>
+                    <TouchableOpacity
+                      style={styles.contactsModalItemContent}
+                      onPress={() => handleContactSelect(contact)}
+                      activeOpacity={0.7}
+                    >
+                      <View style={styles.contactAvatar}>
+                        <Text style={styles.contactAvatarText}>
+                          {contact.firstName?.[0] || ""}
+                          {contact.lastName?.[0] || ""}
+                        </Text>
+                      </View>
+                      <View style={styles.contactInfo}>
+                        <Text style={styles.contactName}>
+                          {contact.nickname ||
+                            `${contact.firstName || ""} ${contact.lastName || ""}`.trim() ||
+                            "Unknown"}
+                        </Text>
+                        <Text style={styles.contactAccountNumber}>
+                          {contact.accountNumber}
+                        </Text>
+                        {contact.emailAddress && (
+                          <Text style={styles.contactEmail}>
+                            {contact.emailAddress}
+                          </Text>
+                        )}
+                      </View>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.deleteContactButton}
+                      onPress={() => {
+                        showModal({
+                          title: t(userData?.preferredLanguage || "English", "transfer.contacts.deleteContact"),
+                          message: t(userData?.preferredLanguage || "English", "transfer.contacts.deleteConfirm").replace("{name}", contact.nickname || contact.firstName || "this contact"),
+                          type: "warning",
+                          showCancelButton: true,
+                          onConfirm: () => {
+                            handleDeleteContact(contact.id);
+                            hideModal();
+                          },
+                          onCancel: hideModal,
+                        });
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons name="trash-outline" size={20} color="#FF6B6B" />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </ScrollView>
+            )}
           </View>
         </View>
       </Modal>
@@ -1502,10 +1845,10 @@ const styles = StyleSheet.create({
   // Quick Actions
   quickActionsContainer: {
     flexDirection: "row",
-    paddingHorizontal: width * 0.05,
-    paddingVertical: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
     backgroundColor: "rgba(255, 255, 255, 0.95)",
-    gap: 12,
+    gap: 10,
     borderBottomWidth: 1,
     borderBottomColor: "#F0F0F0",
   },
@@ -1516,11 +1859,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: "white",
     borderRadius: 12,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    gap: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    gap: 6,
     borderWidth: 1,
     borderColor: Colors.redTheme.background + "30",
+    minHeight: 48,
     ...Platform.select({
       ios: {
         shadowColor: Colors.redTheme.background,
@@ -1534,17 +1878,18 @@ const styles = StyleSheet.create({
     }),
   },
   quickActionIconContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     backgroundColor: Colors.redTheme.background + "10",
     justifyContent: "center",
     alignItems: "center",
   },
   quickActionText: {
-    fontSize: isSmallDevice ? 13 : 14,
+    fontSize: isSmallDevice ? 12 : 13,
     fontWeight: "600",
     color: Colors.redTheme.background,
+    marginLeft: 2,
   },
 
   // Progress Indicator
@@ -2194,5 +2539,168 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 16,
     lineHeight: 18,
+  },
+
+  // Contacts Styles
+  inputLabelRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  contactsToggleButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  contactsToggleText: {
+    fontSize: 12,
+    color: Colors.redTheme.background,
+    fontWeight: "600",
+  },
+  contactsContainer: {
+    backgroundColor: Colors.light.background,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+    marginBottom: 12,
+    maxHeight: 200,
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
+  },
+  contactsScrollView: {
+    maxHeight: 200,
+  },
+  contactsLoading: {
+    padding: 16,
+  },
+  contactItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F0F0F0",
+  },
+  contactAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Colors.redTheme.background + "15",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  },
+  contactAvatarText: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: Colors.redTheme.background,
+  },
+  contactInfo: {
+    flex: 1,
+  },
+  contactName: {
+    fontSize: isSmallDevice ? 14 : 15,
+    fontWeight: "600",
+    color: "#1A1A1A",
+    marginBottom: 2,
+  },
+  contactAccountNumber: {
+    fontSize: 12,
+    color: Colors.light.icon,
+  },
+  contactEmail: {
+    fontSize: 11,
+    color: Colors.light.icon,
+    marginTop: 2,
+  },
+
+  // Contacts Modal Styles
+  contactsModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "flex-end",
+  },
+  contactsModalContent: {
+    backgroundColor: "white",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: height * 0.8,
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: -2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 10,
+      },
+      android: {
+        elevation: 10,
+      },
+    }),
+  },
+  contactsModalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F0F0F0",
+  },
+  contactsModalTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#1A1A1A",
+  },
+  contactsModalCloseButton: {
+    padding: 4,
+  },
+  contactsModalScrollView: {
+    maxHeight: height * 0.7,
+  },
+  contactsModalItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F0F0F0",
+  },
+  contactsModalItemContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+  },
+  deleteContactButton: {
+    padding: 8,
+    marginLeft: 8,
+  },
+  emptyContactsContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 40,
+    minHeight: 200,
+  },
+  emptyContactsIcon: {
+    marginBottom: 16,
+  },
+  emptyContactsText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#666",
+    marginBottom: 8,
+  },
+  emptyContactsSubtext: {
+    fontSize: 14,
+    color: Colors.light.icon,
+    textAlign: "center",
   },
 });
