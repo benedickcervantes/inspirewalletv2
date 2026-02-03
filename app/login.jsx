@@ -1,6 +1,5 @@
 import { useNavigation, useRouter } from "expo-router";
 import {
-  ImageBackground,
   StyleSheet,
   Image,
   Text,
@@ -19,7 +18,9 @@ import {
   Animated,
   KeyboardAvoidingView,
   ActivityIndicator,
+  StatusBar,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import {
   getAuth,
@@ -1326,6 +1327,7 @@ export default function Login() {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
       >
+        <StatusBar barStyle="light-content" backgroundColor="transparent" />
         <TouchableWithoutFeedback 
           onPress={(e) => {
             // Handle keyboard dismiss
@@ -1335,20 +1337,17 @@ export default function Login() {
           }} 
           accessible={false}
         >
-          <ImageBackground
-            source={require("../assets/images/bg2.png")}
+          <LinearGradient
+            colors={["#131313", "#131313", "#6A6A6A"]}
             style={[
               style.container,
               { position: "absolute", top: 0, left: 0, right: 0, bottom: 0 },
             ]}
-            resizeMode="cover"
-            onError={(error) =>
-              console.error("Error loading background image:", error)
-            }
           >
             <SafeAreaView style={style.androidSafeArea} />
 
             <ScrollView
+              style={style.scrollView}
               contentContainerStyle={[
                 style.scrollContainer,
                 isSmallScreen && { paddingVertical: 5 },
@@ -1363,25 +1362,17 @@ export default function Login() {
                 ]}
               >
                 <Image
-                  source={require("../assets/images/title.png")}
+                  source={require("../assets/images/applogo2.png")}
                   style={[
                     style.logoImage,
                     isSmallScreen && { width: 240, height: 70 },
                   ]}
+                  resizeMode="contain"
                   onError={(error) =>
                     console.error("Error loading logo image:", error)
                   }
                 />
               </View>
-
-              <Text
-                style={[
-                  style.welcomeText,
-                  isSmallScreen && { fontSize: 20, marginBottom: 10 },
-                ]}
-              >
-                WELCOME INVESTOR
-              </Text>
 
               <View
                 style={[style.loginContainer, isSmallScreen && { flex: 1.2 }]}
@@ -1395,8 +1386,8 @@ export default function Login() {
                   <View style={style.inputContainer}>
                     <TextInput
                       style={style.textInput}
-                      placeholder="Email Address"
-                      placeholderTextColor="#666"
+                      placeholder="Email address"
+                      placeholderTextColor="#B0B0B0"
                       keyboardType="email-address"
                       autoCapitalize="none"
                       autoCorrect={false}
@@ -1409,8 +1400,8 @@ export default function Login() {
                     <View style={style.passwordContainer}>
                       <TextInput
                         style={style.passwordInput}
-                        placeholder="Password"
-                        placeholderTextColor="#666"
+                        placeholder="Enter password"
+                        placeholderTextColor="#B0B0B0"
                         keyboardType="default"
                         secureTextEntry={!showPassword}
                         autoCapitalize="none"
@@ -1425,57 +1416,55 @@ export default function Login() {
                         <Ionicons
                           name={showPassword ? "eye-off" : "eye"}
                           size={20}
-                          color={Colors.redTheme.background}
+                          color="#B0B0B0"
                         />
                       </TouchableOpacity>
                     </View>
                   </View>
 
                   <TouchableOpacity
-                    style={style.loginButton}
-                    onPress={SignIn}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={style.loginButtonText}>LOGIN</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={style.registerButton}
                     onPress={() => {
-                      router.push("/register");
+                      router.push("/passcode-login");
                     }}
-                    activeOpacity={0.6}
+                    style={[style.linkButton, { marginTop: 8 }]}
                   >
-                    <Text style={style.registerButtonText}>REGISTER</Text>
+                    <Text style={style.passcodeLinkText}>Use Passcode Instead</Text>
                   </TouchableOpacity>
-
-                  <View style={style.linkContainer}>
-                    <TouchableOpacity
-                      onPress={() => {
-                        router.push("/passcode-login");
-                      }}
-                      style={style.linkButton}
-                    >
-                      <Text style={style.linkText}>Enter Passcode Instead</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      onPress={() => router.push("/forgotpassword")}
-                      style={style.linkButton}
-                    >
-                      <Text style={style.linkText}>Forgot Password?</Text>
-                    </TouchableOpacity>
-                  </View>
                 </View>
-              </View>
-
-              <View style={style.ownerContainer}>
-                <Text style={style.ownerText}>CREATED BY INSPIRE</Text>
               </View>
             </ScrollView>
 
+            <View style={style.bottomActions}>
+              <TouchableOpacity
+                style={style.loginButton}
+                onPress={SignIn}
+                activeOpacity={0.8}
+              >
+                <Text style={style.loginButtonText}>LOGIN</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={style.registerButton}
+                onPress={() => {
+                  router.push("/register");
+                }}
+                activeOpacity={0.6}
+              >
+                <Text style={style.registerButtonText}>REGISTER</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => router.push("/forgotpassword")}
+                style={style.linkButton}
+              >
+                <Text style={style.linkText}>Forgot Password?</Text>
+              </TouchableOpacity>
+
+              <Text style={style.ownerText}>CREATED BY INSPIRE</Text>
+            </View>
+
             <SafeAreaView style={style.androidSafeArea} />
-          </ImageBackground>
+          </LinearGradient>
         </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
 
@@ -1717,9 +1706,12 @@ const style = StyleSheet.create({
     width: "100%",
     height: "100%",
   },
+  scrollView: {
+    flex: 1,
+  },
   scrollContainer: {
     flexGrow: 1,
-    justifyContent: "center",
+    justifyContent: "flex-start",
     alignItems: "center",
     paddingVertical: 10,
   },
@@ -1735,16 +1727,6 @@ const style = StyleSheet.create({
     height: 80,
     resizeMode: "contain",
   },
-  welcomeText: {
-    textAlign: "center",
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "black",
-    marginBottom: 15,
-    textShadowColor: "rgba(254, 125, 72, 0.2)",
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
-  },
   loginContainer: {
     flex: 1.5,
     width: "100%",
@@ -1755,65 +1737,41 @@ const style = StyleSheet.create({
   loginForm: {
     width: "100%",
     maxWidth: 350,
-    backgroundColor: "rgba(255, 255, 255, 0.98)",
+    backgroundColor: "rgba(40, 40, 40, 0.85)",
     borderRadius: 20,
     padding: 25,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 10,
-    },
-    shadowOpacity: 0.15,
-    shadowRadius: 20,
-    elevation: 10,
-    borderWidth: 2,
-    borderColor: "rgba(254, 125, 72, 0.1)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.12)",
   },
   inputContainer: {
     marginBottom: 16,
     width: "100%",
   },
   textInput: {
-    borderColor: "rgba(254, 125, 72, 0.2)",
-    borderWidth: 2,
+    borderColor: "rgba(255, 255, 255, 0.25)",
+    borderWidth: 1,
     paddingHorizontal: 18,
     paddingVertical: 14,
     borderRadius: 15,
     width: "100%",
     fontSize: 16,
-    color: "#333",
-    backgroundColor: "rgba(255, 255, 255, 0.95)",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 2,
+    color: "#FFFFFF",
+    backgroundColor: "rgba(30, 30, 30, 0.8)",
   },
   passwordContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.95)",
-    borderColor: "rgba(254, 125, 72, 0.2)",
-    borderWidth: 2,
+    backgroundColor: "rgba(30, 30, 30, 0.8)",
+    borderColor: "rgba(255, 255, 255, 0.25)",
+    borderWidth: 1,
     borderRadius: 15,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 2,
   },
   passwordInput: {
     flex: 1,
     paddingHorizontal: 18,
     paddingVertical: 14,
     fontSize: 16,
-    color: "#333",
+    color: "#FFFFFF",
   },
   eyeButton: {
     paddingHorizontal: 14,
@@ -1821,51 +1779,49 @@ const style = StyleSheet.create({
   },
   loginButton: {
     width: "100%",
-    height: 50,
-    backgroundColor: Colors.redTheme.background,
+    minHeight: 50,
+    backgroundColor: "#FF6F22",
     borderRadius: 15,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 14,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 5,
+    marginBottom: 12,
   },
   loginButtonText: {
-    color: Colors.redTheme.text,
+    color: "#FFFFFF",
     fontWeight: "bold",
     fontSize: 18,
     letterSpacing: 1,
   },
   registerButton: {
     width: "100%",
-    height: 50,
+    minHeight: 50,
     borderRadius: 15,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.9)",
-    borderColor: "rgba(254, 125, 72, 0.3)",
+    backgroundColor: "transparent",
     borderWidth: 2,
-    marginBottom: 16,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 3,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 3,
+    borderColor: "rgba(255, 255, 255, 0.3)",
+    marginBottom: 12,
   },
   registerButtonText: {
-    color: "#fe7d48",
+    color: "#FFFFFF",
     fontWeight: "700",
     fontSize: 18,
     letterSpacing: 0.5,
+  },
+  bottomActions: {
+    width: "100%",
+    paddingHorizontal: 20,
+    paddingBottom: 16,
+    paddingTop: 8,
+    maxWidth: 350,
+    alignSelf: "center",
+  },
+  passcodeLinkText: {
+    color: "#FF6F22",
+    fontSize: 16,
+    fontWeight: "600",
+    textAlign: "center",
   },
   linkContainer: {
     alignItems: "center",
@@ -1876,7 +1832,7 @@ const style = StyleSheet.create({
     paddingVertical: 5,
   },
   linkText: {
-    color: "#fe7d48",
+    color: "#B0B0B0",
     textDecorationLine: "underline",
     fontSize: 16,
     fontWeight: "600",
@@ -1889,9 +1845,10 @@ const style = StyleSheet.create({
     minHeight: 40,
   },
   ownerText: {
-    fontStyle: "italic",
-    color: "#666",
+    color: "#B0B0B0",
     fontSize: 14,
+    textAlign: "center",
+    marginTop: 12,
   },
   androidSafeArea: {
     paddingTop: Platform.OS === "android" ? 25 : 0,
