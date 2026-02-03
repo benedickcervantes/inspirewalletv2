@@ -1558,7 +1558,7 @@ export default function Index() {
                   size={24}
                   color={Colors.redTheme.background}
                 />
-                <Text style={styles.welcomeTitle}>Welcome Investor!</Text>
+                <Text style={styles.welcomeTitle}>Get Started</Text>
               </View>
               <Text style={styles.welcomeText}>
                 🚀 Start your investment journey with Inspire Wallet{"\n"}
