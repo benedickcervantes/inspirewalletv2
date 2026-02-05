@@ -115,20 +115,20 @@ export default function Index() {
               }
               navigationHandledRef.current = true;
               setLoading(false);
-              router.replace("/login");
+              router.replace("/welcome");
             }
           } else {
-            // No stored credentials
+            // No stored credentials - go to welcome page
             navigationHandledRef.current = true;
             setLoading(false);
-            router.replace("/login");
+            router.replace("/welcome");
           }
         }
       } catch (error) {
         console.error("Error in auth handling:", error);
         navigationHandledRef.current = true;
         setLoading(false);
-        router.replace("/login");
+        router.replace("/welcome");
       }
     };
 

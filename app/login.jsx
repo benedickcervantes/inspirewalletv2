@@ -1327,7 +1327,7 @@ export default function Login() {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
       >
-        <StatusBar barStyle="light-content" backgroundColor="transparent" />
+        <StatusBar barStyle="light-content" backgroundColor="transparent" translucent={true} />
         <TouchableWithoutFeedback 
           onPress={(e) => {
             // Handle keyboard dismiss
@@ -1338,13 +1338,23 @@ export default function Login() {
           accessible={false}
         >
           <LinearGradient
-            colors={["#131313", "#131313", "#6A6A6A"]}
+            colors={["#E15816", "#F48F38"]}
+            locations={[0, 1]}
             style={[
               style.container,
               { position: "absolute", top: 0, left: 0, right: 0, bottom: 0 },
             ]}
           >
             <SafeAreaView style={style.androidSafeArea} />
+
+            {/* Back Button */}
+            <TouchableOpacity
+              style={style.backButton}
+              onPress={() => router.replace("/welcome")}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="arrow-back" size={28} color="#FFFFFF" />
+            </TouchableOpacity>
 
             <ScrollView
               style={style.scrollView}
@@ -1387,7 +1397,7 @@ export default function Login() {
                     <TextInput
                       style={style.textInput}
                       placeholder="Email address"
-                      placeholderTextColor="#B0B0B0"
+                      placeholderTextColor="#666666"
                       keyboardType="email-address"
                       autoCapitalize="none"
                       autoCorrect={false}
@@ -1401,7 +1411,7 @@ export default function Login() {
                       <TextInput
                         style={style.passwordInput}
                         placeholder="Enter password"
-                        placeholderTextColor="#B0B0B0"
+                        placeholderTextColor="#666666"
                         keyboardType="default"
                         secureTextEntry={!showPassword}
                         autoCapitalize="none"
@@ -1416,17 +1426,52 @@ export default function Login() {
                         <Ionicons
                           name={showPassword ? "eye-off" : "eye"}
                           size={20}
-                          color="#B0B0B0"
+                          color="#999999"
                         />
                       </TouchableOpacity>
                     </View>
+                    <TouchableOpacity
+                      onPress={() => router.push("/forgotpassword")}
+                      style={style.forgotPasswordButton}
+                    >
+                      <Text style={style.forgotPasswordText}>Forgot Password?</Text>
+                    </TouchableOpacity>
                   </View>
 
                   <TouchableOpacity
-                    onPress={() => {
-                      router.push("/passcode-login");
+                    style={style.loginButton}
+                    onPress={SignIn}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={style.loginButtonText}>LOGIN</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    onPress={async () => {
+                      // Check if user has stored credentials before navigating to passcode login
+                      try {
+                        const userEmail = await AsyncStorage.getItem("userEmail");
+                        const userPassword = await AsyncStorage.getItem("userPassword");
+                        
+                        if (userEmail && userPassword) {
+                          router.push("/passcode-login");
+                        } else {
+                          showModal({
+                            title: "No Saved Credentials",
+                            message: "Please login with email and password first to set up passcode login.",
+                            type: "info",
+                          });
+                        }
+                      } catch (error) {
+                        console.error("Error checking stored credentials:", error);
+                        showModal({
+                          title: "Error",
+                          message: "Unable to check saved credentials. Please login with email and password.",
+                          type: "error",
+                        });
+                      }
                     }}
-                    style={[style.linkButton, { marginTop: 8 }]}
+                    style={[style.linkButton, { marginTop: 32 }]}
                   >
                     <Text style={style.passcodeLinkText}>Use Passcode Instead</Text>
                   </TouchableOpacity>
@@ -1435,31 +1480,6 @@ export default function Login() {
             </ScrollView>
 
             <View style={style.bottomActions}>
-              <TouchableOpacity
-                style={style.loginButton}
-                onPress={SignIn}
-                activeOpacity={0.8}
-              >
-                <Text style={style.loginButtonText}>LOGIN</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={style.registerButton}
-                onPress={() => {
-                  router.push("/register");
-                }}
-                activeOpacity={0.6}
-              >
-                <Text style={style.registerButtonText}>REGISTER</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={() => router.push("/forgotpassword")}
-                style={style.linkButton}
-              >
-                <Text style={style.linkText}>Forgot Password?</Text>
-              </TouchableOpacity>
-
               <Text style={style.ownerText}>CREATED BY INSPIRE</Text>
             </View>
 
@@ -1706,6 +1726,18 @@ const style = StyleSheet.create({
     width: "100%",
     height: "100%",
   },
+  backButton: {
+    position: "absolute",
+    top: Platform.OS === "ios" ? 50 : 40,
+    left: 20,
+    zIndex: 10,
+    width: 44,
+    height: 44,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 22,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+  },
   scrollView: {
     flex: 1,
   },
@@ -1716,112 +1748,121 @@ const style = StyleSheet.create({
     paddingVertical: 10,
   },
   logoContainer: {
-    flex: 0.8,
+    flex: 1,
     width: "100%",
-    justifyContent: "center",
+    justifyContent: "flex-end",
     alignItems: "center",
-    minHeight: 80,
+    minHeight: 200,
+    paddingBottom: 40,
   },
   logoImage: {
-    width: 280,
-    height: 80,
+    width: 550,
+    height: 180,
     resizeMode: "contain",
   },
   loginContainer: {
-    flex: 1.5,
+    flex: 1.8,
     width: "100%",
-    justifyContent: "center",
+    justifyContent: "flex-start",
     alignItems: "center",
     paddingHorizontal: 20,
   },
   loginForm: {
     width: "100%",
-    maxWidth: 350,
-    backgroundColor: "rgba(40, 40, 40, 0.85)",
-    borderRadius: 20,
-    padding: 25,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.12)",
+    maxWidth: 420,
+    paddingHorizontal: 30,
   },
   inputContainer: {
     marginBottom: 16,
     width: "100%",
   },
   textInput: {
-    borderColor: "rgba(255, 255, 255, 0.25)",
-    borderWidth: 1,
-    paddingHorizontal: 18,
-    paddingVertical: 14,
-    borderRadius: 15,
+    paddingHorizontal: 20,
+    paddingVertical: 18,
+    borderRadius: 30,
     width: "100%",
     fontSize: 16,
-    color: "#FFFFFF",
-    backgroundColor: "rgba(30, 30, 30, 0.8)",
+    color: "#333333",
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    borderWidth: 0,
+    minHeight: 60,
   },
   passwordContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(30, 30, 30, 0.8)",
-    borderColor: "rgba(255, 255, 255, 0.25)",
-    borderWidth: 1,
-    borderRadius: 15,
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    borderRadius: 30,
+    borderWidth: 0,
+    minHeight: 60,
   },
   passwordInput: {
     flex: 1,
-    paddingHorizontal: 18,
-    paddingVertical: 14,
+    paddingHorizontal: 20,
+    paddingVertical: 18,
     fontSize: 16,
-    color: "#FFFFFF",
+    color: "#333333",
   },
   eyeButton: {
-    paddingHorizontal: 14,
-    paddingVertical: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
   },
   loginButton: {
     width: "100%",
-    minHeight: 50,
-    backgroundColor: "#FF6F22",
-    borderRadius: 15,
+    minHeight: 48,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 30,
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 12,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   loginButtonText: {
-    color: "#FFFFFF",
-    fontWeight: "bold",
-    fontSize: 18,
-    letterSpacing: 1,
-  },
-  registerButton: {
-    width: "100%",
-    minHeight: 50,
-    borderRadius: 15,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "transparent",
-    borderWidth: 2,
-    borderColor: "rgba(255, 255, 255, 0.3)",
-    marginBottom: 12,
-  },
-  registerButtonText: {
-    color: "#FFFFFF",
-    fontWeight: "700",
+    color: "#E15816",
+    fontWeight: "600",
     fontSize: 18,
     letterSpacing: 0.5,
+  },
+  notMemberText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "400",
+    fontStyle: "italic",
+    textAlign: "left",
+    marginBottom: 6,
+    marginLeft: 4,
   },
   bottomActions: {
     width: "100%",
     paddingHorizontal: 20,
-    paddingBottom: 16,
+    paddingBottom: 20,
     paddingTop: 8,
     maxWidth: 350,
     alignSelf: "center",
   },
   passcodeLinkText: {
-    color: "#FF6F22",
+    color: "#FFFFFF",
     fontSize: 16,
-    fontWeight: "600",
+    fontWeight: "400",
     textAlign: "center",
+    textDecorationLine: "underline",
+  },
+  forgotPasswordButton: {
+    alignSelf: "flex-end",
+    marginTop: 6,
+    marginRight: 12,
+  },
+  forgotPasswordText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "400",
+    fontStyle: "italic",
   },
   linkContainer: {
     alignItems: "center",
@@ -1845,7 +1886,7 @@ const style = StyleSheet.create({
     minHeight: 40,
   },
   ownerText: {
-    color: "#B0B0B0",
+    color: "#FFFFFF",
     fontSize: 14,
     textAlign: "center",
     marginTop: 12,
