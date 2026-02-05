@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
-import { View, ActivityIndicator, StyleSheet } from "react-native";
+import { View, ActivityIndicator, StyleSheet, Image, Text, ImageBackground } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter, usePathname } from "expo-router";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
@@ -29,12 +30,20 @@ export default function Index() {
       // Prevent multiple navigations
       if (navigationHandledRef.current) return;
       
+      // Add minimum 3 second delay to show loading screen
+      const startTime = Date.now();
+      
       try {
         if (user) {
           // User is authenticated
           const passcodeLoginComplete = await AsyncStorage.getItem("passcodeLoginComplete");
           
           if (passcodeLoginComplete === "true") {
+            // Wait for minimum display time
+            const elapsedTime = Date.now() - startTime;
+            const remainingTime = Math.max(0, 3000 - elapsedTime);
+            await new Promise(resolve => setTimeout(resolve, remainingTime));
+            
             navigationHandledRef.current = true;
             setLoading(false);
             router.replace("/main");
@@ -48,6 +57,12 @@ export default function Index() {
             
             if (userDocSnap.exists()) {
               const userData = userDocSnap.data();
+              
+              // Wait for minimum display time
+              const elapsedTime = Date.now() - startTime;
+              const remainingTime = Math.max(0, 3000 - elapsedTime);
+              await new Promise(resolve => setTimeout(resolve, remainingTime));
+              
               navigationHandledRef.current = true;
               setLoading(false);
               
@@ -57,12 +72,23 @@ export default function Index() {
                 router.replace("/create-passcode");
               }
             } else {
+              // Wait for minimum display time
+              const elapsedTime = Date.now() - startTime;
+              const remainingTime = Math.max(0, 3000 - elapsedTime);
+              await new Promise(resolve => setTimeout(resolve, remainingTime));
+              
               navigationHandledRef.current = true;
               setLoading(false);
               router.replace("/login");
             }
           } catch (firestoreError) {
             console.error("Error accessing Firestore:", firestoreError);
+            
+            // Wait for minimum display time
+            const elapsedTime = Date.now() - startTime;
+            const remainingTime = Math.max(0, 3000 - elapsedTime);
+            await new Promise(resolve => setTimeout(resolve, remainingTime));
+            
             navigationHandledRef.current = true;
             setLoading(false);
             router.replace("/login");
@@ -89,6 +115,12 @@ export default function Index() {
                 
                 if (userDocSnap.exists()) {
                   const userData = userDocSnap.data();
+                  
+                  // Wait for minimum display time
+                  const elapsedTime = Date.now() - startTime;
+                  const remainingTime = Math.max(0, 3000 - elapsedTime);
+                  await new Promise(resolve => setTimeout(resolve, remainingTime));
+                  
                   navigationHandledRef.current = true;
                   setLoading(false);
                   
@@ -98,6 +130,11 @@ export default function Index() {
                     router.replace("/passcode");
                   }
                 } else {
+                  // Wait for minimum display time
+                  const elapsedTime = Date.now() - startTime;
+                  const remainingTime = Math.max(0, 3000 - elapsedTime);
+                  await new Promise(resolve => setTimeout(resolve, remainingTime));
+                  
                   navigationHandledRef.current = true;
                   setLoading(false);
                   router.replace("/login");
@@ -113,12 +150,23 @@ export default function Index() {
               } catch (clearError) {
                 console.error("Error clearing credentials:", clearError);
               }
+              
+              // Wait for minimum display time
+              const elapsedTime = Date.now() - startTime;
+              const remainingTime = Math.max(0, 3000 - elapsedTime);
+              await new Promise(resolve => setTimeout(resolve, remainingTime));
+              
               navigationHandledRef.current = true;
               setLoading(false);
               router.replace("/welcome");
             }
           } else {
             // No stored credentials - go to welcome page
+            // Wait for minimum display time
+            const elapsedTime = Date.now() - startTime;
+            const remainingTime = Math.max(0, 3000 - elapsedTime);
+            await new Promise(resolve => setTimeout(resolve, remainingTime));
+            
             navigationHandledRef.current = true;
             setLoading(false);
             router.replace("/welcome");
@@ -126,6 +174,12 @@ export default function Index() {
         }
       } catch (error) {
         console.error("Error in auth handling:", error);
+        
+        // Wait for minimum display time
+        const elapsedTime = Date.now() - startTime;
+        const remainingTime = Math.max(0, 3000 - elapsedTime);
+        await new Promise(resolve => setTimeout(resolve, remainingTime));
+        
         navigationHandledRef.current = true;
         setLoading(false);
         router.replace("/welcome");
@@ -143,9 +197,19 @@ export default function Index() {
   // Show loading while determining auth state
   if (loading) {
     return (
-      <View style={styles.container}>
-        <ActivityIndicator size="large" color="#fe7d48" />
-      </View>
+      <LinearGradient
+        colors={["#E25A17", "#F28934"]}
+        style={styles.container}
+      >
+        <View style={styles.logoContainer}>
+          <Image 
+            source={require("../assets/images/inspireloader.png")}
+            style={styles.logo}
+            resizeMode="contain"
+          />
+          <Text style={styles.createdByText}>By: Inspire</Text>
+        </View>
+      </LinearGradient>
     );
   }
 
@@ -158,6 +222,23 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#f8f9fa",
+  },
+  logoContainer: {
+    justifyContent: "center",
+    alignItems: "center",
+    flex: 1,
+  },
+  logo: {
+    width: 250,
+    height: 250,
+  },
+  createdByText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "500",
+    fontStyle: "italic",
+    letterSpacing: 0.5,
+    position: "absolute",
+    bottom: 50,
   },
 });
