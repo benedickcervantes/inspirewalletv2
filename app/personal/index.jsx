@@ -1573,6 +1573,31 @@ export default function Personal() {
           </View>
         </View>
 
+          {/* Logout Button */}
+          <TouchableOpacity
+            style={styles.logoutButton}
+            onPress={async () => {
+              try {
+                await auth.signOut();
+                router.replace("/welcome");
+              } catch (error) {
+                console.error("Error logging out:", error);
+                showModal({
+                  title: t(userData.preferredLanguage || 'English', 'personal.messages.titles.error'),
+                  message: "Failed to log out. Please try again.",
+                  type: "error",
+                  confirmText: "OK",
+                });
+              }
+            }}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="log-out-outline" size={20} color="#fff" />
+            <Text style={styles.logoutButtonText}>
+              {t(userData.preferredLanguage || 'English', 'personal.buttons.logout') || 'Log Out'}
+            </Text>
+          </TouchableOpacity>
+
           <View style={styles.bottomSpacing} />
         </ScrollView>
       </SafeAreaView>
@@ -2305,6 +2330,31 @@ const styles = StyleSheet.create({
   // Spacing
   bottomSpacing: {
     height: 40,
+  },
+
+  // Logout Button
+  logoutButton: {
+    backgroundColor: "#e74c3c",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 14,
+    marginTop: 8,
+    marginBottom: 16,
+    gap: 10,
+    shadowColor: "#e74c3c",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  logoutButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "700",
+    letterSpacing: 0.3,
   },
 
   // Business Requirements Modal Styles

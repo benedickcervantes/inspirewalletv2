@@ -12,14 +12,16 @@ import {
   TextInput,
   Keyboard,
   TouchableWithoutFeedback,
+  Animated,
+  StatusBar,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { getAuth } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { firestore } from "../configs/firebase";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Colors } from "../constants/Colors";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import LoadingScreen from "./../components/LoadingScreen";
 import registerNNPushToken, {
   registerIndieID,
   unregisterIndieDevice,
@@ -96,7 +98,7 @@ export default function PasscodeLogin() {
   const [checkPasscode, setCheckPasscode] = useState("");
   const [passcode, setPasscode] = useState("");
   const [error, setError] = useState("");
-  const [loadingScreen, setLoadingScreen] = useState(false);
+  const [userName, setUserName] = useState("");
   const [resetPasscodeModalVisible, setResetPasscodeModalVisible] =
     useState(false);
   const [resetEmail, setResetEmail] = useState("");
@@ -105,6 +107,39 @@ export default function PasscodeLogin() {
   const [resetStep, setResetStep] = useState("auth"); // "auth" or "newPasscode"
   const [newPasscode, setNewPasscode] = useState("");
   const [confirmNewPasscode, setConfirmNewPasscode] = useState("");
+  
+  // Shake animation for incorrect passcode
+  const shakeAnimation = useRef(new Animated.Value(0)).current;
+
+  const triggerShake = () => {
+    Animated.sequence([
+      Animated.timing(shakeAnimation, {
+        toValue: 10,
+        duration: 50,
+        useNativeDriver: true,
+      }),
+      Animated.timing(shakeAnimation, {
+        toValue: -10,
+        duration: 50,
+        useNativeDriver: true,
+      }),
+      Animated.timing(shakeAnimation, {
+        toValue: 10,
+        duration: 50,
+        useNativeDriver: true,
+      }),
+      Animated.timing(shakeAnimation, {
+        toValue: -10,
+        duration: 50,
+        useNativeDriver: true,
+      }),
+      Animated.timing(shakeAnimation, {
+        toValue: 0,
+        duration: 50,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
 
   useEffect(() => {
     // Block back button on Android
@@ -141,7 +176,7 @@ export default function PasscodeLogin() {
           const user = userCredential.user;
 
           if (user) {
-            // Get passcode from Firestore
+            // Get passcode and user data from Firestore
             try {
               const userDocRef = doc(firestore, "users", user.uid);
               const userDocSnap = await getDoc(userDocRef);
@@ -149,6 +184,9 @@ export default function PasscodeLogin() {
                 const userData = userDocSnap.data();
                 if (userData.passcode) {
                   setCheckPasscode(userData.passcode);
+                  // Set username - use firstName, fullName, or email
+                  const displayName = userData.firstName || userData.fullName || user.email?.split('@')[0] || "User";
+                  setUserName(displayName);
                 } else {
                   // No passcode - redirect to login
                   router.replace("/login");
@@ -319,133 +357,75 @@ export default function PasscodeLogin() {
     if (value === "Del") {
       setPasscode(passcode.slice(0, -1));
       setError("");
-    } else if (value === "✓") {
-      if (passcode.length === 4) {
-        // Show loading screen when check mark is clicked
-        setLoadingScreen(true);
-        
-        // Add a delay to show loading screen
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        if (passcode === checkPasscode) {
-          // Initialize presence monitoring for passcode login
-          try {
-            const user = auth.currentUser;
-            if (user) {
-              await presenceService.initializePresence(user.uid, {
-                email: user.email,
-                displayName: user.displayName || user.email,
-                userType: "user",
-              });
-
-              // Unregister first to prevent duplicate notifications on passcode login
-              try {
-                // Request notification permissions first (required for Android 13+)
-                const { status: existingStatus } =
-                  await Notifications.getPermissionsAsync();
-                let finalStatus = existingStatus;
-                if (existingStatus !== "granted") {
-                  const { status } =
-                    await Notifications.requestPermissionsAsync();
-                  finalStatus = status;
-                }
-
-                if (finalStatus !== "granted") {
-                  console.warn(
-                    "Notification permissions not granted for passcode login"
-                  );
-                } else {
-                  // Get push token (Native Notify will use this automatically)
-                  const tokenData = await Notifications.getExpoPushTokenAsync({
-                    projectId: "81d5c41e-b862-48d6-a14d-21246b09c564",
-                  });
-                  console.log(
-                    "Got Expo push token for passcode login:",
-                    tokenData.data
-                  );
-
-                  await unregisterIndieDevice(user.uid);
-                  console.log(
-                    "Unregistered user device for passcode login to prevent duplicates"
-                  );
-
-                  // Register for notifications on passcode login
-                  await registerIndieID(
-                    user.uid,
-                    28259,
-                    process.env.EXPO_PUBLIC_NATIVENOTIFY_API_KEY
-                  );
-                  console.log("Registered user device for passcode login");
-
-                  // Send passcode login notification to register user ID as subID
-                  await axios.post(
-                    "https://app.nativenotify.com/api/indie/notification",
-                    {
-                      subID: `${user.uid}`,
-                      appId: 28259,
-                      appToken: process.env.EXPO_PUBLIC_NATIVENOTIFY_API_KEY,
-                      title: "Session Unlocked",
-                      message: "You have successfully unlocked your session.",
-                    }
-                  );
-                  console.log(
-                    "Sent passcode login notification with subID:",
-                    user.uid
-                  );
-                }
-              } catch (notificationError) {
-                console.error(
-                  "Error registering notifications for passcode login:",
-                  notificationError
-                );
-                // Continue execution even if notification registration fails
-              }
-            }
-          } catch (error) {
-            console.error(
-              "Error initializing presence monitoring for passcode login:",
-              error
-            );
-            // Continue execution even if presence monitoring fails
-          }
-
-          // Show loading screen for a bit longer, then navigate to dashboard
-          setTimeout(() => {
-            setLoadingScreen(false);
-            // Set a flag to indicate passcode login is complete
-            AsyncStorage.setItem("passcodeLoginComplete", "true").catch(err => console.error("Error setting passcode flag:", err));
-            showModal({
-              title: "Access Granted!",
-              message: "Welcome back!",
-              type: "success",
-              onConfirm: () => {
-                hideModal();
-                router.replace("/main");
-              },
-            });
-          }, 2000);
-        } else {
-          setLoadingScreen(false);
-          setError("Incorrect Passcode");
-          showModal({
-            title: "Incorrect Passcode",
-            message: "Please try again.",
-            type: "error",
-          });
-        }
-      } else {
-        setError("Passcode must be 4 digits");
-        showModal({
-          title: "Invalid Passcode",
-          message: "Please enter 4 digits.",
-          type: "warning",
-        });
-      }
-      setPasscode("");
     } else {
       if (passcode.length < 4) {
-        setPasscode(passcode + value);
+        const newPasscode = passcode + value;
+        setPasscode(newPasscode);
         setError("");
+        
+        // Auto-verify when 4 digits are entered
+        if (newPasscode.length === 4) {
+          if (newPasscode === checkPasscode) {
+            // Set a flag to indicate passcode login is complete
+            AsyncStorage.setItem("passcodeLoginComplete", "true").catch(err => console.error("Error setting passcode flag:", err));
+            
+            // Navigate immediately
+            router.replace("/main");
+            
+            // Initialize presence monitoring and notifications in background (non-blocking)
+            const user = auth.currentUser;
+            if (user) {
+              // Run these operations in the background without blocking navigation
+              Promise.all([
+                presenceService.initializePresence(user.uid, {
+                  email: user.email,
+                  displayName: user.displayName || user.email,
+                  userType: "user",
+                }).catch(error => console.error("Error initializing presence:", error)),
+                
+                (async () => {
+                  try {
+                    const { status: existingStatus } = await Notifications.getPermissionsAsync();
+                    let finalStatus = existingStatus;
+                    if (existingStatus !== "granted") {
+                      const { status } = await Notifications.requestPermissionsAsync();
+                      finalStatus = status;
+                    }
+
+                    if (finalStatus === "granted") {
+                      const tokenData = await Notifications.getExpoPushTokenAsync({
+                        projectId: "81d5c41e-b862-48d6-a14d-21246b09c564",
+                      });
+                      console.log("Got Expo push token for passcode login:", tokenData.data);
+
+                      await unregisterIndieDevice(user.uid);
+                      console.log("Unregistered user device for passcode login");
+
+                      await registerIndieID(user.uid, 28259, process.env.EXPO_PUBLIC_NATIVENOTIFY_API_KEY);
+                      console.log("Registered user device for passcode login");
+
+                      await axios.post("https://app.nativenotify.com/api/indie/notification", {
+                        subID: `${user.uid}`,
+                        appId: 28259,
+                        appToken: process.env.EXPO_PUBLIC_NATIVENOTIFY_API_KEY,
+                        title: "Session Unlocked",
+                        message: "You have successfully unlocked your session.",
+                      });
+                      console.log("Sent passcode login notification");
+                    }
+                  } catch (error) {
+                    console.error("Error with notifications:", error);
+                  }
+                })()
+              ]).catch(error => console.error("Background operations error:", error));
+            }
+          } else {
+            setError("Incorrect. Please try again");
+            setPasscode("");
+            triggerShake(); // Trigger shake animation
+            // Removed modal notification - error is now shown above PIN circles
+          }
+        }
       }
     }
   };
@@ -481,14 +461,16 @@ export default function PasscodeLogin() {
     return width * 0.04;
   };
 
-  // Show loading screen when processing
-  if (loadingScreen) {
-    return <LoadingScreen type="login" />;
-  }
-
   return (
     <>
-      <View
+      <StatusBar 
+        barStyle="light-content" 
+        backgroundColor="transparent" 
+        translucent={true}
+      />
+      <LinearGradient
+        colors={["#E15816", "#F48F38"]}
+        locations={[0, 1]}
         style={{
           flex: 1,
           width: "100%",
@@ -498,183 +480,322 @@ export default function PasscodeLogin() {
           left: 0,
           right: 0,
           bottom: 0,
-          justifyContent: "center",
+          justifyContent: "flex-start",
           alignItems: "center",
-          backgroundColor: "#f8f9fa",
           paddingHorizontal: isTablet ? 40 : 20,
+          paddingTop: isTablet ? 80 : 60,
         }}
       >
+        {/* Logo */}
         <View
           style={{
             width: "100%",
-            height: isTablet ? 150 : 200,
             justifyContent: "center",
             alignItems: "center",
-            marginBottom: isTablet ? 20 : 0,
+            marginBottom: isTablet ? 80 : 60,
           }}
         >
           <Image
-            source={require("../assets/images/title.png")}
+            source={require("../assets/images/applogo2.png")}
             style={{
-              width: imageWidth,
-              height: imageHeight,
+              width: isTablet ? 320 : 260,
+              height: isTablet ? 110 : 90,
               resizeMode: "contain",
             }}
             onError={(error) =>
-              console.error("Error loading passcode screen image:", error)
+              console.error("Error loading logo image:", error)
             }
           />
         </View>
 
-        <Text
+        {/* Error message - displayed above PIN dots */}
+        {error ? (
+          <Text
+            style={{
+              color: "#FFFFFF",
+              fontSize: isTablet ? 18 : 16,
+              textAlign: "center",
+              fontWeight: "600",
+              marginBottom: 20,
+            }}
+          >
+            {error}
+          </Text>
+        ) : null}
+
+        {/* PIN Dots */}
+        <Animated.View
           style={{
-            fontSize: getTitleFontSize(),
-            fontWeight: "bold",
-            marginBottom: isTablet ? 20 : 15,
-            color: "#333",
+            flexDirection: "row",
+            justifyContent: "center",
+            alignItems: "center",
+            marginBottom: 12,
+            gap: 20,
+            transform: [{ translateX: shakeAnimation }],
           }}
         >
-          Enter Passcode
-        </Text>
+          {[0, 1, 2, 3].map((index) => (
+            <View
+              key={index}
+              style={{
+                width: isTablet ? 20 : 18,
+                height: isTablet ? 20 : 18,
+                borderRadius: isTablet ? 10 : 9,
+                backgroundColor: passcode.length > index ? "#FFFFFF" : "rgba(255, 255, 255, 0.4)",
+                borderWidth: 2,
+                borderColor: "#FFFFFF",
+              }}
+            />
+          ))}
+        </Animated.View>
+
+        {/* Enter your passcode text */}
         <Text
           style={{
-            fontSize: getPasscodeFontSize(),
-            marginBottom: isTablet ? 30 : 20,
-            fontWeight: "bold",
-            color: "#222",
-            letterSpacing: isTablet ? 8 : 4,
+            fontSize: isTablet ? 18 : 16,
+            fontWeight: "400",
+            marginBottom: isTablet ? 60 : 50,
+            color: "rgba(255, 255, 255, 0.8)",
           }}
         >
-          {passcode.replace(/./g, "●")}
+          Enter your passcode
         </Text>
 
+        {/* Number Pad */}
         <View
           style={{
             width: getContainerWidth(),
-            maxWidth: isTablet ? 400 : "none",
-            flexDirection: "row",
-            flexWrap: "wrap",
-            justifyContent: "space-between",
+            maxWidth: isTablet ? 380 : 300,
           }}
         >
-          {["1", "2", "3", "4", "5", "6", "7", "8", "9", "Del", "0", "✓"].map(
-            (key, index) => (
+          {/* Rows 1-3 */}
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              marginBottom: isTablet ? 18 : 15,
+            }}
+          >
+            {["1", "2", "3"].map((key) => (
               <TouchableOpacity
                 key={key}
                 style={{
-                  width: "30%", // Ensures 3 columns
-                  aspectRatio: 1, // Makes the buttons square
+                  width: isTablet ? 85 : 70,
+                  height: isTablet ? 85 : 70,
                   justifyContent: "center",
                   alignItems: "center",
-                  marginVertical: isTablet ? 8 : 5,
-                  backgroundColor: Colors.redTheme.background,
-                  borderRadius: isTablet ? 20 : 15,
+                  backgroundColor: "rgba(255, 255, 255, 0.5)",
+                  borderRadius: isTablet ? 42.5 : 35,
                   shadowColor: "#000",
-                  shadowOffset: { width: 0, height: 4 },
-                  shadowOpacity: 0.3,
-                  shadowRadius: 5,
-                  elevation: 5,
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.1,
+                  shadowRadius: 4,
+                  elevation: 3,
                 }}
                 onPress={() => handlePress(key)}
               >
                 <Text
                   style={{
-                    fontSize: getButtonTextSize(),
-                    fontWeight: "bold",
-                    color: "#fff",
+                    fontSize: isTablet ? 30 : 26,
+                    fontWeight: "600",
+                    color: "#FFFFFF",
                   }}
                 >
                   {key}
                 </Text>
               </TouchableOpacity>
-            )
-          )}
-          {/* "Use Email and Password" Button */}
-          <TouchableOpacity
+            ))}
+          </View>
+
+          <View
             style={{
-              marginTop: isTablet ? 30 : 20,
-              width: "100%",
-              paddingVertical: isTablet ? 15 : 10,
-              paddingHorizontal: 20,
-              backgroundColor: Colors.redTheme.background,
-              borderRadius: isTablet ? 15 : 10,
-              shadowColor: "#000",
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.2,
-              shadowRadius: 4,
-              elevation: 3,
+              flexDirection: "row",
+              justifyContent: "space-between",
+              marginBottom: isTablet ? 18 : 15,
             }}
+          >
+            {["4", "5", "6"].map((key) => (
+              <TouchableOpacity
+                key={key}
+                style={{
+                  width: isTablet ? 85 : 70,
+                  height: isTablet ? 85 : 70,
+                  justifyContent: "center",
+                  alignItems: "center",
+                  backgroundColor: "rgba(255, 255, 255, 0.5)",
+                  borderRadius: isTablet ? 42.5 : 35,
+                  shadowColor: "#000",
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.1,
+                  shadowRadius: 4,
+                  elevation: 3,
+                }}
+                onPress={() => handlePress(key)}
+              >
+                <Text
+                  style={{
+                    fontSize: isTablet ? 30 : 26,
+                    fontWeight: "600",
+                    color: "#FFFFFF",
+                  }}
+                >
+                  {key}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              marginBottom: isTablet ? 18 : 15,
+            }}
+          >
+            {["7", "8", "9"].map((key) => (
+              <TouchableOpacity
+                key={key}
+                style={{
+                  width: isTablet ? 85 : 70,
+                  height: isTablet ? 85 : 70,
+                  justifyContent: "center",
+                  alignItems: "center",
+                  backgroundColor: "rgba(255, 255, 255, 0.5)",
+                  borderRadius: isTablet ? 42.5 : 35,
+                  shadowColor: "#000",
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.1,
+                  shadowRadius: 4,
+                  elevation: 3,
+                }}
+                onPress={() => handlePress(key)}
+              >
+                <Text
+                  style={{
+                    fontSize: isTablet ? 30 : 26,
+                    fontWeight: "600",
+                    color: "#FFFFFF",
+                  }}
+                >
+                  {key}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {/* Bottom row with 0 centered and backspace */}
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "center",
+              alignItems: "center",
+              marginBottom: isTablet ? 20 : 15,
+              position: "relative",
+            }}
+          >
+            <TouchableOpacity
+              style={{
+                width: isTablet ? 85 : 70,
+                height: isTablet ? 85 : 70,
+                justifyContent: "center",
+                alignItems: "center",
+                backgroundColor: "rgba(255, 255, 255, 0.5)",
+                borderRadius: isTablet ? 42.5 : 35,
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.1,
+                shadowRadius: 4,
+                elevation: 3,
+              }}
+              onPress={() => handlePress("0")}
+            >
+              <Text
+                style={{
+                  fontSize: isTablet ? 30 : 26,
+                  fontWeight: "600",
+                  color: "#FFFFFF",
+                }}
+              >
+                0
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={{
+                width: isTablet ? 85 : 70,
+                height: isTablet ? 85 : 70,
+                justifyContent: "center",
+                alignItems: "center",
+                backgroundColor: "transparent",
+                borderRadius: isTablet ? 42.5 : 35,
+                borderWidth: 2,
+                borderColor: "rgba(255, 255, 255, 0.5)",
+                position: "absolute",
+                right: 0,
+              }}
+              onPress={() => handlePress("Del")}
+            >
+              <Text
+                style={{
+                  fontSize: isTablet ? 22 : 18,
+                  fontWeight: "400",
+                  color: "#FFFFFF",
+                }}
+              >
+                ⌫
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Bottom buttons row - Reset Passcode (left) and Use Email (right) */}
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+            width: "90%",
+            maxWidth: 400,
+            paddingHorizontal: 20,
+            position: "absolute",
+            bottom: isTablet ? 50 : 40,
+          }}
+        >
+          {/* Reset Passcode - Left */}
+          <TouchableOpacity
+            onPress={() => {
+              setResetPasscodeModalVisible(true);
+            }}
+          >
+            <Text
+              style={{
+                fontSize: isTablet ? 18 : 16,
+                fontWeight: "400",
+                color: "rgba(255, 255, 255, 0.9)",
+              }}
+            >
+              Reset Passcode
+            </Text>
+          </TouchableOpacity>
+
+          {/* Use Email - Right */}
+          <TouchableOpacity
             onPress={() => {
               router.replace("/login");
             }}
           >
             <Text
               style={{
-                color: "#fff",
-                fontSize: getButtonFontSize(),
-                fontWeight: "bold",
-                textAlign: "center",
+                fontSize: isTablet ? 18 : 16,
+                fontWeight: "400",
+                color: "rgba(255, 255, 255, 0.9)",
               }}
             >
-              Use Email and Password
-            </Text>
-          </TouchableOpacity>
-
-          {/* "Reset Passcode" Button */}
-          <TouchableOpacity
-            style={{
-              marginTop: isTablet ? 20 : 15,
-              width: "100%",
-              paddingVertical: isTablet ? 16 : 12,
-              paddingHorizontal: 20,
-              backgroundColor: "rgba(255, 255, 255, 0.95)",
-              borderColor: Colors.redTheme.background,
-              borderWidth: 2,
-              borderRadius: isTablet ? 18 : 12,
-              shadowColor: "#000",
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.15,
-              shadowRadius: 8,
-              elevation: 5,
-              justifyContent: "center",
-              alignItems: "center",
-              minHeight: isTablet ? 56 : 48,
-            }}
-            onPress={() => {
-              setResetPasscodeModalVisible(true);
-            }}
-            activeOpacity={0.8}
-          >
-            <Text
-              style={{
-                color: Colors.redTheme.background,
-                fontSize: getButtonFontSize(),
-                fontWeight: "700",
-                textAlign: "center",
-                letterSpacing: 0.5,
-                textShadowColor: "rgba(254, 125, 72, 0.1)",
-                textShadowOffset: { width: 0, height: 1 },
-                textShadowRadius: 2,
-              }}
-            >
-              Reset Passcode
+              Use Email
             </Text>
           </TouchableOpacity>
         </View>
-
-        {error ? (
-          <Text
-            style={{
-              color: "red",
-              marginTop: isTablet ? 15 : 10,
-              fontSize: getButtonFontSize(),
-              textAlign: "center",
-            }}
-          >
-            {error}
-          </Text>
-        ) : null}
-      </View>
+      </LinearGradient>
 
       <ProfessionalModal
         visible={modalVisible}

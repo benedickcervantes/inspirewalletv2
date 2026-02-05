@@ -1504,13 +1504,11 @@ export default function Index() {
   }
 
   return (
-    <ImageBackground
-      source={require("../../assets/images/bg2.png")}
+    <View
       style={[
         styles.container,
-        { position: "absolute", top: 0, left: 0, right: 0, bottom: 0 },
+        { backgroundColor: "#1A1A1A" },
       ]}
-      resizeMode="cover"
     >
       {/* Show tutorial modal on first render */}
       {!loading && showTutorialModal && (
@@ -1532,13 +1530,21 @@ export default function Index() {
             onScrollBeginDrag={Keyboard.dismiss}
             showsVerticalScrollIndicator={false}
           >
+            {/* Back Button */}
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => router.back()}
+            >
+              <Ionicons name="chevron-back" size={32} color="#FFFFFF" />
+            </TouchableOpacity>
+
             {/* Header Card */}
             <View style={styles.headerCard}>
               <View style={styles.headerContent}>
                 <Ionicons
                   name="person-add"
                   size={32}
-                  color={Colors.redTheme.background}
+                  color="#FFFFFF"
                   style={styles.headerIcon}
                 />
                 <View style={styles.headerTextContainer}>
@@ -1550,53 +1556,32 @@ export default function Index() {
               </View>
             </View>
 
-            {/* Welcome Card */}
-            <View style={styles.welcomeCard}>
-              <View style={styles.welcomeHeader}>
-                <Ionicons
-                  name="rocket"
-                  size={24}
-                  color={Colors.redTheme.background}
-                />
-                <Text style={styles.welcomeTitle}>Get Started</Text>
-              </View>
-              <Text style={styles.welcomeText}>
-                🚀 Start your investment journey with Inspire Wallet{"\n"}
-                📈 Track your investments and grow your wealth{"\n"}
-                💼 Professional portfolio management tools{"\n"}
-                🔒 Secure and trusted platform
-              </Text>
-            </View>
-
             {/* Registration Form Card */}
             <View style={styles.formCard}>
-              <Text style={styles.sectionTitle}>Account Registration</Text>
+              {/* Personal Details Section */}
+              <Text style={styles.sectionTitle}>PERSONAL DETAILS</Text>
 
-              {/* Personal Information Section */}
-              <View style={styles.formSection}>
-              <Text style={styles.subsectionTitle}>Personal Information</Text>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>First Name *</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Your first name"
+                  placeholderTextColor="#555555"
+                  value={firstName}
+                  onChangeText={(value) => setFirstName(value)}
+                />
+              </View>
 
-                <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>First Name *</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="e.g. John"
-                    placeholderTextColor="#999"
-                    value={firstName}
-                    onChangeText={(value) => setFirstName(value)}
-                  />
-                </View>
-
-                <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>Last Name *</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="e.g. Doe"
-                    placeholderTextColor="#999"
-                    value={lastName}
-                    onChangeText={(value) => setLastName(value)}
-                  />
-                </View>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Last Name *</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Your last name"
+                  placeholderTextColor="#555555"
+                  value={lastName}
+                  onChangeText={(value) => setLastName(value)}
+                />
+              </View>
 
                 <View style={styles.inputGroup}>
                   <Pressable
@@ -1631,13 +1616,12 @@ export default function Index() {
                     <TextInput
                       style={styles.input}
                       placeholder="Enter your company name"
-                      placeholderTextColor="#999"
+                      placeholderTextColor="#555555"
                       value={company}
                       onChangeText={(value) => setCompany(value)}
                     />
                   </View>
                 )}
-              </View>
 
               {/* Contact Information Section */}
               <View style={styles.formSection}>
@@ -1648,7 +1632,7 @@ export default function Index() {
                   <TextInput
                     style={styles.input}
                     placeholder="https://line.me/ti/p/..."
-                    placeholderTextColor="#999"
+                    placeholderTextColor="#555555"
                     value={lineAccountLink}
                     onChangeText={(value) => setLineAccountLink(value)}
                     keyboardType="url"
@@ -1683,7 +1667,7 @@ export default function Index() {
                     <TextInput
                       style={styles.phoneInput}
                       placeholder="9012345678"
-                      placeholderTextColor="#999"
+                      placeholderTextColor="#555555"
                       keyboardType="phone-pad"
                       value={localContactNumber}
                       maxLength={getMaxLength(selectedCountryCode)}
@@ -1847,7 +1831,7 @@ export default function Index() {
                       <TextInput
                         style={styles.searchInput}
                         placeholder="Enter exact agent number..."
-                        placeholderTextColor="#999"
+                        placeholderTextColor="#555555"
                         value={searchQuery}
                         onChangeText={handleSearchChange}
                       />
@@ -1916,7 +1900,7 @@ export default function Index() {
                       <TextInput
                         style={styles.searchInput}
                         placeholder="Enter exact agent number..."
-                        placeholderTextColor="#999"
+                        placeholderTextColor="#555555"
                         value={searchQuery}
                         onChangeText={handleSearchChange}
                       />
@@ -1974,7 +1958,7 @@ export default function Index() {
                   <TextInput
                     style={styles.input}
                     placeholder="your.email@example.com"
-                    placeholderTextColor="#999"
+                    placeholderTextColor="#555555"
                     keyboardType="email-address"
                     value={emailAddress}
                     onChangeText={(value) => setEmailAddress(value)}
@@ -1987,7 +1971,7 @@ export default function Index() {
                     <TextInput
                       style={styles.passwordInput}
                       placeholder="Create a secure password"
-                      placeholderTextColor="#999"
+                      placeholderTextColor="#555555"
                       secureTextEntry={!showPassword}
                       value={password}
                       onChangeText={(value) => setPassword(value)}
@@ -2011,7 +1995,7 @@ export default function Index() {
                     <TextInput
                       style={styles.passwordInput}
                       placeholder="Re-enter your password"
-                      placeholderTextColor="#999"
+                      placeholderTextColor="#555555"
                       secureTextEntry={!showConfirmPass}
                       value={confirmPass}
                       onChangeText={(value) => setConfirmPass(value)}
@@ -2151,7 +2135,7 @@ export default function Index() {
           </View>
         </View>
       </Modal>
-    </ImageBackground>
+    </View>
   );
 }
 
@@ -2342,7 +2326,7 @@ const styles = StyleSheet.create({
     flex: 1,
     width: "100%",
     height: "100%",
-    backgroundColor: "#f8f9fa",
+    backgroundColor: "#1A1A1A",
   },
   androidSafeArea: {
     flex: 1,
@@ -2352,20 +2336,19 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingBottom: 40,
   },
-
+  backButton: {
+    width: 44,
+    height: 44,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 16,
+  },
   // Header Card
   headerCard: {
-    backgroundColor: "rgba(255, 255, 255, 0.95)",
-    borderRadius: 20,
+    backgroundColor: "#2A2A2A",
+    borderRadius: 16,
     padding: 20,
-    marginBottom: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 6,
-    borderLeftWidth: 5,
-    borderLeftColor: Colors.redTheme.background,
+    marginBottom: 24,
   },
   headerContent: {
     flexDirection: "row",
@@ -2373,9 +2356,6 @@ const styles = StyleSheet.create({
   },
   headerIcon: {
     marginRight: 16,
-    backgroundColor: "rgba(254, 125, 72, 0.1)",
-    borderRadius: 20,
-    padding: 8,
   },
   headerTextContainer: {
     flex: 1,
@@ -2383,78 +2363,42 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 22,
     fontWeight: "bold",
-    color: Colors.redTheme.background,
+    color: "#FFFFFF",
     marginBottom: 4,
   },
   headerSubtitle: {
     fontSize: 14,
-    color: "#666",
-    fontWeight: "500",
+    color: "#AAAAAA",
+    fontWeight: "400",
   },
-
-  // Welcome Card
-  welcomeCard: {
-    backgroundColor: "rgba(255, 245, 242, 0.9)",
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: Colors.redTheme.background,
-  },
-  welcomeHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  welcomeTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: Colors.redTheme.background,
-    marginLeft: 8,
-  },
-  welcomeText: {
-    fontSize: 14,
-    color: "#333",
-    lineHeight: 22,
-  },
-
   // Form Card
   formCard: {
-    backgroundColor: "rgba(255, 255, 255, 0.95)",
-    borderRadius: 20,
-    padding: 20,
+    backgroundColor: "transparent",
+    borderRadius: 0,
+    padding: 0,
     marginBottom: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 6,
   },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: Colors.redTheme.background,
-    marginBottom: 20,
-    textAlign: "center",
-  },
-
-  // Form Sections
   formSection: {
     marginBottom: 24,
   },
-  subsectionTitle: {
-    fontSize: 16,
+  sectionTitle: {
+    fontSize: 14,
     fontWeight: "600",
-    color: "#333",
-    marginBottom: 16,
-    paddingBottom: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: "rgba(204, 33, 53, 0.2)",
+    color: "#AAAAAA",
+    marginBottom: 20,
+    letterSpacing: 1,
+    textTransform: "uppercase",
   },
-
+  subsectionTitle: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#888888",
+    marginBottom: 16,
+    letterSpacing: 0.5,
+  },
   // Input Groups
   inputGroup: {
-    marginBottom: 16,
+    marginBottom: 20,
   },
   nameRow: {
     flexDirection: "row",
@@ -2465,24 +2409,21 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   inputLabel: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#333",
+    fontSize: 13,
+    fontWeight: "400",
+    color: "#AAAAAA",
     marginBottom: 8,
   },
   input: {
-    backgroundColor: "white",
-    borderWidth: 2,
-    borderColor: "#e0e0e0",
-    borderRadius: 12,
-    padding: 14,
+    backgroundColor: "transparent",
+    borderWidth: 0,
+    borderBottomWidth: 1,
+    borderBottomColor: "#444444",
+    borderRadius: 0,
+    padding: 12,
+    paddingLeft: 0,
     fontSize: 16,
-    color: "#333",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+    color: "#FFFFFF",
   },
 
   // Phone + country selector row
@@ -2494,12 +2435,12 @@ const styles = StyleSheet.create({
   countrySelectorButton: {
     flexDirection: "row",
     alignItems: "center",
-    borderWidth: 2,
-    borderColor: "#e0e0e0",
-    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#444444",
+    borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    backgroundColor: "white",
+    backgroundColor: "transparent",
   },
   countrySelectorFlag: {
     fontSize: 20,
@@ -2508,29 +2449,26 @@ const styles = StyleSheet.create({
   countrySelectorText: {
     fontSize: 14,
     fontWeight: "600",
-    color: Colors.redTheme.background,
+    color: "#FFFFFF",
     marginRight: 4,
   },
   phoneInput: {
     flex: 1,
-    backgroundColor: "white",
-    borderWidth: 2,
-    borderColor: "#e0e0e0",
-    borderRadius: 12,
-    padding: 14,
+    backgroundColor: "transparent",
+    borderWidth: 0,
+    borderBottomWidth: 1,
+    borderBottomColor: "#444444",
+    borderRadius: 0,
+    padding: 12,
+    paddingLeft: 0,
     fontSize: 16,
-    color: "#333",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+    color: "#FFFFFF",
   },
 
   // Country picker modal styles
   countryModalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: "rgba(0,0,0,0.8)",
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 24,
@@ -2538,7 +2476,7 @@ const styles = StyleSheet.create({
   countryModalContainer: {
     width: "100%",
     maxWidth: 360,
-    backgroundColor: "white",
+    backgroundColor: "#2A2A2A",
     borderRadius: 20,
     paddingVertical: 20,
     paddingHorizontal: 16,
@@ -2546,7 +2484,7 @@ const styles = StyleSheet.create({
   countryModalTitle: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#111827",
+    color: "#FFFFFF",
     marginBottom: 12,
     textAlign: "center",
   },
@@ -2557,7 +2495,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 4,
     borderBottomWidth: 1,
-    borderBottomColor: "#f3f4f6",
+    borderBottomColor: "#444444",
   },
   countryOptionContent: {
     flexDirection: "row",
@@ -2569,7 +2507,7 @@ const styles = StyleSheet.create({
   },
   countryOptionName: {
     fontSize: 14,
-    color: "#111827",
+    color: "#FFFFFF",
     fontWeight: "500",
   },
   countryOptionCode: {
@@ -2581,13 +2519,13 @@ const styles = StyleSheet.create({
     marginTop: 10,
     paddingVertical: 12,
     borderRadius: 12,
-    backgroundColor: "#f3f4f6",
+    backgroundColor: "#444444",
     alignItems: "center",
   },
   countryModalCancelText: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#374151",
+    color: "#FFFFFF",
   },
 
   // Checkbox Styles
@@ -2603,12 +2541,12 @@ const styles = StyleSheet.create({
     height: 24,
     width: 24,
     borderWidth: 2,
-    borderColor: "#e0e0e0",
+    borderColor: "#444444",
     marginRight: 8,
     borderRadius: 6,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "white",
+    backgroundColor: "transparent",
   },
   checkedBox: {
     backgroundColor: Colors.redTheme.background,
@@ -2616,8 +2554,8 @@ const styles = StyleSheet.create({
   },
   checkboxLabel: {
     fontSize: 16,
-    color: "#333",
-    fontWeight: "500",
+    color: "#AAAAAA",
+    fontWeight: "400",
   },
 
   // Radio Button Styles
@@ -2646,24 +2584,21 @@ const styles = StyleSheet.create({
   passwordContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "white",
-    borderWidth: 2,
-    borderColor: "#e0e0e0",
-    borderRadius: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+    backgroundColor: "transparent",
+    borderWidth: 0,
+    borderBottomWidth: 1,
+    borderBottomColor: "#444444",
+    borderRadius: 0,
   },
   passwordInput: {
     flex: 1,
-    padding: 14,
+    padding: 12,
+    paddingLeft: 0,
     fontSize: 16,
-    color: "#333",
+    color: "#FFFFFF",
   },
   eyeButton: {
-    padding: 14,
+    padding: 12,
   },
 
   // Submit Button
@@ -2708,29 +2643,26 @@ const styles = StyleSheet.create({
   },
   agentCodeDisplay: {
     flex: 1,
-    backgroundColor: "white",
-    borderWidth: 2,
-    borderColor: "#e0e0e0",
-    borderRadius: 12,
-    padding: 14,
+    backgroundColor: "transparent",
+    borderWidth: 0,
+    borderBottomWidth: 1,
+    borderBottomColor: "#444444",
+    borderRadius: 0,
+    padding: 12,
+    paddingLeft: 0,
     justifyContent: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
   },
   agentCodeDisplayEmpty: {
-    backgroundColor: "#f8f9fa",
-    borderColor: "#d1d5db",
+    backgroundColor: "transparent",
+    borderBottomColor: "#333333",
   },
   agentCodeText: {
     fontSize: 16,
-    color: "#333",
+    color: "#FFFFFF",
     fontWeight: "600",
   },
   agentCodeTextEmpty: {
-    color: "#6b7280",
+    color: "#666666",
     fontWeight: "400",
     fontStyle: "italic",
   },
@@ -2759,13 +2691,13 @@ const styles = StyleSheet.create({
   },
   agentCodeHint: {
     fontSize: 12,
-    color: "#666",
+    color: "#666666",
     marginTop: 6,
     fontStyle: "italic",
   },
   searchHint: {
     fontSize: 12,
-    color: "#666",
+    color: "#666666",
     marginTop: 6,
     fontStyle: "italic",
   },
@@ -2775,19 +2707,16 @@ const styles = StyleSheet.create({
     position: "relative",
   },
   searchInput: {
-    backgroundColor: "white",
-    borderWidth: 2,
-    borderColor: "#e0e0e0",
-    borderRadius: 12,
-    padding: 14,
+    backgroundColor: "transparent",
+    borderWidth: 0,
+    borderBottomWidth: 1,
+    borderBottomColor: "#444444",
+    borderRadius: 0,
+    padding: 12,
+    paddingLeft: 0,
     paddingRight: 50,
     fontSize: 16,
-    color: "#333",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+    color: "#FFFFFF",
   },
   searchLoading: {
     position: "absolute",
@@ -2895,14 +2824,14 @@ const styles = StyleSheet.create({
   noResultsContainer: {
     marginTop: 12,
     padding: 16,
-    backgroundColor: "#f8f9fa",
+    backgroundColor: "rgba(255, 255, 255, 0.05)",
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#e0e0e0",
+    borderColor: "#333333",
   },
   noResultsText: {
     fontSize: 14,
-    color: "#666",
+    color: "#888888",
     textAlign: "center",
     fontStyle: "italic",
   },
@@ -2910,11 +2839,11 @@ const styles = StyleSheet.create({
   // Selected User Styles
   selectedUserContainer: {
     marginTop: 12,
-    backgroundColor: "rgba(204, 33, 53, 0.05)",
+    backgroundColor: "rgba(204, 33, 53, 0.1)",
     borderRadius: 12,
     padding: 16,
     borderWidth: 1,
-    borderColor: "rgba(204, 33, 53, 0.2)",
+    borderColor: "rgba(204, 33, 53, 0.3)",
   },
   selectedUserHeader: {
     flexDirection: "row",
@@ -2930,30 +2859,30 @@ const styles = StyleSheet.create({
   selectedUserName: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#333",
+    color: "#FFFFFF",
     marginBottom: 4,
   },
   selectedUserAgentCode: {
     fontSize: 14,
-    color: "#666",
+    color: "#AAAAAA",
     marginBottom: 4,
   },
   hierarchicalAgentCode: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#059669",
+    color: "#10B981",
   },
   agentTypeInfo: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#7C3AED",
+    color: "#A78BFA",
     marginTop: 4,
   },
 
   // Master Agent Styles
   masterAgentContainer: {
     marginTop: 12,
-    backgroundColor: "rgba(16, 185, 129, 0.05)",
+    backgroundColor: "rgba(16, 185, 129, 0.1)",
     borderRadius: 12,
     padding: 16,
     borderWidth: 2,
@@ -2973,14 +2902,14 @@ const styles = StyleSheet.create({
   masterAgentCode: {
     fontSize: 16,
     fontWeight: "700",
-    color: "#059669",
+    color: "#10B981",
     fontFamily: Platform.OS === "ios" ? "Courier" : "monospace",
     marginBottom: 8,
     letterSpacing: 0.5,
   },
   masterAgentHint: {
     fontSize: 12,
-    color: "#059669",
+    color: "#10B981",
     fontStyle: "italic",
   },
 
