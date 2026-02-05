@@ -19,6 +19,7 @@
     "@babel/runtime": "^7.28.4",
     "@emailjs/browser": "^4.4.1",
     "@emailjs/react-native": "^4.2.2",
+    "@expo-google-fonts/questrial": "^0.4.1",
     "@expo/vector-icons": "^14.1.0",
     "@react-native-async-storage/async-storage": "^2.1.2",
     "@react-native-community/datetimepicker": "^8.4.1",

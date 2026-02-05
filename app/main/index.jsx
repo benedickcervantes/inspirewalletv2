@@ -19,11 +19,14 @@ import { auth, firestore } from "../../configs/firebase";
 import { doc, onSnapshot, collection, query, orderBy, limit } from "firebase/firestore";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { useFonts } from "expo-font";
+import { Questrial_400Regular } from "@expo-google-fonts/questrial";
 
 const { width } = Dimensions.get("window");
 
 export default function Dashboard() {
   const router = useRouter();
+  const [fontsLoaded] = useFonts({ Questrial_400Regular });
   const [userData, setUserData] = useState(null);
   const [availableBalance, setAvailableBalance] = useState(0);
   const [timeDeposit, setTimeDeposit] = useState(0);
@@ -233,41 +236,58 @@ export default function Dashboard() {
           <View style={styles.balanceCardContainer}>
             {/* Front of Card */}
             <Animated.View style={[styles.cardFace, frontAnimatedStyle]}>
-              <TouchableOpacity 
-                onPress={flipCard}
-                activeOpacity={activeTab === "Cards" ? 0.8 : 1}
-                style={{ flex: 1 }}
-                disabled={activeTab !== "Cards"}
+              <ImageBackground
+                source={require("../../assets/cards/default/card2.0.png")}
+                style={styles.balanceCard}
+                imageStyle={styles.balanceCardImage}
+                resizeMode="cover"
               >
-                <ImageBackground
-                  source={require("../../assets/cards/default/card2.0.png")}
-                  style={styles.balanceCard}
-                  imageStyle={styles.balanceCardImage}
-                  resizeMode="cover"
-                >
-                  <View style={styles.balanceHeader}>
-                    <View style={styles.balanceHeaderLeft}>
-                      <Text style={styles.balanceLabel}>Available Balance:</Text>
-                      <Ionicons name="eye-outline" size={18} color="#FFF" />
+                <View style={styles.balanceCardInner}>
+                  {/* Tap this area to flip card (Wallet tab: no-op; Cards tab: flip) */}
+                  <TouchableOpacity
+                    onPress={flipCard}
+                    activeOpacity={activeTab === "Cards" ? 0.8 : 1}
+                    disabled={activeTab !== "Cards"}
+                    style={styles.cardFlipArea}
+                  >
+                    <View style={styles.balanceHeader}>
+                      <Text style={styles.balanceLabel}>Available Balance</Text>
+                      <Ionicons name="eye-outline" size={18} color="#FFFFFF" />
                     </View>
+                    <View style={styles.balanceAmountContainer}>
+                      <Text style={styles.currency}>PHP </Text>
+                      <Text style={styles.balanceAmount}>{formatCurrency(availableBalance)}</Text>
+                    </View>
+                    <View style={styles.cardSeparator} />
+                  </TouchableOpacity>
+                  {/* Deposit & Withdraw - separate clickable buttons */}
+                  <View style={styles.cardActionsRow} pointerEvents="box-none">
+                    <TouchableOpacity
+                      style={styles.cardButtonDeposit}
+                      onPress={() => router.push("/deposit")}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons name="arrow-down-circle-outline" size={20} color="#FFFFFF" />
+                      <Text style={styles.cardButtonDepositText}>Deposit</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.cardButtonWithdraw}
+                      onPress={() => router.push("/withdraw")}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons name="arrow-up-circle-outline" size={20} color="#FC821D" />
+                      <Text style={styles.cardButtonWithdrawText}>Withdraw</Text>
+                    </TouchableOpacity>
                   </View>
-                  
-                  <View style={styles.balanceAmountContainer}>
-                    <Text style={styles.currency}>PHP</Text>
-                    <Text style={styles.balanceAmount}>{formatCurrency(availableBalance)}</Text>
-                  </View>
-                  
-                  <View style={styles.timeDepositRow}>
-                    <Text style={styles.timeDepositText}>
-                      Time Deposit: PHP {formatCurrency(timeDeposit)}
-                    </Text>
-                  </View>
-                </ImageBackground>
-              </TouchableOpacity>
+                </View>
+              </ImageBackground>
             </Animated.View>
 
-            {/* Back of Card */}
-            <Animated.View style={[styles.cardFace, styles.cardBack, backAnimatedStyle]}>
+            {/* Back of Card - ignore touches when front is showing so Deposit/Withdraw work */}
+            <Animated.View
+              style={[styles.cardFace, styles.cardBack, backAnimatedStyle]}
+              pointerEvents={isCardFlipped ? "auto" : "none"}
+            >
               <TouchableOpacity 
                 onPress={flipCard}
                 activeOpacity={activeTab === "Cards" ? 0.8 : 1}
@@ -284,25 +304,11 @@ export default function Dashboard() {
             </Animated.View>
           </View>
 
-          {/* Deposit and Withdraw Buttons - Outside Card */}
-          <View style={styles.balanceActions}>
-            <TouchableOpacity 
-              style={styles.actionButton}
-              onPress={() => router.push("/deposit")}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="add-circle-outline" size={20} color="#E15816" />
-              <Text style={styles.actionButtonText}>Deposit</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.actionButton}
-              onPress={() => router.push("/withdraw")}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="arrow-up-circle-outline" size={20} color="#E15816" />
-              <Text style={styles.actionButtonText}>Withdraw</Text>
-            </TouchableOpacity>
+          {/* Time Deposit below card (optional info) */}
+          <View style={styles.timeDepositRowOuter}>
+            <Text style={styles.timeDepositTextOuter}>
+              Time Deposit: PHP {formatCurrency(timeDeposit)}
+            </Text>
           </View>
 
           {/* Menu Grid - 5 items per line */}
@@ -529,7 +535,7 @@ const styles = StyleSheet.create({
   },
   balanceCard: {
     padding: 20,
-    borderRadius: 20,
+    borderRadius: 24,
     overflow: "hidden",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
@@ -538,59 +544,73 @@ const styles = StyleSheet.create({
     elevation: 8,
     position: "relative",
     height: 200,
-    justifyContent: "space-between",
   },
   balanceCardImage: {
-    borderRadius: 20,
+    borderRadius: 24,
+  },
+  balanceCardInner: {
+    flex: 1,
+    justifyContent: "space-between",
+  },
+  cardFlipArea: {
+    flex: 1,
   },
   balanceHeader: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  balanceHeaderLeft: {
-    flexDirection: "row",
     alignItems: "center",
     gap: 8,
+    marginBottom: 4,
   },
   balanceLabel: {
     fontSize: 14,
     color: "#FFFFFF",
-    opacity: 0.9,
+    fontWeight: "400",
+    fontFamily: "Questrial_400Regular",
   },
   balanceAmountContainer: {
-    marginBottom: 8,
+    flexDirection: "row",
+    alignItems: "baseline",
+    marginBottom: 4,
   },
   currency: {
     fontSize: 16,
     color: "#FFFFFF",
     fontWeight: "500",
-    marginBottom: 2,
+    marginRight: 4,
+    fontFamily: "Questrial_400Regular",
   },
   balanceAmount: {
-    fontSize: 36,
+    fontSize: 32,
     fontWeight: "bold",
     color: "#FFFFFF",
+    fontFamily: "Questrial_400Regular",
   },
-  timeDepositRow: {
-    paddingTop: 8,
-    paddingBottom: 8,
-    borderTopWidth: 1,
-    borderTopColor: "rgba(255, 255, 255, 0.3)",
-  },
-  timeDepositText: {
-    fontSize: 13,
-    color: "#FFFFFF",
+  cardSeparator: {
+    height: 1,
+    backgroundColor: "#FFFFFF",
+    marginVertical: 12,
     opacity: 0.9,
   },
-  balanceActions: {
+  cardActionsRow: {
     flexDirection: "row",
     gap: 10,
-    paddingHorizontal: 20,
-    marginBottom: 20,
   },
-  actionButton: {
+  cardButtonDeposit: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    backgroundColor: "rgba(255, 255, 255, 0.3)",
+    paddingVertical: 12,
+    borderRadius: 24,
+  },
+  cardButtonDepositText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#FFFFFF",
+  },
+  cardButtonWithdraw: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
@@ -598,19 +618,21 @@ const styles = StyleSheet.create({
     gap: 6,
     backgroundColor: "#FFFFFF",
     paddingVertical: 12,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: "#E0E0E0",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    borderRadius: 24,
   },
-  actionButtonText: {
+  cardButtonWithdrawText: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#E15816",
+    color: "#FC821D",
+  },
+  timeDepositRowOuter: {
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    paddingBottom: 4,
+  },
+  timeDepositTextOuter: {
+    fontSize: 13,
+    color: "#666",
   },
   menuGrid: {
     flexDirection: "row",
