@@ -1,3 +1,4 @@
+//CORRECTED
 import {
   StyleSheet,
   Text,
@@ -44,6 +45,14 @@ export default function Dashboard() {
     },
   ];
 
+  // Add greeting helper function
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good Morning";
+    if (hour < 18) return "Good Afternoon";
+    return "Good Evening";
+  };
+
   useEffect(() => {
     const user = auth.currentUser;
     if (!user) {
@@ -79,6 +88,19 @@ export default function Dashboard() {
     };
   }, []);
 
+  // Reset card to front when switching away from Cards tab
+  useEffect(() => {
+    if (activeTab !== "Cards" && isCardFlipped) {
+      Animated.spring(flipAnimation, {
+        toValue: 0,
+        friction: 8,
+        tension: 10,
+        useNativeDriver: true,
+      }).start();
+      setIsCardFlipped(false);
+    }
+  }, [activeTab]);
+
   // Auto-scroll banners
   useEffect(() => {
     const interval = setInterval(() => {
@@ -105,6 +127,9 @@ export default function Dashboard() {
   };
 
   const flipCard = () => {
+    // Only allow flipping when in "Cards" tab
+    if (activeTab !== "Cards") return;
+    
     if (isCardFlipped) {
       Animated.spring(flipAnimation, {
         toValue: 0,
@@ -170,11 +195,9 @@ export default function Dashboard() {
                 <Ionicons name="person" size={24} color="#999" />
               </View>
               <View>
+                <Text style={styles.greeting}>{getGreeting()}</Text>
                 <Text style={styles.userName}>
-                  {userData?.firstName || userData?.fullName || `User ${userData?.accountNumber?.slice(-4) || "xxxx"}`}
-                </Text>
-                <Text style={styles.userAccount}>
-                  {userData?.accountNumber || ""}
+                  {userData?.firstName || userData?.fullName || "User"}
                 </Text>
               </View>
             </TouchableOpacity>
@@ -212,8 +235,9 @@ export default function Dashboard() {
             <Animated.View style={[styles.cardFace, frontAnimatedStyle]}>
               <TouchableOpacity 
                 onPress={flipCard}
-                activeOpacity={1}
+                activeOpacity={activeTab === "Cards" ? 0.8 : 1}
                 style={{ flex: 1 }}
+                disabled={activeTab !== "Cards"}
               >
                 <ImageBackground
                   source={require("../../assets/cards/default/card2.0.png")}
@@ -246,7 +270,7 @@ export default function Dashboard() {
             <Animated.View style={[styles.cardFace, styles.cardBack, backAnimatedStyle]}>
               <TouchableOpacity 
                 onPress={flipCard}
-                activeOpacity={1}
+                activeOpacity={activeTab === "Cards" ? 0.8 : 1}
                 style={styles.cardBackTouchable}
               >
                 <ImageBackground
@@ -281,7 +305,7 @@ export default function Dashboard() {
             </TouchableOpacity>
           </View>
 
-          {/* Menu Grid */}
+          {/* Menu Grid - 5 items per line */}
           <View style={styles.menuGrid}>
             {menuItems.map((item, index) => (
               <TouchableOpacity
@@ -290,7 +314,7 @@ export default function Dashboard() {
                 onPress={() => router.push(item.route)}
               >
                 <View style={styles.menuIcon}>
-                  <MaterialCommunityIcons name={item.icon} size={28} color="#E15816" />
+                  <MaterialCommunityIcons name={item.icon} size={24} color="#E15816" />
                 </View>
                 <Text style={styles.menuLabel}>{item.label}</Text>
               </TouchableOpacity>
@@ -307,15 +331,15 @@ export default function Dashboard() {
               style={styles.cryptoBanner}
               onPress={() => router.push("/crypto")}
             >
-              <Text style={styles.cryptoTitle}>CRYPTO</Text>
-              <Text style={styles.cryptoSubtitle}>IN INSPIRE</Text>
-              <Text style={styles.cryptoSubtitle}>WALLET</Text>
-              <View style={styles.cryptoIcon}>
-                <MaterialCommunityIcons name="bitcoin" size={40} color="#FFB800" />
+              <View style={styles.cryptoContent}>
+                <Text style={styles.cryptoText}>CRYPTO IN INSPIRE WALLET</Text>
+                <TouchableOpacity style={styles.exploreButton}>
+                  <Text style={styles.exploreButtonText}>Explore</Text>
+                </TouchableOpacity>
               </View>
-              <TouchableOpacity style={styles.exploreButton}>
-                <Text style={styles.exploreButtonText}>Explore</Text>
-              </TouchableOpacity>
+              <View style={styles.cryptoIcon}>
+                <MaterialCommunityIcons name="bitcoin" size={50} color="#FFB800" />
+              </View>
             </TouchableOpacity>
           </ScrollView>
 
@@ -440,16 +464,15 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  greeting: {
+    fontSize: 14,
+    color: "#999",
+    marginBottom: 2,
+  },
   userName: {
     fontSize: 16,
-    fontWeight: "600",
+    fontWeight: "700",
     color: "#333",
-  },
-  userAccount: {
-    fontSize: 12,
-    color: "#999",
-    marginTop: 2,
-    fontStyle: "italic",
   },
   headerRight: {
     flexDirection: "row",
@@ -504,10 +527,6 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
   },
-  flipTouchArea: {
-    flex: 1,
-    zIndex: 1,
-  },
   balanceCard: {
     padding: 20,
     borderRadius: 20,
@@ -521,21 +540,8 @@ const styles = StyleSheet.create({
     height: 200,
     justifyContent: "space-between",
   },
-  flipTouchArea: {
-    flex: 1,
-  },
   balanceCardImage: {
     borderRadius: 20,
-  },
-  cardBackContent: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  cardBackText: {
-    color: "#FFFFFF",
-    fontSize: 18,
-    fontWeight: "600",
   },
   balanceHeader: {
     flexDirection: "row",
@@ -552,10 +558,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#FFFFFF",
     opacity: 0.9,
-  },
-  inspireLogo: {
-    width: 120,
-    height: 45,
   },
   balanceAmountContainer: {
     marginBottom: 8,
@@ -618,13 +620,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   menuItem: {
-    width: (width - 40) / 4,
+    width: (width - 40) / 5,
     alignItems: "center",
     paddingVertical: 16,
   },
   menuIcon: {
-    width: 56,
-    height: 56,
+    width: 48,
+    height: 48,
     borderRadius: 12,
     backgroundColor: "#FFF",
     justifyContent: "center",
@@ -637,10 +639,10 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   menuLabel: {
-    fontSize: 11,
+    fontSize: 10,
     color: "#666",
     textAlign: "center",
-    lineHeight: 14,
+    lineHeight: 13,
   },
   bannerScroll: {
     paddingHorizontal: 20,
@@ -648,39 +650,40 @@ const styles = StyleSheet.create({
   },
   cryptoBanner: {
     width: width - 40,
-    height: 160,
+    height: 120,
     backgroundColor: "#E15816",
     borderRadius: 16,
-    padding: 20,
-    position: "relative",
-    overflow: "hidden",
+    padding: 16,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
-  cryptoTitle: {
-    fontSize: 24,
+  cryptoContent: {
+    flex: 1,
+    justifyContent: "center",
+    paddingRight: 12,
+  },
+  cryptoText: {
+    fontSize: 16,
     fontWeight: "bold",
     color: "#FFFFFF",
-  },
-  cryptoSubtitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#FFFFFF",
+    lineHeight: 22,
+    marginBottom: 12,
   },
   cryptoIcon: {
-    position: "absolute",
-    right: 20,
-    top: 20,
+    justifyContent: "center",
+    alignItems: "center",
+    marginLeft: 8,
   },
   exploreButton: {
-    position: "absolute",
-    bottom: 20,
-    left: 20,
     backgroundColor: "#FFFFFF",
-    paddingHorizontal: 24,
-    paddingVertical: 8,
+    paddingHorizontal: 20,
+    paddingVertical: 6,
     borderRadius: 20,
+    alignSelf: "flex-start",
   },
   exploreButtonText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "600",
     color: "#E15816",
   },
