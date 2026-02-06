@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
-import { View, Animated, Image, Text, StyleSheet, Easing, Dimensions } from "react-native";
+import { View, Animated, Text, StyleSheet, Easing, Dimensions } from "react-native";
+import Svg, { Path, Circle } from "react-native-svg";
 import { Colors } from "../constants/Colors";
 import { t } from "../utils/languageUtils";
 import { getRTLStyles } from "../utils/rtlUtils";
@@ -11,20 +12,9 @@ const { width, height } = Dimensions.get("window");
 const LoadingScreen = ({ type = "register" }) => {
   const [userLanguage, setUserLanguage] = useState("English");
   
-  // Multiple animation values for complex effects
-  const pulseAnim = useRef(new Animated.Value(1)).current;
+  // Animation values for star loader
   const rotateAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const progressAnim = useRef(new Animated.Value(0)).current;
-  const waveAnims = Array.from(
-    { length: 5 },
-    () => useRef(new Animated.Value(0)).current
-  );
-  const textAnims = Array.from(
-    { length: 3 },
-    () => useRef(new Animated.Value(0)).current
-  );
 
   // Fetch user language
   useEffect(() => {
@@ -47,119 +37,39 @@ const LoadingScreen = ({ type = "register" }) => {
   }, []);
 
   useEffect(() => {
-    // Initial fade in
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 800,
-      useNativeDriver: true,
-    }).start();
-
-    // Scale animation
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(scaleAnim, {
-          toValue: 1.1,
-          duration: 1500,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
-        Animated.timing(scaleAnim, {
-          toValue: 0.9,
-          duration: 1500,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
-
-    // Pulse animation
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: 1.2,
-          duration: 1000,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulseAnim, {
-          toValue: 1,
-          duration: 1000,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
-
-    // Rotation animation
+    // Rotation animation - 4 seconds per rotation
     Animated.loop(
       Animated.timing(rotateAnim, {
         toValue: 1,
-        duration: 3000,
+        duration: 4000,
         easing: Easing.linear,
         useNativeDriver: true,
       })
     ).start();
 
-    // Progress bar animation
+    // Pulse animation - 2 seconds cycle
     Animated.loop(
-      Animated.timing(progressAnim, {
-        toValue: 1,
-        duration: 2000,
-        easing: Easing.inOut(Easing.ease),
-        useNativeDriver: false,
-      })
+      Animated.sequence([
+        Animated.timing(scaleAnim, {
+          toValue: 1.1,
+          duration: 1000,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 0.8,
+          duration: 1000,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ])
     ).start();
-
-    // Wave animations
-    waveAnims.forEach((anim, index) => {
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(anim, {
-            toValue: 1,
-            duration: 800,
-            delay: index * 200,
-            easing: Easing.inOut(Easing.ease),
-            useNativeDriver: true,
-          }),
-          Animated.timing(anim, {
-            toValue: 0,
-            duration: 800,
-            easing: Easing.inOut(Easing.ease),
-            useNativeDriver: true,
-          }),
-        ])
-      ).start();
-    });
-
-    // Text animations
-    textAnims.forEach((anim, index) => {
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(anim, {
-            toValue: 1,
-            duration: 600,
-            delay: index * 300,
-            useNativeDriver: true,
-          }),
-          Animated.timing(anim, {
-            toValue: 0.3,
-            duration: 600,
-            useNativeDriver: true,
-          }),
-        ])
-      ).start();
-    });
   }, []);
 
   // Interpolations
   const rotateInterpolate = rotateAnim.interpolate({
     inputRange: [0, 1],
     outputRange: ["0deg", "360deg"],
-  });
-
-  const progressWidth = progressAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, width * 0.6],
   });
 
   // Dynamic text content based on type
@@ -169,31 +79,26 @@ const LoadingScreen = ({ type = "register" }) => {
         return {
           main: t(userLanguage, "loadingScreens.general.login.title"),
           sub: t(userLanguage, "loadingScreens.general.login.subtitle"),
-          loading: t(userLanguage, "loadingScreens.general.login.status")
         };
       case "register":
         return {
           main: t(userLanguage, "loadingScreens.general.register.title"),
           sub: t(userLanguage, "loadingScreens.general.register.subtitle"),
-          loading: t(userLanguage, "loadingScreens.general.register.status")
         };
       case "passcode":
         return {
           main: t(userLanguage, "loadingScreens.general.passcode.title"),
           sub: t(userLanguage, "loadingScreens.general.passcode.subtitle"),
-          loading: t(userLanguage, "loadingScreens.general.passcode.status")
         };
       case "create-passcode":
         return {
           main: t(userLanguage, "loadingScreens.general.createPasscode.title"),
           sub: t(userLanguage, "loadingScreens.general.createPasscode.subtitle"),
-          loading: t(userLanguage, "loadingScreens.general.createPasscode.status")
         };
       default:
         return {
           main: t(userLanguage, "loadingScreens.general.default.title"),
           sub: t(userLanguage, "loadingScreens.general.default.subtitle"),
-          loading: t(userLanguage, "loadingScreens.general.default.status")
         };
     }
   };
@@ -201,145 +106,50 @@ const LoadingScreen = ({ type = "register" }) => {
   const loadingTexts = getLoadingText();
 
   return (
-    <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
-      {/* Background gradient effect */}
-      <View style={styles.backgroundGradient} />
-      
-      {/* Animated circles for depth */}
-      <Animated.View 
-        style={[
-          styles.circle1, 
-          { 
-            transform: [
-              { scale: pulseAnim },
-              { rotate: rotateInterpolate }
-            ] 
-          }
-        ]} 
-      />
-      <Animated.View 
-        style={[
-          styles.circle2, 
-          { 
-            transform: [
-              { scale: pulseAnim },
-              { rotate: rotateInterpolate }
-            ] 
-          }
-        ]} 
-      />
-
-      {/* Main logo with enhanced animation */}
+    <View style={styles.container}>
+      {/* Star loader */}
       <Animated.View
         style={[
-          styles.logoContainer,
+          styles.loaderContainer,
           {
             transform: [
-              { scale: scaleAnim },
               { rotate: rotateInterpolate }
             ]
           }
         ]}
       >
-        <Image
-          source={require("../assets/images/loadinglogo.png")}
-          style={styles.logo}
-        />
+        <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+          <Svg width="80" height="80" viewBox="0 0 100 100">
+            {/* Center circles */}
+            <Circle cx="50" cy="50" r="8" fill="#ffc107" />
+            <Circle cx="50" cy="35" r="3" fill="#ffc107" />
+            <Circle cx="50" cy="65" r="3" fill="#ffc107" />
+            <Circle cx="35" cy="50" r="3" fill="#ffc107" />
+            <Circle cx="65" cy="50" r="3" fill="#ffc107" />
+            
+            {/* Spikes */}
+            <Path d="M50 5 L55 20 L50 25 L45 20 Z" fill="#ffc107" />
+            <Path d="M50 95 L55 80 L50 75 L45 80 Z" fill="#ffc107" />
+            <Path d="M95 50 L80 55 L75 50 L80 45 Z" fill="#ffc107" />
+            <Path d="M5 50 L20 55 L25 50 L20 45 Z" fill="#ffc107" />
+            <Path d="M82 18 L70 30 L65 25 L77 13 Z" fill="#ffc107" />
+            <Path d="M18 82 L30 70 L25 65 L13 77 Z" fill="#ffc107" />
+            <Path d="M82 82 L70 70 L65 75 L77 87 Z" fill="#ffc107" />
+            <Path d="M18 18 L30 30 L25 35 L13 23 Z" fill="#ffc107" />
+          </Svg>
+        </Animated.View>
       </Animated.View>
 
-      {/* Wave indicators */}
-      <View style={styles.waveContainer}>
-        {waveAnims.map((anim, index) => (
-          <Animated.View
-            key={index}
-            style={[
-              styles.wave,
-              {
-                opacity: anim,
-                transform: [
-                  {
-                    scaleY: anim.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [0.3, 1.5],
-                    }),
-                  },
-                ],
-              },
-            ]}
-          />
-        ))}
-      </View>
-
-      {/* Progress bar */}
-      <View style={styles.progressContainer}>
-        <View style={styles.progressTrack}>
-          <Animated.View
-            style={[
-              styles.progressBar,
-              {
-                width: progressWidth,
-              },
-            ]}
-          />
-        </View>
-      </View>
-
-      {/* Animated text */}
+      {/* Text */}
       <View style={styles.textContainer}>
-        <Animated.Text
-          style={[
-            styles.mainText,
-            { opacity: textAnims[0] },
-            getRTLStyles(userLanguage)
-          ]}
-        >
+        <Text style={[styles.mainText, getRTLStyles(userLanguage)]}>
           {loadingTexts.main}
-        </Animated.Text>
-        <Animated.Text
-          style={[
-            styles.subText,
-            { opacity: textAnims[1] },
-            getRTLStyles(userLanguage)
-          ]}
-        >
+        </Text>
+        <Text style={[styles.subText, getRTLStyles(userLanguage)]}>
           {loadingTexts.sub}
-        </Animated.Text>
-        <Animated.Text
-          style={[
-            styles.loadingText,
-            { opacity: textAnims[2] },
-            getRTLStyles(userLanguage)
-          ]}
-        >
-          {loadingTexts.loading}
-        </Animated.Text>
+        </Text>
       </View>
-
-      {/* Floating particles */}
-      <View style={styles.particlesContainer}>
-        {[...Array(6)].map((_, index) => (
-          <Animated.View
-            key={index}
-            style={[
-              styles.particle,
-              {
-                left: Math.random() * width,
-                top: Math.random() * height * 0.6 + height * 0.2,
-                opacity: waveAnims[index % waveAnims.length],
-                transform: [
-                  {
-                    translateY: waveAnims[index % waveAnims.length].interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [0, -20],
-                    }),
-                  },
-                ],
-              },
-            ]}
-          />
-        ))}
-      </View>
-    </Animated.View>
+    </View>
   );
 };
 
@@ -349,118 +159,29 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#F8F9FA",
-    position: "relative",
   },
-  backgroundGradient: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(254, 125, 72, 0.05)",
-  },
-  circle1: {
-    position: "absolute",
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    backgroundColor: "rgba(254, 125, 72, 0.1)",
-    top: "20%",
-    left: "10%",
-  },
-  circle2: {
-    position: "absolute",
-    width: 150,
-    height: 150,
-    borderRadius: 75,
-    backgroundColor: "rgba(254, 125, 72, 0.08)",
-    bottom: "25%",
-    right: "15%",
-  },
-  logoContainer: {
-    alignItems: "center",
+  loaderContainer: {
+    width: 100,
+    height: 100,
     justifyContent: "center",
+    alignItems: "center",
     marginBottom: 40,
-    shadowColor: Colors.redTheme.background,
-    shadowOffset: {
-      width: 0,
-      height: 8,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 10,
-  },
-  logo: {
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-  },
-  waveContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 30,
-    gap: 4,
-  },
-  wave: {
-    width: 6,
-    height: 30,
-    backgroundColor: Colors.redTheme.background,
-    borderRadius: 3,
-    marginHorizontal: 2,
-  },
-  progressContainer: {
-    width: width * 0.6,
-    marginBottom: 30,
-  },
-  progressTrack: {
-    height: 4,
-    backgroundColor: "rgba(254, 125, 72, 0.2)",
-    borderRadius: 2,
-    overflow: "hidden",
-  },
-  progressBar: {
-    height: "100%",
-    backgroundColor: Colors.redTheme.background,
-    borderRadius: 2,
   },
   textContainer: {
     alignItems: "center",
-    marginBottom: 20,
   },
   mainText: {
     fontSize: 22,
     fontWeight: "bold",
-    color: Colors.redTheme.background,
+    color: "#E15816",
     marginBottom: 8,
     textAlign: "center",
   },
   subText: {
     fontSize: 16,
     color: "#666",
-    marginBottom: 12,
     textAlign: "center",
     fontWeight: "500",
-  },
-  loadingText: {
-    fontSize: 14,
-    color: "#999",
-    textAlign: "center",
-    fontStyle: "italic",
-  },
-  particlesContainer: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  particle: {
-    position: "absolute",
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: Colors.redTheme.background,
   },
 });
 
