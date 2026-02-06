@@ -23,6 +23,10 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useFonts } from "expo-font";
 import { Questrial_400Regular } from "@expo-google-fonts/questrial";
 import * as ImagePicker from "expo-image-picker";
+import WalletTab from "../../components/WalletTab";
+import CardsTab from "../../components/CardsTab";
+import SavingsTab from "../../components/SavingsTab";
+import LoanTab from "../../components/LoanTab";
 
 const { width } = Dimensions.get("window");
 
@@ -324,103 +328,39 @@ export default function Dashboard() {
             ))}
           </View>
 
-          {/* Balance Card with Flip Animation */}
-          <View style={styles.balanceCardContainer}>
-            {/* Front of Card */}
-            <Animated.View style={[styles.cardFace, frontAnimatedStyle]}>
-              <ImageBackground
-                source={activeTab === "Cards" 
-                  ? require("../../assets/cards/default/card2.1.png")
-                  : require("../../assets/cards/default/card2.0.png")
-                }
-                style={styles.balanceCard}
-                imageStyle={styles.balanceCardImage}
-                resizeMode="cover"
-              >
-                <View style={styles.balanceCardInner}>
-                  {/* Tap this area to flip card (Wallet tab: no-op; Cards tab: flip) */}
-                  <TouchableOpacity
-                    onPress={flipCard}
-                    activeOpacity={activeTab === "Cards" ? 0.8 : 1}
-                    disabled={activeTab !== "Cards"}
-                    style={activeTab === "Cards" ? styles.cardFlipAreaCards : styles.cardFlipArea}
-                  >
-                    {activeTab === "Cards" ? (
-                      // Cards tab layout - show account number, username, and balance at bottom left
-                      <View style={styles.cardInfoBottomLeft}>
-                        <Text style={styles.cardAccountNumber}>
-                          {userData?.accountNumber || "N/A"}
-                        </Text>
-                        <Text style={styles.cardUsername}>
-                          {userData?.firstName?.toUpperCase() || userData?.fullName?.toUpperCase() || "USER"}
-                        </Text>
-                        <View style={styles.cardBalanceSection}>
-                          <Text style={styles.cardBalanceLabel}>AVAILABLE BALANCE:</Text>
-                          <Text style={styles.cardBalanceAmount}>
-                            ₱ {formatCurrency(availableBalance)}
-                          </Text>
-                        </View>
-                      </View>
-                    ) : (
-                      // Wallet tab layout - original design
-                      <>
-                        <View style={styles.balanceHeader}>
-                          <Text style={styles.balanceLabel}>Available Balance</Text>
-                          <Ionicons name="eye-outline" size={18} color="#FFFFFF" />
-                        </View>
-                        <View style={styles.balanceAmountContainer}>
-                          <Text style={styles.currency}>PHP </Text>
-                          <Text style={styles.balanceAmount}>{formatCurrency(availableBalance)}</Text>
-                        </View>
-                        <View style={styles.cardSeparator} />
-                      </>
-                    )}
-                  </TouchableOpacity>
-                  {/* Deposit & Withdraw - only show in Wallet tab */}
-                  {activeTab === "Wallet" && (
-                    <View style={styles.cardActionsRow} pointerEvents="box-none">
-                      <TouchableOpacity
-                        style={styles.cardButtonDeposit}
-                        onPress={() => router.push("/deposit")}
-                        activeOpacity={0.7}
-                      >
-                        <Ionicons name="arrow-down-circle-outline" size={20} color="#FFFFFF" />
-                        <Text style={styles.cardButtonDepositText}>Deposit</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={styles.cardButtonWithdraw}
-                        onPress={() => router.push("/withdraw")}
-                        activeOpacity={0.7}
-                      >
-                        <Ionicons name="arrow-up-circle-outline" size={20} color="#FC821D" />
-                        <Text style={styles.cardButtonWithdrawText}>Withdraw</Text>
-                      </TouchableOpacity>
-                    </View>
-                  )}
-                </View>
-              </ImageBackground>
-            </Animated.View>
-
-            {/* Back of Card - ignore touches when front is showing so Deposit/Withdraw work */}
-            <Animated.View
-              style={[styles.cardFace, styles.cardBack, backAnimatedStyle]}
-              pointerEvents={isCardFlipped ? "auto" : "none"}
-            >
-              <TouchableOpacity 
-                onPress={flipCard}
-                activeOpacity={activeTab === "Cards" ? 0.8 : 1}
-                style={styles.cardBackTouchable}
-              >
-                <ImageBackground
-                  source={require("../../assets/cards/default/card2.0 back.png")}
-                  style={styles.balanceCard}
-                  imageStyle={styles.balanceCardImage}
-                  resizeMode="cover"
-                >
-                </ImageBackground>
-              </TouchableOpacity>
-            </Animated.View>
-          </View>
+          {/* Balance Card with Flip Animation - Render based on active tab */}
+          {activeTab === "Wallet" && (
+            <WalletTab
+              userData={userData}
+              availableBalance={availableBalance}
+              formatCurrency={formatCurrency}
+              flipAnimation={flipAnimation}
+              isCardFlipped={isCardFlipped}
+              flipCard={flipCard}
+            />
+          )}
+          {activeTab === "Cards" && (
+            <CardsTab
+              userData={userData}
+              availableBalance={availableBalance}
+              formatCurrency={formatCurrency}
+              flipAnimation={flipAnimation}
+              isCardFlipped={isCardFlipped}
+              flipCard={flipCard}
+            />
+          )}
+          {activeTab === "Savings" && (
+            <SavingsTab
+              userData={userData}
+              timeDeposit={timeDeposit}
+              formatCurrency={formatCurrency}
+            />
+          )}
+          {activeTab === "Loan" && (
+            <LoanTab
+              userData={userData}
+            />
+          )}
 
           {/* Quick Action Buttons */}
           <View style={styles.quickActionsContainer}>
@@ -737,159 +677,6 @@ const styles = StyleSheet.create({
   },
   activeTabText: {
     color: "#FFFFFF",
-  },
-  balanceCardContainer: {
-    margin: 20,
-    marginBottom: 10,
-    height: 200,
-  },
-  cardFace: {
-    position: "absolute",
-    width: "100%",
-    height: "100%",
-    backfaceVisibility: "hidden",
-  },
-  cardBack: {
-    position: "absolute",
-    top: 0,
-  },
-  cardBackTouchable: {
-    flex: 1,
-    width: "100%",
-    height: "100%",
-  },
-  balanceCard: {
-    padding: 20,
-    borderRadius: 24,
-    overflow: "hidden",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
-    elevation: 8,
-    position: "relative",
-    height: 200,
-  },
-  balanceCardImage: {
-    borderRadius: 24,
-  },
-  balanceCardInner: {
-    flex: 1,
-    justifyContent: "space-between",
-  },
-  cardFlipArea: {
-    flex: 1,
-  },
-  cardFlipAreaCards: {
-    flex: 1,
-    justifyContent: "flex-end",
-    alignItems: "flex-start",
-  },
-  cardInfoBottomLeft: {
-    paddingBottom: 0,
-  },
-  balanceHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 4,
-  },
-  balanceLabel: {
-    fontSize: 14,
-    color: "#FFFFFF",
-    fontWeight: "400",
-    fontFamily: "Questrial_400Regular",
-  },
-  balanceAmountContainer: {
-    flexDirection: "row",
-    alignItems: "baseline",
-    marginBottom: 4,
-  },
-  currency: {
-    fontSize: 16,
-    color: "#FFFFFF",
-    fontWeight: "500",
-    marginRight: 4,
-    fontFamily: "Questrial_400Regular",
-  },
-  balanceAmount: {
-    fontSize: 32,
-    fontWeight: "bold",
-    color: "#FFFFFF",
-    fontFamily: "Questrial_400Regular",
-  },
-  cardSeparator: {
-    height: 1,
-    backgroundColor: "#FFFFFF",
-    marginVertical: 12,
-    opacity: 0.9,
-  },
-  cardActionsRow: {
-    flexDirection: "row",
-    gap: 10,
-  },
-  cardButtonDeposit: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    backgroundColor: "rgba(255, 255, 255, 0.3)",
-    paddingVertical: 12,
-    borderRadius: 24,
-  },
-  cardButtonDepositText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#FFFFFF",
-  },
-  cardButtonWithdraw: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    backgroundColor: "#FFFFFF",
-    paddingVertical: 12,
-    borderRadius: 24,
-  },
-  cardButtonWithdrawText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#FC821D",
-  },
-  // Cards tab specific styles
-  cardAccountNumber: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#FFFFFF",
-    letterSpacing: 1,
-    marginBottom: 2,
-    fontFamily: "Questrial_400Regular",
-  },
-  cardUsername: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#FFFFFF",
-    marginBottom: 6,
-    fontFamily: "Questrial_400Regular",
-  },
-  cardBalanceSection: {
-    marginTop: 0,
-  },
-  cardBalanceLabel: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: "#FFFFFF",
-    marginBottom: 2,
-    letterSpacing: 0.5,
-    fontFamily: "Questrial_400Regular",
-  },
-  cardBalanceAmount: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#FFFFFF",
-    fontFamily: "Questrial_400Regular",
   },
   timeDepositRowOuter: {
     paddingHorizontal: 20,
