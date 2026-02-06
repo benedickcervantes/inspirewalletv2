@@ -207,7 +207,7 @@ export default function Index() {
             style={styles.logo}
             resizeMode="contain"
           />
-          <Text style={styles.createdByText}>By: Inspire</Text>
+          <Text style={styles.createdByText}>CREATED BY INSPIRE</Text>
         </View>
       </LinearGradient>
     );
@@ -234,10 +234,10 @@ const styles = StyleSheet.create({
   },
   createdByText: {
     color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "500",
-    fontStyle: "italic",
-    letterSpacing: 0.5,
+    fontSize: 12,
+    fontWeight: "400",
+    fontStyle: "normal",
+    letterSpacing: 1,
     position: "absolute",
     bottom: 50,
   },
