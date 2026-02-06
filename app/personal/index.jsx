@@ -562,7 +562,7 @@ export default function Personal() {
         showModal({
           title: t(userData.preferredLanguage || 'English', 'personal.messages.titles.noAccountNumber'),
           message: t(userData.preferredLanguage || 'English', 'personal.messages.warning.noAccountNumber'),
-          type: "warning",
+          type: "warning", 
           confirmText: "OK",
         });
       }
@@ -1594,7 +1594,7 @@ export default function Personal() {
           >
             <Ionicons name="log-out-outline" size={20} color="#fff" />
             <Text style={styles.logoutButtonText}>
-              {t(userData.preferredLanguage || 'English', 'personal.buttons.logout') || 'Log Out'}
+              {t(userData.preferredLanguage || 'English', 'Log Out') || 'Log Out'}
             </Text>
           </TouchableOpacity>
 
@@ -2288,7 +2288,7 @@ const styles = StyleSheet.create({
   },
   selectedLanguageOptionText: {
     color: "#fff",
-  },
+  }, 
   checkmarkCircle: {
     width: 20,
     height: 20,

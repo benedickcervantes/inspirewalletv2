@@ -1,4 +1,3 @@
-//CORRECTED
 import {
   StyleSheet,
   Text,
@@ -12,15 +11,18 @@ import {
   ImageBackground,
   Animated,
   Linking,
+  Alert,
 } from "react-native";
 import React, { useEffect, useState, useRef } from "react";
 import { useRouter } from "expo-router";
-import { auth, firestore } from "../../configs/firebase";
-import { doc, onSnapshot, collection, query, orderBy, limit } from "firebase/firestore";
+import { auth, firestore, storage } from "../../configs/firebase";
+import { doc, onSnapshot, collection, query, orderBy, limit, updateDoc, where } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFonts } from "expo-font";
 import { Questrial_400Regular } from "@expo-google-fonts/questrial";
+import * as ImagePicker from "expo-image-picker";
 
 const { width } = Dimensions.get("window");
 
@@ -36,6 +38,9 @@ export default function Dashboard() {
   const flipAnimation = useRef(new Animated.Value(0)).current;
   const bannerScrollRef = useRef(null);
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
+  const [profileImage, setProfileImage] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
 
   const banners = [
     {
@@ -56,6 +61,57 @@ export default function Dashboard() {
     return "Good Evening";
   };
 
+  // Handle profile picture upload
+  const handleProfilePictureUpload = async () => {
+    try {
+      // Request permission
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      
+      if (permissionResult.granted === false) {
+        Alert.alert("Permission Required", "Please allow access to your photos to upload a profile picture.");
+        return;
+      }
+
+      // Launch image picker
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.7,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        setUploading(true);
+        const imageUri = result.assets[0].uri;
+        
+        // Upload to Firebase Storage
+        const user = auth.currentUser;
+        const response = await fetch(imageUri);
+        const blob = await response.blob();
+        
+        const storageRef = ref(storage, `profilePictures/${user.uid}`);
+        await uploadBytes(storageRef, blob);
+        
+        // Get download URL
+        const downloadURL = await getDownloadURL(storageRef);
+        
+        // Update Firestore
+        const userDocRef = doc(firestore, "users", user.uid);
+        await updateDoc(userDocRef, {
+          profilePicture: downloadURL,
+        });
+        
+        setProfileImage(downloadURL);
+        setUploading(false);
+        Alert.alert("Success", "Profile picture updated successfully!");
+      }
+    } catch (error) {
+      setUploading(false);
+      console.error("Error uploading profile picture:", error);
+      Alert.alert("Error", "Failed to upload profile picture. Please try again.");
+    }
+  };
+
   useEffect(() => {
     const user = auth.currentUser;
     if (!user) {
@@ -71,6 +127,7 @@ export default function Dashboard() {
         setUserData(data);
         setAvailableBalance(data.availableBalance || 0);
         setTimeDeposit(data.timeDepositTotal || 0);
+        setProfileImage(data.profilePicture || null);
       }
     });
 
@@ -85,9 +142,17 @@ export default function Dashboard() {
       setRecentTransactions(transactions);
     });
 
+    // Listen to UNREAD notifications only
+    const notificationsRef = collection(firestore, "users", user.uid, "notifications");
+    const unreadQuery = query(notificationsRef, where("read", "==", false));
+    const unsubscribeNotifications = onSnapshot(unreadQuery, (snapshot) => {
+      setUnreadNotifications(snapshot.size);
+    });
+
     return () => {
       unsubscribeUser();
       unsubscribeTransactions();
+      unsubscribeNotifications();
     };
   }, []);
 
@@ -170,11 +235,8 @@ export default function Dashboard() {
   };
 
   const menuItems = [
-    { icon: "wallet", label: "Investment\nProfile", route: "/monthly" },
-    { icon: "swap-horizontal", label: "Transfer", route: "/transfer" },
+    { icon: "wallet", label: "Investment\nProfile", route: "/monthly", customImage: require("../../assets/images/investmentprofile.png") },
     { icon: "wallet-outline", label: "E-Wallet", route: "/maya" },
-    { icon: "bank", label: "Banking\nService", route: "/bdo" },
-    { icon: "airplane", label: "Travel\nProtection", route: "/travel" },
     { icon: "chart-line", label: "Stock", route: "/stockholder" },
     { icon: "format-list-bulleted", label: "Task", route: "/task" },
     { icon: "account", label: "Agent", route: "/agentrequest" },
@@ -189,27 +251,57 @@ export default function Dashboard() {
         <ScrollView showsVerticalScrollIndicator={false}>
           {/* Header */}
           <View style={styles.header}>
-            <TouchableOpacity 
-              style={styles.headerLeft}
-              onPress={() => router.push("/personal")}
-              activeOpacity={0.7}
-            >
-              <View style={styles.avatar}>
-                <Ionicons name="person" size={24} color="#999" />
-              </View>
-              <View>
-                <Text style={styles.greeting}>{getGreeting()}</Text>
-                <Text style={styles.userName}>
-                  {userData?.firstName || userData?.fullName || "User"}
-                </Text>
-              </View>
-            </TouchableOpacity>
+            <View style={styles.headerLeft}>
+              <TouchableOpacity 
+                onPress={handleProfilePictureUpload}
+                activeOpacity={0.7}
+                disabled={uploading}
+              >
+                <View style={styles.avatar}>
+                  {profileImage ? (
+                    <Image 
+                      source={{ uri: profileImage }} 
+                      style={styles.avatarImage}
+                    />
+                  ) : (
+                    <Ionicons name="person" size={24} color="#999" />
+                  )}
+                  {uploading && (
+                    <View style={styles.uploadingOverlay}>
+                      <Text style={styles.uploadingText}>...</Text>
+                    </View>
+                  )}
+                  <View style={styles.editBadge}>
+                    <Ionicons name="camera" size={12} color="#FFFFFF" />
+                  </View>
+                </View>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                onPress={() => router.push("/personal")}
+                activeOpacity={0.7}
+              >
+                <View>
+                  <Text style={styles.greeting}>{getGreeting()}</Text>
+                  <Text style={styles.userName}>
+                    {userData?.firstName || userData?.fullName || "User"}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            </View>
             <View style={styles.headerRight}>
               <TouchableOpacity 
                 style={styles.iconButton}
                 onPress={() => router.push("/notification")}
               >
                 <Ionicons name="notifications" size={24} color="#E15816" />
+                {/* Notification Badge - Only shows if there are UNREAD notifications */}
+                {unreadNotifications > 0 && (
+                  <View style={styles.notificationBadge}>
+                    <Text style={styles.notificationBadgeText}>
+                      {unreadNotifications > 99 ? '99+' : unreadNotifications}
+                    </Text>
+                  </View>
+                )}
               </TouchableOpacity>
               <View style={styles.iconButton}>
                 <Ionicons name="menu" size={24} color="#CCCCCC" />
@@ -304,27 +396,76 @@ export default function Dashboard() {
             </Animated.View>
           </View>
 
-          {/* Time Deposit below card (optional info) */}
-          <View style={styles.timeDepositRowOuter}>
-            <Text style={styles.timeDepositTextOuter}>
-              Time Deposit: PHP {formatCurrency(timeDeposit)}
-            </Text>
+          {/* Quick Action Buttons */}
+          <View style={styles.quickActionsContainer}>
+            <TouchableOpacity 
+              style={styles.quickActionButton}
+              onPress={() => router.push("/transfer")}
+            >
+              <View style={styles.quickActionIcon}>
+                <MaterialCommunityIcons name="swap-horizontal" size={24} color="#E15816" />
+              </View>
+              <Text style={styles.quickActionLabel}>Transfer</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.quickActionButton}
+              onPress={() => router.push("/bdo")}
+            >
+              <View style={styles.quickActionIcon}>
+                <MaterialCommunityIcons name="bank" size={24} color="#E15816" />
+              </View>
+              <Text style={styles.quickActionLabel}>Banking Service</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.quickActionButton}
+              onPress={() => router.push("/travel")}
+            >
+              <View style={styles.quickActionIcon}>
+                <MaterialCommunityIcons name="airplane" size={24} color="#E15816" />
+              </View>
+              <Text style={styles.quickActionLabel}>Travel Protection</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.quickActionButton}
+              onPress={() => router.push("/history")}
+            >
+              <View style={styles.quickActionIcon}>
+                <MaterialCommunityIcons name="history" size={24} color="#E15816" />
+              </View>
+              <Text style={styles.quickActionLabel}>History</Text>
+            </TouchableOpacity>
           </View>
 
-          {/* Menu Grid - 5 items per line */}
-          <View style={styles.menuGrid}>
-            {menuItems.map((item, index) => (
-              <TouchableOpacity
-                key={index}
-                style={styles.menuItem}
-                onPress={() => router.push(item.route)}
-              >
-                <View style={styles.menuIcon}>
-                  <MaterialCommunityIcons name={item.icon} size={24} color="#E15816" />
-                </View>
-                <Text style={styles.menuLabel}>{item.label}</Text>
-              </TouchableOpacity>
-            ))}
+          {/* Menu Grid Container - 5 items per line */}
+          <View style={styles.menuContainer}>
+            <View style={styles.menuHeader}>
+              <Text style={styles.menuHeaderTitle}>Services</Text>
+            </View>
+            <View style={styles.menuGrid}>
+              {menuItems.map((item, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={styles.menuItem}
+                  onPress={() => router.push(item.route)}
+                >
+                  <View style={styles.menuIcon}>
+                    {item.customImage ? (
+                      <Image 
+                        source={item.customImage} 
+                        style={styles.customIconImage}
+                        resizeMode="contain"
+                      />
+                    ) : (
+                      <MaterialCommunityIcons name={item.icon} size={24} color="#E15816" />
+                    )}
+                  </View>
+                  <Text style={styles.menuLabel}>{item.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
 
           {/* Crypto Banner */}
@@ -338,7 +479,8 @@ export default function Dashboard() {
               onPress={() => router.push("/crypto")}
             >
               <View style={styles.cryptoContent}>
-                <Text style={styles.cryptoText}>CRYPTO IN INSPIRE WALLET</Text>
+                <Text style={styles.cryptoText}>CHANGE YOUR PREFERRED LANGUAGE</Text>
+                <Text style={styles.languageOptionsText}>English, Japanese, Saudi Arabia, and Korea</Text>
                 <TouchableOpacity style={styles.exploreButton}>
                   <Text style={styles.exploreButtonText}>Explore</Text>
                 </TouchableOpacity>
@@ -469,6 +611,39 @@ const styles = StyleSheet.create({
     backgroundColor: "#F0F0F0",
     justifyContent: "center",
     alignItems: "center",
+    position: "relative",
+  },
+  avatarImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+  },
+  editBadge: {
+    position: "absolute",
+    bottom: 0,
+    right: 0,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: "#E15816",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: "#FFFFFF",
+  },
+  uploadingOverlay: {
+    position: "absolute",
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  uploadingText: {
+    color: "#FFFFFF",
+    fontSize: 20,
+    fontWeight: "bold",
   },
   greeting: {
     fontSize: 14,
@@ -489,6 +664,26 @@ const styles = StyleSheet.create({
     height: 40,
     justifyContent: "center",
     alignItems: "center",
+    position: "relative",
+  },
+  notificationBadge: {
+    position: "absolute",
+    top: 4,
+    right: 4,
+    backgroundColor: "#FF3B30",
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 5,
+    borderWidth: 2,
+    borderColor: "#FFFFFF",
+  },
+  notificationBadgeText: {
+    color: "#FFFFFF",
+    fontSize: 11,
+    fontWeight: "700",
   },
   tabs: {
     flexDirection: "row",
@@ -634,23 +829,81 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: "#666",
   },
+  quickActionsContainer: {
+    flexDirection: "row",
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  quickActionButton: {
+    flex: 1,
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    paddingVertical: 16,
+    paddingHorizontal: 8,
+    borderRadius: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  quickActionIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    backgroundColor: "#FFF5F0",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  quickActionLabel: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#333",
+    textAlign: "center",
+    lineHeight: 14,
+  },
+  menuContainer: {
+    marginHorizontal: 20,
+    marginVertical: 16,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  menuHeader: {
+    marginBottom: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F0F0F0",
+  },
+  menuHeaderTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#333",
+  },
   menuGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    justifyContent: "center",
+    justifyContent: "flex-start",
   },
   menuItem: {
-    width: (width - 40) / 5,
+    width: (width - 88) / 5,
     alignItems: "center",
     paddingVertical: 16,
+    paddingHorizontal: 4,
   },
   menuIcon: {
     width: 48,
     height: 48,
     borderRadius: 12,
-    backgroundColor: "#FFF",
+    backgroundColor: "#FFF5F0",
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 8,
@@ -659,6 +912,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 2,
+  },
+  customIconImage: {
+    width: 28,
+    height: 28,
   },
   menuLabel: {
     fontSize: 10,
@@ -690,6 +947,12 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#FFFFFF",
     lineHeight: 22,
+    marginBottom: 4,
+  },
+  languageOptionsText: {
+    fontSize: 11,
+    color: "#FFFFFF",
+    opacity: 0.9,
     marginBottom: 12,
   },
   cryptoIcon: {
