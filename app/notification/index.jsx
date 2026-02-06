@@ -1,3 +1,4 @@
+//NOTIFICATION PAGE
 import React, { useState, useEffect } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, firestore } from '../../configs/firebase';
