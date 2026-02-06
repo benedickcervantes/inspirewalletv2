@@ -329,7 +329,10 @@ export default function Dashboard() {
             {/* Front of Card */}
             <Animated.View style={[styles.cardFace, frontAnimatedStyle]}>
               <ImageBackground
-                source={require("../../assets/cards/default/card2.0.png")}
+                source={activeTab === "Cards" 
+                  ? require("../../assets/cards/default/card2.1.png")
+                  : require("../../assets/cards/default/card2.0.png")
+                }
                 style={styles.balanceCard}
                 imageStyle={styles.balanceCardImage}
                 resizeMode="cover"
@@ -340,37 +343,60 @@ export default function Dashboard() {
                     onPress={flipCard}
                     activeOpacity={activeTab === "Cards" ? 0.8 : 1}
                     disabled={activeTab !== "Cards"}
-                    style={styles.cardFlipArea}
+                    style={activeTab === "Cards" ? styles.cardFlipAreaCards : styles.cardFlipArea}
                   >
-                    <View style={styles.balanceHeader}>
-                      <Text style={styles.balanceLabel}>Available Balance</Text>
-                      <Ionicons name="eye-outline" size={18} color="#FFFFFF" />
-                    </View>
-                    <View style={styles.balanceAmountContainer}>
-                      <Text style={styles.currency}>PHP </Text>
-                      <Text style={styles.balanceAmount}>{formatCurrency(availableBalance)}</Text>
-                    </View>
-                    <View style={styles.cardSeparator} />
+                    {activeTab === "Cards" ? (
+                      // Cards tab layout - show account number, username, and balance at bottom left
+                      <View style={styles.cardInfoBottomLeft}>
+                        <Text style={styles.cardAccountNumber}>
+                          {userData?.accountNumber || "N/A"}
+                        </Text>
+                        <Text style={styles.cardUsername}>
+                          {userData?.firstName?.toUpperCase() || userData?.fullName?.toUpperCase() || "USER"}
+                        </Text>
+                        <View style={styles.cardBalanceSection}>
+                          <Text style={styles.cardBalanceLabel}>AVAILABLE BALANCE:</Text>
+                          <Text style={styles.cardBalanceAmount}>
+                            ₱ {formatCurrency(availableBalance)}
+                          </Text>
+                        </View>
+                      </View>
+                    ) : (
+                      // Wallet tab layout - original design
+                      <>
+                        <View style={styles.balanceHeader}>
+                          <Text style={styles.balanceLabel}>Available Balance</Text>
+                          <Ionicons name="eye-outline" size={18} color="#FFFFFF" />
+                        </View>
+                        <View style={styles.balanceAmountContainer}>
+                          <Text style={styles.currency}>PHP </Text>
+                          <Text style={styles.balanceAmount}>{formatCurrency(availableBalance)}</Text>
+                        </View>
+                        <View style={styles.cardSeparator} />
+                      </>
+                    )}
                   </TouchableOpacity>
-                  {/* Deposit & Withdraw - separate clickable buttons */}
-                  <View style={styles.cardActionsRow} pointerEvents="box-none">
-                    <TouchableOpacity
-                      style={styles.cardButtonDeposit}
-                      onPress={() => router.push("/deposit")}
-                      activeOpacity={0.7}
-                    >
-                      <Ionicons name="arrow-down-circle-outline" size={20} color="#FFFFFF" />
-                      <Text style={styles.cardButtonDepositText}>Deposit</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.cardButtonWithdraw}
-                      onPress={() => router.push("/withdraw")}
-                      activeOpacity={0.7}
-                    >
-                      <Ionicons name="arrow-up-circle-outline" size={20} color="#FC821D" />
-                      <Text style={styles.cardButtonWithdrawText}>Withdraw</Text>
-                    </TouchableOpacity>
-                  </View>
+                  {/* Deposit & Withdraw - only show in Wallet tab */}
+                  {activeTab === "Wallet" && (
+                    <View style={styles.cardActionsRow} pointerEvents="box-none">
+                      <TouchableOpacity
+                        style={styles.cardButtonDeposit}
+                        onPress={() => router.push("/deposit")}
+                        activeOpacity={0.7}
+                      >
+                        <Ionicons name="arrow-down-circle-outline" size={20} color="#FFFFFF" />
+                        <Text style={styles.cardButtonDepositText}>Deposit</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.cardButtonWithdraw}
+                        onPress={() => router.push("/withdraw")}
+                        activeOpacity={0.7}
+                      >
+                        <Ionicons name="arrow-up-circle-outline" size={20} color="#FC821D" />
+                        <Text style={styles.cardButtonWithdrawText}>Withdraw</Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
                 </View>
               </ImageBackground>
             </Animated.View>
@@ -478,16 +504,20 @@ export default function Dashboard() {
               style={styles.cryptoBanner}
               onPress={() => router.push("/crypto")}
             >
-              <View style={styles.cryptoContent}>
-                <Text style={styles.cryptoText}>CHANGE YOUR PREFERRED LANGUAGE</Text>
-                <Text style={styles.languageOptionsText}>English, Japanese, Saudi Arabia, and Korea</Text>
-                <TouchableOpacity style={styles.exploreButton}>
-                  <Text style={styles.exploreButtonText}>Explore</Text>
-                </TouchableOpacity>
-              </View>
-              <View style={styles.cryptoIcon}>
-                <MaterialCommunityIcons name="bitcoin" size={50} color="#FFB800" />
-              </View>
+              <ImageBackground
+                source={require("../../assets/images/what's new banner.png")}
+                style={styles.cryptoBannerBackground}
+                imageStyle={styles.cryptoBannerImage}
+                resizeMode="cover"
+              >
+                <View style={styles.cryptoContent}>
+                  <Text style={styles.cryptoText}>CHANGE YOUR PREFERRED LANGUAGE</Text>
+                  <Text style={styles.languageOptionsText}>English, Japanese, Saudi Arabia, and Korea</Text>
+                  <TouchableOpacity style={styles.exploreButton}>
+                    <Text style={styles.exploreButtonText}>Explore</Text>
+                  </TouchableOpacity>
+                </View>
+              </ImageBackground>
             </TouchableOpacity>
           </ScrollView>
 
@@ -750,6 +780,14 @@ const styles = StyleSheet.create({
   cardFlipArea: {
     flex: 1,
   },
+  cardFlipAreaCards: {
+    flex: 1,
+    justifyContent: "flex-end",
+    alignItems: "flex-start",
+  },
+  cardInfoBottomLeft: {
+    paddingBottom: 0,
+  },
   balanceHeader: {
     flexDirection: "row",
     alignItems: "center",
@@ -819,6 +857,39 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
     color: "#FC821D",
+  },
+  // Cards tab specific styles
+  cardAccountNumber: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#FFFFFF",
+    letterSpacing: 1,
+    marginBottom: 2,
+    fontFamily: "Questrial_400Regular",
+  },
+  cardUsername: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#FFFFFF",
+    marginBottom: 6,
+    fontFamily: "Questrial_400Regular",
+  },
+  cardBalanceSection: {
+    marginTop: 0,
+  },
+  cardBalanceLabel: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#FFFFFF",
+    marginBottom: 2,
+    letterSpacing: 0.5,
+    fontFamily: "Questrial_400Regular",
+  },
+  cardBalanceAmount: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#FFFFFF",
+    fontFamily: "Questrial_400Regular",
   },
   timeDepositRowOuter: {
     paddingHorizontal: 20,
@@ -930,17 +1001,21 @@ const styles = StyleSheet.create({
   cryptoBanner: {
     width: width - 40,
     height: 120,
-    backgroundColor: "#E15816",
     borderRadius: 16,
-    padding: 16,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    overflow: "hidden",
+  },
+  cryptoBannerBackground: {
+    width: "100%",
+    height: "100%",
+    justifyContent: "center",
+  },
+  cryptoBannerImage: {
+    borderRadius: 16,
   },
   cryptoContent: {
     flex: 1,
     justifyContent: "center",
-    paddingRight: 12,
+    paddingHorizontal: 16,
   },
   cryptoText: {
     fontSize: 16,
