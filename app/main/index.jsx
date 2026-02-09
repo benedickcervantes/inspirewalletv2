@@ -17,12 +17,10 @@ import React, { useEffect, useState, useRef } from "react";
 import { useRouter } from "expo-router";
 import { auth, firestore, storage } from "../../configs/firebase";
 import { doc, onSnapshot, collection, query, orderBy, limit, updateDoc, where } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFonts } from "expo-font";
 import { Questrial_400Regular } from "@expo-google-fonts/questrial";
-import * as ImagePicker from "expo-image-picker";
 import WalletTab from "../../components/WalletTab";
 import CardsTab from "../../components/CardsTab";
 import SavingsTab from "../../components/SavingsTab";
@@ -42,8 +40,6 @@ export default function Dashboard() {
   const flipAnimation = useRef(new Animated.Value(0)).current;
   const bannerScrollRef = useRef(null);
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
-  const [profileImage, setProfileImage] = useState(null);
-  const [uploading, setUploading] = useState(false);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
 
   const banners = [
@@ -65,57 +61,6 @@ export default function Dashboard() {
     return "Good Evening";
   };
 
-  // Handle profile picture upload
-  const handleProfilePictureUpload = async () => {
-    try {
-      // Request permission
-      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      
-      if (permissionResult.granted === false) {
-        Alert.alert("Permission Required", "Please allow access to your photos to upload a profile picture.");
-        return;
-      }
-
-      // Launch image picker
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.7,
-      });
-
-      if (!result.canceled && result.assets[0]) {
-        setUploading(true);
-        const imageUri = result.assets[0].uri;
-        
-        // Upload to Firebase Storage
-        const user = auth.currentUser;
-        const response = await fetch(imageUri);
-        const blob = await response.blob();
-        
-        const storageRef = ref(storage, `profilePictures/${user.uid}`);
-        await uploadBytes(storageRef, blob);
-        
-        // Get download URL
-        const downloadURL = await getDownloadURL(storageRef);
-        
-        // Update Firestore
-        const userDocRef = doc(firestore, "users", user.uid);
-        await updateDoc(userDocRef, {
-          profilePicture: downloadURL,
-        });
-        
-        setProfileImage(downloadURL);
-        setUploading(false);
-        Alert.alert("Success", "Profile picture updated successfully!");
-      }
-    } catch (error) {
-      setUploading(false);
-      console.error("Error uploading profile picture:", error);
-      Alert.alert("Error", "Failed to upload profile picture. Please try again.");
-    }
-  };
-
   useEffect(() => {
     const user = auth.currentUser;
     if (!user) {
@@ -131,7 +76,6 @@ export default function Dashboard() {
         setUserData(data);
         setAvailableBalance(data.availableBalance || 0);
         setTimeDeposit(data.timeDepositTotal || 0);
-        setProfileImage(data.profilePicture || null);
       }
     });
 
@@ -256,30 +200,9 @@ export default function Dashboard() {
           {/* Header */}
           <View style={styles.header}>
             <View style={styles.headerLeft}>
-              <TouchableOpacity 
-                onPress={handleProfilePictureUpload}
-                activeOpacity={0.7}
-                disabled={uploading}
-              >
-                <View style={styles.avatar}>
-                  {profileImage ? (
-                    <Image 
-                      source={{ uri: profileImage }} 
-                      style={styles.avatarImage}
-                    />
-                  ) : (
-                    <Ionicons name="person" size={24} color="#999" />
-                  )}
-                  {uploading && (
-                    <View style={styles.uploadingOverlay}>
-                      <Text style={styles.uploadingText}>...</Text>
-                    </View>
-                  )}
-                  <View style={styles.editBadge}>
-                    <Ionicons name="camera" size={12} color="#FFFFFF" />
-                  </View>
-                </View>
-              </TouchableOpacity>
+              <View style={styles.avatar}>
+                <Ionicons name="person" size={28} color="#E15816" />
+              </View>
               <TouchableOpacity 
                 onPress={() => router.push("/personal")}
                 activeOpacity={0.7}
@@ -578,42 +501,11 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: "#F0F0F0",
-    justifyContent: "center",
-    alignItems: "center",
-    position: "relative",
-  },
-  avatarImage: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-  },
-  editBadge: {
-    position: "absolute",
-    bottom: 0,
-    right: 0,
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: "#E15816",
+    backgroundColor: "#FFF5F0",
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 2,
-    borderColor: "#FFFFFF",
-  },
-  uploadingOverlay: {
-    position: "absolute",
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  uploadingText: {
-    color: "#FFFFFF",
-    fontSize: 20,
-    fontWeight: "bold",
+    borderColor: "#E15816",
   },
   greeting: {
     fontSize: 14,
