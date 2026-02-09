@@ -7,11 +7,14 @@ import {
   ScrollView,
   StatusBar,
   Image,
+  Alert,
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "expo-router";
 import { auth, firestore } from "../../configs/firebase";
-import { doc, onSnapshot, signOut } from "firebase/firestore";
+import { doc, onSnapshot } from "firebase/firestore";
+import { signOut } from "firebase/auth";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 
@@ -48,10 +51,19 @@ export default function PersonalNew() {
 
   const handleLogout = async () => {
     try {
+      // Clear stored credentials
+      await AsyncStorage.removeItem("userEmail");
+      await AsyncStorage.removeItem("userPassword");
+      await AsyncStorage.removeItem("passcodeLoginComplete");
+      
+      // Sign out from Firebase
       await signOut(auth);
+      
+      // Navigate to welcome page
       router.replace("/welcome");
     } catch (error) {
       console.error("Error logging out:", error);
+      Alert.alert("Error", "Failed to log out. Please try again.");
     }
   };
 

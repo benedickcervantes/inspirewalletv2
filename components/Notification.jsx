@@ -12,10 +12,11 @@ import {
   Dimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { collection, getDocs, orderBy, query, onSnapshot, doc, updateDoc, addDoc, increment, deleteDoc } from 'firebase/firestore';
+import { collection, getDocs, orderBy, query, onSnapshot, doc, updateDoc, addDoc, increment, deleteDoc, where } from 'firebase/firestore';
 import { firestore, auth } from '../configs/firebase';
 import { Colors } from '../constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { t } from '../utils/languageUtils';
 import axios from 'axios';
 
@@ -29,8 +30,127 @@ const Notification = ({ language = 'English' }) => {
   const [processingReferral, setProcessingReferral] = useState(null);
 
   useEffect(() => {
-    fetchNotifications();
+    const user = auth.currentUser;
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    // Real-time listener for global notifications
+    const globalNotificationsRef = collection(firestore, 'notifications');
+    const globalQuery = query(globalNotificationsRef, orderBy('createdAt', 'desc'));
+    
+    const unsubscribeGlobal = onSnapshot(
+      globalQuery,
+      (snapshot) => {
+        const globalNotifications = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          source: 'global',
+          read: true, // Global notifications are always considered read
+        }));
+        
+        // Update state with global notifications
+        setNotifications(prev => {
+          const userNotifs = prev.filter(n => n.source === 'user');
+          const combined = [...globalNotifications, ...userNotifs];
+          return combined.sort((a, b) => {
+            const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt || 0);
+            const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt || 0);
+            return dateB - dateA;
+          });
+        });
+      },
+      (error) => {
+        console.error('Error fetching global notifications:', error);
+      }
+    );
+
+    // Real-time listener for user-specific notifications
+    const userNotificationsRef = collection(firestore, 'users', user.uid, 'notifications');
+    const userQuery = query(userNotificationsRef, orderBy('createdAt', 'desc'));
+    
+    const unsubscribeUser = onSnapshot(
+      userQuery,
+      (snapshot) => {
+        const userNotifications = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          source: 'user',
+        }));
+        
+        // Update state with user notifications
+        setNotifications(prev => {
+          const globalNotifs = prev.filter(n => n.source === 'global');
+          const combined = [...globalNotifs, ...userNotifications];
+          return combined.sort((a, b) => {
+            const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt || 0);
+            const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt || 0);
+            return dateB - dateA;
+          });
+        });
+        
+        setLoading(false);
+      },
+      (error) => {
+        console.error('Error fetching user notifications:', error);
+        setError(t(language, 'notifications.errorMessage'));
+        setLoading(false);
+      }
+    );
+
+    // Cleanup listeners
+    return () => {
+      unsubscribeGlobal();
+      unsubscribeUser();
+    };
   }, []);
+
+  // Delete notification
+  const handleDeleteNotification = async (notification) => {
+    try {
+      const user = auth.currentUser;
+      if (!user) return;
+
+      // Only allow deleting user-specific notifications
+      if (notification.source === 'user') {
+        const notificationRef = doc(firestore, 'users', user.uid, 'notifications', notification.id);
+        await deleteDoc(notificationRef);
+        console.log('Notification deleted:', notification.id);
+      } else {
+        Alert.alert('Cannot Delete', 'Global notifications cannot be deleted.');
+      }
+    } catch (error) {
+      console.error('Error deleting notification:', error);
+      Alert.alert('Error', 'Failed to delete notification.');
+    }
+  };
+
+  // Mark all notifications as read
+  const handleMarkAllAsRead = async () => {
+    try {
+      const user = auth.currentUser;
+      if (!user) return;
+
+      const userNotificationsRef = collection(firestore, 'users', user.uid, 'notifications');
+      const unreadQuery = query(userNotificationsRef, where('read', '==', false));
+      const unreadSnapshot = await getDocs(unreadQuery);
+
+      // Update all unread notifications
+      const updatePromises = unreadSnapshot.docs.map(doc => 
+        updateDoc(doc.ref, { read: true })
+      );
+
+      await Promise.all(updatePromises);
+      console.log(`Marked ${unreadSnapshot.size} notifications as read`);
+    } catch (error) {
+      console.error('Error marking all as read:', error);
+      Alert.alert('Error', 'Failed to mark all notifications as read.');
+    }
+  };
 
   // Handle referral acceptance
   const handleAcceptReferral = async (notification) => {
@@ -334,7 +454,24 @@ const Notification = ({ language = 'English' }) => {
     });
   };
 
-  const handleNotificationPress = (notification) => {
+  const handleNotificationPress = async (notification) => {
+    // Mark notification as read if it's unread
+    if (!notification.read && notification.source === 'user') {
+      try {
+        const user = auth.currentUser;
+        if (user) {
+          const notificationRef = doc(firestore, 'users', user.uid, 'notifications', notification.id);
+          await updateDoc(notificationRef, {
+            read: true,
+          });
+          console.log('Notification marked as read:', notification.id);
+        }
+      } catch (error) {
+        console.error('Error marking notification as read:', error);
+      }
+    }
+
+    // Navigate to detail page
     router.push({
       pathname: '/notificationdetail',
       params: {
@@ -349,106 +486,130 @@ const Notification = ({ language = 'English' }) => {
   const renderNotificationItem = ({ item }) => {
     const isReferralRequest = item.type === 'referral_request' && item.status === 'pending';
     const isProcessing = processingReferral === item.id;
+    const isRead = item.read === true;
+    const isApproved = item.type === 'referral_approved';
     
     return (
-      <TouchableOpacity
-        style={[
-          styles.notificationCard,
-          item.source === 'user' && styles.userNotificationCard,
-          isReferralRequest && styles.referralRequestCard
-        ]}
-        onPress={() => !isReferralRequest && handleNotificationPress(item)}
-        activeOpacity={isReferralRequest ? 1 : 0.7}
-        disabled={isReferralRequest}
-      >
-        <View style={styles.notificationHeader}>
-          <View style={[
-            styles.notificationIcon,
-            item.source === 'user' && styles.userNotificationIcon,
-            isReferralRequest && styles.referralRequestIcon
-          ]}>
-            <Ionicons 
-              name={isReferralRequest ? 'person-add' : (item.source === 'user' ? 'person' : 'notifications')} 
-              size={20} 
-              color={isReferralRequest ? '#10B981' : (item.source === 'user' ? '#FFB800' : Colors.redTheme.background)} 
-            />
-          </View>
-          <View style={styles.notificationContent}>
-            <View style={styles.titleRow}>
-              <Text style={styles.notificationTitle} numberOfLines={2}>
-                {item.title || t(language, 'notifications.noTitle')}
-              </Text>
-              {item.source === 'user' && !isReferralRequest && (
-                <View style={styles.userBadge}>
-                  <Text style={styles.userBadgeText}>You</Text>
-                </View>
-              )}
-              {isReferralRequest && (
-                <View style={styles.pendingBadge}>
-                  <Text style={styles.pendingBadgeText}>Action Required</Text>
-                </View>
-              )}
-            </View>
-            <Text style={styles.notificationMessage} numberOfLines={isReferralRequest ? 10 : 3}>
-              {truncateMessage(item.message, isReferralRequest ? 500 : 100)}
-            </Text>
-            {isReferralRequest && (
-              <View style={styles.referralDetails}>
-                <Text style={styles.referralDetailText}>Name: {item.newUserName}</Text>
-                <Text style={styles.referralDetailText}>Email: {item.newUserEmail}</Text>
-                <Text style={styles.referralDetailText}>Agent #: {item.newUserAgentNumber}</Text>
-                <Text style={styles.referralDetailText}>Requested Code: {item.requestedAgentCode}</Text>
-              </View>
-            )}
-            <Text style={styles.notificationDate}>
-              {formatDate(item.createdAt)}
-            </Text>
-            
-            {isReferralRequest && (
-              <View style={styles.actionButtons}>
-                <TouchableOpacity
-                  style={[styles.acceptButton, isProcessing && styles.disabledButton]}
-                  onPress={() => handleAcceptReferral(item)}
-                  disabled={isProcessing}
-                >
-                  {isProcessing ? (
-                    <ActivityIndicator size="small" color="#fff" />
-                  ) : (
-                    <>
-                      <Ionicons name="checkmark-circle" size={20} color="#fff" />
-                      <Text style={styles.actionButtonText}>Accept</Text>
-                    </>
-                  )}
-                </TouchableOpacity>
-                
-                <TouchableOpacity
-                  style={[styles.rejectButton, isProcessing && styles.disabledButton]}
-                  onPress={() => handleRejectReferral(item)}
-                  disabled={isProcessing}
-                >
-                  {isProcessing ? (
-                    <ActivityIndicator size="small" color="#fff" />
-                  ) : (
-                    <>
-                      <Ionicons name="close-circle" size={20} color="#fff" />
-                      <Text style={styles.actionButtonText}>Reject</Text>
-                    </>
-                  )}
-                </TouchableOpacity>
-              </View>
-            )}
-          </View>
-          {!isReferralRequest && (
-            <View style={styles.arrowContainer}>
+      <View style={styles.notificationWrapper}>
+        <TouchableOpacity
+          style={[
+            styles.notificationCard,
+            !isRead && styles.unreadNotificationCard,
+            isReferralRequest && styles.referralRequestCard
+          ]}
+          onPress={() => !isReferralRequest && handleNotificationPress(item)}
+          activeOpacity={isReferralRequest ? 1 : 0.7}
+          disabled={isReferralRequest}
+        >
+          <View style={styles.cardContent}>
+            {/* Icon */}
+            <View style={[
+              styles.iconCircle,
+              isReferralRequest && styles.iconCircleOrange,
+              isApproved && styles.iconCircleGreen
+            ]}>
               <Ionicons 
-                name="chevron-forward" 
-                size={16} 
-                color={Colors.redTheme.background} 
+                name={isReferralRequest ? 'person-add' : (isApproved ? 'checkmark-circle' : 'person')} 
+                size={24} 
+                color="#FFFFFF" 
               />
             </View>
-          )}
-        </View>
-      </TouchableOpacity>
+
+            {/* Content */}
+            <View style={styles.contentArea}>
+              <View style={styles.titleRow}>
+                <Text style={styles.notificationTitle} numberOfLines={1}>
+                  {item.title || t(language, 'notifications.noTitle')}
+                </Text>
+                {!isRead && !isReferralRequest && (
+                  <View style={styles.newBadge}>
+                    <Text style={styles.newBadgeText}>NEW</Text>
+                  </View>
+                )}
+                {isApproved && (
+                  <Ionicons name="checkmark-circle" size={20} color="#4CAF50" />
+                )}
+              </View>
+
+              {/* Orange separator line */}
+              <View style={styles.separator} />
+
+              <Text style={styles.notificationMessage} numberOfLines={isReferralRequest ? 10 : 3}>
+                {truncateMessage(item.message, isReferralRequest ? 500 : 100)}
+              </Text>
+
+              {isReferralRequest && (
+                <View style={styles.referralDetails}>
+                  <Text style={styles.referralDetailText}>Name: {item.newUserName}</Text>
+                  <Text style={styles.referralDetailText}>Email: {item.newUserEmail}</Text>
+                  <Text style={styles.referralDetailText}>Agent #: {item.newUserAgentNumber}</Text>
+                  <Text style={styles.referralDetailText}>Requested Code: {item.requestedAgentCode}</Text>
+                </View>
+              )}
+
+              <Text style={styles.notificationDate}>
+                {formatDate(item.createdAt)}
+              </Text>
+              
+              {isReferralRequest && (
+                <View style={styles.actionButtons}>
+                  <TouchableOpacity
+                    style={[styles.acceptButton, isProcessing && styles.disabledButton]}
+                    onPress={() => handleAcceptReferral(item)}
+                    disabled={isProcessing}
+                  >
+                    {isProcessing ? (
+                      <ActivityIndicator size="small" color="#fff" />
+                    ) : (
+                      <>
+                        <Ionicons name="checkmark-circle" size={20} color="#fff" />
+                        <Text style={styles.actionButtonText}>Accept</Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity
+                    style={[styles.rejectButton, isProcessing && styles.disabledButton]}
+                    onPress={() => handleRejectReferral(item)}
+                    disabled={isProcessing}
+                  >
+                    {isProcessing ? (
+                      <ActivityIndicator size="small" color="#fff" />
+                    ) : (
+                      <>
+                        <Ionicons name="close-circle" size={20} color="#fff" />
+                        <Text style={styles.actionButtonText}>Reject</Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+
+            {/* Arrow for approved notifications */}
+            {isApproved && (
+              <View style={styles.arrowContainer}>
+                <Ionicons 
+                  name="chevron-forward" 
+                  size={20} 
+                  color="#E15816" 
+                />
+              </View>
+            )}
+          </View>
+        </TouchableOpacity>
+
+        {/* Delete Button (X) - Only for user notifications */}
+        {item.source === 'user' && (
+          <TouchableOpacity
+            style={styles.deleteButton}
+            onPress={() => handleDeleteNotification(item)}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="close" size={20} color="#999" />
+          </TouchableOpacity>
+        )}
+      </View>
     );
   };
 
@@ -516,7 +677,11 @@ const Notification = ({ language = 'English' }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
+      {/* Orange Gradient Header */}
+      <LinearGradient
+        colors={["#E15816", "#F48F38"]}
+        style={styles.header}
+      >
         <TouchableOpacity 
           style={styles.backButton}
           onPress={() => router.back()}
@@ -524,21 +689,21 @@ const Notification = ({ language = 'English' }) => {
           <Ionicons 
             name="arrow-back" 
             size={24} 
-            color={Colors.redTheme.background} 
+            color="#FFFFFF" 
           />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{t(language, 'notifications.title')}</Text>
         <TouchableOpacity 
           style={styles.refreshButton}
-          onPress={fetchNotifications}
+          onPress={handleMarkAllAsRead}
         >
           <Ionicons 
-            name="refresh" 
+            name="checkmark-done" 
             size={24} 
-            color={Colors.redTheme.background} 
+            color="#FFFFFF" 
           />
         </TouchableOpacity>
-      </View>
+      </LinearGradient>
 
       <View style={styles.content}>
         {error ? (
@@ -568,40 +733,33 @@ const Notification = ({ language = 'English' }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#F5F5F5',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingVertical: 15,
-    backgroundColor: 'white',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    paddingVertical: 16,
   },
   backButton: {
-    padding: 8,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
     borderRadius: 20,
-    backgroundColor: Colors.redTheme.background + '10',
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: Colors.redTheme.background,
-  },
-  headerSpacer: {
-    width: 40,
+    color: '#FFFFFF',
   },
   refreshButton: {
-    padding: 8,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
     borderRadius: 20,
-    backgroundColor: Colors.redTheme.background + '10',
   },
   content: {
     flex: 1,
@@ -609,106 +767,120 @@ const styles = StyleSheet.create({
   listContainer: {
     padding: 16,
   },
+  notificationWrapper: {
+    position: 'relative',
+    marginBottom: 16,
+  },
   notificationCard: {
-    backgroundColor: 'white',
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
-    marginBottom: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
-    borderLeftWidth: 4,
-    borderLeftColor: Colors.redTheme.background,
+    overflow: 'hidden',
   },
-  userNotificationCard: {
-    borderLeftColor: '#FFB800',
-    backgroundColor: '#FFFEF5',
+  deleteButton: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 4,
+    zIndex: 10,
+  },
+  unreadNotificationCard: {
+    backgroundColor: '#FFF9F0',
+    borderLeftWidth: 4,
+    borderLeftColor: '#E15816',
   },
   referralRequestCard: {
-    borderLeftColor: '#10B981',
-    backgroundColor: '#F0FDF4',
     borderWidth: 2,
-    borderColor: '#10B981',
+    borderColor: '#E15816',
   },
-  notificationHeader: {
+  cardContent: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
     padding: 16,
   },
-  notificationIcon: {
+  iconCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#E15816',
+    justifyContent: 'center',
+    alignItems: 'center',
     marginRight: 12,
-    marginTop: 2,
   },
-  userNotificationIcon: {
-    backgroundColor: '#FFF9E6',
-    borderRadius: 20,
-    padding: 4,
+  iconCircleOrange: {
+    backgroundColor: '#E15816',
   },
-  referralRequestIcon: {
-    backgroundColor: '#D1FAE5',
-    borderRadius: 20,
-    padding: 4,
+  iconCircleGreen: {
+    backgroundColor: '#4CAF50',
   },
-  notificationContent: {
+  contentArea: {
     flex: 1,
   },
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
-    gap: 8,
+    justifyContent: 'space-between',
+    marginBottom: 8,
   },
   notificationTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '700',
     color: '#333',
     flex: 1,
   },
-  userBadge: {
-    backgroundColor: '#FFB800',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
+  newBadge: {
+    backgroundColor: '#FFE5D9',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
     borderRadius: 12,
+    marginLeft: 8,
   },
-  userBadgeText: {
-    color: '#fff',
+  newBadgeText: {
     fontSize: 10,
-    fontWeight: 'bold',
+    fontWeight: '700',
+    color: '#E15816',
   },
-  pendingBadge: {
-    backgroundColor: '#10B981',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 12,
-  },
-  pendingBadgeText: {
-    color: '#fff',
-    fontSize: 10,
-    fontWeight: 'bold',
+  separator: {
+    height: 2,
+    backgroundColor: '#E15816',
+    marginBottom: 12,
+    width: '100%',
   },
   notificationMessage: {
     fontSize: 14,
     color: '#666',
     lineHeight: 20,
-    marginBottom: 8,
+    marginBottom: 12,
   },
   notificationDate: {
     fontSize: 12,
     color: '#999',
   },
   referralDetails: {
-    backgroundColor: '#fff',
+    backgroundColor: '#FFF5F0',
     padding: 12,
     borderRadius: 8,
     marginTop: 8,
-    marginBottom: 8,
+    marginBottom: 12,
     borderLeftWidth: 3,
-    borderLeftColor: '#10B981',
+    borderLeftColor: '#E15816',
   },
   referralDetailText: {
     fontSize: 13,
-    color: '#374151',
+    color: '#333',
     marginBottom: 4,
     fontWeight: '500',
   },
@@ -722,7 +894,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#10B981',
+    backgroundColor: '#4CAF50',
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 8,
@@ -748,8 +920,9 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   arrowContainer: {
-    marginLeft: 8,
-    marginTop: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingLeft: 8,
   },
   loadingContainer: {
     flex: 1,

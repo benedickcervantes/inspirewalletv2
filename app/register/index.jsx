@@ -10,11 +10,13 @@ import {
   KeyboardAvoidingView,
   Platform,
   Modal,
+  Alert,
 } from "react-native";
 import { useState } from "react";
 import { useRouter } from "expo-router";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { CameraView, useCameraPermissions } from "expo-camera";
 
 const COUNTRY_OPTIONS = [
   { code: "+63", label: "Philippines", flag: "🇵🇭" },
@@ -27,6 +29,9 @@ const COUNTRY_OPTIONS = [
 export default function Register() {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
+  const [permission, requestPermission] = useCameraPermissions();
+  const [isQRScannerVisible, setIsQRScannerVisible] = useState(false);
+  const [scanned, setScanned] = useState(false);
   
   // Form fields - Step 1
   const [firstName, setFirstName] = useState("");
@@ -49,6 +54,34 @@ export default function Register() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
   const [isCountryModalVisible, setIsCountryModalVisible] = useState(false);
+
+  // Handle QR Scanner
+  const handleOpenQRScanner = async () => {
+    if (!permission) {
+      // Request permission if not yet requested
+      const { status } = await requestPermission();
+      if (status !== 'granted') {
+        Alert.alert('Permission Required', 'Camera permission is required to scan QR codes.');
+        return;
+      }
+    } else if (!permission.granted) {
+      // Permission was denied
+      Alert.alert('Permission Required', 'Camera permission is required to scan QR codes.');
+      return;
+    }
+    
+    setScanned(false);
+    setIsQRScannerVisible(true);
+  };
+
+  const handleBarCodeScanned = ({ type, data }) => {
+    if (scanned) return;
+    
+    setScanned(true);
+    setAgentReferral(data);
+    setIsQRScannerVisible(false);
+    Alert.alert('QR Code Scanned', `Agent referral code: ${data}`);
+  };
 
   const handleNextStep = () => {
     if (currentStep === 1) {
@@ -118,7 +151,16 @@ export default function Register() {
       password,
     });
     // Add your registration logic here
-    alert("Registration successful!");
+    Alert.alert(
+      "Registration Successful!",
+      "Your account has been created successfully.",
+      [
+        {
+          text: "OK",
+          onPress: () => router.replace("/main")
+        }
+      ]
+    );
   };
 
   const handleBackStep = () => {
@@ -381,7 +423,10 @@ export default function Register() {
                         value={agentReferral}
                         onChangeText={setAgentReferral}
                       />
-                      <TouchableOpacity style={styles.qrButton}>
+                      <TouchableOpacity 
+                        style={styles.qrButton}
+                        onPress={handleOpenQRScanner}
+                      >
                         <MaterialCommunityIcons name="qrcode-scan" size={24} color="#E25A17" />
                       </TouchableOpacity>
                     </View>
@@ -495,6 +540,38 @@ export default function Register() {
             </Text>
           </View>
         </KeyboardAvoidingView>
+
+        {/* QR Scanner Modal */}
+        <Modal
+          visible={isQRScannerVisible}
+          transparent={false}
+          animationType="slide"
+          onRequestClose={() => setIsQRScannerVisible(false)}
+        >
+          <View style={styles.qrScannerContainer}>
+            <View style={styles.qrScannerHeader}>
+              <Text style={styles.qrScannerTitle}>Scan Agent QR Code</Text>
+              <TouchableOpacity onPress={() => setIsQRScannerVisible(false)}>
+                <Ionicons name="close" size={28} color="#FFFFFF" />
+              </TouchableOpacity>
+            </View>
+            <CameraView
+              style={styles.camera}
+              facing="back"
+              onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
+              barcodeScannerSettings={{
+                barcodeTypes: ["qr"],
+              }}
+            >
+              <View style={styles.scannerOverlay}>
+                <View style={styles.scannerFrame} />
+                <Text style={styles.scannerText}>
+                  Position the QR code within the frame
+                </Text>
+              </View>
+            </CameraView>
+          </View>
+        </Modal>
 
         {/* Country Selector Modal */}
         <Modal
@@ -884,5 +961,49 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#666",
     fontWeight: "500",
+  },
+  // QR Scanner styles
+  qrScannerContainer: {
+    flex: 1,
+    backgroundColor: "#000",
+  },
+  qrScannerHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 20,
+    paddingTop: 50,
+    backgroundColor: "#E25A17",
+  },
+  qrScannerTitle: {
+    fontSize: 20,
+    fontWeight: "600",
+    color: "#FFFFFF",
+  },
+  camera: {
+    flex: 1,
+  },
+  scannerOverlay: {
+    flex: 1,
+    backgroundColor: "transparent",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  scannerFrame: {
+    width: 250,
+    height: 250,
+    borderWidth: 2,
+    borderColor: "#FFFFFF",
+    borderRadius: 12,
+    backgroundColor: "transparent",
+  },
+  scannerText: {
+    marginTop: 20,
+    fontSize: 16,
+    color: "#FFFFFF",
+    textAlign: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    padding: 12,
+    borderRadius: 8,
   },
 });
