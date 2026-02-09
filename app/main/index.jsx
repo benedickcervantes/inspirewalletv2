@@ -362,7 +362,8 @@ export default function Dashboard() {
             />
           )}
 
-          {/* Quick Action Buttons */}
+          {/* Quick Action Buttons - Hide in Cards tab */}
+          {activeTab !== "Cards" && (
           <View style={styles.quickActionsContainer}>
             <TouchableOpacity 
               style={styles.quickActionButton}
@@ -404,8 +405,10 @@ export default function Dashboard() {
               <Text style={styles.quickActionLabel}>History</Text>
             </TouchableOpacity>
           </View>
+          )}
 
-          {/* Menu Grid Container - 5 items per line */}
+          {/* Menu Grid Container - 5 items per line - Hide in Cards tab */}
+          {activeTab !== "Cards" && (
           <View style={styles.menuContainer}>
             <View style={styles.menuHeader}>
               <Text style={styles.menuHeaderTitle}>Services</Text>
@@ -433,6 +436,7 @@ export default function Dashboard() {
               ))}
             </View>
           </View>
+          )}
 
           {/* Crypto Banner */}
           <ScrollView 
@@ -461,7 +465,8 @@ export default function Dashboard() {
             </TouchableOpacity>
           </ScrollView>
 
-          {/* Transaction History */}
+          {/* Transaction History - Hide in Cards tab */}
+          {activeTab !== "Cards" && (
           <View style={styles.transactionSection}>
             <View style={styles.transactionHeader}>
               <Ionicons name="time-outline" size={20} color="#E15816" />
@@ -502,8 +507,10 @@ export default function Dashboard() {
               </View>
             )}
           </View>
+          )}
 
-          {/* Partner Banners - Auto-scrolling Carousel */}
+          {/* Partner Banners - Auto-scrolling Carousel - Hide in Cards tab */}
+          {activeTab !== "Cards" && (
           <View style={styles.bannersSection}>
             <ScrollView
               ref={bannerScrollRef}
@@ -545,6 +552,7 @@ export default function Dashboard() {
               ))}
             </View>
           </View>
+          )}
 
           {/* Footer */}
           <View style={styles.footer}>
