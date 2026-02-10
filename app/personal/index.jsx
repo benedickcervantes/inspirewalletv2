@@ -7,11 +7,14 @@ import {
   ScrollView,
   StatusBar,
   Image,
+  Alert,
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "expo-router";
 import { auth, firestore } from "../../configs/firebase";
-import { doc, onSnapshot, signOut } from "firebase/firestore";
+import { doc, onSnapshot } from "firebase/firestore";
+import { signOut } from "firebase/auth";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 
@@ -48,10 +51,19 @@ export default function PersonalNew() {
 
   const handleLogout = async () => {
     try {
+      // Clear stored credentials
+      await AsyncStorage.removeItem("userEmail");
+      await AsyncStorage.removeItem("userPassword");
+      await AsyncStorage.removeItem("passcodeLoginComplete");
+      
+      // Sign out from Firebase
       await signOut(auth);
+      
+      // Navigate to welcome page
       router.replace("/welcome");
     } catch (error) {
       console.error("Error logging out:", error);
+      Alert.alert("Error", "Failed to log out. Please try again.");
     }
   };
 
@@ -116,169 +128,226 @@ export default function PersonalNew() {
           {/* Account Details Section */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <MaterialCommunityIcons name="account-details" size={20} color="#E15816" />
+              <View style={styles.sectionIconContainer}>
+                <MaterialCommunityIcons name="account-details" size={22} color="#E15816" />
+              </View>
               <Text style={styles.sectionTitle}>Account Details</Text>
             </View>
 
             {/* Name */}
             <View style={styles.detailItem}>
-              <View style={styles.detailHeader}>
-                <MaterialCommunityIcons name="account" size={18} color="#E15816" />
-                <Text style={styles.detailLabel}>NAME</Text>
-              </View>
-              <View style={styles.detailContent}>
-                <Text style={styles.detailValue}>{fullName}</Text>
-                <TouchableOpacity>
-                  <Ionicons name="create-outline" size={18} color="#999" />
+              <View style={styles.detailRow}>
+                <View style={styles.iconLabelContainer}>
+                  <View style={styles.iconCircle}>
+                    <MaterialCommunityIcons name="account" size={20} color="#E15816" />
+                  </View>
+                  <View style={styles.labelValueContainer}>
+                    <Text style={styles.detailLabel}>NAME</Text>
+                    <Text style={styles.detailValue}>{fullName}</Text>
+                  </View>
+                </View>
+                <TouchableOpacity style={styles.editButton}>
+                  <Ionicons name="create-outline" size={20} color="#E15816" />
                 </TouchableOpacity>
               </View>
             </View>
 
             {/* Company Name */}
             <View style={styles.detailItem}>
-              <View style={styles.detailHeader}>
-                <MaterialCommunityIcons name="office-building" size={18} color="#E15816" />
-                <Text style={styles.detailLabel}>COMPANY NAME</Text>
-              </View>
-              <View style={styles.detailContent}>
-                <Text style={styles.detailValue}>{userData.company || "Inspire Holdings Inc"}</Text>
-                <TouchableOpacity>
-                  <Ionicons name="create-outline" size={18} color="#999" />
+              <View style={styles.detailRow}>
+                <View style={styles.iconLabelContainer}>
+                  <View style={styles.iconCircle}>
+                    <MaterialCommunityIcons name="office-building" size={20} color="#E15816" />
+                  </View>
+                  <View style={styles.labelValueContainer}>
+                    <Text style={styles.detailLabel}>COMPANY NAME</Text>
+                    <Text style={styles.detailValue}>{userData.company || "Inspire Holdings Inc"}</Text>
+                  </View>
+                </View>
+                <TouchableOpacity style={styles.editButton}>
+                  <Ionicons name="create-outline" size={20} color="#E15816" />
                 </TouchableOpacity>
               </View>
             </View>
 
             {/* Contact Number */}
             <View style={styles.detailItem}>
-              <View style={styles.detailHeader}>
-                <MaterialCommunityIcons name="phone" size={18} color="#E15816" />
-                <Text style={styles.detailLabel}>CONTACT NUMBER</Text>
-              </View>
-              <View style={styles.detailContent}>
-                <Text style={styles.detailValue}>{userData.contactNumber || "+63"}</Text>
-                <TouchableOpacity>
-                  <Ionicons name="create-outline" size={18} color="#999" />
+              <View style={styles.detailRow}>
+                <View style={styles.iconLabelContainer}>
+                  <View style={styles.iconCircle}>
+                    <MaterialCommunityIcons name="phone" size={20} color="#E15816" />
+                  </View>
+                  <View style={styles.labelValueContainer}>
+                    <Text style={styles.detailLabel}>CONTACT NUMBER</Text>
+                    <Text style={styles.detailValue}>{userData.contactNumber || "+63"}</Text>
+                  </View>
+                </View>
+                <TouchableOpacity style={styles.editButton}>
+                  <Ionicons name="create-outline" size={20} color="#E15816" />
                 </TouchableOpacity>
               </View>
             </View>
 
             {/* LINE Link Account */}
             <View style={styles.detailItem}>
-              <View style={styles.detailHeader}>
-                <MaterialCommunityIcons name="link-variant" size={18} color="#E15816" />
-                <Text style={styles.detailLabel}>LINE LINK ACCOUNT</Text>
-              </View>
-              <View style={styles.detailContent}>
-                <Text style={styles.detailValue}>{userData.lineAccountLink || "Not provided"}</Text>
-                <TouchableOpacity>
-                  <Ionicons name="create-outline" size={18} color="#999" />
+              <View style={styles.detailRow}>
+                <View style={styles.iconLabelContainer}>
+                  <View style={styles.iconCircle}>
+                    <MaterialCommunityIcons name="link-variant" size={20} color="#00B900" />
+                  </View>
+                  <View style={styles.labelValueContainer}>
+                    <Text style={styles.detailLabel}>LINE LINK ACCOUNT</Text>
+                    <Text style={[styles.detailValue, !userData.lineAccountLink && styles.notProvided]}>
+                      {userData.lineAccountLink || "Not provided"}
+                    </Text>
+                  </View>
+                </View>
+                <TouchableOpacity style={styles.editButton}>
+                  <Ionicons name="create-outline" size={20} color="#E15816" />
                 </TouchableOpacity>
               </View>
             </View>
 
             {/* Viber Link */}
             <View style={styles.detailItem}>
-              <View style={styles.detailHeader}>
-                <MaterialCommunityIcons name="message-text" size={18} color="#E15816" />
-                <Text style={styles.detailLabel}>VIBER LINK</Text>
-              </View>
-              <View style={styles.detailContent}>
-                <Text style={styles.detailValue}>Not provided</Text>
-                <TouchableOpacity>
-                  <Ionicons name="create-outline" size={18} color="#999" />
+              <View style={styles.detailRow}>
+                <View style={styles.iconLabelContainer}>
+                  <View style={styles.iconCircle}>
+                    <MaterialCommunityIcons name="message-text" size={20} color="#7360F2" />
+                  </View>
+                  <View style={styles.labelValueContainer}>
+                    <Text style={styles.detailLabel}>VIBER LINK</Text>
+                    <Text style={[styles.detailValue, styles.notProvided]}>Not provided</Text>
+                  </View>
+                </View>
+                <TouchableOpacity style={styles.editButton}>
+                  <Ionicons name="create-outline" size={20} color="#E15816" />
                 </TouchableOpacity>
               </View>
             </View>
 
             {/* WhatsApp Link */}
             <View style={styles.detailItem}>
-              <View style={styles.detailHeader}>
-                <MaterialCommunityIcons name="whatsapp" size={18} color="#E15816" />
-                <Text style={styles.detailLabel}>WHATSAPP LINK</Text>
-              </View>
-              <View style={styles.detailContent}>
-                <Text style={styles.detailValue}>Not provided</Text>
-                <TouchableOpacity>
-                  <Ionicons name="create-outline" size={18} color="#999" />
+              <View style={styles.detailRow}>
+                <View style={styles.iconLabelContainer}>
+                  <View style={styles.iconCircle}>
+                    <MaterialCommunityIcons name="whatsapp" size={20} color="#25D366" />
+                  </View>
+                  <View style={styles.labelValueContainer}>
+                    <Text style={styles.detailLabel}>WHATSAPP LINK</Text>
+                    <Text style={[styles.detailValue, styles.notProvided]}>Not provided</Text>
+                  </View>
+                </View>
+                <TouchableOpacity style={styles.editButton}>
+                  <Ionicons name="create-outline" size={20} color="#E15816" />
                 </TouchableOpacity>
               </View>
             </View>
 
             {/* Account Number */}
             <View style={styles.detailItem}>
-              <View style={styles.detailHeader}>
-                <MaterialCommunityIcons name="numeric" size={18} color="#E15816" />
-                <Text style={styles.detailLabel}>ACCOUNT NUMBER</Text>
-              </View>
-              <View style={styles.detailContent}>
-                <Text style={styles.detailValue}>{userData.accountNumber || "00065312630"}</Text>
-                <TouchableOpacity>
-                  <Ionicons name="create-outline" size={18} color="#999" />
+              <View style={styles.detailRow}>
+                <View style={styles.iconLabelContainer}>
+                  <View style={styles.iconCircle}>
+                    <MaterialCommunityIcons name="numeric" size={20} color="#E15816" />
+                  </View>
+                  <View style={styles.labelValueContainer}>
+                    <Text style={styles.detailLabel}>ACCOUNT NUMBER</Text>
+                    <Text style={styles.detailValue}>{userData.accountNumber || "00065312630"}</Text>
+                  </View>
+                </View>
+                <TouchableOpacity style={styles.editButton}>
+                  <Ionicons name="create-outline" size={20} color="#E15816" />
                 </TouchableOpacity>
               </View>
             </View>
 
             {/* Account Type */}
             <View style={styles.detailItem}>
-              <View style={styles.detailHeader}>
-                <MaterialCommunityIcons name="account-star" size={18} color="#E15816" />
-                <Text style={styles.detailLabel}>Account Type</Text>
-              </View>
-              <View style={styles.detailContent}>
-                <View style={[styles.badge, styles.badgeAgent, { marginLeft: 0 }]}>
-                  <Text style={styles.badgeText}>{accountType}</Text>
+              <View style={styles.detailRow}>
+                <View style={styles.iconLabelContainer}>
+                  <View style={styles.iconCircle}>
+                    <MaterialCommunityIcons name="account-star" size={20} color="#E15816" />
+                  </View>
+                  <View style={styles.labelValueContainer}>
+                    <Text style={styles.detailLabel}>ACCOUNT TYPE</Text>
+                    <View style={[styles.badge, styles.badgeAgent, { marginTop: 4 }]}>
+                      <MaterialCommunityIcons name="briefcase" size={12} color="#FFFFFF" />
+                      <Text style={styles.badgeText}>{accountType}</Text>
+                    </View>
+                  </View>
                 </View>
               </View>
             </View>
 
             {/* Account Level */}
             <View style={styles.detailItem}>
-              <View style={styles.detailHeader}>
-                <MaterialCommunityIcons name="star" size={18} color="#E15816" />
-                <Text style={styles.detailLabel}>Account Level</Text>
-              </View>
-              <View style={styles.detailContent}>
-                <View style={[styles.badge, styles.badgePremium, { marginLeft: 0 }]}>
-                  <Text style={styles.badgeTextDark}>{accountLevel}</Text>
-                </View>
-                <View style={[styles.badge, styles.badgeWarning, { marginLeft: 8 }]}>
-                  <Text style={styles.badgeTextDark}>VERIFIED</Text>
+              <View style={styles.detailRow}>
+                <View style={styles.iconLabelContainer}>
+                  <View style={styles.iconCircle}>
+                    <MaterialCommunityIcons name="star" size={20} color="#FFD700" />
+                  </View>
+                  <View style={styles.labelValueContainer}>
+                    <Text style={styles.detailLabel}>ACCOUNT LEVEL</Text>
+                    <View style={styles.badgeRow}>
+                      <View style={[styles.badge, styles.badgePremium]}>
+                        <MaterialCommunityIcons name="crown" size={12} color="#333" />
+                        <Text style={styles.badgeTextDark}>{accountLevel}</Text>
+                      </View>
+                      <View style={[styles.badge, styles.badgeVerified]}>
+                        <MaterialCommunityIcons name="check-circle" size={12} color="#FFFFFF" />
+                        <Text style={styles.badgeText}>VERIFIED</Text>
+                      </View>
+                    </View>
+                  </View>
                 </View>
               </View>
             </View>
 
-            {/* Account Number (duplicate for agent number) */}
+            {/* Account Number (Agent Number) */}
             <View style={styles.detailItem}>
-              <View style={styles.detailHeader}>
-                <MaterialCommunityIcons name="account-box" size={18} color="#E15816" />
-                <Text style={styles.detailLabel}>Account Number</Text>
-              </View>
-              <View style={styles.detailContent}>
-                <Text style={styles.detailValue}>{userData.agentNumber || "N/A"}</Text>
+              <View style={styles.detailRow}>
+                <View style={styles.iconLabelContainer}>
+                  <View style={styles.iconCircle}>
+                    <MaterialCommunityIcons name="account-box" size={20} color="#E15816" />
+                  </View>
+                  <View style={styles.labelValueContainer}>
+                    <Text style={styles.detailLabel}>ACCOUNT NUMBER</Text>
+                    <Text style={styles.detailValue}>{userData.agentNumber || "N/A"}</Text>
+                  </View>
+                </View>
               </View>
             </View>
 
             {/* Agent Referrer */}
             <View style={styles.detailItem}>
-              <View style={styles.detailHeader}>
-                <MaterialCommunityIcons name="account-group" size={18} color="#E15816" />
-                <Text style={styles.detailLabel}>AGENT REFERRER</Text>
-              </View>
-              <View style={styles.detailContent}>
-                <Text style={[styles.detailValue, { color: "#E15816" }]}>Master Agent</Text>
+              <View style={styles.detailRow}>
+                <View style={styles.iconLabelContainer}>
+                  <View style={styles.iconCircle}>
+                    <MaterialCommunityIcons name="account-group" size={20} color="#E15816" />
+                  </View>
+                  <View style={styles.labelValueContainer}>
+                    <Text style={styles.detailLabel}>AGENT REFERRER</Text>
+                    <Text style={[styles.detailValue, { color: "#E15816", fontWeight: "600" }]}>Master Agent</Text>
+                  </View>
+                </View>
               </View>
             </View>
 
             {/* Language */}
             <View style={styles.detailItem}>
-              <View style={styles.detailHeader}>
-                <MaterialCommunityIcons name="translate" size={18} color="#E15816" />
-                <Text style={styles.detailLabel}>LANGUAGE</Text>
-              </View>
-              <View style={styles.detailContent}>
-                <Text style={styles.detailValue}>{userData.preferredLanguage || "English"}</Text>
-                <TouchableOpacity>
-                  <Ionicons name="create-outline" size={18} color="#999" />
+              <View style={styles.detailRow}>
+                <View style={styles.iconLabelContainer}>
+                  <View style={styles.iconCircle}>
+                    <MaterialCommunityIcons name="translate" size={20} color="#E15816" />
+                  </View>
+                  <View style={styles.labelValueContainer}>
+                    <Text style={styles.detailLabel}>LANGUAGE</Text>
+                    <Text style={styles.detailValue}>{userData.preferredLanguage || "English"}</Text>
+                  </View>
+                </View>
+                <TouchableOpacity style={styles.editButton}>
+                  <Ionicons name="create-outline" size={20} color="#E15816" />
                 </TouchableOpacity>
               </View>
             </View>
@@ -287,31 +356,42 @@ export default function PersonalNew() {
           {/* Account Status Section */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <MaterialCommunityIcons name="information" size={20} color="#E15816" />
+              <View style={styles.sectionIconContainer}>
+                <MaterialCommunityIcons name="information" size={22} color="#E15816" />
+              </View>
               <Text style={styles.sectionTitle}>Account Status</Text>
             </View>
 
             {/* Status */}
             <View style={styles.detailItem}>
-              <View style={styles.detailHeader}>
-                <MaterialCommunityIcons name="check-circle" size={18} color="#4CAF50" />
-                <Text style={styles.detailLabel}>Status</Text>
-              </View>
-              <View style={styles.detailContent}>
-                <View style={[styles.badge, styles.badgeActive]}>
-                  <Text style={styles.badgeTextDark}>{accountStatus}</Text>
+              <View style={styles.detailRow}>
+                <View style={styles.iconLabelContainer}>
+                  <View style={[styles.iconCircle, { backgroundColor: "#E8F5E9" }]}>
+                    <MaterialCommunityIcons name="check-circle" size={20} color="#4CAF50" />
+                  </View>
+                  <View style={styles.labelValueContainer}>
+                    <Text style={styles.detailLabel}>STATUS</Text>
+                    <View style={[styles.badge, styles.badgeActive, { marginTop: 4 }]}>
+                      <MaterialCommunityIcons name="check" size={12} color="#FFFFFF" />
+                      <Text style={styles.badgeText}>{accountStatus}</Text>
+                    </View>
+                  </View>
                 </View>
               </View>
             </View>
 
             {/* Member Since */}
             <View style={styles.detailItem}>
-              <View style={styles.detailHeader}>
-                <MaterialCommunityIcons name="calendar" size={18} color="#E15816" />
-                <Text style={styles.detailLabel}>MEMBER SINCE</Text>
-              </View>
-              <View style={styles.detailContent}>
-                <Text style={styles.detailValue}>2/5/2026</Text>
+              <View style={styles.detailRow}>
+                <View style={styles.iconLabelContainer}>
+                  <View style={styles.iconCircle}>
+                    <MaterialCommunityIcons name="calendar" size={20} color="#E15816" />
+                  </View>
+                  <View style={styles.labelValueContainer}>
+                    <Text style={styles.detailLabel}>MEMBER SINCE</Text>
+                    <Text style={styles.detailValue}>February 5, 2026</Text>
+                  </View>
+                </View>
               </View>
             </View>
           </View>
@@ -322,8 +402,8 @@ export default function PersonalNew() {
             onPress={handleLogout}
             activeOpacity={0.7}
           >
-            <MaterialCommunityIcons name="logout" size={20} color="#FFFFFF" />
-            <Text style={styles.logoutText}>Log out</Text>
+            <MaterialCommunityIcons name="logout" size={22} color="#FFFFFF" />
+            <Text style={styles.logoutText}>Log Out</Text>
           </TouchableOpacity>
 
           <View style={{ height: 40 }} />
@@ -350,6 +430,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
     backgroundColor: "#FFFFFF",
+    borderBottomWidth: 1,
+    borderBottomColor: "#F0F0F0",
   },
   backButton: {
     width: 40,
@@ -359,8 +441,8 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: "600",
-    color: "#E15816",
+    fontWeight: "700",
+    color: "#333",
   },
   placeholder: {
     width: 40,
@@ -370,28 +452,35 @@ const styles = StyleSheet.create({
   },
   profileCard: {
     margin: 16,
-    borderRadius: 16,
-    padding: 24,
+    borderRadius: 20,
+    padding: 28,
     alignItems: "center",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 5,
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 6,
   },
   avatarContainer: {
-    marginBottom: 12,
+    marginBottom: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 90,
+    height: 90,
+    borderRadius: 45,
     backgroundColor: "#FFFFFF",
     justifyContent: "center",
     alignItems: "center",
+    borderWidth: 3,
+    borderColor: "rgba(255, 255, 255, 0.3)",
   },
   profileName: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: "700",
     color: "#FFFFFF",
     marginBottom: 4,
@@ -399,29 +488,29 @@ const styles = StyleSheet.create({
   profileEmail: {
     fontSize: 14,
     color: "#FFFFFF",
-    opacity: 0.9,
-    marginBottom: 16,
+    opacity: 0.95,
+    marginBottom: 20,
   },
   badgesContainer: {
     flexDirection: "row",
-    gap: 8,
+    gap: 10,
   },
   badge: {
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 12,
+    borderRadius: 14,
     gap: 4,
   },
   badgeAgent: {
-    backgroundColor: "rgba(139, 0, 0, 0.8)",
+    backgroundColor: "rgba(139, 0, 0, 0.9)",
   },
   badgePremium: {
     backgroundColor: "#FFD700",
   },
-  badgeWarning: {
-    backgroundColor: "#FFA500",
+  badgeVerified: {
+    backgroundColor: "#4CAF50",
   },
   badgeActive: {
     backgroundColor: "#4CAF50",
@@ -430,63 +519,102 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "700",
     color: "#FFFFFF",
+    letterSpacing: 0.3,
   },
   badgeTextDark: {
     fontSize: 11,
     fontWeight: "700",
     color: "#333",
+    letterSpacing: 0.3,
   },
   section: {
     backgroundColor: "#FFFFFF",
     marginHorizontal: 16,
     marginBottom: 16,
     borderRadius: 16,
-    padding: 16,
+    padding: 20,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
     elevation: 3,
   },
   sectionHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    marginBottom: 16,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#F0F0F0",
+    gap: 10,
+    marginBottom: 20,
+    paddingBottom: 16,
+    borderBottomWidth: 2,
+    borderBottomColor: "#F5F5F5",
+  },
+  sectionIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#FFF5F0",
+    justifyContent: "center",
+    alignItems: "center",
   },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: "700",
     color: "#333",
   },
   detailItem: {
-    marginBottom: 16,
+    marginBottom: 18,
   },
-  detailHeader: {
+  detailRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    marginBottom: 6,
+    justifyContent: "space-between",
+  },
+  iconLabelContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    flex: 1,
+  },
+  iconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#FFF5F0",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  labelValueContainer: {
+    flex: 1,
   },
   detailLabel: {
     fontSize: 11,
     fontWeight: "600",
     color: "#999",
-    textTransform: "uppercase",
-  },
-  detailContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    marginBottom: 4,
+    letterSpacing: 0.5,
   },
   detailValue: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: "500",
     color: "#333",
-    flex: 1,
+    lineHeight: 20,
+  },
+  notProvided: {
+    color: "#999",
+    fontStyle: "italic",
+  },
+  editButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#FFF5F0",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  badgeRow: {
+    flexDirection: "row",
+    gap: 8,
+    marginTop: 4,
   },
   logoutButton: {
     flexDirection: "row",
@@ -495,17 +623,18 @@ const styles = StyleSheet.create({
     backgroundColor: "#e74c3c",
     marginHorizontal: 16,
     paddingVertical: 16,
-    borderRadius: 12,
-    gap: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    borderRadius: 14,
+    gap: 10,
+    shadowColor: "#e74c3c",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   logoutText: {
-    fontSize: 14,
-    fontWeight: "600",
+    fontSize: 16,
+    fontWeight: "700",
     color: "#FFFFFF",
+    letterSpacing: 0.5,
   },
 });
