@@ -86,7 +86,11 @@ const AgentFloatingButton = ({ onPress, isVisible = true }) => {
 
   const panResponder = useRef(
     PanResponder.create({
-      onMoveShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (evt, gestureState) => {
+        // Only set responder if there's significant movement (more than 5 pixels)
+        const { dx, dy } = gestureState;
+        return Math.abs(dx) > 5 || Math.abs(dy) > 5;
+      },
       onPanResponderGrant: () => {
         setIsDragging(true);
 
@@ -107,8 +111,24 @@ const AgentFloatingButton = ({ onPress, isVisible = true }) => {
         [null, { dx: pan.x, dy: pan.y }],
         { useNativeDriver: false }
       ),
-      onPanResponderRelease: () => {
+      onPanResponderRelease: (evt, gestureState) => {
         pan.flattenOffset();
+
+        // Check if this was a tap (minimal movement) or a drag
+        const { dx, dy } = gestureState;
+        const wasTap = Math.abs(dx) < 5 && Math.abs(dy) < 5;
+
+        if (wasTap) {
+          // This was a tap, not a drag - reset immediately
+          setIsDragging(false);
+          Animated.spring(dragScaleAnim, {
+            toValue: 1,
+            tension: 100,
+            friction: 8,
+            useNativeDriver: true,
+          }).start();
+          return;
+        }
 
         // Calculate new position
         const newX = lastPosition.current.x + pan.x._value;
@@ -178,8 +198,12 @@ const AgentFloatingButton = ({ onPress, isVisible = true }) => {
   ).current;
 
   const handlePress = () => {
+    console.log('🟢 AgentFloatingButton - handlePress called, isDragging:', isDragging);
     if (!isDragging) {
+      console.log('🟢 AgentFloatingButton - Calling onPress callback');
       onPress();
+    } else {
+      console.log('🟡 AgentFloatingButton - Press ignored (dragging)');
     }
   };
 

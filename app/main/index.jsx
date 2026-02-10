@@ -285,7 +285,8 @@ export default function Dashboard() {
             />
           )}
 
-          {/* Quick Action Buttons */}
+          {/* Quick Action Buttons - Hide in Cards and Savings tabs */}
+          {activeTab !== "Cards" && activeTab !== "Savings" && (
           <View style={styles.quickActionsContainer}>
             <TouchableOpacity 
               style={styles.quickActionButton}
@@ -327,8 +328,10 @@ export default function Dashboard() {
               <Text style={styles.quickActionLabel}>History</Text>
             </TouchableOpacity>
           </View>
+          )}
 
-          {/* Menu Grid Container - 5 items per line */}
+          {/* Menu Grid Container - 5 items per line - Hide in Cards and Savings tabs */}
+          {activeTab !== "Cards" && activeTab !== "Savings" && (
           <View style={styles.menuContainer}>
             <View style={styles.menuHeader}>
               <Text style={styles.menuHeaderTitle}>Services</Text>
@@ -356,8 +359,10 @@ export default function Dashboard() {
               ))}
             </View>
           </View>
+          )}
 
-          {/* Crypto Banner */}
+          {/* Crypto Banner - Hide in Savings tab only */}
+          {activeTab !== "Savings" && (
           <ScrollView 
             horizontal 
             showsHorizontalScrollIndicator={false}
@@ -383,8 +388,10 @@ export default function Dashboard() {
               </ImageBackground>
             </TouchableOpacity>
           </ScrollView>
+          )}
 
-          {/* Transaction History */}
+          {/* Transaction History - Hide in Savings tab only */}
+          {activeTab !== "Savings" && (
           <View style={styles.transactionSection}>
             <View style={styles.transactionHeader}>
               <Ionicons name="time-outline" size={20} color="#E15816" />
@@ -425,6 +432,7 @@ export default function Dashboard() {
               </View>
             )}
           </View>
+          )}
 
           {/* Partner Banners - Auto-scrolling Carousel */}
           <View style={styles.bannersSection}>

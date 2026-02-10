@@ -271,9 +271,11 @@ export default function PersonalNew() {
                   </View>
                   <View style={styles.labelValueContainer}>
                     <Text style={styles.detailLabel}>ACCOUNT TYPE</Text>
-                    <View style={[styles.badge, styles.badgeAgent, { marginTop: 4 }]}>
-                      <MaterialCommunityIcons name="briefcase" size={12} color="#FFFFFF" />
-                      <Text style={styles.badgeText}>{accountType}</Text>
+                    <View style={styles.badgeWrapper}>
+                      <View style={[styles.badge, styles.badgeAgent]}>
+                        <MaterialCommunityIcons name="briefcase" size={12} color="#FFFFFF" />
+                        <Text style={styles.badgeText}>{accountType}</Text>
+                      </View>
                     </View>
                   </View>
                 </View>
@@ -371,9 +373,11 @@ export default function PersonalNew() {
                   </View>
                   <View style={styles.labelValueContainer}>
                     <Text style={styles.detailLabel}>STATUS</Text>
-                    <View style={[styles.badge, styles.badgeActive, { marginTop: 4 }]}>
-                      <MaterialCommunityIcons name="check" size={12} color="#FFFFFF" />
-                      <Text style={styles.badgeText}>{accountStatus}</Text>
+                    <View style={styles.badgeWrapper}>
+                      <View style={[styles.badge, styles.badgeActive]}>
+                        <MaterialCommunityIcons name="check" size={12} color="#FFFFFF" />
+                        <Text style={styles.badgeText}>{accountStatus}</Text>
+                      </View>
                     </View>
                   </View>
                 </View>
@@ -495,6 +499,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 10,
   },
+  badgeWrapper: {
+    marginTop: 4,
+    alignSelf: "flex-start",
+  },
   badge: {
     flexDirection: "row",
     alignItems: "center",
@@ -589,7 +597,7 @@ const styles = StyleSheet.create({
   detailLabel: {
     fontSize: 11,
     fontWeight: "600",
-    color: "#999",
+    color: "#666",
     marginBottom: 4,
     letterSpacing: 0.5,
   },
