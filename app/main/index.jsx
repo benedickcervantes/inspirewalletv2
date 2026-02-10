@@ -230,9 +230,12 @@ export default function Dashboard() {
                   </View>
                 )}
               </TouchableOpacity>
-              <View style={styles.iconButton}>
-                <Ionicons name="menu" size={24} color="#CCCCCC" />
-              </View>
+              <TouchableOpacity 
+                style={styles.iconButton}
+                onPress={() => router.push("/settings")}
+              >
+                <Ionicons name="settings-outline" size={24} color="#E15816" />
+              </TouchableOpacity>
             </View>
           </View>
 

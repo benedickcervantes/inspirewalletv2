@@ -245,76 +245,64 @@ export default function Chat() {
 
   if (!selectedTicket) {
     return (
-      <View style={styles.container}>
-        <LinearGradient
-          colors={["#E15B16", "#F48F38"]}
-          style={styles.gradientBackground}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-        >
-          <SafeAreaView style={styles.safeArea}>
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#FFFFFF" />
-              <Text style={styles.loadingText}>Loading chat...</Text>
-            </View>
-          </SafeAreaView>
-        </LinearGradient>
-      </View>
+      <ImageBackground
+        source={require("../../assets/images/chat support  background.png")}
+        style={styles.container}
+        resizeMode="cover"
+      >
+        <SafeAreaView style={styles.safeArea}>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#FFFFFF" />
+            <Text style={styles.loadingText}>Loading chat...</Text>
+          </View>
+        </SafeAreaView>
+      </ImageBackground>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <LinearGradient
-        colors={["#E15B16", "#F48F38"]}
-        style={styles.gradientBackground}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-      >
-        <SafeAreaView style={styles.safeArea}>
+    <ImageBackground
+      source={require("../../assets/images/chat support  background.png")}
+      style={styles.container}
+      resizeMode="cover"
+    >
+      <SafeAreaView style={styles.safeArea}>
         <KeyboardAvoidingView 
           style={styles.keyboardAvoidingView}
           behavior={Platform.OS === "ios" ? "padding" : undefined}
           keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
         >
-          {/* Custom Header with Orange Gradient */}
+          {/* Custom Header - No gradient, use transparent background */}
           <View style={styles.headerContainer}>
-            <LinearGradient
-              colors={["#E25A17", "#F28934"]}
-              style={styles.headerGradient}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-            >
-              <View style={styles.headerContent}>
-                <TouchableOpacity
-                  style={styles.backButton}
-                  onPress={() => router.back()}
-                >
-                  <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
-                </TouchableOpacity>
+            <View style={styles.headerContent}>
+              <TouchableOpacity
+                style={styles.backButton}
+                onPress={() => router.back()}
+              >
+                <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+              </TouchableOpacity>
 
-                <View style={styles.agentInfo}>
-                  <View style={styles.agentAvatar}>
-                    <MaterialCommunityIcons name="headset" size={28} color="#E25A17" />
-                  </View>
-                  <View style={styles.agentDetails}>
-                    <Text style={styles.agentName}>Support Agent</Text>
-                    <Text style={styles.agentStatus}>
-                      Online | ID: {selectedTicket.adminId || "12345"}
-                    </Text>
-                  </View>
+              <View style={styles.agentInfo}>
+                <View style={styles.agentAvatar}>
+                  <MaterialCommunityIcons name="headset" size={28} color="#E25A17" />
                 </View>
-
-                <View style={styles.headerActions}>
-                  <TouchableOpacity style={styles.headerActionButton}>
-                    <Ionicons name="call" size={22} color="#FFFFFF" />
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.headerActionButton}>
-                    <Ionicons name="ellipsis-vertical" size={22} color="#FFFFFF" />
-                  </TouchableOpacity>
+                <View style={styles.agentDetails}>
+                  <Text style={styles.agentName}>Support Agent</Text>
+                  <Text style={styles.agentStatus}>
+                    Online | ID: {selectedTicket.adminId || "support"}
+                  </Text>
                 </View>
               </View>
-            </LinearGradient>
+
+              <View style={styles.headerActions}>
+                <TouchableOpacity style={styles.headerActionButton}>
+                  <Ionicons name="call" size={22} color="#FFFFFF" />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.headerActionButton}>
+                  <Ionicons name="ellipsis-vertical" size={22} color="#FFFFFF" />
+                </TouchableOpacity>
+              </View>
+            </View>
           </View>
 
           {/* Large Inspire Logo Background */}
@@ -486,8 +474,7 @@ export default function Chat() {
           </View>
         </View>
       )}
-      </LinearGradient>
-    </View>
+    </ImageBackground>
   );
 }
 
@@ -518,20 +505,14 @@ const styles = StyleSheet.create({
 
   // Custom Header
   headerContainer: {
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  headerGradient: {
-    paddingTop: Platform.OS === "android" ? 40 : 0,
+    backgroundColor: "transparent",
   },
   headerContent: {
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 12,
+    paddingTop: Platform.OS === "android" ? 8 : 12,
   },
   backButton: {
     width: 40,

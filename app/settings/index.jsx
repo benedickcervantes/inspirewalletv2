@@ -1,182 +1,220 @@
+import React, { useState } from "react";
 import {
   StyleSheet,
   Text,
   View,
   SafeAreaView,
   TouchableOpacity,
-  ScrollView,
-  StatusBar,
   TextInput,
-  Dimensions,
+  ScrollView,
+  ImageBackground,
+  Alert,
 } from "react-native";
-import { useState } from "react";
 import { useRouter } from "expo-router";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-
-const { width } = Dimensions.get("window");
+import { auth } from "../../configs/firebase";
+import { signOut } from "firebase/auth";
 
 export default function Settings() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
 
-  const mainServices = [
-    { icon: "wallet", label: "E-Wallet", subtitle: "Cash In/Cash Out", route: "/maya", active: true },
-    { icon: "swap-horizontal", label: "Transfer", subtitle: "Cash to Cash", route: "/transfer" },
-    { icon: "bank", label: "Banking Services", subtitle: "All in one", route: "/bdo" },
-    { icon: "wallet-outline", label: "Inspire Cards", subtitle: "Virtual & Physical", route: "/inspirecards" },
-    { icon: "airplane", label: "Travel Protection", subtitle: "Insurance", route: "/travel", small: true },
-  ];
+  const handleSignOut = async () => {
+    Alert.alert(
+      "Sign Out",
+      "Are you sure you want to sign out?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Sign Out",
+          onPress: async () => {
+            try {
+              await signOut(auth);
+              router.replace("/welcome");
+            } catch (error) {
+              console.error("Error signing out:", error);
+              Alert.alert("Error", "Failed to sign out. Please try again.");
+            }
+          },
+          style: "destructive",
+        },
+      ]
+    );
+  };
 
-  const inspireBalances = [
-    { icon: "chart-line", label: "Investment Profile", subtitle: "Grow your money", route: "/monthly" },
-    { icon: "chart-bar", label: "Stockholder", subtitle: "Stock Market", route: "/stockholder" },
-    { icon: "account-tie", label: "Agent", subtitle: "Become an Agent", route: "/agentrequest" },
-    { icon: "cash-multiple", label: "Special Campaign", subtitle: "Limited Offers", route: "/campaign" },
-    { icon: "shield-check", label: "Inspire Secure Growth", subtitle: "Safe Investment", route: "/inspiresecuregrowth", small: true },
+  const settingsOptions = [
+    {
+      category: "Account",
+      items: [
+        {
+          icon: "account-multiple",
+          label: "Account Control",
+          route: "/personal",
+        },
+      ],
+    },
+    {
+      category: "Security",
+      items: [
+        {
+          icon: "lock",
+          label: "Passcode",
+          subtitle: "Change your PIN",
+          route: "/passcode",
+        },
+      ],
+    },
+    {
+      category: "Customer Relationship",
+      items: [
+        {
+          icon: "information",
+          label: "About us",
+          route: "/about",
+        },
+        {
+          icon: "account-tie",
+          label: "Agent Request",
+          route: "/agentrequest",
+        },
+        {
+          icon: "headset",
+          label: "Help Center",
+          route: "/helpcenter",
+        },
+        {
+          icon: "shield-check",
+          label: "Privacy Policy",
+          route: "/privacy",
+        },
+        {
+          icon: "file-document",
+          label: "Terms and Condition",
+          route: "/termsandcondition",
+        },
+      ],
+    },
   ];
-
-  const playAndEarn = [
-    { icon: "chart-timeline-variant", label: "Trading", subtitle: "Trade & Invest", route: "/crypto" },
-    { icon: "bitcoin", label: "Deposit via Crypto", subtitle: "Crypto", route: "/depositcrypto" },
-  ];
-
-  const renderServiceCard = (service) => (
-    <TouchableOpacity
-      key={service.label}
-      style={[
-        styles.serviceCard, 
-        service.active && styles.activeCard,
-        service.small && styles.smallCard
-      ]}
-      onPress={() => router.push(service.route)}
-      activeOpacity={0.7}
-    >
-      <View style={[
-        styles.iconContainer, 
-        service.active && styles.activeIconContainer,
-        service.small && styles.smallIconContainer
-      ]}>
-        <MaterialCommunityIcons 
-          name={service.icon} 
-          size={service.small ? 21 : 22} 
-          color={service.active ? "#FFFFFF" : "#E15816"} 
-        />
-      </View>
-      <Text style={[
-        styles.serviceLabel, 
-        service.small && styles.smallLabel,
-        service.active && styles.activeLabel
-      ]} numberOfLines={2} ellipsizeMode="tail">{service.label}</Text>
-      <Text style={[
-        styles.serviceSubtitle, 
-        service.small && styles.smallSubtitle,
-        service.active && styles.activeSubtitle
-      ]} numberOfLines={2} ellipsizeMode="tail">{service.subtitle}</Text>
-    </TouchableOpacity>
-  );
 
   return (
-    <>
-      <StatusBar barStyle="light-content" backgroundColor="#E15816" />
-      <SafeAreaView style={styles.container}>
-        {/* Header */}
+    <ImageBackground
+      source={require("../../assets/images/bg2.png")}
+      style={styles.container}
+      resizeMode="cover"
+    >
+      <SafeAreaView style={styles.safeArea}>
+        {/* Header with Orange Gradient */}
         <LinearGradient
-          colors={["#E15816", "#F48F38"]}
+          colors={["#E25A17", "#F28934"]}
           style={styles.header}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
         >
-          <View style={styles.headerContent}>
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={() => router.back()}
-            >
-              <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>Services</Text>
-            <TouchableOpacity
-              style={styles.notificationButton}
-              onPress={() => router.push("/notification")}
-            >
-              <Ionicons name="notifications-outline" size={24} color="#FFFFFF" />
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+          >
+            <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+          </TouchableOpacity>
 
-          {/* Search Bar */}
-          <View style={styles.searchContainer}>
-            <Ionicons name="search" size={20} color="#999" style={styles.searchIcon} />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search services..."
-              placeholderTextColor="#999"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-            />
-          </View>
+          <Text style={styles.headerTitle}>Settings</Text>
+
+          <TouchableOpacity
+            style={styles.notificationButton}
+            onPress={() => router.push("/notification")}
+          >
+            <Ionicons name="notifications" size={24} color="#FFFFFF" />
+          </TouchableOpacity>
         </LinearGradient>
 
-        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-          {/* Main Services */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Main Services</Text>
-            <View style={styles.servicesGrid}>
-              {mainServices.map((service, index) => renderServiceCard(service, index, mainServices))}
-            </View>
-          </View>
+        {/* Search Bar */}
+        <View style={styles.searchContainer}>
+          <Ionicons name="search" size={20} color="#999" style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search settings..."
+            placeholderTextColor="#999"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+        </View>
 
-          {/* Inspire Balances */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Inspire Balances</Text>
-            <View style={styles.servicesGrid}>
-              {inspireBalances.map((service, index) => renderServiceCard(service, index, inspireBalances))}
-            </View>
-          </View>
-
-          {/* Play and Earn */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Play and Earn</Text>
-            <View style={styles.servicesGrid}>
-              {playAndEarn.map((service, index) => renderServiceCard(service, index, playAndEarn))}
-            </View>
-          </View>
-
-          {/* Crypto Banner */}
-          <TouchableOpacity
-            style={styles.cryptoBanner}
-            onPress={() => router.push("/crypto")}
-            activeOpacity={0.8}
-          >
-            <LinearGradient
-              colors={["#E15816", "#F48F38"]}
-              style={styles.cryptoBannerGradient}
-            >
-              <Text style={styles.cryptoBannerTitle}>CRYPTO IN INSPIRE WALLET</Text>
-              <Text style={styles.cryptoBannerSubtitle}>Trade Bitcoin, Ethereum, & more</Text>
-              <View style={styles.exploreButton}>
-                <Text style={styles.exploreButtonText}>Explore</Text>
+        {/* Settings List */}
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {settingsOptions.map((section, sectionIndex) => (
+            <View key={sectionIndex} style={styles.section}>
+              <Text style={styles.sectionTitle}>{section.category}</Text>
+              
+              <View style={styles.sectionCard}>
+                {section.items.map((item, itemIndex) => (
+                  <TouchableOpacity
+                    key={itemIndex}
+                    style={[
+                      styles.settingItem,
+                      itemIndex !== section.items.length - 1 && styles.settingItemBorder
+                    ]}
+                    onPress={() => router.push(item.route)}
+                  >
+                    <View style={styles.settingLeft}>
+                      <View style={styles.iconContainer}>
+                        <MaterialCommunityIcons
+                          name={item.icon}
+                          size={24}
+                          color="#E25A17"
+                        />
+                      </View>
+                      <View style={styles.settingTextContainer}>
+                        <Text style={styles.settingLabel}>{item.label}</Text>
+                        {item.subtitle && (
+                          <Text style={styles.settingSubtitle}>{item.subtitle}</Text>
+                        )}
+                      </View>
+                    </View>
+                    <Ionicons name="chevron-forward" size={20} color="#CCC" />
+                  </TouchableOpacity>
+                ))}
               </View>
-            </LinearGradient>
+            </View>
+          ))}
+
+          {/* Sign Out Button */}
+          <TouchableOpacity
+            style={styles.signOutButton}
+            onPress={handleSignOut}
+          >
+            <MaterialCommunityIcons name="logout" size={20} color="#666" />
+            <Text style={styles.signOutText}>SIGN OUT</Text>
           </TouchableOpacity>
+
+          <View style={styles.bottomPadding} />
         </ScrollView>
       </SafeAreaView>
-    </>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F5F5F5",
+  },
+  safeArea: {
+    flex: 1,
   },
   header: {
-    paddingBottom: 20,
-  },
-  headerContent: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 16,
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    paddingTop: 20,
   },
   backButton: {
     width: 40,
@@ -186,7 +224,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 20,
-    fontWeight: "bold",
+    fontWeight: "700",
     color: "#FFFFFF",
   },
   notificationButton: {
@@ -200,159 +238,105 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#FFFFFF",
     marginHorizontal: 20,
-    borderRadius: 12,
+    marginTop: 16,
+    marginBottom: 8,
     paddingHorizontal: 16,
-    height: 48,
+    paddingVertical: 12,
+    borderRadius: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   searchIcon: {
     marginRight: 8,
   },
   searchInput: {
     flex: 1,
-    fontSize: 16,
+    fontSize: 15,
     color: "#333",
   },
-  content: {
+  scrollView: {
     flex: 1,
   },
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+  },
   section: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#333",
+    marginBottom: 12,
+  },
+  sectionCard: {
     backgroundColor: "#FFFFFF",
-    marginHorizontal: 16,
-    marginTop: 16,
-    borderRadius: 16,
-    padding: 16,
+    borderRadius: 12,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#333",
-    marginBottom: 16,
-  },
-  servicesGrid: {
+  settingItem: {
     flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-  },
-  serviceCard: {
-    width: (width - 80) / 3,
-    height: 105,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 10,
-    padding: 8,
     alignItems: "center",
-    justifyContent: "flex-start",
-    borderWidth: 1,
-    borderColor: "#E0E0E0",
-    marginBottom: 8,
+    justifyContent: "space-between",
+    paddingVertical: 16,
+    paddingHorizontal: 16,
   },
-  smallCard: {
-    width: (width - 80.2) / 3.01,
-    height: 104,
-    padding: 7.5,
+  settingItemBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: "#F0F0F0",
   },
-  lastRowCard: {
-    marginRight: 8,
-  },
-  activeCard: {
-    backgroundColor: "#F38B35",
-    borderColor: "#DE5212",
-    borderWidth: 2,
+  settingLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
   },
   iconContainer: {
-    width: 42,
-    height: 42,
-    borderRadius: 10,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: "#FFF5F0",
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 6,
+    marginRight: 12,
   },
-  smallIconContainer: {
-    width: 41,
-    height: 41,
-    borderRadius: 9,
-    marginBottom: 5,
+  settingTextContainer: {
+    flex: 1,
   },
-  activeIconContainer: {
-    backgroundColor: "#DE5212",
-  },
-  serviceLabel: {
-    fontSize: 10,
-    fontWeight: "600",
+  settingLabel: {
+    fontSize: 15,
+    fontWeight: "500",
     color: "#333",
-    textAlign: "center",
-    marginBottom: 2,
-    lineHeight: 12,
-    maxHeight: 24,
   },
-  activeLabel: {
-    color: "#FFFFFF",
-  },
-  smallLabel: {
-    fontSize: 9.5,
-    lineHeight: 11,
-    maxHeight: 22,
-  },
-  serviceSubtitle: {
-    fontSize: 8,
+  settingSubtitle: {
+    fontSize: 12,
     color: "#999",
-    textAlign: "center",
-    lineHeight: 10,
-    maxHeight: 20,
+    marginTop: 2,
   },
-  activeSubtitle: {
-    color: "#FFFFFF",
-    opacity: 0.9,
-  },
-  smallSubtitle: {
-    fontSize: 7.5,
-    lineHeight: 9,
-    maxHeight: 18,
-  },
-  cryptoBanner: {
-    marginHorizontal: 20,
-    marginTop: 20,
-    marginBottom: 30,
-    borderRadius: 16,
-    overflow: "hidden",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  cryptoBannerGradient: {
-    padding: 24,
-    minHeight: 140,
+  signOutButton: {
+    flexDirection: "row",
+    alignItems: "center",
     justifyContent: "center",
-  },
-  cryptoBannerTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#FFFFFF",
-    marginBottom: 4,
-  },
-  cryptoBannerSubtitle: {
-    fontSize: 14,
-    color: "#FFFFFF",
-    opacity: 0.9,
+    backgroundColor: "#E0E0E0",
+    paddingVertical: 16,
+    borderRadius: 12,
+    marginTop: 8,
     marginBottom: 16,
   },
-  exploreButton: {
-    backgroundColor: "#FFFFFF",
-    paddingHorizontal: 24,
-    paddingVertical: 10,
-    borderRadius: 20,
-    alignSelf: "flex-start",
-  },
-  exploreButtonText: {
-    fontSize: 14,
+  signOutText: {
+    fontSize: 15,
     fontWeight: "600",
-    color: "#E15816",
+    color: "#666",
+    marginLeft: 8,
+  },
+  bottomPadding: {
+    height: 20,
   },
 });

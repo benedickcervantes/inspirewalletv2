@@ -1,283 +1,236 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import {
   StyleSheet,
   Text,
   View,
-  ImageBackground,
   SafeAreaView,
   ScrollView,
-  Platform,
+  TouchableOpacity,
+  Dimensions,
 } from "react-native";
 import { useRouter, useNavigation } from "expo-router";
-import { Colors } from "../../constants/Colors";
-import { auth, firestore } from "../../configs/firebase";
-import { doc, getDoc } from "firebase/firestore";
-import { t } from "../../utils/languageUtils";
-import { getRTLStyles } from "../../utils/rtlUtils";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
+
+const { width } = Dimensions.get("window");
 
 export default function Index() {
   const navigation = useNavigation();
   const router = useRouter();
-  const [userLanguage, setUserLanguage] = useState('English');
-
-  useEffect(() => {
-    fetchUserLanguage();
-  }, []);
 
   useEffect(() => {
     navigation.setOptions({
-      headerShown: true,
-      headerTransparent: true,
-      headerTitle: t(userLanguage, 'about.header.title'),
-      headerTintColor: Colors.redTheme.background,
-      headerTitleStyle: {
-        fontWeight: "bold",
-        fontSize: 18,
-      },
+      headerShown: false,
     });
-  }, [navigation, userLanguage]);
-
-  const fetchUserLanguage = async () => {
-    try {
-      const user = auth.currentUser;
-      if (user) {
-        const userDocRef = doc(firestore, "users", user.uid);
-        const userDocSnap = await getDoc(userDocRef);
-        
-        if (userDocSnap.exists()) {
-          const data = userDocSnap.data();
-          setUserLanguage(data.preferredLanguage || 'English');
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching user language:", error);
-    }
-  };
-
-  const sections = [
-    {
-      id: 'ourCompany',
-      title: t(userLanguage, 'about.content.ourCompany.title'),
-      icon: 'business-outline',
-      content: t(userLanguage, 'about.content.ourCompany.content')
-    },
-    {
-      id: 'ourMission',
-      title: t(userLanguage, 'about.content.ourMission.title'),
-      icon: 'flag-outline',
-      content: t(userLanguage, 'about.content.ourMission.content')
-    },
-    {
-      id: 'inspireWallet',
-      title: t(userLanguage, 'about.content.inspireWallet.title'),
-      icon: 'wallet-outline',
-      content: t(userLanguage, 'about.content.inspireWallet.content'),
-      bulletPoints: [
-        t(userLanguage, 'about.content.inspireWallet.bulletPoints.investments'),
-        t(userLanguage, 'about.content.inspireWallet.bulletPoints.stocks'),
-        t(userLanguage, 'about.content.inspireWallet.bulletPoints.withdrawals'),
-        t(userLanguage, 'about.content.inspireWallet.bulletPoints.transactions')
-      ],
-      conclusion: t(userLanguage, 'about.content.inspireWallet.conclusion')
-    }
-  ];
-
-  const renderSection = (section) => (
-    <View key={section.id} style={styles.sectionCard}>
-      <View style={styles.sectionHeader}>
-        <View style={styles.sectionIconContainer}>
-          <Ionicons name={section.icon} size={24} color={Colors.redTheme.background} />
-        </View>
-        <Text style={[styles.sectionTitle, getRTLStyles(userLanguage)]}>
-          {section.title}
-        </Text>
-      </View>
-      
-      <Text style={[styles.sectionContent, getRTLStyles(userLanguage)]}>
-        {section.content}
-      </Text>
-
-      {section.bulletPoints && (
-        <View style={styles.bulletPointsContainer}>
-          {section.bulletPoints.map((point, index) => (
-            <View key={index} style={styles.bulletPoint}>
-              <View style={styles.bulletIcon}>
-                <Ionicons name="checkmark" size={12} color={Colors.redTheme.background} />
-              </View>
-              <Text style={[styles.bulletText, getRTLStyles(userLanguage)]}>
-                {point}
-              </Text>
-            </View>
-          ))}
-        </View>
-      )}
-
-      {section.conclusion && (
-        <Text style={[styles.conclusionText, getRTLStyles(userLanguage)]}>
-          {section.conclusion}
-        </Text>
-      )}
-    </View>
-  );
+  }, [navigation]);
 
   return (
-    <ImageBackground
-      source={require("../../assets/images/bg2.png")}
-      style={styles.container}
-    >
-      <SafeAreaView style={styles.androidSafeArea}>
-        <ScrollView 
-          contentContainerStyle={styles.scrollViewContent}
+    <View style={styles.container}>
+      <SafeAreaView style={styles.safeArea}>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+          >
+            <Ionicons name="arrow-back" size={24} color="#E25A17" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>About Inspire</Text>
+          <View style={styles.placeholder} />
+        </View>
+
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          {/* Hero Section */}
-          <View style={styles.heroCard}>
-            <View style={styles.heroIconContainer}>
-              <Ionicons name="information-circle" size={48} color="white" />
+          {/* Our Company Section */}
+          <View style={styles.sectionCard}>
+            <View style={styles.sectionHeader}>
+              <View style={styles.iconContainer}>
+                <MaterialCommunityIcons name="office-building" size={24} color="#FFFFFF" />
+              </View>
+              <Text style={styles.sectionTitle}>Our Company</Text>
             </View>
-            <Text style={[styles.heroTitle, getRTLStyles(userLanguage)]}>
-              {t(userLanguage, 'about.header.title')}
-            </Text>
-            <Text style={[styles.heroSubtitle, getRTLStyles(userLanguage)]}>
-              Learn more about Inspire Wallet and our mission
+            <Text style={styles.sectionText}>
+              At Inspire Alliance Fund Group Inc., we are driven by a powerful purpose: to empower dreams and ignite meaningful change. Founded on the belief that lasting progress begins with opportunity, we exist to support individuals and communities who are ready to make a difference—not just in their own lives, but in the communities around them. We are a financial funding. We are a dynamic movement that bridges passionate visionaries with the support, trust, and resources they need to transform ideas into lasting impact.
             </Text>
           </View>
 
-          {/* Content Sections */}
-          <View style={styles.contentContainer}>
-            {sections.map(renderSection)}
+          {/* Our Mission Section */}
+          <View style={styles.sectionCard}>
+            <View style={styles.sectionHeader}>
+              <View style={styles.iconContainer}>
+                <MaterialCommunityIcons name="flag" size={24} color="#FFFFFF" />
+              </View>
+              <Text style={styles.sectionTitle}>Our Mission</Text>
+            </View>
+            <Text style={styles.sectionText}>
+              At Inspire Alliance Fund Group Inc., our mission is to ignite change by empowering dreams. We believe that real progress begins when people are given the resources, trust, and opportunities to build a better future not just for themselves, but for their communities and beyond. We are more than a funding platform, we are a movement that connects purpose-driven people with the support they need to turn ideas into impact. By investing in human potential, we cultivate a ripple effect: supporting lives, strengthening economies, and shaping a future where hope and innovation thrive together.
+            </Text>
+          </View>
+
+          {/* Inspire Wallet Section */}
+          <View style={styles.sectionCard}>
+            <View style={styles.sectionHeader}>
+              <View style={styles.iconContainer}>
+                <MaterialCommunityIcons name="wallet" size={24} color="#FFFFFF" />
+              </View>
+              <Text style={styles.sectionTitle}>Inspire Wallet</Text>
+            </View>
+            <Text style={styles.sectionText}>
+              Inspire Wallet, our flagship app for Inspire Investors, embodies this vision. Designed as your all-in-one financial companion, Inspire Wallet allows you to:
+            </Text>
+
+            {/* Bullet Points */}
+            <View style={styles.bulletContainer}>
+              <View style={styles.bulletItem}>
+                <View style={styles.checkCircle}>
+                  <Ionicons name="checkmark" size={16} color="#E25A17" />
+                </View>
+                <Text style={styles.bulletText}>Stay on top of your investments</Text>
+              </View>
+
+              <View style={styles.bulletItem}>
+                <View style={styles.checkCircle}>
+                  <Ionicons name="checkmark" size={16} color="#E25A17" />
+                </View>
+                <Text style={styles.bulletText}>Manage stocks</Text>
+              </View>
+
+              <View style={styles.bulletItem}>
+                <View style={styles.checkCircle}>
+                  <Ionicons name="checkmark" size={16} color="#E25A17" />
+                </View>
+                <Text style={styles.bulletText}>Track withdrawals</Text>
+              </View>
+
+              <View style={styles.bulletItem}>
+                <View style={styles.checkCircle}>
+                  <Ionicons name="checkmark" size={16} color="#E25A17" />
+                </View>
+                <Text style={styles.bulletText}>Keep a clear record of all your financial transactions</Text>
+              </View>
+            </View>
+
+            <View style={styles.noteContainer}>
+              <Text style={styles.noteText}>
+                Whether you're a seasoned investor or just getting started, our app provides all the tools you need to manage your portfolio with ease and confidence.
+              </Text>
+            </View>
           </View>
 
           {/* Call to Action Card */}
-          <View style={styles.ctaCard}>
-            <View style={styles.ctaHeader}>
-              <Ionicons name="rocket-outline" size={24} color={Colors.redTheme.background} />
-              <Text style={[styles.ctaTitle, getRTLStyles(userLanguage)]}>
-                Ready to Get Started?
-              </Text>
+          <LinearGradient
+            colors={["#E25A17", "#F28934"]}
+            style={styles.ctaCard}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
+            <View style={styles.ctaIconContainer}>
+              <MaterialCommunityIcons name="rocket-launch" size={32} color="#FFFFFF" />
             </View>
-            <Text style={[styles.ctaText, getRTLStyles(userLanguage)]}>
-              {t(userLanguage, 'about.content.callToAction')}
+            <Text style={styles.ctaTitle}>Ready to Get Started?</Text>
+            <Text style={styles.ctaText}>
+              Join us at Inspire Alliance Fund Group Incorporated and together, let's shape a prosperous future. Take control of your financial journey now!
             </Text>
-          </View>
+          </LinearGradient>
 
-          <View style={styles.bottomSpacing} />
+          <View style={styles.bottomPadding} />
         </ScrollView>
       </SafeAreaView>
-    </ImageBackground>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#F5F5F5",
   },
-  androidSafeArea: {
+  safeArea: {
     flex: 1,
-    paddingTop: Platform.OS === "android" ? 60 : 50,
   },
-  scrollViewContent: {
-    padding: 20,
-    paddingBottom: 40,
-  },
-
-  // Hero Card - Modern e-wallet style
-  heroCard: {
-    backgroundColor: Colors.redTheme.background,
-    borderRadius: 24,
-    padding: 32,
-    marginBottom: 24,
+  header: {
+    flexDirection: "row",
     alignItems: "center",
-    shadowColor: Colors.redTheme.background,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 8,
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    backgroundColor: "#FFFFFF",
+    borderBottomWidth: 1,
+    borderBottomColor: "#F0F0F0",
   },
-  heroIconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
+  backButton: {
+    width: 40,
+    height: 40,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 16,
   },
-  heroTitle: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "white",
-    marginBottom: 8,
-    textAlign: "center",
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#333",
   },
-  heroSubtitle: {
-    fontSize: 14,
-    color: "rgba(255, 255, 255, 0.9)",
-    textAlign: "center",
-    lineHeight: 20,
+  placeholder: {
+    width: 40,
   },
-
-  // Content Container
-  contentContainer: {
-    gap: 16,
+  scrollView: {
+    flex: 1,
   },
-
-  // Section Cards
+  scrollContent: {
+    padding: 20,
+  },
   sectionCard: {
-    backgroundColor: "white",
+    backgroundColor: "#FFFFFF",
     borderRadius: 16,
     padding: 20,
+    marginBottom: 16,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 8,
     elevation: 3,
-    borderLeftWidth: 4,
-    borderLeftColor: Colors.redTheme.background,
   },
   sectionHeader: {
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 16,
   },
-  sectionIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "rgba(254, 125, 72, 0.1)",
+  iconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: "#E25A17",
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: "bold",
-    color: Colors.redTheme.background,
+    fontWeight: "700",
+    color: "#333",
     flex: 1,
   },
-  sectionContent: {
-    fontSize: 15,
+  sectionText: {
+    fontSize: 14,
     lineHeight: 22,
-    color: "#333",
-    marginBottom: 12,
+    color: "#666",
+    textAlign: "justify",
   },
-
-  // Bullet Points
-  bulletPointsContainer: {
-    marginTop: 8,
+  bulletContainer: {
+    marginTop: 16,
   },
-  bulletPoint: {
+  bulletItem: {
     flexDirection: "row",
     alignItems: "flex-start",
-    marginBottom: 8,
+    marginBottom: 12,
   },
-  bulletIcon: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: "rgba(254, 125, 72, 0.1)",
+  checkCircle: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: "#FFF5F0",
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
@@ -286,50 +239,54 @@ const styles = StyleSheet.create({
   bulletText: {
     flex: 1,
     fontSize: 14,
-    lineHeight: 20,
-    color: "#555",
-  },
-
-  // Conclusion Text
-  conclusionText: {
-    fontSize: 15,
     lineHeight: 22,
-    color: "#333",
-    marginTop: 12,
+    color: "#666",
+  },
+  noteContainer: {
+    marginTop: 16,
+    padding: 12,
+    backgroundColor: "#FFF5F0",
+    borderLeftWidth: 3,
+    borderLeftColor: "#E25A17",
+    borderRadius: 8,
+  },
+  noteText: {
+    fontSize: 13,
+    lineHeight: 20,
+    color: "#666",
     fontStyle: "italic",
   },
-
-  // Call to Action Card
   ctaCard: {
-    backgroundColor: "rgba(254, 125, 72, 0.05)",
     borderRadius: 16,
-    padding: 20,
-    marginTop: 16,
-    borderWidth: 1,
-    borderColor: "rgba(254, 125, 72, 0.2)",
+    padding: 24,
     alignItems: "center",
+    marginTop: 8,
+    marginBottom: 16,
   },
-  ctaHeader: {
-    flexDirection: "row",
+  ctaIconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    justifyContent: "center",
     alignItems: "center",
-    marginBottom: 12,
+    marginBottom: 16,
   },
   ctaTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: Colors.redTheme.background,
-    marginLeft: 12,
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#FFFFFF",
+    marginBottom: 12,
+    textAlign: "center",
   },
   ctaText: {
-    fontSize: 15,
+    fontSize: 14,
     lineHeight: 22,
-    color: "#333",
+    color: "#FFFFFF",
     textAlign: "center",
-    fontWeight: "500",
+    opacity: 0.95,
   },
-
-  // Spacing
-  bottomSpacing: {
-    height: 40,
+  bottomPadding: {
+    height: 20,
   },
 });
