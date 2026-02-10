@@ -10,11 +10,18 @@ import {
   KeyboardAvoidingView,
   Platform,
   Modal,
+  Dimensions,
+  Alert,
+  Share,
 } from "react-native";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "expo-router";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { CameraView, Camera } from "expo-camera";
+import QRCode from "react-native-qrcode-svg";
+
+const { width } = Dimensions.get("window");
 
 const COUNTRY_OPTIONS = [
   { code: "+63", label: "Philippines", flag: "🇵🇭" },
@@ -48,7 +55,109 @@ export default function Register() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
+  // Success modal
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  
   const [isCountryModalVisible, setIsCountryModalVisible] = useState(false);
+  
+  // QR Scanner states
+  const [showQRScanner, setShowQRScanner] = useState(false);
+  const [hasPermission, setHasPermission] = useState(null);
+  const [scanned, setScanned] = useState(false);
+  
+  // Agent QR Code states
+  const [showAgentQRCode, setShowAgentQRCode] = useState(false);
+  const [agentNumber, setAgentNumber] = useState("");
+  const qrCodeRef = useRef(null);
+
+  useEffect(() => {
+    const getCameraPermissions = async () => {
+      const { status } = await Camera.requestCameraPermissionsAsync();
+      setHasPermission(status === "granted");
+    };
+    getCameraPermissions();
+  }, []);
+  
+  // Generate agent number when user selects "Yes, I'm an agent"
+  useEffect(() => {
+    if (isAgent === true && !agentNumber) {
+      // Generate a unique agent number (you can customize this logic)
+      const generatedNumber = `AG${Date.now().toString().slice(-8)}`;
+      setAgentNumber(generatedNumber);
+    }
+  }, [isAgent]);
+
+  const handleQRScan = () => {
+    if (hasPermission === false) {
+      Alert.alert(
+        "Camera Permission Required",
+        "Please grant camera permissions in your device settings to scan QR codes.",
+        [{ text: "OK" }]
+      );
+      return;
+    }
+    setScanned(false);
+    setShowQRScanner(true);
+  };
+
+  const handleBarCodeScanned = ({ type, data }) => {
+    setScanned(true);
+    
+    try {
+      // Parse the QR code data
+      const qrData = JSON.parse(data);
+      
+      if (qrData.type === "inspire_agent_referral" && qrData.agentNumber) {
+        // Set the agent referral number
+        setAgentReferral(qrData.agentNumber);
+        setShowQRScanner(false);
+        Alert.alert(
+          "Agent Found!",
+          `Agent ${qrData.agentName || qrData.agentNumber} has been added as your referral.`,
+          [{ text: "OK" }]
+        );
+      } else {
+        Alert.alert(
+          "Invalid QR Code",
+          "This QR code is not a valid Inspire agent referral code.",
+          [
+            { text: "Cancel", onPress: () => setShowQRScanner(false) },
+            { text: "Scan Again", onPress: () => setScanned(false) }
+          ]
+        );
+      }
+    } catch (error) {
+      Alert.alert(
+        "Invalid QR Code",
+        "Unable to read QR code data. Please try again.",
+        [
+          { text: "Cancel", onPress: () => setShowQRScanner(false) },
+          { text: "Scan Again", onPress: () => setScanned(false) }
+        ]
+      );
+    }
+  };
+  
+  const handleShareQRCode = async () => {
+    try {
+      // Get QR code as data URL
+      if (qrCodeRef.current) {
+        qrCodeRef.current.toDataURL(async (dataURL) => {
+          try {
+            await Share.share({
+              message: `Join Inspire Wallet with my referral!\n\nAgent Number: ${agentNumber}\n\nScan my QR code or enter my agent number during registration.`,
+              title: "Inspire Wallet Agent Referral",
+            });
+          } catch (error) {
+            console.error("Error sharing:", error);
+          }
+        });
+      }
+    } catch (error) {
+      console.error("Error sharing QR code:", error);
+      Alert.alert("Error", "Failed to share QR code. Please try again.");
+    }
+  };
 
   const handleNextStep = () => {
     if (currentStep === 1) {
@@ -118,7 +227,7 @@ export default function Register() {
       password,
     });
     // Add your registration logic here
-    alert("Registration successful!");
+    setShowSuccessModal(true);
   };
 
   const handleBackStep = () => {
@@ -368,6 +477,32 @@ export default function Register() {
                     <Text style={styles.radioLabel}>No, I'm an investor</Text>
                   </TouchableOpacity>
 
+                  {/* Agent QR Code Section */}
+                  {isAgent === true && agentNumber && (
+                    <View style={styles.agentQRSection}>
+                      <View style={styles.agentQRHeader}>
+                        <MaterialCommunityIcons name="shield-star" size={24} color="#E25A17" />
+                        <Text style={styles.agentQRTitle}>Your Agent Code</Text>
+                      </View>
+                      
+                      <View style={styles.agentNumberCard}>
+                        <Text style={styles.agentNumberLabel}>Agent Number</Text>
+                        <Text style={styles.agentNumberValue}>{agentNumber}</Text>
+                        <Text style={styles.agentNumberSubtext}>
+                          Share this code with investors to earn referral rewards
+                        </Text>
+                      </View>
+
+                      <TouchableOpacity
+                        style={styles.viewQRButton}
+                        onPress={() => setShowAgentQRCode(true)}
+                      >
+                        <MaterialCommunityIcons name="qrcode" size={20} color="#FFFFFF" />
+                        <Text style={styles.viewQRButtonText}>View QR Code</Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
+
                   {/* Agent Referral (Optional) */}
                   <View style={[styles.inputGroup, { marginTop: 20 }]}>
                     <Text style={styles.inputLabel}>
@@ -381,7 +516,10 @@ export default function Register() {
                         value={agentReferral}
                         onChangeText={setAgentReferral}
                       />
-                      <TouchableOpacity style={styles.qrButton}>
+                      <TouchableOpacity 
+                        style={styles.qrButton}
+                        onPress={handleQRScan}
+                      >
                         <MaterialCommunityIcons name="qrcode-scan" size={24} color="#E25A17" />
                       </TouchableOpacity>
                     </View>
@@ -527,6 +665,191 @@ export default function Register() {
                   </TouchableOpacity>
                 ))}
               </ScrollView>
+            </View>
+          </View>
+        </Modal>
+
+        {/* Success Modal */}
+        <Modal
+          visible={showSuccessModal}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => {
+            setShowSuccessModal(false);
+            router.push("/main");
+          }}
+        >
+          <View style={styles.successModalOverlay}>
+            <View style={styles.successModalContent}>
+              <LinearGradient
+                colors={["#E25A17", "#F28934"]}
+                style={styles.successModalGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <View style={styles.successIconContainer}>
+                  <Ionicons name="checkmark-circle" size={80} color="#FFFFFF" />
+                </View>
+                <Text style={styles.successTitle}>Registration Successful!</Text>
+                <Text style={styles.successMessage}>
+                  Your account has been created successfully. Welcome to Inspire!
+                </Text>
+                <TouchableOpacity
+                  style={styles.successButton}
+                  onPress={() => {
+                    setShowSuccessModal(false);
+                    router.push("/main");
+                  }}
+                >
+                  <Text style={styles.successButtonText}>Continue</Text>
+                </TouchableOpacity>
+              </LinearGradient>
+            </View>
+          </View>
+        </Modal>
+
+        {/* QR Scanner Modal */}
+        <Modal
+          visible={showQRScanner}
+          animationType="slide"
+          onRequestClose={() => setShowQRScanner(false)}
+        >
+          <View style={styles.qrScannerContainer}>
+            {hasPermission === null ? (
+              <View style={styles.qrPermissionContainer}>
+                <Text style={styles.qrPermissionText}>Requesting camera permission...</Text>
+              </View>
+            ) : hasPermission === false ? (
+              <View style={styles.qrPermissionContainer}>
+                <Ionicons name="camera-off" size={64} color="#999" />
+                <Text style={styles.qrPermissionText}>No access to camera</Text>
+                <Text style={styles.qrPermissionSubText}>
+                  Please grant camera permissions in your device settings to scan QR codes.
+                </Text>
+                <TouchableOpacity
+                  style={styles.qrCloseButton}
+                  onPress={() => setShowQRScanner(false)}
+                >
+                  <Text style={styles.qrCloseButtonText}>Close</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <CameraView
+                style={styles.qrCamera}
+                facing="back"
+                onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
+                barcodeScannerSettings={{
+                  barcodeTypes: ["qr"],
+                }}
+              >
+                <View style={styles.qrOverlay}>
+                  {/* Top overlay */}
+                  <View style={styles.qrTopOverlay}>
+                    <Text style={styles.qrInstructionText}>
+                      Position the agent's QR code within the frame
+                    </Text>
+                  </View>
+
+                  {/* Center frame */}
+                  <View style={styles.qrCenterRow}>
+                    <View style={styles.qrSideOverlay} />
+                    <View style={styles.qrFrameContainer}>
+                      {/* Corner brackets */}
+                      <View style={[styles.qrCorner, styles.qrTopLeft]} />
+                      <View style={[styles.qrCorner, styles.qrTopRight]} />
+                      <View style={[styles.qrCorner, styles.qrBottomLeft]} />
+                      <View style={[styles.qrCorner, styles.qrBottomRight]} />
+
+                      {scanned && (
+                        <View style={styles.qrScannedOverlay}>
+                          <Ionicons name="checkmark-circle" size={48} color="#10B981" />
+                          <Text style={styles.qrScannedText}>QR Code Scanned!</Text>
+                        </View>
+                      )}
+                    </View>
+                    <View style={styles.qrSideOverlay} />
+                  </View>
+
+                  {/* Bottom overlay */}
+                  <View style={styles.qrBottomOverlay}>
+                    <TouchableOpacity
+                      style={styles.qrCancelButton}
+                      onPress={() => setShowQRScanner(false)}
+                    >
+                      <Text style={styles.qrCancelButtonText}>Cancel</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </CameraView>
+            )}
+          </View>
+        </Modal>
+
+        {/* Agent QR Code Display Modal */}
+        <Modal
+          visible={showAgentQRCode}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setShowAgentQRCode(false)}
+        >
+          <View style={styles.agentQRModalOverlay}>
+            <View style={styles.agentQRModalContent}>
+              <LinearGradient
+                colors={["#E25A17", "#F28934"]}
+                style={styles.agentQRModalGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <TouchableOpacity
+                  style={styles.agentQRCloseButton}
+                  onPress={() => setShowAgentQRCode(false)}
+                >
+                  <Ionicons name="close" size={24} color="#FFFFFF" />
+                </TouchableOpacity>
+
+                <View style={styles.agentQRIconContainer}>
+                  <MaterialCommunityIcons name="shield-star" size={40} color="#FFFFFF" />
+                </View>
+
+                <Text style={styles.agentQRModalTitle}>Your Agent QR Code</Text>
+                <Text style={styles.agentQRModalSubtitle}>
+                  Share this code with investors
+                </Text>
+
+                <View style={styles.qrCodeContainer}>
+                  <QRCode
+                    value={JSON.stringify({
+                      type: "inspire_agent_referral",
+                      agentNumber: agentNumber,
+                      agentName: `${firstName} ${lastName}`.trim() || agentNumber,
+                    })}
+                    size={200}
+                    backgroundColor="white"
+                    color="#E25A17"
+                    getRef={(ref) => (qrCodeRef.current = ref)}
+                  />
+                </View>
+
+                <View style={styles.agentQRInfoCard}>
+                  <Text style={styles.agentQRInfoLabel}>Agent Number</Text>
+                  <Text style={styles.agentQRInfoValue}>{agentNumber}</Text>
+                  <Text style={styles.agentQRInfoName}>
+                    {`${firstName} ${lastName}`.trim() || "Agent"}
+                  </Text>
+                </View>
+
+                <TouchableOpacity
+                  style={styles.agentQRShareButton}
+                  onPress={handleShareQRCode}
+                >
+                  <Ionicons name="share-social" size={20} color="#E25A17" />
+                  <Text style={styles.agentQRShareButtonText}>Share QR Code</Text>
+                </TouchableOpacity>
+
+                <Text style={styles.agentQRHelpText}>
+                  Investors can scan this QR code during registration to add you as their referral agent.
+                </Text>
+              </LinearGradient>
             </View>
           </View>
         </Modal>
@@ -884,5 +1207,367 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#666",
     fontWeight: "500",
+  },
+  // Success Modal Styles
+  successModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  successModalContent: {
+    width: "100%",
+    maxWidth: 400,
+    borderRadius: 20,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  successModalGradient: {
+    padding: 32,
+    alignItems: "center",
+  },
+  successIconContainer: {
+    marginBottom: 20,
+  },
+  successTitle: {
+    fontSize: 24,
+    fontWeight: "700",
+    color: "#FFFFFF",
+    marginBottom: 12,
+    textAlign: "center",
+  },
+  successMessage: {
+    fontSize: 14,
+    color: "#FFFFFF",
+    textAlign: "center",
+    marginBottom: 24,
+    lineHeight: 20,
+    opacity: 0.95,
+  },
+  successButton: {
+    backgroundColor: "#FFFFFF",
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    borderRadius: 25,
+    width: "100%",
+    alignItems: "center",
+  },
+  successButtonText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#E25A17",
+  },
+  // QR Scanner Styles
+  qrScannerContainer: {
+    flex: 1,
+    backgroundColor: "#000",
+  },
+  qrPermissionContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#000",
+    padding: 20,
+  },
+  qrPermissionText: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "600",
+    marginTop: 20,
+    textAlign: "center",
+  },
+  qrPermissionSubText: {
+    color: "#999",
+    fontSize: 14,
+    marginTop: 10,
+    textAlign: "center",
+    paddingHorizontal: 40,
+  },
+  qrCloseButton: {
+    backgroundColor: "#E25A17",
+    paddingHorizontal: 40,
+    paddingVertical: 14,
+    borderRadius: 25,
+    marginTop: 20,
+  },
+  qrCloseButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  qrCamera: {
+    flex: 1,
+    width: "100%",
+  },
+  qrOverlay: {
+    flex: 1,
+    backgroundColor: "transparent",
+  },
+  qrTopOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    justifyContent: "flex-end",
+    alignItems: "center",
+    paddingBottom: 20,
+  },
+  qrCenterRow: {
+    flexDirection: "row",
+    height: width * 0.7,
+  },
+  qrSideOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
+  },
+  qrFrameContainer: {
+    width: width * 0.7,
+    height: width * 0.7,
+    position: "relative",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  qrCorner: {
+    position: "absolute",
+    width: 40,
+    height: 40,
+    borderColor: "#E25A17",
+  },
+  qrTopLeft: {
+    top: 0,
+    left: 0,
+    borderTopWidth: 4,
+    borderLeftWidth: 4,
+  },
+  qrTopRight: {
+    top: 0,
+    right: 0,
+    borderTopWidth: 4,
+    borderRightWidth: 4,
+  },
+  qrBottomLeft: {
+    bottom: 0,
+    left: 0,
+    borderBottomWidth: 4,
+    borderLeftWidth: 4,
+  },
+  qrBottomRight: {
+    bottom: 0,
+    right: 0,
+    borderBottomWidth: 4,
+    borderRightWidth: 4,
+  },
+  qrBottomOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  qrInstructionText: {
+    color: "#fff",
+    fontSize: 16,
+    textAlign: "center",
+    fontWeight: "500",
+  },
+  qrCancelButton: {
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    paddingHorizontal: 40,
+    paddingVertical: 14,
+    borderRadius: 25,
+  },
+  qrCancelButtonText: {
+    color: "#E25A17",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  qrScannedOverlay: {
+    alignItems: "center",
+  },
+  qrScannedText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+    marginTop: 10,
+  },
+  // Agent QR Code Styles
+  agentQRSection: {
+    marginTop: 24,
+    backgroundColor: "#FFF5F0",
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 2,
+    borderColor: "#E25A17",
+  },
+  agentQRHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 16,
+  },
+  agentQRTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#E25A17",
+  },
+  agentNumberCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 12,
+    alignItems: "center",
+  },
+  agentNumberLabel: {
+    fontSize: 12,
+    color: "#999",
+    marginBottom: 4,
+  },
+  agentNumberValue: {
+    fontSize: 24,
+    fontWeight: "700",
+    color: "#E25A17",
+    marginBottom: 8,
+  },
+  agentNumberSubtext: {
+    fontSize: 12,
+    color: "#666",
+    textAlign: "center",
+    lineHeight: 16,
+  },
+  viewQRButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#E25A17",
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    gap: 8,
+  },
+  viewQRButtonText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  // Agent QR Modal Styles
+  agentQRModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  agentQRModalContent: {
+    width: "100%",
+    maxWidth: 400,
+    borderRadius: 20,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  agentQRModalGradient: {
+    padding: 24,
+    alignItems: "center",
+  },
+  agentQRCloseButton: {
+    position: "absolute",
+    top: 16,
+    right: 16,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 10,
+  },
+  agentQRIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 16,
+    marginTop: 20,
+  },
+  agentQRModalTitle: {
+    fontSize: 22,
+    fontWeight: "700",
+    color: "#FFFFFF",
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  agentQRModalSubtitle: {
+    fontSize: 14,
+    color: "#FFFFFF",
+    opacity: 0.9,
+    marginBottom: 24,
+    textAlign: "center",
+  },
+  qrCodeContainer: {
+    backgroundColor: "#FFFFFF",
+    padding: 20,
+    borderRadius: 16,
+    marginBottom: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  agentQRInfoCard: {
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    borderRadius: 12,
+    padding: 16,
+    width: "100%",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  agentQRInfoLabel: {
+    fontSize: 12,
+    color: "#FFFFFF",
+    opacity: 0.8,
+    marginBottom: 4,
+  },
+  agentQRInfoValue: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#FFFFFF",
+    marginBottom: 4,
+  },
+  agentQRInfoName: {
+    fontSize: 14,
+    color: "#FFFFFF",
+    opacity: 0.9,
+  },
+  agentQRShareButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFFFFF",
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    borderRadius: 25,
+    width: "100%",
+    gap: 8,
+    marginBottom: 16,
+  },
+  agentQRShareButtonText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#E25A17",
+  },
+  agentQRHelpText: {
+    fontSize: 12,
+    color: "#FFFFFF",
+    opacity: 0.8,
+    textAlign: "center",
+    lineHeight: 18,
   },
 });

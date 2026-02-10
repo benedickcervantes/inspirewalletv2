@@ -174,12 +174,61 @@ export default function Layout() {
     [shouldTrackActivity, trackActivity]
   );
 
-  const handleChatPress = () => {
-    setShowChatModal(true);
-    // Mark messages as read when opening chat
-    if (unreadCount > 0) {
-      markAsRead();
+  const handleChatPress = async () => {
+    console.log('🔵 Chat button pressed! Opening chat...');
+    try {
+      const user = auth.currentUser;
+      if (!user) {
+        console.log('❌ No user logged in');
+        return;
+      }
+
+      // Import firestore functions dynamically
+      const { doc: docRef, getDoc, collection, query, orderBy, limit, getDocs, addDoc, serverTimestamp } = await import('firebase/firestore');
+      
+      // Always create a new ticket for fresh chat experience
+      console.log('📝 Creating new ticket...');
+      
+      // Get user data for the ticket
+      const userDocRef = docRef(firestore, "users", user.uid);
+      const userDocSnap = await getDoc(userDocRef);
+      const userData = userDocSnap.exists() ? userDocSnap.data() : {};
+      
+      const ticketsRef = collection(firestore, "users", user.uid, "tickets");
+      
+      const newTicket = {
+        title: "Support Chat",
+        description: "General support inquiry",
+        status: "open",
+        userId: user.uid,
+        userName: `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || "User",
+        userEmail: userData.email || user.email,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        messages: [
+          {
+            id: Date.now(),
+            sender: "System",
+            message: "Welcome to Inspire Chat Support! How can we help you today?",
+            timestamp: new Date(),
+            isCustomer: false,
+          }
+        ],
+        adminId: "support",
+        adminName: "Support Team",
+      };
+      
+      const docRef2 = await addDoc(ticketsRef, newTicket);
+      const ticketId = docRef2.id;
+      console.log('✅ Created new ticket:', ticketId);
+
+      // Navigate to chat with ticket ID
+      router.push(`/chat?ticketId=${ticketId}`);
+      console.log('✅ Navigation to chat successful');
+    } catch (error) {
+      console.error('❌ Error opening chat:', error);
     }
+    
     // Track activity when chat is opened (only on authenticated screens)
     if (shouldTrackActivity) {
       trackActivity();
@@ -196,8 +245,8 @@ export default function Layout() {
 
   // Determine if floating button should be visible
   const shouldShowFloatingButton = () => {
-    // Only show on the dashboard (main) page
-    return isAgent && pathname === '/main';
+    // Show on the dashboard (main) page for all users
+    return pathname === '/main';
   };
 
   return (
@@ -213,12 +262,11 @@ export default function Layout() {
           }}
         />
         
-        {/* Agent Floating Button - Only show for agents on appropriate pages */}
+        {/* Floating Chat Support Button - Show for all users on main page */}
         {shouldShowFloatingButton() && (
           <AgentFloatingButton
             onPress={handleChatPress}
             isVisible={shouldShowFloatingButton()}
-            unreadCount={unreadCount || 3}
           />
         )}
         

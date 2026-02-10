@@ -3,7 +3,6 @@ import {
   StyleSheet,
   Text,
   View,
-  ImageBackground,
   SafeAreaView,
   TextInput,
   TouchableOpacity,
@@ -12,53 +11,26 @@ import {
   FlatList,
   KeyboardAvoidingView,
   Image,
+  ImageBackground,
   Alert,
+  Dimensions,
 } from "react-native";
-import { useNavigation, useLocalSearchParams } from "expo-router";
+import { useNavigation, useLocalSearchParams, useRouter } from "expo-router";
 import { getFirestore, doc, onSnapshot, updateDoc, getDoc } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import * as ImagePicker from 'expo-image-picker';
-import * as FileSystem from 'expo-file-system';
+import { LinearGradient } from "expo-linear-gradient";
 
 import { Colors } from "../../constants/Colors";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import ProfessionalModal from "../../components/ProfessionalModal";
 import useModal from "../../components/useModal";
 
-// Translation utility function
-const translateText = async (text, targetLanguage = 'ja') => {
-  try {
-    const apiKey = 'AIzaSyDw0B7QzCOlTYW7ofPfk916KBIccP9ZQzM';
-    if (!apiKey) {
-      throw new Error('Translation API key not found');
-    }
-
-    const response = await fetch(`https://translation.googleapis.com/language/translate/v2?key=${apiKey}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        q: text,
-        target: targetLanguage,
-        source: 'en', // Assuming admin messages are in English
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Translation API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    return data.data.translations[0].translatedText;
-  } catch (error) {
-    console.error('Translation error:', error);
-    throw error;
-  }
-};
+const { width } = Dimensions.get("window");
 
 export default function Chat() {
   const navigation = useNavigation();
+  const router = useRouter();
   const { ticketId } = useLocalSearchParams();
   const db = getFirestore();
   const auth = getAuth();
@@ -66,10 +38,7 @@ export default function Chat() {
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [newMessage, setNewMessage] = useState("");
   const [sendingMessage, setSendingMessage] = useState(false);
-  const [translatedMessages, setTranslatedMessages] = useState({});
-  const [translatingMessages, setTranslatingMessages] = useState({});
   const [selectedImage, setSelectedImage] = useState(null);
-  const [uploadingImage, setUploadingImage] = useState(false);
   const [fullImageVisible, setFullImageVisible] = useState(false);
   const [fullImageUri, setFullImageUri] = useState(null);
   const { modalVisible, modalConfig, showModal, hideModal } = useModal();
@@ -78,14 +47,7 @@ export default function Chat() {
 
   useEffect(() => {
     navigation.setOptions({
-      headerShown: true,
-      headerTransparent: true,
-      headerTitle: "Support Chat",
-      headerTintColor: Colors.redTheme.background,
-      headerTitleStyle: {
-        fontWeight: "bold",
-        fontSize: 18,
-      },
+      headerShown: false,
     });
   }, []);
 
@@ -147,41 +109,6 @@ export default function Chat() {
 
     return () => unsubscribe();
   }, [ticketId]);
-
-  const handleTranslateMessage = async (messageId, originalText) => {
-    if (translatedMessages[messageId]) {
-      // If already translated, toggle to show original
-      setTranslatedMessages(prev => {
-        const newState = { ...prev };
-        delete newState[messageId];
-        return newState;
-      });
-      return;
-    }
-
-    setTranslatingMessages(prev => ({ ...prev, [messageId]: true }));
-    
-    try {
-      const translatedText = await translateText(originalText, 'ja');
-      setTranslatedMessages(prev => ({
-        ...prev,
-        [messageId]: translatedText
-      }));
-    } catch (error) {
-      console.error('Translation failed:', error);
-      showModal({
-        title: "Translation Error",
-        message: "Failed to translate message. Please try again.",
-        type: "error",
-      });
-    } finally {
-      setTranslatingMessages(prev => {
-        const newState = { ...prev };
-        delete newState[messageId];
-        return newState;
-      });
-    }
-  };
 
   const pickImage = async () => {
     try {
@@ -264,7 +191,23 @@ export default function Chat() {
       // Add message to the ticket
       const updatedMessages = [...selectedTicket.messages, newMessageData];
       
-      // Update the ticket with new message
+      // Check if this is the first customer message (only system message exists before)
+      const customerMessages = selectedTicket.messages.filter(msg => msg.isCustomer === true);
+      const isFirstCustomerMessage = customerMessages.length === 0;
+      
+      // If first customer message, add automatic queue response
+      if (isFirstCustomerMessage) {
+        const queueMessage = {
+          id: Date.now() + 1,
+          sender: "System",
+          message: "Thank you for contacting customer support. Your request has been received and you are now in the queue. An agent will join this chat momentarily.",
+          timestamp: new Date(Date.now() + 500), // Slight delay for natural feel
+          isCustomer: false,
+        };
+        updatedMessages.push(queueMessage);
+      }
+      
+      // Update the ticket with new message(s)
       await updateDoc(ticketRef, {
         messages: updatedMessages,
         updatedAt: new Date(),
@@ -302,43 +245,85 @@ export default function Chat() {
 
   if (!selectedTicket) {
     return (
-      <ImageBackground
-        source={require("../../assets/images/bg2.png")}
-        style={styles.container}
-      >
-        <SafeAreaView style={styles.androidSafeArea}>
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={Colors.redTheme.background} />
-            <Text style={styles.loadingText}>Loading chat...</Text>
-          </View>
-        </SafeAreaView>
-      </ImageBackground>
+      <View style={styles.container}>
+        <LinearGradient
+          colors={["#E15B16", "#F48F38"]}
+          style={styles.gradientBackground}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        >
+          <SafeAreaView style={styles.safeArea}>
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#FFFFFF" />
+              <Text style={styles.loadingText}>Loading chat...</Text>
+            </View>
+          </SafeAreaView>
+        </LinearGradient>
+      </View>
     );
   }
 
   return (
-    <ImageBackground
-      source={require("../../assets/images/bg2.png")}
-      style={styles.container}
-    >
-      <SafeAreaView style={styles.androidSafeArea}>
+    <View style={styles.container}>
+      <LinearGradient
+        colors={["#E15B16", "#F48F38"]}
+        style={styles.gradientBackground}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+      >
+        <SafeAreaView style={styles.safeArea}>
         <KeyboardAvoidingView 
           style={styles.keyboardAvoidingView}
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
         >
-          {/* Chat Topic & Status Header */}
-          <View style={styles.topicStatusHeader}>
-            <Text style={styles.topicText}>{selectedTicket.title}</Text>
-            <View style={[
-              styles.chatStatusBadge,
-              selectedTicket.status === "open"
-                ? styles.chatInProgressBadge
-                : { backgroundColor: "#eee", borderColor: "#ccc" }
-            ]}>
-              <Text style={styles.chatStatusText}>
-                {selectedTicket.status ? selectedTicket.status.charAt(0).toUpperCase() + selectedTicket.status.slice(1) : "Unknown"}
-              </Text>
-            </View>
+          {/* Custom Header with Orange Gradient */}
+          <View style={styles.headerContainer}>
+            <LinearGradient
+              colors={["#E25A17", "#F28934"]}
+              style={styles.headerGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+            >
+              <View style={styles.headerContent}>
+                <TouchableOpacity
+                  style={styles.backButton}
+                  onPress={() => router.back()}
+                >
+                  <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+                </TouchableOpacity>
+
+                <View style={styles.agentInfo}>
+                  <View style={styles.agentAvatar}>
+                    <MaterialCommunityIcons name="headset" size={28} color="#E25A17" />
+                  </View>
+                  <View style={styles.agentDetails}>
+                    <Text style={styles.agentName}>Support Agent</Text>
+                    <Text style={styles.agentStatus}>
+                      Online | ID: {selectedTicket.adminId || "12345"}
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.headerActions}>
+                  <TouchableOpacity style={styles.headerActionButton}>
+                    <Ionicons name="call" size={22} color="#FFFFFF" />
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.headerActionButton}>
+                    <Ionicons name="ellipsis-vertical" size={22} color="#FFFFFF" />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </LinearGradient>
+          </View>
+
+          {/* Large Inspire Logo Background */}
+          <View style={styles.logoBackground}>
+            <Image
+              source={require("../../assets/images/inspireloader.png")}
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
           </View>
           
           {/* Messages List */}
@@ -349,73 +334,51 @@ export default function Chat() {
             renderItem={({ item }) => (
               <View style={[
                 styles.messageContainer,
-                item.isCustomer ? styles.customerMessage : styles.adminMessage
+                item.isCustomer ? styles.customerMessageContainer : styles.adminMessageContainer
               ]}>
-                <Text style={item.isCustomer ? styles.customerMessageSender : styles.messageSender}>{item.sender}</Text>
-                
-                {/* Message Text */}
-                {item.message && (
-                  <Text style={item.isCustomer ? styles.customerMessageText : styles.adminMessageText}>
-                    {translatedMessages[item.id] || item.message}
-                  </Text>
-                )}
-                
-                {/* Image Display */}
-                {item.image && (
-                  <View style={styles.imageContainer}>
-                    <Image
-                      source={{ uri: item.image.uri }}
-                      style={styles.messageImage}
-                      resizeMode="cover"
-                    />
+                <View style={[
+                  styles.messageBubble,
+                  item.isCustomer ? styles.customerBubble : styles.adminBubble
+                ]}>
+                  {/* Message Text */}
+                  {item.message && (
+                    <Text style={[
+                      styles.messageText,
+                      item.isCustomer ? styles.customerMessageText : styles.adminMessageText
+                    ]}>
+                      {item.message}
+                    </Text>
+                  )}
+                  
+                  {/* Image Display */}
+                  {item.image && (
                     <TouchableOpacity
-                      style={styles.viewFullImageButton}
+                      style={styles.imageContainer}
                       onPress={() => viewFullImage(item.image.uri)}
                     >
-                      <Ionicons name="expand" size={16} color="white" />
-                      <Text style={styles.viewFullImageText}>View Full</Text>
+                      <Image
+                        source={{ uri: item.image.uri }}
+                        style={styles.messageImage}
+                        resizeMode="cover"
+                      />
                     </TouchableOpacity>
-                  </View>
-                )}
-                
-                {/* Translation Button for Admin Messages */}
-                {!item.isCustomer && item.message && (
-                  <View style={styles.translationContainer}>
-                    <TouchableOpacity
-                      style={styles.translateButton}
-                      onPress={() => handleTranslateMessage(item.id, item.message)}
-                      disabled={translatingMessages[item.id]}
-                    >
-                      {translatingMessages[item.id] ? (
-                        <ActivityIndicator size="small" color={Colors.redTheme.background} />
-                      ) : (
-                        <>
-                          <Ionicons 
-                            name={translatedMessages[item.id] ? "language" : "language-outline"} 
-                            size={14} 
-                            color={Colors.redTheme.background} 
-                          />
-                          <Text style={styles.translateButtonText}>
-                            {translatedMessages[item.id] ? "Show Original" : "See Translation"}
-                          </Text>
-                        </>
-                      )}
-                    </TouchableOpacity>
-                  </View>
-                )}
-                
-                <Text style={item.isCustomer ? styles.customerMessageTime : styles.messageTime}>
-                  {new Date(item.timestamp?.toDate?.() || item.timestamp).toLocaleTimeString()}
-                </Text>
+                  )}
+                  
+                  <Text style={[
+                    styles.messageTime,
+                    item.isCustomer ? styles.customerMessageTime : styles.adminMessageTime
+                  ]}>
+                    {new Date(item.timestamp?.toDate?.() || item.timestamp).toLocaleTimeString([], {
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </Text>
+                </View>
               </View>
             )}
             style={styles.messagesList}
             contentContainerStyle={styles.messagesListContent}
             showsVerticalScrollIndicator={false}
-            inverted={false}
-            maintainVisibleContentPosition={{
-              minIndexForVisible: 0,
-            }}
             onContentSizeChange={() => {
               setTimeout(() => {
                 if (messagesListRef.current) {
@@ -455,13 +418,14 @@ export default function Chat() {
               style={styles.attachButton}
               onPress={pickImage}
             >
-              <Ionicons name="image" size={24} color={Colors.redTheme.background} />
+              <Ionicons name="attach" size={24} color="#999" />
             </TouchableOpacity>
             
             <TextInput
               ref={messageInputRef}
               style={styles.messageInput}
-              placeholder="Type your message..."
+              placeholder="Type a message..."
+              placeholderTextColor="#999"
               value={newMessage}
               onChangeText={setNewMessage}
               multiline={false}
@@ -469,6 +433,13 @@ export default function Chat() {
               returnKeyType="send"
               blurOnSubmit={false}
             />
+
+            <TouchableOpacity
+              style={styles.emojiButton}
+              onPress={() => {}}
+            >
+              <Ionicons name="happy-outline" size={24} color="#999" />
+            </TouchableOpacity>
             
             <TouchableOpacity
               style={[
@@ -515,18 +486,20 @@ export default function Chat() {
           </View>
         </View>
       )}
-    </ImageBackground>
+      </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8f9fa",
   },
-  androidSafeArea: {
+  gradientBackground: {
     flex: 1,
-    paddingTop: Platform.OS === "android" ? 0 : 0,
+  },
+  safeArea: {
+    flex: 1,
   },
   keyboardAvoidingView: {
     flex: 1,
@@ -535,210 +508,207 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "transparent",
   },
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: "#666",
+    color: "#FFFFFF",
   },
 
-  // Chat Header
-  chatHeader: {
-    backgroundColor: "rgba(255, 255, 255, 0.95)",
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: "rgba(204, 33, 53, 0.1)",
+  // Custom Header
+  headerContainer: {
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 3,
+    elevation: 4,
   },
-  chatHeaderContent: {
-    flex: 1,
+  headerGradient: {
+    paddingTop: Platform.OS === "android" ? 40 : 0,
   },
-  chatHeaderInfo: {
+  headerContent: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
   },
-  chatTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#333",
+  backButton: {
+    width: 40,
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  agentInfo: {
     flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    marginLeft: 8,
   },
-  chatStatusBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 12,
-    borderWidth: 1,
+  agentAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "#FFFFFF",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
   },
-  chatInProgressBadge: {
-    backgroundColor: "rgba(255, 243, 205, 0.8)",
-    borderColor: "rgba(255, 234, 167, 0.8)",
+  agentDetails: {
+    flex: 1,
+    justifyContent: "center",
   },
-  chatStatusText: {
-    fontSize: 11,
-    fontWeight: "600",
-    textTransform: "capitalize",
-    color: "#333",
+  agentName: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#FFFFFF",
+    marginBottom: 3,
   },
-  chatDescription: {
-    fontSize: 14,
-    color: "#666",
-    lineHeight: 20,
+  agentStatus: {
+    fontSize: 12,
+    color: "#FFFFFF",
+    opacity: 0.9,
+  },
+  headerActions: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  headerActionButton: {
+    width: 40,
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  // Logo Background
+  logoBackground: {
+    position: "absolute",
+    top: "30%",
+    left: 0,
+    right: 0,
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: -1,
+  },
+  logoImage: {
+    width: width * 0.4,
+    height: width * 0.4,
+    opacity: 0.2,
   },
 
   // Messages
   messagesList: {
     flex: 1,
-    backgroundColor: "#f8f9fa",
+    backgroundColor: "transparent",
   },
   messagesListContent: {
     padding: 16,
+    paddingBottom: 8,
   },
   messageContainer: {
-    marginBottom: 16,
-    padding: 16,
-    borderRadius: 16,
-    maxWidth: "85%",
+    marginBottom: 12,
+    maxWidth: "80%",
+  },
+  customerMessageContainer: {
+    alignSelf: "flex-end",
+  },
+  adminMessageContainer: {
+    alignSelf: "flex-start",
+  },
+  messageBubble: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 18,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.08,
     shadowRadius: 2,
-    elevation: 1,
+    elevation: 2,
   },
-  customerMessage: {
-    backgroundColor: Colors.redTheme.background,
-    alignSelf: "flex-end",
-    borderWidth: 1,
-    borderColor: Colors.redTheme.background,
+  customerBubble: {
+    backgroundColor: "#E25A17",
+    borderBottomRightRadius: 4,
   },
-  adminMessage: {
-    backgroundColor: "rgba(255, 255, 255, 0.95)",
-    alignSelf: "flex-start",
-    borderWidth: 1,
-    borderColor: "rgba(254, 125, 72, 0.1)",
-  },
-  messageSender: {
-    fontSize: 12,
-    fontWeight: "600",
-    marginBottom: 6,
-    color: "#666",
+  adminBubble: {
+    backgroundColor: "#F5F5F5",
+    borderBottomLeftRadius: 4,
   },
   messageText: {
     fontSize: 15,
-    color: "#333",
-    marginBottom: 6,
     lineHeight: 20,
+    marginBottom: 4,
   },
   customerMessageText: {
-    fontSize: 15,
-    color: "white",
-    marginBottom: 6,
-    lineHeight: 20,
+    color: "#FFFFFF",
   },
   adminMessageText: {
-    fontSize: 15,
-    color: "#333",
-    marginBottom: 6,
-    lineHeight: 20,
+    color: "#333333",
   },
   messageTime: {
     fontSize: 10,
-    color: "#999",
-    textAlign: "right",
-  },
-  customerMessageSender: {
-    fontSize: 12,
-    fontWeight: "600",
-    marginBottom: 6,
-    color: "white",
+    marginTop: 2,
   },
   customerMessageTime: {
-    fontSize: 10,
-    color: "white",
+    color: "#FFFFFF",
+    opacity: 0.8,
     textAlign: "right",
+  },
+  adminMessageTime: {
+    color: "#999999",
+    textAlign: "left",
   },
 
   // Message Input
   messageInputContainer: {
     flexDirection: "row",
-    alignItems: "flex-end",
-    backgroundColor: "rgba(255, 255, 255, 0.95)",
-    padding: 16,
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     borderTopWidth: 1,
-    borderTopColor: "rgba(254, 125, 72, 0.1)",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    borderTopColor: "#F0F0F0",
   },
   attachButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 40,
+    height: 40,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.9)",
-    borderWidth: 1,
-    borderColor: "rgba(254, 125, 72, 0.2)",
-    marginRight: 8,
+    marginRight: 4,
   },
   messageInput: {
     flex: 1,
-    backgroundColor: "white",
-    borderWidth: 1,
-    borderColor: "rgba(254, 125, 72, 0.2)",
-    borderRadius: 24,
+    backgroundColor: "#F5F5F5",
+    borderRadius: 20,
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    marginRight: 12,
-    maxHeight: 120,
+    paddingVertical: 10,
+    marginRight: 4,
     fontSize: 15,
+    maxHeight: 100,
+    color: "#333",
+  },
+  emojiButton: {
+    width: 40,
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 4,
   },
   sendButton: {
-    backgroundColor: Colors.redTheme.background,
+    backgroundColor: "#E25A17",
     width: 44,
     height: 44,
     borderRadius: 22,
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: Colors.redTheme.background,
+    shadowColor: "#E25A17",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 4,
   },
   sendButtonDisabled: {
-    backgroundColor: "#ccc",
+    backgroundColor: "#CCCCCC",
     shadowOpacity: 0.1,
-  },
-
-  // Translation Styles
-  translationContainer: {
-    marginTop: 8,
-    marginBottom: 4,
-  },
-  translateButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    alignSelf: "flex-start",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    backgroundColor: "rgba(255, 255, 255, 0.9)",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "rgba(254, 125, 72, 0.2)",
-  },
-  translateButtonText: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: Colors.redTheme.background,
-    marginLeft: 4,
   },
 
   // Image Styles
@@ -748,9 +718,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     borderRadius: 12,
     overflow: "hidden",
-    backgroundColor: "rgba(255, 255, 255, 0.95)",
-    borderWidth: 1,
-    borderColor: "rgba(254, 125, 72, 0.1)",
+    backgroundColor: "#F5F5F5",
   },
   selectedImagePreview: {
     width: "100%",
@@ -768,30 +736,13 @@ const styles = StyleSheet.create({
   imageContainer: {
     marginTop: 8,
     marginBottom: 4,
-    borderRadius: 8,
+    borderRadius: 12,
     overflow: "hidden",
   },
   messageImage: {
     width: 200,
     height: 150,
-    borderRadius: 8,
-  },
-  viewFullImageButton: {
-    position: "absolute",
-    bottom: 8,
-    right: 8,
-    backgroundColor: "rgba(0, 0, 0, 0.7)",
-    borderRadius: 16,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  viewFullImageText: {
-    color: "white",
-    fontSize: 12,
-    fontWeight: "600",
-    marginLeft: 4,
+    borderRadius: 12,
   },
 
   // Full Image Modal Styles
@@ -824,25 +775,5 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 8,
     zIndex: 1001,
-  },
-
-  // Topic & Status Header
-  topicStatusHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: "rgba(255,255,255,0.97)",
-    paddingHorizontal: 20,
-    paddingTop: 68,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "rgba(254, 125, 72, 0.08)",
-  },
-  topicText: {
-    fontSize: 17,
-    fontWeight: "bold",
-    color: "#222",
-    flex: 1,
-    marginRight: 12,
   },
 });

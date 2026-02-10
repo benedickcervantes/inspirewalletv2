@@ -52,7 +52,7 @@ const ProfessionalModal = ({
   type = "info", // 'success', 'error', 'warning', 'info'
   showCloseButton = true,
   onConfirm = null,
-  confirmText = "OK",
+  confirmText = "Try Again",
   showCancelButton = false,
   cancelText = "Cancel",
 }) => {
@@ -109,13 +109,13 @@ const ProfessionalModal = ({
   const getIconAndColor = () => {
     switch (type) {
       case "success":
-        return { icon: "✓", color: "#10B981", bgColor: "#ECFDF5" };
+        return { icon: "✓", color: "#10B981", bgColor: "#FFFFFF" };
       case "error":
-        return { icon: "!", color: "#EF4444", bgColor: "#FEF2F2" };
+        return { icon: "!", color: "#E25A17", bgColor: "#FFFFFF" };
       case "warning":
-        return { icon: "!", color: "#F59E0B", bgColor: "#FFFBEB" };
+        return { icon: "!", color: "#E25A17", bgColor: "#FFFFFF" };
       default:
-        return { icon: "i", color: "#3B82F6", bgColor: "#EFF6FF" };
+        return { icon: "i", color: "#E25A17", bgColor: "#FFFFFF" };
     }
   };
 
@@ -130,90 +130,104 @@ const ProfessionalModal = ({
           <BlurView intensity={20} tint="dark" style={styles.blurContainer}>
             <Animated.View
               style={[
-                styles.modalContainer,
+                styles.modalContainerWrapper,
                 { transform: [{ scale: scaleAnim }] },
               ]}
             >
-              <View
-                style={[styles.iconContainer, { backgroundColor: bgColor }]}
+              <LinearGradient
+                colors={["#E25A17", "#F28934"]}
+                style={styles.modalContainer}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
               >
-                <Animated.Text
-                  style={[
-                    styles.iconText,
-                    { color, transform: [{ scale: iconScaleAnim }] },
-                  ]}
+                <View
+                  style={[styles.iconContainer, { backgroundColor: bgColor }]}
                 >
-                  {icon}
-                </Animated.Text>
-              </View>
-
-              <Text style={styles.modalTitle}>{title}</Text>
-              <Text style={styles.modalMessage}>{message}</Text>
-
-              <View style={styles.buttonContainer}>
-                {showCancelButton && (
-                  <TouchableOpacity
-                    style={[styles.modalButton, styles.cancelButton]}
-                    onPress={onClose}
+                  <Animated.Text
+                    style={[
+                      styles.iconText,
+                      { color, transform: [{ scale: iconScaleAnim }] },
+                    ]}
                   >
-                    <Text style={styles.cancelButtonText}>{cancelText}</Text>
-                  </TouchableOpacity>
-                )}
+                    {icon}
+                  </Animated.Text>
+                </View>
 
-                {showCloseButton && (
-                  <TouchableOpacity
-                    style={[styles.modalButton, { backgroundColor: color }]}
-                    onPress={onConfirm || onClose}
-                  >
-                    <Text style={styles.confirmButtonText}>{confirmText}</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
+                <Text style={styles.modalTitle}>{title}</Text>
+                <Text style={styles.modalMessage}>{message}</Text>
+
+                <View style={styles.buttonContainer}>
+                  {showCancelButton && (
+                    <TouchableOpacity
+                      style={[styles.modalButton, styles.cancelButton]}
+                      onPress={onClose}
+                    >
+                      <Text style={styles.cancelButtonText}>{cancelText}</Text>
+                    </TouchableOpacity>
+                  )}
+
+                  {showCloseButton && (
+                    <TouchableOpacity
+                      style={[styles.modalButton, styles.confirmButton]}
+                      onPress={onConfirm || onClose}
+                    >
+                      <Text style={styles.confirmButtonText}>{confirmText}</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </LinearGradient>
             </Animated.View>
           </BlurView>
         ) : (
           <View style={styles.androidModalOverlay}>
             <Animated.View
               style={[
-                styles.modalContainer,
+                styles.modalContainerWrapper,
                 { transform: [{ scale: scaleAnim }] },
               ]}
             >
-              <View
-                style={[styles.iconContainer, { backgroundColor: bgColor }]}
+              <LinearGradient
+                colors={["#E25A17", "#F28934"]}
+                style={styles.modalContainer}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
               >
-                <Animated.Text
-                  style={[
-                    styles.iconText,
-                    { color, transform: [{ scale: iconScaleAnim }] },
-                  ]}
+                <View
+                  style={[styles.iconContainer, { backgroundColor: bgColor }]}
                 >
-                  {icon}
-                </Animated.Text>
-              </View>
-
-              <Text style={styles.modalTitle}>{title}</Text>
-              <Text style={styles.modalMessage}>{message}</Text>
-
-              <View style={styles.buttonContainer}>
-                {showCancelButton && (
-                  <TouchableOpacity
-                    style={[styles.modalButton, styles.cancelButton]}
-                    onPress={onClose}
+                  <Animated.Text
+                    style={[
+                      styles.iconText,
+                      { color, transform: [{ scale: iconScaleAnim }] },
+                    ]}
                   >
-                    <Text style={styles.cancelButtonText}>{cancelText}</Text>
-                  </TouchableOpacity>
-                )}
+                    {icon}
+                  </Animated.Text>
+                </View>
 
-                {showCloseButton && (
-                  <TouchableOpacity
-                    style={[styles.modalButton, { backgroundColor: color }]}
-                    onPress={onConfirm || onClose}
-                  >
-                    <Text style={styles.confirmButtonText}>{confirmText}</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
+                <Text style={styles.modalTitle}>{title}</Text>
+                <Text style={styles.modalMessage}>{message}</Text>
+
+                <View style={styles.buttonContainer}>
+                  {showCancelButton && (
+                    <TouchableOpacity
+                      style={[styles.modalButton, styles.cancelButton]}
+                      onPress={onClose}
+                    >
+                      <Text style={styles.cancelButtonText}>{cancelText}</Text>
+                    </TouchableOpacity>
+                  )}
+
+                  {showCloseButton && (
+                    <TouchableOpacity
+                      style={[styles.modalButton, styles.confirmButton]}
+                      onPress={onConfirm || onClose}
+                    >
+                      <Text style={styles.confirmButtonText}>{confirmText}</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </LinearGradient>
             </Animated.View>
           </View>
         )}
@@ -221,6 +235,7 @@ const ProfessionalModal = ({
     </Modal>
   );
 };
+
 // Set up notification handler for Android
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -1538,18 +1553,12 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0, 0, 0, 0.8)",
     paddingHorizontal: 20,
   },
-  modalContainer: {
-    backgroundColor: "#ffffff",
+  modalContainerWrapper: {
     borderRadius: 24,
-    paddingTop: 36,
-    paddingBottom: 32,
-    paddingHorizontal: 32,
-    alignItems: "center",
-    justifyContent: "center",
+    overflow: "hidden",
     minWidth: 320,
     width: "90%",
     maxWidth: 360,
-    minHeight: 200,
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
@@ -1558,9 +1567,15 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.4,
     shadowRadius: 30,
     elevation: 35,
-    borderWidth: 0.5,
-    borderColor: "rgba(255, 255, 255, 0.9)",
-    overflow: "hidden",
+  },
+  modalContainer: {
+    borderRadius: 24,
+    paddingTop: 36,
+    paddingBottom: 32,
+    paddingHorizontal: 32,
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 200,
   },
   iconContainer: {
     width: 80,
@@ -1585,7 +1600,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 24,
     fontWeight: "800",
-    color: "#111827",
+    color: "#FFFFFF",
     marginBottom: 16,
     textAlign: "center",
     letterSpacing: -0.2,
@@ -1593,12 +1608,13 @@ const styles = StyleSheet.create({
   },
   modalMessage: {
     fontSize: 17,
-    color: "#6b7280",
+    color: "#FFFFFF",
     textAlign: "center",
     lineHeight: 26,
     marginBottom: 36,
     paddingHorizontal: 12,
     fontWeight: "400",
+    opacity: 0.95,
   },
   buttonContainer: {
     width: "100%",
@@ -1621,20 +1637,23 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
   },
+  confirmButton: {
+    backgroundColor: "#FFFFFF",
+  },
   cancelButton: {
-    backgroundColor: "#f8fafc",
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
     borderWidth: 1.5,
-    borderColor: "#e2e8f0",
+    borderColor: "rgba(255, 255, 255, 0.5)",
     marginTop: 12,
   },
   confirmButtonText: {
-    color: "#ffffff",
+    color: "#E25A17",
     fontSize: 18,
     fontWeight: "700",
     letterSpacing: 0.3,
   },
   cancelButtonText: {
-    color: "#64748b",
+    color: "#FFFFFF",
     fontSize: 18,
     fontWeight: "600",
     letterSpacing: 0.3,
