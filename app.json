@@ -1,5 +1,6 @@
 {
   "expo": {
+    "jsEngine": "jsc",
     "name": "Inspire Wallet",
     "slug": "investor-wallet",
     "version": "2.2.2",
