@@ -16,6 +16,7 @@ import {
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import { useRouter, useNavigation } from "expo-router";
+import { LinearGradient } from 'expo-linear-gradient';
 import { auth, firestore } from "../../configs/firebase";
 import { doc, onSnapshot, getDoc, updateDoc } from "firebase/firestore";
 import StockTransaction from "../../components/StockTransaction";
@@ -161,10 +162,14 @@ export default function Index() {
   useEffect(() => {
     navigation.setOptions({
       headerShown: true,
-      headerTitle: t(userLanguage, "stockholder.header.title"),
+      headerTitle: "Stockholder Dashboard",
       headerTransparent: true,
-      headerTintColor: Colors.redTheme.background, // This colors the default back button
-      // No headerLeft needed - React Navigation provides default back button
+      headerTintColor: Colors.redTheme.background,
+      headerTitleStyle: {
+        color: Colors.redTheme.background,
+        fontSize: 18,
+        fontWeight: "bold",
+      },
     });
   }, [userLanguage]);
 
@@ -184,14 +189,14 @@ export default function Index() {
           {/* Stock Rate Info Banner */}
           <View style={styles.stockRateBanner}>
             <View style={styles.stockRateIconWrapper}>
-              <Ionicons name="information-circle" size={20} color="#3B82F6" />
+              <Ionicons name="information-circle" size={24} color="#3B82F6" />
             </View>
             <View style={styles.stockRateTextContainer}>
               <Text style={[styles.stockRateLabel, getRTLStyles(userLanguage)]}>
-                {t(userLanguage, "stockholder.content.stockRate")}
+                Stock Rate
               </Text>
               <Text style={[styles.stockRateValue, getRTLStyles(userLanguage)]}>
-                {t(userLanguage, "stockholder.content.stockRateValue").replace("{amount}", formatCurrency(STOCK_RATE))}
+                1 Stock = ₱ {formatCurrency(STOCK_RATE)}
               </Text>
             </View>
           </View>
@@ -199,52 +204,39 @@ export default function Index() {
           {/* Stock Balance Card */}
           <View style={styles.balanceCard}>
             {/* Gradient Header */}
-            <View style={styles.cardGradientHeader}>
+            <LinearGradient
+              colors={['#E15816', '#F48F38']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.cardGradientHeader}
+            >
               <View style={styles.stockIconWrapper}>
-                <Ionicons name="trending-up" size={28} color="white" />
+                <Ionicons name="trending-up" size={32} color="white" />
               </View>
               <View style={styles.stockHeaderInfo}>
-                <Text
-                  style={[styles.stockHeaderLabel, getRTLStyles(userLanguage)]}
-                >
-                  {t(userLanguage, "stockholder.content.yourStockPortfolio")}
+                <Text style={[styles.stockHeaderLabel, getRTLStyles(userLanguage)]}>
+                  Your Stock Portfolio
                 </Text>
                 <View style={styles.stockCountRow}>
-                  <Text
-                    style={[
-                      styles.stockCountNumber,
-                      getRTLStyles(userLanguage),
-                    ]}
-                  >
-                    {formatStockCount(
-                      data.stockCount || (data.stockAmount || 0) / STOCK_RATE
-                    )}
+                  <Text style={[styles.stockCountNumber, getRTLStyles(userLanguage)]}>
+                    {formatStockCount(data.stockCount || (data.stockAmount || 0) / STOCK_RATE)}
                   </Text>
-                  <Text
-                    style={[styles.stockCountUnit, getRTLStyles(userLanguage)]}
-                  >
-                    {(data.stockCount ||
-                      (data.stockAmount || 0) / STOCK_RATE) === 1
-                      ? t(userLanguage, "stockholder.content.stock")
-                      : t(userLanguage, "stockholder.content.stocks")}
+                  <Text style={[styles.stockCountUnit, getRTLStyles(userLanguage)]}>
+                    {(data.stockCount || (data.stockAmount || 0) / STOCK_RATE) === 1 ? "Stock" : "Stocks"}
                   </Text>
                 </View>
               </View>
-            </View>
+            </LinearGradient>
 
             {/* Total Value Section */}
             <View style={styles.totalValueContainer}>
               <View style={styles.totalValueHeader}>
-                <Ionicons name="wallet" size={20} color={Colors.light.icon} />
-                <Text
-                  style={[styles.totalValueLabel, getRTLStyles(userLanguage)]}
-                >
-                  {t(userLanguage, "stockholder.content.totalPortfolioValue")}
+                <Ionicons name="wallet" size={22} color="#1a1a1a" />
+                <Text style={[styles.totalValueLabel, getRTLStyles(userLanguage)]}>
+                  Total Portfolio Value
                 </Text>
               </View>
-              <Text
-                style={[styles.totalValueAmount, getRTLStyles(userLanguage)]}
-              >
+              <Text style={[styles.totalValueAmount, getRTLStyles(userLanguage)]}>
                 ₱ {formatCurrency(data.stockAmount || 0)}
               </Text>
             </View>
@@ -254,35 +246,23 @@ export default function Index() {
           <View style={styles.actionButtonsContainer}>
             <TouchableOpacity
               style={styles.buyButton}
-              onPress={() => {
-                router.push("deposit");
-              }}
+              onPress={() => router.push("deposit")}
               activeOpacity={0.8}
             >
-              <View style={styles.buttonIconContainer}>
-                <Ionicons name="add-circle-outline" size={24} color="white" />
-              </View>
+              <Ionicons name="add-circle-outline" size={24} color="white" />
               <Text style={[styles.buyButtonText, getRTLStyles(userLanguage)]}>
-                {t(userLanguage, "stockholder.content.buy")}
+                BUY
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.sellButton}
-              onPress={() => {
-                router.push("stocktransfer");
-              }}
+              onPress={() => router.push("stocktransfer")}
               activeOpacity={0.8}
             >
-              <View style={styles.buttonIconContainer}>
-                <Ionicons
-                  name="arrow-forward-circle-outline"
-                  size={24}
-                  color="white"
-                />
-              </View>
+              <Ionicons name="arrow-forward-circle-outline" size={24} color="white" />
               <Text style={[styles.sellButtonText, getRTLStyles(userLanguage)]}>
-                {t(userLanguage, "stockholder.content.sell")}
+                SELL
               </Text>
             </TouchableOpacity>
           </View>
@@ -290,13 +270,9 @@ export default function Index() {
           {/* Transaction History Section */}
           <View style={styles.transactionSection}>
             <View style={styles.transactionHeader}>
-              <Ionicons
-                name="time-outline"
-                size={20}
-                color={Colors.redTheme.background}
-              />
+              <Ionicons name="time-outline" size={24} color={Colors.redTheme.background} />
               <Text style={[styles.transactionHeaderText, getRTLStyles(userLanguage)]}>
-                {t(userLanguage, "stockholder.content.transactionHistory")}
+                Transaction History
               </Text>
             </View>
             <StockTransaction userId={userId} />
@@ -342,25 +318,19 @@ const styles = StyleSheet.create({
     backgroundColor: "#EFF6FF",
     borderLeftWidth: 4,
     borderLeftColor: "#3B82F6",
-    borderRadius: 12,
-    padding: 14,
+    borderRadius: 16,
+    padding: 16,
     marginBottom: 16,
-    ...Platform.select({
-      ios: {
-        shadowColor: "#3B82F6",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.15,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 3,
-      },
-    }),
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
   },
   stockRateIconWrapper: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: "white",
     justifyContent: "center",
     alignItems: "center",
@@ -370,46 +340,39 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   stockRateLabel: {
-    fontSize: 12,
-    color: "#6B7280",
-    fontWeight: "500",
-    marginBottom: 2,
+    fontSize: 13,
+    color: "#666",
+    fontWeight: "600",
+    marginBottom: 4,
   },
   stockRateValue: {
-    fontSize: isSmallDevice ? 15 : 16,
-    color: "#1F2937",
-    fontWeight: "700",
+    fontSize: 16,
+    color: "#1a1a1a",
+    fontWeight: "bold",
   },
 
   // Balance Card
   balanceCard: {
-    backgroundColor: Colors.light.background,
+    backgroundColor: "white",
     borderRadius: 20,
     marginBottom: 20,
     overflow: "hidden",
-    ...Platform.select({
-      ios: {
-        shadowColor: "#000000",
-        shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 0.15,
-        shadowRadius: 12,
-      },
-      android: {
-        elevation: 8,
-      },
-    }),
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 6,
   },
   cardGradientHeader: {
-    backgroundColor: Colors.redTheme.background,
-    padding: isSmallDevice ? 20 : 24,
+    padding: 24,
     flexDirection: "row",
     alignItems: "center",
   },
   stockIconWrapper: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: "rgba(255, 255, 255, 0.25)",
     justifyContent: "center",
     alignItems: "center",
     marginRight: 16,
@@ -418,10 +381,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   stockHeaderLabel: {
-    fontSize: isSmallDevice ? 13 : 14,
-    color: "rgba(255, 255, 255, 0.9)",
-    fontWeight: "500",
-    marginBottom: 6,
+    fontSize: 15,
+    color: "white",
+    fontWeight: "600",
+    marginBottom: 8,
   },
   stockCountRow: {
     flexDirection: "row",
@@ -429,134 +392,98 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   stockCountNumber: {
-    fontSize: isSmallDevice ? 32 : 36,
-    fontWeight: "800",
+    fontSize: 40,
+    fontWeight: "bold",
     color: "white",
   },
   stockCountUnit: {
-    fontSize: isSmallDevice ? 16 : 18,
+    fontSize: 20,
     fontWeight: "600",
-    color: "rgba(255, 255, 255, 0.9)",
+    color: "white",
   },
 
   // Total Value Section
   totalValueContainer: {
-    padding: isSmallDevice ? 20 : 24,
+    padding: 24,
+    backgroundColor: "white",
   },
   totalValueHeader: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    marginBottom: 8,
-  },
-  totalValueLabel: {
-    fontSize: isSmallDevice ? 13 : 14,
-    color: Colors.light.icon,
-    fontWeight: "500",
-  },
-  totalValueAmount: {
-    fontSize: isSmallDevice ? 30 : 34,
-    fontWeight: "800",
-    color: "#1F2937",
     marginBottom: 12,
   },
-  perStockContainer: {
-    backgroundColor: "#F9FAFB",
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    alignSelf: "flex-start",
-  },
-  perStockText: {
-    fontSize: 12,
-    color: "#6B7280",
+  totalValueLabel: {
+    fontSize: 15,
+    color: "#1a1a1a",
     fontWeight: "600",
+  },
+  totalValueAmount: {
+    fontSize: 36,
+    fontWeight: "bold",
+    color: "#1a1a1a",
   },
   // Action Buttons
   actionButtonsContainer: {
     flexDirection: "row",
     gap: 12,
-    marginBottom: 24,
+    marginBottom: 20,
   },
   buyButton: {
     flex: 1,
     backgroundColor: "#10B981",
-    borderRadius: 16,
-    paddingVertical: isSmallDevice ? 16 : 18,
-    paddingHorizontal: 16,
+    borderRadius: 50,
+    paddingVertical: 18,
+    paddingHorizontal: 20,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 10,
-    ...Platform.select({
-      ios: {
-        shadowColor: "#10B981",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.4,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 6,
-      },
-    }),
+    shadowColor: "#10B981",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
   sellButton: {
     flex: 1,
-    backgroundColor: Colors.redTheme.background,
-    borderRadius: 16,
-    paddingVertical: isSmallDevice ? 16 : 18,
-    paddingHorizontal: 16,
+    backgroundColor: "#EF4444",
+    borderRadius: 50,
+    paddingVertical: 18,
+    paddingHorizontal: 20,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 10,
-    ...Platform.select({
-      ios: {
-        shadowColor: Colors.redTheme.background,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.4,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 6,
-      },
-    }),
-  },
-  buttonIconContainer: {
-    width: 24,
-    height: 24,
-    justifyContent: "center",
-    alignItems: "center",
+    shadowColor: "#EF4444",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
   buyButtonText: {
-    fontSize: isSmallDevice ? 15 : 17,
+    fontSize: 16,
     color: "white",
-    fontWeight: "700",
-    letterSpacing: 0.3,
+    fontWeight: "bold",
+    letterSpacing: 0.5,
   },
   sellButtonText: {
-    fontSize: isSmallDevice ? 15 : 17,
+    fontSize: 16,
     color: "white",
-    fontWeight: "700",
-    letterSpacing: 0.3,
+    fontWeight: "bold",
+    letterSpacing: 0.5,
   },
   // Transaction Section
   transactionSection: {
     flex: 1,
-    backgroundColor: Colors.light.background,
+    backgroundColor: "white",
     borderRadius: 20,
-    padding: isSmallDevice ? 16 : 20,
-    ...Platform.select({
-      ios: {
-        shadowColor: "#000000",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 4,
-      },
-    }),
+    padding: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
   },
   transactionHeader: {
     flexDirection: "row",
@@ -564,12 +491,12 @@ const styles = StyleSheet.create({
     gap: 10,
     marginBottom: 16,
     paddingBottom: 12,
-    borderBottomWidth: 2,
-    borderBottomColor: "#F3F4F6",
+    borderBottomWidth: 1,
+    borderBottomColor: "#f0f0f0",
   },
   transactionHeaderText: {
-    fontSize: isSmallDevice ? 17 : 19,
-    fontWeight: "700",
+    fontSize: 18,
+    fontWeight: "bold",
     color: Colors.redTheme.background,
     flex: 1,
   },

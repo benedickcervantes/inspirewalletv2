@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { useRouter, useNavigation } from "expo-router";
+import { LinearGradient } from 'expo-linear-gradient';
 import { Colors } from "../../constants/Colors";
 import { auth, firestore } from "../../configs/firebase";
 import { doc, getDoc } from "firebase/firestore";
@@ -30,9 +31,14 @@ export default function Index() {
     navigation.setOptions({
       headerShown: true,
       headerTransparent: true,
-      headerTitle: t(userLanguage, 'termsAndCondition.header.title'),
-      headerTintColor: Colors.redTheme.background, // This colors the default back button
-      // No headerLeft needed - React Navigation provides default back button
+      headerTitle: "Terms & Conditions",
+      headerTintColor: "#000000",
+      headerTitleStyle: {
+        color: "#000000",
+        fontSize: 18,
+        fontWeight: "bold",
+      },
+      headerTitleAlign: "center",
     });
   }, [navigation, userLanguage]);
 
@@ -56,72 +62,66 @@ export default function Index() {
   const sections = [
     {
       id: 'eligibility',
-      title: t(userLanguage, 'termsAndCondition.content.eligibility.title'),
-      icon: 'checkmark-circle-outline',
-      content: t(userLanguage, 'termsAndCondition.content.eligibility.content')
+      title: 'Eligibility',
+      content: 'You must be at least 18 years old and have the legal capacity to enter into contracts. By using our app, you represent that you meet these requirements. If you are located in a jurisdiction where investment services are restricted, you may not use the app.'
     },
     {
       id: 'accountRegistration',
-      title: t(userLanguage, 'termsAndCondition.content.accountRegistration.title'),
-      icon: 'person-add-outline',
-      content: t(userLanguage, 'termsAndCondition.content.accountRegistration.content'),
+      title: 'Account Registration',
+      content: 'To access the maximum capacity of the app, you must create an account. You agree to:',
       bulletPoints: [
-        t(userLanguage, 'termsAndCondition.content.accountRegistration.bulletPoints.accurateInfo'),
-        t(userLanguage, 'termsAndCondition.content.accountRegistration.bulletPoints.passwordSecurity'),
-        t(userLanguage, 'termsAndCondition.content.accountRegistration.bulletPoints.unauthorizedUse')
+        'Provide accurate and complete information',
+        'Maintain the security of your password',
+        'In case of any unauthorized use of your account, kindly notify us immediately'
       ]
     },
     {
       id: 'servicesProvided',
-      title: t(userLanguage, 'termsAndCondition.content.servicesProvided.title'),
-      icon: 'business-outline',
-      content: t(userLanguage, 'termsAndCondition.content.servicesProvided.content')
+      title: 'Services Provided',
+      content: 'Inspire Wallet provides you access and investment and lets you monitor your money before and after withdrawal. Every transaction shall be made through email and not directly with the Bank. Inspire Alliance Fund Group will process your transaction, not the app itself. The process could take approximately five (5) to seven (7) working days to reflect on your Inspire Wallet account.'
     },
     {
       id: 'feesAndCharges',
-      title: t(userLanguage, 'termsAndCondition.content.feesAndCharges.title'),
-      icon: 'card-outline',
-      content: t(userLanguage, 'termsAndCondition.content.feesAndCharges.content')
+      title: 'Fees and Charges',
+      content: 'Details of fees associated with transactions, account maintenance, and other services will be provided in-app and may change from time to time.'
     },
     {
       id: 'userResponsibilities',
-      title: t(userLanguage, 'termsAndCondition.content.userResponsibilities.title'),
-      icon: 'shield-checkmark-outline',
-      content: t(userLanguage, 'termsAndCondition.content.userResponsibilities.content')
+      title: 'User Responsibilities',
+      content: 'You agree to use the app for lawful purposes and to abide by all applicable laws and regulations. You are responsible for your account and investment decisions.'
     },
     {
       id: 'intellectualProperty',
-      title: t(userLanguage, 'termsAndCondition.content.intellectualProperty.title'),
-      icon: 'copyright-outline',
-      content: t(userLanguage, 'termsAndCondition.content.intellectualProperty.content')
+      title: 'Intellectual Property',
+      content: 'All content, trademarks, and software related to are owned by Inspire Alliance Fund Group or its licensors. You are granted a limited, non-exclusive license to use the app for personal purposes.'
     },
     {
       id: 'privacyPolicy',
-      title: t(userLanguage, 'termsAndCondition.content.privacyPolicy.title'),
-      icon: 'lock-closed-outline',
-      content: t(userLanguage, 'termsAndCondition.content.privacyPolicy.content')
+      title: 'Privacy Policy',
+      content: 'Your use of the app is also governed by our Privacy Policy, which details how we collect, use, and protect your personal information. The app only collects data such as your name, email address and bank details.'
     },
     {
       id: 'changesToTerms',
-      title: t(userLanguage, 'termsAndCondition.content.changesToTerms.title'),
-      icon: 'refresh-outline',
-      content: t(userLanguage, 'termsAndCondition.content.changesToTerms.content')
+      title: 'Changes to Terms',
+      content: 'We may update these terms at any time. We will notify you of significant changes through the app or via email. Your continued use of the app after changes constitutes acceptance of the new terms.'
     },
     {
       id: 'contactDetails',
-      title: t(userLanguage, 'termsAndCondition.content.contactDetails.title'),
-      icon: 'mail-outline',
-      content: t(userLanguage, 'termsAndCondition.content.contactDetails.content'),
-      contactInfo: t(userLanguage, 'termsAndCondition.content.contactDetails.contactInfo')
+      title: 'Contact Us',
+      content: 'For questions or concerns regarding these terms, please contact us at:',
+      contactInfo: 'inspireholdings: 85982571'
     }
   ];
 
   const renderSection = (section) => (
     <View key={section.id} style={styles.sectionCard}>
-      <View style={styles.sectionHeader}>
-        <View style={styles.sectionIconContainer}>
-          <Ionicons name={section.icon} size={24} color={Colors.redTheme.background} />
-        </View>
+      <View style={styles.sectionTitleContainer}>
+        <LinearGradient
+          colors={['#E15816', '#F48F38']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0, y: 1 }}
+          style={styles.orangeLine}
+        />
         <Text style={[styles.sectionTitle, getRTLStyles(userLanguage)]}>
           {section.title}
         </Text>
@@ -135,9 +135,7 @@ export default function Index() {
         <View style={styles.bulletPointsContainer}>
           {section.bulletPoints.map((point, index) => (
             <View key={index} style={styles.bulletPoint}>
-              <View style={styles.bulletIcon}>
-                <Ionicons name="checkmark" size={12} color={Colors.redTheme.background} />
-              </View>
+              <Text style={styles.bulletDot}>•</Text>
               <Text style={[styles.bulletText, getRTLStyles(userLanguage)]}>
                 {point}
               </Text>
@@ -147,8 +145,8 @@ export default function Index() {
       )}
 
       {section.contactInfo && (
-        <Text style={[styles.contactInfo, getRTLStyles(userLanguage)]}>
-          <Text style={styles.link}>{section.contactInfo}</Text>
+        <Text style={[styles.contactInfoText, getRTLStyles(userLanguage)]}>
+          {section.contactInfo}
         </Text>
       )}
     </View>
@@ -166,14 +164,11 @@ export default function Index() {
         >
           {/* Hero Section */}
           <View style={styles.heroCard}>
-            <View style={styles.heroIconContainer}>
-              <Ionicons name="document-text" size={48} color="white" />
-            </View>
             <Text style={[styles.heroTitle, getRTLStyles(userLanguage)]}>
-              {t(userLanguage, 'termsAndCondition.header.title')}
+              Welcome to Inspire Wallet!
             </Text>
             <Text style={[styles.heroSubtitle, getRTLStyles(userLanguage)]}>
-              {t(userLanguage, 'termsAndCondition.content.welcome')}
+              Please read these terms and conditions carefully before accessing, using, or obtaining any materials, information, products, or services through the Inspire Wallet (collectively, "the app"). By using our app, you agree to be bound by these terms and conditions ("Terms") and our Privacy Policy. In these "Terms", "we", "us", "our" and "Inspire Wallet" refers to Inspire Wallet, and "I", "you", and "your" refers to you, the user.
             </Text>
           </View>
 
@@ -197,52 +192,40 @@ const styles = StyleSheet.create({
   },
   androidSafeArea: {
     flex: 1,
-    paddingTop: Platform.OS === "android" ? 60 : 50,
+    paddingTop: Platform.OS === "android" ? 80 : 70,
   },
   scrollViewContent: {
-    padding: 20,
+    padding: 16,
     paddingBottom: 40,
   },
 
-  // Hero Card - Modern e-wallet style
+  // Hero Card - Clean white card
   heroCard: {
-    backgroundColor: Colors.redTheme.background,
-    borderRadius: 24,
-    padding: 32,
-    marginBottom: 24,
-    alignItems: "center",
-    shadowColor: Colors.redTheme.background,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 8,
-  },
-  heroIconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
-    justifyContent: "center",
-    alignItems: "center",
+    backgroundColor: "white",
+    borderRadius: 16,
+    padding: 20,
     marginBottom: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
   },
   heroTitle: {
-    fontSize: 24,
+    fontSize: 16,
     fontWeight: "bold",
-    color: "white",
-    marginBottom: 8,
-    textAlign: "center",
+    color: "#E15816",
+    marginBottom: 12,
   },
   heroSubtitle: {
-    fontSize: 14,
-    color: "rgba(255, 255, 255, 0.9)",
-    textAlign: "center",
+    fontSize: 13,
+    color: "#666",
     lineHeight: 20,
   },
 
   // Content Container
   contentContainer: {
-    gap: 16,
+    gap: 0,
   },
 
   // Section Cards
@@ -250,39 +233,35 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
     borderRadius: 16,
     padding: 20,
+    marginBottom: 16,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 8,
     elevation: 3,
-    borderLeftWidth: 4,
-    borderLeftColor: Colors.redTheme.background,
   },
-  sectionHeader: {
+  sectionTitleContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 16,
+    marginBottom: 12,
   },
-  sectionIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "rgba(254, 125, 72, 0.1)",
-    justifyContent: "center",
-    alignItems: "center",
+  orangeLine: {
+    width: 4,
+    height: 20,
     marginRight: 12,
+    borderRadius: 2,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 15,
     fontWeight: "bold",
-    color: Colors.redTheme.background,
+    color: "#1a1a1a",
     flex: 1,
   },
   sectionContent: {
-    fontSize: 15,
-    lineHeight: 22,
-    color: "#333",
-    marginBottom: 12,
+    fontSize: 13,
+    lineHeight: 20,
+    color: "#666",
+    marginBottom: 8,
   },
 
   // Bullet Points
@@ -293,62 +272,27 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-start",
     marginBottom: 8,
+    paddingLeft: 4,
   },
-  bulletIcon: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: "rgba(254, 125, 72, 0.1)",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 12,
-    marginTop: 2,
+  bulletDot: {
+    fontSize: 16,
+    color: "#E15816",
+    marginRight: 8,
+    marginTop: -2,
   },
   bulletText: {
     flex: 1,
-    fontSize: 14,
+    fontSize: 13,
     lineHeight: 20,
-    color: "#555",
+    color: "#666",
   },
 
   // Contact Info
-  contactInfo: {
+  contactInfoText: {
     marginTop: 8,
-    fontSize: 15,
-    color: "#333",
-  },
-  link: {
-    color: Colors.redTheme.background,
+    fontSize: 13,
+    color: "#E15816",
     fontWeight: "600",
-    textDecorationLine: "underline",
-  },
-
-  // Agreement Card
-  agreementCard: {
-    backgroundColor: "rgba(254, 125, 72, 0.05)",
-    borderRadius: 16,
-    padding: 20,
-    marginTop: 8,
-    borderWidth: 1,
-    borderColor: "rgba(254, 125, 72, 0.2)",
-  },
-  agreementHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  agreementTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: Colors.redTheme.background,
-    marginLeft: 12,
-  },
-  agreementText: {
-    fontSize: 15,
-    lineHeight: 22,
-    color: "#333",
-    fontStyle: "italic",
-    fontWeight: "500",
   },
 
   // Spacing
