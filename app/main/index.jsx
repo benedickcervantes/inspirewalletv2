@@ -241,7 +241,7 @@ export default function Dashboard() {
 
           {/* Tabs */}
           <View style={styles.tabs}>
-            {["Wallet", "Investment", "Loan", "Cards"].map((tab) => (
+            {["Wallet", "Investment", "Cards"].map((tab) => (
               <TouchableOpacity
                 key={tab}
                 style={[styles.tab, activeTab === tab && styles.activeTab]}
@@ -280,11 +280,6 @@ export default function Dashboard() {
               userData={userData}
               timeDeposit={timeDeposit}
               formatCurrency={formatCurrency}
-            />
-          )}
-          {activeTab === "Loan" && (
-            <LoanTab
-              userData={userData}
             />
           )}
 
@@ -563,12 +558,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 12,
     backgroundColor: "#FFFFFF",
-    gap: 8,
+    justifyContent: "center",
+    gap: 16,
   },
   tab: {
-    paddingHorizontal: 20,
-    paddingVertical: 8,
+    paddingHorizontal: 28,
+    paddingVertical: 10,
     borderRadius: 20,
+    minWidth: 100,
+    alignItems: "center",
   },
   activeTab: {
     backgroundColor: "#E15816",
