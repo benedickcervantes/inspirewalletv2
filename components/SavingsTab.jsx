@@ -2,10 +2,12 @@ import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, ImageBackground } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 
 const { width } = Dimensions.get("window");
 
 export default function SavingsTab({ userData, timeDeposit, formatCurrency }) {
+  const router = useRouter();
   // Sample data for deposit growth (last 12 months)
   const [depositData, setDepositData] = useState([
     { month: "Jan", amount: 5000 },
@@ -72,21 +74,30 @@ export default function SavingsTab({ userData, timeDeposit, formatCurrency }) {
 
       {/* Deposit Type Options */}
       <View style={styles.optionsContainer}>
-        <TouchableOpacity style={styles.optionCard}>
+        <TouchableOpacity 
+          style={styles.optionCard}
+          onPress={() => router.push("/timedeposit")}
+        >
           <View style={styles.optionIcon}>
             <Ionicons name="time-outline" size={28} color="#E15816" />
           </View>
           <Text style={styles.optionLabel}>Time Deposit</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.optionCard}>
+        <TouchableOpacity 
+          style={styles.optionCard}
+          onPress={() => router.push("/stockinvestment")}
+        >
           <View style={styles.optionIcon}>
             <MaterialCommunityIcons name="chart-line" size={28} color="#E15816" />
           </View>
           <Text style={styles.optionLabel}>Stock Investment</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.optionCard}>
+        <TouchableOpacity 
+          style={styles.optionCard}
+          onPress={() => router.push("/topup")}
+        >
           <View style={styles.optionIcon}>
             <MaterialCommunityIcons name="arrow-up-circle" size={28} color="#E15816" />
           </View>

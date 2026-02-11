@@ -241,7 +241,7 @@ export default function Dashboard() {
 
           {/* Tabs */}
           <View style={styles.tabs}>
-            {["Wallet", "Savings", "Loan", "Cards"].map((tab) => (
+            {["Wallet", "Investment", "Loan", "Cards"].map((tab) => (
               <TouchableOpacity
                 key={tab}
                 style={[styles.tab, activeTab === tab && styles.activeTab]}
@@ -275,7 +275,7 @@ export default function Dashboard() {
               flipCard={flipCard}
             />
           )}
-          {activeTab === "Savings" && (
+          {activeTab === "Investment" && (
             <SavingsTab
               userData={userData}
               timeDeposit={timeDeposit}
@@ -288,8 +288,8 @@ export default function Dashboard() {
             />
           )}
 
-          {/* Quick Action Buttons - Hide in Cards and Savings tabs */}
-          {activeTab !== "Cards" && activeTab !== "Savings" && (
+          {/* Quick Action Buttons - Hide in Cards and Investment tabs */}
+          {activeTab !== "Cards" && activeTab !== "Investment" && (
           <View style={styles.quickActionsContainer}>
             <TouchableOpacity 
               style={styles.quickActionButton}
@@ -333,8 +333,8 @@ export default function Dashboard() {
           </View>
           )}
 
-          {/* Menu Grid Container - 5 items per line - Hide in Cards and Savings tabs */}
-          {activeTab !== "Cards" && activeTab !== "Savings" && (
+          {/* Menu Grid Container - 5 items per line - Hide in Cards and Investment tabs */}
+          {activeTab !== "Cards" && activeTab !== "Investment" && (
           <View style={styles.menuContainer}>
             <View style={styles.menuHeader}>
               <Text style={styles.menuHeaderTitle}>Services</Text>
@@ -364,8 +364,8 @@ export default function Dashboard() {
           </View>
           )}
 
-          {/* Crypto Banner - Hide in Savings tab only */}
-          {activeTab !== "Savings" && (
+          {/* Crypto Banner - Hide in Investment tab only */}
+          {activeTab !== "Investment" && (
           <ScrollView 
             horizontal 
             showsHorizontalScrollIndicator={false}
@@ -393,8 +393,8 @@ export default function Dashboard() {
           </ScrollView>
           )}
 
-          {/* Transaction History - Hide in Savings tab only */}
-          {activeTab !== "Savings" && (
+          {/* Transaction History - Hide in Investment tab only */}
+          {activeTab !== "Investment" && (
           <View style={styles.transactionSection}>
             <View style={styles.transactionHeader}>
               <Ionicons name="time-outline" size={20} color="#E15816" />

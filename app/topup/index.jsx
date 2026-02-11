@@ -5,51 +5,55 @@ import {
   View,
   SafeAreaView,
   TouchableOpacity,
+  TextInput,
   ScrollView,
   Modal,
+  Image,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 
-export default function WithdrawType() {
+export default function TopUpBalance() {
   const router = useRouter();
-  const [selectedType, setSelectedType] = useState(null);
+  const [selectedCurrency, setSelectedCurrency] = useState("PHP");
+  const [showCurrencyModal, setShowCurrencyModal] = useState(false);
+  const [amount, setAmount] = useState("");
   const [showAlertModal, setShowAlertModal] = useState(false);
   const [alertConfig, setAlertConfig] = useState({ title: "", message: "" });
 
-  const withdrawalTypes = [
-    {
-      id: "available-balance",
-      title: "Available Balance",
-      subtitle: "Withdraw from your available balance",
-      icon: "wallet-outline",
-    },
-    {
-      id: "agent-withdrawal",
-      title: "Agent Withdrawal",
-      subtitle: "Withdraw from your agent wallet",
-      icon: "person-circle-outline",
-    },
+  const currencies = [
+    { code: "PHP", name: "Philippine Peso", flag: "🇵🇭", symbol: "₱" },
+    { code: "JPY", name: "Japanese Yen", flag: "🇯🇵", symbol: "¥" },
+    { code: "SAR", name: "Saudi Riyal", flag: "🇸🇦", symbol: "﷼" },
+    { code: "KRW", name: "Korean Won", flag: "🇰🇷", symbol: "₩" },
   ];
 
   const handleContinue = () => {
-    if (!selectedType) {
+    // Validation
+    if (!amount || parseFloat(amount) <= 0) {
       setAlertConfig({
-        title: "Selection Required",
-        message: "Please select a withdrawal type to continue"
+        title: "Invalid Amount",
+        message: "Please enter a valid amount"
       });
       setShowAlertModal(true);
       return;
     }
 
-    // Navigate to withdrawal method selection
+    // Navigate to confirm page with parameters
+    const selectedCurrencyData = getSelectedCurrency();
     router.push({
-      pathname: "/withdraw/method",
+      pathname: "/topup/confirm",
       params: {
-        type: selectedType
+        currency: selectedCurrency,
+        amount: amount,
+        currencySymbol: selectedCurrencyData.symbol,
       }
     });
+  };
+
+  const getSelectedCurrency = () => {
+    return currencies.find(c => c.code === selectedCurrency) || currencies[0];
   };
 
   return (
@@ -69,7 +73,7 @@ export default function WithdrawType() {
             <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
           </TouchableOpacity>
 
-          <Text style={styles.headerTitle}>Withdrawal Request</Text>
+          <Text style={styles.headerTitle}>Deposit Request</Text>
 
           <TouchableOpacity style={styles.refreshButton}>
             <Ionicons name="refresh" size={24} color="#FFFFFF" />
@@ -84,8 +88,6 @@ export default function WithdrawType() {
             </View>
             <View style={styles.stepLine} />
             <View style={styles.stepCircle} />
-            <View style={styles.stepLine} />
-            <View style={styles.stepCircle} />
           </View>
         </View>
 
@@ -96,45 +98,64 @@ export default function WithdrawType() {
         >
           {/* Title */}
           <View style={styles.titleContainer}>
-            <Text style={styles.title}>Select Withdrawal Type</Text>
-            <Text style={styles.subtitle}>Withdraw from your available balance</Text>
+            <Text style={styles.title}>Top Up Available Balance</Text>
           </View>
 
           {/* Form Card */}
           <View style={styles.formCard}>
             <View style={styles.leftBorder} />
 
-            {/* Section Header */}
+            {/* Investment Amount Section */}
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Select Withdrawal Method</Text>
-              <Text style={styles.sectionSubtitle}>Choose how you want to withdraw</Text>
+              <Text style={styles.sectionTitle}>Investment Amount</Text>
+              <Text style={styles.sectionSubtitle}>Enter investment amount</Text>
             </View>
 
-            {/* Withdrawal Type Options */}
-            <View style={styles.typesContainer}>
-              {withdrawalTypes.map((type) => (
-                <TouchableOpacity
-                  key={type.id}
-                  style={[
-                    styles.typeOption,
-                    selectedType === type.id && styles.typeOptionSelected
-                  ]}
-                  onPress={() => setSelectedType(type.id)}
-                  activeOpacity={0.7}
-                >
-                  <View style={styles.typeIconBox}>
-                    <Ionicons 
-                      name={type.icon} 
-                      size={28} 
-                      color="#E25A17" 
-                    />
-                  </View>
-                  <View style={styles.typeInfo}>
-                    <Text style={styles.typeTitle}>{type.title}</Text>
-                    <Text style={styles.typeSubtitle}>{type.subtitle}</Text>
-                  </View>
-                </TouchableOpacity>
-              ))}
+            {/* Select Currency */}
+            <View style={styles.formSection}>
+              <View style={styles.fieldHeader}>
+                <View style={styles.iconBox}>
+                  <Image 
+                    source={require("../../assets/images/currency icon.png")}
+                    style={styles.currencyIcon}
+                    resizeMode="contain"
+                  />
+                </View>
+                <Text style={styles.fieldTitle}>Select Currency</Text>
+              </View>
+
+              <TouchableOpacity 
+                style={styles.currencySelector}
+                onPress={() => setShowCurrencyModal(true)}
+              >
+                <View style={styles.flagContainer}>
+                  <Text style={styles.flagEmoji}>{getSelectedCurrency().flag}</Text>
+                </View>
+                <Text style={styles.currencyText}>{getSelectedCurrency().code}</Text>
+                <Ionicons name="chevron-down" size={20} color="#999" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Amount */}
+            <View style={styles.formSection}>
+              <View style={styles.fieldHeader}>
+                <View style={styles.iconBox}>
+                  <MaterialCommunityIcons name="cash" size={20} color="#E25A17" />
+                </View>
+                <Text style={styles.fieldTitle}>Amount *</Text>
+              </View>
+
+              <View style={styles.amountInput}>
+                <Text style={styles.currencySymbol}>{getSelectedCurrency().symbol}</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter investment amount"
+                  placeholderTextColor="#CCC"
+                  keyboardType="numeric"
+                  value={amount}
+                  onChangeText={setAmount}
+                />
+              </View>
             </View>
           </View>
 
@@ -156,6 +177,49 @@ export default function WithdrawType() {
 
           <View style={styles.bottomPadding} />
         </ScrollView>
+
+        {/* Currency Selector Modal */}
+        <Modal
+          visible={showCurrencyModal}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={() => setShowCurrencyModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContainer}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Select Currency</Text>
+                <TouchableOpacity onPress={() => setShowCurrencyModal(false)}>
+                  <Ionicons name="close" size={24} color="#333" />
+                </TouchableOpacity>
+              </View>
+              <ScrollView style={styles.modalContent}>
+                {currencies.map((currency) => (
+                  <TouchableOpacity
+                    key={currency.code}
+                    style={[
+                      styles.currencyOption,
+                      selectedCurrency === currency.code && styles.currencyOptionSelected
+                    ]}
+                    onPress={() => {
+                      setSelectedCurrency(currency.code);
+                      setShowCurrencyModal(false);
+                    }}
+                  >
+                    <Text style={styles.currencyFlag}>{currency.flag}</Text>
+                    <View style={styles.currencyInfo}>
+                      <Text style={styles.currencyCode}>{currency.code}</Text>
+                      <Text style={styles.currencyName}>{currency.name}</Text>
+                    </View>
+                    {selectedCurrency === currency.code && (
+                      <Ionicons name="checkmark-circle" size={24} color="#E25A17" />
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          </View>
+        </Modal>
 
         {/* Custom Alert Modal */}
         <Modal
@@ -221,7 +285,7 @@ const styles = StyleSheet.create({
   },
   progressContainer: {
     paddingVertical: 24,
-    paddingHorizontal: 60,
+    paddingHorizontal: 80,
     backgroundColor: "#FFFFFF",
   },
   stepIndicator: {
@@ -260,11 +324,6 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "700",
     color: "#333",
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontSize: 13,
-    color: "#999",
   },
   formCard: {
     backgroundColor: "#F9F9F9",
@@ -302,47 +361,71 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: "#999",
   },
-  typesContainer: {
-    gap: 16,
+  formSection: {
+    marginBottom: 24,
   },
-  typeOption: {
+  fieldHeader: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    padding: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    marginBottom: 12,
   },
-  typeOptionSelected: {
-    borderWidth: 2,
-    borderColor: "#E25A17",
-    backgroundColor: "#FFF5F0",
-  },
-  typeIconBox: {
-    width: 56,
-    height: 56,
-    borderRadius: 12,
+  iconBox: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
     backgroundColor: "#FFF5F0",
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 16,
+    marginRight: 8,
   },
-  typeInfo: {
+  currencyIcon: {
+    width: 20,
+    height: 20,
+    tintColor: "#E25A17",
+  },
+  fieldTitle: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#333",
+  },
+  currencySelector: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+  },
+  flagContainer: {
+    marginRight: 8,
+  },
+  flagEmoji: {
+    fontSize: 20,
+  },
+  currencyText: {
     flex: 1,
+    fontSize: 14,
+    color: "#333",
+    fontWeight: "500",
   },
-  typeTitle: {
+  amountInput: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 16,
+    borderRadius: 8,
+  },
+  currencySymbol: {
     fontSize: 18,
-    fontWeight: "700",
     color: "#E25A17",
-    marginBottom: 4,
+    fontWeight: "600",
   },
-  typeSubtitle: {
-    fontSize: 13,
-    color: "#999",
+  input: {
+    flex: 1,
+    paddingVertical: 12,
+    fontSize: 14,
+    color: "#333",
+    marginLeft: 8,
   },
   continueButton: {
     marginTop: 8,
@@ -359,15 +442,73 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 16,
-    gap: 8,
   },
   continueText: {
     fontSize: 18,
     fontWeight: "700",
     color: "#FFFFFF",
+    marginRight: 8,
   },
   bottomPadding: {
     height: 20,
+  },
+  // Currency Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "flex-end",
+  },
+  modalContainer: {
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: "70%",
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F0F0F0",
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#333",
+  },
+  modalContent: {
+    padding: 16,
+  },
+  currencyOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 8,
+    backgroundColor: "#F9F9F9",
+  },
+  currencyOptionSelected: {
+    backgroundColor: "#FFF5F0",
+    borderWidth: 1,
+    borderColor: "#E25A17",
+  },
+  currencyFlag: {
+    fontSize: 32,
+    marginRight: 16,
+  },
+  currencyInfo: {
+    flex: 1,
+  },
+  currencyCode: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 2,
+  },
+  currencyName: {
+    fontSize: 13,
+    color: "#666",
   },
   // Alert Modal Styles
   alertOverlay: {
