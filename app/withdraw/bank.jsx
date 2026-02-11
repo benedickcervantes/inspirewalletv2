@@ -1,53 +1,85 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   StyleSheet,
   Text,
   View,
   SafeAreaView,
   TouchableOpacity,
+  TextInput,
   ScrollView,
   Modal,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { auth, firestore } from "../../configs/firebase";
+import { doc, getDoc } from "firebase/firestore";
 
-export default function WithdrawType() {
+export default function BankWithdrawal() {
   const router = useRouter();
-  const [selectedType, setSelectedType] = useState(null);
+  const [accountNumber, setAccountNumber] = useState("");
+  const [accountHolderName, setAccountHolderName] = useState("");
+  const [bankName, setBankName] = useState("");
+  const [branchName, setBranchName] = useState("");
+  const [withdrawalAmount, setWithdrawalAmount] = useState("");
+  const [emailAddress, setEmailAddress] = useState("");
   const [showAlertModal, setShowAlertModal] = useState(false);
   const [alertConfig, setAlertConfig] = useState({ title: "", message: "" });
+  const [userData, setUserData] = useState(null);
 
-  const withdrawalTypes = [
-    {
-      id: "available-balance",
-      title: "Available Balance",
-      subtitle: "Withdraw from your available balance",
-      icon: "wallet-outline",
-    },
-    {
-      id: "agent-withdrawal",
-      title: "Agent Withdrawal",
-      subtitle: "Withdraw from your agent wallet",
-      icon: "person-circle-outline",
-    },
-  ];
+  useEffect(() => {
+    fetchUserData();
+  }, []);
+
+  const fetchUserData = async () => {
+    try {
+      const user = auth.currentUser;
+      if (user) {
+        const userDocRef = doc(firestore, "users", user.uid);
+        const userDocSnap = await getDoc(userDocRef);
+        
+        if (userDocSnap.exists()) {
+          const data = userDocSnap.data();
+          setUserData(data);
+          setEmailAddress(data.email || "");
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+    }
+  };
 
   const handleContinue = () => {
-    if (!selectedType) {
+    // Validation
+    if (!accountNumber || !accountHolderName || !bankName || !branchName || !withdrawalAmount || !emailAddress) {
       setAlertConfig({
-        title: "Selection Required",
-        message: "Please select a withdrawal type to continue"
+        title: "Missing Information",
+        message: "Please fill in all required fields"
       });
       setShowAlertModal(true);
       return;
     }
 
-    // Navigate to withdrawal method selection
+    if (parseFloat(withdrawalAmount) <= 0) {
+      setAlertConfig({
+        title: "Invalid Amount",
+        message: "Please enter a valid withdrawal amount"
+      });
+      setShowAlertModal(true);
+      return;
+    }
+
+    // Navigate to next step with data
     router.push({
-      pathname: "/withdraw/method",
+      pathname: "/withdraw/confirm",
       params: {
-        type: selectedType
+        method: "local-bank",
+        accountNumber,
+        accountHolderName,
+        bankName,
+        branchName,
+        amount: withdrawalAmount,
+        email: emailAddress,
       }
     });
   };
@@ -82,8 +114,10 @@ export default function WithdrawType() {
             <View style={[styles.stepCircle, styles.stepActive]}>
               <Ionicons name="checkmark" size={16} color="#FFFFFF" />
             </View>
-            <View style={styles.stepLine} />
-            <View style={styles.stepCircle} />
+            <View style={[styles.stepLine, styles.stepLineActive]} />
+            <View style={[styles.stepCircle, styles.stepActive]}>
+              <Ionicons name="checkmark" size={16} color="#FFFFFF" />
+            </View>
             <View style={styles.stepLine} />
             <View style={styles.stepCircle} />
           </View>
@@ -96,45 +130,112 @@ export default function WithdrawType() {
         >
           {/* Title */}
           <View style={styles.titleContainer}>
-            <Text style={styles.title}>Select Withdrawal Type</Text>
+            <Text style={styles.title}>Available Balance</Text>
             <Text style={styles.subtitle}>Withdraw from your available balance</Text>
           </View>
 
-          {/* Form Card */}
+          {/* Banking Information Card */}
           <View style={styles.formCard}>
             <View style={styles.leftBorder} />
-
-            {/* Section Header */}
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Select Withdrawal Method</Text>
-              <Text style={styles.sectionSubtitle}>Choose how you want to withdraw</Text>
+            
+            <View style={styles.cardHeader}>
+              <Text style={styles.cardTitle}>Banking Information</Text>
+              <Text style={styles.cardSubtitle}>Enter your banking information</Text>
             </View>
 
-            {/* Withdrawal Type Options */}
-            <View style={styles.typesContainer}>
-              {withdrawalTypes.map((type) => (
-                <TouchableOpacity
-                  key={type.id}
-                  style={[
-                    styles.typeOption,
-                    selectedType === type.id && styles.typeOptionSelected
-                  ]}
-                  onPress={() => setSelectedType(type.id)}
-                  activeOpacity={0.7}
-                >
-                  <View style={styles.typeIconBox}>
-                    <Ionicons 
-                      name={type.icon} 
-                      size={28} 
-                      color="#E25A17" 
-                    />
-                  </View>
-                  <View style={styles.typeInfo}>
-                    <Text style={styles.typeTitle}>{type.title}</Text>
-                    <Text style={styles.typeSubtitle}>{type.subtitle}</Text>
-                  </View>
-                </TouchableOpacity>
-              ))}
+            {/* Bank Account Number */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Bank Account Number *</Text>
+              <TextInput
+                style={styles.input}
+                placeholder=""
+                placeholderTextColor="#CCC"
+                value={accountNumber}
+                onChangeText={setAccountNumber}
+                keyboardType="numeric"
+              />
+            </View>
+
+            {/* Account Holder Name */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Account Holder Name *</Text>
+              <TextInput
+                style={styles.input}
+                placeholder=""
+                placeholderTextColor="#CCC"
+                value={accountHolderName}
+                onChangeText={setAccountHolderName}
+              />
+            </View>
+
+            {/* Bank Name */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Bank Name *</Text>
+              <TextInput
+                style={styles.input}
+                placeholder=""
+                placeholderTextColor="#CCC"
+                value={bankName}
+                onChangeText={setBankName}
+              />
+            </View>
+
+            {/* Branch Name */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Branch Name *</Text>
+              <TextInput
+                style={styles.input}
+                placeholder=""
+                placeholderTextColor="#CCC"
+                value={branchName}
+                onChangeText={setBranchName}
+              />
+            </View>
+          </View>
+
+          {/* Withdrawal Amount Card */}
+          <View style={styles.formCard}>
+            <View style={styles.leftBorder} />
+            
+            <View style={styles.cardHeader}>
+              <Text style={styles.cardTitle}>Withdrawal Amount</Text>
+              <Text style={styles.cardSubtitle}>Enter withdrawal amount and contact information</Text>
+            </View>
+
+            {/* Withdrawal Amount */}
+            <View style={styles.inputGroup}>
+              <View style={styles.labelWithIcon}>
+                <MaterialCommunityIcons name="cash" size={18} color="#E25A17" />
+                <Text style={styles.inputLabel}>Withdrawal Amount (₱) *</Text>
+              </View>
+              <View style={styles.amountInputContainer}>
+                <Text style={styles.currencySymbol}>₱</Text>
+                <TextInput
+                  style={styles.amountInput}
+                  placeholder=""
+                  placeholderTextColor="#CCC"
+                  value={withdrawalAmount}
+                  onChangeText={setWithdrawalAmount}
+                  keyboardType="numeric"
+                />
+              </View>
+            </View>
+
+            {/* Email Address */}
+            <View style={styles.inputGroup}>
+              <View style={styles.labelWithIcon}>
+                <MaterialCommunityIcons name="email-outline" size={18} color="#E25A17" />
+                <Text style={styles.inputLabel}>Email Address *</Text>
+              </View>
+              <TextInput
+                style={styles.input}
+                placeholder=""
+                placeholderTextColor="#CCC"
+                value={emailAddress}
+                onChangeText={setEmailAddress}
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
             </View>
           </View>
 
@@ -246,6 +347,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#E0E0E0",
     marginHorizontal: 8,
   },
+  stepLineActive: {
+    backgroundColor: "#E25A17",
+  },
   scrollView: {
     flex: 1,
   },
@@ -270,13 +374,13 @@ const styles = StyleSheet.create({
     backgroundColor: "#F9F9F9",
     borderRadius: 16,
     padding: 20,
+    marginBottom: 16,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 8,
     elevation: 3,
     position: "relative",
-    marginBottom: 24,
   },
   leftBorder: {
     position: "absolute",
@@ -288,61 +392,65 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 16,
     borderBottomLeftRadius: 16,
   },
-  sectionHeader: {
+  cardHeader: {
     alignItems: "center",
-    marginBottom: 24,
+    marginBottom: 20,
   },
-  sectionTitle: {
+  cardTitle: {
     fontSize: 18,
     fontWeight: "700",
     color: "#333",
     marginBottom: 4,
   },
-  sectionSubtitle: {
-    fontSize: 13,
+  cardSubtitle: {
+    fontSize: 12,
     color: "#999",
   },
-  typesContainer: {
-    gap: 16,
+  inputGroup: {
+    marginBottom: 16,
   },
-  typeOption: {
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 8,
+  },
+  labelWithIcon: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: 8,
+  },
+  input: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    fontSize: 14,
+    color: "#333",
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+  },
+  amountInputContainer: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    padding: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
   },
-  typeOptionSelected: {
-    borderWidth: 2,
-    borderColor: "#E25A17",
-    backgroundColor: "#FFF5F0",
-  },
-  typeIconBox: {
-    width: 56,
-    height: 56,
-    borderRadius: 12,
-    backgroundColor: "#FFF5F0",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 16,
-  },
-  typeInfo: {
-    flex: 1,
-  },
-  typeTitle: {
+  currencySymbol: {
     fontSize: 18,
-    fontWeight: "700",
     color: "#E25A17",
-    marginBottom: 4,
+    fontWeight: "600",
+    marginRight: 8,
   },
-  typeSubtitle: {
-    fontSize: 13,
-    color: "#999",
+  amountInput: {
+    flex: 1,
+    paddingVertical: 12,
+    fontSize: 14,
+    color: "#333",
   },
   continueButton: {
     marginTop: 8,

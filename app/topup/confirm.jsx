@@ -8,48 +8,90 @@ import {
   ScrollView,
   Modal,
 } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { auth, firestore } from "../../configs/firebase";
+import { doc, getDoc, addDoc, collection, serverTimestamp } from "firebase/firestore";
 
-export default function WithdrawType() {
+export default function TopUpConfirm() {
   const router = useRouter();
-  const [selectedType, setSelectedType] = useState(null);
+  const params = useLocalSearchParams();
   const [showAlertModal, setShowAlertModal] = useState(false);
   const [alertConfig, setAlertConfig] = useState({ title: "", message: "" });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const withdrawalTypes = [
-    {
-      id: "available-balance",
-      title: "Available Balance",
-      subtitle: "Withdraw from your available balance",
-      icon: "wallet-outline",
-    },
-    {
-      id: "agent-withdrawal",
-      title: "Agent Withdrawal",
-      subtitle: "Withdraw from your agent wallet",
-      icon: "person-circle-outline",
-    },
-  ];
+  const currency = params.currency || "PHP";
+  const amount = params.amount || "0";
+  const currencySymbol = params.currencySymbol || "₱";
 
-  const handleContinue = () => {
-    if (!selectedType) {
+  const handleConfirm = async () => {
+    if (isSubmitting) return;
+    
+    setIsSubmitting(true);
+    
+    try {
+      const user = auth.currentUser;
+      if (!user) {
+        setAlertConfig({
+          title: "Error",
+          message: "User not authenticated"
+        });
+        setShowAlertModal(true);
+        setIsSubmitting(false);
+        return;
+      }
+
+      const userDocRef = doc(firestore, "users", user.uid);
+      const userDocSnap = await getDoc(userDocRef);
+      
+      if (!userDocSnap.exists()) {
+        setAlertConfig({
+          title: "Error",
+          message: "User data not found"
+        });
+        setShowAlertModal(true);
+        setIsSubmitting(false);
+        return;
+      }
+
+      const userData = userDocSnap.data();
+
+      const topUpData = {
+        userId: user.uid,
+        userName: `${userData.firstName} ${userData.lastName}`,
+        userEmail: userData.email,
+        type: "Top Up Balance",
+        currency: currency,
+        amount: parseFloat(amount),
+        status: "Pending",
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      };
+
+      await addDoc(collection(firestore, "depositRequests"), topUpData);
+
+      // Show success modal
       setAlertConfig({
-        title: "Selection Required",
-        message: "Please select a withdrawal type to continue"
+        title: "Success",
+        message: "Your top-up request has been submitted successfully!"
       });
       setShowAlertModal(true);
-      return;
+      
+      // Navigate back after a delay
+      setTimeout(() => {
+        setShowAlertModal(false);
+        router.push("/main");
+      }, 2000);
+    } catch (error) {
+      console.error("Error submitting top-up:", error);
+      setAlertConfig({
+        title: "Error",
+        message: "Failed to submit top-up request. Please try again."
+      });
+      setShowAlertModal(true);
+      setIsSubmitting(false);
     }
-
-    // Navigate to withdrawal method selection
-    router.push({
-      pathname: "/withdraw/method",
-      params: {
-        type: selectedType
-      }
-    });
   };
 
   return (
@@ -69,7 +111,7 @@ export default function WithdrawType() {
             <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
           </TouchableOpacity>
 
-          <Text style={styles.headerTitle}>Withdrawal Request</Text>
+          <Text style={styles.headerTitle}>Deposit Request</Text>
 
           <TouchableOpacity style={styles.refreshButton}>
             <Ionicons name="refresh" size={24} color="#FFFFFF" />
@@ -82,10 +124,10 @@ export default function WithdrawType() {
             <View style={[styles.stepCircle, styles.stepActive]}>
               <Ionicons name="checkmark" size={16} color="#FFFFFF" />
             </View>
-            <View style={styles.stepLine} />
-            <View style={styles.stepCircle} />
-            <View style={styles.stepLine} />
-            <View style={styles.stepCircle} />
+            <View style={[styles.stepLine, styles.stepLineActive]} />
+            <View style={[styles.stepCircle, styles.stepActive]}>
+              <MaterialCommunityIcons name="lock" size={16} color="#FFFFFF" />
+            </View>
           </View>
         </View>
 
@@ -96,63 +138,48 @@ export default function WithdrawType() {
         >
           {/* Title */}
           <View style={styles.titleContainer}>
-            <Text style={styles.title}>Select Withdrawal Type</Text>
-            <Text style={styles.subtitle}>Withdraw from your available balance</Text>
+            <Text style={styles.title}>Review & Confirm</Text>
+            <Text style={styles.subtitle}>Review your deposit details</Text>
           </View>
 
-          {/* Form Card */}
-          <View style={styles.formCard}>
+          {/* Deposit Type Card */}
+          <View style={styles.detailCard}>
             <View style={styles.leftBorder} />
-
-            {/* Section Header */}
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Select Withdrawal Method</Text>
-              <Text style={styles.sectionSubtitle}>Choose how you want to withdraw</Text>
-            </View>
-
-            {/* Withdrawal Type Options */}
-            <View style={styles.typesContainer}>
-              {withdrawalTypes.map((type) => (
-                <TouchableOpacity
-                  key={type.id}
-                  style={[
-                    styles.typeOption,
-                    selectedType === type.id && styles.typeOptionSelected
-                  ]}
-                  onPress={() => setSelectedType(type.id)}
-                  activeOpacity={0.7}
-                >
-                  <View style={styles.typeIconBox}>
-                    <Ionicons 
-                      name={type.icon} 
-                      size={28} 
-                      color="#E25A17" 
-                    />
-                  </View>
-                  <View style={styles.typeInfo}>
-                    <Text style={styles.typeTitle}>{type.title}</Text>
-                    <Text style={styles.typeSubtitle}>{type.subtitle}</Text>
-                  </View>
-                </TouchableOpacity>
-              ))}
-            </View>
+            <Text style={styles.detailLabel}>Deposit Type</Text>
+            <Text style={styles.detailValue}>Top Up Available Balance</Text>
           </View>
 
-          {/* Continue Button */}
-          <TouchableOpacity
-            style={styles.continueButton}
-            onPress={handleContinue}
-          >
-            <LinearGradient
-              colors={["#E25A17", "#F28934"]}
-              style={styles.continueGradient}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
+          {/* Investment Amount Card */}
+          <View style={styles.amountCard}>
+            <Text style={styles.amountLabel}>Investment Amount</Text>
+            <Text style={styles.amountValue}>{amount} {currency}</Text>
+          </View>
+
+          {/* Action Buttons */}
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={styles.backButtonBottom}
+              onPress={() => router.back()}
             >
-              <Text style={styles.continueText}>Continue</Text>
-              <Ionicons name="play" size={20} color="#FFFFFF" />
-            </LinearGradient>
-          </TouchableOpacity>
+              <Text style={styles.backButtonText}>Back</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.confirmButton}
+              onPress={handleConfirm}
+              disabled={isSubmitting}
+            >
+              <LinearGradient
+                colors={["#E25A17", "#F28934"]}
+                style={styles.confirmGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+              >
+                <Text style={styles.confirmText}>Confirm</Text>
+                <Ionicons name="play" size={20} color="#FFFFFF" />
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
 
           <View style={styles.bottomPadding} />
         </ScrollView>
@@ -175,7 +202,12 @@ export default function WithdrawType() {
               <Text style={styles.alertMessage}>{alertConfig.message}</Text>
               <TouchableOpacity
                 style={styles.alertButton}
-                onPress={() => setShowAlertModal(false)}
+                onPress={() => {
+                  setShowAlertModal(false);
+                  if (alertConfig.title === "Success") {
+                    router.push("/main");
+                  }
+                }}
               >
                 <Text style={styles.alertButtonText}>OK</Text>
               </TouchableOpacity>
@@ -221,7 +253,7 @@ const styles = StyleSheet.create({
   },
   progressContainer: {
     paddingVertical: 24,
-    paddingHorizontal: 60,
+    paddingHorizontal: 80,
     backgroundColor: "#FFFFFF",
   },
   stepIndicator: {
@@ -246,6 +278,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#E0E0E0",
     marginHorizontal: 8,
   },
+  stepLineActive: {
+    backgroundColor: "#E25A17",
+  },
   scrollView: {
     flex: 1,
   },
@@ -266,17 +301,17 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: "#999",
   },
-  formCard: {
-    backgroundColor: "#F9F9F9",
+  detailCard: {
+    backgroundColor: "#FFFFFF",
     borderRadius: 16,
     padding: 20,
+    marginBottom: 16,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 8,
     elevation: 3,
     position: "relative",
-    marginBottom: 24,
   },
   leftBorder: {
     position: "absolute",
@@ -288,65 +323,65 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 16,
     borderBottomLeftRadius: 16,
   },
-  sectionHeader: {
+  detailLabel: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 8,
+  },
+  detailValue: {
+    fontSize: 14,
+    color: "#666",
+  },
+  amountCard: {
+    backgroundColor: "#FFF5F0",
+    borderRadius: 16,
+    padding: 24,
     alignItems: "center",
     marginBottom: 24,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
   },
-  sectionTitle: {
-    fontSize: 18,
+  amountLabel: {
+    fontSize: 14,
+    color: "#999",
+    marginBottom: 8,
+  },
+  amountValue: {
+    fontSize: 28,
     fontWeight: "700",
     color: "#333",
-    marginBottom: 4,
   },
-  sectionSubtitle: {
-    fontSize: 13,
-    color: "#999",
-  },
-  typesContainer: {
-    gap: 16,
-  },
-  typeOption: {
+  buttonContainer: {
     flexDirection: "row",
-    alignItems: "center",
+    gap: 12,
+  },
+  backButtonBottom: {
+    flex: 1,
     backgroundColor: "#FFFFFF",
     borderRadius: 12,
-    padding: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  typeOptionSelected: {
+    paddingVertical: 16,
+    alignItems: "center",
+    justifyContent: "center",
     borderWidth: 2,
     borderColor: "#E25A17",
-    backgroundColor: "#FFF5F0",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
   },
-  typeIconBox: {
-    width: 56,
-    height: 56,
-    borderRadius: 12,
-    backgroundColor: "#FFF5F0",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 16,
-  },
-  typeInfo: {
-    flex: 1,
-  },
-  typeTitle: {
-    fontSize: 18,
+  backButtonText: {
+    fontSize: 16,
     fontWeight: "700",
     color: "#E25A17",
-    marginBottom: 4,
   },
-  typeSubtitle: {
-    fontSize: 13,
-    color: "#999",
-  },
-  continueButton: {
-    marginTop: 8,
-    borderRadius: 25,
+  confirmButton: {
+    flex: 1,
+    borderRadius: 12,
     overflow: "hidden",
     shadowColor: "#E25A17",
     shadowOffset: { width: 0, height: 4 },
@@ -354,17 +389,17 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 6,
   },
-  continueGradient: {
+  confirmGradient: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 16,
-    gap: 8,
   },
-  continueText: {
-    fontSize: 18,
+  confirmText: {
+    fontSize: 16,
     fontWeight: "700",
     color: "#FFFFFF",
+    marginRight: 8,
   },
   bottomPadding: {
     height: 20,
