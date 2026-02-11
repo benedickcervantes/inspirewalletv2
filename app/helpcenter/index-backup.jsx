@@ -24,7 +24,6 @@ import { ScrollView } from "react-native";
 import { Colors } from "../../constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
-import { LinearGradient } from 'expo-linear-gradient';
 import ProfessionalModal from "../../components/ProfessionalModal";
 import useModal from "../../components/useModal";
 import { t } from "../../utils/languageUtils";
@@ -76,14 +75,12 @@ export default function Index() {
     navigation.setOptions({
       headerShown: true,
       headerTransparent: true,
-      headerTitle: "Help Center",
-      headerTintColor: "#000000",
+      headerTitle: t(userLanguage, "helpCenter.header.title"),
+      headerTintColor: Colors.redTheme.background,
       headerTitleStyle: {
         fontWeight: "bold",
         fontSize: 18,
-        color: "#000000",
       },
-      headerTitleAlign: "center",
     });
   }, [userLanguage]);
 
@@ -417,66 +414,77 @@ export default function Index() {
           onScrollBeginDrag={Keyboard.dismiss}
           showsVerticalScrollIndicator={false}
         >
-          {/* Modern Header with Icon */}
-          <View style={styles.modernHeaderCard}>
-            <LinearGradient
-              colors={['#E15816', '#F48F38']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.iconCircle}
-            >
+          {/* Header Card */}
+          <View style={styles.headerCard}>
+            <View style={styles.headerContent}>
               <Ionicons
-                name="search"
-                size={40}
-                color="white"
+                name="help-circle-outline"
+                size={32}
+                color={Colors.redTheme.background}
+                style={styles.headerIcon}
               />
-            </LinearGradient>
-            <Text style={[styles.modernHeaderTitle, getRTLStyles(userLanguage)]}>Submit Your Request</Text>
-            <Text style={[styles.modernHeaderSubtitle, getRTLStyles(userLanguage)]}>
-              Need help with something? Fill out this form and our support team will get back to you as soon as possible.
+              <View style={styles.headerTextContainer}>
+                <Text style={[styles.headerTitle, getRTLStyles(userLanguage)]}>{t(userLanguage, "helpCenter.content.title")}</Text>
+                <Text style={[styles.headerSubtitle, getRTLStyles(userLanguage)]}>
+                  {t(userLanguage, "helpCenter.content.subtitle")}
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Instructions Card */}
+          <View style={styles.instructionCard}>
+            <View style={styles.instructionHeader}>
+              <Ionicons
+                name="chatbubble-ellipses"
+                size={20}
+                color={Colors.redTheme.background}
+              />
+              <Text style={[styles.instructionTitle, getRTLStyles(userLanguage)]}>{t(userLanguage, "helpCenter.content.submitRequestTitle")}</Text>
+            </View>
+            <Text style={[styles.instructionText, getRTLStyles(userLanguage)]}>
+              {t(userLanguage, "helpCenter.content.instructions")}
             </Text>
           </View>
 
           {/* Form Card */}
-          <View style={styles.modernFormCard}>
+          <View style={styles.formCard}>
+            <Text style={[styles.sectionTitle, getRTLStyles(userLanguage)]}>{t(userLanguage, "helpCenter.content.contactInfo")}</Text>
+
             {/* Personal Information Section */}
-            <View style={styles.modernFormSection}>
-              <Text style={[styles.modernSectionLabel, getRTLStyles(userLanguage)]}>PERSONAL INFORMATION</Text>
+            <View style={styles.formSection}>
+              <Text style={[styles.subsectionTitle, getRTLStyles(userLanguage)]}>{t(userLanguage, "helpCenter.content.yourDetails")}</Text>
 
-              {/* First Name and Last Name in Row */}
-              <View style={styles.rowContainer}>
-                <View style={styles.halfWidth}>
-                  <Text style={[styles.modernInputLabel, getRTLStyles(userLanguage)]}>First Name *</Text>
-                  <TextInput
-                    style={[styles.modernInput, getRTLStyles(userLanguage)]}
-                    placeholder="Enter your first name"
-                    placeholderTextColor="#aaa"
-                    keyboardType="default"
-                    value={firstName}
-                    onChangeText={(value) => setFirstName(value)}
-                  />
-                </View>
-
-                <View style={styles.halfWidth}>
-                  <Text style={[styles.modernInputLabel, getRTLStyles(userLanguage)]}>Last Name *</Text>
-                  <TextInput
-                    style={[styles.modernInput, getRTLStyles(userLanguage)]}
-                    placeholder="Enter your last name"
-                    placeholderTextColor="#aaa"
-                    keyboardType="default"
-                    value={lastName}
-                    onChangeText={(value) => setLastName(value)}
-                  />
-                </View>
+              <View style={styles.inputGroup}>
+                <Text style={[styles.inputLabel, getRTLStyles(userLanguage)]}>{t(userLanguage, "helpCenter.content.firstName")}</Text>
+                <TextInput
+                  style={[styles.input, getRTLStyles(userLanguage)]}
+                  placeholder={t(userLanguage, "helpCenter.content.firstNamePlaceholder")}
+                  placeholderTextColor="#999"
+                  keyboardType="default"
+                  value={firstName}
+                  onChangeText={(value) => setFirstName(value)}
+                />
               </View>
 
-              {/* Email Address */}
-              <View style={styles.fullWidth}>
-                <Text style={[styles.modernInputLabel, getRTLStyles(userLanguage)]}>Email Address *</Text>
+              <View style={styles.inputGroup}>
+                <Text style={[styles.inputLabel, getRTLStyles(userLanguage)]}>{t(userLanguage, "helpCenter.content.lastName")}</Text>
                 <TextInput
-                  style={[styles.modernInput, getRTLStyles(userLanguage)]}
-                  placeholder="your.email@example.com"
-                  placeholderTextColor="#aaa"
+                  style={[styles.input, getRTLStyles(userLanguage)]}
+                  placeholder={t(userLanguage, "helpCenter.content.lastNamePlaceholder")}
+                  placeholderTextColor="#999"
+                  keyboardType="default"
+                  value={lastName}
+                  onChangeText={(value) => setLastName(value)}
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={[styles.inputLabel, getRTLStyles(userLanguage)]}>{t(userLanguage, "helpCenter.content.emailAddress")}</Text>
+                <TextInput
+                  style={[styles.input, getRTLStyles(userLanguage)]}
+                  placeholder={t(userLanguage, "helpCenter.content.emailPlaceholder")}
+                  placeholderTextColor="#999"
                   keyboardType="email-address"
                   value={emailAddress}
                   onChangeText={(value) => setEmailAddress(value)}
@@ -484,71 +492,69 @@ export default function Index() {
               </View>
             </View>
 
-            {/* Issue Details Section */}
-            <View style={styles.modernFormSection}>
-              <Text style={[styles.modernSectionLabel, getRTLStyles(userLanguage)]}>ISSUE DETAILS</Text>
+            {/* Ticket Details Section */}
+            <View style={styles.formSection}>
+              <Text style={[styles.subsectionTitle, getRTLStyles(userLanguage)]}>{t(userLanguage, "helpCenter.content.ticketDetails")}</Text>
 
-              {/* Ticket Title */}
-              <View style={styles.fullWidth}>
-                <Text style={[styles.modernInputLabel, getRTLStyles(userLanguage)]}>Ticket Title *</Text>
+              <View style={styles.inputGroup}>
+                <Text style={[styles.inputLabel, getRTLStyles(userLanguage)]}>{t(userLanguage, "helpCenter.content.ticketTitle")}</Text>
                 <TextInput
-                  style={[styles.modernInput, getRTLStyles(userLanguage)]}
-                  placeholder="Brief title describing your issue"
-                  placeholderTextColor="#aaa"
+                  style={[styles.input, getRTLStyles(userLanguage)]}
+                  placeholder={t(userLanguage, "helpCenter.content.ticketTitlePlaceholder")}
+                  placeholderTextColor="#999"
                   keyboardType="default"
                   value={title}
                   onChangeText={(value) => setTitle(value)}
                 />
               </View>
 
-              {/* Priority Level and Category in Row */}
-              <View style={styles.rowContainer}>
-                <View style={styles.halfWidth}>
-                  <Text style={[styles.modernInputLabel, getRTLStyles(userLanguage)]}>Priority Level *</Text>
-                  <TouchableOpacity
-                    style={styles.modernSelector}
-                    onPress={() => setOpenPriority(true)}
-                  >
-                    <Text style={[styles.modernSelectorText, getRTLStyles(userLanguage)]}>
-                      {priority ? 
-                        (priority === "high" ? "High" :
-                         priority === "medium" ? "Medium" :
-                         priority === "low" ? "Low" : priority)
-                        : "Select priority level"}
-                    </Text>
-                    <Ionicons name="chevron-down" size={18} color="#666" />
-                  </TouchableOpacity>
-                </View>
-
-                <View style={styles.halfWidth}>
-                  <Text style={[styles.modernInputLabel, getRTLStyles(userLanguage)]}>Category *</Text>
-                  <TouchableOpacity
-                    style={styles.modernSelector}
-                    onPress={() => setOpenCategory(true)}
-                  >
-                    <Text style={[styles.modernSelectorText, getRTLStyles(userLanguage)]}>
-                      {category ? 
-                        (category === "payment" ? "Payment Issues" :
-                         category === "withdrawal" ? "Withdrawal Issues" :
-                         category === "verification" ? "Account Verification" :
-                         category === "security" ? "Security Concerns" :
-                         category === "technical" ? "Technical Issues" :
-                         category === "general" ? "General Support" :
-                         category === "other" ? "Other" : category)
-                        : "Select category"}
-                    </Text>
-                    <Ionicons name="chevron-down" size={18} color="#666" />
-                  </TouchableOpacity>
-                </View>
+              <View style={styles.inputGroup}>
+                <Text style={[styles.inputLabel, getRTLStyles(userLanguage)]}>{t(userLanguage, "helpCenter.content.priorityLevel")}</Text>
+                <TouchableOpacity
+                  style={styles.modalSelector}
+                  onPress={() => setOpenPriority(true)}
+                >
+                  <Text style={[styles.modalSelectorText, getRTLStyles(userLanguage)]}>
+                    {priority ? 
+                      (priority === "high" ? t(userLanguage, "helpCenter.content.highPriority") :
+                       priority === "medium" ? t(userLanguage, "helpCenter.content.mediumPriority") :
+                       priority === "low" ? t(userLanguage, "helpCenter.content.lowPriority") : priority)
+                      : t(userLanguage, "helpCenter.content.selectPriority")}
+                  </Text>
+                </TouchableOpacity>
               </View>
 
-              {/* Describe Your Concern */}
-              <View style={styles.fullWidth}>
-                <Text style={[styles.modernInputLabel, getRTLStyles(userLanguage)]}>Describe Your Concern *</Text>
+              <View style={styles.inputGroup}>
+                <Text style={[styles.inputLabel, getRTLStyles(userLanguage)]}>{t(userLanguage, "helpCenter.content.category")}</Text>
+                <TouchableOpacity
+                  style={styles.modalSelector}
+                  onPress={() => setOpenCategory(true)}
+                >
+                  <Text style={[styles.modalSelectorText, getRTLStyles(userLanguage)]}>
+                    {category ? 
+                      (category === "payment" ? t(userLanguage, "helpCenter.content.paymentIssues") :
+                       category === "withdrawal" ? t(userLanguage, "helpCenter.content.withdrawalIssues") :
+                       category === "verification" ? t(userLanguage, "helpCenter.content.accountVerification") :
+                       category === "security" ? t(userLanguage, "helpCenter.content.securityConcerns") :
+                       category === "technical" ? t(userLanguage, "helpCenter.content.appTechnicalIssues") :
+                       category === "general" ? t(userLanguage, "helpCenter.content.generalSupport") :
+                       category === "other" ? t(userLanguage, "helpCenter.content.other") : category)
+                      : t(userLanguage, "helpCenter.content.selectCategory")}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Help Request Section */}
+            <View style={styles.formSection}>
+              <Text style={[styles.subsectionTitle, getRTLStyles(userLanguage)]}>{t(userLanguage, "helpCenter.content.howCanWeHelp")}</Text>
+
+              <View style={styles.inputGroup}>
+                <Text style={[styles.inputLabel, getRTLStyles(userLanguage)]}>{t(userLanguage, "helpCenter.content.describeConcern")}</Text>
                 <TextInput
-                  style={[styles.modernTextArea, getRTLStyles(userLanguage)]}
-                  placeholder="Please describe your concern or question in detail..."
-                  placeholderTextColor="#aaa"
+                  style={[styles.textArea, getRTLStyles(userLanguage)]}
+                  placeholder={t(userLanguage, "helpCenter.content.describePlaceholder")}
+                  placeholderTextColor="#999"
                   keyboardType="default"
                   multiline
                   numberOfLines={6}
@@ -560,39 +566,49 @@ export default function Index() {
             </View>
           </View>
 
-          {/* Disclaimer */}
-          <View style={styles.modernDisclaimerCard}>
-            <Text style={[styles.modernDisclaimerText, getRTLStyles(userLanguage)]}>
-              By submitting this form, we will receive your help request via email. Our support team will review your concern and respond within 24-48 hours during business days. Thank you for reaching out to us!
+          {/* Disclaimer Card */}
+          <View style={styles.disclaimerCard}>
+            <View style={styles.disclaimerHeader}>
+              <Ionicons
+                name="checkmark-circle"
+                size={20}
+                color={Colors.redTheme.background}
+              />
+              <Text style={[styles.disclaimerTitle, getRTLStyles(userLanguage)]}>{t(userLanguage, "helpCenter.content.whatHappensNext")}</Text>
+            </View>
+            <Text style={[styles.disclaimerText, getRTLStyles(userLanguage)]}>
+              {t(userLanguage, "helpCenter.content.disclaimerText")}
             </Text>
           </View>
 
           {/* Submit Button */}
           <TouchableOpacity
+            style={[
+              styles.submitButton,
+              loading && styles.submitButtonDisabled,
+            ]}
             onPress={onSubmit}
             disabled={loading}
-            activeOpacity={0.8}
           >
-            <LinearGradient
-              colors={['#E15816', '#F48F38']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={[
-                styles.modernSubmitButton,
-                loading && styles.submitButtonDisabled,
-              ]}
-            >
+            <View style={styles.submitButtonContent}>
               {loading ? (
                 <ActivityIndicator
                   size="small"
                   color="white"
+                  style={styles.loadingIcon}
                 />
               ) : (
-                <Text style={[styles.modernSubmitButtonText, getRTLStyles(userLanguage)]}>
-                  Submit Request
-                </Text>
+                <Ionicons
+                  name="send-outline"
+                  size={20}
+                  color="white"
+                  style={styles.submitIcon}
+                />
               )}
-            </LinearGradient>
+              <Text style={[styles.submitButtonText, getRTLStyles(userLanguage)]}>
+                {loading ? t(userLanguage, "helpCenter.content.sending") : t(userLanguage, "helpCenter.content.submitRequest")}
+              </Text>
+            </View>
           </TouchableOpacity>
 
 
@@ -1519,152 +1535,6 @@ const styles = StyleSheet.create({
   placeholderView: {
     width: 40,
   },
-  
-  // Modern Header Card Styles
-  modernHeaderCard: {
-    backgroundColor: "white",
-    borderRadius: 16,
-    padding: 24,
-    marginBottom: 16,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  iconCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  modernHeaderTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#1a1a1a",
-    marginBottom: 8,
-    textAlign: "center",
-  },
-  modernHeaderSubtitle: {
-    fontSize: 13,
-    color: "#666",
-    textAlign: "center",
-    lineHeight: 20,
-    paddingHorizontal: 10,
-  },
-
-  // Modern Form Card Styles
-  modernFormCard: {
-    backgroundColor: "white",
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  modernFormSection: {
-    marginBottom: 20,
-  },
-  modernSectionLabel: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: "#1a1a1a",
-    letterSpacing: 0.5,
-    marginBottom: 16,
-  },
-  rowContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    gap: 12,
-  },
-  halfWidth: {
-    flex: 1,
-    marginBottom: 16,
-  },
-  fullWidth: {
-    marginBottom: 16,
-  },
-  modernInputLabel: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#333",
-    marginBottom: 8,
-  },
-  modernInput: {
-    backgroundColor: "#f8f9fa",
-    borderWidth: 1,
-    borderColor: "#e0e0e0",
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 14,
-    color: "#1a1a1a",
-  },
-  modernSelector: {
-    backgroundColor: "#f8f9fa",
-    borderWidth: 1,
-    borderColor: "#e0e0e0",
-    borderRadius: 8,
-    padding: 12,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  modernSelectorText: {
-    fontSize: 14,
-    color: "#1a1a1a",
-    flex: 1,
-  },
-  modernTextArea: {
-    backgroundColor: "#f8f9fa",
-    borderWidth: 1,
-    borderColor: "#e0e0e0",
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 14,
-    color: "#1a1a1a",
-    minHeight: 100,
-    textAlignVertical: "top",
-  },
-
-  // Modern Disclaimer Card
-  modernDisclaimerCard: {
-    backgroundColor: "#f8f9fa",
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 20,
-  },
-  modernDisclaimerText: {
-    fontSize: 11,
-    color: "#666",
-    textAlign: "center",
-    lineHeight: 16,
-  },
-
-  // Modern Submit Button
-  modernSubmitButton: {
-    borderRadius: 12,
-    padding: 16,
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#E15816",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
-    marginBottom: 20,
-  },
-  modernSubmitButtonText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  
   ticketModalContent: {
     flex: 1,
     backgroundColor: "#f8f9fa",
