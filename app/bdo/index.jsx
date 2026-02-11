@@ -1,1595 +1,840 @@
+import React, { useState } from "react";
 import {
   StyleSheet,
   Text,
   View,
-  ImageBackground,
-  TouchableWithoutFeedback,
   SafeAreaView,
-  Keyboard,
-  TextInput,
   TouchableOpacity,
-  Alert,
-  ToastAndroid,
-  Platform,
-  KeyboardAvoidingView,
   ScrollView,
-  ActivityIndicator,
   Modal,
-  Image,
+  ActivityIndicator,
+  TextInput,
+  Alert,
 } from "react-native";
-import { useNavigation } from "expo-router";
-import React, { useEffect, useState } from "react";
-import { send, EmailJSResponseStatus } from "@emailjs/react-native";
-import { getFirestore, doc, getDoc, addDoc, collection } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import * as ImagePicker from 'expo-image-picker';
-import DateTimePicker from "@react-native-community/datetimepicker";
-import { Colors } from "../../constants/Colors";
-import SimpleLoadingScreen from "../../components/SimpleLoadingScreen";
-import BankApplicationLoadingScreen from "../../components/BankApplicationLoadingScreen";
+import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import ProfessionalModal from "../../components/ProfessionalModal";
-import useModal from "../../components/useModal";
-import { checkAccountTypeAccess } from "../../utils/accountTypeUtils";
-import { t } from "../../utils/languageUtils";
-import { getRTLStyles } from "../../utils/rtlUtils";
+import { LinearGradient } from "expo-linear-gradient";
+import { auth, firestore } from "../../configs/firebase";
+import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import * as DocumentPicker from "expo-document-picker";
 
-export default function Index() {
-  const navigation = useNavigation();
-  const db = getFirestore();
-  const auth = getAuth();
-  const storage = getStorage();
-  const [userData, setUserData] = useState({ firstName: "", lastName: "", timeDepositAmount: 0 });
-  const [userLanguage, setUserLanguage] = useState("english");
-  const [open, setOpen] = useState(false);
-  const [openGender, setOpenGender] = useState(false);
-  const [openCivilStatus, setOpenCivilStatus] = useState(false);
-  const [openBank, setOpenBank] = useState(false);
-  const [type, setType] = useState(null);
-  const [loading, setLoading] = useState(true); // Set initial loading to true
-  const { modalVisible, modalConfig, showModal, hideModal } = useModal();
-  const [date, setDate] = useState(new Date());
-  const [show, setShow] = useState(false);
-  const [placeholderDate, setPlaceHolderDate] = useState(
-    "Select your birthdate"
-  );
-
-  // Document upload states
-  const [passportImage, setPassportImage] = useState(null);
-  const [driverLicenseImage, setDriverLicenseImage] = useState(null);
-  const [uploadingDocuments, setUploadingDocuments] = useState(false);
-  const [submittingForm, setSubmittingForm] = useState(false);
-
-  const onChange = (event, selectedDate) => {
-    const currentDate = selectedDate || date;
-
-    // On Android, always close the picker after selection
-    if (Platform.OS === "android") {
-      setShow(false);
-    }
-
-    // Only update the date if user didn't cancel
-    if (event.type === "set" && selectedDate) {
-      setDate(currentDate);
-      setPlaceHolderDate(currentDate.toLocaleDateString());
-    }
-
-    // On iOS, the picker dismisses automatically, but we still need to handle the event
-    if (Platform.OS === "ios" && event.type === "dismissed") {
-      setShow(false);
-    }
-  };
-
-  const fetchUserLanguage = async () => {
-    try {
-      const user = auth.currentUser;
-      if (user) {
-        const userDocRef = doc(db, "users", user.uid);
-        const userDocSnap = await getDoc(userDocRef);
-        if (userDocSnap.exists()) {
-          const data = userDocSnap.data();
-          setUserLanguage(data.preferredLanguage || "english");
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching user language:", error);
-    }
-  };
-
-  useEffect(() => {
-    fetchUserLanguage();
-  }, []);
-
-  useEffect(() => {
-    if (userLanguage !== "english") {
-      setPlaceHolderDate(t(userLanguage, "bdo.content.selectBirthdate"));
-    }
-  }, [userLanguage]);
-
-  useEffect(() => {
-    navigation.setOptions({
-      headerShown: true,
-      headerTransparent: true,
-      headerTitle: t(userLanguage, "bdo.header.title"),
-      headerTintColor: Colors.redTheme.background,
-      headerTitleStyle: {
-        fontWeight: "bold",
-        fontSize: 18,
-      },
-    });
-  }, [userLanguage]);
-
-  useEffect(() => {
-    checkAccessAndFetchData();
-  }, []);
-
-  const checkAccessAndFetchData = async () => {
-    try {
-      const { hasAccess, userAccountType } = await checkAccountTypeAccess("Premium");
-      
-      if (!hasAccess) {
-        setLoading(false);
-        showModal({
-          title: t(userLanguage, "bdo.modals.accessRestricted.title"),
-          message: t(userLanguage, "bdo.modals.accessRestricted.message").replace("{accountType}", userAccountType || "Basic"),
-          type: "warning",
-          onConfirm: () => {
-            navigation.goBack();
-          }
-        });
-        return;
-      }
-
-      // If access is allowed, proceed with fetching user data
-      await fetchUserData();
-    } catch (error) {
-      console.error("Error checking account access:", error);
-      setLoading(false);
-      showModal({
-        title: t(userLanguage, "bdo.modals.error.title"),
-        message: t(userLanguage, "bdo.modals.error.message"),
-        type: "error",
-        onConfirm: () => {
-          navigation.goBack();
-        }
-      });
-    }
-  };
-
-  const fetchUserData = async () => {
-    try {
-      const user = auth.currentUser; // Get the currently signed-in user
-      if (user) {
-        const userDocRef = doc(db, "users", user.uid); // Reference to user's document
-        const userDocSnap = await getDoc(userDocRef); // Fetch user document
-
-        if (userDocSnap.exists()) {
-          const data = userDocSnap.data();
-          const timeDepositAmount = parseFloat(data.timeDepositAmount || 0);
-          
-          setUserData({
-            firstName: data.firstName,
-            lastName: data.lastName,
-            timeDepositAmount: timeDepositAmount
-          });
-
-          // If timeDepositAmount is below 200,000, show warning and redirect
-          if (timeDepositAmount < 200000) {
-            showModal({
-              title: t(userLanguage, "bdo.modals.timeDepositInsufficient.title"),
-              message: t(userLanguage, "bdo.modals.timeDepositInsufficient.message").replace("{amount}", timeDepositAmount.toLocaleString()),
-              type: "warning",
-              onConfirm: () => {
-                navigation.goBack();
-              }
-            });
-          }
-        } else {
-          console.log("No such document!");
-          navigation.goBack();
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching user data:", error);
-      showModal({
-        title: t(userLanguage, "bdo.modals.fetchError.title"),
-        message: t(userLanguage, "bdo.modals.fetchError.message"),
-        type: "error",
-        onConfirm: () => {
-          navigation.goBack();
-        }
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const [emailAddress, setEmailAddress] = useState();
-  const [mobileNumber, setMobileNumber] = useState();
-  const [landlineNumber, setLandlineNumber] = useState();
-  const [address, setAddress] = useState();
-  const [sourceFund, setSourceFund] = useState();
-  const [grossIncome, setGrossIncome] = useState(0);
-  const [gender, setGender] = useState();
-  const [civilStatus, setCivilStatus] = useState("Single");
-  const [BankType, setBankType] = useState("");
-  const [citizenShip, setCitizenShip] = useState("Filipino");
-
-  // Step-by-step procedure states
+export default function BankAccountServices() {
+  const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
-  const [completedSteps, setCompletedSteps] = useState(new Set());
-  const [stepErrors, setStepErrors] = useState({});
+  const [selectedBank, setSelectedBank] = useState("");
+  const [emailAddress, setEmailAddress] = useState("");
+  const [mobileNumber, setMobileNumber] = useState("");
+  const [landlineNumber, setLandlineNumber] = useState("");
+  const [gender, setGender] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState("");
+  const [civilStatus, setCivilStatus] = useState("");
+  const [citizenship, setCitizenship] = useState("");
+  const [completeAddress, setCompleteAddress] = useState("");
+  const [sourceOfFund, setSourceOfFund] = useState("");
+  const [grossMonthlyIncome, setGrossMonthlyIncome] = useState("");
+  const [passportPhoto, setPassportPhoto] = useState(null);
+  const [governmentId, setGovernmentId] = useState(null);
+  const [showBankModal, setShowBankModal] = useState(false);
+  const [showGenderModal, setShowGenderModal] = useState(false);
+  const [showCivilStatusModal, setShowCivilStatusModal] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showAlertModal, setShowAlertModal] = useState(false);
+  const [alertConfig, setAlertConfig] = useState({ title: "", message: "" });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Document upload functions
-  const pickImage = async (type) => {
-    try {
-      // Request permissions
-      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      
-      if (permissionResult.granted === false) {
-        showModal({
-          title: t(userLanguage, "bdo.modals.permissionDenied.title"),
-          message: t(userLanguage, "bdo.modals.permissionDenied.message"),
-          type: "warning",
+  const banks = [
+    "BDO Unibank",
+    "Security Bank",
+    "CTBC Bank",
+    "UnionBank",
+  ];
+
+  const genders = ["Male", "Female", "Other"];
+  const civilStatuses = ["Single", "Married", "Divorced", "Widowed"];
+
+  const totalSteps = 6;
+
+  const handleNext = () => {
+    if (currentStep === 1 && !selectedBank) {
+      setAlertConfig({
+        title: "Selection Required",
+        message: "Please select your preferred bank"
+      });
+      setShowAlertModal(true);
+      return;
+    }
+
+    if (currentStep === 2) {
+      if (!emailAddress || !mobileNumber) {
+        setAlertConfig({
+          title: "Missing Information",
+          message: "Please fill in all required fields"
         });
+        setShowAlertModal(true);
         return;
       }
-
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: false,
-        quality: 0.8,
-      });
-
-      if (!result.canceled && result.assets[0]) {
-        if (type === 'passport') {
-          setPassportImage(result.assets[0]);
-        } else if (type === 'driverLicense') {
-          setDriverLicenseImage(result.assets[0]);
-        }
-      }
-    } catch (error) {
-      console.error('Error picking image:', error);
-      showModal({
-        title: t(userLanguage, "bdo.modals.imagePickerError.title"),
-        message: t(userLanguage, "bdo.modals.imagePickerError.message"),
-        type: "error",
-      });
     }
-  };
 
-  const uploadDocumentToStorage = async (image, documentType) => {
-    try {
-      const user = auth.currentUser;
-      if (!user) throw new Error('User not authenticated');
-
-      // Create a reference to the file in Firebase Storage
-      const fileName = `${documentType}_${user.uid}_${Date.now()}.jpg`;
-      const storageRef = ref(storage, `documents/${user.uid}/${fileName}`);
-
-      // Convert image URI to blob
-      const response = await fetch(image.uri);
-      const blob = await response.blob();
-
-      // Upload the file
-      const snapshot = await uploadBytes(storageRef, blob);
-      
-      // Get the download URL
-      const downloadURL = await getDownloadURL(snapshot.ref);
-      
-      return downloadURL;
-    } catch (error) {
-      console.error(`Error uploading ${documentType}:`, error);
-      throw error;
-    }
-  };
-
-  // Step validation functions
-  const validateStep = (step) => {
-    const errors = {};
-    
-    switch (step) {
-      case 1: // Bank Selection
-        if (!BankType) {
-          errors.bankType = t(userLanguage, "bdo.validation.selectBank");
-        }
-        break;
-      case 2: // Contact Information
-        if (!emailAddress) errors.emailAddress = t(userLanguage, "bdo.validation.emailRequired");
-        if (!mobileNumber) errors.mobileNumber = t(userLanguage, "bdo.validation.mobileRequired");
-        break;
-      case 3: // Personal Details
-        if (!gender) errors.gender = t(userLanguage, "bdo.validation.genderRequired");
-        if (placeholderDate === t(userLanguage, "bdo.content.selectBirthdate")) {
-          errors.birthdate = t(userLanguage, "bdo.validation.birthdateRequired");
-        }
-        if (!civilStatus) errors.civilStatus = t(userLanguage, "bdo.validation.civilStatusRequired");
-        if (!citizenShip) errors.citizenship = t(userLanguage, "bdo.validation.citizenshipRequired");
-        break;
-      case 4: // Address Information
-        if (!address) errors.address = t(userLanguage, "bdo.validation.addressRequired");
-        break;
-      case 5: // Financial Information
-        if (!sourceFund) errors.sourceFund = t(userLanguage, "bdo.validation.sourceFundRequired");
-        if (!grossIncome || grossIncome <= 0) errors.grossIncome = t(userLanguage, "bdo.validation.incomeRequired");
-        break;
-      case 6: // Document Upload
-        if (!passportImage) errors.passportImage = t(userLanguage, "bdo.validation.passportRequired");
-        if (!driverLicenseImage) errors.driverLicenseImage = t(userLanguage, "bdo.validation.driverLicenseRequired");
-        break;
-    }
-    
-    setStepErrors(prev => ({ ...prev, [step]: errors }));
-    return Object.keys(errors).length === 0;
-  };
-
-  const goToNextStep = () => {
-    if (validateStep(currentStep)) {
-      setCompletedSteps(prev => new Set([...prev, currentStep]));
-      if (currentStep < 6) {
-        setCurrentStep(currentStep + 1);
-      } else {
-        onSubmit();
+    if (currentStep === 3) {
+      if (!gender || !dateOfBirth || !civilStatus || !citizenship) {
+        setAlertConfig({
+          title: "Missing Information",
+          message: "Please fill in all required fields"
+        });
+        setShowAlertModal(true);
+        return;
       }
     }
+
+    if (currentStep === 4) {
+      if (!completeAddress) {
+        setAlertConfig({
+          title: "Missing Information",
+          message: "Please fill in your complete address"
+        });
+        setShowAlertModal(true);
+        return;
+      }
+    }
+
+    if (currentStep === 5) {
+      if (!sourceOfFund || !grossMonthlyIncome) {
+        setAlertConfig({
+          title: "Missing Information",
+          message: "Please fill in all required fields"
+        });
+        setShowAlertModal(true);
+        return;
+      }
+    }
+
+    if (currentStep === 6) {
+      if (!passportPhoto || !governmentId) {
+        setAlertConfig({
+          title: "Missing Documents",
+          message: "Please upload all required documents"
+        });
+        setShowAlertModal(true);
+        return;
+      }
+    }
+
+    if (currentStep < totalSteps) {
+      setCurrentStep(currentStep + 1);
+    } else {
+      handleSubmit();
+    }
   };
 
-  const goToPreviousStep = () => {
+  const handleBack = () => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
+    } else {
+      router.back();
     }
   };
 
-  const goToStep = (step) => {
-    if (step <= currentStep || completedSteps.has(step - 1)) {
-      setCurrentStep(step);
-    }
-  };
-
-  const onSubmit = async () => {
-    console.log('🔍 Form validation check:', {
-      emailAddress: !!emailAddress,
-      mobileNumber: !!mobileNumber,
-      address: !!address,
-      sourceFund: !!sourceFund,
-      grossIncome: !!grossIncome,
-      citizenShip: !!citizenShip,
-      BankType: !!BankType,
-      passportImage: !!passportImage,
-      driverLicenseImage: !!driverLicenseImage
-    });
-
-    if (
-      !emailAddress ||
-      !mobileNumber ||
-      !address ||
-      !sourceFund ||
-      !grossIncome ||
-      !citizenShip ||
-      !BankType ||
-      !passportImage ||
-      !driverLicenseImage
-    ) {
-      console.log('❌ Form validation failed - missing required fields');
-      showModal({
-        title: t(userLanguage, "bdo.modals.missingInformation.title"),
-        message: t(userLanguage, "bdo.modals.missingInformation.message"),
-        type: "warning",
-      });
-      return; // Exit the function if validation fails
-    }
-
-    console.log('🚀 Starting form submission...');
-    setSubmittingForm(true); // Start form submission loading
-    setUploadingDocuments(true);
-    console.log('📱 Loading states set:', { submittingForm: true, uploadingDocuments: true });
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
     try {
-      // Get current user
       const user = auth.currentUser;
       if (!user) {
-        setSubmittingForm(false);
-        setUploadingDocuments(false);
-        showModal({
-          title: t(userLanguage, "bdo.modals.authenticationError.title"),
-          message: t(userLanguage, "bdo.modals.authenticationError.message"),
-          type: "error",
+        setAlertConfig({
+          title: "Error",
+          message: "User not authenticated"
         });
+        setShowAlertModal(true);
+        setIsSubmitting(false);
         return;
       }
 
-      // Upload documents to Firebase Storage
-      let passportURL = null;
-      let driverLicenseURL = null;
-
-      try {
-        console.log('📤 Starting document upload...');
-        passportURL = await uploadDocumentToStorage(passportImage, 'passport');
-        console.log('✅ Passport uploaded:', passportURL);
-        driverLicenseURL = await uploadDocumentToStorage(driverLicenseImage, 'driverLicense');
-        console.log('✅ Driver license uploaded:', driverLicenseURL);
-      } catch (uploadError) {
-        console.error('Error uploading documents:', uploadError);
-        setSubmittingForm(false);
-        setUploadingDocuments(false);
-        showModal({
-          title: t(userLanguage, "bdo.modals.documentUploadError.title"),
-          message: t(userLanguage, "bdo.modals.documentUploadError.message"),
-          type: "error",
-        });
-        return;
-      }
-
-      setUploadingDocuments(false);
-      console.log('💾 Documents uploaded, now saving to Firebase...');
-
-      // Prepare application data for Firebase
       const applicationData = {
-        // User information
         userId: user.uid,
-        userName: `${userData.firstName} ${userData.lastName}`,
-        userEmail: user.email,
-        
-        // Contact information
+        preferredBank: selectedBank,
         emailAddress: emailAddress,
         mobileNumber: mobileNumber,
-        landlineNumber: landlineNumber || "",
-        
-        // Personal details
-        gender: gender || "",
-        birthdate: date,
+        landlineNumber: landlineNumber,
+        gender: gender,
+        dateOfBirth: dateOfBirth,
         civilStatus: civilStatus,
-        citizenship: citizenShip,
-        
-        // Address information
-        address: address,
-        
-        // Banking information
-        preferredBank: BankType,
-        
-        // Financial information
-        sourceOfFund: sourceFund,
-        grossMonthlyIncome: parseFloat(grossIncome) || 0,
-        
-        // Application metadata
+        citizenship: citizenship,
+        completeAddress: completeAddress,
+        sourceOfFund: sourceOfFund,
+        grossMonthlyIncome: grossMonthlyIncome,
+        passportPhoto: passportPhoto?.name || "Uploaded",
+        governmentId: governmentId?.name || "Uploaded",
         applicationType: "Bank Account Services",
         status: "Pending",
-        submittedAt: new Date(),
-        processedAt: null,
-        
-        // Document URLs
-        passportURL: passportURL,
-        driverLicenseURL: driverLicenseURL,
-        
-        // Additional fields
-        notes: "",
-        approvedBy: "",
-        approvedAt: null,
+        createdAt: serverTimestamp(),
       };
 
-      // Save to Firebase - Create a new document in the 'bankApplications' collection
-      const applicationRef = await addDoc(
-        collection(db, "bankApplications"),
-        applicationData
-      );
+      await addDoc(collection(firestore, "bankApplications"), applicationData);
 
-      console.log("✅ Bank application saved to Firebase with ID:", applicationRef.id);
-
-      // Also save to user's personal applications subcollection
-      const userApplicationRef = await addDoc(
-        collection(db, "users", user.uid, "applications"),
-        {
-          ...applicationData,
-          applicationId: applicationRef.id,
-          applicationType: "Bank Account Services",
-        }
-      );
-
-      console.log("✅ Application saved to user's personal collection with ID:", userApplicationRef.id);
-
-      // Send email notification
-      await send(
-        process.env.EXPO_PUBLIC_SERVICE_ID,
-        process.env.EXPO_PUBLIC_TEMPLATE_ID,
-        {
-          emailAddress,
-          message: `Name: ${userData.firstName} ${userData.lastName}\nEmail Address: ${emailAddress}\nLandline Number: ${landlineNumber}\nGender: ${gender}\nBirthdate: ${date}\nAddress: ${address}\nBankType: ${BankType}\nSource of Fund: ${sourceFund}\nGross Monthly Income: ${grossIncome}\nCivil Status: ${civilStatus}\nCitizenship: ${citizenShip}\nType: Bank Account Services`,
-        },
-        {
-          publicKey: process.env.EXPO_PUBLIC_API_KEY,
-        }
-      );
-
-      console.log("SUCCESS!");
-      showModal({
-        title: t(userLanguage, "bdo.modals.success.title"),
-        message: t(userLanguage, "bdo.modals.success.message"),
-        type: "success",
-        onConfirm: () => {
-          // Reset form after successful submission
-          setEmailAddress("");
-          setMobileNumber("");
-          setLandlineNumber("");
-          setAddress("");
-          setSourceFund("");
-          setGrossIncome(0);
-          setGender(null);
-          setCivilStatus("Single");
-          setBankType("");
-          setCitizenShip("Filipino");
-          setDate(new Date());
-          setPlaceHolderDate(t(userLanguage, "bdo.content.selectBirthdate"));
-          setPassportImage(null);
-          setDriverLicenseImage(null);
-          setCurrentStep(1);
-          setCompletedSteps(new Set());
-          setStepErrors({});
-        }
+      setAlertConfig({
+        title: "Success",
+        message: "Your bank account application has been submitted successfully!"
       });
-
-    } catch (err) {
-      console.error("Error submitting application:", err);
+      setShowAlertModal(true);
       
-      if (err instanceof EmailJSResponseStatus) {
-        console.log("EmailJS Request Failed...", err);
-        showModal({
-          title: t(userLanguage, "bdo.modals.partialSuccess.title"),
-          message: t(userLanguage, "bdo.modals.partialSuccess.message"),
-          type: "warning",
-        });
-      } else {
-        showModal({
-          title: t(userLanguage, "bdo.modals.submissionFailed.title"),
-          message: t(userLanguage, "bdo.modals.submissionFailed.message").replace("{error}", err.message),
-          type: "error",
-        });
-      }
+      setTimeout(() => {
+        router.push("/main");
+      }, 2000);
+    } catch (error) {
+      console.error("Error submitting application:", error);
+      setAlertConfig({
+        title: "Error",
+        message: "Failed to submit application. Please try again."
+      });
+      setShowAlertModal(true);
     } finally {
-      setSubmittingForm(false); // Stop form submission loading
-      setUploadingDocuments(false); // Stop document upload loading
+      setIsSubmitting(false);
     }
   };
 
-  // Only show the old loading screen for initial data loading, not form submission
-  if (loading && !submittingForm) {
-    return <SimpleLoadingScreen message="Loading BDO deposit form..." />;
-  }
+  const handlePickDocument = async (type) => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ["image/*", "application/pdf"],
+        copyToCacheDirectory: true,
+      });
 
-  if (submittingForm) {
-    return <BankApplicationLoadingScreen message="Processing your bank application..." />;
-  }
-
-  const renderStepIndicator = () => (
-    <View style={styles.stepIndicatorContainer}>
-      {[1, 2, 3, 4, 5, 6].map((step) => (
-        <View key={step} style={styles.stepIndicatorWrapper}>
-          <View style={[
-            styles.stepCircle,
-            currentStep >= step && styles.stepCircleActive,
-            completedSteps.has(step) && styles.stepCircleCompleted
-          ]}>
-            {completedSteps.has(step) ? (
-              <Ionicons name="checkmark" size={16} color="white" />
-            ) : (
-              <Text style={[
-                styles.stepNumber,
-                currentStep >= step && styles.stepNumberActive
-              ]}>{step}</Text>
-            )}
-          </View>
-          {step < 6 && (
-            <View style={[
-              styles.stepLine,
-              completedSteps.has(step) && styles.stepLineActive
-            ]} />
-          )}
-        </View>
-      ))}
-    </View>
-  );
-
-  const renderStepContent = () => {
-    switch (currentStep) {
-      case 1:
-        return (
-          <View style={styles.stepContent}>
-            {/* Step Header */}
-            <View style={styles.stepHeader}>
-              <View style={styles.stepIconContainer}>
-                <Ionicons name="business-outline" size={32} color={Colors.redTheme.background} />
-              </View>
-              <Text style={[styles.stepTitle, getRTLStyles(userLanguage)]}>
-                {t(userLanguage, "bdo.steps.bankSelection.title")}
-              </Text>
-              <Text style={[styles.stepDescription, getRTLStyles(userLanguage)]}>
-                {t(userLanguage, "bdo.steps.bankSelection.description")}
-              </Text>
-            </View>
-
-            {/* Bank Selection Card */}
-            <View style={styles.inputCard}>
-              <View style={styles.inputLabelRow}>
-                <Ionicons name="business" size={20} color={Colors.redTheme.background} />
-                <Text style={[styles.inputLabel, getRTLStyles(userLanguage)]}>
-                  {t(userLanguage, "bdo.content.preferredBank")}
-                </Text>
-              </View>
-              <TouchableOpacity
-                style={[styles.modalSelector, stepErrors[1]?.bankType && styles.inputError]}
-                onPress={() => setOpenBank(true)}
-              >
-                <Text style={[styles.modalSelectorText, getRTLStyles(userLanguage)]}>
-                  {BankType || t(userLanguage, "bdo.content.chooseBank")}
-                </Text>
-                <Ionicons name="chevron-down" size={20} color="#999" />
-              </TouchableOpacity>
-              {stepErrors[1]?.bankType && (
-                <Text style={[styles.errorText, getRTLStyles(userLanguage)]}>
-                  {stepErrors[1].bankType}
-                </Text>
-              )}
-            </View>
-
-            {/* Info Card */}
-            <View style={styles.infoCard}>
-              <Ionicons name="information-circle" size={20} color={Colors.redTheme.background} />
-              <Text style={[styles.infoText, getRTLStyles(userLanguage)]}>
-                Choose your preferred bank for account opening
-              </Text>
-            </View>
-          </View>
-        );
-
-      case 2:
-        return (
-          <View style={styles.stepContent}>
-            {/* Step Header */}
-            <View style={styles.stepHeader}>
-              <View style={styles.stepIconContainer}>
-                <Ionicons name="call-outline" size={32} color={Colors.redTheme.background} />
-              </View>
-              <Text style={[styles.stepTitle, getRTLStyles(userLanguage)]}>
-                {t(userLanguage, "bdo.steps.contactInfo.title")}
-              </Text>
-              <Text style={[styles.stepDescription, getRTLStyles(userLanguage)]}>
-                {t(userLanguage, "bdo.steps.contactInfo.description")}
-              </Text>
-            </View>
-
-            {/* Contact Information Cards */}
-            <View style={styles.inputCard}>
-              <View style={styles.inputLabelRow}>
-                <Ionicons name="mail" size={20} color={Colors.redTheme.background} />
-                <Text style={[styles.inputLabel, getRTLStyles(userLanguage)]}>
-                  {t(userLanguage, "bdo.content.emailAddress")}
-                </Text>
-              </View>
-              <TextInput
-                style={[styles.modernInput, stepErrors[2]?.emailAddress && styles.inputError]}
-                placeholder={t(userLanguage, "bdo.content.emailPlaceholder")}
-                placeholderTextColor="#999"
-                keyboardType="email-address"
-                value={emailAddress}
-                onChangeText={(value) => setEmailAddress(value)}
-                onPress={() => setShow(false)}
-              />
-              {stepErrors[2]?.emailAddress && (
-                <Text style={[styles.errorText, getRTLStyles(userLanguage)]}>
-                  {stepErrors[2].emailAddress}
-                </Text>
-              )}
-            </View>
-
-            <View style={styles.inputCard}>
-              <View style={styles.inputLabelRow}>
-                <Ionicons name="call" size={20} color={Colors.redTheme.background} />
-                <Text style={[styles.inputLabel, getRTLStyles(userLanguage)]}>
-                  {t(userLanguage, "bdo.content.mobileNumber")}
-                </Text>
-              </View>
-              <TextInput
-                style={[styles.modernInput, stepErrors[2]?.mobileNumber && styles.inputError]}
-                placeholder={t(userLanguage, "bdo.content.mobilePlaceholder")}
-                placeholderTextColor="#999"
-                keyboardType="phone-pad"
-                value={mobileNumber}
-                onChangeText={(value) => setMobileNumber(value)}
-                onPress={() => setShow(false)}
-              />
-              {stepErrors[2]?.mobileNumber && (
-                <Text style={[styles.errorText, getRTLStyles(userLanguage)]}>
-                  {stepErrors[2].mobileNumber}
-                </Text>
-              )}
-            </View>
-
-            <View style={styles.inputCard}>
-              <View style={styles.inputLabelRow}>
-                <Ionicons name="phone-portrait" size={20} color={Colors.redTheme.background} />
-                <Text style={[styles.inputLabel, getRTLStyles(userLanguage)]}>
-                  {t(userLanguage, "bdo.content.landlineNumber")}
-                </Text>
-              </View>
-              <TextInput
-                style={styles.modernInput}
-                placeholder={t(userLanguage, "bdo.content.landlinePlaceholder")}
-                placeholderTextColor="#999"
-                keyboardType="phone-pad"
-                value={landlineNumber}
-                onChangeText={(value) => setLandlineNumber(value)}
-                onPress={() => setShow(false)}
-              />
-            </View>
-          </View>
-        );
-
-      case 3:
-        return (
-          <View style={styles.stepContent}>
-            {/* Step Header */}
-            <View style={styles.stepHeader}>
-              <View style={styles.stepIconContainer}>
-                <Ionicons name="person-outline" size={32} color={Colors.redTheme.background} />
-              </View>
-              <Text style={[styles.stepTitle, getRTLStyles(userLanguage)]}>
-                {t(userLanguage, "bdo.steps.personalDetails.title")}
-              </Text>
-              <Text style={[styles.stepDescription, getRTLStyles(userLanguage)]}>
-                {t(userLanguage, "bdo.steps.personalDetails.description")}
-              </Text>
-            </View>
-
-            {/* Personal Details Cards */}
-            <View style={styles.inputCard}>
-              <View style={styles.inputLabelRow}>
-                <Ionicons name="person" size={20} color={Colors.redTheme.background} />
-                <Text style={[styles.inputLabel, getRTLStyles(userLanguage)]}>
-                  {t(userLanguage, "bdo.content.gender")}
-                </Text>
-              </View>
-              <TouchableOpacity
-                style={[styles.modalSelector, stepErrors[3]?.gender && styles.inputError]}
-                onPress={() => setOpenGender(true)}
-              >
-                <Text style={[styles.modalSelectorText, getRTLStyles(userLanguage)]}>
-                  {gender || t(userLanguage, "bdo.content.selectGender")}
-                </Text>
-                <Ionicons name="chevron-down" size={20} color="#999" />
-              </TouchableOpacity>
-              {stepErrors[3]?.gender && (
-                <Text style={[styles.errorText, getRTLStyles(userLanguage)]}>
-                  {stepErrors[3].gender}
-                </Text>
-              )}
-            </View>
-
-            <View style={styles.inputCard}>
-              <View style={styles.inputLabelRow}>
-                <Ionicons name="calendar" size={20} color={Colors.redTheme.background} />
-                <Text style={[styles.inputLabel, getRTLStyles(userLanguage)]}>
-                  {t(userLanguage, "bdo.content.dateOfBirth")}
-                </Text>
-              </View>
-              <TouchableOpacity
-                style={[styles.dateInput, stepErrors[3]?.birthdate && styles.inputError]}
-                onPress={() => setShow(true)}
-              >
-                <Text
-                  style={[
-                    styles.dateText,
-                    getRTLStyles(userLanguage),
-                    placeholderDate === t(userLanguage, "bdo.content.selectBirthdate") &&
-                      styles.placeholderText,
-                  ]}
-                >
-                  {placeholderDate}
-                </Text>
-                <Ionicons name="calendar-outline" size={20} color={Colors.redTheme.background} />
-              </TouchableOpacity>
-              {stepErrors[3]?.birthdate && (
-                <Text style={[styles.errorText, getRTLStyles(userLanguage)]}>
-                  {stepErrors[3].birthdate}
-                </Text>
-              )}
-            </View>
-
-            {show && (
-              <DateTimePicker
-                testID="dateTimePicker"
-                value={date}
-                mode={"date"}
-                is24Hour={true}
-                onChange={onChange}
-                display="compact"
-              />
-            )}
-
-            <View style={styles.inputCard}>
-              <View style={styles.inputLabelRow}>
-                <Ionicons name="heart" size={20} color={Colors.redTheme.background} />
-                <Text style={[styles.inputLabel, getRTLStyles(userLanguage)]}>
-                  {t(userLanguage, "bdo.content.civilStatus")}
-                </Text>
-              </View>
-              <TouchableOpacity
-                style={[styles.modalSelector, stepErrors[3]?.civilStatus && styles.inputError]}
-                onPress={() => setOpenCivilStatus(true)}
-              >
-                <Text style={[styles.modalSelectorText, getRTLStyles(userLanguage)]}>
-                  {civilStatus}
-                </Text>
-                <Ionicons name="chevron-down" size={20} color="#999" />
-              </TouchableOpacity>
-              {stepErrors[3]?.civilStatus && (
-                <Text style={[styles.errorText, getRTLStyles(userLanguage)]}>
-                  {stepErrors[3].civilStatus}
-                </Text>
-              )}
-            </View>
-
-            <View style={styles.inputCard}>
-              <View style={styles.inputLabelRow}>
-                <Ionicons name="flag" size={20} color={Colors.redTheme.background} />
-                <Text style={[styles.inputLabel, getRTLStyles(userLanguage)]}>
-                  {t(userLanguage, "bdo.content.citizenship")}
-                </Text>
-              </View>
-              <TextInput
-                style={[styles.modernInput, stepErrors[3]?.citizenship && styles.inputError]}
-                placeholder={t(userLanguage, "bdo.content.citizenshipPlaceholder")}
-                placeholderTextColor="#999"
-                keyboardType="default"
-                value={citizenShip}
-                onChangeText={(value) => setCitizenShip(value)}
-                onPress={() => setShow(false)}
-              />
-              {stepErrors[3]?.citizenship && (
-                <Text style={[styles.errorText, getRTLStyles(userLanguage)]}>
-                  {stepErrors[3].citizenship}
-                </Text>
-              )}
-            </View>
-          </View>
-        );
-
-      case 4:
-        return (
-          <View style={styles.stepContent}>
-            {/* Step Header */}
-            <View style={styles.stepHeader}>
-              <View style={styles.stepIconContainer}>
-                <Ionicons name="location-outline" size={32} color={Colors.redTheme.background} />
-              </View>
-              <Text style={[styles.stepTitle, getRTLStyles(userLanguage)]}>
-                {t(userLanguage, "bdo.steps.addressInfo.title")}
-              </Text>
-              <Text style={[styles.stepDescription, getRTLStyles(userLanguage)]}>
-                {t(userLanguage, "bdo.steps.addressInfo.description")}
-              </Text>
-            </View>
-
-            {/* Address Information Card */}
-            <View style={styles.inputCard}>
-              <View style={styles.inputLabelRow}>
-                <Ionicons name="location" size={20} color={Colors.redTheme.background} />
-                <Text style={[styles.inputLabel, getRTLStyles(userLanguage)]}>
-                  {t(userLanguage, "bdo.content.completeAddress")}
-                </Text>
-              </View>
-              <TextInput
-                style={[styles.modernTextArea, stepErrors[4]?.address && styles.inputError]}
-                placeholder={t(userLanguage, "bdo.content.addressPlaceholder")}
-                placeholderTextColor="#999"
-                keyboardType="default"
-                multiline
-                numberOfLines={6}
-                textAlignVertical="top"
-                value={address}
-                onChangeText={(value) => setAddress(value)}
-                onPress={() => setShow(false)}
-              />
-              {stepErrors[4]?.address && (
-                <Text style={[styles.errorText, getRTLStyles(userLanguage)]}>
-                  {stepErrors[4].address}
-                </Text>
-              )}
-            </View>
-
-            {/* Info Card */}
-            <View style={styles.infoCard}>
-              <Ionicons name="information-circle" size={20} color={Colors.redTheme.background} />
-              <Text style={[styles.infoText, getRTLStyles(userLanguage)]}>
-                Please provide your complete address including street, city, and postal code
-              </Text>
-            </View>
-          </View>
-        );
-
-      case 5:
-        return (
-          <View style={styles.stepContent}>
-            {/* Step Header */}
-            <View style={styles.stepHeader}>
-              <View style={styles.stepIconContainer}>
-                <Ionicons name="cash-outline" size={32} color={Colors.redTheme.background} />
-              </View>
-              <Text style={[styles.stepTitle, getRTLStyles(userLanguage)]}>
-                {t(userLanguage, "bdo.steps.financialInfo.title")}
-              </Text>
-              <Text style={[styles.stepDescription, getRTLStyles(userLanguage)]}>
-                {t(userLanguage, "bdo.steps.financialInfo.description")}
-              </Text>
-            </View>
-
-            {/* Financial Information Cards */}
-            <View style={styles.inputCard}>
-              <View style={styles.inputLabelRow}>
-                <Ionicons name="trending-up" size={20} color={Colors.redTheme.background} />
-                <Text style={[styles.inputLabel, getRTLStyles(userLanguage)]}>
-                  {t(userLanguage, "bdo.content.sourceOfFund")}
-                </Text>
-              </View>
-              <TextInput
-                style={[styles.modernInput, stepErrors[5]?.sourceFund && styles.inputError]}
-                placeholder={t(userLanguage, "bdo.content.sourcePlaceholder")}
-                placeholderTextColor="#999"
-                keyboardType="default"
-                value={sourceFund}
-                onChangeText={(value) => setSourceFund(value)}
-                onPress={() => setShow(false)}
-              />
-              {stepErrors[5]?.sourceFund && (
-                <Text style={[styles.errorText, getRTLStyles(userLanguage)]}>
-                  {stepErrors[5].sourceFund}
-                </Text>
-              )}
-            </View>
-
-            <View style={styles.inputCard}>
-              <View style={styles.inputLabelRow}>
-                <Ionicons name="wallet" size={20} color={Colors.redTheme.background} />
-                <Text style={[styles.inputLabel, getRTLStyles(userLanguage)]}>
-                  {t(userLanguage, "bdo.content.grossMonthlyIncome")}
-                </Text>
-              </View>
-              <TextInput
-                style={[styles.modernInput, stepErrors[5]?.grossIncome && styles.inputError]}
-                placeholder={t(userLanguage, "bdo.content.incomePlaceholder")}
-                placeholderTextColor="#999"
-                keyboardType="numeric"
-                value={grossIncome?.toString()}
-                onChangeText={(value) => setGrossIncome(value)}
-                onPress={() => setShow(false)}
-              />
-              {stepErrors[5]?.grossIncome && (
-                <Text style={[styles.errorText, getRTLStyles(userLanguage)]}>
-                  {stepErrors[5].grossIncome}
-                </Text>
-              )}
-            </View>
-
-            {/* Info Card */}
-            <View style={styles.infoCard}>
-              <Ionicons name="information-circle" size={20} color={Colors.redTheme.background} />
-              <Text style={[styles.infoText, getRTLStyles(userLanguage)]}>
-                This information helps us understand your banking needs and ensure compliance
-              </Text>
-            </View>
-          </View>
-        );
-
-      case 6:
-        return (
-          <View style={styles.stepContent}>
-            {/* Step Header */}
-            <View style={styles.stepHeader}>
-              <View style={styles.stepIconContainer}>
-                <Ionicons name="document-outline" size={32} color={Colors.redTheme.background} />
-              </View>
-              <Text style={[styles.stepTitle, getRTLStyles(userLanguage)]}>
-                {t(userLanguage, "bdo.steps.documentUpload.title")}
-              </Text>
-              <Text style={[styles.stepDescription, getRTLStyles(userLanguage)]}>
-                {t(userLanguage, "bdo.steps.documentUpload.description")}
-              </Text>
-            </View>
-
-            {/* Document Upload Cards */}
-            <View style={styles.inputCard}>
-              <View style={styles.inputLabelRow}>
-                <Ionicons name="camera" size={20} color={Colors.redTheme.background} />
-                <Text style={[styles.inputLabel, getRTLStyles(userLanguage)]}>
-                  {t(userLanguage, "bdo.content.passportUpload")}
-                </Text>
-              </View>
-              <TouchableOpacity
-                style={[styles.uploadButton, stepErrors[6]?.passportImage && styles.inputError]}
-                onPress={() => pickImage('passport')}
-              >
-                <View style={styles.uploadButtonContent}>
-                  <Ionicons
-                    name="camera-outline"
-                    size={20}
-                    color={Colors.redTheme.background}
-                    style={styles.uploadIcon}
-                  />
-                  <Text style={[styles.uploadButtonText, getRTLStyles(userLanguage)]}>
-                    {passportImage ? t(userLanguage, "bdo.content.changePassport") : t(userLanguage, "bdo.content.selectPassport")}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-              {passportImage && (
-                <View style={styles.imagePreview}>
-                  <Image source={{ uri: passportImage.uri }} style={styles.previewImage} />
-                  <TouchableOpacity
-                    style={styles.removeImageButton}
-                    onPress={() => setPassportImage(null)}
-                  >
-                    <Ionicons name="close-circle" size={24} color="#ff4444" />
-                  </TouchableOpacity>
-                </View>
-              )}
-              {stepErrors[6]?.passportImage && (
-                <Text style={[styles.errorText, getRTLStyles(userLanguage)]}>
-                  {stepErrors[6].passportImage}
-                </Text>
-              )}
-            </View>
-
-            <View style={styles.inputCard}>
-              <View style={styles.inputLabelRow}>
-                <Ionicons name="card" size={20} color={Colors.redTheme.background} />
-                <Text style={[styles.inputLabel, getRTLStyles(userLanguage)]}>
-                  {t(userLanguage, "bdo.content.driverLicenseUpload")}
-                </Text>
-              </View>
-              <TouchableOpacity
-                style={[styles.uploadButton, stepErrors[6]?.driverLicenseImage && styles.inputError]}
-                onPress={() => pickImage('driverLicense')}
-              >
-                <View style={styles.uploadButtonContent}>
-                  <Ionicons
-                    name="camera-outline"
-                    size={20}
-                    color={Colors.redTheme.background}
-                    style={styles.uploadIcon}
-                  />
-                  <Text style={[styles.uploadButtonText, getRTLStyles(userLanguage)]}>
-                    {driverLicenseImage ? t(userLanguage, "bdo.content.changeDriverLicense") : t(userLanguage, "bdo.content.selectDriverLicense")}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-              {driverLicenseImage && (
-                <View style={styles.imagePreview}>
-                  <Image source={{ uri: driverLicenseImage.uri }} style={styles.previewImage} />
-                  <TouchableOpacity
-                    style={styles.removeImageButton}
-                    onPress={() => setDriverLicenseImage(null)}
-                  >
-                    <Ionicons name="close-circle" size={24} color="#ff4444" />
-                  </TouchableOpacity>
-                </View>
-              )}
-              {stepErrors[6]?.driverLicenseImage && (
-                <Text style={[styles.errorText, getRTLStyles(userLanguage)]}>
-                  {stepErrors[6].driverLicenseImage}
-                </Text>
-              )}
-            </View>
-
-            {/* Info Card */}
-            <View style={styles.infoCard}>
-              <Ionicons name="information-circle" size={20} color={Colors.redTheme.background} />
-              <Text style={[styles.infoText, getRTLStyles(userLanguage)]}>
-                Please upload clear, high-quality images of your documents
-              </Text>
-            </View>
-          </View>
-        );
-
-      default:
-        return null;
+      if (result.canceled === false && result.assets && result.assets.length > 0) {
+        const file = result.assets[0];
+        if (type === "passport") {
+          setPassportPhoto(file);
+        } else if (type === "government") {
+          setGovernmentId(file);
+        }
+      }
+    } catch (error) {
+      console.error("Error picking document:", error);
+      Alert.alert("Error", "Failed to pick document. Please try again.");
     }
   };
 
   return (
-    <ImageBackground
-      source={require("../../assets/images/bg2.png")}
-      style={styles.container}
-    >
-      <SafeAreaView style={styles.androidSafeArea}>
+    <View style={styles.container}>
+      <SafeAreaView style={styles.safeArea}>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+          >
+            <Ionicons name="arrow-back" size={24} color="#E25A17" />
+          </TouchableOpacity>
+        </View>
+
         <ScrollView
-          contentContainerStyle={styles.scrollContainer}
-          keyboardShouldPersistTaps="handled"
-          onScrollBeginDrag={Keyboard.dismiss}
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          {/* Hero Card - Modern e-wallet style */}
-          <View style={styles.heroCard}>
+          {/* Hero Card */}
+          <LinearGradient
+            colors={["#E25A17", "#F28934"]}
+            style={styles.heroCard}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
             <View style={styles.heroIconContainer}>
-              <Ionicons name="business" size={48} color="white" />
+              <Ionicons name="business" size={48} color="#FFFFFF" />
             </View>
-            <Text style={[styles.heroTitle, getRTLStyles(userLanguage)]}>
-              {t(userLanguage, "bdo.content.headerTitle")}
-            </Text>
-            <Text style={[styles.heroSubtitle, getRTLStyles(userLanguage)]}>
-              {t(userLanguage, "bdo.content.headerSubtitle")}
-            </Text>
+            <Text style={styles.heroTitle}>Bank Account Services</Text>
+            <Text style={styles.heroSubtitle}>Professional Banking Solutions</Text>
+          </LinearGradient>
+
+          {/* Step Indicator */}
+          <View style={styles.stepIndicatorContainer}>
+            {[1, 2, 3, 4, 5, 6].map((step, index) => (
+              <React.Fragment key={step}>
+                <View
+                  style={[
+                    styles.stepCircle,
+                    currentStep > step && styles.stepCircleCompleted,
+                    currentStep === step && styles.stepCircleActive,
+                  ]}
+                >
+                  {currentStep > step ? (
+                    <Ionicons name="checkmark" size={16} color="#FFFFFF" />
+                  ) : (
+                    <Text
+                      style={[
+                        styles.stepNumber,
+                        currentStep >= step && styles.stepNumberActive,
+                      ]}
+                    >
+                      {step}
+                    </Text>
+                  )}
+                </View>
+                {index < 5 && <View style={styles.stepLine} />}
+              </React.Fragment>
+            ))}
           </View>
 
-          {/* Step Indicator - Modern style */}
-          {renderStepIndicator()}
+          {/* Content Card - Step 1 */}
+          {currentStep === 1 && (
+            <View style={styles.contentCard}>
+              {/* Icon */}
+              <View style={styles.contentIconContainer}>
+                <Ionicons name="business-outline" size={32} color="#E25A17" />
+              </View>
 
-          {/* Step Content */}
-          {renderStepContent()}
-
-          {/* Disclaimer Card */}
-          <View style={styles.disclaimerCard}>
-            <View style={styles.disclaimerHeader}>
-              <Ionicons
-                name="shield-checkmark"
-                size={20}
-                color={Colors.redTheme.background}
-              />
-              <Text style={[styles.disclaimerTitle, getRTLStyles(userLanguage)]}>
-                {t(userLanguage, "bdo.content.processingInfo")}
+              {/* Title */}
+              <Text style={styles.contentTitle}>Choose Your Bank</Text>
+              <Text style={styles.contentDescription}>
+                Select your preferred bank for account opening. This will determine
+                which banking services and features you'll have access to.
               </Text>
+
+              {/* Bank Selection */}
+              <View style={styles.inputSection}>
+                <View style={styles.inputLabelRow}>
+                  <Ionicons name="business" size={18} color="#E25A17" />
+                  <Text style={styles.inputLabel}>Preferred Bank</Text>
+                </View>
+
+                <TouchableOpacity
+                  style={styles.dropdown}
+                  onPress={() => setShowBankModal(true)}
+                >
+                  <Text style={[styles.dropdownText, !selectedBank && styles.placeholderText]}>
+                    {selectedBank || "Choose your preferred bank"}
+                  </Text>
+                  <Ionicons name="chevron-down" size={20} color="#999" />
+                </TouchableOpacity>
+              </View>
             </View>
-            <Text style={[styles.disclaimerText, getRTLStyles(userLanguage)]}>
-              {t(userLanguage, "bdo.content.processingText")}
+          )}
+
+          {/* Content Card - Step 2 */}
+          {currentStep === 2 && (
+            <View style={styles.contentCard}>
+              {/* Icon */}
+              <View style={styles.contentIconContainer}>
+                <Ionicons name="call-outline" size={32} color="#E25A17" />
+              </View>
+
+              {/* Title */}
+              <Text style={styles.contentTitle}>Contact Information</Text>
+              <Text style={styles.contentDescription}>
+                Provide your contact details so we can reach you regarding your
+                application status and account updates.
+              </Text>
+
+              {/* Email Address */}
+              <View style={styles.inputSection}>
+                <Text style={styles.inputLabel}>Email Address *</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="your.email@example.com"
+                  placeholderTextColor="#CCC"
+                  value={emailAddress}
+                  onChangeText={setEmailAddress}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
+              </View>
+
+              {/* Mobile Number */}
+              <View style={styles.inputSection}>
+                <Text style={styles.inputLabel}>Mobile Number *</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="+63 9XX XXX XXXX"
+                  placeholderTextColor="#CCC"
+                  value={mobileNumber}
+                  onChangeText={setMobileNumber}
+                  keyboardType="phone-pad"
+                />
+              </View>
+
+              {/* Landline Number */}
+              <View style={styles.inputSection}>
+                <Text style={styles.inputLabel}>Landline Number</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="(02) XXXX XXXX"
+                  placeholderTextColor="#CCC"
+                  value={landlineNumber}
+                  onChangeText={setLandlineNumber}
+                  keyboardType="phone-pad"
+                />
+              </View>
+            </View>
+          )}
+
+          {/* Content Card - Step 3 */}
+          {currentStep === 3 && (
+            <View style={styles.contentCard}>
+              {/* Icon */}
+              <View style={styles.contentIconContainer}>
+                <Ionicons name="person-outline" size={32} color="#E25A17" />
+              </View>
+
+              {/* Title */}
+              <Text style={styles.contentTitle}>Personal Details</Text>
+              <Text style={styles.contentDescription}>
+                Tell us more about yourself. This information helps us verify your
+                identity and ensure compliance with banking regulations.
+              </Text>
+
+              {/* Gender */}
+              <View style={styles.inputSection}>
+                <Text style={styles.inputLabel}>Gender *</Text>
+                <TouchableOpacity
+                  style={styles.dropdown}
+                  onPress={() => setShowGenderModal(true)}
+                >
+                  <Text style={[styles.dropdownText, !gender && styles.placeholderText]}>
+                    {gender || "Select your gender"}
+                  </Text>
+                  <Ionicons name="chevron-down" size={20} color="#999" />
+                </TouchableOpacity>
+              </View>
+
+              {/* Date of Birth */}
+              <View style={styles.inputSection}>
+                <Text style={styles.inputLabel}>Date of Birth *</Text>
+                <TouchableOpacity
+                  style={styles.dropdown}
+                  onPress={() => setShowDatePicker(true)}
+                >
+                  <Text style={[styles.dropdownText, !dateOfBirth && styles.placeholderText]}>
+                    {dateOfBirth || "Select your birthdate"}
+                  </Text>
+                  <Ionicons name="calendar-outline" size={20} color="#999" />
+                </TouchableOpacity>
+              </View>
+
+              {/* Civil Status */}
+              <View style={styles.inputSection}>
+                <Text style={styles.inputLabel}>Civil Status *</Text>
+                <TouchableOpacity
+                  style={styles.dropdown}
+                  onPress={() => setShowCivilStatusModal(true)}
+                >
+                  <Text style={[styles.dropdownText, !civilStatus && styles.placeholderText]}>
+                    {civilStatus || "Single"}
+                  </Text>
+                  <Ionicons name="chevron-down" size={20} color="#999" />
+                </TouchableOpacity>
+              </View>
+
+              {/* Citizenship */}
+              <View style={styles.inputSection}>
+                <Text style={styles.inputLabel}>Citizenship *</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Filipino"
+                  placeholderTextColor="#CCC"
+                  value={citizenship}
+                  onChangeText={setCitizenship}
+                />
+              </View>
+            </View>
+          )}
+
+          {/* Content Card - Step 4 */}
+          {currentStep === 4 && (
+            <View style={styles.contentCard}>
+              {/* Icon */}
+              <View style={styles.contentIconContainer}>
+                <Ionicons name="location-outline" size={32} color="#E25A17" />
+              </View>
+
+              {/* Title */}
+              <Text style={styles.contentTitle}>Address Information</Text>
+              <Text style={styles.contentDescription}>
+                Provide your complete address for verification and account setup purposes.
+              </Text>
+
+              {/* Complete Address */}
+              <View style={styles.inputSection}>
+                <Text style={styles.inputLabel}>Complete Address *</Text>
+                <TextInput
+                  style={[styles.input, styles.textArea]}
+                  placeholder="House/Unit No., Street, Barangay, City, Province, ZIP Code"
+                  placeholderTextColor="#CCC"
+                  value={completeAddress}
+                  onChangeText={setCompleteAddress}
+                  multiline={true}
+                  numberOfLines={4}
+                  textAlignVertical="top"
+                />
+              </View>
+            </View>
+          )}
+
+          {/* Content Card - Step 5 */}
+          {currentStep === 5 && (
+            <View style={styles.contentCard}>
+              {/* Icon */}
+              <View style={styles.contentIconContainer}>
+                <Ionicons name="wallet-outline" size={32} color="#E25A17" />
+              </View>
+
+              {/* Title */}
+              <Text style={styles.contentTitle}>Financial Information</Text>
+              <Text style={styles.contentDescription}>
+                Share your financial details to help us understand your banking needs and ensure compliance.
+              </Text>
+
+              {/* Source of Fund */}
+              <View style={styles.inputSection}>
+                <Text style={styles.inputLabel}>Source of Fund *</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="e.g., Employment, Business, Investment etc."
+                  placeholderTextColor="#CCC"
+                  value={sourceOfFund}
+                  onChangeText={setSourceOfFund}
+                />
+              </View>
+
+              {/* Gross Monthly Income */}
+              <View style={styles.inputSection}>
+                <Text style={styles.inputLabel}>Gross Monthly Income *</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="₱"
+                  placeholderTextColor="#CCC"
+                  value={grossMonthlyIncome}
+                  onChangeText={setGrossMonthlyIncome}
+                  keyboardType="numeric"
+                />
+              </View>
+            </View>
+          )}
+
+          {/* Content Card - Step 6 */}
+          {currentStep === 6 && (
+            <View style={styles.contentCard}>
+              {/* Icon */}
+              <View style={styles.contentIconContainer}>
+                <Ionicons name="document-text-outline" size={32} color="#E25A17" />
+              </View>
+
+              {/* Title */}
+              <Text style={styles.contentTitle}>Required Documents</Text>
+              <Text style={styles.contentDescription}>
+                Upload required documents for identity verification and account opening purposes.
+              </Text>
+
+              {/* Passport Photo */}
+              <View style={styles.inputSection}>
+                <Text style={styles.inputLabel}>Passport Photo *</Text>
+                <TouchableOpacity
+                  style={styles.uploadBox}
+                  onPress={() => handlePickDocument("passport")}
+                >
+                  <Ionicons name="camera-outline" size={40} color="#E25A17" />
+                  <Text style={styles.uploadText}>
+                    {passportPhoto ? passportPhoto.name : "Upload Passport"}
+                  </Text>
+                  <Text style={styles.uploadSubtext}>Tap to select image</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Government ID */}
+              <View style={styles.inputSection}>
+                <Text style={styles.inputLabel}>Government ID *</Text>
+                <TouchableOpacity
+                  style={styles.uploadBox}
+                  onPress={() => handlePickDocument("government")}
+                >
+                  <Ionicons name="card-outline" size={40} color="#E25A17" />
+                  <Text style={styles.uploadText}>
+                    {governmentId ? governmentId.name : "Upload Government ID"}
+                  </Text>
+                  <Text style={styles.uploadSubtext}>Driver's License, SSS, etc.</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+
+          {/* Info Card */}
+          <View style={styles.infoCard}>
+            <View style={styles.infoIconContainer}>
+              <Ionicons name="information-circle" size={20} color="#E25A17" />
+            </View>
+            <Text style={styles.infoText}>
+              By submitting these details, we will send you an email confirmation
+              with your application status. Please note that this process will take
+              approximately 5-7 working days for review and approval by the selected
+              bank.
             </Text>
           </View>
 
-          {/* Navigation Container */}
+          {/* Navigation Buttons */}
           <View style={styles.navigationContainer}>
-            {currentStep > 1 ? (
-              <TouchableOpacity
-                style={styles.backButton}
-                onPress={goToPreviousStep}
-              >
-                <Ionicons name="arrow-back" size={20} color={Colors.redTheme.background} />
-                <Text style={[styles.backButtonText, getRTLStyles(userLanguage)]}>
-                  Previous
-                </Text>
-              </TouchableOpacity>
-            ) : (
-              <View style={styles.backButtonPlaceholder} />
-            )}
-            
             <TouchableOpacity
-              style={[
-                currentStep === 6 ? styles.submitButton : styles.nextButton,
-                (submittingForm || uploadingDocuments) && styles.submitButtonDisabled,
-              ]}
-              onPress={goToNextStep}
-              disabled={submittingForm || uploadingDocuments}
+              style={styles.backButton2}
+              onPress={handleBack}
             >
-              {(submittingForm || uploadingDocuments) ? (
-                <ActivityIndicator size="small" color="white" />
-              ) : (
-                <>
-                  <Ionicons
-                    name={currentStep === 6 ? "checkmark-circle" : "arrow-forward"}
-                    size={20}
-                    color="white"
-                    style={styles.submitIcon}
-                  />
-                  <Text style={[styles.nextButtonText, getRTLStyles(userLanguage)]}>
-                    {(submittingForm || uploadingDocuments)
-                      ? t(userLanguage, "bdo.content.processing") 
-                      : currentStep === 6 
-                      ? t(userLanguage, "bdo.content.submitApplication")
-                      : "Next"
-                    }
-                  </Text>
-                </>
-              )}
+              <Text style={styles.backButtonText}>Back</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.nextButton}
+              onPress={handleNext}
+              disabled={isSubmitting}
+            >
+              <LinearGradient
+                colors={["#E25A17", "#F28934"]}
+                style={styles.nextGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+              >
+                {isSubmitting ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <>
+                    <Text style={styles.nextText}>
+                      {currentStep === 6 ? "Submit" : "Next"}
+                    </Text>
+                    <Ionicons 
+                      name={currentStep === 6 ? "checkmark" : "play"} 
+                      size={20} 
+                      color="#FFFFFF" 
+                    />
+                  </>
+                )}
+              </LinearGradient>
             </TouchableOpacity>
           </View>
 
-          <View style={styles.bottomSpacing} />
+          <View style={styles.bottomPadding} />
         </ScrollView>
-      </SafeAreaView>
 
-      <Modal
-        visible={openBank}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setOpenBank(false)}
-      >
-        <TouchableWithoutFeedback onPress={() => setOpenBank(false)}>
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContainer}>
-              <View style={styles.modalHeader}>
-                <Text style={[styles.modalTitle, getRTLStyles(userLanguage)]}>{t(userLanguage, "bdo.content.selectBankModal")}</Text>
-                <TouchableOpacity onPress={() => setOpenBank(false)}>
-                  <Ionicons name="close-outline" size={24} color="#333" />
-                </TouchableOpacity>
-              </View>
-              <View style={styles.divider} />
-              <ScrollView showsVerticalScrollIndicator={false}>
-                <TouchableOpacity
-                  style={styles.optionItem}
-                  onPress={() => {
-                    setBankType("BDO");
-                    setOpenBank(false);
-                  }}
-                >
-                  <View style={styles.optionText}>
-                    <Text style={getRTLStyles(userLanguage)}>{t(userLanguage, "bdo.content.bdoUnibank")}</Text>
-                  </View>
-                  {BankType === "BDO" && (
-                    <View style={styles.checkmarkCircle}>
-                      <Ionicons name="checkmark" size={16} color="#fff" />
-                    </View>
-                  )}
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.optionItem}
-                  onPress={() => {
-                    setBankType("Security Bank");
-                    setOpenBank(false);
-                  }}
-                >
-                  <View style={styles.optionText}>
-                    <Text style={getRTLStyles(userLanguage)}>{t(userLanguage, "bdo.content.securityBank")}</Text>
-                  </View>
-                  {BankType === "Security Bank" && (
-                    <View style={styles.checkmarkCircle}>
-                      <Ionicons name="checkmark" size={16} color="#fff" />
-                    </View>
-                  )}
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.optionItem}
-                  onPress={() => {
-                    setBankType("CTBC Bank");
-                    setOpenBank(false);
-                  }}
-                >
-                  <View style={styles.optionText}>
-                    <Text style={getRTLStyles(userLanguage)}>{t(userLanguage, "bdo.content.ctbcBank")}</Text>
-                  </View>
-                  {BankType === "CTBC Bank" && (
-                    <View style={styles.checkmarkCircle}>
-                      <Ionicons name="checkmark" size={16} color="#fff" />
-                    </View>
-                  )}
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.optionItem}
-                  onPress={() => {
-                    setBankType("UnionBank");
-                    setOpenBank(false);
-                  }}
-                >
-                  <View style={styles.optionText}>
-                    <Text style={getRTLStyles(userLanguage)}>{t(userLanguage, "bdo.content.unionBank")}</Text>
-                  </View>
-                  {BankType === "UnionBank" && (
-                    <View style={styles.checkmarkCircle}>
-                      <Ionicons name="checkmark" size={16} color="#fff" />
-                    </View>
-                  )}
-                </TouchableOpacity>
-              </ScrollView>
-            </View>
-          </View>
-        </TouchableWithoutFeedback>
-      </Modal>
-
-      <Modal
-        visible={openGender}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setOpenGender(false)}
-      >
-        <TouchableWithoutFeedback onPress={() => setOpenGender(false)}>
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContainer}>
-              <View style={styles.modalHeader}>
-                <Text style={[styles.modalTitle, getRTLStyles(userLanguage)]}>{t(userLanguage, "bdo.content.selectGenderModal")}</Text>
-                <TouchableOpacity onPress={() => setOpenGender(false)}>
-                  <Ionicons name="close-outline" size={24} color="#333" />
-                </TouchableOpacity>
-              </View>
-              <View style={styles.divider} />
-              <ScrollView showsVerticalScrollIndicator={false}>
-                <TouchableOpacity
-                  style={styles.optionItem}
-                  onPress={() => {
-                    setGender("Male");
-                    setOpenGender(false);
-                  }}
-                >
-                  <View style={styles.optionText}>
-                    <Text style={getRTLStyles(userLanguage)}>{t(userLanguage, "bdo.content.male")}</Text>
-                  </View>
-                  {gender === "Male" && (
-                    <View style={styles.checkmarkCircle}>
-                      <Ionicons name="checkmark" size={16} color="#fff" />
-                    </View>
-                  )}
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.optionItem}
-                  onPress={() => {
-                    setGender("Female");
-                    setOpenGender(false);
-                  }}
-                >
-                  <View style={styles.optionText}>
-                    <Text style={getRTLStyles(userLanguage)}>{t(userLanguage, "bdo.content.female")}</Text>
-                  </View>
-                  {gender === "Female" && (
-                    <View style={styles.checkmarkCircle}>
-                      <Ionicons name="checkmark" size={16} color="#fff" />
-                    </View>
-                  )}
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.optionItem}
-                  onPress={() => {
-                    setGender("Prefer not to say");
-                    setOpenGender(false);
-                  }}
-                >
-                  <View style={styles.optionText}>
-                    <Text style={getRTLStyles(userLanguage)}>{t(userLanguage, "bdo.content.preferNotToSay")}</Text>
-                  </View>
-                  {gender === "Prefer not to say" && (
-                    <View style={styles.checkmarkCircle}>
-                      <Ionicons name="checkmark" size={16} color="#fff" />
-                    </View>
-                  )}
-                </TouchableOpacity>
-              </ScrollView>
-            </View>
-          </View>
-        </TouchableWithoutFeedback>
-      </Modal>
-
-      <Modal
-        visible={openCivilStatus}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setOpenCivilStatus(false)}
-      >
-        <TouchableWithoutFeedback onPress={() => setOpenCivilStatus(false)}>
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContainer}>
-              <View style={styles.modalHeader}>
-                <Text style={[styles.modalTitle, getRTLStyles(userLanguage)]}>{t(userLanguage, "bdo.content.selectCivilStatusModal")}</Text>
-                <TouchableOpacity onPress={() => setOpenCivilStatus(false)}>
-                  <Ionicons name="close-outline" size={24} color="#333" />
-                </TouchableOpacity>
-              </View>
-              <View style={styles.divider} />
-              <ScrollView showsVerticalScrollIndicator={false}>
-                <TouchableOpacity
-                  style={styles.optionItem}
-                  onPress={() => {
-                    setCivilStatus("Single");
-                    setOpenCivilStatus(false);
-                  }}
-                >
-                  <View style={styles.optionText}>
-                    <Text style={getRTLStyles(userLanguage)}>{t(userLanguage, "bdo.content.single")}</Text>
-                  </View>
-                  {civilStatus === "Single" && (
-                    <View style={styles.checkmarkCircle}>
-                      <Ionicons name="checkmark" size={16} color="#fff" />
-                    </View>
-                  )}
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.optionItem}
-                  onPress={() => {
-                    setCivilStatus("Married");
-                    setOpenCivilStatus(false);
-                  }}
-                >
-                  <View style={styles.optionText}>
-                    <Text style={getRTLStyles(userLanguage)}>{t(userLanguage, "bdo.content.married")}</Text>
-                  </View>
-                  {civilStatus === "Married" && (
-                    <View style={styles.checkmarkCircle}>
-                      <Ionicons name="checkmark" size={16} color="#fff" />
-                    </View>
-                  )}
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.optionItem}
-                  onPress={() => {
-                    setCivilStatus("Legally Separated");
-                    setOpenCivilStatus(false);
-                  }}
-                >
-                  <View style={styles.optionText}>
-                    <Text style={getRTLStyles(userLanguage)}>{t(userLanguage, "bdo.content.legallySeparated")}</Text>
-                  </View>
-                  {civilStatus === "Legally Separated" && (
-                    <View style={styles.checkmarkCircle}>
-                      <Ionicons name="checkmark" size={16} color="#fff" />
-                    </View>
-                  )}
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.optionItem}
-                  onPress={() => {
-                    setCivilStatus("Divorced");
-                    setOpenCivilStatus(false);
-                  }}
-                >
-                  <View style={styles.optionText}>
-                    <Text style={getRTLStyles(userLanguage)}>{t(userLanguage, "bdo.content.divorced")}</Text>
-                  </View>
-                  {civilStatus === "Divorced" && (
-                    <View style={styles.checkmarkCircle}>
-                      <Ionicons name="checkmark" size={16} color="#fff" />
-                    </View>
-                  )}
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.optionItem}
-                  onPress={() => {
-                    setCivilStatus("Annulled");
-                    setOpenCivilStatus(false);
-                  }}
-                >
-                  <View style={styles.optionText}>
-                    <Text style={getRTLStyles(userLanguage)}>{t(userLanguage, "bdo.content.annulled")}</Text>
-                  </View>
-                  {civilStatus === "Annulled" && (
-                    <View style={styles.checkmarkCircle}>
-                      <Ionicons name="checkmark" size={16} color="#fff" />
-                    </View>
-                  )}
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.optionItem}
-                  onPress={() => {
-                    setCivilStatus("Widow/er");
-                    setOpenCivilStatus(false);
-                  }}
-                >
-                  <View style={styles.optionText}>
-                    <Text style={getRTLStyles(userLanguage)}>{t(userLanguage, "bdo.content.widow")}</Text>
-                  </View>
-                  {civilStatus === "Widow/er" && (
-                    <View style={styles.checkmarkCircle}>
-                      <Ionicons name="checkmark" size={16} color="#fff" />
-                    </View>
-                  )}
-                </TouchableOpacity>
-              </ScrollView>
-            </View>
-          </View>
-        </TouchableWithoutFeedback>
-      </Modal>
-
-      {/* Loading Overlay */}
-      {(submittingForm || uploadingDocuments) && (
+        {/* Bank Selection Modal */}
         <Modal
-          visible={submittingForm || uploadingDocuments}
+          visible={showBankModal}
           transparent={true}
-          animationType="fade"
+          animationType="slide"
+          onRequestClose={() => setShowBankModal(false)}
         >
-          <View style={styles.loadingOverlay}>
-            <View style={styles.loadingContainer}>
-              <View style={styles.loadingContent}>
-                <ActivityIndicator
-                  size="large"
-                  color={Colors.redTheme.background}
-                  style={styles.mainLoadingSpinner}
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContainer}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Select Bank</Text>
+                <TouchableOpacity onPress={() => setShowBankModal(false)}>
+                  <Ionicons name="close" size={24} color="#333" />
+                </TouchableOpacity>
+              </View>
+              <ScrollView style={styles.modalContent}>
+                {banks.map((bank) => (
+                  <TouchableOpacity
+                    key={bank}
+                    style={[
+                      styles.bankOption,
+                      selectedBank === bank && styles.bankOptionSelected,
+                    ]}
+                    onPress={() => {
+                      setSelectedBank(bank);
+                      setShowBankModal(false);
+                    }}
+                  >
+                    <Text style={styles.bankOptionText}>{bank}</Text>
+                    {selectedBank === bank && (
+                      <Ionicons name="checkmark-circle" size={24} color="#E25A17" />
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          </View>
+        </Modal>
+
+        {/* Gender Selection Modal */}
+        <Modal
+          visible={showGenderModal}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={() => setShowGenderModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContainer}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Select Gender</Text>
+                <TouchableOpacity onPress={() => setShowGenderModal(false)}>
+                  <Ionicons name="close" size={24} color="#333" />
+                </TouchableOpacity>
+              </View>
+              <ScrollView style={styles.modalContent}>
+                {genders.map((item) => (
+                  <TouchableOpacity
+                    key={item}
+                    style={[
+                      styles.bankOption,
+                      gender === item && styles.bankOptionSelected,
+                    ]}
+                    onPress={() => {
+                      setGender(item);
+                      setShowGenderModal(false);
+                    }}
+                  >
+                    <Text style={styles.bankOptionText}>{item}</Text>
+                    {gender === item && (
+                      <Ionicons name="checkmark-circle" size={24} color="#E25A17" />
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          </View>
+        </Modal>
+
+        {/* Civil Status Selection Modal */}
+        <Modal
+          visible={showCivilStatusModal}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={() => setShowCivilStatusModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContainer}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Select Civil Status</Text>
+                <TouchableOpacity onPress={() => setShowCivilStatusModal(false)}>
+                  <Ionicons name="close" size={24} color="#333" />
+                </TouchableOpacity>
+              </View>
+              <ScrollView style={styles.modalContent}>
+                {civilStatuses.map((item) => (
+                  <TouchableOpacity
+                    key={item}
+                    style={[
+                      styles.bankOption,
+                      civilStatus === item && styles.bankOptionSelected,
+                    ]}
+                    onPress={() => {
+                      setCivilStatus(item);
+                      setShowCivilStatusModal(false);
+                    }}
+                  >
+                    <Text style={styles.bankOptionText}>{item}</Text>
+                    {civilStatus === item && (
+                      <Ionicons name="checkmark-circle" size={24} color="#E25A17" />
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          </View>
+        </Modal>
+
+        {/* Date Picker Modal */}
+        <Modal
+          visible={showDatePicker}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={() => setShowDatePicker(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContainer}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Select Date of Birth</Text>
+                <TouchableOpacity onPress={() => setShowDatePicker(false)}>
+                  <Ionicons name="close" size={24} color="#333" />
+                </TouchableOpacity>
+              </View>
+              <View style={styles.datePickerContent}>
+                <TextInput
+                  style={styles.dateInput}
+                  placeholder="MM/DD/YYYY"
+                  placeholderTextColor="#999"
+                  value={dateOfBirth}
+                  onChangeText={setDateOfBirth}
                 />
-                <Text style={[styles.loadingTitle, getRTLStyles(userLanguage)]}>
-                  {uploadingDocuments 
-                    ? t(userLanguage, "bdo.content.uploadingDocuments")
-                    : t(userLanguage, "bdo.content.processingApplication")
-                  }
-                </Text>
-                <Text style={[styles.loadingSubtitle, getRTLStyles(userLanguage)]}>
-                  {uploadingDocuments 
-                    ? t(userLanguage, "bdo.content.uploadingSubtitle")
-                    : t(userLanguage, "bdo.content.processingSubtitle")
-                  }
-                </Text>
-                
-                {/* Progress Steps */}
-                <View style={styles.progressSteps}>
-                  <View style={[
-                    styles.progressStep,
-                    uploadingDocuments && styles.progressStepActive
-                  ]}>
-                    <View style={[
-                      styles.progressStepIcon,
-                      uploadingDocuments && styles.progressStepIconActive
-                    ]}>
-                      <Ionicons 
-                        name="cloud-upload-outline" 
-                        size={16} 
-                        color={uploadingDocuments ? "white" : "#999"} 
-                      />
-                    </View>
-                    <Text style={[
-                      styles.progressStepText,
-                      uploadingDocuments && styles.progressStepTextActive
-                    ]}>
-                      {t(userLanguage, "bdo.content.uploadingStep")}
-                    </Text>
-                  </View>
-                  
-                  <View style={[
-                    styles.progressStep,
-                    submittingForm && !uploadingDocuments && styles.progressStepActive
-                  ]}>
-                    <View style={[
-                      styles.progressStepIcon,
-                      submittingForm && !uploadingDocuments && styles.progressStepIconActive
-                    ]}>
-                      <Ionicons 
-                        name="checkmark-outline" 
-                        size={16} 
-                        color={submittingForm && !uploadingDocuments ? "white" : "#999"} 
-                      />
-                    </View>
-                    <Text style={[
-                      styles.progressStepText,
-                      submittingForm && !uploadingDocuments && styles.progressStepTextActive
-                    ]}>
-                      {t(userLanguage, "bdo.content.savingStep")}
-                    </Text>
-                  </View>
-                </View>
+                <TouchableOpacity
+                  style={styles.dateConfirmButton}
+                  onPress={() => setShowDatePicker(false)}
+                >
+                  <LinearGradient
+                    colors={["#E25A17", "#F28934"]}
+                    style={styles.dateConfirmGradient}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                  >
+                    <Text style={styles.dateConfirmText}>Confirm</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
               </View>
             </View>
           </View>
         </Modal>
-      )}
 
-      <ProfessionalModal
-        visible={modalVisible}
-        onClose={hideModal}
-        title={modalConfig.title}
-        message={modalConfig.message}
-        type={modalConfig.type}
-        showCloseButton={modalConfig.showCloseButton}
-        onConfirm={modalConfig.onConfirm}
-        confirmText={modalConfig.confirmText}
-        showCancelButton={modalConfig.showCancelButton}
-        cancelText={modalConfig.cancelText}
-      />
-    </ImageBackground>
+        {/* Alert Modal */}
+        <Modal
+          visible={showAlertModal}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setShowAlertModal(false)}
+        >
+          <View style={styles.alertOverlay}>
+            <LinearGradient
+              colors={["#E15816", "#F48F38"]}
+              style={styles.alertContainer}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 0, y: 1 }}
+            >
+              <Text style={styles.alertTitle}>{alertConfig.title}</Text>
+              <Text style={styles.alertMessage}>{alertConfig.message}</Text>
+              <TouchableOpacity
+                style={styles.alertButton}
+                onPress={() => {
+                  setShowAlertModal(false);
+                  if (alertConfig.title === "Success") {
+                    router.push("/main");
+                  }
+                }}
+              >
+                <Text style={styles.alertButtonText}>OK</Text>
+              </TouchableOpacity>
+            </LinearGradient>
+          </View>
+        </Modal>
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#F5F5F5",
   },
-  androidSafeArea: {
+  safeArea: {
     flex: 1,
-    paddingTop: Platform.OS === "android" ? 60 : 50,
   },
-  scrollContainer: {
+  header: {
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: "#FFFFFF",
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    justifyContent: "center",
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
     padding: 20,
-    paddingBottom: 40,
   },
-
-  // Hero Card - Modern e-wallet style
   heroCard: {
-    backgroundColor: Colors.redTheme.background,
-    borderRadius: 24,
+    borderRadius: 20,
     padding: 32,
-    marginBottom: 24,
     alignItems: "center",
-    shadowColor: Colors.redTheme.background,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 8,
+    marginBottom: 24,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 6,
   },
   heroIconContainer: {
     width: 80,
@@ -1602,103 +847,56 @@ const styles = StyleSheet.create({
   },
   heroTitle: {
     fontSize: 24,
-    fontWeight: "bold",
-    color: "white",
+    fontWeight: "700",
+    color: "#FFFFFF",
     marginBottom: 8,
     textAlign: "center",
   },
   heroSubtitle: {
     fontSize: 14,
-    color: "rgba(255, 255, 255, 0.9)",
+    color: "#FFFFFF",
+    opacity: 0.9,
     textAlign: "center",
-    lineHeight: 20,
   },
-
-  // Step Indicator - Modern style
   stepIndicatorContainer: {
     flexDirection: "row",
+    alignItems: "center",
     justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 24,
-    paddingHorizontal: 16,
-  },
-  stepIndicatorWrapper: {
-    flexDirection: "row",
-    alignItems: "center",
+    marginBottom: 32,
+    paddingHorizontal: 20,
   },
   stepCircle: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: "#e0e0e0",
+    backgroundColor: "#E0E0E0",
     justifyContent: "center",
     alignItems: "center",
-    borderWidth: 2,
-    borderColor: "#e0e0e0",
   },
   stepCircleActive: {
-    backgroundColor: Colors.redTheme.background,
-    borderColor: Colors.redTheme.background,
+    backgroundColor: "#E25A17",
   },
   stepCircleCompleted: {
     backgroundColor: "#4CAF50",
-    borderColor: "#4CAF50",
   },
   stepNumber: {
     fontSize: 14,
-    fontWeight: "bold",
+    fontWeight: "600",
     color: "#999",
   },
   stepNumberActive: {
-    color: "white",
+    color: "#FFFFFF",
   },
   stepLine: {
-    width: 16,
+    flex: 1,
     height: 2,
-    backgroundColor: "#e0e0e0",
-    marginHorizontal: 1,
+    backgroundColor: "#E0E0E0",
+    marginHorizontal: 4,
   },
-  stepLineActive: {
-    backgroundColor: "#4CAF50",
-  },
-
-  // Step Content
-  stepContent: {
-    marginBottom: 24,
-  },
-  stepHeader: {
-    alignItems: "center",
-    marginBottom: 24,
-  },
-  stepIconContainer: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: "rgba(254, 125, 72, 0.1)",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  stepTitle: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: "#333",
-    marginBottom: 8,
-    textAlign: "center",
-  },
-  stepDescription: {
-    fontSize: 14,
-    color: "#666",
-    textAlign: "center",
-    lineHeight: 20,
-    paddingHorizontal: 20,
-  },
-
-  // Input Card - Modern design
-  inputCard: {
-    backgroundColor: "white",
+  contentCard: {
+    backgroundColor: "#FFFFFF",
     borderRadius: 16,
-    padding: 20,
+    padding: 24,
     marginBottom: 16,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -1706,841 +904,285 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
   },
+  contentIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "#FFF5F0",
+    justifyContent: "center",
+    alignItems: "center",
+    alignSelf: "center",
+    marginBottom: 16,
+  },
+  contentTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#333",
+    textAlign: "center",
+    marginBottom: 8,
+  },
+  contentDescription: {
+    fontSize: 13,
+    color: "#666",
+    textAlign: "center",
+    lineHeight: 20,
+    marginBottom: 24,
+  },
+  inputSection: {
+    marginTop: 8,
+    marginBottom: 16,
+  },
+  input: {
+    backgroundColor: "#F9F9F9",
+    borderRadius: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    fontSize: 14,
+    color: "#333",
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+  },
   inputLabelRow: {
     flexDirection: "row",
     alignItems: "center",
+    gap: 8,
     marginBottom: 12,
   },
   inputLabel: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: "600",
     color: "#333",
-    marginLeft: 8,
   },
-  modernInput: {
-    backgroundColor: "#f8f8f8",
-    borderWidth: 1,
-    borderColor: "#e0e0e0",
-    borderRadius: 12,
-    padding: 16,
-    fontSize: 16,
-    color: "#333",
-  },
-  modernTextArea: {
-    backgroundColor: "#f8f8f8",
-    borderWidth: 1,
-    borderColor: "#e0e0e0",
-    borderRadius: 12,
-    padding: 16,
-    fontSize: 16,
-    color: "#333",
-    minHeight: 120,
-    textAlignVertical: "top",
-  },
-
-  // Info Card
-  infoCard: {
-    backgroundColor: "rgba(254, 125, 72, 0.05)",
-    borderRadius: 12,
-    padding: 16,
+  dropdown: {
     flexDirection: "row",
-    alignItems: "flex-start",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#F9F9F9",
+    borderRadius: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+  },
+  dropdownText: {
+    fontSize: 14,
+    color: "#333",
+  },
+  placeholderText: {
+    color: "#999",
+  },
+  infoCard: {
+    flexDirection: "row",
+    backgroundColor: "#FFF5F0",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 24,
     borderLeftWidth: 4,
-    borderLeftColor: Colors.redTheme.background,
+    borderLeftColor: "#E25A17",
+  },
+  infoIconContainer: {
+    marginRight: 12,
+    marginTop: 2,
   },
   infoText: {
     flex: 1,
     fontSize: 13,
     color: "#666",
-    lineHeight: 18,
-    marginLeft: 12,
+    lineHeight: 20,
   },
-
-  // Navigation Container
   navigationContainer: {
     flexDirection: "row",
-    justifyContent: "space-between",
     gap: 12,
-    marginTop: 8,
+    marginBottom: 24,
   },
-
-  // Back Button
-  backButton: {
+  backButton2: {
     flex: 1,
-    backgroundColor: "white",
-    borderRadius: 16,
-    padding: 16,
-    flexDirection: "row",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 25,
+    paddingVertical: 16,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 2,
-    borderColor: Colors.redTheme.background,
+    borderColor: "#E25A17",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  backButtonPlaceholder: {
-    flex: 1,
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
   },
   backButtonText: {
     fontSize: 16,
-    fontWeight: "bold",
-    color: Colors.redTheme.background,
-    marginLeft: 8,
+    fontWeight: "700",
+    color: "#E25A17",
   },
-
-  // Next Button
   nextButton: {
     flex: 1,
-    backgroundColor: Colors.redTheme.background,
-    borderRadius: 16,
-    padding: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: Colors.redTheme.background,
+    borderRadius: 25,
+    overflow: "hidden",
+    shadowColor: "#E25A17",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 6,
   },
-  nextButtonText: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "white",
-    marginRight: 8,
-  },
-
-  // Submit Button
-  submitButton: {
-    flex: 1,
-    backgroundColor: Colors.redTheme.background,
-    borderRadius: 16,
-    padding: 18,
+  nextGradient: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: Colors.redTheme.background,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
+    paddingVertical: 16,
+    gap: 8,
   },
-  submitButtonDisabled: {
-    backgroundColor: "#ccc",
-    shadowOpacity: 0.1,
+  nextText: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#FFFFFF",
   },
-  submitIcon: {
-    marginRight: 8,
+  bottomPadding: {
+    height: 20,
   },
-
-  // Error Styles
-  inputError: {
-    borderColor: '#FF5252',
-    borderWidth: 2,
-  },
-  errorText: {
-    fontSize: 12,
-    color: '#FF5252',
-    marginTop: 4,
-    marginLeft: 4,
-  },
-
-  // Date Input
-  dateInput: {
-    backgroundColor: "#f8f8f8",
-    borderWidth: 1,
-    borderColor: "#e0e0e0",
-    borderRadius: 12,
-    padding: 16,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  dateText: {
-    fontSize: 16,
-    color: "#333",
-  },
-  placeholderText: {
-    color: "#999",
-  },
-
-  // Modal Selector Styles
-  modalSelector: {
-    backgroundColor: "#f8f8f8",
-    borderWidth: 1,
-    borderColor: "#e0e0e0",
-    borderRadius: 12,
-    padding: 16,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  modalSelectorText: {
-    fontSize: 16,
-    color: "#333",
-    flex: 1,
-  },
-
-  // Upload Button
-  uploadButton: {
-    backgroundColor: "#f8f8f8",
-    borderWidth: 2,
-    borderColor: Colors.redTheme.background,
-    borderStyle: "dashed",
-    borderRadius: 12,
-    padding: 20,
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  uploadButtonContent: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  uploadIcon: {
-    marginRight: 8,
-  },
-  uploadButtonText: {
-    fontSize: 16,
-    color: Colors.redTheme.background,
-    fontWeight: "600",
-  },
-  imagePreview: {
-    position: "relative",
-    marginTop: 12,
-  },
-  previewImage: {
-    width: "100%",
-    height: 200,
-    borderRadius: 12,
-  },
-  removeImageButton: {
-    position: "absolute",
-    top: 8,
-    right: 8,
-    backgroundColor: "white",
-    borderRadius: 12,
-  },
-
-  // Disclaimer Card
-  disclaimerCard: {
-    backgroundColor: "rgba(255, 152, 0, 0.05)",
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    borderLeftWidth: 4,
-    borderLeftColor: "#FF9800",
-  },
-  disclaimerHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  disclaimerTitle: {
-    fontSize: 14,
-    fontWeight: "bold",
-    color: "#FF9800",
-    marginLeft: 8,
-  },
-  disclaimerText: {
-    fontSize: 13,
-    color: "#666",
-    lineHeight: 18,
-  },
-
   // Modal Styles
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.35)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "flex-end",
   },
   modalContainer: {
-    backgroundColor: '#fff',
-    borderRadius: 24,
-    padding: 0,
-    width: '92%',
-    maxWidth: 400,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.18,
-    shadowRadius: 24,
-    elevation: 12,
-    overflow: 'hidden',
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: "70%",
   },
   modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 20,
-    paddingHorizontal: 24,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-    backgroundColor: '#fafbfc',
-    position: 'relative',
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: Colors.redTheme.background,
-    flex: 1,
-    textAlign: 'center',
-    paddingRight: 40,
-    paddingLeft: 24,
-  },
-  optionItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 18,
-    paddingHorizontal: 24,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-    backgroundColor: '#fff',
-  },
-  optionText: {
-    fontSize: 17,
-    color: '#222',
-    fontWeight: '500',
-  },
-  checkmarkCircle: {
-    backgroundColor: Colors.redTheme.background,
-    borderRadius: 12,
-    width: 24,
-    height: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  // Header Card
-  headerCard: {
-    backgroundColor: "rgba(255, 255, 255, 0.95)",
-    borderRadius: 20,
-    padding: 20,
-    marginBottom: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 6,
-    borderLeftWidth: 5,
-    borderLeftColor: Colors.redTheme.background,
-  },
-  headerContent: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  headerIcon: {
-    marginRight: 16,
-    backgroundColor: "rgba(254, 125, 72, 0.1)",
-    borderRadius: 20,
-    padding: 8,
-  },
-  headerTextContainer: {
-    flex: 1,
-  },
-  headerTitle: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: Colors.redTheme.background,
-    marginBottom: 4,
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: "#666",
-    fontWeight: "500",
-  },
-
-  // Instruction Card
-  instructionCard: {
-    backgroundColor: "rgba(255, 245, 242, 0.9)",
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: Colors.redTheme.background,
-  },
-  instructionHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  instructionTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: Colors.redTheme.background,
-    marginLeft: 8,
-  },
-  instructionText: {
-    fontSize: 14,
-    color: "#333",
-    lineHeight: 20,
-  },
-
-  // Form Card
-  formCard: {
-    backgroundColor: "rgba(255, 255, 255, 0.95)",
-    borderRadius: 20,
-    padding: 20,
-    marginBottom: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 6,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: Colors.redTheme.background,
-    marginBottom: 20,
-    textAlign: "center",
-  },
-
-  // Form Sections
-  formSection: {
-    marginBottom: 24,
-  },
-  subsectionTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#333",
-    marginBottom: 16,
-    paddingBottom: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: "rgba(204, 33, 53, 0.2)",
-  },
-
-  // Input Groups
-  inputGroup: {
-    marginBottom: 16,
-  },
-  inputLabel: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#333",
-    marginBottom: 8,
-  },
-  input: {
-    backgroundColor: "white",
-    borderWidth: 2,
-    borderColor: "#e0e0e0",
-    borderRadius: 12,
-    padding: 14,
-    fontSize: 16,
-    color: "#333",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  textArea: {
-    backgroundColor: "white",
-    borderWidth: 2,
-    borderColor: "#e0e0e0",
-    borderRadius: 12,
-    padding: 14,
-    fontSize: 16,
-    color: "#333",
-    minHeight: 100,
-    textAlignVertical: "top",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-
-  // Date Input
-  dateInput: {
-    backgroundColor: "white",
-    borderWidth: 2,
-    borderColor: "#e0e0e0",
-    borderRadius: 12,
-    padding: 14,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F0F0F0",
   },
-  dateText: {
-    fontSize: 16,
-    color: "#333",
-  },
-  placeholderText: {
-    color: "#999",
-  },
-  dateInputDisabled: {
-    opacity: 0.5,
-    backgroundColor: "#f5f5f5",
-  },
-
-  // Dropdown Styles
-  dropdownContainer: {
-    marginBottom: 0,
-  },
-  dropdown: {
-    backgroundColor: "white",
-    borderColor: "#e0e0e0",
-    borderWidth: 2,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 14,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  dropdownText: {
-    fontSize: 16,
-    color: "#333",
-  },
-  dropdownList: {
-    backgroundColor: "white",
-    borderColor: "#e0e0e0",
-    borderWidth: 2,
-    borderRadius: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-
-  // Modal Styles
-  modalSelector: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.95)',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    marginTop: 4,
-},
-modalSelectorText: {
-  flex: 1,
-  fontSize: 16,
-  color: '#333',
-  fontWeight: '500',
-},
-modalSelectorDisabled: {
-  opacity: 0.5,
-  backgroundColor: '#f5f5f5',
-},
-modalOverlay: {
-  flex: 1,
-  backgroundColor: 'rgba(0,0,0,0.35)',
-  justifyContent: 'center',
-  alignItems: 'center',
-  padding: 20,
-},
-modalContainer: {
-  backgroundColor: '#fff',
-  borderRadius: 24,
-  padding: 0,
-  width: '92%',
-  maxWidth: 400,
-  shadowColor: '#000',
-  shadowOffset: { width: 0, height: 8 },
-  shadowOpacity: 0.18,
-  shadowRadius: 24,
-  elevation: 12,
-  overflow: 'hidden',
-},
-modalHeader: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  justifyContent: 'center',
-  paddingVertical: 20,
-  paddingHorizontal: 24,
-  borderBottomWidth: 1,
-  borderBottomColor: '#eee',
-  backgroundColor: '#fafbfc',
-  position: 'relative',
-},
-modalTitle: {
-  fontSize: 20,
-  fontWeight: 'bold',
-  color: Colors.redTheme.background,
-  flex: 1,
-  textAlign: 'center',
-  paddingRight: 40,
-  paddingLeft: 24,
-},
-closeButton: {
-  position: 'absolute',
-  right: 16,
-  top: 16,
-  padding: 8,
-  backgroundColor: '#f2f2f2',
-  borderRadius: 16,
-},
-optionList: {
-  paddingVertical: 8,
-  maxHeight: 350,
-},
-optionItem: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  paddingVertical: 18,
-  paddingHorizontal: 24,
-  borderBottomWidth: 1,
-  borderBottomColor: '#f0f0f0',
-  backgroundColor: '#fff',
-},
-optionText: {
-  fontSize: 17,
-  color: '#222',
-  fontWeight: '500',
-},
-  selectedOption: {
-    backgroundColor: 'rgba(254,125,72,0.08)',
-  },
-selectedOptionText: {
-  color: Colors.redTheme.background,
-  fontWeight: 'bold',
-},
-checkmarkCircle: {
-  backgroundColor: Colors.redTheme.background,
-  borderRadius: 12,
-  width: 24,
-  height: 24,
-  alignItems: 'center',
-  justifyContent: 'center',
-},
-
-  // Disclaimer Card
-  disclaimerCard: {
-    backgroundColor: "rgba(255, 245, 242, 0.9)",
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: Colors.redTheme.background,
-  },
-  disclaimerHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  disclaimerTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: Colors.redTheme.background,
-    marginLeft: 8,
-  },
-  disclaimerText: {
-    fontSize: 14,
-    color: "#333",
-    lineHeight: 20,
-  },
-
-  // Submit Button
-  submitButton: {
-    backgroundColor: Colors.redTheme.background,
-    borderRadius: 16,
-    padding: 18,
-    marginHorizontal: 20,
-    shadowColor: Colors.redTheme.background,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  submitButtonDisabled: {
-    backgroundColor: "#999",
-    shadowOpacity: 0.1,
-  },
-  submitButtonContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  submitIcon: {
-    marginRight: 8,
-  },
-  loadingIcon: {
-    marginRight: 8,
-  },
-  submitButtonText: {
-    color: "white",
+  modalTitle: {
     fontSize: 18,
-    fontWeight: "bold",
-    textAlign: "center",
+    fontWeight: "700",
+    color: "#333",
   },
-
-  // Document Upload Styles
-  uploadButton: {
-    backgroundColor: "white",
-    borderWidth: 2,
-    borderColor: Colors.redTheme.background,
-    borderStyle: "dashed",
-    borderRadius: 12,
+  modalContent: {
     padding: 16,
-    marginTop: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
   },
-  uploadButtonContent: {
+  bankOption: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "space-between",
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 8,
+    backgroundColor: "#F9F9F9",
   },
-  uploadIcon: {
-    marginRight: 8,
+  bankOptionSelected: {
+    backgroundColor: "#FFF5F0",
+    borderWidth: 1,
+    borderColor: "#E25A17",
   },
-  uploadButtonText: {
+  bankOptionText: {
     fontSize: 16,
-    color: Colors.redTheme.background,
-    fontWeight: "600",
-  },
-  uploadButtonDisabled: {
-    opacity: 0.5,
-    borderColor: "#ccc",
-  },
-  imagePreview: {
-    marginTop: 12,
-    position: "relative",
-    alignItems: "center",
-  },
-  previewImage: {
-    width: 200,
-    height: 150,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: "#e0e0e0",
-  },
-  removeImageButton: {
-    position: "absolute",
-    top: -8,
-    right: 0,
-    backgroundColor: "white",
-    borderRadius: 12,
-  },
-  uploadingIndicator: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 16,
-    padding: 12,
-    backgroundColor: "rgba(254, 125, 72, 0.1)",
-    borderRadius: 8,
-  },
-  uploadingText: {
-    marginLeft: 8,
-    fontSize: 14,
-    color: Colors.redTheme.background,
+    color: "#333",
     fontWeight: "500",
   },
-
-  // Loading Overlay Styles
-  loadingOverlay: {
+  // Alert Modal Styles
+  alertOverlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.6)",
     justifyContent: "center",
     alignItems: "center",
   },
-  loadingContainer: {
-    backgroundColor: "white",
-    borderRadius: 24,
-    padding: 32,
-    margin: 20,
-    minWidth: 300,
+  alertContainer: {
+    borderRadius: 12,
+    padding: 24,
+    width: "85%",
     maxWidth: 400,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25,
-    shadowRadius: 16,
-    elevation: 12,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
-  loadingContent: {
-    alignItems: "center",
-  },
-  mainLoadingSpinner: {
-    marginBottom: 20,
-  },
-  loadingTitle: {
+  alertTitle: {
     fontSize: 20,
-    fontWeight: "bold",
-    color: Colors.redTheme.background,
-    marginBottom: 8,
-    textAlign: "center",
+    fontWeight: "700",
+    color: "#FFFFFF",
+    marginBottom: 12,
   },
-  loadingSubtitle: {
-    fontSize: 14,
-    color: "#666",
-    textAlign: "center",
+  alertMessage: {
+    fontSize: 16,
+    color: "#FFFFFF",
+    lineHeight: 24,
     marginBottom: 24,
-    lineHeight: 20,
+    opacity: 0.95,
   },
-  progressSteps: {
-    width: "100%",
-    flexDirection: "row",
-    justifyContent: "space-between",
+  alertButton: {
+    alignSelf: "flex-end",
+    backgroundColor: "#FFFFFF",
+    paddingVertical: 10,
+    paddingHorizontal: 24,
+    borderRadius: 8,
   },
-  progressStep: {
-    flex: 1,
+  alertButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#E15816",
+  },
+  datePickerContent: {
+    padding: 20,
+  },
+  dateInput: {
+    backgroundColor: "#F9F9F9",
+    borderRadius: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    fontSize: 16,
+    color: "#333",
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+    marginBottom: 16,
+  },
+  dateConfirmButton: {
+    borderRadius: 8,
+    overflow: "hidden",
+  },
+  dateConfirmGradient: {
+    paddingVertical: 14,
     alignItems: "center",
-    paddingHorizontal: 8,
   },
-  progressStepActive: {
-    // Active state styling handled by child elements
+  dateConfirmText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#FFFFFF",
   },
-  progressStepIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: "#f0f0f0",
+  textArea: {
+    height: 100,
+    paddingTop: 14,
+  },
+  uploadBox: {
+    backgroundColor: "#FFF5F0",
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: "#E25A17",
+    borderStyle: "dashed",
+    paddingVertical: 40,
+    paddingHorizontal: 20,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 8,
   },
-  progressStepIconActive: {
-    backgroundColor: Colors.redTheme.background,
+  uploadText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#E25A17",
+    marginTop: 12,
+    textAlign: "center",
   },
-  progressStepText: {
+  uploadSubtext: {
     fontSize: 12,
     color: "#999",
+    marginTop: 4,
     textAlign: "center",
-    fontWeight: "500",
-  },
-  progressStepTextActive: {
-    color: Colors.redTheme.background,
-    fontWeight: "600",
-  },
-
-  // Debug Styles
-  debugInfo: {
-    backgroundColor: '#f0f0f0',
-    padding: 10,
-    margin: 10,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#ccc',
-  },
-  debugText: {
-    fontSize: 12,
-    color: '#333',
-    fontFamily: 'monospace',
-  },
-
-  // Spacing
-  bottomSpacing: {
-    height: 40,
   },
 });
