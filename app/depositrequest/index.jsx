@@ -11,7 +11,7 @@ import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 
-export default function DepositIndex() {
+export default function DepositRequest() {
   const router = useRouter();
   const [selectedType, setSelectedType] = useState(null);
 

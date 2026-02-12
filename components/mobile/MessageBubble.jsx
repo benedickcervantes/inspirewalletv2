@@ -122,7 +122,7 @@ const styles = {
     fontWeight: '600'
   },
   ownMessage: {
-    backgroundColor: '#FE7D48',
+    backgroundColor: '#E15816',
     borderRadius: 20,
     borderBottomRightRadius: 6,
     paddingHorizontal: 16,

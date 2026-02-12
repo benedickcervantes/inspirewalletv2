@@ -8,11 +8,12 @@ import {
   StatusBar,
   Image,
   Alert,
+  Modal,
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "expo-router";
 import { auth, firestore } from "../../configs/firebase";
-import { doc, onSnapshot } from "firebase/firestore";
+import { doc, onSnapshot, updateDoc } from "firebase/firestore";
 import { signOut } from "firebase/auth";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
@@ -22,6 +23,14 @@ export default function PersonalNew() {
   const router = useRouter();
   const [userData, setUserData] = useState({});
   const [loading, setLoading] = useState(true);
+  const [showLanguageModal, setShowLanguageModal] = useState(false);
+
+  const languages = [
+    { code: "English", name: "English", flag: "🇺🇸" },
+    { code: "Japanese", name: "Japanese", flag: "🇯🇵" },
+    { code: "Korean", name: "Korean", flag: "🇰🇷" },
+    { code: "Arabic", name: "Saudi Arabia", flag: "🇸🇦" },
+  ];
 
   useEffect(() => {
     const user = auth.currentUser;
@@ -64,6 +73,24 @@ export default function PersonalNew() {
     } catch (error) {
       console.error("Error logging out:", error);
       Alert.alert("Error", "Failed to log out. Please try again.");
+    }
+  };
+
+  const handleLanguageChange = async (language) => {
+    try {
+      const user = auth.currentUser;
+      if (!user) return;
+
+      const userRef = doc(firestore, "users", user.uid);
+      await updateDoc(userRef, {
+        preferredLanguage: language.code,
+      });
+
+      setShowLanguageModal(false);
+      Alert.alert("Success", `Language changed to ${language.name}`);
+    } catch (error) {
+      console.error("Error updating language:", error);
+      Alert.alert("Error", "Failed to update language. Please try again.");
     }
   };
 
@@ -348,7 +375,10 @@ export default function PersonalNew() {
                     <Text style={styles.detailValue}>{userData.preferredLanguage || "English"}</Text>
                   </View>
                 </View>
-                <TouchableOpacity style={styles.editButton}>
+                <TouchableOpacity 
+                  style={styles.editButton}
+                  onPress={() => setShowLanguageModal(true)}
+                >
                   <Ionicons name="create-outline" size={20} color="#E15816" />
                 </TouchableOpacity>
               </View>
@@ -412,6 +442,57 @@ export default function PersonalNew() {
 
           <View style={{ height: 40 }} />
         </ScrollView>
+
+        {/* Language Selection Modal */}
+        <Modal
+          visible={showLanguageModal}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setShowLanguageModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <LinearGradient
+                colors={["#E15816", "#F48F38"]}
+                style={styles.modalGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <View style={styles.modalHeader}>
+                  <MaterialCommunityIcons name="translate" size={60} color="#FFFFFF" />
+                  <Text style={styles.modalTitle}>Select Language</Text>
+                  <Text style={styles.modalSubtitle}>Choose your preferred language</Text>
+                </View>
+
+                <View style={styles.languageList}>
+                  {languages.map((language) => (
+                    <TouchableOpacity
+                      key={language.code}
+                      style={[
+                        styles.languageItem,
+                        userData.preferredLanguage === language.code && styles.languageItemSelected
+                      ]}
+                      onPress={() => handleLanguageChange(language)}
+                    >
+                      <Text style={styles.languageFlag}>{language.flag}</Text>
+                      <Text style={styles.languageName}>{language.name}</Text>
+                      {userData.preferredLanguage === language.code && (
+                        <Ionicons name="checkmark-circle" size={24} color="#FFFFFF" />
+                      )}
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                <TouchableOpacity
+                  style={styles.modalCloseButton}
+                  onPress={() => setShowLanguageModal(false)}
+                >
+                  <Text style={styles.modalCloseButtonText}>Cancel</Text>
+                </TouchableOpacity>
+              </LinearGradient>
+            </View>
+          </View>
+        </Modal>
       </SafeAreaView>
     </>
   );
@@ -644,5 +725,85 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#FFFFFF",
     letterSpacing: 0.5,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  modalContent: {
+    width: "100%",
+    maxWidth: 400,
+    borderRadius: 20,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  modalGradient: {
+    padding: 24,
+  },
+  modalHeader: {
+    alignItems: "center",
+    marginBottom: 24,
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: "700",
+    color: "#FFFFFF",
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: "#FFFFFF",
+    opacity: 0.9,
+  },
+  languageList: {
+    marginBottom: 20,
+  },
+  languageItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
+  },
+  languageItemSelected: {
+    backgroundColor: "rgba(255, 255, 255, 0.3)",
+    borderWidth: 2,
+    borderColor: "#FFFFFF",
+  },
+  languageFlag: {
+    fontSize: 32,
+    marginRight: 16,
+  },
+  languageName: {
+    flex: 1,
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#FFFFFF",
+  },
+  modalCloseButton: {
+    backgroundColor: "#FFFFFF",
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    borderRadius: 28,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  modalCloseButtonText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#E15816",
   },
 });

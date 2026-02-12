@@ -8,43 +8,14 @@ import {
   TextInput,
   ScrollView,
   ImageBackground,
-  Alert,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { auth } from "../../configs/firebase";
-import { signOut } from "firebase/auth";
 
 export default function Settings() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
-
-  const handleSignOut = async () => {
-    Alert.alert(
-      "Sign Out",
-      "Are you sure you want to sign out?",
-      [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
-        {
-          text: "Sign Out",
-          onPress: async () => {
-            try {
-              await signOut(auth);
-              router.replace("/welcome");
-            } catch (error) {
-              console.error("Error signing out:", error);
-              Alert.alert("Error", "Failed to sign out. Please try again.");
-            }
-          },
-          style: "destructive",
-        },
-      ]
-    );
-  };
 
   const settingsOptions = [
     {
@@ -185,15 +156,6 @@ export default function Settings() {
             </View>
           ))}
 
-          {/* Sign Out Button */}
-          <TouchableOpacity
-            style={styles.signOutButton}
-            onPress={handleSignOut}
-          >
-            <MaterialCommunityIcons name="logout" size={20} color="#666" />
-            <Text style={styles.signOutText}>SIGN OUT</Text>
-          </TouchableOpacity>
-
           <View style={styles.bottomPadding} />
         </ScrollView>
       </SafeAreaView>
@@ -319,22 +281,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#999",
     marginTop: 2,
-  },
-  signOutButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#E0E0E0",
-    paddingVertical: 16,
-    borderRadius: 12,
-    marginTop: 8,
-    marginBottom: 16,
-  },
-  signOutText: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: "#666",
-    marginLeft: 8,
   },
   bottomPadding: {
     height: 20,

@@ -28,7 +28,7 @@ export default function SavingsTab({ userData, timeDeposit, formatCurrency }) {
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      {/* Time Deposit Card */}
+      {/* Time Deposit Card - Using card2.0 background */}
       <View style={styles.cardContainer}>
         <ImageBackground
           source={require("../assets/cards/default/card2.0.png")}
@@ -36,85 +36,29 @@ export default function SavingsTab({ userData, timeDeposit, formatCurrency }) {
           imageStyle={styles.depositCardImage}
           resizeMode="cover"
         >
+          <View style={styles.cardHeader}>
+            <Ionicons name="trending-up" size={60} color="rgba(255, 255, 255, 0.3)" style={styles.cardIcon} />
+          </View>
           <View style={styles.depositInfo}>
-            <View style={styles.depositLabelRow}>
-              <Text style={styles.depositLabel}>Time Deposit</Text>
-              <Ionicons name="eye-outline" size={16} color="#FFFFFF" />
-            </View>
+            <Text style={styles.depositLabel}>Time Deposit</Text>
             <Text style={styles.depositAmount}>PHP {formatCurrency(timeDeposit)}</Text>
           </View>
-          <View style={styles.divider} />
-          <TouchableOpacity style={styles.withdrawButton}>
-            <MaterialCommunityIcons name="bank-transfer-out" size={18} color="#E15816" />
-            <Text style={styles.withdrawButtonText}>Withdraw</Text>
-          </TouchableOpacity>
         </ImageBackground>
-      </View>
-
-      {/* Select Deposit Type */}
-      <View style={styles.depositTypeContainer}>
-        <LinearGradient
-          colors={["#E25A17", "#F28934"]}
-          style={styles.depositTypeCard}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-        >
-          <View style={styles.depositTypeContent}>
-            <View>
-              <Text style={styles.depositTypeTitle}>Select Deposit Type *</Text>
-              <Text style={styles.depositTypeSubtitle}>Choose your investment type</Text>
-            </View>
-            <View style={styles.depositTypeIcons}>
-              <MaterialCommunityIcons name="qrcode-scan" size={24} color="#FFFFFF" />
-              <MaterialCommunityIcons name="camera" size={24} color="#FFFFFF" style={{ marginLeft: 12 }} />
-            </View>
-          </View>
-        </LinearGradient>
-      </View>
-
-      {/* Deposit Type Options */}
-      <View style={styles.optionsContainer}>
-        <TouchableOpacity 
-          style={styles.optionCard}
-          onPress={() => router.push("/timedeposit")}
-        >
-          <View style={styles.optionIcon}>
-            <Ionicons name="time-outline" size={28} color="#E15816" />
-          </View>
-          <Text style={styles.optionLabel}>Time Deposit</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          style={styles.optionCard}
-          onPress={() => router.push("/stockinvestment")}
-        >
-          <View style={styles.optionIcon}>
-            <MaterialCommunityIcons name="chart-line" size={28} color="#E15816" />
-          </View>
-          <Text style={styles.optionLabel}>Stock Investment</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          style={styles.optionCard}
-          onPress={() => router.push("/topup")}
-        >
-          <View style={styles.optionIcon}>
-            <MaterialCommunityIcons name="arrow-up-circle" size={28} color="#E15816" />
-          </View>
-          <Text style={styles.optionLabel}>Top Up Balance</Text>
-        </TouchableOpacity>
       </View>
 
       {/* Amount Wallet */}
       <View style={styles.amountWalletContainer}>
         <View style={styles.amountWalletCard}>
           <View style={styles.amountWalletContent}>
-            <View>
-              <Text style={styles.amountWalletLabel}>Amount Wallet</Text>
+            <View style={styles.amountWalletLeft}>
+              <View style={styles.amountWalletHeader}>
+                <Text style={styles.amountWalletLabel}>Amount Wallet</Text>
+                <Ionicons name="flame-outline" size={18} color="#E15816" />
+              </View>
               <Text style={styles.amountWalletAmount}>PHP {formatCurrency(timeDeposit * 0.31)}</Text>
             </View>
             <View style={styles.amountWalletIcon}>
-              <MaterialCommunityIcons name="chart-line-variant" size={40} color="#E15816" />
+              <Ionicons name="trending-up" size={40} color="#E15816" />
             </View>
           </View>
           <Ionicons name="chevron-forward" size={20} color="#333" style={styles.amountWalletArrow} />
@@ -131,7 +75,7 @@ export default function SavingsTab({ userData, timeDeposit, formatCurrency }) {
         >
           <View style={styles.graphHeader}>
             <Text style={styles.graphTitle}>Deposit Growth</Text>
-            <MaterialCommunityIcons name="chart-bar" size={20} color="#FFFFFF" />
+            <Ionicons name="bar-chart-outline" size={20} color="#FFFFFF" />
           </View>
           
           {/* Bar Chart */}
@@ -151,6 +95,63 @@ export default function SavingsTab({ userData, timeDeposit, formatCurrency }) {
             </View>
           </View>
         </LinearGradient>
+      </View>
+
+      {/* Services Section */}
+      <View style={styles.servicesContainer}>
+        <Text style={styles.servicesTitle}>Services</Text>
+        <View style={styles.servicesGrid}>
+          <TouchableOpacity style={styles.serviceItem}>
+            <View style={styles.serviceIcon}>
+              <Ionicons name="pie-chart-outline" size={28} color="#E15816" />
+            </View>
+            <Text style={styles.serviceLabel}>Investment Profile</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.serviceItem}>
+            <View style={styles.serviceIcon}>
+              <Ionicons name="wallet-outline" size={28} color="#E15816" />
+            </View>
+            <Text style={styles.serviceLabel}>E-Wallet</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.serviceItem}>
+            <View style={styles.serviceIcon}>
+              <Ionicons name="stats-chart-outline" size={28} color="#E15816" />
+            </View>
+            <Text style={styles.serviceLabel}>Stock</Text>
+          </TouchableOpacity>
+
+          <View style={styles.serviceColumn}>
+            <TouchableOpacity style={styles.serviceItem}>
+              <View style={styles.serviceIcon}>
+                <Ionicons name="list-outline" size={28} color="#E15816" />
+              </View>
+              <Text style={styles.serviceLabel}>Total</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.serviceItem}>
+              <View style={styles.serviceIcon}>
+                <Ionicons name="ellipsis-horizontal" size={28} color="#E15816" />
+              </View>
+              <Text style={styles.serviceLabel}>More</Text>
+            </TouchableOpacity>
+          </View>
+
+          <TouchableOpacity style={styles.serviceItem}>
+            <View style={styles.serviceIcon}>
+              <Ionicons name="people-outline" size={28} color="#E15816" />
+            </View>
+            <Text style={styles.serviceLabel}>Agent</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.serviceItem}>
+            <View style={styles.serviceIcon}>
+              <Ionicons name="trending-up-outline" size={28} color="#E15816" />
+            </View>
+            <Text style={styles.serviceLabel}>Tracking</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <View style={{ height: 20 }} />
@@ -175,15 +176,25 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 5,
+    minHeight: 160,
     overflow: "hidden",
-    justifyContent: "center",
-    minHeight: 200,
   },
   depositCardImage: {
     borderRadius: 20,
   },
-  depositInfo: {
+  cardHeader: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    alignItems: "flex-start",
     marginBottom: 16,
+  },
+  cardIcon: {
+    position: "absolute",
+    right: 0,
+    top: 0,
+  },
+  depositInfo: {
+    marginTop: 0,
   },
   depositLabelRow: {
     flexDirection: "row",
@@ -195,99 +206,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#FFFFFF",
     opacity: 0.9,
+    marginBottom: 8,
   },
   depositAmount: {
     fontSize: 32,
     fontWeight: "700",
     color: "#FFFFFF",
-  },
-  divider: {
-    height: 1,
-    backgroundColor: "rgba(255, 255, 255, 0.3)",
-    marginBottom: 16,
-  },
-  withdrawButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#FFFFFF",
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 20,
-    alignSelf: "flex-end",
-    gap: 6,
-  },
-  withdrawButtonText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#E15816",
-  },
-  depositTypeContainer: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
-  },
-  depositTypeCard: {
-    borderRadius: 16,
-    padding: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  depositTypeContent: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  depositTypeTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#FFFFFF",
-    marginBottom: 2,
-  },
-  depositTypeSubtitle: {
-    fontSize: 12,
-    color: "#FFFFFF",
-    opacity: 0.9,
-  },
-  depositTypeIcons: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  optionsContainer: {
-    flexDirection: "row",
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    gap: 12,
-  },
-  optionCard: {
-    flex: 1,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    padding: 16,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  optionIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: "#FFF5F0",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  optionLabel: {
-    fontSize: 11,
-    fontWeight: "600",
-    color: "#333",
-    textAlign: "center",
-    lineHeight: 14,
   },
   amountWalletContainer: {
     paddingHorizontal: 20,
@@ -312,11 +236,19 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "space-between",
   },
+  amountWalletLeft: {
+    flex: 1,
+  },
+  amountWalletHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: 4,
+  },
   amountWalletLabel: {
     fontSize: 16,
     fontWeight: "700",
     color: "#333",
-    marginBottom: 4,
   },
   amountWalletAmount: {
     fontSize: 20,
@@ -386,5 +318,51 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     marginTop: 4,
     fontWeight: "600",
+  },
+  servicesContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+  },
+  servicesTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#333",
+    marginBottom: 16,
+  },
+  servicesGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    gap: 16,
+  },
+  serviceItem: {
+    width: (width - 80) / 3,
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  serviceColumn: {
+    width: (width - 80) / 3,
+    alignItems: "center",
+  },
+  serviceIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 12,
+    backgroundColor: "#FFFFFF",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  serviceLabel: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#333",
+    textAlign: "center",
+    lineHeight: 14,
   },
 });

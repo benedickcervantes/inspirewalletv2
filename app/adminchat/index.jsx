@@ -481,10 +481,10 @@ const styles = StyleSheet.create({
     borderColor: "rgba(200, 200, 200, 0.3)",
   },
   adminMessage: {
-    backgroundColor: Colors.redTheme.background,
+    backgroundColor: "#E15816",
     alignSelf: "flex-end",
     borderWidth: 1,
-    borderColor: Colors.redTheme.background,
+    borderColor: "#E15816",
   },
   customerMessageSender: {
     fontSize: 12,
