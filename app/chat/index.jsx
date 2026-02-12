@@ -607,7 +607,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   customerBubble: {
-    backgroundColor: "#E25A17",
+    backgroundColor: "#E15816",
     borderBottomRightRadius: 4,
   },
   adminBubble: {
@@ -675,7 +675,7 @@ const styles = StyleSheet.create({
     marginRight: 4,
   },
   sendButton: {
-    backgroundColor: "#E25A17",
+    backgroundColor: "#E15816",
     width: 44,
     height: 44,
     borderRadius: 22,

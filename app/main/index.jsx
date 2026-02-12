@@ -183,7 +183,6 @@ export default function Dashboard() {
   };
 
   const menuItems = [
-    { icon: "wallet", label: "Investment\nProfile", route: "/monthly", customImage: require("../../assets/images/investmentprofile.png") },
     { icon: "wallet-outline", label: "E-Wallet", route: "/maya" },
     { icon: "chart-line", label: "Stock", route: "/stockholder" },
     { icon: "format-list-bulleted", label: "Task", route: "/task" },
@@ -650,10 +649,11 @@ const styles = StyleSheet.create({
   menuGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    justifyContent: "flex-start",
+    justifyContent: "space-between",
+    paddingHorizontal: 8,
   },
   menuItem: {
-    width: (width - 88) / 5,
+    width: `${100 / 3 - 2}%`,
     alignItems: "center",
     paddingVertical: 16,
     paddingHorizontal: 4,
