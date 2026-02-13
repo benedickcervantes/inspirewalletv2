@@ -187,8 +187,7 @@ export default function Dashboard() {
     { icon: "chart-line", label: "Stock", route: "/stockholder" },
     { icon: "format-list-bulleted", label: "Task", route: "/task" },
     { icon: "account", label: "Agent", route: "/agentrequest" },
-    { icon: "chart-timeline-variant", label: "Trading", route: "/crypto" },
-    { icon: "dots-horizontal", label: "More", route: "/settings" },
+    { icon: "trophy", label: "Play and Earn", route: "/playearn", customImage: require("../../assets/images/play crypto icon.png") },
   ];
 
   return (
@@ -649,11 +648,11 @@ const styles = StyleSheet.create({
   menuGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    justifyContent: "space-between",
     paddingHorizontal: 8,
+    gap: 12,
   },
   menuItem: {
-    width: `${100 / 3 - 2}%`,
+    width: `${(100 / 3) - 3}%`,
     alignItems: "center",
     paddingVertical: 16,
     paddingHorizontal: 4,
