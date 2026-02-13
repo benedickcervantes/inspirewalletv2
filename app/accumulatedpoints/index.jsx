@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
   Modal,
   TextInput,
+  Image,
 } from "react-native";
 import { useRouter, useNavigation } from "expo-router";
 import { Colors } from "../../constants/Colors";
@@ -133,7 +134,7 @@ export default function AccumulatedPoints() {
     setWithdrawalModalVisible(true);
   };
 
-  const withdrawalAmounts = [100, 300, 500, 1000, 2000];
+  const withdrawalAmounts = [50, 100, 300, 500, 1000, 2000];
 
   const handleSubmitWithdrawal = () => {
     // Validation
@@ -421,50 +422,99 @@ export default function AccumulatedPoints() {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <ScrollView showsVerticalScrollIndicator={false}>
-              <Text style={[styles.modalTitle, getRTLStyles(userLanguage)]}>
-                {t(userLanguage, "accumulatedPoints.withdrawPoints") || "Withdraw Points"}
-              </Text>
+            <ScrollView 
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+            >
+              {/* Header with Close Button */}
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Withdraw</Text>
+                <TouchableOpacity
+                  style={styles.closeButton}
+                  onPress={() => setWithdrawalModalVisible(false)}
+                >
+                  <Ionicons name="close" size={28} color="#333" />
+                </TouchableOpacity>
+              </View>
 
               {/* Conversion Note */}
               <View style={styles.conversionNote}>
-                <Ionicons name="information-circle" size={width * 0.05} color="#FF9500" />
-                <Text style={[styles.conversionNoteText, getRTLStyles(userLanguage)]}>
-                  {t(userLanguage, "accumulatedPoints.conversionNote") || "1 Point = ₱1 Peso"}
+                <Ionicons name="information-circle" size={24} color="#E15816" />
+                <Text style={styles.conversionNoteText}>
+                  1 point is exactly equal to ₱1.00
                 </Text>
               </View>
 
+              {/* Mobile Number Input */}
+              <Text style={styles.sectionLabel}>Mobile number</Text>
+              <TextInput
+                style={styles.mobileInput}
+                placeholder=""
+                keyboardType="phone-pad"
+                value={mobileNumber}
+                onChangeText={setMobileNumber}
+                maxLength={11}
+              />
+
               {/* Amount Selection */}
-              <Text style={[styles.sectionLabel, getRTLStyles(userLanguage)]}>
-                {t(userLanguage, "accumulatedPoints.selectAmount") || "Select Amount"}
+              <Text style={styles.sectionLabel}>Choose Amount</Text>
+              <Text style={{ fontSize: 12, color: "#999", marginBottom: 8 }}>
+                Available Points: {accumulatedPoints}
               </Text>
+              
+              {/* Custom Amount Input */}
+              <View style={styles.customAmountContainer}>
+                <TextInput
+                  style={styles.customAmountInput}
+                  placeholder="Enter exact amount"
+                  placeholderTextColor="#BDBDBD"
+                  keyboardType="numeric"
+                  value={selectedAmount ? selectedAmount.toString() : ""}
+                  onChangeText={(text) => {
+                    const numValue = parseInt(text) || 0;
+                    setSelectedAmount(numValue > 0 ? numValue : null);
+                  }}
+                />
+                <Text style={styles.customAmountLabel}>points</Text>
+              </View>
+
+              {/* Quick Amount Buttons */}
+              <Text style={styles.quickAmountLabel}>Or choose quick amount:</Text>
               <View style={styles.amountGrid}>
-                {withdrawalAmounts.map((amount) => (
-                  <TouchableOpacity
-                    key={amount}
-                    style={[
-                      styles.amountButton,
-                      selectedAmount === amount && styles.amountButtonSelected,
-                      amount > accumulatedPoints && styles.amountButtonDisabled
-                    ]}
-                    onPress={() => setSelectedAmount(amount)}
-                    disabled={amount > accumulatedPoints}
-                  >
-                    <Text style={[
-                      styles.amountButtonText,
-                      selectedAmount === amount && styles.amountButtonTextSelected,
-                      amount > accumulatedPoints && styles.amountButtonTextDisabled
-                    ]}>
-                      {amount}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+                {withdrawalAmounts.map((amount) => {
+                  const isSelected = selectedAmount === amount;
+                  const hasEnoughPoints = amount <= accumulatedPoints;
+                  
+                  return (
+                    <TouchableOpacity
+                      key={amount}
+                      activeOpacity={0.6}
+                      style={[
+                        styles.amountButton,
+                        isSelected && styles.amountButtonSelected,
+                      ]}
+                      onPress={() => {
+                        console.log("Setting amount to:", amount);
+                        setSelectedAmount(amount);
+                      }}
+                    >
+                      <Text style={[
+                        styles.amountButtonText,
+                        isSelected && styles.amountButtonTextSelected,
+                        !hasEnoughPoints && styles.amountButtonTextInsufficient,
+                      ]}>
+                        {amount}
+                      </Text>
+                      {!hasEnoughPoints && (
+                        <Text style={styles.insufficientLabel}>Insufficient</Text>
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
 
               {/* Payment Method Selection */}
-              <Text style={[styles.sectionLabel, getRTLStyles(userLanguage)]}>
-                {t(userLanguage, "accumulatedPoints.paymentMethod") || "Payment Method"}
-              </Text>
+              <Text style={styles.sectionLabel}>Receiving Method</Text>
               <View style={styles.paymentMethodContainer}>
                 <TouchableOpacity
                   style={[
@@ -473,13 +523,11 @@ export default function AccumulatedPoints() {
                   ]}
                   onPress={() => setSelectedPaymentMethod("GCash")}
                 >
-                  <View style={styles.paymentMethodIcon}>
-                    <Ionicons 
-                      name="wallet" 
-                      size={width * 0.08} 
-                      color={selectedPaymentMethod === "GCash" ? "#FF9500" : "#666"} 
-                    />
-                  </View>
+                  <Image 
+                    source={require("../../assets/images/gcash2.0.png")} 
+                    style={styles.paymentMethodImage}
+                    resizeMode="contain"
+                  />
                   <Text style={[
                     styles.paymentMethodText,
                     selectedPaymentMethod === "GCash" && styles.paymentMethodTextSelected
@@ -495,13 +543,11 @@ export default function AccumulatedPoints() {
                   ]}
                   onPress={() => setSelectedPaymentMethod("PayMaya")}
                 >
-                  <View style={styles.paymentMethodIcon}>
-                    <Ionicons 
-                      name="card" 
-                      size={width * 0.08} 
-                      color={selectedPaymentMethod === "PayMaya" ? "#FF9500" : "#666"} 
-                    />
-                  </View>
+                  <Image 
+                    source={require("../../assets/images/maya2.0.png")} 
+                    style={styles.paymentMethodImage}
+                    resizeMode="contain"
+                  />
                   <Text style={[
                     styles.paymentMethodText,
                     selectedPaymentMethod === "PayMaya" && styles.paymentMethodTextSelected
@@ -511,45 +557,20 @@ export default function AccumulatedPoints() {
                 </TouchableOpacity>
               </View>
 
-              {/* Mobile Number Input */}
-              <Text style={[styles.sectionLabel, getRTLStyles(userLanguage)]}>
-                {t(userLanguage, "accumulatedPoints.mobileNumber") || "Mobile Number"}
-              </Text>
-              <TextInput
-                style={styles.mobileInput}
-                placeholder="09XXXXXXXXX"
-                keyboardType="phone-pad"
-                value={mobileNumber}
-                onChangeText={setMobileNumber}
-                maxLength={11}
-              />
-
-              {/* Buttons */}
-              <View style={styles.modalButtons}>
-                <TouchableOpacity
-                  style={styles.cancelButton}
-                  onPress={() => setWithdrawalModalVisible(false)}
-                  disabled={withdrawing}
-                >
-                  <Text style={styles.cancelButtonText}>
-                    {t(userLanguage, "accumulatedPoints.cancel") || "Cancel"}
+              {/* Submit Button */}
+              <TouchableOpacity
+                style={[styles.submitButton, withdrawing && styles.submitButtonDisabled]}
+                onPress={handleSubmitWithdrawal}
+                disabled={withdrawing}
+              >
+                {withdrawing ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Text style={styles.submitButtonText}>
+                    Send Withdrawal Request
                   </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[styles.submitButton, withdrawing && styles.submitButtonDisabled]}
-                  onPress={handleSubmitWithdrawal}
-                  disabled={withdrawing}
-                >
-                  {withdrawing ? (
-                    <ActivityIndicator size="small" color="#fff" />
-                  ) : (
-                    <Text style={styles.submitButtonText}>
-                      {t(userLanguage, "accumulatedPoints.submit") || "Submit"}
-                    </Text>
-                  )}
-                </TouchableOpacity>
-              </View>
+                )}
+              </TouchableOpacity>
             </ScrollView>
           </View>
         </View>
@@ -757,149 +778,193 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   modalContent: {
-    backgroundColor: "#fff",
-    borderRadius: 20,
-    padding: width * 0.05,
-    width: width * 0.9,
-    maxHeight: height * 0.8,
+    backgroundColor: "#F5F5F5",
+    borderRadius: 24,
+    padding: 24,
+    width: width * 0.92,
+    maxHeight: height * 0.85,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
   },
   modalTitle: {
-    fontSize: width * 0.06,
-    fontWeight: "bold",
+    fontSize: 28,
+    fontWeight: "700",
     color: "#333",
-    marginBottom: height * 0.02,
-    textAlign: "center",
+  },
+  closeButton: {
+    width: 40,
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
   },
   conversionNote: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#FFF4E6",
-    padding: height * 0.012,
-    borderRadius: 8,
-    marginBottom: height * 0.02,
-    gap: width * 0.02,
+    backgroundColor: "#FFE8D6",
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 24,
+    gap: 12,
     borderWidth: 1,
-    borderColor: "#FFE0B2",
+    borderColor: "#E15816",
   },
   conversionNoteText: {
-    fontSize: width * 0.035,
-    color: "#FF9500",
+    fontSize: 15,
+    color: "#E15816",
     fontWeight: "600",
+    flex: 1,
   },
   sectionLabel: {
-    fontSize: width * 0.04,
+    fontSize: 16,
     fontWeight: "600",
     color: "#333",
-    marginBottom: height * 0.015,
-    marginTop: height * 0.02,
+    marginBottom: 12,
+  },
+  mobileInput: {
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    fontSize: 16,
+    marginBottom: 24,
+    color: "#333",
+  },
+  customAmountContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    borderWidth: 2,
+    borderColor: "#E15816",
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginBottom: 16,
+  },
+  customAmountInput: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
+    padding: 0,
+  },
+  customAmountLabel: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#666",
+    marginLeft: 8,
+  },
+  quickAmountLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#666",
+    marginBottom: 12,
   },
   amountGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: width * 0.025,
-    marginBottom: height * 0.02,
+    marginBottom: 24,
+    justifyContent: "space-between",
   },
   amountButton: {
-    width: (width * 0.8 - width * 0.075) / 3,
-    paddingVertical: height * 0.015,
-    borderRadius: 10,
+    width: (width * 0.92 - 72) / 3,
+    paddingVertical: 16,
+    marginBottom: 12,
+    borderRadius: 12,
     borderWidth: 2,
-    borderColor: "#ddd",
-    backgroundColor: "#fff",
+    borderColor: "#E0E0E0",
+    backgroundColor: "#FFFFFF",
     alignItems: "center",
     justifyContent: "center",
   },
   amountButtonSelected: {
-    borderColor: "#FF9500",
-    backgroundColor: "#FFF4E6",
+    borderColor: "#E15816",
+    backgroundColor: "#FFF5F0",
+    borderWidth: 3,
   },
   amountButtonDisabled: {
-    backgroundColor: "#f5f5f5",
-    borderColor: "#eee",
+    backgroundColor: "#F5F5F5",
+    borderColor: "#E8E8E8",
+    opacity: 0.5,
   },
   amountButtonText: {
-    fontSize: width * 0.04,
-    fontWeight: "600",
-    color: "#333",
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#666",
   },
   amountButtonTextSelected: {
-    color: "#FF9500",
+    color: "#E15816",
   },
   amountButtonTextDisabled: {
-    color: "#ccc",
+    color: "#BDBDBD",
+  },
+  amountButtonTextInsufficient: {
+    color: "#BDBDBD",
+  },
+  insufficientLabel: {
+    fontSize: 10,
+    color: "#F44336",
+    marginTop: 4,
+    fontWeight: "600",
   },
   paymentMethodContainer: {
     flexDirection: "row",
-    gap: width * 0.03,
-    marginBottom: height * 0.02,
+    marginBottom: 32,
+    justifyContent: "space-between",
   },
   paymentMethodButton: {
-    flex: 1,
-    paddingVertical: height * 0.02,
+    width: (width * 0.92 - 60) / 2,
+    paddingVertical: 20,
     borderRadius: 12,
-    borderWidth: 2,
-    borderColor: "#ddd",
-    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+    backgroundColor: "#FFFFFF",
     alignItems: "center",
+    justifyContent: "center",
   },
   paymentMethodButtonSelected: {
-    borderColor: "#FF9500",
-    backgroundColor: "#FFF4E6",
+    borderColor: "#E15816",
+    backgroundColor: "#FFF5F0",
   },
-  paymentMethodIcon: {
-    marginBottom: height * 0.01,
+  paymentMethodImage: {
+    width: 48,
+    height: 48,
+    marginBottom: 8,
   },
   paymentMethodText: {
-    fontSize: width * 0.04,
+    fontSize: 16,
     fontWeight: "600",
     color: "#666",
   },
   paymentMethodTextSelected: {
-    color: "#FF9500",
-  },
-  mobileInput: {
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 10,
-    paddingHorizontal: width * 0.04,
-    paddingVertical: height * 0.015,
-    fontSize: width * 0.04,
-    marginBottom: height * 0.02,
-  },
-  modalButtons: {
-    flexDirection: "row",
-    gap: width * 0.03,
-    marginTop: height * 0.02,
-  },
-  cancelButton: {
-    flex: 1,
-    paddingVertical: height * 0.018,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "#ddd",
-    alignItems: "center",
-  },
-  cancelButtonText: {
-    fontSize: width * 0.04,
-    fontWeight: "600",
-    color: "#666",
+    color: "#E15816",
   },
   submitButton: {
-    flex: 1,
-    paddingVertical: height * 0.018,
-    borderRadius: 10,
-    backgroundColor: "#FF9500",
+    backgroundColor: "#E15816",
+    paddingVertical: 18,
+    borderRadius: 28,
     alignItems: "center",
     justifyContent: "center",
+    shadowColor: "#E15816",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
   submitButtonDisabled: {
-    backgroundColor: "#ccc",
+    backgroundColor: "#CCC",
+    shadowOpacity: 0,
+    elevation: 0,
   },
   submitButtonText: {
-    fontSize: width * 0.04,
-    fontWeight: "bold",
-    color: "#fff",
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#FFFFFF",
   },
   // Success Modal Styles
   successModalContent: {
