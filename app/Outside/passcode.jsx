@@ -1,4 +1,5 @@
 import { useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -11,14 +12,14 @@ import {
     Keyboard,
     Modal,
     Pressable,
+    ScrollView,
     StyleSheet,
     Text,
     TextInput,
     TouchableOpacity,
-    TouchableWithoutFeedback,
     View,
 } from 'react-native';
-import { auth, firestore, signInWithEmailAndPassword, doc, getDoc, setDoc } from '../../configs/firebase';
+import { auth, firestore, signInWithEmailAndPassword, doc, getDoc, getDocFromServer, setDoc } from '../../configs/firebase';
 
 const GRADIENT_START = '#E15816';
 const GRADIENT_END = '#F48F38';
@@ -26,9 +27,9 @@ const WHITE = '#FFFFFF';
 
 const { width } = Dimensions.get('window');
 const isTablet = width >= 768;
-const btnSize = isTablet ? 70 : 70;
-const padWidth = isTablet ? '60%' : '80%';
-const maxPadWidth = isTablet ? 380 : 300;
+const btnSize = isTablet ? 70 : Math.min(60, width * 0.18);
+const padWidth = isTablet ? '60%' : '85%';
+const maxPadWidth = isTablet ? 380 : Math.min(320, width - 48);
 
 // Simple message modal
 function MessageModal({ visible, onClose, title, message, type, confirmText = 'OK', onConfirm }) {
@@ -85,6 +86,7 @@ const msgStyles = StyleSheet.create({
 
 export default function Passcode() {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
 
   const [checkPasscode, setCheckPasscode] = useState('');
   const [passcode, setPasscode] = useState('');
@@ -155,12 +157,18 @@ export default function Passcode() {
 
       try {
         const userDocRef = doc(firestore, 'users', user.uid);
-        const userDocSnap = await getDoc(userDocRef);
+        let userDocSnap;
+        try {
+          userDocSnap = await getDocFromServer(userDocRef);
+        } catch (serverErr) {
+          userDocSnap = await getDoc(userDocRef);
+        }
         if (!cancelled) {
           if (userDocSnap.exists()) {
             const data = userDocSnap.data();
-            if (data.passcode) {
-              setCheckPasscode(data.passcode);
+            const storedPasscode = data?.passcode;
+            if (storedPasscode) {
+              setCheckPasscode(String(storedPasscode));
             } else {
               navigation.replace('Login');
             }
@@ -190,7 +198,7 @@ export default function Passcode() {
     ]).start();
   };
 
-  const handlePress = (value) => {
+  const handlePress = async (value) => {
     if (value === 'Del') {
       setPasscode((p) => p.slice(0, -1));
       setError('');
@@ -201,7 +209,23 @@ export default function Passcode() {
     setPasscode(next);
     setError('');
     if (next.length === 4) {
-      if (next === checkPasscode) {
+      const user = auth?.currentUser;
+      if (!user || !firestore) {
+        setError('Session expired. Please login again.');
+        setPasscode('');
+        triggerShake();
+        return;
+      }
+      let storedPasscode = checkPasscode;
+      try {
+        const userDocRef = doc(firestore, 'users', user.uid);
+        const userDocSnap = await getDocFromServer(userDocRef);
+        if (userDocSnap.exists()) {
+          const data = userDocSnap.data();
+          if (data?.passcode) storedPasscode = String(data.passcode);
+        }
+      } catch (_) {}
+      if (next === storedPasscode) {
         setPasscode('');
         AsyncStorage.setItem('passcodeLoginComplete', 'true').catch(() => {});
         navigation.replace('Main');
@@ -288,73 +312,80 @@ export default function Passcode() {
       <LinearGradient
         colors={[GRADIENT_START, GRADIENT_END]}
         locations={[0, 1]}
-        style={styles.gradient}
+        style={[styles.gradient, { paddingTop: insets.top, paddingBottom: insets.bottom }]}
       >
-        <View style={styles.logoWrap}>
-          <Image
-            source={require('../../assets/images/InpireLogo.png')}
-            style={styles.logo}
-            contentFit="contain"
-          />
-        </View>
-
-        {loadingPasscode ? (
-          <View style={styles.loadingWrap}>
-            <ActivityIndicator size="large" color={WHITE} />
-            <Text style={styles.loadingText}>Loading...</Text>
-          </View>
-        ) : (
-          <>
-        {error ? <Text style={styles.errorText}>{error}</Text> : null}
-
-        <Animated.View style={[styles.dotsWrap, { transform: [{ translateX: shakeAnim }] }]}>
-          {[0, 1, 2, 3].map((i) => (
-            <View
-              key={i}
-              style={[
-                styles.dot,
-                passcode.length > i && styles.dotFilled,
-              ]}
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.logoWrap}>
+            <Image
+              source={require('../../assets/images/InpireLogo.png')}
+              style={styles.logo}
+              contentFit="contain"
             />
-          ))}
-        </Animated.View>
-
-        <Text style={styles.enterText}>Enter your passcode</Text>
-
-        <View style={[styles.padContainer, { width: padWidth, maxWidth: maxPadWidth }]}>
-          {[['1', '2', '3'], ['4', '5', '6'], ['7', '8', '9']].map((row, ri) => (
-            <View key={ri} style={styles.padRow}>
-              {row.map((key) => (
-                <TouchableOpacity
-                  key={key}
-                  style={styles.padButton}
-                  onPress={() => handlePress(key)}
-                >
-                  <Text style={styles.padButtonText}>{key}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          ))}
-          <View style={styles.padRowLast}>
-            <TouchableOpacity style={styles.padButton} onPress={() => handlePress('0')}>
-              <Text style={styles.padButtonText}>0</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.padButton, styles.padButtonDel]} onPress={() => handlePress('Del')}>
-              <Text style={styles.padButtonText}>⌫</Text>
-            </TouchableOpacity>
           </View>
-        </View>
 
-        <View style={styles.bottomRow}>
-          <TouchableOpacity onPress={() => setResetModalVisible(true)}>
-            <Text style={styles.bottomLink}>Reset Passcode</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-            <Text style={styles.bottomLink}>Use Email</Text>
-          </TouchableOpacity>
-        </View>
-          </>
-        )}
+          {loadingPasscode ? (
+            <View style={styles.loadingWrap}>
+              <ActivityIndicator size="large" color={WHITE} />
+              <Text style={styles.loadingText}>Loading...</Text>
+            </View>
+          ) : (
+            <>
+              {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+              <Animated.View style={[styles.dotsWrap, { transform: [{ translateX: shakeAnim }] }]}>
+                {[0, 1, 2, 3].map((i) => (
+                  <View
+                    key={i}
+                    style={[
+                      styles.dot,
+                      passcode.length > i && styles.dotFilled,
+                    ]}
+                  />
+                ))}
+              </Animated.View>
+
+              <Text style={styles.enterText}>Enter your passcode</Text>
+
+              <View style={[styles.padContainer, { width: padWidth, maxWidth: maxPadWidth }]}>
+                {[['1', '2', '3'], ['4', '5', '6'], ['7', '8', '9']].map((row, ri) => (
+                  <View key={ri} style={styles.padRow}>
+                    {row.map((key) => (
+                      <TouchableOpacity
+                        key={key}
+                        style={[styles.padButton, { width: btnSize, height: btnSize, borderRadius: btnSize / 2 }]}
+                        onPress={() => handlePress(key)}
+                      >
+                        <Text style={styles.padButtonText}>{key}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                ))}
+                <View style={styles.padRowLast}>
+                  <TouchableOpacity style={[styles.padButton, { width: btnSize, height: btnSize, borderRadius: btnSize / 2 }]} onPress={() => handlePress('0')}>
+                    <Text style={styles.padButtonText}>0</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={[styles.padButton, styles.padButtonDel]} onPress={() => handlePress('Del')}>
+                    <Text style={styles.padButtonText}>⌫</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              <View style={styles.bottomRow}>
+                <TouchableOpacity onPress={() => setResetModalVisible(true)}>
+                  <Text style={styles.bottomLink}>Reset Passcode</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+                  <Text style={styles.bottomLink}>Use Email</Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          )}
+        </ScrollView>
       </LinearGradient>
 
       <MessageModal
@@ -368,8 +399,14 @@ export default function Passcode() {
       />
 
       <Modal transparent animationType="slide" visible={resetModalVisible} onRequestClose={closeResetModal}>
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <View style={resetStyles.overlay}>
+        <View style={resetStyles.overlay}>
+          <Pressable style={[StyleSheet.absoluteFill, resetStyles.backdrop]} onPress={closeResetModal} />
+          <ScrollView
+            style={resetStyles.modalScroll}
+            contentContainerStyle={resetStyles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            bounces={false}
+          >
             <View style={resetStyles.box}>
               <Text style={resetStyles.title}>
                 {resetStep === 'auth' ? 'Reset Passcode' : 'Set New Passcode'}
@@ -389,6 +426,7 @@ export default function Passcode() {
                     onChangeText={setResetEmail}
                     keyboardType="email-address"
                     autoCapitalize="none"
+                    autoComplete="email"
                   />
                   <TextInput
                     style={resetStyles.input}
@@ -397,6 +435,7 @@ export default function Passcode() {
                     secureTextEntry
                     value={resetPassword}
                     onChangeText={setResetPassword}
+                    autoComplete="password"
                   />
                 </>
               ) : (
@@ -440,8 +479,8 @@ export default function Passcode() {
                 </TouchableOpacity>
               </View>
             </View>
-          </View>
-        </TouchableWithoutFeedback>
+          </ScrollView>
+        </View>
       </Modal>
     </>
   );
@@ -450,12 +489,17 @@ export default function Passcode() {
 const styles = StyleSheet.create({
   gradient: {
     flex: 1,
-    paddingTop: 60,
     paddingHorizontal: 20,
     alignItems: 'center',
   },
+  scroll: { flex: 1, width: '100%' },
+  scrollContent: {
+    flexGrow: 1,
+    alignItems: 'center',
+    paddingBottom: 40,
+  },
   logoWrap: {
-    marginBottom: 50,
+    marginBottom: 24,
     alignItems: 'center',
   },
   logo: {
@@ -547,8 +591,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: '90%',
     maxWidth: 400,
-    position: 'absolute',
-    bottom: 40,
+    marginTop: 32,
   },
   bottomLink: {
     fontSize: 16,
@@ -565,6 +608,9 @@ const resetStyles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.7)',
     padding: 20,
   },
+  backdrop: { zIndex: 0 },
+  modalScroll: { flex: 1, width: '100%', zIndex: 1 },
+  scrollContent: { flexGrow: 1, justifyContent: 'center', paddingVertical: 24 },
   box: {
     backgroundColor: WHITE,
     borderRadius: 20,

@@ -17,11 +17,10 @@ import {
     Text,
     TextInput,
     TouchableOpacity,
-    TouchableWithoutFeedback,
     View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { auth, signInWithEmailAndPassword } from '../../configs/firebase';
+import { auth, firestore, signInWithEmailAndPassword, doc, getDoc } from '../../configs/firebase';
 
 const GRADIENT_START = '#E15816';
 const GRADIENT_END = '#F48F38';
@@ -232,7 +231,23 @@ export default function Login() {
       try {
         await AsyncStorage.setItem('userEmail', trimmedEmail);
         await AsyncStorage.setItem('userPassword', password);
+        await AsyncStorage.removeItem('passcodeLoginComplete');
       } catch (_) {}
+
+      // If user has passcode set, require passcode entry FIRST before Main
+      if (firestore) {
+        try {
+          const userDocRef = doc(firestore, 'users', user.uid);
+          const userDocSnap = await getDoc(userDocRef);
+          if (userDocSnap.exists()) {
+            const userData = userDocSnap.data();
+            if (userData?.passcode) {
+              navigation.replace('Passcode');
+              return;
+            }
+          }
+        } catch (_) {}
+      }
 
       navigation.replace('Main');
     } catch (error) {
@@ -275,19 +290,20 @@ export default function Login() {
     }
   };
 
+  const isWeb = Platform.OS === 'web';
+
   return (
     <>
       <KeyboardAvoidingView
         style={styles.flex1}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={isWeb ? undefined : Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-          <LinearGradient
-            colors={[GRADIENT_START, GRADIENT_END]}
-            locations={[0, 1]}
-            style={[styles.gradient, { paddingTop: insets.top, paddingBottom: insets.bottom }]}
-          >
+        <LinearGradient
+          colors={[GRADIENT_START, GRADIENT_END]}
+          locations={[0, 1]}
+          style={[styles.gradient, { paddingTop: insets.top, paddingBottom: insets.bottom }]}
+        >
             <View style={styles.header}>
               <TouchableOpacity
                 style={styles.backButton}
@@ -300,15 +316,17 @@ export default function Login() {
 
             <ScrollView
               style={styles.scroll}
-              contentContainerStyle={styles.scrollContent}
+              contentContainerStyle={[styles.scrollContent, { paddingBottom: 100 }]}
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
+              bounces={false}
             >
               <View style={styles.logoWrap}>
                 <Image
                   source={require('../../assets/images/InpireLogo.png')}
                   style={styles.logo}
                   contentFit="contain"
+                  accessible={false}
                 />
               </View>
 
@@ -323,6 +341,7 @@ export default function Login() {
                   autoCapitalize="none"
                   autoCorrect={false}
                   editable={!loading}
+                  autoComplete="email"
                 />
 
                 <View style={styles.passwordRow}>
@@ -336,6 +355,7 @@ export default function Login() {
                     autoCapitalize="none"
                     autoCorrect={false}
                     editable={!loading}
+                    autoComplete="password"
                   />
                   <TouchableOpacity
                     style={styles.eyeButton}
@@ -394,7 +414,6 @@ export default function Login() {
 
             <Text style={styles.footer}>CREATED BY INSPIRE</Text>
           </LinearGradient>
-        </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
 
       <MessageModal
@@ -434,15 +453,16 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     alignItems: 'center',
     paddingHorizontal: 28,
-    paddingBottom: 24,
+    minHeight: '100%',
   },
   logoWrap: {
     marginTop: 8,
-    marginBottom: 36,
+    marginBottom: 24,
   },
   logo: {
-    width: 300,
-    height: 200,
+    width: 280,
+    height: 160,
+    maxWidth: '100%',
   },
   form: {
     width: '100%',

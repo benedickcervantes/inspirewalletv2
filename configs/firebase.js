@@ -1,8 +1,8 @@
 // Import the functions you need from the SDKs you need
-import { initializeApp, getApps, getApp } from "firebase/app";
-import { getFirestore, enableIndexedDbPersistence, doc, getDoc, setDoc, onSnapshot, collection, query, where, limit } from "firebase/firestore";
-import { initializeAuth, getReactNativePersistence, getAuth, onAuthStateChanged, signInWithEmailAndPassword } from "firebase/auth";
 import ReactNativeAsyncStorage from "@react-native-async-storage/async-storage";
+import { getApp, getApps, initializeApp } from "firebase/app";
+import { getAuth, getReactNativePersistence, initializeAuth, onAuthStateChanged, signInWithEmailAndPassword } from "firebase/auth";
+import { collection, doc, enableIndexedDbPersistence, getDoc, getDocFromServer, getFirestore, limit, onSnapshot, query, setDoc, where } from "firebase/firestore";
 // Firebase Storage omitted here to avoid @firebase/storage bundling issues in Expo/RN.
 // Use getStorage(app) from "firebase/storage" in a screen that needs uploads if required.
 
@@ -22,17 +22,22 @@ let auth;
 let firestore;
 let storage;
 
+const isWeb = typeof window !== 'undefined' && typeof window.indexedDB !== 'undefined';
+
 try {
     if (getApps().length === 0) {
         app = initializeApp(firebaseConfig);
-        auth = initializeAuth(app, {
-            persistence: getReactNativePersistence(ReactNativeAsyncStorage)
-        });
+        // Web: getAuth uses browser persistence. Native: getReactNativePersistence required.
+        if (isWeb) {
+            auth = getAuth(app);
+        } else {
+            auth = initializeAuth(app, {
+                persistence: getReactNativePersistence(ReactNativeAsyncStorage)
+            });
+        }
         firestore = getFirestore(app);
-        storage = null; // Optional: add getStorage(app) when you need Storage and bundling allows it
+        storage = null;
 
-        // Enable offline persistence on web only (IndexedDB); avoid deprecated API on RN
-        const isWeb = typeof window !== 'undefined' && typeof window.indexedDB !== 'undefined';
         if (isWeb) {
             try {
                 enableIndexedDbPersistence(firestore).catch((err) => {
@@ -105,15 +110,6 @@ function subscribeToNotifications(uid, callback) {
 
 export {
     app,
-    auth,
-    firestore,
-    storage,
-    onAuthStateChanged,
-    signInWithEmailAndPassword,
-    doc,
-    getDoc,
-    setDoc,
-    subscribeToUser,
-    subscribeToTransactions,
-    subscribeToNotifications,
-};  
+    auth, doc, firestore, getDoc,
+    getDocFromServer, onAuthStateChanged, setDoc, signInWithEmailAndPassword, storage, subscribeToNotifications, subscribeToTransactions, subscribeToUser
+};

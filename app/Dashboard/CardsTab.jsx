@@ -1,16 +1,16 @@
-import React, { useRef } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  ImageBackground,
-  StyleSheet,
-  ScrollView,
-  Dimensions,
-  Animated,
-} from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
+import React from "react";
+import {
+  Animated,
+  Dimensions,
+  ImageBackground,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 const { width } = Dimensions.get("window");
 
