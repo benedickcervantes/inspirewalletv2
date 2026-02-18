@@ -53,9 +53,9 @@ export default function Dashboard() {
 
   const languageSlides = [
     { image: require("../../assets/banner/BuyCards.png") },
-    { image: require("../../assets/banner/ChangeLanguage.png")  },
     { image: require("../../assets/banner/CryptoinIwallet.png")  },
     { image: require("../../assets/banner/DepositviaCrypto.png")  },
+    { image: require("../../assets/banner/ChangeLanguage.png")  },
   ];
 
   const getGreeting = () => {
