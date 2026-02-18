@@ -72,8 +72,9 @@ export default function Dashboard() {
 
     const un1 = subscribeToUser(user.uid, (data) => {
       setUserData(data);
-      setAvailableBalance(data.availableBalance || 0);
-      setTimeDeposit(data.timeDepositTotal || 0);
+      const balance = data?.availBalanceAmount ?? data?.availableBalance;
+      setAvailableBalance(Number(balance) || 0);
+      setTimeDeposit(Number(data?.timeDepositTotal) || 0);
     });
     const un2 = subscribeToTransactions(user.uid, (list) => {
       setRecentTransactions(list);

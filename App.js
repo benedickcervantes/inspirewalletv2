@@ -5,12 +5,26 @@ import 'react-native-gesture-handler';
 import 'react-native-reanimated';
 
 import AuthLoader from './app/AuthLoader';
+import DepositScreen from './app/Dashboard/deposit/deposit';
+import StockInvestment from './app/Dashboard/deposit/stockInvestDepo';
+import TimeDeposit from './app/Dashboard/deposit/timedeposit';
+import TimeDepositAmount from './app/Dashboard/deposit/timedepositAmount';
+import StockInvestmentConfirm from './app/Dashboard/deposit/stockInvestDepoConfirm';
+import TimeDepositConfirm from './app/Dashboard/deposit/timedepositConfirm';
+import TopUpBalance from './app/Dashboard/deposit/topupDepoAvailB';
+import TopupConfirm from './app/Dashboard/deposit/topupDepoAvailBconfirm';
 import Dashboard from './app/Dashboard/main';
 import Login from './app/Outside/Login';
 import Passcode from './app/Outside/passcode';
 import Register from './app/Outside/Register';
 import Welcome from './app/Outside/Welcome';
 import Placeholder from './app/Placeholder';
+import WithdrawScreen from './app/Dashboard/withdraw/withdraw';
+import WithdrawMethodScreen from './app/Dashboard/withdraw/withdrawMethod';
+import BankWithdrawal from './app/Dashboard/withdraw/withdrawLocalB';
+import WithdrawLocalBConfirm from './app/Dashboard/withdraw/withdrawLocalBconfirm';
+import EWalletWithdrawal from './app/Dashboard/withdraw/withdrawEwallet';
+import EWalletConfirm from './app/Dashboard/withdraw/withdrawEwalletConfirm';
 
 const Stack = createNativeStackNavigator();
 
@@ -40,8 +54,20 @@ export default function App() {
         <Stack.Screen name="AgentRequest" component={Placeholder} />
         <Stack.Screen name="PlayEarn" component={Placeholder} />
         <Stack.Screen name="Crypto" component={Placeholder} />
-        <Stack.Screen name="Deposit" component={Placeholder} />
-        <Stack.Screen name="Withdraw" component={Placeholder} />
+        <Stack.Screen name="Deposit" component={DepositScreen} />
+        <Stack.Screen name="stockinvestment" component={StockInvestment} />
+        <Stack.Screen name="StockInvestmentConfirm" component={StockInvestmentConfirm} />
+        <Stack.Screen name="timedeposit" component={TimeDeposit} />
+        <Stack.Screen name="TimeDepositAmount" component={TimeDepositAmount} />
+        <Stack.Screen name="TimeDepositConfirm" component={TimeDepositConfirm} />
+        <Stack.Screen name="topup" component={TopUpBalance} />
+        <Stack.Screen name="TopupConfirm" component={TopupConfirm} />
+        <Stack.Screen name="Withdraw" component={WithdrawScreen} />
+        <Stack.Screen name="WithdrawMethod" component={WithdrawMethodScreen} />
+        <Stack.Screen name="WithdrawBank" component={BankWithdrawal} />
+        <Stack.Screen name="WithdrawLocalBConfirm" component={WithdrawLocalBConfirm} />
+        <Stack.Screen name="WithdrawEwallet" component={EWalletWithdrawal} />
+        <Stack.Screen name="WithdrawEwalletConfirm" component={EWalletConfirm} />
       </Stack.Navigator>
       <StatusBar style="auto" />
     </NavigationContainer>

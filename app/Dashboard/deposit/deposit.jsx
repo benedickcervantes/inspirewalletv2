@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
-import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
   ScrollView,
@@ -12,7 +12,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function DepositIndex() {
-  const router = useRouter();
+  const navigation = useNavigation();
   const [selectedType, setSelectedType] = useState(null);
 
   const depositTypes = [
@@ -43,7 +43,8 @@ export default function DepositIndex() {
     if (selectedType) {
       const selected = depositTypes.find((type) => type.id === selectedType);
       if (selected) {
-        router.push(selected.route);
+        const screenName = selected.route.replace(/^\//, "");
+        navigation.navigate(screenName);
       }
     }
   };
@@ -52,18 +53,24 @@ export default function DepositIndex() {
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         {/* Header */}
-        <View style={styles.header}>
+        <LinearGradient
+          colors={["#E25A17", "#F28934"]}
+          style={styles.header}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+        >
           <TouchableOpacity
             style={styles.backButton}
-            onPress={() => router.back()}
+            onPress={() => navigation.goBack()}
           >
-            <Ionicons name="chevron-back" size={28} color="#E25A17" />
+            <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Deposit Request</Text>
-          <TouchableOpacity style={styles.notificationButton}>
-            <Ionicons name="notifications-outline" size={28} color="#E25A17" />
+
+          <TouchableOpacity style={styles.refreshButton}>
+            <Ionicons name="refresh" size={24} color="#FFFFFF" />
           </TouchableOpacity>
-        </View>
+        </LinearGradient>
 
         <ScrollView
           style={styles.scrollView}
@@ -161,25 +168,25 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: 20,
     paddingVertical: 16,
-    backgroundColor: "#FFFFFF",
   },
   backButton: {
     width: 40,
     height: 40,
     justifyContent: "center",
+    alignItems: "center",
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#E25A17",
+    color: "#FFFFFF",
     flex: 1,
     textAlign: "center",
   },
-  notificationButton: {
+  refreshButton: {
     width: 40,
     height: 40,
     justifyContent: "center",
-    alignItems: "flex-end",
+    alignItems: "center",
   },
   scrollView: {
     flex: 1,
@@ -188,7 +195,10 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   stepProgressContainer: {
-    marginBottom: 24,
+    backgroundColor: "#FFFFFF",
+    paddingVertical: 20,
+    paddingHorizontal: 20,
+    marginBottom: 8,
   },
   stepProgressBar: {
     height: 6,
@@ -209,9 +219,9 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   iconCircle: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 88,
+    height: 88,
+    borderRadius: 44,
     backgroundColor: "#E25A17",
     justifyContent: "center",
     alignItems: "center",
