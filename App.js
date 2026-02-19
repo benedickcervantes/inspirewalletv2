@@ -7,24 +7,28 @@ import 'react-native-reanimated';
 import AuthLoader from './app/AuthLoader';
 import DepositScreen from './app/Dashboard/deposit/deposit';
 import StockInvestment from './app/Dashboard/deposit/stockInvestDepo';
+import StockInvestmentConfirm from './app/Dashboard/deposit/stockInvestDepoConfirm';
 import TimeDeposit from './app/Dashboard/deposit/timedeposit';
 import TimeDepositAmount from './app/Dashboard/deposit/timedepositAmount';
-import StockInvestmentConfirm from './app/Dashboard/deposit/stockInvestDepoConfirm';
 import TimeDepositConfirm from './app/Dashboard/deposit/timedepositConfirm';
 import TopUpBalance from './app/Dashboard/deposit/topupDepoAvailB';
 import TopupConfirm from './app/Dashboard/deposit/topupDepoAvailBconfirm';
 import Dashboard from './app/Dashboard/main';
+import WithdrawScreen from './app/Dashboard/withdraw/withdraw';
+import EWalletWithdrawal from './app/Dashboard/withdraw/withdrawEwallet';
+import EWalletConfirm from './app/Dashboard/withdraw/withdrawEwalletConfirm';
+import BankWithdrawal from './app/Dashboard/withdraw/withdrawLocalB';
+import WithdrawLocalBConfirm from './app/Dashboard/withdraw/withdrawLocalBconfirm';
+import WithdrawMethodScreen from './app/Dashboard/withdraw/withdrawMethod';
+import NotificationScreen from './app/Notification/notification';
 import Login from './app/Outside/Login';
 import Passcode from './app/Outside/passcode';
 import Register from './app/Outside/Register';
 import Welcome from './app/Outside/Welcome';
 import Placeholder from './app/Placeholder';
-import WithdrawScreen from './app/Dashboard/withdraw/withdraw';
-import WithdrawMethodScreen from './app/Dashboard/withdraw/withdrawMethod';
-import BankWithdrawal from './app/Dashboard/withdraw/withdrawLocalB';
-import WithdrawLocalBConfirm from './app/Dashboard/withdraw/withdrawLocalBconfirm';
-import EWalletWithdrawal from './app/Dashboard/withdraw/withdrawEwallet';
-import EWalletConfirm from './app/Dashboard/withdraw/withdrawEwalletConfirm';
+import TransferConfirm from './app/ServicesFunction/Transfer/TransferConfirm';
+import TransferRecipient from './app/ServicesFunction/Transfer/TransferRecipient';
+import SendMoney from './app/ServicesFunction/Transfer/TransferService';
 
 const Stack = createNativeStackNavigator();
 
@@ -42,9 +46,11 @@ export default function App() {
         <Stack.Screen name="Passcode" component={Passcode} />
         <Stack.Screen name="Main" component={Dashboard} />
         <Stack.Screen name="Personal" component={Placeholder} />
-        <Stack.Screen name="Notification" component={Placeholder} />
+        <Stack.Screen name="Notification" component={NotificationScreen} />
         <Stack.Screen name="Settings" component={Placeholder} />
-        <Stack.Screen name="Transfer" component={Placeholder} />
+        <Stack.Screen name="Transfer" component={SendMoney} />
+        <Stack.Screen name="TransferRecipient" component={TransferRecipient} />
+        <Stack.Screen name="TransferConfirm" component={TransferConfirm} />
         <Stack.Screen name="Bdo" component={Placeholder} />
         <Stack.Screen name="Travel" component={Placeholder} />
         <Stack.Screen name="History" component={Placeholder} />
