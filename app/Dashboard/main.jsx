@@ -178,10 +178,9 @@ export default function Dashboard() {
     { icon: "format-list-bulleted", label: "Task", route: "Task" },
     { icon: "account", label: "Agent", route: "AgentRequest" },
     {
-      icon: "trophy",
-      label: "Play and Earn",
+      icon: "chart-areaspline",
+      label: "Trading",
       route: "PlayEarn",
-      customImage: PLACEHOLDER_IMG,
     },
   ];
 
@@ -342,19 +341,11 @@ export default function Dashboard() {
                     }
                   >
                     <View style={styles.menuIcon}>
-                      {item.customImage ? (
-                        <Image
-                          source={item.customImage}
-                          style={styles.customIconImage}
-                          resizeMode="contain"
-                        />
-                      ) : (
-                        <MaterialCommunityIcons
-                          name={item.icon}
-                          size={24}
-                          color="#000000"
-                        />
-                      )}
+                      <MaterialCommunityIcons
+                        name={item.icon}
+                        size={24}
+                        color="#000000"
+                      />
                     </View>
                     <Text style={styles.menuLabel}>{item.label}</Text>
                   </TouchableOpacity>
@@ -581,7 +572,7 @@ const styles = StyleSheet.create({
   },
   tab: {
     paddingHorizontal: 28,
-    paddingVertical: 10,
+    paddingVertical:10,
     borderRadius: 20,
     minWidth: 100,
     alignItems: "center",
@@ -639,22 +630,19 @@ const styles = StyleSheet.create({
   },
   menuHeader: {
     marginBottom: 16,
-    paddingBottom: 12,
+    paddingBottom: 8,
     borderBottomWidth: 1,
     borderBottomColor: "#F0F0F0",
   },
   menuHeaderTitle: { fontSize: 18, fontWeight: "700", color: "#333" },
   menuGrid: {
     flexDirection: "row",
-    flexWrap: "wrap",
     paddingHorizontal: 8,
-    gap: 12,
   },
   menuItem: {
-    width: "30%",
+    width: "22%",
     alignItems: "center",
-    paddingVertical: 16,
-    paddingHorizontal: 4,
+    paddingVertical: 0,
   },
   menuIcon: {
     width: 48,
@@ -670,12 +658,12 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 2,
   },
-  customIconImage: { width: 28, height: 28 },
+  customIconImage: { width: 24, height: 24 },
   menuLabel: {
     fontSize: 10,
     color: "#666",
     textAlign: "center",
-    lineHeight: 13,
+    lineHeight: 12,
   },
   languageCarouselContainer: { paddingHorizontal: 20, marginVertical: 16 },
   languageCarouselWrapper: { position: "relative", marginBottom: 12 },
