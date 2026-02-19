@@ -2,30 +2,32 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import React, { useEffect, useRef, useState } from "react";
 import {
-    Animated,
-    Dimensions,
-    Image,
-    Linking,
-    SafeAreaView,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Animated,
+  Dimensions,
+  Image,
+  Linking,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import {
-    auth,
-    subscribeToNotifications,
-    subscribeToTransactions,
-    subscribeToUser,
+  auth,
+  subscribeToNotifications,
+  subscribeToTransactions,
+  subscribeToUser,
 } from "../../configs/firebase";
 import CardsTab from "./CardsTab";
 import SavingsTab from "./SavingsTab";
 import WalletTab from "./WalletTab";
 
-// Placeholder image until you add: assets/banner/Loopwork.png, HRX.png, assets/images/new1–new4.png, play crypto icon.png
+// Placeholder image until you add: assets/images/new1–new4.png, play crypto icon.png
 const PLACEHOLDER_IMG = require("../../assets/images/InpireLogo.png");
+const LOOPWORK_BANNER = require("../../assets/banner/Loopwork.png");
+const HRX_BANNER = require("../../assets/banner/HRX.png");
 
 const { width } = Dimensions.get("window");
 
@@ -45,15 +47,15 @@ export default function Dashboard() {
   const [unreadNotifications, setUnreadNotifications] = useState(0);
 
   const banners = [
-    { image: PLACEHOLDER_IMG, url: "https://inspire-loopwork.com/landingpage" },
-    { image: PLACEHOLDER_IMG, url: "https://www.deskhrx.com/home/" },
+    { image: LOOPWORK_BANNER, url: "https://inspire-loopwork.com/landingpage" },
+    { image: HRX_BANNER, url: "https://www.deskhrx.com/home/" },
   ];
 
   const languageSlides = [
-    { image: PLACEHOLDER_IMG },
-    { image: PLACEHOLDER_IMG },
-    { image: PLACEHOLDER_IMG },
-    { image: PLACEHOLDER_IMG },
+    { image: require("../../assets/banner/BuyCards.png") },
+    { image: require("../../assets/banner/CryptoinIwallet.png")  },
+    { image: require("../../assets/banner/DepositviaCrypto.png")  },
+    { image: require("../../assets/banner/ChangeLanguage.png")  },
   ];
 
   const getGreeting = () => {
