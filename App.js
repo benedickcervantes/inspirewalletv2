@@ -29,6 +29,7 @@ import Placeholder from './app/Placeholder';
 import TransferConfirm from './app/ServicesFunction/Transfer/TransferConfirm';
 import TransferRecipient from './app/ServicesFunction/Transfer/TransferRecipient';
 import SendMoney from './app/ServicesFunction/Transfer/TransferService';
+import Settings from './app/Settings/settings';
 
 const Stack = createNativeStackNavigator();
 
@@ -47,7 +48,7 @@ export default function App() {
         <Stack.Screen name="Main" component={Dashboard} />
         <Stack.Screen name="Personal" component={Placeholder} />
         <Stack.Screen name="Notification" component={NotificationScreen} />
-        <Stack.Screen name="Settings" component={Placeholder} />
+        <Stack.Screen name="Settings" component={Settings} />
         <Stack.Screen name="Transfer" component={SendMoney} />
         <Stack.Screen name="TransferRecipient" component={TransferRecipient} />
         <Stack.Screen name="TransferConfirm" component={TransferConfirm} />

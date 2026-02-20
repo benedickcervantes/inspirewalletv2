@@ -204,7 +204,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: "#FFFFFF",
     fontWeight: "400",
-    marginRight: 6,
+    marginRight: 8,
   },
   balanceAmount: {
     fontSize: 36,
@@ -220,7 +220,7 @@ const styles = StyleSheet.create({
   },
   cardActionsRow: {
     flexDirection: "row",
-    gap: 12,
+    gap: 14,
   },
   cardButtonDeposit: {
     flex: 1,
@@ -229,7 +229,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 8,
     backgroundColor: "rgba(255, 255, 255, 0.3)",
-    paddingVertical: 14,
+    paddingVertical: 12,
     borderRadius: 15,
   },
   cardButtonDepositText: {
