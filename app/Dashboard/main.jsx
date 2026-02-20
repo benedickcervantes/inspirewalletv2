@@ -637,11 +637,11 @@ const styles = StyleSheet.create({
   menuHeaderTitle: { fontSize: 18, fontWeight: "700", color: "#333" },
   menuGrid: {
     flexDirection: "row",
-    paddingHorizontal: 8,
+    paddingHorizontal: 0,
   },
   menuItem: {
-    width: "22%",
-    alignItems: "center",
+    width: "21%",
+    alignItems: "flex-start",
     paddingVertical: 0,
   },
   menuIcon: {
