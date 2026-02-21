@@ -30,7 +30,7 @@ const buildUrl = (path) => {
  * Submit a time deposit request via the backend.
  * POST /time-deposits
  * @param {string} accessToken - Backend JWT from AsyncStorage
- * @param {Object} body - { amount, contractPeriod, depositMethod, walletId? (when Available Balance) }
+ * @param {Object} body - { contractPeriod, amount, depositMethod, walletId? (when available_balance) }
  * @returns {Promise<{ success: boolean, data?: object, error?: string }>}
  */
 export async function submitTimeDepositRequest(accessToken, body) {
@@ -57,6 +57,35 @@ export async function submitTimeDepositRequest(accessToken, body) {
   } catch (e) {
     if (__DEV__) console.error('[Deposit API] Error', e);
     return { success: false, error: e.message || 'Network error. Is the backend running? Check EXPO_PUBLIC_WALLET_BACKEND_URL and network.' };
+  }
+}
+
+/**
+ * Get user's time deposits.
+ * GET /time-deposits — requires JWT
+ * @param {string} accessToken - Backend JWT
+ * @returns {{ success: boolean, deposits?: Array, error?: string }}
+ */
+export async function getTimeDeposits(accessToken) {
+  const url = buildUrl('/time-deposits');
+  if (!url) return { success: false, error: 'Backend URL not configured' };
+  if (!accessToken) return { success: false, error: 'Not authenticated' };
+  try {
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    const list = Array.isArray(data)
+      ? data
+      : data.data ?? data.deposits ?? data.timeDeposits ?? [];
+    return { success: true, deposits: list };
+  } catch (e) {
+    return { success: false, error: e.message || 'Network error' };
   }
 }
 
@@ -429,6 +458,31 @@ export async function getReferralCode(accessToken) {
 }
 
 /**
+ * GET /referrals/tree — requires JWT
+ * Returns the current user's referral tree (referralCode, referrer, ancestors, directReferralCount, totalDescendantCount).
+ * @param {string} accessToken
+ * @returns {{ success: boolean, tree?: object, error?: string }}
+ */
+export async function getReferralTree(accessToken) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: 'Backend URL not configured' };
+  if (!accessToken) return { success: false, error: 'No token' };
+  try {
+    const res = await fetch(`${base}/referrals/tree`, {
+      method: 'GET',
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      return { success: false, error: data.message || 'Failed to get referral tree' };
+    }
+    return { success: true, tree: data };
+  } catch (e) {
+    return { success: false, error: e.message || 'Network error' };
+  }
+}
+
+/**
  * POST /referrals/generate — requires JWT
  * Generates the user's referral code. Returns existing if already present.
  * @param {string} accessToken
@@ -527,6 +581,7 @@ export async function getTransactions(accessToken, opts = {}) {
     if (opts.walletId) params.set('walletId', opts.walletId);
     if (opts.limit != null) params.set('limit', String(opts.limit));
     if (opts.cursor) params.set('cursor', opts.cursor);
+    if (opts.type) params.set('type', opts.type);
     const qs = params.toString();
     const url = `${base}/transactions${qs ? `?${qs}` : ''}`;
     const res = await fetch(url, {

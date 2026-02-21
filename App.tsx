@@ -25,6 +25,7 @@ import Login from './app/Outside/Login';
 import Passcode from './app/Outside/passcode';
 import Register from './app/Outside/Register';
 import Welcome from './app/Outside/Welcome';
+import AgentDashboard from './app/Dashboard/AgentDashboard';
 import Placeholder from './app/Placeholder';
 import TransferConfirm from './app/ServicesFunction/Transfer/TransferConfirm';
 import TransferRecipient from './app/ServicesFunction/Transfer/TransferRecipient';
@@ -59,7 +60,7 @@ export default function App() {
         <Stack.Screen name="Maya" component={Placeholder} />
         <Stack.Screen name="Stockholder" component={Placeholder} />
         <Stack.Screen name="Task" component={Placeholder} />
-        <Stack.Screen name="AgentRequest" component={Placeholder} />
+        <Stack.Screen name="AgentRequest" component={AgentDashboard} />
         <Stack.Screen name="PlayEarn" component={Placeholder} />
         <Stack.Screen name="Crypto" component={Placeholder} />
         <Stack.Screen name="Deposit" component={DepositScreen} />

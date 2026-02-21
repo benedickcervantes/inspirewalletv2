@@ -47,7 +47,8 @@ export default function TimeDepositConfirm() {
       const body: Record<string, string> = {
         amount: String(parseFloat(amount)),
         contractPeriod,
-        depositMethod,
+        depositMethod:
+          depositMethod === "Available Balance" ? "available_balance" : "request_amount",
       };
 
       if (depositMethod === "Available Balance") {

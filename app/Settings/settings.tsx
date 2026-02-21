@@ -178,8 +178,8 @@ const Settings = () => {
     {
       id: 2,
       icon: 'people-outline' as const,
-      title: 'Agent Request',
-      onPress: () => {},
+      title: 'Agent Dashboard',
+      onPress: () => (navigation as { navigate: (name: string) => void }).navigate('AgentRequest'),
     },
     {
       id: 3,
