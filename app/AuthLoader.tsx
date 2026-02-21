@@ -2,16 +2,8 @@ import { useEffect, useState, useRef } from "react";
 import { View, Image, Text, StyleSheet } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useNavigation } from "@react-navigation/native";
-import type { User } from "firebase/auth";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import {
-  auth,
-  firestore,
-  onAuthStateChanged,
-  signInWithEmailAndPassword,
-  doc,
-  getDoc,
-} from "../configs/firebase";
+import { getMe } from "../configs/api";
 import type { RootStackParamList } from "../types/navigation";
 
 const LOADER_IMAGE = require("../assets/images/InpireLogo.png");
@@ -45,123 +37,55 @@ export default function AuthLoader() {
       return new Promise<void>((resolve) => setTimeout(resolve, remaining));
     };
 
-    const handleAuthAndRedirect = async (user: User | null) => {
+    const handleAuthAndRedirect = async () => {
       if (navigationHandledRef.current) return;
       const startTime = Date.now();
 
       try {
-        if (!firestore) {
+        const accessToken = await AsyncStorage.getItem("access_token");
+        if (!accessToken) {
           await waitMinSplash(startTime);
           goTo("Welcome");
           return;
         }
 
-        if (user) {
-          const passcodeLoginComplete = await AsyncStorage.getItem("passcodeLoginComplete");
-
-          if (passcodeLoginComplete === "true") {
-            await waitMinSplash(startTime);
-            goTo("Main");
-            return;
-          }
-
-          try {
-            const userDocRef = doc(firestore, "users", user.uid);
-            const userDocSnap = await getDoc(userDocRef);
-
-            if (userDocSnap.exists()) {
-              const userData = userDocSnap.data() as { passcode?: string };
-              await waitMinSplash(startTime);
-
-              if (userData?.passcode) {
-                goTo("Passcode");
-              } else {
-                goTo("Login");
-              }
-              return;
-            }
-
-            await waitMinSplash(startTime);
-            goTo("Login");
-            return;
-          } catch (firestoreError) {
-            console.error("Error accessing Firestore:", firestoreError);
-            await waitMinSplash(startTime);
-            goTo("Login");
-            return;
-          }
+        const result = await getMe(accessToken);
+        if (!result.success || !result.user) {
+          await AsyncStorage.multiRemove(["access_token", "user", "passcodeLoginComplete"]);
+          await waitMinSplash(startTime);
+          goTo("Welcome");
+          return;
         }
 
-        const userEmail = await AsyncStorage.getItem("userEmail");
-        const userPassword = await AsyncStorage.getItem("userPassword");
+        const passcodeLoginComplete = await AsyncStorage.getItem("passcodeLoginComplete");
+        const user = result.user as { hasPasscode?: boolean };
 
-        if (userEmail && userPassword && auth) {
-          try {
-            const userCredential = await signInWithEmailAndPassword(auth, userEmail, userPassword);
-            const authenticatedUser = userCredential.user;
+        if (passcodeLoginComplete === "true") {
+          await waitMinSplash(startTime);
+          goTo("Main");
+          return;
+        }
 
-            if (authenticatedUser && firestore) {
-              const userDocRef = doc(firestore, "users", authenticatedUser.uid);
-              const userDocSnap = await getDoc(userDocRef);
-
-              if (userDocSnap.exists()) {
-                const userData = userDocSnap.data() as { passcode?: string };
-                await waitMinSplash(startTime);
-
-                if (userData?.passcode) {
-                  goTo("Passcode");
-                } else {
-                  goTo("Login");
-                }
-                return;
-              }
-            }
-
-            await waitMinSplash(startTime);
-            goTo("Login");
-            return;
-          } catch (authError) {
-            console.log("Re-authentication failed:", authError);
-            try {
-              await AsyncStorage.removeItem("userEmail");
-              await AsyncStorage.removeItem("userPassword");
-              await AsyncStorage.removeItem("passcodeLoginComplete");
-            } catch (clearError) {
-              console.error("Error clearing credentials:", clearError);
-            }
-            await waitMinSplash(startTime);
-            goTo("Welcome");
-            return;
-          }
+        if (user?.hasPasscode) {
+          await AsyncStorage.setItem("user", JSON.stringify(result.user));
+          await waitMinSplash(startTime);
+          goTo("Passcode");
+          return;
         }
 
         await waitMinSplash(startTime);
-        goTo("Welcome");
+        goTo("Main");
       } catch (error) {
         console.error("Error in auth handling:", error);
+        try {
+          await AsyncStorage.multiRemove(["access_token", "user", "passcodeLoginComplete"]);
+        } catch (_) {}
         await waitMinSplash(startTime);
         goTo("Welcome");
       }
     };
 
-    if (!firestore || !auth) {
-      const t = setTimeout(() => {
-        if (navigationHandledRef.current) return;
-        navigationHandledRef.current = true;
-        setLoading(false);
-        navigation.reset({
-          index: 0,
-          routes: [{ name: "Welcome" }],
-        });
-      }, MIN_SPLASH_MS);
-      return () => clearTimeout(t);
-    }
-
-    const unsubscribe = onAuthStateChanged(auth, handleAuthAndRedirect);
-
-    return () => {
-      unsubscribe();
-    };
+    handleAuthAndRedirect();
   }, [navigation]);
 
   if (!loading) return null;
