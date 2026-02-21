@@ -10,8 +10,6 @@ Real-time push for wallet balance and transaction updates. The Inspire Wallet ap
 
 Uses **Socket.IO** on path `/ws`. Same host/port as the REST API.
 
-**Frontend:** The app uses `EXPO_PUBLIC_WALLET_BACKEND_URL` from `.env` (e.g. `http://192.168.254.102:3000`). Socket.IO connects to this base URL; no separate WebSocket URL needed.
-
 ---
 
 ## Authentication
@@ -90,29 +88,28 @@ socket.on('PONG', () => { /* connection alive */ });
 
 ---
 
-## Example: React Native / Expo (Option 2 – query parameter)
+## Example: React Native / Expo
 
 ```javascript
 import { io } from 'socket.io-client';
 
-// Backend URL from .env – EXPO_PUBLIC_WALLET_BACKEND_URL
-const baseUrl = process.env.EXPO_PUBLIC_WALLET_BACKEND_URL?.replace(/\/$/, '') || '';
-
 function useRealtime(accessToken: string | null) {
   useEffect(() => {
-    if (!accessToken || !baseUrl) return;
+    if (!accessToken) return;
 
-    const socket = io(baseUrl, {
+    const socket = io('https://your-api.com', {
       path: '/ws',
       transports: ['websocket', 'polling'],
-      query: { token: accessToken },  // Option 2: token as query parameter
+      auth: { token: accessToken },
     });
 
     socket.on('WALLET_UPDATE', (payload) => {
+      // Update balance in state/context
       updateWalletBalance(payload.walletId, payload.balance);
     });
 
     socket.on('TRANSACTION_CREATED', (payload) => {
+      // Refetch transactions or append
       refetchTransactions();
     });
 

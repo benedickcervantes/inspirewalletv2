@@ -223,35 +223,3 @@ Same shape as a single wallet object in the list (includes `balance` and `curren
 4. **Additional currencies:** When the user wants a wallet in another currency (e.g. USD), call `POST /wallets` with `currencyCode: "USD"`. The backend will return 404 if that currency is not yet seeded.
 
 Token expiry is the same as for Auth. When the backend returns **401** on any wallet route, clear the stored token and redirect to login (or trigger your refresh flow if you have one).
-
----
-
-## Frontend data mapping (Dashboard & primary display)
-
-Use this section to wire the main app UI (dashboard, cards, transfer) to the correct API sources.
-
-| UI field | API source | Endpoint | Response path | Notes |
-|----------|------------|----------|---------------|-------|
-| **Available balance** | Wallets | `POST /wallets/main` | `wallet.balance` | String (e.g. `"0.00"`). Parse with `parseFloat()` for display. Call after login when using JWT. |
-| **Account number** | Auth | `POST /auth/login`, `POST /auth/register`, `GET /auth/me` | `user.accountNumber` | 12 digits, displayed as `XXXX XXXX XXXX`. For receiving transfers. See [API-AUTH-AND-USERS.md](API-AUTH-AND-USERS.md). |
-| **First name, last name, email** | Auth | Same as above | `user.firstName`, `user.lastName`, `user.email` | Stored in `user` object from login/register/getMe. |
-| **Main wallet ID** | Wallets | `POST /wallets/main` | `wallet.id` | Use for `fromWalletId` in transfers if not using default. See [API-TRANSFERS.md](API-TRANSFERS.md). |
-| **Currency symbol** | Wallets | `POST /wallets/main` | `wallet.currency.symbol` | e.g. `"₱"` for PHP. Use for amount display. |
-
-### After login (JWT flow)
-
-1. Store `access_token` and `user` from login/register response.
-2. Call `POST /wallets/main` with `Authorization: Bearer <access_token>`.
-3. Set **available balance** from `wallet.balance` (parse as float).
-4. Set **account number** from `user.accountNumber` (already in stored `user`).
-5. For transfers: use balance from wallet; recipients are managed via [API-BENEFICIARIES.md](API-BENEFICIARIES.md) and [API-TRANSFERS.md](API-TRANSFERS.md).
-
-### Refreshing balance
-
-- After a transfer, the wallet balance is updated atomically on the backend. Call `POST /wallets/main` or `GET /wallets` again to refresh the displayed balance.
-- Alternatively, refetch when the user returns to the dashboard (e.g. on `useFocusEffect`).
-
-### Transfer flow (balance)
-
-- **Transfer / Send Money:** Use `POST /wallets/main` to load available balance for JWT users. Pass or refetch balance on the transfer recipient screen for validation.
-- **Recipients:** The backend uses [Beneficiaries](API-BENEFICIARIES.md) and [Transfers](API-TRANSFERS.md). To send by account number or email, create a beneficiary first, then call `POST /transfers` with `beneficiaryId`.

@@ -258,32 +258,3 @@ Same as in the Wallets API:
 3. **Creating transactions:** The frontend typically does **not** call `POST /transactions` directly. When a user does a **deposit** (e.g. top-up) or **withdraw** (e.g. cash-out), the backend flow that handles that operation will update the wallet balance and create the transaction. So: deposit and withdraw both change the balance and both produce a transaction record; the transaction list is the history of those balance changes.
 
 When the backend returns **401** on any transaction route, clear the stored token and redirect to login (or use your refresh flow).
-
----
-
-## Frontend data mapping (Dashboard & transaction history)
-
-Use this section to wire the Transaction History UI to the correct API sources.
-
-| UI field | API source | Endpoint | Response path | Notes |
-|----------|------------|----------|---------------|-------|
-| **Transaction list** | Transactions | `GET /transactions` | Response array | Use for activity feed and statements. |
-| **Display amount** | Transaction object | — | `transaction.amount` | String (e.g. `"100.50"`). Parse with `parseFloat()` for display. |
-| **Display type label** | Transaction object | — | `transaction.type` | Map: `TOP_UP` → Deposit, `PAYMENT` → Withdraw, `TRANSFER_OUT` → Transfer, `TRANSFER_IN` → Received, `FEE` → Fee, `REFUND` → Refund. |
-| **Display date** | Transaction object | — | `transaction.createdAt` | ISO 8601 string. Use `new Date(createdAt).toLocaleDateString()`. |
-| **Currency symbol** | Transaction object | — | `transaction.currency?.symbol` | e.g. `"₱"`. Fallback to `"₱"` if missing. |
-
-### After login (JWT flow)
-
-1. After loading wallet via `POST /wallets/main` (see [API-WALLETS-AND-CURRENCY.md](API-WALLETS-AND-CURRENCY.md)), call `GET /transactions?limit=20` to populate the Transaction History section.
-2. Optionally filter by main wallet: `GET /transactions?walletId={wallet.id}&limit=20`.
-
-### Refreshing transactions
-
-- Refetch when the user returns to the dashboard (e.g. on `useFocusEffect`) so new transfers appear immediately.
-- After a successful transfer, the backend creates a transaction atomically; call `GET /transactions` again to refresh.
-
-### Related APIs
-
-- **Wallet ID:** Get from `POST /wallets/main` → `wallet.id`. See [API-WALLETS-AND-CURRENCY.md](API-WALLETS-AND-CURRENCY.md).
-- **Transfer-created transactions:** `POST /transfers` creates a transaction with `type: TRANSFER_OUT`. See [API-TRANSFERS.md](API-TRANSFERS.md).

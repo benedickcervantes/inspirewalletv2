@@ -611,56 +611,9 @@ Authorization: Bearer <access_token>
 
 ---
 
-## Deposit Requests (Time Deposit, Stock Investment, Top Up)
+## Deposit Requests
 
-Three deposit options are available as **request-only** flows (no bank participation yet). Users submit requests; admins approve or reject.
-
-### 1. Time Deposit (existing)
-
-- **Create request:** `POST /time-deposits` (user) — creates PENDING time deposit
-- **Admin list pending:** `GET /time-deposits/admin/pending` (ADMIN only)
-- **Admin approve:** `POST /time-deposits/:id/approve` (ADMIN only)
-- **Admin reject:** `POST /time-deposits/:id/reject` (ADMIN only)
-
-### 2. Top Up Available Balance
-
-- **Create request:** `POST /deposit-requests/top-up` (user)
-- **List own:** `GET /deposit-requests/top-up` (user)
-- **Get one:** `GET /deposit-requests/top-up/:id` (user)
-- **Admin list pending:** `GET /deposit-requests/admin/top-up/pending` (ADMIN only)
-- **Admin approve:** `POST /deposit-requests/admin/top-up/:id/approve` (ADMIN only)
-- **Admin reject:** `POST /deposit-requests/admin/top-up/:id/reject` (ADMIN only)
-
-**Top-up request body**
-
-| Field       | Type   | Required | Description                    |
-|------------|--------|----------|--------------------------------|
-| `walletId` | string | Yes      | Target wallet ID               |
-| `amount`   | string | Yes      | Decimal (e.g. `"1000.50"`)     |
-| `reference`| string | No       | Payment reference (e.g. bank)  |
-
-### 3. Stock Investment
-
-- **Create request:** `POST /deposit-requests/stock-investment` (user)
-- **List own:** `GET /deposit-requests/stock-investment` (user)
-- **Get one:** `GET /deposit-requests/stock-investment/:id` (user)
-- **Admin list pending:** `GET /deposit-requests/admin/stock-investment/pending` (ADMIN only)
-- **Admin approve:** `POST /deposit-requests/admin/stock-investment/:id/approve` (ADMIN only)
-- **Admin reject:** `POST /deposit-requests/admin/stock-investment/:id/reject` (ADMIN only)
-
-**Stock investment request body**
-
-| Field        | Type   | Required | Description           |
-|-------------|--------|----------|-----------------------|
-| `walletId`  | string | Yes      | Source wallet ID      |
-| `amount`    | string | Yes      | Decimal (e.g. `"5000"`) |
-| `stockSymbol` | string | No     | Stock symbol (optional) |
-
-**Approve/Reject body (optional)**
-
-| Field  | Type   | Description              |
-|--------|--------|--------------------------|
-| `notes`| string | Admin notes (max 500 chars) |
+Time Deposit, Top Up, and Stock Investment. See **[API-DEPOSIT-REQUESTS.md](API-DEPOSIT-REQUESTS.md)** for full documentation.
 
 ---
 

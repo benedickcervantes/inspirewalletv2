@@ -12,39 +12,237 @@ const getBaseUrl = () => {
 
 const getWalletBackendUrl = getBaseUrl;
 
-/**
- * Submit a deposit request via the backend.
- * @param {string} firebaseIdToken - From auth.currentUser.getIdToken()
- * @param {Object} body - { type, amount, currency, depositMethod?, contractPeriod?, maturityDate?, userName?, userEmail? }
- * @returns {Promise<{ success: boolean, data?: { id }, error?: string }>}
- */
-export async function submitDepositRequest(firebaseIdToken, body) {
+// Optional: set EXPO_PUBLIC_API_PREFIX=api if backend mounts routes under /api
+const getApiPrefix = () => {
+  const p = process.env.EXPO_PUBLIC_API_PREFIX;
+  return p ? `/${p.replace(/^\/|\/$/g, '')}` : '';
+};
+
+const buildUrl = (path) => {
   const base = getWalletBackendUrl();
-  if (!base) {
-    return { success: false, error: 'Backend URL not configured' };
-  }
+  if (!base) return null;
+  const prefix = getApiPrefix();
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  return `${base}${prefix}${cleanPath}`;
+};
+
+/**
+ * Submit a time deposit request via the backend.
+ * POST /time-deposits
+ * @param {string} accessToken - Backend JWT from AsyncStorage
+ * @param {Object} body - { amount, contractPeriod, depositMethod, walletId? (when Available Balance) }
+ * @returns {Promise<{ success: boolean, data?: object, error?: string }>}
+ */
+export async function submitTimeDepositRequest(accessToken, body) {
+  const url = buildUrl('/time-deposits');
+  if (!url) return { success: false, error: 'Backend URL not configured. Set EXPO_PUBLIC_WALLET_BACKEND_URL in .env and restart the app.' };
+  if (!accessToken) return { success: false, error: 'Not authenticated' };
   try {
-    const res = await fetch(`${base}/api/deposit-requests`, {
+    if (__DEV__) console.log('[Deposit API] POST', url, body);
+    const res = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${firebaseIdToken}`,
+        Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify(body),
     });
     const data = await res.json().catch(() => ({}));
+    if (__DEV__) console.log('[Deposit API] Response', res.status, data);
     if (!res.ok) {
-      return {
-        success: false,
-        error: data.error || `Request failed (${res.status})`,
-      };
+      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, error: msg };
     }
-    return { success: true, data: data.data };
+    return { success: true, data: data.data ?? data };
   } catch (e) {
-    return {
-      success: false,
-      error: e.message || 'Network error. Is the backend running?',
-    };
+    if (__DEV__) console.error('[Deposit API] Error', e);
+    return { success: false, error: e.message || 'Network error. Is the backend running? Check EXPO_PUBLIC_WALLET_BACKEND_URL and network.' };
+  }
+}
+
+/**
+ * Submit a top-up request via the backend.
+ * POST /deposit-requests/top-up
+ * @param {string} accessToken - Backend JWT
+ * @param {Object} body - { walletId, amount, reference? }
+ * @returns {Promise<{ success: boolean, data?: object, error?: string }>}
+ */
+export async function submitTopUpRequest(accessToken, body) {
+  const url = buildUrl('/deposit-requests/top-up');
+  if (!url) return { success: false, error: 'Backend URL not configured. Set EXPO_PUBLIC_WALLET_BACKEND_URL in .env and restart the app.' };
+  if (!accessToken) return { success: false, error: 'Not authenticated' };
+  try {
+    if (__DEV__) console.log('[Deposit API] POST', url, body);
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (__DEV__) console.log('[Deposit API] Response', res.status, data);
+    if (!res.ok) {
+      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    return { success: true, data: data.data ?? data };
+  } catch (e) {
+    if (__DEV__) console.error('[Deposit API] Error', e);
+    return { success: false, error: e.message || 'Network error. Is the backend running?' };
+  }
+}
+
+/**
+ * Submit a stock investment request via the backend.
+ * POST /deposit-requests/stock-investment
+ * @param {string} accessToken - Backend JWT
+ * @param {Object} body - { walletId, amount, stockSymbol? }
+ * @returns {Promise<{ success: boolean, data?: object, error?: string }>}
+ */
+export async function submitStockInvestmentRequest(accessToken, body) {
+  const url = buildUrl('/deposit-requests/stock-investment');
+  if (!url) return { success: false, error: 'Backend URL not configured. Set EXPO_PUBLIC_WALLET_BACKEND_URL in .env and restart the app.' };
+  if (!accessToken) return { success: false, error: 'Not authenticated' };
+  try {
+    if (__DEV__) console.log('[Deposit API] POST', url, body);
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (__DEV__) console.log('[Deposit API] Response', res.status, data);
+    if (!res.ok) {
+      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    return { success: true, data: data.data ?? data };
+  } catch (e) {
+    if (__DEV__) console.error('[Deposit API] Error', e);
+    return { success: false, error: e.message || 'Network error. Is the backend running?' };
+  }
+}
+
+/**
+ * Get user's top-up deposit requests.
+ * GET /deposit-requests/top-up
+ * @param {string} accessToken - Backend JWT
+ * @returns {Promise<{ success: boolean, requests?: Array, error?: string }>}
+ */
+export async function getTopUpDepositRequests(accessToken) {
+  const url = buildUrl('/deposit-requests/top-up');
+  if (!url) return { success: false, error: 'Backend URL not configured' };
+  if (!accessToken) return { success: false, error: 'Not authenticated' };
+  try {
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    const list = Array.isArray(data) ? data : data.data ?? data.requests ?? [];
+    return { success: true, requests: list };
+  } catch (e) {
+    return { success: false, error: e.message || 'Network error' };
+  }
+}
+
+/**
+ * Get user's stock investment deposit requests.
+ * GET /deposit-requests/stock-investment
+ * @param {string} accessToken - Backend JWT
+ * @returns {Promise<{ success: boolean, requests?: Array, error?: string }>}
+ */
+export async function getStockInvestmentDepositRequests(accessToken) {
+  const url = buildUrl('/deposit-requests/stock-investment');
+  if (!url) return { success: false, error: 'Backend URL not configured' };
+  if (!accessToken) return { success: false, error: 'Not authenticated' };
+  try {
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    const list = Array.isArray(data) ? data : data.data ?? data.requests ?? [];
+    return { success: true, requests: list };
+  } catch (e) {
+    return { success: false, error: e.message || 'Network error' };
+  }
+}
+
+// --- Withdrawal Requests API ---
+
+/**
+ * Submit a withdrawal request via the backend.
+ * POST /withdrawal-requests
+ * @param {string} accessToken - Backend JWT
+ * @param {Object} body - Local Bank: { walletId, amount, method: "local_bank", email?, accountNumber, accountHolderName, bankName, branchName? }
+ *                       E-Wallet: { walletId, amount, method: "e_wallet", email?, walletType: "gcash"|"maya", accountNumber, accountName }
+ * @returns {Promise<{ success: boolean, data?: object, error?: string }>}
+ */
+export async function submitWithdrawalRequest(accessToken, body) {
+  const url = buildUrl('/withdrawal-requests');
+  if (!url) return { success: false, error: 'Backend URL not configured. Set EXPO_PUBLIC_WALLET_BACKEND_URL in .env and restart the app.' };
+  if (!accessToken) return { success: false, error: 'Not authenticated' };
+  try {
+    if (__DEV__) console.log('[Withdrawal API] POST', url, body);
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (__DEV__) console.log('[Withdrawal API] Response', res.status, data);
+    if (!res.ok) {
+      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    return { success: true, data: data.data ?? data };
+  } catch (e) {
+    if (__DEV__) console.error('[Withdrawal API] Error', e);
+    return { success: false, error: e.message || 'Network error. Is the backend running?' };
+  }
+}
+
+/**
+ * Get user's withdrawal requests.
+ * GET /withdrawal-requests
+ * @param {string} accessToken - Backend JWT
+ * @returns {Promise<{ success: boolean, requests?: Array, error?: string }>}
+ */
+export async function getWithdrawalRequests(accessToken) {
+  const url = buildUrl('/withdrawal-requests');
+  if (!url) return { success: false, error: 'Backend URL not configured' };
+  if (!accessToken) return { success: false, error: 'Not authenticated' };
+  try {
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    const list = Array.isArray(data) ? data : data.data ?? data.requests ?? [];
+    return { success: true, requests: list };
+  } catch (e) {
+    return { success: false, error: e.message || 'Network error' };
   }
 }
 

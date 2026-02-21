@@ -81,4 +81,4 @@ User deletion is performed by `UsersService.deleteUser(userId)`. It:
 1. Reparents all users who had this user as referrer to this user's referrer (grandparent), so the hierarchy stays consistent.
 2. Deletes the user (wallets and beneficiaries are removed by existing cascade rules).
 
-`deleteUser` is exposed via `DELETE /users/:id` (admin only). See API-AUTH-AND-USERS.md.
+`deleteUser` is exposed via `DELETE /users/:id` and `DELETE /users/by-account-number/:accountNumber` (admin only). See API-AUTH-AND-USERS.md.
