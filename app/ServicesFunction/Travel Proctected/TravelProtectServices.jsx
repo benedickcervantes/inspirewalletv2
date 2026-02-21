@@ -1,24 +1,10 @@
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import DateTimePicker from "@react-native-community/datetimepicker";
-import { useRouter } from "expo-router";
-import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
-import { onSnapshot } from "firebase/firestore";
-import { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Modal,
-  Platform,
-  ScrollView,
-  SafeAreaView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    Modal,
+    Text,
+    TouchableOpacity,
+    View
 } from "react-native";
-import { auth, doc, firestore } from "../../configs/firebase";
 
 // Custom Alert Modal Component
 const CustomAlertModal = ({
@@ -183,8 +169,8 @@ export default function TravelProtection() {
   const [purposeOfTravel, setPurposeOfTravel] = useState("");
 
   // Form fields - Step 5
-  const [passportPhoto, setPassportPhoto] = useState<string | null>(null);
-  const [governmentId, setGovernmentId] = useState<string | null>(null);
+  const [passportPhoto, setPassportPhoto] = useState(null);
+  const [governmentId, setGovernmentId] = useState(null);
 
   // Dropdown states
   const [showGenderDropdown, setShowGenderDropdown] = useState(false);
@@ -210,8 +196,8 @@ export default function TravelProtection() {
   };
 
   useEffect(() => {
-    const user = auth?.currentUser;
-    if (!user || !firestore) {
+    const user = auth.currentUser;
+    if (!user) {
       router.replace("/welcome");
       return;
     }

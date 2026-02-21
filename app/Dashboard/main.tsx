@@ -1,5 +1,6 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
+import type { NavProp } from "../../types/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
   Animated,
@@ -20,7 +21,6 @@ import {
   subscribeToTransactions,
   subscribeToUser,
 } from "../../configs/firebase";
-import type { NavProp } from "../../types/navigation";
 import CardsTab from "./CardsTab";
 import SavingsTab from "./SavingsTab";
 import WalletTab from "./WalletTab";
@@ -185,10 +185,10 @@ export default function Dashboard() {
   };
 
   const menuItems = [
-    { icon: "account", label: "Agent", route: "AgentRequest" },
     { icon: "wallet-outline", label: "E-Wallet", route: "Maya" },
     { icon: "chart-line", label: "Stock", route: "Stockholder" },
     { icon: "format-list-bulleted", label: "Task", route: "Task" },
+    { icon: "account", label: "Agent", route: "AgentRequest" },
     {
       icon: "chart-areaspline",
       label: "Trading",

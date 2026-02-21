@@ -9,17 +9,17 @@ import notificationService from './notificationService';
  */
 const NotificationBadge = () => {
   const [unreadCount, setUnreadCount] = useState(0);
-  const [user, setUser] = useState<{ uid: string } | null>(null);
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
-    const unsubscribeAuth = auth?.onAuthStateChanged((currentUser) => {
-      setUser(currentUser as { uid: string } | null);
+    const unsubscribeAuth = auth.onAuthStateChanged((currentUser) => {
+      setUser(currentUser);
       if (!currentUser) {
         setUnreadCount(0);
       }
     });
 
-    return () => unsubscribeAuth?.();
+    return () => unsubscribeAuth();
   }, []);
 
   useEffect(() => {
