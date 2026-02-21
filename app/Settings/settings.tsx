@@ -1,7 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
+import type { NavProp } from '../../types/navigation';
 import {
   SafeAreaView,
   ScrollView,
@@ -15,6 +17,13 @@ import {
 const Settings = () => {
   const navigation = useNavigation();
   const [searchQuery, setSearchQuery] = useState('');
+
+  const handleSignOut = async () => {
+    try {
+      await AsyncStorage.multiRemove(['userEmail', 'userPassword', 'passcodeLoginComplete']);
+    } catch (_) {}
+    (navigation as unknown as NavProp).replace('Login');
+  };
 
   const securityOptions = [
     {
@@ -149,7 +158,7 @@ const Settings = () => {
           ))}
         </View>
 
-        <TouchableOpacity style={styles.signOutButton}>
+        <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
           <Ionicons name="log-out-outline" size={20} color="#666" />
           <Text style={styles.signOutText}>SIGN OUT</Text>
         </TouchableOpacity>

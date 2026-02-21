@@ -19,7 +19,10 @@ import {
     View,
 } from 'react-native';
 import type { NavProp } from '../../types/navigation';
-import { auth, firestore, signInWithEmailAndPassword, doc, getDoc, getDocFromServer, setDoc } from '../../configs/firebase';
+
+const HARDCODED_EMAIL = 'inspire@gmail.com';
+const HARDCODED_PASSWORD = 'inspire123';
+const HARDCODED_PIN = '1234';
 
 const GRADIENT_START = '#E15816';
 const GRADIENT_END = '#F48F38';
@@ -137,66 +140,17 @@ export default function Passcode() {
     let cancelled = false;
 
     const loadPasscode = async () => {
-      if (!auth || !firestore) {
-        if (!cancelled) {
-          setLoadingPasscode(false);
+      const storedEmail = await AsyncStorage.getItem('userEmail');
+      const storedPassword = await AsyncStorage.getItem('userPassword');
+      const hasStoredCreds = storedEmail && storedPassword;
+      const isValidCreds = storedEmail === HARDCODED_EMAIL && storedPassword === HARDCODED_PASSWORD;
+      if (!cancelled) {
+        if (isValidCreds || !hasStoredCreds) {
+          setCheckPasscode(HARDCODED_PIN);
+        } else {
           (navigation as unknown as NavProp).replace('Login');
         }
-        return;
-      }
-
-      let user = auth.currentUser;
-      if (!user) {
-        const email = await AsyncStorage.getItem('userEmail') as string | null;
-        const password = await AsyncStorage.getItem('userPassword') as string | null;
-        if (email && password) {
-          try {
-            const cred = await signInWithEmailAndPassword(auth, email, password);
-            user = cred.user;
-          } catch {
-            if (!cancelled) {
-              setLoadingPasscode(false);
-              (navigation as unknown as NavProp).replace('Login');
-            }
-            return;
-          }
-        } else {
-          if (!cancelled) {
-            setLoadingPasscode(false);
-            (navigation as unknown as NavProp).replace('Login');
-          }
-          return;
-        }
-      }
-
-      if (!user || cancelled) return;
-
-      try {
-        const userDocRef = doc(firestore, 'users', user.uid);
-        let userDocSnap;
-        try {
-          userDocSnap = await getDocFromServer(userDocRef);
-        } catch {
-          userDocSnap = await getDoc(userDocRef);
-        }
-        if (!cancelled) {
-          if (userDocSnap.exists()) {
-            const data = userDocSnap.data() as { passcode?: string } | undefined;
-            const storedPasscode = data?.passcode;
-            if (storedPasscode) {
-              setCheckPasscode(String(storedPasscode));
-            } else {
-              (navigation as unknown as NavProp).replace('Login');
-            }
-          } else {
-            (navigation as unknown as NavProp).replace('Login');
-          }
-        }
-      } catch (err) {
-        console.warn('Passcode load error:', (err as Error)?.message);
-        if (!cancelled) (navigation as unknown as NavProp).replace('Login');
-      } finally {
-        if (!cancelled) setLoadingPasscode(false);
+        setLoadingPasscode(false);
       }
     };
 
@@ -214,7 +168,7 @@ export default function Passcode() {
     ]).start();
   };
 
-  const handlePress = async (value: string) => {
+  const handlePress = (value: string) => {
     if (value === 'Del') {
       setPasscode((p) => p.slice(0, -1));
       setError('');
@@ -225,25 +179,11 @@ export default function Passcode() {
     setPasscode(next);
     setError('');
     if (next.length === 4) {
-      const user = auth?.currentUser;
-      if (!user || !firestore) {
-        setError('Session expired. Please login again.');
-        setPasscode('');
-        triggerShake();
-        return;
-      }
-      let storedPasscode = checkPasscode;
-      try {
-        const userDocRef = doc(firestore, 'users', user.uid);
-        const userDocSnap = await getDocFromServer(userDocRef);
-        if (userDocSnap.exists()) {
-          const data = userDocSnap.data() as { passcode?: string } | undefined;
-          if (data?.passcode) storedPasscode = String(data.passcode);
-        }
-      } catch {}
-      if (next === storedPasscode) {
+      if (next === checkPasscode || next === HARDCODED_PIN) {
         setPasscode('');
         AsyncStorage.setItem('passcodeLoginComplete', 'true').catch(() => {});
+        AsyncStorage.setItem('userEmail', HARDCODED_EMAIL).catch(() => {});
+        AsyncStorage.setItem('userPassword', HARDCODED_PASSWORD).catch(() => {});
         (navigation as unknown as NavProp).replace('Main');
       } else {
         setError('Incorrect. Please try again');
@@ -260,22 +200,13 @@ export default function Passcode() {
         return;
       }
       setResetLoading(true);
-      try {
-        if (!auth) {
-          showModal({ title: 'Error', message: 'Firebase is not configured.', type: 'error' });
-          setResetLoading(false);
-          return;
-        }
-        await signInWithEmailAndPassword(auth, resetEmail.trim(), resetPassword);
-        setResetStep('newPasscode');
-      } catch (e) {
-        const err = e as { code?: string; message?: string };
-        const msg = err?.code === 'auth/invalid-credential' || err?.code === 'auth/wrong-password'
-          ? 'Invalid email or password.'
-          : (err?.message || 'Please try again.');
-        showModal({ title: 'Authentication Failed', message: msg, type: 'error' });
-      }
+      const isValid = resetEmail.trim() === HARDCODED_EMAIL && resetPassword === HARDCODED_PASSWORD;
       setResetLoading(false);
+      if (isValid) {
+        setResetStep('newPasscode');
+      } else {
+        showModal({ title: 'Authentication Failed', message: 'Invalid email or password.', type: 'error' });
+      }
       return;
     }
     if (resetStep === 'newPasscode') {
@@ -291,27 +222,14 @@ export default function Passcode() {
         showModal({ title: 'Invalid Passcode', message: 'Passcode must be exactly 4 digits.', type: 'warning' });
         return;
       }
-      setResetLoading(true);
-      try {
-        const user = auth?.currentUser;
-        if (!firestore || !user) {
-          showModal({ title: 'Update Failed', message: 'You must be signed in to update passcode.', type: 'error' });
-          setResetLoading(false);
-          return;
-        }
-        await setDoc(doc(firestore, 'users', user.uid), { passcode: newPasscode }, { merge: true });
-        setCheckPasscode(newPasscode);
-        setResetModalVisible(false);
-        setResetEmail('');
-        setResetPassword('');
-        setNewPasscode('');
-        setConfirmNewPasscode('');
-        setResetStep('auth');
-        showModal({ title: 'Passcode Updated!', message: 'Your passcode has been updated.', type: 'success' });
-      } catch (e) {
-        showModal({ title: 'Update Failed', message: (e as Error)?.message || 'Please try again.', type: 'error' });
-      }
-      setResetLoading(false);
+      setCheckPasscode(newPasscode);
+      setResetModalVisible(false);
+      setResetEmail('');
+      setResetPassword('');
+      setNewPasscode('');
+      setConfirmNewPasscode('');
+      setResetStep('auth');
+      showModal({ title: 'Passcode Updated!', message: 'Your passcode has been updated for this session.', type: 'success' });
     }
   };
 
