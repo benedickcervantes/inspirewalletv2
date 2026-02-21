@@ -81,6 +81,7 @@ Creates a new user and returns an access token and user object (you can log the 
     "lastName": "Doe",
     "middleName": "Marie",
     "status": "ACTIVE",
+    "role": "USER",
     "emailVerified": false,
     "hasPasscode": false,
     "companyName": null,
@@ -277,6 +278,7 @@ Authenticates with email and password and returns an access token and user objec
     "lastName": "Doe",
     "middleName": "Marie",
     "status": "ACTIVE",
+    "role": "USER",
     "hasPasscode": false,
     "companyName": null,
     "lineAccountLink": null,
@@ -318,12 +320,15 @@ Returns the profile of the authenticated user.
   "lastName": "Doe",
   "middleName": "Marie",
   "status": "ACTIVE",
+  "role": "USER",
   "hasPasscode": false,
   "companyName": null,
   "lineAccountLink": null,
   "isAgent": false
 }
 ```
+
+`role` is one of `USER`, `ADMIN`, or `PAYMENT_SERVICE`. Use it to gate admin-only UI (e.g. admin portal) or to verify the user can access admin endpoints.
 
 The `hasPasscode` field indicates whether the user has set a 4-digit passcode. If `true`, the frontend should prompt for the passcode when performing sensitive operations (transfers, profile updates, beneficiary changes). See **[API-PASSCODE.md](API-PASSCODE.md)** for details.
 
@@ -451,6 +456,7 @@ The **user** object returned by register, login, `GET /auth/me`, and `PATCH /aut
 | `lastName`     | string  | Last name                                               |
 | `middleName`   | string \| null | Middle name (optional)                        |
 | `status`       | string  | One of: `PENDING`, `ACTIVE`, `SUSPENDED`                |
+| `role`         | string  | One of: `USER`, `ADMIN`, `PAYMENT_SERVICE`              |
 | `emailVerified`| boolean | Whether the user has verified their email via OTP. New users receive an OTP email; call `POST /auth/verify-email` to verify. |
 | `hasPasscode`  | boolean | Whether the user has set a 4-digit passcode. Use to decide when to prompt for passcode on transfers, profile updates, etc. |
 | `companyName`  | string \| null | Company name (optional)                      |
@@ -466,6 +472,66 @@ To show or update profile, use `GET /auth/me` and `PATCH /auth/profile`. Sensibl
 ## Admin endpoints (Users API)
 
 These endpoints are under `/users` and require JWT authentication with **ADMIN** role.
+
+### List users
+
+**`GET /users`**  
+**Protected:** Yes — requires `Authorization: Bearer <access_token>` and **ADMIN** role.
+
+Returns a paginated list of users with decrypted PII. Supports search by email and filters.
+
+**Query parameters**
+
+| Param   | Type    | Required | Description                                      |
+|---------|---------|----------|--------------------------------------------------|
+| `page`  | number  | No       | Page number (default: 1)                         |
+| `limit` | number  | No       | Items per page, 1–100 (default: 20)              |
+| `search`| string  | No       | Partial match on email (case-insensitive)        |
+| `status`| string  | No       | Filter by status: `PENDING`, `ACTIVE`, `SUSPENDED` |
+| `agent` | boolean | No       | Filter by agent: `true` or `false`               |
+
+**Example request**
+
+```http
+GET /users?page=1&limit=20&search=jane&status=ACTIVE
+Authorization: Bearer <access_token>
+```
+
+**Example success response** `200`
+
+```json
+{
+  "users": [
+    {
+      "id": "clxx...",
+      "email": "jane@example.com",
+      "accountNumber": "1234 5678 9012",
+      "firstName": "Jane",
+      "lastName": "Doe",
+      "middleName": "Marie",
+      "status": "ACTIVE",
+      "role": "USER",
+      "emailVerified": true,
+      "isAgent": false,
+      "createdAt": "2025-01-15T10:00:00.000Z",
+      "updatedAt": "2025-01-15T10:00:00.000Z"
+    }
+  ],
+  "pagination": {
+    "total": 42,
+    "page": 1,
+    "limit": 20,
+    "totalPages": 3
+  }
+}
+```
+
+**Error responses**
+
+- **401 Unauthorized** – Missing or invalid/expired token
+- **403 Forbidden** – Caller does not have ADMIN role
+
+---
 
 ### Delete user
 
@@ -501,6 +567,100 @@ Permanently deletes a user. Referral cascading: users who had this user as refer
   ```json
   { "statusCode": 404, "message": "User not found", "error": "Not Found" }
   ```
+
+---
+
+### Delete user by account number
+
+**`DELETE /users/by-account-number/:accountNumber`**  
+**Protected:** Yes — requires `Authorization: Bearer <access_token>` and **ADMIN** role.
+
+Permanently deletes a user identified by their 12-digit account number. Same cascade as `DELETE /users/:id`: removes the user, wallets, beneficiaries, time deposits, top-up requests, stock investment requests, and email verification OTPs. Referrals are reparented to the grandparent. See [API-REFERRALS.md](API-REFERRALS.md) for details.
+
+**Request**
+
+- **URL param:** `accountNumber` — 12-digit account number, with or without spaces (e.g. `6381 4540 6439` or `638145406439`).
+- **Headers:** `Authorization: Bearer <access_token>` (admin JWT).
+
+**Example**
+
+```http
+DELETE /users/by-account-number/6381%204540%206439
+Authorization: Bearer <access_token>
+```
+
+**Example success response** `200`
+
+```json
+{
+  "success": true
+}
+```
+
+**Error responses**
+
+- **404 Not Found** – No user found with the given account number.
+- **401 Unauthorized** – Missing or invalid/expired token, or caller is not ADMIN.
+- **403 Forbidden** – Caller does not have ADMIN role.
+
+---
+
+## Direct InspireBank Deposit (Admin Only)
+
+**`POST /deposits/by-account-number`** — Credit a user's main PHP wallet by account number (e.g. `"0196 8487 2308"`). See **[API-INSPIREBANK-ECONOMIC-FLOW.md](API-INSPIREBANK-ECONOMIC-FLOW.md)** for full request/response details.
+
+---
+
+## Deposit Requests (Time Deposit, Stock Investment, Top Up)
+
+Three deposit options are available as **request-only** flows (no bank participation yet). Users submit requests; admins approve or reject.
+
+### 1. Time Deposit (existing)
+
+- **Create request:** `POST /time-deposits` (user) — creates PENDING time deposit
+- **Admin list pending:** `GET /time-deposits/admin/pending` (ADMIN only)
+- **Admin approve:** `POST /time-deposits/:id/approve` (ADMIN only)
+- **Admin reject:** `POST /time-deposits/:id/reject` (ADMIN only)
+
+### 2. Top Up Available Balance
+
+- **Create request:** `POST /deposit-requests/top-up` (user)
+- **List own:** `GET /deposit-requests/top-up` (user)
+- **Get one:** `GET /deposit-requests/top-up/:id` (user)
+- **Admin list pending:** `GET /deposit-requests/admin/top-up/pending` (ADMIN only)
+- **Admin approve:** `POST /deposit-requests/admin/top-up/:id/approve` (ADMIN only)
+- **Admin reject:** `POST /deposit-requests/admin/top-up/:id/reject` (ADMIN only)
+
+**Top-up request body**
+
+| Field       | Type   | Required | Description                    |
+|------------|--------|----------|--------------------------------|
+| `walletId` | string | Yes      | Target wallet ID               |
+| `amount`   | string | Yes      | Decimal (e.g. `"1000.50"`)     |
+| `reference`| string | No       | Payment reference (e.g. bank)  |
+
+### 3. Stock Investment
+
+- **Create request:** `POST /deposit-requests/stock-investment` (user)
+- **List own:** `GET /deposit-requests/stock-investment` (user)
+- **Get one:** `GET /deposit-requests/stock-investment/:id` (user)
+- **Admin list pending:** `GET /deposit-requests/admin/stock-investment/pending` (ADMIN only)
+- **Admin approve:** `POST /deposit-requests/admin/stock-investment/:id/approve` (ADMIN only)
+- **Admin reject:** `POST /deposit-requests/admin/stock-investment/:id/reject` (ADMIN only)
+
+**Stock investment request body**
+
+| Field        | Type   | Required | Description           |
+|-------------|--------|----------|-----------------------|
+| `walletId`  | string | Yes      | Source wallet ID      |
+| `amount`    | string | Yes      | Decimal (e.g. `"5000"`) |
+| `stockSymbol` | string | No     | Stock symbol (optional) |
+
+**Approve/Reject body (optional)**
+
+| Field  | Type   | Description              |
+|--------|--------|--------------------------|
+| `notes`| string | Admin notes (max 500 chars) |
 
 ---
 
