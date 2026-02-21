@@ -17,6 +17,7 @@ import {
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getOrCreateMainWallet, getTransactions } from "../../configs/api";
+import { createRealtimeConnection, startHeartbeat } from "../../configs/realtime";
 import {
   auth,
   subscribeToNotifications,
@@ -53,6 +54,8 @@ export default function Dashboard() {
   const languageScrollRef = useRef<ScrollView | null>(null);
   const mainWalletIdRef = useRef<string | null>(null);
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const socketRef = useRef<{ disconnect: () => void } | null>(null);
+  const heartbeatCleanupRef = useRef<(() => void) | null>(null);
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
   const [currentLanguageIndex, setCurrentLanguageIndex] = useState(0);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
@@ -200,21 +203,73 @@ export default function Dashboard() {
     }
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    const startPolling = () => {
+      if (pollIntervalRef.current) return;
+      refetchJwtData();
+      pollIntervalRef.current = setInterval(refetchJwtData, 15000);
+    };
+
+    const stopPolling = () => {
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+        pollIntervalRef.current = null;
+      }
+    };
+
+    AsyncStorage.getItem("access_token").then((token) => {
+      if (cancelled || !token) return;
+
+      startPolling();
+
+      const socket = createRealtimeConnection(token, {
+        onWalletUpdate: (payload) => {
+          if (payload?.walletId === mainWalletIdRef.current && payload?.balance != null) {
+            const bal = parseFloat(String(payload.balance));
+            setAvailableBalance(Number.isNaN(bal) ? 0 : bal);
+          }
+        },
+        onTransactionCreated: () => {
+          refetchJwtData();
+        },
+        onConnect: () => {
+          stopPolling();
+          heartbeatCleanupRef.current = startHeartbeat(socket);
+        },
+        onDisconnect: () => {
+          heartbeatCleanupRef.current?.();
+          heartbeatCleanupRef.current = null;
+          startPolling();
+        },
+        onError: () => {
+          startPolling();
+        },
+      });
+
+      if (socket) {
+        socketRef.current = socket;
+      }
+    });
+
+    return () => {
+      cancelled = true;
+      stopPolling();
+      heartbeatCleanupRef.current?.();
+      heartbeatCleanupRef.current = null;
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        socketRef.current = null;
+      }
+    };
+  }, [refetchJwtData]);
+
   useFocusEffect(
     useCallback(() => {
-      let cancelled = false;
       AsyncStorage.getItem("access_token").then((token) => {
-        if (cancelled || !token) return;
-        refetchJwtData();
-        pollIntervalRef.current = setInterval(refetchJwtData, 15000);
+        if (token) refetchJwtData();
       });
-      return () => {
-        cancelled = true;
-        if (pollIntervalRef.current) {
-          clearInterval(pollIntervalRef.current);
-          pollIntervalRef.current = null;
-        }
-      };
     }, [refetchJwtData])
   );
 
