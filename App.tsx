@@ -43,6 +43,7 @@ import TransferRecipient from './app/ServicesFunction/Transfer/TransferRecipient
 import SendMoney from './app/ServicesFunction/Transfer/TransferService';
 import TravelProtection from './app/ServicesFunction/Travel Proctected/TravelProtectServices';
 import Settings from './app/Settings/settings';
+import History from './app/History/history';
 import type { RootStackParamList } from './types/navigation';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -73,7 +74,7 @@ export default function App() {
         <Stack.Screen name="BankingFinancialInfo" component={BankingFinancialInfo} />
         <Stack.Screen name="BankingRequiredInfo" component={BankingRequiredInfo} />
         <Stack.Screen name="Travel" component={TravelProtection} />
-        <Stack.Screen name="History" component={Placeholder} />
+        <Stack.Screen name="History" component={History} />
         <Stack.Screen name="Maya" component={Placeholder} />
         <Stack.Screen name="EwalletService" component={EwalletService} />
         <Stack.Screen name="EwalletContactInfo" component={EwalletContactInfo} />
