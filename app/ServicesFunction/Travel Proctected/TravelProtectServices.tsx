@@ -1,21 +1,49 @@
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import DateTimePicker, {
+  type DateTimePickerEvent,
+} from "@react-native-community/datetimepicker";
+import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
+import { doc, onSnapshot } from "firebase/firestore";
+import { useEffect, useState } from "react";
 import {
-    Modal,
-    Text,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  Modal,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
+import { auth, firestore } from "../../../configs/firebase";
+import type { RootStackParamList } from "../../../types/navigation";
 
-// Custom Alert Modal Component
+type AlertType = "success" | "error" | "warning" | "info";
+
+interface CustomAlertModalProps {
+  visible: boolean;
+  onClose: () => void;
+  title: string;
+  message: string;
+  type?: AlertType;
+  confirmText?: string;
+}
+
 const CustomAlertModal = ({
   visible,
   onClose,
   title,
   message,
-  type = "info", // 'success', 'error', 'warning', 'info'
+  type = "info",
   confirmText = "OK",
-}) => {
-  const getIconAndColor = () => {
+}: CustomAlertModalProps) => {
+  const getIconAndColor = (): { icon: string; color: string } => {
     switch (type) {
       case "success":
         return { icon: "✓", color: "#10B981" };
@@ -33,7 +61,7 @@ const CustomAlertModal = ({
   if (!visible) return null;
 
   return (
-    <Modal transparent={true} animationType="fade" visible={visible}>
+    <Modal transparent animationType="fade" visible={visible}>
       <View style={customAlertStyles.modalOverlay}>
         <View style={customAlertStyles.modalContent}>
           <LinearGradient
@@ -51,7 +79,9 @@ const CustomAlertModal = ({
               style={customAlertStyles.confirmButton}
               onPress={onClose}
             >
-              <Text style={customAlertStyles.confirmButtonText}>{confirmText}</Text>
+              <Text style={customAlertStyles.confirmButtonText}>
+                {confirmText}
+              </Text>
             </TouchableOpacity>
           </LinearGradient>
         </View>
@@ -126,8 +156,17 @@ const customAlertStyles = StyleSheet.create({
   },
 });
 
+interface AlertConfig {
+  title: string;
+  message: string;
+  type: AlertType;
+  confirmText: string;
+}
+
 export default function TravelProtection() {
-  const router = useRouter();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList, "Travel">>();
+
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(true);
   const [protectionFee, setProtectionFee] = useState(1250);
@@ -143,7 +182,8 @@ export default function TravelProtection() {
   const [gender, setGender] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [dateOfBirthText, setDateOfBirthText] = useState("Select your birthdate");
+  const [dateOfBirthText, setDateOfBirthText] =
+    useState("Select your birthdate");
   const [civilStatus, setCivilStatus] = useState("Single");
   const [citizenship, setCitizenship] = useState("Filipino");
 
@@ -156,21 +196,24 @@ export default function TravelProtection() {
   const [destinationAddress, setDestinationAddress] = useState("");
   const [checkInDate, setCheckInDate] = useState(new Date());
   const [showCheckInPicker, setShowCheckInPicker] = useState(false);
-  const [checkInDateText, setCheckInDateText] = useState("Select check-in date");
+  const [checkInDateText, setCheckInDateText] =
+    useState("Select check-in date");
   const [duration, setDuration] = useState("");
   const [airline, setAirline] = useState("");
   const [departureTime, setDepartureTime] = useState(new Date());
   const [showDepartureTimePicker, setShowDepartureTimePicker] = useState(false);
-  const [departureTimeText, setDepartureTimeText] = useState("Select departure time");
+  const [departureTimeText, setDepartureTimeText] =
+    useState("Select departure time");
   const [arrivalTime, setArrivalTime] = useState(new Date());
   const [showArrivalTimePicker, setShowArrivalTimePicker] = useState(false);
-  const [arrivalTimeText, setArrivalTimeText] = useState("Select arrival time");
+  const [arrivalTimeText, setArrivalTimeText] =
+    useState("Select arrival time");
   const [passportNumber, setPassportNumber] = useState("");
   const [purposeOfTravel, setPurposeOfTravel] = useState("");
 
   // Form fields - Step 5
-  const [passportPhoto, setPassportPhoto] = useState(null);
-  const [governmentId, setGovernmentId] = useState(null);
+  const [passportPhoto, setPassportPhoto] = useState<string | null>(null);
+  const [governmentId, setGovernmentId] = useState<string | null>(null);
 
   // Dropdown states
   const [showGenderDropdown, setShowGenderDropdown] = useState(false);
@@ -178,14 +221,18 @@ export default function TravelProtection() {
 
   // Custom alert modal states
   const [alertVisible, setAlertVisible] = useState(false);
-  const [alertConfig, setAlertConfig] = useState({
+  const [alertConfig, setAlertConfig] = useState<AlertConfig>({
     title: "",
     message: "",
     type: "info",
     confirmText: "OK",
   });
 
-  const showAlert = (title, message, type = "error") => {
+  const showAlert = (
+    title: string,
+    message: string,
+    type: AlertType = "error"
+  ) => {
     setAlertConfig({
       title,
       message,
@@ -196,9 +243,14 @@ export default function TravelProtection() {
   };
 
   useEffect(() => {
-    const user = auth.currentUser;
+    const user = auth?.currentUser;
     if (!user) {
-      router.replace("/welcome");
+      navigation.replace("Welcome");
+      return;
+    }
+
+    if (!firestore) {
+      setLoading(false);
       return;
     }
 
@@ -208,7 +260,10 @@ export default function TravelProtection() {
       (userDoc) => {
         if (userDoc.exists()) {
           const data = userDoc.data();
-          const timeDepositAmount = data.timeDepositTotal || data.timeDepositAmount || 0;
+          const timeDepositAmount =
+            (data?.timeDepositTotal as number) ??
+            (data?.timeDepositAmount as number) ??
+            0;
           setUserTimeDeposit(timeDepositAmount);
           if (timeDepositAmount > 0) {
             setProtectionFee(625);
@@ -225,7 +280,7 @@ export default function TravelProtection() {
     );
 
     return () => unsubscribe();
-  }, []);
+  }, [navigation]);
 
   const handleNext = () => {
     if (currentStep === 1) {
@@ -235,7 +290,12 @@ export default function TravelProtection() {
       }
       setCurrentStep(2);
     } else if (currentStep === 2) {
-      if (!gender || dateOfBirthText === "Select your birthdate" || !civilStatus || !citizenship) {
+      if (
+        !gender ||
+        dateOfBirthText === "Select your birthdate" ||
+        !civilStatus ||
+        !citizenship
+      ) {
         showAlert("Required Fields", "Please fill in all required fields", "error");
         return;
       }
@@ -263,7 +323,11 @@ export default function TravelProtection() {
       setCurrentStep(5);
     } else if (currentStep === 5) {
       if (!passportPhoto || !governmentId) {
-        showAlert("Required Documents", "Please upload both required documents", "error");
+        showAlert(
+          "Required Documents",
+          "Please upload both required documents",
+          "error"
+        );
         return;
       }
       setCurrentStep(6);
@@ -276,7 +340,7 @@ export default function TravelProtection() {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
     } else {
-      router.back();
+      navigation.goBack();
     }
   };
 
@@ -287,11 +351,11 @@ export default function TravelProtection() {
       "success"
     );
     setTimeout(() => {
-      router.back();
+      navigation.goBack();
     }, 2000);
   };
 
-  const onDateChange = (event, selectedDate) => {
+  const onDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
     if (Platform.OS === "android") {
       setShowDatePicker(false);
     }
@@ -304,7 +368,10 @@ export default function TravelProtection() {
     }
   };
 
-  const onCheckInDateChange = (event, selectedDate) => {
+  const onCheckInDateChange = (
+    event: DateTimePickerEvent,
+    selectedDate?: Date
+  ) => {
     if (Platform.OS === "android") {
       setShowCheckInPicker(false);
     }
@@ -317,26 +384,42 @@ export default function TravelProtection() {
     }
   };
 
-  const onDepartureTimeChange = (event, selectedTime) => {
+  const onDepartureTimeChange = (
+    event: DateTimePickerEvent,
+    selectedTime?: Date
+  ) => {
     if (Platform.OS === "android") {
       setShowDepartureTimePicker(false);
     }
     if (event.type === "set" && selectedTime) {
       setDepartureTime(selectedTime);
-      setDepartureTimeText(selectedTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+      setDepartureTimeText(
+        selectedTime.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      );
     }
     if (Platform.OS === "ios" && event.type === "dismissed") {
       setShowDepartureTimePicker(false);
     }
   };
 
-  const onArrivalTimeChange = (event, selectedTime) => {
+  const onArrivalTimeChange = (
+    event: DateTimePickerEvent,
+    selectedTime?: Date
+  ) => {
     if (Platform.OS === "android") {
       setShowArrivalTimePicker(false);
     }
     if (event.type === "set" && selectedTime) {
       setArrivalTime(selectedTime);
-      setArrivalTimeText(selectedTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+      setArrivalTimeText(
+        selectedTime.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      );
     }
     if (Platform.OS === "ios" && event.type === "dismissed") {
       setShowArrivalTimePicker(false);
@@ -345,7 +428,8 @@ export default function TravelProtection() {
 
   const pickPassportPhoto = async () => {
     try {
-      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      const permissionResult =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (permissionResult.granted === false) {
         showAlert(
           "Permission Required",
@@ -373,7 +457,8 @@ export default function TravelProtection() {
 
   const pickGovernmentId = async () => {
     try {
-      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      const permissionResult =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (permissionResult.granted === false) {
         showAlert(
           "Permission Required",
@@ -435,7 +520,7 @@ export default function TravelProtection() {
         <View style={styles.header}>
           <TouchableOpacity
             style={styles.backButton}
-            onPress={() => router.back()}
+            onPress={() => navigation.goBack()}
           >
             <Ionicons name="arrow-back" size={24} color="#E25A17" />
           </TouchableOpacity>
@@ -460,7 +545,11 @@ export default function TravelProtection() {
                 end={{ x: 1, y: 1 }}
               >
                 <View style={styles.heroIconContainer}>
-                  <MaterialCommunityIcons name="airplane" size={40} color="#FFFFFF" />
+                  <MaterialCommunityIcons
+                    name="airplane"
+                    size={40}
+                    color="#FFFFFF"
+                  />
                 </View>
                 <Text style={styles.heroTitle}>Travel Protection</Text>
                 <Text style={styles.heroSubtitle}>Secure your journey</Text>
@@ -468,20 +557,32 @@ export default function TravelProtection() {
 
               <View style={styles.infoBanner}>
                 <View style={styles.infoBannerIcon}>
-                  <MaterialCommunityIcons name="information" size={20} color="#E25A17" />
+                  <MaterialCommunityIcons
+                    name="information"
+                    size={20}
+                    color="#E25A17"
+                  />
                 </View>
                 <Text style={styles.infoBannerText}>
-                  Complete this form to subscribe. Your application will be processed within{" "}
-                  <Text style={styles.infoBannerBold}>5-7 working days</Text> after payment confirmation.
+                  Complete this form to subscribe. Your application will be
+                  processed within{" "}
+                  <Text style={styles.infoBannerBold}>5-7 working days</Text>{" "}
+                  after payment confirmation.
                 </Text>
               </View>
 
               <View style={styles.feeCard}>
                 <View style={styles.feeHeader}>
-                  <MaterialCommunityIcons name="shield-check" size={20} color="#E25A17" />
+                  <MaterialCommunityIcons
+                    name="shield-check"
+                    size={20}
+                    color="#E25A17"
+                  />
                   <Text style={styles.feeLabel}>Protection Fee</Text>
                 </View>
-                <Text style={styles.feeAmount}>₱ {protectionFee.toLocaleString()}</Text>
+                <Text style={styles.feeAmount}>
+                  ₱ {protectionFee.toLocaleString()}
+                </Text>
                 <Text style={styles.feeSubtext}>
                   {userTimeDeposit > 0
                     ? "DISCOUNTED RATE (TIME DEPOSIT HOLDER)"
@@ -496,11 +597,17 @@ export default function TravelProtection() {
                 <View style={styles.formCard}>
                   <View style={styles.formHeader}>
                     <View style={styles.formIconContainer}>
-                      <MaterialCommunityIcons name="home-account" size={24} color="#E25A17" />
+                      <MaterialCommunityIcons
+                        name="home-account"
+                        size={24}
+                        color="#E25A17"
+                      />
                     </View>
                     <View>
                       <Text style={styles.formTitle}>Contact Information</Text>
-                      <Text style={styles.formSubtitle}>Please provide your contact details</Text>
+                      <Text style={styles.formSubtitle}>
+                        Please provide your contact details
+                      </Text>
                     </View>
                   </View>
 
@@ -568,11 +675,17 @@ export default function TravelProtection() {
                 <View style={styles.formCard}>
                   <View style={styles.formHeader}>
                     <View style={styles.formIconContainer}>
-                      <MaterialCommunityIcons name="account-circle" size={24} color="#E25A17" />
+                      <MaterialCommunityIcons
+                        name="account-circle"
+                        size={24}
+                        color="#E25A17"
+                      />
                     </View>
                     <View>
                       <Text style={styles.formTitle}>Personal Details</Text>
-                      <Text style={styles.formSubtitle}>Please provide your personal information</Text>
+                      <Text style={styles.formSubtitle}>
+                        Please provide your personal information
+                      </Text>
                     </View>
                   </View>
 
@@ -584,7 +697,12 @@ export default function TravelProtection() {
                       style={styles.dropdown}
                       onPress={() => setShowGenderDropdown(!showGenderDropdown)}
                     >
-                      <Text style={[styles.dropdownText, !gender && styles.dropdownPlaceholder]}>
+                      <Text
+                        style={[
+                          styles.dropdownText,
+                          !gender && styles.dropdownPlaceholder,
+                        ]}
+                      >
                         {gender || "Select your gender"}
                       </Text>
                       <Ionicons name="chevron-down" size={20} color="#666" />
@@ -600,7 +718,9 @@ export default function TravelProtection() {
                               setShowGenderDropdown(false);
                             }}
                           >
-                            <Text style={styles.dropdownItemText}>{option}</Text>
+                            <Text style={styles.dropdownItemText}>
+                              {option}
+                            </Text>
                           </TouchableOpacity>
                         ))}
                       </View>
@@ -618,7 +738,8 @@ export default function TravelProtection() {
                       <Text
                         style={[
                           styles.dropdownText,
-                          dateOfBirthText === "Select your birthdate" && styles.dropdownPlaceholder,
+                          dateOfBirthText === "Select your birthdate" &&
+                            styles.dropdownPlaceholder,
                         ]}
                       >
                         {dateOfBirthText}
@@ -629,7 +750,9 @@ export default function TravelProtection() {
                       <DateTimePicker
                         value={dateOfBirth}
                         mode="date"
-                        display={Platform.OS === "ios" ? "spinner" : "default"}
+                        display={
+                          Platform.OS === "ios" ? "spinner" : "default"
+                        }
                         onChange={onDateChange}
                         maximumDate={new Date()}
                       />
@@ -642,25 +765,31 @@ export default function TravelProtection() {
                     </Text>
                     <TouchableOpacity
                       style={styles.dropdown}
-                      onPress={() => setShowCivilStatusDropdown(!showCivilStatusDropdown)}
+                      onPress={() =>
+                        setShowCivilStatusDropdown(!showCivilStatusDropdown)
+                      }
                     >
                       <Text style={styles.dropdownText}>{civilStatus}</Text>
                       <Ionicons name="chevron-down" size={20} color="#666" />
                     </TouchableOpacity>
                     {showCivilStatusDropdown && (
                       <View style={styles.dropdownMenu}>
-                        {["Single", "Married", "Divorced", "Widowed"].map((option) => (
-                          <TouchableOpacity
-                            key={option}
-                            style={styles.dropdownItem}
-                            onPress={() => {
-                              setCivilStatus(option);
-                              setShowCivilStatusDropdown(false);
-                            }}
-                          >
-                            <Text style={styles.dropdownItemText}>{option}</Text>
-                          </TouchableOpacity>
-                        ))}
+                        {["Single", "Married", "Divorced", "Widowed"].map(
+                          (option) => (
+                            <TouchableOpacity
+                              key={option}
+                              style={styles.dropdownItem}
+                              onPress={() => {
+                                setCivilStatus(option);
+                                setShowCivilStatusDropdown(false);
+                              }}
+                            >
+                              <Text style={styles.dropdownItemText}>
+                                {option}
+                              </Text>
+                            </TouchableOpacity>
+                          )
+                        )}
                       </View>
                     )}
                   </View>
@@ -685,11 +814,19 @@ export default function TravelProtection() {
                 <View style={styles.formCard}>
                   <View style={styles.formHeader}>
                     <View style={styles.formIconContainer}>
-                      <MaterialCommunityIcons name="cash-multiple" size={24} color="#E25A17" />
+                      <MaterialCommunityIcons
+                        name="cash-multiple"
+                        size={24}
+                        color="#E25A17"
+                      />
                     </View>
                     <View>
-                      <Text style={styles.formTitle}>Financial Information</Text>
-                      <Text style={styles.formSubtitle}>Please provide your financial information</Text>
+                      <Text style={styles.formTitle}>
+                        Financial Information
+                      </Text>
+                      <Text style={styles.formSubtitle}>
+                        Please provide your financial information
+                      </Text>
                     </View>
                   </View>
 
@@ -708,7 +845,8 @@ export default function TravelProtection() {
 
                   <View style={styles.inputGroup}>
                     <Text style={styles.inputLabel}>
-                      Gross Monthly Income <Text style={styles.required}>*</Text>
+                      Gross Monthly Income{" "}
+                      <Text style={styles.required}>*</Text>
                     </Text>
                     <TextInput
                       style={styles.input}
@@ -741,17 +879,24 @@ export default function TravelProtection() {
                 <View style={styles.formCard}>
                   <View style={styles.formHeader}>
                     <View style={styles.formIconContainer}>
-                      <MaterialCommunityIcons name="airplane-takeoff" size={24} color="#E25A17" />
+                      <MaterialCommunityIcons
+                        name="airplane-takeoff"
+                        size={24}
+                        color="#E25A17"
+                      />
                     </View>
                     <View>
                       <Text style={styles.formTitle}>Travel Details</Text>
-                      <Text style={styles.formSubtitle}>Please provide your travel information</Text>
+                      <Text style={styles.formSubtitle}>
+                        Please provide your travel information
+                      </Text>
                     </View>
                   </View>
 
                   <View style={styles.inputGroup}>
                     <Text style={styles.inputLabel}>
-                      Destination Address <Text style={styles.required}>*</Text>
+                      Destination Address{" "}
+                      <Text style={styles.required}>*</Text>
                     </Text>
                     <TextInput
                       style={[styles.input, styles.textArea]}
@@ -776,7 +921,8 @@ export default function TravelProtection() {
                       <Text
                         style={[
                           styles.dropdownText,
-                          checkInDateText === "Select check-in date" && styles.dropdownPlaceholder,
+                          checkInDateText === "Select check-in date" &&
+                            styles.dropdownPlaceholder,
                         ]}
                       >
                         {checkInDateText}
@@ -787,7 +933,9 @@ export default function TravelProtection() {
                       <DateTimePicker
                         value={checkInDate}
                         mode="date"
-                        display={Platform.OS === "ios" ? "spinner" : "default"}
+                        display={
+                          Platform.OS === "ios" ? "spinner" : "default"
+                        }
                         onChange={onCheckInDateChange}
                         minimumDate={new Date()}
                       />
@@ -832,7 +980,8 @@ export default function TravelProtection() {
                       <Text
                         style={[
                           styles.dropdownText,
-                          departureTimeText === "Select departure time" && styles.dropdownPlaceholder,
+                          departureTimeText === "Select departure time" &&
+                            styles.dropdownPlaceholder,
                         ]}
                       >
                         {departureTimeText}
@@ -843,7 +992,9 @@ export default function TravelProtection() {
                       <DateTimePicker
                         value={departureTime}
                         mode="time"
-                        display={Platform.OS === "ios" ? "spinner" : "default"}
+                        display={
+                          Platform.OS === "ios" ? "spinner" : "default"
+                        }
                         onChange={onDepartureTimeChange}
                       />
                     )}
@@ -860,7 +1011,8 @@ export default function TravelProtection() {
                       <Text
                         style={[
                           styles.dropdownText,
-                          arrivalTimeText === "Select arrival time" && styles.dropdownPlaceholder,
+                          arrivalTimeText === "Select arrival time" &&
+                            styles.dropdownPlaceholder,
                         ]}
                       >
                         {arrivalTimeText}
@@ -871,7 +1023,9 @@ export default function TravelProtection() {
                       <DateTimePicker
                         value={arrivalTime}
                         mode="time"
-                        display={Platform.OS === "ios" ? "spinner" : "default"}
+                        display={
+                          Platform.OS === "ios" ? "spinner" : "default"
+                        }
                         onChange={onArrivalTimeChange}
                       />
                     )}
@@ -914,11 +1068,19 @@ export default function TravelProtection() {
                 <View style={styles.formCard}>
                   <View style={styles.formHeader}>
                     <View style={styles.formIconContainer}>
-                      <MaterialCommunityIcons name="file-document" size={24} color="#E25A17" />
+                      <MaterialCommunityIcons
+                        name="file-document"
+                        size={24}
+                        color="#E25A17"
+                      />
                     </View>
                     <View>
-                      <Text style={styles.formTitle}>Required Documents</Text>
-                      <Text style={styles.formSubtitle}>Please upload your required documents</Text>
+                      <Text style={styles.formTitle}>
+                        Required Documents
+                      </Text>
+                      <Text style={styles.formSubtitle}>
+                        Please upload your required documents
+                      </Text>
                     </View>
                   </View>
 
@@ -936,8 +1098,15 @@ export default function TravelProtection() {
                         size={40}
                         color={passportPhoto ? "#4CAF50" : "#E25A17"}
                       />
-                      <Text style={[styles.uploadText, passportPhoto && styles.uploadTextSuccess]}>
-                        {passportPhoto ? "Passport Photo Uploaded" : "Upload Passport"}
+                      <Text
+                        style={[
+                          styles.uploadText,
+                          passportPhoto && styles.uploadTextSuccess,
+                        ]}
+                      >
+                        {passportPhoto
+                          ? "Passport Photo Uploaded"
+                          : "Upload Passport"}
                       </Text>
                       <Text style={styles.uploadSubtext}>Tap to select image</Text>
                     </TouchableOpacity>
@@ -957,10 +1126,19 @@ export default function TravelProtection() {
                         size={40}
                         color={governmentId ? "#4CAF50" : "#E25A17"}
                       />
-                      <Text style={[styles.uploadText, governmentId && styles.uploadTextSuccess]}>
-                        {governmentId ? "Government ID Uploaded" : "Upload Government ID"}
+                      <Text
+                        style={[
+                          styles.uploadText,
+                          governmentId && styles.uploadTextSuccess,
+                        ]}
+                      >
+                        {governmentId
+                          ? "Government ID Uploaded"
+                          : "Upload Government ID"}
                       </Text>
-                      <Text style={styles.uploadSubtext}>Tap to upload valid Gov't ID</Text>
+                      <Text style={styles.uploadSubtext}>
+                        Tap to upload valid Gov't ID
+                      </Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -971,19 +1149,31 @@ export default function TravelProtection() {
                 <View style={styles.formCard}>
                   <View style={styles.formHeader}>
                     <View style={styles.formIconContainer}>
-                      <MaterialCommunityIcons name="clipboard-check" size={24} color="#E25A17" />
+                      <MaterialCommunityIcons
+                        name="clipboard-check"
+                        size={24}
+                        color="#E25A17"
+                      />
                     </View>
                     <View>
                       <Text style={styles.formTitle}>Review & Submit</Text>
-                      <Text style={styles.formSubtitle}>Review your application before submitting</Text>
+                      <Text style={styles.formSubtitle}>
+                        Review your application before submitting
+                      </Text>
                     </View>
                   </View>
 
                   {/* Contact Information Summary */}
                   <View style={styles.reviewSection}>
                     <View style={styles.reviewSectionHeader}>
-                      <MaterialCommunityIcons name="home-account" size={18} color="#E25A17" />
-                      <Text style={styles.reviewSectionTitle}>Contact Information</Text>
+                      <MaterialCommunityIcons
+                        name="home-account"
+                        size={18}
+                        color="#E25A17"
+                      />
+                      <Text style={styles.reviewSectionTitle}>
+                        Contact Information
+                      </Text>
                     </View>
                     <View style={styles.reviewItem}>
                       <Text style={styles.reviewLabel}>EMAIL ADDRESS</Text>
@@ -1008,12 +1198,22 @@ export default function TravelProtection() {
                   {/* Travel Details Summary */}
                   <View style={styles.reviewSection}>
                     <View style={styles.reviewSectionHeader}>
-                      <MaterialCommunityIcons name="airplane-takeoff" size={18} color="#E25A17" />
-                      <Text style={styles.reviewSectionTitle}>Travel Details</Text>
+                      <MaterialCommunityIcons
+                        name="airplane-takeoff"
+                        size={18}
+                        color="#E25A17"
+                      />
+                      <Text style={styles.reviewSectionTitle}>
+                        Travel Details
+                      </Text>
                     </View>
                     <View style={styles.reviewItem}>
-                      <Text style={styles.reviewLabel}>DESTINATION ADDRESS</Text>
-                      <Text style={styles.reviewValue}>{destinationAddress || "N/A"}</Text>
+                      <Text style={styles.reviewLabel}>
+                        DESTINATION ADDRESS
+                      </Text>
+                      <Text style={styles.reviewValue}>
+                        {destinationAddress || "N/A"}
+                      </Text>
                     </View>
                     <View style={styles.reviewItem}>
                       <Text style={styles.reviewLabel}>AIRLINE</Text>
@@ -1021,16 +1221,20 @@ export default function TravelProtection() {
                     </View>
                     <View style={styles.reviewItem}>
                       <Text style={styles.reviewLabel}>PASSPORT NUMBER</Text>
-                      <Text style={styles.reviewValue}>{passportNumber || "N/A"}</Text>
+                      <Text style={styles.reviewValue}>
+                        {passportNumber || "N/A"}
+                      </Text>
                     </View>
                   </View>
 
                   {/* Terms & Conditions */}
                   <View style={styles.termsBox}>
                     <Text style={styles.termsText}>
-                      By submitting this application, you confirm that all information provided is accurate. 
-                      Payment will be processed securely through PayPal. Your travel protection coverage will 
-                      be activated within 5-7 working days after successful payment and document verification.
+                      By submitting this application, you confirm that all
+                      information provided is accurate. Payment will be
+                      processed securely through PayPal. Your travel protection
+                      coverage will be activated within 5-7 working days after
+                      successful payment and document verification.
                     </Text>
                   </View>
                 </View>

@@ -5,6 +5,7 @@ import 'react-native-gesture-handler';
 import 'react-native-reanimated';
 
 import AuthLoader from './app/AuthLoader';
+import AgentDashboard from './app/Dashboard/AgentDashboard';
 import DepositScreen from './app/Dashboard/deposit/deposit';
 import StockInvestment from './app/Dashboard/deposit/stockInvestDepo';
 import StockInvestmentConfirm from './app/Dashboard/deposit/stockInvestDepoConfirm';
@@ -25,14 +26,14 @@ import Login from './app/Outside/Login';
 import Passcode from './app/Outside/passcode';
 import Register from './app/Outside/Register';
 import Welcome from './app/Outside/Welcome';
-import AgentDashboard from './app/Dashboard/AgentDashboard';
 import Placeholder from './app/Placeholder';
-import AgentServices from './app/ServicesFunction/Agent/AgentServices';
 import BankingContactInfo from './app/ServicesFunction/Banking/BankingContactInfo';
+import BankingPersonalInfo from './app/ServicesFunction/Banking/BankingPersonalInfo';
 import BankingService from './app/ServicesFunction/Banking/BankingService';
 import TransferConfirm from './app/ServicesFunction/Transfer/TransferConfirm';
 import TransferRecipient from './app/ServicesFunction/Transfer/TransferRecipient';
 import SendMoney from './app/ServicesFunction/Transfer/TransferService';
+import TravelProtection from './app/ServicesFunction/Travel Proctected/TravelProtectServices';
 import Settings from './app/Settings/settings';
 import type { RootStackParamList } from './types/navigation';
 
@@ -59,7 +60,8 @@ export default function App() {
         <Stack.Screen name="TransferConfirm" component={TransferConfirm} />
         <Stack.Screen name="Bdo" component={BankingService} />
         <Stack.Screen name="BankingContactInfo" component={BankingContactInfo} />
-        <Stack.Screen name="Travel" component={Placeholder} />
+        <Stack.Screen name="BankingPersonalInfo" component={BankingPersonalInfo} />
+        <Stack.Screen name="Travel" component={TravelProtection} />
         <Stack.Screen name="History" component={Placeholder} />
         <Stack.Screen name="Maya" component={Placeholder} />
         <Stack.Screen name="Stockholder" component={Placeholder} />
