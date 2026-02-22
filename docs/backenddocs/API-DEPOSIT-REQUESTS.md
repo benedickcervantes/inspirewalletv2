@@ -54,7 +54,8 @@ See **[API-TIME-DEPOSITS.md](API-TIME-DEPOSITS.md)** for full documentation.
 Summary:
 
 - **Create request:** `POST /time-deposits` (user). Body: `{ contractType, amount, walletId?, depositSource?, depositMethod? }` or `{ contractPeriod, amount, walletId? }`. Use `contractType`: `"sixMonths"` | `"oneYear"` | `"twoYears"`, or `contractPeriod`: `"6 Months"` | `"1 Year"` | `"2 Years"`. Use `depositMethod`: `"available_balance"` (default, deduct from wallet) or `"request_amount"` (top-up on approval).
-- **Admin list:** Use unified `GET /deposit-requests/admin?requestType=time_deposit` or `GET /time-deposits/admin?status=PENDING|APPROVED|REJECTED` (time deposit only).
+- **Admin create on behalf:** `POST /time-deposits/admin` (ADMIN only) — body includes `userId` or `accountNumber` plus contractType/contractPeriod, amount, walletId, depositSource/depositMethod.
+- **Admin list:** Use unified `GET /deposit-requests/admin?requestType=time_deposit` or `GET /time-deposits/admin?status=PENDING|APPROVED|REJECTED` (time deposit only). Optionally filter by user: `GET /time-deposits/admin?userId=xxx` or `?accountNumber=xxx`.
 - **Admin list pending:** `GET /time-deposits/admin/pending` (ADMIN only) — shortcut for pending only.
 - **Admin approve:** `POST /time-deposits/:id/approve` (ADMIN only). Body: `{ notes? }`
 - **Admin reject:** `POST /time-deposits/:id/reject` (ADMIN only)
@@ -66,6 +67,7 @@ Admin list includes `user` (firstName, lastName, email), `requestType: "time_dep
 ## 2. Top Up Available Balance
 
 - **Create request:** `POST /deposit-requests/top-up` (user)
+- **Admin create on behalf:** `POST /deposit-requests/admin/top-up` (ADMIN only) — body includes `userId` or `accountNumber` plus walletId, amount, reference
 - **List own:** `GET /deposit-requests/top-up` (user)
 - **Get one:** `GET /deposit-requests/top-up/:id` (user)
 - **Admin list all:** `GET /deposit-requests/admin/top-up` (ADMIN only) — returns all top-up requests. Optional query: `?status=PENDING|APPROVED|REJECTED` to filter. Omit to return all. Same response shape as list pending (includes `user` and `requestType`).
@@ -123,6 +125,7 @@ Only these fields are allowed. The backend identifies the user from the JWT (`us
 ## 3. Stock Investment
 
 - **Create request:** `POST /deposit-requests/stock-investment` (user)
+- **Admin create on behalf:** `POST /deposit-requests/admin/stock-investment` (ADMIN only) — body includes `userId` or `accountNumber` plus walletId, amount, stockSymbol
 - **List own:** `GET /deposit-requests/stock-investment` (user)
 - **Get one:** `GET /deposit-requests/stock-investment/:id` (user)
 - **Admin list all:** `GET /deposit-requests/admin/stock-investment` (ADMIN only) — returns all stock investment requests. Optional query: `?status=PENDING|APPROVED|REJECTED` to filter. Omit to return all. Same response shape as list pending (includes `user` and `requestType`).

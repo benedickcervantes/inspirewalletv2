@@ -710,7 +710,7 @@ export default function Dashboard() {
                       </Text>
                     </View>
                     <Text style={styles.transactionAmount}>
-                      Γé▒{formatCurrency(transaction.amount || 0)}
+                      ₱{formatCurrency(transaction.amount || 0)}
                     </Text>
                   </View>
                 ))
@@ -727,7 +727,7 @@ export default function Dashboard() {
                     <Text style={styles.transactionName}>Free Default Card</Text>
                     <Text style={styles.transactionDate}>February 03, 2026</Text>
                   </View>
-                  <Text style={styles.transactionAmount}>Γé▒0.00</Text>
+                  <Text style={styles.transactionAmount}>₱0.00</Text>
                 </View>
               )}
             </View>
