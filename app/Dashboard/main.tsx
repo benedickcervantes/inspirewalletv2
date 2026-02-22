@@ -1,7 +1,7 @@
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
+﻿import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NavProp } from "../../types/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Animated,
   Dimensions,
@@ -15,6 +15,9 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { getOrCreateMainWallet, getTransactions } from "../../configs/api";
+import { createRealtimeConnection, startHeartbeat } from "../../configs/realtime";
 import {
   auth,
   subscribeToNotifications,
@@ -49,6 +52,10 @@ export default function Dashboard() {
   const flipAnimation = useRef(new Animated.Value(0)).current;
   const bannerScrollRef = useRef<ScrollView | null>(null);
   const languageScrollRef = useRef<ScrollView | null>(null);
+  const mainWalletIdRef = useRef<string | null>(null);
+  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const socketRef = useRef<{ disconnect: () => void } | null>(null);
+  const heartbeatCleanupRef = useRef<(() => void) | null>(null);
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
   const [currentLanguageIndex, setCurrentLanguageIndex] = useState(0);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
@@ -73,36 +80,198 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
-    if (!auth) return;
-    const user = auth.currentUser;
-    if (!user) {
-      (navigation as unknown as NavProp).replace("Welcome");
-      return;
-    }
+    let unsubscribes: Array<() => void> = [];
 
-    const un1 = subscribeToUser(user.uid, (data) => {
-      if (!data) {
-        setUserData(null);
+    const init = async () => {
+      const accessToken = await AsyncStorage.getItem("access_token");
+      const userJson = await AsyncStorage.getItem("user");
+
+      if (accessToken && userJson) {
+        const user = JSON.parse(userJson) as Record<string, unknown>;
+        setUserData({
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          accountNumber: user.accountNumber,
+        });
+        setAvailableBalance(0);
+        setTimeDeposit(0);
+        const { success, wallet } = await getOrCreateMainWallet(accessToken);
+        mainWalletIdRef.current = (wallet?.id as string) ?? null;
+        if (success && wallet?.balance != null) {
+          const bal = parseFloat(String(wallet.balance));
+          setAvailableBalance(Number.isNaN(bal) ? 0 : bal);
+        }
+        const txRes = await getTransactions(accessToken, {
+          walletId: wallet?.id as string | undefined,
+          limit: 20,
+        });
+        if (txRes.success && txRes.transactions) {
+          const typeLabels: Record<string, string> = {
+            TOP_UP: "Deposit",
+            PAYMENT: "Withdraw",
+            TRANSFER_OUT: "Transfer",
+            TRANSFER_IN: "Received",
+            FEE: "Fee",
+            REFUND: "Refund",
+          };
+          const mapped: Transaction[] = txRes.transactions.map((tx: Record<string, unknown>) => ({
+            id: String(tx.id ?? ""),
+            type: typeLabels[String(tx.type ?? "")] ?? String(tx.type ?? "Transaction"),
+            amount: (() => {
+              const a = parseFloat(String(tx.amount ?? 0));
+              return Number.isNaN(a) ? 0 : a;
+            })(),
+            timestamp: {
+              toDate: () => new Date(String(tx.createdAt ?? "")),
+            },
+          }));
+          setRecentTransactions(mapped);
+        }
         return;
       }
-      setUserData(data as Record<string, unknown>);
-      const balance = (data?.availBalanceAmount ?? data?.availableBalance) as number | undefined;
-      setAvailableBalance(Number(balance) || 0);
-      setTimeDeposit(Number(data?.timeDepositTotal) || 0);
+
+      mainWalletIdRef.current = null;
+      if (!auth) {
+        (navigation as unknown as NavProp).replace("Welcome");
+        return;
+      }
+      const firebaseUser = auth.currentUser;
+      if (!firebaseUser) {
+        (navigation as unknown as NavProp).replace("Welcome");
+        return;
+      }
+
+      const un1 = subscribeToUser(firebaseUser.uid, (data) => {
+        if (!data) {
+          setUserData(null);
+          return;
+        }
+        setUserData(data as Record<string, unknown>);
+        const balance = (data?.availBalanceAmount ?? data?.availableBalance) as number | undefined;
+        setAvailableBalance(Number(balance) || 0);
+        setTimeDeposit(Number(data?.timeDepositTotal) || 0);
+      });
+      const un2 = subscribeToTransactions(firebaseUser.uid, (list: Transaction[]) => {
+        setRecentTransactions(list);
+      });
+      const un3 = subscribeToNotifications(firebaseUser.uid, (count: number) => {
+        setUnreadNotifications(count);
+      });
+      unsubscribes = [un1, un2, un3];
+    };
+
+    init();
+    return () => {
+      unsubscribes.forEach((fn) => fn());
+    };
+  }, [navigation]);
+
+  const refetchJwtData = useCallback(async () => {
+    const accessToken = await AsyncStorage.getItem("access_token");
+    if (!accessToken) return;
+    const { success: walletSuccess, wallet } = await getOrCreateMainWallet(accessToken);
+    if (walletSuccess && wallet?.balance != null) {
+      const bal = parseFloat(String(wallet.balance));
+      setAvailableBalance(Number.isNaN(bal) ? 0 : bal);
+    }
+    const txRes = await getTransactions(accessToken, {
+      walletId: (wallet?.id as string) ?? mainWalletIdRef.current ?? undefined,
+      limit: 20,
     });
-    const un2 = subscribeToTransactions(user.uid, (list: Transaction[]) => {
-      setRecentTransactions(list);
-    });
-    const un3 = subscribeToNotifications(user.uid, (count: number) => {
-      setUnreadNotifications(count);
+    if (txRes.success && txRes.transactions) {
+      const typeLabels: Record<string, string> = {
+        TOP_UP: "Deposit",
+        PAYMENT: "Withdraw",
+        TRANSFER_OUT: "Transfer",
+        TRANSFER_IN: "Received",
+        FEE: "Fee",
+        REFUND: "Refund",
+      };
+      const mapped: Transaction[] = txRes.transactions.map((tx: Record<string, unknown>) => ({
+        id: String(tx.id ?? ""),
+        type: typeLabels[String(tx.type ?? "")] ?? String(tx.type ?? "Transaction"),
+        amount: (() => {
+          const a = parseFloat(String(tx.amount ?? 0));
+          return Number.isNaN(a) ? 0 : a;
+        })(),
+        timestamp: {
+          toDate: () => new Date(String(tx.createdAt ?? "")),
+        },
+      }));
+      setRecentTransactions(mapped);
+    }
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const startPolling = () => {
+      if (pollIntervalRef.current) return;
+      refetchJwtData();
+      pollIntervalRef.current = setInterval(refetchJwtData, 15000);
+    };
+
+    const stopPolling = () => {
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+        pollIntervalRef.current = null;
+      }
+    };
+
+    AsyncStorage.getItem("access_token").then((token) => {
+      if (cancelled || !token) return;
+
+      startPolling();
+
+      const socket = createRealtimeConnection(token, {
+        onWalletUpdate: (payload) => {
+          if (payload?.walletId === mainWalletIdRef.current && payload?.balance != null) {
+            const bal = parseFloat(String(payload.balance));
+            setAvailableBalance(Number.isNaN(bal) ? 0 : bal);
+          }
+        },
+        onTransactionCreated: () => {
+          refetchJwtData();
+        },
+        onConnect: () => {
+          stopPolling();
+          heartbeatCleanupRef.current = startHeartbeat(socket);
+        },
+        onDisconnect: () => {
+          heartbeatCleanupRef.current?.();
+          heartbeatCleanupRef.current = null;
+          startPolling();
+        },
+        onError: () => {
+          startPolling();
+        },
+      });
+
+      if (socket) {
+        socketRef.current = socket;
+      }
     });
 
     return () => {
-      un1();
-      un2();
-      un3();
+      cancelled = true;
+      stopPolling();
+      heartbeatCleanupRef.current?.();
+      heartbeatCleanupRef.current = null;
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        socketRef.current = null;
+      }
     };
-  }, [navigation]);
+  }, [refetchJwtData]);
+
+  useFocusEffect(
+    useCallback(() => {
+      AsyncStorage.getItem("access_token").then((token) => {
+        if (token) refetchJwtData();
+      });
+    }, [refetchJwtData])
+  );
 
   useEffect(() => {
     if (activeTab !== "Cards" && isCardFlipped) {
@@ -450,7 +619,7 @@ export default function Dashboard() {
                       </Text>
                     </View>
                     <Text style={styles.transactionAmount}>
-                      ₱{formatCurrency(transaction.amount || 0)}
+                      Γé▒{formatCurrency(transaction.amount || 0)}
                     </Text>
                   </View>
                 ))
@@ -467,7 +636,7 @@ export default function Dashboard() {
                     <Text style={styles.transactionName}>Free Default Card</Text>
                     <Text style={styles.transactionDate}>February 03, 2026</Text>
                   </View>
-                  <Text style={styles.transactionAmount}>₱0.00</Text>
+                  <Text style={styles.transactionAmount}>Γé▒0.00</Text>
                 </View>
               )}
             </View>
