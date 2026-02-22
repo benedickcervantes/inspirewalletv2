@@ -34,6 +34,11 @@ export type RootStackParamList = {
   Travel: undefined;
   History: undefined;
   Maya: undefined;
+  EwalletService: undefined;
+  EwalletContactInfo: { selectedProvider: string };
+  EwalletPersonalInfo: { selectedProvider: string };
+  EwalletAddressInfo: { selectedProvider: string };
+  EwalletFinancialInfo: { selectedProvider: string };
   Stockholder: undefined;
   Task: undefined;
   AgentRequest: undefined;

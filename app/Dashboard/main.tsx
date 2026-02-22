@@ -461,7 +461,7 @@ export default function Dashboard() {
   };
 
   const menuItems = [
-    { icon: "wallet-outline", label: "E-Wallet", route: "Maya" },
+    { icon: "wallet-outline", label: "E-Wallet", route: "EwalletService" },
     { icon: "chart-line", label: "Stock", route: "Stockholder" },
     { icon: "format-list-bulleted", label: "Task", route: "Task" },
     { icon: "account", label: "Agent", route: "AgentRequest" },
