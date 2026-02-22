@@ -141,7 +141,14 @@ export default function StockService() {
         ];
 
   const handleBuy = () => {
-    navigation.navigate("stockinvestment" as never);
+    (navigation as { navigate: (name: string, params?: object) => void }).navigate("StockBuy");
+  };
+
+  const handleSell = () => {
+    (navigation as { navigate: (name: string, params?: object) => void }).navigate("StockSell", {
+      stockCount,
+      totalPortfolioValue,
+    });
   };
 
   return (
@@ -244,16 +251,13 @@ export default function StockService() {
 
               <TouchableOpacity
                 style={styles.sellButton}
-                disabled
+                onPress={handleSell}
                 activeOpacity={0.9}
               >
                 <View style={styles.sellButtonIcon}>
                   <Ionicons name="arrow-forward" size={24} color="#FFFFFF" />
                 </View>
-                <View style={styles.sellButtonTextWrap}>
-                  <Text style={styles.sellButtonText}>SELL</Text>
-                  <Text style={styles.sellComingSoon}>Coming soon</Text>
-                </View>
+                <Text style={styles.sellButtonText}>SELL</Text>
               </TouchableOpacity>
             </View>
 
@@ -462,10 +466,6 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderRadius: 12,
     gap: 10,
-    opacity: 0.7,
-  },
-  sellButtonTextWrap: {
-    alignItems: "flex-start",
   },
   sellButtonIcon: {
     width: 36,
@@ -479,11 +479,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "700",
     color: "#FFFFFF",
-  },
-  sellComingSoon: {
-    fontSize: 10,
-    color: "rgba(255,255,255,0.9)",
-    marginTop: 2,
   },
   transactionCard: {
     backgroundColor: "#E8E8E8",

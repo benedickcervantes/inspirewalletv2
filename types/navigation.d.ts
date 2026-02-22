@@ -40,6 +40,8 @@ export type RootStackParamList = {
   EwalletAddressInfo: { selectedProvider: string };
   EwalletFinancialInfo: { selectedProvider: string };
   Stockholder: undefined;
+  StockBuy: undefined;
+  StockSell: { stockCount: number; totalPortfolioValue: number };
   Task: undefined;
   AgentRequest: undefined;
   PlayEarn: undefined;
