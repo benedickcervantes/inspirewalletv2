@@ -21,7 +21,8 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { NavProp } from '../../types/navigation';
-import { auth, firestore, signInWithEmailAndPassword, doc, getDoc } from '../../configs/firebase';
+import { login } from '../../configs/api';
+
 
 const GRADIENT_START = '#E15816';
 const GRADIENT_END = '#F48F38';
@@ -222,88 +223,37 @@ export default function Login() {
       return;
     }
 
-    if (!auth) {
-      showModal({
-        title: 'Connection Error',
-        message: 'Firebase is not configured. Please check your app configuration.',
-        type: 'error',
-      });
-      return;
-    }
-
     setLoading(true);
-    const safetyTimeout = setTimeout(() => setLoading(false), 10000);
-
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, trimmedEmail, password);
-      clearTimeout(safetyTimeout);
-      setLoading(false);
+      const result = await login(trimmedEmail, password);
 
-      const user = userCredential.user;
-      if (!user) {
-        showModal({ title: 'Login Error', message: 'No user returned. Please try again.', type: 'error' });
+      if (!result.success) {
+        showModal({
+          title: 'Login Failed',
+          message: result.error || 'Invalid email or password. Please try again.',
+          type: 'error',
+        });
         return;
       }
 
-      try {
-        await AsyncStorage.setItem('userEmail', trimmedEmail);
-        await AsyncStorage.setItem('userPassword', password);
-        await AsyncStorage.removeItem('passcodeLoginComplete');
-      } catch (_) {}
+      await AsyncStorage.setItem('access_token', result.access_token || '');
+      await AsyncStorage.setItem('user', JSON.stringify(result.user || {}));
+      await AsyncStorage.removeItem('passcodeLoginComplete');
 
-      if (firestore) {
-        try {
-          const userDocRef = doc(firestore, 'users', user.uid);
-          const userDocSnap = await getDoc(userDocRef);
-          if (userDocSnap.exists()) {
-            const userData = userDocSnap.data() as { passcode?: string } | undefined;
-            if (userData?.passcode) {
-              (navigation as unknown as NavProp).replace('Passcode');
-              return;
-            }
-          }
-        } catch (_) {}
-      }
-
-      (navigation as unknown as NavProp).replace('Main');
-    } catch (error: unknown) {
-      clearTimeout(safetyTimeout);
-      setLoading(false);
-      const err = error as { code?: string; message?: string };
-      const code = err?.code || '';
-      const msg = err?.message || 'Something went wrong.';
-
-      if (code === 'auth/invalid-credential' || code === 'auth/wrong-password') {
-        showModal({
-          title: 'Invalid Credentials',
-          message: 'Please check your email and password.',
-          type: 'error',
-        });
-      } else if (code === 'auth/user-not-found') {
-        showModal({
-          title: 'Account Not Found',
-          message: 'No account found with this email.',
-          type: 'error',
-        });
-      } else if (code === 'auth/too-many-requests') {
-        showModal({
-          title: 'Too Many Attempts',
-          message: 'Please try again later or use Forgot Password.',
-          type: 'warning',
-        });
-      } else if (code === 'auth/network-request-failed') {
-        showModal({
-          title: 'Connection Error',
-          message: 'Please check your internet connection.',
-          type: 'error',
-        });
+      const user = result.user as { hasPasscode?: boolean } | undefined;
+      if (user?.hasPasscode) {
+        (navigation as unknown as NavProp).replace('Passcode');
       } else {
-        showModal({
-          title: 'Login Error',
-          message: msg || 'An unexpected error occurred. Please try again.',
-          type: 'error',
-        });
+        (navigation as unknown as NavProp).replace('Main');
       }
+    } catch (_) {
+      showModal({
+        title: 'Login Error',
+        message: 'An unexpected error occurred. Please try again.',
+        type: 'error',
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -411,7 +361,7 @@ export default function Login() {
                   onPress={() => {
                     showModal({
                       title: 'Forgot Password',
-                      message: 'Connect your forgot-password screen or Firebase sendPasswordResetEmail here.',
+                      message: 'Password reset is not supported at this time. Please contact support for assistance.',
                       type: 'info',
                     });
                   }}

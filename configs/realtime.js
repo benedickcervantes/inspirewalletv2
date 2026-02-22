@@ -1,0 +1,75 @@
+/**
+ * Real-time WebSocket (Socket.IO) connection for Inspire Wallet.
+ * Uses EXPO_PUBLIC_WALLET_BACKEND_URL from .env.
+ * Auth: Option 2 - token as query parameter.
+ *
+ * @see docs/backenddocs/API-REALTIME.md
+ */
+
+const getBaseUrl = () => {
+  const url = process.env.EXPO_PUBLIC_WALLET_BACKEND_URL;
+  if (!url) return null;
+  return url.replace(/\/$/, '');
+};
+
+/**
+ * Creates a Socket.IO connection for real-time wallet and transaction updates.
+ * Uses query parameter for JWT: { token: accessToken }
+ *
+ * @param {string} accessToken - JWT from AsyncStorage
+ * @param {object} handlers - { onWalletUpdate, onTransactionCreated, onConnect, onDisconnect, onError }
+ * @returns {object|null} socket instance or null if URL/token missing
+ */
+export function createRealtimeConnection(accessToken, handlers = {}) {
+  const baseUrl = getBaseUrl();
+  if (!baseUrl || !accessToken) return null;
+
+  try {
+    // eslint-disable-next-line global-require
+    const { io } = require('socket.io-client');
+
+    const socket = io(baseUrl, {
+      path: '/ws',
+      transports: ['websocket', 'polling'],
+      query: { token: accessToken },
+    });
+
+    socket.on('WALLET_UPDATE', (payload) => {
+      handlers.onWalletUpdate?.(payload);
+    });
+
+    socket.on('TRANSACTION_CREATED', (payload) => {
+      handlers.onTransactionCreated?.(payload);
+    });
+
+    socket.on('connect', () => {
+      handlers.onConnect?.();
+    });
+
+    socket.on('disconnect', (reason) => {
+      handlers.onDisconnect?.(reason);
+    });
+
+    socket.on('connect_error', (err) => {
+      handlers.onError?.(err);
+    });
+
+    return socket;
+  } catch (e) {
+    handlers.onError?.(e);
+    return null;
+  }
+}
+
+/**
+ * Start heartbeat (PING every 30s) to keep connection alive.
+ * @param {object} socket - Socket.IO instance
+ * @returns {function} cleanup function to clear the interval
+ */
+export function startHeartbeat(socket) {
+  if (!socket) return () => {};
+  const pingInterval = setInterval(() => {
+    if (socket.connected) socket.emit('PING');
+  }, 30000);
+  return () => clearInterval(pingInterval);
+}

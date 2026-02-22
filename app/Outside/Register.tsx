@@ -12,14 +12,15 @@ import {
   Modal,
   Dimensions,
   Alert,
-  Share,
 } from 'react-native';
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { CameraView, Camera } from 'expo-camera';
-import QRCode from 'react-native-qrcode-svg';
+import { ActivityIndicator } from 'react-native';
+import type { NavProp } from '../../types/navigation';
+import { register as registerApi } from '../../configs/api';
 
 const { width } = Dimensions.get('window');
 
@@ -27,11 +28,11 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const isValidEmail = (email: string) => EMAIL_REGEX.test((email || '').trim().toLowerCase());
 
 const COUNTRY_OPTIONS = [
-  { code: '+63', label: 'Philippines', flag: '🇵🇭' },
-  { code: '+81', label: 'Japan', flag: '🇯🇵' },
-  { code: '+966', label: 'Saudi Arabia', flag: '🇸🇦' },
-  { code: '+82', label: 'Korea', flag: '🇰🇷' },
-  { code: '+1', label: 'United States', flag: '🇺🇸' },
+  { code: '+63', label: 'Philippines', flag: '🇵🇭', iso: 'PH' },
+  { code: '+81', label: 'Japan', flag: '🇯🇵', iso: 'JP' },
+  { code: '+966', label: 'Saudi Arabia', flag: '🇸🇦', iso: 'SA' },
+  { code: '+82', label: 'Korea', flag: '🇰🇷', iso: 'KR' },
+  { code: '+1', label: 'United States', flag: '🇺🇸', iso: 'US' },
 ];
 
 export default function Register() {
@@ -47,7 +48,9 @@ export default function Register() {
   const [selectedCountryCode, setSelectedCountryCode] = useState('+63');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isAgent, setIsAgent] = useState<boolean | null>(null);
-  const [agentReferral, setAgentReferral] = useState('');
+  const [referralCode, setReferralCode] = useState('');
+  const [registerLoading, setRegisterLoading] = useState(false);
+  const [registerError, setRegisterError] = useState('');
 
   const [emailAddress, setEmailAddress] = useState('');
   const [password, setPassword] = useState('');
@@ -58,98 +61,8 @@ export default function Register() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isCountryModalVisible, setIsCountryModalVisible] = useState(false);
 
-  const [showQRScanner, setShowQRScanner] = useState(false);
-  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
-  const [scanned, setScanned] = useState(false);
-
-  const [showAgentQRCode, setShowAgentQRCode] = useState(false);
-  const [agentNumber, setAgentNumber] = useState('');
-  const qrCodeRef = useRef<QRCode | null>(null);
-
-  useEffect(() => {
-    const getCameraPermissions = async () => {
-      const { status } = await Camera.requestCameraPermissionsAsync();
-      setHasPermission(status === 'granted');
-    };
-    getCameraPermissions();
-  }, []);
-
-  useEffect(() => {
-    if (isAgent === true && !agentNumber) {
-      const generatedNumber = `AG${Date.now().toString().slice(-8)}`;
-      setAgentNumber(generatedNumber);
-    }
-  }, [isAgent]);
-
-  const handleQRScan = () => {
-    if (hasPermission === false) {
-      Alert.alert(
-        'Camera Permission Required',
-        'Please grant camera permissions in your device settings to scan QR codes.',
-        [{ text: 'OK' }]
-      );
-      return;
-    }
-    setScanned(false);
-    setShowQRScanner(true);
-  };
-
-  const handleBarCodeScanned = ({ data }: { type: string; data: string }) => {
-    setScanned(true);
-    try {
-      const qrData = JSON.parse(data) as { type?: string; agentNumber?: string; agentName?: string };
-      if (qrData.type === 'inspire_agent_referral' && qrData.agentNumber) {
-        setAgentReferral(qrData.agentNumber);
-        setShowQRScanner(false);
-        Alert.alert(
-          'Agent Found!',
-          `Agent ${qrData.agentName || qrData.agentNumber} has been added as your referral.`,
-          [{ text: 'OK' }]
-        );
-      } else {
-        Alert.alert(
-          'Invalid QR Code',
-          'This QR code is not a valid Inspire agent referral code.',
-          [
-            { text: 'Cancel', onPress: () => setShowQRScanner(false) },
-            { text: 'Scan Again', onPress: () => setScanned(false) },
-          ]
-        );
-      }
-    } catch {
-      Alert.alert(
-        'Invalid QR Code',
-        'Unable to read QR code data. Please try again.',
-        [
-          { text: 'Cancel', onPress: () => setShowQRScanner(false) },
-          { text: 'Scan Again', onPress: () => setScanned(false) },
-        ]
-      );
-    }
-  };
-
-  const handleShareQRCode = async () => {
-    try {
-      const qr = qrCodeRef.current as { toDataURL?: (cb: (url: string) => void) => void } | null;
-      if (qr?.toDataURL) {
-        qr.toDataURL(async (_dataURL: string) => {
-          try {
-            await Share.share({
-              message: `Join Inspire Wallet with my referral!\n\nAgent Number: ${agentNumber}\n\nScan my QR code or enter my agent number during registration.`,
-              title: 'Inspire Wallet Agent Referral',
-            });
-          } catch (error) {
-            console.error('Error sharing:', error);
-          }
-        });
-      }
-    } catch (error) {
-      console.error('Error sharing QR code:', error);
-      Alert.alert('Error', 'Failed to share QR code. Please try again.');
-    }
-  };
-
   const handleNextStep = () => {
+    setRegisterError('');
     if (currentStep === 1) {
       if (!firstName.trim()) {
         alert('Please enter your first name');
@@ -188,8 +101,8 @@ export default function Register() {
         alert('Please enter a password');
         return;
       }
-      if (password.length < 6) {
-        alert('Password must be at least 6 characters');
+      if (password.length < 8) {
+        alert('Password must be at least 8 characters');
         return;
       }
       if (password !== confirmPassword) {
@@ -200,20 +113,39 @@ export default function Register() {
     }
   };
 
-  const handleRegister = () => {
-    console.log('Registration data:', {
-      firstName,
-      lastName,
-      hasCompany,
-      companyName,
-      lineAccountLink,
-      phoneNumber: selectedCountryCode + phoneNumber,
-      isAgent,
-      agentReferral,
-      emailAddress,
-      password,
-    });
-    setShowSuccessModal(true);
+  const handleRegister = async () => {
+    setRegisterError('');
+    setRegisterLoading(true);
+    try {
+      const country = COUNTRY_OPTIONS.find((c) => c.code === selectedCountryCode);
+      const phone = selectedCountryCode + phoneNumber;
+      const body: Record<string, unknown> = {
+        email: emailAddress.trim(),
+        password,
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        phone: phone.length > 0 && phone.length <= 30 ? phone : undefined,
+        countryCode: country?.iso,
+        referralCode: referralCode.trim() || undefined,
+        companyName: hasCompany && companyName.trim() ? companyName.trim() : undefined,
+        lineAccountLink: lineAccountLink.trim() || undefined,
+        isAgent: isAgent ?? false,
+      };
+      const result = await registerApi(body);
+
+      if (!result.success) {
+        setRegisterError(result.error || 'Registration failed. Please try again.');
+        return;
+      }
+
+      await AsyncStorage.setItem('access_token', result.access_token || '');
+      await AsyncStorage.setItem('user', JSON.stringify(result.user || {}));
+      setShowSuccessModal(true);
+    } catch (_) {
+      setRegisterError('An unexpected error occurred. Please try again.');
+    } finally {
+      setRegisterLoading(false);
+    }
   };
 
   const handleBackStep = () => {
@@ -399,55 +331,42 @@ export default function Register() {
                   <Text style={styles.sectionTitle}>Account Type</Text>
                   <View style={styles.sectionUnderline} />
                   <Text style={styles.inputLabel}>
-                    Are you an agent? <Text style={styles.required}>*</Text>
+                    Are you an agent or investor? <Text style={styles.required}>*</Text>
                   </Text>
                   <TouchableOpacity style={styles.radioContainer} onPress={() => setIsAgent(true)}>
                     <View style={[styles.radio, isAgent === true && styles.radioChecked]}>
                       {isAgent === true && <View style={styles.radioDot} />}
                     </View>
-                    <Text style={styles.radioLabel}>Yes, I'm an agent</Text>
+                    <Text style={styles.radioLabel}>I'm an agent</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.radioContainer} onPress={() => setIsAgent(false)}>
                     <View style={[styles.radio, isAgent === false && styles.radioChecked]}>
                       {isAgent === false && <View style={styles.radioDot} />}
                     </View>
-                    <Text style={styles.radioLabel}>No, I'm an investor</Text>
+                    <Text style={styles.radioLabel}>I'm an investor</Text>
                   </TouchableOpacity>
-                  {isAgent === true && agentNumber && (
+                  {isAgent !== null && (
                     <View style={styles.agentQRSection}>
                       <View style={styles.agentQRHeader}>
                         <MaterialCommunityIcons name="shield-star" size={24} color="#E25A17" />
-                        <Text style={styles.agentQRTitle}>Your Agent Code</Text>
+                        <Text style={styles.agentQRTitle}>Referral Code</Text>
                       </View>
-                      <View style={styles.agentNumberCard}>
-                        <Text style={styles.agentNumberLabel}>Agent Number</Text>
-                        <Text style={styles.agentNumberValue}>{agentNumber}</Text>
-                        <Text style={styles.agentNumberSubtext}>
-                          Share this code with investors to earn referral rewards
-                        </Text>
-                      </View>
-                      <TouchableOpacity style={styles.viewQRButton} onPress={() => setShowAgentQRCode(true)}>
-                        <MaterialCommunityIcons name="qrcode" size={20} color="#FFFFFF" />
-                        <Text style={styles.viewQRButtonText}>View QR Code</Text>
-                      </TouchableOpacity>
+                      <Text style={styles.agentNumberSubtext}>
+                        You will receive your unique referral code after registration. Share it so others can register under you.
+                      </Text>
                     </View>
                   )}
                   <View style={[styles.inputGroup, { marginTop: 20 }]}>
-                    <Text style={styles.inputLabel}>Search your Agent Referral (Optional)</Text>
-                    <View style={styles.searchInputContainer}>
-                      <TextInput
-                        style={styles.searchInput}
-                        placeholder="Enter exact agent number..."
-                        placeholderTextColor="#999"
-                        value={agentReferral}
-                        onChangeText={setAgentReferral}
-                      />
-                      <TouchableOpacity style={styles.qrButton} onPress={handleQRScan}>
-                        <MaterialCommunityIcons name="qrcode-scan" size={24} color="#E25A17" />
-                      </TouchableOpacity>
-                    </View>
+                    <Text style={styles.inputLabel}>Referrer's code (Optional)</Text>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Enter referrer's code"
+                      placeholderTextColor="#999"
+                      value={referralCode}
+                      onChangeText={setReferralCode}
+                    />
                     <Text style={styles.helperText}>
-                      Enter the exact agent number or scan QR code to automatically find and select the agent.
+                      Enter your referrer's code if you were invited by someone.
                     </Text>
                   </View>
                 </View>
@@ -513,14 +432,28 @@ export default function Register() {
                     </View>
                   </View>
                 </View>
+                {registerError ? (
+                  <View style={styles.errorBanner}>
+                    <Text style={styles.errorBannerText}>{registerError}</Text>
+                  </View>
+                ) : null}
               </>
             )}
           </ScrollView>
 
           <View style={styles.footer}>
-            <TouchableOpacity style={styles.nextButton} onPress={handleNextStep} activeOpacity={0.8}>
+            <TouchableOpacity
+              style={[styles.nextButton, registerLoading && styles.nextButtonDisabled]}
+              onPress={handleNextStep}
+              activeOpacity={0.8}
+              disabled={registerLoading}
+            >
               <LinearGradient colors={['#E25A17', '#F28934']} style={styles.nextButtonGradient}>
-                <Text style={styles.nextButtonText}>{currentStep === 3 ? 'Register' : 'Next Step'}</Text>
+                {registerLoading ? (
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                ) : (
+                  <Text style={styles.nextButtonText}>{currentStep === 3 ? 'Register' : 'Next Step'}</Text>
+                )}
               </LinearGradient>
             </TouchableOpacity>
             <Text style={styles.termsText}>By continuing, you agree to our Terms of Service</Text>
@@ -587,137 +520,19 @@ export default function Register() {
                 </Text>
                 <TouchableOpacity
                   style={styles.successButton}
-                  onPress={() => {
+                  onPress={async () => {
                     setShowSuccessModal(false);
-                    navigation.navigate('Login');
+                    const userJson = await AsyncStorage.getItem('user');
+                    const user = userJson ? (JSON.parse(userJson) as { hasPasscode?: boolean }) : null;
+                    if (user?.hasPasscode) {
+                      (navigation as unknown as NavProp).replace('Passcode');
+                    } else {
+                      (navigation as unknown as NavProp).replace('Main');
+                    }
                   }}
                 >
-                  <Text style={styles.successButtonText}>Login</Text>
+                  <Text style={styles.successButtonText}>Continue to App</Text>
                 </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.successButtonSecondary}
-                  onPress={() => {
-                    setShowSuccessModal(false);
-                    navigation.navigate('Welcome');
-                  }}
-                >
-                  <Text style={styles.successButtonSecondaryText}>Back to Welcome</Text>
-                </TouchableOpacity>
-              </LinearGradient>
-            </View>
-          </View>
-        </Modal>
-
-        <Modal
-          visible={showQRScanner}
-          animationType="slide"
-          onRequestClose={() => setShowQRScanner(false)}
-        >
-          <View style={styles.qrScannerContainer}>
-            {hasPermission === null ? (
-              <View style={styles.qrPermissionContainer}>
-                <Text style={styles.qrPermissionText}>Requesting camera permission...</Text>
-              </View>
-            ) : hasPermission === false ? (
-              <View style={styles.qrPermissionContainer}>
-                <Ionicons name="camera-outline" size={64} color="#999" />
-                <Text style={styles.qrPermissionText}>No access to camera</Text>
-                <Text style={styles.qrPermissionSubText}>
-                  Please grant camera permissions in your device settings to scan QR codes.
-                </Text>
-                <TouchableOpacity style={styles.qrCloseButton} onPress={() => setShowQRScanner(false)}>
-                  <Text style={styles.qrCloseButtonText}>Close</Text>
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <CameraView
-                style={styles.qrCamera}
-                facing="back"
-                onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
-                barcodeScannerSettings={{
-                  barcodeTypes: ['qr'],
-                }}
-              >
-                <View style={styles.qrOverlay}>
-                  <View style={styles.qrTopOverlay}>
-                    <Text style={styles.qrInstructionText}>
-                      Position the agent's QR code within the frame
-                    </Text>
-                  </View>
-                  <View style={styles.qrCenterRow}>
-                    <View style={styles.qrSideOverlay} />
-                    <View style={styles.qrFrameContainer}>
-                      <View style={[styles.qrCorner, styles.qrTopLeft]} />
-                      <View style={[styles.qrCorner, styles.qrTopRight]} />
-                      <View style={[styles.qrCorner, styles.qrBottomLeft]} />
-                      <View style={[styles.qrCorner, styles.qrBottomRight]} />
-                      {scanned && (
-                        <View style={styles.qrScannedOverlay}>
-                          <Ionicons name="checkmark-circle" size={48} color="#10B981" />
-                          <Text style={styles.qrScannedText}>QR Code Scanned!</Text>
-                        </View>
-                      )}
-                    </View>
-                    <View style={styles.qrSideOverlay} />
-                  </View>
-                  <View style={styles.qrBottomOverlay}>
-                    <TouchableOpacity style={styles.qrCancelButton} onPress={() => setShowQRScanner(false)}>
-                      <Text style={styles.qrCancelButtonText}>Cancel</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              </CameraView>
-            )}
-          </View>
-        </Modal>
-
-        <Modal
-          visible={showAgentQRCode}
-          transparent={true}
-          animationType="fade"
-          onRequestClose={() => setShowAgentQRCode(false)}
-        >
-          <View style={styles.agentQRModalOverlay}>
-            <View style={styles.agentQRModalContent}>
-              <LinearGradient
-                colors={['#E25A17', '#F28934']}
-                style={styles.agentQRModalGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <TouchableOpacity style={styles.agentQRCloseButton} onPress={() => setShowAgentQRCode(false)}>
-                  <Ionicons name="close" size={24} color="#FFFFFF" />
-                </TouchableOpacity>
-                <View style={styles.agentQRIconContainer}>
-                  <MaterialCommunityIcons name="shield-star" size={40} color="#FFFFFF" />
-                </View>
-                <Text style={styles.agentQRModalTitle}>Your Agent QR Code</Text>
-                <Text style={styles.agentQRModalSubtitle}>Share this code with investors</Text>
-                <View style={styles.qrCodeContainer}>
-                  <QRCode
-                    value={JSON.stringify({
-                      type: 'inspire_agent_referral',
-                      agentNumber: agentNumber,
-                      agentName: `${firstName} ${lastName}`.trim() || agentNumber,
-                    })}
-                    size={200}
-                    backgroundColor="white"
-                    color="#E25A17"
-                    getRef={(ref) => (qrCodeRef.current = ref)}
-                  />
-                </View>
-                <View style={styles.agentQRInfoCard}>
-                  <Text style={styles.agentQRInfoLabel}>Agent Number</Text>
-                  <Text style={styles.agentQRInfoValue}>{agentNumber}</Text>
-                  <Text style={styles.agentQRInfoName}>{`${firstName} ${lastName}`.trim() || 'Agent'}</Text>
-                </View>
-                <TouchableOpacity style={styles.agentQRShareButton} onPress={handleShareQRCode}>
-                  <Ionicons name="share-social" size={20} color="#E25A17" />
-                  <Text style={styles.agentQRShareButtonText}>Share QR Code</Text>
-                </TouchableOpacity>
-                <Text style={styles.agentQRHelpText}>
-                  Investors can scan this QR code during registration to add you as their referral agent.
-                </Text>
               </LinearGradient>
             </View>
           </View>
@@ -900,8 +715,18 @@ const styles = StyleSheet.create({
     borderTopColor: '#E0E0E0',
   },
   nextButton: { borderRadius: 12, overflow: 'hidden', marginBottom: 12 },
+  nextButtonDisabled: { opacity: 0.7 },
   nextButtonGradient: { paddingVertical: 16, alignItems: 'center' },
   nextButtonText: { fontSize: 16, fontWeight: '600', color: '#FFFFFF' },
+  errorBanner: {
+    backgroundColor: '#FEE2E2',
+    borderRadius: 8,
+    padding: 12,
+    marginTop: 16,
+    borderLeftWidth: 4,
+    borderLeftColor: '#DC2626',
+  },
+  errorBannerText: { fontSize: 14, color: '#DC2626' },
   termsText: { fontSize: 12, color: '#999', textAlign: 'center' },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.5)', justifyContent: 'flex-end' },
   modalContainer: { backgroundColor: '#FFFFFF', borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '70%' },

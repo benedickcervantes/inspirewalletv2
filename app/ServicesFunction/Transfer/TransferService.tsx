@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { doc, getDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import {
@@ -13,37 +14,40 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { getOrCreateMainWallet } from "../../../configs/api";
 import { auth, firestore } from "../../../configs/firebase";
 
 const { width } = Dimensions.get("window");
 
-// Reusable function to fetch user balances from Firestore
+// Reusable function to fetch user balances (JWT or Firebase)
 export const fetchUserBalances = async () => {
+  const accessToken = await AsyncStorage.getItem("access_token");
+  if (accessToken) {
+    const { success, wallet } = await getOrCreateMainWallet(accessToken);
+    const bal = success && wallet?.balance != null ? parseFloat(String(wallet.balance)) : 0;
+    return {
+      availableBalance: Number.isNaN(bal) ? 0 : bal,
+      agentWallet: 0,
+      userData: null,
+    };
+  }
   if (!auth || !firestore) {
     throw new Error("Firebase not configured");
   }
-  try {
-    const user = auth.currentUser;
-    if (!user) {
-      throw new Error("No authenticated user found");
-    }
-
-    const userDoc = await getDoc(doc(firestore, "users", user.uid));
-    
-    if (!userDoc.exists()) {
-      throw new Error("User document not found");
-    }
-
-    const userData = userDoc.data() as Record<string, unknown>;
-    return {
-      availableBalance: Number(userData?.balance ?? userData?.availBalanceAmount ?? 0) || 0,
-      agentWallet: Number(userData?.agentWallet ?? userData?.agentWalletAmount ?? 0) || 0,
-      userData,
-    };
-  } catch (error) {
-    console.error("Error fetching balances:", error);
-    throw error;
+  const user = auth.currentUser;
+  if (!user) {
+    throw new Error("No authenticated user found");
   }
+  const userDoc = await getDoc(doc(firestore, "users", user.uid));
+  if (!userDoc.exists()) {
+    throw new Error("User document not found");
+  }
+  const userData = userDoc.data() as Record<string, unknown>;
+  return {
+    availableBalance: Number(userData?.balance ?? userData?.availBalanceAmount ?? 0) || 0,
+    agentWallet: Number(userData?.agentWallet ?? userData?.agentWalletAmount ?? 0) || 0,
+    userData,
+  };
 };
 
 // Reusable function to validate balance selection

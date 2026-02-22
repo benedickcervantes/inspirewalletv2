@@ -26,6 +26,7 @@ export type RootStackParamList = {
     recipientId: string;
   };
   Bdo: undefined;
+  BankingContactInfo: { selectedBank: string };
   Travel: undefined;
   History: undefined;
   Maya: undefined;
