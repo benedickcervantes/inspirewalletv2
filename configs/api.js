@@ -1,7 +1,14 @@
 /**
  * Wallet backend API helpers.
  * Uses EXPO_PUBLIC_WALLET_BACKEND_URL (InpireWalletv3_Backend).
- * Auth endpoints use {base}/auth (no /api prefix).
+ *
+ * Per docs/backenddocs: Base URL is http://localhost:3000 (or deployed URL).
+ * All paths are at root — NO /api prefix. Examples:
+ *   GET /time-deposits, POST /time-deposits
+ *   GET /wallets, POST /wallets/main
+ *   GET /deposit-requests/top-up, POST /deposit-requests/top-up
+ *   etc.
+ * Do NOT set EXPO_PUBLIC_API_PREFIX unless your backend uses /api.
  */
 
 const getBaseUrl = () => {
@@ -12,7 +19,7 @@ const getBaseUrl = () => {
 
 const getWalletBackendUrl = getBaseUrl;
 
-// Optional: set EXPO_PUBLIC_API_PREFIX=api if backend mounts routes under /api
+// Only set EXPO_PUBLIC_API_PREFIX=api if backend mounts ALL routes under /api (docs say no prefix)
 const getApiPrefix = () => {
   const p = process.env.EXPO_PUBLIC_API_PREFIX;
   return p ? `/${p.replace(/^\/|\/$/g, '')}` : '';
@@ -28,15 +35,16 @@ const buildUrl = (path) => {
 
 /**
  * Submit a time deposit request via the backend.
- * POST /time-deposits
+ * POST /time-deposits (no /api prefix)
  * @param {string} accessToken - Backend JWT from AsyncStorage
  * @param {Object} body - { contractPeriod, amount, depositMethod, walletId? (when available_balance) }
  * @returns {Promise<{ success: boolean, data?: object, error?: string }>}
  */
 export async function submitTimeDepositRequest(accessToken, body) {
-  const url = buildUrl('/time-deposits');
-  if (!url) return { success: false, error: 'Backend URL not configured. Set EXPO_PUBLIC_WALLET_BACKEND_URL in .env and restart the app.' };
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: 'Backend URL not configured. Set EXPO_PUBLIC_WALLET_BACKEND_URL in .env.' };
   if (!accessToken) return { success: false, error: 'Not authenticated' };
+  const url = `${base}/time-deposits`;
   try {
     if (__DEV__) console.log('[Deposit API] POST', url, body);
     const res = await fetch(url, {
@@ -60,31 +68,94 @@ export async function submitTimeDepositRequest(accessToken, body) {
   }
 }
 
+function parseTimeDepositsResponse(data) {
+  let list = Array.isArray(data) ? data : null;
+  if (!list && data) {
+    const raw = data.data ?? data.deposits ?? data.timeDeposits ?? data.items;
+    list = Array.isArray(raw) ? raw : (raw?.items ?? raw?.data);
+    if (list && !Array.isArray(list)) list = [];
+  }
+  return Array.isArray(list) ? list : [];
+}
+
 /**
  * Get user's time deposits.
- * GET /time-deposits — requires JWT
+ * GET /time-deposits — requires JWT (no /api prefix, no /contracts).
+ * Uses base URL + /time-deposits directly — same pattern as POST /wallets/main.
  * @param {string} accessToken - Backend JWT
  * @returns {{ success: boolean, deposits?: Array, error?: string }}
  */
 export async function getTimeDeposits(accessToken) {
-  const url = buildUrl('/time-deposits');
-  if (!url) return { success: false, error: 'Backend URL not configured' };
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: 'Backend URL not configured. Set EXPO_PUBLIC_WALLET_BACKEND_URL in .env.' };
   if (!accessToken) return { success: false, error: 'Not authenticated' };
+
+  const url = `${base}/time-deposits`;
+
   try {
+    if (__DEV__) console.log('[TimeDeposits API] GET', url);
     const res = await fetch(url, {
       method: 'GET',
-      headers: { Authorization: `Bearer ${accessToken}` },
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
     });
     const data = await res.json().catch(() => ({}));
+    if (__DEV__) console.log('[TimeDeposits API] Response', res.status, Array.isArray(data) ? `array[${data.length}]` : typeof data);
+
     if (!res.ok) {
       const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || `Request failed (${res.status})`;
       return { success: false, error: msg };
     }
-    const list = Array.isArray(data)
-      ? data
-      : data.data ?? data.deposits ?? data.timeDeposits ?? [];
-    return { success: true, deposits: list };
+
+    const list = parseTimeDepositsResponse(data);
+    const deposits = Array.isArray(list) ? list : [];
+    if (__DEV__) {
+      console.log('[TimeDeposits API] Parsed count:', deposits.length, deposits[0] ? `first: status=${deposits[0].status} amount=${deposits[0].amount}` : '');
+      if (deposits[0]) {
+        const d = deposits[0];
+        console.log('[TimeDeposits API] First deposit referrer:', d.referrer, 'commission:', d.commission ? 'present' : 'absent', 'keys:', d.referrer ? Object.keys(d.referrer) : []);
+      }
+    }
+    return { success: true, deposits };
   } catch (e) {
+    if (__DEV__) console.error('[TimeDeposits API] Error', e);
+    return { success: false, error: e.message || 'Network error' };
+  }
+}
+
+/**
+ * Get interest rate tiers for time deposits.
+ * GET /time-deposits/interest-rates — requires JWT.
+ * @param {string} accessToken - Backend JWT
+ * @param {string} [contractType] - Optional: "sixMonths" | "oneYear" | "twoYears"
+ * @returns {{ success: boolean, tiers?: Array<{ contractType: string, amount: string, interestRate: string }>, error?: string }}
+ */
+export async function getTimeDepositInterestRates(accessToken, contractType) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: 'Backend URL not configured.' };
+  if (!accessToken) return { success: false, error: 'Not authenticated' };
+  let url = `${base}/time-deposits/interest-rates`;
+  if (contractType) {
+    url += `?contractType=${encodeURIComponent(contractType)}`;
+  }
+  try {
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      return { success: false, error: data.message || data.error || `Request failed (${res.status})` };
+    }
+    const tiers = Array.isArray(data) ? data : (data.tiers ?? data.data ?? []);
+    return { success: true, tiers };
+  } catch (e) {
+    if (__DEV__) console.error('[InterestRates API] Error', e);
     return { success: false, error: e.message || 'Network error' };
   }
 }

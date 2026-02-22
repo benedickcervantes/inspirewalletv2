@@ -2,6 +2,8 @@
 
 This document describes the **time deposit** API for the frontend. Users create time deposit requests; admins approve or reject. On approval, the wallet is debited and the deposit becomes active. Agent commission is distributed automatically to referrers (see [API-AGENT-COMMISSION.md](API-AGENT-COMMISSION.md)).
 
+**Referrer (agent) resolution:** When a user requests a time deposit, the system **automatically fetches who referred the investor** from their referral hierarchy. The backend uses the investor's `referredById` chain (up to 3 levels) to determine commission recipients. No referrer fields need to be sent when creating a time deposit as a user; the response will include `commission` and `referrer` when applicable.
+
 ---
 
 ## Base URL & Conventions
@@ -113,7 +115,7 @@ All time deposit endpoints return the same object shape (`TimeDepositWithSchedul
 **`POST /time-deposits`**  
 **Protected:** Yes (JWT).
 
-Creates a PENDING time deposit. No wallet debit until admin approves.
+Creates a PENDING time deposit. No wallet debit until admin approves. The backend **automatically fetches who referred the investor** (the agent) from the user's referral hierarchy; the response includes `commission` and `referrer` when applicable.
 
 **Request body**
 
