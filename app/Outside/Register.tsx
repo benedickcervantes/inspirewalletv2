@@ -58,7 +58,6 @@ export default function Register() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isCountryModalVisible, setIsCountryModalVisible] = useState(false);
 
   const handleNextStep = () => {
@@ -140,7 +139,8 @@ export default function Register() {
 
       await AsyncStorage.setItem('access_token', result.access_token || '');
       await AsyncStorage.setItem('user', JSON.stringify(result.user || {}));
-      setShowSuccessModal(true);
+      await AsyncStorage.setItem('registrationPasscodePending', 'true');
+      (navigation as unknown as NavProp).replace('CreatePasscode');
     } catch (_) {
       setRegisterError('An unexpected error occurred. Please try again.');
     } finally {
@@ -494,49 +494,6 @@ export default function Register() {
           </View>
         </Modal>
 
-        <Modal
-          visible={showSuccessModal}
-          transparent={true}
-          animationType="fade"
-          onRequestClose={() => {
-            setShowSuccessModal(false);
-            navigation.navigate('Welcome');
-          }}
-        >
-          <View style={styles.successModalOverlay}>
-            <View style={styles.successModalContent}>
-              <LinearGradient
-                colors={['#E25A17', '#F28934']}
-                style={styles.successModalGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <View style={styles.successIconContainer}>
-                  <Ionicons name="checkmark-circle" size={80} color="#FFFFFF" />
-                </View>
-                <Text style={styles.successTitle}>Registration Successful!</Text>
-                <Text style={styles.successMessage}>
-                  Your account has been created successfully. Welcome to Inspire!
-                </Text>
-                <TouchableOpacity
-                  style={styles.successButton}
-                  onPress={async () => {
-                    setShowSuccessModal(false);
-                    const userJson = await AsyncStorage.getItem('user');
-                    const user = userJson ? (JSON.parse(userJson) as { hasPasscode?: boolean }) : null;
-                    if (user?.hasPasscode) {
-                      (navigation as unknown as NavProp).replace('Passcode');
-                    } else {
-                      (navigation as unknown as NavProp).replace('Main');
-                    }
-                  }}
-                >
-                  <Text style={styles.successButtonText}>Continue to App</Text>
-                </TouchableOpacity>
-              </LinearGradient>
-            </View>
-          </View>
-        </Modal>
       </SafeAreaView>
     </>
   );

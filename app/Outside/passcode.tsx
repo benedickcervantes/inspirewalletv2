@@ -117,6 +117,7 @@ export default function Passcode() {
   const [confirmNewPasscode, setConfirmNewPasscode] = useState('');
   const [resetLoading, setResetLoading] = useState(false);
   const [loadingPasscode, setLoadingPasscode] = useState(true);
+  const [needsAuth, setNeedsAuth] = useState(false);
 
   const shakeAnim = useRef(new Animated.Value(0)).current;
 
@@ -141,7 +142,7 @@ export default function Passcode() {
       const user = userJson ? (JSON.parse(userJson) as { hasPasscode?: boolean }) : null;
       if (!cancelled) {
         if (!accessToken) {
-          (navigation as unknown as NavProp).replace('Login');
+          setNeedsAuth(true);
         } else if (!user?.hasPasscode) {
           (navigation as unknown as NavProp).replace('Main');
         }
@@ -271,6 +272,27 @@ export default function Passcode() {
             <View style={styles.loadingWrap}>
               <ActivityIndicator size="large" color={WHITE} />
               <Text style={styles.loadingText}>Loading...</Text>
+            </View>
+          ) : needsAuth ? (
+            <View style={styles.needsAuthWrap}>
+              <Text style={styles.needsAuthTitle}>Passcode Login</Text>
+              <Text style={styles.needsAuthMessage}>
+                To use passcode, you need to sign in with your email and password first. Don't have an account?
+              </Text>
+              <View style={styles.needsAuthButtons}>
+                <TouchableOpacity
+                  style={[styles.needsAuthBtn, styles.needsAuthBtnSecondary]}
+                  onPress={() => (navigation as unknown as NavProp).replace('Register')}
+                >
+                  <Text style={styles.needsAuthBtnText}>Register</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.needsAuthBtn, styles.needsAuthBtnPrimary]}
+                  onPress={() => (navigation as unknown as NavProp).replace('Login')}
+                >
+                  <Text style={styles.needsAuthBtnText}>Login</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           ) : (
             <>
@@ -453,6 +475,48 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.9)',
     fontSize: 16,
     marginTop: 12,
+  },
+  needsAuthWrap: {
+    alignItems: 'center',
+    paddingHorizontal: 24,
+  },
+  needsAuthTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: WHITE,
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  needsAuthMessage: {
+    fontSize: 16,
+    color: 'rgba(255,255,255,0.9)',
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 32,
+  },
+  needsAuthButtons: {
+    width: '100%',
+    maxWidth: 280,
+    gap: 14,
+  },
+  needsAuthBtn: {
+    paddingVertical: 16,
+    borderRadius: 999,
+    alignItems: 'center',
+    minHeight: 52,
+  },
+  needsAuthBtnPrimary: {
+    backgroundColor: GRADIENT_START,
+  },
+  needsAuthBtnSecondary: {
+    backgroundColor: 'rgba(255,255,255,0.35)',
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.7)',
+  },
+  needsAuthBtnText: {
+    fontSize: 17,
+    fontWeight: '600',
+    color: WHITE,
   },
   errorText: {
     color: WHITE,
