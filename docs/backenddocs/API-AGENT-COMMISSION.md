@@ -8,6 +8,8 @@ This document describes the **agent commission system** for time deposits and ho
 
 When an admin approves a time deposit creation, the system **automatically** distributes commission to up to 3 referrers in the investor's referral hierarchy. Commission is credited to each referrer's **agent commission balance** on their wallet (same currency as the deposit). Each commission credit is recorded in the **AgentCommission** table for audit and display.
 
+**Referrer resolution:** When a user creates a time deposit request, the backend **automatically fetches who referred the investor** (the agent) from the user's referral hierarchy (via `referredById` set at registration). No frontend input is needed. The same resolution applies to admin-created time deposits unless a manual `referral` override is provided.
+
 ---
 
 ## Commission in Time Deposit Responses
@@ -65,6 +67,8 @@ All time deposit responses include a `commission` field when applicable:
 - **`distribution[].firstName`**, **`distribution[].lastName`** — Referrer's name.
 - **`distribution`** — Per-referrer breakdown. `sharePercent` is 70, 20, 10 for 3 referrers; 70, 30 for 2; 100 for 1.
 - **`commission`** is `null` when the investor has no referrers.
+
+**Referrer field (contract details):** Time deposit responses also include a top-level `referrer` object — the primary agent who referred the investor. Display in contract details as: "Referred by: {firstName} {lastName}" (optionally with referralCode). `referrer` is `null` when the investor has no referrer.
 
 **Formula:**
 - Commission Credit = Investment Amount × Commission Rate × (1 − 20% tax)

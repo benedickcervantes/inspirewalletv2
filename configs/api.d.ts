@@ -22,12 +22,21 @@ export interface GetTransactionsResult {
   error?: string;
 }
 
+export function getMe(
+  accessToken: string
+): Promise<{ success: boolean; user?: unknown; error?: string }>;
+
 export function getOrCreateMainWallet(
   accessToken: string
 ): Promise<GetOrCreateMainWalletResult>;
 export function getTimeDeposits(
   accessToken: string
 ): Promise<GetTimeDepositsResult>;
+
+export function getTimeDepositInterestRates(
+  accessToken: string,
+  contractType?: string
+): Promise<{ success: boolean; tiers?: Array<{ contractType: string; amount: string; interestRate: string }>; error?: string }>;
 export function getTransactions(
   accessToken: string,
   opts?: { walletId?: string; limit?: number; cursor?: string; type?: string }

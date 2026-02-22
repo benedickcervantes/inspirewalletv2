@@ -57,6 +57,9 @@ export default function AuthLoader() {
           return;
         }
 
+        // Always store user so Dashboard has userData (backend-only, no Firebase)
+        await AsyncStorage.setItem("user", JSON.stringify(result.user));
+
         const passcodeLoginComplete = await AsyncStorage.getItem("passcodeLoginComplete");
         const user = result.user as { hasPasscode?: boolean };
 
@@ -67,7 +70,6 @@ export default function AuthLoader() {
         }
 
         if (user?.hasPasscode) {
-          await AsyncStorage.setItem("user", JSON.stringify(result.user));
           await waitMinSplash(startTime);
           goTo("Passcode");
           return;

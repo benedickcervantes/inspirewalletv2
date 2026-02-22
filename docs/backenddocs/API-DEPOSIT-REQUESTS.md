@@ -51,6 +51,8 @@ Returns **all** deposit requests (time deposit, top-up, stock investment) in one
 
 See **[API-TIME-DEPOSITS.md](API-TIME-DEPOSITS.md)** for full documentation.
 
+**Automatic referrer resolution:** When a user creates a time deposit request (`POST /time-deposits`), the system **automatically fetches who referred the investor** (the agent) from the user's referral hierarchy (stored via `referredById` at registration). No referrer input is required. The response includes `commission` (preview of amounts to be distributed to referrers) and `referrer` (primary agent who referred the investor). Admin-created time deposits (`POST /time-deposits/admin`) may optionally override the referrer via the `referral` object; otherwise the same automatic resolution applies.
+
 Summary:
 - **Create request:** `POST /time-deposits` (user). Body: `{ contractType, amount, walletId?, depositSource?, depositMethod? }` or `{ contractPeriod, amount, walletId? }`. Use `contractType`: `"sixMonths"` | `"oneYear"` | `"twoYears"`, or `contractPeriod`: `"6 Months"` | `"1 Year"` | `"2 Years"`. Use `depositMethod`: `"available_balance"` (default, deduct from wallet) or `"request_amount"` (top-up on approval).
 - **Admin create on behalf:** `POST /time-deposits/admin` (ADMIN only) — body includes `userId` or `accountNumber` plus contractType/contractPeriod, amount, walletId, depositSource/depositMethod.
@@ -59,7 +61,7 @@ Summary:
 - **Admin approve:** `POST /time-deposits/:id/approve` (ADMIN only). Body: `{ notes? }`
 - **Admin reject:** `POST /time-deposits/:id/reject` (ADMIN only)
 
-Admin list includes `user` (firstName, lastName, email), `requestType: "time_deposit"`, `requestStatus`, `createdAt` (ISO 8601), and `commission` (for pending).
+Admin list includes `user` (firstName, lastName, email), `requestType: "time_deposit"`, `requestStatus`, `createdAt` (ISO 8601), `commission` (auto-resolved from investor's referral hierarchy), and `referrer` (primary agent who referred the investor).
 
 ---
 
