@@ -1,14 +1,23 @@
 # User Activity API (Admin Frontend Reference)
 
-These endpoints allow admins to check whether users are online or offline and when they were last active. Requires `Authorization: Bearer <admin_token>` and ADMIN role.
+These endpoints allow admins to check whether users are **online** or **offline** and when they were last active. Requires `Authorization: Bearer <admin_token>` and ADMIN role.
 
 **Encryption:** All stored data (lastLoginAt, lastActiveAt, isOnline) is encrypted at rest (AES-256-GCM).
 
 ---
 
+## Online vs Offline
+
+| Status      | Condition                                                                              |
+| ----------- | -------------------------------------------------------------------------------------- |
+| **online**  | User has an active WebSocket connection (app open, connected)                          |
+| **offline** | User has no active WebSocket connection (app closed, disconnected, or never connected) |
+
+---
+
 ## How Activity Is Tracked
 
-- **`isOnline`:** Set to `true` when the user connects via WebSocket (app in foreground, connected). Set to `false` when the user disconnects or closes the app.
+- **`isOnline` / `status`:** `true` / `"online"` when the user connects via WebSocket. `false` / `"offline"` when they disconnect or close the app.
 - **`lastActiveAt`:** Updated when the user logs in and when they connect via WebSocket.
 - **`lastLoginAt`:** Updated when the user logs in (email/password authentication).
 
@@ -21,14 +30,17 @@ These endpoints allow admins to check whether users are online or offline and wh
 Returns activity status for a single user.
 
 **Example**
+
 ```
 GET /user-activity/clxx123
 ```
 
 **Response**
+
 ```json
 {
   "isOnline": true,
+  "status": "online",
   "lastActiveAt": "2026-02-22T12:05:00.000Z",
   "lastLoginAt": "2026-02-22T11:00:00.000Z"
 }
@@ -36,13 +48,15 @@ GET /user-activity/clxx123
 
 **Field descriptions**
 
-| Field         | Description                                         |
-|---------------|-----------------------------------------------------|
-| `isOnline`    | Whether the user has an active WebSocket connection |
-| `lastActiveAt`| Last time the user was active (login or connect)    |
-| `lastLoginAt` | Last time the user logged in                        |
+| Field          | Type     | Description                                                |
+| -------------- | -------- | ---------------------------------------------------------- |
+| `isOnline`     | boolean  | `true` = online, `false` = offline                         |
+| `status`       | string   | `"online"` or `"offline"` — use for UI labels and badges   |
+| `lastActiveAt` | datetime | Last time the user was active (login or WebSocket connect) |
+| `lastLoginAt`  | datetime | Last time the user logged in                               |
 
 **Error responses**
+
 - **404** – User has no activity record yet (e.g. never logged in)
 
 ---
@@ -53,11 +67,12 @@ Returns activity status for multiple users. Use when populating the messaging co
 
 **Query parameters**
 
-| Field    | Type     | Required | Description                               |
-|----------|----------|----------|-------------------------------------------|
-| `userIds`| string[] | Yes      | Comma-separated user IDs, e.g. `id1,id2,id3` |
+| Field     | Type     | Required | Description                                  |
+| --------- | -------- | -------- | -------------------------------------------- |
+| `userIds` | string[] | Yes      | Comma-separated user IDs, e.g. `id1,id2,id3` |
 
 **Example**
+
 ```
 GET /user-activity/bulk?userIds=clxx123,clxx456,clxx789
 ```
@@ -70,11 +85,13 @@ A map of `userId` to activity object. Users without an activity record return `n
 {
   "clxx123": {
     "isOnline": true,
+    "status": "online",
     "lastActiveAt": "2026-02-22T12:05:00.000Z",
     "lastLoginAt": "2026-02-22T11:00:00.000Z"
   },
   "clxx456": {
     "isOnline": false,
+    "status": "offline",
     "lastActiveAt": "2026-02-22T10:30:00.000Z",
     "lastLoginAt": "2026-02-22T10:30:00.000Z"
   },

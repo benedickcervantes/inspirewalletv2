@@ -17,6 +17,8 @@ import {
 } from "react-native";
 import { getMe, getOrCreateMainWallet, getReferralTree, getTimeDeposits, getTransactions } from "../../configs/api";
 import { createRealtimeConnection, startHeartbeat } from "../../configs/realtime";
+import { setConnectionStatus } from "../../lib/connectionStatus";
+import { notifyNewSupportMessage } from "../../lib/messagingEvents";
 import type { NavProp } from "../../types/navigation";
 import CardsTab from "./CardsTab";
 import SavingsTab from "./SavingsTab";
@@ -361,13 +363,18 @@ export default function Dashboard() {
         onTransactionCreated: () => {
           refetchJwtData();
         },
+        onNewSupportMessage: () => {
+          notifyNewSupportMessage();
+        },
         onConnect: () => {
+          setConnectionStatus(true);
           stopPolling();
           if (socket) {
             heartbeatCleanupRef.current = startHeartbeat(socket) as () => void;
           }
         },
         onDisconnect: () => {
+          setConnectionStatus(false);
           heartbeatCleanupRef.current?.();
           heartbeatCleanupRef.current = null;
           startPolling();
@@ -384,6 +391,7 @@ export default function Dashboard() {
 
     return () => {
       cancelled = true;
+      setConnectionStatus(false);
       stopPolling();
       heartbeatCleanupRef.current?.();
       heartbeatCleanupRef.current = null;

@@ -78,3 +78,56 @@ export function resendVerification(email: string): Promise<{
   success: boolean;
   error?: string;
 }>;
+
+// Messaging API (Client)
+export function sendMessage(
+  accessToken: string,
+  content: string
+): Promise<{ success: boolean; id?: string; error?: string }>;
+export function getMessages(
+  accessToken: string,
+  opts?: { page?: number; limit?: number }
+): Promise<{
+  success: boolean;
+  messages?: Array<{
+    id: string;
+    content: string;
+    createdAt: string;
+    status: string;
+    senderName?: string;
+    direction?: "ADMIN_TO_USER" | "USER_TO_ADMIN";
+  }>;
+  pagination?: { total?: number; page?: number; limit?: number; totalPages?: number };
+  error?: string;
+}>;
+export function markMessageAsRead(
+  accessToken: string,
+  messageId: string
+): Promise<{ success: boolean; error?: string }>;
+export function markAllMessagesAsRead(
+  accessToken: string
+): Promise<{ success: boolean; count?: number; error?: string }>;
+
+// User Activity API (Admin)
+export function getUserActivity(
+  adminToken: string,
+  userId: string
+): Promise<{
+  success: boolean;
+  isOnline?: boolean;
+  status?: "online" | "offline";
+  lastActiveAt?: string;
+  lastLoginAt?: string;
+  error?: string;
+}>;
+export function getBulkUserActivity(
+  adminToken: string,
+  userIds: string[]
+): Promise<{
+  success: boolean;
+  activities?: Record<
+    string,
+    { isOnline: boolean; status: string; lastActiveAt: string; lastLoginAt: string } | null
+  >;
+  error?: string;
+}>;

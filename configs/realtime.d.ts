@@ -6,6 +6,7 @@ export interface WalletUpdatePayload {
 export interface RealtimeHandlers {
   onWalletUpdate?: (payload: WalletUpdatePayload) => void;
   onTransactionCreated?: (payload?: unknown) => void;
+  onNewSupportMessage?: (payload?: unknown) => void;
   onConnect?: () => void;
   onDisconnect?: (reason?: string) => void;
   onError?: (err?: unknown) => void;
