@@ -45,3 +45,36 @@ export function getTransactions(
 export function getStockInvestmentDepositRequests(
   accessToken: string
 ): Promise<{ success: boolean; requests?: unknown[]; error?: string }>;
+
+// Auth API
+export function login(
+  email: string,
+  password: string
+): Promise<{ success: boolean; access_token?: string; user?: object; error?: string }>;
+export function register(body: object): Promise<{
+  success: boolean;
+  access_token?: string;
+  user?: object;
+  error?: string;
+}>;
+export function getMe(accessToken: string): Promise<{
+  success: boolean;
+  user?: object;
+  error?: string;
+}>;
+export function setPasscode(
+  accessToken: string,
+  passcode: string
+): Promise<{ success: boolean; error?: string }>;
+export function verifyPasscode(
+  accessToken: string,
+  passcode: string
+): Promise<{ success: boolean; error?: string }>;
+export function verifyEmail(
+  email: string,
+  otp: string
+): Promise<{ success: boolean; error?: string }>;
+export function resendVerification(email: string): Promise<{
+  success: boolean;
+  error?: string;
+}>;

@@ -10,11 +10,17 @@ export type RootStackParamList = {
   Welcome: undefined;
   Login: undefined;
   Register: undefined;
+  CreatePasscode: undefined;
   Passcode: undefined;
   Main: undefined;
   Personal: undefined;
   Notification: undefined;
   Settings: undefined;
+  Aboutus: undefined;
+  DeleteAccount: undefined;
+  HelpCenter: undefined;
+  PrivacyPolicy: undefined;
+  TermsConditions: undefined;
   Transfer: undefined;
   TransferRecipient: { balanceType: string };
   TransferConfirm: {
@@ -26,6 +32,7 @@ export type RootStackParamList = {
     recipientId: string;
   };
   Bdo: undefined;
+  Message: undefined;
   BankingContactInfo: { selectedBank: string };
   BankingPersonalInfo: { selectedBank: string };
   BankingAddressInfo: { selectedBank: string };
