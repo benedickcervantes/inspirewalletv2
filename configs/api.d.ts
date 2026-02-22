@@ -32,3 +32,7 @@ export function getTransactions(
   accessToken: string,
   opts?: { walletId?: string; limit?: number; cursor?: string; type?: string }
 ): Promise<GetTransactionsResult>;
+
+export function getStockInvestmentDepositRequests(
+  accessToken: string
+): Promise<{ success: boolean; requests?: unknown[]; error?: string }>;
