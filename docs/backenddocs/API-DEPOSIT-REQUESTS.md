@@ -12,18 +12,18 @@ Returns **all** deposit requests (time deposit, top-up, stock investment) in one
 
 **Query parameters**
 
-| Parameter     | Type   | Required | Description                                                             |
-| ------------- | ------ | -------- | ----------------------------------------------------------------------- |
-| `status`      | string | No       | `PENDING` \| `APPROVED` \| `REJECTED`. Omit for ALL.                    |
-| `requestType` | string | No       | `time_deposit` \| `stock_investment` \| `top_up_balance`. Omit for ALL. |
+| Parameter     | Type   | Required | Description                                                                 |
+|---------------|--------|----------|-----------------------------------------------------------------------------|
+| `status`      | string | No       | `PENDING` \| `APPROVED` \| `REJECTED`. Omit for ALL.                        |
+| `requestType` | string | No       | `time_deposit` \| `stock_investment` \| `top_up_balance`. Omit for ALL.     |
 
 **Example calls**
 
-| Dropdown 1 (Status) | Dropdown 2 (Type) | Request                                                                  |
-| ------------------- | ----------------- | ------------------------------------------------------------------------ |
-| ALL                 | ALL               | `GET /deposit-requests/admin`                                            |
-| PENDING             | ALL               | `GET /deposit-requests/admin?status=PENDING`                             |
-| APPROVED            | TIME DEPOSIT      | `GET /deposit-requests/admin?status=APPROVED&requestType=time_deposit`   |
+| Dropdown 1 (Status) | Dropdown 2 (Type) | Request |
+|---------------------|-------------------|---------|
+| ALL                 | ALL               | `GET /deposit-requests/admin` |
+| PENDING             | ALL               | `GET /deposit-requests/admin?status=PENDING` |
+| APPROVED            | TIME DEPOSIT      | `GET /deposit-requests/admin?status=APPROVED&requestType=time_deposit` |
 | REJECTED            | TOP UP            | `GET /deposit-requests/admin?status=REJECTED&requestType=top_up_balance` |
 
 **Response:** Array of deposit requests. Each item includes:
@@ -52,7 +52,6 @@ Returns **all** deposit requests (time deposit, top-up, stock investment) in one
 See **[API-TIME-DEPOSITS.md](API-TIME-DEPOSITS.md)** for full documentation.
 
 Summary:
-
 - **Create request:** `POST /time-deposits` (user). Body: `{ contractType, amount, walletId?, depositSource?, depositMethod? }` or `{ contractPeriod, amount, walletId? }`. Use `contractType`: `"sixMonths"` | `"oneYear"` | `"twoYears"`, or `contractPeriod`: `"6 Months"` | `"1 Year"` | `"2 Years"`. Use `depositMethod`: `"available_balance"` (default, deduct from wallet) or `"request_amount"` (top-up on approval).
 - **Admin create on behalf:** `POST /time-deposits/admin` (ADMIN only) — body includes `userId` or `accountNumber` plus contractType/contractPeriod, amount, walletId, depositSource/depositMethod.
 - **Admin list:** Use unified `GET /deposit-requests/admin?requestType=time_deposit` or `GET /time-deposits/admin?status=PENDING|APPROVED|REJECTED` (time deposit only). Optionally filter by user: `GET /time-deposits/admin?userId=xxx` or `?accountNumber=xxx`.
@@ -102,11 +101,11 @@ Admin list includes `user` (firstName, lastName, email), `requestType: "time_dep
 
 **Top-up create request body** — `POST /deposit-requests/top-up`
 
-| Field       | Type   | Required | Description                                       |
-| ----------- | ------ | -------- | ------------------------------------------------- |
-| `walletId`  | string | Yes      | Target wallet ID                                  |
-| `amount`    | string | Yes      | Decimal (e.g. `"1000.50"`). Max 2 decimal places. |
-| `reference` | string | No       | Payment reference (e.g. bank)                     |
+| Field       | Type   | Required | Description                    |
+|------------|--------|----------|--------------------------------|
+| `walletId` | string | Yes      | Target wallet ID               |
+| `amount`   | string | Yes      | Decimal (e.g. `"1000.50"`). Max 2 decimal places. |
+| `reference`| string | No       | Payment reference (e.g. bank)  |
 
 **Example request**
 
@@ -160,11 +159,11 @@ Only these fields are allowed. The backend identifies the user from the JWT (`us
 
 **Stock investment create request body** — `POST /deposit-requests/stock-investment`
 
-| Field         | Type   | Required | Description                                       |
-| ------------- | ------ | -------- | ------------------------------------------------- |
-| `walletId`    | string | Yes      | Source wallet ID                                  |
-| `amount`      | string | Yes      | Decimal (e.g. `"5000.00"`). Max 2 decimal places. |
-| `stockSymbol` | string | No       | Stock symbol (optional)                           |
+| Field        | Type   | Required | Description           |
+|-------------|--------|----------|-----------------------|
+| `walletId`  | string | Yes      | Source wallet ID      |
+| `amount`    | string | Yes      | Decimal (e.g. `"5000.00"`). Max 2 decimal places. |
+| `stockSymbol` | string | No     | Stock symbol (optional) |
 
 **Example request**
 
@@ -189,9 +188,9 @@ For **top-up** and **stock investment** approve/reject endpoints:
 - `POST /deposit-requests/admin/stock-investment/:id/approve`
 - `POST /deposit-requests/admin/stock-investment/:id/reject`
 
-| Field   | Type   | Required | Description                 |
-| ------- | ------ | -------- | --------------------------- |
-| `notes` | string | No       | Admin notes (max 500 chars) |
+| Field  | Type   | Required | Description              |
+|--------|--------|----------|--------------------------|
+| `notes`| string | No       | Admin notes (max 500 chars) |
 
 **Example**
 

@@ -23,14 +23,14 @@ This document describes how the frontend should use the **Transactions** API. Ev
 
 **Transaction types (API name → meaning for the frontend)**
 
-| API `type`     | Meaning / display idea                                | Balance effect    |
-| -------------- | ----------------------------------------------------- | ----------------- |
-| `TOP_UP`       | **Deposit** (money in: card, bank, cash-in)           | Balance increases |
-| `PAYMENT`      | **Withdraw** (money out: to bank, merchant, cash-out) | Balance decreases |
-| `TRANSFER_OUT` | Sent to another user’s wallet                         | Balance decreases |
-| `TRANSFER_IN`  | Received from another user                            | Balance increases |
-| `FEE`          | Fee deducted                                          | Balance decreases |
-| `REFUND`       | Refund received                                       | Balance increases |
+| API `type`     | Meaning / display idea        | Balance effect      |
+|----------------|--------------------------------|---------------------|
+| `TOP_UP`       | **Deposit** (money in: card, bank, cash-in) | Balance increases   |
+| `PAYMENT`      | **Withdraw** (money out: to bank, merchant, cash-out) | Balance decreases   |
+| `TRANSFER_OUT` | Sent to another user’s wallet  | Balance decreases   |
+| `TRANSFER_IN`  | Received from another user     | Balance increases   |
+| `FEE`          | Fee deducted                   | Balance decreases   |
+| `REFUND`       | Refund received                | Balance increases   |
 
 Use these types when showing labels (e.g. show “Deposit” for `TOP_UP`, “Withdraw” for `PAYMENT`) and when building statements or filters.
 
@@ -49,12 +49,12 @@ Returns transactions for the authenticated user. Optionally filter by a single w
 
 **Query parameters**
 
-| Parameter  | Type   | Required | Description                                                                |
-| ---------- | ------ | -------- | -------------------------------------------------------------------------- |
+| Parameter  | Type   | Required | Description                                                                 |
+|------------|--------|----------|-----------------------------------------------------------------------------|
 | `walletId` | string | No       | If provided, only transactions for this wallet (must belong to the user).  |
-| `userId`   | string | No       | **ADMIN only.** If provided, list that user's transactions instead of own. |
+| `userId`   | string | No       | **ADMIN only.** If provided, list that user's transactions instead of own.  |
 | `limit`    | string | No       | Max number of items (default 50, max 100). Parsed as integer.              |
-| `cursor`   | string | No       | Transaction ID for cursor-based pagination (next page).                    |
+| `cursor`   | string | No       | Transaction ID for cursor-based pagination (next page).                     |
 
 **Request**
 
@@ -109,11 +109,11 @@ Authorization: Bearer <admin_token>
 
 **Error responses**
 
-- **404 Not Found** – `walletId` was provided but wallet not found or not owned by the user
+- **404 Not Found** – `walletId` was provided but wallet not found or not owned by the user  
   ```json
   { "statusCode": 404, "message": "Wallet not found", "error": "Not Found" }
   ```
-- **401 Unauthorized** – Missing or invalid/expired token
+- **401 Unauthorized** – Missing or invalid/expired token  
   ```json
   { "statusCode": 401, "message": "Unauthorized" }
   ```
@@ -138,13 +138,9 @@ Same shape as a single transaction object in the list (see **Transaction object*
 
 **Error responses**
 
-- **404 Not Found** – Transaction not found or its wallet is not owned by the user
+- **404 Not Found** – Transaction not found or its wallet is not owned by the user  
   ```json
-  {
-    "statusCode": 404,
-    "message": "Transaction not found",
-    "error": "Not Found"
-  }
+  { "statusCode": 404, "message": "Transaction not found", "error": "Not Found" }
   ```
 - **401 Unauthorized** – Missing or invalid/expired token
 
@@ -159,17 +155,17 @@ Creates a transaction record (audit row). The wallet must belong to the authenti
 
 **Request body**
 
-| Field         | Type   | Required | Validation                                      | Description                                   |
-| ------------- | ------ | -------- | ----------------------------------------------- | --------------------------------------------- |
-| `walletId`    | string | Yes      | —                                               | Wallet this transaction applies to            |
-| `toWalletId`  | string | No       | —                                               | For transfers: the counterpart wallet         |
-| `amount`      | string | Yes      | Decimal, up to 2 decimal places (e.g. `100.50`) | Amount (stored encrypted)                     |
-| `currencyId`  | string | Yes      | Must match the wallet’s currency                | Currency ID (audit)                           |
-| `type`        | string | Yes      | See **Transaction types** below                 | Kind of transaction                           |
-| `status`      | string | No       | See **Transaction statuses** below              | Default: `PENDING`                            |
-| `externalId`  | string | No       | Max 512 characters                              | External reference (e.g. payment gateway id)  |
-| `description` | string | No       | Max 2000 characters                             | Human-readable description                    |
-| `metadata`    | object | No       | Valid JSON object                               | Arbitrary key-value data (e.g. source, last4) |
+| Field        | Type   | Required | Validation                                    | Description                                      |
+|-------------|--------|----------|-----------------------------------------------|--------------------------------------------------|
+| `walletId`  | string | Yes      | —                                             | Wallet this transaction applies to               |
+| `toWalletId`| string | No       | —                                             | For transfers: the counterpart wallet            |
+| `amount`    | string | Yes      | Decimal, up to 2 decimal places (e.g. `100.50`) | Amount (stored encrypted)                        |
+| `currencyId` | string | Yes      | Must match the wallet’s currency              | Currency ID (audit)                              |
+| `type`      | string | Yes      | See **Transaction types** below               | Kind of transaction                             |
+| `status`    | string | No       | See **Transaction statuses** below            | Default: `PENDING`                              |
+| `externalId`| string | No       | Max 512 characters                            | External reference (e.g. payment gateway id)     |
+| `description` | string | No     | Max 2000 characters                           | Human-readable description                       |
+| `metadata`  | object | No       | Valid JSON object                             | Arbitrary key-value data (e.g. source, last4)   |
 
 **Transaction types:** `TOP_UP`, `TRANSFER_OUT`, `TRANSFER_IN`, `PAYMENT`, `FEE`, `REFUND`
 
@@ -210,38 +206,34 @@ Same shape as a single transaction object (includes decrypted `amount`, `descrip
 
 **Error responses**
 
-- **404 Not Found** – Wallet not found or not owned by the user
+- **404 Not Found** – Wallet not found or not owned by the user  
   ```json
   { "statusCode": 404, "message": "Wallet not found", "error": "Not Found" }
   ```
-- **404 Not Found** – Currency does not match the wallet
+- **404 Not Found** – Currency does not match the wallet  
   ```json
-  {
-    "statusCode": 404,
-    "message": "Currency does not match wallet",
-    "error": "Not Found"
-  }
+  { "statusCode": 404, "message": "Currency does not match wallet", "error": "Not Found" }
   ```
-- **400 Bad Request** – Validation failed (e.g. invalid `amount`, `type`, or `status`)
+- **400 Bad Request** – Validation failed (e.g. invalid `amount`, `type`, or `status`)  
 - **401 Unauthorized** – Missing or invalid/expired token
 
 ---
 
 ## Transaction object (in responses)
 
-| Field         | Type           | Description                                                                 |
-| ------------- | -------------- | --------------------------------------------------------------------------- |
-| `id`          | string         | Unique transaction ID (cuid)                                                |
-| `walletId`    | string         | Wallet this transaction applies to                                          |
-| `toWalletId`  | string \| null | For transfers: the other wallet; otherwise `null`                           |
-| `amount`      | string         | Amount as decimal string (e.g. `"100.50"`) — decrypted by backend           |
-| `currency`    | object         | Currency at time of transaction (decrypted `name`, `symbol`; see below)     |
-| `type`        | string         | One of: `TOP_UP`, `TRANSFER_OUT`, `TRANSFER_IN`, `PAYMENT`, `FEE`, `REFUND` |
-| `status`      | string         | One of: `PENDING`, `COMPLETED`, `FAILED`, `REVERSED`                        |
-| `externalId`  | string \| null | External reference (e.g. payment id) — decrypted                            |
-| `description` | string \| null | Human-readable description — decrypted                                      |
-| `metadata`    | object \| null | Arbitrary JSON — decrypted                                                  |
-| `createdAt`   | string         | ISO 8601 date-time                                                          |
+| Field        | Type   | Description                                                                 |
+|-------------|--------|-----------------------------------------------------------------------------|
+| `id`        | string | Unique transaction ID (cuid)                                                |
+| `walletId`  | string | Wallet this transaction applies to                                          |
+| `toWalletId`| string \| null | For transfers: the other wallet; otherwise `null`                   |
+| `amount`    | string | Amount as decimal string (e.g. `"100.50"`) — decrypted by backend           |
+| `currency`  | object | Currency at time of transaction (decrypted `name`, `symbol`; see below)      |
+| `type`      | string | One of: `TOP_UP`, `TRANSFER_OUT`, `TRANSFER_IN`, `PAYMENT`, `FEE`, `REFUND` |
+| `status`    | string | One of: `PENDING`, `COMPLETED`, `FAILED`, `REVERSED`                        |
+| `externalId`| string \| null | External reference (e.g. payment id) — decrypted                         |
+| `description` | string \| null | Human-readable description — decrypted                                   |
+| `metadata`  | object \| null | Arbitrary JSON — decrypted                                               |
+| `createdAt` | string | ISO 8601 date-time                                                          |
 
 ---
 
@@ -249,14 +241,14 @@ Same shape as a single transaction object (includes decrypted `amount`, `descrip
 
 Same as in the Wallets API:
 
-| Field       | Type           | Description                           |
-| ----------- | -------------- | ------------------------------------- |
-| `id`        | string         | Unique currency ID (cuid)             |
-| `code`      | string         | 3-letter ISO code (e.g. `PHP`, `USD`) |
-| `name`      | string         | Display name (e.g. Philippine Peso)   |
-| `symbol`    | string \| null | Symbol (e.g. ₱, $)                    |
-| `createdAt` | string         | ISO 8601 date-time                    |
-| `updatedAt` | string         | ISO 8601 date-time                    |
+| Field       | Type   | Description                          |
+|------------|--------|--------------------------------------|
+| `id`       | string | Unique currency ID (cuid)            |
+| `code`     | string | 3-letter ISO code (e.g. `PHP`, `USD`)|
+| `name`     | string | Display name (e.g. Philippine Peso)  |
+| `symbol`   | string \| null | Symbol (e.g. ₱, $)              |
+| `createdAt`| string | ISO 8601 date-time                   |
+| `updatedAt`| string | ISO 8601 date-time                   |
 
 ---
 

@@ -14,11 +14,11 @@ This document describes the **time deposit** API for the frontend. Users create 
 
 ## Contract Types
 
-| Value       | Term      | Dividend Payouts   |
-| ----------- | --------- | ------------------ |
-| `sixMonths` | 6 months  | 1 (at maturity)    |
-| `oneYear`   | 12 months | 2 (every 6 months) |
-| `twoYears`  | 24 months | 4 (every 6 months) |
+| Value | Term | Dividend Payouts |
+|-------|------|------------------|
+| `sixMonths` | 6 months | 1 (at maturity) |
+| `oneYear` | 12 months | 2 (every 6 months) |
+| `twoYears` | 24 months | 4 (every 6 months) |
 
 - **Minimum investment:** 50,000 PHP (or equivalent in deposit currency)
 - **Dividend:** Computed per 6‑month period, 20% tax withheld
@@ -30,10 +30,10 @@ This document describes the **time deposit** API for the frontend. Users create 
 
 When creating a time deposit, the user chooses how the amount will be funded:
 
-| Value                         | Description                                                                                                                                                         |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `AVAILABLE_BALANCE` (default) | Deduct from user's wallet. Requires sufficient balance at creation. On approval, wallet is debited and InspireBank receives the funds.                              |
-| `REQUEST_AMOUNT`              | No deduction at creation. On approval, the amount is credited to the user (top-up flow), then debited for the time deposit. Same flow as external deposit approval. |
+| Value | Description |
+|-------|-------------|
+| `AVAILABLE_BALANCE` (default) | Deduct from user's wallet. Requires sufficient balance at creation. On approval, wallet is debited and InspireBank receives the funds. |
+| `REQUEST_AMOUNT` | No deduction at creation. On approval, the amount is credited to the user (top-up flow), then debited for the time deposit. Same flow as external deposit approval. |
 
 - **`available_balance`**: User must have the amount in their wallet. On approval: debit wallet → add to InspireBank → time deposit active.
 - **`request_amount`**: User requests the amount (e.g. will deposit externally). On approval: credit user (top-up + InspireBank) → debit for time deposit → active. No prior balance required.
@@ -50,6 +50,7 @@ All time deposit endpoints return the same object shape (`TimeDepositWithSchedul
   "contractType": "oneYear",
   "depositSource": "AVAILABLE_BALANCE",
   "amount": "500000.00",
+  "createdAt": "2026-02-22T02:20:00.000Z",
   "interestRate": "5.25",
   "status": "PENDING",
   "startDate": null,
@@ -76,31 +77,32 @@ All time deposit endpoints return the same object shape (`TimeDepositWithSchedul
 }
 ```
 
-| Field                   | Type                                              | Description                                                                            |
-| ----------------------- | ------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| `id`                    | string                                            | Time deposit id                                                                        |
-| `contractType`          | `sixMonths` \| `oneYear` \| `twoYears`            | Contract term                                                                          |
-| `depositSource`         | `AVAILABLE_BALANCE` \| `REQUEST_AMOUNT`           | How the amount is funded (see below)                                                   |
-| `amount`                | string                                            | Investment amount                                                                      |
-| `interestRate`          | string                                            | Interest rate (e.g. `"5.25"` for 5.25%)                                                |
-| `status`                | `PENDING` \| `ACTIVE` \| `MATURED` \| `CANCELLED` | Status                                                                                 |
-| `startDate`             | string \| null                                    | Start date (YYYY-MM-DD) when ACTIVE                                                    |
-| `maturityDate`          | string \| null                                    | Maturity date when ACTIVE                                                              |
-| `projectedStartDate`    | string                                            | Projected start (for PENDING) or same as startDate                                     |
-| `projectedMaturityDate` | string                                            | Projected maturity                                                                     |
-| `payoutSchedule`        | array                                             | Dividend schedule (see below)                                                          |
-| `commission`            | object \| null                                    | Commission preview or credited; see [API-AGENT-COMMISSION.md](API-AGENT-COMMISSION.md) |
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | Time deposit id |
+| `contractType` | `sixMonths` \| `oneYear` \| `twoYears` | Contract term |
+| `depositSource` | `AVAILABLE_BALANCE` \| `REQUEST_AMOUNT` | How the amount is funded (see below) |
+| `amount` | string | Investment amount |
+| `createdAt` | string | Creation date in ISO 8601 format (e.g. `"2026-02-22T02:20:00.000Z"`) |
+| `interestRate` | string | Interest rate (e.g. `"5.25"` for 5.25%) |
+| `status` | `PENDING` \| `ACTIVE` \| `MATURED` \| `CANCELLED` | Status |
+| `startDate` | string \| null | Start date (YYYY-MM-DD) when ACTIVE |
+| `maturityDate` | string \| null | Maturity date when ACTIVE |
+| `projectedStartDate` | string | Projected start (for PENDING) or same as startDate |
+| `projectedMaturityDate` | string | Projected maturity |
+| `payoutSchedule` | array | Dividend schedule (see below) |
+| `commission` | object \| null | Commission preview or credited; see [API-AGENT-COMMISSION.md](API-AGENT-COMMISSION.md) |
 
 **Payout schedule item:**
 
-| Field               | Type                | Description                           |
-| ------------------- | ------------------- | ------------------------------------- |
-| `payoutIndex`       | number              | 1-based index                         |
-| `expectedDate`      | string              | YYYY-MM-DD                            |
-| `amount`            | string              | Dividend amount (after tax)           |
-| `status`            | `PENDING` \| `PAID` | Payout status                         |
-| `isLastPayout`      | boolean?            | True for final payout                 |
-| `principalReturned` | string?             | Principal returned (last payout only) |
+| Field | Type | Description |
+|-------|------|-------------|
+| `payoutIndex` | number | 1-based index |
+| `expectedDate` | string | YYYY-MM-DD |
+| `amount` | string | Dividend amount (after tax) |
+| `status` | `PENDING` \| `PAID` | Payout status |
+| `isLastPayout` | boolean? | True for final payout |
+| `principalReturned` | string? | Principal returned (last payout only) |
 
 ---
 
@@ -115,14 +117,14 @@ Creates a PENDING time deposit. No wallet debit until admin approves.
 
 **Request body**
 
-| Field            | Type                                    | Required | Description                                                                           |
-| ---------------- | --------------------------------------- | -------- | ------------------------------------------------------------------------------------- |
-| `contractType`   | `sixMonths` \| `oneYear` \| `twoYears`  | Yes\*    | Contract term (use this or `contractPeriod`)                                          |
-| `contractPeriod` | string                                  | Yes\*    | Alias for contractType. Accepts `"6 Months"`, `"1 Year"`, `"2 Years"` or enum values. |
-| `amount`         | string                                  | Yes      | Decimal with up to 2 places (e.g. `"50000.00"`)                                       |
-| `walletId`       | string                                  | No       | Wallet to debit. Defaults to user's main PHP wallet.                                  |
-| `depositSource`  | `AVAILABLE_BALANCE` \| `REQUEST_AMOUNT` | No       | How the amount is funded. Default `AVAILABLE_BALANCE`.                                |
-| `depositMethod`  | string                                  | No       | Alias for depositSource. Accepts `"available_balance"` or `"request_amount"`.         |
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `contractType` | `sixMonths` \| `oneYear` \| `twoYears` | Yes* | Contract term (use this or `contractPeriod`) |
+| `contractPeriod` | string | Yes* | Alias for contractType. Accepts `"6 Months"`, `"1 Year"`, `"2 Years"` or enum values. |
+| `amount` | string | Yes | Decimal with up to 2 places (e.g. `"50000.00"`) |
+| `walletId` | string | No | Wallet to debit. Defaults to user's main PHP wallet. |
+| `depositSource` | `AVAILABLE_BALANCE` \| `REQUEST_AMOUNT` | No | How the amount is funded. Default `AVAILABLE_BALANCE`. |
+| `depositMethod` | string | No | Alias for depositSource. Accepts `"available_balance"` or `"request_amount"`. |
 
 \* Provide either `contractType` or `contractPeriod` (not both required).
 
@@ -219,9 +221,9 @@ User requests early withdrawal. Sets `cancellationRequestedAt`; admin must appro
 
 **Query parameters**
 
-| Parameter      | Type                                   | Required | Description             |
-| -------------- | -------------------------------------- | -------- | ----------------------- |
-| `contractType` | `sixMonths` \| `oneYear` \| `twoYears` | No       | Filter by contract type |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `contractType` | `sixMonths` \| `oneYear` \| `twoYears` | No | Filter by contract type |
 
 **Response:** Array of tiers
 
@@ -253,13 +255,35 @@ Creates or updates an interest rate tier for a contract type and amount.
 
 **Request body**
 
-| Field          | Type                                   | Required | Description                 |
-| -------------- | -------------------------------------- | -------- | --------------------------- |
-| `contractType` | `sixMonths` \| `oneYear` \| `twoYears` | Yes      | Contract type               |
-| `amount`       | string                                 | Yes      | Decimal (e.g. `"50000.00"`) |
-| `interestRate` | string                                 | Yes      | Rate (e.g. `"5.00"` for 5%) |
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `contractType` | `sixMonths` \| `oneYear` \| `twoYears` | Yes | Contract type |
+| `amount` | string | Yes | Decimal (e.g. `"50000.00"`) |
+| `interestRate` | string | Yes | Rate (e.g. `"5.00"` for 5%) |
 
 **Response:** `{ id, contractType, amount, interestRate }`
+
+---
+
+### Admin create time deposit
+
+**`POST /time-deposits/admin`**  
+**Protected:** Yes. **ADMIN** only.
+
+Creates a PENDING time deposit on behalf of a user. Same response shape as `POST /time-deposits`, plus `commission` preview when applicable.
+
+**Request body:** Same as user create, plus `userId` or `accountNumber`, and optional admin overrides:
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `userId` \| `accountNumber` | string | One required | Target user |
+| `interestRate` | string | No | Custom rate override (e.g. "5.25"). Omit for tier interpolation. |
+| `referral` | object | No | Manual referrer override for agent commission. |
+| `referral.referrerUserId` | string | Yes (if referral) | User ID of the referrer/agent |
+| `referral.commissionPercentage` | number | No | Override commission % (0-100). |
+| `referral.mode` | string | No | "manual" (single referrer) or "hierarchy" (referrer + upline). |
+
+See [API-ADMIN-DEPOSIT-WITHDRAW.md](API-ADMIN-DEPOSIT-WITHDRAW.md) for full request body and examples.
 
 ---
 
@@ -268,7 +292,7 @@ Creates or updates an interest rate tier for a contract type and amount.
 **`GET /time-deposits/admin/pending`**  
 **Protected:** Yes. **ADMIN** only.
 
-Returns all PENDING time deposits for approval. Each item includes `userId` and `user` (firstName, lastName, email).
+Returns all PENDING time deposits for approval. Each item includes `userId`, `user` (firstName, lastName, email), `requestType`, and `createdAt` (aligned with top-up and stock investment request formats).
 
 **Response:** Array of `TimeDepositForAdminList`
 
@@ -279,6 +303,8 @@ Returns all PENDING time deposits for approval. Each item includes `userId` and 
     "userId": "clxx...",
     "contractType": "oneYear",
     "depositSource": "REQUEST_AMOUNT",
+    "requestType": "time_deposit",
+    "createdAt": "2026-02-22T02:20:00.000Z",
     "amount": "500000.00",
     "interestRate": "5.25",
     "status": "PENDING",
@@ -315,9 +341,9 @@ Approves a PENDING time deposit. Behavior depends on `depositSource`:
 
 **Request body**
 
-| Field   | Type   | Required | Description                          |
-| ------- | ------ | -------- | ------------------------------------ |
-| `notes` | string | No       | Optional admin notes. Max 500 chars. |
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `notes` | string | No | Optional admin notes. Max 500 chars. |
 
 **Example**
 
