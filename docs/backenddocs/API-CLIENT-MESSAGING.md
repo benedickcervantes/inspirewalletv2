@@ -1,6 +1,6 @@
 # Client Messaging API (Frontend Reference)
 
-These endpoints allow app users to view support messages from Inspire Wallet Customer Support and mark them as read.
+These endpoints allow app users to message Inspire Wallet Customer Support and view the two-way conversation. **Either the user or admin can start the conversation.**
 
 **Encryption:** Message content, status, direction, and read timestamp are encrypted at rest (AES-256-GCM).
 
@@ -16,9 +16,35 @@ These endpoints allow app users to view support messages from Inspire Wallet Cus
 
 ## Endpoints
 
-### 1. List Messages (GET /messages)
+### 1. Send Message (POST /messages)
 
-List the current user's support messages (conversation with admin). Messages are ordered by newest first.
+Send a message to support. Use this to start a new conversation or reply to an existing one.
+
+**Request body**
+
+| Field    | Type   | Required | Description                    |
+|----------|--------|----------|--------------------------------|
+| `content`| string | Yes      | Message content (1–10000 chars)|
+
+**Example**
+```json
+{
+  "content": "I need help with my withdrawal request."
+}
+```
+
+**Response**
+```json
+{
+  "id": "clxx..."
+}
+```
+
+---
+
+### 2. List Messages (GET /messages)
+
+List the current user's messages (two-way conversation with support). Shows both messages from the user and from Inspire Wallet Customer Support. Messages are ordered by newest first.
 
 **Query parameters**
 
@@ -41,14 +67,16 @@ GET /messages?page=1&limit=20
       "content": "Your withdrawal has been approved. The funds will arrive within 1–2 business days.",
       "createdAt": "2026-02-22T12:00:00.000Z",
       "status": "READ",
-      "senderName": "Inspire Wallet Customer Support"
+      "senderName": "Inspire Wallet Customer Support",
+      "direction": "ADMIN_TO_USER"
     },
     {
       "id": "clxx...",
-      "content": "We have received your withdrawal request.",
-      "createdAt": "2026-02-20T10:00:00.000Z",
-      "status": "READ",
-      "senderName": "Inspire Wallet Customer Support"
+      "content": "I need help with my withdrawal.",
+      "createdAt": "2026-02-20T09:00:00.000Z",
+      "status": "SENT",
+      "senderName": "You",
+      "direction": "USER_TO_ADMIN"
     }
   ],
   "pagination": {
@@ -68,11 +96,12 @@ GET /messages?page=1&limit=20
 | `content`   | Message body                                                  |
 | `createdAt` | Date/time when the message was sent                           |
 | `status`    | `SENT` or `READ`                                              |
-| `senderName`| Always `"Inspire Wallet Customer Support"` for admin messages  |
+| `senderName`| `"Inspire Wallet Customer Support"` for admin messages, `"You"` for user's own messages |
+| `direction` | `ADMIN_TO_USER` or `USER_TO_ADMIN`                            |
 
 ---
 
-### 2. Mark Message as Read (PATCH /messages/:id/read)
+### 3. Mark Message as Read (PATCH /messages/:id/read)
 
 Mark a single message as read.
 
@@ -94,7 +123,7 @@ PATCH /messages/clxx123/read
 
 ---
 
-### 3. Mark All as Read (PATCH /messages/read-all)
+### 4. Mark All as Read (PATCH /messages/read-all)
 
 Mark all unread support messages as read.
 
@@ -137,6 +166,7 @@ See [API-REALTIME.md](API-REALTIME.md) for WebSocket connection details.
 
 | Action          | Endpoint               | Method |
 |-----------------|------------------------|--------|
+| Send message    | /messages              | POST   |
 | List messages   | /messages              | GET    |
 | Mark one read   | /messages/:id/read     | PATCH  |
 | Mark all read   | /messages/read-all     | PATCH  |
