@@ -5,16 +5,16 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useState } from "react";
 import {
-    KeyboardAvoidingView,
-    Platform,
-    SafeAreaView,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  KeyboardAvoidingView,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import type { RootStackParamList } from "../../../types/navigation";
 
@@ -41,8 +41,7 @@ export default function BankingContactInfo() {
     // Basic validation for required fields
     if (!email.trim()) return;
     if (!mobileNumber.trim()) return;
-    // Navigate to next step when implemented
-    navigation.goBack();
+    navigation.navigate("BankingPersonalInfo", { selectedBank });
   };
 
   return (

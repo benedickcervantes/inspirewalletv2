@@ -1,6 +1,6 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
-import type { NavProp } from "../../types/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Animated,
@@ -15,15 +15,15 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getOrCreateMainWallet, getTimeDeposits, getTransactions } from "../../configs/api";
-import { createRealtimeConnection, startHeartbeat } from "../../configs/realtime";
 import {
   auth,
   subscribeToNotifications,
   subscribeToTransactions,
   subscribeToUser,
 } from "../../configs/firebase";
+import { createRealtimeConnection, startHeartbeat } from "../../configs/realtime";
+import type { NavProp } from "../../types/navigation";
 import CardsTab from "./CardsTab";
 import SavingsTab from "./SavingsTab";
 import WalletTab from "./WalletTab";
@@ -66,6 +66,20 @@ interface PayoutScheduleItem {
   principalReturned?: string;
 }
 
+// Wallet shape from API (wallet may be typed as object)
+interface RawApiWallet {
+  id?: string;
+  balance?: number | string;
+}
+
+// Raw transaction shape from API (transactions array is unknown[])
+interface RawApiTransaction {
+  id?: unknown;
+  type?: unknown;
+  amount?: unknown;
+  createdAt?: unknown;
+}
+
 interface TimeDeposit {
   id: string;
   contractType: string;
@@ -81,6 +95,7 @@ interface TimeDeposit {
   dividendEarned?: string;
   dividend?: string;
   payoutSchedule?: PayoutScheduleItem[];
+  payout_schedule?: PayoutScheduleItem[]; // API may return snake_case
 }
 
 function computeTimeDepositTotal(deposits: TimeDeposit[]): number {
@@ -94,7 +109,7 @@ function computeDividend(deposits: TimeDeposit[]): number {
   // For each payout: use only dividend (if principalReturned is set, amount includes principal so subtract it).
   const activeOnly = deposits.filter((d) => d.status === "ACTIVE");
   return activeOnly.reduce((total, d) => {
-    const schedule = d.payoutSchedule ?? (d as Record<string, unknown>).payout_schedule ?? [];
+    const schedule = d.payoutSchedule ?? d.payout_schedule ?? [];
     const contractDividend = (Array.isArray(schedule) ? schedule : []).reduce(
       (s: number, p: { amount?: string | number; principalReturned?: string | number; principal_returned?: string }) => {
         const amt = typeof p?.amount === "number" ? p.amount : parseFloat(String(p?.amount ?? 0));
@@ -188,9 +203,10 @@ export default function Dashboard() {
         setTimeDeposit(0);
         setDeposits([]);
         const { success, wallet } = await getOrCreateMainWallet(accessToken);
-        mainWalletIdRef.current = (wallet?.id as string) ?? null;
-        if (success && wallet?.balance != null) {
-          const bal = parseFloat(String(wallet.balance));
+        const w = wallet as RawApiWallet | undefined;
+        mainWalletIdRef.current = w?.id ?? null;
+        if (success && w?.balance != null) {
+          const bal = parseFloat(String(w.balance));
           setAvailableBalance(Number.isNaN(bal) ? 0 : bal);
         }
         const tdRes = await getTimeDeposits(accessToken);
@@ -200,11 +216,11 @@ export default function Dashboard() {
           setTimeDeposit(computeTimeDepositTotal(list));
         }
         const txRes = await getTransactions(accessToken, {
-          walletId: wallet?.id as string | undefined,
+          walletId: w?.id,
           limit: 20,
         });
         if (txRes.success && txRes.transactions) {
-          const mapped: Transaction[] = txRes.transactions.map((tx: Record<string, unknown>) => ({
+          const mapped: Transaction[] = (txRes.transactions as RawApiTransaction[]).map((tx) => ({
             id: String(tx.id ?? ""),
             type: getTransactionTypeLabel(String(tx.type ?? "")),
             amount: (() => {
@@ -260,8 +276,9 @@ export default function Dashboard() {
     const accessToken = await AsyncStorage.getItem("access_token");
     if (!accessToken) return;
     const { success: walletSuccess, wallet } = await getOrCreateMainWallet(accessToken);
-    if (walletSuccess && wallet?.balance != null) {
-      const bal = parseFloat(String(wallet.balance));
+    const w = wallet as RawApiWallet | undefined;
+    if (walletSuccess && w?.balance != null) {
+      const bal = parseFloat(String(w.balance));
       setAvailableBalance(Number.isNaN(bal) ? 0 : bal);
     }
     const tdRes = await getTimeDeposits(accessToken);
@@ -271,11 +288,12 @@ export default function Dashboard() {
       setTimeDeposit(computeTimeDepositTotal(list));
     }
     const txRes = await getTransactions(accessToken, {
-      walletId: (wallet?.id as string) ?? mainWalletIdRef.current ?? undefined,
+      walletId: w?.id ?? mainWalletIdRef.current ?? undefined,
       limit: 20,
     });
     if (txRes.success && txRes.transactions) {
-      const mapped: Transaction[] = txRes.transactions.map((tx: Record<string, unknown>) => ({
+      const txs = txRes.transactions as RawApiTransaction[];
+      const mapped: Transaction[] = txs.map((tx) => ({
         id: String(tx.id ?? ""),
         type: getTransactionTypeLabel(String(tx.type ?? "")),
         amount: (() => {
@@ -312,7 +330,7 @@ export default function Dashboard() {
       startPolling();
 
       const socket = createRealtimeConnection(token, {
-        onWalletUpdate: (payload) => {
+        onWalletUpdate: (payload: { walletId?: string; balance?: number | string }) => {
           if (payload?.walletId === mainWalletIdRef.current && payload?.balance != null) {
             const bal = parseFloat(String(payload.balance));
             setAvailableBalance(Number.isNaN(bal) ? 0 : bal);
@@ -323,7 +341,9 @@ export default function Dashboard() {
         },
         onConnect: () => {
           stopPolling();
-          heartbeatCleanupRef.current = startHeartbeat(socket);
+          if (socket) {
+            heartbeatCleanupRef.current = startHeartbeat(socket) as () => void;
+          }
         },
         onDisconnect: () => {
           heartbeatCleanupRef.current?.();
@@ -336,7 +356,7 @@ export default function Dashboard() {
       });
 
       if (socket) {
-        socketRef.current = socket;
+        socketRef.current = socket as { disconnect: () => void };
       }
     });
 
