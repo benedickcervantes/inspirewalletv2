@@ -38,6 +38,8 @@ import EwalletAddressInfo from './app/ServicesFunction/E-Wallet/EwalletAddressIn
 import EwalletFinancialInfo from './app/ServicesFunction/E-Wallet/EwalletFinancialinfo';
 import EwalletPersonalInfo from './app/ServicesFunction/E-Wallet/EwalletPersonalInfo';
 import EwalletService from './app/ServicesFunction/E-Wallet/EwalletService';
+import StockBuy from './app/ServicesFunction/Stock/StockBuy';
+import StockSell from './app/ServicesFunction/Stock/StockSell';
 import StockService from './app/ServicesFunction/Stock/StockService';
 import TransferConfirm from './app/ServicesFunction/Transfer/TransferConfirm';
 import TransferRecipient from './app/ServicesFunction/Transfer/TransferRecipient';
@@ -83,6 +85,8 @@ export default function App() {
         <Stack.Screen name="EwalletAddressInfo" component={EwalletAddressInfo} />
         <Stack.Screen name="EwalletFinancialInfo" component={EwalletFinancialInfo} />
         <Stack.Screen name="Stockholder" component={StockService} />
+        <Stack.Screen name="StockBuy" component={StockBuy} />
+        <Stack.Screen name="StockSell" component={StockSell} />
         <Stack.Screen name="Task" component={Placeholder} />
         <Stack.Screen name="AgentRequest" component={AgentDashboard} />
         <Stack.Screen name="PlayEarn" component={Placeholder} />
