@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import {
@@ -15,6 +16,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { getOrCreateMainWallet } from "../../../configs/api";
 import { auth, firestore } from "../../../configs/firebase";
 
 const { width } = Dimensions.get("window");
@@ -25,32 +27,33 @@ interface Contact {
   accountNumber?: string;
 }
 
-// Reusable function to fetch user balance by type
+// Reusable function to fetch user balance by type (JWT or Firebase)
 export const fetchBalanceByType = async (balanceType: string) => {
+  const accessToken = await AsyncStorage.getItem("access_token");
+  if (accessToken) {
+    const { success, wallet } = await getOrCreateMainWallet(accessToken);
+    if (success && wallet?.balance != null && balanceType === "available") {
+      const bal = parseFloat(String(wallet.balance));
+      return Number.isNaN(bal) ? 0 : bal;
+    }
+    return 0;
+  }
   if (!auth || !firestore) {
     throw new Error("Firebase not configured");
   }
-  try {
-    const user = auth.currentUser;
-    if (!user) {
-      throw new Error("No authenticated user found");
-    }
-
-    const userDoc = await getDoc(doc(firestore, "users", user.uid));
-    if (!userDoc.exists()) {
-      throw new Error("User document not found");
-    }
-
-    const userData = userDoc.data() as Record<string, unknown>;
-    if (balanceType === "available") {
-      return Number(userData?.balance ?? userData?.availBalanceAmount ?? 0) || 0;
-    } else {
-      return Number(userData?.agentWallet ?? userData?.agentWalletAmount ?? 0) || 0;
-    }
-  } catch (error) {
-    console.error("Error fetching balance:", error);
-    throw error;
+  const user = auth.currentUser;
+  if (!user) {
+    throw new Error("No authenticated user found");
   }
+  const userDoc = await getDoc(doc(firestore, "users", user.uid));
+  if (!userDoc.exists()) {
+    throw new Error("User document not found");
+  }
+  const userData = userDoc.data() as Record<string, unknown>;
+  if (balanceType === "available") {
+    return Number(userData?.balance ?? userData?.availBalanceAmount ?? 0) || 0;
+  }
+  return Number(userData?.agentWallet ?? userData?.agentWalletAmount ?? 0) || 0;
 };
 
 // Reusable function to load user contacts

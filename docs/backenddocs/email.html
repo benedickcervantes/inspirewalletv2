@@ -1,0 +1,299 @@
+<!--
+  EmailJS verification template - Copy this HTML into EmailJS Dashboard > Email Templates.
+  Variables: {{to_email}}, {{firstName}}, {{otp}}, {{otp_1}}..{{otp_6}}, {{verify_link}}, {{expiry_minutes}}
+  Set "To Email" = {{to_email}} in the template settings.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Your Email - Inspire Wallet</title>
+    <style>
+        /* Reset and Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background: linear-gradient(180deg, #E15816 0%, #F48F38 100%);
+            min-height: 100vh;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        /* Email Container */
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .email-wrapper {
+            background: #fff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Email Header */
+        .email-header {
+            background: linear-gradient(135deg, #E15816 0%, #F48F38 100%);
+            padding: 32px 24px;
+            text-align: center;
+        }
+
+        .email-logo {
+            width: 120px;
+            height: auto;
+            margin-bottom: 12px;
+            filter: brightness(0) invert(1);
+        }
+
+        .brand-name {
+            color: #fff;
+            font-size: 24px;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        /* Email Card */
+        .email-card {
+            background: rgba(255, 255, 255, 0.95);
+            margin: 24px;
+            padding: 40px 32px;
+            border-radius: 12px;
+            border: 1px solid rgba(225, 88, 22, 0.2);
+        }
+
+        .email-title {
+            color: #E15816;
+            font-size: 26px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .email-text {
+            color: #333;
+            font-size: 15px;
+            line-height: 1.7;
+            margin-bottom: 32px;
+        }
+
+        /* OTP Display Section */
+        .otp-display {
+            background: linear-gradient(135deg, rgba(225, 88, 22, 0.1) 0%, rgba(244, 143, 56, 0.1) 100%);
+            border: 2px solid rgba(225, 88, 22, 0.3);
+            border-radius: 16px;
+            padding: 32px 24px;
+            text-align: center;
+            margin: 32px 0;
+        }
+
+        .otp-label {
+            color: #666;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .otp-code {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .otp-digit {
+            background: #fff;
+            color: #E15816;
+            font-size: 32px;
+            font-weight: 700;
+            width: 56px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            border: 2px solid #E15816;
+            box-shadow: 0 4px 12px rgba(225, 88, 22, 0.2);
+            font-family: 'Courier New', monospace;
+        }
+
+        .otp-instruction {
+            color: #888;
+            font-size: 13px;
+            margin-top: 12px;
+            line-height: 1.5;
+        }
+
+        /* Link Section */
+        .link-section {
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .link-text {
+            color: #666;
+            font-size: 13px;
+            margin-bottom: 12px;
+        }
+
+        .link-box {
+            background: rgba(225, 88, 22, 0.05);
+            border: 1px solid rgba(225, 88, 22, 0.2);
+            border-radius: 8px;
+            padding: 16px;
+            word-break: break-all;
+        }
+
+        .verification-link {
+            color: #E15816;
+            font-size: 13px;
+            line-height: 1.6;
+            text-decoration: underline;
+            word-break: break-all;
+        }
+
+        /* Email Footer */
+        .email-footer {
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .footer-text {
+            color: #666;
+            font-size: 13px;
+            margin-bottom: 12px;
+        }
+
+        .footer-text strong {
+            color: #E15816;
+            font-weight: 600;
+        }
+
+        /* Email Bottom */
+        .email-bottom {
+            background: rgba(225, 88, 22, 0.05);
+            padding: 24px;
+            text-align: center;
+            border-top: 1px solid rgba(225, 88, 22, 0.2);
+        }
+
+        .copyright {
+            color: #666;
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+
+        .support {
+            color: #888;
+            font-size: 12px;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 640px) {
+            body {
+                padding: 10px;
+            }
+
+            .email-card {
+                margin: 16px;
+                padding: 28px 20px;
+            }
+
+            .email-title {
+                font-size: 22px;
+            }
+
+            .email-logo {
+                width: 100px;
+            }
+
+            .brand-name {
+                font-size: 20px;
+            }
+
+            .otp-code {
+                gap: 8px;
+            }
+
+            .otp-digit {
+                width: 48px;
+                height: 56px;
+                font-size: 28px;
+            }
+
+            .otp-display {
+                padding: 24px 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="email-wrapper">
+            <!-- Email Header -->
+            <div class="email-header">
+                <img src="https://i.ibb.co/sd0vxbpz/INSPIREWORD.png" alt="Inspire Wallet" class="email-logo">
+                <h1 class="brand-name">Inspire Wallet</h1>
+            </div>
+
+            <!-- Email Content Card -->
+            <div class="email-card">
+                <h2 class="email-title">Verify Your Email Address</h2>
+                
+                <p class="email-text">
+                    Hi {{firstName}}, thank you for creating your account! To complete the registration process, 
+                    please use the verification code below:
+                </p>
+
+                <!-- OTP Code Display (EmailJS: otp_1..otp_6 or use {{otp}} for plain) -->
+                <div class="otp-display">
+                    <p class="otp-label">Your Verification Code</p>
+                    <div class="otp-code">
+                        <span class="otp-digit">{{otp_1}}</span>
+                        <span class="otp-digit">{{otp_2}}</span>
+                        <span class="otp-digit">{{otp_3}}</span>
+                        <span class="otp-digit">{{otp_4}}</span>
+                        <span class="otp-digit">{{otp_5}}</span>
+                        <span class="otp-digit">{{otp_6}}</span>
+                    </div>
+                    <p class="otp-instruction">Enter this code in the app, or click the link below to verify</p>
+                </div>
+
+                <!-- Alternative Link Section (EmailJS: {{verify_link}}) -->
+                <div class="link-section">
+                    <p class="link-text">Or click this link to verify your email:</p>
+                    <div class="link-box">
+                        <a href="{{verify_link}}" class="verification-link">{{verify_link}}</a>
+                    </div>
+                </div>
+
+                <!-- Footer Info (EmailJS: {{expiry_minutes}}) -->
+                <div class="email-footer">
+                    <p class="footer-text">
+                        This code and link will expire in <strong>{{expiry_minutes}} minutes</strong> for security reasons.
+                    </p>
+                    <p class="footer-text">
+                        If you didn't request this code, please ignore this email.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Email Bottom -->
+            <div class="email-bottom">
+                <p class="copyright">&copy; 2026 Inspire Wallet. All rights reserved.</p>
+                <p class="support">Need assistance? Please contact us at support@inspire-alliance.com or call (02) 5322 1002.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

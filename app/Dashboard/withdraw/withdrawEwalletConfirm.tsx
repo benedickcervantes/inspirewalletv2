@@ -1,7 +1,7 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
-import { addDoc, collection, doc, getDoc, serverTimestamp } from "firebase/firestore";
 import React, { useState } from "react";
 import {
     Modal,
@@ -12,7 +12,7 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
-import { auth, firestore } from "../../../configs/firebase";
+import { getOrCreateMainWallet, submitWithdrawalRequest } from "../../../configs/api";
 
 export default function EWalletConfirm() {
   const navigation = useNavigation();
@@ -33,74 +33,66 @@ export default function EWalletConfirm() {
     if (isSubmitting) return;
 
     setIsSubmitting(true);
+    setAlertConfig({ title: "", message: "" });
 
     try {
-      if (!auth || !firestore) {
-        setAlertConfig({ title: "Error", message: "Firebase not configured" });
-        setShowAlertModal(true);
-        setIsSubmitting(false);
-        return;
-      }
-      const user = auth.currentUser;
-      if (!user) {
+      const accessToken = await AsyncStorage.getItem("access_token");
+      if (!accessToken) {
         setAlertConfig({
           title: "Error",
-          message: "User not authenticated"
+          message: "Please log in to submit a withdrawal request.",
         });
         setShowAlertModal(true);
         setIsSubmitting(false);
         return;
       }
 
-      const userDocRef = doc(firestore, "users", user.uid);
-      const userDocSnap = await getDoc(userDocRef);
-
-      if (!userDocSnap.exists()) {
+      const { success: walletSuccess, wallet } = await getOrCreateMainWallet(accessToken);
+      if (!walletSuccess || !wallet?.id) {
         setAlertConfig({
           title: "Error",
-          message: "User data not found"
+          message: "Could not load wallet. Please try again.",
         });
         setShowAlertModal(true);
         setIsSubmitting(false);
         return;
       }
 
-      const userData = userDocSnap.data() as { firstName?: string; lastName?: string };
-
-      const withdrawalData = {
-        userId: user.uid,
-        userName: `${userData.firstName} ${userData.lastName}`,
-        userEmail: email,
-        type: "Withdrawal",
-        method: "E-Wallet",
-        walletType: walletType.charAt(0).toUpperCase() + walletType.slice(1),
-        accountNumber: accountNumber,
-        accountName: accountName,
-        amount: parseFloat(amount),
-        status: "Pending",
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      };
-
-      await addDoc(collection(firestore, "withdrawalRequests"), withdrawalData);
-
-      setAlertConfig({
-        title: "Success",
-        message: "Your withdrawal request has been submitted successfully!"
+      const result = await submitWithdrawalRequest(accessToken, {
+        walletId: wallet.id as string,
+        amount: String(parseFloat(amount)),
+        method: "e_wallet",
+        email: email || undefined,
+        walletType: walletType.toLowerCase() as "gcash" | "maya",
+        accountNumber,
+        accountName,
       });
-      setShowAlertModal(true);
 
-      setTimeout(() => {
-        setShowAlertModal(false);
-        navigation.navigate("Main");
-      }, 2000);
+      if (result.success) {
+        setAlertConfig({
+          title: "Success",
+          message: "Your withdrawal request has been submitted successfully!",
+        });
+        setShowAlertModal(true);
+        setTimeout(() => {
+          setShowAlertModal(false);
+          navigation.navigate("Main");
+        }, 2000);
+      } else {
+        setAlertConfig({
+          title: "Error",
+          message: result.error || "Failed to submit withdrawal request. Please try again.",
+        });
+        setShowAlertModal(true);
+      }
     } catch (error) {
       console.error("Error submitting withdrawal:", error);
       setAlertConfig({
         title: "Error",
-        message: "Failed to submit withdrawal request. Please try again."
+        message: "An unexpected error occurred. Please try again.",
       });
       setShowAlertModal(true);
+    } finally {
       setIsSubmitting(false);
     }
   };

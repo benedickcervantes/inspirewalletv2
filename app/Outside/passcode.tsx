@@ -19,10 +19,7 @@ import {
     View,
 } from 'react-native';
 import type { NavProp } from '../../types/navigation';
-
-const HARDCODED_EMAIL = 'inspire@gmail.com';
-const HARDCODED_PASSWORD = 'inspire123';
-const HARDCODED_PIN = '1234';
+import { verifyPasscode, login } from '../../configs/api';
 
 const GRADIENT_START = '#E15816';
 const GRADIENT_END = '#F48F38';
@@ -108,7 +105,6 @@ export default function Passcode() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
 
-  const [checkPasscode, setCheckPasscode] = useState('');
   const [passcode, setPasscode] = useState('');
   const [error, setError] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
@@ -140,15 +136,14 @@ export default function Passcode() {
     let cancelled = false;
 
     const loadPasscode = async () => {
-      const storedEmail = await AsyncStorage.getItem('userEmail');
-      const storedPassword = await AsyncStorage.getItem('userPassword');
-      const hasStoredCreds = storedEmail && storedPassword;
-      const isValidCreds = storedEmail === HARDCODED_EMAIL && storedPassword === HARDCODED_PASSWORD;
+      const accessToken = await AsyncStorage.getItem('access_token');
+      const userJson = await AsyncStorage.getItem('user');
+      const user = userJson ? (JSON.parse(userJson) as { hasPasscode?: boolean }) : null;
       if (!cancelled) {
-        if (isValidCreds || !hasStoredCreds) {
-          setCheckPasscode(HARDCODED_PIN);
-        } else {
+        if (!accessToken) {
           (navigation as unknown as NavProp).replace('Login');
+        } else if (!user?.hasPasscode) {
+          (navigation as unknown as NavProp).replace('Main');
         }
         setLoadingPasscode(false);
       }
@@ -168,7 +163,7 @@ export default function Passcode() {
     ]).start();
   };
 
-  const handlePress = (value: string) => {
+  const handlePress = async (value: string) => {
     if (value === 'Del') {
       setPasscode((p) => p.slice(0, -1));
       setError('');
@@ -179,11 +174,15 @@ export default function Passcode() {
     setPasscode(next);
     setError('');
     if (next.length === 4) {
-      if (next === checkPasscode || next === HARDCODED_PIN) {
+      const accessToken = await AsyncStorage.getItem('access_token');
+      if (!accessToken) {
+        (navigation as unknown as NavProp).replace('Login');
+        return;
+      }
+      const result = await verifyPasscode(accessToken, next);
+      if (result.success) {
         setPasscode('');
         AsyncStorage.setItem('passcodeLoginComplete', 'true').catch(() => {});
-        AsyncStorage.setItem('userEmail', HARDCODED_EMAIL).catch(() => {});
-        AsyncStorage.setItem('userPassword', HARDCODED_PASSWORD).catch(() => {});
         (navigation as unknown as NavProp).replace('Main');
       } else {
         setError('Incorrect. Please try again');
@@ -200,12 +199,14 @@ export default function Passcode() {
         return;
       }
       setResetLoading(true);
-      const isValid = resetEmail.trim() === HARDCODED_EMAIL && resetPassword === HARDCODED_PASSWORD;
+      const result = await login(resetEmail.trim(), resetPassword);
       setResetLoading(false);
-      if (isValid) {
+      if (result.success && result.access_token) {
+        await AsyncStorage.setItem('access_token', result.access_token);
+        await AsyncStorage.setItem('user', JSON.stringify(result.user || {}));
         setResetStep('newPasscode');
       } else {
-        showModal({ title: 'Authentication Failed', message: 'Invalid email or password.', type: 'error' });
+        showModal({ title: 'Authentication Failed', message: result.error || 'Invalid email or password.', type: 'error' });
       }
       return;
     }
@@ -222,14 +223,17 @@ export default function Passcode() {
         showModal({ title: 'Invalid Passcode', message: 'Passcode must be exactly 4 digits.', type: 'warning' });
         return;
       }
-      setCheckPasscode(newPasscode);
       setResetModalVisible(false);
       setResetEmail('');
       setResetPassword('');
       setNewPasscode('');
       setConfirmNewPasscode('');
       setResetStep('auth');
-      showModal({ title: 'Passcode Updated!', message: 'Your passcode has been updated for this session.', type: 'success' });
+      showModal({
+        title: 'Reset Passcode',
+        message: 'To change your passcode, go to Settings in the app after logging in.',
+        type: 'info',
+      });
     }
   };
 

@@ -21,9 +21,8 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { NavProp } from '../../types/navigation';
+import { login } from '../../configs/api';
 
-const HARDCODED_EMAIL = 'inspire@gmail.com';
-const HARDCODED_PASSWORD = 'inspire123';
 
 const GRADIENT_START = '#E15816';
 const GRADIENT_END = '#F48F38';
@@ -225,37 +224,36 @@ export default function Login() {
     }
 
     setLoading(true);
-    const safetyTimeout = setTimeout(() => setLoading(false), 2000);
-
     try {
-      const isValid = trimmedEmail === HARDCODED_EMAIL && password === HARDCODED_PASSWORD;
-      clearTimeout(safetyTimeout);
-      setLoading(false);
+      const result = await login(trimmedEmail, password);
 
-      if (!isValid) {
+      if (!result.success) {
         showModal({
-          title: 'Invalid Credentials',
-          message: 'Please check your email and password.',
+          title: 'Login Failed',
+          message: result.error || 'Invalid email or password. Please try again.',
           type: 'error',
         });
         return;
       }
 
-      try {
-        await AsyncStorage.setItem('userEmail', trimmedEmail);
-        await AsyncStorage.setItem('userPassword', password);
-        await AsyncStorage.removeItem('passcodeLoginComplete');
-      } catch (_) {}
+      await AsyncStorage.setItem('access_token', result.access_token || '');
+      await AsyncStorage.setItem('user', JSON.stringify(result.user || {}));
+      await AsyncStorage.removeItem('passcodeLoginComplete');
 
-      (navigation as unknown as NavProp).replace('Passcode');
+      const user = result.user as { hasPasscode?: boolean } | undefined;
+      if (user?.hasPasscode) {
+        (navigation as unknown as NavProp).replace('Passcode');
+      } else {
+        (navigation as unknown as NavProp).replace('Main');
+      }
     } catch (_) {
-      clearTimeout(safetyTimeout);
-      setLoading(false);
       showModal({
         title: 'Login Error',
         message: 'An unexpected error occurred. Please try again.',
         type: 'error',
       });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -363,7 +361,7 @@ export default function Login() {
                   onPress={() => {
                     showModal({
                       title: 'Forgot Password',
-                      message: 'Connect your forgot-password screen or Firebase sendPasswordResetEmail here.',
+                      message: 'Password reset is not supported at this time. Please contact support for assistance.',
                       type: 'info',
                     });
                   }}

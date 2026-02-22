@@ -1,8 +1,8 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
-import { addDoc, collection, serverTimestamp } from "firebase/firestore";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
     Modal,
     SafeAreaView,
@@ -12,43 +12,21 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
-import { auth, doc, firestore, getDoc } from "../../../configs/firebase";
+import { getOrCreateMainWallet, submitTimeDepositRequest } from "../../../configs/api";
 
 export default function TimeDepositConfirm() {
   const navigation = useNavigation();
   const route = useRoute();
   const params = (route.params || {}) as { depositMethod?: string; contractPeriod?: string; amount?: string; currency?: string };
 
-  const [userData, setUserData] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const depositMethod = params.depositMethod || "Request Amount";
   const contractPeriod = params.contractPeriod || "";
   const amount = params.amount || "0";
   const currency = params.currency || "PHP";
-
-  useEffect(() => {
-    fetchUserData();
-  }, []);
-
-  const fetchUserData = async () => {
-    try {
-      if (!auth || !firestore) return;
-      const user = auth.currentUser;
-      if (user) {
-        const userDocRef = doc(firestore, "users", user.uid);
-        const userDocSnap = await getDoc(userDocRef);
-
-        if (userDocSnap.exists()) {
-          const data = userDocSnap.data() as Record<string, unknown>;
-          setUserData(data);
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching user data:", error);
-    }
-  };
 
   const getMaturityDate = () => {
     const months = contractPeriod === "6 Months" ? 6 : contractPeriod === "1 Year" ? 12 : 24;
@@ -57,31 +35,42 @@ export default function TimeDepositConfirm() {
 
   const handleConfirm = async () => {
     setLoading(true);
+    setErrorMessage(null);
     try {
-      if (!auth || !firestore) return;
-      const user = auth.currentUser;
-      if (!user) return;
+      const accessToken = await AsyncStorage.getItem("access_token");
+      if (!accessToken) {
+        setErrorMessage("Please log in to submit a deposit request.");
+        setLoading(false);
+        return;
+      }
 
-      const depositData = {
-        userId: user.uid,
-        userName: userData ? `${userData.firstName ?? ""} ${userData.lastName ?? ""}`.trim() || user.email : user.email,
-        userEmail: userData?.email ?? user.email,
-        type: "Time Deposit",
-        depositMethod: depositMethod,
-        currency: currency,
-        amount: parseFloat(amount),
-        contractPeriod: contractPeriod,
-        maturityDate: getMaturityDate(),
-        status: "Pending",
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
+      const body: Record<string, string> = {
+        amount: String(parseFloat(amount)),
+        contractPeriod,
+        depositMethod:
+          depositMethod === "Available Balance" ? "available_balance" : "request_amount",
       };
 
-      await addDoc(collection(firestore, "depositRequests"), depositData);
+      if (depositMethod === "Available Balance") {
+        const { success, wallet } = await getOrCreateMainWallet(accessToken);
+        if (!success || !wallet?.id) {
+          setErrorMessage("Could not load wallet. Please try again.");
+          setLoading(false);
+          return;
+        }
+        body.walletId = wallet.id as string;
+      }
 
-      setShowSuccessModal(true);
+      const result = await submitTimeDepositRequest(accessToken, body);
+
+      if (result.success) {
+        setShowSuccessModal(true);
+      } else {
+        setErrorMessage(result.error || "Failed to submit deposit request.");
+      }
     } catch (error) {
       console.error("Error submitting deposit:", error);
+      setErrorMessage("An unexpected error occurred. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -206,6 +195,13 @@ export default function TimeDepositConfirm() {
               <Text style={styles.statusValue}>Pending</Text>
             </View>
           </View>
+
+          {errorMessage ? (
+            <View style={styles.errorBanner}>
+              <Ionicons name="alert-circle" size={20} color="#B71C1C" />
+              <Text style={styles.errorText}>{errorMessage}</Text>
+            </View>
+          ) : null}
 
           {/* Action Buttons */}
           <View style={styles.buttonContainer}>
@@ -469,6 +465,22 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "600",
     color: "#4CAF50",
+  },
+  errorBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "#FFEBEE",
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+    borderLeftWidth: 4,
+    borderLeftColor: "#B71C1C",
+  },
+  errorText: {
+    flex: 1,
+    fontSize: 14,
+    color: "#B71C1C",
   },
   buttonContainer: {
     flexDirection: "row",

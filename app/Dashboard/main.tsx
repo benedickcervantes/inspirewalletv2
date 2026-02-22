@@ -1,4 +1,4 @@
-﻿import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NavProp } from "../../types/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -16,7 +16,7 @@ import {
   View,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { getOrCreateMainWallet, getTransactions } from "../../configs/api";
+import { getOrCreateMainWallet, getTimeDeposits, getTransactions } from "../../configs/api";
 import { createRealtimeConnection, startHeartbeat } from "../../configs/realtime";
 import {
   auth,
@@ -34,6 +34,22 @@ const HRX_BANNER = require("../../assets/banner/HRX.png");
 
 const { width } = Dimensions.get("window");
 
+// API returns raw enums; map to user-friendly labels for transaction history
+const TRANSACTION_TYPE_LABELS: Record<string, string> = {
+  TOP_UP: "Deposit",
+  PAYMENT: "Withdraw",
+  TRANSFER_OUT: "Transfer",
+  TRANSFER_IN: "Received",
+  FEE: "Fee",
+  REFUND: "Refund",
+  TIME_DEPOSIT: "Time Deposit",
+};
+
+function getTransactionTypeLabel(type?: string): string {
+  if (!type) return "Transaction";
+  return TRANSACTION_TYPE_LABELS[type] ?? type;
+}
+
 interface Transaction {
   id: string;
   type?: string;
@@ -41,11 +57,85 @@ interface Transaction {
   timestamp?: { toDate?: () => Date };
 }
 
+interface PayoutScheduleItem {
+  payoutIndex: number;
+  expectedDate: string;
+  amount: string;
+  status: "PENDING" | "PAID";
+  isLastPayout?: boolean;
+  principalReturned?: string;
+}
+
+interface TimeDeposit {
+  id: string;
+  contractType: string;
+  depositSource?: "AVAILABLE_BALANCE" | "REQUEST_AMOUNT";
+  amount: string;
+  interestRate: string;
+  status: "PENDING" | "ACTIVE" | "MATURED" | "CANCELLED";
+  startDate: string | null;
+  maturityDate: string | null;
+  projectedStartDate: string;
+  projectedMaturityDate: string;
+  createdAt?: string;
+  dividendEarned?: string;
+  dividend?: string;
+  payoutSchedule?: PayoutScheduleItem[];
+}
+
+function computeTimeDepositTotal(deposits: TimeDeposit[]): number {
+  return deposits
+    .filter((d) => d.status === "ACTIVE" || d.status === "MATURED")
+    .reduce((sum, d) => sum + (parseFloat(d.amount) || 0), 0);
+}
+
+function computeDividend(deposits: TimeDeposit[]): number {
+  // Expected dividend = sum per contract (ACTIVE/MATURED only) of dividend from schedule.
+  // For each payout: use only dividend (if principalReturned is set, amount includes principal so subtract it).
+  const activeOnly = deposits.filter((d) => d.status === "ACTIVE");
+  return activeOnly.reduce((total, d) => {
+    const schedule = d.payoutSchedule ?? (d as Record<string, unknown>).payout_schedule ?? [];
+    const contractDividend = (Array.isArray(schedule) ? schedule : []).reduce(
+      (s: number, p: { amount?: string | number; principalReturned?: string | number; principal_returned?: string }) => {
+        const amt = typeof p?.amount === "number" ? p.amount : parseFloat(String(p?.amount ?? 0));
+        const principal = parseFloat(String(p?.principalReturned ?? p?.principal_returned ?? 0));
+        const dividendOnly = Number.isNaN(amt) ? 0 : principal > 0 ? Math.max(0, amt - principal) : amt;
+        return s + dividendOnly;
+      },
+      0
+    );
+    return total + contractDividend;
+  }, 0);
+}
+
+function computeDepositGrowth(deposits: TimeDeposit[]): { month: string; amount: number }[] {
+  const months: { month: string; amount: number }[] = [];
+  const year = new Date().getFullYear();
+  const monthLabels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  for (let m = 0; m < 12; m++) {
+    const monthEnd = new Date(year, m + 1, 0);
+    let amount = 0;
+    for (const dep of deposits) {
+      if (dep.status !== "ACTIVE" && dep.status !== "MATURED") continue;
+      const start = dep.startDate ? new Date(dep.startDate) : new Date(dep.projectedStartDate);
+      const maturity = dep.maturityDate
+        ? new Date(dep.maturityDate)
+        : new Date(dep.projectedMaturityDate);
+      if (start <= monthEnd && maturity > monthEnd) {
+        amount += parseFloat(dep.amount) || 0;
+      }
+    }
+    months.push({ month: monthLabels[m], amount });
+  }
+  return months;
+}
+
 export default function Dashboard() {
   const navigation = useNavigation();
   const [userData, setUserData] = useState<Record<string, unknown> | null>(null);
   const [availableBalance, setAvailableBalance] = useState(0);
   const [timeDeposit, setTimeDeposit] = useState(0);
+  const [deposits, setDeposits] = useState<TimeDeposit[]>([]);
   const [activeTab, setActiveTab] = useState("Wallet");
   const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
   const [isCardFlipped, setIsCardFlipped] = useState(false);
@@ -96,28 +186,27 @@ export default function Dashboard() {
         });
         setAvailableBalance(0);
         setTimeDeposit(0);
+        setDeposits([]);
         const { success, wallet } = await getOrCreateMainWallet(accessToken);
         mainWalletIdRef.current = (wallet?.id as string) ?? null;
         if (success && wallet?.balance != null) {
           const bal = parseFloat(String(wallet.balance));
           setAvailableBalance(Number.isNaN(bal) ? 0 : bal);
         }
+        const tdRes = await getTimeDeposits(accessToken);
+        if (tdRes.success && tdRes.deposits) {
+          const list = tdRes.deposits as TimeDeposit[];
+          setDeposits(list);
+          setTimeDeposit(computeTimeDepositTotal(list));
+        }
         const txRes = await getTransactions(accessToken, {
           walletId: wallet?.id as string | undefined,
           limit: 20,
         });
         if (txRes.success && txRes.transactions) {
-          const typeLabels: Record<string, string> = {
-            TOP_UP: "Deposit",
-            PAYMENT: "Withdraw",
-            TRANSFER_OUT: "Transfer",
-            TRANSFER_IN: "Received",
-            FEE: "Fee",
-            REFUND: "Refund",
-          };
           const mapped: Transaction[] = txRes.transactions.map((tx: Record<string, unknown>) => ({
             id: String(tx.id ?? ""),
-            type: typeLabels[String(tx.type ?? "")] ?? String(tx.type ?? "Transaction"),
+            type: getTransactionTypeLabel(String(tx.type ?? "")),
             amount: (() => {
               const a = parseFloat(String(tx.amount ?? 0));
               return Number.isNaN(a) ? 0 : a;
@@ -175,22 +264,20 @@ export default function Dashboard() {
       const bal = parseFloat(String(wallet.balance));
       setAvailableBalance(Number.isNaN(bal) ? 0 : bal);
     }
+    const tdRes = await getTimeDeposits(accessToken);
+    if (tdRes.success && tdRes.deposits) {
+      const list = tdRes.deposits as TimeDeposit[];
+      setDeposits(list);
+      setTimeDeposit(computeTimeDepositTotal(list));
+    }
     const txRes = await getTransactions(accessToken, {
       walletId: (wallet?.id as string) ?? mainWalletIdRef.current ?? undefined,
       limit: 20,
     });
     if (txRes.success && txRes.transactions) {
-      const typeLabels: Record<string, string> = {
-        TOP_UP: "Deposit",
-        PAYMENT: "Withdraw",
-        TRANSFER_OUT: "Transfer",
-        TRANSFER_IN: "Received",
-        FEE: "Fee",
-        REFUND: "Refund",
-      };
       const mapped: Transaction[] = txRes.transactions.map((tx: Record<string, unknown>) => ({
         id: String(tx.id ?? ""),
-        type: typeLabels[String(tx.type ?? "")] ?? String(tx.type ?? "Transaction"),
+        type: getTransactionTypeLabel(String(tx.type ?? "")),
         amount: (() => {
           const a = parseFloat(String(tx.amount ?? 0));
           return Number.isNaN(a) ? 0 : a;
@@ -450,7 +537,11 @@ export default function Dashboard() {
             <SavingsTab
               userData={userData}
               timeDeposit={timeDeposit}
+              dividend={computeDividend(deposits)}
+              depositGrowthData={computeDepositGrowth(deposits)}
+              deposits={deposits}
               formatCurrency={formatCurrency}
+              onRefresh={refetchJwtData}
             />
           )}
 
@@ -611,7 +702,7 @@ export default function Dashboard() {
                     </View>
                     <View style={styles.transactionDetails}>
                       <Text style={styles.transactionName}>
-                        {transaction.type || "Transaction"}
+                        {getTransactionTypeLabel(transaction.type)}
                       </Text>
                       <Text style={styles.transactionDate}>
                         {transaction.timestamp?.toDate?.()?.toLocaleDateString() ||
@@ -642,47 +733,49 @@ export default function Dashboard() {
             </View>
           )}
 
-          <View style={styles.bannersSection}>
-            <ScrollView
-              ref={bannerScrollRef}
-              horizontal
-              pagingEnabled
-              showsHorizontalScrollIndicator={false}
-              onMomentumScrollEnd={(event) => {
-                const index = Math.round(
-                  event.nativeEvent.contentOffset.x / (width - 40)
-                );
-                setCurrentBannerIndex(index);
-              }}
-              style={styles.bannerScrollView}
-            >
-              {banners.map((banner, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={styles.bannerItem}
-                  onPress={() => Linking.openURL(banner.url)}
-                  activeOpacity={0.8}
-                >
-                  <Image
-                    source={banner.image}
-                    style={styles.bannerImage}
-                    resizeMode="cover"
+          {activeTab !== "Investment" && (
+            <View style={styles.bannersSection}>
+              <ScrollView
+                ref={bannerScrollRef}
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                onMomentumScrollEnd={(event) => {
+                  const index = Math.round(
+                    event.nativeEvent.contentOffset.x / (width - 40)
+                  );
+                  setCurrentBannerIndex(index);
+                }}
+                style={styles.bannerScrollView}
+              >
+                {banners.map((banner, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={styles.bannerItem}
+                    onPress={() => Linking.openURL(banner.url)}
+                    activeOpacity={0.8}
+                  >
+                    <Image
+                      source={banner.image}
+                      style={styles.bannerImage}
+                      resizeMode="cover"
+                    />
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+              <View style={styles.paginationDots}>
+                {banners.map((_, index) => (
+                  <View
+                    key={index}
+                    style={[
+                      styles.dot,
+                      currentBannerIndex === index && styles.activeDot,
+                    ]}
                   />
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-            <View style={styles.paginationDots}>
-              {banners.map((_, index) => (
-                <View
-                  key={index}
-                  style={[
-                    styles.dot,
-                    currentBannerIndex === index && styles.activeDot,
-                  ]}
-                />
-              ))}
+                ))}
+              </View>
             </View>
-          </View>
+          )}
 
           <View style={styles.footer}>
             <Text style={styles.footerText}>CREATED BY INSPIRE</Text>
