@@ -70,8 +70,7 @@ export default function BankingPersonalInfo() {
     if (!dateOfBirth) return;
     if (!civilStatus.trim()) return;
     if (!citizenship.trim()) return;
-    // TODO: Navigate to next step when implemented
-    navigation.goBack();
+    navigation.navigate("BankingAddressInfo", { selectedBank });
   };
 
   return (

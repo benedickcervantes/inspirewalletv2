@@ -28,6 +28,9 @@ export type RootStackParamList = {
   Bdo: undefined;
   BankingContactInfo: { selectedBank: string };
   BankingPersonalInfo: { selectedBank: string };
+  BankingAddressInfo: { selectedBank: string };
+  BankingFinancialInfo: { selectedBank: string };
+  BankingRequiredInfo: { selectedBank: string };
   Travel: undefined;
   History: undefined;
   Maya: undefined;
