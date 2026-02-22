@@ -22,6 +22,7 @@ import BankWithdrawal from './app/Dashboard/withdraw/withdrawLocalB';
 import WithdrawLocalBConfirm from './app/Dashboard/withdraw/withdrawLocalBconfirm';
 import WithdrawMethodScreen from './app/Dashboard/withdraw/withdrawMethod';
 import NotificationScreen from './app/Notification/notification';
+import CreatePasscode from './app/Outside/CreatePasscode';
 import Login from './app/Outside/Login';
 import Passcode from './app/Outside/passcode';
 import Register from './app/Outside/Register';
@@ -43,8 +44,14 @@ import TransferConfirm from './app/ServicesFunction/Transfer/TransferConfirm';
 import TransferRecipient from './app/ServicesFunction/Transfer/TransferRecipient';
 import SendMoney from './app/ServicesFunction/Transfer/TransferService';
 import TravelProtection from './app/ServicesFunction/Travel Proctected/TravelProtectServices';
+import Aboutus from './app/Settings/Aboutus';
+import DeleteAccount from './app/Settings/DeleteAccount';
+import HelpCenter from './app/Settings/HelpCenter';
+import PrivacyPolicy from './app/Settings/PrivacyPolicy';
 import Settings from './app/Settings/settings';
+import TermsConditions from './app/Settings/TermsConditions';
 import History from './app/History/history';
+import Message from './app/Dashboard/Message';
 import type { RootStackParamList } from './types/navigation';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -60,15 +67,22 @@ export default function App() {
         <Stack.Screen name="Welcome" component={Welcome} />
         <Stack.Screen name="Login" component={Login} />
         <Stack.Screen name="Register" component={Register} />
+        <Stack.Screen name="CreatePasscode" component={CreatePasscode} />
         <Stack.Screen name="Passcode" component={Passcode} />
         <Stack.Screen name="Main" component={Dashboard} />
         <Stack.Screen name="Personal" component={Placeholder} />
         <Stack.Screen name="Notification" component={NotificationScreen} />
         <Stack.Screen name="Settings" component={Settings} />
+        <Stack.Screen name="Aboutus" component={Aboutus} />
+        <Stack.Screen name="DeleteAccount" component={DeleteAccount} />
+        <Stack.Screen name="HelpCenter" component={HelpCenter} />
+        <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicy} />
+        <Stack.Screen name="TermsConditions" component={TermsConditions} />
         <Stack.Screen name="Transfer" component={SendMoney} />
         <Stack.Screen name="TransferRecipient" component={TransferRecipient} />
         <Stack.Screen name="TransferConfirm" component={TransferConfirm} />
         <Stack.Screen name="Bdo" component={BankingService} />
+        <Stack.Screen name="Message" component={Message} />
         <Stack.Screen name="BankingContactInfo" component={BankingContactInfo} />
         <Stack.Screen name="BankingPersonalInfo" component={BankingPersonalInfo} />
         <Stack.Screen name="BankingAddressInfo" component={BankingAddressInfo} />

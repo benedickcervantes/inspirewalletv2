@@ -75,7 +75,7 @@ const Settings = () => {
 
   const handleSignOut = async () => {
     try {
-      await AsyncStorage.multiRemove(['access_token', 'user', 'userEmail', 'userPassword', 'passcodeLoginComplete']);
+      await AsyncStorage.multiRemove(['access_token', 'user', 'userEmail', 'userPassword', 'passcodeLoginComplete', 'registrationPasscodePending']);
     } catch (_) {}
     (navigation as unknown as NavProp).replace('Login');
   };
@@ -164,7 +164,7 @@ const Settings = () => {
       icon: 'close-circle-outline' as const,
       title: 'Delete Account',
       subtitle: '',
-      onPress: () => {},
+      onPress: () => (navigation as { navigate: (name: string) => void }).navigate('DeleteAccount'),
     },
   ];
 
@@ -173,7 +173,7 @@ const Settings = () => {
       id: 1,
       icon: 'information-circle-outline' as const,
       title: 'About us',
-      onPress: () => {},
+      onPress: () => (navigation as { navigate: (name: string) => void }).navigate('Aboutus'),
     },
     {
       id: 2,
@@ -185,19 +185,19 @@ const Settings = () => {
       id: 3,
       icon: 'headset-outline' as const,
       title: 'Help Center',
-      onPress: () => {},
+      onPress: () => (navigation as { navigate: (name: string) => void }).navigate('HelpCenter'),
     },
     {
       id: 4,
       icon: 'shield-outline' as const,
       title: 'Privacy Policy',
-      onPress: () => {},
+      onPress: () => (navigation as { navigate: (name: string) => void }).navigate('PrivacyPolicy'),
     },
     {
       id: 5,
       icon: 'document-text-outline' as const,
       title: 'Terms and Condition',
-      onPress: () => {},
+      onPress: () => (navigation as { navigate: (name: string) => void }).navigate('TermsConditions'),
     },
   ];
 

@@ -462,6 +462,7 @@ export default function Dashboard() {
 
   const menuItems = [
     { icon: "wallet-outline", label: "E-Wallet", route: "EwalletService" },
+    { icon: "message-text", label: "Message", route: "Message" },
     { icon: "chart-line", label: "Stock", route: "Stockholder" },
     { icon: "format-list-bulleted", label: "Task", route: "Task" },
     { icon: "account", label: "Agent", route: "AgentRequest" },
@@ -931,12 +932,14 @@ const styles = StyleSheet.create({
   menuHeaderTitle: { fontSize: 18, fontWeight: "700", color: "#333" },
   menuGrid: {
     flexDirection: "row",
+    flexWrap: "wrap",
     paddingHorizontal: 0,
   },
   menuItem: {
-    width: "21%",
-    alignItems: "flex-start",
-    paddingVertical: 0,
+    width: "25%",
+    alignItems: "center",
+    paddingVertical: 8,
+    marginBottom: 8,
   },
   menuIcon: {
     width: 48,

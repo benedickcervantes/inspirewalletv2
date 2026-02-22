@@ -351,6 +351,37 @@ export async function getMe(accessToken) {
 }
 
 /**
+ * POST /auth/passcode — requires JWT
+ * Sets a 4-digit passcode for the authenticated user.
+ * @param {string} accessToken
+ * @param {string} passcode — exactly 4 digits
+ * @returns {{ success: boolean, error?: string }}
+ */
+export async function setPasscode(accessToken, passcode) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: 'Backend URL not configured' };
+  if (!accessToken) return { success: false, error: 'No token' };
+  try {
+    const res = await fetch(`${base}/auth/passcode`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ passcode }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message) ? data.message[0] : data.message || 'Failed to set passcode';
+      return { success: false, error: msg };
+    }
+    return { success: true };
+  } catch (e) {
+    return { success: false, error: e.message || 'Network error' };
+  }
+}
+
+/**
  * POST /auth/verify-passcode — requires JWT
  * @param {string} accessToken
  * @param {string} passcode
