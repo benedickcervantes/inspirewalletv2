@@ -27,6 +27,9 @@ import Register from './app/Outside/Register';
 import Welcome from './app/Outside/Welcome';
 import AgentDashboard from './app/Dashboard/AgentDashboard';
 import Placeholder from './app/Placeholder';
+import AgentServices from './app/ServicesFunction/Agent/AgentServices';
+import BankingContactInfo from './app/ServicesFunction/Banking/BankingContactInfo';
+import BankingService from './app/ServicesFunction/Banking/BankingService';
 import TransferConfirm from './app/ServicesFunction/Transfer/TransferConfirm';
 import TransferRecipient from './app/ServicesFunction/Transfer/TransferRecipient';
 import SendMoney from './app/ServicesFunction/Transfer/TransferService';
@@ -54,7 +57,8 @@ export default function App() {
         <Stack.Screen name="Transfer" component={SendMoney} />
         <Stack.Screen name="TransferRecipient" component={TransferRecipient} />
         <Stack.Screen name="TransferConfirm" component={TransferConfirm} />
-        <Stack.Screen name="Bdo" component={Placeholder} />
+        <Stack.Screen name="Bdo" component={BankingService} />
+        <Stack.Screen name="BankingContactInfo" component={BankingContactInfo} />
         <Stack.Screen name="Travel" component={Placeholder} />
         <Stack.Screen name="History" component={Placeholder} />
         <Stack.Screen name="Maya" component={Placeholder} />
