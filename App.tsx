@@ -33,6 +33,11 @@ import BankingFinancialInfo from './app/ServicesFunction/Banking/BankingFinancia
 import BankingPersonalInfo from './app/ServicesFunction/Banking/BankingPersonalInfo';
 import BankingRequiredInfo from './app/ServicesFunction/Banking/BankingRequiredInfo';
 import BankingService from './app/ServicesFunction/Banking/BankingService';
+import EwalletContactInfo from './app/ServicesFunction/E-Wallet/EwalletContactInfo';
+import EwalletAddressInfo from './app/ServicesFunction/E-Wallet/EwalletAddressInfo';
+import EwalletFinancialInfo from './app/ServicesFunction/E-Wallet/EwalletFinancialinfo';
+import EwalletPersonalInfo from './app/ServicesFunction/E-Wallet/EwalletPersonalInfo';
+import EwalletService from './app/ServicesFunction/E-Wallet/EwalletService';
 import TransferConfirm from './app/ServicesFunction/Transfer/TransferConfirm';
 import TransferRecipient from './app/ServicesFunction/Transfer/TransferRecipient';
 import SendMoney from './app/ServicesFunction/Transfer/TransferService';
@@ -70,6 +75,11 @@ export default function App() {
         <Stack.Screen name="Travel" component={TravelProtection} />
         <Stack.Screen name="History" component={Placeholder} />
         <Stack.Screen name="Maya" component={Placeholder} />
+        <Stack.Screen name="EwalletService" component={EwalletService} />
+        <Stack.Screen name="EwalletContactInfo" component={EwalletContactInfo} />
+        <Stack.Screen name="EwalletPersonalInfo" component={EwalletPersonalInfo} />
+        <Stack.Screen name="EwalletAddressInfo" component={EwalletAddressInfo} />
+        <Stack.Screen name="EwalletFinancialInfo" component={EwalletFinancialInfo} />
         <Stack.Screen name="Stockholder" component={Placeholder} />
         <Stack.Screen name="Task" component={Placeholder} />
         <Stack.Screen name="AgentRequest" component={AgentDashboard} />
