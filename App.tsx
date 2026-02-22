@@ -27,8 +27,11 @@ import Passcode from './app/Outside/passcode';
 import Register from './app/Outside/Register';
 import Welcome from './app/Outside/Welcome';
 import Placeholder from './app/Placeholder';
+import BankingAddressInfo from './app/ServicesFunction/Banking/BankingAdressinfo';
 import BankingContactInfo from './app/ServicesFunction/Banking/BankingContactInfo';
+import BankingFinancialInfo from './app/ServicesFunction/Banking/BankingFinancialInfo';
 import BankingPersonalInfo from './app/ServicesFunction/Banking/BankingPersonalInfo';
+import BankingRequiredInfo from './app/ServicesFunction/Banking/BankingRequiredInfo';
 import BankingService from './app/ServicesFunction/Banking/BankingService';
 import TransferConfirm from './app/ServicesFunction/Transfer/TransferConfirm';
 import TransferRecipient from './app/ServicesFunction/Transfer/TransferRecipient';
@@ -61,6 +64,9 @@ export default function App() {
         <Stack.Screen name="Bdo" component={BankingService} />
         <Stack.Screen name="BankingContactInfo" component={BankingContactInfo} />
         <Stack.Screen name="BankingPersonalInfo" component={BankingPersonalInfo} />
+        <Stack.Screen name="BankingAddressInfo" component={BankingAddressInfo} />
+        <Stack.Screen name="BankingFinancialInfo" component={BankingFinancialInfo} />
+        <Stack.Screen name="BankingRequiredInfo" component={BankingRequiredInfo} />
         <Stack.Screen name="Travel" component={TravelProtection} />
         <Stack.Screen name="History" component={Placeholder} />
         <Stack.Screen name="Maya" component={Placeholder} />

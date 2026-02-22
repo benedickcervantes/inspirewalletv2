@@ -1,13 +1,12 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
-import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import DateTimePicker, {
   type DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
-import { doc, onSnapshot } from "firebase/firestore";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   ActivityIndicator,
   Modal,
@@ -21,7 +20,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { auth, firestore } from "../../../configs/firebase";
 import type { RootStackParamList } from "../../../types/navigation";
 
 type AlertType = "success" | "error" | "warning" | "info";
@@ -168,7 +166,7 @@ export default function TravelProtection() {
     useNavigation<NativeStackNavigationProp<RootStackParamList, "Travel">>();
 
   const [currentStep, setCurrentStep] = useState(1);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [protectionFee, setProtectionFee] = useState(1250);
   const [userTimeDeposit, setUserTimeDeposit] = useState(0);
 
@@ -241,46 +239,6 @@ export default function TravelProtection() {
     });
     setAlertVisible(true);
   };
-
-  useEffect(() => {
-    const user = auth?.currentUser;
-    if (!user) {
-      navigation.replace("Welcome");
-      return;
-    }
-
-    if (!firestore) {
-      setLoading(false);
-      return;
-    }
-
-    const userRef = doc(firestore, "users", user.uid);
-    const unsubscribe = onSnapshot(
-      userRef,
-      (userDoc) => {
-        if (userDoc.exists()) {
-          const data = userDoc.data();
-          const timeDepositAmount =
-            (data?.timeDepositTotal as number) ??
-            (data?.timeDepositAmount as number) ??
-            0;
-          setUserTimeDeposit(timeDepositAmount);
-          if (timeDepositAmount > 0) {
-            setProtectionFee(625);
-          } else {
-            setProtectionFee(1250);
-          }
-        }
-        setLoading(false);
-      },
-      (error) => {
-        console.error("Error fetching user data:", error);
-        setLoading(false);
-      }
-    );
-
-    return () => unsubscribe();
-  }, [navigation]);
 
   const handleNext = () => {
     if (currentStep === 1) {
