@@ -22,26 +22,24 @@ const THEME_COLOR = "#E15816";
 const ORANGE_GRADIENT = ["#E25A17", "#F28934"] as const;
 const GREEN_COMPLETE = "#10B981";
 
-export default function BankingContactInfo() {
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, "BankingContactInfo">>();
-  const route = useRoute<RouteProp<RootStackParamList, "BankingContactInfo">>();
+export default function BankingFinancialInfo() {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, "BankingFinancialInfo">>();
+  const route = useRoute<RouteProp<RootStackParamList, "BankingFinancialInfo">>();
   const selectedBank = route.params?.selectedBank ?? "Security Bank";
 
-  const [email, setEmail] = useState("");
-  const [mobileNumber, setMobileNumber] = useState("");
-  const [landlineNumber, setLandlineNumber] = useState("");
+  const [sourceOfFund, setSourceOfFund] = useState("");
+  const [grossMonthlyIncome, setGrossMonthlyIncome] = useState("0");
 
-  const currentStep = 2;
+  const currentStep = 5;
 
   const handleBack = () => {
     navigation.goBack();
   };
 
   const handleNext = () => {
-    // Basic validation for required fields
-    if (!email.trim()) return;
-    if (!mobileNumber.trim()) return;
-    navigation.navigate("BankingPersonalInfo", { selectedBank });
+    if (!sourceOfFund.trim()) return;
+    if (!grossMonthlyIncome.trim()) return;
+    navigation.navigate("BankingRequiredInfo", { selectedBank });
   };
 
   return (
@@ -79,7 +77,7 @@ export default function BankingContactInfo() {
             </View>
           </View>
 
-          {/* Progress Stepper - Step 1 complete (green), Step 2 active */}
+          {/* Progress Stepper - Steps 1–4 complete (green), Step 5 active */}
           <View style={styles.progressContainer}>
             <View style={styles.stepRow}>
               {[1, 2, 3, 4, 5, 6].map((step) => (
@@ -123,56 +121,45 @@ export default function BankingContactInfo() {
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
-            {/* Main Content Card - Contact Information */}
+            {/* Main Content Card - Financial Information */}
             <View style={styles.contentCard}>
               <View style={styles.stepIconWrapper}>
-                <Ionicons name="call" size={28} color={THEME_COLOR} />
+                <MaterialCommunityIcons
+                  name="cash-multiple"
+                  size={28}
+                  color={THEME_COLOR}
+                />
               </View>
-              <Text style={styles.contentTitle}>Contact Information</Text>
+              <Text style={styles.contentTitle}>Financial Information</Text>
               <Text style={styles.contentDescription}>
-                Provide your contact details so we can reach you regarding your
-                application status and account updates.
+                Share your financial details to help us understand your banking
+                needs and ensure compliance.
               </Text>
 
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>
-                  Email Address<Text style={styles.required}>*</Text>
+                  Source of Fund<Text style={styles.required}>*</Text>
                 </Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="your.email@example.com"
+                  placeholder="e.g., Employment, Business, Investment etc."
                   placeholderTextColor="#9E9E9E"
-                  value={email}
-                  onChangeText={setEmail}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoCorrect={false}
+                  value={sourceOfFund}
+                  onChangeText={setSourceOfFund}
                 />
               </View>
 
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>
-                  Mobile Number<Text style={styles.required}>*</Text>
+                  Gross Monthly Income<Text style={styles.required}>*</Text>
                 </Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="+63 9XX XXX XXXX"
+                  placeholder="0"
                   placeholderTextColor="#9E9E9E"
-                  value={mobileNumber}
-                  onChangeText={setMobileNumber}
-                  keyboardType="phone-pad"
-                />
-              </View>
-
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Landline Number</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="(02) XXXX XXXX"
-                  placeholderTextColor="#9E9E9E"
-                  value={landlineNumber}
-                  onChangeText={setLandlineNumber}
-                  keyboardType="phone-pad"
+                  value={grossMonthlyIncome}
+                  onChangeText={setGrossMonthlyIncome}
+                  keyboardType="numeric"
                 />
               </View>
             </View>
@@ -183,10 +170,10 @@ export default function BankingContactInfo() {
                 <Text style={styles.infoIconText}>i</Text>
               </View>
               <Text style={styles.infoText}>
-                By submitting these details, we will send you an email confirmation
-                with your application status. Please note that this process will
-                take approximately 5-7 working days for review and approval by the
-                selected bank.
+                By submitting these details, we will send you an email
+                confirmation with your application status. Please note that this
+                process will take approximately 5-7 working days for review and
+                approval by the selected bank.
               </Text>
             </View>
 

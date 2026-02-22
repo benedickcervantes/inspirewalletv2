@@ -22,10 +22,14 @@ const THEME_COLOR = "#E15816";
 const ORANGE_GRADIENT = ["#E25A17", "#F28934"] as const;
 const GREEN_COMPLETE = "#10B981";
 
-export default function BankingContactInfo() {
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, "BankingContactInfo">>();
-  const route = useRoute<RouteProp<RootStackParamList, "BankingContactInfo">>();
-  const selectedBank = route.params?.selectedBank ?? "Security Bank";
+export default function EwalletContactInfo() {
+  const navigation =
+    useNavigation<
+      NativeStackNavigationProp<RootStackParamList, "EwalletContactInfo">
+    >();
+  const route =
+    useRoute<RouteProp<RootStackParamList, "EwalletContactInfo">>();
+  const selectedProvider = route.params?.selectedProvider ?? "";
 
   const [email, setEmail] = useState("");
   const [mobileNumber, setMobileNumber] = useState("");
@@ -38,10 +42,9 @@ export default function BankingContactInfo() {
   };
 
   const handleNext = () => {
-    // Basic validation for required fields
     if (!email.trim()) return;
     if (!mobileNumber.trim()) return;
-    navigation.navigate("BankingPersonalInfo", { selectedBank });
+    navigation.navigate("EwalletPersonalInfo", { selectedProvider });
   };
 
   return (
@@ -65,24 +68,27 @@ export default function BankingContactInfo() {
                 colors={ORANGE_GRADIENT}
                 style={styles.headerGradient}
                 start={{ x: 0, y: 0 }}
-                end={{ x: 0, y: 1 }}
+                end={{ x: 1, y: 0 }}
               >
-                <MaterialCommunityIcons
-                  name="bank"
-                  size={40}
-                  color="#FFFFFF"
-                  style={styles.headerIcon}
-                />
-                <Text style={styles.headerTitle}>Bank Account Services</Text>
-                <Text style={styles.headerSubtitle}>Professional Banking Solutions</Text>
+                <View style={styles.headerIconWrapper}>
+                  <MaterialCommunityIcons
+                    name="wallet"
+                    size={40}
+                    color="#FFFFFF"
+                  />
+                </View>
+                <Text style={styles.headerTitle}>E-Wallet Account Opening</Text>
+                <Text style={styles.headerSubtitle}>
+                  Digital Banking Made Simple
+                </Text>
               </LinearGradient>
             </View>
           </View>
 
-          {/* Progress Stepper - Step 1 complete (green), Step 2 active */}
+          {/* Progress Stepper - 5 steps, Step 1 complete, Step 2 active */}
           <View style={styles.progressContainer}>
             <View style={styles.stepRow}>
-              {[1, 2, 3, 4, 5, 6].map((step) => (
+              {[1, 2, 3, 4, 5].map((step) => (
                 <React.Fragment key={step}>
                   <View
                     style={[
@@ -104,7 +110,7 @@ export default function BankingContactInfo() {
                       </Text>
                     )}
                   </View>
-                  {step < 6 && (
+                  {step < 5 && (
                     <View
                       style={[
                         styles.stepLine,
@@ -183,10 +189,10 @@ export default function BankingContactInfo() {
                 <Text style={styles.infoIconText}>i</Text>
               </View>
               <Text style={styles.infoText}>
-                By submitting these details, we will send you an email confirmation
-                with your application status. Please note that this process will
-                take approximately 5-7 working days for review and approval by the
-                selected bank.
+                By submitting these details, we will send you an email
+                confirmation with your application status. Please note that this
+                process will take approximately 5-7 working days for review and
+                approval.
               </Text>
             </View>
 
@@ -260,7 +266,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     alignItems: "center",
   },
-  headerIcon: {
+  headerIconWrapper: {
+    width: 64,
+    height: 64,
+    borderRadius: 16,
+    backgroundColor: "rgba(255, 255, 255, 0.25)",
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 12,
   },
   headerTitle: {

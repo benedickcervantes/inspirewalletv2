@@ -22,26 +22,32 @@ const THEME_COLOR = "#E15816";
 const ORANGE_GRADIENT = ["#E25A17", "#F28934"] as const;
 const GREEN_COMPLETE = "#10B981";
 
-export default function BankingContactInfo() {
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, "BankingContactInfo">>();
-  const route = useRoute<RouteProp<RootStackParamList, "BankingContactInfo">>();
-  const selectedBank = route.params?.selectedBank ?? "Security Bank";
+export default function EwalletFinancialInfo() {
+  const navigation =
+    useNavigation<
+      NativeStackNavigationProp<RootStackParamList, "EwalletFinancialInfo">
+    >();
+  const route =
+    useRoute<RouteProp<RootStackParamList, "EwalletFinancialInfo">>();
+  const selectedProvider = route.params?.selectedProvider ?? "";
 
-  const [email, setEmail] = useState("");
-  const [mobileNumber, setMobileNumber] = useState("");
-  const [landlineNumber, setLandlineNumber] = useState("");
+  const [sourceOfFund, setSourceOfFund] = useState("");
+  const [grossMonthlyIncome, setGrossMonthlyIncome] = useState("0");
 
-  const currentStep = 2;
+  const currentStep = 5;
 
   const handleBack = () => {
     navigation.goBack();
   };
 
-  const handleNext = () => {
-    // Basic validation for required fields
-    if (!email.trim()) return;
-    if (!mobileNumber.trim()) return;
-    navigation.navigate("BankingPersonalInfo", { selectedBank });
+  const handleSubmit = () => {
+    if (!sourceOfFund.trim()) return;
+    if (!grossMonthlyIncome.trim()) return;
+    // TODO: Submit application to backend
+    (navigation as { reset: (state: { index: number; routes: { name: string }[] }) => void }).reset({
+      index: 0,
+      routes: [{ name: "Main" }],
+    });
   };
 
   return (
@@ -65,24 +71,27 @@ export default function BankingContactInfo() {
                 colors={ORANGE_GRADIENT}
                 style={styles.headerGradient}
                 start={{ x: 0, y: 0 }}
-                end={{ x: 0, y: 1 }}
+                end={{ x: 1, y: 0 }}
               >
-                <MaterialCommunityIcons
-                  name="bank"
-                  size={40}
-                  color="#FFFFFF"
-                  style={styles.headerIcon}
-                />
-                <Text style={styles.headerTitle}>Bank Account Services</Text>
-                <Text style={styles.headerSubtitle}>Professional Banking Solutions</Text>
+                <View style={styles.headerIconWrapper}>
+                  <MaterialCommunityIcons
+                    name="wallet"
+                    size={40}
+                    color="#FFFFFF"
+                  />
+                </View>
+                <Text style={styles.headerTitle}>E-Wallet Account Opening</Text>
+                <Text style={styles.headerSubtitle}>
+                  Digital Banking Made Simple
+                </Text>
               </LinearGradient>
             </View>
           </View>
 
-          {/* Progress Stepper - Step 1 complete (green), Step 2 active */}
+          {/* Progress Stepper - 5 steps, Steps 1-4 complete, Step 5 active */}
           <View style={styles.progressContainer}>
             <View style={styles.stepRow}>
-              {[1, 2, 3, 4, 5, 6].map((step) => (
+              {[1, 2, 3, 4, 5].map((step) => (
                 <React.Fragment key={step}>
                   <View
                     style={[
@@ -104,7 +113,7 @@ export default function BankingContactInfo() {
                       </Text>
                     )}
                   </View>
-                  {step < 6 && (
+                  {step < 5 && (
                     <View
                       style={[
                         styles.stepLine,
@@ -123,56 +132,45 @@ export default function BankingContactInfo() {
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
-            {/* Main Content Card - Contact Information */}
+            {/* Main Content Card - Financial Information */}
             <View style={styles.contentCard}>
               <View style={styles.stepIconWrapper}>
-                <Ionicons name="call" size={28} color={THEME_COLOR} />
+                <MaterialCommunityIcons
+                  name="piggy-bank-outline"
+                  size={28}
+                  color={THEME_COLOR}
+                />
               </View>
-              <Text style={styles.contentTitle}>Contact Information</Text>
+              <Text style={styles.contentTitle}>Financial Information</Text>
               <Text style={styles.contentDescription}>
-                Provide your contact details so we can reach you regarding your
-                application status and account updates.
+                Share your financial details to help us understand your banking
+                needs and ensure compliance.
               </Text>
 
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>
-                  Email Address<Text style={styles.required}>*</Text>
+                  Source of Fund<Text style={styles.required}>*</Text>
                 </Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="your.email@example.com"
+                  placeholder="e.g., Employment, Business, Investment etc."
                   placeholderTextColor="#9E9E9E"
-                  value={email}
-                  onChangeText={setEmail}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoCorrect={false}
+                  value={sourceOfFund}
+                  onChangeText={setSourceOfFund}
                 />
               </View>
 
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>
-                  Mobile Number<Text style={styles.required}>*</Text>
+                  Gross Monthly Income<Text style={styles.required}>*</Text>
                 </Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="+63 9XX XXX XXXX"
+                  placeholder="0"
                   placeholderTextColor="#9E9E9E"
-                  value={mobileNumber}
-                  onChangeText={setMobileNumber}
-                  keyboardType="phone-pad"
-                />
-              </View>
-
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Landline Number</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="(02) XXXX XXXX"
-                  placeholderTextColor="#9E9E9E"
-                  value={landlineNumber}
-                  onChangeText={setLandlineNumber}
-                  keyboardType="phone-pad"
+                  value={grossMonthlyIncome}
+                  onChangeText={setGrossMonthlyIncome}
+                  keyboardType="numeric"
                 />
               </View>
             </View>
@@ -183,17 +181,17 @@ export default function BankingContactInfo() {
                 <Text style={styles.infoIconText}>i</Text>
               </View>
               <Text style={styles.infoText}>
-                By submitting these details, we will send you an email confirmation
-                with your application status. Please note that this process will
-                take approximately 5-7 working days for review and approval by the
-                selected bank.
+                By submitting these details, we will send you an email
+                confirmation with your application status. Please note that this
+                process will take approximately 5-7 working days for review and
+                approval.
               </Text>
             </View>
 
             <View style={styles.bottomSpacing} />
           </ScrollView>
 
-          {/* Back & Next Buttons */}
+          {/* Back & Submit Buttons */}
           <View style={styles.footer}>
             <View style={styles.buttonRow}>
               <TouchableOpacity
@@ -204,17 +202,17 @@ export default function BankingContactInfo() {
                 <Text style={styles.backButtonText}>Back</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={styles.nextButton}
-                onPress={handleNext}
+                style={styles.submitButton}
+                onPress={handleSubmit}
                 activeOpacity={0.9}
               >
                 <LinearGradient
                   colors={ORANGE_GRADIENT}
-                  style={styles.nextGradient}
+                  style={styles.submitGradient}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                 >
-                  <Text style={styles.nextButtonText}>Next</Text>
+                  <Text style={styles.submitButtonText}>Submit</Text>
                 </LinearGradient>
               </TouchableOpacity>
             </View>
@@ -260,7 +258,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     alignItems: "center",
   },
-  headerIcon: {
+  headerIconWrapper: {
+    width: 64,
+    height: 64,
+    borderRadius: 16,
+    backgroundColor: "rgba(255, 255, 255, 0.25)",
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 12,
   },
   headerTitle: {
@@ -440,17 +444,17 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: THEME_COLOR,
   },
-  nextButton: {
+  submitButton: {
     flex: 1,
     borderRadius: 14,
     overflow: "hidden",
   },
-  nextGradient: {
+  submitGradient: {
     paddingVertical: 16,
     alignItems: "center",
     justifyContent: "center",
   },
-  nextButtonText: {
+  submitButtonText: {
     fontSize: 18,
     fontWeight: "700",
     color: "#FFFFFF",

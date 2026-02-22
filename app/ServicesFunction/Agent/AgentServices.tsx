@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Animated,
@@ -17,7 +17,7 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-  type ViewStyle,
+  type TextStyle
 } from "react-native";
 import type { RootStackParamList } from "../../../types/navigation";
 
@@ -111,8 +111,8 @@ const t = (lang: string, key: string): string => {
   return strings[key] ?? key;
 };
 
-// No RTL for static - returns empty object
-const getRTLStyles = (_lang?: string): ViewStyle => ({});
+// No RTL for static - returns empty object (TextStyle for Text/TextInput compatibility)
+const getRTLStyles = (_lang?: string): TextStyle => ({});
 
 // Professional Modal Component (static, no BlurView dependency)
 const ProfessionalModal = ({

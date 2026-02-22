@@ -5,6 +5,7 @@ import 'react-native-gesture-handler';
 import 'react-native-reanimated';
 
 import AuthLoader from './app/AuthLoader';
+import AgentDashboard from './app/Dashboard/AgentDashboard';
 import DepositScreen from './app/Dashboard/deposit/deposit';
 import StockInvestment from './app/Dashboard/deposit/stockInvestDepo';
 import StockInvestmentConfirm from './app/Dashboard/deposit/stockInvestDepoConfirm';
@@ -25,15 +26,27 @@ import Login from './app/Outside/Login';
 import Passcode from './app/Outside/passcode';
 import Register from './app/Outside/Register';
 import Welcome from './app/Outside/Welcome';
-import AgentDashboard from './app/Dashboard/AgentDashboard';
 import Placeholder from './app/Placeholder';
-import AgentServices from './app/ServicesFunction/Agent/AgentServices';
+import BankingAddressInfo from './app/ServicesFunction/Banking/BankingAdressinfo';
 import BankingContactInfo from './app/ServicesFunction/Banking/BankingContactInfo';
+import BankingFinancialInfo from './app/ServicesFunction/Banking/BankingFinancialInfo';
+import BankingPersonalInfo from './app/ServicesFunction/Banking/BankingPersonalInfo';
+import BankingRequiredInfo from './app/ServicesFunction/Banking/BankingRequiredInfo';
 import BankingService from './app/ServicesFunction/Banking/BankingService';
+import EwalletContactInfo from './app/ServicesFunction/E-Wallet/EwalletContactInfo';
+import EwalletAddressInfo from './app/ServicesFunction/E-Wallet/EwalletAddressInfo';
+import EwalletFinancialInfo from './app/ServicesFunction/E-Wallet/EwalletFinancialinfo';
+import EwalletPersonalInfo from './app/ServicesFunction/E-Wallet/EwalletPersonalInfo';
+import EwalletService from './app/ServicesFunction/E-Wallet/EwalletService';
+import StockBuy from './app/ServicesFunction/Stock/StockBuy';
+import StockSell from './app/ServicesFunction/Stock/StockSell';
+import StockService from './app/ServicesFunction/Stock/StockService';
 import TransferConfirm from './app/ServicesFunction/Transfer/TransferConfirm';
 import TransferRecipient from './app/ServicesFunction/Transfer/TransferRecipient';
 import SendMoney from './app/ServicesFunction/Transfer/TransferService';
+import TravelProtection from './app/ServicesFunction/Travel Proctected/TravelProtectServices';
 import Settings from './app/Settings/settings';
+import History from './app/History/history';
 import type { RootStackParamList } from './types/navigation';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -59,10 +72,21 @@ export default function App() {
         <Stack.Screen name="TransferConfirm" component={TransferConfirm} />
         <Stack.Screen name="Bdo" component={BankingService} />
         <Stack.Screen name="BankingContactInfo" component={BankingContactInfo} />
-        <Stack.Screen name="Travel" component={Placeholder} />
-        <Stack.Screen name="History" component={Placeholder} />
+        <Stack.Screen name="BankingPersonalInfo" component={BankingPersonalInfo} />
+        <Stack.Screen name="BankingAddressInfo" component={BankingAddressInfo} />
+        <Stack.Screen name="BankingFinancialInfo" component={BankingFinancialInfo} />
+        <Stack.Screen name="BankingRequiredInfo" component={BankingRequiredInfo} />
+        <Stack.Screen name="Travel" component={TravelProtection} />
+        <Stack.Screen name="History" component={History} />
         <Stack.Screen name="Maya" component={Placeholder} />
-        <Stack.Screen name="Stockholder" component={Placeholder} />
+        <Stack.Screen name="EwalletService" component={EwalletService} />
+        <Stack.Screen name="EwalletContactInfo" component={EwalletContactInfo} />
+        <Stack.Screen name="EwalletPersonalInfo" component={EwalletPersonalInfo} />
+        <Stack.Screen name="EwalletAddressInfo" component={EwalletAddressInfo} />
+        <Stack.Screen name="EwalletFinancialInfo" component={EwalletFinancialInfo} />
+        <Stack.Screen name="Stockholder" component={StockService} />
+        <Stack.Screen name="StockBuy" component={StockBuy} />
+        <Stack.Screen name="StockSell" component={StockSell} />
         <Stack.Screen name="Task" component={Placeholder} />
         <Stack.Screen name="AgentRequest" component={AgentDashboard} />
         <Stack.Screen name="PlayEarn" component={Placeholder} />
