@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useState } from 'react';
@@ -12,8 +13,18 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+import { getMessages } from '../../configs/api';
 import { auth } from '../../configs/firebase';
 import notificationService, { type NotificationItem } from './notificationService';
+
+interface Message {
+  id: string;
+  content: string;
+  createdAt: string;
+  status: 'SENT' | 'READ';
+  senderName?: string;
+  direction?: 'ADMIN_TO_USER' | 'USER_TO_ADMIN';
+}
 
 interface NotificationProps {
   language?: string;
@@ -22,25 +33,52 @@ interface NotificationProps {
 const Notification = ({ language = 'English' }: NotificationProps) => {
   const navigation = useNavigation();
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [user, setUser] = useState<{ uid: string } | null>(null);
+  const [useBackend, setUseBackend] = useState(false);
 
   useEffect(() => {
-    if (!auth) {
-      setLoading(false);
-      return;
-    }
-    const unsubscribeAuth = auth.onAuthStateChanged((currentUser) => {
-      setUser(currentUser);
-      if (!currentUser) {
-        setNotifications([]);
+    const checkAuth = async () => {
+      const accessToken = await AsyncStorage.getItem("access_token");
+      if (accessToken) {
+        setUseBackend(true);
+        fetchBackendMessages();
+      } else if (auth) {
+        const unsubscribeAuth = auth.onAuthStateChanged((currentUser) => {
+          setUser(currentUser);
+          if (!currentUser) {
+            setNotifications([]);
+            setLoading(false);
+          }
+        });
+        return () => unsubscribeAuth();
+      } else {
         setLoading(false);
       }
-    });
+    };
 
-    return () => unsubscribeAuth();
+    checkAuth();
   }, []);
+
+  const fetchBackendMessages = async () => {
+    try {
+      setLoading(true);
+      const accessToken = await AsyncStorage.getItem("access_token");
+      if (!accessToken) return;
+
+      const result = await getMessages(accessToken, { page: 1, limit: 50 });
+      if (result.success && result.messages) {
+        setMessages(result.messages as Message[]);
+      }
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
 
   useEffect(() => {
     if (!user) {
@@ -63,13 +101,23 @@ const Notification = ({ language = 'English' }: NotificationProps) => {
 
   const handleRefresh = () => {
     setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 1000);
+    if (useBackend) {
+      fetchBackendMessages();
+    } else {
+      setTimeout(() => setRefreshing(false), 1000);
+    }
   };
 
-  const handleNotificationPress = async (notification: NotificationItem) => {
-    if (!notification.read && user) {
+  const handleNotificationPress = async (notification: NotificationItem | Message) => {
+    if (useBackend) {
+      // Backend messages - navigate to message detail or mark as read
+      return;
+    }
+    
+    const notif = notification as NotificationItem;
+    if (!notif.read && user) {
       try {
-        await notificationService.markAsRead(user.uid, notification.id);
+        await notificationService.markAsRead(user.uid, notif.id);
       } catch (error) {
         console.error('Error marking notification as read:', error);
       }
@@ -105,6 +153,67 @@ const Notification = ({ language = 'English' }: NotificationProps) => {
     
     return date.toLocaleString('en-US', options);
   };
+
+  const renderBackendMessage = ({ item }: { item: Message }) => (
+    <TouchableOpacity
+      style={[
+        styles.notificationCard,
+        item.status === 'SENT' && styles.unreadCard,
+      ]}
+      onPress={() => handleNotificationPress(item)}
+    >
+      <View style={styles.cardContent}>
+        <View style={[
+          styles.iconContainer,
+          item.status === 'SENT' && styles.unreadIconContainer,
+        ]}>
+          <Ionicons
+            name={item.direction === 'ADMIN_TO_USER' ? 'mail' : 'send'}
+            size={24}
+            color="#E25A17"
+          />
+        </View>
+
+        <View style={styles.textContainer}>
+          <View style={styles.titleRow}>
+            <Text style={styles.notificationTitle}>
+              {item.senderName || (item.direction === 'ADMIN_TO_USER' ? 'Support Message' : 'Your Message')}
+            </Text>
+            {item.status === 'SENT' && (
+              <View style={styles.newBadge}>
+                <Text style={styles.newBadgeText}>NEW</Text>
+              </View>
+            )}
+          </View>
+
+          <View style={styles.divider} />
+
+          <Text style={styles.notificationMessage} numberOfLines={3}>
+            {item.content}
+          </Text>
+
+          <Text style={styles.timestamp}>
+            {new Date(item.createdAt).toLocaleString('en-US', {
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
+          </Text>
+        </View>
+
+        {item.status === 'READ' && (
+          <Ionicons
+            name="chevron-forward"
+            size={20}
+            color="#CCC"
+            style={styles.chevron}
+          />
+        )}
+      </View>
+    </TouchableOpacity>
+  );
 
   const renderNotificationItem = ({ item }: { item: NotificationItem }) => (
     <TouchableOpacity
@@ -172,7 +281,7 @@ const Notification = ({ language = 'English' }: NotificationProps) => {
     </View>
   );
 
-  if (!user) {
+  if (!user && !useBackend) {
     return (
       <SafeAreaView style={styles.container}>
         <LinearGradient
@@ -227,12 +336,12 @@ const Notification = ({ language = 'English' }: NotificationProps) => {
         </View>
       ) : (
         <FlatList
-          data={notifications}
-          renderItem={renderNotificationItem}
+          data={useBackend ? messages : notifications}
+          renderItem={useBackend ? renderBackendMessage : renderNotificationItem}
           keyExtractor={(item) => item.id}
           contentContainerStyle={[
             styles.listContent,
-            notifications.length === 0 && styles.emptyListContent,
+            (useBackend ? messages.length === 0 : notifications.length === 0) && styles.emptyListContent,
           ]}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={renderEmptyState}
