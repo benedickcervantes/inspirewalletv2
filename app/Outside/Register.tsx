@@ -1,31 +1,33 @@
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useState } from 'react';
 import {
-  StyleSheet,
-  Text,
-  View,
+  ActivityIndicator,
+  Dimensions,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
   SafeAreaView,
-  TextInput,
-  TouchableOpacity,
   ScrollView,
   StatusBar,
-  KeyboardAvoidingView,
-  Platform,
-  Modal,
-  Dimensions,
-  Alert,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
-import { useState } from 'react';
-import { useNavigation } from '@react-navigation/native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import { ActivityIndicator } from 'react-native';
-import type { NavProp } from '../../types/navigation';
 import { register as registerApi } from '../../configs/api';
+import type { NavProp } from '../../types/navigation';
 
 const { width } = Dimensions.get('window');
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const isValidEmail = (email: string) => EMAIL_REGEX.test((email || '').trim().toLowerCase());
+
+const capitalizeWords = (text: string) =>
+  text.replace(/\b\w/g, (char) => char.toUpperCase());
 
 const COUNTRY_OPTIONS = [
   { code: '+63', label: 'Philippines', flag: '🇵🇭', iso: 'PH' },
@@ -229,8 +231,9 @@ export default function Register() {
                       style={styles.input}
                       placeholder="e.g. John"
                       placeholderTextColor="#999"
+                      autoCapitalize="words"
                       value={firstName}
-                      onChangeText={setFirstName}
+                      onChangeText={(text) => setFirstName(capitalizeWords(text))}
                     />
                   </View>
                   <View style={styles.inputGroup}>
@@ -241,8 +244,9 @@ export default function Register() {
                       style={styles.input}
                       placeholder="e.g. Doe"
                       placeholderTextColor="#999"
+                      autoCapitalize="words"
                       value={lastName}
-                      onChangeText={setLastName}
+                      onChangeText={(text) => setLastName(capitalizeWords(text))}
                     />
                   </View>
                   <View style={styles.inputGroup}>
@@ -280,8 +284,9 @@ export default function Register() {
                         style={styles.input}
                         placeholder="Enter your company name"
                         placeholderTextColor="#999"
+                        autoCapitalize="words"
                         value={companyName}
-                        onChangeText={setCompanyName}
+                        onChangeText={(text) => setCompanyName(capitalizeWords(text))}
                       />
                     </View>
                   )}
