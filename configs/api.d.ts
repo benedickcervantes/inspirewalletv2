@@ -131,3 +131,22 @@ export function getBulkUserActivity(
   >;
   error?: string;
 }>;
+
+// Referral API
+export function getReferralTree(
+  accessToken: string
+): Promise<{
+  success: boolean;
+  tree?: {
+    referralCode?: string;
+    directReferralCount?: number;
+    totalDescendantCount?: number;
+    directReferrals?: Array<{
+      userId: string;
+      referralCode?: string;
+      firstName?: string;
+      lastName?: string;
+    }>;
+  };
+  error?: string;
+}>;
