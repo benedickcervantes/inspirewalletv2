@@ -1,10 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
-import React, { useCallback, useState } from "react";
+import React, { useState } from "react";
 import {
-  ActivityIndicator,
-  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -12,84 +10,10 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import {
-  getStockInvestmentDepositRequests,
-  getTopUpDepositRequests,
-} from "../../../configs/api";
-
-interface DepositRequestItem {
-  id: string;
-  amount: string | number;
-  status: string;
-  requestType?: string;
-  createdAt?: string;
-}
 
 export default function DepositIndex() {
   const navigation = useNavigation();
   const [selectedType, setSelectedType] = useState<string | null>(null);
-  const [requests, setRequests] = useState<DepositRequestItem[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
-
-  const fetchDepositRequests = useCallback(async () => {
-    const accessToken = await AsyncStorage.getItem("access_token");
-    if (!accessToken) {
-      setRequests([]);
-      return;
-    }
-    try {
-      const [topUpRes, stockRes] = await Promise.all([
-        getTopUpDepositRequests(accessToken),
-        getStockInvestmentDepositRequests(accessToken),
-      ]);
-      const items: DepositRequestItem[] = [];
-      if (topUpRes.success && topUpRes.requests) {
-        topUpRes.requests.forEach((r: Record<string, unknown>) =>
-          items.push({
-            id: String(r.id ?? ""),
-            amount: r.amount ?? 0,
-            status: String(r.status ?? ""),
-            requestType: "Top Up",
-            createdAt: r.createdAt as string | undefined,
-          })
-        );
-      }
-      if (stockRes.success && stockRes.requests) {
-        stockRes.requests.forEach((r: Record<string, unknown>) =>
-          items.push({
-            id: String(r.id ?? ""),
-            amount: r.amount ?? 0,
-            status: String(r.status ?? ""),
-            requestType: "Stock Investment",
-            createdAt: r.createdAt as string | undefined,
-          })
-        );
-      }
-      items.sort((a, b) => {
-        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-        return dateB - dateA;
-      });
-      setRequests(items);
-    } catch {
-      setRequests([]);
-    }
-  }, []);
-
-  useFocusEffect(
-    useCallback(() => {
-      setLoading(true);
-      fetchDepositRequests().finally(() => setLoading(false));
-    }, [fetchDepositRequests])
-  );
-
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await fetchDepositRequests();
-    setRefreshing(false);
-  }, [fetchDepositRequests]);
 
   const depositTypes = [
     {
@@ -142,31 +66,13 @@ export default function DepositIndex() {
             <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Deposit Request</Text>
-
-          <TouchableOpacity
-            style={styles.refreshButton}
-            onPress={onRefresh}
-            disabled={refreshing || loading}
-          >
-            {refreshing || loading ? (
-              <ActivityIndicator size="small" color="#FFFFFF" />
-            ) : (
-              <Ionicons name="refresh" size={24} color="#FFFFFF" />
-            )}
-          </TouchableOpacity>
+          <View style={styles.headerSpacer} />
         </LinearGradient>
 
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing && !loading}
-              onRefresh={onRefresh}
-              tintColor="#E25A17"
-            />
-          }
         >
           {/* Step Progress Bar */}
           <View style={styles.stepProgressContainer}>
@@ -180,33 +86,6 @@ export default function DepositIndex() {
           <View style={styles.iconCircle}>
             <Ionicons name="trending-up" size={48} color="#FFFFFF" />
           </View>
-
-          {/* My Deposit Requests */}
-          {requests.length > 0 && (
-            <View style={styles.requestsSection}>
-              <Text style={styles.requestsSectionTitle}>My Deposit Requests</Text>
-              {requests.slice(0, 5).map((req) => (
-                <View key={req.id} style={styles.requestCard}>
-                  <View style={styles.requestCardLeft}>
-                    <Text style={styles.requestType}>{req.requestType}</Text>
-                    <Text style={styles.requestAmount}>
-                      ₱{typeof req.amount === "string" ? req.amount : Number(req.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                    </Text>
-                  </View>
-                  <View
-                    style={[
-                      styles.requestStatusBadge,
-                      req.status === "PENDING" && styles.requestStatusPending,
-                      req.status === "APPROVED" && styles.requestStatusApproved,
-                      req.status === "REJECTED" && styles.requestStatusRejected,
-                    ]}
-                  >
-                    <Text style={styles.requestStatusText}>{req.status}</Text>
-                  </View>
-                </View>
-              ))}
-            </View>
-          )}
 
           {/* Title */}
           <Text style={styles.title}>Select Deposit Type *</Text>
@@ -300,11 +179,9 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: "center",
   },
-  refreshButton: {
+  headerSpacer: {
     width: 40,
     height: 40,
-    justifyContent: "center",
-    alignItems: "center",
   },
   scrollView: {
     flex: 1,
@@ -444,64 +321,5 @@ const styles = StyleSheet.create({
   },
   bottomPadding: {
     height: 40,
-  },
-  requestsSection: {
-    marginBottom: 24,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 16,
-    padding: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  requestsSectionTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#333",
-    marginBottom: 12,
-  },
-  requestCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#F0F0F0",
-  },
-  requestCardLeft: {
-    flex: 1,
-  },
-  requestType: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#333",
-  },
-  requestAmount: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#E25A17",
-    marginTop: 2,
-  },
-  requestStatusBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
-    backgroundColor: "#E0E0E0",
-  },
-  requestStatusPending: {
-    backgroundColor: "#FFF3E0",
-  },
-  requestStatusApproved: {
-    backgroundColor: "#E8F5E9",
-  },
-  requestStatusRejected: {
-    backgroundColor: "#FFEBEE",
-  },
-  requestStatusText: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: "#333",
   },
 });

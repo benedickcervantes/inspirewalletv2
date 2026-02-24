@@ -533,6 +533,65 @@ Authorization: Bearer <access_token>
 
 ---
 
+### Get user detail (with wallets)
+
+**`GET /users/:id`**  
+**Protected:** Yes — requires `Authorization: Bearer <access_token>` and **ADMIN** role.
+
+Returns a single user's details including decrypted PII, referral info, and their wallets (with `balance` and `agentCommission`). Use for the admin user detail view.
+
+**Response fields**
+
+| Field | Type | Description |
+|-------|------|--------------|
+| `id` | string | User ID (cuid) |
+| `email` | string | Email address |
+| `accountNumber` | string | 12-digit account number (e.g. `"1234 5678 9012"`) |
+| `firstName` | string | First name |
+| `lastName` | string | Last name |
+| `referralCode` | string \| null | User's unique referral ID (8 chars, e.g. `"ABC12XYZ"`). Use for sharing sign-up links. See [API-REFERRALS.md](API-REFERRALS.md). |
+| `referredById` | string \| null | User ID of the referrer (who referred this user), if any. |
+| `wallets` | array | User's wallets with `balance` and `agentCommission`. |
+| ... | | Plus other user fields (status, role, emailVerified, isAgent, createdAt, etc.) |
+
+**Request**
+
+- **URL param:** `id` — user ID (cuid).
+- **Headers:** `Authorization: Bearer <access_token>` (admin JWT).
+
+**Example success response** `200`
+
+```json
+{
+  "id": "clxx...",
+  "email": "jane@example.com",
+  "accountNumber": "1234 5678 9012",
+  "firstName": "Jane",
+  "lastName": "Doe",
+  "referralCode": "ABC12XYZ",
+  "referredById": null,
+  "status": "ACTIVE",
+  "role": "USER",
+  "isAgent": false,
+  "wallets": [
+    {
+      "id": "clxx...",
+      "balance": "10000.00",
+      "agentCommission": "500.00",
+      "currency": { "code": "PHP", "name": "Philippine Peso", "symbol": "₱" }
+    }
+  ]
+}
+```
+
+**Error responses**
+
+- **404 Not Found** – User not found
+- **401 Unauthorized** – Missing or invalid/expired token
+- **403 Forbidden** – Caller does not have ADMIN role
+
+---
+
 ### Delete user
 
 **`DELETE /users/:id`**  
@@ -613,7 +672,7 @@ Authorization: Bearer <access_token>
 
 ## Deposit Requests
 
-Time Deposit, Top Up, and Stock Investment. See **[API-DEPOSIT-REQUESTS.md](API-DEPOSIT-REQUESTS.md)** for full documentation.
+Time Deposit, Top Up, and Stock Investment. See **[API-TIME-DEPOSITS.md](API-TIME-DEPOSITS.md)** for time deposits and **[API-DEPOSIT-REQUESTS.md](API-DEPOSIT-REQUESTS.md)** for top-up and stock investment.
 
 ---
 

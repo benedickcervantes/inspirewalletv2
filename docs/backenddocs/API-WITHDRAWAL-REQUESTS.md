@@ -29,6 +29,7 @@ Users submit withdrawal requests (Local Bank or E-Wallet); admins approve or rej
 | Method | Endpoint | Role | Description |
 |--------|----------|------|-------------|
 | POST | `/withdrawal-requests` | USER | Create withdrawal request |
+| POST | `/withdrawal-requests/admin` | ADMIN | Create withdrawal request on behalf of user (body: targetUserId or targetAccountNumber + walletId, amount, method, account details) |
 | GET | `/withdrawal-requests` | USER | List own requests |
 | GET | `/withdrawal-requests/:id` | USER | Get one request |
 | GET | `/withdrawal-requests/admin` | ADMIN | List all (optional `?status=PENDING\|APPROVED\|REJECTED`) |
@@ -51,6 +52,7 @@ Creates a new withdrawal request with status `PENDING`. The wallet is **not** de
 |-------|------|----------|------------|-------------|
 | `walletId` | string | Yes | Non-empty | Source wallet to debit on approval |
 | `amount` | string | Yes | Decimal, up to 2 places (e.g. `"1000.50"`) | Amount to withdraw |
+| `source` | string | No | `"available_balance"` (default) or `"agent_commission"` | Source of funds; use `agent_commission` to withdraw from agent commission balance |
 | `method` | string | Yes | `"local_bank"` | Withdrawal method |
 | `email` | string | No | Valid email | Contact email (user may override) |
 | `accountNumber` | string | Yes | 1–50 chars | Bank account number |

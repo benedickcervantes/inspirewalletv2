@@ -15,14 +15,10 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { getOrCreateMainWallet, getTimeDeposits, getTransactions } from "../../configs/api";
-import {
-  auth,
-  subscribeToNotifications,
-  subscribeToTransactions,
-  subscribeToUser,
-} from "../../configs/firebase";
+import { getMe, getOrCreateMainWallet, getReferralTree, getTimeDeposits, getTransactions } from "../../configs/api";
 import { createRealtimeConnection, startHeartbeat } from "../../configs/realtime";
+import { setConnectionStatus } from "../../lib/connectionStatus";
+import { notifyNewSupportMessage } from "../../lib/messagingEvents";
 import type { NavProp } from "../../types/navigation";
 import CardsTab from "./CardsTab";
 import SavingsTab from "./SavingsTab";
@@ -100,8 +96,8 @@ interface TimeDeposit {
 
 function computeTimeDepositTotal(deposits: TimeDeposit[]): number {
   return deposits
-    .filter((d) => d.status === "ACTIVE" || d.status === "MATURED")
-    .reduce((sum, d) => sum + (parseFloat(d.amount) || 0), 0);
+    .filter((d) => d.status === "ACTIVE" || d.status === "MATURED" || d.status === "PENDING")
+    .reduce((sum, d) => sum + (parseFloat(String(d?.amount ?? 0)) || 0), 0);
 }
 
 function computeDividend(deposits: TimeDeposit[]): number {
@@ -164,6 +160,11 @@ export default function Dashboard() {
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
   const [currentLanguageIndex, setCurrentLanguageIndex] = useState(0);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
+  const [userReferrer, setUserReferrer] = useState<{
+    referralCode?: string;
+    firstName?: string;
+    lastName?: string;
+  } | null>(null);
 
   const banners = [
     { image: LOOPWORK_BANNER, url: "https://inspire-loopwork.com/landingpage" },
@@ -185,91 +186,96 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
-    let unsubscribes: Array<() => void> = [];
-
     const init = async () => {
       const accessToken = await AsyncStorage.getItem("access_token");
-      const userJson = await AsyncStorage.getItem("user");
+      if (!accessToken) {
+        (navigation as unknown as NavProp).replace("Welcome");
+        return;
+      }
 
-      if (accessToken && userJson) {
-        const user = JSON.parse(userJson) as Record<string, unknown>;
+      // Backend only — no Firebase
+      let user: Record<string, unknown> | null = null;
+      const userJson = await AsyncStorage.getItem("user");
+      if (userJson) {
+        try {
+          user = JSON.parse(userJson) as Record<string, unknown>;
+        } catch {
+          user = null;
+        }
+      }
+      if (!user?.firstName) {
+        const meRes = await getMe(accessToken);
+        if (meRes.success && meRes.user) user = meRes.user as Record<string, unknown>;
+      }
+      if (user) {
         setUserData({
           firstName: user.firstName,
           lastName: user.lastName,
           email: user.email,
           accountNumber: user.accountNumber,
         });
-        setAvailableBalance(0);
-        setTimeDeposit(0);
-        setDeposits([]);
-        const { success, wallet } = await getOrCreateMainWallet(accessToken);
-        const w = wallet as RawApiWallet | undefined;
-        mainWalletIdRef.current = w?.id ?? null;
-        if (success && w?.balance != null) {
-          const bal = parseFloat(String(w.balance));
-          setAvailableBalance(Number.isNaN(bal) ? 0 : bal);
-        }
-        const tdRes = await getTimeDeposits(accessToken);
-        if (tdRes.success && tdRes.deposits) {
-          const list = tdRes.deposits as TimeDeposit[];
-          setDeposits(list);
-          setTimeDeposit(computeTimeDepositTotal(list));
-        }
-        const txRes = await getTransactions(accessToken, {
-          walletId: w?.id,
-          limit: 20,
-        });
-        if (txRes.success && txRes.transactions) {
-          const mapped: Transaction[] = (txRes.transactions as RawApiTransaction[]).map((tx) => ({
-            id: String(tx.id ?? ""),
-            type: getTransactionTypeLabel(String(tx.type ?? "")),
-            amount: (() => {
-              const a = parseFloat(String(tx.amount ?? 0));
-              return Number.isNaN(a) ? 0 : a;
-            })(),
-            timestamp: {
-              toDate: () => new Date(String(tx.createdAt ?? "")),
-            },
-          }));
-          setRecentTransactions(mapped);
-        }
-        return;
       }
 
-      mainWalletIdRef.current = null;
-      if (!auth) {
-        (navigation as unknown as NavProp).replace("Welcome");
-        return;
-      }
-      const firebaseUser = auth.currentUser;
-      if (!firebaseUser) {
-        (navigation as unknown as NavProp).replace("Welcome");
-        return;
+      setAvailableBalance(0);
+      setTimeDeposit(0);
+      setDeposits([]);
+      setUnreadNotifications(0);
+
+      const { success, wallet } = await getOrCreateMainWallet(accessToken);
+      const w = wallet as RawApiWallet | undefined;
+      mainWalletIdRef.current = w?.id ?? null;
+      if (success && w?.balance != null) {
+        const bal = parseFloat(String(w.balance));
+        setAvailableBalance(Number.isNaN(bal) ? 0 : bal);
       }
 
-      const un1 = subscribeToUser(firebaseUser.uid, (data) => {
-        if (!data) {
-          setUserData(null);
-          return;
+      const tdRes = await getTimeDeposits(accessToken);
+      if (tdRes.success && Array.isArray(tdRes.deposits)) {
+        const list = tdRes.deposits as TimeDeposit[];
+        setDeposits(list);
+        setTimeDeposit(computeTimeDepositTotal(list));
+      } else if (!tdRes.success && __DEV__) {
+        console.warn('[Dashboard] getTimeDeposits failed:', tdRes.error);
+      }
+
+      const treeRes = await getReferralTree(accessToken);
+      if (treeRes.success && treeRes.tree) {
+        const tree = treeRes.tree as { ancestors?: Array<{ referralCode?: string; firstName?: string; lastName?: string }> };
+        const first = tree.ancestors?.[0];
+        if (first?.referralCode ?? (first as { referral_code?: string })?.referral_code) {
+          setUserReferrer({
+            referralCode: first.referralCode ?? (first as { referral_code?: string }).referral_code,
+            firstName: first.firstName ?? (first as { first_name?: string }).first_name,
+            lastName: first.lastName ?? (first as { last_name?: string }).last_name,
+          });
+        } else {
+          setUserReferrer(null);
         }
-        setUserData(data as Record<string, unknown>);
-        const balance = (data?.availBalanceAmount ?? data?.availableBalance) as number | undefined;
-        setAvailableBalance(Number(balance) || 0);
-        setTimeDeposit(Number(data?.timeDepositTotal) || 0);
+      } else {
+        setUserReferrer(null);
+      }
+
+      const txRes = await getTransactions(accessToken, {
+        walletId: w?.id,
+        limit: 20,
       });
-      const un2 = subscribeToTransactions(firebaseUser.uid, (list: Transaction[]) => {
-        setRecentTransactions(list);
-      });
-      const un3 = subscribeToNotifications(firebaseUser.uid, (count: number) => {
-        setUnreadNotifications(count);
-      });
-      unsubscribes = [un1, un2, un3];
+      if (txRes.success && txRes.transactions) {
+        const mapped: Transaction[] = (txRes.transactions as RawApiTransaction[]).map((tx) => ({
+          id: String(tx.id ?? ""),
+          type: getTransactionTypeLabel(String(tx.type ?? "")),
+          amount: (() => {
+            const a = parseFloat(String(tx.amount ?? 0));
+            return Number.isNaN(a) ? 0 : a;
+          })(),
+          timestamp: {
+            toDate: () => new Date(String(tx.createdAt ?? "")),
+          },
+        }));
+        setRecentTransactions(mapped);
+      }
     };
 
     init();
-    return () => {
-      unsubscribes.forEach((fn) => fn());
-    };
   }, [navigation]);
 
   const refetchJwtData = useCallback(async () => {
@@ -282,10 +288,28 @@ export default function Dashboard() {
       setAvailableBalance(Number.isNaN(bal) ? 0 : bal);
     }
     const tdRes = await getTimeDeposits(accessToken);
-    if (tdRes.success && tdRes.deposits) {
+    if (tdRes.success && Array.isArray(tdRes.deposits)) {
       const list = tdRes.deposits as TimeDeposit[];
       setDeposits(list);
       setTimeDeposit(computeTimeDepositTotal(list));
+    } else if (!tdRes.success && __DEV__) {
+      console.warn('[Dashboard] getTimeDeposits failed:', tdRes.error);
+    }
+    const treeRes = await getReferralTree(accessToken);
+    if (treeRes.success && treeRes.tree) {
+      const tree = treeRes.tree as { ancestors?: Array<{ referralCode?: string; firstName?: string; lastName?: string }> };
+      const first = tree.ancestors?.[0];
+      if (first?.referralCode ?? (first as { referral_code?: string })?.referral_code) {
+        setUserReferrer({
+          referralCode: first.referralCode ?? (first as { referral_code?: string }).referral_code,
+          firstName: first.firstName ?? (first as { first_name?: string }).first_name,
+          lastName: first.lastName ?? (first as { last_name?: string }).last_name,
+        });
+      } else {
+        setUserReferrer(null);
+      }
+    } else {
+      setUserReferrer(null);
     }
     const txRes = await getTransactions(accessToken, {
       walletId: w?.id ?? mainWalletIdRef.current ?? undefined,
@@ -339,13 +363,18 @@ export default function Dashboard() {
         onTransactionCreated: () => {
           refetchJwtData();
         },
+        onNewSupportMessage: () => {
+          notifyNewSupportMessage();
+        },
         onConnect: () => {
+          setConnectionStatus(true);
           stopPolling();
           if (socket) {
             heartbeatCleanupRef.current = startHeartbeat(socket) as () => void;
           }
         },
         onDisconnect: () => {
+          setConnectionStatus(false);
           heartbeatCleanupRef.current?.();
           heartbeatCleanupRef.current = null;
           startPolling();
@@ -362,6 +391,7 @@ export default function Dashboard() {
 
     return () => {
       cancelled = true;
+      setConnectionStatus(false);
       stopPolling();
       heartbeatCleanupRef.current?.();
       heartbeatCleanupRef.current = null;
@@ -563,6 +593,7 @@ export default function Dashboard() {
               deposits={deposits}
               formatCurrency={formatCurrency}
               onRefresh={refetchJwtData}
+              userReferrer={userReferrer}
             />
           )}
 
@@ -731,7 +762,7 @@ export default function Dashboard() {
                       </Text>
                     </View>
                     <Text style={styles.transactionAmount}>
-                      Γé▒{formatCurrency(transaction.amount || 0)}
+                      ₱{formatCurrency(transaction.amount || 0)}
                     </Text>
                   </View>
                 ))
@@ -748,7 +779,7 @@ export default function Dashboard() {
                     <Text style={styles.transactionName}>Free Default Card</Text>
                     <Text style={styles.transactionDate}>February 03, 2026</Text>
                   </View>
-                  <Text style={styles.transactionAmount}>Γé▒0.00</Text>
+                  <Text style={styles.transactionAmount}>₱0.00</Text>
                 </View>
               )}
             </View>
