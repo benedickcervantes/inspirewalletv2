@@ -103,7 +103,10 @@ export default function App() {
         <Stack.Screen name="StockSell" component={StockSell} />
         <Stack.Screen name="Task" component={Placeholder} />
         <Stack.Screen name="AgentRequest" component={AgentDashboard} />
-        <Stack.Screen name="PlayEarn" component={Placeholder} />
+        <Stack.Screen name="PlayEarn" component={PlayEarnServices} />
+        <Stack.Screen name="DepositCrypto" component={DepositCrypto} />
+        <Stack.Screen name="DepositCryptoEth" component={DepositCryptoEth} />
+        <Stack.Screen name="DepositCryptoUSDT" component={DepositCryptoUSDT} />
         <Stack.Screen name="Crypto" component={Placeholder} />
         <Stack.Screen name="Deposit" component={DepositScreen} />
         <Stack.Screen name="stockinvestment" component={StockInvestment} />

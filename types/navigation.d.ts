@@ -52,6 +52,9 @@ export type RootStackParamList = {
   Task: undefined;
   AgentRequest: undefined;
   PlayEarn: undefined;
+  DepositCrypto: undefined;
+  DepositCryptoEth: undefined;
+  DepositCryptoUSDT: undefined;
   Crypto: undefined;
   Deposit: undefined;
   stockinvestment: undefined;
