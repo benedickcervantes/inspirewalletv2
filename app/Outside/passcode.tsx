@@ -18,7 +18,7 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import CustomLoader from '../../components/CustomLoader';
+import CustomLoader from '../Loader/CustomLoader';
 import { login, verifyPasscode } from '../../configs/api';
 import type { NavProp } from '../../types/navigation';
 
