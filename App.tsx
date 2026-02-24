@@ -39,6 +39,10 @@ import EwalletAddressInfo from './app/ServicesFunction/E-Wallet/EwalletAddressIn
 import EwalletFinancialInfo from './app/ServicesFunction/E-Wallet/EwalletFinancialinfo';
 import EwalletPersonalInfo from './app/ServicesFunction/E-Wallet/EwalletPersonalInfo';
 import EwalletService from './app/ServicesFunction/E-Wallet/EwalletService';
+import DepositCrypto from './app/ServicesFunction/Play&Earn/depositCrypto';
+import DepositCryptoEth from './app/ServicesFunction/Play&Earn/depositCryptoEth';
+import DepositCryptoUSDT from './app/ServicesFunction/Play&Earn/depositCryptoUSDT';
+import PlayEarnServices from './app/ServicesFunction/Play&Earn/Play&earnServices';
 import StockService from './app/ServicesFunction/Stock/StockService';
 import TransferConfirm from './app/ServicesFunction/Transfer/TransferConfirm';
 import TransferRecipient from './app/ServicesFunction/Transfer/TransferRecipient';
@@ -99,7 +103,10 @@ export default function App() {
         <Stack.Screen name="Stockholder" component={StockService} />
         <Stack.Screen name="Task" component={Placeholder} />
         <Stack.Screen name="AgentRequest" component={AgentDashboard} />
-        <Stack.Screen name="PlayEarn" component={Placeholder} />
+        <Stack.Screen name="PlayEarn" component={PlayEarnServices} />
+        <Stack.Screen name="DepositCrypto" component={DepositCrypto} />
+        <Stack.Screen name="DepositCryptoEth" component={DepositCryptoEth} />
+        <Stack.Screen name="DepositCryptoUSDT" component={DepositCryptoUSDT} />
         <Stack.Screen name="Crypto" component={Placeholder} />
         <Stack.Screen name="Deposit" component={DepositScreen} />
         <Stack.Screen name="stockinvestment" component={StockInvestment} />
