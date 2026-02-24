@@ -4,5 +4,6 @@
     "source.organizeImports": "explicit",
     "source.sortMembers": "explicit"
   },
-  "javascript.autoClosingTags": false
+  "javascript.autoClosingTags": false,
+  "typescript.autoClosingTags": false
 }

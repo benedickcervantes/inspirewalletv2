@@ -15,12 +15,14 @@ import TimeDepositConfirm from './app/Dashboard/deposit/timedepositConfirm';
 import TopUpBalance from './app/Dashboard/deposit/topupDepoAvailB';
 import TopupConfirm from './app/Dashboard/deposit/topupDepoAvailBconfirm';
 import Dashboard from './app/Dashboard/main';
+import Message from './app/Dashboard/Message';
 import WithdrawScreen from './app/Dashboard/withdraw/withdraw';
 import EWalletWithdrawal from './app/Dashboard/withdraw/withdrawEwallet';
 import EWalletConfirm from './app/Dashboard/withdraw/withdrawEwalletConfirm';
 import BankWithdrawal from './app/Dashboard/withdraw/withdrawLocalB';
 import WithdrawLocalBConfirm from './app/Dashboard/withdraw/withdrawLocalBconfirm';
 import WithdrawMethodScreen from './app/Dashboard/withdraw/withdrawMethod';
+import History from './app/History/history';
 import NotificationScreen from './app/Notification/notification';
 import CreatePasscode from './app/Outside/CreatePasscode';
 import Login from './app/Outside/Login';
@@ -34,14 +36,16 @@ import BankingFinancialInfo from './app/ServicesFunction/Banking/BankingFinancia
 import BankingPersonalInfo from './app/ServicesFunction/Banking/BankingPersonalInfo';
 import BankingRequiredInfo from './app/ServicesFunction/Banking/BankingRequiredInfo';
 import BankingService from './app/ServicesFunction/Banking/BankingService';
-import EwalletContactInfo from './app/ServicesFunction/E-Wallet/EwalletContactInfo';
 import EwalletAddressInfo from './app/ServicesFunction/E-Wallet/EwalletAddressInfo';
+import EwalletContactInfo from './app/ServicesFunction/E-Wallet/EwalletContactInfo';
 import EwalletFinancialInfo from './app/ServicesFunction/E-Wallet/EwalletFinancialinfo';
 import EwalletPersonalInfo from './app/ServicesFunction/E-Wallet/EwalletPersonalInfo';
 import EwalletService from './app/ServicesFunction/E-Wallet/EwalletService';
+import PlayEarnServices from './app/ServicesFunction/Play&Earn/Play&earnServices';
 import StockBuy from './app/ServicesFunction/Stock/StockBuy';
 import StockSell from './app/ServicesFunction/Stock/StockSell';
 import StockService from './app/ServicesFunction/Stock/StockService';
+import TaskServices from './app/ServicesFunction/Task/TaskServices';
 import TransferConfirm from './app/ServicesFunction/Transfer/TransferConfirm';
 import TransferRecipient from './app/ServicesFunction/Transfer/TransferRecipient';
 import SendMoney from './app/ServicesFunction/Transfer/TransferService';
@@ -52,8 +56,6 @@ import HelpCenter from './app/Settings/HelpCenter';
 import PrivacyPolicy from './app/Settings/PrivacyPolicy';
 import Settings from './app/Settings/settings';
 import TermsConditions from './app/Settings/TermsConditions';
-import History from './app/History/history';
-import Message from './app/Dashboard/Message';
 import type { RootStackParamList } from './types/navigation';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -101,12 +103,9 @@ export default function App() {
         <Stack.Screen name="Stockholder" component={StockService} />
         <Stack.Screen name="StockBuy" component={StockBuy} />
         <Stack.Screen name="StockSell" component={StockSell} />
-        <Stack.Screen name="Task" component={Placeholder} />
+        <Stack.Screen name="Task" component={TaskServices} />
         <Stack.Screen name="AgentRequest" component={AgentDashboard} />
         <Stack.Screen name="PlayEarn" component={PlayEarnServices} />
-        <Stack.Screen name="DepositCrypto" component={DepositCrypto} />
-        <Stack.Screen name="DepositCryptoEth" component={DepositCryptoEth} />
-        <Stack.Screen name="DepositCryptoUSDT" component={DepositCryptoUSDT} />
         <Stack.Screen name="Crypto" component={Placeholder} />
         <Stack.Screen name="Deposit" component={DepositScreen} />
         <Stack.Screen name="stockinvestment" component={StockInvestment} />
