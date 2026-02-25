@@ -68,7 +68,7 @@ export default function CardsTab({
         <Animated.View style={[styles.cardFace, frontAnimatedStyle]}>
           <TouchableOpacity activeOpacity={0.8} onPress={flipCard}>
             <ImageBackground
-              source={require("../../assets/cards/default/card2.1.png")}
+              source={require("../../assets/images/Eecard 2.0.png")}
               style={styles.mainCard}
               imageStyle={styles.mainCardImage}
               resizeMode="cover"
@@ -192,7 +192,7 @@ export default function CardsTab({
           <View style={styles.cardItem}>
             <View style={styles.cardPreview}>
               <ImageBackground
-                source={require("../../assets/cards/default/card2.1.png")}
+                source={require("../../assets/images/Eecard 2.0.png")}
                 style={styles.cardPreviewImage}
                 imageStyle={styles.cardPreviewImageStyle}
                 resizeMode="cover"
@@ -217,7 +217,7 @@ export default function CardsTab({
         <View style={styles.yourCollectionGrid}>
           <View style={[styles.yourCollectionItem, { width: cardItemWidth }]}>
             <ImageBackground
-              source={require("../../assets/cards/default/card2.1.png")}
+              source={require("../../assets/images/Eecard 2.0.png")}
               style={styles.yourCollectionCard}
               imageStyle={styles.yourCollectionCardImage}
               resizeMode="cover"
