@@ -1,8 +1,10 @@
 /**
  * App language / locale settings.
  * Default: English. Supported: English, Korean, Japanese, Arabic.
+ * English is always the fallback when no preference is set or stored value is invalid.
  */
 
+/** Default app language (used on first launch and when no valid preference is stored). */
 export const DEFAULT_LANGUAGE = "English";
 
 /** Language options with label, code, and flag emoji for map/selector UI */

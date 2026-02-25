@@ -86,7 +86,7 @@ export default function CardsTab({
                       .join(" ")
                       .toUpperCase() || "ARIES"}
                   </Text>
-                  <Text style={styles.cardBalanceLabel}>AVAILABLE BALANCE:</Text>
+                  <Text style={styles.cardBalanceLabel}>{t("cards.availableBalance")}</Text>
                   <Text style={styles.cardBalanceAmount}>
                     ₱ {formatCurrency(availableBalance)}
                   </Text>

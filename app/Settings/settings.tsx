@@ -16,7 +16,6 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { useLanguage } from '../../context/LanguageContext';
-import { SUPPORTED_LANGUAGES } from '../../constants/locales';
 import { getReferralCode, resendVerification, verifyEmail } from '../../configs/api';
 import type { NavProp } from '../../types/navigation';
 
@@ -29,7 +28,7 @@ const BASE_WIDTH = 375;
 
 const Settings = () => {
   const navigation = useNavigation();
-  const { t, language, setLanguage } = useLanguage();
+  const { t } = useLanguage();
   const { width: screenWidth } = useWindowDimensions();
   const scale = Math.min(screenWidth / BASE_WIDTH, 1.35);
   const scaled = (n: number) => Math.round(n * scale);
@@ -39,7 +38,6 @@ const Settings = () => {
   const [referralLoading, setReferralLoading] = useState(false);
   const [referralError, setReferralError] = useState<string | null>(null);
   const [emailVerifyModalVisible, setEmailVerifyModalVisible] = useState(false);
-  const [languageModalVisible, setLanguageModalVisible] = useState(false);
   const [emailOtp, setEmailOtp] = useState('');
   const [emailVerifyLoading, setEmailVerifyLoading] = useState(false);
   const [emailVerifyError, setEmailVerifyError] = useState<string | null>(null);
@@ -196,11 +194,6 @@ const Settings = () => {
     title: t(o.titleKey),
   }));
 
-  const handleSelectLanguage = (selectedLabel: string) => {
-    setLanguage(selectedLabel);
-    setLanguageModalVisible(false);
-  };
-
   const r = {
     header: {
       paddingHorizontal: scaled(16),
@@ -297,16 +290,16 @@ const Settings = () => {
                 <Ionicons name="gift-outline" size={r.iconSize} color="#F38B35" />
               </View>
               <View style={[styles.optionText, r.optionText]}>
-                <Text style={[styles.optionTitle, r.optionTitle]} numberOfLines={1}>My Referral Code</Text>
+                <Text style={[styles.optionTitle, r.optionTitle]} numberOfLines={1}>{t('settings.myReferralCode')}</Text>
                 <Text style={[styles.optionSubtitle, r.optionSubtitle]} numberOfLines={1}>
-                  {referralLoading ? 'Loading...' : referralCode || 'Tap to refresh'}
+                  {referralLoading ? t('settings.loading') : referralCode || t('settings.tapToRefresh')}
                 </Text>
               </View>
             </View>
             {referralLoading ? (
               <ActivityIndicator size="small" color="#F38B35" />
             ) : (
-              <Text style={[styles.generateButtonText, r.generateButtonText]}>Refresh</Text>
+              <Text style={[styles.generateButtonText, r.generateButtonText]}>{t('settings.refresh')}</Text>
             )}
           </TouchableOpacity>
           {referralError ? (
@@ -316,26 +309,7 @@ const Settings = () => {
           ) : null}
         </View>
 
-        <Text style={[styles.sectionTitle, r.sectionTitle]}>{t('settings.language')}</Text>
-        <View style={[styles.sectionCard, r.sectionCard]}>
-          <TouchableOpacity
-            style={[styles.referralOptionItem, r.referralOptionItem]}
-            onPress={() => setLanguageModalVisible(true)}
-          >
-            <View style={styles.optionLeft}>
-              <View style={[styles.iconContainer, r.iconContainer]}>
-                <Ionicons name="language-outline" size={r.iconSize} color="#F38B35" />
-              </View>
-              <View style={[styles.optionText, r.optionText]}>
-                <Text style={[styles.optionTitle, r.optionTitle]} numberOfLines={1}>{t('settings.language')}</Text>
-                <Text style={[styles.optionSubtitle, r.optionSubtitle]} numberOfLines={1}>{language}</Text>
-              </View>
-            </View>
-            <Ionicons name="chevron-forward" size={r.iconSizeSmall} color="#CCC" />
-          </TouchableOpacity>
-        </View>
-
-        <Text style={[styles.sectionTitle, r.sectionTitle]}>Email Verification</Text>
+        <Text style={[styles.sectionTitle, r.sectionTitle]}>{t('settings.emailVerification')}</Text>
         <View style={[styles.sectionCard, r.sectionCard]}>
           <View style={[styles.referralOptionItem, r.referralOptionItem]}>
             <View style={styles.optionLeft}>
@@ -344,16 +318,16 @@ const Settings = () => {
               </View>
               <View style={[styles.optionText, r.optionText]}>
                 <Text style={[styles.optionTitle, r.optionTitle]} numberOfLines={1} ellipsizeMode="tail">
-                  {userData?.email || 'Loading...'}
+                  {userData?.email || t('settings.loading')}
                 </Text>
                 <Text style={[styles.optionSubtitle, r.optionSubtitle]}>
-                  {userData?.emailVerified ? 'Verified' : 'Not verified'}
+                  {userData?.emailVerified ? t('settings.verified') : t('settings.notVerified')}
                 </Text>
               </View>
             </View>
             {!userData?.emailVerified && userData?.email ? (
               <TouchableOpacity onPress={openEmailVerifyModal}>
-                <Text style={[styles.generateButtonText, r.generateButtonText]}>Verify</Text>
+                <Text style={[styles.generateButtonText, r.generateButtonText]}>{t('settings.verify')}</Text>
               </TouchableOpacity>
             ) : (
               <Ionicons name="checkmark-circle" size={r.iconSize} color="#22C55E" />
@@ -414,7 +388,7 @@ const Settings = () => {
 
         <TouchableOpacity style={[styles.signOutButton, r.signOutButton]} onPress={handleSignOut}>
           <Ionicons name="log-out-outline" size={r.iconSizeSmall} color="#666" />
-          <Text style={[styles.signOutText, r.signOutText]}>SIGN OUT</Text>
+          <Text style={[styles.signOutText, r.signOutText]}>{t('settings.signOut')}</Text>
         </TouchableOpacity>
       </ScrollView>
 
@@ -427,7 +401,7 @@ const Settings = () => {
         <View style={[styles.modalOverlay, r.modalOverlay]}>
           <View style={[styles.emailVerifyModalContent, r.modalContent]}>
             <View style={[styles.modalHeader, r.modalHeader]}>
-              <Text style={[styles.modalTitle, r.modalTitle]} numberOfLines={1}>Verify Email</Text>
+              <Text style={[styles.modalTitle, r.modalTitle]} numberOfLines={1}>{t('settings.verifyEmail')}</Text>
               <TouchableOpacity onPress={closeEmailVerifyModal} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
                 <Ionicons name="close" size={r.iconSize} color="#333" />
               </TouchableOpacity>
@@ -435,19 +409,19 @@ const Settings = () => {
             {emailVerifySuccess ? (
               <View style={[styles.emailVerifySuccess, r.emailVerifySuccess]}>
                 <Ionicons name="checkmark-circle" size={r.iconSizeLarge} color="#22C55E" />
-                <Text style={[styles.emailVerifySuccessText, r.emailVerifySuccessText]}>Email verified successfully</Text>
+                <Text style={[styles.emailVerifySuccessText, r.emailVerifySuccessText]}>{t('settings.emailVerifiedSuccess')}</Text>
                 <TouchableOpacity style={[styles.modalButton, r.modalButton]} onPress={closeEmailVerifyModal}>
-                  <Text style={[styles.modalButtonText, r.modalButtonText]}>Done</Text>
+                  <Text style={[styles.modalButtonText, r.modalButtonText]}>{t('settings.done')}</Text>
                 </TouchableOpacity>
               </View>
             ) : (
               <>
                 <Text style={[styles.modalSubtitle, r.modalSubtitle]} numberOfLines={2}>
-                  Enter the 6-digit code sent to {userData?.email}
+                  {t('settings.enterCodeSentTo')} {userData?.email}
                 </Text>
                 <TextInput
                   style={[styles.otpInput, r.otpInput]}
-                  placeholder="000000"
+                  placeholder={t('settings.otpPlaceholder')}
                   placeholderTextColor="#999"
                   value={emailOtp}
                   onChangeText={(val) => {
@@ -468,7 +442,7 @@ const Settings = () => {
                   {emailVerifyLoading ? (
                     <ActivityIndicator size="small" color="#FFFFFF" />
                   ) : (
-                    <Text style={[styles.modalButtonText, r.modalButtonText]}>Verify</Text>
+                    <Text style={[styles.modalButtonText, r.modalButtonText]}>{t('settings.verify')}</Text>
                   )}
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -479,51 +453,13 @@ const Settings = () => {
                   {resendLoading ? (
                     <ActivityIndicator size="small" color="#F38B35" />
                   ) : (
-                    <Text style={[styles.resendButtonText, r.resendButtonText]}>Resend verification email</Text>
+                    <Text style={[styles.resendButtonText, r.resendButtonText]}>{t('settings.resendVerificationEmail')}</Text>
                   )}
                 </TouchableOpacity>
               </>
             )}
           </View>
         </View>
-      </Modal>
-
-      <Modal
-        visible={languageModalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setLanguageModalVisible(false)}
-      >
-        <TouchableOpacity
-          style={styles.languageModalOverlay}
-          activeOpacity={1}
-          onPress={() => setLanguageModalVisible(false)}
-        >
-          <View style={[styles.languageModalContent, r.modalContent]} onStartShouldSetResponder={() => true}>
-            <View style={[styles.modalHeader, r.modalHeader]}>
-              <Text style={[styles.modalTitle, r.modalTitle]}>{t('profile.selectLanguage')}</Text>
-              <TouchableOpacity onPress={() => setLanguageModalVisible(false)} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
-                <Ionicons name="close" size={r.iconSize} color="#333" />
-              </TouchableOpacity>
-            </View>
-            <Text style={[styles.modalSubtitle, r.modalSubtitle]}>{t('profile.defaultIsEnglish')}</Text>
-            {SUPPORTED_LANGUAGES.map(({ label, flag }) => (
-              <TouchableOpacity
-                key={label}
-                style={[styles.languageOption, language === label && styles.languageOptionSelected]}
-                onPress={() => handleSelectLanguage(label)}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.languageOptionFlag}>{flag}</Text>
-                <Text style={[styles.languageOptionText, language === label && styles.languageOptionTextSelected]}>{label}</Text>
-                {language === label && <Ionicons name="checkmark-circle" size={22} color="#E15816" />}
-              </TouchableOpacity>
-            ))}
-            <TouchableOpacity style={[styles.modalButton, r.modalButton]} onPress={() => setLanguageModalVisible(false)}>
-              <Text style={[styles.modalButtonText, r.modalButtonText]}>{t('common.cancel')}</Text>
-            </TouchableOpacity>
-          </View>
-        </TouchableOpacity>
       </Modal>
     </SafeAreaView>
   );
@@ -733,48 +669,6 @@ const styles = StyleSheet.create({
     color: '#666',
     marginLeft: 8,
     letterSpacing: 1,
-  },
-  languageModalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  languageModalContent: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 20,
-    width: '100%',
-    maxWidth: 360,
-  },
-  languageOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    marginBottom: 6,
-    backgroundColor: '#F5F5F5',
-  },
-  languageOptionSelected: {
-    backgroundColor: '#FFF0E8',
-    borderWidth: 1,
-    borderColor: '#E15816',
-  },
-  languageOptionFlag: {
-    fontSize: 22,
-    marginRight: 12,
-  },
-  languageOptionText: {
-    fontSize: 16,
-    color: '#333',
-    flex: 1,
-  },
-  languageOptionTextSelected: {
-    fontWeight: '600',
-    color: '#E15816',
   },
 });
 
