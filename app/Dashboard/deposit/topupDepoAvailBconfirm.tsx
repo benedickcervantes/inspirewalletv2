@@ -137,7 +137,7 @@ export default function TopUpConfirm() {
           <View style={styles.detailCard}>
             <View style={styles.leftBorder} />
             <Text style={styles.detailLabel}>Deposit Type</Text>
-            <Text style={styles.detailValue}>Top Up Available Balance</Text>
+            <Text style={styles.detailValue}>{t("deposit.topUpBalance")}</Text>
           </View>
 
           {/* Investment Amount Card */}

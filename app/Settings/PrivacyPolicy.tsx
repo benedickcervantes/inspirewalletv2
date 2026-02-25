@@ -14,73 +14,20 @@ import { useLanguage } from '../../context/LanguageContext';
 import type { NavProp } from '../../types/navigation';
 
 const SECTIONS = [
-  {
-    heading: 'We Value Your Privacy',
-    headingOrange: true,
-    body: 'This policy explains how we collect, use, and protect your information when you use Inspire Wallet. We are committed to maintaining the trust and confidence of our users.',
-    boldInBody: ['Inspire Wallet'],
-  },
-  {
-    heading: 'What Information We Collect',
-    intro: 'We collect the following types of data:',
-    bullets: [
-      'Personal Information: Your name, email address, and other details you provide.',
-      'Usage Data: Information like your device type, IP address, and how you use the app.',
-    ],
-  },
-  {
-    heading: 'How We Use Your Information',
-    intro: 'We use your information to:',
-    bullets: [
-      'Provide and improve your services.',
-      'Contact you with updates or important notices.',
-      'Monitor how the app is used to enhance performance.',
-    ],
-  },
-  {
-    heading: 'Sharing Your Information',
-    body: 'We may share your data with service providers who help us run the app, business partners, or authorities if required by law.',
-  },
-  {
-    heading: 'Data Security',
-    body: 'We take steps to protect your information, but no system is 100% secure. Always be cautious when sharing data online.',
-  },
-  {
-    heading: "Children's Privacy",
-    body: "We do not collect data from anyone under 13. If you believe your child has shared data with us, contact us to remove it.",
-  },
-  {
-    heading: 'Your Rights',
-    body: 'You can update or delete your personal data by logging into your account or contacting us.',
-  },
-  {
-    heading: 'Changes To This Policy',
-    body: 'We may update this policy periodically. Check this page for the latest version.',
-  },
-  {
-    heading: 'Contact US',
-    intro: 'If you have any questions, email us at:',
-    email: 'info@inspireholdings.ph',
-  },
+  { headingKey: 'privacy.h1', headingOrange: true, bodyKey: 'privacy.b1' },
+  { headingKey: 'privacy.h2', introKey: 'privacy.i2', bulletKeys: ['privacy.b2_1', 'privacy.b2_2'] },
+  { headingKey: 'privacy.h3', introKey: 'privacy.i3', bulletKeys: ['privacy.b3_1', 'privacy.b3_2', 'privacy.b3_3'] },
+  { headingKey: 'privacy.h4', bodyKey: 'privacy.b4' },
+  { headingKey: 'privacy.h5', bodyKey: 'privacy.b5' },
+  { headingKey: 'privacy.h6', bodyKey: 'privacy.b6' },
+  { headingKey: 'privacy.h7', bodyKey: 'privacy.b7' },
+  { headingKey: 'privacy.h8', bodyKey: 'privacy.b8' },
+  { headingKey: 'privacy.h9', introKey: 'privacy.i9', email: 'info@inspireholdings.ph' },
 ];
 
 const PrivacyPolicy = () => {
   const navigation = useNavigation();
   const { t } = useLanguage();
-
-  const renderBodyWithBold = (text: string, boldPhrases: string[]) => {
-    const phrase = boldPhrases[0];
-    if (!phrase) return text;
-    const idx = text.indexOf(phrase);
-    if (idx === -1) return text;
-    return (
-      <>
-        {text.slice(0, idx)}
-        <Text style={styles.boldText}>{phrase}</Text>
-        {text.slice(idx + phrase.length)}
-      </>
-    );
-  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -109,30 +56,26 @@ const PrivacyPolicy = () => {
                 <Text
                   style={[styles.heading, section.headingOrange && styles.headingOrange]}
                 >
-                  {section.heading}
+                  {t(section.headingKey)}
                 </Text>
               </View>
-              {section.intro ? (
-                <Text style={styles.intro}>{section.intro}</Text>
+              {'introKey' in section && section.introKey ? (
+                <Text style={styles.intro}>{t(section.introKey)}</Text>
               ) : null}
-              {section.body ? (
-                <Text style={styles.body}>
-                  {section.boldInBody
-                    ? renderBodyWithBold(section.body, section.boldInBody)
-                    : section.body}
-                </Text>
+              {'bodyKey' in section && section.bodyKey ? (
+                <Text style={styles.body}>{t(section.bodyKey)}</Text>
               ) : null}
-              {section.bullets ? (
+              {'bulletKeys' in section && section.bulletKeys ? (
                 <View style={styles.bulletList}>
-                  {section.bullets.map((item, i) => (
+                  {section.bulletKeys.map((key, i) => (
                     <View key={i} style={styles.bulletRow}>
                       <View style={styles.bullet} />
-                      <Text style={styles.bulletText}>{item}</Text>
+                      <Text style={styles.bulletText}>{t(key)}</Text>
                     </View>
                   ))}
                 </View>
               ) : null}
-              {section.email ? (
+              {'email' in section && section.email ? (
                 <TouchableOpacity
                   onPress={() => Linking.openURL(`mailto:${section.email}`)}
                   activeOpacity={0.7}

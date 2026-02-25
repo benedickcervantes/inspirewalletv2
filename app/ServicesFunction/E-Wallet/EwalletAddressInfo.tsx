@@ -16,6 +16,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useLanguage } from "../../../context/LanguageContext";
 import type { RootStackParamList } from "../../../types/navigation";
 
 const THEME_COLOR = "#E15816";
@@ -29,6 +30,7 @@ export default function EwalletAddressInfo() {
     >();
   const route =
     useRoute<RouteProp<RootStackParamList, "EwalletAddressInfo">>();
+  const { t } = useLanguage();
   const selectedProvider = route.params?.selectedProvider ?? "";
 
   const [completeAddress, setCompleteAddress] = useState("");
@@ -74,9 +76,9 @@ export default function EwalletAddressInfo() {
                     color="#FFFFFF"
                   />
                 </View>
-                <Text style={styles.headerTitle}>E-Wallet Account Opening</Text>
+                <Text style={styles.headerTitle}>{t("ewallet.headerTitle")}</Text>
                 <Text style={styles.headerSubtitle}>
-                  Digital Banking Made Simple
+                  {t("ewallet.headerSubtitle")}
                 </Text>
               </LinearGradient>
             </View>
@@ -131,19 +133,18 @@ export default function EwalletAddressInfo() {
               <View style={styles.stepIconWrapper}>
                 <Ionicons name="location" size={28} color={THEME_COLOR} />
               </View>
-              <Text style={styles.contentTitle}>Address Information</Text>
+              <Text style={styles.contentTitle}>{t("banking.addressInfo")}</Text>
               <Text style={styles.contentDescription}>
-                Provide your complete address for verification and account setup
-                purposes.
+                {t("banking.addressInfoDesc")}
               </Text>
 
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>
-                  Complete Address<Text style={styles.required}>*</Text>
+                  {t("banking.completeAddress")}<Text style={styles.required}>*</Text>
                 </Text>
                 <TextInput
                   style={styles.addressInput}
-                  placeholder="House/Unit No., Street, Barangay, City, Province, ZIP Code"
+                  placeholder={t("banking.placeholderAddress")}
                   placeholderTextColor="#9E9E9E"
                   value={completeAddress}
                   onChangeText={setCompleteAddress}
@@ -160,10 +161,7 @@ export default function EwalletAddressInfo() {
                 <Text style={styles.infoIconText}>i</Text>
               </View>
               <Text style={styles.infoText}>
-                By submitting these details, we will send you an email
-                confirmation with your application status. Please note that this
-                process will take approximately 5-7 working days for review and
-                approval.
+                {t("ewallet.infoNote")}
               </Text>
             </View>
 
@@ -178,7 +176,7 @@ export default function EwalletAddressInfo() {
                 onPress={handleBack}
                 activeOpacity={0.8}
               >
-                <Text style={styles.backButtonText}>Back</Text>
+                <Text style={styles.backButtonText}>{t("ewallet.back")}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.nextButton}
@@ -191,7 +189,7 @@ export default function EwalletAddressInfo() {
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                 >
-                  <Text style={styles.nextButtonText}>Next</Text>
+                  <Text style={styles.nextButtonText}>{t("ewallet.next")}</Text>
                 </LinearGradient>
               </TouchableOpacity>
             </View>

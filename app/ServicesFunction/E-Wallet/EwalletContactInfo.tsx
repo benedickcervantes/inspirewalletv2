@@ -16,6 +16,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useLanguage } from "../../../context/LanguageContext";
 import type { RootStackParamList } from "../../../types/navigation";
 
 const THEME_COLOR = "#E15816";
@@ -29,6 +30,7 @@ export default function EwalletContactInfo() {
     >();
   const route =
     useRoute<RouteProp<RootStackParamList, "EwalletContactInfo">>();
+  const { t } = useLanguage();
   const selectedProvider = route.params?.selectedProvider ?? "";
 
   const [email, setEmail] = useState("");
@@ -77,9 +79,9 @@ export default function EwalletContactInfo() {
                     color="#FFFFFF"
                   />
                 </View>
-                <Text style={styles.headerTitle}>E-Wallet Account Opening</Text>
+                <Text style={styles.headerTitle}>{t("ewallet.headerTitle")}</Text>
                 <Text style={styles.headerSubtitle}>
-                  Digital Banking Made Simple
+                  {t("ewallet.headerSubtitle")}
                 </Text>
               </LinearGradient>
             </View>
@@ -134,19 +136,18 @@ export default function EwalletContactInfo() {
               <View style={styles.stepIconWrapper}>
                 <Ionicons name="call" size={28} color={THEME_COLOR} />
               </View>
-              <Text style={styles.contentTitle}>Contact Information</Text>
+              <Text style={styles.contentTitle}>{t("banking.contactInfo")}</Text>
               <Text style={styles.contentDescription}>
-                Provide your contact details so we can reach you regarding your
-                application status and account updates.
+                {t("banking.contactInfoDesc")}
               </Text>
 
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>
-                  Email Address<Text style={styles.required}>*</Text>
+                  {t("banking.emailAddress")}<Text style={styles.required}>*</Text>
                 </Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="your.email@example.com"
+                  placeholder={t("banking.placeholderEmail")}
                   placeholderTextColor="#9E9E9E"
                   value={email}
                   onChangeText={setEmail}
@@ -158,11 +159,11 @@ export default function EwalletContactInfo() {
 
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>
-                  Mobile Number<Text style={styles.required}>*</Text>
+                  {t("banking.mobileNumber")}<Text style={styles.required}>*</Text>
                 </Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="+63 9XX XXX XXXX"
+                  placeholder={t("banking.placeholderMobile")}
                   placeholderTextColor="#9E9E9E"
                   value={mobileNumber}
                   onChangeText={setMobileNumber}
@@ -171,10 +172,10 @@ export default function EwalletContactInfo() {
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Landline Number</Text>
+                <Text style={styles.inputLabel}>{t("banking.landlineNumber")}</Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="(02) XXXX XXXX"
+                  placeholder={t("banking.placeholderLandline")}
                   placeholderTextColor="#9E9E9E"
                   value={landlineNumber}
                   onChangeText={setLandlineNumber}
@@ -189,10 +190,7 @@ export default function EwalletContactInfo() {
                 <Text style={styles.infoIconText}>i</Text>
               </View>
               <Text style={styles.infoText}>
-                By submitting these details, we will send you an email
-                confirmation with your application status. Please note that this
-                process will take approximately 5-7 working days for review and
-                approval.
+                {t("ewallet.infoNote")}
               </Text>
             </View>
 
@@ -207,7 +205,7 @@ export default function EwalletContactInfo() {
                 onPress={handleBack}
                 activeOpacity={0.8}
               >
-                <Text style={styles.backButtonText}>Back</Text>
+                <Text style={styles.backButtonText}>{t("ewallet.back")}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.nextButton}
@@ -220,7 +218,7 @@ export default function EwalletContactInfo() {
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                 >
-                  <Text style={styles.nextButtonText}>Next</Text>
+                  <Text style={styles.nextButtonText}>{t("ewallet.next")}</Text>
                 </LinearGradient>
               </TouchableOpacity>
             </View>

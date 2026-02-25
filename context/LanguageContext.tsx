@@ -1,6 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
-import { DEFAULT_LANGUAGE, getLanguageCode } from "../constants/locales";
+import { DEFAULT_LANGUAGE, getLanguageCode, normalizeLanguage } from "../constants/locales";
 import { getTranslation } from "../translations";
 
 const USER_PREFERRED_LANGUAGE_KEY = "user_preferred_language";
@@ -19,16 +19,16 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     AsyncStorage.getItem(USER_PREFERRED_LANGUAGE_KEY).then((stored) => {
-      if (stored && typeof stored === "string") {
-        setLanguageState(stored);
-      }
+      const value = stored && typeof stored === "string" ? stored : "";
+      setLanguageState(normalizeLanguage(value));
       setReady(true);
     });
   }, []);
 
   const setLanguage = useCallback((label: string) => {
-    setLanguageState(label);
-    AsyncStorage.setItem(USER_PREFERRED_LANGUAGE_KEY, label);
+    const normalized = normalizeLanguage(label);
+    setLanguageState(normalized);
+    AsyncStorage.setItem(USER_PREFERRED_LANGUAGE_KEY, normalized);
   }, []);
 
   const t = useCallback(

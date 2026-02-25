@@ -95,6 +95,7 @@ export default function SendMoney() {
   const [availableBalance, setAvailableBalance] = useState(0);
   const [agentWallet, setAgentWallet] = useState(0);
   const [showAlertModal, setShowAlertModal] = useState(false);
+  const [alertMessageKey, setAlertMessageKey] = useState("sendMoney.selectBalanceToContinue");
 
   useEffect(() => {
     loadBalances();
@@ -114,6 +115,11 @@ export default function SendMoney() {
     const validation = validateBalanceSelection(selectedBalance, agentWallet);
     
     if (!validation.isValid) {
+      setAlertMessageKey(
+        validation.message === "Agent wallet has insufficient balance"
+          ? "sendMoney.agentWalletInsufficient"
+          : "sendMoney.selectBalanceToContinue"
+      );
       setShowAlertModal(true);
       return;
     }
@@ -232,7 +238,7 @@ export default function SendMoney() {
                 </Text>
                 <View style={styles.availableBadge}>
                   <Ionicons name="checkmark-circle" size={14} color="#4CAF50" />
-                  <Text style={styles.availableBadgeText}>Available</Text>
+                  <Text style={styles.availableBadgeText}>{t("sendMoney.available")}</Text>
                 </View>
               </View>
             </TouchableOpacity>
@@ -278,7 +284,7 @@ export default function SendMoney() {
                 ) : (
                   <View style={styles.availableBadge}>
                     <Ionicons name="checkmark-circle" size={14} color="#4CAF50" />
-                    <Text style={styles.availableBadgeText}>Available</Text>
+                    <Text style={styles.availableBadgeText}>{t("sendMoney.available")}</Text>
                   </View>
                 )}
               </View>
@@ -330,7 +336,7 @@ export default function SendMoney() {
                 </View>
                 <Text style={styles.modalTitle}>{t("sendMoney.selectionRequired")}</Text>
                 <Text style={styles.modalMessage}>
-                  {t("sendMoney.selectBalanceToContinue")}
+                  {t(alertMessageKey)}
                 </Text>
                 <TouchableOpacity
                   style={styles.modalButton}
