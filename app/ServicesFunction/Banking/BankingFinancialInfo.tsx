@@ -26,6 +26,7 @@ const GREEN_COMPLETE = "#10B981";
 export default function BankingFinancialInfo() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, "BankingFinancialInfo">>();
   const route = useRoute<RouteProp<RootStackParamList, "BankingFinancialInfo">>();
+  const { t } = useLanguage();
   const selectedBank = route.params?.selectedBank ?? "Security Bank";
 
   const [sourceOfFund, setSourceOfFund] = useState("");

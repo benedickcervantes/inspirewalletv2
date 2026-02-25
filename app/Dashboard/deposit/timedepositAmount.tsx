@@ -13,10 +13,12 @@ import {
     View,
 } from "react-native";
 import { auth, doc, firestore, getDoc } from "../../../configs/firebase";
+import { useLanguage } from "../../../context/LanguageContext";
 
 export default function TimeDepositAmount() {
   const navigation = useNavigation();
   const route = useRoute();
+  const { t } = useLanguage();
   const params = (route.params || {}) as { currency?: string; depositMethod?: string; contractPeriod?: string };
 
   const [selectedCurrency, setSelectedCurrency] = useState(params.currency || "PHP");
@@ -66,8 +68,8 @@ export default function TimeDepositAmount() {
   const handleContinue = () => {
     if (!amount || parseFloat(amount) < 50000) {
       setAlertConfig({
-        title: "Invalid Amount",
-        message: "Minimum ₱50,000 for time deposit",
+        title: t("deposit.invalidAmount"),
+        message: t("deposit.minTimeDeposit"),
       });
       setShowAlertModal(true);
       return;
@@ -102,7 +104,7 @@ export default function TimeDepositAmount() {
             <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
           </TouchableOpacity>
 
-          <Text style={styles.headerTitle}>Deposit Request</Text>
+          <Text style={styles.headerTitle}>{t("deposit.depositRequest")}</Text>
 
           <TouchableOpacity style={styles.refreshButton}>
             <Ionicons name="refresh" size={24} color="#FFFFFF" />
@@ -133,8 +135,8 @@ export default function TimeDepositAmount() {
         >
           {/* Title */}
           <View style={styles.titleContainer}>
-            <Text style={styles.title}>Investment Amount</Text>
-            <Text style={styles.subtitle}>Enter investment amount</Text>
+            <Text style={styles.title}>{t("deposit.investmentAmount")}</Text>
+            <Text style={styles.subtitle}>{t("deposit.enterAmount")}</Text>
           </View>
 
           {/* Form Card */}
@@ -147,7 +149,7 @@ export default function TimeDepositAmount() {
                 <View style={styles.iconBox}>
                   <MaterialCommunityIcons name="currency-usd" size={20} color="#E25A17" />
                 </View>
-                <Text style={styles.sectionTitle}>Select Currency</Text>
+                <Text style={styles.sectionTitle}>{t("deposit.selectCurrency")}</Text>
               </View>
 
               <TouchableOpacity
@@ -168,14 +170,14 @@ export default function TimeDepositAmount() {
                 <View style={styles.iconBox}>
                   <MaterialCommunityIcons name="cash" size={20} color="#E25A17" />
                 </View>
-                <Text style={styles.sectionTitle}>Amount *</Text>
+                <Text style={styles.sectionTitle}>{t("deposit.amount")}</Text>
               </View>
 
               <View style={styles.amountInput}>
                 <Text style={styles.currencySymbol}>{getSelectedCurrency().symbol}</Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="Enter investment amount"
+                  placeholder={t("deposit.enterAmount")}
                   placeholderTextColor="#999"
                   keyboardType="numeric"
                   value={amount}
@@ -196,7 +198,7 @@ export default function TimeDepositAmount() {
             >
               <View style={styles.equivalentHeader}>
                 <MaterialCommunityIcons name="chart-line" size={20} color="#FFFFFF" />
-                <Text style={styles.equivalentTitle}>PHP Equivalent</Text>
+                <Text style={styles.equivalentTitle}>{t("deposit.phpEquivalent")}</Text>
               </View>
               <View style={styles.equivalentAmount}>
                 <MaterialCommunityIcons name="approximately-equal" size={24} color="#FFFFFF" />
@@ -218,7 +220,7 @@ export default function TimeDepositAmount() {
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
             >
-              <Text style={styles.continueText}>Continue</Text>
+              <Text style={styles.continueText}>{t("deposit.continue")}</Text>
               <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
             </LinearGradient>
           </TouchableOpacity>
@@ -236,7 +238,7 @@ export default function TimeDepositAmount() {
           <View style={styles.modalOverlay}>
             <View style={styles.modalContainer}>
               <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Select Currency</Text>
+                <Text style={styles.modalTitle}>{t("deposit.selectCurrency")}</Text>
                 <TouchableOpacity onPress={() => setShowCurrencyModal(false)}>
                   <Ionicons name="close" size={24} color="#333" />
                 </TouchableOpacity>
@@ -289,7 +291,7 @@ export default function TimeDepositAmount() {
                 style={styles.alertButton}
                 onPress={() => setShowAlertModal(false)}
               >
-                <Text style={styles.alertButtonText}>OK</Text>
+                <Text style={styles.alertButtonText}>{t("deposit.ok")}</Text>
               </TouchableOpacity>
             </LinearGradient>
           </View>

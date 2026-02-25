@@ -13,10 +13,12 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { getOrCreateMainWallet, submitStockInvestmentRequest } from "../../../configs/api";
+import { useLanguage } from "../../../context/LanguageContext";
 
 export default function StockInvestmentConfirm() {
   const navigation = useNavigation();
   const route = useRoute();
+  const { t } = useLanguage();
   const params = (route.params || {}) as { currency?: string; amount?: string; currencySymbol?: string };
 
   const [showAlertModal, setShowAlertModal] = useState(false);
@@ -37,8 +39,8 @@ export default function StockInvestmentConfirm() {
       const accessToken = await AsyncStorage.getItem("access_token");
       if (!accessToken) {
         setAlertConfig({
-          title: "Error",
-          message: "Please log in to submit a stock investment request.",
+          title: t("deposit.error"),
+          message: t("deposit.pleaseLoginStock"),
         });
         setShowAlertModal(true);
         setIsSubmitting(false);
@@ -48,8 +50,8 @@ export default function StockInvestmentConfirm() {
       const { success: walletSuccess, wallet } = await getOrCreateMainWallet(accessToken);
       if (!walletSuccess || !wallet?.id) {
         setAlertConfig({
-          title: "Error",
-          message: "Could not load wallet. Please try again.",
+          title: t("deposit.error"),
+          message: t("deposit.walletLoadError"),
         });
         setShowAlertModal(true);
         setIsSubmitting(false);
@@ -63,8 +65,8 @@ export default function StockInvestmentConfirm() {
 
       if (result.success) {
         setAlertConfig({
-          title: "Success",
-          message: "Your stock investment request has been submitted successfully!",
+          title: t("deposit.success"),
+          message: t("deposit.stockSubmitted"),
         });
         setShowAlertModal(true);
         setTimeout(() => {
@@ -73,16 +75,16 @@ export default function StockInvestmentConfirm() {
         }, 2000);
       } else {
         setAlertConfig({
-          title: "Error",
-          message: result.error || "Failed to submit investment request. Please try again.",
+          title: t("deposit.error"),
+          message: result.error || t("deposit.submitError"),
         });
         setShowAlertModal(true);
       }
     } catch (error) {
       console.error("Error submitting investment:", error);
       setAlertConfig({
-        title: "Error",
-        message: "An unexpected error occurred. Please try again.",
+        title: t("deposit.error"),
+        message: t("deposit.unexpectedError"),
       });
       setShowAlertModal(true);
     } finally {
@@ -107,7 +109,7 @@ export default function StockInvestmentConfirm() {
             <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
           </TouchableOpacity>
 
-          <Text style={styles.headerTitle}>Deposit Request</Text>
+          <Text style={styles.headerTitle}>{t("deposit.depositRequest")}</Text>
 
           <TouchableOpacity style={styles.refreshButton}>
             <Ionicons name="refresh" size={24} color="#FFFFFF" />
@@ -134,15 +136,15 @@ export default function StockInvestmentConfirm() {
         >
           {/* Title */}
           <View style={styles.titleContainer}>
-            <Text style={styles.title}>Review & Confirm</Text>
-            <Text style={styles.subtitle}>Review your deposit details</Text>
+            <Text style={styles.title}>{t("deposit.reviewConfirm")}</Text>
+            <Text style={styles.subtitle}>{t("deposit.reviewDetails")}</Text>
           </View>
 
           {/* Deposit Type Card */}
           <View style={styles.detailCard}>
             <View style={styles.leftBorder} />
-            <Text style={styles.detailLabel}>Deposit Type</Text>
-            <Text style={styles.detailValue}>Stock Investment</Text>
+            <Text style={styles.detailLabel}>{t("deposit.depositType")}</Text>
+            <Text style={styles.detailValue}>{t("deposit.stockInvestmentTitle")}</Text>
           </View>
 
           {/* Investment Amount Card */}
@@ -152,7 +154,7 @@ export default function StockInvestmentConfirm() {
             start={{ x: 0, y: 0 }}
             end={{ x: 0, y: 1 }}
           >
-            <Text style={styles.amountCardTitle}>Investment Amount</Text>
+            <Text style={styles.amountCardTitle}>{t("deposit.investmentAmount")}</Text>
             <Text style={styles.amountValue}>
               {currencySymbol} {parseFloat(amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currency}
             </Text>
@@ -164,7 +166,7 @@ export default function StockInvestmentConfirm() {
               style={styles.backButtonBottom}
               onPress={() => navigation.goBack()}
             >
-              <Text style={styles.backButtonText}>Back</Text>
+              <Text style={styles.backButtonText}>{t("deposit.back")}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -178,7 +180,7 @@ export default function StockInvestmentConfirm() {
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
               >
-                <Text style={styles.confirmText}>{isSubmitting ? "Processing..." : "Confirm"}</Text>
+                <Text style={styles.confirmText}>{isSubmitting ? t("deposit.processing") : t("deposit.confirm")}</Text>
                 {!isSubmitting && <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />}
               </LinearGradient>
             </TouchableOpacity>
