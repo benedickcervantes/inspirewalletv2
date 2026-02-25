@@ -510,21 +510,19 @@ export default function Dashboard() {
       <SafeAreaView style={styles.container} edges={["left", "right", "bottom"]}>
         <View style={[styles.header, { paddingTop: Math.max(insets.top, 12) }]}>
           <View style={styles.headerLeft}>
-            <View style={styles.avatar}>
-              <Ionicons name="person" size={28} color="#E15816" />
-            </View>
             <TouchableOpacity
               onPress={() => navigation.navigate("Personal")}
               activeOpacity={0.7}
-              style={styles.headerUserTouch}
+              style={styles.avatar}
             >
-              <View style={styles.headerUserText}>
-                <Text style={styles.greeting} numberOfLines={1}>{getGreeting()}</Text>
-                <Text style={styles.userName} numberOfLines={1} ellipsizeMode="tail">
-                  {(userData?.firstName as string) || (userData?.fullName as string) || "User"}
-                </Text>
-              </View>
+              <Ionicons name="person" size={28} color="#E15816" />
             </TouchableOpacity>
+            <View style={styles.headerUserText}>
+              <Text style={styles.greeting} numberOfLines={1}>{getGreeting()}</Text>
+              <Text style={styles.userName} numberOfLines={1} ellipsizeMode="tail">
+                {(userData?.firstName as string) || (userData?.fullName as string) || "User"}
+              </Text>
+            </View>
           </View>
           <View style={styles.headerRight}>
               <TouchableOpacity
