@@ -1,19 +1,19 @@
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { doc, getDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import {
   Dimensions,
   Modal,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { getOrCreateMainWallet } from "../../../configs/api";
 import { auth, firestore } from "../../../configs/firebase";
 
@@ -88,6 +88,7 @@ export const checkSufficientBalance = (balanceType: string, availableBalance: nu
 
 export default function SendMoney() {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const [selectedBalance, setSelectedBalance] = useState<string | null>(null);
   const [availableBalance, setAvailableBalance] = useState(0);
   const [agentWallet, setAgentWallet] = useState(0);
@@ -120,26 +121,25 @@ export default function SendMoney() {
   };
 
   return (
-    <View style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        {/* Header */}
-        <LinearGradient
-          colors={["#E25A17", "#F28934"]}
-          style={styles.header}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      {/* Header */}
+      <LinearGradient
+        colors={["#E25A17", "#F28934"]}
+        style={styles.header}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+      >
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
         >
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Send Money</Text>
-          <TouchableOpacity style={styles.notificationButton}>
-            <Ionicons name="notifications-outline" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
-        </LinearGradient>
+          <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Send Money</Text>
+        <TouchableOpacity style={styles.notificationButton}>
+          <Ionicons name="notifications-outline" size={24} color="#FFFFFF" />
+        </TouchableOpacity>
+      </LinearGradient>
 
         <ScrollView
           style={styles.scrollView}
@@ -340,7 +340,6 @@ export default function SendMoney() {
             </View>
           </View>
         </Modal>
-      </SafeAreaView>
     </View>
   );
 }
@@ -349,9 +348,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#F5F5F5",
-  },
-  safeArea: {
-    flex: 1,
   },
   header: {
     flexDirection: "row",

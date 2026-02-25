@@ -4,16 +4,16 @@ import { LinearGradient } from "expo-linear-gradient";
 import { addDoc, collection, doc, getDoc, serverTimestamp, updateDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Dimensions,
-    Modal,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Dimensions,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { auth, firestore } from "../../../configs/firebase";
 
 const { width } = Dimensions.get("window");
@@ -150,6 +150,7 @@ export const fetchCurrentBalance = async (userId: string, balanceType: string) =
 export default function TransferConfirm() {
   const navigation = useNavigation();
   const route = useRoute();
+  const insets = useSafeAreaInsets();
   
   const params = (route.params || {}) as { balanceType?: string; accountNumber?: string; amount?: string; description?: string; recipientName?: string; recipientId?: string };
   const balanceType = params.balanceType || "";
@@ -228,26 +229,25 @@ export default function TransferConfirm() {
   };
 
   return (
-    <View style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        {/* Header */}
-        <LinearGradient
-          colors={["#E25A17", "#F28934"]}
-          style={styles.header}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      {/* Header */}
+      <LinearGradient
+        colors={["#E25A17", "#F28934"]}
+        style={styles.header}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+      >
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
         >
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Send Money</Text>
-          <TouchableOpacity style={styles.notificationButton}>
-            <Ionicons name="notifications-outline" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
-        </LinearGradient>
+          <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Send Money</Text>
+        <TouchableOpacity style={styles.notificationButton}>
+          <Ionicons name="notifications-outline" size={24} color="#FFFFFF" />
+        </TouchableOpacity>
+      </LinearGradient>
 
         <ScrollView
           style={styles.scrollView}
@@ -475,7 +475,6 @@ export default function TransferConfirm() {
             </View>
           </View>
         </Modal>
-      </SafeAreaView>
     </View>
   );
 }
@@ -484,9 +483,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#F5F5F5",
-  },
-  safeArea: {
-    flex: 1,
   },
   header: {
     flexDirection: "row",
