@@ -1,9 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useCallback, useEffect, useState } from 'react';
-import type { NavProp } from '../../types/navigation';
 import {
   ActivityIndicator,
   Modal,
@@ -16,6 +15,7 @@ import {
   View,
 } from 'react-native';
 import { getReferralCode, resendVerification, verifyEmail } from '../../configs/api';
+import type { NavProp } from '../../types/navigation';
 
 interface UserData {
   email?: string;
@@ -24,7 +24,6 @@ interface UserData {
 
 const Settings = () => {
   const navigation = useNavigation();
-  const [searchQuery, setSearchQuery] = useState('');
   const [userData, setUserData] = useState<UserData | null>(null);
   const [referralCode, setReferralCode] = useState<string | null>(null);
   const [referralLoading, setReferralLoading] = useState(false);
@@ -214,23 +213,8 @@ const Settings = () => {
           <TouchableOpacity onPress={() => navigation.navigate('Main')} style={styles.backButton}>
             <Ionicons name="arrow-back" size={28} color="#FFFFFF" />
           </TouchableOpacity>
-          
           <Text style={styles.headerTitle}>Settings</Text>
-          
-          <TouchableOpacity style={styles.notificationButton}>
-            <Ionicons name="notifications-outline" size={28} color="#FFFFFF" />
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.searchContainer}>
-          <Ionicons name="search" size={20} color="#999" style={styles.searchIcon} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search settings..."
-            placeholderTextColor="#999"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
+          <View style={styles.headerSpacer} />
         </View>
       </LinearGradient>
 
@@ -427,14 +411,13 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 16,
-    paddingTop: 40,
-    paddingBottom: 19,
+    paddingTop: 12,
+    paddingBottom: 14,
   },
   headerTop: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 20,
   },
   backButton: {
     padding: 4,
@@ -446,30 +429,8 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: 'center',
   },
-  notificationButton: {
-    padding: 4,
-  },
-  searchContainer: {
-    backgroundColor: '#FFFFFF',
-    marginHorizontal: 0,
-    borderRadius: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  searchIcon: {
-    marginRight: 8,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 14,
-    color: '#333',
+  headerSpacer: {
+    width: 36,
   },
   content: {
     flex: 1,
