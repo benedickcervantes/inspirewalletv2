@@ -1,21 +1,23 @@
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  SafeAreaView,
+  Platform,
   ScrollView,
   StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getOrCreateMainWallet, getTransactions } from '../../configs/api';
-import { auth, subscribeToTransactions } from '../../configs/firebase';
 import type { TransactionDoc } from '../../configs/firebase';
+import { auth, subscribeToTransactions } from '../../configs/firebase';
 import type { NavProp } from '../../types/navigation';
 
 const TRANSACTION_TYPE_LABELS: Record<string, string> = {
@@ -63,6 +65,13 @@ const ORANGE_GRADIENT: readonly [string, string] = ['#E25A17', '#F28934'];
 
 export default function HistoryScreen() {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const headerPaddingTop =
+    Platform.OS === 'android'
+      ? Math.max(insets.top, StatusBar.currentHeight ?? 0, 12)
+      : Math.max(insets.top, 12);
+  const headerPaddingHorizontal = width < 375 ? 12 : 16;
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -244,7 +253,13 @@ export default function HistoryScreen() {
       <SafeAreaView style={styles.container}>
         <LinearGradient
           colors={ORANGE_GRADIENT}
-          style={styles.header}
+          style={[
+            styles.header,
+            {
+              paddingTop: headerPaddingTop,
+              paddingHorizontal: headerPaddingHorizontal,
+            },
+          ]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
         >
@@ -253,7 +268,11 @@ export default function HistoryScreen() {
               <Ionicons name="arrow-back" size={24} color="#E15816" />
             </View>
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>All Transactions</Text>
+          <View style={styles.headerTitleWrap}>
+            <Text style={styles.headerTitle} numberOfLines={1} ellipsizeMode="tail">
+              All Transactions
+            </Text>
+          </View>
           <View style={styles.headerRight}>
             <TouchableOpacity style={styles.headerIconButton} onPress={() => {}} activeOpacity={0.7}>
               <View style={styles.headerIconCircle}>
@@ -355,19 +374,24 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
     paddingVertical: 14,
   },
   backButton: {
     padding: 4,
   },
   backButtonCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: 'rgba(255,255,255,0.9)',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  headerTitleWrap: {
+    flex: 1,
+    minWidth: 0,
+    justifyContent: 'center',
+    marginHorizontal: 8,
   },
   headerTitle: {
     fontSize: 18,
@@ -382,9 +406,9 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   headerIconCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: 'rgba(255,255,255,0.3)',
     justifyContent: 'center',
     alignItems: 'center',

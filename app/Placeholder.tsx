@@ -3,18 +3,18 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { doc, getDoc } from "firebase/firestore";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
-  Modal,
+  Platform,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { useLanguage } from "../context/LanguageContext";
-import { DEFAULT_LANGUAGE, normalizeLanguage, SUPPORTED_LANGUAGES } from "../constants/locales";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { getMe } from "../configs/api";
 import { auth, firestore } from "../configs/firebase";
 
@@ -22,7 +22,18 @@ const USER_PREFERRED_LANGUAGE_KEY = "user_preferred_language";
 
 export default function Placeholder() {
   const navigation = useNavigation();
-  const { language: contextLanguage, setLanguage: setContextLanguage, t } = useLanguage();
+  const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const isSmallDevice = width < 375;
+  const scale = Math.min(width / 375, 1.25);
+  const headerPaddingTop =
+    Platform.OS === "android"
+      ? Math.max(insets.top, StatusBar.currentHeight ?? 0, 12)
+      : Math.max(insets.top, 12);
+  const headerPaddingHorizontal = isSmallDevice ? 16 : 20;
+  const sectionMarginHorizontal = isSmallDevice ? 12 : 16;
+  const sectionPadding = isSmallDevice ? 12 : 16;
+  const avatarSize = Math.round(72 * scale);
   const [userData, setUserData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [languageModalVisible, setLanguageModalVisible] = useState(false);
@@ -117,28 +128,51 @@ export default function Placeholder() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{
+          paddingBottom: Math.max(insets.bottom, 40),
+          paddingHorizontal: 0,
+        }}
+        style={styles.scrollView}
+      >
         {/* Header with Gradient */}
         <LinearGradient
           colors={["#E15816", "#F48F38"]}
-          style={styles.header}
+          style={[
+            styles.header,
+            {
+              paddingTop: headerPaddingTop,
+              paddingHorizontal: headerPaddingHorizontal,
+            },
+          ]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
         >
-          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-            <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+          <TouchableOpacity
+            style={[styles.backButton, { top: headerPaddingTop, left: headerPaddingHorizontal }]}
+            onPress={() => navigation.goBack()}
+            activeOpacity={0.7}
+          >
+            <View style={styles.backButtonTouchTarget}>
+              <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+            </View>
           </TouchableOpacity>
 
           {/* Profile Avatar */}
           <View style={styles.avatarContainer}>
-            <View style={styles.avatar}>
-              <Ionicons name="person" size={48} color="#E15816" />
+            <View style={[styles.avatar, { width: avatarSize, height: avatarSize, borderRadius: avatarSize / 2 }]}>
+              <Ionicons name="person" size={Math.round(40 * scale)} color="#E15816" />
             </View>
           </View>
 
           {/* User Info */}
-          <Text style={styles.userName}>{fullName}</Text>
-          <Text style={styles.userEmail}>{email}</Text>
+          <Text style={[styles.userName, { fontSize: Math.round(22 * scale) }]} numberOfLines={1} ellipsizeMode="tail">
+            {fullName}
+          </Text>
+          <Text style={[styles.userEmail, { fontSize: Math.round(14 * scale) }]} numberOfLines={1} ellipsizeMode="tail">
+            {email}
+          </Text>
 
           {/* Badges */}
           <View style={styles.badgesContainer}>
@@ -158,10 +192,10 @@ export default function Placeholder() {
         </LinearGradient>
 
         {/* Account Details Section */}
-        <View style={styles.section}>
+        <View style={[styles.section, { marginHorizontal: sectionMarginHorizontal, padding: sectionPadding }]}>
           <View style={styles.sectionHeader}>
-            <Ionicons name="person-circle-outline" size={24} color="#E15816" />
-            <Text style={styles.sectionTitle}>{t("profile.accountDetails")}</Text>
+            <Ionicons name="person-circle-outline" size={22} color="#E15816" />
+            <Text style={[styles.sectionTitle, { fontSize: Math.round(16 * scale) }]}>Account Details</Text>
           </View>
 
           <DetailItem
@@ -243,10 +277,10 @@ export default function Placeholder() {
         </View>
 
         {/* Account Status Section */}
-        <View style={styles.section}>
+        <View style={[styles.section, { marginHorizontal: sectionMarginHorizontal, padding: sectionPadding }]}>
           <View style={styles.sectionHeader}>
-            <Ionicons name="information-circle-outline" size={24} color="#E15816" />
-            <Text style={styles.sectionTitle}>{t("profile.accountStatus")}</Text>
+            <Ionicons name="information-circle-outline" size={22} color="#E15816" />
+            <Text style={[styles.sectionTitle, { fontSize: Math.round(16 * scale) }]}>Account Status</Text>
           </View>
 
           <DetailItem
@@ -262,8 +296,6 @@ export default function Placeholder() {
             value={memberSince}
           />
         </View>
-
-        <View style={{ height: 40 }} />
       </ScrollView>
 
       <Modal
@@ -377,7 +409,10 @@ function DetailItem({
           </View>
         )}
         {editable && (
-          <View style={styles.editButton}>
+          <TouchableOpacity
+            style={styles.editButton}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          >
             <Ionicons name="create-outline" size={18} color="#999" />
           </View>
         )}
@@ -402,32 +437,44 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#F5F5F5",
   },
+  scrollView: {
+    flex: 1,
+  },
   header: {
-    paddingTop: 16,
     paddingBottom: 32,
-    paddingHorizontal: 20,
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,
   },
   backButton: {
-    marginBottom: 24,
+    position: "absolute",
+    zIndex: 10,
+    padding: 4,
+  },
+  backButtonTouchTarget: {
+    width: 44,
+    height: 44,
+    justifyContent: "center",
+    alignItems: "center",
   },
   avatarContainer: {
     alignItems: "center",
     marginBottom: 16,
   },
   avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
     backgroundColor: "#FFFFFF",
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 5,
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 5,
+      },
+    }),
   },
   userName: {
     fontSize: 22,
@@ -469,15 +516,16 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "700",
     color: "#FFFFFF",
+    marginLeft: 4,
   },
   premiumBadgeText: {
     fontSize: 12,
     fontWeight: "700",
     color: "#333",
+    marginLeft: 4,
   },
   section: {
     backgroundColor: "#FFFFFF",
-    marginHorizontal: 16,
     marginTop: 16,
     borderRadius: 16,
     padding: 16,

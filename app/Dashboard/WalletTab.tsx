@@ -73,7 +73,7 @@ export default function WalletTab({
     <View style={styles.balanceCardContainer}>
       <Animated.View style={[styles.cardFace, frontAnimatedStyle]}>
         <ImageBackground
-          source={require("../../assets/cards/default/card2.1.png")}
+          source={require("../../assets/images/Eecard 2.0.png")}
           style={styles.balanceCard}
           imageStyle={styles.balanceCardImage}
           resizeMode="cover"
