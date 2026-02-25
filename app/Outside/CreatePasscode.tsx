@@ -7,12 +7,12 @@ import { useEffect, useRef, useState } from 'react';
 import {
   Animated,
   BackHandler,
-  Dimensions,
   Modal,
   Pressable,
   StyleSheet,
   Text,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -23,11 +23,6 @@ const GRADIENT_START = '#E15816';
 const GRADIENT_END = '#F48F38';
 const WHITE = '#FFFFFF';
 
-const { width } = Dimensions.get('window');
-const isTablet = width >= 768;
-const btnSize = isTablet ? 70 : Math.min(60, width * 0.18);
-const padWidth = isTablet ? '60%' : '85%';
-const maxPadWidth = isTablet ? 380 : Math.min(320, width - 48);
 
 interface MessageModalProps {
   visible: boolean;
@@ -93,6 +88,10 @@ const msgStyles = StyleSheet.create({
 export default function CreatePasscode() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const btnSize = width >= 768 ? 70 : Math.min(60, Math.max(44, width * 0.18));
+  const padWidth = width >= 768 ? '60%' : '85%';
+  const maxPadWidth = width >= 768 ? 380 : Math.min(320, width - 48);
 
   const [step, setStep] = useState<'create' | 'confirm'>('create');
   const [pin, setPin] = useState('');
@@ -328,8 +327,8 @@ const styles = StyleSheet.create({
   headerSpacer: { width: 44 },
   logoWrap: { flex: 1, alignItems: 'center' },
   logo: {
-    width: isTablet ? 180 : 140,
-    height: isTablet ? 65 : 50,
+    width: 140,
+    height: 50,
   },
   helpButton: {
     width: 44,
@@ -387,9 +386,6 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   padButton: {
-    width: btnSize,
-    height: btnSize,
-    borderRadius: btnSize / 2,
     backgroundColor: 'rgba(255,255,255,0.5)',
     justifyContent: 'center',
     alignItems: 'center',

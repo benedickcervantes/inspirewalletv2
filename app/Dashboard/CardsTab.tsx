@@ -2,16 +2,14 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import {
   Animated,
-  Dimensions,
   ImageBackground,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from "react-native";
-
-const { width } = Dimensions.get("window");
 
 interface CardsTabProps {
   userData: { firstName?: string; accountNumber?: string } | null;
@@ -31,6 +29,9 @@ export default function CardsTab({
   flipCard,
 }: CardsTabProps) {
   const navigation = useNavigation();
+  const { width } = useWindowDimensions();
+  const horizontalPadding = width < 375 ? 16 : 20;
+  const cardItemWidth = (width - horizontalPadding * 2 - 12) / 2;
 
   const frontInterpolate = flipAnimation.interpolate({
     inputRange: [0, 180],
@@ -211,7 +212,7 @@ export default function CardsTab({
         </View>
 
         <View style={styles.yourCollectionGrid}>
-          <View style={styles.yourCollectionItem}>
+          <View style={[styles.yourCollectionItem, { width: cardItemWidth }]}>
             <ImageBackground
               source={require("../../assets/cards/default/card2.1.png")}
               style={styles.yourCollectionCard}
@@ -226,7 +227,7 @@ export default function CardsTab({
           </View>
 
           {[1, 2, 3, 4].map((item) => (
-            <View key={item} style={styles.yourCollectionItem}>
+            <View key={item} style={[styles.yourCollectionItem, { width: cardItemWidth }]}>
               <View style={styles.emptySlot}>
                 <Ionicons name="add-circle-outline" size={32} color="#CCC" />
                 <Text style={styles.emptySlotText}>Empty Slot</Text>
@@ -468,7 +469,6 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   yourCollectionItem: {
-    width: (width - 52) / 2,
     aspectRatio: 1.6,
   },
   yourCollectionCard: {

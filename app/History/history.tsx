@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { useCallback, useEffect, useState } from 'react';
@@ -58,6 +59,7 @@ interface RawApiWallet {
 }
 
 const CURRENCY_SYMBOL = '₱';
+const ORANGE_GRADIENT: readonly [string, string] = ['#E25A17', '#F28934'];
 
 export default function HistoryScreen() {
   const navigation = useNavigation();
@@ -238,30 +240,33 @@ export default function HistoryScreen() {
 
   return (
     <>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <StatusBar barStyle="light-content" backgroundColor="#E25A17" />
       <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.headerButton} onPress={handleBack} activeOpacity={0.7}>
-            <Ionicons name="chevron-back" size={28} color="#E15816" />
+        <LinearGradient
+          colors={ORANGE_GRADIENT}
+          style={styles.header}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+        >
+          <TouchableOpacity style={styles.backButton} onPress={handleBack} activeOpacity={0.7}>
+            <View style={styles.backButtonCircle}>
+              <Ionicons name="arrow-back" size={24} color="#E15816" />
+            </View>
           </TouchableOpacity>
           <Text style={styles.headerTitle}>All Transactions</Text>
           <View style={styles.headerRight}>
-            <TouchableOpacity
-              style={styles.headerButton}
-              onPress={() => {}}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="search" size={24} color="#11181C" />
+            <TouchableOpacity style={styles.headerIconButton} onPress={() => {}} activeOpacity={0.7}>
+              <View style={styles.headerIconCircle}>
+                <Ionicons name="search" size={20} color="#FFF" />
+              </View>
             </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.headerButton}
-              onPress={() => {}}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="filter" size={22} color="#11181C" />
+            <TouchableOpacity style={styles.headerIconButton} onPress={() => {}} activeOpacity={0.7}>
+              <View style={styles.headerIconCircle}>
+                <Ionicons name="filter" size={20} color="#FFF" />
+              </View>
             </TouchableOpacity>
           </View>
-        </View>
+        </LinearGradient>
 
         <ScrollView
           style={styles.content}
@@ -351,25 +356,38 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    paddingVertical: 14,
   },
-  headerButton: {
-    width: 40,
-    height: 40,
+  backButton: {
+    padding: 4,
+  },
+  backButtonCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.9)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#11181C',
+    color: '#FFF',
   },
   headerRight: {
     flexDirection: 'row',
-    gap: 4,
+    gap: 8,
+  },
+  headerIconButton: {
+    padding: 4,
+  },
+  headerIconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   content: {
     flex: 1,

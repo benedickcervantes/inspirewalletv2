@@ -4,17 +4,17 @@ import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Animated,
-  Dimensions,
   Image,
   Linking,
-  SafeAreaView,
   ScrollView,
   StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { getMe, getOrCreateMainWallet, getReferralTree, getTimeDeposits, getTransactions } from "../../configs/api";
 import { createRealtimeConnection, startHeartbeat } from "../../configs/realtime";
 import { setConnectionStatus } from "../../lib/connectionStatus";
@@ -24,11 +24,8 @@ import CardsTab from "./CardsTab";
 import SavingsTab from "./SavingsTab";
 import WalletTab from "./WalletTab";
 
-const PLACEHOLDER_IMG = require("../../assets/images/InpireLogo.png");
 const LOOPWORK_BANNER = require("../../assets/banner/Loopwork.png");
 const HRX_BANNER = require("../../assets/banner/HRX.png");
-
-const { width } = Dimensions.get("window");
 
 // API returns raw enums; map to user-friendly labels for transaction history
 const TRANSACTION_TYPE_LABELS: Record<string, string> = {
@@ -143,6 +140,10 @@ function computeDepositGrowth(deposits: TimeDeposit[]): { month: string; amount:
 
 export default function Dashboard() {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const horizontalPadding = width < 375 ? 16 : 20;
+  const carouselWidth = width - horizontalPadding * 2;
   const [userData, setUserData] = useState<Record<string, unknown> | null>(null);
   const [availableBalance, setAvailableBalance] = useState(0);
   const [timeDeposit, setTimeDeposit] = useState(0);
@@ -242,7 +243,7 @@ export default function Dashboard() {
       if (treeRes.success && treeRes.tree) {
         const tree = treeRes.tree as { ancestors?: Array<{ referralCode?: string; firstName?: string; lastName?: string }> };
         const first = tree.ancestors?.[0];
-        if (first?.referralCode ?? (first as { referral_code?: string })?.referral_code) {
+        if (first && (first.referralCode ?? (first as { referral_code?: string }).referral_code)) {
           setUserReferrer({
             referralCode: first.referralCode ?? (first as { referral_code?: string }).referral_code,
             firstName: first.firstName ?? (first as { first_name?: string }).first_name,
@@ -299,7 +300,7 @@ export default function Dashboard() {
     if (treeRes.success && treeRes.tree) {
       const tree = treeRes.tree as { ancestors?: Array<{ referralCode?: string; firstName?: string; lastName?: string }> };
       const first = tree.ancestors?.[0];
-      if (first?.referralCode ?? (first as { referral_code?: string })?.referral_code) {
+      if (first && (first.referralCode ?? (first as { referral_code?: string }).referral_code)) {
         setUserReferrer({
           referralCode: first.referralCode ?? (first as { referral_code?: string }).referral_code,
           firstName: first.firstName ?? (first as { first_name?: string }).first_name,
@@ -428,7 +429,7 @@ export default function Dashboard() {
         const nextIndex = (prevIndex + 1) % banners.length;
         if (bannerScrollRef.current) {
           bannerScrollRef.current.scrollTo({
-            x: nextIndex * (width - 40),
+            x: nextIndex * carouselWidth,
             animated: true,
           });
         }
@@ -436,7 +437,7 @@ export default function Dashboard() {
       });
     }, 3000);
     return () => clearInterval(interval);
-  }, []);
+  }, [carouselWidth]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-PH", {
@@ -450,7 +451,7 @@ export default function Dashboard() {
     setCurrentLanguageIndex(nextIndex);
     if (languageScrollRef.current) {
       languageScrollRef.current.scrollTo({
-        x: nextIndex * (width - 40),
+        x: nextIndex * carouselWidth,
         animated: true,
       });
     }
@@ -464,7 +465,7 @@ export default function Dashboard() {
     setCurrentLanguageIndex(prevIndex);
     if (languageScrollRef.current) {
       languageScrollRef.current.scrollTo({
-        x: prevIndex * (width - 40),
+        x: prevIndex * carouselWidth,
         animated: true,
       });
     }
@@ -506,26 +507,26 @@ export default function Dashboard() {
   return (
     <>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-      <SafeAreaView style={styles.container}>
-        <ScrollView showsVerticalScrollIndicator={false}>
-          <View style={styles.header}>
-            <View style={styles.headerLeft}>
-              <View style={styles.avatar}>
-                <Ionicons name="person" size={28} color="#E15816" />
-              </View>
-              <TouchableOpacity
-                onPress={() => navigation.navigate("Personal")}
-                activeOpacity={0.7}
-              >
-                <View>
-                  <Text style={styles.greeting}>{getGreeting()}</Text>
-                  <Text style={styles.userName}>
-                    {(userData?.firstName as string) || (userData?.fullName as string) || "User"}
-                  </Text>
-                </View>
-              </TouchableOpacity>
+      <SafeAreaView style={styles.container} edges={["left", "right", "bottom"]}>
+        <View style={[styles.header, { paddingTop: Math.max(insets.top, 12) }]}>
+          <View style={styles.headerLeft}>
+            <View style={styles.avatar}>
+              <Ionicons name="person" size={28} color="#E15816" />
             </View>
-            <View style={styles.headerRight}>
+            <TouchableOpacity
+              onPress={() => navigation.navigate("Personal")}
+              activeOpacity={0.7}
+              style={styles.headerUserTouch}
+            >
+              <View style={styles.headerUserText}>
+                <Text style={styles.greeting} numberOfLines={1}>{getGreeting()}</Text>
+                <Text style={styles.userName} numberOfLines={1} ellipsizeMode="tail">
+                  {(userData?.firstName as string) || (userData?.fullName as string) || "User"}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.headerRight}>
               <TouchableOpacity
                 style={styles.iconButton}
                 onPress={() => navigation.navigate("Notification")}
@@ -548,6 +549,7 @@ export default function Dashboard() {
             </View>
           </View>
 
+        <ScrollView showsVerticalScrollIndicator={false}>
           <View style={styles.tabs}>
             {["Wallet", "Investment", "Cards"].map((tab) => (
               <TouchableOpacity
@@ -679,7 +681,7 @@ export default function Dashboard() {
           )}
 
           {activeTab !== "Investment" && (
-            <View style={styles.languageCarouselContainer}>
+            <View style={[styles.languageCarouselContainer, { paddingHorizontal: horizontalPadding }]}>
               <View style={styles.languageCarouselWrapper}>
                 <ScrollView
                   ref={languageScrollRef}
@@ -688,7 +690,7 @@ export default function Dashboard() {
                   showsHorizontalScrollIndicator={false}
                   onMomentumScrollEnd={(event) => {
                     const index = Math.round(
-                      event.nativeEvent.contentOffset.x / (width - 40)
+                      event.nativeEvent.contentOffset.x / carouselWidth
                     );
                     setCurrentLanguageIndex(index);
                   }}
@@ -697,7 +699,7 @@ export default function Dashboard() {
                   {languageSlides.map((slide, index) => (
                     <TouchableOpacity
                       key={index}
-                      style={styles.languageSlide}
+                      style={[styles.languageSlide, { width: carouselWidth }]}
                       onPress={() => navigation.navigate("Crypto")}
                       activeOpacity={0.9}
                     >
@@ -794,7 +796,7 @@ export default function Dashboard() {
                 showsHorizontalScrollIndicator={false}
                 onMomentumScrollEnd={(event) => {
                   const index = Math.round(
-                    event.nativeEvent.contentOffset.x / (width - 40)
+                    event.nativeEvent.contentOffset.x / carouselWidth
                   );
                   setCurrentBannerIndex(index);
                 }}
@@ -803,7 +805,7 @@ export default function Dashboard() {
                 {banners.map((banner, index) => (
                   <TouchableOpacity
                     key={index}
-                    style={styles.bannerItem}
+                    style={[styles.bannerItem, { width: carouselWidth }]}
                     onPress={() => Linking.openURL(banner.url)}
                     activeOpacity={0.8}
                   >
@@ -848,7 +850,9 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     backgroundColor: "#FFFFFF",
   },
-  headerLeft: { flexDirection: "row", alignItems: "center", gap: 12 },
+  headerLeft: { flex: 1, flexDirection: "row", alignItems: "center", gap: 12, minWidth: 0 },
+  headerUserTouch: { flex: 1, minWidth: 0 },
+  headerUserText: { flex: 1, minWidth: 0, justifyContent: "center" },
   avatar: {
     width: 50,
     height: 50,
@@ -863,8 +867,10 @@ const styles = StyleSheet.create({
   userName: { fontSize: 16, fontWeight: "700", color: "#333" },
   headerRight: { flexDirection: "row", gap: 12 },
   iconButton: {
-    width: 40,
-    height: 40,
+    width: 44,
+    height: 44,
+    minWidth: 44,
+    minHeight: 44,
     justifyContent: "center",
     alignItems: "center",
     position: "relative",
@@ -898,9 +904,10 @@ const styles = StyleSheet.create({
   },
   tab: {
     paddingHorizontal: 28,
-    paddingVertical: 10,
+    paddingVertical: 12,
     borderRadius: 20,
     minWidth: 100,
+    minHeight: 44,
     alignItems: "center",
   },
   activeTab: { backgroundColor: "#E15816" },
@@ -993,11 +1000,10 @@ const styles = StyleSheet.create({
     textAlign: "center",
     lineHeight: 12,
   },
-  languageCarouselContainer: { paddingHorizontal: 20, marginVertical: 16 },
+  languageCarouselContainer: { marginVertical: 16 },
   languageCarouselWrapper: { position: "relative", marginBottom: 12 },
   languageScrollView: { borderRadius: 16 },
   languageSlide: {
-    width: width - 40,
     height: 140,
     borderRadius: 16,
     overflow: "hidden",
@@ -1079,7 +1085,6 @@ const styles = StyleSheet.create({
   bannersSection: { paddingHorizontal: 20, marginBottom: 20 },
   bannerScrollView: { marginBottom: 12 },
   bannerItem: {
-    width: width - 40,
     height: 120,
     borderRadius: 12,
     overflow: "hidden",

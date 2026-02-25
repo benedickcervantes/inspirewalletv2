@@ -10,6 +10,7 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -31,6 +32,8 @@ interface CommissionTransaction {
 
 export default function AgentDashboard() {
   const navigation = useNavigation();
+  const { width } = useWindowDimensions();
+  const horizontalPadding = width < 375 ? 16 : 20;
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [agentCommission, setAgentCommission] = useState(0);
@@ -187,7 +190,7 @@ export default function AgentDashboard() {
 
         <ScrollView
           style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, { paddingHorizontal: horizontalPadding, paddingTop: 16 }]}
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
@@ -333,11 +336,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
   },
-  backButton: { padding: 4 },
+  backButton: { padding: 12, minWidth: 44, minHeight: 44, justifyContent: "center" },
   headerTitle: { fontSize: 18, fontWeight: "700", color: "#FFFFFF" },
-  refreshButton: { padding: 4 },
+  refreshButton: { padding: 12, minWidth: 44, minHeight: 44, justifyContent: "center" },
   scrollView: { flex: 1 },
-  scrollContent: { padding: 16, paddingBottom: 32 },
+  scrollContent: { paddingBottom: 32 },
   errorBanner: {
     flexDirection: "row",
     alignItems: "center",

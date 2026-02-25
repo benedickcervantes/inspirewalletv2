@@ -7,7 +7,6 @@ import {
   ActivityIndicator,
   Animated,
   BackHandler,
-  Dimensions,
   Modal,
   Pressable,
   ScrollView,
@@ -15,6 +14,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -25,12 +25,6 @@ import type { NavProp } from '../../types/navigation';
 const GRADIENT_START = '#E15816';
 const GRADIENT_END = '#F48F38';
 const WHITE = '#FFFFFF';
-
-const { width } = Dimensions.get('window');
-const isTablet = width >= 768;
-const btnSize = isTablet ? 70 : Math.min(60, width * 0.18);
-const padWidth = isTablet ? '60%' : '85%';
-const maxPadWidth = isTablet ? 380 : Math.min(320, width - 48);
 
 interface MessageModalProps {
   visible: boolean;
@@ -105,6 +99,10 @@ interface ModalConfig {
 export default function Passcode() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const btnSize = width >= 768 ? 70 : Math.min(60, Math.max(44, width * 0.18));
+  const padWidth = width >= 768 ? '60%' : '85%';
+  const maxPadWidth = width >= 768 ? 380 : Math.min(320, width - 48);
 
   const [passcode, setPasscode] = useState('');
   const [error, setError] = useState('');
@@ -477,8 +475,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logo: {
-    width: isTablet ? 280 : 180,
-    height: isTablet ? 100 : 64,
+    width: 180,
+    height: 64,
   },
   loadingWrap: {
     alignItems: 'center',
@@ -586,9 +584,6 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   padButton: {
-    width: btnSize,
-    height: btnSize,
-    borderRadius: btnSize / 2,
     backgroundColor: 'rgba(255,255,255,0.25)',
     justifyContent: 'center',
     alignItems: 'center',

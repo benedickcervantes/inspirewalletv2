@@ -147,7 +147,7 @@ export default function WalletTab({
 
 const styles = StyleSheet.create({
   balanceCardContainer: {
-    margin: 20,
+    margin: 16,
     marginBottom: 10,
     height: 220,
   },

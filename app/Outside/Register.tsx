@@ -16,12 +16,11 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  useWindowDimensions,
   View
 } from 'react-native';
 import { register as registerApi } from '../../configs/api';
 import type { NavProp } from '../../types/navigation';
-
-const { width } = Dimensions.get('window');
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const isValidEmail = (email: string) => EMAIL_REGEX.test((email || '').trim().toLowerCase());
@@ -39,6 +38,7 @@ const COUNTRY_OPTIONS = [
 
 export default function Register() {
   const navigation = useNavigation();
+  const { width } = useWindowDimensions();
   const [currentStep, setCurrentStep] = useState(1);
 
   const [firstName, setFirstName] = useState('');
@@ -782,12 +782,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingBottom: 20,
   },
-  qrCenterRow: { flexDirection: 'row', height: width * 0.7 },
+  qrCenterRow: { flexDirection: 'row', height: Dimensions.get('window').width * 0.7 },
   qrSideOverlay: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.7)' },
   qrFrameContainer: {
-    width: width * 0.7,
-    height: width * 0.7,
-    position: 'relative',
+    width: Dimensions.get('window').width * 0.7,
+    height: Dimensions.get('window').width * 0.7,
+    position: 'relative' as const,
     justifyContent: 'center',
     alignItems: 'center',
   },

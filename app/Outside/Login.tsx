@@ -493,9 +493,9 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   logo: {
-    width: 280,
+    width: '100%',
+    maxWidth: 280,
     height: 160,
-    maxWidth: '100%',
   },
   form: {
     width: '100%',
