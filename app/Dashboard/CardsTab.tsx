@@ -12,7 +12,7 @@ import {
 } from "react-native";
 
 interface CardsTabProps {
-  userData: { firstName?: string; accountNumber?: string } | null;
+  userData: { firstName?: string; lastName?: string; accountNumber?: string } | null;
   availableBalance: number;
   formatCurrency: (amount: number) => string;
   flipAnimation: Animated.Value;
@@ -79,7 +79,10 @@ export default function CardsTab({
                     {userData?.accountNumber || "00001729819"}
                   </Text>
                   <Text style={styles.cardName}>
-                    {userData?.firstName?.toUpperCase() || "ARIES"}
+                    {[userData?.firstName, userData?.lastName]
+                      .filter(Boolean)
+                      .join(" ")
+                      .toUpperCase() || "ARIES"}
                   </Text>
                   <Text style={styles.cardBalanceLabel}>AVAILABLE BALANCE:</Text>
                   <Text style={styles.cardBalanceAmount}>

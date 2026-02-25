@@ -5,6 +5,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { collection, doc, getDoc, getDocs, limit, orderBy, query } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { auth, firestore } from "../../../configs/firebase";
 
 interface TaskItem {
@@ -25,6 +26,7 @@ interface HistoryItem {
 
 export default function TaskServices() {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const [accumulatedPoints, setAccumulatedPoints] = useState(0);
   const [historyItems, setHistoryItems] = useState<HistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -141,7 +143,7 @@ export default function TaskServices() {
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: insets.top + 12, paddingBottom: 12 }]}>
           <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
             <Ionicons name="chevron-back" size={28} color="#E15816" />
           </TouchableOpacity>
@@ -157,8 +159,8 @@ export default function TaskServices() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
+      {/* Header - sits just below status bar / notch */}
+      <View style={[styles.header, { paddingTop: insets.top + 12, paddingBottom: 12 }]}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Ionicons name="chevron-back" size={28} color="#E15816" />
         </TouchableOpacity>
@@ -257,7 +259,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingVertical: 12,
     backgroundColor: "#FFFFFF",
   },
   backButton: {
