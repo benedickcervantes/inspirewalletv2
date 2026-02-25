@@ -15,6 +15,7 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
+import { useLanguage } from '../../context/LanguageContext';
 import { getReferralCode, resendVerification, verifyEmail } from '../../configs/api';
 import type { NavProp } from '../../types/navigation';
 
@@ -65,11 +66,11 @@ const Settings = () => {
         setReferralError(result.error);
       }
     } catch (_) {
-      setReferralError('Failed to load referral code');
+      setReferralError(t('settings.failedToLoadReferral'));
     } finally {
       setReferralLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     loadUser();
@@ -93,12 +94,12 @@ const Settings = () => {
   const handleVerifyEmail = async () => {
     const email = userData?.email?.trim();
     if (!email) {
-      setEmailVerifyError('Email not found. Please sign in again.');
+      setEmailVerifyError(t('settings.emailNotFound'));
       return;
     }
     const otp = emailOtp.trim();
     if (!/^\d{6}$/.test(otp)) {
-      setEmailVerifyError('Enter the 6-digit code from your email');
+      setEmailVerifyError(t('settings.enter6DigitCode'));
       return;
     }
     setEmailVerifyError(null);
@@ -114,10 +115,10 @@ const Settings = () => {
           await AsyncStorage.setItem('user', JSON.stringify({ ...user, emailVerified: true }));
         }
       } else {
-        setEmailVerifyError(result.error || 'Verification failed');
+        setEmailVerifyError(result.error || t('settings.verificationFailed'));
       }
     } catch (_) {
-      setEmailVerifyError('An unexpected error occurred');
+      setEmailVerifyError(t('settings.unexpectedError'));
     } finally {
       setEmailVerifyLoading(false);
     }
@@ -133,12 +134,12 @@ const Settings = () => {
       if (result.success) {
         setEmailVerifyError(null);
         setEmailOtp('');
-      } else {
-        setEmailVerifyError(result.error || 'Failed to resend');
-      }
-    } catch (_) {
-      setEmailVerifyError('Failed to resend verification email');
-    } finally {
+    } else {
+      setEmailVerifyError(result.error || t('settings.failedToResend'));
+    }
+  } catch (_) {
+    setEmailVerifyError(t('settings.failedToResend'));
+  } finally {
       setResendLoading(false);
     }
   };
@@ -161,50 +162,25 @@ const Settings = () => {
     {
       id: 1,
       icon: 'lock-closed-outline' as const,
-      title: 'Passcode',
-      subtitle: 'Change your PIN',
+      titleKey: 'settings.passcode',
+      subtitleKey: 'settings.changePin',
       onPress: () => {},
     },
     {
       id: 2,
       icon: 'close-circle-outline' as const,
-      title: 'Delete Account',
-      subtitle: '',
+      titleKey: 'settings.deleteAccount',
+      subtitleKey: '',
       onPress: () => (navigation as { navigate: (name: string) => void }).navigate('DeleteAccount'),
     },
   ];
 
   const customerRelationshipOptions = [
-    {
-      id: 1,
-      icon: 'information-circle-outline' as const,
-      title: 'About us',
-      onPress: () => (navigation as { navigate: (name: string) => void }).navigate('Aboutus'),
-    },
-    {
-      id: 2,
-      icon: 'people-outline' as const,
-      title: 'Agent Dashboard',
-      onPress: () => (navigation as { navigate: (name: string) => void }).navigate('AgentRequest'),
-    },
-    {
-      id: 3,
-      icon: 'headset-outline' as const,
-      title: 'Help Center',
-      onPress: () => (navigation as { navigate: (name: string) => void }).navigate('HelpCenter'),
-    },
-    {
-      id: 4,
-      icon: 'shield-outline' as const,
-      title: 'Privacy Policy',
-      onPress: () => (navigation as { navigate: (name: string) => void }).navigate('PrivacyPolicy'),
-    },
-    {
-      id: 5,
-      icon: 'document-text-outline' as const,
-      title: 'Terms and Condition',
-      onPress: () => (navigation as { navigate: (name: string) => void }).navigate('TermsConditions'),
-    },
+    { id: 1, icon: 'information-circle-outline' as const, titleKey: 'settings.aboutUs', onPress: () => (navigation as { navigate: (name: string) => void }).navigate('Aboutus') },
+    { id: 2, icon: 'people-outline' as const, titleKey: 'settings.agentDashboard', onPress: () => (navigation as { navigate: (name: string) => void }).navigate('AgentRequest') },
+    { id: 3, icon: 'headset-outline' as const, titleKey: 'settings.helpCenter', onPress: () => (navigation as { navigate: (name: string) => void }).navigate('HelpCenter') },
+    { id: 4, icon: 'shield-outline' as const, titleKey: 'settings.privacyPolicy', onPress: () => (navigation as { navigate: (name: string) => void }).navigate('PrivacyPolicy') },
+    { id: 5, icon: 'document-text-outline' as const, titleKey: 'settings.termsAndCondition', onPress: () => (navigation as { navigate: (name: string) => void }).navigate('TermsConditions') },
   ];
 
   const r = {
@@ -437,8 +413,8 @@ const Settings = () => {
                   placeholder="000000"
                   placeholderTextColor="#999"
                   value={emailOtp}
-                  onChangeText={(t) => {
-                    setEmailOtp(t.replace(/\D/g, '').slice(0, 6));
+                  onChangeText={(val) => {
+                    setEmailOtp(val.replace(/\D/g, '').slice(0, 6));
                     setEmailVerifyError(null);
                   }}
                   keyboardType="number-pad"

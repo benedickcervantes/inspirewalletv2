@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useLanguage } from '../../context/LanguageContext';
 import type { NavProp } from '../../types/navigation';
 
 const SECTIONS = [
@@ -72,6 +73,7 @@ const SECTIONS = [
 
 const TermsConditions = () => {
   const navigation = useNavigation();
+  const { t } = useLanguage();
 
   return (
     <SafeAreaView style={styles.container}>
@@ -86,7 +88,7 @@ const TermsConditions = () => {
           <TouchableOpacity onPress={() => (navigation as unknown as NavProp).goBack()} style={styles.backButton}>
             <Ionicons name="arrow-back" size={28} color="#FFFFFF" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Terms & Conditions</Text>
+          <Text style={styles.headerTitle}>{t('terms.title')}</Text>
           <View style={styles.headerSpacer} />
         </View>
       </LinearGradient>

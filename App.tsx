@@ -59,12 +59,14 @@ import HelpCenter from './app/Settings/HelpCenter';
 import PrivacyPolicy from './app/Settings/PrivacyPolicy';
 import Settings from './app/Settings/settings';
 import TermsConditions from './app/Settings/TermsConditions';
+import { LanguageProvider } from './context/LanguageContext';
 import type { RootStackParamList } from './types/navigation';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function App() {
   return (
+    <LanguageProvider>
     <NavigationContainer>
       <Stack.Navigator
         initialRouteName="AuthLoader"
@@ -130,5 +132,6 @@ export default function App() {
       </Stack.Navigator>
       <StatusBar style="auto" />
     </NavigationContainer>
+    </LanguageProvider>
   );
 }

@@ -14,6 +14,7 @@ import {
   View
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useLanguage } from "../../../context/LanguageContext";
 import { getOrCreateMainWallet } from "../../../configs/api";
 import { auth, firestore } from "../../../configs/firebase";
 
@@ -87,6 +88,7 @@ export const checkSufficientBalance = (balanceType: string, availableBalance: nu
 };
 
 export default function SendMoney() {
+  const { t } = useLanguage();
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const [selectedBalance, setSelectedBalance] = useState<string | null>(null);
@@ -135,7 +137,7 @@ export default function SendMoney() {
         >
           <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Send Money</Text>
+        <Text style={styles.headerTitle}>{t("sendMoney.title")}</Text>
         <TouchableOpacity style={styles.notificationButton}>
           <Ionicons name="notifications-outline" size={24} color="#FFFFFF" />
         </TouchableOpacity>
@@ -152,21 +154,21 @@ export default function SendMoney() {
               <View style={styles.quickActionIcon}>
                 <Ionicons name="qr-code" size={28} color="#E25A17" />
               </View>
-              <Text style={styles.quickActionText}>My QR</Text>
+              <Text style={styles.quickActionText}>{t("sendMoney.myQr")}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.quickActionButton}>
               <View style={styles.quickActionIcon}>
                 <Ionicons name="scan" size={28} color="#E25A17" />
               </View>
-              <Text style={styles.quickActionText}>Scan QR</Text>
+              <Text style={styles.quickActionText}>{t("sendMoney.scanQr")}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.quickActionButton}>
               <View style={styles.quickActionIcon}>
                 <Ionicons name="people" size={28} color="#E25A17" />
               </View>
-              <Text style={styles.quickActionText}>Contacts</Text>
+              <Text style={styles.quickActionText}>{t("sendMoney.contacts")}</Text>
             </TouchableOpacity>
           </View>
 
@@ -187,12 +189,12 @@ export default function SendMoney() {
             </View>
           </View>
 
-          <Text style={styles.stepLabel}>Step 1 of 3</Text>
+          <Text style={styles.stepLabel}>{t("sendMoney.step1Of3")}</Text>
 
           {/* Step Title */}
-          <Text style={styles.stepTitle}>Select Balance Type</Text>
+          <Text style={styles.stepTitle}>{t("sendMoney.selectBalanceType")}</Text>
           <Text style={styles.stepSubtitle}>
-            Choose which balance to use for transfer
+            {t("sendMoney.selectBalanceSubtitle")}
           </Text>
 
           {/* Balance Cards */}
@@ -210,8 +212,8 @@ export default function SendMoney() {
                   <Ionicons name="wallet" size={24} color="#E25A17" />
                 </View>
                 <View style={styles.balanceInfo}>
-                  <Text style={styles.balanceTitle}>Available Balance</Text>
-                  <Text style={styles.balanceSubtitle}>Main wallet balance</Text>
+                  <Text style={styles.balanceTitle}>{t("sendMoney.availableBalance")}</Text>
+                  <Text style={styles.balanceSubtitle}>{t("sendMoney.mainWalletBalance")}</Text>
                 </View>
                 <View
                   style={[
@@ -250,8 +252,8 @@ export default function SendMoney() {
                   <Ionicons name="briefcase" size={24} color="#E25A17" />
                 </View>
                 <View style={styles.balanceInfo}>
-                  <Text style={styles.balanceTitle}>Agent Wallet</Text>
-                  <Text style={styles.balanceSubtitle}>Commission earnings</Text>
+                  <Text style={styles.balanceTitle}>{t("sendMoney.agentWallet")}</Text>
+                  <Text style={styles.balanceSubtitle}>{t("sendMoney.commissionEarnings")}</Text>
                 </View>
                 <View
                   style={[
@@ -271,7 +273,7 @@ export default function SendMoney() {
                 {agentWallet === 0 ? (
                   <View style={styles.insufficientBadge}>
                     <Ionicons name="alert-circle" size={14} color="#F44336" />
-                    <Text style={styles.insufficientBadgeText}>Insufficient</Text>
+                    <Text style={styles.insufficientBadgeText}>{t("sendMoney.insufficient")}</Text>
                   </View>
                 ) : (
                   <View style={styles.availableBadge}>
@@ -300,7 +302,7 @@ export default function SendMoney() {
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
             >
-              <Text style={styles.continueText}>Continue</Text>
+              <Text style={styles.continueText}>{t("sendMoney.continue")}</Text>
               <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
             </LinearGradient>
           </TouchableOpacity>
@@ -326,15 +328,15 @@ export default function SendMoney() {
                 <View style={styles.iconContainer}>
                   <Ionicons name="alert-circle" size={80} color="#FFFFFF" />
                 </View>
-                <Text style={styles.modalTitle}>Selection Required</Text>
+                <Text style={styles.modalTitle}>{t("sendMoney.selectionRequired")}</Text>
                 <Text style={styles.modalMessage}>
-                  Please select a balance type to continue
+                  {t("sendMoney.selectBalanceToContinue")}
                 </Text>
                 <TouchableOpacity
                   style={styles.modalButton}
                   onPress={() => setShowAlertModal(false)}
                 >
-                  <Text style={styles.modalButtonText}>OK</Text>
+                  <Text style={styles.modalButtonText}>{t("common.ok")}</Text>
                 </TouchableOpacity>
               </LinearGradient>
             </View>

@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
+import { useLanguage } from "../../../context/LanguageContext";
 import { collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import {
@@ -112,12 +113,12 @@ export const verifyRecipientAccount = async (accountNumber: string) => {
   }
 };
 
-// Reusable function to validate transfer form
+// Reusable function to validate transfer form (returns translation keys for message)
 export const validateTransferForm = (accountNumber: string, amount: string, availableBalance: number) => {
   if (!accountNumber || !amount) {
     return {
       isValid: false,
-      message: "Please fill in all required fields"
+      messageKey: "sendMoney.fillRequiredFields" as const,
     };
   }
 
@@ -125,24 +126,25 @@ export const validateTransferForm = (accountNumber: string, amount: string, avai
   if (isNaN(transferAmount) || transferAmount <= 0) {
     return {
       isValid: false,
-      message: "Please enter a valid amount"
+      messageKey: "sendMoney.enterValidAmount" as const,
     };
   }
 
   if (transferAmount > availableBalance) {
     return {
       isValid: false,
-      message: "Insufficient balance"
+      messageKey: "sendMoney.insufficientBalance" as const,
     };
   }
 
   return {
     isValid: true,
-    message: "Validation successful"
+    messageKey: null,
   };
 };
 
 export default function TransferRecipient() {
+  const { t } = useLanguage();
   const navigation = useNavigation();
   const route = useRoute();
   const insets = useSafeAreaInsets();
@@ -185,8 +187,8 @@ export default function TransferRecipient() {
   const handleContinue = async () => {
     const validation = validateTransferForm(accountNumber, amount, Number(availableBalance) || 0);
     
-    if (!validation.isValid) {
-      setAlertMessage(validation.message);
+    if (!validation.isValid && validation.messageKey) {
+      setAlertMessage(validation.messageKey);
       setShowAlertModal(true);
       return;
     }
@@ -197,7 +199,7 @@ export default function TransferRecipient() {
       const recipientResult = await verifyRecipientAccount(accountNumber);
 
       if (!recipientResult.exists || !recipientResult.data) {
-        setAlertMessage("Recipient account not found");
+        setAlertMessage("sendMoney.recipientNotFound");
         setShowAlertModal(true);
         setIsLoading(false);
         return;
@@ -215,7 +217,7 @@ export default function TransferRecipient() {
       });
     } catch (error) {
       console.error("Error verifying recipient:", error);
-      setAlertMessage("Error verifying recipient. Please try again.");
+      setAlertMessage("sendMoney.errorVerifyingRecipient");
       setShowAlertModal(true);
     } finally {
       setIsLoading(false);
@@ -242,7 +244,7 @@ export default function TransferRecipient() {
         >
           <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Send Money</Text>
+        <Text style={styles.headerTitle}>{t("sendMoney.title")}</Text>
         <TouchableOpacity style={styles.notificationButton}>
           <Ionicons name="notifications-outline" size={24} color="#FFFFFF" />
         </TouchableOpacity>
@@ -259,21 +261,21 @@ export default function TransferRecipient() {
               <View style={styles.quickActionIcon}>
                 <Ionicons name="qr-code" size={28} color="#E25A17" />
               </View>
-              <Text style={styles.quickActionText}>My QR</Text>
+              <Text style={styles.quickActionText}>{t("sendMoney.myQr")}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.quickActionButton}>
               <View style={styles.quickActionIcon}>
                 <Ionicons name="scan" size={28} color="#E25A17" />
               </View>
-              <Text style={styles.quickActionText}>Scan QR</Text>
+              <Text style={styles.quickActionText}>{t("sendMoney.scanQr")}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.quickActionButton}>
               <View style={styles.quickActionIcon}>
                 <Ionicons name="people" size={28} color="#E25A17" />
               </View>
-              <Text style={styles.quickActionText}>Contacts</Text>
+              <Text style={styles.quickActionText}>{t("sendMoney.contacts")}</Text>
             </TouchableOpacity>
           </View>
 
@@ -296,11 +298,11 @@ export default function TransferRecipient() {
             </View>
           </View>
 
-          <Text style={styles.stepLabel}>Step 2 of 3</Text>
+          <Text style={styles.stepLabel}>{t("sendMoney.step2Of3")}</Text>
 
           {/* Step Title */}
-          <Text style={styles.stepTitle}>Transfer Details</Text>
-          <Text style={styles.stepSubtitle}>Enter recipient and amount</Text>
+          <Text style={styles.stepTitle}>{t("sendMoney.transferDetails")}</Text>
+          <Text style={styles.stepSubtitle}>{t("sendMoney.enterRecipientAndAmount")}</Text>
 
           {/* Form */}
           <View style={styles.formContainer}>
@@ -308,12 +310,12 @@ export default function TransferRecipient() {
             <View style={styles.inputSection}>
               <View style={styles.labelRow}>
                 <Ionicons name="person-outline" size={20} color="#E25A17" />
-                <Text style={styles.inputLabel}>Recipient Account Number</Text>
+                <Text style={styles.inputLabel}>{t("sendMoney.recipientAccountNumber")}</Text>
               </View>
               <View style={styles.inputWithButton}>
                 <TextInput
                   style={styles.input}
-                  placeholder="Enter account number"
+                  placeholder={t("sendMoney.placeholderAccountNumber")}
                   placeholderTextColor="#CCC"
                   value={accountNumber}
                   onChangeText={setAccountNumber}
@@ -323,7 +325,7 @@ export default function TransferRecipient() {
                   style={styles.contactsButton}
                   onPress={() => setShowContactsModal(true)}
                 >
-                  <Text style={styles.contactsButtonText}>Show Contacts</Text>
+                  <Text style={styles.contactsButtonText}>{t("sendMoney.showContacts")}</Text>
                   <Ionicons name="chevron-down" size={16} color="#E25A17" />
                 </TouchableOpacity>
               </View>
@@ -344,7 +346,7 @@ export default function TransferRecipient() {
                 keyboardType="decimal-pad"
               />
               <Text style={styles.availableText}>
-                Available: PHP {availableBalance.toLocaleString("en-PH", {
+                {t("sendMoney.availableLabel")}: PHP {availableBalance.toLocaleString("en-PH", {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2
                 })}
@@ -355,11 +357,11 @@ export default function TransferRecipient() {
             <View style={styles.inputSection}>
               <View style={styles.labelRow}>
                 <Ionicons name="document-text-outline" size={20} color="#E25A17" />
-                <Text style={styles.inputLabel}>Description (Optional)</Text>
+                <Text style={styles.inputLabel}>{t("sendMoney.descriptionOptional")}</Text>
               </View>
               <TextInput
                 style={[styles.input, styles.textArea]}
-                placeholder="Add a note..."
+                placeholder={t("sendMoney.placeholderNote")}
                 placeholderTextColor="#CCC"
                 value={description}
                 onChangeText={setDescription}
@@ -392,7 +394,7 @@ export default function TransferRecipient() {
                 <ActivityIndicator size="small" color="#FFFFFF" />
               ) : (
                 <>
-                  <Text style={styles.continueText}>Continue</Text>
+                  <Text style={styles.continueText}>{t("sendMoney.continue")}</Text>
                   <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
                 </>
               )}
@@ -420,13 +422,13 @@ export default function TransferRecipient() {
                 <View style={styles.iconContainer}>
                   <Ionicons name="alert-circle" size={80} color="#FFFFFF" />
                 </View>
-                <Text style={styles.modalTitle}>Alert</Text>
-                <Text style={styles.modalMessage}>{alertMessage}</Text>
+                <Text style={styles.modalTitle}>{t("sendMoney.alert")}</Text>
+                <Text style={styles.modalMessage}>{t(alertMessage)}</Text>
                 <TouchableOpacity
                   style={styles.modalButton}
                   onPress={() => setShowAlertModal(false)}
                 >
-                  <Text style={styles.modalButtonText}>OK</Text>
+                  <Text style={styles.modalButtonText}>{t("common.ok")}</Text>
                 </TouchableOpacity>
               </LinearGradient>
             </View>
@@ -443,7 +445,7 @@ export default function TransferRecipient() {
           <View style={styles.modalOverlay}>
             <View style={styles.contactsModalContainer}>
               <View style={styles.contactsModalHeader}>
-                <Text style={styles.contactsModalTitle}>Select Contact</Text>
+                <Text style={styles.contactsModalTitle}>{t("sendMoney.selectContact")}</Text>
                 <TouchableOpacity onPress={() => setShowContactsModal(false)}>
                   <Ionicons name="close" size={24} color="#333" />
                 </TouchableOpacity>
@@ -452,7 +454,7 @@ export default function TransferRecipient() {
                 {contacts.length === 0 ? (
                   <View style={styles.emptyState}>
                     <Ionicons name="people-outline" size={48} color="#CCC" />
-                    <Text style={styles.emptyStateText}>No contacts found</Text>
+                    <Text style={styles.emptyStateText}>{t("sendMoney.noContactsFound")}</Text>
                   </View>
                 ) : (
                   contacts.map((contact) => (

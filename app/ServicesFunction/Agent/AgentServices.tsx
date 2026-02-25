@@ -19,6 +19,7 @@ import {
   View,
   type TextStyle
 } from "react-native";
+import { DEFAULT_LANGUAGE } from "../../../constants/locales";
 import type { RootStackParamList } from "../../../types/navigation";
 
 // Static theme - no backend
@@ -259,7 +260,7 @@ const ProfessionalModal = ({
 
 export default function AgentServices() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, "AgentRequest">>();
-  const [userLanguage, setUserLanguage] = useState("English");
+  const [userLanguage, setUserLanguage] = useState(DEFAULT_LANGUAGE);
 
   // Static mock user data
   const [firstName, setFirstName] = useState("John");

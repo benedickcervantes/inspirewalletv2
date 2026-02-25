@@ -20,7 +20,10 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useLanguage } from "../../../context/LanguageContext";
 import type { RootStackParamList } from "../../../types/navigation";
+
+const EMPTY_PLACEHOLDER = "__empty__";
 
 type AlertType = "success" | "error" | "warning" | "info";
 
@@ -162,6 +165,7 @@ interface AlertConfig {
 }
 
 export default function TravelProtection() {
+  const { t } = useLanguage();
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList, "Travel">>();
 
@@ -176,14 +180,13 @@ export default function TravelProtection() {
   const [landlineNumber, setLandlineNumber] = useState("");
   const [homeAddress, setHomeAddress] = useState("");
 
-  // Form fields - Step 2
+  // Form fields - Step 2 (store internal values for dropdowns; display via t())
   const [gender, setGender] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [dateOfBirthText, setDateOfBirthText] =
-    useState("Select your birthdate");
+  const [dateOfBirthText, setDateOfBirthText] = useState(EMPTY_PLACEHOLDER);
   const [civilStatus, setCivilStatus] = useState("Single");
-  const [citizenship, setCitizenship] = useState("Filipino");
+  const [citizenship, setCitizenship] = useState("");
 
   // Form fields - Step 3
   const [sourceOfFund, setSourceOfFund] = useState("");
@@ -194,18 +197,15 @@ export default function TravelProtection() {
   const [destinationAddress, setDestinationAddress] = useState("");
   const [checkInDate, setCheckInDate] = useState(new Date());
   const [showCheckInPicker, setShowCheckInPicker] = useState(false);
-  const [checkInDateText, setCheckInDateText] =
-    useState("Select check-in date");
+  const [checkInDateText, setCheckInDateText] = useState(EMPTY_PLACEHOLDER);
   const [duration, setDuration] = useState("");
   const [airline, setAirline] = useState("");
   const [departureTime, setDepartureTime] = useState(new Date());
   const [showDepartureTimePicker, setShowDepartureTimePicker] = useState(false);
-  const [departureTimeText, setDepartureTimeText] =
-    useState("Select departure time");
+  const [departureTimeText, setDepartureTimeText] = useState(EMPTY_PLACEHOLDER);
   const [arrivalTime, setArrivalTime] = useState(new Date());
   const [showArrivalTimePicker, setShowArrivalTimePicker] = useState(false);
-  const [arrivalTimeText, setArrivalTimeText] =
-    useState("Select arrival time");
+  const [arrivalTimeText, setArrivalTimeText] = useState(EMPTY_PLACEHOLDER);
   const [passportNumber, setPassportNumber] = useState("");
   const [purposeOfTravel, setPurposeOfTravel] = useState("");
 
@@ -235,7 +235,7 @@ export default function TravelProtection() {
       title,
       message,
       type,
-      confirmText: "OK",
+      confirmText: t("common.ok"),
     });
     setAlertVisible(true);
   };
@@ -243,47 +243,47 @@ export default function TravelProtection() {
   const handleNext = () => {
     if (currentStep === 1) {
       if (!emailAddress || !mobileNumber || !homeAddress) {
-        showAlert("Required Fields", "Please fill in all required fields", "error");
+        showAlert(t("travel.requiredFields"), t("travel.fillRequired"), "error");
         return;
       }
       setCurrentStep(2);
     } else if (currentStep === 2) {
       if (
         !gender ||
-        dateOfBirthText === "Select your birthdate" ||
+        dateOfBirthText === EMPTY_PLACEHOLDER ||
         !civilStatus ||
         !citizenship
       ) {
-        showAlert("Required Fields", "Please fill in all required fields", "error");
+        showAlert(t("travel.requiredFields"), t("travel.fillRequired"), "error");
         return;
       }
       setCurrentStep(3);
     } else if (currentStep === 3) {
       if (!sourceOfFund || !grossMonthlyIncome || !cashOnHand) {
-        showAlert("Required Fields", "Please fill in all required fields", "error");
+        showAlert(t("travel.requiredFields"), t("travel.fillRequired"), "error");
         return;
       }
       setCurrentStep(4);
     } else if (currentStep === 4) {
       if (
         !destinationAddress ||
-        checkInDateText === "Select check-in date" ||
+        checkInDateText === EMPTY_PLACEHOLDER ||
         !duration ||
         !airline ||
-        departureTimeText === "Select departure time" ||
-        arrivalTimeText === "Select arrival time" ||
+        departureTimeText === EMPTY_PLACEHOLDER ||
+        arrivalTimeText === EMPTY_PLACEHOLDER ||
         !passportNumber ||
         !purposeOfTravel
       ) {
-        showAlert("Required Fields", "Please fill in all required fields", "error");
+        showAlert(t("travel.requiredFields"), t("travel.fillRequired"), "error");
         return;
       }
       setCurrentStep(5);
     } else if (currentStep === 5) {
       if (!passportPhoto || !governmentId) {
         showAlert(
-          "Required Documents",
-          "Please upload both required documents",
+          t("travel.requiredDocuments"),
+          t("travel.uploadBothDocs"),
           "error"
         );
         return;
@@ -304,8 +304,8 @@ export default function TravelProtection() {
 
   const handleSubmit = () => {
     showAlert(
-      "Application Submitted",
-      "Your travel protection application has been submitted successfully! We will process your request within 5-7 working days.",
+      t("travel.applicationSubmitted"),
+      t("travel.applicationSuccess"),
       "success"
     );
     setTimeout(() => {
@@ -390,8 +390,8 @@ export default function TravelProtection() {
         await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (permissionResult.granted === false) {
         showAlert(
-          "Permission Required",
-          "Please allow access to your photos to upload documents.",
+          t("travel.permissionRequired"),
+          t("travel.allowPhotos"),
           "warning"
         );
         return;
@@ -409,7 +409,7 @@ export default function TravelProtection() {
       }
     } catch (error) {
       console.error("Error picking passport photo:", error);
-      showAlert("Error", "Failed to pick image. Please try again.", "error");
+      showAlert(t("travel.error"), t("travel.failedToPickImage"), "error");
     }
   };
 
@@ -419,8 +419,8 @@ export default function TravelProtection() {
         await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (permissionResult.granted === false) {
         showAlert(
-          "Permission Required",
-          "Please allow access to your photos to upload documents.",
+          t("travel.permissionRequired"),
+          t("travel.allowPhotos"),
           "warning"
         );
         return;
@@ -437,7 +437,7 @@ export default function TravelProtection() {
       }
     } catch (error) {
       console.error("Error picking government ID:", error);
-      showAlert("Error", "Failed to pick image. Please try again.", "error");
+      showAlert(t("travel.error"), t("travel.failedToPickImage"), "error");
     }
   };
 
@@ -487,7 +487,7 @@ export default function TravelProtection() {
         {loading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#E25A17" />
-            <Text style={styles.loadingText}>Loading...</Text>
+            <Text style={styles.loadingText}>{t("travel.loading")}</Text>
           </View>
         ) : (
           <>
@@ -509,8 +509,8 @@ export default function TravelProtection() {
                     color="#FFFFFF"
                   />
                 </View>
-                <Text style={styles.heroTitle}>Travel Protection</Text>
-                <Text style={styles.heroSubtitle}>Secure your journey</Text>
+                <Text style={styles.heroTitle}>{t("travel.title")}</Text>
+                <Text style={styles.heroSubtitle}>{t("travel.subtitle")}</Text>
               </LinearGradient>
 
               <View style={styles.infoBanner}>
@@ -522,10 +522,9 @@ export default function TravelProtection() {
                   />
                 </View>
                 <Text style={styles.infoBannerText}>
-                  Complete this form to subscribe. Your application will be
-                  processed within{" "}
-                  <Text style={styles.infoBannerBold}>5-7 working days</Text>{" "}
-                  after payment confirmation.
+                  {t("travel.infoBanner")}{" "}
+                  <Text style={styles.infoBannerBold}>{t("travel.infoBannerDays")}</Text>{" "}
+                  {t("travel.infoBannerAfter")}
                 </Text>
               </View>
 
@@ -536,15 +535,15 @@ export default function TravelProtection() {
                     size={20}
                     color="#E25A17"
                   />
-                  <Text style={styles.feeLabel}>Protection Fee</Text>
+                  <Text style={styles.feeLabel}>{t("travel.protectionFee")}</Text>
                 </View>
                 <Text style={styles.feeAmount}>
                   ₱ {protectionFee.toLocaleString()}
                 </Text>
                 <Text style={styles.feeSubtext}>
                   {userTimeDeposit > 0
-                    ? "DISCOUNTED RATE (TIME DEPOSIT HOLDER)"
-                    : "STANDARD PROTECTION RATE"}
+                    ? t("travel.discountedRate")
+                    : t("travel.standardRate")}
                 </Text>
               </View>
 
@@ -562,20 +561,20 @@ export default function TravelProtection() {
                       />
                     </View>
                     <View>
-                      <Text style={styles.formTitle}>Contact Information</Text>
+                      <Text style={styles.formTitle}>{t("travel.contactInfo")}</Text>
                       <Text style={styles.formSubtitle}>
-                        Please provide your contact details
+                        {t("travel.contactSubtitle")}
                       </Text>
                     </View>
                   </View>
 
                   <View style={styles.inputGroup}>
                     <Text style={styles.inputLabel}>
-                      Email Address <Text style={styles.required}>*</Text>
+                      {t("travel.emailAddress")} <Text style={styles.required}>*</Text>
                     </Text>
                     <TextInput
                       style={styles.input}
-                      placeholder="youremail@example.com"
+                      placeholder={t("travel.placeholderEmail")}
                       placeholderTextColor="#999"
                       value={emailAddress}
                       onChangeText={setEmailAddress}
@@ -586,11 +585,11 @@ export default function TravelProtection() {
 
                   <View style={styles.inputGroup}>
                     <Text style={styles.inputLabel}>
-                      Mobile Number <Text style={styles.required}>*</Text>
+                      {t("travel.mobileNumber")} <Text style={styles.required}>*</Text>
                     </Text>
                     <TextInput
                       style={styles.input}
-                      placeholder="+63 9XX XXX XXXX"
+                      placeholder={t("travel.placeholderMobile")}
                       placeholderTextColor="#999"
                       value={mobileNumber}
                       onChangeText={setMobileNumber}
@@ -599,10 +598,10 @@ export default function TravelProtection() {
                   </View>
 
                   <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>Landline Number</Text>
+                    <Text style={styles.inputLabel}>{t("travel.landlineNumber")}</Text>
                     <TextInput
                       style={styles.input}
-                      placeholder="(02) XXXX XXXX"
+                      placeholder={t("travel.placeholderLandline")}
                       placeholderTextColor="#999"
                       value={landlineNumber}
                       onChangeText={setLandlineNumber}
@@ -612,11 +611,11 @@ export default function TravelProtection() {
 
                   <View style={styles.inputGroup}>
                     <Text style={styles.inputLabel}>
-                      Home Address <Text style={styles.required}>*</Text>
+                      {t("travel.homeAddress")} <Text style={styles.required}>*</Text>
                     </Text>
                     <TextInput
                       style={[styles.input, styles.textArea]}
-                      placeholder="House/Unit no., Street, Barangay City, Province, ZIP Code"
+                      placeholder={t("travel.placeholderHomeAddress")}
                       placeholderTextColor="#999"
                       value={homeAddress}
                       onChangeText={setHomeAddress}
@@ -640,16 +639,16 @@ export default function TravelProtection() {
                       />
                     </View>
                     <View>
-                      <Text style={styles.formTitle}>Personal Details</Text>
+                      <Text style={styles.formTitle}>{t("travel.personalDetails")}</Text>
                       <Text style={styles.formSubtitle}>
-                        Please provide your personal information
+                        {t("travel.personalSubtitle")}
                       </Text>
                     </View>
                   </View>
 
                   <View style={styles.inputGroup}>
                     <Text style={styles.inputLabel}>
-                      Gender <Text style={styles.required}>*</Text>
+                      {t("travel.gender")} <Text style={styles.required}>*</Text>
                     </Text>
                     <TouchableOpacity
                       style={styles.dropdown}
@@ -661,13 +660,19 @@ export default function TravelProtection() {
                           !gender && styles.dropdownPlaceholder,
                         ]}
                       >
-                        {gender || "Select your gender"}
+                        {gender
+                          ? gender === "Male"
+                            ? t("travel.genderMale")
+                            : gender === "Female"
+                              ? t("travel.genderFemale")
+                              : t("travel.genderOther")
+                          : t("travel.selectGender")}
                       </Text>
                       <Ionicons name="chevron-down" size={20} color="#666" />
                     </TouchableOpacity>
                     {showGenderDropdown && (
                       <View style={styles.dropdownMenu}>
-                        {["Male", "Female", "Other"].map((option) => (
+                        {(["Male", "Female", "Other"] as const).map((option) => (
                           <TouchableOpacity
                             key={option}
                             style={styles.dropdownItem}
@@ -677,7 +682,11 @@ export default function TravelProtection() {
                             }}
                           >
                             <Text style={styles.dropdownItemText}>
-                              {option}
+                              {option === "Male"
+                                ? t("travel.genderMale")
+                                : option === "Female"
+                                  ? t("travel.genderFemale")
+                                  : t("travel.genderOther")}
                             </Text>
                           </TouchableOpacity>
                         ))}
@@ -687,7 +696,7 @@ export default function TravelProtection() {
 
                   <View style={styles.inputGroup}>
                     <Text style={styles.inputLabel}>
-                      Date of Birth <Text style={styles.required}>*</Text>
+                      {t("travel.dateOfBirth")} <Text style={styles.required}>*</Text>
                     </Text>
                     <TouchableOpacity
                       style={styles.dropdown}
@@ -696,11 +705,13 @@ export default function TravelProtection() {
                       <Text
                         style={[
                           styles.dropdownText,
-                          dateOfBirthText === "Select your birthdate" &&
+                          dateOfBirthText === EMPTY_PLACEHOLDER &&
                             styles.dropdownPlaceholder,
                         ]}
                       >
-                        {dateOfBirthText}
+                        {dateOfBirthText === EMPTY_PLACEHOLDER
+                          ? t("travel.selectBirthdate")
+                          : dateOfBirthText}
                       </Text>
                       <Ionicons name="calendar" size={20} color="#666" />
                     </TouchableOpacity>
@@ -719,7 +730,7 @@ export default function TravelProtection() {
 
                   <View style={styles.inputGroup}>
                     <Text style={styles.inputLabel}>
-                      Civil Status <Text style={styles.required}>*</Text>
+                      {t("travel.civilStatus")} <Text style={styles.required}>*</Text>
                     </Text>
                     <TouchableOpacity
                       style={styles.dropdown}
@@ -727,12 +738,20 @@ export default function TravelProtection() {
                         setShowCivilStatusDropdown(!showCivilStatusDropdown)
                       }
                     >
-                      <Text style={styles.dropdownText}>{civilStatus}</Text>
+                      <Text style={styles.dropdownText}>
+                        {civilStatus === "Single"
+                          ? t("travel.single")
+                          : civilStatus === "Married"
+                            ? t("travel.married")
+                            : civilStatus === "Divorced"
+                              ? t("travel.divorced")
+                              : t("travel.widowed")}
+                      </Text>
                       <Ionicons name="chevron-down" size={20} color="#666" />
                     </TouchableOpacity>
                     {showCivilStatusDropdown && (
                       <View style={styles.dropdownMenu}>
-                        {["Single", "Married", "Divorced", "Widowed"].map(
+                        {(["Single", "Married", "Divorced", "Widowed"] as const).map(
                           (option) => (
                             <TouchableOpacity
                               key={option}
@@ -743,7 +762,13 @@ export default function TravelProtection() {
                               }}
                             >
                               <Text style={styles.dropdownItemText}>
-                                {option}
+                                {option === "Single"
+                                  ? t("travel.single")
+                                  : option === "Married"
+                                    ? t("travel.married")
+                                    : option === "Divorced"
+                                      ? t("travel.divorced")
+                                      : t("travel.widowed")}
                               </Text>
                             </TouchableOpacity>
                           )
@@ -754,11 +779,11 @@ export default function TravelProtection() {
 
                   <View style={styles.inputGroup}>
                     <Text style={styles.inputLabel}>
-                      Citizenship <Text style={styles.required}>*</Text>
+                      {t("travel.citizenship")} <Text style={styles.required}>*</Text>
                     </Text>
                     <TextInput
                       style={styles.input}
-                      placeholder="Filipino"
+                      placeholder={t("travel.placeholderCitizenship")}
                       placeholderTextColor="#999"
                       value={citizenship}
                       onChangeText={setCitizenship}
@@ -780,21 +805,21 @@ export default function TravelProtection() {
                     </View>
                     <View>
                       <Text style={styles.formTitle}>
-                        Financial Information
+                        {t("travel.financialInfo")}
                       </Text>
                       <Text style={styles.formSubtitle}>
-                        Please provide your financial information
+                        {t("travel.financialSubtitle")}
                       </Text>
                     </View>
                   </View>
 
                   <View style={styles.inputGroup}>
                     <Text style={styles.inputLabel}>
-                      Source of Fund <Text style={styles.required}>*</Text>
+                      {t("travel.sourceOfFund")} <Text style={styles.required}>*</Text>
                     </Text>
                     <TextInput
                       style={styles.input}
-                      placeholder="e.g., Employment, Business, Investment etc."
+                      placeholder={t("travel.placeholderSourceOfFund")}
                       placeholderTextColor="#999"
                       value={sourceOfFund}
                       onChangeText={setSourceOfFund}
@@ -803,7 +828,7 @@ export default function TravelProtection() {
 
                   <View style={styles.inputGroup}>
                     <Text style={styles.inputLabel}>
-                      Gross Monthly Income{" "}
+                      {t("travel.grossMonthlyIncome")}{" "}
                       <Text style={styles.required}>*</Text>
                     </Text>
                     <TextInput
@@ -818,7 +843,7 @@ export default function TravelProtection() {
 
                   <View style={styles.inputGroup}>
                     <Text style={styles.inputLabel}>
-                      Cash on Hand <Text style={styles.required}>*</Text>
+                      {t("travel.cashOnHand")} <Text style={styles.required}>*</Text>
                     </Text>
                     <TextInput
                       style={styles.input}
@@ -844,21 +869,21 @@ export default function TravelProtection() {
                       />
                     </View>
                     <View>
-                      <Text style={styles.formTitle}>Travel Details</Text>
+                      <Text style={styles.formTitle}>{t("travel.travelDetails")}</Text>
                       <Text style={styles.formSubtitle}>
-                        Please provide your travel information
+                        {t("travel.travelSubtitle")}
                       </Text>
                     </View>
                   </View>
 
                   <View style={styles.inputGroup}>
                     <Text style={styles.inputLabel}>
-                      Destination Address{" "}
+                      {t("travel.destinationAddress")}{" "}
                       <Text style={styles.required}>*</Text>
                     </Text>
                     <TextInput
                       style={[styles.input, styles.textArea]}
-                      placeholder="Hotel/Accommodation address where you'll be staying"
+                      placeholder={t("travel.placeholderDestination")}
                       placeholderTextColor="#999"
                       value={destinationAddress}
                       onChangeText={setDestinationAddress}
@@ -870,7 +895,7 @@ export default function TravelProtection() {
 
                   <View style={styles.inputGroup}>
                     <Text style={styles.inputLabel}>
-                      Check-in Date <Text style={styles.required}>*</Text>
+                      {t("travel.checkInDate")} <Text style={styles.required}>*</Text>
                     </Text>
                     <TouchableOpacity
                       style={styles.dropdown}
@@ -879,11 +904,13 @@ export default function TravelProtection() {
                       <Text
                         style={[
                           styles.dropdownText,
-                          checkInDateText === "Select check-in date" &&
+                          checkInDateText === EMPTY_PLACEHOLDER &&
                             styles.dropdownPlaceholder,
                         ]}
                       >
-                        {checkInDateText}
+                        {checkInDateText === EMPTY_PLACEHOLDER
+                          ? t("travel.selectCheckIn")
+                          : checkInDateText}
                       </Text>
                       <Ionicons name="calendar" size={20} color="#666" />
                     </TouchableOpacity>
@@ -902,7 +929,7 @@ export default function TravelProtection() {
 
                   <View style={styles.inputGroup}>
                     <Text style={styles.inputLabel}>
-                      Duration (Days) <Text style={styles.required}>*</Text>
+                      {t("travel.durationDays")} <Text style={styles.required}>*</Text>
                     </Text>
                     <TextInput
                       style={styles.input}
@@ -916,11 +943,11 @@ export default function TravelProtection() {
 
                   <View style={styles.inputGroup}>
                     <Text style={styles.inputLabel}>
-                      Airline <Text style={styles.required}>*</Text>
+                      {t("travel.airline")} <Text style={styles.required}>*</Text>
                     </Text>
                     <TextInput
                       style={styles.input}
-                      placeholder="e.g., Philippine Airlines, Cebu Pacific, etc."
+                      placeholder={t("travel.placeholderAirline")}
                       placeholderTextColor="#999"
                       value={airline}
                       onChangeText={setAirline}
@@ -929,7 +956,7 @@ export default function TravelProtection() {
 
                   <View style={styles.inputGroup}>
                     <Text style={styles.inputLabel}>
-                      Departure Time <Text style={styles.required}>*</Text>
+                      {t("travel.departureTime")} <Text style={styles.required}>*</Text>
                     </Text>
                     <TouchableOpacity
                       style={styles.dropdown}
@@ -938,11 +965,13 @@ export default function TravelProtection() {
                       <Text
                         style={[
                           styles.dropdownText,
-                          departureTimeText === "Select departure time" &&
+                          departureTimeText === EMPTY_PLACEHOLDER &&
                             styles.dropdownPlaceholder,
                         ]}
                       >
-                        {departureTimeText}
+                        {departureTimeText === EMPTY_PLACEHOLDER
+                          ? t("travel.selectDeparture")
+                          : departureTimeText}
                       </Text>
                       <Ionicons name="time" size={20} color="#666" />
                     </TouchableOpacity>
@@ -960,7 +989,7 @@ export default function TravelProtection() {
 
                   <View style={styles.inputGroup}>
                     <Text style={styles.inputLabel}>
-                      Arrival Time <Text style={styles.required}>*</Text>
+                      {t("travel.arrivalTime")} <Text style={styles.required}>*</Text>
                     </Text>
                     <TouchableOpacity
                       style={styles.dropdown}
@@ -969,11 +998,13 @@ export default function TravelProtection() {
                       <Text
                         style={[
                           styles.dropdownText,
-                          arrivalTimeText === "Select arrival time" &&
+                          arrivalTimeText === EMPTY_PLACEHOLDER &&
                             styles.dropdownPlaceholder,
                         ]}
                       >
-                        {arrivalTimeText}
+                        {arrivalTimeText === EMPTY_PLACEHOLDER
+                          ? t("travel.selectArrival")
+                          : arrivalTimeText}
                       </Text>
                       <Ionicons name="time" size={20} color="#666" />
                     </TouchableOpacity>
@@ -991,11 +1022,11 @@ export default function TravelProtection() {
 
                   <View style={styles.inputGroup}>
                     <Text style={styles.inputLabel}>
-                      Passport Number <Text style={styles.required}>*</Text>
+                      {t("travel.passportNumber")} <Text style={styles.required}>*</Text>
                     </Text>
                     <TextInput
                       style={styles.input}
-                      placeholder="P1234567"
+                      placeholder={t("travel.placeholderPassport")}
                       placeholderTextColor="#999"
                       value={passportNumber}
                       onChangeText={setPassportNumber}
@@ -1005,11 +1036,11 @@ export default function TravelProtection() {
 
                   <View style={styles.inputGroup}>
                     <Text style={styles.inputLabel}>
-                      Purpose of Travel <Text style={styles.required}>*</Text>
+                      {t("travel.purposeOfTravel")} <Text style={styles.required}>*</Text>
                     </Text>
                     <TextInput
                       style={[styles.input, styles.textArea]}
-                      placeholder="Describe the purpose of your travel (business, vacation, family, visit, etc.)"
+                      placeholder={t("travel.placeholderPurpose")}
                       placeholderTextColor="#999"
                       value={purposeOfTravel}
                       onChangeText={setPurposeOfTravel}
@@ -1034,10 +1065,10 @@ export default function TravelProtection() {
                     </View>
                     <View>
                       <Text style={styles.formTitle}>
-                        Required Documents
+                        {t("travel.requiredDocs")}
                       </Text>
                       <Text style={styles.formSubtitle}>
-                        Please upload your required documents
+                        {t("travel.requiredDocsSubtitle")}
                       </Text>
                     </View>
                   </View>
@@ -1045,7 +1076,7 @@ export default function TravelProtection() {
                   {/* Passport Photo */}
                   <View style={styles.inputGroup}>
                     <Text style={styles.inputLabel}>
-                      Passport Photo <Text style={styles.required}>*</Text>
+                      {t("travel.passportPhoto")} <Text style={styles.required}>*</Text>
                     </Text>
                     <TouchableOpacity
                       style={styles.uploadBox}
@@ -1063,17 +1094,17 @@ export default function TravelProtection() {
                         ]}
                       >
                         {passportPhoto
-                          ? "Passport Photo Uploaded"
-                          : "Upload Passport"}
+                          ? t("travel.passportUploaded")
+                          : t("travel.uploadPassport")}
                       </Text>
-                      <Text style={styles.uploadSubtext}>Tap to select image</Text>
+                      <Text style={styles.uploadSubtext}>{t("travel.tapToSelectImage")}</Text>
                     </TouchableOpacity>
                   </View>
 
                   {/* Government ID */}
                   <View style={styles.inputGroup}>
                     <Text style={styles.inputLabel}>
-                      Government ID <Text style={styles.required}>*</Text>
+                      {t("travel.governmentId")} <Text style={styles.required}>*</Text>
                     </Text>
                     <TouchableOpacity
                       style={styles.uploadBox}
@@ -1091,11 +1122,11 @@ export default function TravelProtection() {
                         ]}
                       >
                         {governmentId
-                          ? "Government ID Uploaded"
-                          : "Upload Government ID"}
+                          ? t("travel.governmentIdUploaded")
+                          : t("travel.uploadGovernmentId")}
                       </Text>
                       <Text style={styles.uploadSubtext}>
-                        Tap to upload valid Gov't ID
+                        {t("travel.tapToUploadGovId")}
                       </Text>
                     </TouchableOpacity>
                   </View>
@@ -1114,9 +1145,9 @@ export default function TravelProtection() {
                       />
                     </View>
                     <View>
-                      <Text style={styles.formTitle}>Review & Submit</Text>
+                      <Text style={styles.formTitle}>{t("travel.reviewSubmit")}</Text>
                       <Text style={styles.formSubtitle}>
-                        Review your application before submitting
+                        {t("travel.reviewSubtitle")}
                       </Text>
                     </View>
                   </View>
@@ -1130,25 +1161,25 @@ export default function TravelProtection() {
                         color="#E25A17"
                       />
                       <Text style={styles.reviewSectionTitle}>
-                        Contact Information
+                        {t("travel.reviewContactInfo")}
                       </Text>
                     </View>
                     <View style={styles.reviewItem}>
-                      <Text style={styles.reviewLabel}>EMAIL ADDRESS</Text>
+                      <Text style={styles.reviewLabel}>{t("travel.labelEmail")}</Text>
                       <Text style={styles.reviewValue}>{emailAddress}</Text>
                     </View>
                     <View style={styles.reviewItem}>
-                      <Text style={styles.reviewLabel}>MOBILE NUMBER</Text>
+                      <Text style={styles.reviewLabel}>{t("travel.labelMobile")}</Text>
                       <Text style={styles.reviewValue}>{mobileNumber}</Text>
                     </View>
                     {landlineNumber && (
                       <View style={styles.reviewItem}>
-                        <Text style={styles.reviewLabel}>LANDLINE NUMBER</Text>
+                        <Text style={styles.reviewLabel}>{t("travel.labelLandline")}</Text>
                         <Text style={styles.reviewValue}>{landlineNumber}</Text>
                       </View>
                     )}
                     <View style={styles.reviewItem}>
-                      <Text style={styles.reviewLabel}>HOME ADDRESS</Text>
+                      <Text style={styles.reviewLabel}>{t("travel.labelHomeAddress")}</Text>
                       <Text style={styles.reviewValue}>{homeAddress}</Text>
                     </View>
                   </View>
@@ -1162,25 +1193,25 @@ export default function TravelProtection() {
                         color="#E25A17"
                       />
                       <Text style={styles.reviewSectionTitle}>
-                        Travel Details
+                        {t("travel.reviewTravelDetails")}
                       </Text>
                     </View>
                     <View style={styles.reviewItem}>
                       <Text style={styles.reviewLabel}>
-                        DESTINATION ADDRESS
+                        {t("travel.labelDestination")}
                       </Text>
                       <Text style={styles.reviewValue}>
-                        {destinationAddress || "N/A"}
+                        {destinationAddress || t("travel.na")}
                       </Text>
                     </View>
                     <View style={styles.reviewItem}>
-                      <Text style={styles.reviewLabel}>AIRLINE</Text>
-                      <Text style={styles.reviewValue}>{airline || "N/A"}</Text>
+                      <Text style={styles.reviewLabel}>{t("travel.labelAirline")}</Text>
+                      <Text style={styles.reviewValue}>{airline || t("travel.na")}</Text>
                     </View>
                     <View style={styles.reviewItem}>
-                      <Text style={styles.reviewLabel}>PASSPORT NUMBER</Text>
+                      <Text style={styles.reviewLabel}>{t("travel.labelPassport")}</Text>
                       <Text style={styles.reviewValue}>
-                        {passportNumber || "N/A"}
+                        {passportNumber || t("travel.na")}
                       </Text>
                     </View>
                   </View>
@@ -1188,11 +1219,7 @@ export default function TravelProtection() {
                   {/* Terms & Conditions */}
                   <View style={styles.termsBox}>
                     <Text style={styles.termsText}>
-                      By submitting this application, you confirm that all
-                      information provided is accurate. Payment will be
-                      processed securely through PayPal. Your travel protection
-                      coverage will be activated within 5-7 working days after
-                      successful payment and document verification.
+                      {t("travel.termsText")}
                     </Text>
                   </View>
                 </View>
@@ -1201,7 +1228,7 @@ export default function TravelProtection() {
 
             <View style={styles.buttonContainer}>
               <TouchableOpacity style={styles.backButtonBottom} onPress={handleBack}>
-                <Text style={styles.backButtonText}>Back</Text>
+                <Text style={styles.backButtonText}>{t("travel.back")}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
                 <LinearGradient
@@ -1211,7 +1238,7 @@ export default function TravelProtection() {
                   end={{ x: 1, y: 0 }}
                 >
                   <Text style={styles.nextButtonText}>
-                    {currentStep === 6 ? "Apply" : "Next"}
+                    {currentStep === 6 ? t("travel.apply") : t("travel.next")}
                   </Text>
                 </LinearGradient>
               </TouchableOpacity>

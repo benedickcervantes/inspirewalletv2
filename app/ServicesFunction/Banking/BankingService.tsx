@@ -14,6 +14,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useLanguage } from "../../../context/LanguageContext";
 import type { RootStackParamList } from "../../../types/navigation";
 
 const THEME_COLOR = "#E15816";
@@ -31,6 +32,7 @@ const BANKS = [
 ];
 
 export default function BankingService() {
+  const { t } = useLanguage();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, "Bdo">>();
   const [selectedBank, setSelectedBank] = useState("Security Bank");
   const [showBankModal, setShowBankModal] = useState(false);
@@ -65,8 +67,8 @@ export default function BankingService() {
                 color="#FFFFFF"
                 style={styles.headerIcon}
               />
-              <Text style={styles.headerTitle}>Bank Account Services</Text>
-              <Text style={styles.headerSubtitle}>Professional Banking Solutions</Text>
+              <Text style={styles.headerTitle}>{t("banking.headerTitle")}</Text>
+              <Text style={styles.headerSubtitle}>{t("banking.headerSubtitle")}</Text>
             </LinearGradient>
           </View>
         </View>
@@ -111,14 +113,13 @@ export default function BankingService() {
                 color={THEME_COLOR}
               />
             </View>
-            <Text style={styles.contentTitle}>Choose Your Bank</Text>
+            <Text style={styles.contentTitle}>{t("banking.chooseBank")}</Text>
             <Text style={styles.contentDescription}>
-              Select your preferred bank account opening. This will determine which
-              banking services and features you'll have access to.
+              {t("banking.chooseBankDesc")}
             </Text>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Preferred Bank</Text>
+              <Text style={styles.inputLabel}>{t("banking.preferredBank")}</Text>
               <TouchableOpacity
                 style={styles.dropdown}
                 onPress={() => setShowBankModal(true)}
@@ -135,10 +136,7 @@ export default function BankingService() {
               <Text style={styles.infoIconText}>i</Text>
             </View>
             <Text style={styles.infoText}>
-              By submitting these details, we will send you an email confirmation
-              with your application status. Please note that this process will
-              take approximately 5-7 working days for review and approval by the
-              selected bank.
+              {t("banking.infoNote")}
             </Text>
           </View>
 
@@ -158,7 +156,7 @@ export default function BankingService() {
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
             >
-              <Text style={styles.nextButtonText}>Next</Text>
+              <Text style={styles.nextButtonText}>{t("banking.next")}</Text>
             </LinearGradient>
           </TouchableOpacity>
         </View>
@@ -174,7 +172,7 @@ export default function BankingService() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select Bank</Text>
+              <Text style={styles.modalTitle}>{t("banking.selectBank")}</Text>
               <TouchableOpacity onPress={() => setShowBankModal(false)}>
                 <Ionicons name="close" size={24} color="#333" />
               </TouchableOpacity>
