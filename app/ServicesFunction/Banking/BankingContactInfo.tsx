@@ -5,17 +5,18 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useState } from "react";
 import {
-    KeyboardAvoidingView,
-    Platform,
-    SafeAreaView,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  KeyboardAvoidingView,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
+import { useLanguage } from "../../../context/LanguageContext";
 import type { RootStackParamList } from "../../../types/navigation";
 
 const THEME_COLOR = "#E15816";
@@ -23,6 +24,7 @@ const ORANGE_GRADIENT = ["#E25A17", "#F28934"] as const;
 const GREEN_COMPLETE = "#10B981";
 
 export default function BankingContactInfo() {
+  const { t } = useLanguage();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, "BankingContactInfo">>();
   const route = useRoute<RouteProp<RootStackParamList, "BankingContactInfo">>();
   const selectedBank = route.params?.selectedBank ?? "Security Bank";
@@ -41,8 +43,7 @@ export default function BankingContactInfo() {
     // Basic validation for required fields
     if (!email.trim()) return;
     if (!mobileNumber.trim()) return;
-    // Navigate to next step when implemented
-    navigation.goBack();
+    navigation.navigate("BankingPersonalInfo", { selectedBank });
   };
 
   return (
@@ -74,8 +75,8 @@ export default function BankingContactInfo() {
                   color="#FFFFFF"
                   style={styles.headerIcon}
                 />
-                <Text style={styles.headerTitle}>Bank Account Services</Text>
-                <Text style={styles.headerSubtitle}>Professional Banking Solutions</Text>
+                <Text style={styles.headerTitle}>{t("banking.headerTitle")}</Text>
+                <Text style={styles.headerSubtitle}>{t("banking.headerSubtitle")}</Text>
               </LinearGradient>
             </View>
           </View>
@@ -129,19 +130,18 @@ export default function BankingContactInfo() {
               <View style={styles.stepIconWrapper}>
                 <Ionicons name="call" size={28} color={THEME_COLOR} />
               </View>
-              <Text style={styles.contentTitle}>Contact Information</Text>
+              <Text style={styles.contentTitle}>{t("banking.contactInfo")}</Text>
               <Text style={styles.contentDescription}>
-                Provide your contact details so we can reach you regarding your
-                application status and account updates.
+                {t("banking.contactInfoDesc")}
               </Text>
 
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>
-                  Email Address<Text style={styles.required}>*</Text>
+                  {t("banking.emailAddress")}<Text style={styles.required}>*</Text>
                 </Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="your.email@example.com"
+                  placeholder={t("banking.placeholderEmail")}
                   placeholderTextColor="#9E9E9E"
                   value={email}
                   onChangeText={setEmail}
@@ -153,11 +153,11 @@ export default function BankingContactInfo() {
 
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>
-                  Mobile Number<Text style={styles.required}>*</Text>
+                  {t("banking.mobileNumber")}<Text style={styles.required}>*</Text>
                 </Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="+63 9XX XXX XXXX"
+                  placeholder={t("banking.placeholderMobile")}
                   placeholderTextColor="#9E9E9E"
                   value={mobileNumber}
                   onChangeText={setMobileNumber}
@@ -166,10 +166,10 @@ export default function BankingContactInfo() {
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Landline Number</Text>
+                <Text style={styles.inputLabel}>{t("banking.landlineNumber")}</Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="(02) XXXX XXXX"
+                  placeholder={t("banking.placeholderLandline")}
                   placeholderTextColor="#9E9E9E"
                   value={landlineNumber}
                   onChangeText={setLandlineNumber}
@@ -184,10 +184,7 @@ export default function BankingContactInfo() {
                 <Text style={styles.infoIconText}>i</Text>
               </View>
               <Text style={styles.infoText}>
-                By submitting these details, we will send you an email confirmation
-                with your application status. Please note that this process will
-                take approximately 5-7 working days for review and approval by the
-                selected bank.
+                {t("banking.infoNote")}
               </Text>
             </View>
 
@@ -202,7 +199,7 @@ export default function BankingContactInfo() {
                 onPress={handleBack}
                 activeOpacity={0.8}
               >
-                <Text style={styles.backButtonText}>Back</Text>
+                <Text style={styles.backButtonText}>{t("banking.back")}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.nextButton}
@@ -215,7 +212,7 @@ export default function BankingContactInfo() {
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                 >
-                  <Text style={styles.nextButtonText}>Next</Text>
+                  <Text style={styles.nextButtonText}>{t("banking.next")}</Text>
                 </LinearGradient>
               </TouchableOpacity>
             </View>

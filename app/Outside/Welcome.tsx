@@ -3,15 +3,13 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useState } from 'react';
 import {
-    Dimensions,
     Pressable,
     StyleSheet,
     Text,
+    useWindowDimensions,
     View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 const GRADIENT_START = '#E15816';
 const GRADIENT_END = '#F48F38';
@@ -22,6 +20,7 @@ const WHITE = '#FFFFFF';
 export default function Welcome() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
+  const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = useWindowDimensions();
   const [showStartup, setShowStartup] = useState(true);
 
   useEffect(() => {
@@ -85,8 +84,6 @@ const styles = StyleSheet.create({
   startupContainer: {
     flex: 1,
     backgroundColor: WHITE,
-    width: SCREEN_WIDTH,
-    height: SCREEN_HEIGHT,
   },
   startupImage: {
     position: 'absolute',
@@ -104,9 +101,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   logo: {
-    width: 500,
-    height: 300,
+    width: '100%',
+    maxWidth: 400,
+    height: 240,
+    maxHeight: 280,
     marginBottom: 40,
+    alignSelf: 'center',
   },
   actions: {
     width: '100%',

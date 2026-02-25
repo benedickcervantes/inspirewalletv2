@@ -36,6 +36,8 @@ interface MessageModalProps {
   type?: 'info' | 'success' | 'error' | 'warning';
   confirmText?: string;
   onConfirm?: (() => void) | null;
+  secondaryText?: string;
+  onSecondary?: (() => void) | null;
 }
 
 function MessageModal({
@@ -46,6 +48,8 @@ function MessageModal({
   type = 'info',
   confirmText = 'OK',
   onConfirm,
+  secondaryText,
+  onSecondary,
 }: MessageModalProps) {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.9)).current;
@@ -87,16 +91,30 @@ function MessageModal({
           </View>
           <Text style={modalStyles.title}>{title}</Text>
           <Text style={modalStyles.message}>{message}</Text>
-          <TouchableOpacity
-            style={modalStyles.button}
-            onPress={() => {
-              if (onConfirm) onConfirm();
-              onClose();
-            }}
-            activeOpacity={0.8}
-          >
-            <Text style={modalStyles.buttonText}>{confirmText}</Text>
-          </TouchableOpacity>
+          <View style={modalStyles.buttonsRow}>
+            {secondaryText && onSecondary ? (
+              <TouchableOpacity
+                style={[modalStyles.button, modalStyles.buttonSecondary]}
+                onPress={() => {
+                  onSecondary();
+                  onClose();
+                }}
+                activeOpacity={0.8}
+              >
+                <Text style={modalStyles.buttonSecondaryText}>{secondaryText}</Text>
+              </TouchableOpacity>
+            ) : null}
+            <TouchableOpacity
+              style={modalStyles.button}
+              onPress={() => {
+                if (onConfirm) onConfirm();
+                onClose();
+              }}
+              activeOpacity={0.8}
+            >
+              <Text style={modalStyles.buttonText}>{confirmText}</Text>
+            </TouchableOpacity>
+          </View>
         </Animated.View>
       </Animated.View>
     </Modal>
@@ -148,6 +166,12 @@ const modalStyles = StyleSheet.create({
     marginBottom: 24,
     lineHeight: 22,
   },
+  buttonsRow: {
+    flexDirection: 'row',
+    gap: 12,
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+  },
   button: {
     backgroundColor: GRADIENT_START,
     paddingVertical: 14,
@@ -156,8 +180,18 @@ const modalStyles = StyleSheet.create({
     minWidth: 120,
     alignItems: 'center',
   },
+  buttonSecondary: {
+    backgroundColor: 'transparent',
+    borderWidth: 2,
+    borderColor: GRADIENT_START,
+  },
   buttonText: {
     color: WHITE,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  buttonSecondaryText: {
+    color: GRADIENT_START,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -169,6 +203,8 @@ interface ModalConfig {
   type: 'info' | 'success' | 'error' | 'warning';
   confirmText: string;
   onConfirm: (() => void) | null;
+  secondaryText?: string;
+  onSecondary?: (() => void) | null;
 }
 
 export default function Login() {
@@ -186,6 +222,8 @@ export default function Login() {
     type: 'info',
     confirmText: 'OK',
     onConfirm: null,
+    secondaryText: undefined,
+    onSecondary: undefined,
   });
 
   const showModal = (config: Partial<ModalConfig>) => {
@@ -195,6 +233,8 @@ export default function Login() {
       type: 'info',
       confirmText: 'OK',
       onConfirm: null,
+      secondaryText: undefined,
+      onSecondary: undefined,
       ...config,
     });
     setModalVisible(true);
@@ -338,7 +378,31 @@ export default function Login() {
 
                 <TouchableOpacity
                   style={styles.passcodeLinkWrap}
-                  onPress={() => navigation.navigate('Passcode')}
+                  onPress={async () => {
+                    const token = await AsyncStorage.getItem('access_token');
+                    const userJson = await AsyncStorage.getItem('user');
+                    const user = userJson ? (JSON.parse(userJson) as { hasPasscode?: boolean }) : null;
+                    if (token && user?.hasPasscode) {
+                      (navigation as unknown as NavProp).replace('Passcode');
+                    } else if (!token) {
+                      showModal({
+                        title: 'Passcode Login',
+                        message:
+                          'To use passcode, you need to sign in with your email and password first. Don\'t have an account? Please register to create one.',
+                        type: 'info',
+                        confirmText: 'OK',
+                        secondaryText: 'Register',
+                        onSecondary: () => (navigation as unknown as NavProp).replace('Register'),
+                      });
+                    } else {
+                      showModal({
+                        title: 'No Passcode Set',
+                        message:
+                          'You haven\'t set up a passcode yet. Sign in with your email and password, then you can set up passcode in Settings after logging in.',
+                        type: 'info',
+                      });
+                    }
+                  }}
                 >
                   <Text style={styles.passcodeLinkText}>Use Passcode Instead</Text>
                 </TouchableOpacity>
@@ -391,6 +455,8 @@ export default function Login() {
         type={modalConfig.type}
         confirmText={modalConfig.confirmText}
         onConfirm={modalConfig.onConfirm}
+        secondaryText={modalConfig.secondaryText}
+        onSecondary={modalConfig.onSecondary}
       />
     </>
   );
@@ -427,9 +493,9 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   logo: {
-    width: 280,
+    width: '100%',
+    maxWidth: 280,
     height: 160,
-    maxWidth: '100%',
   },
   form: {
     width: '100%',

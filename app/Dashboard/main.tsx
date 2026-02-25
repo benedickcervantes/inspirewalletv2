@@ -1,54 +1,43 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
-import type { NavProp } from "../../types/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Animated,
-  Dimensions,
   Image,
   Linking,
-  SafeAreaView,
   ScrollView,
   StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { getOrCreateMainWallet, getTimeDeposits, getTransactions } from "../../configs/api";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { getMe, getOrCreateMainWallet, getReferralTree, getTimeDeposits, getTransactions } from "../../configs/api";
 import { createRealtimeConnection, startHeartbeat } from "../../configs/realtime";
-import {
-  auth,
-  subscribeToNotifications,
-  subscribeToTransactions,
-  subscribeToUser,
-} from "../../configs/firebase";
+import { useLanguage } from "../../context/LanguageContext";
+import { setConnectionStatus } from "../../lib/connectionStatus";
+import { notifyNewSupportMessage } from "../../lib/messagingEvents";
+import type { NavProp } from "../../types/navigation";
 import CardsTab from "./CardsTab";
 import SavingsTab from "./SavingsTab";
 import WalletTab from "./WalletTab";
 
-const PLACEHOLDER_IMG = require("../../assets/images/InpireLogo.png");
 const LOOPWORK_BANNER = require("../../assets/banner/Loopwork.png");
 const HRX_BANNER = require("../../assets/banner/HRX.png");
 
-const { width } = Dimensions.get("window");
-
-// API returns raw enums; map to user-friendly labels for transaction history
-const TRANSACTION_TYPE_LABELS: Record<string, string> = {
-  TOP_UP: "Deposit",
-  PAYMENT: "Withdraw",
-  TRANSFER_OUT: "Transfer",
-  TRANSFER_IN: "Received",
-  FEE: "Fee",
-  REFUND: "Refund",
-  TIME_DEPOSIT: "Time Deposit",
+// API returns raw enums; keys for translation (use t() when displaying)
+const TRANSACTION_TYPE_KEYS: Record<string, string> = {
+  TOP_UP: "tx.deposit",
+  PAYMENT: "tx.withdraw",
+  TRANSFER_OUT: "tx.transfer",
+  TRANSFER_IN: "tx.received",
+  FEE: "tx.fee",
+  REFUND: "tx.refund",
+  TIME_DEPOSIT: "tx.timeDeposit",
 };
-
-function getTransactionTypeLabel(type?: string): string {
-  if (!type) return "Transaction";
-  return TRANSACTION_TYPE_LABELS[type] ?? type;
-}
 
 interface Transaction {
   id: string;
@@ -66,6 +55,20 @@ interface PayoutScheduleItem {
   principalReturned?: string;
 }
 
+// Wallet shape from API (wallet may be typed as object)
+interface RawApiWallet {
+  id?: string;
+  balance?: number | string;
+}
+
+// Raw transaction shape from API (transactions array is unknown[])
+interface RawApiTransaction {
+  id?: unknown;
+  type?: unknown;
+  amount?: unknown;
+  createdAt?: unknown;
+}
+
 interface TimeDeposit {
   id: string;
   contractType: string;
@@ -81,12 +84,13 @@ interface TimeDeposit {
   dividendEarned?: string;
   dividend?: string;
   payoutSchedule?: PayoutScheduleItem[];
+  payout_schedule?: PayoutScheduleItem[]; // API may return snake_case
 }
 
 function computeTimeDepositTotal(deposits: TimeDeposit[]): number {
   return deposits
-    .filter((d) => d.status === "ACTIVE" || d.status === "MATURED")
-    .reduce((sum, d) => sum + (parseFloat(d.amount) || 0), 0);
+    .filter((d) => d.status === "ACTIVE" || d.status === "MATURED" || d.status === "PENDING")
+    .reduce((sum, d) => sum + (parseFloat(String(d?.amount ?? 0)) || 0), 0);
 }
 
 function computeDividend(deposits: TimeDeposit[]): number {
@@ -94,7 +98,7 @@ function computeDividend(deposits: TimeDeposit[]): number {
   // For each payout: use only dividend (if principalReturned is set, amount includes principal so subtract it).
   const activeOnly = deposits.filter((d) => d.status === "ACTIVE");
   return activeOnly.reduce((total, d) => {
-    const schedule = d.payoutSchedule ?? (d as Record<string, unknown>).payout_schedule ?? [];
+    const schedule = d.payoutSchedule ?? d.payout_schedule ?? [];
     const contractDividend = (Array.isArray(schedule) ? schedule : []).reduce(
       (s: number, p: { amount?: string | number; principalReturned?: string | number; principal_returned?: string }) => {
         const amt = typeof p?.amount === "number" ? p.amount : parseFloat(String(p?.amount ?? 0));
@@ -130,8 +134,19 @@ function computeDepositGrowth(deposits: TimeDeposit[]): { month: string; amount:
   return months;
 }
 
+function getTransactionTypeLabel(t: (key: string) => string, type?: string): string {
+  if (!type) return t("tx.transaction");
+  const key = TRANSACTION_TYPE_KEYS[type];
+  return key ? t(key) : type;
+}
+
 export default function Dashboard() {
   const navigation = useNavigation();
+  const { t } = useLanguage();
+  const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const horizontalPadding = width < 375 ? 16 : 20;
+  const carouselWidth = width - horizontalPadding * 2;
   const [userData, setUserData] = useState<Record<string, unknown> | null>(null);
   const [availableBalance, setAvailableBalance] = useState(0);
   const [timeDeposit, setTimeDeposit] = useState(0);
@@ -149,6 +164,11 @@ export default function Dashboard() {
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
   const [currentLanguageIndex, setCurrentLanguageIndex] = useState(0);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
+  const [userReferrer, setUserReferrer] = useState<{
+    referralCode?: string;
+    firstName?: string;
+    lastName?: string;
+  } | null>(null);
 
   const banners = [
     { image: LOOPWORK_BANNER, url: "https://inspire-loopwork.com/landingpage" },
@@ -164,120 +184,146 @@ export default function Dashboard() {
 
   const getGreeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return "Good Morning";
-    if (hour < 18) return "Good Afternoon";
-    return "Good Evening";
+    if (hour < 12) return t("dashboard.goodMorning");
+    if (hour < 18) return t("dashboard.goodAfternoon");
+    return t("dashboard.goodEvening");
   };
 
   useEffect(() => {
-    let unsubscribes: Array<() => void> = [];
-
     const init = async () => {
       const accessToken = await AsyncStorage.getItem("access_token");
-      const userJson = await AsyncStorage.getItem("user");
+      if (!accessToken) {
+        (navigation as unknown as NavProp).replace("Welcome");
+        return;
+      }
 
-      if (accessToken && userJson) {
-        const user = JSON.parse(userJson) as Record<string, unknown>;
+      // Backend only — no Firebase
+      let user: Record<string, unknown> | null = null;
+      const userJson = await AsyncStorage.getItem("user");
+      if (userJson) {
+        try {
+          user = JSON.parse(userJson) as Record<string, unknown>;
+        } catch {
+          user = null;
+        }
+      }
+      if (!user?.firstName) {
+        const meRes = await getMe(accessToken);
+        if (meRes.success && meRes.user) user = meRes.user as Record<string, unknown>;
+      }
+      if (user) {
         setUserData({
           firstName: user.firstName,
           lastName: user.lastName,
           email: user.email,
           accountNumber: user.accountNumber,
         });
-        setAvailableBalance(0);
-        setTimeDeposit(0);
-        setDeposits([]);
-        const { success, wallet } = await getOrCreateMainWallet(accessToken);
-        mainWalletIdRef.current = (wallet?.id as string) ?? null;
-        if (success && wallet?.balance != null) {
-          const bal = parseFloat(String(wallet.balance));
-          setAvailableBalance(Number.isNaN(bal) ? 0 : bal);
-        }
-        const tdRes = await getTimeDeposits(accessToken);
-        if (tdRes.success && tdRes.deposits) {
-          const list = tdRes.deposits as TimeDeposit[];
-          setDeposits(list);
-          setTimeDeposit(computeTimeDepositTotal(list));
-        }
-        const txRes = await getTransactions(accessToken, {
-          walletId: wallet?.id as string | undefined,
-          limit: 20,
-        });
-        if (txRes.success && txRes.transactions) {
-          const mapped: Transaction[] = txRes.transactions.map((tx: Record<string, unknown>) => ({
-            id: String(tx.id ?? ""),
-            type: getTransactionTypeLabel(String(tx.type ?? "")),
-            amount: (() => {
-              const a = parseFloat(String(tx.amount ?? 0));
-              return Number.isNaN(a) ? 0 : a;
-            })(),
-            timestamp: {
-              toDate: () => new Date(String(tx.createdAt ?? "")),
-            },
-          }));
-          setRecentTransactions(mapped);
-        }
-        return;
       }
 
-      mainWalletIdRef.current = null;
-      if (!auth) {
-        (navigation as unknown as NavProp).replace("Welcome");
-        return;
-      }
-      const firebaseUser = auth.currentUser;
-      if (!firebaseUser) {
-        (navigation as unknown as NavProp).replace("Welcome");
-        return;
+      setAvailableBalance(0);
+      setTimeDeposit(0);
+      setDeposits([]);
+      setUnreadNotifications(0);
+
+      const { success, wallet } = await getOrCreateMainWallet(accessToken);
+      const w = wallet as RawApiWallet | undefined;
+      mainWalletIdRef.current = w?.id ?? null;
+      if (success && w?.balance != null) {
+        const bal = parseFloat(String(w.balance));
+        setAvailableBalance(Number.isNaN(bal) ? 0 : bal);
       }
 
-      const un1 = subscribeToUser(firebaseUser.uid, (data) => {
-        if (!data) {
-          setUserData(null);
-          return;
+      const tdRes = await getTimeDeposits(accessToken);
+      if (tdRes.success && Array.isArray(tdRes.deposits)) {
+        const list = tdRes.deposits as TimeDeposit[];
+        setDeposits(list);
+        setTimeDeposit(computeTimeDepositTotal(list));
+      } else if (!tdRes.success && __DEV__) {
+        console.warn('[Dashboard] getTimeDeposits failed:', tdRes.error);
+      }
+
+      const treeRes = await getReferralTree(accessToken);
+      if (treeRes.success && treeRes.tree) {
+        const tree = treeRes.tree as { ancestors?: Array<{ referralCode?: string; firstName?: string; lastName?: string }> };
+        const first = tree.ancestors?.[0];
+        if (first && (first.referralCode ?? (first as { referral_code?: string }).referral_code)) {
+          setUserReferrer({
+            referralCode: first.referralCode ?? (first as { referral_code?: string }).referral_code,
+            firstName: first.firstName ?? (first as { first_name?: string }).first_name,
+            lastName: first.lastName ?? (first as { last_name?: string }).last_name,
+          });
+        } else {
+          setUserReferrer(null);
         }
-        setUserData(data as Record<string, unknown>);
-        const balance = (data?.availBalanceAmount ?? data?.availableBalance) as number | undefined;
-        setAvailableBalance(Number(balance) || 0);
-        setTimeDeposit(Number(data?.timeDepositTotal) || 0);
+      } else {
+        setUserReferrer(null);
+      }
+
+      const txRes = await getTransactions(accessToken, {
+        walletId: w?.id,
+        limit: 20,
       });
-      const un2 = subscribeToTransactions(firebaseUser.uid, (list: Transaction[]) => {
-        setRecentTransactions(list);
-      });
-      const un3 = subscribeToNotifications(firebaseUser.uid, (count: number) => {
-        setUnreadNotifications(count);
-      });
-      unsubscribes = [un1, un2, un3];
+      if (txRes.success && txRes.transactions) {
+        const mapped: Transaction[] = (txRes.transactions as RawApiTransaction[]).map((tx) => ({
+          id: String(tx.id ?? ""),
+          type: String(tx.type ?? ""),
+          amount: (() => {
+            const a = parseFloat(String(tx.amount ?? 0));
+            return Number.isNaN(a) ? 0 : a;
+          })(),
+          timestamp: {
+            toDate: () => new Date(String(tx.createdAt ?? "")),
+          },
+        }));
+        setRecentTransactions(mapped);
+      }
     };
 
     init();
-    return () => {
-      unsubscribes.forEach((fn) => fn());
-    };
   }, [navigation]);
 
   const refetchJwtData = useCallback(async () => {
     const accessToken = await AsyncStorage.getItem("access_token");
     if (!accessToken) return;
     const { success: walletSuccess, wallet } = await getOrCreateMainWallet(accessToken);
-    if (walletSuccess && wallet?.balance != null) {
-      const bal = parseFloat(String(wallet.balance));
+    const w = wallet as RawApiWallet | undefined;
+    if (walletSuccess && w?.balance != null) {
+      const bal = parseFloat(String(w.balance));
       setAvailableBalance(Number.isNaN(bal) ? 0 : bal);
     }
     const tdRes = await getTimeDeposits(accessToken);
-    if (tdRes.success && tdRes.deposits) {
+    if (tdRes.success && Array.isArray(tdRes.deposits)) {
       const list = tdRes.deposits as TimeDeposit[];
       setDeposits(list);
       setTimeDeposit(computeTimeDepositTotal(list));
+    } else if (!tdRes.success && __DEV__) {
+      console.warn('[Dashboard] getTimeDeposits failed:', tdRes.error);
+    }
+    const treeRes = await getReferralTree(accessToken);
+    if (treeRes.success && treeRes.tree) {
+      const tree = treeRes.tree as { ancestors?: Array<{ referralCode?: string; firstName?: string; lastName?: string }> };
+      const first = tree.ancestors?.[0];
+      if (first && (first.referralCode ?? (first as { referral_code?: string }).referral_code)) {
+        setUserReferrer({
+          referralCode: first.referralCode ?? (first as { referral_code?: string }).referral_code,
+          firstName: first.firstName ?? (first as { first_name?: string }).first_name,
+          lastName: first.lastName ?? (first as { last_name?: string }).last_name,
+        });
+      } else {
+        setUserReferrer(null);
+      }
+    } else {
+      setUserReferrer(null);
     }
     const txRes = await getTransactions(accessToken, {
-      walletId: (wallet?.id as string) ?? mainWalletIdRef.current ?? undefined,
+      walletId: w?.id ?? mainWalletIdRef.current ?? undefined,
       limit: 20,
     });
     if (txRes.success && txRes.transactions) {
-      const mapped: Transaction[] = txRes.transactions.map((tx: Record<string, unknown>) => ({
+      const txs = txRes.transactions as RawApiTransaction[];
+      const mapped: Transaction[] = txs.map((tx) => ({
         id: String(tx.id ?? ""),
-        type: getTransactionTypeLabel(String(tx.type ?? "")),
+        type: String(tx.type ?? ""),
         amount: (() => {
           const a = parseFloat(String(tx.amount ?? 0));
           return Number.isNaN(a) ? 0 : a;
@@ -312,7 +358,7 @@ export default function Dashboard() {
       startPolling();
 
       const socket = createRealtimeConnection(token, {
-        onWalletUpdate: (payload) => {
+        onWalletUpdate: (payload: { walletId?: string; balance?: number | string }) => {
           if (payload?.walletId === mainWalletIdRef.current && payload?.balance != null) {
             const bal = parseFloat(String(payload.balance));
             setAvailableBalance(Number.isNaN(bal) ? 0 : bal);
@@ -321,11 +367,18 @@ export default function Dashboard() {
         onTransactionCreated: () => {
           refetchJwtData();
         },
+        onNewSupportMessage: () => {
+          notifyNewSupportMessage();
+        },
         onConnect: () => {
+          setConnectionStatus(true);
           stopPolling();
-          heartbeatCleanupRef.current = startHeartbeat(socket);
+          if (socket) {
+            heartbeatCleanupRef.current = startHeartbeat(socket) as () => void;
+          }
         },
         onDisconnect: () => {
+          setConnectionStatus(false);
           heartbeatCleanupRef.current?.();
           heartbeatCleanupRef.current = null;
           startPolling();
@@ -336,12 +389,13 @@ export default function Dashboard() {
       });
 
       if (socket) {
-        socketRef.current = socket;
+        socketRef.current = socket as { disconnect: () => void };
       }
     });
 
     return () => {
       cancelled = true;
+      setConnectionStatus(false);
       stopPolling();
       heartbeatCleanupRef.current?.();
       heartbeatCleanupRef.current = null;
@@ -378,7 +432,7 @@ export default function Dashboard() {
         const nextIndex = (prevIndex + 1) % banners.length;
         if (bannerScrollRef.current) {
           bannerScrollRef.current.scrollTo({
-            x: nextIndex * (width - 40),
+            x: nextIndex * carouselWidth,
             animated: true,
           });
         }
@@ -386,7 +440,7 @@ export default function Dashboard() {
       });
     }, 3000);
     return () => clearInterval(interval);
-  }, []);
+  }, [carouselWidth]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-PH", {
@@ -400,7 +454,7 @@ export default function Dashboard() {
     setCurrentLanguageIndex(nextIndex);
     if (languageScrollRef.current) {
       languageScrollRef.current.scrollTo({
-        x: nextIndex * (width - 40),
+        x: nextIndex * carouselWidth,
         animated: true,
       });
     }
@@ -414,7 +468,7 @@ export default function Dashboard() {
     setCurrentLanguageIndex(prevIndex);
     if (languageScrollRef.current) {
       languageScrollRef.current.scrollTo({
-        x: prevIndex * (width - 40),
+        x: prevIndex * carouselWidth,
         animated: true,
       });
     }
@@ -441,40 +495,35 @@ export default function Dashboard() {
   };
 
   const menuItems = [
-    { icon: "wallet-outline", label: "E-Wallet", route: "Maya" },
-    { icon: "chart-line", label: "Stock", route: "Stockholder" },
-    { icon: "format-list-bulleted", label: "Task", route: "Task" },
-    { icon: "account", label: "Agent", route: "AgentRequest" },
-    {
-      icon: "chart-areaspline",
-      label: "Trading",
-      route: "PlayEarn",
-    },
+    { icon: "wallet-outline", labelKey: "dashboard.eWallet", route: "EwalletService" },
+    { icon: "message-text", labelKey: "dashboard.message", route: "Message" },
+    { icon: "chart-line", labelKey: "dashboard.stock", route: "Stockholder" },
+    { icon: "format-list-bulleted", labelKey: "dashboard.task", route: "Task" },
+    { icon: "account", labelKey: "dashboard.agent", route: "AgentRequest" },
+    { icon: "chart-areaspline", labelKey: "dashboard.trading", route: "PlayEarn" },
   ];
 
   return (
     <>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-      <SafeAreaView style={styles.container}>
-        <ScrollView showsVerticalScrollIndicator={false}>
-          <View style={styles.header}>
-            <View style={styles.headerLeft}>
-              <View style={styles.avatar}>
-                <Ionicons name="person" size={28} color="#E15816" />
-              </View>
-              <TouchableOpacity
-                onPress={() => navigation.navigate("Personal")}
-                activeOpacity={0.7}
-              >
-                <View>
-                  <Text style={styles.greeting}>{getGreeting()}</Text>
-                  <Text style={styles.userName}>
-                    {(userData?.firstName as string) || (userData?.fullName as string) || "User"}
-                  </Text>
-                </View>
-              </TouchableOpacity>
+      <SafeAreaView style={styles.container} edges={["left", "right", "bottom"]}>
+        <View style={[styles.header, { paddingTop: Math.max(insets.top, 12) }]}>
+          <View style={styles.headerLeft}>
+            <TouchableOpacity
+              onPress={() => navigation.navigate("Personal")}
+              activeOpacity={0.7}
+              style={styles.avatar}
+            >
+              <Ionicons name="person" size={28} color="#E15816" />
+            </TouchableOpacity>
+            <View style={styles.headerUserText}>
+              <Text style={styles.greeting} numberOfLines={1}>{getGreeting()}</Text>
+              <Text style={styles.userName} numberOfLines={1} ellipsizeMode="tail">
+                {(userData?.firstName as string) || (userData?.fullName as string) || "User"}
+              </Text>
             </View>
-            <View style={styles.headerRight}>
+          </View>
+          <View style={styles.headerRight}>
               <TouchableOpacity
                 style={styles.iconButton}
                 onPress={() => navigation.navigate("Notification")}
@@ -497,8 +546,9 @@ export default function Dashboard() {
             </View>
           </View>
 
+        <ScrollView showsVerticalScrollIndicator={false}>
           <View style={styles.tabs}>
-            {["Wallet", "Investment", "Cards"].map((tab) => (
+            {(["Wallet", "Investment", "Cards"] as const).map((tab) => (
               <TouchableOpacity
                 key={tab}
                 style={[styles.tab, activeTab === tab && styles.activeTab]}
@@ -507,7 +557,7 @@ export default function Dashboard() {
                 <Text
                   style={[styles.tabText, activeTab === tab && styles.activeTabText]}
                 >
-                  {tab}
+                  {t(tab === "Wallet" ? "dashboard.wallet" : tab === "Investment" ? "dashboard.investment" : "dashboard.cards")}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -542,6 +592,7 @@ export default function Dashboard() {
               deposits={deposits}
               formatCurrency={formatCurrency}
               onRefresh={refetchJwtData}
+              userReferrer={userReferrer}
             />
           )}
 
@@ -558,7 +609,7 @@ export default function Dashboard() {
                     color="#E15816"
                   />
                 </View>
-                <Text style={styles.quickActionLabel}>Transfer</Text>
+                <Text style={styles.quickActionLabel}>{t("dashboard.transfer")}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.quickActionButton}
@@ -567,7 +618,7 @@ export default function Dashboard() {
                 <View style={styles.quickActionIcon}>
                   <MaterialCommunityIcons name="bank" size={24} color="#E15816" />
                 </View>
-                <Text style={styles.quickActionLabel}>Banking Service</Text>
+                <Text style={styles.quickActionLabel}>{t("dashboard.bankingService")}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.quickActionButton}
@@ -580,7 +631,7 @@ export default function Dashboard() {
                     color="#E15816"
                   />
                 </View>
-                <Text style={styles.quickActionLabel}>Travel Protection</Text>
+                <Text style={styles.quickActionLabel}>{t("dashboard.travelProtection")}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.quickActionButton}
@@ -593,7 +644,7 @@ export default function Dashboard() {
                     color="#E15816"
                   />
                 </View>
-                <Text style={styles.quickActionLabel}>History</Text>
+                <Text style={styles.quickActionLabel}>{t("dashboard.history")}</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -601,7 +652,7 @@ export default function Dashboard() {
           {activeTab !== "Cards" && activeTab !== "Investment" && (
             <View style={styles.menuContainer}>
               <View style={styles.menuHeader}>
-                <Text style={styles.menuHeaderTitle}>Services</Text>
+                <Text style={styles.menuHeaderTitle}>{t("dashboard.services")}</Text>
               </View>
               <View style={styles.menuGrid}>
                 {menuItems.map((item, index) => (
@@ -619,7 +670,7 @@ export default function Dashboard() {
                         color="#000000"
                       />
                     </View>
-                    <Text style={styles.menuLabel}>{item.label}</Text>
+                    <Text style={styles.menuLabel}>{t(item.labelKey)}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -627,7 +678,7 @@ export default function Dashboard() {
           )}
 
           {activeTab !== "Investment" && (
-            <View style={styles.languageCarouselContainer}>
+            <View style={[styles.languageCarouselContainer, { paddingHorizontal: horizontalPadding }]}>
               <View style={styles.languageCarouselWrapper}>
                 <ScrollView
                   ref={languageScrollRef}
@@ -636,7 +687,7 @@ export default function Dashboard() {
                   showsHorizontalScrollIndicator={false}
                   onMomentumScrollEnd={(event) => {
                     const index = Math.round(
-                      event.nativeEvent.contentOffset.x / (width - 40)
+                      event.nativeEvent.contentOffset.x / carouselWidth
                     );
                     setCurrentLanguageIndex(index);
                   }}
@@ -645,7 +696,7 @@ export default function Dashboard() {
                   {languageSlides.map((slide, index) => (
                     <TouchableOpacity
                       key={index}
-                      style={styles.languageSlide}
+                      style={[styles.languageSlide, { width: carouselWidth }]}
                       onPress={() => navigation.navigate("Crypto")}
                       activeOpacity={0.9}
                     >
@@ -688,7 +739,7 @@ export default function Dashboard() {
             <View style={styles.transactionSection}>
               <View style={styles.transactionHeader}>
                 <Ionicons name="time-outline" size={20} color="#E15816" />
-                <Text style={styles.transactionTitle}>Transaction History</Text>
+                <Text style={styles.transactionTitle}>{t("dashboard.transactionHistory")}</Text>
               </View>
               {recentTransactions.length > 0 ? (
                 recentTransactions.map((transaction) => (
@@ -702,7 +753,7 @@ export default function Dashboard() {
                     </View>
                     <View style={styles.transactionDetails}>
                       <Text style={styles.transactionName}>
-                        {getTransactionTypeLabel(transaction.type)}
+                        {getTransactionTypeLabel(t, transaction.type)}
                       </Text>
                       <Text style={styles.transactionDate}>
                         {transaction.timestamp?.toDate?.()?.toLocaleDateString() ||
@@ -710,7 +761,7 @@ export default function Dashboard() {
                       </Text>
                     </View>
                     <Text style={styles.transactionAmount}>
-                      Γé▒{formatCurrency(transaction.amount || 0)}
+                      ₱{formatCurrency(transaction.amount || 0)}
                     </Text>
                   </View>
                 ))
@@ -724,10 +775,10 @@ export default function Dashboard() {
                     />
                   </View>
                   <View style={styles.transactionDetails}>
-                    <Text style={styles.transactionName}>Free Default Card</Text>
+                    <Text style={styles.transactionName}>{t("dashboard.freeDefaultCard")}</Text>
                     <Text style={styles.transactionDate}>February 03, 2026</Text>
                   </View>
-                  <Text style={styles.transactionAmount}>Γé▒0.00</Text>
+                  <Text style={styles.transactionAmount}>₱0.00</Text>
                 </View>
               )}
             </View>
@@ -742,7 +793,7 @@ export default function Dashboard() {
                 showsHorizontalScrollIndicator={false}
                 onMomentumScrollEnd={(event) => {
                   const index = Math.round(
-                    event.nativeEvent.contentOffset.x / (width - 40)
+                    event.nativeEvent.contentOffset.x / carouselWidth
                   );
                   setCurrentBannerIndex(index);
                 }}
@@ -751,7 +802,7 @@ export default function Dashboard() {
                 {banners.map((banner, index) => (
                   <TouchableOpacity
                     key={index}
-                    style={styles.bannerItem}
+                    style={[styles.bannerItem, { width: carouselWidth }]}
                     onPress={() => Linking.openURL(banner.url)}
                     activeOpacity={0.8}
                   >
@@ -778,7 +829,7 @@ export default function Dashboard() {
           )}
 
           <View style={styles.footer}>
-            <Text style={styles.footerText}>CREATED BY INSPIRE</Text>
+            <Text style={styles.footerText}>{t("dashboard.createdByInspire")}</Text>
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -796,7 +847,9 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     backgroundColor: "#FFFFFF",
   },
-  headerLeft: { flexDirection: "row", alignItems: "center", gap: 12 },
+  headerLeft: { flex: 1, flexDirection: "row", alignItems: "center", gap: 12, minWidth: 0 },
+  headerUserTouch: { flex: 1, minWidth: 0 },
+  headerUserText: { flex: 1, minWidth: 0, justifyContent: "center" },
   avatar: {
     width: 50,
     height: 50,
@@ -811,8 +864,10 @@ const styles = StyleSheet.create({
   userName: { fontSize: 16, fontWeight: "700", color: "#333" },
   headerRight: { flexDirection: "row", gap: 12 },
   iconButton: {
-    width: 40,
-    height: 40,
+    width: 44,
+    height: 44,
+    minWidth: 44,
+    minHeight: 44,
     justifyContent: "center",
     alignItems: "center",
     position: "relative",
@@ -846,9 +901,10 @@ const styles = StyleSheet.create({
   },
   tab: {
     paddingHorizontal: 28,
-    paddingVertical: 10,
+    paddingVertical: 12,
     borderRadius: 20,
     minWidth: 100,
+    minHeight: 44,
     alignItems: "center",
   },
   activeTab: { backgroundColor: "#E15816" },
@@ -911,12 +967,14 @@ const styles = StyleSheet.create({
   menuHeaderTitle: { fontSize: 18, fontWeight: "700", color: "#333" },
   menuGrid: {
     flexDirection: "row",
+    flexWrap: "wrap",
     paddingHorizontal: 0,
   },
   menuItem: {
-    width: "21%",
-    alignItems: "flex-start",
-    paddingVertical: 0,
+    width: "25%",
+    alignItems: "center",
+    paddingVertical: 8,
+    marginBottom: 8,
   },
   menuIcon: {
     width: 48,
@@ -939,11 +997,10 @@ const styles = StyleSheet.create({
     textAlign: "center",
     lineHeight: 12,
   },
-  languageCarouselContainer: { paddingHorizontal: 20, marginVertical: 16 },
+  languageCarouselContainer: { marginVertical: 16 },
   languageCarouselWrapper: { position: "relative", marginBottom: 12 },
   languageScrollView: { borderRadius: 16 },
   languageSlide: {
-    width: width - 40,
     height: 140,
     borderRadius: 16,
     overflow: "hidden",
@@ -1025,7 +1082,6 @@ const styles = StyleSheet.create({
   bannersSection: { paddingHorizontal: 20, marginBottom: 20 },
   bannerScrollView: { marginBottom: 12 },
   bannerItem: {
-    width: width - 40,
     height: 120,
     borderRadius: 12,
     overflow: "hidden",

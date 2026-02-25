@@ -77,6 +77,21 @@ Emitted when a new transaction is created (transfer, top-up, payment, time depos
 
 ---
 
+### `NEW_SUPPORT_MESSAGE`
+
+Emitted when an admin sends a support message to the user.
+
+**Payload:**
+```json
+{
+  "messageId": "clxx..."
+}
+```
+
+**Client action:** Refetch `GET /messages` or append the new message. Optionally show a push notification or unread badge.
+
+---
+
 ## Heartbeat (PING / PONG)
 
 Clients can send `PING` to keep the connection alive. The server responds with `PONG`.

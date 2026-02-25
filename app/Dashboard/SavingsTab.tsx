@@ -5,7 +5,7 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Dimensions,
+  useWindowDimensions,
   ImageBackground,
   Modal,
   RefreshControl,
@@ -14,22 +14,34 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 
-const { width } = Dimensions.get("window");
-
 interface PayoutScheduleItem {
-  payoutIndex: number;
-  expectedDate: string;
-  amount: string;
-  status: "PENDING" | "PAID";
+  payoutIndex?: number;
+  expectedDate?: string;
+  amount?: string | number;
+  status?: "PENDING" | "PAID";
   isLastPayout?: boolean;
   principalReturned?: string;
+  principal_returned?: string;
 }
 
+/** Referrer from backend (primary agent who referred you). Supports camelCase and snake_case. */
+interface ReferrerInfo {
+  userId?: string;
+  user_id?: string;
+  referralCode?: string;
+  referral_code?: string;
+  firstName?: string;
+  first_name?: string;
+  lastName?: string;
+  last_name?: string;
+}
+
+/** Matches API-TIME-DEPOSITS.md TimeDepositWithSchedule */
 interface TimeDeposit {
   id: string;
   contractType: string;
   depositSource?: "AVAILABLE_BALANCE" | "REQUEST_AMOUNT";
-  amount: string;
+  amount: string | number;
   interestRate: string;
   status: "PENDING" | "ACTIVE" | "MATURED" | "CANCELLED";
   startDate: string | null;
@@ -38,6 +50,9 @@ interface TimeDeposit {
   projectedMaturityDate: string;
   createdAt?: string;
   payoutSchedule?: PayoutScheduleItem[];
+  payout_schedule?: PayoutScheduleItem[];
+  commission?: unknown;
+  referrer?: ReferrerInfo | null;
 }
 
 interface SavingsTabProps {
@@ -48,6 +63,8 @@ interface SavingsTabProps {
   deposits: TimeDeposit[];
   formatCurrency: (amount: number) => string;
   onRefresh?: () => Promise<void>;
+  /** Fallback: user's referrer from GET /referrals/tree (when contract has no referrer/commission) */
+  userReferrer?: { referralCode?: string; firstName?: string; lastName?: string } | null;
 }
 
 const CONTRACT_TYPE_LABELS: Record<string, string> = {
@@ -55,6 +72,49 @@ const CONTRACT_TYPE_LABELS: Record<string, string> = {
   oneYear: "1 Year",
   twoYears: "2 Years",
 };
+
+function parseAmount(val: string | number | undefined): number {
+  if (val == null) return 0;
+  const n = typeof val === "number" ? val : parseFloat(String(val));
+  return Number.isNaN(n) ? 0 : n;
+}
+
+function getPayoutSchedule(dep: TimeDeposit): PayoutScheduleItem[] {
+  const schedule = dep.payoutSchedule ?? dep.payout_schedule;
+  return Array.isArray(schedule) ? schedule : [];
+}
+
+/** Get referrer from top-level referrer or commission.distribution[0] (primary agent). Normalizes camelCase/snake_case. */
+function getReferrer(dep: TimeDeposit): ReferrerInfo | null {
+  const ref = dep.referrer;
+  if (ref && typeof ref === "object") {
+    return {
+      referralCode: ref.referralCode ?? ref.referral_code,
+      firstName: ref.firstName ?? ref.first_name,
+      lastName: ref.lastName ?? ref.last_name,
+    };
+  }
+  const comm = dep.commission as {
+    distribution?: Array<{
+      referralCode?: string;
+      referral_code?: string;
+      firstName?: string;
+      first_name?: string;
+      lastName?: string;
+      last_name?: string;
+    }>;
+  } | undefined;
+  const dist = comm?.distribution;
+  if (Array.isArray(dist) && dist.length > 0) {
+    const first = dist[0];
+    return {
+      referralCode: first.referralCode ?? first.referral_code,
+      firstName: first.firstName ?? first.first_name,
+      lastName: first.lastName ?? first.last_name,
+    };
+  }
+  return null;
+}
 
 export default function SavingsTab({
   userData,
@@ -64,6 +124,7 @@ export default function SavingsTab({
   deposits,
   formatCurrency,
   onRefresh,
+  userReferrer,
 }: SavingsTabProps) {
   const [contractTab, setContractTab] = useState<"Active" | "Completed" | "Pending">("Active");
   const [selectedContract, setSelectedContract] = useState<TimeDeposit | null>(null);
@@ -226,13 +287,23 @@ export default function SavingsTab({
               <TouchableOpacity
                 key={dep.id}
                 style={styles.contractCard}
-                onPress={() => setSelectedContract(dep)}
+                onPress={() => {
+                  if (__DEV__) {
+                    console.log("[SavingsTab] Contract selected:", {
+                      id: dep.id,
+                      referrer: dep.referrer,
+                      commission: dep.commission,
+                      commissionKeys: dep.commission ? Object.keys(dep.commission as object) : [],
+                    });
+                  }
+                  setSelectedContract(dep);
+                }}
                 activeOpacity={0.7}
               >
                 <View style={styles.contractCardTop}>
                   <View>
                     <Text style={styles.contractCardAmount}>
-                      ₱ {formatCurrency(parseFloat(dep.amount) || 0)}
+                      ₱ {formatCurrency(parseAmount(dep.amount))}
                     </Text>
                     <Text style={styles.contractCardType}>
                       {CONTRACT_TYPE_LABELS[dep.contractType] ?? dep.contractType}
@@ -321,7 +392,7 @@ export default function SavingsTab({
                   <View style={styles.modalDetailRow}>
                     <Text style={styles.modalDetailLabel}>Amount</Text>
                     <Text style={styles.modalDetailValue}>
-                      ₱ {formatCurrency(parseFloat(selectedContract.amount) || 0)}
+                      ₱ {formatCurrency(parseAmount(selectedContract.amount))}
                     </Text>
                   </View>
                   <View style={styles.modalDetailRow}>
@@ -371,70 +442,82 @@ export default function SavingsTab({
                         : formatDate(selectedContract.projectedMaturityDate)}
                     </Text>
                   </View>
+                  <View style={styles.modalDetailRow}>
+                    <Text style={styles.modalDetailLabel}>Referred by</Text>
+                    <Text style={styles.modalDetailValue}>
+                      {(() => {
+                        const ref = getReferrer(selectedContract) ?? userReferrer;
+                        if (!ref) return "No referrer";
+                        const name = `${ref.firstName ?? ""} ${ref.lastName ?? ""}`.trim() || "—";
+                        const code = ref.referralCode ?? (ref as ReferrerInfo).referral_code;
+                        return code ? (name ? `${name} (${code})` : `(${code})`) : name || "—";
+                      })()}
+                    </Text>
+                  </View>
 
                   <Text style={styles.payoutSectionTitle}>Payout Schedule</Text>
                   <View style={styles.payoutStepper}>
-                    {(selectedContract.payoutSchedule ?? []).map((payout, idx) => (
-                      <View key={payout.payoutIndex} style={styles.payoutItem}>
+                    {getPayoutSchedule(selectedContract).map((payout, idx) => (
+                      <View key={payout.payoutIndex ?? idx} style={styles.payoutItem}>
                         <View style={styles.payoutItemLeft}>
                           <View
                             style={[
                               styles.payoutDot,
-                              payout.status === "PAID"
+                              (payout.status ?? "PENDING") === "PAID"
                                 ? styles.payoutDotPaid
                                 : styles.payoutDotPending,
                             ]}
                           />
-                          {idx < (selectedContract.payoutSchedule?.length ?? 1) - 1 && (
+                          {idx < getPayoutSchedule(selectedContract).length - 1 && (
                             <View
-                              style={[
-                                styles.payoutLine,
-                                payout.status === "PAID"
-                                  ? styles.payoutLinePaid
-                                  : styles.payoutLinePending,
-                              ]}
+                            style={[
+                              styles.payoutLine,
+                              (payout.status ?? "PENDING") === "PAID"
+                                ? styles.payoutLinePaid
+                                : styles.payoutLinePending,
+                            ]}
                             />
                           )}
                         </View>
                         <View style={styles.payoutItemRight}>
                           <Text style={styles.payoutDate}>
-                            {formatDate(payout.expectedDate)}
+                            {payout.expectedDate ? formatDate(payout.expectedDate) : "—"}
                           </Text>
                           <Text style={styles.payoutAmount}>
-                            ₱ {formatCurrency(parseFloat(payout.amount) || 0)}
+                            ₱ {formatCurrency(parseAmount(payout.amount))}
                             {payout.isLastPayout &&
-                              payout.principalReturned &&
+                              (payout.principalReturned ?? payout.principal_returned) &&
                               ` + ₱ ${formatCurrency(
-                                parseFloat(payout.principalReturned) || 0
+                                parseAmount(payout.principalReturned ?? payout.principal_returned)
                               )} principal`}
                           </Text>
                           <View
                             style={[
                               styles.payoutStatusChip,
-                              payout.status === "PAID"
+                              (payout.status ?? "PENDING") === "PAID"
                                 ? styles.payoutStatusPaid
                                 : styles.payoutStatusPending,
                             ]}
                           >
                             <Ionicons
-                              name={payout.status === "PAID" ? "checkmark-circle" : "time-outline"}
+                              name={(payout.status ?? "PENDING") === "PAID" ? "checkmark-circle" : "time-outline"}
                               size={14}
-                              color={payout.status === "PAID" ? "#059669" : "#D97706"}
+                              color={(payout.status ?? "PENDING") === "PAID" ? "#059669" : "#D97706"}
                             />
                             <Text
                               style={[
                                 styles.payoutStatusText,
-                                { color: payout.status === "PAID" ? "#059669" : "#D97706" },
+                                { color: (payout.status ?? "PENDING") === "PAID" ? "#059669" : "#D97706" },
                               ]}
                             >
-                              {payout.status}
+                              {payout.status ?? "PENDING"}
                             </Text>
                           </View>
                         </View>
                       </View>
                     ))}
                   </View>
-                  {(selectedContract.payoutSchedule?.length ?? 0) === 0 && (
+                  {getPayoutSchedule(selectedContract).length === 0 && (
                     <Text style={styles.noPayoutsText}>No payout schedule</Text>
                   )}
                 </ScrollView>

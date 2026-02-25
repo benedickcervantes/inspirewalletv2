@@ -1,19 +1,20 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
+import { useLanguage } from "../../../context/LanguageContext";
 import { addDoc, collection, doc, getDoc, serverTimestamp, updateDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Dimensions,
-    Modal,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Dimensions,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { auth, firestore } from "../../../configs/firebase";
 
 const { width } = Dimensions.get("window");
@@ -148,8 +149,10 @@ export const fetchCurrentBalance = async (userId: string, balanceType: string) =
 };
 
 export default function TransferConfirm() {
+  const { t } = useLanguage();
   const navigation = useNavigation();
   const route = useRoute();
+  const insets = useSafeAreaInsets();
   
   const params = (route.params || {}) as { balanceType?: string; accountNumber?: string; amount?: string; description?: string; recipientName?: string; recipientId?: string };
   const balanceType = params.balanceType || "";
@@ -191,7 +194,7 @@ export default function TransferConfirm() {
     try {
       const user = auth.currentUser;
       if (!user) {
-        setErrorMessage("User not authenticated");
+        setErrorMessage(t("sendMoney.userNotAuthenticated"));
         setShowErrorModal(true);
         setIsProcessing(false);
         return;
@@ -210,12 +213,12 @@ export default function TransferConfirm() {
       if (result.success) {
         setShowSuccessModal(true);
       } else {
-        setErrorMessage(result.message);
+        setErrorMessage(result.message || t("sendMoney.transferFailed"));
         setShowErrorModal(true);
       }
     } catch (error) {
       console.error("Error processing transfer:", error);
-      setErrorMessage("Transfer failed. Please try again.");
+      setErrorMessage(t("sendMoney.transferFailed"));
       setShowErrorModal(true);
     } finally {
       setIsProcessing(false);
@@ -228,26 +231,25 @@ export default function TransferConfirm() {
   };
 
   return (
-    <View style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        {/* Header */}
-        <LinearGradient
-          colors={["#E25A17", "#F28934"]}
-          style={styles.header}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      {/* Header */}
+      <LinearGradient
+        colors={["#E25A17", "#F28934"]}
+        style={styles.header}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+      >
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
         >
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Send Money</Text>
-          <TouchableOpacity style={styles.notificationButton}>
-            <Ionicons name="notifications-outline" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
-        </LinearGradient>
+          <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>{t("sendMoney.title")}</Text>
+        <TouchableOpacity style={styles.notificationButton}>
+          <Ionicons name="notifications-outline" size={24} color="#FFFFFF" />
+        </TouchableOpacity>
+      </LinearGradient>
 
         <ScrollView
           style={styles.scrollView}
@@ -260,21 +262,21 @@ export default function TransferConfirm() {
               <View style={styles.quickActionIcon}>
                 <Ionicons name="qr-code" size={28} color="#E25A17" />
               </View>
-              <Text style={styles.quickActionText}>My QR</Text>
+              <Text style={styles.quickActionText}>{t("sendMoney.myQr")}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.quickActionButton}>
               <View style={styles.quickActionIcon}>
                 <Ionicons name="scan" size={28} color="#E25A17" />
               </View>
-              <Text style={styles.quickActionText}>Scan QR</Text>
+              <Text style={styles.quickActionText}>{t("sendMoney.scanQr")}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.quickActionButton}>
               <View style={styles.quickActionIcon}>
                 <Ionicons name="people" size={28} color="#E25A17" />
               </View>
-              <Text style={styles.quickActionText}>Contacts</Text>
+              <Text style={styles.quickActionText}>{t("sendMoney.contacts")}</Text>
             </TouchableOpacity>
           </View>
 
@@ -300,12 +302,12 @@ export default function TransferConfirm() {
           </View>
 
           {/* Step Title */}
-          <Text style={styles.stepTitle}>Confirm Transfer</Text>
-          <Text style={styles.stepSubtitle}>Review your transfer details</Text>
+          <Text style={styles.stepTitle}>{t("sendMoney.confirmTransfer")}</Text>
+          <Text style={styles.stepSubtitle}>{t("sendMoney.reviewTransferDetails")}</Text>
 
           {/* Recipient Card */}
           <View style={styles.recipientCard}>
-            <Text style={styles.recipientLabel}>To</Text>
+            <Text style={styles.recipientLabel}>{t("sendMoney.to")}</Text>
             <View style={styles.recipientInfo}>
               <View style={styles.avatar}>
                 <Text style={styles.avatarText}>{getUserInitials(recipientName)}</Text>
@@ -325,7 +327,7 @@ export default function TransferConfirm() {
             end={{ x: 1, y: 1 }}
           >
             <View style={styles.detailsHeader}>
-              <Text style={styles.detailsLabel}>Amount to Transfer</Text>
+              <Text style={styles.detailsLabel}>{t("sendMoney.amountToTransfer")}</Text>
             </View>
             <Text style={styles.amountText}>
               PHP {amount.toLocaleString("en-PH", {
@@ -334,15 +336,15 @@ export default function TransferConfirm() {
               })}
             </Text>
             <View style={styles.detailsRow}>
-              <Text style={styles.detailsRowLabel}>From</Text>
+              <Text style={styles.detailsRowLabel}>{t("sendMoney.from")}</Text>
               <View style={styles.detailsRowValue}>
                 <Text style={styles.detailsRowText}>
-                  {balanceType === "available" ? "Available Balance" : "Agent Wallet"}
+                  {balanceType === "available" ? t("sendMoney.availableBalance") : t("sendMoney.agentWallet")}
                 </Text>
               </View>
             </View>
             <View style={styles.detailsRow}>
-              <Text style={styles.detailsRowLabel}>Description (Optional)</Text>
+              <Text style={styles.detailsRowLabel}>{t("sendMoney.descriptionOptional")}</Text>
               <View style={styles.detailsRowValue}>
                 <Text style={styles.detailsRowText}>{description}</Text>
               </View>
@@ -363,7 +365,7 @@ export default function TransferConfirm() {
               </View>
               <View style={styles.summaryDivider} />
               <View style={styles.summaryItem}>
-                <Text style={styles.summaryLabel}>New Balance</Text>
+                <Text style={styles.summaryLabel}>{t("sendMoney.newBalance")}</Text>
                 <Text style={styles.summaryValue}>
                   PHP {newBalance.toLocaleString("en-PH", {
                     minimumFractionDigits: 2,
@@ -373,7 +375,7 @@ export default function TransferConfirm() {
               </View>
             </View>
             <View style={styles.transferAmountRow}>
-              <Text style={styles.transferAmountLabel}>Transfer Amount</Text>
+              <Text style={styles.transferAmountLabel}>{t("sendMoney.transferAmount")}</Text>
               <Text style={styles.transferAmountValue}>
                 -{amount.toLocaleString("en-PH", {
                   minimumFractionDigits: 2,
@@ -399,7 +401,7 @@ export default function TransferConfirm() {
                 <ActivityIndicator size="small" color="#FFFFFF" />
               ) : (
                 <>
-                  <Text style={styles.confirmText}>Confirm</Text>
+                  <Text style={styles.confirmText}>{t("sendMoney.confirm")}</Text>
                   <Ionicons name="checkmark-circle" size={20} color="#FFFFFF" />
                 </>
               )}
@@ -427,18 +429,17 @@ export default function TransferConfirm() {
                 <View style={styles.checkIconContainer}>
                   <Ionicons name="checkmark-circle" size={80} color="#FFFFFF" />
                 </View>
-                <Text style={styles.modalTitle}>Transfer Complete!</Text>
+                <Text style={styles.modalTitle}>{t("sendMoney.transferComplete")}</Text>
                 <Text style={styles.modalMessage}>
-                  Your transfer of PHP {amount.toLocaleString("en-PH", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                  })} to {recipientName} has been completed successfully.
+                  {t("sendMoney.transferSuccessMessage")
+                    .replace("{amount}", amount.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 }))
+                    .replace("{name}", recipientName)}
                 </Text>
                 <TouchableOpacity
                   style={styles.modalButton}
                   onPress={handleSuccessOk}
                 >
-                  <Text style={styles.modalButtonText}>OK</Text>
+                  <Text style={styles.modalButtonText}>{t("common.ok")}</Text>
                 </TouchableOpacity>
               </LinearGradient>
             </View>
@@ -463,19 +464,18 @@ export default function TransferConfirm() {
                 <View style={styles.checkIconContainer}>
                   <Ionicons name="alert-circle" size={80} color="#FFFFFF" />
                 </View>
-                <Text style={styles.modalTitle}>Error</Text>
+                <Text style={styles.modalTitle}>{t("sendMoney.error")}</Text>
                 <Text style={styles.modalMessage}>{errorMessage}</Text>
                 <TouchableOpacity
                   style={styles.modalButton}
                   onPress={() => setShowErrorModal(false)}
                 >
-                  <Text style={styles.modalButtonText}>OK</Text>
+                  <Text style={styles.modalButtonText}>{t("common.ok")}</Text>
                 </TouchableOpacity>
               </LinearGradient>
             </View>
           </View>
         </Modal>
-      </SafeAreaView>
     </View>
   );
 }
@@ -484,9 +484,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#F5F5F5",
-  },
-  safeArea: {
-    flex: 1,
   },
   header: {
     flexDirection: "row",

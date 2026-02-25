@@ -1,7 +1,14 @@
 /**
  * Wallet backend API helpers.
  * Uses EXPO_PUBLIC_WALLET_BACKEND_URL (InpireWalletv3_Backend).
- * Auth endpoints use {base}/auth (no /api prefix).
+ *
+ * Per docs/backenddocs: Base URL is http://localhost:3000 (or deployed URL).
+ * All paths are at root — NO /api prefix. Examples:
+ *   GET /time-deposits, POST /time-deposits
+ *   GET /wallets, POST /wallets/main
+ *   GET /deposit-requests/top-up, POST /deposit-requests/top-up
+ *   etc.
+ * Do NOT set EXPO_PUBLIC_API_PREFIX unless your backend uses /api.
  */
 
 const getBaseUrl = () => {
@@ -12,7 +19,7 @@ const getBaseUrl = () => {
 
 const getWalletBackendUrl = getBaseUrl;
 
-// Optional: set EXPO_PUBLIC_API_PREFIX=api if backend mounts routes under /api
+// Only set EXPO_PUBLIC_API_PREFIX=api if backend mounts ALL routes under /api (docs say no prefix)
 const getApiPrefix = () => {
   const p = process.env.EXPO_PUBLIC_API_PREFIX;
   return p ? `/${p.replace(/^\/|\/$/g, '')}` : '';
@@ -28,15 +35,16 @@ const buildUrl = (path) => {
 
 /**
  * Submit a time deposit request via the backend.
- * POST /time-deposits
+ * POST /time-deposits (no /api prefix)
  * @param {string} accessToken - Backend JWT from AsyncStorage
  * @param {Object} body - { contractPeriod, amount, depositMethod, walletId? (when available_balance) }
  * @returns {Promise<{ success: boolean, data?: object, error?: string }>}
  */
 export async function submitTimeDepositRequest(accessToken, body) {
-  const url = buildUrl('/time-deposits');
-  if (!url) return { success: false, error: 'Backend URL not configured. Set EXPO_PUBLIC_WALLET_BACKEND_URL in .env and restart the app.' };
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: 'Backend URL not configured. Set EXPO_PUBLIC_WALLET_BACKEND_URL in .env.' };
   if (!accessToken) return { success: false, error: 'Not authenticated' };
+  const url = `${base}/time-deposits`;
   try {
     if (__DEV__) console.log('[Deposit API] POST', url, body);
     const res = await fetch(url, {
@@ -60,31 +68,94 @@ export async function submitTimeDepositRequest(accessToken, body) {
   }
 }
 
+function parseTimeDepositsResponse(data) {
+  let list = Array.isArray(data) ? data : null;
+  if (!list && data) {
+    const raw = data.data ?? data.deposits ?? data.timeDeposits ?? data.items;
+    list = Array.isArray(raw) ? raw : (raw?.items ?? raw?.data);
+    if (list && !Array.isArray(list)) list = [];
+  }
+  return Array.isArray(list) ? list : [];
+}
+
 /**
  * Get user's time deposits.
- * GET /time-deposits — requires JWT
+ * GET /time-deposits — requires JWT (no /api prefix, no /contracts).
+ * Uses base URL + /time-deposits directly — same pattern as POST /wallets/main.
  * @param {string} accessToken - Backend JWT
  * @returns {{ success: boolean, deposits?: Array, error?: string }}
  */
 export async function getTimeDeposits(accessToken) {
-  const url = buildUrl('/time-deposits');
-  if (!url) return { success: false, error: 'Backend URL not configured' };
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: 'Backend URL not configured. Set EXPO_PUBLIC_WALLET_BACKEND_URL in .env.' };
   if (!accessToken) return { success: false, error: 'Not authenticated' };
+
+  const url = `${base}/time-deposits`;
+
   try {
+    if (__DEV__) console.log('[TimeDeposits API] GET', url);
     const res = await fetch(url, {
       method: 'GET',
-      headers: { Authorization: `Bearer ${accessToken}` },
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
     });
     const data = await res.json().catch(() => ({}));
+    if (__DEV__) console.log('[TimeDeposits API] Response', res.status, Array.isArray(data) ? `array[${data.length}]` : typeof data);
+
     if (!res.ok) {
       const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || `Request failed (${res.status})`;
       return { success: false, error: msg };
     }
-    const list = Array.isArray(data)
-      ? data
-      : data.data ?? data.deposits ?? data.timeDeposits ?? [];
-    return { success: true, deposits: list };
+
+    const list = parseTimeDepositsResponse(data);
+    const deposits = Array.isArray(list) ? list : [];
+    if (__DEV__) {
+      console.log('[TimeDeposits API] Parsed count:', deposits.length, deposits[0] ? `first: status=${deposits[0].status} amount=${deposits[0].amount}` : '');
+      if (deposits[0]) {
+        const d = deposits[0];
+        console.log('[TimeDeposits API] First deposit referrer:', d.referrer, 'commission:', d.commission ? 'present' : 'absent', 'keys:', d.referrer ? Object.keys(d.referrer) : []);
+      }
+    }
+    return { success: true, deposits };
   } catch (e) {
+    if (__DEV__) console.error('[TimeDeposits API] Error', e);
+    return { success: false, error: e.message || 'Network error' };
+  }
+}
+
+/**
+ * Get interest rate tiers for time deposits.
+ * GET /time-deposits/interest-rates — requires JWT.
+ * @param {string} accessToken - Backend JWT
+ * @param {string} [contractType] - Optional: "sixMonths" | "oneYear" | "twoYears"
+ * @returns {{ success: boolean, tiers?: Array<{ contractType: string, amount: string, interestRate: string }>, error?: string }}
+ */
+export async function getTimeDepositInterestRates(accessToken, contractType) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: 'Backend URL not configured.' };
+  if (!accessToken) return { success: false, error: 'Not authenticated' };
+  let url = `${base}/time-deposits/interest-rates`;
+  if (contractType) {
+    url += `?contractType=${encodeURIComponent(contractType)}`;
+  }
+  try {
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      return { success: false, error: data.message || data.error || `Request failed (${res.status})` };
+    }
+    const tiers = Array.isArray(data) ? data : (data.tiers ?? data.data ?? []);
+    return { success: true, tiers };
+  } catch (e) {
+    if (__DEV__) console.error('[InterestRates API] Error', e);
     return { success: false, error: e.message || 'Network error' };
   }
 }
@@ -351,6 +422,37 @@ export async function getMe(accessToken) {
 }
 
 /**
+ * POST /auth/passcode — requires JWT
+ * Sets a 4-digit passcode for the authenticated user.
+ * @param {string} accessToken
+ * @param {string} passcode — exactly 4 digits
+ * @returns {{ success: boolean, error?: string }}
+ */
+export async function setPasscode(accessToken, passcode) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: 'Backend URL not configured' };
+  if (!accessToken) return { success: false, error: 'No token' };
+  try {
+    const res = await fetch(`${base}/auth/passcode`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ passcode }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message) ? data.message[0] : data.message || 'Failed to set passcode';
+      return { success: false, error: msg };
+    }
+    return { success: true };
+  } catch (e) {
+    return { success: false, error: e.message || 'Network error' };
+  }
+}
+
+/**
  * POST /auth/verify-passcode — requires JWT
  * @param {string} accessToken
  * @param {string} passcode
@@ -594,6 +696,223 @@ export async function getTransactions(accessToken, opts = {}) {
     }
     return { success: true, transactions: Array.isArray(data) ? data : [] };
   } catch (e) {
+    return { success: false, error: e.message || 'Network error' };
+  }
+}
+
+// --- Messaging API (Client) ---
+
+/**
+ * POST /messages — requires JWT
+ * Send a message to support. Start a new conversation or reply.
+ * @param {string} accessToken
+ * @param {string} content — Message content (1–10000 chars)
+ * @returns {{ success: boolean, id?: string, error?: string }}
+ */
+export async function sendMessage(accessToken, content) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: 'Backend URL not configured' };
+  if (!accessToken) return { success: false, error: 'Not authenticated' };
+  const trimmed = typeof content === 'string' ? content.trim() : '';
+  if (!trimmed) return { success: false, error: 'Message content is required' };
+  try {
+    const url = `${base}/messages`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ content: trimmed }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    return { success: true, id: data.id };
+  } catch (e) {
+    if (__DEV__) console.error('[Messages API] Error', e);
+    return { success: false, error: e.message || 'Network error' };
+  }
+}
+
+/**
+ * GET /messages — requires JWT
+ * List the current user's support messages. Ordered newest first.
+ * @param {string} accessToken
+ * @param {{ page?: number, limit?: number }} opts
+ * @returns {{ success: boolean, messages?: Array, pagination?: object, error?: string }}
+ */
+export async function getMessages(accessToken, opts = {}) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: 'Backend URL not configured' };
+  if (!accessToken) return { success: false, error: 'Not authenticated' };
+  try {
+    const params = new URLSearchParams();
+    if (opts.page != null) params.set('page', String(opts.page));
+    if (opts.limit != null) params.set('limit', String(opts.limit));
+    const qs = params.toString();
+    const url = `${base}/messages${qs ? `?${qs}` : ''}`;
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    return {
+      success: true,
+      messages: data.messages ?? [],
+      pagination: data.pagination ?? {},
+    };
+  } catch (e) {
+    if (__DEV__) console.error('[Messages API] Error', e);
+    return { success: false, error: e.message || 'Network error' };
+  }
+}
+
+/**
+ * PATCH /messages/:id/read — requires JWT
+ * Mark a single message as read.
+ * @param {string} accessToken
+ * @param {string} messageId
+ * @returns {{ success: boolean, error?: string }}
+ */
+export async function markMessageAsRead(accessToken, messageId) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: 'Backend URL not configured' };
+  if (!accessToken) return { success: false, error: 'Not authenticated' };
+  if (!messageId) return { success: false, error: 'Message ID required' };
+  try {
+    const url = `${base}/messages/${encodeURIComponent(messageId)}/read`;
+    const res = await fetch(url, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    return { success: true };
+  } catch (e) {
+    if (__DEV__) console.error('[Messages API] Error', e);
+    return { success: false, error: e.message || 'Network error' };
+  }
+}
+
+/**
+ * PATCH /messages/read-all — requires JWT
+ * Mark all unread support messages as read.
+ * @param {string} accessToken
+ * @returns {{ success: boolean, count?: number, error?: string }}
+ */
+export async function markAllMessagesAsRead(accessToken) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: 'Backend URL not configured' };
+  if (!accessToken) return { success: false, error: 'Not authenticated' };
+  try {
+    const url = `${base}/messages/read-all`;
+    const res = await fetch(url, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    return { success: true, count: data.count ?? 0 };
+  } catch (e) {
+    if (__DEV__) console.error('[Messages API] Error', e);
+    return { success: false, error: e.message || 'Network error' };
+  }
+}
+
+// --- User Activity API (Admin) ---
+
+/**
+ * GET /user-activity/:userId — requires Admin JWT
+ * Returns activity status for a single user (online/offline, lastActiveAt, lastLoginAt).
+ * @param {string} adminToken — Admin JWT
+ * @param {string} userId
+ * @returns {{ success: boolean, isOnline?: boolean, status?: string, lastActiveAt?: string, lastLoginAt?: string, error?: string }}
+ */
+export async function getUserActivity(adminToken, userId) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: 'Backend URL not configured' };
+  if (!adminToken) return { success: false, error: 'Not authenticated' };
+  if (!userId) return { success: false, error: 'User ID required' };
+  try {
+    const url = `${base}/user-activity/${encodeURIComponent(userId)}`;
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${adminToken}`,
+      },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    return {
+      success: true,
+      isOnline: data.isOnline,
+      status: data.status,
+      lastActiveAt: data.lastActiveAt,
+      lastLoginAt: data.lastLoginAt,
+    };
+  } catch (e) {
+    if (__DEV__) console.error('[UserActivity API] Error', e);
+    return { success: false, error: e.message || 'Network error' };
+  }
+}
+
+/**
+ * GET /user-activity/bulk?userIds=id1,id2,id3 — requires Admin JWT
+ * Returns activity status for multiple users. Users without a record return null.
+ * @param {string} adminToken — Admin JWT
+ * @param {string[]} userIds
+ * @returns {{ success: boolean, activities?: Record<string, { isOnline: boolean, status: string, lastActiveAt: string, lastLoginAt: string } | null>, error?: string }}
+ */
+export async function getBulkUserActivity(adminToken, userIds) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: 'Backend URL not configured' };
+  if (!adminToken) return { success: false, error: 'Not authenticated' };
+  if (!Array.isArray(userIds) || userIds.length === 0) return { success: false, error: 'User IDs required' };
+  try {
+    const idsParam = userIds.filter(Boolean).join(',');
+    if (!idsParam) return { success: false, error: 'User IDs required' };
+    const url = `${base}/user-activity/bulk?userIds=${encodeURIComponent(idsParam)}`;
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${adminToken}`,
+      },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    return { success: true, activities: data };
+  } catch (e) {
+    if (__DEV__) console.error('[UserActivity API] Error', e);
     return { success: false, error: e.message || 'Network error' };
   }
 }

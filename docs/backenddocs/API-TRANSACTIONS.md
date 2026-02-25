@@ -52,6 +52,7 @@ Returns transactions for the authenticated user. Optionally filter by a single w
 | Parameter  | Type   | Required | Description                                                                 |
 |------------|--------|----------|-----------------------------------------------------------------------------|
 | `walletId` | string | No       | If provided, only transactions for this wallet (must belong to the user).  |
+| `userId`   | string | No       | **ADMIN only.** If provided, list that user's transactions instead of own.  |
 | `limit`    | string | No       | Max number of items (default 50, max 100). Parsed as integer.              |
 | `cursor`   | string | No       | Transaction ID for cursor-based pagination (next page).                     |
 
@@ -70,6 +71,13 @@ GET /transactions?limit=20
 
 ```http
 GET /transactions?walletId=clxx...&limit=20
+```
+
+**Example: admin list another user's transactions**
+
+```http
+GET /transactions?userId=clxx...&limit=20
+Authorization: Bearer <admin_token>
 ```
 
 **Example success response** `200`

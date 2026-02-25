@@ -51,14 +51,25 @@ export default function AuthLoader() {
 
         const result = await getMe(accessToken);
         if (!result.success || !result.user) {
-          await AsyncStorage.multiRemove(["access_token", "user", "passcodeLoginComplete"]);
+          await AsyncStorage.multiRemove(["access_token", "user", "passcodeLoginComplete", "registrationPasscodePending"]);
           await waitMinSplash(startTime);
           goTo("Welcome");
           return;
         }
 
+        // Always store user so Dashboard has userData (backend-only, no Firebase)
+        await AsyncStorage.setItem("user", JSON.stringify(result.user));
+
+        const registrationPasscodePending = await AsyncStorage.getItem("registrationPasscodePending");
         const passcodeLoginComplete = await AsyncStorage.getItem("passcodeLoginComplete");
         const user = result.user as { hasPasscode?: boolean };
+
+        if (registrationPasscodePending === "true") {
+          await AsyncStorage.setItem("user", JSON.stringify(result.user));
+          await waitMinSplash(startTime);
+          goTo("CreatePasscode");
+          return;
+        }
 
         if (passcodeLoginComplete === "true") {
           await waitMinSplash(startTime);
@@ -67,7 +78,6 @@ export default function AuthLoader() {
         }
 
         if (user?.hasPasscode) {
-          await AsyncStorage.setItem("user", JSON.stringify(result.user));
           await waitMinSplash(startTime);
           goTo("Passcode");
           return;
@@ -78,7 +88,7 @@ export default function AuthLoader() {
       } catch (error) {
         console.error("Error in auth handling:", error);
         try {
-          await AsyncStorage.multiRemove(["access_token", "user", "passcodeLoginComplete"]);
+          await AsyncStorage.multiRemove(["access_token", "user", "passcodeLoginComplete", "registrationPasscodePending"]);
         } catch (_) {}
         await waitMinSplash(startTime);
         goTo("Welcome");

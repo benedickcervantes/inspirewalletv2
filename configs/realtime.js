@@ -42,6 +42,10 @@ export function createRealtimeConnection(accessToken, handlers = {}) {
       handlers.onTransactionCreated?.(payload);
     });
 
+    socket.on('NEW_SUPPORT_MESSAGE', (payload) => {
+      handlers.onNewSupportMessage?.(payload);
+    });
+
     socket.on('connect', () => {
       handlers.onConnect?.();
     });

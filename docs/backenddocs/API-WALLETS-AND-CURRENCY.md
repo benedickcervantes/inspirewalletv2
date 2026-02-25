@@ -1,6 +1,6 @@
 # API Documentation: Wallets & Currency (Frontend Guide)
 
-This document describes how the frontend should use the **Wallets** API. Wallets hold user balances per currency. The default currency is **PHP** (Philippine Peso). Balance and currency display data are encrypted at rest on the backend; the frontend sends and receives **plain JSON**.
+This document describes how the frontend should use the **Wallets** API. Wallets hold user balances and agent commission per currency. The default currency is **PHP** (Philippine Peso). Balance, agent commission, and currency display data are encrypted at rest on the backend; the frontend sends and receives **plain JSON**.
 
 ---
 
@@ -25,7 +25,7 @@ All wallet endpoints are under the `/wallets` prefix. Every wallet belongs to th
 **`GET /wallets`**  
 **Protected:** Yes.
 
-Returns all wallets for the authenticated user. Each wallet includes decrypted balance and currency (name, symbol).
+Returns all wallets for the authenticated user. Each wallet includes decrypted balance, agent commission, and currency (name, symbol).
 
 **Request**
 
@@ -41,6 +41,7 @@ Returns all wallets for the authenticated user. Each wallet includes decrypted b
     "userId": "clxx...",
     "currencyId": "clxx...",
     "balance": "0.00",
+    "agentCommission": "0.00",
     "status": "ACTIVE",
     "createdAt": "2026-02-18T00:00:00.000Z",
     "updatedAt": "2026-02-18T00:00:00.000Z",
@@ -85,6 +86,7 @@ Idempotent: returns the user’s main (PHP) wallet, creating it if it doesn’t 
   "userId": "clxx...",
   "currencyId": "clxx...",
   "balance": "0.00",
+  "agentCommission": "0.00",
   "status": "ACTIVE",
   "createdAt": "2026-02-18T00:00:00.000Z",
   "updatedAt": "2026-02-18T00:00:00.000Z",
@@ -137,7 +139,7 @@ Creates a new wallet for the authenticated user. Default currency is PHP. A user
 
 **Example success response** `201`
 
-Same shape as the wallet object in “Get or create main wallet” above (includes `balance` and `currency` with decrypted name/symbol).
+Same shape as the wallet object in “Get or create main wallet” above (includes `balance`, `agentCommission`, and `currency` with decrypted name/symbol).
 
 **Error responses**
 
@@ -168,7 +170,7 @@ Returns a single wallet by ID. The wallet must belong to the authenticated user.
 
 **Example success response** `200`
 
-Same shape as a single wallet object in the list (includes `balance` and `currency`).
+Same shape as a single wallet object in the list (includes `balance`, `agentCommission`, and `currency`).
 
 **Error responses**
 
@@ -182,16 +184,17 @@ Same shape as a single wallet object in the list (includes `balance` and `curren
 
 ## Wallet object (in responses)
 
-| Field        | Type   | Description                                              |
-|-------------|--------|----------------------------------------------------------|
-| `id`        | string | Unique wallet ID (cuid)                                  |
-| `userId`    | string | Owner user ID                                            |
-| `currencyId`| string | Reference to the currency                                |
-| `balance`   | string | Current balance as decimal string (e.g. `"0.00"`) — decrypted by backend |
-| `status`    | string | One of: `ACTIVE`, `FROZEN`, `CLOSED`                     |
-| `createdAt` | string | ISO 8601 date-time                                       |
-| `updatedAt` | string | ISO 8601 date-time                                       |
-| `currency`  | object | Currency with decrypted `name` and `symbol` (see below)   |
+| Field             | Type   | Description                                                                 |
+|-------------------|--------|-----------------------------------------------------------------------------|
+| `id`              | string | Unique wallet ID (cuid)                                                    |
+| `userId`          | string | Owner user ID                                                              |
+| `currencyId`      | string | Reference to the currency                                                  |
+| `balance`         | string | Current balance as decimal string (e.g. `"0.00"`) — decrypted by backend   |
+| `agentCommission` | string | Agent commission balance (e.g. `"0.00"`). Non-agents have `"0.00"`.        |
+| `status`          | string | One of: `ACTIVE`, `FROZEN`, `CLOSED`                                       |
+| `createdAt`       | string | ISO 8601 date-time                                                         |
+| `updatedAt`       | string | ISO 8601 date-time                                                         |
+| `currency`        | object | Currency with decrypted `name` and `symbol` (see below)                     |
 
 ---
 
@@ -210,7 +213,7 @@ Same shape as a single wallet object in the list (includes `balance` and `curren
 
 ## Encryption (backend only)
 
-- **Balance** and **currency name/symbol** are stored encrypted in the database (Supabase via Prisma).
+- **Balance**, **agent commission**, and **currency name/symbol** are stored encrypted in the database (Supabase via Prisma).
 - The frontend never sends or receives encrypted values. All wallet and currency fields in the API are plain JSON; the backend encrypts on write and decrypts on read.
 
 ---

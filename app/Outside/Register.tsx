@@ -1,31 +1,32 @@
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useState } from 'react';
 import {
-  StyleSheet,
-  Text,
-  View,
+  ActivityIndicator,
+  Dimensions,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
   SafeAreaView,
-  TextInput,
-  TouchableOpacity,
   ScrollView,
   StatusBar,
-  KeyboardAvoidingView,
-  Platform,
-  Modal,
-  Dimensions,
-  Alert,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  useWindowDimensions,
+  View
 } from 'react-native';
-import { useState } from 'react';
-import { useNavigation } from '@react-navigation/native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import { ActivityIndicator } from 'react-native';
-import type { NavProp } from '../../types/navigation';
 import { register as registerApi } from '../../configs/api';
-
-const { width } = Dimensions.get('window');
+import type { NavProp } from '../../types/navigation';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const isValidEmail = (email: string) => EMAIL_REGEX.test((email || '').trim().toLowerCase());
+
+const capitalizeWords = (text: string) =>
+  text.replace(/\b\w/g, (char) => char.toUpperCase());
 
 const COUNTRY_OPTIONS = [
   { code: '+63', label: 'Philippines', flag: '🇵🇭', iso: 'PH' },
@@ -37,6 +38,7 @@ const COUNTRY_OPTIONS = [
 
 export default function Register() {
   const navigation = useNavigation();
+  const { width } = useWindowDimensions();
   const [currentStep, setCurrentStep] = useState(1);
 
   const [firstName, setFirstName] = useState('');
@@ -58,7 +60,6 @@ export default function Register() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isCountryModalVisible, setIsCountryModalVisible] = useState(false);
 
   const handleNextStep = () => {
@@ -140,7 +141,8 @@ export default function Register() {
 
       await AsyncStorage.setItem('access_token', result.access_token || '');
       await AsyncStorage.setItem('user', JSON.stringify(result.user || {}));
-      setShowSuccessModal(true);
+      await AsyncStorage.setItem('registrationPasscodePending', 'true');
+      (navigation as unknown as NavProp).replace('CreatePasscode');
     } catch (_) {
       setRegisterError('An unexpected error occurred. Please try again.');
     } finally {
@@ -229,8 +231,9 @@ export default function Register() {
                       style={styles.input}
                       placeholder="e.g. John"
                       placeholderTextColor="#999"
+                      autoCapitalize="words"
                       value={firstName}
-                      onChangeText={setFirstName}
+                      onChangeText={(text) => setFirstName(capitalizeWords(text))}
                     />
                   </View>
                   <View style={styles.inputGroup}>
@@ -241,8 +244,9 @@ export default function Register() {
                       style={styles.input}
                       placeholder="e.g. Doe"
                       placeholderTextColor="#999"
+                      autoCapitalize="words"
                       value={lastName}
-                      onChangeText={setLastName}
+                      onChangeText={(text) => setLastName(capitalizeWords(text))}
                     />
                   </View>
                   <View style={styles.inputGroup}>
@@ -280,8 +284,9 @@ export default function Register() {
                         style={styles.input}
                         placeholder="Enter your company name"
                         placeholderTextColor="#999"
+                        autoCapitalize="words"
                         value={companyName}
-                        onChangeText={setCompanyName}
+                        onChangeText={(text) => setCompanyName(capitalizeWords(text))}
                       />
                     </View>
                   )}
@@ -494,49 +499,6 @@ export default function Register() {
           </View>
         </Modal>
 
-        <Modal
-          visible={showSuccessModal}
-          transparent={true}
-          animationType="fade"
-          onRequestClose={() => {
-            setShowSuccessModal(false);
-            navigation.navigate('Welcome');
-          }}
-        >
-          <View style={styles.successModalOverlay}>
-            <View style={styles.successModalContent}>
-              <LinearGradient
-                colors={['#E25A17', '#F28934']}
-                style={styles.successModalGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <View style={styles.successIconContainer}>
-                  <Ionicons name="checkmark-circle" size={80} color="#FFFFFF" />
-                </View>
-                <Text style={styles.successTitle}>Registration Successful!</Text>
-                <Text style={styles.successMessage}>
-                  Your account has been created successfully. Welcome to Inspire!
-                </Text>
-                <TouchableOpacity
-                  style={styles.successButton}
-                  onPress={async () => {
-                    setShowSuccessModal(false);
-                    const userJson = await AsyncStorage.getItem('user');
-                    const user = userJson ? (JSON.parse(userJson) as { hasPasscode?: boolean }) : null;
-                    if (user?.hasPasscode) {
-                      (navigation as unknown as NavProp).replace('Passcode');
-                    } else {
-                      (navigation as unknown as NavProp).replace('Main');
-                    }
-                  }}
-                >
-                  <Text style={styles.successButtonText}>Continue to App</Text>
-                </TouchableOpacity>
-              </LinearGradient>
-            </View>
-          </View>
-        </Modal>
       </SafeAreaView>
     </>
   );
@@ -820,12 +782,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingBottom: 20,
   },
-  qrCenterRow: { flexDirection: 'row', height: width * 0.7 },
+  qrCenterRow: { flexDirection: 'row', height: Dimensions.get('window').width * 0.7 },
   qrSideOverlay: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.7)' },
   qrFrameContainer: {
-    width: width * 0.7,
-    height: width * 0.7,
-    position: 'relative',
+    width: Dimensions.get('window').width * 0.7,
+    height: Dimensions.get('window').width * 0.7,
+    position: 'relative' as const,
     justifyContent: 'center',
     alignItems: 'center',
   },

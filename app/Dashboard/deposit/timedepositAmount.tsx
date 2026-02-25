@@ -204,7 +204,6 @@ export default function TimeDepositAmount() {
                   ₱{phpEquivalent.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </Text>
               </View>
-              <Text style={styles.equivalentSubtext}>Rate:</Text>
             </LinearGradient>
           </View>
 
