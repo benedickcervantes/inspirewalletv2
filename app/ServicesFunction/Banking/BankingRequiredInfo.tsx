@@ -17,6 +17,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useLanguage } from "../../../context/LanguageContext";
 import type { RootStackParamList } from "../../../types/navigation";
 
 const THEME_COLOR = "#E15816";
@@ -24,6 +25,7 @@ const ORANGE_GRADIENT = ["#E25A17", "#F28934"] as const;
 const GREEN_COMPLETE = "#10B981";
 
 export default function BankingRequiredInfo() {
+  const { t } = useLanguage();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, "BankingRequiredInfo">>();
   const route = useRoute<RouteProp<RootStackParamList, "BankingRequiredInfo">>();
   const selectedBank = route.params?.selectedBank ?? "Security Bank";
@@ -39,8 +41,8 @@ export default function BankingRequiredInfo() {
         await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (permissionResult.granted === false) {
         Alert.alert(
-          "Permission Required",
-          "Please allow access to your photos to upload documents."
+          t("banking.permissionRequired"),
+          t("banking.allowPhotos")
         );
         return;
       }
@@ -57,7 +59,7 @@ export default function BankingRequiredInfo() {
       }
     } catch (error) {
       console.error("Error picking passport photo:", error);
-      Alert.alert("Error", "Failed to pick image. Please try again.");
+      Alert.alert(t("banking.error"), t("banking.failedToPickImage"));
     }
   };
 
@@ -67,8 +69,8 @@ export default function BankingRequiredInfo() {
         await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (permissionResult.granted === false) {
         Alert.alert(
-          "Permission Required",
-          "Please allow access to your photos to upload documents."
+          t("banking.permissionRequired"),
+          t("banking.allowPhotos")
         );
         return;
       }
@@ -84,7 +86,7 @@ export default function BankingRequiredInfo() {
       }
     } catch (error) {
       console.error("Error picking government ID:", error);
-      Alert.alert("Error", "Failed to pick image. Please try again.");
+      Alert.alert(t("banking.error"), t("banking.failedToPickImage"));
     }
   };
 
@@ -94,11 +96,11 @@ export default function BankingRequiredInfo() {
 
   const handleSubmit = () => {
     if (!passportPhoto) {
-      Alert.alert("Required", "Please upload your passport photo.");
+      Alert.alert(t("banking.required"), t("banking.uploadPassportRequired"));
       return;
     }
     if (!governmentId) {
-      Alert.alert("Required", "Please upload your government ID.");
+      Alert.alert(t("banking.required"), t("banking.uploadGovIdRequired"));
       return;
     }
     // TODO: Submit application to backend
@@ -130,8 +132,8 @@ export default function BankingRequiredInfo() {
                 color="#FFFFFF"
                 style={styles.headerIcon}
               />
-              <Text style={styles.headerTitle}>Bank Account Services</Text>
-              <Text style={styles.headerSubtitle}>Professional Banking Solutions</Text>
+              <Text style={styles.headerTitle}>{t("banking.headerTitle")}</Text>
+              <Text style={styles.headerSubtitle}>{t("banking.headerSubtitle")}</Text>
             </LinearGradient>
           </View>
         </View>
@@ -184,16 +186,15 @@ export default function BankingRequiredInfo() {
             <View style={styles.stepIconWrapper}>
               <Ionicons name="document-text" size={28} color={THEME_COLOR} />
             </View>
-            <Text style={styles.contentTitle}>Required Documents</Text>
+            <Text style={styles.contentTitle}>{t("banking.requiredDocs")}</Text>
             <Text style={styles.contentDescription}>
-              Upload required documents for identity verification and account
-              opening process.
+              {t("banking.requiredDocsDesc")}
             </Text>
 
             {/* Passport Photo Upload */}
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>
-                Passport Photo<Text style={styles.required}>*</Text>
+                {t("banking.passportPhoto")}<Text style={styles.required}>*</Text>
               </Text>
               <TouchableOpacity
                 style={styles.uploadArea}
@@ -209,14 +210,14 @@ export default function BankingRequiredInfo() {
                     />
                     <View style={styles.uploadedOverlay}>
                       <Ionicons name="checkmark-circle" size={32} color={GREEN_COMPLETE} />
-                      <Text style={styles.uploadedText}>Uploaded</Text>
+                      <Text style={styles.uploadedText}>{t("banking.uploaded")}</Text>
                     </View>
                   </View>
                 ) : (
                   <>
                     <Ionicons name="camera" size={40} color={THEME_COLOR} style={styles.uploadIcon} />
-                    <Text style={styles.uploadLabel}>Upload Passport.</Text>
-                    <Text style={styles.uploadHint}>Tap to select image</Text>
+                    <Text style={styles.uploadLabel}>{t("banking.uploadPassport")}</Text>
+                    <Text style={styles.uploadHint}>{t("banking.tapToSelectImage")}</Text>
                   </>
                 )}
               </TouchableOpacity>
@@ -225,7 +226,7 @@ export default function BankingRequiredInfo() {
             {/* Government ID Upload */}
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>
-                Government ID<Text style={styles.required}>*</Text>
+                {t("banking.governmentId")}<Text style={styles.required}>*</Text>
               </Text>
               <TouchableOpacity
                 style={styles.uploadArea}
@@ -241,7 +242,7 @@ export default function BankingRequiredInfo() {
                     />
                     <View style={styles.uploadedOverlay}>
                       <Ionicons name="checkmark-circle" size={32} color={GREEN_COMPLETE} />
-                      <Text style={styles.uploadedText}>Uploaded</Text>
+                      <Text style={styles.uploadedText}>{t("banking.uploaded")}</Text>
                     </View>
                   </View>
                 ) : (
@@ -252,8 +253,8 @@ export default function BankingRequiredInfo() {
                       color={THEME_COLOR}
                       style={styles.uploadIcon}
                     />
-                    <Text style={styles.uploadLabel}>Upload Government ID.</Text>
-                    <Text style={styles.uploadHint}>Driver's License, SSS, etc.</Text>
+                    <Text style={styles.uploadLabel}>{t("banking.uploadGovernmentId")}</Text>
+                    <Text style={styles.uploadHint}>{t("banking.uploadGovIdHint")}</Text>
                   </>
                 )}
               </TouchableOpacity>
@@ -266,10 +267,7 @@ export default function BankingRequiredInfo() {
               <Text style={styles.infoIconText}>i</Text>
             </View>
             <Text style={styles.infoText}>
-              By submitting these details, we will send you an email
-              confirmation with your application status. Please note that this
-              process will take approximately 5-7 working days for review and
-              approval by the selected bank.
+              {t("banking.infoNote")}
             </Text>
           </View>
 
@@ -284,7 +282,7 @@ export default function BankingRequiredInfo() {
               onPress={handleBack}
               activeOpacity={0.8}
             >
-              <Text style={styles.backButtonText}>Back</Text>
+              <Text style={styles.backButtonText}>{t("banking.back")}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.nextButton}
@@ -297,7 +295,7 @@ export default function BankingRequiredInfo() {
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
               >
-                <Text style={styles.nextButtonText}>Submit</Text>
+                <Text style={styles.nextButtonText}>{t("banking.submit")}</Text>
               </LinearGradient>
             </TouchableOpacity>
           </View>

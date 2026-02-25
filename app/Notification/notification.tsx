@@ -13,6 +13,7 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+import { useLanguage } from '../../context/LanguageContext';
 import { getMessages } from '../../configs/api';
 import { auth } from '../../configs/firebase';
 import notificationService, { type NotificationItem } from './notificationService';
@@ -26,12 +27,9 @@ interface Message {
   direction?: 'ADMIN_TO_USER' | 'USER_TO_ADMIN';
 }
 
-interface NotificationProps {
-  language?: string;
-}
-
-const Notification = ({ language = 'English' }: NotificationProps) => {
+const Notification = () => {
   const navigation = useNavigation();
+  const { t } = useLanguage();
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
@@ -177,11 +175,11 @@ const Notification = ({ language = 'English' }: NotificationProps) => {
         <View style={styles.textContainer}>
           <View style={styles.titleRow}>
             <Text style={styles.notificationTitle}>
-              {item.senderName || (item.direction === 'ADMIN_TO_USER' ? 'Support Message' : 'Your Message')}
+              {item.senderName || (item.direction === 'ADMIN_TO_USER' ? t('notification.supportMessage') : t('notification.yourMessage'))}
             </Text>
             {item.status === 'SENT' && (
               <View style={styles.newBadge}>
-                <Text style={styles.newBadgeText}>NEW</Text>
+                <Text style={styles.newBadgeText}>{t('notification.newBadge')}</Text>
               </View>
             )}
           </View>
@@ -243,7 +241,7 @@ const Notification = ({ language = 'English' }: NotificationProps) => {
             )}
             {!item.read && (
               <View style={styles.newBadge}>
-                <Text style={styles.newBadgeText}>NEW</Text>
+                <Text style={styles.newBadgeText}>{t('notification.newBadge')}</Text>
               </View>
             )}
           </View>
@@ -274,10 +272,8 @@ const Notification = ({ language = 'English' }: NotificationProps) => {
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
       <Ionicons name="notifications-off-outline" size={64} color="#CCC" />
-      <Text style={styles.emptyText}>No notifications yet</Text>
-      <Text style={styles.emptySubtext}>
-        You'll see notifications here when you have updates
-      </Text>
+      <Text style={styles.emptyText}>{t('notification.noNotifications')}</Text>
+      <Text style={styles.emptySubtext}>{t('notification.noNotificationsSubtext')}</Text>
     </View>
   );
 
@@ -296,11 +292,11 @@ const Notification = ({ language = 'English' }: NotificationProps) => {
           >
             <Ionicons name="chevron-back" size={28} color="#FFFFFF" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Notifications</Text>
+          <Text style={styles.headerTitle}>{t('notification.title')}</Text>
           <View style={styles.refreshButton} />
         </LinearGradient>
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>Please log in to view notifications</Text>
+          <Text style={styles.emptyText}>{t('notification.loginToView')}</Text>
         </View>
       </SafeAreaView>
     );
@@ -320,7 +316,7 @@ const Notification = ({ language = 'English' }: NotificationProps) => {
         >
           <Ionicons name="chevron-back" size={28} color="#FFFFFF" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Notifications</Text>
+        <Text style={styles.headerTitle}>{t('notification.title')}</Text>
         <TouchableOpacity
           style={styles.refreshButton}
           onPress={handleRefresh}
