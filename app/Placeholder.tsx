@@ -3,8 +3,9 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { doc, getDoc } from "firebase/firestore";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
+  Modal,
   Platform,
   ScrollView,
   StatusBar,
@@ -17,6 +18,8 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { getMe } from "../configs/api";
 import { auth, firestore } from "../configs/firebase";
+import { useLanguage } from "../context/LanguageContext";
+import { DEFAULT_LANGUAGE, normalizeLanguage, SUPPORTED_LANGUAGES } from "../constants/locales";
 
 const USER_PREFERRED_LANGUAGE_KEY = "user_preferred_language";
 
@@ -24,6 +27,7 @@ export default function Placeholder() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
+  const { t, language: contextLanguage, setLanguage } = useLanguage();
   const isSmallDevice = width < 375;
   const scale = Math.min(width / 375, 1.25);
   const headerPaddingTop =
@@ -89,22 +93,22 @@ export default function Placeholder() {
 
   const fullName = userData?.firstName && userData?.lastName 
     ? `${userData.firstName} ${userData.lastName}`
-    : userData?.displayName || userData?.name || "User";
+    : userData?.displayName || userData?.name || t("common.user");
   const email = userData?.email || "user@example.com";
   const isAgent = userData?.isAgent || userData?.role === "agent" || false;
   const isPremium = userData?.isPremium || userData?.accountLevel === "premium" || false;
   const accountNumber = userData?.accountNumber || userData?.id || "000053126300";
   const companyName = userData?.companyName || "Inspire Holdings Inc";
   const contactNumber = userData?.phoneNumber || userData?.phone || "+63";
-  const lineLink = userData?.lineLink || "Not provided";
-  const viberLink = userData?.viberLink || "Not provided";
-  const whatsappLink = userData?.whatsappLink || "Not provided";
+  const lineLink = userData?.lineLink || t("common.notProvided");
+  const viberLink = userData?.viberLink || t("common.notProvided");
+  const whatsappLink = userData?.whatsappLink || t("common.notProvided");
   const accountLevelLabel = isPremium ? t("profile.premium") : t("profile.basic");
-  const agentReferrer = userData?.agentReferrer || userData?.referredBy || "Master Agent";
+  const agentReferrer = userData?.agentReferrer || userData?.referredBy || t("profile.masterAgent");
   const language = normalizeLanguage(userData?.language ?? contextLanguage);
 
   const handleSelectLanguage = async (selectedLabel: string) => {
-    setContextLanguage(selectedLabel);
+    setLanguage(selectedLabel);
     setUserData((prev: any) => (prev ? { ...prev, language: selectedLabel } : null));
     await AsyncStorage.setItem(USER_PREFERRED_LANGUAGE_KEY, selectedLabel);
     const userJson = await AsyncStorage.getItem("user");
@@ -179,13 +183,13 @@ export default function Placeholder() {
             {isAgent && (
               <View style={styles.agentBadge}>
                 <MaterialCommunityIcons name="shield-account" size={16} color="#FFFFFF" />
-                <Text style={styles.badgeText}>AGENT</Text>
+                <Text style={styles.badgeText}>{t("profile.agent").toUpperCase()}</Text>
               </View>
             )}
             {isPremium && (
               <View style={styles.premiumBadge}>
                 <Ionicons name="diamond" size={16} color="#333" />
-                <Text style={styles.premiumBadgeText}>PREMIUM</Text>
+                <Text style={styles.premiumBadgeText}>{t("profile.premium").toUpperCase()}</Text>
               </View>
             )}
           </View>
@@ -195,7 +199,7 @@ export default function Placeholder() {
         <View style={[styles.section, { marginHorizontal: sectionMarginHorizontal, padding: sectionPadding }]}>
           <View style={styles.sectionHeader}>
             <Ionicons name="person-circle-outline" size={22} color="#E15816" />
-            <Text style={[styles.sectionTitle, { fontSize: Math.round(16 * scale) }]}>Account Details</Text>
+            <Text style={[styles.sectionTitle, { fontSize: Math.round(16 * scale) }]}>{t("profile.accountDetails")}</Text>
           </View>
 
           <DetailItem
@@ -280,7 +284,7 @@ export default function Placeholder() {
         <View style={[styles.section, { marginHorizontal: sectionMarginHorizontal, padding: sectionPadding }]}>
           <View style={styles.sectionHeader}>
             <Ionicons name="information-circle-outline" size={22} color="#E15816" />
-            <Text style={[styles.sectionTitle, { fontSize: Math.round(16 * scale) }]}>Account Status</Text>
+            <Text style={[styles.sectionTitle, { fontSize: Math.round(16 * scale) }]}>{t("profile.accountStatus")}</Text>
           </View>
 
           <DetailItem
@@ -408,13 +412,15 @@ function DetailItem({
             )}
           </View>
         )}
-        {editable && (
+        {editable && onEditPress && (
           <TouchableOpacity
             style={styles.editButton}
-            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            onPress={onEditPress}
+            hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+            activeOpacity={0.7}
           >
-            <Ionicons name="create-outline" size={18} color="#999" />
-          </View>
+            <Ionicons name="create-outline" size={22} color="#E15816" />
+          </TouchableOpacity>
         )}
       </View>
     </>
@@ -588,8 +594,12 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
   },
   editButton: {
-    padding: 4,
+    padding: 12,
     marginLeft: 8,
+    minWidth: 44,
+    minHeight: 44,
+    justifyContent: "center",
+    alignItems: "center",
   },
   modalOverlay: {
     flex: 1,
