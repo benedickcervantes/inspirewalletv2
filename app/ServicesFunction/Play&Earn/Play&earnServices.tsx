@@ -1,5 +1,6 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
+import { LinearGradient } from "expo-linear-gradient";
 import React, { useState } from "react";
 import {
   Platform,
@@ -13,6 +14,7 @@ import {
 } from "react-native";
 
 const THEME_COLOR = "#E15816";
+const ORANGE_GRADIENT: readonly [string, string] = ["#E25A17", "#F28934"];
 const GREEN_BUTTON = "#22C55E";
 
 const CRYPTO_ASSETS: { id: string; label: string; icon: React.ComponentProps<typeof Ionicons>["name"] }[] = [
@@ -49,13 +51,20 @@ export default function PlayEarnServices() {
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        {/* Header */}
-        <View style={styles.header}>
+        {/* Header - Orange Gradient (matches Deposit screens) */}
+        <LinearGradient
+          colors={ORANGE_GRADIENT}
+          style={styles.header}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+        >
           <TouchableOpacity
             style={styles.backButton}
-            onPress={() => navigation.goBack()}
+            onPress={() => navigation.navigate("Main")}
           >
-            <Ionicons name="arrow-back" size={28} color="#000" />
+            <View style={styles.backButtonCircle}>
+              <Ionicons name="arrow-back" size={24} color={THEME_COLOR} />
+            </View>
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Play and Earn</Text>
           <TouchableOpacity style={styles.helpButton}>
@@ -63,7 +72,7 @@ export default function PlayEarnServices() {
               <Text style={styles.helpIconText}>?</Text>
             </View>
           </TouchableOpacity>
-        </View>
+        </LinearGradient>
 
         <ScrollView
           style={styles.scrollView}
@@ -303,33 +312,39 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    paddingTop: 16,
+    paddingVertical: 16,
   },
   backButton: {
     padding: 4,
   },
+  backButtonCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "rgba(255,255,255,0.9)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
   headerTitle: {
     fontSize: 20,
     fontWeight: "700",
-    color: "#000",
+    color: "#FFF",
   },
   helpButton: {
     padding: 4,
   },
   helpIconCircle: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    borderWidth: 1.5,
-    borderColor: "#999",
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "rgba(255,255,255,0.9)",
     justifyContent: "center",
     alignItems: "center",
   },
   helpIconText: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#666",
+    color: THEME_COLOR,
   },
   scrollView: {
     flex: 1,

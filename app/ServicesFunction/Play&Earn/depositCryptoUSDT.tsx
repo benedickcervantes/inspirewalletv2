@@ -90,7 +90,7 @@ export default function DepositCryptoUSDT() {
       return;
     }
     Alert.alert("Deposit request submitted", "Your deposit will be processed once we verify the transaction receipt.");
-    navigation.goBack();
+    navigation.navigate("PlayEarn");
   };
 
   const getCryptoPillActiveStyle = () => {
@@ -111,7 +111,7 @@ export default function DepositCryptoUSDT() {
         >
           <TouchableOpacity
             style={styles.backButton}
-            onPress={() => navigation.goBack()}
+            onPress={() => navigation.navigate("PlayEarn")}
           >
             <View style={styles.backButtonCircle}>
               <Ionicons name="arrow-back" size={24} color={THEME_COLOR} />
@@ -145,8 +145,8 @@ export default function DepositCryptoUSDT() {
                 crypto.id === "BTC" ? styles.cryptoPillIconCircleActiveBtc :
                 crypto.id === "ETH" ? styles.cryptoPillIconCircleActiveEth :
                 styles.cryptoPillIconCircleActiveUsdt;
-              const iconColor = isActive && crypto.id === "USDT" ? "#22C55E" : (isActive ? "#FFF" : "#555");
-              const textActiveStyle = crypto.id === "USDT" && isActive ? styles.cryptoPillTextActiveUsdt : styles.cryptoPillTextActive;
+              const iconColor = isActive ? "#FFF" : "#555";
+              const textActiveStyle = isActive ? styles.cryptoPillTextActive : undefined;
               return (
                 <TouchableOpacity
                   key={crypto.id}
@@ -432,9 +432,6 @@ const styles = StyleSheet.create({
   },
   cryptoPillTextActive: {
     color: "#FFF",
-  },
-  cryptoPillTextActiveUsdt: {
-    color: "#22C55E",
   },
   walletCard: {
     backgroundColor: "#2D2D2D",
