@@ -20,6 +20,7 @@ import {
   getReferralTree,
   getTransactions,
 } from "../../configs/api";
+import { useLanguage } from "../../context/LanguageContext";
 
 interface CommissionTransaction {
   id: string;
@@ -32,6 +33,7 @@ interface CommissionTransaction {
 
 export default function AgentDashboard() {
   const navigation = useNavigation();
+  const { t } = useLanguage();
   const { width } = useWindowDimensions();
   const horizontalPadding = width < 375 ? 16 : 20;
   const [loading, setLoading] = useState(true);
@@ -55,7 +57,7 @@ export default function AgentDashboard() {
   const fetchData = useCallback(async () => {
     const accessToken = await AsyncStorage.getItem("access_token");
     if (!accessToken) {
-      setError("Not authenticated");
+      setError(t("agent.notAuthenticated"));
       return;
     }
     setError(null);
@@ -111,7 +113,7 @@ export default function AgentDashboard() {
               id: String(tx.id ?? ""),
               amount: Number.isNaN(amt) ? 0 : amt,
               currencySymbol: curr?.symbol ?? "₱",
-              description: desc || (tx.description as string) || "Commission from referred client",
+              description: desc || (tx.description as string) || t("agent.commissionFromClient"),
               createdAt: String(tx.createdAt ?? ""),
               metadata: meta,
             };
@@ -122,9 +124,9 @@ export default function AgentDashboard() {
         setReferredClientsWithDeposits([]);
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load agent dashboard");
+      setError(e instanceof Error ? e.message : t("agent.failedToLoad"));
     }
-  }, []);
+  }, [t]);
 
   useFocusEffect(
     useCallback(() => {
@@ -143,8 +145,8 @@ export default function AgentDashboard() {
     if (!referralCode) return;
     try {
       await Share.share({
-        message: `Join InspireWallet with my referral code: ${referralCode}`,
-        title: "Referral Code",
+        message: `${t("agent.shareMessagePrefix")} ${referralCode}`,
+        title: t("agent.shareTitle"),
       });
     } catch {
       // User cancelled or share failed
@@ -174,7 +176,7 @@ export default function AgentDashboard() {
           >
             <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Agent Dashboard</Text>
+          <Text style={styles.headerTitle}>{t("agent.title")}</Text>
           <TouchableOpacity
             style={styles.refreshButton}
             onPress={onRefresh}
@@ -211,19 +213,19 @@ export default function AgentDashboard() {
           <View style={styles.commissionCard}>
             <View style={styles.commissionHeader}>
               <Ionicons name="cash-outline" size={28} color="#E25A17" />
-              <Text style={styles.commissionLabel}>Agent Commission</Text>
+              <Text style={styles.commissionLabel}>{t("agent.commission")}</Text>
             </View>
             <Text style={styles.commissionAmount}>
               {currencySymbol} {formatCurrency(agentCommission)}
             </Text>
             <Text style={styles.commissionHint}>
-              Earned from referred clients' approved time deposits
+              {t("agent.commissionHint")}
             </Text>
           </View>
 
           {/* Referral Code & Share */}
           <View style={styles.referralCard}>
-            <Text style={styles.sectionTitle}>Your Referral Code</Text>
+            <Text style={styles.sectionTitle}>{t("agent.yourReferralCode")}</Text>
             <View style={styles.referralCodeRow}>
               <View style={styles.referralCodeBox}>
                 <Text style={styles.referralCodeText}>
@@ -236,7 +238,7 @@ export default function AgentDashboard() {
                 disabled={!referralCode}
               >
                 <Ionicons name="share-outline" size={22} color="#FFFFFF" />
-                <Text style={styles.shareButtonText}>Share</Text>
+                <Text style={styles.shareButtonText}>{t("agent.share")}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -245,24 +247,24 @@ export default function AgentDashboard() {
           <View style={styles.statsRow}>
             <View style={styles.statCard}>
               <Text style={styles.statValue}>{directReferralCount}</Text>
-              <Text style={styles.statLabel}>Direct Referrals</Text>
+              <Text style={styles.statLabel}>{t("agent.directReferrals")}</Text>
             </View>
             <View style={styles.statCard}>
               <Text style={styles.statValue}>{totalDescendantCount}</Text>
-              <Text style={styles.statLabel}>Total Network</Text>
+              <Text style={styles.statLabel}>{t("agent.totalNetwork")}</Text>
             </View>
           </View>
 
           {/* My Referrals */}
           {(directReferrals.length > 0 || directReferralCount > 0) && (
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>My Referrals</Text>
+              <Text style={styles.sectionTitle}>{t("agent.myReferrals")}</Text>
               {directReferrals.length > 0 ? (
                 directReferrals.map((ref) => (
                   <View key={ref.userId} style={styles.referralItem}>
                     <View style={styles.referralItemLeft}>
                       <Text style={styles.referralItemName}>
-                        {[ref.firstName, ref.lastName].filter(Boolean).join(" ") || "Referral"}
+                        {[ref.firstName, ref.lastName].filter(Boolean).join(" ") || t("agent.referralFallback")}
                       </Text>
                       {ref.referralCode && (
                         <Text style={styles.referralItemCode}>{ref.referralCode}</Text>
@@ -273,7 +275,7 @@ export default function AgentDashboard() {
                 ))
               ) : (
                 <Text style={styles.emptyHint}>
-                  {directReferralCount} direct referral{directReferralCount !== 1 ? "s" : ""} in your network
+                  {directReferralCount} {t(directReferralCount === 1 ? "agent.directReferralInNetwork" : "agent.directReferralsInNetwork")}
                 </Text>
               )}
             </View>
@@ -282,10 +284,10 @@ export default function AgentDashboard() {
           {/* Referred Clients with Time Deposits */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>
-              Referred Clients with Time Deposits
+              {t("agent.referredClientsTitle")}
             </Text>
             <Text style={styles.sectionSubtitle}>
-              Clients you referred who had approved time deposits (commission earned)
+              {t("agent.referredClientsSubtitle")}
             </Text>
             {referredClientsWithDeposits.length > 0 ? (
               referredClientsWithDeposits.map((item) => (
@@ -311,10 +313,10 @@ export default function AgentDashboard() {
               <View style={styles.emptyState}>
                 <Ionicons name="time-outline" size={48} color="#CCC" />
                 <Text style={styles.emptyStateText}>
-                  No referred clients with approved time deposits yet
+                  {t("agent.emptyReferredClients")}
                 </Text>
                 <Text style={styles.emptyStateSubtext}>
-                  When your referrals create time deposits and they get approved, you'll earn commission and see them here.
+                  {t("agent.emptyReferredClientsHint")}
                 </Text>
               </View>
             )}

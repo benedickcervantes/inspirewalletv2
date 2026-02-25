@@ -45,12 +45,7 @@ const Aboutus = () => {
             <Text style={styles.cardTitle}>{t('about.ourCompany')}</Text>
           </View>
           <Text style={styles.cardText}>
-            At Inspire Alliance Fund Group Inc., we are driven by a powerful purpose: to empower dreams
-            and ignite meaningful change. Founded on the belief that lasting progress begins with
-            opportunity, we exist to support individuals who are ready to make a difference—not just
-            in their own lives, but in the communities around them. We go beyond traditional funding.
-            We are a dynamic movement that bridges passionate visionaries with the support, trust, and
-            resources they need to transform ideas into lasting impact.
+            {t('about.ourCompanyDesc')}
           </Text>
         </View>
 
@@ -62,13 +57,7 @@ const Aboutus = () => {
             <Text style={styles.cardTitle}>{t('about.ourMission')}</Text>
           </View>
           <Text style={styles.cardText}>
-            At Inspire Alliance Fund Group Inc, our mission is to ignite change by empowering dreams.
-            We believe that real progress begins when individuals are given the resources, trust, and
-            opportunities to build a better future not just for themselves, but for their communities
-            and beyond. We are more than a funding platform; we are a movement that connects
-            purpose-driven people with the support they need to turn ideas into impact. By investing
-            in human potential, we cultivate a ripple effect supporting lives, strengthening
-            economies, and shaping a future where hope and innovation thrive together.
+            {t('about.ourMissionDesc')}
           </Text>
         </View>
 
@@ -80,8 +69,7 @@ const Aboutus = () => {
             <Text style={styles.cardTitle}>{t('about.inspireWallet')}</Text>
           </View>
           <Text style={styles.cardText}>
-            Inspire Wallet, our flagship app for Inspire investors, embodies this vision. Designed as
-            your all-in-one financial companion, Inspire Wallet allows you to:
+            {t('about.inspireWalletIntro')}
           </Text>
           <View style={styles.featuresList}>
             {WALLET_FEATURE_KEYS.map((key, index) => (

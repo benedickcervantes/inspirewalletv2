@@ -13,6 +13,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useLanguage } from "../../../context/LanguageContext";
 
 const THEME_COLOR = "#E15816";
 const ORANGE_GRADIENT = ["#E25A17", "#F28934"];
@@ -28,6 +29,7 @@ const E_WALLET_PROVIDERS = [
 
 export default function EwalletService() {
   const navigation = useNavigation();
+  const { t } = useLanguage();
   const [selectedProvider, setSelectedProvider] = useState("");
   const [showProviderModal, setShowProviderModal] = useState(false);
   const [currentStep] = useState(1);
@@ -63,8 +65,8 @@ export default function EwalletService() {
                   color="#FFFFFF"
                 />
               </View>
-              <Text style={styles.headerTitle}>E-Wallet Account Opening</Text>
-              <Text style={styles.headerSubtitle}>Digital Banking Made Simple</Text>
+              <Text style={styles.headerTitle}>{t("ewallet.headerTitle")}</Text>
+              <Text style={styles.headerSubtitle}>{t("ewallet.headerSubtitle")}</Text>
             </LinearGradient>
           </View>
         </View>
@@ -109,14 +111,13 @@ export default function EwalletService() {
                 color={THEME_COLOR}
               />
             </View>
-            <Text style={styles.contentTitle}>Choose Your E-Wallet Provider</Text>
+            <Text style={styles.contentTitle}>{t("ewallet.chooseProvider")}</Text>
             <Text style={styles.contentDescription}>
-              This will determine which digital banking services you'll have
-              access to.
+              {t("ewallet.chooseProviderDesc")}
             </Text>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Select E-Wallet type</Text>
+              <Text style={styles.inputLabel}>{t("ewallet.selectEwalletType")}</Text>
               <TouchableOpacity
                 style={styles.dropdown}
                 onPress={() => setShowProviderModal(true)}
@@ -127,7 +128,7 @@ export default function EwalletService() {
                     !selectedProvider && styles.dropdownPlaceholder,
                   ]}
                 >
-                  {selectedProvider || "Select your preferred E-Wallet"}
+                  {selectedProvider || t("ewallet.selectPreferred")}
                 </Text>
                 <Ionicons name="chevron-down" size={20} color="#999" />
               </TouchableOpacity>
@@ -140,9 +141,7 @@ export default function EwalletService() {
               <Text style={styles.infoIconText}>i</Text>
             </View>
             <Text style={styles.infoText}>
-              By submitting these details, we will send you an email confirmation
-              with your application status. Please note that this process will
-              take approximately 5-7 working days for review and approval.
+              {t("ewallet.infoNote")}
             </Text>
           </View>
 
@@ -162,7 +161,7 @@ export default function EwalletService() {
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
             >
-              <Text style={styles.nextButtonText}>Next</Text>
+              <Text style={styles.nextButtonText}>{t("ewallet.next")}</Text>
             </LinearGradient>
           </TouchableOpacity>
         </View>
@@ -178,7 +177,7 @@ export default function EwalletService() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select E-Wallet Provider</Text>
+              <Text style={styles.modalTitle}>{t("ewallet.selectProvider")}</Text>
               <TouchableOpacity onPress={() => setShowProviderModal(false)}>
                 <Ionicons name="close" size={24} color="#333" />
               </TouchableOpacity>

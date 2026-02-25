@@ -86,7 +86,7 @@ export default function WalletTab({
               style={styles.cardFlipArea}
             >
               <View style={styles.balanceHeader}>
-                <Text style={styles.balanceLabel}>Available Balance</Text>
+                <Text style={styles.balanceLabel}>{t("dashboard.availableBalance")}</Text>
                 <TouchableOpacity onPress={toggleBalanceVisibility} activeOpacity={0.7}>
                   <SvgXml 
                     xml={isBalanceVisible ? openEyeSvg : closeEyeSvg} 

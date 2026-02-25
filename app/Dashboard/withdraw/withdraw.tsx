@@ -11,9 +11,11 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
+import { useLanguage } from "../../../context/LanguageContext";
 
 export default function WithdrawType() {
   const navigation = useNavigation();
+  const { t } = useLanguage();
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [showAlertModal, setShowAlertModal] = useState(false);
   const [alertConfig, setAlertConfig] = useState<{ title: string; message: string }>({ title: "", message: "" });
@@ -21,14 +23,14 @@ export default function WithdrawType() {
   const withdrawalTypes = [
     {
       id: "available-balance",
-      title: "Available Balance",
-      subtitle: "Withdraw from your available balance",
+      titleKey: "dashboard.availableBalance",
+      subtitleKey: "withdraw.fromAvailableBalance",
       icon: "wallet-outline" as const,
     },
     {
       id: "agent-withdrawal",
-      title: "Agent Withdrawal",
-      subtitle: "Withdraw from your agent wallet",
+      titleKey: "withdraw.agentWithdrawal",
+      subtitleKey: "withdraw.fromAgentWallet",
       icon: "person-circle-outline" as const,
     },
   ];
@@ -36,8 +38,8 @@ export default function WithdrawType() {
   const handleContinue = () => {
     if (!selectedType) {
       setAlertConfig({
-        title: "Selection Required",
-        message: "Please select a withdrawal type to continue"
+        title: t("sendMoney.selectionRequired"),
+        message: t("withdraw.selectTypeToContinue")
       });
       setShowAlertModal(true);
       return;
@@ -64,7 +66,7 @@ export default function WithdrawType() {
             <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
           </TouchableOpacity>
 
-          <Text style={styles.headerTitle}>Withdrawal Request</Text>
+          <Text style={styles.headerTitle}>{t("withdraw.headerTitle")}</Text>
 
           <TouchableOpacity style={styles.refreshButton}>
             <Ionicons name="refresh" size={24} color="#FFFFFF" />
@@ -91,8 +93,8 @@ export default function WithdrawType() {
         >
           {/* Title */}
           <View style={styles.titleContainer}>
-            <Text style={styles.title}>Select Withdrawal Type</Text>
-            <Text style={styles.subtitle}>Withdraw from your available balance</Text>
+            <Text style={styles.title}>{t("withdraw.selectType")}</Text>
+            <Text style={styles.subtitle}>{t("withdraw.fromAvailableBalance")}</Text>
           </View>
 
           {/* Form Card */}
@@ -101,8 +103,8 @@ export default function WithdrawType() {
 
             {/* Section Header */}
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Select Withdrawal Method</Text>
-              <Text style={styles.sectionSubtitle}>Choose how you want to withdraw</Text>
+              <Text style={styles.sectionTitle}>{t("withdraw.selectMethod")}</Text>
+              <Text style={styles.sectionSubtitle}>{t("withdraw.chooseHowToWithdraw")}</Text>
             </View>
 
             {/* Withdrawal Type Options */}
@@ -125,8 +127,8 @@ export default function WithdrawType() {
                     />
                   </View>
                   <View style={styles.typeInfo}>
-                    <Text style={styles.typeTitle}>{type.title}</Text>
-                    <Text style={styles.typeSubtitle}>{type.subtitle}</Text>
+                    <Text style={styles.typeTitle}>{t(type.titleKey)}</Text>
+                    <Text style={styles.typeSubtitle}>{t(type.subtitleKey)}</Text>
                   </View>
                 </TouchableOpacity>
               ))}
@@ -144,7 +146,7 @@ export default function WithdrawType() {
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
             >
-              <Text style={styles.continueText}>Continue</Text>
+              <Text style={styles.continueText}>{t("sendMoney.continue")}</Text>
               <Ionicons name="play" size={20} color="#FFFFFF" />
             </LinearGradient>
           </TouchableOpacity>
@@ -172,7 +174,7 @@ export default function WithdrawType() {
                 style={styles.alertButton}
                 onPress={() => setShowAlertModal(false)}
               >
-                <Text style={styles.alertButtonText}>OK</Text>
+                <Text style={styles.alertButtonText}>{t("common.ok")}</Text>
               </TouchableOpacity>
             </LinearGradient>
           </View>
