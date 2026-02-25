@@ -12,9 +12,11 @@ import {
     View
 } from "react-native";
 import { auth, doc, firestore, getDoc } from "../../../configs/firebase";
+import { useLanguage } from "../../../context/LanguageContext";
 
 export default function TimeDeposit() {
   const navigation = useNavigation();
+  const { t } = useLanguage();
   const [currentStep, setCurrentStep] = useState(1);
   const [depositMethod, setDepositMethod] = useState("Request Amount");
   const [selectedCurrency, setSelectedCurrency] = useState("PHP");
@@ -57,16 +59,16 @@ export default function TimeDeposit() {
   };
 
   const contractOptions = [
-    { label: "6 Months Contract", value: "6 Months" },
-    { label: "1 Year Contract", value: "1 Year" },
-    { label: "2 Years Contract", value: "2 Years" },
+    { labelKey: "deposit.contract6Months", value: "6 Months" },
+    { labelKey: "deposit.contract1Year", value: "1 Year" },
+    { labelKey: "deposit.contract2Years", value: "2 Years" },
   ];
 
   const handleContinue = () => {
     if (!contractPeriod) {
       setAlertConfig({
-        title: "Select Contract",
-        message: "Please select a contract period",
+        title: t("deposit.selectContract"),
+        message: t("deposit.selectContractPeriod"),
       });
       setShowAlertModal(true);
       return;
@@ -100,7 +102,7 @@ export default function TimeDeposit() {
             <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
           </TouchableOpacity>
 
-          <Text style={styles.headerTitle}>Deposit Request</Text>
+          <Text style={styles.headerTitle}>{t("deposit.depositRequest")}</Text>
 
           <TouchableOpacity style={styles.refreshButton}>
             <Ionicons name="refresh" size={24} color="#FFFFFF" />
@@ -131,8 +133,8 @@ export default function TimeDeposit() {
         >
           {/* Title */}
           <View style={styles.titleContainer}>
-            <Text style={styles.title}>Time Deposit</Text>
-            <Text style={styles.subtitle}>Minimum ₱50,000 for time deposit</Text>
+            <Text style={styles.title}>{t("deposit.timeDeposit")}</Text>
+            <Text style={styles.subtitle}>{t("deposit.timeDepositMinShort")}</Text>
           </View>
 
           {/* Form Card */}
@@ -145,7 +147,7 @@ export default function TimeDeposit() {
                 <View style={styles.iconBox}>
                   <MaterialCommunityIcons name="cash-multiple" size={20} color="#E25A17" />
                 </View>
-                <Text style={styles.sectionTitle}>Deposit Method</Text>
+                <Text style={styles.sectionTitle}>{t("deposit.depositMethod")}</Text>
               </View>
 
               <TouchableOpacity
@@ -160,7 +162,7 @@ export default function TimeDeposit() {
                     <View style={styles.radioInner} />
                   )}
                 </View>
-                <Text style={styles.radioLabel}>Request Amount</Text>
+                <Text style={styles.radioLabel}>{t("investment.requestAmount")}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -175,7 +177,7 @@ export default function TimeDeposit() {
                     <View style={styles.radioInner} />
                   )}
                 </View>
-                <Text style={styles.radioLabel}>Available Balance</Text>
+                <Text style={styles.radioLabel}>{t("investment.availableBalance")}</Text>
               </TouchableOpacity>
             </View>
 
@@ -185,7 +187,7 @@ export default function TimeDeposit() {
                 <View style={styles.iconBox}>
                   <MaterialCommunityIcons name="currency-usd" size={20} color="#E25A17" />
                 </View>
-                <Text style={styles.sectionTitle}>Select Currency</Text>
+                <Text style={styles.sectionTitle}>{t("deposit.selectCurrency")}</Text>
               </View>
 
               <TouchableOpacity
@@ -206,7 +208,7 @@ export default function TimeDeposit() {
                 <View style={styles.iconBox}>
                   <MaterialCommunityIcons name="calendar-clock" size={20} color="#E25A17" />
                 </View>
-                <Text style={styles.sectionTitle}>Contract Period *</Text>
+                <Text style={styles.sectionTitle}>{t("deposit.contractPeriod")}</Text>
               </View>
 
               {contractOptions.map((option) => (
@@ -218,7 +220,7 @@ export default function TimeDeposit() {
                   ]}
                   onPress={() => setContractPeriod(option.value)}
                 >
-                  <Text style={styles.contractLabel}>{option.label}</Text>
+                  <Text style={styles.contractLabel}>{t(option.labelKey)}</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -235,7 +237,7 @@ export default function TimeDeposit() {
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
             >
-              <Text style={styles.continueText}>Continue</Text>
+              <Text style={styles.continueText}>{t("deposit.continue")}</Text>
               <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
             </LinearGradient>
           </TouchableOpacity>
@@ -253,7 +255,7 @@ export default function TimeDeposit() {
           <View style={styles.modalOverlay}>
             <View style={styles.modalContainer}>
               <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Select Currency</Text>
+                <Text style={styles.modalTitle}>{t("deposit.selectCurrency")}</Text>
                 <TouchableOpacity onPress={() => setShowCurrencyModal(false)}>
                   <Ionicons name="close" size={24} color="#333" />
                 </TouchableOpacity>
@@ -306,7 +308,7 @@ export default function TimeDeposit() {
                 style={styles.alertButton}
                 onPress={() => setShowAlertModal(false)}
               >
-                <Text style={styles.alertButtonText}>OK</Text>
+                <Text style={styles.alertButtonText}>{t("deposit.ok")}</Text>
               </TouchableOpacity>
             </LinearGradient>
           </View>

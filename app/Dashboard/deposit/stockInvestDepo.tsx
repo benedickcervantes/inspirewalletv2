@@ -12,9 +12,11 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useLanguage } from "../../../context/LanguageContext";
 
 export default function StockInvestment() {
   const navigation = useNavigation();
+  const { t } = useLanguage();
   const [selectedCurrency, setSelectedCurrency] = useState("PHP");
   const [showCurrencyModal, setShowCurrencyModal] = useState(false);
   const [amount, setAmount] = useState("");
@@ -31,8 +33,8 @@ export default function StockInvestment() {
   const handleContinue = () => {
     if (!amount || parseFloat(amount) < 2000000) {
       setAlertConfig({
-        title: "Invalid Amount",
-        message: "Minimum ₱2,000,000 for stock investment",
+        title: t("deposit.invalidAmount"),
+        message: t("deposit.minStock"),
       });
       setShowAlertModal(true);
       return;
@@ -67,7 +69,7 @@ export default function StockInvestment() {
             <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
           </TouchableOpacity>
 
-          <Text style={styles.headerTitle}>Deposit Request</Text>
+          <Text style={styles.headerTitle}>{t("deposit.depositRequest")}</Text>
 
           <TouchableOpacity style={styles.refreshButton}>
             <Ionicons name="refresh" size={24} color="#FFFFFF" />
@@ -92,8 +94,8 @@ export default function StockInvestment() {
         >
           {/* Title */}
           <View style={styles.titleContainer}>
-            <Text style={styles.title}>Stock Investment</Text>
-            <Text style={styles.subtitle}>Minimum ₱2,000,000 for Stock · Enter amount below</Text>
+            <Text style={styles.title}>{t("deposit.stockInvestmentTitle")}</Text>
+            <Text style={styles.subtitle}>{t("deposit.stockMinShort")}</Text>
           </View>
 
           {/* Form Card */}
@@ -110,7 +112,7 @@ export default function StockInvestment() {
                     color="#E25A17"
                   />
                 </View>
-                <Text style={styles.sectionTitle}>Select Currency</Text>
+                <Text style={styles.sectionTitle}>{t("deposit.selectCurrency")}</Text>
               </View>
 
               <TouchableOpacity
@@ -135,7 +137,7 @@ export default function StockInvestment() {
                 <View style={styles.iconBox}>
                   <MaterialCommunityIcons name="cash" size={20} color="#E25A17" />
                 </View>
-                <Text style={styles.sectionTitle}>Amount *</Text>
+                <Text style={styles.sectionTitle}>{t("deposit.amount")}</Text>
               </View>
 
               <View style={styles.amountInput}>
@@ -144,7 +146,7 @@ export default function StockInvestment() {
                 </Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="Enter investment amount"
+                  placeholder={t("deposit.enterAmount")}
                   placeholderTextColor="#999"
                   keyboardType="numeric"
                   value={amount}
@@ -165,7 +167,7 @@ export default function StockInvestment() {
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
             >
-              <Text style={styles.continueText}>Continue</Text>
+              <Text style={styles.continueText}>{t("deposit.continue")}</Text>
               <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
             </LinearGradient>
           </TouchableOpacity>
@@ -183,7 +185,7 @@ export default function StockInvestment() {
           <View style={styles.modalOverlay}>
             <View style={styles.modalContainer}>
               <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Select Currency</Text>
+                <Text style={styles.modalTitle}>{t("deposit.selectCurrency")}</Text>
                 <TouchableOpacity onPress={() => setShowCurrencyModal(false)}>
                   <Ionicons name="close" size={24} color="#333" />
                 </TouchableOpacity>
@@ -241,7 +243,7 @@ export default function StockInvestment() {
                 style={styles.alertButton}
                 onPress={() => setShowAlertModal(false)}
               >
-                <Text style={styles.alertButtonText}>OK</Text>
+                <Text style={styles.alertButtonText}>{t("deposit.ok")}</Text>
               </TouchableOpacity>
             </LinearGradient>
           </View>

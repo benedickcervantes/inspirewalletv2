@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
+import { useLanguage } from "../../context/LanguageContext";
 
 interface PayoutScheduleItem {
   payoutIndex?: number;
@@ -67,10 +68,10 @@ interface SavingsTabProps {
   userReferrer?: { referralCode?: string; firstName?: string; lastName?: string } | null;
 }
 
-const CONTRACT_TYPE_LABELS: Record<string, string> = {
-  sixMonths: "6 Months",
-  oneYear: "1 Year",
-  twoYears: "2 Years",
+const CONTRACT_TYPE_KEYS: Record<string, string> = {
+  sixMonths: "investment.sixMonths",
+  oneYear: "investment.oneYear",
+  twoYears: "investment.twoYears",
 };
 
 function parseAmount(val: string | number | undefined): number {
@@ -126,9 +127,15 @@ export default function SavingsTab({
   onRefresh,
   userReferrer,
 }: SavingsTabProps) {
+  const { t } = useLanguage();
   const [contractTab, setContractTab] = useState<"Active" | "Completed" | "Pending">("Active");
   const [selectedContract, setSelectedContract] = useState<TimeDeposit | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+
+  const getContractTypeLabel = (contractType: string) => {
+    const key = CONTRACT_TYPE_KEYS[contractType];
+    return key ? t(key) : contractType;
+  };
 
   const filteredDeposits = deposits.filter((d) => {
     if (contractTab === "Active") return d.status === "ACTIVE";
@@ -191,7 +198,7 @@ export default function SavingsTab({
             />
           </View>
           <View style={styles.depositInfo}>
-            <Text style={styles.depositLabel}>Time Deposit</Text>
+            <Text style={styles.depositLabel}>{t("investment.timeDeposit")}</Text>
             <Text style={styles.depositAmount}>₱ {formatCurrency(timeDeposit)}</Text>
           </View>
         </ImageBackground>
@@ -202,14 +209,14 @@ export default function SavingsTab({
           <View style={styles.amountWalletContent}>
             <View style={styles.amountWalletLeft}>
               <View style={styles.amountWalletHeader}>
-                <Text style={styles.amountWalletLabel}>Amount Wallet (Expected Dividend)</Text>
+                <Text style={styles.amountWalletLabel}>{t("investment.amountWalletLabel")}</Text>
                 <Ionicons name="flame-outline" size={18} color="#E15816" />
               </View>
               <Text style={styles.amountWalletAmount}>
                 ₱ {formatCurrency(dividend)}
               </Text>
               <Text style={styles.amountWalletHint}>
-                Total expected dividend from all contracts
+                {t("investment.amountWalletHint")}
               </Text>
             </View>
             <View style={styles.amountWalletIcon}>
@@ -227,7 +234,7 @@ export default function SavingsTab({
           end={{ x: 1, y: 1 }}
         >
           <View style={styles.graphHeader}>
-            <Text style={styles.graphTitle}>Deposit Growth ({new Date().getFullYear()})</Text>
+            <Text style={styles.graphTitle}>{t("investment.depositGrowth")} ({new Date().getFullYear()})</Text>
             <Ionicons name="bar-chart-outline" size={20} color="#FFFFFF" />
           </View>
           <View style={styles.chartContainer}>
@@ -249,7 +256,7 @@ export default function SavingsTab({
       </View>
 
       <View style={styles.contractsSection}>
-        <Text style={styles.contractsSectionTitle}>Contracts</Text>
+        <Text style={styles.contractsSectionTitle}>{t("investment.contracts")}</Text>
         <View style={styles.contractTabs}>
           {(["Active", "Completed", "Pending"] as const).map((tab) => (
             <TouchableOpacity
@@ -263,7 +270,7 @@ export default function SavingsTab({
                   contractTab === tab && styles.contractTabTextActive,
                 ]}
               >
-                {tab}
+                {t(tab === "Active" ? "investment.active" : tab === "Completed" ? "investment.completed" : "investment.pending")}
               </Text>
             </TouchableOpacity>
           ))}
@@ -274,12 +281,12 @@ export default function SavingsTab({
             <View style={styles.emptyState}>
               <Ionicons name="document-text-outline" size={48} color="#CCC" />
               <Text style={styles.emptyStateText}>
-                No {contractTab.toLowerCase()} contracts
+                {contractTab === "Active" ? t("investment.noActiveContracts") : contractTab === "Completed" ? t("investment.noCompletedContracts") : t("investment.noPendingContracts")}
               </Text>
               <Text style={styles.emptyStateSubtext}>
-                {contractTab === "Pending" && "Submitted deposits will appear here once created."}
-                {contractTab === "Active" && "Approved time deposits will appear here."}
-                {contractTab === "Completed" && "Matured or cancelled contracts will appear here."}
+                {contractTab === "Pending" && t("investment.emptyPending")}
+                {contractTab === "Active" && t("investment.emptyActive")}
+                {contractTab === "Completed" && t("investment.emptyCompleted")}
               </Text>
             </View>
           ) : (
@@ -306,7 +313,7 @@ export default function SavingsTab({
                       ₱ {formatCurrency(parseAmount(dep.amount))}
                     </Text>
                     <Text style={styles.contractCardType}>
-                      {CONTRACT_TYPE_LABELS[dep.contractType] ?? dep.contractType}
+                      {getContractTypeLabel(dep.contractType)}
                     </Text>
                   </View>
                   <View style={styles.contractCardRight}>
@@ -326,7 +333,7 @@ export default function SavingsTab({
                       </Text>
                     </View>
                     <Text style={styles.contractCardRate}>
-                      {dep.interestRate}% p.a.
+                      {dep.interestRate}% {t("investment.perAnnum")}
                     </Text>
                   </View>
                 </View>
@@ -361,7 +368,7 @@ export default function SavingsTab({
             {selectedContract && (
               <>
                 <View style={styles.modalHeader}>
-                  <Text style={styles.modalTitle}>Contract Details</Text>
+                  <Text style={styles.modalTitle}>{t("investment.contractDetails")}</Text>
                   <TouchableOpacity
                     onPress={() => setSelectedContract(null)}
                     style={styles.modalCloseButton}
@@ -390,44 +397,43 @@ export default function SavingsTab({
                   </View>
 
                   <View style={styles.modalDetailRow}>
-                    <Text style={styles.modalDetailLabel}>Amount</Text>
+                    <Text style={styles.modalDetailLabel}>{t("investment.amount")}</Text>
                     <Text style={styles.modalDetailValue}>
                       ₱ {formatCurrency(parseAmount(selectedContract.amount))}
                     </Text>
                   </View>
                   <View style={styles.modalDetailRow}>
-                    <Text style={styles.modalDetailLabel}>Interest Rate</Text>
+                    <Text style={styles.modalDetailLabel}>{t("investment.interestRate")}</Text>
                     <Text style={styles.modalDetailValue}>
-                      {selectedContract.interestRate}% per annum
+                      {selectedContract.interestRate}% {t("investment.perAnnum")}
                     </Text>
                   </View>
                   <View style={styles.modalDetailRow}>
-                    <Text style={styles.modalDetailLabel}>Contract Type</Text>
+                    <Text style={styles.modalDetailLabel}>{t("investment.contractType")}</Text>
                     <Text style={styles.modalDetailValue}>
-                      {CONTRACT_TYPE_LABELS[selectedContract.contractType] ??
-                        selectedContract.contractType}
+                      {getContractTypeLabel(selectedContract.contractType)}
                     </Text>
                   </View>
                   {selectedContract.depositSource && (
                     <View style={styles.modalDetailRow}>
-                      <Text style={styles.modalDetailLabel}>Deposit Source</Text>
+                      <Text style={styles.modalDetailLabel}>{t("investment.depositSource")}</Text>
                       <Text style={styles.modalDetailValue}>
                         {selectedContract.depositSource === "AVAILABLE_BALANCE"
-                          ? "Available Balance"
-                          : "Request Amount"}
+                          ? t("investment.availableBalance")
+                          : t("investment.requestAmount")}
                       </Text>
                     </View>
                   )}
                   {selectedContract.createdAt && (
                     <View style={styles.modalDetailRow}>
-                      <Text style={styles.modalDetailLabel}>Created</Text>
+                      <Text style={styles.modalDetailLabel}>{t("investment.created")}</Text>
                       <Text style={styles.modalDetailValue}>
                         {formatDate(selectedContract.createdAt)}
                       </Text>
                     </View>
                   )}
                   <View style={styles.modalDetailRow}>
-                    <Text style={styles.modalDetailLabel}>Start Date</Text>
+                    <Text style={styles.modalDetailLabel}>{t("investment.startDate")}</Text>
                     <Text style={styles.modalDetailValue}>
                       {selectedContract.startDate
                         ? formatDate(selectedContract.startDate)
@@ -435,7 +441,7 @@ export default function SavingsTab({
                     </Text>
                   </View>
                   <View style={styles.modalDetailRow}>
-                    <Text style={styles.modalDetailLabel}>Maturity Date</Text>
+                    <Text style={styles.modalDetailLabel}>{t("investment.maturityDate")}</Text>
                     <Text style={styles.modalDetailValue}>
                       {selectedContract.maturityDate
                         ? formatDate(selectedContract.maturityDate)
@@ -443,11 +449,11 @@ export default function SavingsTab({
                     </Text>
                   </View>
                   <View style={styles.modalDetailRow}>
-                    <Text style={styles.modalDetailLabel}>Referred by</Text>
+                    <Text style={styles.modalDetailLabel}>{t("investment.referredBy")}</Text>
                     <Text style={styles.modalDetailValue}>
                       {(() => {
                         const ref = getReferrer(selectedContract) ?? userReferrer;
-                        if (!ref) return "No referrer";
+                        if (!ref) return t("investment.noReferrer");
                         const name = `${ref.firstName ?? ""} ${ref.lastName ?? ""}`.trim() || "—";
                         const code = ref.referralCode ?? (ref as ReferrerInfo).referral_code;
                         return code ? (name ? `${name} (${code})` : `(${code})`) : name || "—";
@@ -455,7 +461,7 @@ export default function SavingsTab({
                     </Text>
                   </View>
 
-                  <Text style={styles.payoutSectionTitle}>Payout Schedule</Text>
+                  <Text style={styles.payoutSectionTitle}>{t("investment.payoutSchedule")}</Text>
                   <View style={styles.payoutStepper}>
                     {getPayoutSchedule(selectedContract).map((payout, idx) => (
                       <View key={payout.payoutIndex ?? idx} style={styles.payoutItem}>
@@ -489,7 +495,7 @@ export default function SavingsTab({
                               (payout.principalReturned ?? payout.principal_returned) &&
                               ` + ₱ ${formatCurrency(
                                 parseAmount(payout.principalReturned ?? payout.principal_returned)
-                              )} principal`}
+                              )} ${t("investment.principal")}`}
                           </Text>
                           <View
                             style={[
@@ -518,7 +524,7 @@ export default function SavingsTab({
                     ))}
                   </View>
                   {getPayoutSchedule(selectedContract).length === 0 && (
-                    <Text style={styles.noPayoutsText}>No payout schedule</Text>
+                    <Text style={styles.noPayoutsText}>{t("investment.noPayoutSchedule")}</Text>
                   )}
                 </ScrollView>
               </>

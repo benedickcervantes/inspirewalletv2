@@ -19,21 +19,17 @@ import { getOrCreateMainWallet, getTransactions } from '../../configs/api';
 import type { TransactionDoc } from '../../configs/firebase';
 import { auth, subscribeToTransactions } from '../../configs/firebase';
 import type { NavProp } from '../../types/navigation';
+import { useLanguage } from '../../context/LanguageContext';
 
-const TRANSACTION_TYPE_LABELS: Record<string, string> = {
-  TOP_UP: 'Deposit',
-  PAYMENT: 'Withdraw',
-  TRANSFER_OUT: 'Transfer',
-  TRANSFER_IN: 'Received',
-  FEE: 'Fee',
-  REFUND: 'Refund',
-  TIME_DEPOSIT: 'Time Deposit',
+const TRANSACTION_TYPE_KEYS: Record<string, string> = {
+  TOP_UP: 'tx.deposit',
+  PAYMENT: 'tx.withdraw',
+  TRANSFER_OUT: 'tx.transfer',
+  TRANSFER_IN: 'tx.received',
+  FEE: 'tx.fee',
+  REFUND: 'tx.refund',
+  TIME_DEPOSIT: 'tx.timeDeposit',
 };
-
-function getTransactionTypeLabel(type?: string): string {
-  if (!type) return 'Transaction';
-  return TRANSACTION_TYPE_LABELS[type] ?? type;
-}
 
 const SPENT_TYPES = ['PAYMENT', 'TRANSFER_OUT', 'FEE'];
 const INCOME_TYPES = ['TOP_UP', 'TRANSFER_IN', 'REFUND'];
@@ -65,8 +61,21 @@ const ORANGE_GRADIENT: readonly [string, string] = ['#E25A17', '#F28934'];
 
 export default function HistoryScreen() {
   const navigation = useNavigation();
+  const { t } = useLanguage();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
+
+  const getTransactionTypeLabel = (type?: string) => {
+    if (!type) return t('tx.transaction');
+    const key = TRANSACTION_TYPE_KEYS[type];
+    return key ? t(key) : type;
+  };
+
+  const getTransactionDisplayName = (tx: Transaction) => {
+    if (tx.description === 'Free Default Card') return t('history.freeDefaultCard');
+    if (tx.description === 'Created Account') return t('history.createdAccount');
+    return tx.description || getTransactionTypeLabel(tx.type);
+  };
   const headerPaddingTop =
     Platform.OS === 'android'
       ? Math.max(insets.top, StatusBar.currentHeight ?? 0, 12)
@@ -270,7 +279,7 @@ export default function HistoryScreen() {
           </TouchableOpacity>
           <View style={styles.headerTitleWrap}>
             <Text style={styles.headerTitle} numberOfLines={1} ellipsizeMode="tail">
-              All Transactions
+              {t('history.allTransactions')}
             </Text>
           </View>
           <View style={styles.headerRight}>
@@ -294,20 +303,20 @@ export default function HistoryScreen() {
         >
           <View style={styles.summaryCards}>
             <View style={styles.summaryCard}>
-              <Text style={styles.summaryLabel}>TOTAL SPENT</Text>
+              <Text style={styles.summaryLabel}>{t('history.totalSpent').toUpperCase()}</Text>
               <Text style={styles.summaryValue}>
                 {CURRENCY_SYMBOL} {formatCurrency(totalSpent)}
               </Text>
             </View>
             <View style={styles.summaryCard}>
-              <Text style={styles.summaryLabel}>TOTAL INCOME</Text>
+              <Text style={styles.summaryLabel}>{t('history.totalIncome').toUpperCase()}</Text>
               <Text style={styles.summaryValue}>
                 {CURRENCY_SYMBOL} {formatCurrency(totalIncome)}
               </Text>
             </View>
           </View>
 
-          <Text style={styles.sectionTitle}>CURRENT TRANSACTIONS</Text>
+          <Text style={styles.sectionTitle}>{t('history.currentTransactions').toUpperCase()}</Text>
 
           {loading && transactions.length === 0 ? (
             <View style={styles.loadingContainer}>
@@ -333,7 +342,7 @@ export default function HistoryScreen() {
                   </View>
                   <View style={styles.transactionDetails}>
                     <Text style={styles.transactionName}>
-                      {tx.description || getTransactionTypeLabel(tx.type)}
+                      {getTransactionDisplayName(tx)}
                     </Text>
                     <Text style={styles.transactionDate}>{formatDateTime(tx)}</Text>
                   </View>
@@ -355,7 +364,7 @@ export default function HistoryScreen() {
               {loadingMore ? (
                 <ActivityIndicator size="small" color="#999" />
               ) : (
-                <Text style={styles.loadMoreText}>LOAD MORE</Text>
+                <Text style={styles.loadMoreText}>{t('history.loadMore').toUpperCase()}</Text>
               )}
             </TouchableOpacity>
           )}

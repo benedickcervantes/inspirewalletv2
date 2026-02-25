@@ -16,6 +16,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { useLanguage } from '../../context/LanguageContext';
+import { SUPPORTED_LANGUAGES } from '../../constants/locales';
 import { getReferralCode, resendVerification, verifyEmail } from '../../configs/api';
 import type { NavProp } from '../../types/navigation';
 
@@ -28,6 +29,7 @@ const BASE_WIDTH = 375;
 
 const Settings = () => {
   const navigation = useNavigation();
+  const { t, language, setLanguage } = useLanguage();
   const { width: screenWidth } = useWindowDimensions();
   const scale = Math.min(screenWidth / BASE_WIDTH, 1.35);
   const scaled = (n: number) => Math.round(n * scale);
@@ -37,6 +39,7 @@ const Settings = () => {
   const [referralLoading, setReferralLoading] = useState(false);
   const [referralError, setReferralError] = useState<string | null>(null);
   const [emailVerifyModalVisible, setEmailVerifyModalVisible] = useState(false);
+  const [languageModalVisible, setLanguageModalVisible] = useState(false);
   const [emailOtp, setEmailOtp] = useState('');
   const [emailVerifyLoading, setEmailVerifyLoading] = useState(false);
   const [emailVerifyError, setEmailVerifyError] = useState<string | null>(null);
@@ -134,12 +137,12 @@ const Settings = () => {
       if (result.success) {
         setEmailVerifyError(null);
         setEmailOtp('');
-    } else {
-      setEmailVerifyError(result.error || t('settings.failedToResend'));
-    }
-  } catch (_) {
-    setEmailVerifyError(t('settings.failedToResend'));
-  } finally {
+      } else {
+        setEmailVerifyError(result.error || t('settings.failedToResend'));
+      }
+    } catch (_) {
+      setEmailVerifyError(t('settings.failedToResend'));
+    } finally {
       setResendLoading(false);
     }
   };
@@ -182,6 +185,21 @@ const Settings = () => {
     { id: 4, icon: 'shield-outline' as const, titleKey: 'settings.privacyPolicy', onPress: () => (navigation as { navigate: (name: string) => void }).navigate('PrivacyPolicy') },
     { id: 5, icon: 'document-text-outline' as const, titleKey: 'settings.termsAndCondition', onPress: () => (navigation as { navigate: (name: string) => void }).navigate('TermsConditions') },
   ];
+
+  const securityOptionsWithLabels = securityOptions.map((o) => ({
+    ...o,
+    title: t(o.titleKey),
+    subtitle: o.subtitleKey ? t(o.subtitleKey) : '',
+  }));
+  const customerRelationshipOptionsWithLabels = customerRelationshipOptions.map((o) => ({
+    ...o,
+    title: t(o.titleKey),
+  }));
+
+  const handleSelectLanguage = (selectedLabel: string) => {
+    setLanguage(selectedLabel);
+    setLanguageModalVisible(false);
+  };
 
   const r = {
     header: {
@@ -257,7 +275,7 @@ const Settings = () => {
           >
             <Ionicons name="arrow-back" size={r.backIconSize} color="#FFFFFF" />
           </TouchableOpacity>
-          <Text style={[styles.headerTitle, r.headerTitle]} numberOfLines={1}>Settings</Text>
+          <Text style={[styles.headerTitle, r.headerTitle]} numberOfLines={1}>{t('settings.title')}</Text>
           <View style={[styles.headerSpacer, r.headerSpacer]} />
         </View>
       </LinearGradient>
@@ -267,7 +285,7 @@ const Settings = () => {
         contentContainerStyle={r.contentContainer}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={[styles.sectionTitle, r.sectionTitle]}>Referral</Text>
+        <Text style={[styles.sectionTitle, r.sectionTitle]}>{t('settings.referral')}</Text>
         <View style={[styles.sectionCard, r.sectionCard]}>
           <TouchableOpacity
             style={[styles.referralOptionItem, r.referralOptionItem]}
@@ -298,6 +316,25 @@ const Settings = () => {
           ) : null}
         </View>
 
+        <Text style={[styles.sectionTitle, r.sectionTitle]}>{t('settings.language')}</Text>
+        <View style={[styles.sectionCard, r.sectionCard]}>
+          <TouchableOpacity
+            style={[styles.referralOptionItem, r.referralOptionItem]}
+            onPress={() => setLanguageModalVisible(true)}
+          >
+            <View style={styles.optionLeft}>
+              <View style={[styles.iconContainer, r.iconContainer]}>
+                <Ionicons name="language-outline" size={r.iconSize} color="#F38B35" />
+              </View>
+              <View style={[styles.optionText, r.optionText]}>
+                <Text style={[styles.optionTitle, r.optionTitle]} numberOfLines={1}>{t('settings.language')}</Text>
+                <Text style={[styles.optionSubtitle, r.optionSubtitle]} numberOfLines={1}>{language}</Text>
+              </View>
+            </View>
+            <Ionicons name="chevron-forward" size={r.iconSizeSmall} color="#CCC" />
+          </TouchableOpacity>
+        </View>
+
         <Text style={[styles.sectionTitle, r.sectionTitle]}>Email Verification</Text>
         <View style={[styles.sectionCard, r.sectionCard]}>
           <View style={[styles.referralOptionItem, r.referralOptionItem]}>
@@ -324,9 +361,9 @@ const Settings = () => {
           </View>
         </View>
 
-        <Text style={[styles.sectionTitle, r.sectionTitle]}>Security</Text>
+        <Text style={[styles.sectionTitle, r.sectionTitle]}>{t('settings.security')}</Text>
         <View style={[styles.sectionCard, r.sectionCard]}>
-          {securityOptions.map((option, index) => (
+          {securityOptionsWithLabels.map((option, index) => (
             <TouchableOpacity
               key={option.id}
               style={[
@@ -352,9 +389,9 @@ const Settings = () => {
           ))}
         </View>
 
-        <Text style={[styles.sectionTitle, r.sectionTitle]}>Customer Relationship</Text>
+        <Text style={[styles.sectionTitle, r.sectionTitle]}>{t('settings.customerRelationship')}</Text>
         <View style={[styles.sectionCard, r.sectionCard]}>
-          {customerRelationshipOptions.map((option, index) => (
+          {customerRelationshipOptionsWithLabels.map((option, index) => (
             <TouchableOpacity
               key={option.id}
               style={[
@@ -449,6 +486,44 @@ const Settings = () => {
             )}
           </View>
         </View>
+      </Modal>
+
+      <Modal
+        visible={languageModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setLanguageModalVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.languageModalOverlay}
+          activeOpacity={1}
+          onPress={() => setLanguageModalVisible(false)}
+        >
+          <View style={[styles.languageModalContent, r.modalContent]} onStartShouldSetResponder={() => true}>
+            <View style={[styles.modalHeader, r.modalHeader]}>
+              <Text style={[styles.modalTitle, r.modalTitle]}>{t('profile.selectLanguage')}</Text>
+              <TouchableOpacity onPress={() => setLanguageModalVisible(false)} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+                <Ionicons name="close" size={r.iconSize} color="#333" />
+              </TouchableOpacity>
+            </View>
+            <Text style={[styles.modalSubtitle, r.modalSubtitle]}>{t('profile.defaultIsEnglish')}</Text>
+            {SUPPORTED_LANGUAGES.map(({ label, flag }) => (
+              <TouchableOpacity
+                key={label}
+                style={[styles.languageOption, language === label && styles.languageOptionSelected]}
+                onPress={() => handleSelectLanguage(label)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.languageOptionFlag}>{flag}</Text>
+                <Text style={[styles.languageOptionText, language === label && styles.languageOptionTextSelected]}>{label}</Text>
+                {language === label && <Ionicons name="checkmark-circle" size={22} color="#E15816" />}
+              </TouchableOpacity>
+            ))}
+            <TouchableOpacity style={[styles.modalButton, r.modalButton]} onPress={() => setLanguageModalVisible(false)}>
+              <Text style={[styles.modalButtonText, r.modalButtonText]}>{t('common.cancel')}</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
       </Modal>
     </SafeAreaView>
   );
@@ -658,6 +733,48 @@ const styles = StyleSheet.create({
     color: '#666',
     marginLeft: 8,
     letterSpacing: 1,
+  },
+  languageModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  languageModalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 20,
+    width: '100%',
+    maxWidth: 360,
+  },
+  languageOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    marginBottom: 6,
+    backgroundColor: '#F5F5F5',
+  },
+  languageOptionSelected: {
+    backgroundColor: '#FFF0E8',
+    borderWidth: 1,
+    borderColor: '#E15816',
+  },
+  languageOptionFlag: {
+    fontSize: 22,
+    marginRight: 12,
+  },
+  languageOptionText: {
+    fontSize: 16,
+    color: '#333',
+    flex: 1,
+  },
+  languageOptionTextSelected: {
+    fontWeight: '600',
+    color: '#E15816',
   },
 });
 
