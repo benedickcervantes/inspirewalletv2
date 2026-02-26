@@ -328,7 +328,7 @@ export default function Login() {
               ) : (
                 <TouchableOpacity
                   style={styles.backButton}
-                  onPress={() => navigation.goBack()}
+                  onPress={() => (navigation as unknown as NavProp).replace('Welcome')}
                   activeOpacity={0.7}
                 >
                   <Ionicons name="arrow-back" size={26} color={WHITE} />
@@ -348,7 +348,8 @@ export default function Login() {
                   source={require('../../assets/images/InpireLogo.png')}
                   style={styles.logo}
                   contentFit="contain"
-                  accessible={false}
+                  accessible={true}
+                  accessibilityLabel="Inspire company logo"
                 />
               </View>
 
@@ -499,22 +500,23 @@ const styles = StyleSheet.create({
   scroll: { flex: 1 },
   scrollContent: {
     flexGrow: 1,
+    justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 28,
     minHeight: '100%',
   },
   logoWrap: {
-    marginTop: 8,
-    marginBottom: 24,
+    alignSelf: 'center',
+    marginBottom: 32,
   },
   logo: {
-    width: '100%',
-    maxWidth: 280,
-    height: 160,
+    width: 260,
+    height: 140,
   },
   form: {
     width: '100%',
     maxWidth: 360,
+    alignSelf: 'center',
   },
   input: {
     backgroundColor: 'rgba(255,255,255,0.28)',
