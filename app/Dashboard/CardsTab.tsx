@@ -60,10 +60,6 @@ export default function CardsTab({
           <Text style={styles.sectionTitle}>{t("cards.yourInspireCard")}</Text>
           <Text style={styles.sectionSubtitle}>{t("cards.defaultCard")}</Text>
         </View>
-        <TouchableOpacity style={styles.viewDetailsButton}>
-          <Ionicons name="eye-outline" size={16} color="#E15816" />
-          <Text style={styles.viewDetailsText}>{t("cards.viewDetails")}</Text>
-        </TouchableOpacity>
       </View>
 
       <View style={styles.mainCardContainer}>
@@ -272,16 +268,6 @@ const styles = StyleSheet.create({
   sectionSubtitle: {
     fontSize: 12,
     color: "#999",
-  },
-  viewDetailsButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  viewDetailsText: {
-    fontSize: 14,
-    color: "#E15816",
-    fontWeight: "600",
   },
   mainCardContainer: {
     paddingHorizontal: 20,

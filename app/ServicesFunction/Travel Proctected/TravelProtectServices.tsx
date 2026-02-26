@@ -25,6 +25,13 @@ import type { RootStackParamList } from "../../../types/navigation";
 
 const EMPTY_PLACEHOLDER = "__empty__";
 
+const MONTH_KEYS = [
+  "banking.january", "banking.february", "banking.march", "banking.april", "banking.may", "banking.june",
+  "banking.july", "banking.august", "banking.september", "banking.october", "banking.november", "banking.december",
+] as const;
+const DAYS = Array.from({ length: 31 }, (_, i) => (i + 1).toString());
+const YEARS = Array.from({ length: 71 }, (_, i) => (2010 - i).toString());
+
 type AlertType = "success" | "error" | "warning" | "info";
 
 interface CustomAlertModalProps {
@@ -182,9 +189,10 @@ export default function TravelProtection() {
 
   // Form fields - Step 2 (store internal values for dropdowns; display via t())
   const [gender, setGender] = useState("");
-  const [dateOfBirth, setDateOfBirth] = useState(new Date());
-  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [dateOfBirth, setDateOfBirth] = useState<Date | null>(null);
+  const [showDateModal, setShowDateModal] = useState(false);
   const [dateOfBirthText, setDateOfBirthText] = useState(EMPTY_PLACEHOLDER);
+  const [tempDate, setTempDate] = useState({ month: 0, day: 1, year: 2000 });
   const [civilStatus, setCivilStatus] = useState("Single");
   const [citizenship, setCitizenship] = useState("");
 
@@ -313,17 +321,14 @@ export default function TravelProtection() {
     }, 2000);
   };
 
-  const onDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
-    if (Platform.OS === "android") {
-      setShowDatePicker(false);
-    }
-    if (event.type === "set" && selectedDate) {
-      setDateOfBirth(selectedDate);
-      setDateOfBirthText(selectedDate.toLocaleDateString());
-    }
-    if (Platform.OS === "ios" && event.type === "dismissed") {
-      setShowDatePicker(false);
-    }
+  const formatDateOfBirth = (d: Date) => {
+    return `${t(MONTH_KEYS[d.getMonth()])} ${d.getDate()}, ${d.getFullYear()}`;
+  };
+
+  const applyDateFromTemp = (month: number, day: number, year: number) => {
+    const d = new Date(year, month, day);
+    setDateOfBirth(d);
+    setDateOfBirthText(formatDateOfBirth(d));
   };
 
   const onCheckInDateChange = (
@@ -700,7 +705,16 @@ export default function TravelProtection() {
                     </Text>
                     <TouchableOpacity
                       style={styles.dropdown}
-                      onPress={() => setShowDatePicker(true)}
+                      onPress={() => {
+                        if (dateOfBirth) {
+                          setTempDate({
+                            month: dateOfBirth.getMonth(),
+                            day: dateOfBirth.getDate(),
+                            year: dateOfBirth.getFullYear(),
+                          });
+                        }
+                        setShowDateModal(true);
+                      }}
                     >
                       <Text
                         style={[
@@ -715,17 +729,6 @@ export default function TravelProtection() {
                       </Text>
                       <Ionicons name="calendar" size={20} color="#666" />
                     </TouchableOpacity>
-                    {showDatePicker && (
-                      <DateTimePicker
-                        value={dateOfBirth}
-                        mode="date"
-                        display={
-                          Platform.OS === "ios" ? "spinner" : "default"
-                        }
-                        onChange={onDateChange}
-                        maximumDate={new Date()}
-                      />
-                    )}
                   </View>
 
                   <View style={styles.inputGroup}>
@@ -1247,6 +1250,95 @@ export default function TravelProtection() {
         )}
       </SafeAreaView>
 
+      {/* Date of Birth Modal */}
+      <Modal
+        visible={showDateModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowDateModal(false)}
+      >
+        <View style={styles.dateModalOverlay}>
+          <TouchableOpacity
+            style={styles.dateModalBackdrop}
+            activeOpacity={1}
+            onPress={() => setShowDateModal(false)}
+          />
+          <View style={styles.dateModalContainer}>
+            <View style={styles.dateModalHeader}>
+              <Text style={styles.dateModalTitle}>{t("travel.selectBirthdate")}</Text>
+              <TouchableOpacity onPress={() => setShowDateModal(false)}>
+                <Ionicons name="close" size={24} color="#333" />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.datePickerRow}>
+              <View style={styles.datePickerColumn}>
+                <Text style={styles.datePickerLabel}>{t("banking.month")}</Text>
+                <ScrollView style={styles.dateScroll} showsVerticalScrollIndicator={false}>
+                  {MONTH_KEYS.map((key, i) => (
+                    <TouchableOpacity
+                      key={key}
+                      style={[
+                        styles.dateOption,
+                        tempDate.month === i && styles.dateOptionSelected,
+                      ]}
+                      onPress={() => {
+                        const next = { ...tempDate, month: i };
+                        setTempDate(next);
+                        applyDateFromTemp(next.month, next.day, next.year);
+                      }}
+                    >
+                      <Text style={styles.dateOptionText}>{t(key)}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+              <View style={styles.datePickerColumn}>
+                <Text style={styles.datePickerLabel}>{t("banking.day")}</Text>
+                <ScrollView style={styles.dateScroll} showsVerticalScrollIndicator={false}>
+                  {DAYS.map((d) => (
+                    <TouchableOpacity
+                      key={d}
+                      style={[
+                        styles.dateOption,
+                        tempDate.day === parseInt(d, 10) && styles.dateOptionSelected,
+                      ]}
+                      onPress={() => {
+                        const next = { ...tempDate, day: parseInt(d, 10) };
+                        setTempDate(next);
+                        applyDateFromTemp(next.month, next.day, next.year);
+                      }}
+                    >
+                      <Text style={styles.dateOptionText}>{d}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+              <View style={styles.datePickerColumn}>
+                <Text style={styles.datePickerLabel}>{t("banking.year")}</Text>
+                <ScrollView style={styles.dateScroll} showsVerticalScrollIndicator={false}>
+                  {YEARS.map((y) => (
+                    <TouchableOpacity
+                      key={y}
+                      style={[
+                        styles.dateOption,
+                        tempDate.year === parseInt(y, 10) && styles.dateOptionSelected,
+                      ]}
+                      onPress={() => {
+                        const next = { ...tempDate, year: parseInt(y, 10) };
+                        setTempDate(next);
+                        applyDateFromTemp(next.month, next.day, next.year);
+                      }}
+                    >
+                      <Text style={styles.dateOptionText}>{y}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       {/* Custom Alert Modal */}
       <CustomAlertModal
         visible={alertVisible}
@@ -1625,5 +1717,68 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#666",
     lineHeight: 18,
+  },
+  dateModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "flex-end",
+  },
+  dateModalBackdrop: {
+    flex: 1,
+  },
+  dateModalContainer: {
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: "70%",
+  },
+  dateModalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E0E0E0",
+  },
+  dateModalTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#333",
+  },
+  datePickerRow: {
+    flexDirection: "row",
+    padding: 16,
+    gap: 12,
+  },
+  datePickerColumn: {
+    flex: 1,
+  },
+  datePickerLabel: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#666",
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  dateScroll: {
+    maxHeight: 180,
+  },
+  dateOption: {
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+    marginBottom: 4,
+    alignItems: "center",
+    backgroundColor: "#F9F9F9",
+  },
+  dateOptionSelected: {
+    backgroundColor: "rgba(226, 90, 23, 0.12)",
+    borderWidth: 1,
+    borderColor: "rgba(226, 90, 23, 0.3)",
+  },
+  dateOptionText: {
+    fontSize: 14,
+    color: "#333",
+    fontWeight: "500",
   },
 });
