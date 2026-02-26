@@ -115,6 +115,7 @@ export default function WithdrawRequest() {
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
           {/* Icon Circle */}
           <View style={styles.iconCircle}>
