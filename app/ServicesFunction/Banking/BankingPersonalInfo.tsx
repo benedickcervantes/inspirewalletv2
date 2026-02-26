@@ -15,23 +15,25 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
+import { useLanguage } from "../../../context/LanguageContext";
 import type { RootStackParamList } from "../../../types/navigation";
 
 const THEME_COLOR = "#E15816";
 const ORANGE_GRADIENT = ["#E25A17", "#F28934"] as const;
 const GREEN_COMPLETE = "#10B981";
 
-const GENDER_OPTIONS = ["Male", "Female", "Other"];
-const CIVIL_STATUS_OPTIONS = ["Single", "Married", "Widowed", "Separated", "Divorced"];
-const CITIZENSHIP_OPTIONS = ["Filipino", "Dual Citizen", "Foreign National"];
-const MONTHS = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
-];
+const GENDER_OPTIONS = ["Male", "Female", "Other"] as const;
+const CIVIL_STATUS_OPTIONS = ["Single", "Married", "Widowed", "Separated", "Divorced"] as const;
+const CITIZENSHIP_OPTIONS = ["Filipino", "Dual Citizen", "Foreign National"] as const;
+const MONTH_KEYS = [
+  "banking.january", "banking.february", "banking.march", "banking.april", "banking.may", "banking.june",
+  "banking.july", "banking.august", "banking.september", "banking.october", "banking.november", "banking.december",
+] as const;
 const DAYS = Array.from({ length: 31 }, (_, i) => (i + 1).toString());
 const YEARS = Array.from({ length: 71 }, (_, i) => (2010 - i).toString());
 
 export default function BankingPersonalInfo() {
+  const { t } = useLanguage();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, "BankingPersonalInfo">>();
   const route = useRoute<RouteProp<RootStackParamList, "BankingPersonalInfo">>();
   const selectedBank = route.params?.selectedBank ?? "Security Bank";
@@ -52,7 +54,7 @@ export default function BankingPersonalInfo() {
 
   const formatDate = (d: Date | null) => {
     if (!d) return "";
-    return `${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+    return `${t(MONTH_KEYS[d.getMonth()])} ${d.getDate()}, ${d.getFullYear()}`;
   };
 
   const handleDateConfirm = () => {
@@ -95,8 +97,8 @@ export default function BankingPersonalInfo() {
                 color="#FFFFFF"
                 style={styles.headerIcon}
               />
-              <Text style={styles.headerTitle}>Bank Account Services</Text>
-              <Text style={styles.headerSubtitle}>Professional Banking Solutions</Text>
+              <Text style={styles.headerTitle}>{t("banking.headerTitle")}</Text>
+              <Text style={styles.headerSubtitle}>{t("banking.headerSubtitle")}</Text>
             </LinearGradient>
           </View>
         </View>
@@ -150,15 +152,14 @@ export default function BankingPersonalInfo() {
             <View style={styles.stepIconWrapper}>
               <Ionicons name="person-outline" size={28} color={THEME_COLOR} />
             </View>
-            <Text style={styles.contentTitle}>Personal Details</Text>
+            <Text style={styles.contentTitle}>{t("banking.personalDetails")}</Text>
             <Text style={styles.contentDescription}>
-              Tell us about yourself. This information is required for identity
-              verification and compliance purposes.
+              {t("banking.personalDetailsDesc")}
             </Text>
 
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>
-                Gender<Text style={styles.required}>*</Text>
+                {t("banking.gender")}<Text style={styles.required}>*</Text>
               </Text>
               <TouchableOpacity
                 style={styles.dropdown}
@@ -170,7 +171,7 @@ export default function BankingPersonalInfo() {
                     !gender && styles.dropdownPlaceholder,
                   ]}
                 >
-                  {gender || "Select your gender"}
+                  {gender ? (gender === "Male" ? t("banking.genderMale") : gender === "Female" ? t("banking.genderFemale") : t("banking.genderOther")) : t("banking.selectGender")}
                 </Text>
                 <Ionicons name="chevron-down" size={20} color="#999" />
               </TouchableOpacity>
@@ -178,7 +179,7 @@ export default function BankingPersonalInfo() {
 
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>
-                Date of Birth<Text style={styles.required}>*</Text>
+                {t("banking.dateOfBirth")}<Text style={styles.required}>*</Text>
               </Text>
               <TouchableOpacity
                 style={styles.dropdown}
@@ -199,7 +200,7 @@ export default function BankingPersonalInfo() {
                     !dateOfBirth && styles.dropdownPlaceholder,
                   ]}
                 >
-                  {dateOfBirth ? formatDate(dateOfBirth) : "Select your birthdate"}
+                  {dateOfBirth ? formatDate(dateOfBirth) : t("banking.selectBirthdate")}
                 </Text>
                 <Ionicons name="calendar-outline" size={20} color="#999" />
               </TouchableOpacity>
@@ -207,7 +208,7 @@ export default function BankingPersonalInfo() {
 
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>
-                Civil Status<Text style={styles.required}>*</Text>
+                {t("banking.civilStatus")}<Text style={styles.required}>*</Text>
               </Text>
               <TouchableOpacity
                 style={styles.dropdown}
@@ -219,7 +220,7 @@ export default function BankingPersonalInfo() {
                     !civilStatus && styles.dropdownPlaceholder,
                   ]}
                 >
-                  {civilStatus || "Select your civil status"}
+                  {civilStatus ? (civilStatus === "Single" ? t("banking.single") : civilStatus === "Married" ? t("banking.married") : civilStatus === "Widowed" ? t("banking.widowed") : civilStatus === "Separated" ? t("banking.separated") : t("banking.divorced")) : t("banking.selectCivilStatus")}
                 </Text>
                 <Ionicons name="chevron-down" size={20} color="#999" />
               </TouchableOpacity>
@@ -227,7 +228,7 @@ export default function BankingPersonalInfo() {
 
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>
-                Citizenship<Text style={styles.required}>*</Text>
+                {t("banking.citizenship")}<Text style={styles.required}>*</Text>
               </Text>
               <TouchableOpacity
                 style={styles.dropdown}
@@ -239,7 +240,7 @@ export default function BankingPersonalInfo() {
                     !citizenship && styles.dropdownPlaceholder,
                   ]}
                 >
-                  {citizenship || "Select your citizenship"}
+                  {citizenship ? (citizenship === "Filipino" ? t("banking.filipino") : citizenship === "Dual Citizen" ? t("banking.dualCitizen") : t("banking.foreignNational")) : t("banking.selectCitizenship")}
                 </Text>
                 <Ionicons name="chevron-down" size={20} color="#999" />
               </TouchableOpacity>
@@ -252,10 +253,7 @@ export default function BankingPersonalInfo() {
               <Text style={styles.infoIconText}>i</Text>
             </View>
             <Text style={styles.infoText}>
-              By submitting these details, we will send you an email confirmation
-              with your application status. Please note that this process will
-              take approximately 5-7 working days for review and approval by the
-              selected bank.
+              {t("banking.infoNote")}
             </Text>
           </View>
 
@@ -270,7 +268,7 @@ export default function BankingPersonalInfo() {
               onPress={handleBack}
               activeOpacity={0.8}
             >
-              <Text style={styles.backButtonText}>Back</Text>
+              <Text style={styles.backButtonText}>{t("banking.back")}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.nextButton}
@@ -283,7 +281,7 @@ export default function BankingPersonalInfo() {
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
               >
-                <Text style={styles.nextButtonText}>Next</Text>
+                <Text style={styles.nextButtonText}>{t("banking.next")}</Text>
               </LinearGradient>
             </TouchableOpacity>
           </View>
@@ -300,7 +298,7 @@ export default function BankingPersonalInfo() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select Gender</Text>
+              <Text style={styles.modalTitle}>{t("banking.modalSelectGender")}</Text>
               <TouchableOpacity onPress={() => setShowGenderModal(false)}>
                 <Ionicons name="close" size={24} color="#333" />
               </TouchableOpacity>
@@ -315,7 +313,7 @@ export default function BankingPersonalInfo() {
                     setShowGenderModal(false);
                   }}
                 >
-                  <Text style={styles.optionText}>{opt}</Text>
+                  <Text style={styles.optionText}>{opt === "Male" ? t("banking.genderMale") : opt === "Female" ? t("banking.genderFemale") : t("banking.genderOther")}</Text>
                   {gender === opt && (
                     <Ionicons name="checkmark-circle" size={22} color={THEME_COLOR} />
                   )}
@@ -336,31 +334,31 @@ export default function BankingPersonalInfo() {
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContainer, styles.dateModalContainer]}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select Birthdate</Text>
+              <Text style={styles.modalTitle}>{t("banking.modalSelectBirthdate")}</Text>
               <TouchableOpacity onPress={() => setShowDateModal(false)}>
                 <Ionicons name="close" size={24} color="#333" />
               </TouchableOpacity>
             </View>
             <View style={styles.datePickerRow}>
               <View style={styles.datePickerColumn}>
-                <Text style={styles.datePickerLabel}>Month</Text>
+                <Text style={styles.datePickerLabel}>{t("banking.month")}</Text>
                 <ScrollView style={styles.dateScroll} showsVerticalScrollIndicator={false}>
-                  {MONTHS.map((m, i) => (
+                  {MONTH_KEYS.map((key, i) => (
                     <TouchableOpacity
-                      key={m}
+                      key={key}
                       style={[
                         styles.dateOption,
                         tempDate.month === i && styles.dateOptionSelected,
                       ]}
                       onPress={() => setTempDate((p) => ({ ...p, month: i }))}
                     >
-                      <Text style={styles.dateOptionText}>{m}</Text>
+                      <Text style={styles.dateOptionText}>{t(key)}</Text>
                     </TouchableOpacity>
                   ))}
                 </ScrollView>
               </View>
               <View style={styles.datePickerColumn}>
-                <Text style={styles.datePickerLabel}>Day</Text>
+                <Text style={styles.datePickerLabel}>{t("banking.day")}</Text>
                 <ScrollView style={styles.dateScroll} showsVerticalScrollIndicator={false}>
                   {DAYS.map((d) => (
                     <TouchableOpacity
@@ -377,7 +375,7 @@ export default function BankingPersonalInfo() {
                 </ScrollView>
               </View>
               <View style={styles.datePickerColumn}>
-                <Text style={styles.datePickerLabel}>Year</Text>
+                <Text style={styles.datePickerLabel}>{t("banking.year")}</Text>
                 <ScrollView style={styles.dateScroll} showsVerticalScrollIndicator={false}>
                   {YEARS.map((y) => (
                     <TouchableOpacity
@@ -398,7 +396,7 @@ export default function BankingPersonalInfo() {
               style={styles.dateConfirmButton}
               onPress={handleDateConfirm}
             >
-              <Text style={styles.dateConfirmText}>Confirm</Text>
+              <Text style={styles.dateConfirmText}>{t("banking.confirm")}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -414,7 +412,7 @@ export default function BankingPersonalInfo() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select Civil Status</Text>
+              <Text style={styles.modalTitle}>{t("banking.modalSelectCivilStatus")}</Text>
               <TouchableOpacity onPress={() => setShowCivilStatusModal(false)}>
                 <Ionicons name="close" size={24} color="#333" />
               </TouchableOpacity>
@@ -429,7 +427,7 @@ export default function BankingPersonalInfo() {
                     setShowCivilStatusModal(false);
                   }}
                 >
-                  <Text style={styles.optionText}>{opt}</Text>
+                  <Text style={styles.optionText}>{opt === "Single" ? t("banking.single") : opt === "Married" ? t("banking.married") : opt === "Widowed" ? t("banking.widowed") : opt === "Separated" ? t("banking.separated") : t("banking.divorced")}</Text>
                   {civilStatus === opt && (
                     <Ionicons name="checkmark-circle" size={22} color={THEME_COLOR} />
                   )}
@@ -450,7 +448,7 @@ export default function BankingPersonalInfo() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select Citizenship</Text>
+              <Text style={styles.modalTitle}>{t("banking.modalSelectCitizenship")}</Text>
               <TouchableOpacity onPress={() => setShowCitizenshipModal(false)}>
                 <Ionicons name="close" size={24} color="#333" />
               </TouchableOpacity>
@@ -465,7 +463,7 @@ export default function BankingPersonalInfo() {
                     setShowCitizenshipModal(false);
                   }}
                 >
-                  <Text style={styles.optionText}>{opt}</Text>
+                  <Text style={styles.optionText}>{opt === "Filipino" ? t("banking.filipino") : opt === "Dual Citizen" ? t("banking.dualCitizen") : t("banking.foreignNational")}</Text>
                   {citizenship === opt && (
                     <Ionicons name="checkmark-circle" size={22} color={THEME_COLOR} />
                   )}

@@ -13,10 +13,12 @@ import {
     View,
 } from "react-native";
 import { getOrCreateMainWallet, submitTopUpRequest } from "../../../configs/api";
+import { useLanguage } from "../../../context/LanguageContext";
 
 export default function TopUpConfirm() {
   const navigation = useNavigation();
   const route = useRoute();
+  const { t } = useLanguage();
   const params = (route.params || {}) as { currency?: string; amount?: string; currencySymbol?: string };
   const [showAlertModal, setShowAlertModal] = useState(false);
   const [alertConfig, setAlertConfig] = useState<{ title: string; message: string }>({ title: "", message: "" });
@@ -35,7 +37,7 @@ export default function TopUpConfirm() {
     try {
       const accessToken = await AsyncStorage.getItem("access_token");
       if (!accessToken) {
-        setAlertConfig({ title: "Error", message: "Please log in to submit a top-up request." });
+        setAlertConfig({ title: t("deposit.error"), message: t("deposit.pleaseLoginTopup") });
         setShowAlertModal(true);
         setIsSubmitting(false);
         return;
@@ -43,7 +45,7 @@ export default function TopUpConfirm() {
 
       const { success: walletSuccess, wallet } = await getOrCreateMainWallet(accessToken);
       if (!walletSuccess || !wallet?.id) {
-        setAlertConfig({ title: "Error", message: "Could not load wallet. Please try again." });
+        setAlertConfig({ title: t("deposit.error"), message: t("deposit.walletLoadError") });
         setShowAlertModal(true);
         setIsSubmitting(false);
         return;
@@ -56,8 +58,8 @@ export default function TopUpConfirm() {
 
       if (result.success) {
         setAlertConfig({
-          title: "Success",
-          message: "Your top-up request has been submitted successfully!",
+          title: t("deposit.success"),
+          message: t("deposit.topUpSuccess"),
         });
         setShowAlertModal(true);
         setTimeout(() => {
@@ -66,16 +68,16 @@ export default function TopUpConfirm() {
         }, 2000);
       } else {
         setAlertConfig({
-          title: "Error",
-          message: result.error || "Failed to submit top-up request. Please try again.",
+          title: t("deposit.error"),
+          message: result.error || t("deposit.submitError"),
         });
         setShowAlertModal(true);
       }
     } catch (error) {
       console.error("Error submitting top-up:", error);
       setAlertConfig({
-        title: "Error",
-        message: "An unexpected error occurred. Please try again.",
+        title: t("deposit.error"),
+        message: t("deposit.unexpectedError"),
       });
       setShowAlertModal(true);
     } finally {
@@ -100,7 +102,7 @@ export default function TopUpConfirm() {
             <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
           </TouchableOpacity>
 
-          <Text style={styles.headerTitle}>Deposit Request</Text>
+          <Text style={styles.headerTitle}>{t("deposit.depositRequest")}</Text>
 
           <TouchableOpacity style={styles.refreshButton}>
             <Ionicons name="refresh" size={24} color="#FFFFFF" />
@@ -127,15 +129,15 @@ export default function TopUpConfirm() {
         >
           {/* Title */}
           <View style={styles.titleContainer}>
-            <Text style={styles.title}>Review & Confirm</Text>
-            <Text style={styles.subtitle}>Review your deposit details</Text>
+            <Text style={styles.title}>{t("deposit.reviewConfirm")}</Text>
+            <Text style={styles.subtitle}>{t("deposit.reviewDetails")}</Text>
           </View>
 
           {/* Deposit Type Card */}
           <View style={styles.detailCard}>
             <View style={styles.leftBorder} />
             <Text style={styles.detailLabel}>Deposit Type</Text>
-            <Text style={styles.detailValue}>Top Up Available Balance</Text>
+            <Text style={styles.detailValue}>{t("deposit.topUpBalance")}</Text>
           </View>
 
           {/* Investment Amount Card */}
@@ -145,7 +147,7 @@ export default function TopUpConfirm() {
             start={{ x: 0, y: 0 }}
             end={{ x: 0, y: 1 }}
           >
-            <Text style={styles.amountCardTitle}>Investment Amount</Text>
+            <Text style={styles.amountCardTitle}>{t("deposit.investmentAmount")}</Text>
             <Text style={styles.amountValue}>
               {currencySymbol}{parseFloat(amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currency}
             </Text>
@@ -157,7 +159,7 @@ export default function TopUpConfirm() {
               style={styles.backButtonBottom}
               onPress={() => navigation.goBack()}
             >
-              <Text style={styles.backButtonText}>Back</Text>
+              <Text style={styles.backButtonText}>{t("deposit.back")}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -171,7 +173,7 @@ export default function TopUpConfirm() {
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
               >
-                <Text style={styles.confirmText}>{isSubmitting ? "Processing..." : "Confirm"}</Text>
+                <Text style={styles.confirmText}>{isSubmitting ? t("deposit.processing") : t("deposit.confirm")}</Text>
                 {!isSubmitting && <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />}
               </LinearGradient>
             </TouchableOpacity>
@@ -200,12 +202,12 @@ export default function TopUpConfirm() {
                 style={styles.alertButton}
                 onPress={() => {
                   setShowAlertModal(false);
-                  if (alertConfig.title === "Success") {
+                  if (alertConfig.title === t("deposit.success")) {
                     navigation.navigate("Main");
                   }
                 }}
               >
-                <Text style={styles.alertButtonText}>OK</Text>
+                <Text style={styles.alertButtonText}>{t("deposit.ok")}</Text>
               </TouchableOpacity>
             </LinearGradient>
           </View>

@@ -12,9 +12,11 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { useLanguage } from "../../../context/LanguageContext";
 
 export default function TopUpBalance() {
   const navigation = useNavigation();
+  const { t } = useLanguage();
   const [selectedCurrency, setSelectedCurrency] = useState("PHP");
   const [showCurrencyModal, setShowCurrencyModal] = useState(false);
   const [amount, setAmount] = useState("");
@@ -32,8 +34,8 @@ export default function TopUpBalance() {
     // Validation
     if (!amount || parseFloat(amount) <= 0) {
       setAlertConfig({
-        title: "Invalid Amount",
-        message: "Please enter a valid amount"
+        title: t("deposit.invalidAmount"),
+        message: t("deposit.enterAmount")
       });
       setShowAlertModal(true);
       return;
@@ -69,7 +71,7 @@ export default function TopUpBalance() {
             <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
           </TouchableOpacity>
 
-          <Text style={styles.headerTitle}>Deposit Request</Text>
+          <Text style={styles.headerTitle}>{t("deposit.depositRequest")}</Text>
 
           <TouchableOpacity style={styles.refreshButton}>
             <Ionicons name="refresh" size={24} color="#FFFFFF" />
@@ -94,8 +96,8 @@ export default function TopUpBalance() {
         >
           {/* Title */}
           <View style={styles.titleContainer}>
-            <Text style={styles.title}>Top Up Available Balance</Text>
-            <Text style={styles.subtitle}>Add funds to your available balance</Text>
+            <Text style={styles.title}>{t("deposit.topUpBalance")}</Text>
+            <Text style={styles.subtitle}>{t("deposit.topUpSubtitle")}</Text>
           </View>
 
           {/* Form Card */}
@@ -108,7 +110,7 @@ export default function TopUpBalance() {
                 <View style={styles.iconBox}>
                   <MaterialCommunityIcons name="currency-usd" size={20} color="#E25A17" />
                 </View>
-                <Text style={styles.sectionTitle}>Select Currency</Text>
+                <Text style={styles.sectionTitle}>{t("deposit.selectCurrency")}</Text>
               </View>
 
               <TouchableOpacity 
@@ -129,7 +131,7 @@ export default function TopUpBalance() {
                 <View style={styles.iconBox}>
                   <MaterialCommunityIcons name="cash" size={20} color="#E25A17" />
                 </View>
-                <Text style={styles.sectionTitle}>Amount *</Text>
+                <Text style={styles.sectionTitle}>{t("deposit.amount")}</Text>
               </View>
 
               <View style={styles.amountInput}>
@@ -157,7 +159,7 @@ export default function TopUpBalance() {
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
             >
-              <Text style={styles.continueText}>Continue</Text>
+              <Text style={styles.continueText}>{t("deposit.continue")}</Text>
               <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
             </LinearGradient>
           </TouchableOpacity>
@@ -175,7 +177,7 @@ export default function TopUpBalance() {
           <View style={styles.modalOverlay}>
             <View style={styles.modalContainer}>
               <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Select Currency</Text>
+                <Text style={styles.modalTitle}>{t("deposit.selectCurrency")}</Text>
                 <TouchableOpacity onPress={() => setShowCurrencyModal(false)}>
                   <Ionicons name="close" size={24} color="#333" />
                 </TouchableOpacity>
@@ -228,7 +230,7 @@ export default function TopUpBalance() {
                 style={styles.alertButton}
                 onPress={() => setShowAlertModal(false)}
               >
-                <Text style={styles.alertButtonText}>OK</Text>
+                <Text style={styles.alertButtonText}>{t("deposit.ok")}</Text>
               </TouchableOpacity>
             </LinearGradient>
           </View>

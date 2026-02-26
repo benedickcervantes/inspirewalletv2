@@ -14,23 +14,18 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useLanguage } from '../../context/LanguageContext';
 import type { NavProp } from '../../types/navigation';
 
-const REASON_OPTIONS = [
-  'No longer need the service',
-  'Found a better alternative',
-  'Privacy concerns',
-  'Too expensive',
-  'Technical issues',
-  'Other',
-];
+const REASON_KEYS = ['delete.reasonNoLonger', 'delete.reasonBetter', 'delete.reasonPrivacy', 'delete.reasonExpensive', 'delete.reasonTechnical', 'delete.reasonOther'] as const;
 
 type Step = 'confirm' | 'reason' | 'done';
 
 const DeleteAccount = () => {
   const navigation = useNavigation();
+  const { t } = useLanguage();
   const [step, setStep] = useState<Step>('confirm');
-  const [reason, setReason] = useState('');
+  const [reasonKey, setReasonKey] = useState('');
   const [additionalDetails, setAdditionalDetails] = useState('');
   const [showReasonModal, setShowReasonModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -44,8 +39,8 @@ const DeleteAccount = () => {
   };
 
   const handleSubmit = async () => {
-    if (!reason.trim()) {
-      Alert.alert('Required', 'Please select a reason for deleting your account.');
+    if (!reasonKey.trim()) {
+      Alert.alert(t('delete.required'), t('delete.requiredReason'));
       return;
     }
 
@@ -56,9 +51,9 @@ const DeleteAccount = () => {
     setStep('done');
 
     Alert.alert(
-      'Request Submitted',
-      'Your account deletion request has been submitted. Our admin team will process your request within 2-3 business days. You will be notified via email once your account has been deleted. Thank you for being part of Inspire Wallet.',
-      [{ text: 'OK', onPress: () => (navigation as unknown as NavProp).goBack() }]
+      t('delete.requestSubmitted'),
+      t('delete.successMessage'),
+      [{ text: t('common.ok'), onPress: () => (navigation as unknown as NavProp).goBack() }]
     );
   };
 
@@ -75,7 +70,7 @@ const DeleteAccount = () => {
           <TouchableOpacity onPress={() => (navigation as unknown as NavProp).goBack()} style={styles.backButton}>
             <Ionicons name="arrow-back" size={28} color="#FFFFFF" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Delete Account</Text>
+          <Text style={styles.headerTitle}>{t('delete.title')}</Text>
           <View style={styles.headerSpacer} />
         </View>
       </LinearGradient>
@@ -86,17 +81,14 @@ const DeleteAccount = () => {
             <View style={styles.iconWrapper}>
               <MaterialCommunityIcons name="alert-circle-outline" size={56} color="#F38B35" />
             </View>
-            <Text style={styles.confirmTitle}>Do you really want to delete your account?</Text>
-            <Text style={styles.confirmSubtitle}>
-              This action cannot be undone. All your data, including investments and transaction
-              history, will be permanently removed.
-            </Text>
+            <Text style={styles.confirmTitle}>{t('delete.confirmTitle')}</Text>
+            <Text style={styles.confirmSubtitle}>{t('delete.confirmSubtitle')}</Text>
             <View style={styles.buttonRow}>
               <TouchableOpacity style={styles.cancelButton} onPress={handleConfirmNo} activeOpacity={0.8}>
-                <Text style={styles.cancelButtonText}>No, keep my account</Text>
+                <Text style={styles.cancelButtonText}>{t('delete.noKeepAccount')}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.dangerButton} onPress={handleConfirmYes} activeOpacity={0.8}>
-                <Text style={styles.dangerButtonText}>Yes, delete my account</Text>
+                <Text style={styles.dangerButtonText}>{t('delete.yesDeleteAccount')}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -107,26 +99,23 @@ const DeleteAccount = () => {
             <View style={styles.iconWrapper}>
               <MaterialCommunityIcons name="comment-question-outline" size={48} color="#F38B35" />
             </View>
-            <Text style={styles.reasonTitle}>Tell us why you're leaving</Text>
-            <Text style={styles.reasonSubtitle}>
-              Your feedback helps us improve. Please select a reason and feel free to add more
-              details.
-            </Text>
+            <Text style={styles.reasonTitle}>{t('delete.tellUsWhy')}</Text>
+            <Text style={styles.reasonSubtitle}>{t('delete.reasonSubtitle')}</Text>
 
             <Text style={styles.inputLabel}>
-              Reason<Text style={styles.required}> *</Text>
+              {t('delete.reason')}<Text style={styles.required}> *</Text>
             </Text>
             <TouchableOpacity style={styles.dropdown} onPress={() => setShowReasonModal(true)}>
-              <Text style={[styles.dropdownText, !reason && styles.dropdownPlaceholder]}>
-                {reason || 'Select reason'}
+              <Text style={[styles.dropdownText, !reasonKey && styles.dropdownPlaceholder]}>
+                {reasonKey ? t(reasonKey) : t('delete.selectReason')}
               </Text>
               <Ionicons name="chevron-down" size={20} color="#999" />
             </TouchableOpacity>
 
-            <Text style={[styles.inputLabel, { marginTop: 16 }]}>Additional details (optional)</Text>
+            <Text style={[styles.inputLabel, { marginTop: 16 }]}>{t('delete.additionalDetails')}</Text>
             <TextInput
               style={[styles.input, styles.textArea]}
-              placeholder="Share more about your experience..."
+              placeholder={t('delete.placeholderDetails')}
               placeholderTextColor="#9E9E9E"
               value={additionalDetails}
               onChangeText={setAdditionalDetails}
@@ -150,14 +139,14 @@ const DeleteAccount = () => {
                 {submitting ? (
                   <ActivityIndicator size="small" color="#FFFFFF" />
                 ) : (
-                  <Text style={styles.submitButtonText}>Submit Request</Text>
+                  <Text style={styles.submitButtonText}>{t('delete.submitRequest')}</Text>
                 )}
               </LinearGradient>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.backLink} onPress={() => setStep('confirm')}>
               <Ionicons name="arrow-back" size={18} color="#F38B35" />
-              <Text style={styles.backLinkText}>Go back</Text>
+              <Text style={styles.backLinkText}>{t('delete.goBack')}</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -172,23 +161,23 @@ const DeleteAccount = () => {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select Reason</Text>
+              <Text style={styles.modalTitle}>{t('delete.selectReasonTitle')}</Text>
               <TouchableOpacity onPress={() => setShowReasonModal(false)}>
                 <Ionicons name="close" size={24} color="#333" />
               </TouchableOpacity>
             </View>
             <ScrollView style={styles.modalContent}>
-              {REASON_OPTIONS.map((opt) => (
+              {REASON_KEYS.map((key) => (
                 <TouchableOpacity
-                  key={opt}
-                  style={[styles.optionRow, reason === opt && styles.optionRowSelected]}
+                  key={key}
+                  style={[styles.optionRow, reasonKey === key && styles.optionRowSelected]}
                   onPress={() => {
-                    setReason(opt);
+                    setReasonKey(key);
                     setShowReasonModal(false);
                   }}
                 >
-                  <Text style={styles.optionText}>{opt}</Text>
-                  {reason === opt && <Ionicons name="checkmark-circle" size={22} color="#F38B35" />}
+                  <Text style={styles.optionText}>{t(key)}</Text>
+                  {reasonKey === key && <Ionicons name="checkmark-circle" size={22} color="#F38B35" />}
                 </TouchableOpacity>
               ))}
             </ScrollView>

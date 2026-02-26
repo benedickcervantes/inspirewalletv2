@@ -14,6 +14,7 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
+import { useLanguage } from "../../../context/LanguageContext";
 import { getStockInvestmentDepositRequests } from "../../../configs/api";
 
 const THEME_COLOR = "#E15816";
@@ -50,6 +51,7 @@ function formatCurrency(value: number | string): string {
 
 export default function StockService() {
   const navigation = useNavigation();
+  const { t } = useLanguage();
   const [requests, setRequests] = useState<StockRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -124,17 +126,17 @@ export default function StockService() {
             id: r.id,
             label:
               r.status === "APPROVED"
-                ? "Stock Purchase"
+                ? t("stock.stockPurchase")
                 : r.status === "PENDING"
-                  ? "Stock Request"
-                  : "Stock Request (Rejected)",
+                  ? t("stock.stockRequest")
+                  : t("stock.stockRequestRejected"),
             date: formatTransactionDate(r.createdAt),
             amount: `-₱${formatCurrency(r.amount)}`,
           }))
       : [
           {
             id: "placeholder",
-            label: "Created Account",
+            label: t("stock.createdAccount"),
             date: "Jan 29. 2026",
             amount: "-₱0.00",
           },
@@ -162,7 +164,7 @@ export default function StockService() {
           >
             <Ionicons name="arrow-back" size={28} color={THEME_COLOR} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Stockholder Dashboard</Text>
+          <Text style={styles.headerTitle}>{t("stock.title")}</Text>
           <View style={styles.headerSpacer} />
         </View>
 
@@ -194,9 +196,9 @@ export default function StockService() {
                 <View style={styles.stockRateIconCircle}>
                   <Text style={styles.stockRateIconText}>!</Text>
                 </View>
-                <Text style={styles.stockRateLabel}>Stock Rate</Text>
+                <Text style={styles.stockRateLabel}>{t("stock.stockRate")}</Text>
                 <Text style={styles.stockRateValue}>
-                  1 Stock = ₱{STOCK_RATE_FORMATTED}
+                  {t("stock.stockRateValue")}
                 </Text>
               </LinearGradient>
             </View>
@@ -216,9 +218,9 @@ export default function StockService() {
                     color="#FFFFFF"
                   />
                 </View>
-                <Text style={styles.portfolioLabel}>Your Stock Portfolio</Text>
+                <Text style={styles.portfolioLabel}>{t("stock.yourPortfolio")}</Text>
                 <Text style={styles.portfolioStocks}>
-                  {stockCount} Stock{stockCount !== 1 ? "s" : ""}
+                  {stockCount} {stockCount !== 1 ? t("stock.stocks") : t("stock.stock")}
                 </Text>
                 <View style={styles.portfolioValueRow}>
                   <MaterialCommunityIcons
@@ -227,7 +229,7 @@ export default function StockService() {
                     color="#000"
                   />
                   <Text style={styles.portfolioValueLabel}>
-                    Total Portfolio Value
+                    {t("stock.totalPortfolioValue")}
                   </Text>
                 </View>
                 <Text style={styles.portfolioValue}>
@@ -246,7 +248,7 @@ export default function StockService() {
                 <View style={styles.buyButtonIcon}>
                   <Ionicons name="add" size={24} color="#FFFFFF" />
                 </View>
-                <Text style={styles.buyButtonText}>BUY</Text>
+                <Text style={styles.buyButtonText}>{t("stock.buy")}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -257,7 +259,7 @@ export default function StockService() {
                 <View style={styles.sellButtonIcon}>
                   <Ionicons name="arrow-forward" size={24} color="#FFFFFF" />
                 </View>
-                <Text style={styles.sellButtonText}>SELL</Text>
+                <Text style={styles.sellButtonText}>{t("stock.sell")}</Text>
               </TouchableOpacity>
             </View>
 
@@ -265,7 +267,7 @@ export default function StockService() {
             <View style={styles.transactionCard}>
               <View style={styles.transactionHeader}>
                 <Ionicons name="time-outline" size={22} color={THEME_COLOR} />
-                <Text style={styles.transactionTitle}>Transaction History</Text>
+                <Text style={styles.transactionTitle}>{t("stock.transactionHistory")}</Text>
               </View>
               <View style={styles.transactionList}>
                 {transactions.map((tx) => (

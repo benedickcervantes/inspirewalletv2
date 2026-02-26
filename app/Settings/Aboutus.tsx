@@ -9,17 +9,14 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useLanguage } from '../../context/LanguageContext';
 import type { NavProp } from '../../types/navigation';
 
-const WALLET_FEATURES = [
-  'Stay on top of your investments',
-  'Manage stocks',
-  'Track withdrawals',
-  'Keep a clear record of all your financial transactions',
-];
+const WALLET_FEATURE_KEYS = ['about.feature1', 'about.feature2', 'about.feature3', 'about.feature4'] as const;
 
 const Aboutus = () => {
   const navigation = useNavigation();
+  const { t } = useLanguage();
 
   return (
     <SafeAreaView style={styles.container}>
@@ -34,7 +31,7 @@ const Aboutus = () => {
           <TouchableOpacity onPress={() => (navigation as unknown as NavProp).goBack()} style={styles.backButton}>
             <Ionicons name="arrow-back" size={28} color="#FFFFFF" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>About Inspire</Text>
+          <Text style={styles.headerTitle}>{t('about.title')}</Text>
           <View style={styles.headerSpacer} />
         </View>
       </LinearGradient>
@@ -45,15 +42,10 @@ const Aboutus = () => {
             <View style={styles.iconWrapper}>
               <MaterialCommunityIcons name="domain" size={24} color="#F38B35" />
             </View>
-            <Text style={styles.cardTitle}>Our Company</Text>
+            <Text style={styles.cardTitle}>{t('about.ourCompany')}</Text>
           </View>
           <Text style={styles.cardText}>
-            At Inspire Alliance Fund Group Inc., we are driven by a powerful purpose: to empower dreams
-            and ignite meaningful change. Founded on the belief that lasting progress begins with
-            opportunity, we exist to support individuals who are ready to make a difference—not just
-            in their own lives, but in the communities around them. We go beyond traditional funding.
-            We are a dynamic movement that bridges passionate visionaries with the support, trust, and
-            resources they need to transform ideas into lasting impact.
+            {t('about.ourCompanyDesc')}
           </Text>
         </View>
 
@@ -62,16 +54,10 @@ const Aboutus = () => {
             <View style={styles.iconWrapper}>
               <MaterialCommunityIcons name="account-group" size={24} color="#F38B35" />
             </View>
-            <Text style={styles.cardTitle}>Our Mission</Text>
+            <Text style={styles.cardTitle}>{t('about.ourMission')}</Text>
           </View>
           <Text style={styles.cardText}>
-            At Inspire Alliance Fund Group Inc, our mission is to ignite change by empowering dreams.
-            We believe that real progress begins when individuals are given the resources, trust, and
-            opportunities to build a better future not just for themselves, but for their communities
-            and beyond. We are more than a funding platform; we are a movement that connects
-            purpose-driven people with the support they need to turn ideas into impact. By investing
-            in human potential, we cultivate a ripple effect supporting lives, strengthening
-            economies, and shaping a future where hope and innovation thrive together.
+            {t('about.ourMissionDesc')}
           </Text>
         </View>
 
@@ -80,28 +66,24 @@ const Aboutus = () => {
             <View style={styles.iconWrapper}>
               <MaterialCommunityIcons name="wallet" size={24} color="#F38B35" />
             </View>
-            <Text style={styles.cardTitle}>Inspire Wallet</Text>
+            <Text style={styles.cardTitle}>{t('about.inspireWallet')}</Text>
           </View>
           <Text style={styles.cardText}>
-            Inspire Wallet, our flagship app for Inspire investors, embodies this vision. Designed as
-            your all-in-one financial companion, Inspire Wallet allows you to:
+            {t('about.inspireWalletIntro')}
           </Text>
           <View style={styles.featuresList}>
-            {WALLET_FEATURES.map((feature, index) => (
+            {WALLET_FEATURE_KEYS.map((key, index) => (
               <View key={index} style={styles.featureRow}>
                 <View style={styles.checkIcon}>
                   <Ionicons name="checkmark" size={14} color="#FFFFFF" />
                 </View>
-                <Text style={styles.featureText}>{feature}</Text>
+                <Text style={styles.featureText}>{t(key)}</Text>
               </View>
             ))}
           </View>
           <View style={styles.blockquote}>
             <View style={styles.blockquoteBar} />
-            <Text style={styles.blockquoteText}>
-              Whether you're a seasoned investor or just getting started, our app provides all the
-              tools you need to manage your portfolio with ease and confidence.
-            </Text>
+            <Text style={styles.blockquoteText}>{t('about.blockquote')}</Text>
           </View>
         </View>
 
@@ -109,11 +91,8 @@ const Aboutus = () => {
           <View style={styles.ctaIconWrapper}>
             <MaterialCommunityIcons name="rocket-launch" size={40} color="#FFFFFF" />
           </View>
-          <Text style={styles.ctaTitle}>Ready to Get Started?</Text>
-          <Text style={styles.ctaText}>
-            Join us at Inspire Alliance Fund Group Incorporated and together, let's shape a prosperous
-            future. Take control of your financial journey now!
-          </Text>
+          <Text style={styles.ctaTitle}>{t('about.readyToGetStarted')}</Text>
+          <Text style={styles.ctaText}>{t('about.ctaText')}</Text>
         </View>
 
         <View style={styles.bottomPadding} />

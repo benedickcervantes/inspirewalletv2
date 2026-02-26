@@ -13,10 +13,12 @@ import {
     View,
 } from "react-native";
 import { getOrCreateMainWallet, submitTimeDepositRequest } from "../../../configs/api";
+import { useLanguage } from "../../../context/LanguageContext";
 
 export default function TimeDepositConfirm() {
   const navigation = useNavigation();
   const route = useRoute();
+  const { t } = useLanguage();
   const params = (route.params || {}) as { depositMethod?: string; contractPeriod?: string; amount?: string; currency?: string };
 
   const [loading, setLoading] = useState(false);
@@ -39,7 +41,7 @@ export default function TimeDepositConfirm() {
     try {
       const accessToken = await AsyncStorage.getItem("access_token");
       if (!accessToken) {
-        setErrorMessage("Please log in to submit a deposit request.");
+        setErrorMessage(t("deposit.pleaseLoginDeposit"));
         setLoading(false);
         return;
       }
@@ -54,7 +56,7 @@ export default function TimeDepositConfirm() {
       if (depositMethod === "Available Balance") {
         const { success, wallet } = await getOrCreateMainWallet(accessToken);
         if (!success || !wallet?.id) {
-          setErrorMessage("Could not load wallet. Please try again.");
+          setErrorMessage(t("deposit.walletLoadError"));
           setLoading(false);
           return;
         }
@@ -66,11 +68,11 @@ export default function TimeDepositConfirm() {
       if (result.success) {
         setShowSuccessModal(true);
       } else {
-        setErrorMessage(result.error || "Failed to submit deposit request.");
+        setErrorMessage(result.error || t("deposit.submitError"));
       }
     } catch (error) {
       console.error("Error submitting deposit:", error);
-      setErrorMessage("An unexpected error occurred. Please try again.");
+      setErrorMessage(t("deposit.unexpectedError"));
     } finally {
       setLoading(false);
     }
@@ -101,7 +103,7 @@ export default function TimeDepositConfirm() {
             <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
           </TouchableOpacity>
 
-          <Text style={styles.headerTitle}>Deposit Request</Text>
+          <Text style={styles.headerTitle}>{t("deposit.depositRequest")}</Text>
 
           <TouchableOpacity style={styles.refreshButton}>
             <Ionicons name="refresh" size={24} color="#FFFFFF" />
@@ -146,12 +148,12 @@ export default function TimeDepositConfirm() {
               </View>
 
               <View style={styles.detailItem}>
-                <Text style={styles.detailLabel}>Contract Period *</Text>
+                <Text style={styles.detailLabel}>{t("deposit.contractPeriod")}</Text>
                 <Text style={styles.detailValue}>{contractPeriod}</Text>
               </View>
 
               <View style={styles.detailItem}>
-                <Text style={styles.detailLabel}>Deposit Method</Text>
+                <Text style={styles.detailLabel}>{t("deposit.depositMethod")}</Text>
                 <Text style={styles.detailValue}>{depositMethod}</Text>
               </View>
             </View>
@@ -163,7 +165,7 @@ export default function TimeDepositConfirm() {
               start={{ x: 0, y: 0 }}
               end={{ x: 0, y: 1 }}
             >
-              <Text style={styles.amountCardTitle}>Investment Amount</Text>
+              <Text style={styles.amountCardTitle}>{t("deposit.investmentAmount")}</Text>
               <View style={styles.amountDisplay}>
                 <Text style={styles.amountValue}>
                   {currency} {parseFloat(amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -174,18 +176,18 @@ export default function TimeDepositConfirm() {
 
           {/* Deposit Summary Card */}
           <View style={styles.summaryCard}>
-            <Text style={styles.summaryTitle}>Deposit Summary</Text>
+            <Text style={styles.summaryTitle}>{t("deposit.depositSummary")}</Text>
 
             <View style={styles.summaryRow}>
               <View style={styles.summaryItem}>
-                <Text style={styles.summaryLabel}>Principal Amount</Text>
+                <Text style={styles.summaryLabel}>{t("deposit.principalAmount")}</Text>
                 <Text style={styles.summaryValue}>
                   {currency} {parseFloat(amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </Text>
               </View>
 
               <View style={styles.summaryItem}>
-                <Text style={styles.summaryLabel}>Maturity</Text>
+                <Text style={styles.summaryLabel}>{t("deposit.maturity")}</Text>
                 <Text style={styles.summaryValue}>{getMaturityDate()}</Text>
               </View>
             </View>
@@ -209,7 +211,7 @@ export default function TimeDepositConfirm() {
               style={styles.backButtonBottom}
               onPress={() => navigation.goBack()}
             >
-              <Text style={styles.backButtonText}>Back</Text>
+              <Text style={styles.backButtonText}>{t("deposit.back")}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -224,7 +226,7 @@ export default function TimeDepositConfirm() {
                 end={{ x: 1, y: 0 }}
               >
                 <Text style={styles.confirmText}>
-                  {loading ? "Processing..." : "Confirm"}
+                  {loading ? t("deposit.processing") : t("deposit.confirm")}
                 </Text>
                 {!loading && <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />}
               </LinearGradient>
@@ -252,15 +254,15 @@ export default function TimeDepositConfirm() {
                 <View style={styles.successIconContainer}>
                   <Ionicons name="checkmark-circle" size={64} color="#FFFFFF" />
                 </View>
-                <Text style={styles.successTitle}>Success</Text>
+                <Text style={styles.successTitle}>{t("deposit.successTitle")}</Text>
                 <Text style={styles.successMessage}>
-                  Your time deposit request has been submitted successfully!
+                  {t("deposit.successMessage")}
                 </Text>
                 <TouchableOpacity
                   style={styles.successButton}
                   onPress={goToMain}
                 >
-                  <Text style={styles.successButtonText}>OK</Text>
+                  <Text style={styles.successButtonText}>{t("deposit.goToDashboard")}</Text>
                 </TouchableOpacity>
               </LinearGradient>
             </View>

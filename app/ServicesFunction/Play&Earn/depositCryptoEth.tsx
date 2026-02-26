@@ -90,7 +90,7 @@ export default function DepositCryptoEth() {
       return;
     }
     Alert.alert("Deposit request submitted", "Your deposit will be processed once we verify the transaction receipt.");
-    navigation.goBack();
+    navigation.navigate("PlayEarn");
   };
 
   const getCryptoPillActiveStyle = () => {
@@ -111,7 +111,7 @@ export default function DepositCryptoEth() {
         >
           <TouchableOpacity
             style={styles.backButton}
-            onPress={() => navigation.goBack()}
+            onPress={() => navigation.navigate("PlayEarn")}
           >
             <View style={styles.backButtonCircle}>
               <Ionicons name="arrow-back" size={24} color={THEME_COLOR} />

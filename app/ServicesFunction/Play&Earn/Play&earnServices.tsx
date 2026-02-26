@@ -1,5 +1,6 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
+import { LinearGradient } from "expo-linear-gradient";
 import React, { useState } from "react";
 import {
   Platform,
@@ -11,8 +12,10 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useLanguage } from "../../../context/LanguageContext";
 
 const THEME_COLOR = "#E15816";
+const ORANGE_GRADIENT: readonly [string, string] = ["#E25A17", "#F28934"];
 const GREEN_BUTTON = "#22C55E";
 
 const CRYPTO_ASSETS: { id: string; label: string; icon: React.ComponentProps<typeof Ionicons>["name"] }[] = [
@@ -34,6 +37,7 @@ function formatCurrency(value: number | string): string {
 
 export default function PlayEarnServices() {
   const navigation = useNavigation();
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<TabType>("trading");
   const [selectedCrypto, setSelectedCrypto] = useState("BTC");
   const [selectedTimeRange, setSelectedTimeRange] = useState<TimeRange>("24h");
@@ -49,21 +53,28 @@ export default function PlayEarnServices() {
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        {/* Header */}
-        <View style={styles.header}>
+        {/* Header - Orange Gradient (matches Deposit screens) */}
+        <LinearGradient
+          colors={ORANGE_GRADIENT}
+          style={styles.header}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+        >
           <TouchableOpacity
             style={styles.backButton}
-            onPress={() => navigation.goBack()}
+            onPress={() => navigation.navigate("Main")}
           >
-            <Ionicons name="arrow-back" size={28} color="#000" />
+            <View style={styles.backButtonCircle}>
+              <Ionicons name="arrow-back" size={24} color={THEME_COLOR} />
+            </View>
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Play and Earn</Text>
+          <Text style={styles.headerTitle}>{t("playEarn.title")}</Text>
           <TouchableOpacity style={styles.helpButton}>
             <View style={styles.helpIconCircle}>
               <Text style={styles.helpIconText}>?</Text>
             </View>
           </TouchableOpacity>
-        </View>
+        </LinearGradient>
 
         <ScrollView
           style={styles.scrollView}
@@ -83,7 +94,7 @@ export default function PlayEarnServices() {
                   activeTab === "trading" && styles.tabTextActive,
                 ]}
               >
-                Trading
+                {t("playEarn.trading")}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -101,14 +112,14 @@ export default function PlayEarnServices() {
                   activeTab === "deposit" && styles.tabTextActive,
                 ]}
               >
-                Deposit via Crypto
+                {t("playEarn.depositViaCrypto")}
               </Text>
             </TouchableOpacity>
           </View>
 
           {/* Available Balance Card */}
           <View style={styles.balanceCard}>
-            <Text style={styles.balanceLabel}>Available Balance</Text>
+            <Text style={styles.balanceLabel}>{t("playEarn.availableBalance")}</Text>
             <Text style={styles.balanceValue}>
               P {formatCurrency(availableBalance)}
             </Text>
@@ -118,7 +129,7 @@ export default function PlayEarnServices() {
           <View style={styles.assetCardsRow}>
             <View style={styles.assetCard}>
               <View style={styles.assetCardHeader}>
-                <Text style={styles.assetCardTitle}>CRYPTO</Text>
+                <Text style={styles.assetCardTitle}>{t("playEarn.crypto")}</Text>
                 <Ionicons name="logo-bitcoin" size={18} color={THEME_COLOR} />
               </View>
               <View style={styles.assetItem}>
@@ -136,7 +147,7 @@ export default function PlayEarnServices() {
             </View>
             <View style={styles.assetCard}>
               <View style={styles.assetCardHeader}>
-                <Text style={styles.assetCardTitle}>FOREX</Text>
+                <Text style={styles.assetCardTitle}>{t("playEarn.forex")}</Text>
                 <MaterialCommunityIcons
                   name="cube-outline"
                   size={18}
@@ -155,7 +166,7 @@ export default function PlayEarnServices() {
           </View>
 
           {/* CRYPTO Section Label */}
-          <Text style={styles.sectionLabel}>CRYPTO</Text>
+          <Text style={styles.sectionLabel}>{t("playEarn.crypto")}</Text>
 
           {/* Crypto Selection Buttons */}
           <View style={styles.cryptoButtons}>
@@ -192,7 +203,7 @@ export default function PlayEarnServices() {
           </View>
 
           {/* Current Price */}
-          <Text style={styles.currentPriceLabel}>CURRENT PRICE</Text>
+          <Text style={styles.currentPriceLabel}>{t("playEarn.currentPrice")}</Text>
           <View style={styles.priceRow}>
             <View>
               <Text style={styles.currentPrice}>P 3,845,755.81</Text>
@@ -230,7 +241,7 @@ export default function PlayEarnServices() {
               <Text
                 style={[styles.toggleText, isBuy && styles.toggleTextActive]}
               >
-                Buy
+                {t("playEarn.buy")}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -240,13 +251,13 @@ export default function PlayEarnServices() {
               <Text
                 style={[styles.toggleText, !isBuy && styles.toggleTextActive]}
               >
-                Sell
+                {t("playEarn.sell")}
               </Text>
             </TouchableOpacity>
           </View>
 
           {/* Spending Amount */}
-          <Text style={styles.inputLabel}>SPENDING AMOUNT</Text>
+          <Text style={styles.inputLabel}>{t("playEarn.spendingAmount")}</Text>
           <View style={styles.amountInputRow}>
             <TextInput
               style={styles.amountInput}
@@ -278,7 +289,7 @@ export default function PlayEarnServices() {
             onPress={() => {}}
           >
             <Text style={styles.confirmButtonText}>
-              {isBuy ? "Confirm Purchase" : "Confirm Sell"}
+              {isBuy ? t("playEarn.confirmPurchase") : t("playEarn.confirmSell")}
             </Text>
           </TouchableOpacity>
 
@@ -303,33 +314,39 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    paddingTop: 16,
+    paddingVertical: 16,
   },
   backButton: {
     padding: 4,
   },
+  backButtonCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "rgba(255,255,255,0.9)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
   headerTitle: {
     fontSize: 20,
     fontWeight: "700",
-    color: "#000",
+    color: "#FFF",
   },
   helpButton: {
     padding: 4,
   },
   helpIconCircle: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    borderWidth: 1.5,
-    borderColor: "#999",
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "rgba(255,255,255,0.9)",
     justifyContent: "center",
     alignItems: "center",
   },
   helpIconText: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#666",
+    color: THEME_COLOR,
   },
   scrollView: {
     flex: 1,

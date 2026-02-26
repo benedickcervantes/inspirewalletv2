@@ -145,6 +145,10 @@ export function getBulkUserActivity(
 }>;
 
 // Referral API
+export function getReferralCode(
+  accessToken: string
+): Promise<{ success: boolean; referralCode?: string; error?: string }>;
+
 export function getReferralTree(
   accessToken: string
 ): Promise<{

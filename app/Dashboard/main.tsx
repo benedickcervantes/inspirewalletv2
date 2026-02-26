@@ -17,6 +17,7 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { getMe, getOrCreateMainWallet, getReferralTree, getTimeDeposits, getTransactions } from "../../configs/api";
 import { createRealtimeConnection, startHeartbeat } from "../../configs/realtime";
+import { useLanguage } from "../../context/LanguageContext";
 import { setConnectionStatus } from "../../lib/connectionStatus";
 import { notifyNewSupportMessage } from "../../lib/messagingEvents";
 import type { NavProp } from "../../types/navigation";
@@ -27,21 +28,16 @@ import WalletTab from "./WalletTab";
 const LOOPWORK_BANNER = require("../../assets/banner/Loopwork.png");
 const HRX_BANNER = require("../../assets/banner/HRX.png");
 
-// API returns raw enums; map to user-friendly labels for transaction history
-const TRANSACTION_TYPE_LABELS: Record<string, string> = {
-  TOP_UP: "Deposit",
-  PAYMENT: "Withdraw",
-  TRANSFER_OUT: "Transfer",
-  TRANSFER_IN: "Received",
-  FEE: "Fee",
-  REFUND: "Refund",
-  TIME_DEPOSIT: "Time Deposit",
+// API returns raw enums; keys for translation (use t() when displaying)
+const TRANSACTION_TYPE_KEYS: Record<string, string> = {
+  TOP_UP: "tx.deposit",
+  PAYMENT: "tx.withdraw",
+  TRANSFER_OUT: "tx.transfer",
+  TRANSFER_IN: "tx.received",
+  FEE: "tx.fee",
+  REFUND: "tx.refund",
+  TIME_DEPOSIT: "tx.timeDeposit",
 };
-
-function getTransactionTypeLabel(type?: string): string {
-  if (!type) return "Transaction";
-  return TRANSACTION_TYPE_LABELS[type] ?? type;
-}
 
 interface Transaction {
   id: string;
@@ -138,8 +134,15 @@ function computeDepositGrowth(deposits: TimeDeposit[]): { month: string; amount:
   return months;
 }
 
+function getTransactionTypeLabel(t: (key: string) => string, type?: string): string {
+  if (!type) return t("tx.transaction");
+  const key = TRANSACTION_TYPE_KEYS[type];
+  return key ? t(key) : type;
+}
+
 export default function Dashboard() {
   const navigation = useNavigation();
+  const { t } = useLanguage();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const horizontalPadding = width < 375 ? 16 : 20;
@@ -181,9 +184,9 @@ export default function Dashboard() {
 
   const getGreeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return "Good Morning";
-    if (hour < 18) return "Good Afternoon";
-    return "Good Evening";
+    if (hour < 12) return t("dashboard.goodMorning");
+    if (hour < 18) return t("dashboard.goodAfternoon");
+    return t("dashboard.goodEvening");
   };
 
   useEffect(() => {
@@ -263,7 +266,7 @@ export default function Dashboard() {
       if (txRes.success && txRes.transactions) {
         const mapped: Transaction[] = (txRes.transactions as RawApiTransaction[]).map((tx) => ({
           id: String(tx.id ?? ""),
-          type: getTransactionTypeLabel(String(tx.type ?? "")),
+          type: String(tx.type ?? ""),
           amount: (() => {
             const a = parseFloat(String(tx.amount ?? 0));
             return Number.isNaN(a) ? 0 : a;
@@ -320,7 +323,7 @@ export default function Dashboard() {
       const txs = txRes.transactions as RawApiTransaction[];
       const mapped: Transaction[] = txs.map((tx) => ({
         id: String(tx.id ?? ""),
-        type: getTransactionTypeLabel(String(tx.type ?? "")),
+        type: String(tx.type ?? ""),
         amount: (() => {
           const a = parseFloat(String(tx.amount ?? 0));
           return Number.isNaN(a) ? 0 : a;
@@ -492,16 +495,12 @@ export default function Dashboard() {
   };
 
   const menuItems = [
-    { icon: "wallet-outline", label: "E-Wallet", route: "EwalletService" },
-    { icon: "message-text", label: "Message", route: "Message" },
-    { icon: "chart-line", label: "Stock", route: "Stockholder" },
-    { icon: "format-list-bulleted", label: "Task", route: "Task" },
-    { icon: "account", label: "Agent", route: "AgentRequest" },
-    {
-      icon: "chart-areaspline",
-      label: "Trading",
-      route: "PlayEarn",
-    },
+    { icon: "wallet-outline", labelKey: "dashboard.eWallet", route: "EwalletService" },
+    { icon: "message-text", labelKey: "dashboard.message", route: "Message" },
+    { icon: "chart-line", labelKey: "dashboard.stock", route: "Stockholder" },
+    { icon: "format-list-bulleted", labelKey: "dashboard.task", route: "Task" },
+    { icon: "account", labelKey: "dashboard.agent", route: "AgentRequest" },
+    { icon: "chart-areaspline", labelKey: "dashboard.trading", route: "PlayEarn" },
   ];
 
   return (
@@ -510,21 +509,19 @@ export default function Dashboard() {
       <SafeAreaView style={styles.container} edges={["left", "right", "bottom"]}>
         <View style={[styles.header, { paddingTop: Math.max(insets.top, 12) }]}>
           <View style={styles.headerLeft}>
-            <View style={styles.avatar}>
-              <Ionicons name="person" size={28} color="#E15816" />
-            </View>
             <TouchableOpacity
               onPress={() => navigation.navigate("Personal")}
               activeOpacity={0.7}
-              style={styles.headerUserTouch}
+              style={styles.avatar}
             >
-              <View style={styles.headerUserText}>
-                <Text style={styles.greeting} numberOfLines={1}>{getGreeting()}</Text>
-                <Text style={styles.userName} numberOfLines={1} ellipsizeMode="tail">
-                  {(userData?.firstName as string) || (userData?.fullName as string) || "User"}
-                </Text>
-              </View>
+              <Ionicons name="person" size={28} color="#E15816" />
             </TouchableOpacity>
+            <View style={styles.headerUserText}>
+              <Text style={styles.greeting} numberOfLines={1}>{getGreeting()}</Text>
+              <Text style={styles.userName} numberOfLines={1} ellipsizeMode="tail">
+                {(userData?.firstName as string) || (userData?.fullName as string) || "User"}
+              </Text>
+            </View>
           </View>
           <View style={styles.headerRight}>
               <TouchableOpacity
@@ -551,7 +548,7 @@ export default function Dashboard() {
 
         <ScrollView showsVerticalScrollIndicator={false}>
           <View style={styles.tabs}>
-            {["Wallet", "Investment", "Cards"].map((tab) => (
+            {(["Wallet", "Investment", "Cards"] as const).map((tab) => (
               <TouchableOpacity
                 key={tab}
                 style={[styles.tab, activeTab === tab && styles.activeTab]}
@@ -560,7 +557,7 @@ export default function Dashboard() {
                 <Text
                   style={[styles.tabText, activeTab === tab && styles.activeTabText]}
                 >
-                  {tab}
+                  {t(tab === "Wallet" ? "dashboard.wallet" : tab === "Investment" ? "dashboard.investment" : "dashboard.cards")}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -612,7 +609,7 @@ export default function Dashboard() {
                     color="#E15816"
                   />
                 </View>
-                <Text style={styles.quickActionLabel}>Transfer</Text>
+                <Text style={styles.quickActionLabel}>{t("dashboard.transfer")}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.quickActionButton}
@@ -621,7 +618,7 @@ export default function Dashboard() {
                 <View style={styles.quickActionIcon}>
                   <MaterialCommunityIcons name="bank" size={24} color="#E15816" />
                 </View>
-                <Text style={styles.quickActionLabel}>Banking Service</Text>
+                <Text style={styles.quickActionLabel}>{t("dashboard.bankingService")}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.quickActionButton}
@@ -634,7 +631,7 @@ export default function Dashboard() {
                     color="#E15816"
                   />
                 </View>
-                <Text style={styles.quickActionLabel}>Travel Protection</Text>
+                <Text style={styles.quickActionLabel}>{t("dashboard.travelProtection")}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.quickActionButton}
@@ -647,7 +644,7 @@ export default function Dashboard() {
                     color="#E15816"
                   />
                 </View>
-                <Text style={styles.quickActionLabel}>History</Text>
+                <Text style={styles.quickActionLabel}>{t("dashboard.history")}</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -655,7 +652,7 @@ export default function Dashboard() {
           {activeTab !== "Cards" && activeTab !== "Investment" && (
             <View style={styles.menuContainer}>
               <View style={styles.menuHeader}>
-                <Text style={styles.menuHeaderTitle}>Services</Text>
+                <Text style={styles.menuHeaderTitle}>{t("dashboard.services")}</Text>
               </View>
               <View style={styles.menuGrid}>
                 {menuItems.map((item, index) => (
@@ -673,7 +670,7 @@ export default function Dashboard() {
                         color="#000000"
                       />
                     </View>
-                    <Text style={styles.menuLabel}>{item.label}</Text>
+                    <Text style={styles.menuLabel}>{t(item.labelKey)}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -742,7 +739,7 @@ export default function Dashboard() {
             <View style={styles.transactionSection}>
               <View style={styles.transactionHeader}>
                 <Ionicons name="time-outline" size={20} color="#E15816" />
-                <Text style={styles.transactionTitle}>Transaction History</Text>
+                <Text style={styles.transactionTitle}>{t("dashboard.transactionHistory")}</Text>
               </View>
               {recentTransactions.length > 0 ? (
                 recentTransactions.map((transaction) => (
@@ -756,7 +753,7 @@ export default function Dashboard() {
                     </View>
                     <View style={styles.transactionDetails}>
                       <Text style={styles.transactionName}>
-                        {getTransactionTypeLabel(transaction.type)}
+                        {getTransactionTypeLabel(t, transaction.type)}
                       </Text>
                       <Text style={styles.transactionDate}>
                         {transaction.timestamp?.toDate?.()?.toLocaleDateString() ||
@@ -778,7 +775,7 @@ export default function Dashboard() {
                     />
                   </View>
                   <View style={styles.transactionDetails}>
-                    <Text style={styles.transactionName}>Free Default Card</Text>
+                    <Text style={styles.transactionName}>{t("dashboard.freeDefaultCard")}</Text>
                     <Text style={styles.transactionDate}>February 03, 2026</Text>
                   </View>
                   <Text style={styles.transactionAmount}>₱0.00</Text>
@@ -832,7 +829,7 @@ export default function Dashboard() {
           )}
 
           <View style={styles.footer}>
-            <Text style={styles.footerText}>CREATED BY INSPIRE</Text>
+            <Text style={styles.footerText}>{t("dashboard.createdByInspire")}</Text>
           </View>
         </ScrollView>
       </SafeAreaView>

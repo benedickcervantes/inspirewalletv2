@@ -10,9 +10,10 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
+import { useLanguage } from "../../context/LanguageContext";
 
 interface CardsTabProps {
-  userData: { firstName?: string; accountNumber?: string } | null;
+  userData: { firstName?: string; lastName?: string; accountNumber?: string } | null;
   availableBalance: number;
   formatCurrency: (amount: number) => string;
   flipAnimation: Animated.Value;
@@ -29,6 +30,7 @@ export default function CardsTab({
   flipCard,
 }: CardsTabProps) {
   const navigation = useNavigation();
+  const { t } = useLanguage();
   const { width } = useWindowDimensions();
   const horizontalPadding = width < 375 ? 16 : 20;
   const cardItemWidth = (width - horizontalPadding * 2 - 12) / 2;
@@ -55,12 +57,12 @@ export default function CardsTab({
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Your Inspire Card</Text>
-          <Text style={styles.sectionSubtitle}>Default Card</Text>
+          <Text style={styles.sectionTitle}>{t("cards.yourInspireCard")}</Text>
+          <Text style={styles.sectionSubtitle}>{t("cards.defaultCard")}</Text>
         </View>
         <TouchableOpacity style={styles.viewDetailsButton}>
           <Ionicons name="eye-outline" size={16} color="#E15816" />
-          <Text style={styles.viewDetailsText}>View Details</Text>
+          <Text style={styles.viewDetailsText}>{t("cards.viewDetails")}</Text>
         </TouchableOpacity>
       </View>
 
@@ -68,7 +70,7 @@ export default function CardsTab({
         <Animated.View style={[styles.cardFace, frontAnimatedStyle]}>
           <TouchableOpacity activeOpacity={0.8} onPress={flipCard}>
             <ImageBackground
-              source={require("../../assets/cards/default/card2.1.png")}
+              source={require("../../assets/images/Eecard 2.0.png")}
               style={styles.mainCard}
               imageStyle={styles.mainCardImage}
               resizeMode="cover"
@@ -79,9 +81,12 @@ export default function CardsTab({
                     {userData?.accountNumber || "00001729819"}
                   </Text>
                   <Text style={styles.cardName}>
-                    {userData?.firstName?.toUpperCase() || "ARIES"}
+                    {[userData?.firstName, userData?.lastName]
+                      .filter(Boolean)
+                      .join(" ")
+                      .toUpperCase() || "ARIES"}
                   </Text>
-                  <Text style={styles.cardBalanceLabel}>AVAILABLE BALANCE:</Text>
+                  <Text style={styles.cardBalanceLabel}>{t("cards.availableBalance")}</Text>
                   <Text style={styles.cardBalanceAmount}>
                     ₱ {formatCurrency(availableBalance)}
                   </Text>
@@ -110,9 +115,9 @@ export default function CardsTab({
         <View style={styles.collectionHeader}>
           <View style={styles.collectionTitleRow}>
             <MaterialCommunityIcons name="crown" size={20} color="#FFD700" />
-            <Text style={styles.collectionTitle}>VIP Collection</Text>
+            <Text style={styles.collectionTitle}>{t("cards.vipCollection")}</Text>
           </View>
-          <Text style={styles.collectionSubtitle}>VIP PHYSICAL CARD REQUIRED</Text>
+          <Text style={styles.collectionSubtitle}>{t("cards.vipPhysicalRequired")}</Text>
         </View>
 
         <View style={styles.cardsGrid}>
@@ -129,10 +134,10 @@ export default function CardsTab({
                 </View>
               </ImageBackground>
             </View>
-            <Text style={styles.cardItemTitle}>Diamond Elite</Text>
-            <Text style={styles.cardItemSubtitle}>VIP Upgrade</Text>
+            <Text style={styles.cardItemTitle}>{t("cards.diamondElite")}</Text>
+            <Text style={styles.cardItemSubtitle}>{t("cards.vipUpgrade")}</Text>
             <TouchableOpacity style={styles.upgradeButton}>
-              <Text style={styles.upgradeButtonText}>Upgrade Required</Text>
+              <Text style={styles.upgradeButtonText}>{t("cards.upgradeRequired")}</Text>
             </TouchableOpacity>
           </View>
 
@@ -145,15 +150,15 @@ export default function CardsTab({
                 resizeMode="cover"
               >
                 <View style={styles.vipBadge}>
-                  <Text style={styles.vipBadgeText}>VIP</Text>
+                  <Text style={styles.vipBadgeText}>{t("cards.vip")}</Text>
                 </View>
-                <Text style={styles.cardPreviewTitle}>INSPIRE MEMBERS</Text>
+                <Text style={styles.cardPreviewTitle}>{t("cards.inspireMembers")}</Text>
               </ImageBackground>
             </View>
-            <Text style={styles.cardItemTitle}>Gold Elite</Text>
-            <Text style={styles.cardItemSubtitle}>Emerging Millionaire</Text>
+            <Text style={styles.cardItemTitle}>{t("cards.goldElite")}</Text>
+            <Text style={styles.cardItemSubtitle}>{t("cards.emergingMillionaire")}</Text>
             <TouchableOpacity style={styles.getStartedButton}>
-              <Text style={styles.getStartedButtonText}>Get Started</Text>
+              <Text style={styles.getStartedButtonText}>{t("cards.getStarted")}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -163,9 +168,9 @@ export default function CardsTab({
         <View style={styles.collectionHeader}>
           <View style={styles.collectionTitleRow}>
             <MaterialCommunityIcons name="palette" size={20} color="#E15816" />
-            <Text style={styles.collectionTitle}>Design Collection</Text>
+            <Text style={styles.collectionTitle}>{t("cards.designCollection")}</Text>
           </View>
-          <Text style={styles.collectionSubtitle}>PREMIUM VISUAL STYLES</Text>
+          <Text style={styles.collectionSubtitle}>{t("cards.premiumVisualStyles")}</Text>
         </View>
 
         <View style={styles.cardsGrid}>
@@ -178,50 +183,50 @@ export default function CardsTab({
                 resizeMode="cover"
               >
                 <View style={styles.vipBadge}>
-                  <Text style={styles.vipBadgeText}>VIP</Text>
+                  <Text style={styles.vipBadgeText}>{t("cards.vip")}</Text>
                 </View>
               </ImageBackground>
             </View>
-            <Text style={styles.cardItemTitle}>Royal Curve</Text>
-            <Text style={styles.cardItemSubtitle}>Sign Up Only</Text>
+            <Text style={styles.cardItemTitle}>{t("cards.royalCurve")}</Text>
+            <Text style={styles.cardItemSubtitle}>{t("cards.signUpOnly")}</Text>
           </View>
 
           <View style={styles.cardItem}>
             <View style={styles.cardPreview}>
               <ImageBackground
-                source={require("../../assets/cards/default/card2.1.png")}
+                source={require("../../assets/images/Eecard 2.0.png")}
                 style={styles.cardPreviewImage}
                 imageStyle={styles.cardPreviewImageStyle}
                 resizeMode="cover"
               >
                 <View style={styles.vipBadge}>
-                  <Text style={styles.vipBadgeText}>VIP</Text>
+                  <Text style={styles.vipBadgeText}>{t("cards.vip")}</Text>
                 </View>
               </ImageBackground>
             </View>
-            <Text style={styles.cardItemTitle}>Orange Elite</Text>
-            <Text style={styles.cardItemSubtitle}>Sign Up Only</Text>
+            <Text style={styles.cardItemTitle}>{t("cards.orangeElite")}</Text>
+            <Text style={styles.cardItemSubtitle}>{t("cards.signUpOnly")}</Text>
           </View>
         </View>
       </View>
 
       <View style={styles.collectionSection}>
         <View style={styles.collectionHeader}>
-          <Text style={styles.yourCollectionTitle}>YOUR COLLECTION</Text>
+          <Text style={styles.yourCollectionTitle}>{t("cards.yourCollection")}</Text>
           <Text style={styles.collectionCount}>1/5</Text>
         </View>
 
         <View style={styles.yourCollectionGrid}>
           <View style={[styles.yourCollectionItem, { width: cardItemWidth }]}>
             <ImageBackground
-              source={require("../../assets/cards/default/card2.1.png")}
+              source={require("../../assets/images/Eecard 2.0.png")}
               style={styles.yourCollectionCard}
               imageStyle={styles.yourCollectionCardImage}
               resizeMode="cover"
             >
               <View style={styles.activeCardBadge}>
                 <MaterialCommunityIcons name="check-circle" size={16} color="#4CAF50" />
-                <Text style={styles.activeCardText}>Active Card</Text>
+                <Text style={styles.activeCardText}>{t("cards.activeCard")}</Text>
               </View>
             </ImageBackground>
           </View>
@@ -230,7 +235,7 @@ export default function CardsTab({
             <View key={item} style={[styles.yourCollectionItem, { width: cardItemWidth }]}>
               <View style={styles.emptySlot}>
                 <Ionicons name="add-circle-outline" size={32} color="#CCC" />
-                <Text style={styles.emptySlotText}>Empty Slot</Text>
+                <Text style={styles.emptySlotText}>{t("cards.emptySlot")}</Text>
               </View>
             </View>
           ))}

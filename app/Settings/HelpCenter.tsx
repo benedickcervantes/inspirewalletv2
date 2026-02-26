@@ -15,17 +15,11 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useLanguage } from '../../context/LanguageContext';
 import type { NavProp } from '../../types/navigation';
 
-const PRIORITY_OPTIONS = ['Low', 'Medium', 'High', 'Urgent'];
-const CATEGORY_OPTIONS = [
-  'Account',
-  'Wallet',
-  'Transactions',
-  'Investments',
-  'Technical Issue',
-  'Other',
-];
+const PRIORITY_KEYS = ['help.priorityLow', 'help.priorityMedium', 'help.priorityHigh', 'help.priorityUrgent'] as const;
+const CATEGORY_KEYS = ['help.categoryAccount', 'help.categoryWallet', 'help.categoryTransactions', 'help.categoryInvestments', 'help.categoryTechnical', 'help.categoryOther'] as const;
 
 interface UserData {
   firstName?: string;
@@ -35,12 +29,13 @@ interface UserData {
 
 const HelpCenter = () => {
   const navigation = useNavigation();
+  const { t } = useLanguage();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [ticketTitle, setTicketTitle] = useState('');
   const [priorityLevel, setPriorityLevel] = useState('');
-  const [category, setCategory] = useState('');
+  const [categoryKey, setCategoryKey] = useState('');
   const [concern, setConcern] = useState('');
   const [showPriorityModal, setShowPriorityModal] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
@@ -70,35 +65,35 @@ const HelpCenter = () => {
     const e = email.trim();
 
     if (!f) {
-      Alert.alert('Validation Error', 'Please enter your first name.');
+      Alert.alert(t('help.validationError'), t('help.validationFirst'));
       return;
     }
     if (!l) {
-      Alert.alert('Validation Error', 'Please enter your last name.');
+      Alert.alert(t('help.validationError'), t('help.validationLast'));
       return;
     }
     if (!e) {
-      Alert.alert('Validation Error', 'Please enter your email address.');
+      Alert.alert(t('help.validationError'), t('help.validationEmail'));
       return;
     }
     if (!validateEmail(e)) {
-      Alert.alert('Validation Error', 'Please enter a valid email address.');
+      Alert.alert(t('help.validationError'), t('help.validationEmailValid'));
       return;
     }
     if (!ticketTitle.trim()) {
-      Alert.alert('Validation Error', 'Please enter a ticket title.');
+      Alert.alert(t('help.validationError'), t('help.validationTitle'));
       return;
     }
     if (!priorityLevel) {
-      Alert.alert('Validation Error', 'Please select a priority level.');
+      Alert.alert(t('help.validationError'), t('help.validationPriority'));
       return;
     }
-    if (!category) {
-      Alert.alert('Validation Error', 'Please select a category.');
+    if (!categoryKey) {
+      Alert.alert(t('help.validationError'), t('help.validationCategory'));
       return;
     }
     if (!concern.trim()) {
-      Alert.alert('Validation Error', 'Please describe your concern.');
+      Alert.alert(t('help.validationError'), t('help.validationConcern'));
       return;
     }
 
@@ -107,9 +102,9 @@ const HelpCenter = () => {
     await new Promise((r) => setTimeout(r, 800));
     setSubmitting(false);
     Alert.alert(
-      'Request Submitted',
-      'Thank you for reaching out! Our support team will review your concern and respond within 24-48 hours during business days.',
-      [{ text: 'OK', onPress: () => (navigation as unknown as NavProp).goBack() }]
+      t('help.requestSubmitted'),
+      t('help.thankYouMessage'),
+      [{ text: t('common.ok'), onPress: () => (navigation as unknown as NavProp).goBack() }]
     );
   };
 
@@ -126,7 +121,7 @@ const HelpCenter = () => {
           <TouchableOpacity onPress={() => (navigation as unknown as NavProp).goBack()} style={styles.headerButton}>
             <Ionicons name="arrow-back" size={28} color="#FFFFFF" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Help Center</Text>
+          <Text style={styles.headerTitle}>{t('help.title')}</Text>
           <TouchableOpacity style={styles.headerButton}>
             <View style={styles.headerIconCircle}>
               <Ionicons name="time-outline" size={22} color="#F38B35" />
@@ -141,23 +136,20 @@ const HelpCenter = () => {
             <MaterialCommunityIcons name="comment-search-outline" size={36} color="#F38B35" />
           </View>
           <View style={styles.bannerText}>
-            <Text style={styles.bannerTitle}>Submit Your Request</Text>
-            <Text style={styles.bannerSubtitle}>
-              Need help with something? Fill out this form and our support team will get back to you
-              as soon as possible.
-            </Text>
+            <Text style={styles.bannerTitle}>{t('help.submitRequest')}</Text>
+            <Text style={styles.bannerSubtitle}>{t('help.bannerSubtitle')}</Text>
           </View>
         </View>
 
-        <Text style={styles.sectionLabel}>PERSONAL INFORMATION</Text>
+        <Text style={styles.sectionLabel}>{t('help.personalInfo')}</Text>
         <View style={styles.row}>
           <View style={styles.halfInput}>
             <Text style={styles.inputLabel}>
-              First Name<Text style={styles.required}> *</Text>
+              {t('help.firstName')}<Text style={styles.required}> *</Text>
             </Text>
             <TextInput
               style={styles.input}
-              placeholder="Enter your first name"
+              placeholder={t('help.placeholderFirst')}
               placeholderTextColor="#9E9E9E"
               value={firstName}
               onChangeText={setFirstName}
@@ -166,11 +158,11 @@ const HelpCenter = () => {
           </View>
           <View style={styles.halfInput}>
             <Text style={styles.inputLabel}>
-              Last Name<Text style={styles.required}> *</Text>
+              {t('help.lastName')}<Text style={styles.required}> *</Text>
             </Text>
             <TextInput
               style={styles.input}
-              placeholder="Enter your last name"
+              placeholder={t('help.placeholderLast')}
               placeholderTextColor="#9E9E9E"
               value={lastName}
               onChangeText={setLastName}
@@ -180,11 +172,11 @@ const HelpCenter = () => {
         </View>
         <View style={styles.inputGroup}>
           <Text style={styles.inputLabel}>
-            Email Address<Text style={styles.required}> *</Text>
+            {t('help.emailAddress')}<Text style={styles.required}> *</Text>
           </Text>
           <TextInput
             style={styles.input}
-            placeholder="your.email@example.com"
+            placeholder={t('help.placeholderEmail')}
             placeholderTextColor="#9E9E9E"
             value={email}
             onChangeText={setEmail}
@@ -193,14 +185,14 @@ const HelpCenter = () => {
           />
         </View>
 
-        <Text style={styles.sectionLabel}>ISSUE DETAILS</Text>
+        <Text style={styles.sectionLabel}>{t('help.issueDetails')}</Text>
         <View style={styles.inputGroup}>
           <Text style={styles.inputLabel}>
-            Ticket Title<Text style={styles.required}> *</Text>
+            {t('help.ticketTitle')}<Text style={styles.required}> *</Text>
           </Text>
           <TextInput
             style={styles.input}
-            placeholder="Brief title describing your issue"
+            placeholder={t('help.placeholderTitle')}
             placeholderTextColor="#9E9E9E"
             value={ticketTitle}
             onChangeText={setTicketTitle}
@@ -209,22 +201,22 @@ const HelpCenter = () => {
         <View style={styles.row}>
           <View style={styles.halfInput}>
             <Text style={styles.inputLabel}>
-              Priority Level<Text style={styles.required}> *</Text>
+              {t('help.priorityLevel')}<Text style={styles.required}> *</Text>
             </Text>
             <TouchableOpacity style={styles.dropdown} onPress={() => setShowPriorityModal(true)}>
               <Text style={[styles.dropdownText, !priorityLevel && styles.dropdownPlaceholder]}>
-                {priorityLevel || 'Select priority level'}
+                {priorityLevel || t('help.selectPriority')}
               </Text>
               <Ionicons name="chevron-down" size={20} color="#999" />
             </TouchableOpacity>
           </View>
           <View style={styles.halfInput}>
             <Text style={styles.inputLabel}>
-              Category<Text style={styles.required}> *</Text>
+              {t('help.category')}<Text style={styles.required}> *</Text>
             </Text>
             <TouchableOpacity style={styles.dropdown} onPress={() => setShowCategoryModal(true)}>
-              <Text style={[styles.dropdownText, !category && styles.dropdownPlaceholder]}>
-                {category || 'Select category'}
+              <Text style={[styles.dropdownText, !categoryKey && styles.dropdownPlaceholder]}>
+                {categoryKey ? t(categoryKey) : t('help.selectCategory')}
               </Text>
               <Ionicons name="chevron-down" size={20} color="#999" />
             </TouchableOpacity>
@@ -232,11 +224,11 @@ const HelpCenter = () => {
         </View>
         <View style={styles.inputGroup}>
           <Text style={styles.inputLabel}>
-            Describe Your Concern<Text style={styles.required}> *</Text>
+            {t('help.describeConcern')}<Text style={styles.required}> *</Text>
           </Text>
           <TextInput
             style={[styles.input, styles.textArea]}
-            placeholder="Please describe your concern or question in detail..."
+            placeholder={t('help.placeholderConcern')}
             placeholderTextColor="#9E9E9E"
             value={concern}
             onChangeText={setConcern}
@@ -246,11 +238,7 @@ const HelpCenter = () => {
           />
         </View>
 
-        <Text style={styles.note}>
-          By submitting this form, we will receive your help request via email. Our support team will
-          review your concern and respond within 24-48 hours during business days. Thank you for
-          reaching out to us!
-        </Text>
+        <Text style={styles.note}>{t('help.note')}</Text>
 
         <TouchableOpacity
           style={[styles.submitButton, submitting && styles.submitButtonDisabled]}
@@ -267,7 +255,7 @@ const HelpCenter = () => {
             {submitting ? (
               <ActivityIndicator size="small" color="#FFFFFF" />
             ) : (
-              <Text style={styles.submitButtonText}>SUBMIT REQUEST</Text>
+              <Text style={styles.submitButtonText}>{t('help.submitRequestButton')}</Text>
             )}
           </LinearGradient>
         </TouchableOpacity>
@@ -284,23 +272,23 @@ const HelpCenter = () => {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select Priority Level</Text>
+              <Text style={styles.modalTitle}>{t('help.selectPriorityTitle')}</Text>
               <TouchableOpacity onPress={() => setShowPriorityModal(false)}>
                 <Ionicons name="close" size={24} color="#333" />
               </TouchableOpacity>
             </View>
             <ScrollView style={styles.modalContent}>
-              {PRIORITY_OPTIONS.map((opt) => (
+              {PRIORITY_KEYS.map((key) => (
                 <TouchableOpacity
-                  key={opt}
-                  style={[styles.optionRow, priorityLevel === opt && styles.optionRowSelected]}
+                  key={key}
+                  style={[styles.optionRow, priorityLevel === key && styles.optionRowSelected]}
                   onPress={() => {
-                    setPriorityLevel(opt);
+                    setPriorityLevel(key);
                     setShowPriorityModal(false);
                   }}
                 >
-                  <Text style={styles.optionText}>{opt}</Text>
-                  {priorityLevel === opt && <Ionicons name="checkmark-circle" size={22} color="#F38B35" />}
+                  <Text style={styles.optionText}>{t(key)}</Text>
+                  {priorityLevel === key && <Ionicons name="checkmark-circle" size={22} color="#F38B35" />}
                 </TouchableOpacity>
               ))}
             </ScrollView>
@@ -317,23 +305,23 @@ const HelpCenter = () => {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select Category</Text>
+              <Text style={styles.modalTitle}>{t('help.selectCategoryTitle')}</Text>
               <TouchableOpacity onPress={() => setShowCategoryModal(false)}>
                 <Ionicons name="close" size={24} color="#333" />
               </TouchableOpacity>
             </View>
             <ScrollView style={styles.modalContent}>
-              {CATEGORY_OPTIONS.map((opt) => (
+              {CATEGORY_KEYS.map((key) => (
                 <TouchableOpacity
-                  key={opt}
-                  style={[styles.optionRow, category === opt && styles.optionRowSelected]}
+                  key={key}
+                  style={[styles.optionRow, categoryKey === key && styles.optionRowSelected]}
                   onPress={() => {
-                    setCategory(opt);
+                    setCategoryKey(key);
                     setShowCategoryModal(false);
                   }}
                 >
-                  <Text style={styles.optionText}>{opt}</Text>
-                  {category === opt && <Ionicons name="checkmark-circle" size={22} color="#F38B35" />}
+                  <Text style={styles.optionText}>{t(key)}</Text>
+                  {categoryKey === key && <Ionicons name="checkmark-circle" size={22} color="#F38B35" />}
                 </TouchableOpacity>
               ))}
             </ScrollView>
