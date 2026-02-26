@@ -173,8 +173,8 @@ const Settings = () => {
     {
       id: 1,
       icon: 'lock-closed-outline' as const,
-      title: 'Change passcode',
-      subtitle: 'Update your 4-digit PIN',
+      titleKey: 'settings.changePasscode',
+      subtitleKey: 'settings.updatePinSubtitle',
       onPress: () => (navigation as { navigate: (name: string) => void }).navigate('ChangePasscode'),
     },
     {
@@ -196,8 +196,8 @@ const Settings = () => {
 
   const securityOptionsWithLabels = securityOptions.map((o) => ({
     ...o,
-    title: t(o.titleKey),
-    subtitle: o.subtitleKey ? t(o.subtitleKey) : '',
+    title: (o as { titleKey?: string }).titleKey ? t((o as { titleKey: string }).titleKey) : (o as { title?: string }).title ?? '',
+    subtitle: (o as { subtitleKey?: string }).subtitleKey ? t((o as { subtitleKey: string }).subtitleKey) : (o as { subtitle?: string }).subtitle ?? '',
   }));
   const customerRelationshipOptionsWithLabels = customerRelationshipOptions.map((o) => ({
     ...o,

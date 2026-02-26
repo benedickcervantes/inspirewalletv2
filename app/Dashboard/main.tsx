@@ -6,6 +6,7 @@ import {
   Animated,
   Image,
   Linking,
+  Modal,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -15,6 +16,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { languageChoiceDoneKey, SUPPORTED_LANGUAGES } from "../../constants/locales";
 import { getMe, getOrCreateMainWallet, getReferralTree, getTimeDeposits, getTransactions } from "../../configs/api";
 import { createRealtimeConnection, startHeartbeat } from "../../configs/realtime";
 import { useLanguage } from "../../context/LanguageContext";
@@ -142,7 +144,7 @@ function getTransactionTypeLabel(t: (key: string) => string, type?: string): str
 
 export default function Dashboard() {
   const navigation = useNavigation();
-  const { t } = useLanguage();
+  const { t, setLanguage } = useLanguage();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const horizontalPadding = width < 375 ? 16 : 20;
@@ -169,6 +171,7 @@ export default function Dashboard() {
     firstName?: string;
     lastName?: string;
   } | null>(null);
+  const [showFirstTimeLanguageModal, setShowFirstTimeLanguageModal] = useState(false);
 
   const banners = [
     { image: LOOPWORK_BANNER, url: "https://inspire-loopwork.com/landingpage" },
@@ -276,6 +279,14 @@ export default function Dashboard() {
           },
         }));
         setRecentTransactions(mapped);
+      }
+
+      // First-time login: show language picker if this user hasn't chosen yet
+      const accountNumber = (user as { accountNumber?: string })?.accountNumber;
+      const choiceKey = languageChoiceDoneKey(accountNumber);
+      const hasChosen = await AsyncStorage.getItem(choiceKey);
+      if (hasChosen !== "true") {
+        setShowFirstTimeLanguageModal(true);
       }
     };
 
@@ -503,9 +514,42 @@ export default function Dashboard() {
     { icon: "chart-areaspline", labelKey: "dashboard.trading", route: "PlayEarn" },
   ];
 
+  const handleFirstTimeLanguageSelect = (label: string) => {
+    setLanguage(label);
+    const accountNumber = userData?.accountNumber as string | undefined;
+    AsyncStorage.setItem(languageChoiceDoneKey(accountNumber), "true");
+    setShowFirstTimeLanguageModal(false);
+  };
+
   return (
     <>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <Modal
+        visible={showFirstTimeLanguageModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => {}}
+      >
+        <View style={styles.languageModalOverlay}>
+          <View style={styles.languageModalContent}>
+            <Text style={styles.languageModalTitle}>{t("profile.selectLanguage")}</Text>
+            <Text style={styles.languageModalSubtitle}>{t("profile.defaultIsEnglish")}</Text>
+            <ScrollView style={styles.languageModalList} showsVerticalScrollIndicator={false}>
+              {SUPPORTED_LANGUAGES.map((lang) => (
+                <TouchableOpacity
+                  key={lang.code}
+                  style={styles.languageModalOption}
+                  onPress={() => handleFirstTimeLanguageSelect(lang.label)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.languageModalFlag}>{lang.flag}</Text>
+                  <Text style={styles.languageModalLabel}>{lang.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
       <SafeAreaView style={styles.container} edges={["left", "right", "bottom"]}>
         <View style={[styles.header, { paddingTop: Math.max(insets.top, 12) }]}>
           <View style={styles.headerLeft}>
@@ -1108,4 +1152,45 @@ const styles = StyleSheet.create({
   activeDot: { backgroundColor: "#E15816", width: 24 },
   footer: { paddingVertical: 24, alignItems: "center" },
   footerText: { fontSize: 12, color: "#999", letterSpacing: 1 },
+  // First-time language modal
+  languageModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 24,
+  },
+  languageModalContent: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 24,
+    width: "100%",
+    maxWidth: 340,
+    maxHeight: "80%",
+  },
+  languageModalTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#1a1a1a",
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  languageModalSubtitle: {
+    fontSize: 14,
+    color: "#666",
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  languageModalList: { maxHeight: 280 },
+  languageModalOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    backgroundColor: "#FFF5F0",
+    marginBottom: 8,
+  },
+  languageModalFlag: { fontSize: 24, marginRight: 12 },
+  languageModalLabel: { fontSize: 16, fontWeight: "600", color: "#333" },
 });
