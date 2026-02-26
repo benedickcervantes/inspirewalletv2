@@ -38,20 +38,23 @@ Creates a new user and returns an access token and user object (you can log the 
 
 **Request body**
 
-| Field             | Type    | Required | Validation                        | Description                                                                                            |
-| ----------------- | ------- | -------- | --------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `email`           | string  | Yes      | Valid email format                | Login identifier                                                                                       |
-| `password`        | string  | Yes      | Min 8 characters, max 128         | Plain text (sent over HTTPS)                                                                           |
-| `firstName`       | string  | Yes      | 1–100 characters                  | Given name                                                                                             |
-| `lastName`        | string  | Yes      | 1–100 characters                  | Family name                                                                                            |
-| `middleName`      | string  | No       | 1–100 characters                  | Middle name                                                                                            |
-| `phone`           | string  | No       | Max 30 characters                 | Phone number                                                                                           |
-| `dateOfBirth`     | string  | No       | ISO 8601 date (e.g. `1990-01-15`) | Date of birth                                                                                          |
-| `countryCode`     | string  | No       | Exactly 2 characters (e.g. `US`)  | ISO country code                                                                                       |
-| `referralCode`    | string  | No       | 4–20 characters                   | Referrer's **referral ID** when signing up via referral link. See [API-REFERRALS.md](API-REFERRALS.md) |
-| `companyName`     | string  | No       | Max 200 characters                | Company name (when user checks "I have a company")                                                     |
-| `lineAccountLink` | string  | No       | Max 500 characters                | LINE Account Link URL (optional)                                                                       |
-| `isAgent`         | boolean | No       |                                   | Whether user is an agent (default: false)                                                              |
+| Field             | Type    | Required | Validation                                        | Description                                                                                            |
+| ----------------- | ------- | -------- | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `email`           | string  | Yes      | Valid email format                                | Login identifier                                                                                       |
+| `password`        | string  | Yes      | Min 8 characters, max 128                         | Plain text (sent over HTTPS)                                                                           |
+| `firstName`       | string  | Yes      | 1–100 characters                                  | Given name                                                                                             |
+| `lastName`        | string  | Yes      | 1–100 characters                                  | Family name                                                                                            |
+| `middleName`      | string  | No       | 1–100 characters                                  | Middle name                                                                                            |
+| `phone`           | string  | No       | Max 30 characters                                 | Phone number                                                                                           |
+| `dateOfBirth`     | string  | No       | ISO 8601 date (e.g. `1990-01-15`)                 | Date of birth                                                                                          |
+| `countryCode`     | string  | No       | Exactly 2 characters (e.g. `US`)                  | ISO country code                                                                                       |
+| `referralCode`    | string  | No       | 4–20 characters                                   | Referrer's **referral ID** when signing up via referral link. See [API-REFERRALS.md](API-REFERRALS.md) |
+| `companyName`     | string  | No       | Max 200 characters                                | Company name (when user checks "I have a company")                                                     |
+| `lineAccountLink` | string  | No       | Max 500 characters                                | LINE Account Link URL (optional)                                                                       |
+| `viberLink`       | string  | No       | Max 500 characters                                | Viber account link (optional)                                                                          |
+| `whatsappLink`    | string  | No       | Max 500 characters                                | WhatsApp account link (optional)                                                                       |
+| `language`        | string  | No       | One of: `ENGLISH`, `ARABIC`, `JAPANESE`, `KOREAN` | User UI language preference                                                                            |
+| `isAgent`         | boolean | No       |                                                   | Whether user is an agent (default: false)                                                              |
 
 **Example request**
 
@@ -86,7 +89,12 @@ Creates a new user and returns an access token and user object (you can log the 
     "hasPasscode": false,
     "companyName": null,
     "lineAccountLink": null,
-    "isAgent": false
+    "viberLink": null,
+    "whatsappLink": null,
+    "language": null,
+    "isAgent": false,
+    "createdAt": "2025-01-15T10:00:00.000Z",
+    "referrerName": null
   }
 }
 ```
@@ -303,7 +311,12 @@ Authenticates with email and password and returns an access token and user objec
     "hasPasscode": false,
     "companyName": null,
     "lineAccountLink": null,
-    "isAgent": false
+    "viberLink": null,
+    "whatsappLink": null,
+    "language": null,
+    "isAgent": false,
+    "createdAt": "2025-01-15T10:00:00.000Z",
+    "referrerName": null
   }
 }
 ```
@@ -349,12 +362,16 @@ Returns the profile of the authenticated user.
   "hasPasscode": false,
   "companyName": null,
   "lineAccountLink": null,
+  "viberLink": null,
+  "whatsappLink": null,
+  "language": null,
   "isAgent": false,
-  "createdAt": "2025-01-15T10:00:00.000Z"
+  "createdAt": "2025-01-15T10:00:00.000Z",
+  "referrerName": null
 }
 ```
 
-Use `GET /auth/me` for the **Personal Information** page (Dashboard → person icon → Personal). Display editable fields (firstName, lastName, middleName, phone, dateOfBirth, countryCode, companyName, lineAccountLink) and persist changes with `PATCH /auth/profile`. Use `createdAt` for "Member Since" when available.
+Use `GET /auth/me` for the **Personal Information** page (Dashboard → person icon → Personal). Display editable fields (firstName, lastName, middleName, phone, dateOfBirth, countryCode, companyName, lineAccountLink, viberLink, whatsappLink, language) and persist changes with `PATCH /auth/profile`. Use `createdAt` for "Member Since" and `referrerName` for "Agent Referrer".
 
 `role` is one of `USER`, `ADMIN`, or `PAYMENT_SERVICE`. Use it to gate admin-only UI (e.g. admin portal) or to verify the user can access admin endpoints.
 
@@ -378,17 +395,20 @@ Updates the authenticated user's profile. All body fields are optional; only pro
 
 **Request body**
 
-| Field             | Type   | Required    | Validation                        | Description                           |
-| ----------------- | ------ | ----------- | --------------------------------- | ------------------------------------- |
-| `firstName`       | string | No          | 1–100 characters                  | Given name                            |
-| `lastName`        | string | No          | 1–100 characters                  | Family name                           |
-| `middleName`      | string | No          | 1–100 characters                  | Middle name                           |
-| `phone`           | string | No          | Max 30 characters                 | Phone number                          |
-| `dateOfBirth`     | string | No          | ISO 8601 date (e.g. `1990-01-15`) | Date of birth                         |
-| `countryCode`     | string | No          | Exactly 2 characters (e.g. `US`)  | ISO country code                      |
-| `companyName`     | string | No          | Max 200 characters                | Company name (Personal page)          |
-| `lineAccountLink` | string | No          | Max 500 characters                | LINE Account Link URL (Personal page) |
-| `passcode`        | string | Conditional | Exactly 4 digits (0–9)            | Required when user has passcode set   |
+| Field             | Type   | Required    | Validation                                        | Description                           |
+| ----------------- | ------ | ----------- | ------------------------------------------------- | ------------------------------------- |
+| `firstName`       | string | No          | 1–100 characters                                  | Given name                            |
+| `lastName`        | string | No          | 1–100 characters                                  | Family name                           |
+| `middleName`      | string | No          | 1–100 characters                                  | Middle name                           |
+| `phone`           | string | No          | Max 30 characters                                 | Phone number                          |
+| `dateOfBirth`     | string | No          | ISO 8601 date (e.g. `1990-01-15`)                 | Date of birth                         |
+| `countryCode`     | string | No          | Exactly 2 characters (e.g. `US`)                  | ISO country code                      |
+| `companyName`     | string | No          | Max 200 characters                                | Company name (Personal page)          |
+| `lineAccountLink` | string | No          | Max 500 characters                                | LINE Account Link URL (Personal page) |
+| `viberLink`       | string | No          | Max 500 characters                                | Viber account link                    |
+| `whatsappLink`    | string | No          | Max 500 characters                                | WhatsApp account link                 |
+| `language`        | string | No          | One of: `ENGLISH`, `ARABIC`, `JAPANESE`, `KOREAN` | User UI language preference           |
+| `passcode`        | string | Conditional | Exactly 4 digits (0–9)                            | Required when user has passcode set   |
 
 **Example request**
 
@@ -399,6 +419,9 @@ Updates the authenticated user's profile. All body fields are optional; only pro
   "middleName": "Marie",
   "companyName": "Acme Inc",
   "lineAccountLink": "https://line.me/ti/p/~jane_doe",
+  "viberLink": "https://viber.click/jane_doe",
+  "whatsappLink": "https://wa.me/1234567890",
+  "language": "ENGLISH",
   "passcode": "1234"
 }
 ```
@@ -495,28 +518,32 @@ All passcode endpoints require JWT authentication. The passcode is encrypted at 
 
 The **user** object returned by register, login, `GET /auth/me`, and `PATCH /auth/profile` has the same shape:
 
-| Field             | Type           | Description                                                                                                                                                      |
-| ----------------- | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `id`              | string         | Unique user ID (cuid)                                                                                                                                            |
-| `email`           | string         | Email address                                                                                                                                                    |
-| `accountNumber`   | string         | 12-digit account number, formatted as **XXXX XXXX XXXX** (e.g. `1234 5678 9012`). Unique per user; use for receiving transfers and sharing with others.          |
-| `firstName`       | string         | First name                                                                                                                                                       |
-| `lastName`        | string         | Last name                                                                                                                                                        |
-| `middleName`      | string \| null | Middle name (optional)                                                                                                                                           |
-| `status`          | string         | One of: `PENDING`, `ACTIVE`, `SUSPENDED`                                                                                                                         |
-| `role`            | string         | One of: `USER`, `ADMIN`, `PAYMENT_SERVICE`                                                                                                                       |
-| `emailVerified`   | boolean        | Whether the user has verified their email via OTP. New users receive an OTP email; call `POST /auth/verify-email` to verify.                                     |
-| `hasPasscode`     | boolean        | Whether the user has set a 4-digit passcode. Use to decide when to prompt for passcode on transfers, profile updates, etc.                                       |
-| `companyName`     | string \| null | Company name (optional). Editable via `PATCH /auth/profile`.                                                                                                     |
-| `lineAccountLink` | string \| null | LINE Account Link URL (optional). Editable via `PATCH /auth/profile`.                                                                                            |
-| `isAgent`         | boolean        | Whether the user is an agent (default: false)                                                                                                                    |
-| `createdAt`       | string \| null | ISO 8601 date (e.g. `2025-01-15T10:00:00.000Z`). Registration date; use for "Member Since" on Personal page. May not be present if backend has not yet added it. |
+| Field             | Type           | Description                                                                                                                                             |
+| ----------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`              | string         | Unique user ID (cuid)                                                                                                                                   |
+| `email`           | string         | Email address                                                                                                                                           |
+| `accountNumber`   | string         | 12-digit account number, formatted as **XXXX XXXX XXXX** (e.g. `1234 5678 9012`). Unique per user; use for receiving transfers and sharing with others. |
+| `firstName`       | string         | First name                                                                                                                                              |
+| `lastName`        | string         | Last name                                                                                                                                               |
+| `middleName`      | string \| null | Middle name (optional)                                                                                                                                  |
+| `status`          | string         | One of: `PENDING`, `ACTIVE`, `SUSPENDED`                                                                                                                |
+| `role`            | string         | One of: `USER`, `ADMIN`, `PAYMENT_SERVICE`                                                                                                              |
+| `emailVerified`   | boolean        | Whether the user has verified their email via OTP. New users receive an OTP email; call `POST /auth/verify-email` to verify.                            |
+| `hasPasscode`     | boolean        | Whether the user has set a 4-digit passcode. Use to decide when to prompt for passcode on transfers, profile updates, etc.                              |
+| `companyName`     | string \| null | Company name (optional). Editable via `PATCH /auth/profile`.                                                                                            |
+| `lineAccountLink` | string \| null | LINE Account Link URL (optional). Editable via `PATCH /auth/profile`.                                                                                   |
+| `viberLink`       | string \| null | Viber account link (optional). Editable via `PATCH /auth/profile`.                                                                                      |
+| `whatsappLink`    | string \| null | WhatsApp account link (optional). Editable via `PATCH /auth/profile`.                                                                                   |
+| `language`        | string \| null | User UI language: `ENGLISH`, `ARABIC`, `JAPANESE`, or `KOREAN`. Editable via `PATCH /auth/profile`.                                                     |
+| `isAgent`         | boolean        | Whether the user is an agent (default: false)                                                                                                           |
+| `createdAt`       | string         | ISO 8601 date (e.g. `2025-01-15T10:00:00.000Z`). Registration date; use for "Member Since" on Personal page.                                            |
+| `referrerName`    | string \| null | Agent referrer display name (firstName + lastName). null if user has no referrer. Use for "Agent Referrer" on Personal page.                            |
 
 Every user (new and existing) has an account number. New users receive one at registration; existing users were backfilled via migration.
 
 To show or update profile, use `GET /auth/me` and `PATCH /auth/profile`. Sensible fields (e.g. phone, dateOfBirth, countryCode) are stored and encrypted on the backend; include them in the profile update body to change them.
 
-**Personal Information page:** For the Personal page (Dashboard → person icon → Personal), see [API-BACKEND-CHANGES-PERSONAL-PROFILE.md](API-BACKEND-CHANGES-PERSONAL-PROFILE.md) for backend requirements. The frontend should support `companyName` and `lineAccountLink` in both `GET /auth/me` and `PATCH /auth/profile`; `createdAt` may be returned for "Member Since". Optional fields (`viberLink`, `whatsappLink`, `language`, referrer info) may be added in future backend versions.
+**Personal Information page:** For the Personal page (Dashboard → person icon → Personal), use `GET /auth/me` for display and `PATCH /auth/profile` for updates. Supported editable fields: firstName, lastName, middleName, phone, dateOfBirth, countryCode, companyName, lineAccountLink, viberLink, whatsappLink, language. Use `createdAt` for "Member Since" and `referrerName` for "Agent Referrer".
 
 ---
 
