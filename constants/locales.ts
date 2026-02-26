@@ -32,6 +32,13 @@ export function getLanguageLabel(code: string): string {
   return found?.label ?? "English";
 }
 
+/** AsyncStorage key prefix for "user has chosen language" (first-time modal). Use with accountNumber: languageChoiceDoneKey(accountNumber). */
+export const LANGUAGE_CHOICE_DONE_KEY_PREFIX = "language_chosen_";
+
+export function languageChoiceDoneKey(accountNumber: string | undefined): string {
+  return accountNumber ? `${LANGUAGE_CHOICE_DONE_KEY_PREFIX}${accountNumber}` : `${LANGUAGE_CHOICE_DONE_KEY_PREFIX}global`;
+}
+
 /** Ensures the value is a supported language; otherwise returns default English. */
 export function normalizeLanguage(value: string | null | undefined): string {
   if (!value || typeof value !== "string") return DEFAULT_LANGUAGE;

@@ -170,8 +170,8 @@ const Settings = () => {
     {
       id: 1,
       icon: 'lock-closed-outline' as const,
-      title: 'Change passcode',
-      subtitle: 'Update your 4-digit PIN',
+      titleKey: 'settings.changePasscode',
+      subtitleKey: 'settings.updatePinSubtitle',
       onPress: () => (navigation as { navigate: (name: string) => void }).navigate('ChangePasscode'),
     },
     {
