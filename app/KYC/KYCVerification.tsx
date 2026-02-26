@@ -17,9 +17,10 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { getMe } from "../../configs/api";
 import { useLanguage } from "../../context/LanguageContext";
 import type { RootStackParamList } from "../../types/navigation";
@@ -52,13 +53,24 @@ const COUNTRY_OPTIONS = ["Philippines", "Japan", "South Korea", "Saudi Arabia", 
 const DAYS = Array.from({ length: 31 }, (_, i) => (i + 1).toString());
 const YEARS = Array.from({ length: 71 }, (_, i) => (2010 - i).toString());
 
+const REFERENCE_WIDTH = 375;
+
 export default function KYCVerification() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, "KYCVerification">>();
   const { t } = useLanguage();
+  const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+
+  const isSmallDevice = width < 375;
+  const scale = Math.min(width / REFERENCE_WIDTH, 1.25);
+  const horizontalPadding = isSmallDevice ? 16 : 20;
+  const contentPadding = isSmallDevice ? 16 : 24;
+  const safePaddingTop = Platform.OS === "android" ? Math.max(insets.top, StatusBar.currentHeight ?? 0, 12) : Math.max(insets.top, 12);
+  const safePaddingBottom = Math.max(insets.bottom, 16);
+  const footerPaddingBottom = Platform.OS === "ios" ? Math.max(insets.bottom, 20) : 20;
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [companyName, setCompanyName] = useState("");
   const [birthday, setBirthday] = useState<Date | null>(null);
   const [gender, setGender] = useState("");
   const [nationality, setNationality] = useState("");
@@ -92,7 +104,6 @@ export default function KYCVerification() {
           const u = result.user as Record<string, unknown>;
           if (u.firstName) setFirstName(String(u.firstName));
           if (u.lastName) setLastName(String(u.lastName));
-          if (u.companyName) setCompanyName(String(u.companyName));
           if (u.dateOfBirth) {
             const d = new Date(String(u.dateOfBirth));
             if (!isNaN(d.getTime())) {
@@ -192,18 +203,21 @@ export default function KYCVerification() {
 
   return (
     <View style={styles.container}>
-      <SafeAreaView style={styles.safeArea} edges={["top"]}>
+      <SafeAreaView
+        style={[styles.safeArea, { paddingTop: Platform.OS === "android" ? safePaddingTop : undefined }]}
+        edges={["top"]}
+      >
         {/* Header: Back arrow + Title */}
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingHorizontal: horizontalPadding, paddingTop: 12, paddingBottom: 12 }]}>
           <TouchableOpacity style={styles.backButton} onPress={handleBack}>
             <Ionicons name="arrow-back" size={28} color={THEME_COLOR} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>{t("kyc.title")}</Text>
+          <Text style={[styles.headerTitle, { fontSize: Math.min(18 * scale, 18) }]} numberOfLines={1}>{t("kyc.title")}</Text>
           <View style={styles.headerSpacer} />
         </View>
 
         {/* Progress: 4 horizontal lines (active = current step, completed = steps before) */}
-        <View style={styles.progressContainer}>
+        <View style={[styles.progressContainer, { paddingHorizontal: horizontalPadding }]}>
           <View style={styles.progressRow}>
             {[1, 2, 3, 4].map((step) => (
               <View
@@ -223,18 +237,18 @@ export default function KYCVerification() {
         >
           <ScrollView
             style={styles.scrollView}
-            contentContainerStyle={styles.scrollContent}
+            contentContainerStyle={[styles.scrollContent, { paddingHorizontal: horizontalPadding, paddingBottom: 24 + safePaddingBottom }]}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
             {currentStep === 1 && (
             <>
             {/* Personal Details Card */}
-            <View style={styles.contentCard}>
+            <View style={[styles.contentCard, { padding: contentPadding }]}>
               <View style={styles.stepIconWrapper}>
                 <Ionicons name="person-outline" size={28} color={THEME_COLOR} />
               </View>
-              <Text style={styles.contentTitle}>{t("kyc.personalDetails")}</Text>
+              <Text style={[styles.contentTitle, { fontSize: 18 * scale }]}>{t("kyc.personalDetails")}</Text>
               <Text style={styles.contentDescription}>
                 {t("kyc.personalDetailsDesc")}
               </Text>
@@ -267,19 +281,6 @@ export default function KYCVerification() {
                     autoCapitalize="words"
                   />
                 </View>
-              </View>
-
-              {/* Company Name */}
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>{t("kyc.companyName")}</Text>
-                <TextInput
-                  style={styles.textInput}
-                  value={companyName}
-                  onChangeText={setCompanyName}
-                  placeholder={t("kyc.placeholderCompanyName")}
-                  placeholderTextColor="#9E9E9E"
-                  autoCapitalize="words"
-                />
               </View>
 
               {/* Birthday */}
@@ -398,11 +399,11 @@ export default function KYCVerification() {
             {currentStep === 2 && (
             <>
             {/* Address Information Card */}
-            <View style={styles.contentCard}>
+            <View style={[styles.contentCard, { padding: contentPadding }]}>
               <View style={styles.stepIconWrapper}>
                 <Ionicons name="location-outline" size={28} color={THEME_COLOR} />
               </View>
-              <Text style={styles.contentTitle}>{t("kyc.addressInformation")}</Text>
+              <Text style={[styles.contentTitle, { fontSize: 18 * scale }]}>{t("kyc.addressInformation")}</Text>
               <Text style={styles.contentDescription}>
                 {t("kyc.addressDetailsDesc")}
               </Text>
@@ -464,11 +465,11 @@ export default function KYCVerification() {
             {currentStep === 3 && (
             <>
             {/* Personal Documents Card */}
-            <View style={styles.contentCard}>
+            <View style={[styles.contentCard, { padding: contentPadding }]}>
               <View style={styles.stepIconWrapper}>
                 <Ionicons name="document-text-outline" size={28} color={THEME_COLOR} />
               </View>
-              <Text style={styles.contentTitle}>{t("kyc.personalDocuments")}</Text>
+              <Text style={[styles.contentTitle, { fontSize: 18 * scale }]}>{t("kyc.personalDocuments")}</Text>
               <Text style={styles.contentDescription}>
                 {t("kyc.personalDocumentsDesc")}
               </Text>
@@ -601,11 +602,11 @@ export default function KYCVerification() {
             {currentStep === 4 && (
             <>
             {/* Review & Submit */}
-            <Text style={styles.reviewTitle}>{t("kyc.reviewSubmit")}</Text>
+            <Text style={[styles.reviewTitle, { fontSize: 18 * scale }]}>{t("kyc.reviewSubmit")}</Text>
             <Text style={styles.reviewSubtitle}>{t("kyc.reviewSubmitDesc")}</Text>
 
             {/* Personal Details Summary Card */}
-            <View style={styles.reviewCard}>
+            <View style={[styles.reviewCard, { padding: contentPadding }]}>
               <View style={styles.reviewCardHeader}>
                 <View style={styles.reviewCardTitleRow}>
                   <Ionicons name="person-outline" size={22} color={THEME_COLOR} />
@@ -647,7 +648,7 @@ export default function KYCVerification() {
             </View>
 
             {/* Address Information Summary Card */}
-            <View style={styles.reviewCard}>
+            <View style={[styles.reviewCard, { padding: contentPadding }]}>
               <View style={styles.reviewCardHeader}>
                 <View style={styles.reviewCardTitleRow}>
                   <Ionicons name="location-outline" size={22} color={THEME_COLOR} />
@@ -677,7 +678,7 @@ export default function KYCVerification() {
             </View>
 
             {/* Personal Documents Summary Card */}
-            <View style={styles.reviewCard}>
+            <View style={[styles.reviewCard, { padding: contentPadding }]}>
               <View style={styles.reviewCardHeader}>
                 <View style={styles.reviewCardTitleRow}>
                   <Ionicons name="document-text-outline" size={22} color={THEME_COLOR} />
@@ -796,7 +797,7 @@ export default function KYCVerification() {
           </ScrollView>
 
           {/* Footer: step 1 = Next; steps 2–3 = Back + Next; step 4 = Confirm and Submit */}
-          <View style={styles.footer}>
+          <View style={[styles.footer, { paddingHorizontal: horizontalPadding, paddingBottom: footerPaddingBottom }]}>
             {currentStep === 4 ? (
               <TouchableOpacity
                 style={styles.nextButton}
@@ -1087,7 +1088,7 @@ export default function KYCVerification() {
               />
             ) : null}
             <TouchableOpacity
-              style={styles.imageViewerClose}
+              style={[styles.imageViewerClose, { top: safePaddingTop + 8, right: horizontalPadding }]}
               onPress={() => setViewingImageUri(null)}
               hitSlop={{ top: 16, bottom: 16, left: 16, right: 16 }}
             >
