@@ -1,8 +1,8 @@
-import { useEffect, useState, useRef } from "react";
-import { View, Image, Text, StyleSheet } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
-import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useNavigation } from "@react-navigation/native";
+import { LinearGradient } from "expo-linear-gradient";
+import { useEffect, useRef, useState } from "react";
+import { Image, StyleSheet, Text, View } from "react-native";
 import { getMe } from "../configs/api";
 import type { RootStackParamList } from "../types/navigation";
 
