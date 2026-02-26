@@ -63,11 +63,17 @@ export default function KYCVerification() {
 
   const isSmallDevice = width < 375;
   const scale = Math.min(width / REFERENCE_WIDTH, 1.25);
-  const horizontalPadding = isSmallDevice ? 16 : 20;
-  const contentPadding = isSmallDevice ? 16 : 24;
-  const safePaddingTop = Platform.OS === "android" ? Math.max(insets.top, StatusBar.currentHeight ?? 0, 12) : Math.max(insets.top, 12);
+  // Width-based padding so content uses more screen on small devices and stays balanced on large ones
+  const horizontalPadding = Math.max(12, Math.min(22, Math.round(width * 0.045)));
+  const contentPadding = Math.max(12, Math.min(24, Math.round(width * 0.048)));
+  const safePaddingTop = Platform.OS === "android"
+    ? (StatusBar.currentHeight ?? 0)
+    : insets.top;
   const safePaddingBottom = Math.max(insets.bottom, 16);
   const footerPaddingBottom = Platform.OS === "ios" ? Math.max(insets.bottom, 20) : 20;
+  const labelFontSize = Math.round(14 * scale);
+  const inputFontSize = Math.round(16 * scale);
+  const descriptionFontSize = Math.round(14 * scale);
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -203,22 +209,19 @@ export default function KYCVerification() {
 
   return (
     <View style={styles.container}>
-      <SafeAreaView
-        style={[styles.safeArea, { paddingTop: Platform.OS === "android" ? safePaddingTop : undefined }]}
-        edges={["top"]}
-      >
-        {/* Header: Back arrow + Title */}
-        <View style={[styles.header, { paddingHorizontal: horizontalPadding, paddingTop: 12, paddingBottom: 12 }]}>
+      <SafeAreaView style={styles.safeArea} edges={["bottom"]}>
+        {/* Header: fully up — bar extends to top, content below status bar */}
+        <View style={[styles.header, { paddingHorizontal: horizontalPadding, paddingTop: safePaddingTop }]}>
           <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-            <Ionicons name="arrow-back" size={28} color={THEME_COLOR} />
+            <Ionicons name="arrow-back" size={24} color={THEME_COLOR} />
           </TouchableOpacity>
-          <Text style={[styles.headerTitle, { fontSize: Math.min(18 * scale, 18) }]} numberOfLines={1}>{t("kyc.title")}</Text>
+          <Text style={styles.headerTitle} numberOfLines={1}>{t("kyc.title")}</Text>
           <View style={styles.headerSpacer} />
         </View>
 
         {/* Progress: 4 horizontal lines (active = current step, completed = steps before) */}
         <View style={[styles.progressContainer, { paddingHorizontal: horizontalPadding }]}>
-          <View style={styles.progressRow}>
+          <View style={[styles.progressRow, { gap: Math.round(8 * scale) }]}>
             {[1, 2, 3, 4].map((step) => (
               <View
                 key={step}
@@ -237,7 +240,14 @@ export default function KYCVerification() {
         >
           <ScrollView
             style={styles.scrollView}
-            contentContainerStyle={[styles.scrollContent, { paddingHorizontal: horizontalPadding, paddingBottom: 24 + safePaddingBottom }]}
+            contentContainerStyle={[
+              styles.scrollContent,
+              {
+                paddingHorizontal: horizontalPadding,
+                paddingTop: 0,
+                paddingBottom: 24 + safePaddingBottom,
+              },
+            ]}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
@@ -248,19 +258,19 @@ export default function KYCVerification() {
               <View style={styles.stepIconWrapper}>
                 <Ionicons name="person-outline" size={28} color={THEME_COLOR} />
               </View>
-              <Text style={[styles.contentTitle, { fontSize: 18 * scale }]}>{t("kyc.personalDetails")}</Text>
-              <Text style={styles.contentDescription}>
+              <Text style={[styles.contentTitle, { fontSize: Math.round(18 * scale) }]}>{t("kyc.personalDetails")}</Text>
+              <Text style={[styles.contentDescription, { fontSize: descriptionFontSize }]}>
                 {t("kyc.personalDetailsDesc")}
               </Text>
 
               {/* First Name | Last Name (2-column) */}
-              <View style={styles.rowInputs}>
+              <View style={[styles.rowInputs, { gap: Math.round(12 * scale) }]}>
                 <View style={[styles.inputGroup, styles.inputHalf]}>
-                  <Text style={styles.inputLabel}>
+                  <Text style={[styles.inputLabel, { fontSize: labelFontSize }]}>
                     {t("kyc.firstName")} <Text style={styles.required}>*</Text>
                   </Text>
                   <TextInput
-                    style={styles.textInput}
+                    style={[styles.textInput, { fontSize: inputFontSize }]}
                     value={firstName}
                     onChangeText={setFirstName}
                     placeholder={t("kyc.placeholderFirstName")}
@@ -269,11 +279,11 @@ export default function KYCVerification() {
                   />
                 </View>
                 <View style={[styles.inputGroup, styles.inputHalf]}>
-                  <Text style={styles.inputLabel}>
+                  <Text style={[styles.inputLabel, { fontSize: labelFontSize }]}>
                     {t("kyc.lastName")} <Text style={styles.required}>*</Text>
                   </Text>
                   <TextInput
-                    style={styles.textInput}
+                    style={[styles.textInput, { fontSize: inputFontSize }]}
                     value={lastName}
                     onChangeText={setLastName}
                     placeholder={t("kyc.placeholderLastName")}
@@ -285,7 +295,7 @@ export default function KYCVerification() {
 
               {/* Birthday */}
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>
+                <Text style={[styles.inputLabel, { fontSize: labelFontSize }]}>
                   {t("kyc.birthday")} <Text style={styles.required}>*</Text>
                 </Text>
                 <TouchableOpacity
@@ -304,6 +314,7 @@ export default function KYCVerification() {
                   <Text
                     style={[
                       styles.dropdownText,
+                      { fontSize: inputFontSize },
                       !birthday && styles.dropdownPlaceholder,
                     ]}
                   >
@@ -315,7 +326,7 @@ export default function KYCVerification() {
 
               {/* Gender */}
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>
+                <Text style={[styles.inputLabel, { fontSize: labelFontSize }]}>
                   {t("kyc.gender")} <Text style={styles.required}>*</Text>
                 </Text>
                 <TouchableOpacity
@@ -325,6 +336,7 @@ export default function KYCVerification() {
                   <Text
                     style={[
                       styles.dropdownText,
+                      { fontSize: inputFontSize },
                       !gender && styles.dropdownPlaceholder,
                     ]}
                   >
@@ -336,7 +348,7 @@ export default function KYCVerification() {
 
               {/* Nationality */}
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>
+                <Text style={[styles.inputLabel, { fontSize: labelFontSize }]}>
                   {t("kyc.nationality")} <Text style={styles.required}>*</Text>
                 </Text>
                 <TouchableOpacity
@@ -346,6 +358,7 @@ export default function KYCVerification() {
                   <Text
                     style={[
                       styles.dropdownText,
+                      { fontSize: inputFontSize },
                       !nationality && styles.dropdownPlaceholder,
                     ]}
                   >
@@ -357,7 +370,7 @@ export default function KYCVerification() {
 
               {/* Source of Income */}
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>
+                <Text style={[styles.inputLabel, { fontSize: labelFontSize }]}>
                   {t("kyc.sourceOfIncome")} <Text style={styles.required}>*</Text>
                 </Text>
                 <TouchableOpacity
@@ -367,6 +380,7 @@ export default function KYCVerification() {
                   <Text
                     style={[
                       styles.dropdownText,
+                      { fontSize: inputFontSize },
                       !sourceOfIncome && styles.dropdownPlaceholder,
                     ]}
                   >
@@ -378,11 +392,11 @@ export default function KYCVerification() {
 
               {/* Monthly Income */}
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>
+                <Text style={[styles.inputLabel, { fontSize: labelFontSize }]}>
                   {t("kyc.monthlyIncome")} <Text style={styles.required}>*</Text>
                 </Text>
                 <TextInput
-                  style={styles.textInput}
+                  style={[styles.textInput, { fontSize: inputFontSize }]}
                   value={monthlyIncome}
                   onChangeText={(text) => setMonthlyIncome(text.replace(/[^0-9]/g, ""))}
                   placeholder={t("kyc.placeholderMonthlyIncome")}
@@ -403,13 +417,13 @@ export default function KYCVerification() {
               <View style={styles.stepIconWrapper}>
                 <Ionicons name="location-outline" size={28} color={THEME_COLOR} />
               </View>
-              <Text style={[styles.contentTitle, { fontSize: 18 * scale }]}>{t("kyc.addressInformation")}</Text>
-              <Text style={styles.contentDescription}>
+              <Text style={[styles.contentTitle, { fontSize: Math.round(18 * scale) }]}>{t("kyc.addressInformation")}</Text>
+              <Text style={[styles.contentDescription, { fontSize: descriptionFontSize }]}>
                 {t("kyc.addressDetailsDesc")}
               </Text>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>
+                <Text style={[styles.inputLabel, { fontSize: labelFontSize }]}>
                   {t("kyc.country")} <Text style={styles.required}>*</Text>
                 </Text>
                 <TouchableOpacity
@@ -419,6 +433,7 @@ export default function KYCVerification() {
                   <Text
                     style={[
                       styles.dropdownText,
+                      { fontSize: inputFontSize },
                       !country && styles.dropdownPlaceholder,
                     ]}
                   >
@@ -429,7 +444,7 @@ export default function KYCVerification() {
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>
+                <Text style={[styles.inputLabel, { fontSize: labelFontSize }]}>
                   {t("kyc.fullAddress")} <Text style={styles.required}>*</Text>
                 </Text>
                 <TextInput
@@ -444,11 +459,11 @@ export default function KYCVerification() {
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>
+                <Text style={[styles.inputLabel, { fontSize: labelFontSize }]}>
                   {t("kyc.postalCode")} <Text style={styles.required}>*</Text>
                 </Text>
                 <TextInput
-                  style={styles.textInput}
+                  style={[styles.textInput, { fontSize: inputFontSize }]}
                   value={postalCode}
                   onChangeText={setPostalCode}
                   placeholder={t("kyc.placeholderPostalCode")}
@@ -469,13 +484,13 @@ export default function KYCVerification() {
               <View style={styles.stepIconWrapper}>
                 <Ionicons name="document-text-outline" size={28} color={THEME_COLOR} />
               </View>
-              <Text style={[styles.contentTitle, { fontSize: 18 * scale }]}>{t("kyc.personalDocuments")}</Text>
-              <Text style={styles.contentDescription}>
+              <Text style={[styles.contentTitle, { fontSize: Math.round(18 * scale) }]}>{t("kyc.personalDocuments")}</Text>
+              <Text style={[styles.contentDescription, { fontSize: descriptionFontSize }]}>
                 {t("kyc.personalDocumentsDesc")}
               </Text>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>
+                <Text style={[styles.inputLabel, { fontSize: labelFontSize }]}>
                   {t("kyc.govIdFront")} <Text style={styles.required}>*</Text>
                 </Text>
                 <TouchableOpacity
@@ -515,7 +530,7 @@ export default function KYCVerification() {
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>
+                <Text style={[styles.inputLabel, { fontSize: labelFontSize }]}>
                   {t("kyc.govIdBack")} <Text style={styles.required}>*</Text>
                 </Text>
                 <TouchableOpacity
@@ -555,7 +570,7 @@ export default function KYCVerification() {
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>
+                <Text style={[styles.inputLabel, { fontSize: labelFontSize }]}>
                   {t("kyc.selfiePhoto")} <Text style={styles.required}>*</Text>
                 </Text>
                 <TouchableOpacity
@@ -602,7 +617,7 @@ export default function KYCVerification() {
             {currentStep === 4 && (
             <>
             {/* Review & Submit */}
-            <Text style={[styles.reviewTitle, { fontSize: 18 * scale }]}>{t("kyc.reviewSubmit")}</Text>
+            <Text style={[styles.reviewTitle, { fontSize: Math.round(18 * scale) }]}>{t("kyc.reviewSubmit")}</Text>
             <Text style={styles.reviewSubtitle}>{t("kyc.reviewSubmitDesc")}</Text>
 
             {/* Personal Details Summary Card */}
@@ -1108,30 +1123,35 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
-    paddingTop: Platform.OS === "android" ? (StatusBar.currentHeight ?? 0) : 0,
+    paddingTop: 0,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 12,
+    paddingVertical: 16,
     backgroundColor: "#FFFFFF",
   },
   backButton: {
-    padding: 4,
+    width: 40,
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: "700",
     color: "#000000",
+    flex: 1,
+    textAlign: "center",
   },
   headerSpacer: {
-    width: 36,
+    width: 40,
   },
   progressContainer: {
-    paddingVertical: 16,
+    paddingTop: 12,
+    paddingBottom: 0,
     paddingHorizontal: 24,
     backgroundColor: "#FFFFFF",
   },
@@ -1198,12 +1218,14 @@ const styles = StyleSheet.create({
   rowInputs: {
     flexDirection: "row",
     gap: 12,
+    marginBottom: 20,
   },
   inputGroup: {
     marginBottom: 20,
   },
   inputHalf: {
     flex: 1,
+    marginBottom: 0,
   },
   inputLabel: {
     fontSize: 14,
