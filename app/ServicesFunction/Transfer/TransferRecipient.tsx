@@ -17,6 +17,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { getOrCreateMainWallet, getRecipientByAccountNumber } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
+import { useResponsive } from "../../../utils/responsive";
 
 const { width } = Dimensions.get("window");
 
@@ -78,6 +79,7 @@ export default function TransferRecipient() {
   const navigation = useNavigation();
   const route = useRoute();
   const insets = useSafeAreaInsets();
+  const { horizontalPadding } = useResponsive();
   const params = (route.params || {}) as { balanceType?: string };
   const balanceType = params.balanceType;
 
@@ -185,7 +187,7 @@ export default function TransferRecipient() {
 
         <ScrollView
           style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, { paddingHorizontal: horizontalPadding }]}
           showsVerticalScrollIndicator={false}
         >
           {/* Quick Actions */}

@@ -2,14 +2,9 @@ import { useNavigation } from '@react-navigation/native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useState } from 'react';
-import {
-  Pressable,
-  StyleSheet,
-  Text,
-  useWindowDimensions,
-  View,
-} from 'react-native';
+import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useResponsive } from '../../utils/responsive';
 
 const GRADIENT_START = '#E15816';
 const GRADIENT_END = '#F48F38';
@@ -21,6 +16,7 @@ export default function Welcome() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = useWindowDimensions();
+  const { horizontalPadding } = useResponsive();
   const [showStartup, setShowStartup] = useState(true);
 
   useEffect(() => {
@@ -44,7 +40,7 @@ export default function Welcome() {
     <LinearGradient
       colors={[GRADIENT_START, GRADIENT_END]}
       locations={[0, 1]}
-      style={[styles.welcomeContainer, { paddingTop: insets.top, paddingBottom: insets.bottom }]}
+      style={[styles.welcomeContainer, { paddingTop: insets.top, paddingBottom: insets.bottom, paddingHorizontal: horizontalPadding }]}
     >
       <View style={styles.welcomeContent}>
         <Image
@@ -92,7 +88,6 @@ const styles = StyleSheet.create({
   },
   welcomeContainer: {
     flex: 1,
-    paddingHorizontal: 28,
     justifyContent: 'space-between',
   },
   welcomeContent: {
@@ -112,6 +107,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 320,
     gap: 16,
+    paddingHorizontal: 4,
   },
   button: {
     paddingVertical: 18,

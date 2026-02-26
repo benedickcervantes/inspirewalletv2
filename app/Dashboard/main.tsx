@@ -11,9 +11,9 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  useWindowDimensions,
   View,
 } from "react-native";
+import { useResponsive } from "../../utils/responsive";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { getMe, getOrCreateMainWallet, getReferralTree, getTimeDeposits, getTransactions } from "../../configs/api";
 import { createRealtimeConnection, startHeartbeat } from "../../configs/realtime";
@@ -144,8 +144,7 @@ export default function Dashboard() {
   const navigation = useNavigation();
   const { t } = useLanguage();
   const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
-  const horizontalPadding = width < 375 ? 16 : 20;
+  const { width, horizontalPadding } = useResponsive();
   const carouselWidth = width - horizontalPadding * 2;
   const [userData, setUserData] = useState<Record<string, unknown> | null>(null);
   const [availableBalance, setAvailableBalance] = useState(0);

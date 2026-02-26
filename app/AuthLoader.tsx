@@ -4,6 +4,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useRef, useState } from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
 import { getMe } from "../configs/api";
+import { useResponsive } from "../utils/responsive";
 import type { RootStackParamList } from "../types/navigation";
 
 const LOADER_IMAGE = require("../assets/images/InpireLogo.png");
@@ -13,6 +14,7 @@ type ScreenName = keyof RootStackParamList;
 
 export default function AuthLoader() {
   const navigation = useNavigation();
+  const { scale } = useResponsive();
   const [loading, setLoading] = useState(true);
   const hasInitializedRef = useRef(false);
   const navigationHandledRef = useRef(false);
@@ -103,7 +105,7 @@ export default function AuthLoader() {
   return (
     <LinearGradient colors={["#E25A17", "#F28934"]} style={styles.container}>
       <View style={styles.logoContainer}>
-        <Image source={LOADER_IMAGE} style={styles.logo} resizeMode="contain" />
+        <Image source={LOADER_IMAGE} style={[styles.logo, { width: scale(250), height: scale(250) }]} resizeMode="contain" />
         <Text style={styles.createdByText}>CREATED BY INSPIRE</Text>
       </View>
     </LinearGradient>
@@ -122,8 +124,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   logo: {
-    width: 250,
-    height: 250,
+    maxWidth: "80%",
+    maxHeight: "45%",
+    aspectRatio: 1,
   },
   createdByText: {
     color: "#FFFFFF",

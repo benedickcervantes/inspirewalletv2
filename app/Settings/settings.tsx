@@ -13,9 +13,9 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-  useWindowDimensions,
 } from 'react-native';
 import { useLanguage } from '../../context/LanguageContext';
+import { useResponsive } from '../../utils/responsive';
 import { getReferralCode, resendVerification, verifyEmail } from '../../configs/api';
 import type { NavProp } from '../../types/navigation';
 
@@ -24,14 +24,11 @@ interface UserData {
   emailVerified?: boolean;
 }
 
-const BASE_WIDTH = 375;
-
 const Settings = () => {
   const navigation = useNavigation();
   const { t } = useLanguage();
-  const { width: screenWidth } = useWindowDimensions();
-  const scale = Math.min(screenWidth / BASE_WIDTH, 1.35);
-  const scaled = (n: number) => Math.round(n * scale);
+  const { width: screenWidth, scale: scaleFn } = useResponsive();
+  const scaled = (n: number) => Math.round(scaleFn(n));
 
   const [userData, setUserData] = useState<UserData | null>(null);
   const [referralCode, setReferralCode] = useState<string | null>(null);
@@ -194,14 +191,17 @@ const Settings = () => {
     { id: 5, icon: 'document-text-outline' as const, titleKey: 'settings.termsAndCondition', onPress: () => (navigation as { navigate: (name: string) => void }).navigate('TermsConditions') },
   ];
 
-  const securityOptionsWithLabels = securityOptions.map((o) => ({
-    ...o,
-    title: t(o.titleKey),
-    subtitle: o.subtitleKey ? t(o.subtitleKey) : '',
-  }));
+  const securityOptionsWithLabels = securityOptions.map((o) => {
+    const opt = o as { title?: string; titleKey?: string };
+    return {
+      ...o,
+      title: opt.title ?? (opt.titleKey ? t(opt.titleKey) : ''),
+      subtitle: o.subtitleKey ? t(o.subtitleKey) : '',
+    };
+  });
   const customerRelationshipOptionsWithLabels = customerRelationshipOptions.map((o) => ({
     ...o,
-    title: t(o.titleKey),
+    title: t(o.titleKey ?? ''),
   }));
 
   const r = {
