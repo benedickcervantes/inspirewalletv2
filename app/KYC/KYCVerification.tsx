@@ -58,7 +58,6 @@ export default function KYCVerification() {
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [companyName, setCompanyName] = useState("");
   const [birthday, setBirthday] = useState<Date | null>(null);
   const [gender, setGender] = useState("");
   const [nationality, setNationality] = useState("");
@@ -92,7 +91,6 @@ export default function KYCVerification() {
           const u = result.user as Record<string, unknown>;
           if (u.firstName) setFirstName(String(u.firstName));
           if (u.lastName) setLastName(String(u.lastName));
-          if (u.companyName) setCompanyName(String(u.companyName));
           if (u.dateOfBirth) {
             const d = new Date(String(u.dateOfBirth));
             if (!isNaN(d.getTime())) {
@@ -267,19 +265,6 @@ export default function KYCVerification() {
                     autoCapitalize="words"
                   />
                 </View>
-              </View>
-
-              {/* Company Name */}
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>{t("kyc.companyName")}</Text>
-                <TextInput
-                  style={styles.textInput}
-                  value={companyName}
-                  onChangeText={setCompanyName}
-                  placeholder={t("kyc.placeholderCompanyName")}
-                  placeholderTextColor="#9E9E9E"
-                  autoCapitalize="words"
-                />
               </View>
 
               {/* Birthday */}
