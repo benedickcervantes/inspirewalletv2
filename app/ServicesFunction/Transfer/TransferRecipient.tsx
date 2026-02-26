@@ -2,7 +2,6 @@ import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -15,7 +14,9 @@ import {
   TouchableOpacity,
   View
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { getOrCreateMainWallet, getRecipientByAccountNumber } from "../../../configs/api";
+import { useLanguage } from "../../../context/LanguageContext";
 
 const { width } = Dimensions.get("window");
 
@@ -115,8 +116,8 @@ export default function TransferRecipient() {
 
   const handleContinue = async () => {
     const validation = validateTransferForm(accountNumber, amount, Number(availableBalance) || 0);
-    if (!validation.isValid) {
-      setAlertMessage(validation.message);
+    if (!validation.isValid && validation.messageKey) {
+      setAlertMessage(t(validation.messageKey));
       setShowAlertModal(true);
       return;
     }
