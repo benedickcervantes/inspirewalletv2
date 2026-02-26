@@ -81,29 +81,20 @@ const Settings = () => {
     loadReferralCode();
   }, [loadReferralCode]);
 
-  /** Sign out: if user has passcode, go to Passcode screen (stay authenticated). Otherwise full sign out and go to Login. */
+  /** Sign out: always full sign out and go directly to Welcome (login/register), no Passcode/PIN screen. */
   const handleSignOut = async () => {
     try {
-      const userJson = await AsyncStorage.getItem('user');
-      const user = userJson ? (JSON.parse(userJson) as { hasPasscode?: boolean }) : null;
-      const hasPasscode = !!user?.hasPasscode;
-
-      if (hasPasscode) {
-        await AsyncStorage.removeItem('passcodeLoginComplete');
-        (navigation as unknown as NavProp).reset({ index: 0, routes: [{ name: 'Passcode' }] });
-      } else {
-        await AsyncStorage.multiRemove([
-          'access_token',
-          'user',
-          'userEmail',
-          'userPassword',
-          'passcodeLoginComplete',
-          'registrationPasscodePending',
-        ]);
-        (navigation as unknown as NavProp).reset({ index: 0, routes: [{ name: 'Login', params: { fromSignOut: true } }] });
-      }
+      await AsyncStorage.multiRemove([
+        'access_token',
+        'user',
+        'userEmail',
+        'userPassword',
+        'passcodeLoginComplete',
+        'registrationPasscodePending',
+      ]);
+      (navigation as unknown as NavProp).reset({ index: 0, routes: [{ name: 'Welcome' }] });
     } catch (_) {
-      (navigation as unknown as NavProp).reset({ index: 0, routes: [{ name: 'Login', params: { fromSignOut: true } }] });
+      (navigation as unknown as NavProp).reset({ index: 0, routes: [{ name: 'Welcome' }] });
     }
   };
 
