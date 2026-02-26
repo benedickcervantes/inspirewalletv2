@@ -4,7 +4,9 @@ import { LinearGradient } from "expo-linear-gradient";
 import { doc, getDoc } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import {
+    KeyboardAvoidingView,
     Modal,
+    Platform,
     SafeAreaView,
     ScrollView,
     StyleSheet,
@@ -152,10 +154,17 @@ export default function EWalletWithdrawal() {
           </View>
         </View>
 
+        <KeyboardAvoidingView
+          style={styles.keyboardAvoid}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+        >
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
         >
           {/* Title */}
           <View style={styles.titleContainer}>
@@ -276,6 +285,7 @@ export default function EWalletWithdrawal() {
 
           <View style={styles.bottomPadding} />
         </ScrollView>
+        </KeyboardAvoidingView>
 
         {/* Custom Alert Modal */}
         <Modal
@@ -369,11 +379,15 @@ const styles = StyleSheet.create({
   stepLineActive: {
     backgroundColor: "#E25A17",
   },
+  keyboardAvoid: {
+    flex: 1,
+  },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
     padding: 20,
+    paddingBottom: 120,
   },
   titleContainer: {
     alignItems: "center",
@@ -510,7 +524,7 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
   },
   bottomPadding: {
-    height: 20,
+    height: 40,
   },
   // Alert Modal Styles
   alertOverlay: {

@@ -4,7 +4,9 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useState } from "react";
 import {
+    KeyboardAvoidingView,
     Modal,
+    Platform,
     SafeAreaView,
     ScrollView,
     StyleSheet,
@@ -173,6 +175,7 @@ export default function WithdrawLocalBConfirm() {
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
           {/* Title */}
           <View style={styles.titleContainer}>
@@ -276,6 +279,11 @@ export default function WithdrawLocalBConfirm() {
           animationType="fade"
           onRequestClose={() => !isSubmitting && setShowPasscodeModal(false)}
         >
+          <KeyboardAvoidingView
+            style={styles.passcodeModalOverlay}
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            keyboardVerticalOffset={Platform.OS === "ios" ? 40 : 0}
+          >
           <View style={styles.alertOverlay}>
             <View style={styles.passcodeModalContent}>
               <Text style={styles.passcodeModalTitle}>Enter your passcode</Text>
@@ -310,6 +318,7 @@ export default function WithdrawLocalBConfirm() {
               </View>
             </View>
           </View>
+          </KeyboardAvoidingView>
         </Modal>
 
         {/* Custom Alert Modal */}
@@ -535,6 +544,11 @@ const styles = StyleSheet.create({
   alertOverlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.6)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  passcodeModalOverlay: {
+    flex: 1,
     justifyContent: "center",
     alignItems: "center",
   },

@@ -90,6 +90,7 @@ export default function WithdrawType() {
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
           {/* Title */}
           <View style={styles.titleContainer}>

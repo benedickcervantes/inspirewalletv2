@@ -4,14 +4,16 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useState } from "react";
 import {
-    Modal,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { getOrCreateMainWallet, submitWithdrawalRequest } from "../../../configs/api";
 
@@ -84,10 +86,6 @@ export default function EWalletConfirm() {
           message: "Your withdrawal request has been submitted successfully!",
         });
         setShowAlertModal(true);
-        setTimeout(() => {
-          setShowAlertModal(false);
-          navigation.navigate("Main");
-        }, 2000);
       } else {
         setAlertConfig({
           title: "Error",
@@ -171,6 +169,7 @@ export default function EWalletConfirm() {
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
           {/* Title */}
           <View style={styles.titleContainer}>
@@ -265,7 +264,12 @@ export default function EWalletConfirm() {
           animationType="fade"
           onRequestClose={() => !isSubmitting && setShowPasscodeModal(false)}
         >
-          <View style={styles.alertOverlay}>
+          <KeyboardAvoidingView
+            style={styles.passcodeModalOverlay}
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            keyboardVerticalOffset={Platform.OS === "ios" ? 40 : 0}
+          >
+          <View style={styles.passcodeModalOverlay}>
             <View style={styles.passcodeModalContent}>
               <Text style={styles.passcodeModalTitle}>Enter your passcode</Text>
               <TextInput
@@ -278,6 +282,7 @@ export default function EWalletConfirm() {
                 maxLength={4}
                 keyboardType="number-pad"
                 editable={!isSubmitting}
+                underlineColorAndroid="transparent"
               />
               <View style={styles.passcodeModalButtons}>
                 <TouchableOpacity
@@ -299,6 +304,7 @@ export default function EWalletConfirm() {
               </View>
             </View>
           </View>
+          </KeyboardAvoidingView>
         </Modal>
 
         {/* Custom Alert Modal */}
@@ -526,6 +532,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  passcodeModalOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   alertContainer: {
     borderRadius: 12,
     padding: 24,
@@ -565,9 +576,14 @@ const styles = StyleSheet.create({
   passcodeModalContent: {
     backgroundColor: "#FFFFFF",
     borderRadius: 16,
-    padding: 24,
-    width: "85%",
-    maxWidth: 340,
+    padding: 28,
+    width: "88%",
+    maxWidth: 360,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 12,
   },
   passcodeModalTitle: {
     fontSize: 18,
@@ -577,8 +593,8 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   passcodeInput: {
-    borderWidth: 1,
-    borderColor: "#E0E0E0",
+    borderWidth: 2,
+    borderColor: "#E25A17",
     borderRadius: 8,
     paddingHorizontal: 16,
     paddingVertical: 12,
@@ -586,6 +602,12 @@ const styles = StyleSheet.create({
     textAlign: "center",
     letterSpacing: 8,
     marginBottom: 20,
+    backgroundColor: "#FFFFFF",
+    shadowColor: "transparent",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    elevation: 0,
   },
   passcodeModalButtons: {
     flexDirection: "row",
