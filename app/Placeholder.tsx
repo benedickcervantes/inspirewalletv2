@@ -5,22 +5,27 @@ import { LinearGradient } from "expo-linear-gradient";
 import { doc, getDoc } from "firebase/firestore";
 import { useCallback, useEffect, useState } from "react";
 import {
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
   Modal,
   Platform,
   ScrollView,
   StatusBar,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   useWindowDimensions,
   View,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { getMe } from "../configs/api";
+import { getMe, updateProfile } from "../configs/api";
 import { auth, firestore } from "../configs/firebase";
 import { useLanguage } from "../context/LanguageContext";
 import { DEFAULT_LANGUAGE, normalizeLanguage, SUPPORTED_LANGUAGES } from "../constants/locales";
 
+const THEME_COLOR = "#E15816";
 const USER_PREFERRED_LANGUAGE_KEY = "user_preferred_language";
 
 export default function Placeholder() {
@@ -40,7 +45,15 @@ export default function Placeholder() {
   const avatarSize = Math.round(72 * scale);
   const [userData, setUserData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [showNameModal, setShowNameModal] = useState(false);
+  const [showPhoneModal, setShowPhoneModal] = useState(false);
   const [languageModalVisible, setLanguageModalVisible] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [editFirstName, setEditFirstName] = useState("");
+  const [editLastName, setEditLastName] = useState("");
+  const [editMiddleName, setEditMiddleName] = useState("");
+  const [editPhone, setEditPhone] = useState("");
+  const [passcode, setPasscode] = useState("");
 
   const fetchUserData = useCallback(async () => {
     try {
@@ -82,13 +95,86 @@ export default function Placeholder() {
     fetchUserData();
   }, [fetchUserData]);
 
-  const getInitials = (name: string) => {
-    if (!name) return "U";
-    const parts = name.split(" ");
-    if (parts.length >= 2) {
-      return (parts[0][0] + parts[1][0]).toUpperCase();
+  const hasPasscode = !!userData?.hasPasscode;
+
+  const handleSaveName = async () => {
+    const firstName = editFirstName.trim();
+    const lastName = editLastName.trim();
+    if (!firstName || !lastName) {
+      Alert.alert("Validation", "First name and last name are required.");
+      return;
     }
-    return name[0].toUpperCase();
+    const accessToken = await AsyncStorage.getItem("access_token");
+    if (!accessToken) {
+      Alert.alert("Error", "Not authenticated.");
+      return;
+    }
+    setSaving(true);
+    const body: Record<string, string> = { firstName, lastName };
+    if (editMiddleName.trim()) body.middleName = editMiddleName.trim();
+    if (hasPasscode) {
+      if (!passcode || !/^\d{4}$/.test(passcode)) {
+        Alert.alert("Passcode Required", "Enter your 4-digit passcode.");
+        setSaving(false);
+        return;
+      }
+      body.passcode = passcode;
+    }
+    const result = await updateProfile(accessToken, body);
+    setSaving(false);
+    if (result.success && result.user) {
+      setUserData(result.user);
+      setShowNameModal(false);
+      setPasscode("");
+    } else {
+      Alert.alert("Error", result.error || "Failed to update profile.");
+    }
+  };
+
+  const handleSavePhone = async () => {
+    const phone = editPhone.trim();
+    if (!phone) {
+      Alert.alert("Validation", "Contact number is required.");
+      return;
+    }
+    const accessToken = await AsyncStorage.getItem("access_token");
+    if (!accessToken) {
+      Alert.alert("Error", "Not authenticated.");
+      return;
+    }
+    setSaving(true);
+    const body: Record<string, string> = { phone };
+    if (hasPasscode) {
+      if (!passcode || !/^\d{4}$/.test(passcode)) {
+        Alert.alert("Passcode Required", "Enter your 4-digit passcode.");
+        setSaving(false);
+        return;
+      }
+      body.passcode = passcode;
+    }
+    const result = await updateProfile(accessToken, body);
+    setSaving(false);
+    if (result.success && result.user) {
+      setUserData(result.user);
+      setShowPhoneModal(false);
+      setPasscode("");
+    } else {
+      Alert.alert("Error", result.error || "Failed to update profile.");
+    }
+  };
+
+  const openNameModal = () => {
+    setEditFirstName(userData?.firstName ?? "");
+    setEditLastName(userData?.lastName ?? "");
+    setEditMiddleName(userData?.middleName ?? "");
+    setPasscode("");
+    setShowNameModal(true);
+  };
+
+  const openPhoneModal = () => {
+    setEditPhone(userData?.phone ?? userData?.phoneNumber ?? "");
+    setPasscode("");
+    setShowPhoneModal(true);
   };
 
   const fullName = userData?.firstName && userData?.lastName 
@@ -99,8 +185,8 @@ export default function Placeholder() {
   const isPremium = userData?.isPremium || userData?.accountLevel === "premium" || false;
   const accountNumber = userData?.accountNumber || userData?.id || "000053126300";
   const companyName = userData?.companyName || "Inspire Holdings Inc";
-  const contactNumber = userData?.phoneNumber || userData?.phone || "+63";
-  const lineLink = userData?.lineLink || t("common.notProvided");
+  const contactNumber = userData?.phone ?? userData?.phoneNumber ?? "+63";
+  const lineLink = userData?.lineAccountLink ?? userData?.lineLink ?? t("common.notProvided");
   const viberLink = userData?.viberLink || t("common.notProvided");
   const whatsappLink = userData?.whatsappLink || t("common.notProvided");
   const accountLevelLabel = isPremium ? t("profile.premium") : t("profile.basic");
@@ -124,11 +210,28 @@ export default function Placeholder() {
     setLanguageModalVisible(false);
   };
 
-  const memberSince = userData?.createdAt 
-    ? new Date(userData.createdAt.seconds ? userData.createdAt.seconds * 1000 : userData.createdAt).toLocaleDateString()
-    : "2/5/2026";
+  const memberSince = userData?.createdAt
+    ? new Date(
+        userData.createdAt?.seconds
+          ? userData.createdAt.seconds * 1000
+          : typeof userData.createdAt === "string"
+            ? userData.createdAt
+            : userData.createdAt
+      ).toLocaleDateString()
+    : "—";
   const statusRaw = userData?.status || "Active";
   const status = statusRaw === "Active" ? t("profile.active") : statusRaw;
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={THEME_COLOR} />
+          <Text style={styles.loadingText}>Loading profile...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -207,6 +310,7 @@ export default function Placeholder() {
             label={t("profile.name")}
             value={fullName}
             editable
+            onEdit={openNameModal}
           />
           <DetailItem
             icon="business-outline"
@@ -219,6 +323,7 @@ export default function Placeholder() {
             label={t("profile.contactNumber")}
             value={contactNumber}
             editable
+            onEdit={openPhoneModal}
           />
           <DetailItem
             icon="link-outline"
@@ -302,6 +407,147 @@ export default function Placeholder() {
         </View>
       </ScrollView>
 
+      {/* Name Edit Modal */}
+      <Modal visible={showNameModal} transparent animationType="slide">
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.modalOverlay}
+        >
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Edit Name</Text>
+              <TouchableOpacity
+                onPress={() => !saving && setShowNameModal(false)}
+                disabled={saving}
+              >
+                <Ionicons name="close" size={24} color="#333" />
+              </TouchableOpacity>
+            </View>
+            <ScrollView keyboardShouldPersistTaps="handled" style={styles.modalScroll}>
+              <View style={styles.modalBody}>
+              <Text style={styles.inputLabel}>First Name *</Text>
+              <TextInput
+                style={styles.input}
+                value={editFirstName}
+                onChangeText={setEditFirstName}
+                placeholder="First name"
+                placeholderTextColor="#999"
+                editable={!saving}
+                autoCapitalize="words"
+              />
+              <Text style={styles.inputLabel}>Last Name *</Text>
+              <TextInput
+                style={styles.input}
+                value={editLastName}
+                onChangeText={setEditLastName}
+                placeholder="Last name"
+                placeholderTextColor="#999"
+                editable={!saving}
+                autoCapitalize="words"
+              />
+              <Text style={styles.inputLabel}>Middle Name (optional)</Text>
+              <TextInput
+                style={styles.input}
+                value={editMiddleName}
+                onChangeText={setEditMiddleName}
+                placeholder="Middle name"
+                placeholderTextColor="#999"
+                editable={!saving}
+                autoCapitalize="words"
+              />
+              {hasPasscode && (
+                <>
+                  <Text style={styles.inputLabel}>Passcode *</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={passcode}
+                    onChangeText={setPasscode}
+                    placeholder="4-digit passcode"
+                    placeholderTextColor="#999"
+                    keyboardType="number-pad"
+                    maxLength={4}
+                    secureTextEntry
+                    editable={!saving}
+                  />
+                </>
+              )}
+              </View>
+            </ScrollView>
+            <TouchableOpacity
+              style={[styles.saveButton, saving && styles.saveButtonDisabled]}
+              onPress={handleSaveName}
+              disabled={saving}
+            >
+              {saving ? (
+                <ActivityIndicator color="#FFF" />
+              ) : (
+                <Text style={styles.saveButtonText}>Save</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* Phone Edit Modal */}
+      <Modal visible={showPhoneModal} transparent animationType="slide">
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.modalOverlay}
+        >
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Edit Contact Number</Text>
+              <TouchableOpacity
+                onPress={() => !saving && setShowPhoneModal(false)}
+                disabled={saving}
+              >
+                <Ionicons name="close" size={24} color="#333" />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.modalBody}>
+              <Text style={styles.inputLabel}>Contact Number *</Text>
+              <TextInput
+                style={styles.input}
+                value={editPhone}
+                onChangeText={setEditPhone}
+                placeholder="+63..."
+                placeholderTextColor="#999"
+                keyboardType="phone-pad"
+                editable={!saving}
+              />
+              {hasPasscode && (
+                <>
+                  <Text style={styles.inputLabel}>Passcode *</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={passcode}
+                    onChangeText={setPasscode}
+                    placeholder="4-digit passcode"
+                    placeholderTextColor="#999"
+                    keyboardType="number-pad"
+                    maxLength={4}
+                    secureTextEntry
+                    editable={!saving}
+                  />
+                </>
+              )}
+            </View>
+            <TouchableOpacity
+              style={[styles.saveButton, saving && styles.saveButtonDisabled]}
+              onPress={handleSavePhone}
+              disabled={saving}
+            >
+              {saving ? (
+                <ActivityIndicator color="#FFF" />
+              ) : (
+                <Text style={styles.saveButtonText}>Save</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* Language Modal */}
       <Modal
         visible={languageModalVisible}
         transparent
@@ -314,7 +560,6 @@ export default function Placeholder() {
           onPress={() => setLanguageModalVisible(false)}
         >
           <View style={styles.languageModalContent} onStartShouldSetResponder={() => true}>
-            {/* Map / globe header */}
             <View style={styles.languageMapHeader}>
               <View style={styles.languageMapGlobe}>
                 <Ionicons name="globe-outline" size={40} color="#E15816" />
@@ -383,6 +628,7 @@ interface DetailItemProps {
   badge?: string;
   badgeColor?: string;
   verified?: boolean;
+  onEdit?: () => void;
 }
 
 function DetailItem({
@@ -391,15 +637,17 @@ function DetailItem({
   value,
   editable,
   onEditPress,
+  onEdit,
   badge,
   badgeColor,
   verified,
 }: DetailItemProps) {
-  const handlePress = editable && onEditPress ? onEditPress : undefined;
+  const onEditHandler = onEditPress ?? onEdit;
+  const handlePress = editable && onEditHandler ? onEditHandler : undefined;
   const content = (
     <>
       <View style={styles.detailHeader}>
-        <Ionicons name={icon as any} size={18} color="#E15816" />
+        <Ionicons name={icon as any} size={18} color={THEME_COLOR} />
         <Text style={styles.detailLabel}>{label}</Text>
       </View>
       <View style={styles.detailValueContainer}>
@@ -412,10 +660,10 @@ function DetailItem({
             )}
           </View>
         )}
-        {editable && onEditPress && (
+        {editable && onEditHandler && (
           <TouchableOpacity
             style={styles.editButton}
-            onPress={onEditPress}
+            onPress={onEditHandler}
             hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
             activeOpacity={0.7}
           >
@@ -601,13 +849,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 24,
-  },
   languageModalContent: {
     backgroundColor: "#FFFFFF",
     borderRadius: 16,
@@ -701,5 +942,79 @@ const styles = StyleSheet.create({
   languageModalCancelText: {
     fontSize: 16,
     color: "#666",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 12,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: "#666",
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
+  },
+  modalContent: {
+    backgroundColor: "#FFF",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingBottom: Platform.OS === "ios" ? 34 : 20,
+    maxHeight: "80%",
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E0E0E0",
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#333",
+  },
+  modalScroll: {
+    maxHeight: 320,
+  },
+  modalBody: {
+    padding: 20,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 8,
+    marginTop: 12,
+  },
+  input: {
+    borderWidth: 2,
+    borderColor: "#E0E0E0",
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    fontSize: 16,
+    color: "#333",
+  },
+  saveButton: {
+    marginHorizontal: 20,
+    marginTop: 20,
+    paddingVertical: 16,
+    borderRadius: 14,
+    backgroundColor: THEME_COLOR,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  saveButtonDisabled: {
+    opacity: 0.7,
+  },
+  saveButtonText: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#FFF",
   },
 });

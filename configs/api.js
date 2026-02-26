@@ -422,6 +422,37 @@ export async function getMe(accessToken) {
 }
 
 /**
+ * PATCH /auth/profile — requires JWT
+ * Updates the authenticated user's profile. When user has passcode set, passcode must be included.
+ * @param {string} accessToken
+ * @param {Object} body - { firstName?, lastName?, middleName?, phone?, dateOfBirth?, countryCode?, passcode? (required when hasPasscode) }
+ * @returns {{ success: boolean, user?: object, error?: string }}
+ */
+export async function updateProfile(accessToken, body) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: 'Backend URL not configured' };
+  if (!accessToken) return { success: false, error: 'No token' };
+  try {
+    const res = await fetch(`${base}/auth/profile`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || 'Failed to update profile';
+      return { success: false, error: msg };
+    }
+    return { success: true, user: data };
+  } catch (e) {
+    return { success: false, error: e.message || 'Network error' };
+  }
+}
+
+/**
  * POST /auth/passcode — requires JWT
  * Sets a 4-digit passcode for the authenticated user.
  * @param {string} accessToken
