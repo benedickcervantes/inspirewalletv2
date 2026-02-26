@@ -677,7 +677,7 @@ export default function Dashboard() {
             </View>
           )}
 
-          {activeTab !== "Investment" && (
+          {activeTab !== "Investment" && activeTab !== "Cards" && (
             <View style={[styles.languageCarouselContainer, { paddingHorizontal: horizontalPadding }]}>
               <View style={styles.languageCarouselWrapper}>
                 <ScrollView
@@ -735,7 +735,7 @@ export default function Dashboard() {
             </View>
           )}
 
-          {activeTab !== "Investment" && (
+          {activeTab !== "Investment" && activeTab !== "Cards" && (
             <View style={styles.transactionSection}>
               <View style={styles.transactionHeader}>
                 <Ionicons name="time-outline" size={20} color="#E15816" />
@@ -784,7 +784,7 @@ export default function Dashboard() {
             </View>
           )}
 
-          {activeTab !== "Investment" && (
+          {activeTab !== "Investment" && activeTab !== "Cards" && (
             <View style={styles.bannersSection}>
               <ScrollView
                 ref={bannerScrollRef}
