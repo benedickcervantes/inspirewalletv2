@@ -17,6 +17,7 @@ import {
 } from 'react-native';
 import { useLanguage } from '../../context/LanguageContext';
 import type { NavProp } from '../../types/navigation';
+import { useResponsive } from '../../utils/responsive';
 
 const PRIORITY_KEYS = ['help.priorityLow', 'help.priorityMedium', 'help.priorityHigh', 'help.priorityUrgent'] as const;
 const CATEGORY_KEYS = ['help.categoryAccount', 'help.categoryWallet', 'help.categoryTransactions', 'help.categoryInvestments', 'help.categoryTechnical', 'help.categoryOther'] as const;
@@ -30,6 +31,7 @@ interface UserData {
 const HelpCenter = () => {
   const navigation = useNavigation();
   const { t } = useLanguage();
+  const { horizontalPadding } = useResponsive();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -130,7 +132,7 @@ const HelpCenter = () => {
         </View>
       </LinearGradient>
 
-      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+      <ScrollView style={styles.scroll} contentContainerStyle={{ paddingHorizontal: horizontalPadding }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <View style={styles.banner}>
           <View style={styles.bannerIconWrapper}>
             <MaterialCommunityIcons name="comment-search-outline" size={36} color="#F38B35" />
