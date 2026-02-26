@@ -26,16 +26,19 @@ Users submit withdrawal requests (Local Bank or E-Wallet); admins approve or rej
 
 ## Endpoints
 
-| Method | Endpoint | Role | Description |
-|--------|----------|------|-------------|
-| POST | `/withdrawal-requests` | USER | Create withdrawal request |
-| POST | `/withdrawal-requests/admin` | ADMIN | Create withdrawal request on behalf of user (body: targetUserId or targetAccountNumber + walletId, amount, method, account details) |
-| GET | `/withdrawal-requests` | USER | List own requests |
-| GET | `/withdrawal-requests/:id` | USER | Get one request |
-| GET | `/withdrawal-requests/admin` | ADMIN | List all (optional `?status=PENDING\|APPROVED\|REJECTED`) |
-| GET | `/withdrawal-requests/admin/pending` | ADMIN | List pending only |
-| POST | `/withdrawal-requests/admin/:id/approve` | ADMIN | Approve (triggers actual withdrawal) |
-| POST | `/withdrawal-requests/admin/:id/reject` | ADMIN | Reject |
+| Method | Endpoint                                 | Role  | Description                                                                                                                         |
+| ------ | ---------------------------------------- | ----- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| POST   | `/withdrawal-requests`                   | USER  | Create withdrawal request                                                                                                           |
+| POST   | `/withdrawal-requests/admin`             | ADMIN | Create withdrawal request on behalf of user (body: targetUserId or targetAccountNumber + walletId, amount, method, account details) |
+| GET    | `/withdrawal-requests`                   | USER  | List own requests                                                                                                                   |
+| GET    | `/withdrawal-requests/:id`               | USER  | Get one request                                                                                                                     |
+| GET    | `/withdrawal-requests/admin`             | ADMIN | List all (optional `?status=PENDING\|APPROVED\|REJECTED`)                                                                           |
+| GET    | `/withdrawal-requests/admin/pending`     | ADMIN | List pending only                                                                                                                   |
+| GET    | `/withdrawal-requests/admin/stats`       | ADMIN | Get pending count (`{ "pending": number }`)                                                                                         |
+| POST   | `/withdrawal-requests/admin/:id/approve` | ADMIN | Approve (triggers actual withdrawal)                                                                                                |
+| POST   | `/withdrawal-requests/admin/:id/reject`  | ADMIN | Reject                                                                                                                              |
+
+For **admin fetch** (list, pending, stats) and full response payloads, see **[API-ADMIN-FETCH-WITHDRAWAL-AND-TRANSFER.md](API-ADMIN-FETCH-WITHDRAWAL-AND-TRANSFER.md)**.
 
 ---
 
@@ -48,29 +51,31 @@ Creates a new withdrawal request with status `PENDING`. The wallet is **not** de
 
 ### Request body (Local Bank)
 
-| Field | Type | Required | Validation | Description |
-|-------|------|----------|------------|-------------|
-| `walletId` | string | Yes | Non-empty | Source wallet to debit on approval |
-| `amount` | string | Yes | Decimal, up to 2 places (e.g. `"1000.50"`) | Amount to withdraw |
-| `source` | string | No | `"available_balance"` (default) or `"agent_commission"` | Source of funds; use `agent_commission` to withdraw from agent commission balance |
-| `method` | string | Yes | `"local_bank"` | Withdrawal method |
-| `email` | string | No | Valid email | Contact email (user may override) |
-| `accountNumber` | string | Yes | 1–50 chars | Bank account number |
-| `accountHolderName` | string | Yes | 1–200 chars | Account holder name |
-| `bankName` | string | Yes | 1–200 chars | Bank name |
-| `branchName` | string | No | Max 200 chars | Branch name (optional) |
+| Field               | Type   | Required    | Validation                                                                                                                                                                      | Description                                                                       |
+| ------------------- | ------ | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| `walletId`          | string | Yes         | Non-empty                                                                                                                                                                       | Source wallet to debit on approval                                                |
+| `amount`            | string | Yes         | Decimal, up to 2 places (e.g. `"1000.50"`)                                                                                                                                      | Amount to withdraw                                                                |
+| `source`            | string | No          | `"available_balance"` (default) or `"agent_commission"`                                                                                                                         | Source of funds; use `agent_commission` to withdraw from agent commission balance |
+| `method`            | string | Yes         | `"local_bank"`                                                                                                                                                                  | Withdrawal method                                                                 |
+| `email`             | string | No          | Valid email                                                                                                                                                                     | Contact email (user may override)                                                 |
+| `accountNumber`     | string | Yes         | 1–50 chars                                                                                                                                                                      | Bank account number                                                               |
+| `accountHolderName` | string | Yes         | 1–200 chars                                                                                                                                                                     | Account holder name                                                               |
+| `bankName`          | string | Yes         | 1–200 chars                                                                                                                                                                     | Bank name                                                                         |
+| `branchName`        | string | No          | Max 200 chars                                                                                                                                                                   | Branch name (optional)                                                            |
+| `passcode`          | string | Conditional | Exactly 4 digits (0–9). **Required when the user has a passcode set.** See [API-PASSCODE.md](API-PASSCODE.md) and [API-PASSCODE-REQUIREMENTS.md](API-PASSCODE-REQUIREMENTS.md). |
 
 ### Request body (E-Wallet)
 
-| Field | Type | Required | Validation | Description |
-|-------|------|----------|------------|-------------|
-| `walletId` | string | Yes | Non-empty | Source wallet to debit on approval |
-| `amount` | string | Yes | Decimal, up to 2 places (e.g. `"500.00"`) | Amount to withdraw |
-| `method` | string | Yes | `"e_wallet"` | Withdrawal method |
-| `email` | string | No | Valid email | Contact email (user may override) |
-| `walletType` | string | Yes | `"gcash"` or `"maya"` | E-wallet provider |
-| `accountNumber` | string | Yes | 1–20 chars | E-wallet account / mobile number |
-| `accountName` | string | Yes | 1–200 chars | Name registered with e-wallet |
+| Field           | Type   | Required    | Validation                                                                                                                                                                      | Description                        |
+| --------------- | ------ | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| `walletId`      | string | Yes         | Non-empty                                                                                                                                                                       | Source wallet to debit on approval |
+| `amount`        | string | Yes         | Decimal, up to 2 places (e.g. `"500.00"`)                                                                                                                                       | Amount to withdraw                 |
+| `method`        | string | Yes         | `"e_wallet"`                                                                                                                                                                    | Withdrawal method                  |
+| `email`         | string | No          | Valid email                                                                                                                                                                     | Contact email (user may override)  |
+| `walletType`    | string | Yes         | `"gcash"` or `"maya"`                                                                                                                                                           | E-wallet provider                  |
+| `accountNumber` | string | Yes         | 1–20 chars                                                                                                                                                                      | E-wallet account / mobile number   |
+| `accountName`   | string | Yes         | 1–200 chars                                                                                                                                                                     | Name registered with e-wallet      |
+| `passcode`      | string | Conditional | Exactly 4 digits (0–9). **Required when the user has a passcode set.** See [API-PASSCODE.md](API-PASSCODE.md) and [API-PASSCODE-REQUIREMENTS.md](API-PASSCODE-REQUIREMENTS.md). |
 
 ### Example request (Local Bank)
 
@@ -83,9 +88,12 @@ Creates a new withdrawal request with status `PENDING`. The wallet is **not** de
   "accountNumber": "1234567890",
   "accountHolderName": "Jane Doe",
   "bankName": "BDO Unibank",
-  "branchName": "Makati Branch"
+  "branchName": "Makati Branch",
+  "passcode": "1234"
 }
 ```
+
+When the user has a passcode set (`user.hasPasscode === true`), the frontend will include `passcode` in the body. The backend must verify it before creating the withdrawal request; if missing or incorrect, return **400 Bad Request** (e.g. "Passcode is required for this operation" / "Passcode is incorrect"). See [API-PASSCODE-REQUIREMENTS.md](API-PASSCODE-REQUIREMENTS.md).
 
 ### Example request (E-Wallet)
 
@@ -128,11 +136,28 @@ For E-Wallet, `walletType`, `accountNumber`, and `accountName` are returned inst
 
 ### Error responses
 
-- **400 Bad Request** – Validation failed (invalid or missing fields)
+- **400 Bad Request** – Validation failed (invalid or missing fields), or passcode required but missing/incorrect (when user has passcode set):
   ```json
   {
     "statusCode": 400,
-    "message": ["amount must be a decimal with up to 2 places", "method must be one of: local_bank, e_wallet"],
+    "message": "Passcode is required for this operation. Set a passcode first or provide your current passcode.",
+    "error": "Bad Request"
+  }
+  ```
+  ```json
+  {
+    "statusCode": 400,
+    "message": "Passcode is incorrect",
+    "error": "Bad Request"
+  }
+  ```
+  ```json
+  {
+    "statusCode": 400,
+    "message": [
+      "amount must be a decimal with up to 2 places",
+      "method must be one of: local_bank, e_wallet"
+    ],
     "error": "Bad Request"
   }
   ```
@@ -193,7 +218,11 @@ Same shape as a single item in the list response above.
 
 - **404 Not Found** – Request not found or not owned by user
   ```json
-  { "statusCode": 404, "message": "Withdrawal request not found", "error": "Not Found" }
+  {
+    "statusCode": 404,
+    "message": "Withdrawal request not found",
+    "error": "Not Found"
+  }
   ```
 - **401 Unauthorized** – Missing or invalid token
 
@@ -208,9 +237,9 @@ Returns all withdrawal requests. Optional query param to filter by status.
 
 ### Query parameters
 
-| Param | Type | Required | Description |
-|-------|------|----------|-------------|
-| `status` | string | No | Filter: `PENDING`, `APPROVED`, or `REJECTED`. Omit to return all. |
+| Param    | Type   | Required | Description                                                       |
+| -------- | ------ | -------- | ----------------------------------------------------------------- |
+| `status` | string | No       | Filter: `PENDING`, `APPROVED`, or `REJECTED`. Omit to return all. |
 
 ### Example request
 
@@ -280,9 +309,9 @@ Approves the withdrawal request and **triggers the actual withdrawal** (debit wa
 
 ### Request body (optional)
 
-| Field | Type | Required | Validation | Description |
-|-------|------|----------|------------|-------------|
-| `notes` | string | No | Max 500 chars | Admin notes (stored in `adminNotes`) |
+| Field   | Type   | Required | Validation    | Description                          |
+| ------- | ------ | -------- | ------------- | ------------------------------------ |
+| `notes` | string | No       | Max 500 chars | Admin notes (stored in `adminNotes`) |
 
 ### Example request
 
@@ -300,15 +329,27 @@ Returns the updated withdrawal request with `status: "APPROVED"`, `reviewedAt` a
 
 - **404 Not Found** – Request not found
   ```json
-  { "statusCode": 404, "message": "Withdrawal request not found", "error": "Not Found" }
+  {
+    "statusCode": 404,
+    "message": "Withdrawal request not found",
+    "error": "Not Found"
+  }
   ```
 - **400 Bad Request** – Request is not PENDING (already approved or rejected)
   ```json
-  { "statusCode": 400, "message": "Withdrawal request is not pending", "error": "Bad Request" }
+  {
+    "statusCode": 400,
+    "message": "Withdrawal request is not pending",
+    "error": "Bad Request"
+  }
   ```
 - **400 Bad Request** – Insufficient balance in wallet
   ```json
-  { "statusCode": 400, "message": "Insufficient balance", "error": "Bad Request" }
+  {
+    "statusCode": 400,
+    "message": "Insufficient balance",
+    "error": "Bad Request"
+  }
   ```
 - **401 Unauthorized** – Missing or invalid token
 - **403 Forbidden** – Caller does not have ADMIN role
@@ -324,9 +365,9 @@ Rejects the withdrawal request. Status is updated to `REJECTED`. No debit occurs
 
 ### Request body (optional)
 
-| Field | Type | Required | Validation | Description |
-|-------|------|----------|------------|-------------|
-| `notes` | string | No | Max 500 chars | Admin notes (reason for rejection, stored in `adminNotes`) |
+| Field   | Type   | Required | Validation    | Description                                                |
+| ------- | ------ | -------- | ------------- | ---------------------------------------------------------- |
+| `notes` | string | No       | Max 500 chars | Admin notes (reason for rejection, stored in `adminNotes`) |
 
 ### Example request
 

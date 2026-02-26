@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from 'react';
 import {
     ActivityIndicator,
     Animated,
+    BackHandler,
     Keyboard,
     KeyboardAvoidingView,
     Modal,
@@ -209,7 +210,15 @@ interface ModalConfig {
 
 export default function Login() {
   const navigation = useNavigation();
+  const route = useRoute();
   const insets = useSafeAreaInsets();
+  const fromSignOut = (route.params as { fromSignOut?: boolean } | undefined)?.fromSignOut;
+
+  useEffect(() => {
+    if (!fromSignOut) return;
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => true);
+    return () => sub.remove();
+  }, [fromSignOut]);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -284,7 +293,9 @@ export default function Login() {
       if (user?.hasPasscode) {
         (navigation as unknown as NavProp).replace('Passcode');
       } else {
-        (navigation as unknown as NavProp).replace('Main');
+        // First login without passcode: require user to create one before Main
+        await AsyncStorage.setItem('registrationPasscodePending', 'true');
+        (navigation as unknown as NavProp).replace('CreatePasscode');
       }
     } catch (_) {
       showModal({
@@ -312,13 +323,17 @@ export default function Login() {
           style={[styles.gradient, { paddingTop: insets.top, paddingBottom: insets.bottom }]}
         >
             <View style={styles.header}>
-              <TouchableOpacity
-                style={styles.backButton}
-                onPress={() => navigation.goBack()}
-                activeOpacity={0.7}
-              >
-                <Ionicons name="arrow-back" size={26} color={WHITE} />
-              </TouchableOpacity>
+              {fromSignOut ? (
+                <View style={styles.backButton} />
+              ) : (
+                <TouchableOpacity
+                  style={styles.backButton}
+                  onPress={() => navigation.goBack()}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="arrow-back" size={26} color={WHITE} />
+                </TouchableOpacity>
+              )}
             </View>
 
             <ScrollView

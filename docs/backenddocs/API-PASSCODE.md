@@ -185,8 +185,15 @@ When a user has a passcode set, they **must provide it** for these operations:
 | Create beneficiary | `POST /beneficiaries` | `passcode` in body |
 | Update beneficiary | `PATCH /beneficiaries/:id` | `passcode` in body |
 | Delete beneficiary | `DELETE /beneficiaries/:id` | `passcode` in body |
+| Create withdrawal request | `POST /withdrawal-requests` | `passcode` in body |
 
 - **If the user has no passcode set:** No passcode is required; the operation proceeds.
 - **If the user has a passcode set:** The `passcode` field must be included and must match. If missing or wrong, the API returns **400 Bad Request**.
 
 Use the `hasPasscode` field in the user object (from `GET /auth/me`, login, register) to determine whether to prompt the user for their passcode before calling these endpoints.
+
+---
+
+## Backend requirements summary
+
+For backend implementers: which operations must require and verify passcode when `user.hasPasscode` is true, and how to implement it, see **[API-PASSCODE-REQUIREMENTS.md](API-PASSCODE-REQUIREMENTS.md)**.

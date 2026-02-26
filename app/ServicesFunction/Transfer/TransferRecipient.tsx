@@ -2,8 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
-import { useLanguage } from "../../../context/LanguageContext";
-import { collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -16,9 +15,7 @@ import {
   TouchableOpacity,
   View
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { getOrCreateMainWallet } from "../../../configs/api";
-import { auth, firestore } from "../../../configs/firebase";
+import { getOrCreateMainWallet, getRecipientByAccountNumber } from "../../../configs/api";
 
 const { width } = Dimensions.get("window");
 
@@ -28,89 +25,21 @@ interface Contact {
   accountNumber?: string;
 }
 
-// Reusable function to fetch user balance by type (JWT or Firebase)
+// Reusable function to fetch user balance by type (backend only)
 export const fetchBalanceByType = async (balanceType: string) => {
   const accessToken = await AsyncStorage.getItem("access_token");
-  if (accessToken) {
-    const { success, wallet } = await getOrCreateMainWallet(accessToken);
-    if (success && wallet?.balance != null && balanceType === "available") {
-      const bal = parseFloat(String(wallet.balance));
-      return Number.isNaN(bal) ? 0 : bal;
-    }
-    return 0;
+  if (!accessToken) return 0;
+  const { success, wallet } = await getOrCreateMainWallet(accessToken);
+  if (success && wallet?.balance != null && balanceType === "available") {
+    const bal = parseFloat(String(wallet.balance));
+    return Number.isNaN(bal) ? 0 : bal;
   }
-  if (!auth || !firestore) {
-    throw new Error("Firebase not configured");
-  }
-  const user = auth.currentUser;
-  if (!user) {
-    throw new Error("No authenticated user found");
-  }
-  const userDoc = await getDoc(doc(firestore, "users", user.uid));
-  if (!userDoc.exists()) {
-    throw new Error("User document not found");
-  }
-  const userData = userDoc.data() as Record<string, unknown>;
-  if (balanceType === "available") {
-    return Number(userData?.balance ?? userData?.availBalanceAmount ?? 0) || 0;
-  }
-  return Number(userData?.agentWallet ?? userData?.agentWalletAmount ?? 0) || 0;
+  return 0;
 };
 
-// Reusable function to load user contacts
-export const loadUserContacts = async () => {
-  if (!auth || !firestore) return [];
-  try {
-    const user = auth.currentUser;
-    if (!user) {
-      throw new Error("No authenticated user found");
-    }
-
-    const contactsQuery = query(
-      collection(firestore, "contacts"),
-      where("userId", "==", user.uid)
-    );
-    const contactsSnapshot = await getDocs(contactsQuery);
-    const contactsList = contactsSnapshot.docs.map((docSnap) => ({
-      id: docSnap.id,
-      ...docSnap.data()
-    }));
-    return contactsList;
-  } catch (error) {
-    console.error("Error loading contacts:", error);
-    return [];
-  }
-};
-
-// Reusable function to verify recipient account
-export const verifyRecipientAccount = async (accountNumber: string) => {
-  if (!firestore) {
-    throw new Error("Firebase not configured");
-  }
-  try {
-    const recipientQuery = query(
-      collection(firestore, "users"),
-      where("accountNumber", "==", accountNumber)
-    );
-    const recipientSnapshot = await getDocs(recipientQuery);
-
-    if (recipientSnapshot.empty) {
-      return { exists: false, data: null };
-    }
-
-    const recipientData = recipientSnapshot.docs[0].data() as Record<string, unknown>;
-    return {
-      exists: true,
-      data: {
-        recipientName: recipientData.fullName || recipientData.name || "Unknown",
-        recipientId: recipientSnapshot.docs[0].id,
-        ...recipientData
-      }
-    };
-  } catch (error) {
-    console.error("Error verifying recipient:", error);
-    throw error;
-  }
+// Reusable function to load user contacts (backend has no contacts API in this flow; return empty)
+export const loadUserContacts = async (): Promise<Contact[]> => {
+  return [];
 };
 
 // Reusable function to validate transfer form (returns translation keys for message)
@@ -186,34 +115,37 @@ export default function TransferRecipient() {
 
   const handleContinue = async () => {
     const validation = validateTransferForm(accountNumber, amount, Number(availableBalance) || 0);
-    
-    if (!validation.isValid && validation.messageKey) {
-      setAlertMessage(validation.messageKey);
+    if (!validation.isValid) {
+      setAlertMessage(validation.message);
       setShowAlertModal(true);
       return;
     }
-
-    // Verify recipient exists
     setIsLoading(true);
     try {
-      const recipientResult = await verifyRecipientAccount(accountNumber);
-
-      if (!recipientResult.exists || !recipientResult.data) {
-        setAlertMessage("sendMoney.recipientNotFound");
+      const accessToken = await AsyncStorage.getItem("access_token");
+      if (!accessToken) {
+        setAlertMessage("Please log in to continue.");
         setShowAlertModal(true);
         setIsLoading(false);
         return;
       }
-
-      const { recipientName, recipientId } = recipientResult.data;
-      // Navigate to confirmation page
+      const recipientResult = await getRecipientByAccountNumber(accessToken, accountNumber);
+      if (!recipientResult.success || !recipientResult.data) {
+        setAlertMessage(recipientResult.error || "Recipient account not found");
+        setShowAlertModal(true);
+        setIsLoading(false);
+        return;
+      }
+      const data = recipientResult.data as { mainWalletId?: string; firstName?: string; lastName?: string; accountNumber?: string };
+      const recipientName = [data.firstName, data.lastName].filter(Boolean).join(" ") || "Unknown";
       navigation.navigate("TransferConfirm", {
         balanceType: balanceType ?? "available",
         accountNumber,
         amount,
         description,
-        recipientName: String(recipientName ?? "Unknown"),
-        recipientId: String(recipientId ?? "")
+        recipientName,
+        recipientId: "",
+        mainWalletId: data.mainWalletId ?? "",
       });
     } catch (error) {
       console.error("Error verifying recipient:", error);

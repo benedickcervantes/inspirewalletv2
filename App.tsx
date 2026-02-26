@@ -54,6 +54,7 @@ import TransferRecipient from './app/ServicesFunction/Transfer/TransferRecipient
 import SendMoney from './app/ServicesFunction/Transfer/TransferService';
 import TravelProtection from './app/ServicesFunction/Travel Proctected/TravelProtectServices';
 import Aboutus from './app/Settings/Aboutus';
+import ChangePasscode from './app/Settings/ChangePasscode';
 import DeleteAccount from './app/Settings/DeleteAccount';
 import HelpCenter from './app/Settings/HelpCenter';
 import PrivacyPolicy from './app/Settings/PrivacyPolicy';
@@ -82,6 +83,7 @@ export default function App() {
         <Stack.Screen name="Personal" component={Placeholder} />
         <Stack.Screen name="Notification" component={NotificationScreen} />
         <Stack.Screen name="Settings" component={Settings} />
+        <Stack.Screen name="ChangePasscode" component={ChangePasscode} />
         <Stack.Screen name="Aboutus" component={Aboutus} />
         <Stack.Screen name="DeleteAccount" component={DeleteAccount} />
         <Stack.Screen name="HelpCenter" component={HelpCenter} />

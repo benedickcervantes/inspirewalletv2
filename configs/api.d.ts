@@ -29,6 +29,13 @@ export function getMe(
 export function getOrCreateMainWallet(
   accessToken: string
 ): Promise<GetOrCreateMainWalletResult>;
+export function getRecipientByAccountNumber(
+  accessToken: string,
+  accountNumber: string
+): Promise<{ success: boolean; data?: { mainWalletId?: string; firstName?: string; lastName?: string; accountNumber?: string }; error?: string; notFound?: boolean }>;
+export function getBeneficiaries(accessToken: string): Promise<{ success: boolean; beneficiaries?: unknown[]; error?: string }>;
+export function createBeneficiary(accessToken: string, body: object): Promise<{ success: boolean; data?: unknown; error?: string }>;
+export function submitTransfer(accessToken: string, body: object): Promise<{ success: boolean; data?: unknown; error?: string }>;
 export function getTimeDeposits(
   accessToken: string
 ): Promise<GetTimeDepositsResult>;
@@ -69,6 +76,11 @@ export function setPasscode(
 export function verifyPasscode(
   accessToken: string,
   passcode: string
+): Promise<{ success: boolean; error?: string }>;
+export function updatePasscode(
+  accessToken: string,
+  currentPasscode: string,
+  newPasscode: string
 ): Promise<{ success: boolean; error?: string }>;
 export function verifyEmail(
   email: string,
