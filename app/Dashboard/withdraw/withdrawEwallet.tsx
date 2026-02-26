@@ -14,9 +14,11 @@ import {
     View,
 } from "react-native";
 import { auth, firestore } from "../../../configs/firebase";
+import { useLanguage } from "../../../context/LanguageContext";
 
 export default function EWalletWithdrawal() {
   const navigation = useNavigation();
+  const { t } = useLanguage();
   const [selectedWallet, setSelectedWallet] = useState<string | null>(null);
   const [accountNumber, setAccountNumber] = useState("");
   const [accountName, setAccountName] = useState("");
@@ -157,8 +159,8 @@ export default function EWalletWithdrawal() {
         >
           {/* Title */}
           <View style={styles.titleContainer}>
-            <Text style={styles.title}>Wallet Information</Text>
-            <Text style={styles.subtitle}>Withdraw from your available balance</Text>
+            <Text style={styles.title}>{t("withdraw.walletInformation")}</Text>
+            <Text style={styles.subtitle}>{t("withdraw.fromAvailableBalance")}</Text>
           </View>
 
           {/* Select E-Wallet Type */}

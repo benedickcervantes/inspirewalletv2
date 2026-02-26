@@ -5,13 +5,15 @@ import { LinearGradient } from "expo-linear-gradient";
 import { collection, doc, getDoc, getDocs, limit, orderBy, query } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useLanguage } from "../../../context/LanguageContext";
 import { auth, firestore } from "../../../configs/firebase";
 
 interface TaskItem {
   id: string;
   icon: string;
   iconType: 'ionicons' | 'material';
-  title: string;
+  titleKey: string;
   points: number;
   color: string;
 }
@@ -25,6 +27,8 @@ interface HistoryItem {
 
 export default function TaskServices() {
   const navigation = useNavigation();
+  const { t } = useLanguage();
+  const insets = useSafeAreaInsets();
   const [accumulatedPoints, setAccumulatedPoints] = useState(0);
   const [historyItems, setHistoryItems] = useState<HistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,7 +60,7 @@ export default function TaskServices() {
           const data = doc.data();
           return {
             id: doc.id,
-            task: data.taskName || data.task || "Task completed",
+            task: data.taskName || data.task || t("task.taskCompleted"),
             date: data.completedAt ? new Date(data.completedAt.seconds * 1000).toLocaleString('en-US', {
               month: 'short',
               day: 'numeric',
@@ -88,64 +92,22 @@ export default function TaskServices() {
   };
 
   const tasks: TaskItem[] = [
-    {
-      id: '1',
-      icon: 'logo-facebook',
-      iconType: 'ionicons',
-      title: 'Follow Inspire Next Global Inc. on Facebook!',
-      points: 3,
-      color: '#1877F2',
-    },
-    {
-      id: '2',
-      icon: 'logo-instagram',
-      iconType: 'ionicons',
-      title: 'Follow Inspire Next Global Inc. on Instagram!',
-      points: 2,
-      color: '#E4405F',
-    },
-    {
-      id: '3',
-      icon: 'logo-tiktok',
-      iconType: 'ionicons',
-      title: 'Follow our Tiktok Account!',
-      points: 3,
-      color: '#000000',
-    },
-    {
-      id: '4',
-      icon: 'logo-instagram',
-      iconType: 'ionicons',
-      title: 'Follow Inspire Holdings Inc. on Instagram!',
-      points: 2,
-      color: '#E4405F',
-    },
-    {
-      id: '5',
-      icon: 'logo-facebook',
-      iconType: 'ionicons',
-      title: 'Follow Inspire Holdings Inc. on Facebook!',
-      points: 3,
-      color: '#1877F2',
-    },
-    {
-      id: '6',
-      icon: 'logo-youtube',
-      iconType: 'ionicons',
-      title: 'Subscribe on Inspire Next Global YouTube Channel!',
-      points: 2,
-      color: '#FF0000',
-    },
+    { id: '1', icon: 'logo-facebook', iconType: 'ionicons', titleKey: 'task.followFacebook', points: 3, color: '#1877F2' },
+    { id: '2', icon: 'logo-instagram', iconType: 'ionicons', titleKey: 'task.followInstagram', points: 2, color: '#E4405F' },
+    { id: '3', icon: 'logo-tiktok', iconType: 'ionicons', titleKey: 'task.followTiktok', points: 3, color: '#000000' },
+    { id: '4', icon: 'logo-instagram', iconType: 'ionicons', titleKey: 'task.followHoldingsInstagram', points: 2, color: '#E4405F' },
+    { id: '5', icon: 'logo-facebook', iconType: 'ionicons', titleKey: 'task.followHoldingsFacebook', points: 3, color: '#1877F2' },
+    { id: '6', icon: 'logo-youtube', iconType: 'ionicons', titleKey: 'task.subscribeYoutube', points: 2, color: '#FF0000' },
   ];
 
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: insets.top + 12, paddingBottom: 12 }]}>
           <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
             <Ionicons name="chevron-back" size={28} color="#E15816" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Tasks</Text>
+          <Text style={styles.headerTitle}>{t("task.tasks")}</Text>
           <View style={{ width: 40 }} />
         </View>
         <View style={styles.loadingContainer}>
@@ -157,12 +119,12 @@ export default function TaskServices() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
+      {/* Header - sits just below status bar / notch */}
+      <View style={[styles.header, { paddingTop: insets.top + 12, paddingBottom: 12 }]}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Ionicons name="chevron-back" size={28} color="#E15816" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Tasks</Text>
+        <Text style={styles.headerTitle}>{t("task.tasks")}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -176,7 +138,7 @@ export default function TaskServices() {
             end={{ x: 1, y: 0 }}
           >
             <View style={styles.pointsLeft}>
-              <Text style={styles.pointsLabel}>ACCUMULATED POINTS</Text>
+              <Text style={styles.pointsLabel}>{t("task.accumulatedPointsLabel")}</Text>
               <View style={styles.pointsValueContainer}>
                 <Text style={styles.pointsValue}>{accumulatedPoints}</Text>
                 <Ionicons name="star" size={32} color="#FFFFFF" />
@@ -184,7 +146,7 @@ export default function TaskServices() {
             </View>
             <TouchableOpacity style={styles.withdrawButton}>
               <Ionicons name="wallet-outline" size={24} color="#E15816" />
-              <Text style={styles.withdrawButtonText}>Withdraw Points</Text>
+              <Text style={styles.withdrawButtonText}>{t("task.withdrawPoints")}</Text>
             </TouchableOpacity>
           </LinearGradient>
         </View>
@@ -194,10 +156,10 @@ export default function TaskServices() {
           <View style={styles.sectionHeader}>
             <View style={styles.sectionTitleContainer}>
               <Ionicons name="time-outline" size={20} color="#E15816" />
-              <Text style={styles.sectionTitle}>History</Text>
+              <Text style={styles.sectionTitle}>{t("task.history")}</Text>
             </View>
             <TouchableOpacity>
-              <Text style={styles.seeAllText}>See all</Text>
+              <Text style={styles.seeAllText}>{t("task.seeAll")}</Text>
             </TouchableOpacity>
           </View>
 
@@ -207,7 +169,7 @@ export default function TaskServices() {
                 <Ionicons name="checkmark-circle" size={24} color="#4CAF50" />
               </View>
               <View style={styles.historyContent}>
-                <Text style={styles.historyTitle}>Earned from task: {item.task}</Text>
+                <Text style={styles.historyTitle}>{t("task.earnedFromTask")} {item.task}</Text>
                 <Text style={styles.historyDate}>{item.date}</Text>
               </View>
               <Text style={styles.historyPoints}>+{item.points}</Text>
@@ -217,7 +179,7 @@ export default function TaskServices() {
 
         {/* Tasks for you Section */}
         <View style={styles.section}>
-          <Text style={styles.tasksForYouTitle}>Tasks for you</Text>
+          <Text style={styles.tasksForYouTitle}>{t("task.tasksForYou")}</Text>
 
           {tasks.map((task) => (
             <TouchableOpacity key={task.id} style={styles.taskItem}>
@@ -225,10 +187,10 @@ export default function TaskServices() {
                 <Ionicons name={task.icon as any} size={28} color="#FFFFFF" />
               </View>
               <View style={styles.taskContent}>
-                <Text style={styles.taskTitle}>{task.title}</Text>
+                <Text style={styles.taskTitle}>{t(task.titleKey)}</Text>
                 <View style={styles.taskPointsContainer}>
                   <Ionicons name="star" size={14} color="#E15816" />
-                  <Text style={styles.taskPoints}>{task.points} points</Text>
+                  <Text style={styles.taskPoints}>{task.points} {t("task.pointsLabel")}</Text>
                 </View>
               </View>
               <Ionicons name="chevron-forward" size={20} color="#CCC" />
@@ -257,7 +219,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingVertical: 12,
     backgroundColor: "#FFFFFF",
   },
   backButton: {

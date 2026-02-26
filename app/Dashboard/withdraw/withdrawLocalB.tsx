@@ -12,6 +12,7 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { useLanguage } from "../../../context/LanguageContext";
 import { auth, firestore } from "../../../configs/firebase";
 import { doc, getDoc } from "firebase/firestore";
 
@@ -128,8 +129,8 @@ export default function BankWithdrawal() {
         >
           {/* Title */}
           <View style={styles.titleContainer}>
-            <Text style={styles.title}>Available Balance</Text>
-            <Text style={styles.subtitle}>Withdraw from your available balance</Text>
+            <Text style={styles.title}>{t("dashboard.availableBalance")}</Text>
+            <Text style={styles.subtitle}>{t("withdraw.fromAvailableBalance")}</Text>
           </View>
 
           {/* Banking Information Card */}

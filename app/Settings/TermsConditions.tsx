@@ -10,68 +10,25 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useLanguage } from '../../context/LanguageContext';
 import type { NavProp } from '../../types/navigation';
 
 const SECTIONS = [
-  {
-    heading: 'Welcome to Inspire Wallet!',
-    body:
-      'Please read these terms and conditions carefully before accessing, using, or obtaining any materials, information, products or services. By accessing the Inspire Wallet (collectively, "the app"), you agree to be bound by these terms and conditions ("Terms") and our Privacy Policy. In these "Terms", "we", "us", "our" and "Inspire Wallet" refers to Inspire Wallet, and "you" and "your" refers to you, the user of our application.',
-  },
-  {
-    heading: 'Eligibility',
-    body:
-      'You must be at least 18 years old and have the legal capacity to enter into contracts. By using our app, you represent that you meet these requirements. If you are located in a jurisdiction where investment services are restricted, you may not use the app.',
-  },
-  {
-    heading: 'Account Registration',
-    intro: 'To access the maximum capacity of the app, you must create an account. You agree to:',
-    bullets: [
-      'Provide accurate and complete information',
-      'Maintain the security of your password',
-      'In case of any unauthorized use of your account, kindly notify us immediately',
-    ],
-  },
-  {
-    heading: 'Services Provided',
-    body:
-      'Inspire Wallet tracks your stocks and investments and lets you monitor your money before and after withdrawal. Every transaction shall be made through email and not directly with the bank. Inspire Alliance Fund Group will process your transaction, not the app itself. The process could take approximately five (5) to seven (7) working days to reflect on your Inspire Wallet account.',
-  },
-  {
-    heading: 'Fees and Charges',
-    body:
-      'Details about fees associated with transactions, account maintenance, and other services will be provided in-app and may change from time to time.',
-  },
-  {
-    heading: 'User Responsibilities',
-    body:
-      'You agree to use the app for lawful purposes and to abide by all applicable laws and regulations. You are responsible for your account and investment decisions.',
-  },
-  {
-    heading: 'Intellectual Property',
-    body:
-      'All content, trademarks, and software related to Inspire Wallet are owned by Inspire Alliance Fund Group or its licensors. You are granted a limited, non-exclusive license to use the app for personal purposes.',
-  },
-  {
-    heading: 'Privacy Policy',
-    body:
-      'Your use of the app is also governed by our Privacy Policy, which details how we collect, use, and protect your personal information. The app only collects data such as your name, email address and bank details.',
-  },
-  {
-    heading: 'Changes to Terms',
-    body:
-      'We may modify these terms at any time. We will notify you of significant changes through the app or via email. Your continued use of the app after changes constitutes acceptance of the new terms.',
-  },
-  {
-    heading: 'Contact',
-    contactIntro: 'For questions or concerns regarding these terms, please contact us at',
-    contactText: 'inspireholdings.ph: 85963571',
-    contactUrl: 'tel:85963571',
-  },
+  { headingKey: 'terms.h1', bodyKey: 'terms.b1' },
+  { headingKey: 'terms.h2', bodyKey: 'terms.b2' },
+  { headingKey: 'terms.h3', introKey: 'terms.i3', bulletKeys: ['terms.b3_1', 'terms.b3_2', 'terms.b3_3'] },
+  { headingKey: 'terms.h4', bodyKey: 'terms.b4' },
+  { headingKey: 'terms.h5', bodyKey: 'terms.b5' },
+  { headingKey: 'terms.h6', bodyKey: 'terms.b6' },
+  { headingKey: 'terms.h7', bodyKey: 'terms.b7' },
+  { headingKey: 'terms.h8', bodyKey: 'terms.b8' },
+  { headingKey: 'terms.h9', bodyKey: 'terms.b9' },
+  { headingKey: 'terms.h10', introKey: 'terms.i10', contactTextKey: 'terms.contactText', contactUrl: 'tel:85963571' },
 ];
 
 const TermsConditions = () => {
   const navigation = useNavigation();
+  const { t } = useLanguage();
 
   return (
     <SafeAreaView style={styles.container}>
@@ -86,7 +43,7 @@ const TermsConditions = () => {
           <TouchableOpacity onPress={() => (navigation as unknown as NavProp).goBack()} style={styles.backButton}>
             <Ionicons name="arrow-back" size={28} color="#FFFFFF" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Terms & Conditions</Text>
+          <Text style={styles.headerTitle}>{t('terms.title')}</Text>
           <View style={styles.headerSpacer} />
         </View>
       </LinearGradient>
@@ -97,32 +54,32 @@ const TermsConditions = () => {
             <View key={idx} style={styles.section}>
               <View style={styles.headingRow}>
                 <View style={styles.headingAccent} />
-                <Text style={styles.heading}>{section.heading}</Text>
+                <Text style={styles.heading}>{t(section.headingKey)}</Text>
               </View>
-              {section.intro ? (
-                <Text style={styles.intro}>{section.intro}</Text>
+              {'introKey' in section && section.introKey ? (
+                <Text style={styles.intro}>{t(section.introKey)}</Text>
               ) : null}
-              {section.body ? (
-                <Text style={styles.body}>{section.body}</Text>
+              {'bodyKey' in section && section.bodyKey ? (
+                <Text style={styles.body}>{t(section.bodyKey)}</Text>
               ) : null}
-              {section.bullets ? (
+              {'bulletKeys' in section && section.bulletKeys ? (
                 <View style={styles.bulletList}>
-                  {section.bullets.map((item, i) => (
+                  {section.bulletKeys.map((key, i) => (
                     <View key={i} style={styles.bulletRow}>
                       <View style={styles.bullet} />
-                      <Text style={styles.bulletText}>{item}</Text>
+                      <Text style={styles.bulletText}>{t(key)}</Text>
                     </View>
                   ))}
                 </View>
               ) : null}
-              {section.contactIntro ? (
+              {'contactTextKey' in section && section.contactTextKey && 'contactUrl' in section ? (
                 <View style={styles.contactSection}>
-                  <Text style={styles.contactIntro}>{section.contactIntro}</Text>
+                  <Text style={styles.contactIntro}>{t(section.introKey!)}</Text>
                   <TouchableOpacity
                     onPress={() => section.contactUrl && Linking.openURL(section.contactUrl)}
                     activeOpacity={0.7}
                   >
-                    <Text style={styles.contactLink}>{section.contactText}</Text>
+                    <Text style={styles.contactLink}>{t(section.contactTextKey)}</Text>
                   </TouchableOpacity>
                 </View>
               ) : null}

@@ -69,6 +69,10 @@ export function getMe(accessToken: string): Promise<{
   user?: object;
   error?: string;
 }>;
+export function updateProfile(
+  accessToken: string,
+  body: Record<string, string>
+): Promise<{ success: boolean; user?: object; error?: string }>;
 export function setPasscode(
   accessToken: string,
   passcode: string
@@ -145,6 +149,10 @@ export function getBulkUserActivity(
 }>;
 
 // Referral API
+export function getReferralCode(
+  accessToken: string
+): Promise<{ success: boolean; referralCode?: string; error?: string }>;
+
 export function getReferralTree(
   accessToken: string
 ): Promise<{

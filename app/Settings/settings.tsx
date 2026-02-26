@@ -1,9 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useCallback, useEffect, useState } from 'react';
-import type { NavProp } from '../../types/navigation';
 import {
   ActivityIndicator,
   Modal,
@@ -14,17 +13,26 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  useWindowDimensions,
 } from 'react-native';
+import { useLanguage } from '../../context/LanguageContext';
 import { getReferralCode, resendVerification, verifyEmail } from '../../configs/api';
+import type { NavProp } from '../../types/navigation';
 
 interface UserData {
   email?: string;
   emailVerified?: boolean;
 }
 
+const BASE_WIDTH = 375;
+
 const Settings = () => {
   const navigation = useNavigation();
-  const [searchQuery, setSearchQuery] = useState('');
+  const { t } = useLanguage();
+  const { width: screenWidth } = useWindowDimensions();
+  const scale = Math.min(screenWidth / BASE_WIDTH, 1.35);
+  const scaled = (n: number) => Math.round(n * scale);
+
   const [userData, setUserData] = useState<UserData | null>(null);
   const [referralCode, setReferralCode] = useState<string | null>(null);
   const [referralLoading, setReferralLoading] = useState(false);
@@ -59,11 +67,11 @@ const Settings = () => {
         setReferralError(result.error);
       }
     } catch (_) {
-      setReferralError('Failed to load referral code');
+      setReferralError(t('settings.failedToLoadReferral'));
     } finally {
       setReferralLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     loadUser();
@@ -106,12 +114,12 @@ const Settings = () => {
   const handleVerifyEmail = async () => {
     const email = userData?.email?.trim();
     if (!email) {
-      setEmailVerifyError('Email not found. Please sign in again.');
+      setEmailVerifyError(t('settings.emailNotFound'));
       return;
     }
     const otp = emailOtp.trim();
     if (!/^\d{6}$/.test(otp)) {
-      setEmailVerifyError('Enter the 6-digit code from your email');
+      setEmailVerifyError(t('settings.enter6DigitCode'));
       return;
     }
     setEmailVerifyError(null);
@@ -127,10 +135,10 @@ const Settings = () => {
           await AsyncStorage.setItem('user', JSON.stringify({ ...user, emailVerified: true }));
         }
       } else {
-        setEmailVerifyError(result.error || 'Verification failed');
+        setEmailVerifyError(result.error || t('settings.verificationFailed'));
       }
     } catch (_) {
-      setEmailVerifyError('An unexpected error occurred');
+      setEmailVerifyError(t('settings.unexpectedError'));
     } finally {
       setEmailVerifyLoading(false);
     }
@@ -147,10 +155,10 @@ const Settings = () => {
         setEmailVerifyError(null);
         setEmailOtp('');
       } else {
-        setEmailVerifyError(result.error || 'Failed to resend');
+        setEmailVerifyError(result.error || t('settings.failedToResend'));
       }
     } catch (_) {
-      setEmailVerifyError('Failed to resend verification email');
+      setEmailVerifyError(t('settings.failedToResend'));
     } finally {
       setResendLoading(false);
     }
@@ -181,44 +189,85 @@ const Settings = () => {
     {
       id: 2,
       icon: 'close-circle-outline' as const,
-      title: 'Delete Account',
-      subtitle: '',
+      titleKey: 'settings.deleteAccount',
+      subtitleKey: '',
       onPress: () => (navigation as { navigate: (name: string) => void }).navigate('DeleteAccount'),
     },
   ];
 
   const customerRelationshipOptions = [
-    {
-      id: 1,
-      icon: 'information-circle-outline' as const,
-      title: 'About us',
-      onPress: () => (navigation as { navigate: (name: string) => void }).navigate('Aboutus'),
-    },
-    {
-      id: 2,
-      icon: 'people-outline' as const,
-      title: 'Agent Dashboard',
-      onPress: () => (navigation as { navigate: (name: string) => void }).navigate('AgentRequest'),
-    },
-    {
-      id: 3,
-      icon: 'headset-outline' as const,
-      title: 'Help Center',
-      onPress: () => (navigation as { navigate: (name: string) => void }).navigate('HelpCenter'),
-    },
-    {
-      id: 4,
-      icon: 'shield-outline' as const,
-      title: 'Privacy Policy',
-      onPress: () => (navigation as { navigate: (name: string) => void }).navigate('PrivacyPolicy'),
-    },
-    {
-      id: 5,
-      icon: 'document-text-outline' as const,
-      title: 'Terms and Condition',
-      onPress: () => (navigation as { navigate: (name: string) => void }).navigate('TermsConditions'),
-    },
+    { id: 1, icon: 'information-circle-outline' as const, titleKey: 'settings.aboutUs', onPress: () => (navigation as { navigate: (name: string) => void }).navigate('Aboutus') },
+    { id: 2, icon: 'people-outline' as const, titleKey: 'settings.agentDashboard', onPress: () => (navigation as { navigate: (name: string) => void }).navigate('AgentRequest') },
+    { id: 3, icon: 'headset-outline' as const, titleKey: 'settings.helpCenter', onPress: () => (navigation as { navigate: (name: string) => void }).navigate('HelpCenter') },
+    { id: 4, icon: 'shield-outline' as const, titleKey: 'settings.privacyPolicy', onPress: () => (navigation as { navigate: (name: string) => void }).navigate('PrivacyPolicy') },
+    { id: 5, icon: 'document-text-outline' as const, titleKey: 'settings.termsAndCondition', onPress: () => (navigation as { navigate: (name: string) => void }).navigate('TermsConditions') },
   ];
+
+  const securityOptionsWithLabels = securityOptions.map((o) => ({
+    ...o,
+    title: t(o.titleKey),
+    subtitle: o.subtitleKey ? t(o.subtitleKey) : '',
+  }));
+  const customerRelationshipOptionsWithLabels = customerRelationshipOptions.map((o) => ({
+    ...o,
+    title: t(o.titleKey),
+  }));
+
+  const r = {
+    header: {
+      paddingHorizontal: scaled(16),
+      paddingTop: scaled(14),
+      paddingBottom: scaled(16),
+    },
+    backButton: {
+      padding: scaled(8),
+      minWidth: scaled(44),
+      minHeight: scaled(44),
+    },
+    headerTitle: { fontSize: scaled(18) },
+    headerSpacer: { width: scaled(44) },
+    content: { paddingHorizontal: scaled(16) },
+    contentContainer: { paddingBottom: scaled(40) },
+    sectionTitle: { fontSize: scaled(18), marginBottom: scaled(12), marginTop: scaled(8) },
+    sectionCard: { borderRadius: scaled(12), marginBottom: scaled(18) },
+    optionItem: { paddingVertical: scaled(14), paddingHorizontal: scaled(16) },
+    optionText: { marginRight: scaled(8) },
+    iconContainer: { width: scaled(40), height: scaled(40), borderRadius: scaled(12), marginRight: scaled(12) },
+    optionTitle: { fontSize: scaled(15) },
+    optionSubtitle: { fontSize: scaled(12), marginTop: scaled(2) },
+    referralOptionItem: { paddingVertical: scaled(14), paddingHorizontal: scaled(16) },
+    generateButtonText: { fontSize: scaled(14) },
+    referralError: { paddingHorizontal: scaled(16), paddingBottom: scaled(12) },
+    referralErrorText: { fontSize: scaled(12) },
+    signOutButton: { borderRadius: scaled(12), paddingVertical: scaled(16), marginBottom: scaled(32) },
+    signOutText: { fontSize: scaled(14), marginLeft: scaled(8) },
+    modalOverlay: { padding: scaled(20) },
+    modalContent: {
+      padding: scaled(20),
+      borderRadius: scaled(16),
+      width: Math.min(screenWidth - scaled(40), 400),
+    },
+    modalHeader: { marginBottom: scaled(16) },
+    modalTitle: { fontSize: scaled(18) },
+    modalSubtitle: { fontSize: scaled(14), marginBottom: scaled(12) },
+    otpInput: {
+      paddingHorizontal: scaled(16),
+      paddingVertical: scaled(14),
+      fontSize: scaled(18),
+      marginBottom: scaled(12),
+      borderRadius: scaled(8),
+    },
+    modalButton: { borderRadius: scaled(8), paddingVertical: scaled(14), marginBottom: scaled(8) },
+    modalButtonText: { fontSize: scaled(16) },
+    resendButton: { paddingVertical: scaled(12) },
+    resendButtonText: { fontSize: scaled(14) },
+    emailVerifySuccess: { paddingVertical: scaled(20) },
+    emailVerifySuccessText: { fontSize: scaled(16), marginTop: scaled(12), marginBottom: scaled(20) },
+    iconSize: scaled(24),
+    iconSizeSmall: scaled(20),
+    iconSizeLarge: scaled(48),
+    backIconSize: scaled(28),
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -227,142 +276,138 @@ const Settings = () => {
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
         locations={[0.01, 1]}
-        style={styles.header}
+        style={[styles.header, r.header]}
       >
         <View style={styles.headerTop}>
-          <TouchableOpacity onPress={() => navigation.navigate('Main')} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={28} color="#FFFFFF" />
+          <TouchableOpacity
+            onPress={() => navigation.navigate('Main')}
+            style={[styles.backButton, r.backButton]}
+            activeOpacity={0.7}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          >
+            <Ionicons name="arrow-back" size={r.backIconSize} color="#FFFFFF" />
           </TouchableOpacity>
-          
-          <Text style={styles.headerTitle}>Settings</Text>
-          
-          <TouchableOpacity style={styles.notificationButton}>
-            <Ionicons name="notifications-outline" size={28} color="#FFFFFF" />
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.searchContainer}>
-          <Ionicons name="search" size={20} color="#999" style={styles.searchIcon} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search settings..."
-            placeholderTextColor="#999"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
+          <Text style={[styles.headerTitle, r.headerTitle]} numberOfLines={1}>{t('settings.title')}</Text>
+          <View style={[styles.headerSpacer, r.headerSpacer]} />
         </View>
       </LinearGradient>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <Text style={styles.sectionTitle}>Referral</Text>
-        <View style={styles.sectionCard}>
+      <ScrollView
+        style={[styles.content, r.content]}
+        contentContainerStyle={r.contentContainer}
+        showsVerticalScrollIndicator={false}
+      >
+        <Text style={[styles.sectionTitle, r.sectionTitle]}>{t('settings.referral')}</Text>
+        <View style={[styles.sectionCard, r.sectionCard]}>
           <TouchableOpacity
-            style={styles.referralOptionItem}
+            style={[styles.referralOptionItem, r.referralOptionItem]}
             onPress={handleRefreshReferralCode}
             disabled={referralLoading}
           >
             <View style={styles.optionLeft}>
-              <View style={styles.iconContainer}>
-                <Ionicons name="gift-outline" size={24} color="#F38B35" />
+              <View style={[styles.iconContainer, r.iconContainer]}>
+                <Ionicons name="gift-outline" size={r.iconSize} color="#F38B35" />
               </View>
-              <View style={styles.optionText}>
-                <Text style={styles.optionTitle}>My Referral Code</Text>
-                <Text style={styles.optionSubtitle}>
-                  {referralLoading ? 'Loading...' : referralCode || 'Tap to refresh'}
+              <View style={[styles.optionText, r.optionText]}>
+                <Text style={[styles.optionTitle, r.optionTitle]} numberOfLines={1}>{t('settings.myReferralCode')}</Text>
+                <Text style={[styles.optionSubtitle, r.optionSubtitle]} numberOfLines={1}>
+                  {referralLoading ? t('settings.loading') : referralCode || t('settings.tapToRefresh')}
                 </Text>
               </View>
             </View>
             {referralLoading ? (
               <ActivityIndicator size="small" color="#F38B35" />
             ) : (
-              <Text style={styles.generateButtonText}>Refresh</Text>
+              <Text style={[styles.generateButtonText, r.generateButtonText]}>{t('settings.refresh')}</Text>
             )}
           </TouchableOpacity>
           {referralError ? (
-            <View style={styles.referralError}>
-              <Text style={styles.referralErrorText}>{referralError}</Text>
+            <View style={[styles.referralError, r.referralError]}>
+              <Text style={[styles.referralErrorText, r.referralErrorText]}>{referralError}</Text>
             </View>
           ) : null}
         </View>
 
-        <Text style={styles.sectionTitle}>Email Verification</Text>
-        <View style={styles.sectionCard}>
-          <View style={styles.referralOptionItem}>
+        <Text style={[styles.sectionTitle, r.sectionTitle]}>{t('settings.emailVerification')}</Text>
+        <View style={[styles.sectionCard, r.sectionCard]}>
+          <View style={[styles.referralOptionItem, r.referralOptionItem]}>
             <View style={styles.optionLeft}>
-              <View style={styles.iconContainer}>
-                <Ionicons name="mail-outline" size={24} color="#F38B35" />
+              <View style={[styles.iconContainer, r.iconContainer]}>
+                <Ionicons name="mail-outline" size={r.iconSize} color="#F38B35" />
               </View>
-              <View style={styles.optionText}>
-                <Text style={styles.optionTitle}>
-                  {userData?.email || 'Loading...'}
+              <View style={[styles.optionText, r.optionText]}>
+                <Text style={[styles.optionTitle, r.optionTitle]} numberOfLines={1} ellipsizeMode="tail">
+                  {userData?.email || t('settings.loading')}
                 </Text>
-                <Text style={styles.optionSubtitle}>
-                  {userData?.emailVerified ? 'Verified' : 'Not verified'}
+                <Text style={[styles.optionSubtitle, r.optionSubtitle]}>
+                  {userData?.emailVerified ? t('settings.verified') : t('settings.notVerified')}
                 </Text>
               </View>
             </View>
             {!userData?.emailVerified && userData?.email ? (
               <TouchableOpacity onPress={openEmailVerifyModal}>
-                <Text style={styles.generateButtonText}>Verify</Text>
+                <Text style={[styles.generateButtonText, r.generateButtonText]}>{t('settings.verify')}</Text>
               </TouchableOpacity>
             ) : (
-              <Ionicons name="checkmark-circle" size={24} color="#22C55E" />
+              <Ionicons name="checkmark-circle" size={r.iconSize} color="#22C55E" />
             )}
           </View>
         </View>
 
-        <Text style={styles.sectionTitle}>Security</Text>
-        <View style={styles.sectionCard}>
-          {securityOptions.map((option, index) => (
+        <Text style={[styles.sectionTitle, r.sectionTitle]}>{t('settings.security')}</Text>
+        <View style={[styles.sectionCard, r.sectionCard]}>
+          {securityOptionsWithLabels.map((option, index) => (
             <TouchableOpacity
               key={option.id}
               style={[
                 styles.optionItem,
+                r.optionItem,
                 index !== securityOptions.length - 1 && styles.optionBorder,
               ]}
               onPress={option.onPress}
             >
               <View style={styles.optionLeft}>
-                <View style={styles.iconContainer}>
-                  <Ionicons name={option.icon} size={24} color="#F38B35" />
+                <View style={[styles.iconContainer, r.iconContainer]}>
+                  <Ionicons name={option.icon} size={r.iconSize} color="#F38B35" />
                 </View>
-                <View style={styles.optionText}>
-                  <Text style={styles.optionTitle}>{option.title}</Text>
+                <View style={[styles.optionText, r.optionText]}>
+                  <Text style={[styles.optionTitle, r.optionTitle]} numberOfLines={1}>{option.title}</Text>
                   {option.subtitle ? (
-                    <Text style={styles.optionSubtitle}>{option.subtitle}</Text>
+                    <Text style={[styles.optionSubtitle, r.optionSubtitle]} numberOfLines={1}>{option.subtitle}</Text>
                   ) : null}
                 </View>
               </View>
-              <Ionicons name="chevron-forward" size={20} color="#CCC" />
+              <Ionicons name="chevron-forward" size={r.iconSizeSmall} color="#CCC" />
             </TouchableOpacity>
           ))}
         </View>
 
-        <Text style={styles.sectionTitle}>Customer Relationship</Text>
-        <View style={styles.sectionCard}>
-          {customerRelationshipOptions.map((option, index) => (
+        <Text style={[styles.sectionTitle, r.sectionTitle]}>{t('settings.customerRelationship')}</Text>
+        <View style={[styles.sectionCard, r.sectionCard]}>
+          {customerRelationshipOptionsWithLabels.map((option, index) => (
             <TouchableOpacity
               key={option.id}
               style={[
                 styles.optionItem,
+                r.optionItem,
                 index !== customerRelationshipOptions.length - 1 && styles.optionBorder,
               ]}
               onPress={option.onPress}
             >
               <View style={styles.optionLeft}>
-                <View style={styles.iconContainer}>
-                  <Ionicons name={option.icon} size={24} color="#F38B35" />
+                <View style={[styles.iconContainer, r.iconContainer]}>
+                  <Ionicons name={option.icon} size={r.iconSize} color="#F38B35" />
                 </View>
-                <Text style={styles.optionTitle}>{option.title}</Text>
+                <Text style={[styles.optionTitle, r.optionTitle]} numberOfLines={1}>{option.title}</Text>
               </View>
-              <Ionicons name="chevron-forward" size={20} color="#CCC" />
+              <Ionicons name="chevron-forward" size={r.iconSizeSmall} color="#CCC" />
             </TouchableOpacity>
           ))}
         </View>
 
-        <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
-          <Ionicons name="log-out-outline" size={20} color="#666" />
-          <Text style={styles.signOutText}>SIGN OUT</Text>
+        <TouchableOpacity style={[styles.signOutButton, r.signOutButton]} onPress={handleSignOut}>
+          <Ionicons name="log-out-outline" size={r.iconSizeSmall} color="#666" />
+          <Text style={[styles.signOutText, r.signOutText]}>{t('settings.signOut')}</Text>
         </TouchableOpacity>
       </ScrollView>
 
@@ -372,62 +417,62 @@ const Settings = () => {
         animationType="fade"
         onRequestClose={closeEmailVerifyModal}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.emailVerifyModalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Verify Email</Text>
-              <TouchableOpacity onPress={closeEmailVerifyModal}>
-                <Ionicons name="close" size={24} color="#333" />
+        <View style={[styles.modalOverlay, r.modalOverlay]}>
+          <View style={[styles.emailVerifyModalContent, r.modalContent]}>
+            <View style={[styles.modalHeader, r.modalHeader]}>
+              <Text style={[styles.modalTitle, r.modalTitle]} numberOfLines={1}>{t('settings.verifyEmail')}</Text>
+              <TouchableOpacity onPress={closeEmailVerifyModal} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+                <Ionicons name="close" size={r.iconSize} color="#333" />
               </TouchableOpacity>
             </View>
             {emailVerifySuccess ? (
-              <View style={styles.emailVerifySuccess}>
-                <Ionicons name="checkmark-circle" size={48} color="#22C55E" />
-                <Text style={styles.emailVerifySuccessText}>Email verified successfully</Text>
-                <TouchableOpacity style={styles.modalButton} onPress={closeEmailVerifyModal}>
-                  <Text style={styles.modalButtonText}>Done</Text>
+              <View style={[styles.emailVerifySuccess, r.emailVerifySuccess]}>
+                <Ionicons name="checkmark-circle" size={r.iconSizeLarge} color="#22C55E" />
+                <Text style={[styles.emailVerifySuccessText, r.emailVerifySuccessText]}>{t('settings.emailVerifiedSuccess')}</Text>
+                <TouchableOpacity style={[styles.modalButton, r.modalButton]} onPress={closeEmailVerifyModal}>
+                  <Text style={[styles.modalButtonText, r.modalButtonText]}>{t('settings.done')}</Text>
                 </TouchableOpacity>
               </View>
             ) : (
               <>
-                <Text style={styles.modalSubtitle}>
-                  Enter the 6-digit code sent to {userData?.email}
+                <Text style={[styles.modalSubtitle, r.modalSubtitle]} numberOfLines={2}>
+                  {t('settings.enterCodeSentTo')} {userData?.email}
                 </Text>
                 <TextInput
-                  style={styles.otpInput}
-                  placeholder="000000"
+                  style={[styles.otpInput, r.otpInput]}
+                  placeholder={t('settings.otpPlaceholder')}
                   placeholderTextColor="#999"
                   value={emailOtp}
-                  onChangeText={(t) => {
-                    setEmailOtp(t.replace(/\D/g, '').slice(0, 6));
+                  onChangeText={(val) => {
+                    setEmailOtp(val.replace(/\D/g, '').slice(0, 6));
                     setEmailVerifyError(null);
                   }}
                   keyboardType="number-pad"
                   maxLength={6}
                 />
                 {emailVerifyError ? (
-                  <Text style={styles.referralErrorText}>{emailVerifyError}</Text>
+                  <Text style={[styles.referralErrorText, r.referralErrorText]}>{emailVerifyError}</Text>
                 ) : null}
                 <TouchableOpacity
-                  style={[styles.modalButton, emailVerifyLoading && styles.modalButtonDisabled]}
+                  style={[styles.modalButton, r.modalButton, emailVerifyLoading && styles.modalButtonDisabled]}
                   onPress={handleVerifyEmail}
                   disabled={emailVerifyLoading || emailOtp.length !== 6}
                 >
                   {emailVerifyLoading ? (
                     <ActivityIndicator size="small" color="#FFFFFF" />
                   ) : (
-                    <Text style={styles.modalButtonText}>Verify</Text>
+                    <Text style={[styles.modalButtonText, r.modalButtonText]}>{t('settings.verify')}</Text>
                   )}
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={styles.resendButton}
+                  style={[styles.resendButton, r.resendButton]}
                   onPress={handleResendVerification}
                   disabled={resendLoading}
                 >
                   {resendLoading ? (
                     <ActivityIndicator size="small" color="#F38B35" />
                   ) : (
-                    <Text style={styles.resendButtonText}>Resend verification email</Text>
+                    <Text style={[styles.resendButtonText, r.resendButtonText]}>{t('settings.resendVerificationEmail')}</Text>
                   )}
                 </TouchableOpacity>
               </>
@@ -446,49 +491,31 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 16,
-    paddingTop: 40,
-    paddingBottom: 19,
+    paddingTop: 12,
+    paddingBottom: 14,
   },
   headerTop: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 20,
   },
   backButton: {
-    padding: 4,
+    padding: 8,
+    minWidth: 44,
+    minHeight: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
   },
   headerTitle: {
-    fontSize: 18,
     fontFamily: 'Poppins-Bold',
     color: '#FFFFFF',
     flex: 1,
     textAlign: 'center',
+    minWidth: 0,
   },
-  notificationButton: {
-    padding: 4,
-  },
-  searchContainer: {
-    backgroundColor: '#FFFFFF',
-    marginHorizontal: 0,
-    borderRadius: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  searchIcon: {
-    marginRight: 8,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 14,
-    color: '#333',
+  headerSpacer: {
+    width: 44,
   },
   content: {
     flex: 1,
@@ -539,6 +566,7 @@ const styles = StyleSheet.create({
   },
   optionText: {
     flex: 1,
+    minWidth: 0,
   },
   optionTitle: {
     fontSize: 15,

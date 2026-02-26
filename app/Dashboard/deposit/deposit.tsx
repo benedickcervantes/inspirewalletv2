@@ -10,30 +10,32 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useLanguage } from "../../../context/LanguageContext";
 
 export default function DepositIndex() {
   const navigation = useNavigation();
+  const { t } = useLanguage();
   const [selectedType, setSelectedType] = useState<string | null>(null);
 
   const depositTypes = [
     {
       id: "timedeposit",
-      title: "Time Deposit",
-      subtitle: "Minimum ₱50,000 for Time Deposit",
+      titleKey: "deposit.timeDeposit",
+      subtitleKey: "deposit.timeDepositMin",
       icon: "time-outline" as const,
       route: "/timedeposit",
     },
     {
       id: "stock",
-      title: "Stock Investment",
-      subtitle: "Minimum ₱2,000,000 for Stock",
+      titleKey: "deposit.stockInvestment",
+      subtitleKey: "deposit.stockInvestmentMin",
       icon: "bar-chart-outline" as const,
       route: "/stockinvestment",
     },
     {
       id: "topup",
-      title: "Top Up Available Balance",
-      subtitle: "Top Up Available Balance",
+      titleKey: "deposit.topUpBalance",
+      subtitleKey: "deposit.topUpBalance",
       icon: "wallet-outline" as const,
       route: "/topup",
     },
@@ -65,7 +67,7 @@ export default function DepositIndex() {
           >
             <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Deposit Request</Text>
+          <Text style={styles.headerTitle}>{t("deposit.depositRequest")}</Text>
           <View style={styles.headerSpacer} />
         </LinearGradient>
 
@@ -79,7 +81,7 @@ export default function DepositIndex() {
             <View style={styles.stepProgressBar}>
               <View style={styles.stepProgressFill} />
             </View>
-            <Text style={styles.stepText}>Step 1 of 3</Text>
+            <Text style={styles.stepText}>{t("deposit.step1of3")}</Text>
           </View>
 
           {/* Icon Circle */}
@@ -88,8 +90,8 @@ export default function DepositIndex() {
           </View>
 
           {/* Title */}
-          <Text style={styles.title}>Select Deposit Type *</Text>
-          <Text style={styles.subtitle}>Choose your investment type</Text>
+          <Text style={styles.title}>{t("deposit.selectDepositType")}</Text>
+          <Text style={styles.subtitle}>{t("deposit.chooseInvestmentType")}</Text>
 
           {/* Deposit Type Options */}
           <View style={styles.optionsContainer}>
@@ -106,8 +108,8 @@ export default function DepositIndex() {
                   <Ionicons name={type.icon} size={32} color="#E25A17" />
                 </View>
                 <View style={styles.optionTextContainer}>
-                  <Text style={styles.optionTitle}>{type.title}</Text>
-                  <Text style={styles.optionSubtitle}>{type.subtitle}</Text>
+                  <Text style={styles.optionTitle}>{t(type.titleKey)}</Text>
+                  <Text style={styles.optionSubtitle}>{t(type.subtitleKey)}</Text>
                 </View>
                 <View
                   style={[
@@ -139,7 +141,7 @@ export default function DepositIndex() {
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
             >
-              <Text style={styles.continueText}>Continue</Text>
+              <Text style={styles.continueText}>{t("deposit.continue")}</Text>
               <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
             </LinearGradient>
           </TouchableOpacity>

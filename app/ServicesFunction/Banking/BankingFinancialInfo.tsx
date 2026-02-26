@@ -16,6 +16,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useLanguage } from "../../../context/LanguageContext";
 import type { RootStackParamList } from "../../../types/navigation";
 
 const THEME_COLOR = "#E15816";
@@ -25,6 +26,7 @@ const GREEN_COMPLETE = "#10B981";
 export default function BankingFinancialInfo() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, "BankingFinancialInfo">>();
   const route = useRoute<RouteProp<RootStackParamList, "BankingFinancialInfo">>();
+  const { t } = useLanguage();
   const selectedBank = route.params?.selectedBank ?? "Security Bank";
 
   const [sourceOfFund, setSourceOfFund] = useState("");
@@ -71,8 +73,8 @@ export default function BankingFinancialInfo() {
                   color="#FFFFFF"
                   style={styles.headerIcon}
                 />
-                <Text style={styles.headerTitle}>Bank Account Services</Text>
-                <Text style={styles.headerSubtitle}>Professional Banking Solutions</Text>
+                <Text style={styles.headerTitle}>{t("banking.headerTitle")}</Text>
+                <Text style={styles.headerSubtitle}>{t("banking.headerSubtitle")}</Text>
               </LinearGradient>
             </View>
           </View>
@@ -130,19 +132,18 @@ export default function BankingFinancialInfo() {
                   color={THEME_COLOR}
                 />
               </View>
-              <Text style={styles.contentTitle}>Financial Information</Text>
+              <Text style={styles.contentTitle}>{t("banking.financialInfo")}</Text>
               <Text style={styles.contentDescription}>
-                Share your financial details to help us understand your banking
-                needs and ensure compliance.
+                {t("banking.financialInfoDesc")}
               </Text>
 
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>
-                  Source of Fund<Text style={styles.required}>*</Text>
+                  {t("banking.sourceOfFund")}<Text style={styles.required}>*</Text>
                 </Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="e.g., Employment, Business, Investment etc."
+                  placeholder={t("banking.placeholderSourceOfFund")}
                   placeholderTextColor="#9E9E9E"
                   value={sourceOfFund}
                   onChangeText={setSourceOfFund}
@@ -151,7 +152,7 @@ export default function BankingFinancialInfo() {
 
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>
-                  Gross Monthly Income<Text style={styles.required}>*</Text>
+                  {t("banking.grossMonthlyIncome")}<Text style={styles.required}>*</Text>
                 </Text>
                 <TextInput
                   style={styles.input}
@@ -170,10 +171,7 @@ export default function BankingFinancialInfo() {
                 <Text style={styles.infoIconText}>i</Text>
               </View>
               <Text style={styles.infoText}>
-                By submitting these details, we will send you an email
-                confirmation with your application status. Please note that this
-                process will take approximately 5-7 working days for review and
-                approval by the selected bank.
+                {t("banking.infoNote")}
               </Text>
             </View>
 
@@ -188,7 +186,7 @@ export default function BankingFinancialInfo() {
                 onPress={handleBack}
                 activeOpacity={0.8}
               >
-                <Text style={styles.backButtonText}>Back</Text>
+                <Text style={styles.backButtonText}>{t("banking.back")}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.nextButton}
@@ -201,7 +199,7 @@ export default function BankingFinancialInfo() {
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                 >
-                  <Text style={styles.nextButtonText}>Next</Text>
+                  <Text style={styles.nextButtonText}>{t("banking.next")}</Text>
                 </LinearGradient>
               </TouchableOpacity>
             </View>

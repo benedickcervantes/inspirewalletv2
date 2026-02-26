@@ -19,6 +19,7 @@ import {
   View,
   type TextStyle
 } from "react-native";
+import { useLanguage } from "../../../context/LanguageContext";
 import type { RootStackParamList } from "../../../types/navigation";
 
 // Static theme - no backend
@@ -60,58 +61,7 @@ interface ProfessionalModalProps {
   cancelText?: string;
 }
 
-// Static translation strings (frontend only)
-const t = (lang: string, key: string): string => {
-  const strings: Record<string, string> = {
-    "agentRequest.header.title": "Agent Request",
-    "agentRequest.content.headerTitle": "Become an Agent",
-    "agentRequest.content.headerSubtitle": "Submit your request to join our agent network",
-    "agentRequest.content.requestInformation.title": "Request Information",
-    "agentRequest.content.requestInformation.text":
-      "Fill out the form below to submit your agent application. You will need to generate an agent number and optionally select a parent agent.",
-    "agentRequest.content.form.title": "Agent Request Form",
-    "agentRequest.content.form.personalInformation.title": "Personal Information",
-    "agentRequest.content.form.personalInformation.fullNameLabel": "Full Name",
-    "agentRequest.content.form.agentNumber.title": "Agent Number",
-    "agentRequest.content.form.agentNumber.generateLabel": "Generate Agent Number",
-    "agentRequest.content.form.agentNumber.placeholder": "Tap Generate to create",
-    "agentRequest.content.form.agentNumber.generateButton": "Generate",
-    "agentRequest.content.form.agentNumber.hint":
-      "Your unique 5-character agent identifier",
-    "agentRequest.content.form.parentAgent.title": "Parent Agent (Optional)",
-    "agentRequest.content.form.parentAgent.searchLabel": "Search by Agent Number",
-    "agentRequest.content.form.parentAgent.searchPlaceholder": "Enter agent number",
-    "agentRequest.content.form.parentAgent.searchHint":
-      "Search for your referrer's agent number to link accounts",
-    "agentRequest.content.form.parentAgent.selectedAgent": "Selected Agent",
-    "agentRequest.content.form.parentAgent.parentAgentCode": "Parent Agent Code:",
-    "agentRequest.content.form.parentAgent.yourAgentCode": "Your Agent Code:",
-    "agentRequest.content.form.parentAgent.noResults": "No agent found for: {query}",
-    "agentRequest.content.submitButton.submit": "Submit Request",
-    "agentRequest.content.submitButton.submitting": "Submitting...",
-    "agentRequest.modals.accessRestricted.title": "Access Restricted",
-    "agentRequest.modals.accessRestricted.message":
-      "This feature requires a Premium account. Your current plan: {accountType}",
-    "agentRequest.modals.alreadyAgent.title": "Already an Agent",
-    "agentRequest.modals.alreadyAgent.message": "You are already registered as an agent.",
-    "agentRequest.modals.agentNumberGenerated.title": "Agent Number Generated",
-    "agentRequest.modals.agentNumberGenerated.message":
-      "Your agent number is: {agentNumber}",
-    "agentRequest.modals.agentFound.title": "Agent Found",
-    "agentRequest.modals.agentFound.message":
-      "{firstName} {lastName} (Agent #{agentNumber})",
-    "agentRequest.modals.requestSubmitted.title": "Request Submitted",
-    "agentRequest.modals.requestSubmitted.message":
-      "Your agent request has been submitted successfully. ID: {requestId}",
-    "agentRequest.modals.error.title": "Error",
-    "agentRequest.modals.error.message": "Something went wrong. Please try again.",
-    "agentRequest.modals.error.generationFailed": "Failed to generate unique agent code.",
-    "agentRequest.modals.error.submitFailed": "Failed to submit request. Please try again.",
-  };
-  return strings[key] ?? key;
-};
-
-// No RTL for static - returns empty object (TextStyle for Text/TextInput compatibility)
+// No RTL - returns empty object (TextStyle for Text/TextInput compatibility)
 const getRTLStyles = (_lang?: string): TextStyle => ({});
 
 // Professional Modal Component (static, no BlurView dependency)
@@ -259,7 +209,7 @@ const ProfessionalModal = ({
 
 export default function AgentServices() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, "AgentRequest">>();
-  const [userLanguage, setUserLanguage] = useState("English");
+  const { t, language } = useLanguage();
 
   // Static mock user data
   const [firstName, setFirstName] = useState("John");
@@ -290,10 +240,10 @@ export default function AgentServices() {
   useEffect(() => {
     navigation.setOptions({
       headerShown: true,
-      headerTitle: t(userLanguage, "agentRequest.header.title"),
+      headerTitle: t("agentRequest.header.title"),
       headerTransparent: true,
     });
-  }, [userLanguage, navigation]);
+  }, [language, navigation, t]);
 
   useEffect(() => {
     return () => {
@@ -356,8 +306,8 @@ export default function AgentServices() {
       setAgentNumber(newCode);
       setHierarchicalAgentCode(finalHierarchicalCode);
       showModal({
-        title: t(userLanguage, "agentRequest.modals.agentNumberGenerated.title"),
-        message: t(userLanguage, "agentRequest.modals.agentNumberGenerated.message").replace(
+        title: t("agentRequest.modals.agentNumberGenerated.title"),
+        message: t("agentRequest.modals.agentNumberGenerated.message").replace(
           "{agentNumber}",
           newCode
         ),
@@ -415,8 +365,8 @@ export default function AgentServices() {
     setSearchResults([]);
 
     showModal({
-      title: t(userLanguage, "agentRequest.modals.agentFound.title"),
-      message: t(userLanguage, "agentRequest.modals.agentFound.message")
+      title: t("agentRequest.modals.agentFound.title"),
+      message: t("agentRequest.modals.agentFound.message")
         .replace("{firstName}", user.firstName)
         .replace("{lastName}", user.lastName)
         .replace("{agentNumber}", user.agentNumber),
@@ -438,8 +388,8 @@ export default function AgentServices() {
   const submitAgentRequest = () => {
     if (!agentNumber) {
       showModal({
-        title: "Missing Agent Number",
-        message: "Please generate an agent number first.",
+        title: t("agentRequest.modals.missingAgentNumber.title"),
+        message: t("agentRequest.modals.missingAgentNumber.message"),
         type: "warning",
       });
       return;
@@ -450,8 +400,8 @@ export default function AgentServices() {
     setTimeout(() => {
       const mockRequestId = "REQ-" + Math.random().toString(36).slice(2, 10);
       showModal({
-        title: t(userLanguage, "agentRequest.modals.requestSubmitted.title"),
-        message: t(userLanguage, "agentRequest.modals.requestSubmitted.message").replace(
+        title: t("agentRequest.modals.requestSubmitted.title"),
+        message: t("agentRequest.modals.requestSubmitted.message").replace(
           "{requestId}",
           mockRequestId
         ),
@@ -469,7 +419,7 @@ export default function AgentServices() {
     return (
       <View style={[styles.container, styles.loadingContainer]}>
         <ActivityIndicator size="large" color={THEME_COLOR} />
-        <Text style={styles.loadingText}>Submitting request...</Text>
+        <Text style={styles.loadingText}>{t("agentRequest.content.submitButton.submitting")}</Text>
       </View>
     );
   }
@@ -497,11 +447,11 @@ export default function AgentServices() {
                   style={styles.headerIcon}
                 />
                 <View style={styles.headerTextContainer}>
-                  <Text style={[styles.headerTitle, getRTLStyles(userLanguage)]}>
-                    {t(userLanguage, "agentRequest.content.headerTitle")}
+                  <Text style={[styles.headerTitle, getRTLStyles(language)]}>
+                    {t("agentRequest.content.headerTitle")}
                   </Text>
-                  <Text style={[styles.headerSubtitle, getRTLStyles(userLanguage)]}>
-                    {t(userLanguage, "agentRequest.content.headerSubtitle")}
+                  <Text style={[styles.headerSubtitle, getRTLStyles(language)]}>
+                    {t("agentRequest.content.headerSubtitle")}
                   </Text>
                 </View>
               </View>
@@ -515,33 +465,33 @@ export default function AgentServices() {
                   size={24}
                   color={THEME_COLOR}
                 />
-                <Text style={[styles.infoTitle, getRTLStyles(userLanguage)]}>
-                  {t(userLanguage, "agentRequest.content.requestInformation.title")}
+                <Text style={[styles.infoTitle, getRTLStyles(language)]}>
+                  {t("agentRequest.content.requestInformation.title")}
                 </Text>
               </View>
-              <Text style={[styles.infoText, getRTLStyles(userLanguage)]}>
-                {t(userLanguage, "agentRequest.content.requestInformation.text")}
+              <Text style={[styles.infoText, getRTLStyles(language)]}>
+                {t("agentRequest.content.requestInformation.text")}
               </Text>
             </View>
 
             {/* Request Form Card */}
             <View style={styles.formCard}>
-              <Text style={[styles.sectionTitle, getRTLStyles(userLanguage)]}>
-                {t(userLanguage, "agentRequest.content.form.title")}
+              <Text style={[styles.sectionTitle, getRTLStyles(language)]}>
+                {t("agentRequest.content.form.title")}
               </Text>
 
               {/* Personal Information Section */}
               <View style={styles.formSection}>
-                <Text style={[styles.subsectionTitle, getRTLStyles(userLanguage)]}>
-                  {t(userLanguage, "agentRequest.content.form.personalInformation.title")}
+                <Text style={[styles.subsectionTitle, getRTLStyles(language)]}>
+                  {t("agentRequest.content.form.personalInformation.title")}
                 </Text>
 
                 <View style={styles.inputGroup}>
-                  <Text style={[styles.inputLabel, getRTLStyles(userLanguage)]}>
-                    {t(userLanguage, "agentRequest.content.form.personalInformation.fullNameLabel")}
+                  <Text style={[styles.inputLabel, getRTLStyles(language)]}>
+                    {t("agentRequest.content.form.personalInformation.fullNameLabel")}
                   </Text>
                   <View style={styles.readOnlyInput}>
-                    <Text style={[styles.readOnlyText, getRTLStyles(userLanguage)]}>
+                    <Text style={[styles.readOnlyText, getRTLStyles(language)]}>
                       {fullName || "—"}
                     </Text>
                   </View>
@@ -550,13 +500,13 @@ export default function AgentServices() {
 
               {/* Agent Number Generation Section */}
               <View style={styles.formSection}>
-                <Text style={[styles.subsectionTitle, getRTLStyles(userLanguage)]}>
-                  {t(userLanguage, "agentRequest.content.form.agentNumber.title")}
+                <Text style={[styles.subsectionTitle, getRTLStyles(language)]}>
+                  {t("agentRequest.content.form.agentNumber.title")}
                 </Text>
 
                 <View style={styles.inputGroup}>
-                  <Text style={[styles.inputLabel, getRTLStyles(userLanguage)]}>
-                    {t(userLanguage, "agentRequest.content.form.agentNumber.generateLabel")}
+                  <Text style={[styles.inputLabel, getRTLStyles(language)]}>
+                    {t("agentRequest.content.form.agentNumber.generateLabel")}
                   </Text>
                   <View style={styles.agentCodeContainer}>
                     <View
@@ -569,11 +519,11 @@ export default function AgentServices() {
                         style={[
                           styles.agentCodeText,
                           !agentNumber && styles.agentCodeTextEmpty,
-                          getRTLStyles(userLanguage),
+                          getRTLStyles(language),
                         ]}
                       >
                         {agentNumber ||
-                          t(userLanguage, "agentRequest.content.form.agentNumber.placeholder")}
+                          t("agentRequest.content.form.agentNumber.placeholder")}
                       </Text>
                     </View>
                     <TouchableOpacity
@@ -588,31 +538,31 @@ export default function AgentServices() {
                         <ActivityIndicator size="small" color="white" />
                       ) : (
                         <Text style={styles.generateButtonText}>
-                          {t(userLanguage, "agentRequest.content.form.agentNumber.generateButton")}
+                          {t("agentRequest.content.form.agentNumber.generateButton")}
                         </Text>
                       )}
                     </TouchableOpacity>
                   </View>
-                  <Text style={[styles.agentCodeHint, getRTLStyles(userLanguage)]}>
-                    {t(userLanguage, "agentRequest.content.form.agentNumber.hint")}
+                  <Text style={[styles.agentCodeHint, getRTLStyles(language)]}>
+                    {t("agentRequest.content.form.agentNumber.hint")}
                   </Text>
                 </View>
               </View>
 
               {/* Agent Search Section */}
               <View style={styles.formSection}>
-                <Text style={[styles.subsectionTitle, getRTLStyles(userLanguage)]}>
-                  {t(userLanguage, "agentRequest.content.form.parentAgent.title")}
+                <Text style={[styles.subsectionTitle, getRTLStyles(language)]}>
+                  {t("agentRequest.content.form.parentAgent.title")}
                 </Text>
 
                 <View style={styles.inputGroup}>
-                  <Text style={[styles.inputLabel, getRTLStyles(userLanguage)]}>
-                    {t(userLanguage, "agentRequest.content.form.parentAgent.searchLabel")}
+                  <Text style={[styles.inputLabel, getRTLStyles(language)]}>
+                    {t("agentRequest.content.form.parentAgent.searchLabel")}
                   </Text>
                   <View style={styles.searchContainer}>
                     <TextInput
-                      style={[styles.searchInput, getRTLStyles(userLanguage)]}
-                      placeholder={t(userLanguage, "agentRequest.content.form.parentAgent.searchPlaceholder")}
+                      style={[styles.searchInput, getRTLStyles(language)]}
+                      placeholder={t("agentRequest.content.form.parentAgent.searchPlaceholder")}
                       placeholderTextColor="#999"
                       value={searchQuery}
                       onChangeText={handleSearchChange}
@@ -625,27 +575,27 @@ export default function AgentServices() {
                       />
                     )}
                   </View>
-                  <Text style={[styles.searchHint, getRTLStyles(userLanguage)]}>
-                    {t(userLanguage, "agentRequest.content.form.parentAgent.searchHint")}
+                  <Text style={[styles.searchHint, getRTLStyles(language)]}>
+                    {t("agentRequest.content.form.parentAgent.searchHint")}
                   </Text>
                   {selectedUser && (
                     <View style={styles.selectedUserContainer}>
                       <View style={styles.selectedUserHeader}>
                         <Ionicons name="person" size={16} color={THEME_COLOR} />
-                        <Text style={[styles.selectedUserTitle, getRTLStyles(userLanguage)]}>
-                          {t(userLanguage, "agentRequest.content.form.parentAgent.selectedAgent")}
+                        <Text style={[styles.selectedUserTitle, getRTLStyles(language)]}>
+                          {t("agentRequest.content.form.parentAgent.selectedAgent")}
                         </Text>
                       </View>
-                      <Text style={[styles.selectedUserName, getRTLStyles(userLanguage)]}>
+                      <Text style={[styles.selectedUserName, getRTLStyles(language)]}>
                         {selectedUser.firstName} {selectedUser.lastName}
                       </Text>
-                      <Text style={[styles.selectedUserAgentCode, getRTLStyles(userLanguage)]}>
-                        {t(userLanguage, "agentRequest.content.form.parentAgent.parentAgentCode")}{" "}
+                      <Text style={[styles.selectedUserAgentCode, getRTLStyles(language)]}>
+                        {t("agentRequest.content.form.parentAgent.parentAgentCode")}{" "}
                         {selectedUser.agentCode}
                       </Text>
                       {hierarchicalAgentCode ? (
-                        <Text style={[styles.hierarchicalAgentCode, getRTLStyles(userLanguage)]}>
-                          {t(userLanguage, "agentRequest.content.form.parentAgent.yourAgentCode")}{" "}
+                        <Text style={[styles.hierarchicalAgentCode, getRTLStyles(language)]}>
+                          {t("agentRequest.content.form.parentAgent.yourAgentCode")}{" "}
                           {hierarchicalAgentCode}
                         </Text>
                       ) : null}
@@ -656,8 +606,8 @@ export default function AgentServices() {
                     searchResults.length === 0 &&
                     !isSearching && (
                       <View style={styles.noResultsContainer}>
-                        <Text style={[styles.noResultsText, getRTLStyles(userLanguage)]}>
-                          {t(userLanguage, "agentRequest.content.form.parentAgent.noResults").replace(
+                        <Text style={[styles.noResultsText, getRTLStyles(language)]}>
+                          {t("agentRequest.content.form.parentAgent.noResults").replace(
                             "{query}",
                             searchQuery
                           )}
@@ -687,8 +637,8 @@ export default function AgentServices() {
                 )}
                 <Text style={styles.submitButtonText}>
                   {loading
-                    ? t(userLanguage, "agentRequest.content.submitButton.submitting")
-                    : t(userLanguage, "agentRequest.content.submitButton.submit")}
+                    ? t("agentRequest.content.submitButton.submitting")
+                    : t("agentRequest.content.submitButton.submit")}
                 </Text>
               </View>
             </TouchableOpacity>
@@ -706,9 +656,9 @@ export default function AgentServices() {
         type={modalConfig.type}
         showCloseButton={modalConfig.showCloseButton}
         onConfirm={modalConfig.onConfirm}
-        confirmText={modalConfig.confirmText}
+        confirmText={modalConfig.confirmText || t("common.ok")}
         showCancelButton={modalConfig.showCancelButton}
-        cancelText={modalConfig.cancelText}
+        cancelText={modalConfig.cancelText || t("common.cancel")}
       />
     </View>
   );

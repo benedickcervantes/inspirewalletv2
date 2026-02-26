@@ -16,6 +16,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useLanguage } from "../../../context/LanguageContext";
 import type { RootStackParamList } from "../../../types/navigation";
 
 const THEME_COLOR = "#E15816";
@@ -23,6 +24,7 @@ const ORANGE_GRADIENT = ["#E25A17", "#F28934"] as const;
 const GREEN_COMPLETE = "#10B981";
 
 export default function BankingAddressInfo() {
+  const { t } = useLanguage();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, "BankingAddressInfo">>();
   const route = useRoute<RouteProp<RootStackParamList, "BankingAddressInfo">>();
   const selectedBank = route.params?.selectedBank ?? "Security Bank";
@@ -124,19 +126,18 @@ export default function BankingAddressInfo() {
               <View style={styles.stepIconWrapper}>
                 <Ionicons name="location" size={28} color={THEME_COLOR} />
               </View>
-              <Text style={styles.contentTitle}>Address Information</Text>
+              <Text style={styles.contentTitle}>{t("banking.addressInfo")}</Text>
               <Text style={styles.contentDescription}>
-                Provide your complete address for verification and account setup
-                purposes.
+                {t("banking.addressInfoDesc")}
               </Text>
 
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>
-                  Complete Address<Text style={styles.required}>*</Text>
+                  {t("banking.completeAddress")}<Text style={styles.required}>*</Text>
                 </Text>
                 <TextInput
                   style={styles.addressInput}
-                  placeholder="House/Unit No., Street, Barangay, City, Province, ZIP Code"
+                  placeholder={t("banking.placeholderAddress")}
                   placeholderTextColor="#9E9E9E"
                   value={completeAddress}
                   onChangeText={setCompleteAddress}
@@ -171,7 +172,7 @@ export default function BankingAddressInfo() {
                 onPress={handleBack}
                 activeOpacity={0.8}
               >
-                <Text style={styles.backButtonText}>Back</Text>
+                <Text style={styles.backButtonText}>{t("banking.back")}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.nextButton}
@@ -184,7 +185,7 @@ export default function BankingAddressInfo() {
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                 >
-                  <Text style={styles.nextButtonText}>Next</Text>
+                  <Text style={styles.nextButtonText}>{t("banking.next")}</Text>
                 </LinearGradient>
               </TouchableOpacity>
             </View>
