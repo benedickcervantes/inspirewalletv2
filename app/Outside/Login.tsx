@@ -1,28 +1,29 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation, useRoute } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useRef, useState } from 'react';
 import {
-    ActivityIndicator,
-    Animated,
-    BackHandler,
-    Keyboard,
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Animated,
+  BackHandler,
+  Keyboard,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import type { NavProp } from '../../types/navigation';
 import { login } from '../../configs/api';
+import type { NavProp } from '../../types/navigation';
+import { useResponsive } from '../../utils/responsive';
 
 
 const GRADIENT_START = '#E15816';
@@ -212,6 +213,7 @@ export default function Login() {
   const navigation = useNavigation();
   const route = useRoute();
   const insets = useSafeAreaInsets();
+  const { scale, verticalScale, moderateScale, horizontalPadding } = useResponsive();
   const fromSignOut = (route.params as { fromSignOut?: boolean } | undefined)?.fromSignOut;
 
   useEffect(() => {
@@ -322,12 +324,12 @@ export default function Login() {
           locations={[0, 1]}
           style={[styles.gradient, { paddingTop: insets.top, paddingBottom: insets.bottom }]}
         >
-            <View style={styles.header}>
+            <View style={[styles.header, { paddingHorizontal: horizontalPadding }]}>
               {fromSignOut ? (
-                <View style={styles.backButton} />
+                <View style={[styles.backButton, { width: scale(44), height: scale(44), borderRadius: scale(22) }]} />
               ) : (
                 <TouchableOpacity
-                  style={styles.backButton}
+                  style={[styles.backButton, { width: scale(44), height: scale(44), borderRadius: scale(22) }]}
                   onPress={() => (navigation as unknown as NavProp).replace('Welcome')}
                   activeOpacity={0.7}
                 >
@@ -338,15 +340,15 @@ export default function Login() {
 
             <ScrollView
               style={styles.scroll}
-              contentContainerStyle={[styles.scrollContent, { paddingBottom: 100 }]}
+              contentContainerStyle={[styles.scrollContent, { paddingHorizontal: horizontalPadding, paddingBottom: verticalScale(100) }]}
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
               bounces={false}
             >
-              <View style={styles.logoWrap}>
+              <View style={[styles.logoWrap, { marginBottom: verticalScale(32) }]}>
                 <Image
                   source={require('../../assets/images/InpireLogo.png')}
-                  style={styles.logo}
+                  style={[styles.logo, { width: scale(260), height: scale(140) }]}
                   contentFit="contain"
                   accessible={true}
                   accessibilityLabel="Inspire company logo"
@@ -502,17 +504,12 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 28,
     minHeight: '100%',
   },
   logoWrap: {
     alignSelf: 'center',
-    marginBottom: 32,
   },
-  logo: {
-    width: 260,
-    height: 140,
-  },
+  logo: {},
   form: {
     width: '100%',
     maxWidth: 360,
@@ -545,6 +542,10 @@ const styles = StyleSheet.create({
   },
   eyeButton: {
     padding: 14,
+    minWidth: 44,
+    minHeight: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   passcodeLinkWrap: {
     alignItems: 'center',

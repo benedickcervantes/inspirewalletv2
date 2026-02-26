@@ -16,6 +16,7 @@ import {
   View,
 } from "react-native";
 import { useLanguage } from "../../../context/LanguageContext";
+import { useResponsive } from "../../../utils/responsive";
 import type { RootStackParamList } from "../../../types/navigation";
 
 const THEME_COLOR = "#E15816";
@@ -34,6 +35,7 @@ const YEARS = Array.from({ length: 71 }, (_, i) => (2010 - i).toString());
 
 export default function BankingPersonalInfo() {
   const { t } = useLanguage();
+  const { horizontalPadding } = useResponsive();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, "BankingPersonalInfo">>();
   const route = useRoute<RouteProp<RootStackParamList, "BankingPersonalInfo">>();
   const selectedBank = route.params?.selectedBank ?? "Security Bank";
@@ -143,7 +145,7 @@ export default function BankingPersonalInfo() {
 
         <ScrollView
           style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, { paddingHorizontal: horizontalPadding }]}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >

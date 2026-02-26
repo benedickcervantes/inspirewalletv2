@@ -14,6 +14,7 @@ export type RootStackParamList = {
   Passcode: undefined;
   Main: undefined;
   Personal: undefined;
+  KYCVerification: undefined;
   Notification: undefined;
   Settings: undefined;
   ChangePasscode: undefined;

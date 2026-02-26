@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Animated, ImageBackground, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SvgXml } from "react-native-svg";
 import { useLanguage } from "../../context/LanguageContext";
+import { useResponsive } from "../../utils/responsive";
 
 const depositSvg = `<svg width="20" height="20" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
 <path d="M8.07099 0.999942L0.999919 8.07101M0.999919 8.07101L1.20195 2.21213M0.999919 8.07101L6.8588 7.86898" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -40,6 +41,7 @@ export default function WalletTab({
 }: WalletTabProps) {
   const navigation = useNavigation();
   const { t } = useLanguage();
+  const { horizontalPadding } = useResponsive();
   const [isBalanceVisible, setIsBalanceVisible] = useState(true);
 
   const toggleBalanceVisibility = () => {
@@ -70,7 +72,7 @@ export default function WalletTab({
   };
 
   return (
-    <View style={styles.balanceCardContainer}>
+    <View style={[styles.balanceCardContainer, { marginHorizontal: horizontalPadding }]}>
       <Animated.View style={[styles.cardFace, frontAnimatedStyle]}>
         <ImageBackground
           source={require("../../assets/images/Eecard 2.0.png")}
@@ -149,7 +151,6 @@ export default function WalletTab({
 
 const styles = StyleSheet.create({
   balanceCardContainer: {
-    margin: 16,
     marginBottom: 10,
     height: 220,
   },
