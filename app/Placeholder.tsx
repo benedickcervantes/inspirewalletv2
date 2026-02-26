@@ -190,7 +190,8 @@ export default function Placeholder() {
   const viberLink = userData?.viberLink || t("common.notProvided");
   const whatsappLink = userData?.whatsappLink || t("common.notProvided");
   const accountLevelLabel = isPremium ? t("profile.premium") : t("profile.basic");
-  const agentReferrer = userData?.agentReferrer || userData?.referredBy || t("profile.masterAgent");
+  const referrerName = userData?.referrerName ?? userData?.agentReferrer ?? userData?.referredBy ?? null;
+  const agentReferrer = referrerName ?? t("common.notProvided");
   const language = normalizeLanguage(userData?.language ?? contextLanguage);
 
   const handleSelectLanguage = async (selectedLabel: string) => {
@@ -353,8 +354,8 @@ export default function Placeholder() {
             icon="star-outline"
             label={t("profile.accountType")}
             value={isAgent ? t("profile.agent") : t("profile.investor")}
-            badge={isAgent ? t("profile.agent") : undefined}
-            badgeColor="#E15816"
+            badge={isAgent ? t("profile.agent") : t("profile.investor")}
+            badgeColor={isAgent ? "#E15816" : "#999"}
           />
           <DetailItem
             icon="trophy-outline"
@@ -363,6 +364,9 @@ export default function Placeholder() {
             badge={accountLevelLabel}
             badgeColor={isPremium ? "#FFD700" : "#999"}
             verified={isPremium}
+            showVerifyButton={!isPremium}
+            onVerifyPress={() => (navigation as { navigate: (name: string) => void }).navigate("KYCVerification")}
+            verifyButtonLabel={t("profile.verify")}
           />
           <DetailItem
             icon="finger-print-outline"
@@ -373,8 +377,8 @@ export default function Placeholder() {
             icon="people-outline"
             label={t("profile.agentReferrer")}
             value={agentReferrer}
-            badge={t("profile.masterAgent")}
-            badgeColor="#FFD700"
+            badge={referrerName ? t("profile.referred") : undefined}
+            badgeColor={referrerName ? "#FFD700" : undefined}
           />
           <DetailItem
             icon="language-outline"
@@ -628,6 +632,9 @@ interface DetailItemProps {
   badge?: string;
   badgeColor?: string;
   verified?: boolean;
+  showVerifyButton?: boolean;
+  onVerifyPress?: () => void;
+  verifyButtonLabel?: string;
   onEdit?: () => void;
 }
 
@@ -641,6 +648,9 @@ function DetailItem({
   badge,
   badgeColor,
   verified,
+  showVerifyButton,
+  onVerifyPress,
+  verifyButtonLabel = "Verify",
 }: DetailItemProps) {
   const onEditHandler = onEditPress ?? onEdit;
   const handlePress = editable && onEditHandler ? onEditHandler : undefined;
@@ -659,6 +669,16 @@ function DetailItem({
               <Ionicons name="checkmark-circle" size={14} color="#333" style={{ marginLeft: 4 }} />
             )}
           </View>
+        )}
+        {showVerifyButton && onVerifyPress && (
+          <TouchableOpacity
+            style={[styles.verifyBadge, { backgroundColor: "#FFD700" }]}
+            onPress={onVerifyPress}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="settings-outline" size={14} color="#333" />
+            <Text style={styles.verifyBadgeText}>{verifyButtonLabel}</Text>
+          </TouchableOpacity>
         )}
         {editable && onEditHandler && (
           <TouchableOpacity
@@ -835,6 +855,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     borderRadius: 12,
     marginLeft: 8,
+  },
+  verifyBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: 12,
+    marginLeft: 8,
+    gap: 4,
+  },
+  verifyBadgeText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#333",
   },
   badgeTextSmall: {
     fontSize: 11,
