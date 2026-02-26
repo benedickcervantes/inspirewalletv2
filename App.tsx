@@ -77,8 +77,16 @@ export default function App() {
         <Stack.Screen name="Welcome" component={Welcome} />
         <Stack.Screen name="Login" component={Login} />
         <Stack.Screen name="Register" component={Register} />
-        <Stack.Screen name="CreatePasscode" component={CreatePasscode} />
-        <Stack.Screen name="Passcode" component={Passcode} />
+        <Stack.Screen
+          name="CreatePasscode"
+          component={CreatePasscode}
+          options={{ gestureEnabled: false }}
+        />
+        <Stack.Screen
+          name="Passcode"
+          component={Passcode}
+          options={{ gestureEnabled: false }}
+        />
         <Stack.Screen name="Main" component={Dashboard} />
         <Stack.Screen name="Personal" component={Placeholder} />
         <Stack.Screen name="Notification" component={NotificationScreen} />

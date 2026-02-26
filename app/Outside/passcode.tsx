@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { Image } from 'expo-image';
@@ -17,11 +18,10 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import CustomLoader from '../Loader/CustomLoader';
 import { login, verifyPasscode } from '../../configs/api';
 import type { NavProp } from '../../types/navigation';
+import CustomLoader from '../Loader/CustomLoader';
 
 const GRADIENT_START = '#E15816';
 const GRADIENT_END = '#F48F38';

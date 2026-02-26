@@ -154,7 +154,7 @@ export default function Register() {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
     } else {
-      navigation.goBack();
+      (navigation as unknown as NavProp).replace('Welcome');
     }
   };
 
