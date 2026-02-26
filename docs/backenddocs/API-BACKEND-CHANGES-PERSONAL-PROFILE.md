@@ -53,11 +53,11 @@ Add the following fields to the `PATCH /auth/profile` request body (all optional
 
 If the Personal page should persist these fields, add them to the User model and APIs:
 
-| Field          | Type   | Validation              | Description                               |
-| -------------- | ------ | ----------------------- | ----------------------------------------- |
-| `viberLink`    | string | Optional; max 500 chars | Viber account link                        |
-| `whatsappLink` | string | Optional; max 500 chars | WhatsApp account link                     |
-| `language`     | string | Optional; max 50 chars  | User language preference (e.g. "English") |
+| Field          | Type   | Validation                                                  | Description                 |
+| -------------- | ------ | ----------------------------------------------------------- | --------------------------- |
+| `viberLink`    | string | Optional; max 500 chars                                     | Viber account link          |
+| `whatsappLink` | string | Optional; max 500 chars                                     | WhatsApp account link       |
+| `language`     | string | Optional; one of: `ENGLISH`, `ARABIC`, `JAPANESE`, `KOREAN` | User UI language preference |
 
 **Implementation steps:**
 
@@ -90,15 +90,15 @@ The Personal page shows "Agent Referrer". The referrer may be available from the
 
 ## Summary Checklist
 
-| Change                             | Priority | Required for basic edit flow?          |
-| ---------------------------------- | -------- | -------------------------------------- |
-| Add `companyName` to PATCH DTO     | Medium   | Yes (Personal page shows Company Name) |
-| Add `lineAccountLink` to PATCH DTO | Medium   | Yes (Personal page shows LINE Link)    |
-| Add `viberLink` field              | Low      | No (optional)                          |
-| Add `whatsappLink` field           | Low      | No (optional)                          |
-| Add `language` field               | Low      | No (optional)                          |
-| Return `createdAt` in GET /auth/me | Low      | No (optional, for Member Since)        |
-| Referrer info for display          | Low      | No (optional)                          |
+| Change                                     | Priority | Required for basic edit flow?          | Status |
+| ------------------------------------------ | -------- | -------------------------------------- | ------ |
+| Add `companyName` to PATCH DTO             | Medium   | Yes (Personal page shows Company Name) | Done   |
+| Add `lineAccountLink` to PATCH DTO         | Medium   | Yes (Personal page shows LINE Link)    | Done   |
+| Add `viberLink` field                      | Low      | No (optional)                          | Done   |
+| Add `whatsappLink` field                   | Low      | No (optional)                          | Done   |
+| Add `language` field                       | Low      | No (optional)                          | Done   |
+| Return `createdAt` in GET /auth/me         | Low      | No (optional, for Member Since)        | Done   |
+| Referrer info for display (`referrerName`) | Low      | No (optional)                          | Done   |
 
 ---
 
