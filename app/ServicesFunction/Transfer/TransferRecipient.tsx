@@ -14,7 +14,9 @@ import {
   TouchableOpacity,
   View
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { getOrCreateMainWallet, getRecipientByAccountNumber } from "../../../configs/api";
+import { useLanguage } from "../../../context/LanguageContext";
 
 const { width } = Dimensions.get("window");
 
@@ -114,8 +116,8 @@ export default function TransferRecipient() {
 
   const handleContinue = async () => {
     const validation = validateTransferForm(accountNumber, amount, Number(availableBalance) || 0);
-    if (!validation.isValid) {
-      setAlertMessage(validation.message);
+    if (!validation.isValid && validation.messageKey) {
+      setAlertMessage(t(validation.messageKey));
       setShowAlertModal(true);
       return;
     }
