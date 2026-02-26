@@ -17,6 +17,7 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import CustomLoader from '../Loader/CustomLoader';
 import { login, verifyPasscode } from '../../configs/api';
@@ -99,10 +100,21 @@ interface ModalConfig {
 export default function Passcode() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
-  const btnSize = width >= 768 ? 70 : Math.min(60, Math.max(44, width * 0.18));
-  const padWidth = width >= 768 ? '60%' : '85%';
-  const maxPadWidth = width >= 768 ? 380 : Math.min(320, width - 48);
+  const { width, height } = useWindowDimensions();
+  const isSmallPhone = width < 380;
+  const horizontalPadding = Math.max(16, Math.min(24, Math.round(width * 0.055)));
+  const btnSize = width >= 768 ? 80 : Math.min(72, Math.max(52, width * 0.22));
+  const delBtnSize = width >= 768 ? 80 : Math.min(72, Math.max(52, width * 0.22));
+  const padWidth = width >= 768 ? '65%' : width < 340 ? '92%' : '88%';
+  const maxPadWidth = width >= 768 ? 420 : Math.min(360, width - horizontalPadding * 2);
+  const logoWidth = Math.min(200, Math.max(160, width * 0.52));
+  const logoHeight = Math.round(logoWidth * (72 / 200));
+  const dotSize = isSmallPhone ? 20 : 22;
+  const dotGap = isSmallPhone ? 20 : 24;
+  const enterTextSize = isSmallPhone ? 16 : 18;
+  const padButtonTextSize = isSmallPhone ? 26 : 30;
+  const logoTopMargin = Math.min(40, Math.round(height * 0.04));
+  const backspaceIconSize = isSmallPhone ? 24 : 28;
 
   const [passcode, setPasscode] = useState('');
   const [error, setError] = useState('');
@@ -258,7 +270,7 @@ export default function Passcode() {
         <LinearGradient
           colors={[GRADIENT_START, GRADIENT_END]}
           locations={[0, 1]}
-          style={[styles.gradient, { paddingTop: insets.top, paddingBottom: insets.bottom }]}
+          style={[styles.gradient, { paddingTop: insets.top, paddingBottom: insets.bottom, paddingHorizontal: horizontalPadding }]}
         >
         <ScrollView
           style={styles.scroll}
@@ -266,10 +278,11 @@ export default function Passcode() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={styles.logoWrap}>
+          <View style={styles.centerContent}>
+          <View style={[styles.logoWrap, { marginTop: logoTopMargin }]}>
             <Image
               source={require('../../assets/images/InpireLogo.png')}
-              style={styles.logo}
+              style={[styles.logo, { width: logoWidth, height: logoHeight }]}
               contentFit="contain"
             />
           </View>
@@ -299,19 +312,20 @@ export default function Passcode() {
             <>
               {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
-              <Animated.View style={[styles.dotsWrap, { transform: [{ translateX: shakeAnim }] }]}>
+              <Animated.View style={[styles.dotsWrap, { gap: dotGap, transform: [{ translateX: shakeAnim }] }]}>
                 {[0, 1, 2, 3].map((i) => (
                   <View
                     key={i}
                     style={[
                       styles.dot,
+                      { width: dotSize, height: dotSize, borderRadius: dotSize / 2 },
                       passcode.length > i && styles.dotFilled,
                     ]}
                   />
                 ))}
               </Animated.View>
 
-              <Text style={styles.enterText}>Enter your passcode</Text>
+              <Text style={[styles.enterText, { fontSize: enterTextSize }]}>Enter your passcode</Text>
 
               <View style={[styles.padContainer, { width: padWidth, maxWidth: maxPadWidth }]}>
                 {[['1', '2', '3'], ['4', '5', '6'], ['7', '8', '9']].map((row, ri) => (
@@ -322,38 +336,39 @@ export default function Passcode() {
                         style={[styles.padButton, { width: btnSize, height: btnSize, borderRadius: btnSize / 2 }]}
                         onPress={() => handlePress(key)}
                       >
-                        <Text style={styles.padButtonText}>{key}</Text>
+                        <Text style={[styles.padButtonText, { fontSize: padButtonTextSize }]}>{key}</Text>
                       </TouchableOpacity>
                     ))}
                   </View>
                 ))}
                 <View style={styles.padRowLast}>
                   <View style={{ width: btnSize }} />
-                  <TouchableOpacity 
-                    style={[styles.padButton, { width: btnSize, height: btnSize, borderRadius: btnSize / 2 }]} 
+                  <TouchableOpacity
+                    style={[styles.padButton, { width: btnSize, height: btnSize, borderRadius: btnSize / 2 }]}
                     onPress={() => handlePress('0')}
                   >
-                    <Text style={styles.padButtonText}>0</Text>
+                    <Text style={[styles.padButtonText, { fontSize: padButtonTextSize }]}>0</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity 
-                    style={[styles.padButton, styles.padButtonDel, { width: btnSize, height: btnSize, borderRadius: btnSize / 2 }]} 
+                  <TouchableOpacity
+                    style={[styles.padButton, styles.padButtonDel, { width: delBtnSize, height: delBtnSize, borderRadius: delBtnSize / 2 }]}
                     onPress={() => handlePress('Del')}
                   >
-                    <Text style={styles.padButtonText}>⌫</Text>
+                    <Ionicons name="backspace-outline" size={backspaceIconSize} color={WHITE} />
                   </TouchableOpacity>
                 </View>
               </View>
 
-              <View style={styles.bottomRow}>
-                <TouchableOpacity onPress={() => setResetModalVisible(true)}>
-                  <Text style={styles.bottomLink}>Reset Passcode</Text>
+              <View style={[styles.bottomRow, { maxWidth: Math.min(280, width - horizontalPadding * 2) }]}>
+                <TouchableOpacity style={[styles.bottomButton, styles.bottomButtonPrimary]} onPress={() => (navigation as unknown as NavProp).replace('Login')}>
+                  <Text style={styles.bottomButtonTextPrimary}>Use Email</Text>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-                  <Text style={styles.bottomLink}>Use Email</Text>
+                <TouchableOpacity style={styles.forgotLinkWrap} onPress={() => setResetModalVisible(true)}>
+                  <Text style={styles.forgotLink}>Forgot Passcode?</Text>
                 </TouchableOpacity>
               </View>
             </>
           )}
+          </View>
         </ScrollView>
       </LinearGradient>
       )}
@@ -469,14 +484,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingBottom: 40,
   },
+  centerContent: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+  },
   logoWrap: {
-    marginTop: 20,
-    marginBottom: 40,
+    marginBottom: 32,
     alignItems: 'center',
   },
   logo: {
-    width: 180,
-    height: 64,
+    /* width/height set inline for responsiveness */
   },
   loadingWrap: {
     alignItems: 'center',
@@ -545,14 +564,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 16,
-    marginBottom: 16,
+    gap: 24,
+    marginBottom: 20,
     paddingVertical: 8,
   },
   dot: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
     borderWidth: 2.5,
     borderColor: 'rgba(255,255,255,0.9)',
     backgroundColor: 'transparent',
@@ -570,18 +586,19 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   padContainer: {
-    marginBottom: 16,
+    marginTop: 8,
+    marginBottom: 12,
   },
   padRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    marginBottom: 20,
   },
   padRowLast: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 20,
   },
   padButton: {
     backgroundColor: 'rgba(255,255,255,0.25)',
@@ -594,25 +611,43 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.6)',
   },
   padButtonText: {
-    fontSize: 28,
+    fontSize: 30,
     fontWeight: '500',
     color: WHITE,
   },
   bottomRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    width: '100%',
+    maxWidth: 280,
+    marginTop: 16,
     alignItems: 'center',
-    width: '90%',
-    maxWidth: 400,
-    marginTop: 32,
-    paddingHorizontal: 8,
+    gap: 16,
   },
-  bottomLink: {
+  bottomButton: {
+    width: '100%',
+    paddingVertical: 16,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 52,
+  },
+  bottomButtonPrimary: {
+    backgroundColor: GRADIENT_START,
+  },
+  bottomButtonTextPrimary: {
+    fontSize: 17,
+    fontWeight: '600',
+    color: WHITE,
+  },
+  forgotLinkWrap: {
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+  },
+  forgotLink: {
     fontSize: 16,
     fontWeight: '500',
     color: WHITE,
     textDecorationLine: 'underline',
-    textDecorationColor: 'rgba(255,255,255,0.6)',
+    textDecorationColor: 'rgba(255,255,255,0.8)',
   },
 });
 

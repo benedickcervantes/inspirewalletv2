@@ -8,7 +8,7 @@ export type NavProp = {
 export type RootStackParamList = {
   AuthLoader: undefined;
   Welcome: undefined;
-  Login: undefined;
+  Login: { fromSignOut?: boolean } | undefined;
   Register: undefined;
   CreatePasscode: undefined;
   Passcode: undefined;
@@ -16,6 +16,7 @@ export type RootStackParamList = {
   Personal: undefined;
   Notification: undefined;
   Settings: undefined;
+  ChangePasscode: undefined;
   Aboutus: undefined;
   DeleteAccount: undefined;
   HelpCenter: undefined;
@@ -30,6 +31,7 @@ export type RootStackParamList = {
     description?: string;
     recipientName: string;
     recipientId: string;
+    mainWalletId?: string;
   };
   Bdo: undefined;
   Message: undefined;

@@ -73,11 +73,30 @@ const Settings = () => {
     loadReferralCode();
   }, [loadReferralCode]);
 
+  /** Sign out: if user has passcode, go to Passcode screen (stay authenticated). Otherwise full sign out and go to Login. */
   const handleSignOut = async () => {
     try {
-      await AsyncStorage.multiRemove(['access_token', 'user', 'userEmail', 'userPassword', 'passcodeLoginComplete', 'registrationPasscodePending']);
-    } catch (_) {}
-    (navigation as unknown as NavProp).replace('Login');
+      const userJson = await AsyncStorage.getItem('user');
+      const user = userJson ? (JSON.parse(userJson) as { hasPasscode?: boolean }) : null;
+      const hasPasscode = !!user?.hasPasscode;
+
+      if (hasPasscode) {
+        await AsyncStorage.removeItem('passcodeLoginComplete');
+        (navigation as unknown as NavProp).reset({ index: 0, routes: [{ name: 'Passcode' }] });
+      } else {
+        await AsyncStorage.multiRemove([
+          'access_token',
+          'user',
+          'userEmail',
+          'userPassword',
+          'passcodeLoginComplete',
+          'registrationPasscodePending',
+        ]);
+        (navigation as unknown as NavProp).reset({ index: 0, routes: [{ name: 'Login', params: { fromSignOut: true } }] });
+      }
+    } catch (_) {
+      (navigation as unknown as NavProp).reset({ index: 0, routes: [{ name: 'Login', params: { fromSignOut: true } }] });
+    }
   };
 
   const handleRefreshReferralCode = () => {
@@ -155,9 +174,9 @@ const Settings = () => {
     {
       id: 1,
       icon: 'lock-closed-outline' as const,
-      title: 'Passcode',
-      subtitle: 'Change your PIN',
-      onPress: () => {},
+      title: 'Change passcode',
+      subtitle: 'Update your 4-digit PIN',
+      onPress: () => (navigation as { navigate: (name: string) => void }).navigate('ChangePasscode'),
     },
     {
       id: 2,
