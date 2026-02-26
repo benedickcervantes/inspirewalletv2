@@ -14,21 +14,21 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { useResponsive } from "../../utils/responsive";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { languageChoiceDoneKey, SUPPORTED_LANGUAGES } from "../../constants/locales";
 import { getMe, getOrCreateMainWallet, getReferralTree, getTimeDeposits, getTransactions } from "../../configs/api";
 import { createRealtimeConnection, startHeartbeat } from "../../configs/realtime";
+import { languageChoiceDoneKey, SUPPORTED_LANGUAGES } from "../../constants/locales";
 import { useLanguage } from "../../context/LanguageContext";
 import { setConnectionStatus } from "../../lib/connectionStatus";
 import { notifyNewSupportMessage } from "../../lib/messagingEvents";
 import type { NavProp } from "../../types/navigation";
+import { useResponsive } from "../../utils/responsive";
 import CardsTab from "./CardsTab";
 import SavingsTab from "./SavingsTab";
 import WalletTab from "./WalletTab";
 
 const LOOPWORK_BANNER = require("../../assets/banner/Loopwork.png");
-const HRX_BANNER = require("../../assets/banner/HRX.png");
+const HRX_BANNER = require("../../assets/banner/DeskHRX.png");
 
 // API returns raw enums; keys for translation (use t() when displaying)
 const TRANSACTION_TYPE_KEYS: Record<string, string> = {
@@ -178,6 +178,8 @@ export default function Dashboard() {
   ];
 
   const languageSlides = [
+    { image: require("../../assets/banner/DeskHRX.png") },
+    { image: require("../../assets/banner/Loopwork.png") },
     { image: require("../../assets/banner/BuyCards.png") },
     { image: require("../../assets/banner/CryptoinIwallet.png") },
     { image: require("../../assets/banner/DepositviaCrypto.png") },
@@ -452,6 +454,22 @@ export default function Dashboard() {
     return () => clearInterval(interval);
   }, [carouselWidth]);
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentLanguageIndex((prevIndex) => {
+        const nextIndex = (prevIndex + 1) % languageSlides.length;
+        if (languageScrollRef.current) {
+          languageScrollRef.current.scrollTo({
+            x: nextIndex * carouselWidth,
+            animated: true,
+          });
+        }
+        return nextIndex;
+      });
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [carouselWidth]);
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-PH", {
       minimumFractionDigits: 2,
@@ -459,30 +477,7 @@ export default function Dashboard() {
     }).format(amount);
   };
 
-  const handleNextLanguageSlide = () => {
-    const nextIndex = (currentLanguageIndex + 1) % languageSlides.length;
-    setCurrentLanguageIndex(nextIndex);
-    if (languageScrollRef.current) {
-      languageScrollRef.current.scrollTo({
-        x: nextIndex * carouselWidth,
-        animated: true,
-      });
-    }
-  };
 
-  const handlePrevLanguageSlide = () => {
-    const prevIndex =
-      currentLanguageIndex === 0
-        ? languageSlides.length - 1
-        : currentLanguageIndex - 1;
-    setCurrentLanguageIndex(prevIndex);
-    if (languageScrollRef.current) {
-      languageScrollRef.current.scrollTo({
-        x: prevIndex * carouselWidth,
-        animated: true,
-      });
-    }
-  };
 
   const flipCard = () => {
     if (activeTab !== "Cards") return;
@@ -751,18 +746,6 @@ export default function Dashboard() {
                     </TouchableOpacity>
                   ))}
                 </ScrollView>
-                <TouchableOpacity
-                  style={styles.carouselButtonLeft}
-                  onPress={handlePrevLanguageSlide}
-                >
-                  <Ionicons name="chevron-back" size={28} color="#FFFFFF" />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.carouselButtonRight}
-                  onPress={handleNextLanguageSlide}
-                >
-                  <Ionicons name="chevron-forward" size={28} color="#FFFFFF" />
-                </TouchableOpacity>
               </View>
               <View style={styles.languagePaginationDots}>
                 {languageSlides.map((_, index) => (
@@ -1049,32 +1032,6 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   languageSlideImage: { width: "100%", height: "100%", borderRadius: 16 },
-  carouselButtonLeft: {
-    position: "absolute",
-    left: 12,
-    top: "50%",
-    marginTop: -20,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 10,
-  },
-  carouselButtonRight: {
-    position: "absolute",
-    right: 12,
-    top: "50%",
-    marginTop: -20,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 10,
-  },
   languagePaginationDots: {
     flexDirection: "row",
     justifyContent: "center",
