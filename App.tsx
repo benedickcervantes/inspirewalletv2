@@ -29,6 +29,7 @@ import Login from './app/Outside/Login';
 import Passcode from './app/Outside/passcode';
 import Register from './app/Outside/Register';
 import Welcome from './app/Outside/Welcome';
+import KYCVerification from './app/KYC/KYCVerification';
 import Placeholder from './app/Placeholder';
 import BankingAddressInfo from './app/ServicesFunction/Banking/BankingAdressinfo';
 import BankingContactInfo from './app/ServicesFunction/Banking/BankingContactInfo';
@@ -81,6 +82,7 @@ export default function App() {
         <Stack.Screen name="Passcode" component={Passcode} />
         <Stack.Screen name="Main" component={Dashboard} />
         <Stack.Screen name="Personal" component={Placeholder} />
+        <Stack.Screen name="KYCVerification" component={KYCVerification} />
         <Stack.Screen name="Notification" component={NotificationScreen} />
         <Stack.Screen name="Settings" component={Settings} />
         <Stack.Screen name="ChangePasscode" component={ChangePasscode} />
