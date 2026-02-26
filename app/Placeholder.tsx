@@ -555,7 +555,7 @@ export default function Placeholder() {
         onRequestClose={() => setLanguageModalVisible(false)}
       >
         <TouchableOpacity
-          style={styles.modalOverlay}
+          style={styles.languageModalOverlay}
           activeOpacity={1}
           onPress={() => setLanguageModalVisible(false)}
         >
@@ -848,6 +848,13 @@ const styles = StyleSheet.create({
     minHeight: 44,
     justifyContent: "center",
     alignItems: "center",
+  },
+  languageModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 24,
   },
   languageModalContent: {
     backgroundColor: "#FFFFFF",
