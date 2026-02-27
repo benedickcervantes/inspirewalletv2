@@ -4,18 +4,18 @@ import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    FlatList,
-    RefreshControl,
-    SafeAreaView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  FlatList,
+  RefreshControl,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { useLanguage } from '../../context/LanguageContext';
 import { getMessages } from '../../configs/api';
 import { auth } from '../../configs/firebase';
+import { useLanguage } from '../../context/LanguageContext';
 import notificationService, { type NotificationItem } from './notificationService';
 
 interface Message {
@@ -330,14 +330,34 @@ const Notification = () => {
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#E25A17" />
         </View>
-      ) : (
-        <FlatList
-          data={useBackend ? messages : notifications}
-          renderItem={useBackend ? renderBackendMessage : renderNotificationItem}
+      ) : useBackend ? (
+        <FlatList<Message>
+          data={messages}
+          renderItem={renderBackendMessage}
           keyExtractor={(item) => item.id}
           contentContainerStyle={[
             styles.listContent,
-            (useBackend ? messages.length === 0 : notifications.length === 0) && styles.emptyListContent,
+            messages.length === 0 && styles.emptyListContent,
+          ]}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={renderEmptyState}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              colors={['#E25A17']}
+              tintColor="#E25A17"
+            />
+          }
+        />
+      ) : (
+        <FlatList<NotificationItem>
+          data={notifications}
+          renderItem={renderNotificationItem}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={[
+            styles.listContent,
+            notifications.length === 0 && styles.emptyListContent,
           ]}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={renderEmptyState}
