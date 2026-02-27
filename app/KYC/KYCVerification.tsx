@@ -100,6 +100,8 @@ export default function KYCVerification() {
   const [selfieUri, setSelfieUri] = useState<string | null>(null);
   const [confirmAccuracy, setConfirmAccuracy] = useState(false);
   const [viewingImageUri, setViewingImageUri] = useState<string | null>(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showConfirmRequiredModal, setShowConfirmRequiredModal] = useState(false);
 
   const fetchUserData = useCallback(async () => {
     try {
@@ -202,8 +204,16 @@ export default function KYCVerification() {
   };
 
   const handleConfirmSubmit = () => {
-    if (!confirmAccuracy) return;
+    if (!confirmAccuracy) {
+      setShowConfirmRequiredModal(true);
+      return;
+    }
     // Future: submit KYC to backend
+    setShowSuccessModal(true);
+  };
+
+  const handleSuccessModalClose = () => {
+    setShowSuccessModal(false);
     navigation.goBack();
   };
 
@@ -1112,6 +1122,56 @@ export default function KYCVerification() {
           </View>
         </TouchableOpacity>
       </Modal>
+
+      {/* Success confirmation modal - shown when KYC submission is complete */}
+      <Modal
+        visible={showSuccessModal}
+        transparent
+        animationType="fade"
+        onRequestClose={handleSuccessModalClose}
+      >
+        <View style={styles.successModalOverlay}>
+          <View style={styles.successModalContent}>
+            <View style={styles.successModalIconContainer}>
+              <Ionicons name="checkmark-circle" size={64} color={GREEN_UPLOADED} />
+            </View>
+            <Text style={styles.successModalTitle}>{t("kyc.submissionSuccess")}</Text>
+            <Text style={styles.successModalMessage}>{t("kyc.submissionSuccessMessage")}</Text>
+            <TouchableOpacity
+              style={styles.successModalButton}
+              onPress={handleSuccessModalClose}
+              activeOpacity={0.9}
+            >
+              <Text style={styles.successModalButtonText}>{t("kyc.ok")}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Confirm required modal - shown when user submits without checking the confirmation box */}
+      <Modal
+        visible={showConfirmRequiredModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowConfirmRequiredModal(false)}
+      >
+        <View style={styles.successModalOverlay}>
+          <View style={styles.successModalContent}>
+            <View style={styles.successModalIconContainer}>
+              <Ionicons name="alert-circle-outline" size={64} color={THEME_COLOR} />
+            </View>
+            <Text style={styles.successModalTitle}>{t("kyc.confirmRequiredTitle")}</Text>
+            <Text style={styles.successModalMessage}>{t("kyc.confirmRequiredMessage")}</Text>
+            <TouchableOpacity
+              style={styles.successModalButton}
+              onPress={() => setShowConfirmRequiredModal(false)}
+              activeOpacity={0.9}
+            >
+              <Text style={styles.successModalButtonText}>{t("kyc.ok")}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -1656,5 +1716,56 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: Platform.OS === "ios" ? 50 : 40,
     right: 20,
+  },
+  successModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  successModalContent: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    padding: 28,
+    width: "100%",
+    maxWidth: 360,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 8,
+    alignItems: "center",
+  },
+  successModalIconContainer: {
+    marginBottom: 20,
+  },
+  successModalTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#000000",
+    marginBottom: 12,
+    textAlign: "center",
+  },
+  successModalMessage: {
+    fontSize: 15,
+    color: "#666",
+    lineHeight: 22,
+    textAlign: "center",
+    marginBottom: 24,
+  },
+  successModalButton: {
+    backgroundColor: THEME_COLOR,
+    paddingVertical: 14,
+    paddingHorizontal: 40,
+    borderRadius: 14,
+    width: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  successModalButtonText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#FFFFFF",
   },
 });

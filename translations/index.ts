@@ -101,6 +101,11 @@ const en: TranslationMap = {
   "kyc.reviewBiometrics": "Biometrics",
   "kyc.confirmAccuracy": "By submitting this application, you confirm that all information provided is accurate.",
   "kyc.confirmAndSubmit": "Confirm and Submit",
+  "kyc.submissionSuccess": "KYC Submitted Successfully",
+  "kyc.submissionSuccessMessage": "Your application has been submitted. We will review it and notify you once verification is complete.",
+  "kyc.confirmRequiredTitle": "Confirmation Required",
+  "kyc.confirmRequiredMessage": "Please confirm that all information provided is accurate by checking the confirmation box before submitting.",
+  "kyc.ok": "OK",
 
   // Dashboard
   "dashboard.goodMorning": "Good Morning",
@@ -946,6 +951,11 @@ const ko: TranslationMap = {
   "kyc.reviewBiometrics": "생체 인증",
   "kyc.confirmAccuracy": "이 신청을 제출함으로써 제공한 모든 정보가 정확함을 확인합니다.",
   "kyc.confirmAndSubmit": "확인 후 제출",
+  "kyc.submissionSuccess": "KYC 제출 완료",
+  "kyc.submissionSuccessMessage": "신청이 제출되었습니다. 검토 후 인증이 완료되면 알려드리겠습니다.",
+  "kyc.confirmRequiredTitle": "확인 필요",
+  "kyc.confirmRequiredMessage": "제출 전 확인란을 선택하여 제공한 모든 정보가 정확함을 확인해 주세요.",
+  "kyc.ok": "확인",
   "dashboard.goodMorning": "좋은 아침이에요",
   "dashboard.goodAfternoon": "좋은 오후에요",
   "dashboard.goodEvening": "좋은 저녁이에요",
