@@ -21,6 +21,7 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import CustomLoader from '../Loader/CustomLoader';
 import { login } from '../../configs/api';
 import type { NavProp } from '../../types/navigation';
 import { useResponsive } from '../../utils/responsive';
@@ -275,10 +276,14 @@ export default function Login() {
     }
 
     setLoading(true);
+    const loaderStart = Date.now();
+    const MIN_LOADER_MS = 2000;
+
     try {
       const result = await login(trimmedEmail, password);
 
       if (!result.success) {
+        setLoading(false);
         showModal({
           title: 'Login Failed',
           message: result.error || 'Invalid email or password. Please try again.',
@@ -291,26 +296,32 @@ export default function Login() {
       await AsyncStorage.setItem('user', JSON.stringify(result.user || {}));
       await AsyncStorage.removeItem('passcodeLoginComplete');
 
+      const elapsed = Date.now() - loaderStart;
+      const remaining = Math.max(0, MIN_LOADER_MS - elapsed);
+      await new Promise((r) => setTimeout(r, remaining));
+
       const user = result.user as { hasPasscode?: boolean } | undefined;
       if (user?.hasPasscode) {
         (navigation as unknown as NavProp).replace('Passcode');
       } else {
-        // First login without passcode: require user to create one before Main
         await AsyncStorage.setItem('registrationPasscodePending', 'true');
         (navigation as unknown as NavProp).replace('CreatePasscode');
       }
     } catch (_) {
+      setLoading(false);
       showModal({
         title: 'Login Error',
         message: 'An unexpected error occurred. Please try again.',
         type: 'error',
       });
-    } finally {
-      setLoading(false);
     }
   };
 
   const isWeb = Platform.OS === 'web';
+
+  if (loading) {
+    return <CustomLoader text="LOGGING IN" />;
+  }
 
   return (
     <>

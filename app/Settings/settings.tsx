@@ -14,10 +14,11 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useLanguage } from '../../context/LanguageContext';
-import { useResponsive } from '../../utils/responsive';
 import { getReferralCode, resendVerification, verifyEmail } from '../../configs/api';
+import { useLanguage } from '../../context/LanguageContext';
 import type { NavProp } from '../../types/navigation';
+import { useResponsive } from '../../utils/responsive';
+import CustomLoader from '../Loader/CustomLoader';
 
 interface UserData {
   email?: string;
@@ -40,6 +41,7 @@ const Settings = () => {
   const [emailVerifyError, setEmailVerifyError] = useState<string | null>(null);
   const [emailVerifySuccess, setEmailVerifySuccess] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
 
   const loadUser = useCallback(async () => {
     const userJson = await AsyncStorage.getItem('user');
@@ -80,6 +82,10 @@ const Settings = () => {
 
   /** Sign out: always full sign out and go directly to Welcome (login/register), no Passcode/PIN screen. */
   const handleSignOut = async () => {
+    setSigningOut(true);
+    const loaderStart = Date.now();
+    const MIN_LOADER_MS = 4000;
+
     try {
       await AsyncStorage.multiRemove([
         'access_token',
@@ -89,10 +95,13 @@ const Settings = () => {
         'passcodeLoginComplete',
         'registrationPasscodePending',
       ]);
-      (navigation as unknown as NavProp).reset({ index: 0, routes: [{ name: 'Welcome' }] });
-    } catch (_) {
-      (navigation as unknown as NavProp).reset({ index: 0, routes: [{ name: 'Welcome' }] });
-    }
+    } catch (_) {}
+
+    const elapsed = Date.now() - loaderStart;
+    const remaining = Math.max(0, MIN_LOADER_MS - elapsed);
+    await new Promise((r) => setTimeout(r, remaining));
+
+    (navigation as unknown as NavProp).reset({ index: 0, routes: [{ name: 'Welcome' }] });
   };
 
   const handleRefreshReferralCode = () => {
@@ -259,6 +268,10 @@ const Settings = () => {
     iconSizeLarge: scaled(48),
     backIconSize: scaled(28),
   };
+
+  if (signingOut) {
+    return <CustomLoader text="SIGNING OUT" />;
+  }
 
   return (
     <SafeAreaView style={styles.container}>
