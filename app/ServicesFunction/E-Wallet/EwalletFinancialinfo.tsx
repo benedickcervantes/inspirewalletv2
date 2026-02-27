@@ -6,6 +6,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import React, { useState } from "react";
 import {
   KeyboardAvoidingView,
+  Modal,
   Platform,
   SafeAreaView,
   ScrollView,
@@ -23,6 +24,22 @@ const THEME_COLOR = "#E15816";
 const ORANGE_GRADIENT = ["#E25A17", "#F28934"] as const;
 const GREEN_COMPLETE = "#10B981";
 
+const SOURCE_OF_FUND_OPTIONS = ["Employment", "Business", "Investment", "Inheritance", "Pension", "Other"];
+const SOURCE_OF_FUND_KEY: Record<string, string> = {
+  Employment: "banking.sourceEmployment",
+  Business: "banking.sourceBusiness",
+  Investment: "banking.sourceInvestment",
+  Inheritance: "banking.sourceInheritance",
+  Pension: "banking.sourcePension",
+  Other: "banking.sourceOther",
+};
+const CURRENCY_OPTIONS = ["PHP", "USD", "EUR"];
+const CURRENCY_KEY: Record<string, string> = {
+  PHP: "banking.currencyPHP",
+  USD: "banking.currencyUSD",
+  EUR: "banking.currencyEUR",
+};
+
 export default function EwalletFinancialInfo() {
   const navigation =
     useNavigation<
@@ -30,10 +47,14 @@ export default function EwalletFinancialInfo() {
     >();
   const route =
     useRoute<RouteProp<RootStackParamList, "EwalletFinancialInfo">>();
+  const { t } = useLanguage();
   const selectedProvider = route.params?.selectedProvider ?? "";
 
   const [sourceOfFund, setSourceOfFund] = useState("");
-  const [grossMonthlyIncome, setGrossMonthlyIncome] = useState("0");
+  const [grossMonthlyIncome, setGrossMonthlyIncome] = useState("");
+  const [grossMonthlyIncomeCurrency, setGrossMonthlyIncomeCurrency] = useState("");
+  const [showSourceOfFundModal, setShowSourceOfFundModal] = useState(false);
+  const [showCurrencyModal, setShowCurrencyModal] = useState(false);
 
   const currentStep = 5;
 
@@ -43,6 +64,7 @@ export default function EwalletFinancialInfo() {
 
   const handleSubmit = () => {
     if (!sourceOfFund.trim()) return;
+    if (!grossMonthlyIncomeCurrency) return;
     if (!grossMonthlyIncome.trim()) return;
     // TODO: Submit application to backend
     (navigation as { reset: (state: { index: number; routes: { name: string }[] }) => void }).reset({
@@ -151,27 +173,50 @@ export default function EwalletFinancialInfo() {
                 <Text style={styles.inputLabel}>
                   {t("banking.sourceOfFund")}<Text style={styles.required}>*</Text>
                 </Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder={t("banking.placeholderSourceOfFund")}
-                  placeholderTextColor="#9E9E9E"
-                  value={sourceOfFund}
-                  onChangeText={setSourceOfFund}
-                />
+                <TouchableOpacity
+                  style={styles.dropdown}
+                  onPress={() => setShowSourceOfFundModal(true)}
+                >
+                  <Text
+                    style={[
+                      styles.dropdownText,
+                      !sourceOfFund && styles.dropdownPlaceholder,
+                    ]}
+                  >
+                    {sourceOfFund ? t(SOURCE_OF_FUND_KEY[sourceOfFund]) : t("banking.selectSourceOfFund")}
+                  </Text>
+                  <Ionicons name="chevron-down" size={20} color="#999" />
+                </TouchableOpacity>
               </View>
 
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>
                   {t("banking.grossMonthlyIncome")}<Text style={styles.required}>*</Text>
                 </Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="0"
-                  placeholderTextColor="#9E9E9E"
-                  value={grossMonthlyIncome}
-                  onChangeText={setGrossMonthlyIncome}
-                  keyboardType="numeric"
-                />
+                <View style={styles.incomeRow}>
+                  <TouchableOpacity
+                    style={[styles.dropdown, styles.currencyDropdown]}
+                    onPress={() => setShowCurrencyModal(true)}
+                  >
+                    <Text
+                      style={[
+                        styles.dropdownText,
+                        !grossMonthlyIncomeCurrency && styles.dropdownPlaceholder,
+                      ]}
+                    >
+                      {grossMonthlyIncomeCurrency ? t(CURRENCY_KEY[grossMonthlyIncomeCurrency]) : t("banking.selectCurrency")}
+                    </Text>
+                    <Ionicons name="chevron-down" size={20} color="#999" />
+                  </TouchableOpacity>
+                  <TextInput
+                    style={[styles.input, styles.amountInput]}
+                    placeholder="0"
+                    placeholderTextColor="#9E9E9E"
+                    value={grossMonthlyIncome}
+                    onChangeText={setGrossMonthlyIncome}
+                    keyboardType="numeric"
+                  />
+                </View>
               </View>
             </View>
 
@@ -216,6 +261,84 @@ export default function EwalletFinancialInfo() {
           </View>
         </KeyboardAvoidingView>
       </SafeAreaView>
+
+      {/* Source of Fund Modal */}
+      <Modal
+        visible={showSourceOfFundModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowSourceOfFundModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>{t("banking.modalSelectSourceOfFund")}</Text>
+              <TouchableOpacity onPress={() => setShowSourceOfFundModal(false)}>
+                <Ionicons name="close" size={24} color="#333" />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={styles.modalContent}>
+              {SOURCE_OF_FUND_OPTIONS.map((opt) => (
+                <TouchableOpacity
+                  key={opt}
+                  style={[
+                    styles.optionRow,
+                    sourceOfFund === opt && styles.optionRowSelected,
+                  ]}
+                  onPress={() => {
+                    setSourceOfFund(opt);
+                    setShowSourceOfFundModal(false);
+                  }}
+                >
+                  <Text style={styles.optionText}>{t(SOURCE_OF_FUND_KEY[opt])}</Text>
+                  {sourceOfFund === opt && (
+                    <Ionicons name="checkmark-circle" size={22} color={THEME_COLOR} />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Currency Modal */}
+      <Modal
+        visible={showCurrencyModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowCurrencyModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>{t("banking.modalSelectCurrency")}</Text>
+              <TouchableOpacity onPress={() => setShowCurrencyModal(false)}>
+                <Ionicons name="close" size={24} color="#333" />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={styles.modalContent}>
+              {CURRENCY_OPTIONS.map((opt) => (
+                <TouchableOpacity
+                  key={opt}
+                  style={[
+                    styles.optionRow,
+                    grossMonthlyIncomeCurrency === opt && styles.optionRowSelected,
+                  ]}
+                  onPress={() => {
+                    setGrossMonthlyIncomeCurrency(opt);
+                    setShowCurrencyModal(false);
+                  }}
+                >
+                  <Text style={styles.optionText}>{t(CURRENCY_KEY[opt])}</Text>
+                  {grossMonthlyIncomeCurrency === opt && (
+                    <Ionicons name="checkmark-circle" size={22} color={THEME_COLOR} />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -383,6 +506,84 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     fontSize: 16,
     color: "#000000",
+  },
+  dropdown: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#FFFFFF",
+    borderWidth: 2,
+    borderColor: "#E0E0E0",
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+  },
+  dropdownText: {
+    fontSize: 16,
+    color: "#000000",
+    fontWeight: "500",
+  },
+  dropdownPlaceholder: {
+    color: "#9E9E9E",
+    fontWeight: "400",
+  },
+  incomeRow: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  currencyDropdown: {
+    flex: 0,
+    minWidth: 100,
+  },
+  amountInput: {
+    flex: 1,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "flex-end",
+  },
+  modalContainer: {
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: "60%",
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E0E0E0",
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#333",
+  },
+  modalContent: {
+    padding: 16,
+  },
+  optionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    marginBottom: 4,
+    backgroundColor: "#F9F9F9",
+  },
+  optionRowSelected: {
+    backgroundColor: "rgba(225, 88, 22, 0.08)",
+    borderWidth: 1,
+    borderColor: "rgba(225, 88, 22, 0.3)",
+  },
+  optionText: {
+    fontSize: 16,
+    color: "#333",
+    fontWeight: "500",
   },
   infoBox: {
     flexDirection: "row",

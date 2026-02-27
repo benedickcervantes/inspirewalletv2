@@ -8,6 +8,7 @@ import React, { useState } from "react";
 import {
   Alert,
   Image,
+  Modal,
   Platform,
   SafeAreaView,
   ScrollView,
@@ -17,6 +18,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import CustomLoader from "../../Loader/CustomLoader";
 import { useLanguage } from "../../../context/LanguageContext";
 import type { RootStackParamList } from "../../../types/navigation";
 
@@ -24,19 +26,35 @@ const THEME_COLOR = "#E15816";
 const ORANGE_GRADIENT = ["#E25A17", "#F28934"] as const;
 const GREEN_COMPLETE = "#10B981";
 
+const ID_TYPE_OPTIONS = ["Passport", "Driver License", "National ID", "None of these"] as const;
+type IdType = (typeof ID_TYPE_OPTIONS)[number];
+const ID_TYPE_KEY: Record<IdType, string> = {
+  Passport: "banking.idPassport",
+  "Driver License": "banking.idDriverLicense",
+  "National ID": "banking.idNationalId",
+  "None of these": "banking.idNone",
+};
+
 export default function BankingRequiredInfo() {
   const { t } = useLanguage();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, "BankingRequiredInfo">>();
   const route = useRoute<RouteProp<RootStackParamList, "BankingRequiredInfo">>();
-  const selectedBank = route.params?.selectedBank ?? "Security Bank";
+  const selectedBank = route.params?.selectedBank ?? "UnionBank";
 
+  const [idType, setIdType] = useState<IdType | "">("");
+  const [showIdTypeModal, setShowIdTypeModal] = useState(false);
   const [passportPhoto, setPassportPhoto] = useState<string | null>(null);
-  const [governmentId, setGovernmentId] = useState<string | null>(null);
+  const [idFront, setIdFront] = useState<string | null>(null);
+  const [idBack, setIdBack] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   const currentStep = 6;
 
   const pickPassportPhoto = async () => {
+    setUploading(true);
     try {
+      // Let the loading overlay mount before opening the picker
+      await new Promise((r) => setTimeout(r, 300));
       const permissionResult =
         await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (permissionResult.granted === false) {
@@ -60,11 +78,17 @@ export default function BankingRequiredInfo() {
     } catch (error) {
       console.error("Error picking passport photo:", error);
       Alert.alert(t("banking.error"), t("banking.failedToPickImage"));
+    } finally {
+      setUploading(false);
     }
   };
 
-  const pickGovernmentId = async () => {
+  const pickIdImage = async (
+    setter: (uri: string) => void
+  ) => {
+    setUploading(true);
     try {
+      await new Promise((r) => setTimeout(r, 300));
       const permissionResult =
         await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (permissionResult.granted === false) {
@@ -82,11 +106,13 @@ export default function BankingRequiredInfo() {
       });
 
       if (!result.canceled && result.assets[0]) {
-        setGovernmentId(result.assets[0].uri);
+        setter(result.assets[0].uri);
       }
     } catch (error) {
-      console.error("Error picking government ID:", error);
+      console.error("Error picking image:", error);
       Alert.alert(t("banking.error"), t("banking.failedToPickImage"));
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -94,12 +120,25 @@ export default function BankingRequiredInfo() {
     navigation.goBack();
   };
 
+  const canSubmit = () => {
+    if (!idType) return false;
+    if (idType === "None of these") return false;
+    if (idType === "Passport") return !!passportPhoto;
+    if (idType === "Driver License" || idType === "National ID") return !!(idFront && idBack);
+    return false;
+  };
+
   const handleSubmit = () => {
-    if (!passportPhoto) {
+    if (!idType) {
+      Alert.alert(t("banking.required"), t("banking.selectIdType"));
+      return;
+    }
+    if (idType === "None of these") return; // button disabled, no-op
+    if (idType === "Passport" && !passportPhoto) {
       Alert.alert(t("banking.required"), t("banking.uploadPassportRequired"));
       return;
     }
-    if (!governmentId) {
+    if ((idType === "Driver License" || idType === "National ID") && (!idFront || !idBack)) {
       Alert.alert(t("banking.required"), t("banking.uploadGovIdRequired"));
       return;
     }
@@ -107,8 +146,18 @@ export default function BankingRequiredInfo() {
     navigation.navigate("Main");
   };
 
+  const goToMessage = () => {
+    navigation.navigate("Message");
+  };
+
   return (
     <View style={styles.container}>
+      {/* Full-screen loading overlay when picking/uploading image */}
+      <Modal visible={uploading} transparent animationType="fade">
+        <View style={styles.loadingOverlay}>
+          <CustomLoader text={t("banking.uploading")} />
+        </View>
+      </Modal>
       <SafeAreaView style={styles.safeArea}>
         {/* Top: Back arrow + Header card */}
         <View style={styles.topSection}>
@@ -191,74 +240,149 @@ export default function BankingRequiredInfo() {
               {t("banking.requiredDocsDesc")}
             </Text>
 
-            {/* Passport Photo Upload */}
+            {/* ID Type Dropdown */}
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>
-                {t("banking.passportPhoto")}<Text style={styles.required}>*</Text>
+                {t("banking.idType")}<Text style={styles.required}>*</Text>
               </Text>
               <TouchableOpacity
-                style={styles.uploadArea}
-                onPress={pickPassportPhoto}
-                activeOpacity={0.8}
+                style={styles.dropdown}
+                onPress={() => setShowIdTypeModal(true)}
               >
-                {passportPhoto ? (
-                  <View style={styles.uploadPreview}>
-                    <Image
-                      source={{ uri: passportPhoto }}
-                      style={styles.uploadThumbnail}
-                      resizeMode="cover"
-                    />
-                    <View style={styles.uploadedOverlay}>
-                      <Ionicons name="checkmark-circle" size={32} color={GREEN_COMPLETE} />
-                      <Text style={styles.uploadedText}>{t("banking.uploaded")}</Text>
-                    </View>
-                  </View>
-                ) : (
-                  <>
-                    <Ionicons name="camera" size={40} color={THEME_COLOR} style={styles.uploadIcon} />
-                    <Text style={styles.uploadLabel}>{t("banking.uploadPassport")}</Text>
-                    <Text style={styles.uploadHint}>{t("banking.tapToSelectImage")}</Text>
-                  </>
-                )}
+                <Text
+                  style={[
+                    styles.dropdownText,
+                    !idType && styles.dropdownPlaceholder,
+                  ]}
+                >
+                  {idType ? t(ID_TYPE_KEY[idType]) : t("banking.selectIdType")}
+                </Text>
+                <Ionicons name="chevron-down" size={20} color="#999" />
               </TouchableOpacity>
             </View>
 
-            {/* Government ID Upload */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>
-                {t("banking.governmentId")}<Text style={styles.required}>*</Text>
-              </Text>
-              <TouchableOpacity
-                style={styles.uploadArea}
-                onPress={pickGovernmentId}
-                activeOpacity={0.8}
-              >
-                {governmentId ? (
-                  <View style={styles.uploadPreview}>
-                    <Image
-                      source={{ uri: governmentId }}
-                      style={styles.uploadThumbnail}
-                      resizeMode="cover"
-                    />
-                    <View style={styles.uploadedOverlay}>
-                      <Ionicons name="checkmark-circle" size={32} color={GREEN_COMPLETE} />
-                      <Text style={styles.uploadedText}>{t("banking.uploaded")}</Text>
+            {/* Passport: 1 image only */}
+            {idType === "Passport" && (
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>
+                  {t("banking.passportPhoto")}<Text style={styles.required}>*</Text>
+                </Text>
+                <TouchableOpacity
+                  style={styles.uploadArea}
+                  onPress={pickPassportPhoto}
+                  activeOpacity={0.8}
+                >
+                  {passportPhoto ? (
+                    <View style={styles.uploadPreview}>
+                      <Image
+                        source={{ uri: passportPhoto }}
+                        style={styles.uploadThumbnail}
+                        resizeMode="cover"
+                      />
+                      <View style={styles.uploadedOverlay}>
+                        <Ionicons name="checkmark-circle" size={32} color={GREEN_COMPLETE} />
+                        <Text style={styles.uploadedText}>{t("banking.uploaded")}</Text>
+                      </View>
                     </View>
-                  </View>
-                ) : (
-                  <>
-                    <MaterialCommunityIcons
-                      name="card-account-details"
-                      size={40}
-                      color={THEME_COLOR}
-                      style={styles.uploadIcon}
-                    />
-                    <Text style={styles.uploadLabel}>{t("banking.uploadGovernmentId")}</Text>
-                    <Text style={styles.uploadHint}>{t("banking.uploadGovIdHint")}</Text>
-                  </>
-                )}
-              </TouchableOpacity>
-            </View>
+                  ) : (
+                    <>
+                      <Ionicons name="camera" size={40} color={THEME_COLOR} style={styles.uploadIcon} />
+                      <Text style={styles.uploadLabel}>{t("banking.uploadPassport")}</Text>
+                      <Text style={styles.uploadHint}>{t("banking.tapToSelectImage")}</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {/* Driver License / National ID: Front + Back */}
+            {(idType === "Driver License" || idType === "National ID") && (
+              <>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>
+                    {t("banking.uploadIdFront")}<Text style={styles.required}>*</Text>
+                  </Text>
+                  <TouchableOpacity
+                    style={styles.uploadArea}
+                    onPress={() => pickIdImage(setIdFront)}
+                    activeOpacity={0.8}
+                  >
+                    {idFront ? (
+                      <View style={styles.uploadPreview}>
+                        <Image
+                          source={{ uri: idFront }}
+                          style={styles.uploadThumbnail}
+                          resizeMode="cover"
+                        />
+                        <View style={styles.uploadedOverlay}>
+                          <Ionicons name="checkmark-circle" size={32} color={GREEN_COMPLETE} />
+                          <Text style={styles.uploadedText}>{t("banking.uploaded")}</Text>
+                        </View>
+                      </View>
+                    ) : (
+                      <>
+                        <MaterialCommunityIcons
+                          name="card-account-details"
+                          size={40}
+                          color={THEME_COLOR}
+                          style={styles.uploadIcon}
+                        />
+                        <Text style={styles.uploadLabel}>{t("banking.uploadIdFront")}</Text>
+                        <Text style={styles.uploadHint}>{t("banking.tapToSelectImage")}</Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+                </View>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>
+                    {t("banking.uploadIdBack")}<Text style={styles.required}>*</Text>
+                  </Text>
+                  <TouchableOpacity
+                    style={styles.uploadArea}
+                    onPress={() => pickIdImage(setIdBack)}
+                    activeOpacity={0.8}
+                  >
+                    {idBack ? (
+                      <View style={styles.uploadPreview}>
+                        <Image
+                          source={{ uri: idBack }}
+                          style={styles.uploadThumbnail}
+                          resizeMode="cover"
+                        />
+                        <View style={styles.uploadedOverlay}>
+                          <Ionicons name="checkmark-circle" size={32} color={GREEN_COMPLETE} />
+                          <Text style={styles.uploadedText}>{t("banking.uploaded")}</Text>
+                        </View>
+                      </View>
+                    ) : (
+                      <>
+                        <MaterialCommunityIcons
+                          name="card-account-details"
+                          size={40}
+                          color={THEME_COLOR}
+                          style={styles.uploadIcon}
+                        />
+                        <Text style={styles.uploadLabel}>{t("banking.uploadIdBack")}</Text>
+                        <Text style={styles.uploadHint}>{t("banking.tapToSelectImage")}</Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
+
+            {/* None of these: message with link to Message */}
+            {idType === "None of these" && (
+              <View style={styles.idNoneBox}>
+                <Text style={styles.idNoneText}>
+                  {t("banking.idNoneMessage")}{" "}
+                  <Text style={styles.messageLink} onPress={goToMessage}>
+                    {t("banking.messageUnderServices")}
+                  </Text>
+                  .
+                </Text>
+              </View>
+            )}
           </View>
 
           {/* Info Box */}
@@ -285,12 +409,13 @@ export default function BankingRequiredInfo() {
               <Text style={styles.backButtonText}>{t("banking.back")}</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={styles.nextButton}
+              style={[styles.nextButton, !canSubmit() && styles.nextButtonDisabled]}
               onPress={handleSubmit}
               activeOpacity={0.9}
+              disabled={!canSubmit()}
             >
               <LinearGradient
-                colors={ORANGE_GRADIENT}
+                colors={canSubmit() ? ORANGE_GRADIENT : ["#BDBDBD", "#9E9E9E"]}
                 style={styles.nextGradient}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
@@ -301,6 +426,45 @@ export default function BankingRequiredInfo() {
           </View>
         </View>
       </SafeAreaView>
+
+      {/* ID Type Modal */}
+      <Modal
+        visible={showIdTypeModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowIdTypeModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>{t("banking.modalSelectIdType")}</Text>
+              <TouchableOpacity onPress={() => setShowIdTypeModal(false)}>
+                <Ionicons name="close" size={24} color="#333" />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={styles.modalContent}>
+              {ID_TYPE_OPTIONS.map((opt) => (
+                <TouchableOpacity
+                  key={opt}
+                  style={[
+                    styles.optionRow,
+                    idType === opt && styles.optionRowSelected,
+                  ]}
+                  onPress={() => {
+                    setIdType(opt);
+                    setShowIdTypeModal(false);
+                  }}
+                >
+                  <Text style={styles.optionText}>{t(ID_TYPE_KEY[opt])}</Text>
+                  {idType === opt && (
+                    <Ionicons name="checkmark-circle" size={22} color={THEME_COLOR} />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -309,6 +473,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#F5F5F5",
+  },
+  loadingOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.3)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   safeArea: {
     flex: 1,
@@ -451,6 +621,91 @@ const styles = StyleSheet.create({
   required: {
     color: THEME_COLOR,
   },
+  dropdown: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#FFFFFF",
+    borderWidth: 2,
+    borderColor: "#E0E0E0",
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+  },
+  dropdownText: {
+    fontSize: 16,
+    color: "#000000",
+    fontWeight: "500",
+  },
+  dropdownPlaceholder: {
+    color: "#9E9E9E",
+    fontWeight: "400",
+  },
+  idNoneBox: {
+    backgroundColor: "rgba(255, 235, 205, 0.9)",
+    borderRadius: 12,
+    padding: 14,
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: "rgba(225, 88, 22, 0.35)",
+  },
+  idNoneText: {
+    fontSize: 14,
+    color: "#333333",
+    lineHeight: 22,
+  },
+  messageLink: {
+    color: THEME_COLOR,
+    fontWeight: "700",
+    textDecorationLine: "underline",
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "flex-end",
+  },
+  modalContainer: {
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: "60%",
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E0E0E0",
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#333",
+  },
+  modalContent: {
+    padding: 16,
+  },
+  optionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    marginBottom: 4,
+    backgroundColor: "#F9F9F9",
+  },
+  optionRowSelected: {
+    backgroundColor: "rgba(225, 88, 22, 0.08)",
+    borderWidth: 1,
+    borderColor: "rgba(225, 88, 22, 0.3)",
+  },
+  optionText: {
+    fontSize: 16,
+    color: "#333",
+    fontWeight: "500",
+  },
   uploadArea: {
     backgroundColor: "rgba(255, 250, 245, 0.9)",
     borderWidth: 2,
@@ -559,6 +814,9 @@ const styles = StyleSheet.create({
     flex: 1,
     borderRadius: 14,
     overflow: "hidden",
+  },
+  nextButtonDisabled: {
+    opacity: 0.8,
   },
   nextGradient: {
     paddingVertical: 16,

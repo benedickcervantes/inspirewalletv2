@@ -20,21 +20,12 @@ import type { RootStackParamList } from "../../../types/navigation";
 const THEME_COLOR = "#E15816";
 const ORANGE_GRADIENT = ["#E25A17", "#F28934"] as const;
 
-const BANKS = [
-  "Security Bank",
-  "BDO Unibank",
-  "BPI",
-  "Metrobank",
-  "Landbank",
-  "UnionBank",
-  "Chinabank",
-  "RCBC",
-];
+const BANKS = ["UnionBank", "Security Bank", "CTBC", "BDO"];
 
 export default function BankingService() {
   const { t } = useLanguage();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, "Bdo">>();
-  const [selectedBank, setSelectedBank] = useState("Security Bank");
+  const [selectedBank, setSelectedBank] = useState("UnionBank");
   const [showBankModal, setShowBankModal] = useState(false);
   const [currentStep] = useState(1);
 

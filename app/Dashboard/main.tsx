@@ -12,12 +12,27 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { getMe, getOrCreateMainWallet, getReferralTree, getTimeDeposits, getTransactions } from "../../configs/api";
-import { createRealtimeConnection, startHeartbeat } from "../../configs/realtime";
-import { languageChoiceDoneKey, SUPPORTED_LANGUAGES } from "../../constants/locales";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
+import {
+  getMe,
+  getOrCreateMainWallet,
+  getReferralTree,
+  getTimeDeposits,
+  getTransactions,
+} from "../../configs/api";
+import {
+  createRealtimeConnection,
+  startHeartbeat,
+} from "../../configs/realtime";
+import {
+  languageChoiceDoneKey,
+  SUPPORTED_LANGUAGES,
+} from "../../constants/locales";
 import { useLanguage } from "../../context/LanguageContext";
 import { setConnectionStatus } from "../../lib/connectionStatus";
 import { notifyNewSupportMessage } from "../../lib/messagingEvents";
@@ -26,9 +41,6 @@ import { useResponsive } from "../../utils/responsive";
 import CardsTab from "./CardsTab";
 import SavingsTab from "./SavingsTab";
 import WalletTab from "./WalletTab";
-
-const LOOPWORK_BANNER = require("../../assets/banner/Loopwork.png");
-const HRX_BANNER = require("../../assets/banner/DeskHRX.png");
 
 // API returns raw enums; keys for translation (use t() when displaying)
 const TRANSACTION_TYPE_KEYS: Record<string, string> = {
@@ -91,7 +103,12 @@ interface TimeDeposit {
 
 function computeTimeDepositTotal(deposits: TimeDeposit[]): number {
   return deposits
-    .filter((d) => d.status === "ACTIVE" || d.status === "MATURED" || d.status === "PENDING")
+    .filter(
+      (d) =>
+        d.status === "ACTIVE" ||
+        d.status === "MATURED" ||
+        d.status === "PENDING",
+    )
     .reduce((sum, d) => sum + (parseFloat(String(d?.amount ?? 0)) || 0), 0);
 }
 
@@ -102,28 +119,61 @@ function computeDividend(deposits: TimeDeposit[]): number {
   return activeOnly.reduce((total, d) => {
     const schedule = d.payoutSchedule ?? d.payout_schedule ?? [];
     const contractDividend = (Array.isArray(schedule) ? schedule : []).reduce(
-      (s: number, p: { amount?: string | number; principalReturned?: string | number; principal_returned?: string }) => {
-        const amt = typeof p?.amount === "number" ? p.amount : parseFloat(String(p?.amount ?? 0));
-        const principal = parseFloat(String(p?.principalReturned ?? p?.principal_returned ?? 0));
-        const dividendOnly = Number.isNaN(amt) ? 0 : principal > 0 ? Math.max(0, amt - principal) : amt;
+      (
+        s: number,
+        p: {
+          amount?: string | number;
+          principalReturned?: string | number;
+          principal_returned?: string;
+        },
+      ) => {
+        const amt =
+          typeof p?.amount === "number"
+            ? p.amount
+            : parseFloat(String(p?.amount ?? 0));
+        const principal = parseFloat(
+          String(p?.principalReturned ?? p?.principal_returned ?? 0),
+        );
+        const dividendOnly = Number.isNaN(amt)
+          ? 0
+          : principal > 0
+            ? Math.max(0, amt - principal)
+            : amt;
         return s + dividendOnly;
       },
-      0
+      0,
     );
     return total + contractDividend;
   }, 0);
 }
 
-function computeDepositGrowth(deposits: TimeDeposit[]): { month: string; amount: number }[] {
+function computeDepositGrowth(
+  deposits: TimeDeposit[],
+): { month: string; amount: number }[] {
   const months: { month: string; amount: number }[] = [];
   const year = new Date().getFullYear();
-  const monthLabels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const monthLabels = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
   for (let m = 0; m < 12; m++) {
     const monthEnd = new Date(year, m + 1, 0);
     let amount = 0;
     for (const dep of deposits) {
       if (dep.status !== "ACTIVE" && dep.status !== "MATURED") continue;
-      const start = dep.startDate ? new Date(dep.startDate) : new Date(dep.projectedStartDate);
+      const start = dep.startDate
+        ? new Date(dep.startDate)
+        : new Date(dep.projectedStartDate);
       const maturity = dep.maturityDate
         ? new Date(dep.maturityDate)
         : new Date(dep.projectedMaturityDate);
@@ -136,7 +186,10 @@ function computeDepositGrowth(deposits: TimeDeposit[]): { month: string; amount:
   return months;
 }
 
-function getTransactionTypeLabel(t: (key: string) => string, type?: string): string {
+function getTransactionTypeLabel(
+  t: (key: string) => string,
+  type?: string,
+): string {
   if (!type) return t("tx.transaction");
   const key = TRANSACTION_TYPE_KEYS[type];
   return key ? t(key) : type;
@@ -148,21 +201,23 @@ export default function Dashboard() {
   const insets = useSafeAreaInsets();
   const { width, horizontalPadding } = useResponsive();
   const carouselWidth = width - horizontalPadding * 2;
-  const [userData, setUserData] = useState<Record<string, unknown> | null>(null);
+  const [userData, setUserData] = useState<Record<string, unknown> | null>(
+    null,
+  );
   const [availableBalance, setAvailableBalance] = useState(0);
   const [timeDeposit, setTimeDeposit] = useState(0);
   const [deposits, setDeposits] = useState<TimeDeposit[]>([]);
   const [activeTab, setActiveTab] = useState("Wallet");
-  const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
+  const [recentTransactions, setRecentTransactions] = useState<Transaction[]>(
+    [],
+  );
   const [isCardFlipped, setIsCardFlipped] = useState(false);
   const flipAnimation = useRef(new Animated.Value(0)).current;
-  const bannerScrollRef = useRef<ScrollView | null>(null);
   const languageScrollRef = useRef<ScrollView | null>(null);
   const mainWalletIdRef = useRef<string | null>(null);
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const socketRef = useRef<{ disconnect: () => void } | null>(null);
   const heartbeatCleanupRef = useRef<(() => void) | null>(null);
-  const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
   const [currentLanguageIndex, setCurrentLanguageIndex] = useState(0);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [userReferrer, setUserReferrer] = useState<{
@@ -170,17 +225,13 @@ export default function Dashboard() {
     firstName?: string;
     lastName?: string;
   } | null>(null);
-  const [showFirstTimeLanguageModal, setShowFirstTimeLanguageModal] = useState(false);
-
-  const banners = [
-    { image: LOOPWORK_BANNER, url: "https://inspire-loopwork.com/landingpage" },
-    { image: HRX_BANNER, url: "https://www.deskhrx.com/home/" },
-  ];
+  const [showFirstTimeLanguageModal, setShowFirstTimeLanguageModal] =
+    useState(false);
 
   const languageSlides = [
-    { image: require("../../assets/banner/DeskHRX.png") },
-    { image: require("../../assets/banner/Loopwork.png") },
-    { image: require("../../assets/banner/BuyCards.png") },
+    { image: require("../../assets/banner/DeskHRX.png"), url: "https://www.deskhrx.com/" },
+    { image: require("../../assets/banner/Loopwork.png"), url: "https://www.inspire-loopwork.com" },
+    { image: require("../../assets/banner/BuyCards.png"), action: "cards" },
     { image: require("../../assets/banner/CryptoinIwallet.png") },
     { image: require("../../assets/banner/DepositviaCrypto.png") },
     { image: require("../../assets/banner/ChangeLanguage.png") },
@@ -213,7 +264,8 @@ export default function Dashboard() {
       }
       if (!user?.firstName) {
         const meRes = await getMe(accessToken);
-        if (meRes.success && meRes.user) user = meRes.user as Record<string, unknown>;
+        if (meRes.success && meRes.user)
+          user = meRes.user as Record<string, unknown>;
       }
       if (user) {
         setUserData({
@@ -243,18 +295,32 @@ export default function Dashboard() {
         setDeposits(list);
         setTimeDeposit(computeTimeDepositTotal(list));
       } else if (!tdRes.success && __DEV__) {
-        console.warn('[Dashboard] getTimeDeposits failed:', tdRes.error);
+        console.warn("[Dashboard] getTimeDeposits failed:", tdRes.error);
       }
 
       const treeRes = await getReferralTree(accessToken);
       if (treeRes.success && treeRes.tree) {
-        const tree = treeRes.tree as { ancestors?: Array<{ referralCode?: string; firstName?: string; lastName?: string }> };
+        const tree = treeRes.tree as {
+          ancestors?: Array<{
+            referralCode?: string;
+            firstName?: string;
+            lastName?: string;
+          }>;
+        };
         const first = tree.ancestors?.[0];
-        if (first && (first.referralCode ?? (first as { referral_code?: string }).referral_code)) {
+        if (
+          first &&
+          (first.referralCode ??
+            (first as { referral_code?: string }).referral_code)
+        ) {
           setUserReferrer({
-            referralCode: first.referralCode ?? (first as { referral_code?: string }).referral_code,
-            firstName: first.firstName ?? (first as { first_name?: string }).first_name,
-            lastName: first.lastName ?? (first as { last_name?: string }).last_name,
+            referralCode:
+              first.referralCode ??
+              (first as { referral_code?: string }).referral_code,
+            firstName:
+              first.firstName ?? (first as { first_name?: string }).first_name,
+            lastName:
+              first.lastName ?? (first as { last_name?: string }).last_name,
           });
         } else {
           setUserReferrer(null);
@@ -268,7 +334,9 @@ export default function Dashboard() {
         limit: 20,
       });
       if (txRes.success && txRes.transactions) {
-        const mapped: Transaction[] = (txRes.transactions as RawApiTransaction[]).map((tx) => ({
+        const mapped: Transaction[] = (
+          txRes.transactions as RawApiTransaction[]
+        ).map((tx) => ({
           id: String(tx.id ?? ""),
           type: String(tx.type ?? ""),
           amount: (() => {
@@ -297,7 +365,8 @@ export default function Dashboard() {
   const refetchJwtData = useCallback(async () => {
     const accessToken = await AsyncStorage.getItem("access_token");
     if (!accessToken) return;
-    const { success: walletSuccess, wallet } = await getOrCreateMainWallet(accessToken);
+    const { success: walletSuccess, wallet } =
+      await getOrCreateMainWallet(accessToken);
     const w = wallet as RawApiWallet | undefined;
     if (walletSuccess && w?.balance != null) {
       const bal = parseFloat(String(w.balance));
@@ -309,17 +378,31 @@ export default function Dashboard() {
       setDeposits(list);
       setTimeDeposit(computeTimeDepositTotal(list));
     } else if (!tdRes.success && __DEV__) {
-      console.warn('[Dashboard] getTimeDeposits failed:', tdRes.error);
+      console.warn("[Dashboard] getTimeDeposits failed:", tdRes.error);
     }
     const treeRes = await getReferralTree(accessToken);
     if (treeRes.success && treeRes.tree) {
-      const tree = treeRes.tree as { ancestors?: Array<{ referralCode?: string; firstName?: string; lastName?: string }> };
+      const tree = treeRes.tree as {
+        ancestors?: Array<{
+          referralCode?: string;
+          firstName?: string;
+          lastName?: string;
+        }>;
+      };
       const first = tree.ancestors?.[0];
-      if (first && (first.referralCode ?? (first as { referral_code?: string }).referral_code)) {
+      if (
+        first &&
+        (first.referralCode ??
+          (first as { referral_code?: string }).referral_code)
+      ) {
         setUserReferrer({
-          referralCode: first.referralCode ?? (first as { referral_code?: string }).referral_code,
-          firstName: first.firstName ?? (first as { first_name?: string }).first_name,
-          lastName: first.lastName ?? (first as { last_name?: string }).last_name,
+          referralCode:
+            first.referralCode ??
+            (first as { referral_code?: string }).referral_code,
+          firstName:
+            first.firstName ?? (first as { first_name?: string }).first_name,
+          lastName:
+            first.lastName ?? (first as { last_name?: string }).last_name,
         });
       } else {
         setUserReferrer(null);
@@ -370,8 +453,14 @@ export default function Dashboard() {
       startPolling();
 
       const socket = createRealtimeConnection(token, {
-        onWalletUpdate: (payload: { walletId?: string; balance?: number | string }) => {
-          if (payload?.walletId === mainWalletIdRef.current && payload?.balance != null) {
+        onWalletUpdate: (payload: {
+          walletId?: string;
+          balance?: number | string;
+        }) => {
+          if (
+            payload?.walletId === mainWalletIdRef.current &&
+            payload?.balance != null
+          ) {
             const bal = parseFloat(String(payload.balance));
             setAvailableBalance(Number.isNaN(bal) ? 0 : bal);
           }
@@ -423,7 +512,7 @@ export default function Dashboard() {
       AsyncStorage.getItem("access_token").then((token) => {
         if (token) refetchJwtData();
       });
-    }, [refetchJwtData])
+    }, [refetchJwtData]),
   );
 
   useEffect(() => {
@@ -438,21 +527,7 @@ export default function Dashboard() {
     }
   }, [activeTab]);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentBannerIndex((prevIndex) => {
-        const nextIndex = (prevIndex + 1) % banners.length;
-        if (bannerScrollRef.current) {
-          bannerScrollRef.current.scrollTo({
-            x: nextIndex * carouselWidth,
-            animated: true,
-          });
-        }
-        return nextIndex;
-      });
-    }, 3000);
-    return () => clearInterval(interval);
-  }, [carouselWidth]);
+
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -466,7 +541,7 @@ export default function Dashboard() {
         }
         return nextIndex;
       });
-    }, 3000);
+    }, 5000);
     return () => clearInterval(interval);
   }, [carouselWidth]);
 
@@ -476,8 +551,6 @@ export default function Dashboard() {
       maximumFractionDigits: 2,
     }).format(amount);
   };
-
-
 
   const flipCard = () => {
     if (activeTab !== "Cards") return;
@@ -500,12 +573,20 @@ export default function Dashboard() {
   };
 
   const menuItems = [
-    { icon: "wallet-outline", labelKey: "dashboard.eWallet", route: "EwalletService" },
+    {
+      icon: "wallet-outline",
+      labelKey: "dashboard.eWallet",
+      route: "EwalletService",
+    },
     { icon: "message-text", labelKey: "dashboard.message", route: "Message" },
     { icon: "chart-line", labelKey: "dashboard.stock", route: "Stockholder" },
     { icon: "format-list-bulleted", labelKey: "dashboard.task", route: "Task" },
     { icon: "account", labelKey: "dashboard.agent", route: "AgentRequest" },
-    { icon: "chart-areaspline", labelKey: "dashboard.trading", route: "PlayEarn" },
+    {
+      icon: "chart-areaspline",
+      labelKey: "dashboard.trading",
+      route: "PlayEarn",
+    },
   ];
 
   const handleFirstTimeLanguageSelect = (label: string) => {
@@ -513,6 +594,22 @@ export default function Dashboard() {
     const accountNumber = userData?.accountNumber as string | undefined;
     AsyncStorage.setItem(languageChoiceDoneKey(accountNumber), "true");
     setShowFirstTimeLanguageModal(false);
+  };
+
+  const handleBannerPress = async (url?: string, action?: string) => {
+    if (action === "cards") {
+      setActiveTab("Cards");
+      return;
+    }
+    if (!url) return;
+    try {
+      const supported = await Linking.canOpenURL(url);
+      if (supported) {
+        await Linking.openURL(url);
+      }
+    } catch (error) {
+      console.error("Error opening URL:", error);
+    }
   };
 
   return (
@@ -526,9 +623,16 @@ export default function Dashboard() {
       >
         <View style={styles.languageModalOverlay}>
           <View style={styles.languageModalContent}>
-            <Text style={styles.languageModalTitle}>{t("profile.selectLanguage")}</Text>
-            <Text style={styles.languageModalSubtitle}>{t("profile.defaultIsEnglish")}</Text>
-            <ScrollView style={styles.languageModalList} showsVerticalScrollIndicator={false}>
+            <Text style={styles.languageModalTitle}>
+              {t("profile.selectLanguage")}
+            </Text>
+            <Text style={styles.languageModalSubtitle}>
+              {t("profile.defaultIsEnglish")}
+            </Text>
+            <ScrollView
+              style={styles.languageModalList}
+              showsVerticalScrollIndicator={false}
+            >
               {SUPPORTED_LANGUAGES.map((lang) => (
                 <TouchableOpacity
                   key={lang.code}
@@ -544,7 +648,10 @@ export default function Dashboard() {
           </View>
         </View>
       </Modal>
-      <SafeAreaView style={styles.container} edges={["left", "right", "bottom"]}>
+      <SafeAreaView
+        style={styles.container}
+        edges={["left", "right", "bottom"]}
+      >
         <View style={[styles.header, { paddingTop: Math.max(insets.top, 12) }]}>
           <View style={styles.headerLeft}>
             <TouchableOpacity
@@ -555,34 +662,42 @@ export default function Dashboard() {
               <Ionicons name="person" size={28} color="#E15816" />
             </TouchableOpacity>
             <View style={styles.headerUserText}>
-              <Text style={styles.greeting} numberOfLines={1}>{getGreeting()}</Text>
-              <Text style={styles.userName} numberOfLines={1} ellipsizeMode="tail">
-                {(userData?.firstName as string) || (userData?.fullName as string) || "User"}
+              <Text style={styles.greeting} numberOfLines={1}>
+                {getGreeting()}
+              </Text>
+              <Text
+                style={styles.userName}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
+                {(userData?.firstName as string) ||
+                  (userData?.fullName as string) ||
+                  "User"}
               </Text>
             </View>
           </View>
           <View style={styles.headerRight}>
-              <TouchableOpacity
-                style={styles.iconButton}
-                onPress={() => navigation.navigate("Notification")}
-              >
-                <Ionicons name="notifications" size={24} color="#E15816" />
-                {unreadNotifications > 0 && (
-                  <View style={styles.notificationBadge}>
-                    <Text style={styles.notificationBadgeText}>
-                      {unreadNotifications > 99 ? "99+" : unreadNotifications}
-                    </Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.iconButton}
-                onPress={() => navigation.navigate("Settings")}
-              >
-                <Ionicons name="settings-outline" size={24} color="#E15816" />
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity
+              style={styles.iconButton}
+              onPress={() => navigation.navigate("Notification")}
+            >
+              <Ionicons name="notifications" size={24} color="#E15816" />
+              {unreadNotifications > 0 && (
+                <View style={styles.notificationBadge}>
+                  <Text style={styles.notificationBadgeText}>
+                    {unreadNotifications > 99 ? "99+" : unreadNotifications}
+                  </Text>
+                </View>
+              )}
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.iconButton}
+              onPress={() => navigation.navigate("Settings")}
+            >
+              <Ionicons name="settings-outline" size={24} color="#E15816" />
+            </TouchableOpacity>
           </View>
+        </View>
 
         <ScrollView showsVerticalScrollIndicator={false}>
           <View style={styles.tabs}>
@@ -593,9 +708,18 @@ export default function Dashboard() {
                 onPress={() => setActiveTab(tab)}
               >
                 <Text
-                  style={[styles.tabText, activeTab === tab && styles.activeTabText]}
+                  style={[
+                    styles.tabText,
+                    activeTab === tab && styles.activeTabText,
+                  ]}
                 >
-                  {t(tab === "Wallet" ? "dashboard.wallet" : tab === "Investment" ? "dashboard.investment" : "dashboard.cards")}
+                  {t(
+                    tab === "Wallet"
+                      ? "dashboard.wallet"
+                      : tab === "Investment"
+                        ? "dashboard.investment"
+                        : "dashboard.cards",
+                  )}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -647,16 +771,24 @@ export default function Dashboard() {
                     color="#E15816"
                   />
                 </View>
-                <Text style={styles.quickActionLabel}>{t("dashboard.transfer")}</Text>
+                <Text style={styles.quickActionLabel}>
+                  {t("dashboard.transfer")}
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.quickActionButton}
                 onPress={() => navigation.navigate("Bdo")}
               >
                 <View style={styles.quickActionIcon}>
-                  <MaterialCommunityIcons name="bank" size={24} color="#E15816" />
+                  <MaterialCommunityIcons
+                    name="bank"
+                    size={24}
+                    color="#E15816"
+                  />
                 </View>
-                <Text style={styles.quickActionLabel}>{t("dashboard.bankingService")}</Text>
+                <Text style={styles.quickActionLabel}>
+                  {t("dashboard.bankingService")}
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.quickActionButton}
@@ -669,7 +801,9 @@ export default function Dashboard() {
                     color="#E15816"
                   />
                 </View>
-                <Text style={styles.quickActionLabel}>{t("dashboard.travelProtection")}</Text>
+                <Text style={styles.quickActionLabel}>
+                  {t("dashboard.travelProtection")}
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.quickActionButton}
@@ -682,7 +816,9 @@ export default function Dashboard() {
                     color="#E15816"
                   />
                 </View>
-                <Text style={styles.quickActionLabel}>{t("dashboard.history")}</Text>
+                <Text style={styles.quickActionLabel}>
+                  {t("dashboard.history")}
+                </Text>
               </TouchableOpacity>
             </View>
           )}
@@ -690,7 +826,9 @@ export default function Dashboard() {
           {activeTab !== "Cards" && activeTab !== "Investment" && (
             <View style={styles.menuContainer}>
               <View style={styles.menuHeader}>
-                <Text style={styles.menuHeaderTitle}>{t("dashboard.services")}</Text>
+                <Text style={styles.menuHeaderTitle}>
+                  {t("dashboard.services")}
+                </Text>
               </View>
               <View style={styles.menuGrid}>
                 {menuItems.map((item, index) => (
@@ -698,12 +836,18 @@ export default function Dashboard() {
                     key={index}
                     style={styles.menuItem}
                     onPress={() =>
-                      (navigation as { navigate: (name: string) => void }).navigate(item.route)
+                      (
+                        navigation as { navigate: (name: string) => void }
+                      ).navigate(item.route)
                     }
                   >
                     <View style={styles.menuIcon}>
                       <MaterialCommunityIcons
-                        name={item.icon as React.ComponentProps<typeof MaterialCommunityIcons>['name']}
+                        name={
+                          item.icon as React.ComponentProps<
+                            typeof MaterialCommunityIcons
+                          >["name"]
+                        }
                         size={24}
                         color="#000000"
                       />
@@ -716,7 +860,12 @@ export default function Dashboard() {
           )}
 
           {activeTab !== "Investment" && activeTab !== "Cards" && (
-            <View style={[styles.languageCarouselContainer, { paddingHorizontal: horizontalPadding }]}>
+            <View
+              style={[
+                styles.languageCarouselContainer,
+                { paddingHorizontal: horizontalPadding },
+              ]}
+            >
               <View style={styles.languageCarouselWrapper}>
                 <ScrollView
                   ref={languageScrollRef}
@@ -725,25 +874,37 @@ export default function Dashboard() {
                   showsHorizontalScrollIndicator={false}
                   onMomentumScrollEnd={(event) => {
                     const index = Math.round(
-                      event.nativeEvent.contentOffset.x / carouselWidth
+                      event.nativeEvent.contentOffset.x / carouselWidth,
                     );
                     setCurrentLanguageIndex(index);
                   }}
                   style={styles.languageScrollView}
                 >
                   {languageSlides.map((slide, index) => (
-                    <TouchableOpacity
+                    <View
                       key={index}
                       style={[styles.languageSlide, { width: carouselWidth }]}
-                      onPress={() => navigation.navigate("Crypto")}
-                      activeOpacity={0.9}
                     >
-                      <Image
-                        source={slide.image}
-                        style={styles.languageSlideImage}
-                        resizeMode="cover"
-                      />
-                    </TouchableOpacity>
+                      {slide.url || slide.action ? (
+                        <TouchableOpacity
+                          onPress={() => handleBannerPress(slide.url, slide.action)}
+                          activeOpacity={0.8}
+                          style={styles.languageSlideImageContainer}
+                        >
+                          <Image
+                            source={slide.image}
+                            style={styles.languageSlideImage}
+                            resizeMode="cover"
+                          />
+                        </TouchableOpacity>
+                      ) : (
+                        <Image
+                          source={slide.image}
+                          style={styles.languageSlideImage}
+                          resizeMode="cover"
+                        />
+                      )}
+                    </View>
                   ))}
                 </ScrollView>
               </View>
@@ -753,7 +914,8 @@ export default function Dashboard() {
                     key={index}
                     style={[
                       styles.languageDot,
-                      currentLanguageIndex === index && styles.languageActiveDot,
+                      currentLanguageIndex === index &&
+                        styles.languageActiveDot,
                     ]}
                   />
                 ))}
@@ -765,7 +927,9 @@ export default function Dashboard() {
             <View style={styles.transactionSection}>
               <View style={styles.transactionHeader}>
                 <Ionicons name="time-outline" size={20} color="#E15816" />
-                <Text style={styles.transactionTitle}>{t("dashboard.transactionHistory")}</Text>
+                <Text style={styles.transactionTitle}>
+                  {t("dashboard.transactionHistory")}
+                </Text>
               </View>
               {recentTransactions.length > 0 ? (
                 recentTransactions.map((transaction) => (
@@ -782,8 +946,9 @@ export default function Dashboard() {
                         {getTransactionTypeLabel(t, transaction.type)}
                       </Text>
                       <Text style={styles.transactionDate}>
-                        {transaction.timestamp?.toDate?.()?.toLocaleDateString() ||
-                          ""}
+                        {transaction.timestamp
+                          ?.toDate?.()
+                          ?.toLocaleDateString() || ""}
                       </Text>
                     </View>
                     <Text style={styles.transactionAmount}>
@@ -801,8 +966,12 @@ export default function Dashboard() {
                     />
                   </View>
                   <View style={styles.transactionDetails}>
-                    <Text style={styles.transactionName}>{t("dashboard.freeDefaultCard")}</Text>
-                    <Text style={styles.transactionDate}>February 03, 2026</Text>
+                    <Text style={styles.transactionName}>
+                      {t("dashboard.freeDefaultCard")}
+                    </Text>
+                    <Text style={styles.transactionDate}>
+                      February 03, 2026
+                    </Text>
                   </View>
                   <Text style={styles.transactionAmount}>₱0.00</Text>
                 </View>
@@ -810,52 +979,10 @@ export default function Dashboard() {
             </View>
           )}
 
-          {activeTab !== "Investment" && activeTab !== "Cards" && (
-            <View style={styles.bannersSection}>
-              <ScrollView
-                ref={bannerScrollRef}
-                horizontal
-                pagingEnabled
-                showsHorizontalScrollIndicator={false}
-                onMomentumScrollEnd={(event) => {
-                  const index = Math.round(
-                    event.nativeEvent.contentOffset.x / carouselWidth
-                  );
-                  setCurrentBannerIndex(index);
-                }}
-                style={styles.bannerScrollView}
-              >
-                {banners.map((banner, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    style={[styles.bannerItem, { width: carouselWidth }]}
-                    onPress={() => Linking.openURL(banner.url)}
-                    activeOpacity={0.8}
-                  >
-                    <Image
-                      source={banner.image}
-                      style={styles.bannerImage}
-                      resizeMode="cover"
-                    />
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-              <View style={styles.paginationDots}>
-                {banners.map((_, index) => (
-                  <View
-                    key={index}
-                    style={[
-                      styles.dot,
-                      currentBannerIndex === index && styles.activeDot,
-                    ]}
-                  />
-                ))}
-              </View>
-            </View>
-          )}
-
           <View style={styles.footer}>
-            <Text style={styles.footerText}>{t("dashboard.createdByInspire")}</Text>
+            <Text style={styles.footerText}>
+              {t("dashboard.createdByInspire")}
+            </Text>
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -873,7 +1000,13 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     backgroundColor: "#FFFFFF",
   },
-  headerLeft: { flex: 1, flexDirection: "row", alignItems: "center", gap: 12, minWidth: 0 },
+  headerLeft: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    minWidth: 0,
+  },
   headerUserTouch: { flex: 1, minWidth: 0 },
   headerUserText: { flex: 1, minWidth: 0, justifyContent: "center" },
   avatar: {
@@ -1031,6 +1164,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     overflow: "hidden",
   },
+  languageSlideImageContainer: { width: "100%", height: "100%" },
   languageSlideImage: { width: "100%", height: "100%", borderRadius: 16 },
   languagePaginationDots: {
     flexDirection: "row",
@@ -1079,33 +1213,6 @@ const styles = StyleSheet.create({
   },
   transactionDate: { fontSize: 12, color: "#999" },
   transactionAmount: { fontSize: 14, fontWeight: "600", color: "#E15816" },
-  bannersSection: { paddingHorizontal: 20, marginBottom: 20 },
-  bannerScrollView: { marginBottom: 12 },
-  bannerItem: {
-    height: 120,
-    borderRadius: 12,
-    overflow: "hidden",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    marginRight: 0,
-  },
-  bannerImage: { width: "100%", height: "100%" },
-  paginationDots: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 8,
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: "#D0D0D0",
-  },
-  activeDot: { backgroundColor: "#E15816", width: 24 },
   footer: { paddingVertical: 24, alignItems: "center" },
   footerText: { fontSize: 12, color: "#999", letterSpacing: 1 },
   // First-time language modal

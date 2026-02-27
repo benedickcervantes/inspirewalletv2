@@ -88,13 +88,13 @@ export default function Message() {
 
     const result = await getMessages(accessToken, { page: 1, limit: 100 });
     if (result.success && result.messages) {
-      setMessages(mapApiToDisplay(result.messages));
+      setMessages(mapApiToDisplay(result.messages as ApiMessage[]));
       setError(null);
       // Mark all as read when viewing, then refetch to show updated status
       await markAllMessagesAsRead(accessToken);
       const refetch = await getMessages(accessToken, { page: 1, limit: 100 });
       if (refetch.success && refetch.messages) {
-        setMessages(mapApiToDisplay(refetch.messages));
+        setMessages(mapApiToDisplay(refetch.messages as ApiMessage[]));
       }
     } else {
       setError(result.error || "Failed to load messages.");
@@ -144,12 +144,12 @@ export default function Message() {
     const unsubscribe = subscribeToNewSupportMessage(() => {
       fetchMessages();
     });
-    return unsubscribe;
+    return () => { unsubscribe(); };
   }, [fetchMessages]);
 
   useEffect(() => {
     const unsubscribe = subscribeToConnectionStatus(setIsOnline);
-    return unsubscribe;
+    return () => { unsubscribe(); };
   }, []);
 
   useEffect(() => {
