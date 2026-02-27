@@ -3,34 +3,35 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-    Animated,
-    Image,
-    Modal,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  Animated,
+  Image,
+  Linking,
+  Modal,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from "react-native";
 import {
-    SafeAreaView,
-    useSafeAreaInsets,
+  SafeAreaView,
+  useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import {
-    getMe,
-    getOrCreateMainWallet,
-    getReferralTree,
-    getTimeDeposits,
-    getTransactions,
+  getMe,
+  getOrCreateMainWallet,
+  getReferralTree,
+  getTimeDeposits,
+  getTransactions,
 } from "../../configs/api";
 import {
-    createRealtimeConnection,
-    startHeartbeat,
+  createRealtimeConnection,
+  startHeartbeat,
 } from "../../configs/realtime";
 import {
-    languageChoiceDoneKey,
-    SUPPORTED_LANGUAGES,
+  languageChoiceDoneKey,
+  SUPPORTED_LANGUAGES,
 } from "../../constants/locales";
 import { useLanguage } from "../../context/LanguageContext";
 import { setConnectionStatus } from "../../lib/connectionStatus";
@@ -228,9 +229,9 @@ export default function Dashboard() {
     useState(false);
 
   const languageSlides = [
-    { image: require("../../assets/banner/DeskHRX.png") },
-    { image: require("../../assets/banner/Loopwork.png") },
-    { image: require("../../assets/banner/BuyCards.png") },
+    { image: require("../../assets/banner/DeskHRX.png"), url: "https://www.deskhrx.com/" },
+    { image: require("../../assets/banner/Loopwork.png"), url: "https://www.inspire-loopwork.com" },
+    { image: require("../../assets/banner/BuyCards.png"), action: "cards" },
     { image: require("../../assets/banner/CryptoinIwallet.png") },
     { image: require("../../assets/banner/DepositviaCrypto.png") },
     { image: require("../../assets/banner/ChangeLanguage.png") },
@@ -526,21 +527,7 @@ export default function Dashboard() {
     }
   }, [activeTab]);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentBannerIndex((prevIndex) => {
-        const nextIndex = (prevIndex + 1) % banners.length;
-        if (bannerScrollRef.current) {
-          bannerScrollRef.current.scrollTo({
-            x: nextIndex * carouselWidth,
-            animated: true,
-          });
-        }
-        return nextIndex;
-      });
-    }, 3000);
-    return () => clearInterval(interval);
-  }, [carouselWidth]);
+
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -554,7 +541,7 @@ export default function Dashboard() {
         }
         return nextIndex;
       });
-    }, 3000);
+    }, 5000);
     return () => clearInterval(interval);
   }, [carouselWidth]);
 
@@ -607,6 +594,22 @@ export default function Dashboard() {
     const accountNumber = userData?.accountNumber as string | undefined;
     AsyncStorage.setItem(languageChoiceDoneKey(accountNumber), "true");
     setShowFirstTimeLanguageModal(false);
+  };
+
+  const handleBannerPress = async (url?: string, action?: string) => {
+    if (action === "cards") {
+      setActiveTab("Cards");
+      return;
+    }
+    if (!url) return;
+    try {
+      const supported = await Linking.canOpenURL(url);
+      if (supported) {
+        await Linking.openURL(url);
+      }
+    } catch (error) {
+      console.error("Error opening URL:", error);
+    }
   };
 
   return (
@@ -878,18 +881,30 @@ export default function Dashboard() {
                   style={styles.languageScrollView}
                 >
                   {languageSlides.map((slide, index) => (
-                    <TouchableOpacity
+                    <View
                       key={index}
                       style={[styles.languageSlide, { width: carouselWidth }]}
-                      onPress={() => navigation.navigate("Crypto")}
-                      activeOpacity={0.9}
                     >
-                      <Image
-                        source={slide.image}
-                        style={styles.languageSlideImage}
-                        resizeMode="cover"
-                      />
-                    </TouchableOpacity>
+                      {slide.url || slide.action ? (
+                        <TouchableOpacity
+                          onPress={() => handleBannerPress(slide.url, slide.action)}
+                          activeOpacity={0.8}
+                          style={styles.languageSlideImageContainer}
+                        >
+                          <Image
+                            source={slide.image}
+                            style={styles.languageSlideImage}
+                            resizeMode="cover"
+                          />
+                        </TouchableOpacity>
+                      ) : (
+                        <Image
+                          source={slide.image}
+                          style={styles.languageSlideImage}
+                          resizeMode="cover"
+                        />
+                      )}
+                    </View>
                   ))}
                 </ScrollView>
               </View>
@@ -1149,6 +1164,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     overflow: "hidden",
   },
+  languageSlideImageContainer: { width: "100%", height: "100%" },
   languageSlideImage: { width: "100%", height: "100%", borderRadius: 16 },
   languagePaginationDots: {
     flexDirection: "row",
