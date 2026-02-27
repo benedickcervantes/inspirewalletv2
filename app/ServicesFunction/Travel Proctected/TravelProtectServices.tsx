@@ -22,6 +22,9 @@ import {
 } from "react-native";
 import { useLanguage } from "../../../context/LanguageContext";
 import type { RootStackParamList } from "../../../types/navigation";
+import TravelProtectDetails from "./TravelProtectDetails";
+import TravelProtectFinanInfo from "./TravelProtectFinanInfo";
+import TravelProtectPerDeatails from "./TravelProtectPerDeatails";
 
 const EMPTY_PLACEHOLDER = "__empty__";
 
@@ -29,8 +32,6 @@ const MONTH_KEYS = [
   "banking.january", "banking.february", "banking.march", "banking.april", "banking.may", "banking.june",
   "banking.july", "banking.august", "banking.september", "banking.october", "banking.november", "banking.december",
 ] as const;
-const DAYS = Array.from({ length: 31 }, (_, i) => (i + 1).toString());
-const YEARS = Array.from({ length: 71 }, (_, i) => (2010 - i).toString());
 
 type AlertType = "success" | "error" | "warning" | "info";
 
@@ -203,9 +204,14 @@ export default function TravelProtection() {
 
   // Form fields - Step 4
   const [destinationAddress, setDestinationAddress] = useState("");
-  const [checkInDate, setCheckInDate] = useState(new Date());
-  const [showCheckInPicker, setShowCheckInPicker] = useState(false);
+  const [checkInDate, setCheckInDate] = useState<Date | null>(null);
+  const [showCheckInModal, setShowCheckInModal] = useState(false);
   const [checkInDateText, setCheckInDateText] = useState(EMPTY_PLACEHOLDER);
+  const [tempCheckInDate, setTempCheckInDate] = useState({
+    month: new Date().getMonth(),
+    day: new Date().getDate(),
+    year: new Date().getFullYear(),
+  });
   const [duration, setDuration] = useState("");
   const [airline, setAirline] = useState("");
   const [departureTime, setDepartureTime] = useState(new Date());
@@ -331,20 +337,10 @@ export default function TravelProtection() {
     setDateOfBirthText(formatDateOfBirth(d));
   };
 
-  const onCheckInDateChange = (
-    event: DateTimePickerEvent,
-    selectedDate?: Date
-  ) => {
-    if (Platform.OS === "android") {
-      setShowCheckInPicker(false);
-    }
-    if (event.type === "set" && selectedDate) {
-      setCheckInDate(selectedDate);
-      setCheckInDateText(selectedDate.toLocaleDateString());
-    }
-    if (Platform.OS === "ios" && event.type === "dismissed") {
-      setShowCheckInPicker(false);
-    }
+  const applyCheckInDateFromTemp = (month: number, day: number, year: number) => {
+    const d = new Date(year, month, day);
+    setCheckInDate(d);
+    setCheckInDateText(formatDateOfBirth(d));
   };
 
   const onDepartureTimeChange = (
@@ -634,425 +630,70 @@ export default function TravelProtection() {
 
               {/* Step 2: Personal Details */}
               {currentStep === 2 && (
-                <View style={styles.formCard}>
-                  <View style={styles.formHeader}>
-                    <View style={styles.formIconContainer}>
-                      <MaterialCommunityIcons
-                        name="account-circle"
-                        size={24}
-                        color="#E25A17"
-                      />
-                    </View>
-                    <View>
-                      <Text style={styles.formTitle}>{t("travel.personalDetails")}</Text>
-                      <Text style={styles.formSubtitle}>
-                        {t("travel.personalSubtitle")}
-                      </Text>
-                    </View>
-                  </View>
-
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>
-                      {t("travel.gender")} <Text style={styles.required}>*</Text>
-                    </Text>
-                    <TouchableOpacity
-                      style={styles.dropdown}
-                      onPress={() => setShowGenderDropdown(!showGenderDropdown)}
-                    >
-                      <Text
-                        style={[
-                          styles.dropdownText,
-                          !gender && styles.dropdownPlaceholder,
-                        ]}
-                      >
-                        {gender
-                          ? gender === "Male"
-                            ? t("travel.genderMale")
-                            : gender === "Female"
-                              ? t("travel.genderFemale")
-                              : t("travel.genderOther")
-                          : t("travel.selectGender")}
-                      </Text>
-                      <Ionicons name="chevron-down" size={20} color="#666" />
-                    </TouchableOpacity>
-                    {showGenderDropdown && (
-                      <View style={styles.dropdownMenu}>
-                        {(["Male", "Female", "Other"] as const).map((option) => (
-                          <TouchableOpacity
-                            key={option}
-                            style={styles.dropdownItem}
-                            onPress={() => {
-                              setGender(option);
-                              setShowGenderDropdown(false);
-                            }}
-                          >
-                            <Text style={styles.dropdownItemText}>
-                              {option === "Male"
-                                ? t("travel.genderMale")
-                                : option === "Female"
-                                  ? t("travel.genderFemale")
-                                  : t("travel.genderOther")}
-                            </Text>
-                          </TouchableOpacity>
-                        ))}
-                      </View>
-                    )}
-                  </View>
-
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>
-                      {t("travel.dateOfBirth")} <Text style={styles.required}>*</Text>
-                    </Text>
-                    <TouchableOpacity
-                      style={styles.dropdown}
-                      onPress={() => {
-                        if (dateOfBirth) {
-                          setTempDate({
-                            month: dateOfBirth.getMonth(),
-                            day: dateOfBirth.getDate(),
-                            year: dateOfBirth.getFullYear(),
-                          });
-                        }
-                        setShowDateModal(true);
-                      }}
-                    >
-                      <Text
-                        style={[
-                          styles.dropdownText,
-                          dateOfBirthText === EMPTY_PLACEHOLDER &&
-                            styles.dropdownPlaceholder,
-                        ]}
-                      >
-                        {dateOfBirthText === EMPTY_PLACEHOLDER
-                          ? t("travel.selectBirthdate")
-                          : dateOfBirthText}
-                      </Text>
-                      <Ionicons name="calendar" size={20} color="#666" />
-                    </TouchableOpacity>
-                  </View>
-
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>
-                      {t("travel.civilStatus")} <Text style={styles.required}>*</Text>
-                    </Text>
-                    <TouchableOpacity
-                      style={styles.dropdown}
-                      onPress={() =>
-                        setShowCivilStatusDropdown(!showCivilStatusDropdown)
-                      }
-                    >
-                      <Text style={styles.dropdownText}>
-                        {civilStatus === "Single"
-                          ? t("travel.single")
-                          : civilStatus === "Married"
-                            ? t("travel.married")
-                            : civilStatus === "Divorced"
-                              ? t("travel.divorced")
-                              : t("travel.widowed")}
-                      </Text>
-                      <Ionicons name="chevron-down" size={20} color="#666" />
-                    </TouchableOpacity>
-                    {showCivilStatusDropdown && (
-                      <View style={styles.dropdownMenu}>
-                        {(["Single", "Married", "Divorced", "Widowed"] as const).map(
-                          (option) => (
-                            <TouchableOpacity
-                              key={option}
-                              style={styles.dropdownItem}
-                              onPress={() => {
-                                setCivilStatus(option);
-                                setShowCivilStatusDropdown(false);
-                              }}
-                            >
-                              <Text style={styles.dropdownItemText}>
-                                {option === "Single"
-                                  ? t("travel.single")
-                                  : option === "Married"
-                                    ? t("travel.married")
-                                    : option === "Divorced"
-                                      ? t("travel.divorced")
-                                      : t("travel.widowed")}
-                              </Text>
-                            </TouchableOpacity>
-                          )
-                        )}
-                      </View>
-                    )}
-                  </View>
-
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>
-                      {t("travel.citizenship")} <Text style={styles.required}>*</Text>
-                    </Text>
-                    <TextInput
-                      style={styles.input}
-                      placeholder={t("travel.placeholderCitizenship")}
-                      placeholderTextColor="#999"
-                      value={citizenship}
-                      onChangeText={setCitizenship}
-                    />
-                  </View>
-                </View>
+                <TravelProtectPerDeatails
+                  gender={gender}
+                  setGender={setGender}
+                  dateOfBirth={dateOfBirth}
+                  dateOfBirthText={dateOfBirthText}
+                  showDateModal={showDateModal}
+                  setShowDateModal={setShowDateModal}
+                  tempDate={tempDate}
+                  setTempDate={setTempDate}
+                  civilStatus={civilStatus}
+                  setCivilStatus={setCivilStatus}
+                  citizenship={citizenship}
+                  setCitizenship={setCitizenship}
+                  showGenderDropdown={showGenderDropdown}
+                  setShowGenderDropdown={setShowGenderDropdown}
+                  showCivilStatusDropdown={showCivilStatusDropdown}
+                  setShowCivilStatusDropdown={setShowCivilStatusDropdown}
+                  applyDateFromTemp={applyDateFromTemp}
+                />
               )}
 
               {/* Step 3: Financial Information */}
               {currentStep === 3 && (
-                <View style={styles.formCard}>
-                  <View style={styles.formHeader}>
-                    <View style={styles.formIconContainer}>
-                      <MaterialCommunityIcons
-                        name="cash-multiple"
-                        size={24}
-                        color="#E25A17"
-                      />
-                    </View>
-                    <View>
-                      <Text style={styles.formTitle}>
-                        {t("travel.financialInfo")}
-                      </Text>
-                      <Text style={styles.formSubtitle}>
-                        {t("travel.financialSubtitle")}
-                      </Text>
-                    </View>
-                  </View>
-
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>
-                      {t("travel.sourceOfFund")} <Text style={styles.required}>*</Text>
-                    </Text>
-                    <TextInput
-                      style={styles.input}
-                      placeholder={t("travel.placeholderSourceOfFund")}
-                      placeholderTextColor="#999"
-                      value={sourceOfFund}
-                      onChangeText={setSourceOfFund}
-                    />
-                  </View>
-
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>
-                      {t("travel.grossMonthlyIncome")}{" "}
-                      <Text style={styles.required}>*</Text>
-                    </Text>
-                    <TextInput
-                      style={styles.input}
-                      placeholder="0"
-                      placeholderTextColor="#999"
-                      value={grossMonthlyIncome}
-                      onChangeText={setGrossMonthlyIncome}
-                      keyboardType="numeric"
-                    />
-                  </View>
-
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>
-                      {t("travel.cashOnHand")} <Text style={styles.required}>*</Text>
-                    </Text>
-                    <TextInput
-                      style={styles.input}
-                      placeholder="0"
-                      placeholderTextColor="#999"
-                      value={cashOnHand}
-                      onChangeText={setCashOnHand}
-                      keyboardType="numeric"
-                    />
-                  </View>
-                </View>
+                <TravelProtectFinanInfo
+                  sourceOfFund={sourceOfFund}
+                  setSourceOfFund={setSourceOfFund}
+                  grossMonthlyIncome={grossMonthlyIncome}
+                  setGrossMonthlyIncome={setGrossMonthlyIncome}
+                  cashOnHand={cashOnHand}
+                  setCashOnHand={setCashOnHand}
+                />
               )}
 
               {/* Step 4: Travel Details */}
               {currentStep === 4 && (
-                <View style={styles.formCard}>
-                  <View style={styles.formHeader}>
-                    <View style={styles.formIconContainer}>
-                      <MaterialCommunityIcons
-                        name="airplane-takeoff"
-                        size={24}
-                        color="#E25A17"
-                      />
-                    </View>
-                    <View>
-                      <Text style={styles.formTitle}>{t("travel.travelDetails")}</Text>
-                      <Text style={styles.formSubtitle}>
-                        {t("travel.travelSubtitle")}
-                      </Text>
-                    </View>
-                  </View>
-
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>
-                      {t("travel.destinationAddress")}{" "}
-                      <Text style={styles.required}>*</Text>
-                    </Text>
-                    <TextInput
-                      style={[styles.input, styles.textArea]}
-                      placeholder={t("travel.placeholderDestination")}
-                      placeholderTextColor="#999"
-                      value={destinationAddress}
-                      onChangeText={setDestinationAddress}
-                      multiline
-                      numberOfLines={2}
-                      textAlignVertical="top"
-                    />
-                  </View>
-
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>
-                      {t("travel.checkInDate")} <Text style={styles.required}>*</Text>
-                    </Text>
-                    <TouchableOpacity
-                      style={styles.dropdown}
-                      onPress={() => setShowCheckInPicker(true)}
-                    >
-                      <Text
-                        style={[
-                          styles.dropdownText,
-                          checkInDateText === EMPTY_PLACEHOLDER &&
-                            styles.dropdownPlaceholder,
-                        ]}
-                      >
-                        {checkInDateText === EMPTY_PLACEHOLDER
-                          ? t("travel.selectCheckIn")
-                          : checkInDateText}
-                      </Text>
-                      <Ionicons name="calendar" size={20} color="#666" />
-                    </TouchableOpacity>
-                    {showCheckInPicker && (
-                      <DateTimePicker
-                        value={checkInDate}
-                        mode="date"
-                        display={
-                          Platform.OS === "ios" ? "spinner" : "default"
-                        }
-                        onChange={onCheckInDateChange}
-                        minimumDate={new Date()}
-                      />
-                    )}
-                  </View>
-
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>
-                      {t("travel.durationDays")} <Text style={styles.required}>*</Text>
-                    </Text>
-                    <TextInput
-                      style={styles.input}
-                      placeholder="0"
-                      placeholderTextColor="#999"
-                      value={duration}
-                      onChangeText={setDuration}
-                      keyboardType="numeric"
-                    />
-                  </View>
-
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>
-                      {t("travel.airline")} <Text style={styles.required}>*</Text>
-                    </Text>
-                    <TextInput
-                      style={styles.input}
-                      placeholder={t("travel.placeholderAirline")}
-                      placeholderTextColor="#999"
-                      value={airline}
-                      onChangeText={setAirline}
-                    />
-                  </View>
-
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>
-                      {t("travel.departureTime")} <Text style={styles.required}>*</Text>
-                    </Text>
-                    <TouchableOpacity
-                      style={styles.dropdown}
-                      onPress={() => setShowDepartureTimePicker(true)}
-                    >
-                      <Text
-                        style={[
-                          styles.dropdownText,
-                          departureTimeText === EMPTY_PLACEHOLDER &&
-                            styles.dropdownPlaceholder,
-                        ]}
-                      >
-                        {departureTimeText === EMPTY_PLACEHOLDER
-                          ? t("travel.selectDeparture")
-                          : departureTimeText}
-                      </Text>
-                      <Ionicons name="time" size={20} color="#666" />
-                    </TouchableOpacity>
-                    {showDepartureTimePicker && (
-                      <DateTimePicker
-                        value={departureTime}
-                        mode="time"
-                        display={
-                          Platform.OS === "ios" ? "spinner" : "default"
-                        }
-                        onChange={onDepartureTimeChange}
-                      />
-                    )}
-                  </View>
-
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>
-                      {t("travel.arrivalTime")} <Text style={styles.required}>*</Text>
-                    </Text>
-                    <TouchableOpacity
-                      style={styles.dropdown}
-                      onPress={() => setShowArrivalTimePicker(true)}
-                    >
-                      <Text
-                        style={[
-                          styles.dropdownText,
-                          arrivalTimeText === EMPTY_PLACEHOLDER &&
-                            styles.dropdownPlaceholder,
-                        ]}
-                      >
-                        {arrivalTimeText === EMPTY_PLACEHOLDER
-                          ? t("travel.selectArrival")
-                          : arrivalTimeText}
-                      </Text>
-                      <Ionicons name="time" size={20} color="#666" />
-                    </TouchableOpacity>
-                    {showArrivalTimePicker && (
-                      <DateTimePicker
-                        value={arrivalTime}
-                        mode="time"
-                        display={
-                          Platform.OS === "ios" ? "spinner" : "default"
-                        }
-                        onChange={onArrivalTimeChange}
-                      />
-                    )}
-                  </View>
-
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>
-                      {t("travel.passportNumber")} <Text style={styles.required}>*</Text>
-                    </Text>
-                    <TextInput
-                      style={styles.input}
-                      placeholder={t("travel.placeholderPassport")}
-                      placeholderTextColor="#999"
-                      value={passportNumber}
-                      onChangeText={setPassportNumber}
-                      autoCapitalize="characters"
-                    />
-                  </View>
-
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>
-                      {t("travel.purposeOfTravel")} <Text style={styles.required}>*</Text>
-                    </Text>
-                    <TextInput
-                      style={[styles.input, styles.textArea]}
-                      placeholder={t("travel.placeholderPurpose")}
-                      placeholderTextColor="#999"
-                      value={purposeOfTravel}
-                      onChangeText={setPurposeOfTravel}
-                      multiline
-                      numberOfLines={3}
-                      textAlignVertical="top"
-                    />
-                  </View>
-                </View>
+                <TravelProtectDetails
+                  destinationAddress={destinationAddress}
+                  setDestinationAddress={setDestinationAddress}
+                  checkInDate={checkInDate}
+                  checkInDateText={checkInDateText}
+                  showCheckInModal={showCheckInModal}
+                  setShowCheckInModal={setShowCheckInModal}
+                  tempCheckInDate={tempCheckInDate}
+                  setTempCheckInDate={setTempCheckInDate}
+                  applyCheckInDateFromTemp={applyCheckInDateFromTemp}
+                  duration={duration}
+                  setDuration={setDuration}
+                  airline={airline}
+                  setAirline={setAirline}
+                  departureTime={departureTime}
+                  departureTimeText={departureTimeText}
+                  showDepartureTimePicker={showDepartureTimePicker}
+                  setShowDepartureTimePicker={setShowDepartureTimePicker}
+                  onDepartureTimeChange={onDepartureTimeChange}
+                  arrivalTime={arrivalTime}
+                  arrivalTimeText={arrivalTimeText}
+                  showArrivalTimePicker={showArrivalTimePicker}
+                  setShowArrivalTimePicker={setShowArrivalTimePicker}
+                  onArrivalTimeChange={onArrivalTimeChange}
+                  passportNumber={passportNumber}
+                  setPassportNumber={setPassportNumber}
+                  purposeOfTravel={purposeOfTravel}
+                  setPurposeOfTravel={setPurposeOfTravel}
+                />
               )}
 
               {/* Step 5: Required Documents */}
@@ -1249,95 +890,6 @@ export default function TravelProtection() {
           </>
         )}
       </SafeAreaView>
-
-      {/* Date of Birth Modal */}
-      <Modal
-        visible={showDateModal}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowDateModal(false)}
-      >
-        <View style={styles.dateModalOverlay}>
-          <TouchableOpacity
-            style={styles.dateModalBackdrop}
-            activeOpacity={1}
-            onPress={() => setShowDateModal(false)}
-          />
-          <View style={styles.dateModalContainer}>
-            <View style={styles.dateModalHeader}>
-              <Text style={styles.dateModalTitle}>{t("travel.selectBirthdate")}</Text>
-              <TouchableOpacity onPress={() => setShowDateModal(false)}>
-                <Ionicons name="close" size={24} color="#333" />
-              </TouchableOpacity>
-            </View>
-            <View style={styles.datePickerRow}>
-              <View style={styles.datePickerColumn}>
-                <Text style={styles.datePickerLabel}>{t("banking.month")}</Text>
-                <ScrollView style={styles.dateScroll} showsVerticalScrollIndicator={false}>
-                  {MONTH_KEYS.map((key, i) => (
-                    <TouchableOpacity
-                      key={key}
-                      style={[
-                        styles.dateOption,
-                        tempDate.month === i && styles.dateOptionSelected,
-                      ]}
-                      onPress={() => {
-                        const next = { ...tempDate, month: i };
-                        setTempDate(next);
-                        applyDateFromTemp(next.month, next.day, next.year);
-                      }}
-                    >
-                      <Text style={styles.dateOptionText}>{t(key)}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </View>
-              <View style={styles.datePickerColumn}>
-                <Text style={styles.datePickerLabel}>{t("banking.day")}</Text>
-                <ScrollView style={styles.dateScroll} showsVerticalScrollIndicator={false}>
-                  {DAYS.map((d) => (
-                    <TouchableOpacity
-                      key={d}
-                      style={[
-                        styles.dateOption,
-                        tempDate.day === parseInt(d, 10) && styles.dateOptionSelected,
-                      ]}
-                      onPress={() => {
-                        const next = { ...tempDate, day: parseInt(d, 10) };
-                        setTempDate(next);
-                        applyDateFromTemp(next.month, next.day, next.year);
-                      }}
-                    >
-                      <Text style={styles.dateOptionText}>{d}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </View>
-              <View style={styles.datePickerColumn}>
-                <Text style={styles.datePickerLabel}>{t("banking.year")}</Text>
-                <ScrollView style={styles.dateScroll} showsVerticalScrollIndicator={false}>
-                  {YEARS.map((y) => (
-                    <TouchableOpacity
-                      key={y}
-                      style={[
-                        styles.dateOption,
-                        tempDate.year === parseInt(y, 10) && styles.dateOptionSelected,
-                      ]}
-                      onPress={() => {
-                        const next = { ...tempDate, year: parseInt(y, 10) };
-                        setTempDate(next);
-                        applyDateFromTemp(next.month, next.day, next.year);
-                      }}
-                    >
-                      <Text style={styles.dateOptionText}>{y}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </View>
-            </View>
-          </View>
-        </View>
-      </Modal>
 
       {/* Custom Alert Modal */}
       <CustomAlertModal
@@ -1717,68 +1269,5 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#666",
     lineHeight: 18,
-  },
-  dateModalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    justifyContent: "flex-end",
-  },
-  dateModalBackdrop: {
-    flex: 1,
-  },
-  dateModalContainer: {
-    backgroundColor: "#FFFFFF",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    maxHeight: "70%",
-  },
-  dateModalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: "#E0E0E0",
-  },
-  dateModalTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#333",
-  },
-  datePickerRow: {
-    flexDirection: "row",
-    padding: 16,
-    gap: 12,
-  },
-  datePickerColumn: {
-    flex: 1,
-  },
-  datePickerLabel: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: "#666",
-    marginBottom: 8,
-    textAlign: "center",
-  },
-  dateScroll: {
-    maxHeight: 180,
-  },
-  dateOption: {
-    paddingVertical: 10,
-    paddingHorizontal: 8,
-    borderRadius: 8,
-    marginBottom: 4,
-    alignItems: "center",
-    backgroundColor: "#F9F9F9",
-  },
-  dateOptionSelected: {
-    backgroundColor: "rgba(226, 90, 23, 0.12)",
-    borderWidth: 1,
-    borderColor: "rgba(226, 90, 23, 0.3)",
-  },
-  dateOptionText: {
-    fontSize: 14,
-    color: "#333",
-    fontWeight: "500",
   },
 });

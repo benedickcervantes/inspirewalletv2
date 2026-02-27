@@ -22,8 +22,8 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { getMe, updateProfile } from "../configs/api";
 import { auth, firestore } from "../configs/firebase";
-import { useLanguage } from "../context/LanguageContext";
 import { DEFAULT_LANGUAGE, normalizeLanguage, SUPPORTED_LANGUAGES } from "../constants/locales";
+import { useLanguage } from "../context/LanguageContext";
 
 const THEME_COLOR = "#E15816";
 const USER_PREFERRED_LANGUAGE_KEY = "user_preferred_language";
