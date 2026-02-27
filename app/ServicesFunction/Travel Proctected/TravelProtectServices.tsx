@@ -1,7 +1,4 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import DateTimePicker, {
-  type DateTimePickerEvent,
-} from "@react-native-community/datetimepicker";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import * as ImagePicker from "expo-image-picker";
@@ -9,6 +6,8 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useState } from "react";
 import {
   ActivityIndicator,
+  Keyboard,
+  KeyboardAvoidingView,
   Modal,
   Platform,
   SafeAreaView,
@@ -22,9 +21,12 @@ import {
 } from "react-native";
 import { useLanguage } from "../../../context/LanguageContext";
 import type { RootStackParamList } from "../../../types/navigation";
+import { useResponsive } from "../../../utils/responsive";
 import TravelProtectDetails from "./TravelProtectDetails";
 import TravelProtectFinanInfo from "./TravelProtectFinanInfo";
 import TravelProtectPerDeatails from "./TravelProtectPerDeatails";
+import TravelProtectReviewSubmit from "./TravelProtectReview&Submit";
+import TravelRequiredDocu from "./TravelRequiredDocu";
 
 const EMPTY_PLACEHOLDER = "__empty__";
 
@@ -174,6 +176,7 @@ interface AlertConfig {
 
 export default function TravelProtection() {
   const { t } = useLanguage();
+  const { scale, verticalScale, horizontalPadding } = useResponsive();
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList, "Travel">>();
 
@@ -217,9 +220,17 @@ export default function TravelProtection() {
   const [departureTime, setDepartureTime] = useState(new Date());
   const [showDepartureTimePicker, setShowDepartureTimePicker] = useState(false);
   const [departureTimeText, setDepartureTimeText] = useState(EMPTY_PLACEHOLDER);
+  const [tempDepartureTime, setTempDepartureTime] = useState({
+    hour: new Date().getHours(),
+    minute: new Date().getMinutes(),
+  });
   const [arrivalTime, setArrivalTime] = useState(new Date());
   const [showArrivalTimePicker, setShowArrivalTimePicker] = useState(false);
   const [arrivalTimeText, setArrivalTimeText] = useState(EMPTY_PLACEHOLDER);
+  const [tempArrivalTime, setTempArrivalTime] = useState({
+    hour: new Date().getHours(),
+    minute: new Date().getMinutes(),
+  });
   const [passportNumber, setPassportNumber] = useState("");
   const [purposeOfTravel, setPurposeOfTravel] = useState("");
 
@@ -343,46 +354,22 @@ export default function TravelProtection() {
     setCheckInDateText(formatDateOfBirth(d));
   };
 
-  const onDepartureTimeChange = (
-    event: DateTimePickerEvent,
-    selectedTime?: Date
-  ) => {
-    if (Platform.OS === "android") {
-      setShowDepartureTimePicker(false);
-    }
-    if (event.type === "set" && selectedTime) {
-      setDepartureTime(selectedTime);
-      setDepartureTimeText(
-        selectedTime.toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        })
-      );
-    }
-    if (Platform.OS === "ios" && event.type === "dismissed") {
-      setShowDepartureTimePicker(false);
-    }
+  const applyDepartureTimeFromTemp = (hour: number, minute: number) => {
+    const d = new Date();
+    d.setHours(hour, minute, 0, 0);
+    setDepartureTime(d);
+    setDepartureTimeText(
+      d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+    );
   };
 
-  const onArrivalTimeChange = (
-    event: DateTimePickerEvent,
-    selectedTime?: Date
-  ) => {
-    if (Platform.OS === "android") {
-      setShowArrivalTimePicker(false);
-    }
-    if (event.type === "set" && selectedTime) {
-      setArrivalTime(selectedTime);
-      setArrivalTimeText(
-        selectedTime.toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        })
-      );
-    }
-    if (Platform.OS === "ios" && event.type === "dismissed") {
-      setShowArrivalTimePicker(false);
-    }
+  const applyArrivalTimeFromTemp = (hour: number, minute: number) => {
+    const d = new Date();
+    d.setHours(hour, minute, 0, 0);
+    setArrivalTime(d);
+    setArrivalTimeText(
+      d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+    );
   };
 
   const pickPassportPhoto = async () => {
@@ -442,79 +429,79 @@ export default function TravelProtection() {
     }
   };
 
-  const renderStepIndicator = () => {
-    return (
-      <View style={styles.stepIndicatorContainer}>
-        {[1, 2, 3, 4, 5, 6].map((step) => (
-          <View
-            key={step}
-            style={[
-              styles.stepDot,
-              currentStep === step && styles.stepDotActive,
-              currentStep > step && styles.stepDotCompleted,
-            ]}
-          >
-            {currentStep > step ? (
-              <Ionicons name="checkmark" size={16} color="#FFFFFF" />
-            ) : (
-              <Text
-                style={[
-                  styles.stepDotText,
-                  currentStep === step && styles.stepDotTextActive,
-                ]}
-              >
-                {step}
-              </Text>
-            )}
-          </View>
-        ))}
-      </View>
-    );
+  const dynamicStyles = {
+    scrollContent: {
+      paddingHorizontal: horizontalPadding,
+      paddingBottom: verticalScale(100),
+    },
+    heroCard: { padding: scale(24), marginTop: verticalScale(16), marginBottom: verticalScale(16) },
+    heroIconContainer: { width: scale(80), height: scale(80), marginBottom: verticalScale(16) },
+    heroTitle: { fontSize: scale(22) },
+    heroSubtitle: { fontSize: scale(14) },
+    infoBanner: { padding: scale(16), marginBottom: verticalScale(16) },
+    feeCard: { padding: scale(20), marginBottom: verticalScale(16) },
+    feeAmount: { fontSize: scale(32) },
+    stepIndicator: { gap: scale(12), marginBottom: verticalScale(24) },
+    stepDot: { width: scale(32), height: scale(32) },
+    formCard: { padding: scale(20) },
+    buttonContainer: {
+      paddingHorizontal: horizontalPadding,
+      paddingVertical: verticalScale(16),
+      paddingBottom: Platform.OS === "ios" ? verticalScale(32) : verticalScale(16),
+    },
   };
 
   return (
     <>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-      <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Ionicons name="arrow-back" size={24} color="#E25A17" />
-          </TouchableOpacity>
-        </View>
-
-        {loading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#E25A17" />
-            <Text style={styles.loadingText}>{t("travel.loading")}</Text>
-          </View>
-        ) : (
-          <>
-            <ScrollView
-              style={styles.scrollView}
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={styles.scrollContent}
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : StatusBar.currentHeight ?? 20}
+      >
+        <SafeAreaView style={styles.container}>
+          <View style={[styles.header, { paddingHorizontal: horizontalPadding }]}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}
             >
+              <Ionicons name="arrow-back" size={scale(24)} color="#E25A17" />
+            </TouchableOpacity>
+          </View>
+
+          {loading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#E25A17" />
+              <Text style={[styles.loadingText, { fontSize: scale(14) }]}>{t("travel.loading")}</Text>
+            </View>
+          ) : (
+            <>
+              <ScrollView
+                style={styles.scrollView}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={[styles.scrollContent, dynamicStyles.scrollContent]}
+                keyboardShouldPersistTaps="handled"
+                keyboardDismissMode="on-drag"
+                onScrollBeginDrag={Keyboard.dismiss}
+              >
               <LinearGradient
                 colors={["#E25A17", "#F28934"]}
-                style={styles.heroCard}
+                style={[styles.heroCard, dynamicStyles.heroCard]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
               >
-                <View style={styles.heroIconContainer}>
+                <View style={[styles.heroIconContainer, dynamicStyles.heroIconContainer]}>
                   <MaterialCommunityIcons
                     name="airplane"
-                    size={40}
+                    size={scale(40)}
                     color="#FFFFFF"
                   />
                 </View>
-                <Text style={styles.heroTitle}>{t("travel.title")}</Text>
-                <Text style={styles.heroSubtitle}>{t("travel.subtitle")}</Text>
+                <Text style={[styles.heroTitle, dynamicStyles.heroTitle]}>{t("travel.title")}</Text>
+                <Text style={[styles.heroSubtitle, dynamicStyles.heroSubtitle]}>{t("travel.subtitle")}</Text>
               </LinearGradient>
 
-              <View style={styles.infoBanner}>
+              <View style={[styles.infoBanner, dynamicStyles.infoBanner]}>
                 <View style={styles.infoBannerIcon}>
                   <MaterialCommunityIcons
                     name="information"
@@ -529,7 +516,7 @@ export default function TravelProtection() {
                 </Text>
               </View>
 
-              <View style={styles.feeCard}>
+              <View style={[styles.feeCard, dynamicStyles.feeCard]}>
                 <View style={styles.feeHeader}>
                   <MaterialCommunityIcons
                     name="shield-check"
@@ -538,7 +525,7 @@ export default function TravelProtection() {
                   />
                   <Text style={styles.feeLabel}>{t("travel.protectionFee")}</Text>
                 </View>
-                <Text style={styles.feeAmount}>
+                <Text style={[styles.feeAmount, dynamicStyles.feeAmount]}>
                   ₱ {protectionFee.toLocaleString()}
                 </Text>
                 <Text style={styles.feeSubtext}>
@@ -548,11 +535,36 @@ export default function TravelProtection() {
                 </Text>
               </View>
 
-              {renderStepIndicator()}
+              <View style={[styles.stepIndicatorContainer, dynamicStyles.stepIndicator]}>
+                {[1, 2, 3, 4, 5, 6].map((step) => (
+                  <View
+                    key={step}
+                    style={[
+                      styles.stepDot,
+                      dynamicStyles.stepDot,
+                      currentStep === step && styles.stepDotActive,
+                      currentStep > step && styles.stepDotCompleted,
+                    ]}
+                  >
+                    {currentStep > step ? (
+                      <Ionicons name="checkmark" size={scale(16)} color="#FFFFFF" />
+                    ) : (
+                      <Text
+                        style={[
+                          styles.stepDotText,
+                          currentStep === step && styles.stepDotTextActive,
+                        ]}
+                      >
+                        {step}
+                      </Text>
+                    )}
+                  </View>
+                ))}
+              </View>
 
               {/* Step 1: Contact Information */}
               {currentStep === 1 && (
-                <View style={styles.formCard}>
+                <View style={[styles.formCard, dynamicStyles.formCard]}>
                   <View style={styles.formHeader}>
                     <View style={styles.formIconContainer}>
                       <MaterialCommunityIcons
@@ -683,12 +695,16 @@ export default function TravelProtection() {
                   departureTimeText={departureTimeText}
                   showDepartureTimePicker={showDepartureTimePicker}
                   setShowDepartureTimePicker={setShowDepartureTimePicker}
-                  onDepartureTimeChange={onDepartureTimeChange}
+                  tempDepartureTime={tempDepartureTime}
+                  setTempDepartureTime={setTempDepartureTime}
+                  applyDepartureTimeFromTemp={applyDepartureTimeFromTemp}
                   arrivalTime={arrivalTime}
                   arrivalTimeText={arrivalTimeText}
                   showArrivalTimePicker={showArrivalTimePicker}
                   setShowArrivalTimePicker={setShowArrivalTimePicker}
-                  onArrivalTimeChange={onArrivalTimeChange}
+                  tempArrivalTime={tempArrivalTime}
+                  setTempArrivalTime={setTempArrivalTime}
+                  applyArrivalTimeFromTemp={applyArrivalTimeFromTemp}
                   passportNumber={passportNumber}
                   setPassportNumber={setPassportNumber}
                   purposeOfTravel={purposeOfTravel}
@@ -698,179 +714,29 @@ export default function TravelProtection() {
 
               {/* Step 5: Required Documents */}
               {currentStep === 5 && (
-                <View style={styles.formCard}>
-                  <View style={styles.formHeader}>
-                    <View style={styles.formIconContainer}>
-                      <MaterialCommunityIcons
-                        name="file-document"
-                        size={24}
-                        color="#E25A17"
-                      />
-                    </View>
-                    <View>
-                      <Text style={styles.formTitle}>
-                        {t("travel.requiredDocs")}
-                      </Text>
-                      <Text style={styles.formSubtitle}>
-                        {t("travel.requiredDocsSubtitle")}
-                      </Text>
-                    </View>
-                  </View>
-
-                  {/* Passport Photo */}
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>
-                      {t("travel.passportPhoto")} <Text style={styles.required}>*</Text>
-                    </Text>
-                    <TouchableOpacity
-                      style={styles.uploadBox}
-                      onPress={pickPassportPhoto}
-                    >
-                      <MaterialCommunityIcons
-                        name="camera"
-                        size={40}
-                        color={passportPhoto ? "#4CAF50" : "#E25A17"}
-                      />
-                      <Text
-                        style={[
-                          styles.uploadText,
-                          passportPhoto && styles.uploadTextSuccess,
-                        ]}
-                      >
-                        {passportPhoto
-                          ? t("travel.passportUploaded")
-                          : t("travel.uploadPassport")}
-                      </Text>
-                      <Text style={styles.uploadSubtext}>{t("travel.tapToSelectImage")}</Text>
-                    </TouchableOpacity>
-                  </View>
-
-                  {/* Government ID */}
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>
-                      {t("travel.governmentId")} <Text style={styles.required}>*</Text>
-                    </Text>
-                    <TouchableOpacity
-                      style={styles.uploadBox}
-                      onPress={pickGovernmentId}
-                    >
-                      <MaterialCommunityIcons
-                        name="card-account-details"
-                        size={40}
-                        color={governmentId ? "#4CAF50" : "#E25A17"}
-                      />
-                      <Text
-                        style={[
-                          styles.uploadText,
-                          governmentId && styles.uploadTextSuccess,
-                        ]}
-                      >
-                        {governmentId
-                          ? t("travel.governmentIdUploaded")
-                          : t("travel.uploadGovernmentId")}
-                      </Text>
-                      <Text style={styles.uploadSubtext}>
-                        {t("travel.tapToUploadGovId")}
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
+                <TravelRequiredDocu
+                  passportPhoto={passportPhoto}
+                  governmentId={governmentId}
+                  onPickPassportPhoto={pickPassportPhoto}
+                  onPickGovernmentId={pickGovernmentId}
+                />
               )}
 
               {/* Step 6: Review & Submit */}
               {currentStep === 6 && (
-                <View style={styles.formCard}>
-                  <View style={styles.formHeader}>
-                    <View style={styles.formIconContainer}>
-                      <MaterialCommunityIcons
-                        name="clipboard-check"
-                        size={24}
-                        color="#E25A17"
-                      />
-                    </View>
-                    <View>
-                      <Text style={styles.formTitle}>{t("travel.reviewSubmit")}</Text>
-                      <Text style={styles.formSubtitle}>
-                        {t("travel.reviewSubtitle")}
-                      </Text>
-                    </View>
-                  </View>
-
-                  {/* Contact Information Summary */}
-                  <View style={styles.reviewSection}>
-                    <View style={styles.reviewSectionHeader}>
-                      <MaterialCommunityIcons
-                        name="home-account"
-                        size={18}
-                        color="#E25A17"
-                      />
-                      <Text style={styles.reviewSectionTitle}>
-                        {t("travel.reviewContactInfo")}
-                      </Text>
-                    </View>
-                    <View style={styles.reviewItem}>
-                      <Text style={styles.reviewLabel}>{t("travel.labelEmail")}</Text>
-                      <Text style={styles.reviewValue}>{emailAddress}</Text>
-                    </View>
-                    <View style={styles.reviewItem}>
-                      <Text style={styles.reviewLabel}>{t("travel.labelMobile")}</Text>
-                      <Text style={styles.reviewValue}>{mobileNumber}</Text>
-                    </View>
-                    {landlineNumber && (
-                      <View style={styles.reviewItem}>
-                        <Text style={styles.reviewLabel}>{t("travel.labelLandline")}</Text>
-                        <Text style={styles.reviewValue}>{landlineNumber}</Text>
-                      </View>
-                    )}
-                    <View style={styles.reviewItem}>
-                      <Text style={styles.reviewLabel}>{t("travel.labelHomeAddress")}</Text>
-                      <Text style={styles.reviewValue}>{homeAddress}</Text>
-                    </View>
-                  </View>
-
-                  {/* Travel Details Summary */}
-                  <View style={styles.reviewSection}>
-                    <View style={styles.reviewSectionHeader}>
-                      <MaterialCommunityIcons
-                        name="airplane-takeoff"
-                        size={18}
-                        color="#E25A17"
-                      />
-                      <Text style={styles.reviewSectionTitle}>
-                        {t("travel.reviewTravelDetails")}
-                      </Text>
-                    </View>
-                    <View style={styles.reviewItem}>
-                      <Text style={styles.reviewLabel}>
-                        {t("travel.labelDestination")}
-                      </Text>
-                      <Text style={styles.reviewValue}>
-                        {destinationAddress || t("travel.na")}
-                      </Text>
-                    </View>
-                    <View style={styles.reviewItem}>
-                      <Text style={styles.reviewLabel}>{t("travel.labelAirline")}</Text>
-                      <Text style={styles.reviewValue}>{airline || t("travel.na")}</Text>
-                    </View>
-                    <View style={styles.reviewItem}>
-                      <Text style={styles.reviewLabel}>{t("travel.labelPassport")}</Text>
-                      <Text style={styles.reviewValue}>
-                        {passportNumber || t("travel.na")}
-                      </Text>
-                    </View>
-                  </View>
-
-                  {/* Terms & Conditions */}
-                  <View style={styles.termsBox}>
-                    <Text style={styles.termsText}>
-                      {t("travel.termsText")}
-                    </Text>
-                  </View>
-                </View>
+                <TravelProtectReviewSubmit
+                  emailAddress={emailAddress}
+                  mobileNumber={mobileNumber}
+                  landlineNumber={landlineNumber}
+                  homeAddress={homeAddress}
+                  destinationAddress={destinationAddress}
+                  airline={airline}
+                  passportNumber={passportNumber}
+                />
               )}
             </ScrollView>
 
-            <View style={styles.buttonContainer}>
+            <View style={[styles.buttonContainer, dynamicStyles.buttonContainer]}>
               <TouchableOpacity style={styles.backButtonBottom} onPress={handleBack}>
                 <Text style={styles.backButtonText}>{t("travel.back")}</Text>
               </TouchableOpacity>
@@ -889,7 +755,8 @@ export default function TravelProtection() {
             </View>
           </>
         )}
-      </SafeAreaView>
+        </SafeAreaView>
+      </KeyboardAvoidingView>
 
       {/* Custom Alert Modal */}
       <CustomAlertModal
@@ -1201,73 +1068,5 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#FFFFFF",
     letterSpacing: 0.5,
-  },
-  uploadBox: {
-    backgroundColor: "#F8F8F8",
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: "#E0E0E0",
-    borderStyle: "dashed",
-    paddingVertical: 40,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  uploadText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#E25A17",
-    marginTop: 12,
-  },
-  uploadTextSuccess: {
-    color: "#4CAF50",
-  },
-  uploadSubtext: {
-    fontSize: 12,
-    color: "#999",
-    marginTop: 4,
-  },
-  reviewSection: {
-    marginBottom: 20,
-    paddingBottom: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: "#F0F0F0",
-  },
-  reviewSectionHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 16,
-  },
-  reviewSectionTitle: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#E25A17",
-  },
-  reviewItem: {
-    marginBottom: 12,
-  },
-  reviewLabel: {
-    fontSize: 11,
-    fontWeight: "600",
-    color: "#999",
-    marginBottom: 4,
-    letterSpacing: 0.5,
-  },
-  reviewValue: {
-    fontSize: 14,
-    color: "#333",
-    lineHeight: 20,
-  },
-  termsBox: {
-    backgroundColor: "#FFF5F0",
-    borderRadius: 12,
-    padding: 16,
-    borderLeftWidth: 4,
-    borderLeftColor: "#E25A17",
-  },
-  termsText: {
-    fontSize: 12,
-    color: "#666",
-    lineHeight: 18,
   },
 });
