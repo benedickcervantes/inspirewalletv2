@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useEffect, useState } from "react";
 import {
@@ -15,6 +16,7 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
+import { useLanguage } from "../../../context/LanguageContext";
 import { createBeneficiary, getOrCreateMainWallet, submitTransfer } from "../../../configs/api";
 
 const { width } = Dimensions.get("window");
@@ -31,6 +33,7 @@ export const getUserInitials = (name: string) => {
 
 export default function TransferConfirm() {
   const { t } = useLanguage();
+  const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const route = useRoute();
   const params = (route.params || {}) as {
