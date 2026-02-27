@@ -4,17 +4,17 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { LinearGradient } from "expo-linear-gradient";
 import { useState } from "react";
 import {
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    useWindowDimensions,
-    View,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLanguage } from "../../context/LanguageContext";
@@ -64,13 +64,18 @@ export default function KYCAddressInformation() {
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea} edges={["bottom"]}>
         {/* Header */}
-        <View style={[styles.header, { paddingHorizontal: horizontalPadding, paddingTop: safePaddingTop }]}>
+        <LinearGradient
+          colors={["#E15816", "#F48F38"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={[styles.header, { paddingHorizontal: horizontalPadding, paddingTop: safePaddingTop }]}
+        >
           <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-            <Ionicons name="arrow-back" size={24} color={THEME_COLOR} />
+            <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
           </TouchableOpacity>
           <Text style={styles.headerTitle} numberOfLines={1}>{t("kyc.addressInformation")}</Text>
           <View style={styles.headerSpacer} />
-        </View>
+        </LinearGradient>
 
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -82,7 +87,7 @@ export default function KYCAddressInformation() {
               styles.scrollContent,
               {
                 paddingHorizontal: horizontalPadding,
-                paddingTop: 0,
+                paddingTop: 20,
                 paddingBottom: 24 + safePaddingBottom,
               },
             ]}
@@ -236,7 +241,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: 16,
     paddingVertical: 16,
-    backgroundColor: "#FFFFFF",
   },
   backButton: {
     width: 40,
@@ -247,7 +251,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#000000",
+    color: "#FFFFFF",
     flex: 1,
     textAlign: "center",
   },

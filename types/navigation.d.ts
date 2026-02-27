@@ -15,6 +15,7 @@ export type RootStackParamList = {
   Main: undefined;
   Personal: undefined;
   KYCVerification: undefined;
+  KYCcompany: undefined;
   KYCAddressInformation: undefined;
   Notification: undefined;
   Settings: undefined;

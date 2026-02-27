@@ -6,19 +6,19 @@ import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useEffect, useState } from "react";
 import {
-  Alert,
-  Image,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
+    Alert,
+    Image,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    useWindowDimensions,
+    View,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { getMe } from "../../configs/api";
@@ -221,16 +221,21 @@ export default function KYCVerification() {
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea} edges={["bottom"]}>
         {/* Header: fully up — bar extends to top, content below status bar */}
-        <View style={[styles.header, { paddingHorizontal: horizontalPadding, paddingTop: safePaddingTop }]}>
+        <LinearGradient
+          colors={["#E15816", "#F48F38"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={[styles.header, { paddingHorizontal: horizontalPadding, paddingTop: safePaddingTop }]}
+        >
           <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-            <Ionicons name="arrow-back" size={24} color={THEME_COLOR} />
+            <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
           </TouchableOpacity>
           <Text style={styles.headerTitle} numberOfLines={1}>{t("kyc.title")}</Text>
           <View style={styles.headerSpacer} />
-        </View>
+        </LinearGradient>
 
         {/* Progress: 4 horizontal lines (active = current step, completed = steps before) */}
-        <View style={[styles.progressContainer, { paddingHorizontal: horizontalPadding }]}>
+        <View style={[styles.progressContainer, { paddingHorizontal: horizontalPadding, marginBottom: 20 }]}>
           <View style={[styles.progressRow, { gap: Math.round(8 * scale) }]}>
             {[1, 2, 3, 4].map((step) => (
               <View
@@ -254,7 +259,7 @@ export default function KYCVerification() {
               styles.scrollContent,
               {
                 paddingHorizontal: horizontalPadding,
-                paddingTop: 0,
+                paddingTop: 4,
                 paddingBottom: 24 + safePaddingBottom,
               },
             ]}
@@ -1191,7 +1196,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: 16,
     paddingVertical: 16,
-    backgroundColor: "#FFFFFF",
   },
   backButton: {
     width: 40,
@@ -1202,7 +1206,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#000000",
+    color: "#FFFFFF",
     flex: 1,
     textAlign: "center",
   },
@@ -1210,8 +1214,8 @@ const styles = StyleSheet.create({
     width: 40,
   },
   progressContainer: {
-    paddingTop: 12,
-    paddingBottom: 0,
+    paddingTop: 16,
+    paddingBottom: 16,
     paddingHorizontal: 24,
     backgroundColor: "#FFFFFF",
   },

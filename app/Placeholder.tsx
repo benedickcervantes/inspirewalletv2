@@ -5,19 +5,19 @@ import { LinearGradient } from "expo-linear-gradient";
 import { doc, getDoc } from "firebase/firestore";
 import { useCallback, useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
+    ActivityIndicator,
+    Alert,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    useWindowDimensions,
+    View,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { getMe, updateProfile } from "../configs/api";
@@ -47,14 +47,12 @@ export default function Placeholder() {
   const [loading, setLoading] = useState(true);
   const [showNameModal, setShowNameModal] = useState(false);
   const [showPhoneModal, setShowPhoneModal] = useState(false);
-  const [showCompanyModal, setShowCompanyModal] = useState(false);
   const [languageModalVisible, setLanguageModalVisible] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editFirstName, setEditFirstName] = useState("");
   const [editLastName, setEditLastName] = useState("");
   const [editMiddleName, setEditMiddleName] = useState("");
   const [editPhone, setEditPhone] = useState("");
-  const [editCompanyName, setEditCompanyName] = useState("");
   const [passcode, setPasscode] = useState("");
 
   const fetchUserData = useCallback(async () => {
@@ -180,41 +178,7 @@ export default function Placeholder() {
   };
 
   const openCompanyModal = () => {
-    setEditCompanyName(userData?.companyName ?? "");
-    setPasscode("");
-    setShowCompanyModal(true);
-  };
-
-  const handleSaveCompany = async () => {
-    const company = editCompanyName.trim();
-    if (!company) {
-      Alert.alert("Validation", "Company name is required.");
-      return;
-    }
-    const accessToken = await AsyncStorage.getItem("access_token");
-    if (!accessToken) {
-      Alert.alert("Error", "Not authenticated.");
-      return;
-    }
-    setSaving(true);
-    const body: Record<string, string> = { companyName: company };
-    if (hasPasscode) {
-      if (!passcode || !/^\d{4}$/.test(passcode)) {
-        Alert.alert("Passcode Required", "Enter your 4-digit passcode.");
-        setSaving(false);
-        return;
-      }
-      body.passcode = passcode;
-    }
-    const result = await updateProfile(accessToken, body);
-    setSaving(false);
-    if (result.success && result.user) {
-      setUserData(result.user);
-      setShowCompanyModal(false);
-      setPasscode("");
-    } else {
-      Alert.alert("Error", result.error || "Failed to update profile.");
-    }
+    (navigation as any).navigate("KYCcompany");
   };
 
   const fullName = userData?.firstName && userData?.lastName 
@@ -583,65 +547,6 @@ export default function Placeholder() {
             <TouchableOpacity
               style={[styles.saveButton, saving && styles.saveButtonDisabled]}
               onPress={handleSavePhone}
-              disabled={saving}
-            >
-              {saving ? (
-                <ActivityIndicator color="#FFF" />
-              ) : (
-                <Text style={styles.saveButtonText}>Save</Text>
-              )}
-            </TouchableOpacity>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
-
-      {/* Company Edit Modal */}
-      <Modal visible={showCompanyModal} transparent animationType="slide">
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          style={styles.modalOverlay}
-        >
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Edit Company Name</Text>
-              <TouchableOpacity
-                onPress={() => !saving && setShowCompanyModal(false)}
-                disabled={saving}
-              >
-                <Ionicons name="close" size={24} color="#333" />
-              </TouchableOpacity>
-            </View>
-            <View style={styles.modalBody}>
-              <Text style={styles.inputLabel}>Company Name *</Text>
-              <TextInput
-                style={styles.input}
-                value={editCompanyName}
-                onChangeText={setEditCompanyName}
-                placeholder="Company name"
-                placeholderTextColor="#999"
-                editable={!saving}
-                autoCapitalize="words"
-              />
-              {hasPasscode && (
-                <>
-                  <Text style={styles.inputLabel}>Passcode *</Text>
-                  <TextInput
-                    style={styles.input}
-                    value={passcode}
-                    onChangeText={setPasscode}
-                    placeholder="4-digit passcode"
-                    placeholderTextColor="#999"
-                    keyboardType="number-pad"
-                    maxLength={4}
-                    secureTextEntry
-                    editable={!saving}
-                  />
-                </>
-              )}
-            </View>
-            <TouchableOpacity
-              style={[styles.saveButton, saving && styles.saveButtonDisabled]}
-              onPress={handleSaveCompany}
               disabled={saving}
             >
               {saving ? (
