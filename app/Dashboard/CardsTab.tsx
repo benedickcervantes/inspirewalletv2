@@ -120,23 +120,31 @@ export default function CardsTab({
           <View style={styles.cardItem}>
             <View style={styles.cardPreview}>
               <ImageBackground
-                source={require("../../assets/cards/vip/vip2/front.png")}
+                source={require("../../assets/cards/vip/vip7/front.png")}
                 style={styles.cardPreviewImage}
                 imageStyle={styles.cardPreviewImageStyle}
                 resizeMode="cover"
               >
+                <View style={styles.vipBadge}>
+                  <Text style={styles.vipBadgeText}>{t("cards.vip")}</Text>
+                </View>
                 <View style={styles.lockedOverlay}>
-                  <Ionicons name="lock-closed" size={32} color="#FFFFFF" />
+                  <Ionicons name="lock-closed" size={30} color="#E0E0E0" />
                 </View>
               </ImageBackground>
             </View>
-            <Text style={styles.cardItemTitle}>{t("cards.diamondElite")}</Text>
-            <Text style={styles.cardItemSubtitle}>{t("cards.vipUpgrade")}</Text>
-            <TouchableOpacity style={styles.upgradeButton}>
-              <Text style={styles.upgradeButtonText}>{t("cards.upgradeRequired")}</Text>
-            </TouchableOpacity>
-          </View>
 
+            <View style={styles.cardInfo}>
+              <Text style={styles.cardItemTitle}>{t("cards.diamondElite")}</Text>
+              <Text style={styles.cardItemSubtitle}>10M Deposit</Text>
+
+              <TouchableOpacity style={styles.upgradeButton}>
+                <Text style={styles.upgradeButtonText}>
+                  {t("cards.upgradeRequired")}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
           <View style={styles.cardItem}>
             <View style={styles.cardPreview}>
               <ImageBackground
@@ -146,16 +154,20 @@ export default function CardsTab({
                 resizeMode="cover"
               >
                 <View style={styles.vipBadge}>
-                  <Text style={styles.vipBadgeText}>{t("cards.vip")}</Text>
+                  <Text style={styles.vipBadgeText}>10,000</Text>
                 </View>
-                <Text style={styles.cardPreviewTitle}>{t("cards.inspireMembers")}</Text>
               </ImageBackground>
             </View>
-            <Text style={styles.cardItemTitle}>{t("cards.goldElite")}</Text>
-            <Text style={styles.cardItemSubtitle}>{t("cards.emergingMillionaire")}</Text>
-            <TouchableOpacity style={styles.getStartedButton}>
-              <Text style={styles.getStartedButtonText}>{t("cards.getStarted")}</Text>
-            </TouchableOpacity>
+            <View style={styles.cardInfo}>
+              <Text style={styles.cardItemTitle}>{t("cards.goldElite")}</Text>
+              <Text style={styles.cardItemSubtitle}>Monthly Sub</Text>
+
+              <TouchableOpacity style={styles.getStartedButton}>
+                <Text style={styles.getStartedButtonText}>
+                  {t("cards.getStarted")}
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </View>
@@ -173,35 +185,47 @@ export default function CardsTab({
           <View style={styles.cardItem}>
             <View style={styles.cardPreview}>
               <ImageBackground
-                source={require("../../assets/cards/design/cd2/front.png")}
+                source={require("../../assets/cards/vip/vip2/front.png")}
                 style={styles.cardPreviewImage}
                 imageStyle={styles.cardPreviewImageStyle}
                 resizeMode="cover"
               >
-                <View style={styles.vipBadge}>
-                  <Text style={styles.vipBadgeText}>{t("cards.vip")}</Text>
+                <View style={styles.premiumGradientGold}>
+                  <Text style={styles.premiumLabel}>Premium</Text>
                 </View>
               </ImageBackground>
             </View>
-            <Text style={styles.cardItemTitle}>{t("cards.royalCurve")}</Text>
-            <Text style={styles.cardItemSubtitle}>{t("cards.signUpOnly")}</Text>
-          </View>
 
+            <View style={styles.cardInfo}>
+              <Text style={styles.cardItemTitle}>{t("cards.royalCurve")}</Text>
+              <Text style={styles.cardItemSubtitle}>{t("cards.signUpOnly")}</Text>
+
+              <TouchableOpacity style={styles.upgradeButton}>
+                <Text style={styles.upgradeButtonText}>Tap to Buy</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
           <View style={styles.cardItem}>
             <View style={styles.cardPreview}>
               <ImageBackground
-                source={require("../../assets/images/Eecard 2.0.png")}
+                source={require("../../assets/cards/vip/vip2/front.png")} // mali yung kulay black dapat
                 style={styles.cardPreviewImage}
                 imageStyle={styles.cardPreviewImageStyle}
                 resizeMode="cover"
               >
-                <View style={styles.vipBadge}>
-                  <Text style={styles.vipBadgeText}>{t("cards.vip")}</Text>
+                <View style={styles.premiumGradient}>
+                  <Text style={styles.premiumLabel}>Premium</Text>
                 </View>
               </ImageBackground>
             </View>
-            <Text style={styles.cardItemTitle}>{t("cards.orangeElite")}</Text>
-            <Text style={styles.cardItemSubtitle}>{t("cards.signUpOnly")}</Text>
+            <View style={styles.cardInfo}>
+              <Text style={styles.cardItemTitle}>{t("cards.orangeElite")}</Text>
+              <Text style={styles.cardItemSubtitle}>{t("cards.signUpOnly")}</Text>
+
+              <TouchableOpacity style={styles.upgradeButton}>
+                <Text style={styles.upgradeButtonText}>Tap to Buy</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </View>
@@ -360,28 +384,29 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   cardItem: {
-    flex: 1,
+    width: "48%",
     backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    padding: 12,
+    borderRadius: 16,
+    padding: 0,
+    overflow: "hidden",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    elevation: 5,
+},
   cardPreview: {
     width: "100%",
-    aspectRatio: 1.6,
-    marginBottom: 12,
-    borderRadius: 8,
+    aspectRatio: 1.4,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
     overflow: "hidden",
   },
+
   cardPreviewImage: {
-    width: "100%",
-    height: "100%",
-    justifyContent: "space-between",
+    flex: 1,
     padding: 12,
+    justifyContent: "flex-start",
   },
   cardPreviewImageStyle: {
     borderRadius: 8,
@@ -394,15 +419,16 @@ const styles = StyleSheet.create({
   },
   vipBadge: {
     alignSelf: "flex-start",
-    backgroundColor: "#FFD700",
-    paddingHorizontal: 8,
+    backgroundColor: "#F6C344",
+    paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 4,
+    borderRadius: 8,
   },
   vipBadgeText: {
     fontSize: 10,
     fontWeight: "700",
     color: "#333",
+    letterSpacing: 0.5,
   },
   cardPreviewTitle: {
     fontSize: 10,
@@ -422,15 +448,15 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   upgradeButton: {
-    backgroundColor: "#F5F5F5",
-    paddingVertical: 8,
-    borderRadius: 6,
+    backgroundColor: "#EDEDED",
+    paddingVertical: 10,
+    borderRadius: 10,
     alignItems: "center",
   },
   upgradeButtonText: {
     fontSize: 12,
     fontWeight: "600",
-    color: "#999",
+    color: "#777",
   },
   getStartedButton: {
     backgroundColor: "#FFD700",
@@ -504,4 +530,34 @@ const styles = StyleSheet.create({
     color: "#CCC",
     marginTop: 8,
   },
+  cardInfo: {
+  padding: 14,
+  backgroundColor: "#FAFAFA",
+ },
+ overlayGradient: {
+  ...StyleSheet.absoluteFillObject,
+  backgroundColor: "rgba(0,0,0,0.4)",
+  },
+  premiumGradient: {
+  ...StyleSheet.absoluteFillObject,
+  backgroundColor: "rgba(0,0,0,0.08)",
+},
+  premiumGradientGold: {
+  ...StyleSheet.absoluteFillObject,
+  backgroundColor: "rgba(255,165,0,0.15)",
+},
+premiumLabel: {
+  position: "absolute",
+  top: 12,
+  left: 12,
+  fontSize: 11,
+  fontWeight: "700",
+  color: "rgba(0,0,0,0.4)",
+  letterSpacing: 1,
+},
+premiumLogo: {
+  position: "absolute",
+  top: 10,
+  right: 12,
+},
 });
