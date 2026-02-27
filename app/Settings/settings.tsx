@@ -4,15 +4,15 @@ import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useCallback, useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
-  Modal,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Modal,
+    SafeAreaView,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import { getReferralCode, resendVerification, verifyEmail } from '../../configs/api';
 import { useLanguage } from '../../context/LanguageContext';
@@ -82,10 +82,6 @@ const Settings = () => {
 
   /** Sign out: always full sign out and go directly to Welcome (login/register), no Passcode/PIN screen. */
   const handleSignOut = async () => {
-    setSigningOut(true);
-    const loaderStart = Date.now();
-    const MIN_LOADER_MS = 4000;
-
     try {
       await AsyncStorage.multiRemove([
         'access_token',
@@ -96,10 +92,6 @@ const Settings = () => {
         'registrationPasscodePending',
       ]);
     } catch (_) {}
-
-    const elapsed = Date.now() - loaderStart;
-    const remaining = Math.max(0, MIN_LOADER_MS - elapsed);
-    await new Promise((r) => setTimeout(r, remaining));
 
     (navigation as unknown as NavProp).reset({ index: 0, routes: [{ name: 'Welcome' }] });
   };

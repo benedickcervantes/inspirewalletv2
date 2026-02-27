@@ -126,6 +126,9 @@ export default function HistoryScreen() {
   });
   const [customStartDate, setCustomStartDate] = useState<string>("");
   const [customEndDate, setCustomEndDate] = useState<string>("");
+  const [isSelectMode, setIsSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showDeleteOptions, setShowDeleteOptions] = useState(false);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-PH", {
@@ -162,8 +165,8 @@ export default function HistoryScreen() {
       type: "TOP_UP",
       amount: 0,
       description: "Created Account",
-      timestamp: { toDate: () => new Date("2008-02-10T16:30:00") },
-      createdAt: "2008-02-10T16:30:00",
+      timestamp: { toDate: () => new Date("2026-02-01T16:30:00") },
+      createdAt: "2026-02-01T16:30:00",
     },
   ];
 
@@ -182,7 +185,7 @@ export default function HistoryScreen() {
     });
   };
 
-  const allTransactions = transactions.length > 0 ? transactions : defaultTransactions;
+  const allTransactions = transactions.length > 0 ? [...defaultTransactions, ...transactions] : defaultTransactions;
   const displayTransactions = filterTransactionsByDate(allTransactions);
 
   const totalSpent = displayTransactions
@@ -326,11 +329,26 @@ export default function HistoryScreen() {
   }, []);
 
   const handleBack = () => {
-    (navigation as unknown as NavProp).goBack();
+    if (isSelectMode) {
+      setIsSelectMode(false);
+      setSelectedIds(new Set());
+    } else {
+      (navigation as unknown as NavProp).goBack();
+    }
   };
 
   const handleTransactionPress = (tx: Transaction) => {
-    (navigation as unknown as NavProp).navigate("Main");
+    if (isSelectMode) {
+      const newSelected = new Set(selectedIds);
+      if (newSelected.has(tx.id)) {
+        newSelected.delete(tx.id);
+      } else {
+        newSelected.add(tx.id);
+      }
+      setSelectedIds(newSelected);
+    } else {
+      (navigation as unknown as NavProp).navigate("Main");
+    }
   };
 
   const handleLoadMore = () => {
@@ -346,6 +364,34 @@ export default function HistoryScreen() {
         dateRange.end ?? undefined,
       );
     }
+  };
+
+  const handleDeleteClick = () => {
+    setIsSelectMode(!isSelectMode);
+    if (isSelectMode) {
+      setSelectedIds(new Set());
+      setShowDeleteOptions(false);
+    }
+  };
+
+  const handleBulkDelete = () => {
+    if (selectedIds.size === 0) return;
+    setTransactions((prev) =>
+      prev.filter((tx) => !selectedIds.has(tx.id))
+    );
+    setSelectedIds(new Set());
+    setIsSelectMode(false);
+    setShowDeleteOptions(false);
+  };
+
+  const handleKeepSelected = () => {
+    if (selectedIds.size === 0) return;
+    setTransactions((prev) =>
+      prev.filter((tx) => selectedIds.has(tx.id))
+    );
+    setSelectedIds(new Set());
+    setIsSelectMode(false);
+    setShowDeleteOptions(false);
   };
 
   const applyDateFilter = (filterType: string) => {
@@ -400,11 +446,8 @@ export default function HistoryScreen() {
         end.setHours(23, 59, 59, 999);
         break;
       case "month":
-        start = new Date(now);
-        start.setDate(start.getDate() - 30);
-        start.setHours(0, 0, 0, 0);
-        end = new Date(now);
-        end.setHours(23, 59, 59, 999);
+        start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0);
+        end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
         break;
       case "last7days":
         start = new Date(now);
@@ -502,7 +545,8 @@ export default function HistoryScreen() {
               <Ionicons name="filter" size={20} color="#FFF" />
             </TouchableOpacity>
             {showFilterDropdown && (
-              <View style={styles.filterDropdownMenu}>
+              <View style={styles.filterDropdownContainer}>
+                <View style={styles.filterDropdownMenu}>
                 <Text style={styles.filterDropdownTitle}>Filter by Date</Text>
                 <TouchableOpacity
                   style={[
@@ -590,10 +634,11 @@ export default function HistoryScreen() {
                   </Text>
                 </TouchableOpacity>
               </View>
+              </View>
             )}
             <TouchableOpacity
               style={styles.headerIconButton}
-              onPress={() => {}}
+              onPress={handleDeleteClick}
               activeOpacity={0.7}
             >
               <DeleteIcon color="#FFF" size={20} />
@@ -629,6 +674,27 @@ export default function HistoryScreen() {
             {t("history.currentTransactions").toUpperCase()}
           </Text>
 
+          {isSelectMode && (
+            <TouchableOpacity
+              style={styles.selectAllButton}
+              onPress={() => {
+                if (selectedIds.size === displayTransactions.length) {
+                  setSelectedIds(new Set());
+                } else {
+                  const allIds = new Set(displayTransactions.map((tx) => tx.id));
+                  setSelectedIds(allIds);
+                }
+              }}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.selectAllButtonText}>
+                {selectedIds.size === displayTransactions.length
+                  ? "Deselect All"
+                  : "Select All"}
+              </Text>
+            </TouchableOpacity>
+          )}
+
           {loading && transactions.length === 0 ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color="#E15816" />
@@ -638,10 +704,20 @@ export default function HistoryScreen() {
               {displayTransactions.map((tx) => (
                 <TouchableOpacity
                   key={tx.id}
-                  style={styles.transactionItem}
+                  style={[
+                    styles.transactionItem,
+                    selectedIds.has(tx.id) && styles.transactionItemSelected,
+                  ]}
                   onPress={() => handleTransactionPress(tx)}
                   activeOpacity={0.7}
                 >
+                  {isSelectMode && (
+                    <View style={styles.checkbox}>
+                      {selectedIds.has(tx.id) && (
+                        <Ionicons name="checkmark" size={16} color="#E15816"/>
+                      )}
+                    </View>
+                  )}
                   <View style={styles.transactionIcon}>
                     <Ionicons
                       name={
@@ -754,6 +830,88 @@ export default function HistoryScreen() {
             </TouchableOpacity>
           </TouchableOpacity>
         </Modal>
+
+        {isSelectMode && selectedIds.size > 0 && (
+          <Modal
+            visible={showDeleteOptions}
+            transparent
+            animationType="fade"
+            onRequestClose={() => setShowDeleteOptions(false)}
+          >
+            <TouchableOpacity
+              style={styles.modalOverlay}
+              activeOpacity={1}
+              onPress={() => setShowDeleteOptions(false)}
+            >
+              <TouchableOpacity
+                activeOpacity={1}
+                onPress={(e) => e.stopPropagation()}
+              >
+                <View style={[styles.filterModal, { padding: modalPadding }]}>
+                  <Text style={styles.filterModalTitle}>
+                    Delete {selectedIds.size} Transaction{selectedIds.size > 1 ? "s" : ""}?
+                  </Text>
+                  <Text style={styles.deleteModalSubtitle}>
+                    Choose what to do with the selected transactions
+                  </Text>
+                  <View style={styles.deleteOptionsContainer}>
+                    <TouchableOpacity
+                      style={[styles.deleteOptionButton, styles.deleteButton]}
+                      onPress={handleBulkDelete}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.deleteOptionButtonText}>
+                        Delete Selected
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.deleteOptionButton, styles.keepButton]}
+                      onPress={handleKeepSelected}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.keepOptionButtonText}>
+                        Keep Only Selected
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.deleteOptionButton, styles.cancelButton]}
+                      onPress={() => setShowDeleteOptions(false)}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.cancelOptionButtonText}>Cancel</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            </TouchableOpacity>
+          </Modal>
+        )}
+
+        {isSelectMode && selectedIds.size > 0 && (
+          <View style={styles.deleteActionBar}>
+            <Text style={styles.deleteActionBarText}>
+              {selectedIds.size} selected
+            </Text>
+            <View style={styles.actionButtonsContainer}>
+              <TouchableOpacity
+                style={styles.deleteActionButton}
+                onPress={() => {
+                  handleKeepSelected();
+                }}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.remainActionButtonText}>Remain</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.deleteActionButton}
+                onPress={() => setShowDeleteOptions(true)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.deleteActionButtonText}>Delete</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
       </SafeAreaView>
     </>
   );
@@ -823,7 +981,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 5,
-    zIndex: 100,
+    zIndex: 1000,
+    minWidth: 150,
+  },
+  filterDropdownContainer: {
+    position: "relative",
   },
   filterDropdownTitle: {
     fontWeight: "bold",
@@ -989,5 +1151,112 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "600",
     color: "#FFFFFF",
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: "#E15816",
+    marginRight: 12,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  transactionItemSelected: {
+    backgroundColor: "#FFF5F0",
+  },
+  selectAllButton: {
+    alignSelf: "flex-end",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginBottom: 12,
+    backgroundColor: "#FFF5F0",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#E15816",
+  },
+  selectAllButtonText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#E15816",
+  },
+  deleteActionBar: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: "#E15816",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  deleteActionBarText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#FFFFFF",
+  },
+  actionButtonsContainer: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  deleteActionButton: {
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  deleteActionButtonText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#E15816",
+  },
+  remainActionButtonText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#E15816",
+  },
+  deleteModalSubtitle: {
+    fontSize: 14,
+    color: "#687076",
+    marginBottom: 16,
+    textAlign: "center",
+  },
+  deleteOptionsContainer: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: "#F0F0F0",
+    gap: 8,
+  },
+  deleteOptionButton: {
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: "center",
+  },
+  deleteButton: {
+    backgroundColor: "#FF4444",
+  },
+  keepButton: {
+    backgroundColor: "#4CAF50",
+  },
+  cancelButton: {
+    backgroundColor: "#F0F0F0",
+  },
+  deleteOptionButtonText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#FFFFFF",
+  },
+  keepOptionButtonText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#FFFFFF",
+  },
+  cancelOptionButtonText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#687076",
   },
 });

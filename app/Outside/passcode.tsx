@@ -189,7 +189,7 @@ export default function Passcode() {
     if (next.length === 4) {
       setVerifyingPasscode(true);
       const loaderStart = Date.now();
-      const MIN_LOADER_MS = 4000;
+      const MIN_LOADER_MS = 3000;
 
       const accessToken = await AsyncStorage.getItem('access_token');
       if (!accessToken) {
