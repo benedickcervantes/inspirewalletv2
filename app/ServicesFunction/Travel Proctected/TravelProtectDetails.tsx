@@ -1,16 +1,12 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import DateTimePicker, {
-  type DateTimePickerEvent,
-} from "@react-native-community/datetimepicker";
 import {
-  Modal,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    Modal,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { useLanguage } from "../../../context/LanguageContext";
 
@@ -31,6 +27,8 @@ const MONTH_KEYS = [
   "banking.december",
 ] as const;
 const DAYS = Array.from({ length: 31 }, (_, i) => (i + 1).toString());
+const HOURS = Array.from({ length: 24 }, (_, i) => i);
+const MINUTES = Array.from({ length: 60 }, (_, i) => i);
 
 export interface TravelProtectDetailsProps {
   destinationAddress: string;
@@ -50,18 +48,16 @@ export interface TravelProtectDetailsProps {
   departureTimeText: string;
   showDepartureTimePicker: boolean;
   setShowDepartureTimePicker: (value: boolean) => void;
-  onDepartureTimeChange: (
-    event: DateTimePickerEvent,
-    selectedTime?: Date
-  ) => void;
+  tempDepartureTime: { hour: number; minute: number };
+  setTempDepartureTime: (value: { hour: number; minute: number }) => void;
+  applyDepartureTimeFromTemp: (hour: number, minute: number) => void;
   arrivalTime: Date;
   arrivalTimeText: string;
   showArrivalTimePicker: boolean;
   setShowArrivalTimePicker: (value: boolean) => void;
-  onArrivalTimeChange: (
-    event: DateTimePickerEvent,
-    selectedTime?: Date
-  ) => void;
+  tempArrivalTime: { hour: number; minute: number };
+  setTempArrivalTime: (value: { hour: number; minute: number }) => void;
+  applyArrivalTimeFromTemp: (hour: number, minute: number) => void;
   passportNumber: string;
   setPassportNumber: (value: string) => void;
   purposeOfTravel: string;
@@ -86,12 +82,16 @@ export default function TravelProtectDetails({
   departureTimeText,
   showDepartureTimePicker,
   setShowDepartureTimePicker,
-  onDepartureTimeChange,
+  tempDepartureTime,
+  setTempDepartureTime,
+  applyDepartureTimeFromTemp,
   arrivalTime,
   arrivalTimeText,
   showArrivalTimePicker,
   setShowArrivalTimePicker,
-  onArrivalTimeChange,
+  tempArrivalTime,
+  setTempArrivalTime,
+  applyArrivalTimeFromTemp,
   passportNumber,
   setPassportNumber,
   purposeOfTravel,
@@ -206,7 +206,13 @@ export default function TravelProtectDetails({
         </Text>
         <TouchableOpacity
           style={styles.dropdown}
-          onPress={() => setShowDepartureTimePicker(true)}
+          onPress={() => {
+            setTempDepartureTime({
+              hour: departureTime.getHours(),
+              minute: departureTime.getMinutes(),
+            });
+            setShowDepartureTimePicker(true);
+          }}
         >
           <Text
             style={[
@@ -221,14 +227,6 @@ export default function TravelProtectDetails({
           </Text>
           <Ionicons name="time" size={20} color="#666" />
         </TouchableOpacity>
-        {showDepartureTimePicker && (
-          <DateTimePicker
-            value={departureTime}
-            mode="time"
-            display={Platform.OS === "ios" ? "spinner" : "default"}
-            onChange={onDepartureTimeChange}
-          />
-        )}
       </View>
 
       <View style={styles.inputGroup}>
@@ -237,7 +235,13 @@ export default function TravelProtectDetails({
         </Text>
         <TouchableOpacity
           style={styles.dropdown}
-          onPress={() => setShowArrivalTimePicker(true)}
+          onPress={() => {
+            setTempArrivalTime({
+              hour: arrivalTime.getHours(),
+              minute: arrivalTime.getMinutes(),
+            });
+            setShowArrivalTimePicker(true);
+          }}
         >
           <Text
             style={[
@@ -252,14 +256,6 @@ export default function TravelProtectDetails({
           </Text>
           <Ionicons name="time" size={20} color="#666" />
         </TouchableOpacity>
-        {showArrivalTimePicker && (
-          <DateTimePicker
-            value={arrivalTime}
-            mode="time"
-            display={Platform.OS === "ios" ? "spinner" : "default"}
-            onChange={onArrivalTimeChange}
-          />
-        )}
       </View>
 
       <View style={styles.inputGroup}>
@@ -388,6 +384,182 @@ export default function TravelProtectDetails({
                       }}
                     >
                       <Text style={styles.dateOptionText}>{y.toString()}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Departure Time Modal */}
+      <Modal
+        visible={showDepartureTimePicker}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowDepartureTimePicker(false)}
+      >
+        <View style={styles.dateModalOverlay}>
+          <TouchableOpacity
+            style={styles.dateModalBackdrop}
+            activeOpacity={1}
+            onPress={() => setShowDepartureTimePicker(false)}
+          />
+          <View style={styles.dateModalContainer}>
+            <View style={styles.dateModalHeader}>
+              <Text style={styles.dateModalTitle}>
+                {t("travel.selectDeparture")}
+              </Text>
+              <TouchableOpacity onPress={() => setShowDepartureTimePicker(false)}>
+                <Ionicons name="close" size={24} color="#333" />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.datePickerRow}>
+              <View style={styles.datePickerColumn}>
+                <Text style={styles.datePickerLabel}>{t("banking.hour")}</Text>
+                <ScrollView
+                  style={styles.dateScroll}
+                  showsVerticalScrollIndicator={false}
+                >
+                  {HOURS.map((h) => (
+                    <TouchableOpacity
+                      key={h}
+                      style={[
+                        styles.dateOption,
+                        tempDepartureTime.hour === h &&
+                          styles.dateOptionSelected,
+                      ]}
+                      onPress={() => {
+                        const next = {
+                          ...tempDepartureTime,
+                          hour: h,
+                        };
+                        setTempDepartureTime(next);
+                        applyDepartureTimeFromTemp(next.hour, next.minute);
+                      }}
+                    >
+                      <Text style={styles.dateOptionText}>
+                        {h.toString().padStart(2, "0")}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+              <View style={styles.datePickerColumn}>
+                <Text style={styles.datePickerLabel}>{t("banking.minute")}</Text>
+                <ScrollView
+                  style={styles.dateScroll}
+                  showsVerticalScrollIndicator={false}
+                >
+                  {MINUTES.map((m) => (
+                    <TouchableOpacity
+                      key={m}
+                      style={[
+                        styles.dateOption,
+                        tempDepartureTime.minute === m &&
+                          styles.dateOptionSelected,
+                      ]}
+                      onPress={() => {
+                        const next = {
+                          ...tempDepartureTime,
+                          minute: m,
+                        };
+                        setTempDepartureTime(next);
+                        applyDepartureTimeFromTemp(next.hour, next.minute);
+                      }}
+                    >
+                      <Text style={styles.dateOptionText}>
+                        {m.toString().padStart(2, "0")}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Arrival Time Modal */}
+      <Modal
+        visible={showArrivalTimePicker}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowArrivalTimePicker(false)}
+      >
+        <View style={styles.dateModalOverlay}>
+          <TouchableOpacity
+            style={styles.dateModalBackdrop}
+            activeOpacity={1}
+            onPress={() => setShowArrivalTimePicker(false)}
+          />
+          <View style={styles.dateModalContainer}>
+            <View style={styles.dateModalHeader}>
+              <Text style={styles.dateModalTitle}>
+                {t("travel.selectArrival")}
+              </Text>
+              <TouchableOpacity onPress={() => setShowArrivalTimePicker(false)}>
+                <Ionicons name="close" size={24} color="#333" />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.datePickerRow}>
+              <View style={styles.datePickerColumn}>
+                <Text style={styles.datePickerLabel}>{t("banking.hour")}</Text>
+                <ScrollView
+                  style={styles.dateScroll}
+                  showsVerticalScrollIndicator={false}
+                >
+                  {HOURS.map((h) => (
+                    <TouchableOpacity
+                      key={h}
+                      style={[
+                        styles.dateOption,
+                        tempArrivalTime.hour === h &&
+                          styles.dateOptionSelected,
+                      ]}
+                      onPress={() => {
+                        const next = {
+                          ...tempArrivalTime,
+                          hour: h,
+                        };
+                        setTempArrivalTime(next);
+                        applyArrivalTimeFromTemp(next.hour, next.minute);
+                      }}
+                    >
+                      <Text style={styles.dateOptionText}>
+                        {h.toString().padStart(2, "0")}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+              <View style={styles.datePickerColumn}>
+                <Text style={styles.datePickerLabel}>{t("banking.minute")}</Text>
+                <ScrollView
+                  style={styles.dateScroll}
+                  showsVerticalScrollIndicator={false}
+                >
+                  {MINUTES.map((m) => (
+                    <TouchableOpacity
+                      key={m}
+                      style={[
+                        styles.dateOption,
+                        tempArrivalTime.minute === m &&
+                          styles.dateOptionSelected,
+                      ]}
+                      onPress={() => {
+                        const next = {
+                          ...tempArrivalTime,
+                          minute: m,
+                        };
+                        setTempArrivalTime(next);
+                        applyArrivalTimeFromTemp(next.hour, next.minute);
+                      }}
+                    >
+                      <Text style={styles.dateOptionText}>
+                        {m.toString().padStart(2, "0")}
+                      </Text>
                     </TouchableOpacity>
                   ))}
                 </ScrollView>
