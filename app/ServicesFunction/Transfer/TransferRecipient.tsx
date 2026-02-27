@@ -6,7 +6,9 @@ import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Dimensions,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -185,10 +187,20 @@ export default function TransferRecipient() {
         </TouchableOpacity>
       </LinearGradient>
 
+        <KeyboardAvoidingView
+          style={styles.keyboardView}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+        >
         <ScrollView
           style={styles.scrollView}
-          contentContainerStyle={[styles.scrollContent, { paddingHorizontal: horizontalPadding }]}
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingHorizontal: horizontalPadding, paddingBottom: Math.max(insets.bottom, 24) }
+          ]}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
         >
           {/* Quick Actions */}
           <View style={styles.quickActionsContainer}>
@@ -338,6 +350,7 @@ export default function TransferRecipient() {
 
           <View style={styles.bottomPadding} />
         </ScrollView>
+        </KeyboardAvoidingView>
 
         {/* Alert Modal */}
         <Modal
@@ -445,6 +458,9 @@ const styles = StyleSheet.create({
     height: 40,
     justifyContent: "center",
     alignItems: "center",
+  },
+  keyboardView: {
+    flex: 1,
   },
   scrollView: {
     flex: 1,

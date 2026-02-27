@@ -7,7 +7,9 @@ import { useEffect, useState } from "react";
 import {
     ActivityIndicator,
     Dimensions,
+    KeyboardAvoidingView,
     Modal,
+    Platform,
     SafeAreaView,
     ScrollView,
     StyleSheet,
@@ -366,7 +368,11 @@ export default function TransferConfirm() {
           animationType="fade"
           onRequestClose={() => !isProcessing && setShowPasscodeModal(false)}
         >
-          <View style={styles.modalOverlay}>
+          <KeyboardAvoidingView
+            style={styles.modalOverlay}
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            keyboardVerticalOffset={Platform.OS === "ios" ? 40 : 0}
+          >
             <View style={styles.passcodeModalContent}>
               <Text style={styles.passcodeModalTitle}>Enter your passcode</Text>
               <TextInput
@@ -399,7 +405,7 @@ export default function TransferConfirm() {
                 </TouchableOpacity>
               </View>
             </View>
-          </View>
+          </KeyboardAvoidingView>
         </Modal>
 
         {/* Success Modal */}
