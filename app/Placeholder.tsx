@@ -47,12 +47,14 @@ export default function Placeholder() {
   const [loading, setLoading] = useState(true);
   const [showNameModal, setShowNameModal] = useState(false);
   const [showPhoneModal, setShowPhoneModal] = useState(false);
+  const [showCompanyModal, setShowCompanyModal] = useState(false);
   const [languageModalVisible, setLanguageModalVisible] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editFirstName, setEditFirstName] = useState("");
   const [editLastName, setEditLastName] = useState("");
   const [editMiddleName, setEditMiddleName] = useState("");
   const [editPhone, setEditPhone] = useState("");
+  const [editCompanyName, setEditCompanyName] = useState("");
   const [passcode, setPasscode] = useState("");
 
   const fetchUserData = useCallback(async () => {
@@ -177,6 +179,44 @@ export default function Placeholder() {
     setShowPhoneModal(true);
   };
 
+  const openCompanyModal = () => {
+    setEditCompanyName(userData?.companyName ?? "");
+    setPasscode("");
+    setShowCompanyModal(true);
+  };
+
+  const handleSaveCompany = async () => {
+    const company = editCompanyName.trim();
+    if (!company) {
+      Alert.alert("Validation", "Company name is required.");
+      return;
+    }
+    const accessToken = await AsyncStorage.getItem("access_token");
+    if (!accessToken) {
+      Alert.alert("Error", "Not authenticated.");
+      return;
+    }
+    setSaving(true);
+    const body: Record<string, string> = { companyName: company };
+    if (hasPasscode) {
+      if (!passcode || !/^\d{4}$/.test(passcode)) {
+        Alert.alert("Passcode Required", "Enter your 4-digit passcode.");
+        setSaving(false);
+        return;
+      }
+      body.passcode = passcode;
+    }
+    const result = await updateProfile(accessToken, body);
+    setSaving(false);
+    if (result.success && result.user) {
+      setUserData(result.user);
+      setShowCompanyModal(false);
+      setPasscode("");
+    } else {
+      Alert.alert("Error", result.error || "Failed to update profile.");
+    }
+  };
+
   const fullName = userData?.firstName && userData?.lastName 
     ? `${userData.firstName} ${userData.lastName}`
     : userData?.displayName || userData?.name || t("common.user");
@@ -184,8 +224,8 @@ export default function Placeholder() {
   const isAgent = userData?.isAgent || userData?.role === "agent" || false;
   const isPremium = userData?.isPremium || userData?.accountLevel === "premium" || false;
   const accountNumber = userData?.accountNumber || userData?.id || "000053126300";
-  const companyName = userData?.companyName || "Inspire Holdings Inc";
-  const contactNumber = userData?.phone ?? userData?.phoneNumber ?? "+63";
+  const companyName = userData?.companyName || t("Tap to add company name") || "Tap to add company name";
+  const contactNumber = userData?.phone ?? userData?.phoneNumber ?? t("Tap to add phone number") ?? "Tap to add phone number";
   const lineLink = userData?.lineAccountLink ?? userData?.lineLink ?? t("common.notProvided");
   const viberLink = userData?.viberLink || t("common.notProvided");
   const whatsappLink = userData?.whatsappLink || t("common.notProvided");
@@ -318,6 +358,8 @@ export default function Placeholder() {
             label={t("profile.companyName")}
             value={companyName}
             editable
+            onEdit={openCompanyModal}
+            isPlaceholder={!userData?.companyName}
           />
           <DetailItem
             icon="call-outline"
@@ -325,6 +367,7 @@ export default function Placeholder() {
             value={contactNumber}
             editable
             onEdit={openPhoneModal}
+            isPlaceholder={!userData?.phone && !userData?.phoneNumber}
           />
           <DetailItem
             icon="link-outline"
@@ -510,11 +553,12 @@ export default function Placeholder() {
             </View>
             <View style={styles.modalBody}>
               <Text style={styles.inputLabel}>Contact Number *</Text>
+              <Text style={styles.inputHint}>Include country code (e.g., +1, +81, +82, +966, +63)</Text>
               <TextInput
                 style={styles.input}
                 value={editPhone}
                 onChangeText={setEditPhone}
-                placeholder="+63..."
+                placeholder="+1234567890"
                 placeholderTextColor="#999"
                 keyboardType="phone-pad"
                 editable={!saving}
@@ -539,6 +583,65 @@ export default function Placeholder() {
             <TouchableOpacity
               style={[styles.saveButton, saving && styles.saveButtonDisabled]}
               onPress={handleSavePhone}
+              disabled={saving}
+            >
+              {saving ? (
+                <ActivityIndicator color="#FFF" />
+              ) : (
+                <Text style={styles.saveButtonText}>Save</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* Company Edit Modal */}
+      <Modal visible={showCompanyModal} transparent animationType="slide">
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.modalOverlay}
+        >
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Edit Company Name</Text>
+              <TouchableOpacity
+                onPress={() => !saving && setShowCompanyModal(false)}
+                disabled={saving}
+              >
+                <Ionicons name="close" size={24} color="#333" />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.modalBody}>
+              <Text style={styles.inputLabel}>Company Name *</Text>
+              <TextInput
+                style={styles.input}
+                value={editCompanyName}
+                onChangeText={setEditCompanyName}
+                placeholder="Company name"
+                placeholderTextColor="#999"
+                editable={!saving}
+                autoCapitalize="words"
+              />
+              {hasPasscode && (
+                <>
+                  <Text style={styles.inputLabel}>Passcode *</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={passcode}
+                    onChangeText={setPasscode}
+                    placeholder="4-digit passcode"
+                    placeholderTextColor="#999"
+                    keyboardType="number-pad"
+                    maxLength={4}
+                    secureTextEntry
+                    editable={!saving}
+                  />
+                </>
+              )}
+            </View>
+            <TouchableOpacity
+              style={[styles.saveButton, saving && styles.saveButtonDisabled]}
+              onPress={handleSaveCompany}
               disabled={saving}
             >
               {saving ? (
@@ -636,6 +739,7 @@ interface DetailItemProps {
   onVerifyPress?: () => void;
   verifyButtonLabel?: string;
   onEdit?: () => void;
+  isPlaceholder?: boolean;
 }
 
 function DetailItem({
@@ -651,6 +755,7 @@ function DetailItem({
   showVerifyButton,
   onVerifyPress,
   verifyButtonLabel = "Verify",
+  isPlaceholder = false,
 }: DetailItemProps) {
   const onEditHandler = onEditPress ?? onEdit;
   const handlePress = editable && onEditHandler ? onEditHandler : undefined;
@@ -661,7 +766,7 @@ function DetailItem({
         <Text style={styles.detailLabel}>{label}</Text>
       </View>
       <View style={styles.detailValueContainer}>
-        <Text style={styles.detailValue}>{value}</Text>
+        <Text style={isPlaceholder ? styles.detailValuePlaceholder : styles.detailValue}>{value}</Text>
         {badge && (
           <View style={[styles.badge, { backgroundColor: badgeColor }]}>
             <Text style={styles.badgeTextSmall}>{badge}</Text>
@@ -856,6 +961,13 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     color: "#333",
     flex: 1,
+  },
+  detailValuePlaceholder: {
+    fontSize: 15,
+    fontWeight: "500",
+    color: "#999",
+    flex: 1,
+    fontStyle: "italic",
   },
   badge: {
     flexDirection: "row",
@@ -1053,6 +1165,12 @@ const styles = StyleSheet.create({
     color: "#333",
     marginBottom: 8,
     marginTop: 12,
+  },
+  inputHint: {
+    fontSize: 12,
+    color: "#666",
+    marginBottom: 8,
+    fontStyle: "italic",
   },
   input: {
     borderWidth: 2,
