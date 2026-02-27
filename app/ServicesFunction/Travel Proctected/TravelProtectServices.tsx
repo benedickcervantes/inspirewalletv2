@@ -3,13 +3,13 @@ import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   ActivityIndicator,
   Keyboard,
-  KeyboardAvoidingView,
   Modal,
   Platform,
+  Pressable,
   SafeAreaView,
   ScrollView,
   StatusBar,
@@ -17,8 +17,9 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useLanguage } from "../../../context/LanguageContext";
 import type { RootStackParamList } from "../../../types/navigation";
 import { useResponsive } from "../../../utils/responsive";
@@ -185,11 +186,33 @@ export default function TravelProtection() {
   const [protectionFee, setProtectionFee] = useState(1250);
   const [userTimeDeposit, setUserTimeDeposit] = useState(0);
 
+  // Text input refs for Step 1
+  const emailRef = useRef<TextInput>(null);
+  const mobileRef = useRef<TextInput>(null);
+  const landlineRef = useRef<TextInput>(null);
+  const homeAddressRef = useRef<TextInput>(null);
+
   // Form fields - Step 1
   const [emailAddress, setEmailAddress] = useState("");
   const [mobileNumber, setMobileNumber] = useState("");
   const [landlineNumber, setLandlineNumber] = useState("");
   const [homeAddress, setHomeAddress] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [mobileError, setMobileError] = useState("");
+  const [landlineError, setLandlineError] = useState("");
+  const [selectedCountry, setSelectedCountry] = useState({ code: "PH", flag: "🇵🇭", dialCode: "+63", name: "Philippines", example: "9171234567" });
+  const [showCountryDropdown, setShowCountryDropdown] = useState(false);
+
+  const countries = [
+      { code: "PH", flag: "🇵🇭", dialCode: "+63", name: "Philippines", example: "9171234567" },
+      { code: "US", flag: "🇺🇸", dialCode: "+1", name: "United States", example: "2025551234" },
+      { code: "KR", flag: "🇰🇷", dialCode: "+82", name: "South Korea", example: "1012345678" },
+      { code: "SA", flag: "🇸🇦", dialCode: "+966", name: "Saudi Arabia", example: "501234567" },
+      { code: "JP", flag: "🇯🇵", dialCode: "+81", name: "Japan", example: "9012345678" },
+      { code: "CN", flag: "🇨🇳", dialCode: "+86", name: "China", example: "13912345678" },
+      { code: "MY", flag: "🇲🇾", dialCode: "+60", name: "Malaysia", example: "123456789" },
+      { code: "VN", flag: "🇻🇳", dialCode: "+84", name: "Vietnam", example: "912345678" },
+    ];
 
   // Form fields - Step 2 (store internal values for dropdowns; display via t())
   const [gender, setGender] = useState("");
@@ -265,12 +288,41 @@ export default function TravelProtection() {
     setAlertVisible(true);
   };
 
+  const validateEmail = (email: string): boolean => {
+    return email.includes("@");
+  };
+
+  const validateMobileNumber = (mobile: string): boolean => {
+    const digitsOnly = mobile.replace(/\D/g, "");
+    return digitsOnly.length >= 10 && digitsOnly.length <= 11;
+  };
+
+  const validateLandlineNumber = (landline: string): boolean => {
+    const digitsOnly = landline.replace(/\D/g, "");
+    return digitsOnly.length === 8;
+  };
+
   const handleNext = () => {
     if (currentStep === 1) {
       if (!emailAddress || !mobileNumber || !homeAddress) {
         showAlert(t("travel.requiredFields"), t("travel.fillRequired"), "error");
         return;
       }
+      if (!validateEmail(emailAddress)) {
+        setEmailError(t("Please Enter Valid Email") || "Invalid email");
+        return;
+      }
+      if (!validateMobileNumber(mobileNumber)) {
+        setMobileError(t("Please Enter Valid Number") || "Mobile must be 10-11 digits");
+        return;
+      }
+      if (landlineNumber && !validateLandlineNumber(landlineNumber)) {
+        setLandlineError(t("Please Enter Valid Landline Number") || "Landline must be 8 digits");
+        return;
+      }
+      setEmailError("");
+      setMobileError("");
+      setLandlineError("");
       setCurrentStep(2);
     } else if (currentStep === 2) {
       if (
@@ -432,7 +484,7 @@ export default function TravelProtection() {
   const dynamicStyles = {
     scrollContent: {
       paddingHorizontal: horizontalPadding,
-      paddingBottom: verticalScale(100),
+      paddingBottom: verticalScale(20),
     },
     heroCard: { padding: scale(24), marginTop: verticalScale(16), marginBottom: verticalScale(16) },
     heroIconContainer: { width: scale(80), height: scale(80), marginBottom: verticalScale(16) },
@@ -454,12 +506,17 @@ export default function TravelProtection() {
   return (
     <>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-      <KeyboardAvoidingView
-        style={styles.container}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : StatusBar.currentHeight ?? 20}
-      >
-        <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.container}>
+        <KeyboardAwareScrollView
+          style={styles.container}
+          contentContainerStyle={[styles.scrollContent, dynamicStyles.scrollContent]}
+          enableOnAndroid={true}
+          enableAutomaticScroll={true}
+          extraScrollHeight={150}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <Pressable onPress={Keyboard.dismiss}>
           <View style={[styles.header, { paddingHorizontal: horizontalPadding }]}>
             <TouchableOpacity
               style={styles.backButton}
@@ -476,14 +533,6 @@ export default function TravelProtection() {
             </View>
           ) : (
             <>
-              <ScrollView
-                style={styles.scrollView}
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={[styles.scrollContent, dynamicStyles.scrollContent]}
-                keyboardShouldPersistTaps="handled"
-                keyboardDismissMode="on-drag"
-                onScrollBeginDrag={Keyboard.dismiss}
-              >
               <LinearGradient
                 colors={["#E25A17", "#F28934"]}
                 style={[styles.heroCard, dynamicStyles.heroCard]}
@@ -586,40 +635,112 @@ export default function TravelProtection() {
                       {t("travel.emailAddress")} <Text style={styles.required}>*</Text>
                     </Text>
                     <TextInput
-                      style={styles.input}
+                      ref={emailRef}
+                      style={[
+                        styles.input,
+                        emailError && styles.inputError
+                      ]}
                       placeholder={t("travel.placeholderEmail")}
                       placeholderTextColor="#999"
                       value={emailAddress}
-                      onChangeText={setEmailAddress}
+                      onChangeText={(text) => {
+                        setEmailAddress(text);
+                        if (emailError) setEmailError("");
+                      }}
                       keyboardType="email-address"
                       autoCapitalize="none"
+                      returnKeyType="next"
+                      onSubmitEditing={() => mobileRef.current?.focus()}
                     />
+                    {emailError && (
+                      <Text style={styles.errorMessage}>{emailError}</Text>
+                    )}
                   </View>
 
                   <View style={styles.inputGroup}>
                     <Text style={styles.inputLabel}>
                       {t("travel.mobileNumber")} <Text style={styles.required}>*</Text>
                     </Text>
-                    <TextInput
-                      style={styles.input}
-                      placeholder={t("travel.placeholderMobile")}
-                      placeholderTextColor="#999"
-                      value={mobileNumber}
-                      onChangeText={setMobileNumber}
-                      keyboardType="phone-pad"
-                    />
+                    <View style={styles.mobileInputContainer}>
+                      <TouchableOpacity
+                        style={styles.countryDropdown}
+                        onPress={() => setShowCountryDropdown(!showCountryDropdown)}
+                      >
+                        <Text style={styles.countryFlag}>{selectedCountry.flag}</Text>
+                        <Text style={styles.countryCode}>{selectedCountry.dialCode}</Text>
+                        <Ionicons name="chevron-down" size={16} color="#666" />
+                      </TouchableOpacity>
+                      <TextInput
+                        ref={mobileRef}
+                        style={[
+                          styles.mobileInput,
+                          mobileError && styles.inputError
+                        ]}
+                        placeholder={selectedCountry.example}
+                        placeholderTextColor="#999"
+                        value={mobileNumber}
+                        onChangeText={(text) => {
+                          const digitsOnly = text.replace(/\D/g, "");
+                          if (digitsOnly.length <= 11) {
+                            setMobileNumber(digitsOnly);
+                            if (mobileError) setMobileError("");
+                          }
+                        }}
+                        keyboardType="phone-pad"
+                        returnKeyType="next"
+                        onSubmitEditing={() => landlineRef.current?.focus()}
+                        maxLength={11}
+                      />
+                    </View>
+                    {showCountryDropdown && (
+                      <ScrollView style={styles.dropdownMenu} scrollEnabled={true} nestedScrollEnabled={true}>
+                        {countries.map((country) => (
+                          <TouchableOpacity
+                            key={country.code}
+                            style={styles.dropdownItem}
+                            onPress={() => {
+                              setSelectedCountry(country);
+                              setShowCountryDropdown(false);
+                            }}
+                          >
+                            <Text style={styles.dropdownItemContent}>
+                              {country.flag} {country.dialCode} {country.name}
+                            </Text>
+                          </TouchableOpacity>
+                        ))}
+                      </ScrollView>
+                    )}
+                    {mobileError && (
+                      <Text style={styles.errorMessage}>{mobileError}</Text>
+                    )}
                   </View>
 
                   <View style={styles.inputGroup}>
                     <Text style={styles.inputLabel}>{t("travel.landlineNumber")}</Text>
                     <TextInput
-                      style={styles.input}
+                      ref={landlineRef}
+                      style={[
+                        styles.input,
+                        landlineError && styles.inputError
+                      ]}
                       placeholder={t("travel.placeholderLandline")}
                       placeholderTextColor="#999"
                       value={landlineNumber}
-                      onChangeText={setLandlineNumber}
+                      onChangeText={(text) => {
+                        const digitsOnly = text.replace(/\D/g, "");
+                        if (digitsOnly.length <= 8) {
+                          setLandlineNumber(digitsOnly);
+                          if (landlineError) setLandlineError("");
+                        }
+                      }}
                       keyboardType="phone-pad"
+                      returnKeyType="next"
+                      onSubmitEditing={() => homeAddressRef.current?.focus()}
+                      maxLength={8}
                     />
+                    {landlineError && (
+                      <Text style={styles.errorMessage}>{landlineError}</Text>
+                    )}
                   </View>
 
                   <View style={styles.inputGroup}>
@@ -627,6 +748,7 @@ export default function TravelProtection() {
                       {t("travel.homeAddress")} <Text style={styles.required}>*</Text>
                     </Text>
                     <TextInput
+                      ref={homeAddressRef}
                       style={[styles.input, styles.textArea]}
                       placeholder={t("travel.placeholderHomeAddress")}
                       placeholderTextColor="#999"
@@ -635,6 +757,8 @@ export default function TravelProtection() {
                       multiline
                       numberOfLines={3}
                       textAlignVertical="top"
+                      returnKeyType="done"
+                      onSubmitEditing={Keyboard.dismiss}
                     />
                   </View>
                 </View>
@@ -682,29 +806,23 @@ export default function TravelProtection() {
                   setDestinationAddress={setDestinationAddress}
                   checkInDate={checkInDate}
                   checkInDateText={checkInDateText}
-                  showCheckInModal={showCheckInModal}
                   setShowCheckInModal={setShowCheckInModal}
                   tempCheckInDate={tempCheckInDate}
                   setTempCheckInDate={setTempCheckInDate}
-                  applyCheckInDateFromTemp={applyCheckInDateFromTemp}
                   duration={duration}
                   setDuration={setDuration}
                   airline={airline}
                   setAirline={setAirline}
                   departureTime={departureTime}
                   departureTimeText={departureTimeText}
-                  showDepartureTimePicker={showDepartureTimePicker}
                   setShowDepartureTimePicker={setShowDepartureTimePicker}
                   tempDepartureTime={tempDepartureTime}
                   setTempDepartureTime={setTempDepartureTime}
-                  applyDepartureTimeFromTemp={applyDepartureTimeFromTemp}
                   arrivalTime={arrivalTime}
                   arrivalTimeText={arrivalTimeText}
-                  showArrivalTimePicker={showArrivalTimePicker}
                   setShowArrivalTimePicker={setShowArrivalTimePicker}
                   tempArrivalTime={tempArrivalTime}
                   setTempArrivalTime={setTempArrivalTime}
-                  applyArrivalTimeFromTemp={applyArrivalTimeFromTemp}
                   passportNumber={passportNumber}
                   setPassportNumber={setPassportNumber}
                   purposeOfTravel={purposeOfTravel}
@@ -734,8 +852,9 @@ export default function TravelProtection() {
                   passportNumber={passportNumber}
                 />
               )}
-            </ScrollView>
-
+            </>
+          )}
+            
             <View style={[styles.buttonContainer, dynamicStyles.buttonContainer]}>
               <TouchableOpacity style={styles.backButtonBottom} onPress={handleBack}>
                 <Text style={styles.backButtonText}>{t("travel.back")}</Text>
@@ -753,10 +872,9 @@ export default function TravelProtection() {
                 </LinearGradient>
               </TouchableOpacity>
             </View>
-          </>
-        )}
-        </SafeAreaView>
-      </KeyboardAvoidingView>
+          </Pressable>
+        </KeyboardAwareScrollView>
+      </SafeAreaView>
 
       {/* Custom Alert Modal */}
       <CustomAlertModal
@@ -801,7 +919,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 20,
-    paddingBottom: 100,
+    paddingBottom: 20,
   },
   heroCard: {
     borderRadius: 20,
@@ -977,6 +1095,53 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#E0E0E0",
   },
+  inputError: {
+    borderColor: "#E25A17",
+    borderWidth: 2,
+  },
+  errorMessage: {
+    fontSize: 12,
+    color: "#E25A17",
+    marginTop: 6,
+    fontWeight: "500",
+  },
+  mobileInputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  countryDropdown: {
+    backgroundColor: "#F8F8F8",
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+  },
+  countryFlag: {
+    fontSize: 20,
+    lineHeight: 20,
+  },
+  countryCode: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#333",
+  },
+  mobileInput: {
+    flex: 1,
+    backgroundColor: "#F8F8F8",
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 14,
+    color: "#333",
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+  },
   textArea: {
     height: 80,
     paddingTop: 14,
@@ -1010,6 +1175,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    maxHeight: 250,
   },
   dropdownItem: {
     paddingHorizontal: 16,
@@ -1021,14 +1187,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#333",
   },
+  dropdownItemContent: {
+    fontSize: 14,
+    color: "#333",
+    fontWeight: "500",
+  },
   buttonContainer: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: "#FFFFFF",
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    position: "relative",
+    backgroundColor: "transparent",
+    paddingHorizontal: 0,
+    paddingVertical: 0,
     borderTopWidth: 1,
     borderTopColor: "#E0E0E0",
     flexDirection: "row",
@@ -1042,6 +1210,11 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     alignItems: "center",
     justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   backButtonText: {
     fontSize: 16,
@@ -1052,7 +1225,7 @@ const styles = StyleSheet.create({
   nextButton: {
     flex: 1,
     borderRadius: 12,
-    overflow: "hidden",
+    overflow: "visible",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
@@ -1062,6 +1235,12 @@ const styles = StyleSheet.create({
   nextButtonGradient: {
     paddingVertical: 16,
     alignItems: "center",
+    borderRadius: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   nextButtonText: {
     fontSize: 16,
