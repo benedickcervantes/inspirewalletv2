@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useEffect, useState } from "react";
@@ -11,7 +12,6 @@ import {
   StatusBar,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   useWindowDimensions,
   View
@@ -126,6 +126,10 @@ export default function HistoryScreen() {
   });
   const [customStartDate, setCustomStartDate] = useState<string>("");
   const [customEndDate, setCustomEndDate] = useState<string>("");
+  const [showStartDatePicker, setShowStartDatePicker] = useState(false);
+  const [showEndDatePicker, setShowEndDatePicker] = useState(false);
+  const [tempStartDate, setTempStartDate] = useState<Date>(new Date());
+  const [tempEndDate, setTempEndDate] = useState<Date>(new Date());
   const [isSelectMode, setIsSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [showDeleteOptions, setShowDeleteOptions] = useState(false);
@@ -504,6 +508,34 @@ export default function HistoryScreen() {
     fetchTransactions(false, 0, start, end);
   };
 
+  const handleStartDateChange = (event: any, selectedDate?: Date) => {
+    if (Platform.OS === "android") {
+      setShowStartDatePicker(false);
+    }
+    if (selectedDate) {
+      setTempStartDate(selectedDate);
+      const formattedDate = selectedDate.toISOString().split("T")[0];
+      setCustomStartDate(formattedDate);
+      if (Platform.OS === "android") {
+        setShowStartDatePicker(false);
+      }
+    }
+  };
+
+  const handleEndDateChange = (event: any, selectedDate?: Date) => {
+    if (Platform.OS === "android") {
+      setShowEndDatePicker(false);
+    }
+    if (selectedDate) {
+      setTempEndDate(selectedDate);
+      const formattedDate = selectedDate.toISOString().split("T")[0];
+      setCustomEndDate(formattedDate);
+      if (Platform.OS === "android") {
+        setShowEndDatePicker(false);
+      }
+    }
+  };
+
   return (
     <>
       <StatusBar barStyle="light-content" backgroundColor="#E25A17" />
@@ -527,27 +559,21 @@ export default function HistoryScreen() {
           >
             <Ionicons name="arrow-back" size={24} color="#FFF" />
           </TouchableOpacity>
-          <View style={styles.headerTitleWrap}>
-            <Text
-              style={styles.headerTitle}
-              numberOfLines={1}
-              ellipsizeMode="tail"
-            >
-              {t("history.allTransactions")}
-            </Text>
-          </View>
+          <Text style={styles.headerTitle}>
+            {t("history.allTransactions")}
+          </Text>
           <View style={styles.headerRight}>
-            <TouchableOpacity
-              style={styles.headerIconButton}
-              onPress={() => setShowFilterDropdown((prev) => !prev)}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="filter" size={20} color="#FFF" />
-            </TouchableOpacity>
-            {showFilterDropdown && (
-              <View style={styles.filterDropdownContainer}>
+            <View style={styles.filterDropdownContainer}>
+              <TouchableOpacity
+                style={styles.headerIconButton}
+                onPress={() => setShowFilterDropdown((prev) => !prev)}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="filter" size={24} color="#FFF" />
+              </TouchableOpacity>
+              {showFilterDropdown && (
                 <View style={styles.filterDropdownMenu}>
-                <Text style={styles.filterDropdownTitle}>Filter by Date</Text>
+                  <Text style={styles.filterDropdownTitle}>Filter by Date</Text>
                 <TouchableOpacity
                   style={[
                     styles.filterOption,
@@ -555,15 +581,20 @@ export default function HistoryScreen() {
                   ]}
                   onPress={() => applyDateFilter("all")}
                 >
-                  <Text
-                    style={[
-                      styles.filterOptionText,
-                      selectedFilter === "all" &&
-                        styles.filterOptionTextSelected,
-                    ]}
-                  >
-                    All Time
-                  </Text>
+                  <View style={styles.filterOptionContent}>
+                    <Text
+                      style={[
+                        styles.filterOptionText,
+                        selectedFilter === "all" &&
+                          styles.filterOptionTextSelected,
+                      ]}
+                    >
+                      All Time
+                    </Text>
+                    {selectedFilter === "all" && (
+                      <Ionicons name="checkmark" size={18} color="#E15816" />
+                    )}
+                  </View>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[
@@ -572,15 +603,20 @@ export default function HistoryScreen() {
                   ]}
                   onPress={() => applyDateFilter("today")}
                 >
-                  <Text
-                    style={[
-                      styles.filterOptionText,
-                      selectedFilter === "today" &&
-                        styles.filterOptionTextSelected,
-                    ]}
-                  >
-                    Today
-                  </Text>
+                  <View style={styles.filterOptionContent}>
+                    <Text
+                      style={[
+                        styles.filterOptionText,
+                        selectedFilter === "today" &&
+                          styles.filterOptionTextSelected,
+                      ]}
+                    >
+                      Today
+                    </Text>
+                    {selectedFilter === "today" && (
+                      <Ionicons name="checkmark" size={18} color="#E15816" />
+                    )}
+                  </View>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[
@@ -589,15 +625,20 @@ export default function HistoryScreen() {
                   ]}
                   onPress={() => applyDateFilter("week")}
                 >
-                  <Text
-                    style={[
-                      styles.filterOptionText,
-                      selectedFilter === "week" &&
-                        styles.filterOptionTextSelected,
-                    ]}
-                  >
-                    This Week
-                  </Text>
+                  <View style={styles.filterOptionContent}>
+                    <Text
+                      style={[
+                        styles.filterOptionText,
+                        selectedFilter === "week" &&
+                          styles.filterOptionTextSelected,
+                      ]}
+                    >
+                      This Week
+                    </Text>
+                    {selectedFilter === "week" && (
+                      <Ionicons name="checkmark" size={18} color="#E15816" />
+                    )}
+                  </View>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[
@@ -606,15 +647,20 @@ export default function HistoryScreen() {
                   ]}
                   onPress={() => applyDateFilter("month")}
                 >
-                  <Text
-                    style={[
-                      styles.filterOptionText,
-                      selectedFilter === "month" &&
-                        styles.filterOptionTextSelected,
-                    ]}
-                  >
-                    This Month
-                  </Text>
+                  <View style={styles.filterOptionContent}>
+                    <Text
+                      style={[
+                        styles.filterOptionText,
+                        selectedFilter === "month" &&
+                          styles.filterOptionTextSelected,
+                      ]}
+                    >
+                      This Month
+                    </Text>
+                    {selectedFilter === "month" && (
+                      <Ionicons name="checkmark" size={18} color="#E15816" />
+                    )}
+                  </View>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[
@@ -623,19 +669,24 @@ export default function HistoryScreen() {
                   ]}
                   onPress={() => applyDateFilter("custom")}
                 >
-                  <Text
-                    style={[
-                      styles.filterOptionText,
-                      selectedFilter === "custom" &&
-                        styles.filterOptionTextSelected,
-                    ]}
-                  >
-                    Custom Range
-                  </Text>
+                  <View style={styles.filterOptionContent}>
+                    <Text
+                      style={[
+                        styles.filterOptionText,
+                        selectedFilter === "custom" &&
+                          styles.filterOptionTextSelected,
+                      ]}
+                    >
+                      Custom Range
+                    </Text>
+                    {selectedFilter === "custom" && (
+                      <Ionicons name="checkmark" size={18} color="#E15816" />
+                    )}
+                  </View>
                 </TouchableOpacity>
-              </View>
-              </View>
-            )}
+                </View>
+              )}
+            </View>
             <TouchableOpacity
               style={styles.headerIconButton}
               onPress={handleDeleteClick}
@@ -778,48 +829,49 @@ export default function HistoryScreen() {
               activeOpacity={1}
               onPress={(e) => e.stopPropagation()}
             >
-              <View
-                style={[
-                  styles.filterModal,
-                  { padding: modalPadding },
-                ]}
-              >
-                <Text style={styles.filterModalTitle}>Custom Date Range</Text>
+              <View style={styles.filterModal}>
+                <View style={styles.modalHeader}>
+                  <View style={styles.modalIconContainer}>
+                    <Ionicons name="calendar-outline" size={28} color="#E15816" />
+                  </View>
+                  <Text style={styles.filterModalTitle}>Select Date Range</Text>
+                  <Text style={styles.filterModalSubtitle}>
+                    Choose start and end dates for filtering
+                  </Text>
+                </View>
                 <View style={styles.customDateSection}>
                   <View style={styles.dateInputContainer}>
                     <Text style={styles.dateLabel}>Start Date</Text>
-                    <TextInput
-                      style={[
-                        styles.dateInput,
-                        {
-                          padding: dateInputPadding,
-                          fontSize: dateInputFontSize,
-                        },
-                      ]}
-                      placeholder="YYYY-MM-DD"
-                      value={customStartDate}
-                      onChangeText={setCustomStartDate}
-                    />
+                    <TouchableOpacity
+                      style={styles.dateInputButton}
+                      onPress={() => setShowStartDatePicker(true)}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons name="calendar-outline" size={20} color="#E15816" />
+                      <Text style={[styles.dateInputText, !customStartDate && styles.dateInputPlaceholder]}>
+                        {customStartDate || "Select start date"}
+                      </Text>
+                      <Ionicons name="chevron-down" size={20} color="#687076" />
+                    </TouchableOpacity>
                   </View>
                   <View style={styles.dateInputContainer}>
                     <Text style={styles.dateLabel}>End Date</Text>
-                    <TextInput
-                      style={[
-                        styles.dateInput,
-                        {
-                          padding: dateInputPadding,
-                          fontSize: dateInputFontSize,
-                        },
-                      ]}
-                      placeholder="YYYY-MM-DD"
-                      value={customEndDate}
-                      onChangeText={setCustomEndDate}
-                    />
+                    <TouchableOpacity
+                      style={styles.dateInputButton}
+                      onPress={() => setShowEndDatePicker(true)}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons name="calendar-outline" size={20} color="#E15816" />
+                      <Text style={[styles.dateInputText, !customEndDate && styles.dateInputPlaceholder]}>
+                        {customEndDate || "Select end date"}
+                      </Text>
+                      <Ionicons name="chevron-down" size={20} color="#687076" />
+                    </TouchableOpacity>
                   </View>
                   <TouchableOpacity
                     style={styles.applyCustomButton}
                     onPress={applyCustomDateRange}
-                    activeOpacity={0.7}
+                    activeOpacity={0.8}
                   >
                     <Text style={styles.applyCustomButtonText}>
                       Apply Filter
@@ -830,6 +882,27 @@ export default function HistoryScreen() {
             </TouchableOpacity>
           </TouchableOpacity>
         </Modal>
+
+        {/* Date Pickers */}
+        {showStartDatePicker && (
+          <DateTimePicker
+            value={tempStartDate}
+            mode="date"
+            display={Platform.OS === "ios" ? "spinner" : "default"}
+            onChange={handleStartDateChange}
+            maximumDate={new Date()}
+          />
+        )}
+        {showEndDatePicker && (
+          <DateTimePicker
+            value={tempEndDate}
+            mode="date"
+            display={Platform.OS === "ios" ? "spinner" : "default"}
+            onChange={handleEndDateChange}
+            maximumDate={new Date()}
+            minimumDate={customStartDate ? new Date(customStartDate) : undefined}
+          />
+        )}
 
         {isSelectMode && selectedIds.size > 0 && (
           <Modal
@@ -926,26 +999,30 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    paddingVertical: 16,
   },
   backButton: {
-    padding: 8,
-    marginRight: 8,
-  },
-  headerTitleWrap: {
-    flex: 1,
+    width: 40,
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
   },
   headerTitle: {
-    fontSize: 18,
+    flex: 1,
+    fontSize: 20,
     fontWeight: "700",
     color: "#FFF",
+    textAlign: "center",
   },
   headerRight: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
   },
   headerIconButton: {
-    padding: 8,
+    width: 40,
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
   },
   content: {
     flex: 1,
@@ -969,28 +1046,34 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
   },
-  filterDropdownMenu: {
-    position: "absolute",
-    top: 40,
-    right: 10,
-    backgroundColor: "#fff",
-    borderRadius: 8,
-    padding: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 5,
-    zIndex: 1000,
-    minWidth: 150,
-  },
   filterDropdownContainer: {
     position: "relative",
   },
+  filterDropdownMenu: {
+    position: "absolute",
+    top: 50,
+    right: 0,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 10,
+    zIndex: 1000,
+    minWidth: 180,
+  },
   filterDropdownTitle: {
-    fontWeight: "bold",
+    fontWeight: "700",
+    fontSize: 13,
     marginBottom: 8,
-    color: "#333",
+    marginTop: 4,
+    paddingHorizontal: 12,
+    color: "#687076",
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
   },
   summaryLabel: {
     fontSize: 11,
@@ -1072,85 +1155,148 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
     justifyContent: "center",
     alignItems: "center",
-    padding: 16,
+    padding: 20,
   },
   filterModal: {
     backgroundColor: "#FFFFFF",
-    borderRadius: 16,
+    borderRadius: 24,
     width: "90%",
     maxWidth: 400,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.25,
+    shadowRadius: 24,
+    elevation: 12,
+    overflow: "hidden",
+  },
+  modalHeader: {
+    backgroundColor: "#FFF5F0",
+    paddingVertical: 24,
+    paddingHorizontal: 24,
+    alignItems: "center",
+    borderBottomWidth: 1,
+    borderBottomColor: "#FFE5D9",
+  },
+  modalIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "#FFFFFF",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 12,
+    shadowColor: "#E15816",
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 8,
+    shadowRadius: 8,
+    elevation: 3,
   },
   filterModalTitle: {
-    fontSize: 18,
+    fontSize: 22,
     fontWeight: "700",
     color: "#11181C",
-    marginBottom: 20,
+    marginBottom: 4,
+    textAlign: "center",
+  },
+  filterModalSubtitle: {
+    fontSize: 14,
+    fontWeight: "400",
+    color: "#687076",
     textAlign: "center",
   },
   filterOption: {
-    paddingVertical: 14,
+    paddingVertical: 12,
     paddingHorizontal: 16,
-    borderRadius: 10,
-    marginBottom: 8,
-    backgroundColor: "#F5F5F5",
-    borderWidth: 1,
-    borderColor: "#F0F0F0",
+    borderRadius: 12,
+    marginBottom: 4,
+    marginHorizontal: 8,
+    backgroundColor: "transparent",
   },
   filterOptionSelected: {
     backgroundColor: "#FFF5F0",
-    borderColor: "#E15816",
+  },
+  filterOptionContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
   },
   filterOptionText: {
     fontSize: 15,
     fontWeight: "500",
-    color: "#687076",
-    textAlign: "center",
+    color: "#11181C",
+    flex: 1,
   },
   filterOptionTextSelected: {
     color: "#E15816",
     fontWeight: "600",
   },
   customDateSection: {
-    marginTop: 12,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: "#F0F0F0",
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 24,
   },
   dateInputContainer: {
-    marginBottom: 12,
+    marginBottom: 20,
   },
   dateLabel: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: "600",
-    color: "#687076",
-    marginBottom: 6,
+    color: "#11181C",
+    marginBottom: 8,
   },
   dateInput: {
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: "#E0E0E0",
-    borderRadius: 8,
-    backgroundColor: "#F8F8F8",
-    overflow: "hidden",
+    borderRadius: 12,
+    backgroundColor: "#FFFFFF",
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    fontSize: 15,
+    color: "#11181C",
+    fontWeight: "500",
+  },
+  dateInputButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1.5,
+    borderColor: "#E0E0E0",
+    borderRadius: 12,
+    backgroundColor: "#FFFFFF",
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    gap: 12,
+  },
+  dateInputText: {
+    flex: 1,
+    fontSize: 15,
+    color: "#11181C",
+    fontWeight: "500",
+  },
+  dateInputPlaceholder: {
+    color: "#999",
+    fontWeight: "400",
   },
   applyCustomButton: {
     backgroundColor: "#E15816",
-    paddingVertical: 12,
-    borderRadius: 10,
+    paddingVertical: 16,
+    borderRadius: 12,
     alignItems: "center",
     marginTop: 8,
+    shadowColor: "#E15816",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   applyCustomButtonText: {
-    fontSize: 15,
-    fontWeight: "600",
+    fontSize: 16,
+    fontWeight: "700",
     color: "#FFFFFF",
+    letterSpacing: 0.5,
   },
   checkbox: {
     width: 24,
