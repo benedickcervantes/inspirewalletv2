@@ -4,16 +4,17 @@ import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useCallback, useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    Modal,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Modal,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { getReferralCode, resendVerification, verifyEmail } from '../../configs/api';
 import { useLanguage } from '../../context/LanguageContext';
 import type { NavProp } from '../../types/navigation';
@@ -266,18 +267,20 @@ const Settings = () => {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <LinearGradient
-        colors={['#DE5212', '#F38B35']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        locations={[0.01, 1]}
-        style={[styles.header, r.header]}
-      >
-        <View style={styles.headerTop}>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('Main')}
-            style={[styles.backButton, r.backButton]}
+    <>
+      <StatusBar barStyle="light-content" backgroundColor="#DE5212" />
+      <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+        <LinearGradient
+          colors={['#DE5212', '#F38B35']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          locations={[0.01, 1]}
+          style={[styles.header, r.header]}
+        >
+          <View style={styles.headerTop}>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('Main')}
+              style={[styles.backButton, r.backButton]}
             activeOpacity={0.7}
             hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
           >
@@ -476,7 +479,8 @@ const Settings = () => {
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
+      </SafeAreaView>
+    </>
   );
 };
 

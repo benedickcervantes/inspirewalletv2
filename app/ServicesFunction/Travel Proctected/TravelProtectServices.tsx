@@ -5,21 +5,21 @@ import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRef, useState } from "react";
 import {
-  ActivityIndicator,
-  Keyboard,
-  Modal,
-  Platform,
-  Pressable,
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
+    ActivityIndicator,
+    Keyboard,
+    Modal,
+    Platform,
+    Pressable,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useLanguage } from "../../../context/LanguageContext";
 import type { RootStackParamList } from "../../../types/navigation";
 import { useResponsive } from "../../../utils/responsive";
@@ -506,7 +506,35 @@ export default function TravelProtection() {
   return (
     <>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+        {/* Top: Back arrow + Header card */}
+        <View style={[styles.topSection, { paddingHorizontal: horizontalPadding }]}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Ionicons name="arrow-back" size={scale(28)} color="#E25A17" />
+          </TouchableOpacity>
+
+          <View style={styles.headerCard}>
+            <LinearGradient
+              colors={["#E25A17", "#F28934"]}
+              style={styles.headerGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 0, y: 1 }}
+            >
+              <MaterialCommunityIcons
+                name="airplane"
+                size={scale(40)}
+                color="#FFFFFF"
+                style={styles.headerIcon}
+              />
+              <Text style={[styles.heroTitle, dynamicStyles.heroTitle]}>{t("travel.title")}</Text>
+              <Text style={[styles.heroSubtitle, dynamicStyles.heroSubtitle]}>{t("travel.subtitle")}</Text>
+            </LinearGradient>
+          </View>
+        </View>
+
         <KeyboardAwareScrollView
           style={styles.container}
           contentContainerStyle={[styles.scrollContent, dynamicStyles.scrollContent]}
@@ -517,14 +545,6 @@ export default function TravelProtection() {
           showsVerticalScrollIndicator={false}
         >
           <Pressable onPress={Keyboard.dismiss}>
-          <View style={[styles.header, { paddingHorizontal: horizontalPadding }]}>
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={() => navigation.goBack()}
-            >
-              <Ionicons name="arrow-back" size={scale(24)} color="#E25A17" />
-            </TouchableOpacity>
-          </View>
 
           {loading ? (
             <View style={styles.loadingContainer}>
@@ -533,22 +553,6 @@ export default function TravelProtection() {
             </View>
           ) : (
             <>
-              <LinearGradient
-                colors={["#E25A17", "#F28934"]}
-                style={[styles.heroCard, dynamicStyles.heroCard]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <View style={[styles.heroIconContainer, dynamicStyles.heroIconContainer]}>
-                  <MaterialCommunityIcons
-                    name="airplane"
-                    size={scale(40)}
-                    color="#FFFFFF"
-                  />
-                </View>
-                <Text style={[styles.heroTitle, dynamicStyles.heroTitle]}>{t("travel.title")}</Text>
-                <Text style={[styles.heroSubtitle, dynamicStyles.heroSubtitle]}>{t("travel.subtitle")}</Text>
-              </LinearGradient>
 
               <View style={[styles.infoBanner, dynamicStyles.infoBanner]}>
                 <View style={styles.infoBannerIcon}>
@@ -909,10 +913,33 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     backgroundColor: "#FFFFFF",
   },
+  topSection: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 16,
+    backgroundColor: "#FFFFFF",
+  },
   backButton: {
     width: 40,
     height: 40,
     justifyContent: "center",
+    marginBottom: 12,
+  },
+  headerCard: {
+    borderRadius: 20,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  headerGradient: {
+    padding: 24,
+    alignItems: "center",
+  },
+  headerIcon: {
+    marginBottom: 12,
   },
   scrollView: {
     flex: 1,
