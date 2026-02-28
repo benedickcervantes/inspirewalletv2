@@ -35,7 +35,7 @@ export default function TopUpBalance() {
     if (!amount || parseFloat(amount) <= 0) {
       setAlertConfig({
         title: t("deposit.invalidAmount"),
-        message: t("deposit.enterAmount")
+        message: t("deposit.enterAmount") // can enter a letter, but still contiune to confirm, need to validate if the input is a number and greater than 0
       });
       setShowAlertModal(true);
       return;

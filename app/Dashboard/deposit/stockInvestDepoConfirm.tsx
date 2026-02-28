@@ -1,25 +1,32 @@
-import React, { useState } from "react";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useNavigation, useRoute } from "@react-navigation/native";
+import { LinearGradient } from "expo-linear-gradient";
+import { useState } from "react";
 import {
+  Modal,
+  ScrollView,
   StyleSheet,
   Text,
-  View,
   TouchableOpacity,
-  ScrollView,
-  Modal,
+  View,
 } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useNavigation, useRoute } from "@react-navigation/native";
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
-import { getOrCreateMainWallet, submitStockInvestmentRequest } from "../../../configs/api";
+import {
+  getOrCreateMainWallet,
+  submitStockInvestmentRequest,
+} from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
 
 export default function StockInvestmentConfirm() {
   const navigation = useNavigation();
   const route = useRoute();
   const { t } = useLanguage();
-  const params = (route.params || {}) as { currency?: string; amount?: string; currencySymbol?: string };
+  const params = (route.params || {}) as {
+    currency?: string;
+    amount?: string;
+    currencySymbol?: string;
+  };
 
   const [showAlertModal, setShowAlertModal] = useState(false);
   const [alertConfig, setAlertConfig] = useState({ title: "", message: "" });
@@ -47,7 +54,8 @@ export default function StockInvestmentConfirm() {
         return;
       }
 
-      const { success: walletSuccess, wallet } = await getOrCreateMainWallet(accessToken);
+      const { success: walletSuccess, wallet } =
+        await getOrCreateMainWallet(accessToken);
       if (!walletSuccess || !wallet?.id) {
         setAlertConfig({
           title: t("deposit.error"),
@@ -100,12 +108,10 @@ export default function StockInvestmentConfirm() {
           colors={["#E25A17", "#F28934"]}
           style={styles.header}
           start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-        >
+          end={{ x: 1, y: 0 }}>
           <TouchableOpacity
             style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
+            onPress={() => navigation.goBack()}>
             <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
           </TouchableOpacity>
 
@@ -132,8 +138,7 @@ export default function StockInvestmentConfirm() {
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
+          showsVerticalScrollIndicator={false}>
           {/* Title */}
           <View style={styles.titleContainer}>
             <Text style={styles.title}>{t("deposit.reviewConfirm")}</Text>
@@ -144,7 +149,9 @@ export default function StockInvestmentConfirm() {
           <View style={styles.detailCard}>
             <View style={styles.leftBorder} />
             <Text style={styles.detailLabel}>{t("deposit.depositType")}</Text>
-            <Text style={styles.detailValue}>{t("deposit.stockInvestmentTitle")}</Text>
+            <Text style={styles.detailValue}>
+              {t("deposit.stockInvestmentTitle")}
+            </Text>
           </View>
 
           {/* Investment Amount Card */}
@@ -152,11 +159,17 @@ export default function StockInvestmentConfirm() {
             colors={["#F28934", "#E25A17"]}
             style={styles.amountCard}
             start={{ x: 0, y: 0 }}
-            end={{ x: 0, y: 1 }}
-          >
-            <Text style={styles.amountCardTitle}>{t("deposit.investmentAmount")}</Text>
+            end={{ x: 0, y: 1 }}>
+            <Text style={styles.amountCardTitle}>
+              {t("deposit.investmentAmount")}
+            </Text>
             <Text style={styles.amountValue}>
-              {currencySymbol} {parseFloat(amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currency}
+              {currencySymbol}{" "}
+              {parseFloat(amount).toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}{" "}
+              {currency}
             </Text>
           </LinearGradient>
 
@@ -164,24 +177,27 @@ export default function StockInvestmentConfirm() {
           <View style={styles.buttonContainer}>
             <TouchableOpacity
               style={styles.backButtonBottom}
-              onPress={() => navigation.goBack()}
-            >
+              onPress={() => navigation.goBack()}>
               <Text style={styles.backButtonText}>{t("deposit.back")}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.confirmButton}
               onPress={handleConfirm}
-              disabled={isSubmitting}
-            >
+              disabled={isSubmitting}>
               <LinearGradient
                 colors={["#E25A17", "#F28934"]}
                 style={styles.confirmGradient}
                 start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-              >
-                <Text style={styles.confirmText}>{isSubmitting ? t("deposit.processing") : t("deposit.confirm")}</Text>
-                {!isSubmitting && <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />}
+                end={{ x: 1, y: 0 }}>
+                <Text style={styles.confirmText}>
+                  {isSubmitting
+                    ? t("deposit.processing")
+                    : t("deposit.confirm")}
+                </Text>
+                {!isSubmitting && (
+                  <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
+                )}
               </LinearGradient>
             </TouchableOpacity>
           </View>
@@ -194,15 +210,13 @@ export default function StockInvestmentConfirm() {
           visible={showAlertModal}
           transparent={true}
           animationType="fade"
-          onRequestClose={() => setShowAlertModal(false)}
-        >
+          onRequestClose={() => setShowAlertModal(false)}>
           <View style={styles.alertOverlay}>
             <LinearGradient
               colors={["#E15816", "#F48F38"]}
               style={styles.alertContainer}
               start={{ x: 0, y: 0 }}
-              end={{ x: 0, y: 1 }}
-            >
+              end={{ x: 0, y: 1 }}>
               <Text style={styles.alertTitle}>{alertConfig.title}</Text>
               <Text style={styles.alertMessage}>{alertConfig.message}</Text>
               <TouchableOpacity
@@ -212,8 +226,7 @@ export default function StockInvestmentConfirm() {
                   if (alertConfig.title === "Success") {
                     navigation.navigate("Main");
                   }
-                }}
-              >
+                }}>
                 <Text style={styles.alertButtonText}>OK</Text>
               </TouchableOpacity>
             </LinearGradient>
@@ -368,16 +381,16 @@ const styles = StyleSheet.create({
   },
   backButtonBottom: {
     flex: 1,
-    backgroundColor: "#E0E0E0",
-    borderRadius: 12,
+    backgroundColor: "#E25A17",
+    borderRadius: 30,
     paddingVertical: 16,
     alignItems: "center",
     justifyContent: "center",
   },
   backButtonText: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: "700",
-    color: "#666",
+    color: "#ffffff",
   },
   confirmButton: {
     flex: 1,
