@@ -1,19 +1,20 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
-  Modal,
-  Platform,
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Modal,
+    Platform,
+    SafeAreaView,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { useLanguage } from "../../../context/LanguageContext";
+import { isServiceUnderMaintenance } from "../../../lib/maintenance";
 
 const THEME_COLOR = "#E15816";
 const ORANGE_GRADIENT = ["#E25A17", "#F28934"];
@@ -33,11 +34,44 @@ export default function EwalletService() {
   const [selectedProvider, setSelectedProvider] = useState("");
   const [showProviderModal, setShowProviderModal] = useState(false);
   const [currentStep] = useState(1);
+  const [isUnderMaintenance, setIsUnderMaintenance] = useState(false);
+  const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
+
+  // Check maintenance status on focus
+  useFocusEffect(
+    useCallback(() => {
+      const checkMaintenance = async () => {
+        try {
+          const isMaintenance = await isServiceUnderMaintenance("ewallet");
+          setIsUnderMaintenance(isMaintenance);
+          if (isMaintenance) {
+            setShowMaintenanceModal(true);
+          }
+        } catch (error) {
+          console.error("Error checking maintenance:", error);
+        }
+      };
+      checkMaintenance();
+    }, [])
+  );
 
   const handleNext = () => {
     if (!selectedProvider) return;
     navigation.navigate("EwalletContactInfo", { selectedProvider });
   };
+
+  if (isUnderMaintenance) {
+    return (
+      <View style={styles.container}>
+        <SafeAreaView style={styles.safeArea}>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={THEME_COLOR} />
+            <Text style={styles.loadingText}>Service under maintenance</Text>
+          </View>
+        </SafeAreaView>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>

@@ -3,38 +3,39 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  Animated,
-  Image,
-  Linking,
-  Modal,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View
+    Animated,
+    Image,
+    Linking,
+    Modal,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
 } from "react-native";
 import {
-  SafeAreaView,
-  useSafeAreaInsets,
+    SafeAreaView,
+    useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import {
-  getMe,
-  getOrCreateMainWallet,
-  getReferralTree,
-  getTimeDeposits,
-  getTransactions,
+    getMe,
+    getOrCreateMainWallet,
+    getReferralTree,
+    getTimeDeposits,
+    getTransactions,
 } from "../../configs/api";
 import {
-  createRealtimeConnection,
-  startHeartbeat,
+    createRealtimeConnection,
+    startHeartbeat,
 } from "../../configs/realtime";
 import {
-  languageChoiceDoneKey,
-  SUPPORTED_LANGUAGES,
+    languageChoiceDoneKey,
+    SUPPORTED_LANGUAGES,
 } from "../../constants/locales";
 import { useLanguage } from "../../context/LanguageContext";
 import { setConnectionStatus } from "../../lib/connectionStatus";
+import { getMaintenanceStatus } from "../../lib/maintenance";
 import { notifyNewSupportMessage } from "../../lib/messagingEvents";
 import type { NavProp } from "../../types/navigation";
 import { useResponsive } from "../../utils/responsive";
@@ -227,6 +228,8 @@ export default function Dashboard() {
   } | null>(null);
   const [showFirstTimeLanguageModal, setShowFirstTimeLanguageModal] =
     useState(false);
+  const [maintenanceStatus, setMaintenanceStatus] = useState<Record<string, boolean>>({});
+  const [selectedMaintenanceService, setSelectedMaintenanceService] = useState<string | null>(null);
 
   const languageSlides = [
     { image: require("../../assets/banner/DeskHRX.png"), url: "https://www.deskhrx.com/" },
@@ -357,6 +360,10 @@ export default function Dashboard() {
       if (hasChosen !== "true") {
         setShowFirstTimeLanguageModal(true);
       }
+
+      // Check maintenance status for all services
+      const status = await getMaintenanceStatus();
+      setMaintenanceStatus(status);
     };
 
     init();
@@ -512,6 +519,8 @@ export default function Dashboard() {
       AsyncStorage.getItem("access_token").then((token) => {
         if (token) refetchJwtData();
       });
+      // Also refresh maintenance status
+      getMaintenanceStatus().then(setMaintenanceStatus);
     }, [refetchJwtData]),
   );
 
@@ -615,6 +624,30 @@ export default function Dashboard() {
   return (
     <>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <Modal
+        visible={selectedMaintenanceService !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setSelectedMaintenanceService(null)}
+      >
+        <View style={styles.maintenanceModalOverlay}>
+          <View style={styles.maintenanceModalContent}>
+            <View style={styles.maintenanceModalIconContainer}>
+              <Text style={styles.maintenanceModalIcon}>🔧</Text>
+            </View>
+            <Text style={styles.maintenanceModalTitle}>Coming Soon</Text>
+            <Text style={styles.maintenanceModalMessage}>
+              This service is currently under maintenance. We're working hard to bring you an improved experience. Please check back soon!
+            </Text>
+            <TouchableOpacity
+              style={styles.maintenanceModalButton}
+              onPress={() => setSelectedMaintenanceService(null)}
+            >
+              <Text style={styles.maintenanceModalButtonText}>Got it</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
       <Modal
         visible={showFirstTimeLanguageModal}
         transparent
@@ -831,30 +864,56 @@ export default function Dashboard() {
                 </Text>
               </View>
               <View style={styles.menuGrid}>
-                {menuItems.map((item, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    style={styles.menuItem}
-                    onPress={() =>
-                      (
-                        navigation as { navigate: (name: string) => void }
-                      ).navigate(item.route)
-                    }
-                  >
-                    <View style={styles.menuIcon}>
-                      <MaterialCommunityIcons
-                        name={
-                          item.icon as React.ComponentProps<
-                            typeof MaterialCommunityIcons
-                          >["name"]
+                {menuItems.map((item, index) => {
+                  // Map route names to service IDs
+                  const routeToServiceMap: Record<string, string> = {
+                    "EwalletService": "ewallet",
+                    "Message": "message",
+                    "Stockholder": "stock",
+                    "Task": "task",
+                    "AgentRequest": "agent",
+                    "PlayEarn": "trading",
+                  };
+                  const serviceId = routeToServiceMap[item.route] || item.route.toLowerCase();
+                  const isUnderMaintenance = maintenanceStatus[serviceId];
+                  
+                  return (
+                    <TouchableOpacity
+                      key={index}
+                      style={[styles.menuItem, isUnderMaintenance && styles.menuItemDisabled]}
+                      onPress={() => {
+                        if (isUnderMaintenance) {
+                          setSelectedMaintenanceService(item.labelKey);
+                        } else {
+                          (
+                            navigation as { navigate: (name: string) => void }
+                          ).navigate(item.route);
                         }
-                        size={24}
-                        color="#000000"
-                      />
-                    </View>
-                    <Text style={styles.menuLabel}>{t(item.labelKey)}</Text>
-                  </TouchableOpacity>
-                ))}
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <View style={[styles.menuIcon, isUnderMaintenance && styles.menuIconDisabled]}>
+                        <MaterialCommunityIcons
+                          name={
+                            item.icon as React.ComponentProps<
+                              typeof MaterialCommunityIcons
+                            >["name"]
+                          }
+                          size={24}
+                          color={isUnderMaintenance ? "#CCCCCC" : "#000000"}
+                        />
+                      </View>
+                      <Text style={[styles.menuLabel, isUnderMaintenance && styles.menuLabelDisabled]}>
+                        {t(item.labelKey)}
+                      </Text>
+                      {isUnderMaintenance && (
+                        <View style={styles.comingSoonBadge}>
+                          <Text style={styles.comingSoonText}>Coming Soon</Text>
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
             </View>
           )}
@@ -1134,6 +1193,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 8,
     marginBottom: 8,
+    position: "relative",
   },
   menuIcon: {
     width: 48,
@@ -1148,6 +1208,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 2,
+    overflow: "hidden",
+    position: "relative",
   },
   customIconImage: { width: 24, height: 24 },
   menuLabel: {
@@ -1155,6 +1217,33 @@ const styles = StyleSheet.create({
     color: "#666",
     textAlign: "center",
     lineHeight: 12,
+  },
+  menuItemDisabled: {
+    opacity: 0.6,
+  },
+  menuIconDisabled: {
+    backgroundColor: "#F0F0F0",
+  },
+  menuLabelDisabled: {
+    color: "#999",
+  },
+  comingSoonBadge: {
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    width: 70,
+    height: 20,
+    backgroundColor: "#E15816",
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 2,
+    transform: [{ translateX: -35 }, { translateY: -10 }, { rotate: "-45deg" }],
+    zIndex: 10,
+  },
+  comingSoonText: {
+    fontSize: 8,
+    fontWeight: "700",
+    color: "#FFFFFF",
   },
   languageCarouselContainer: { marginVertical: 16 },
   languageCarouselWrapper: { position: "relative", marginBottom: 12 },
@@ -1222,6 +1311,60 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     padding: 24,
+  },
+  maintenanceModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 24,
+  },
+  maintenanceModalContent: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 24,
+    width: "100%",
+    maxWidth: 320,
+    alignItems: "center",
+  },
+  maintenanceModalIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: "#FFF3E0",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  maintenanceModalIcon: {
+    fontSize: 40,
+  },
+  maintenanceModalTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#333",
+    marginBottom: 12,
+    textAlign: "center",
+  },
+  maintenanceModalMessage: {
+    fontSize: 14,
+    color: "#666",
+    textAlign: "center",
+    marginBottom: 24,
+    lineHeight: 20,
+  },
+  maintenanceModalButton: {
+    backgroundColor: "#E15816",
+    paddingVertical: 12,
+    paddingHorizontal: 32,
+    borderRadius: 10,
+    width: "100%",
+  },
+  maintenanceModalButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "600",
+    textAlign: "center",
   },
   languageModalContent: {
     backgroundColor: "#FFFFFF",

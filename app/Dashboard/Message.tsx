@@ -3,21 +3,22 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
-  Keyboard,
-  KeyboardAvoidingView,
-  Platform,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Keyboard,
+    KeyboardAvoidingView,
+    Platform,
+    RefreshControl,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { getMessages, markAllMessagesAsRead, sendMessage } from "../../configs/api";
 import { subscribeToConnectionStatus } from "../../lib/connectionStatus";
+import { isServiceUnderMaintenance } from "../../lib/maintenance";
 import { subscribeToNewSupportMessage } from "../../lib/messagingEvents";
 import type { NavProp } from "../../types/navigation";
 
@@ -76,8 +77,30 @@ export default function Message() {
   const [error, setError] = useState<string | null>(null);
   const [isOnline, setIsOnline] = useState(false);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const [isUnderMaintenance, setIsUnderMaintenance] = useState(false);
+  const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
+
+  // Check maintenance status on focus
+  useFocusEffect(
+    useCallback(() => {
+      const checkMaintenance = async () => {
+        try {
+          const isMaintenance = await isServiceUnderMaintenance("message");
+          setIsUnderMaintenance(isMaintenance);
+          if (isMaintenance) {
+            setShowMaintenanceModal(true);
+          }
+        } catch (error) {
+          console.error("Error checking maintenance:", error);
+        }
+      };
+      checkMaintenance();
+    }, [])
+  );
 
   const fetchMessages = useCallback(async () => {
+    if (isUnderMaintenance) return;
+    
     const accessToken = await AsyncStorage.getItem("access_token");
     if (!accessToken) {
       setError("Please log in to view messages.");
@@ -176,6 +199,17 @@ export default function Message() {
       return () => clearTimeout(t);
     }
   }, [messages]);
+
+  if (isUnderMaintenance) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#E15816" />
+          <Text style={styles.loadingText}>Service under maintenance</Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
