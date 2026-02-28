@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useEffect, useState } from "react";
@@ -11,7 +12,6 @@ import {
   StatusBar,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   useWindowDimensions,
   View
@@ -126,6 +126,10 @@ export default function HistoryScreen() {
   });
   const [customStartDate, setCustomStartDate] = useState<string>("");
   const [customEndDate, setCustomEndDate] = useState<string>("");
+  const [showStartDatePicker, setShowStartDatePicker] = useState(false);
+  const [showEndDatePicker, setShowEndDatePicker] = useState(false);
+  const [tempStartDate, setTempStartDate] = useState<Date>(new Date());
+  const [tempEndDate, setTempEndDate] = useState<Date>(new Date());
   const [isSelectMode, setIsSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [showDeleteOptions, setShowDeleteOptions] = useState(false);
@@ -504,6 +508,34 @@ export default function HistoryScreen() {
     fetchTransactions(false, 0, start, end);
   };
 
+  const handleStartDateChange = (event: any, selectedDate?: Date) => {
+    if (Platform.OS === "android") {
+      setShowStartDatePicker(false);
+    }
+    if (selectedDate) {
+      setTempStartDate(selectedDate);
+      const formattedDate = selectedDate.toISOString().split("T")[0];
+      setCustomStartDate(formattedDate);
+      if (Platform.OS === "android") {
+        setShowStartDatePicker(false);
+      }
+    }
+  };
+
+  const handleEndDateChange = (event: any, selectedDate?: Date) => {
+    if (Platform.OS === "android") {
+      setShowEndDatePicker(false);
+    }
+    if (selectedDate) {
+      setTempEndDate(selectedDate);
+      const formattedDate = selectedDate.toISOString().split("T")[0];
+      setCustomEndDate(formattedDate);
+      if (Platform.OS === "android") {
+        setShowEndDatePicker(false);
+      }
+    }
+  };
+
   return (
     <>
       <StatusBar barStyle="light-content" backgroundColor="#E25A17" />
@@ -810,23 +842,31 @@ export default function HistoryScreen() {
                 <View style={styles.customDateSection}>
                   <View style={styles.dateInputContainer}>
                     <Text style={styles.dateLabel}>Start Date</Text>
-                    <TextInput
-                      style={styles.dateInput}
-                      placeholder="YYYY-MM-DD"
-                      placeholderTextColor="#999"
-                      value={customStartDate}
-                      onChangeText={setCustomStartDate}
-                    />
+                    <TouchableOpacity
+                      style={styles.dateInputButton}
+                      onPress={() => setShowStartDatePicker(true)}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons name="calendar-outline" size={20} color="#E15816" />
+                      <Text style={[styles.dateInputText, !customStartDate && styles.dateInputPlaceholder]}>
+                        {customStartDate || "Select start date"}
+                      </Text>
+                      <Ionicons name="chevron-down" size={20} color="#687076" />
+                    </TouchableOpacity>
                   </View>
                   <View style={styles.dateInputContainer}>
                     <Text style={styles.dateLabel}>End Date</Text>
-                    <TextInput
-                      style={styles.dateInput}
-                      placeholder="YYYY-MM-DD"
-                      placeholderTextColor="#999"
-                      value={customEndDate}
-                      onChangeText={setCustomEndDate}
-                    />
+                    <TouchableOpacity
+                      style={styles.dateInputButton}
+                      onPress={() => setShowEndDatePicker(true)}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons name="calendar-outline" size={20} color="#E15816" />
+                      <Text style={[styles.dateInputText, !customEndDate && styles.dateInputPlaceholder]}>
+                        {customEndDate || "Select end date"}
+                      </Text>
+                      <Ionicons name="chevron-down" size={20} color="#687076" />
+                    </TouchableOpacity>
                   </View>
                   <TouchableOpacity
                     style={styles.applyCustomButton}
@@ -842,6 +882,27 @@ export default function HistoryScreen() {
             </TouchableOpacity>
           </TouchableOpacity>
         </Modal>
+
+        {/* Date Pickers */}
+        {showStartDatePicker && (
+          <DateTimePicker
+            value={tempStartDate}
+            mode="date"
+            display={Platform.OS === "ios" ? "spinner" : "default"}
+            onChange={handleStartDateChange}
+            maximumDate={new Date()}
+          />
+        )}
+        {showEndDatePicker && (
+          <DateTimePicker
+            value={tempEndDate}
+            mode="date"
+            display={Platform.OS === "ios" ? "spinner" : "default"}
+            onChange={handleEndDateChange}
+            maximumDate={new Date()}
+            minimumDate={customStartDate ? new Date(customStartDate) : undefined}
+          />
+        )}
 
         {isSelectMode && selectedIds.size > 0 && (
           <Modal
@@ -1197,6 +1258,27 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: "#11181C",
     fontWeight: "500",
+  },
+  dateInputButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1.5,
+    borderColor: "#E0E0E0",
+    borderRadius: 12,
+    backgroundColor: "#FFFFFF",
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    gap: 12,
+  },
+  dateInputText: {
+    flex: 1,
+    fontSize: 15,
+    color: "#11181C",
+    fontWeight: "500",
+  },
+  dateInputPlaceholder: {
+    color: "#999",
+    fontWeight: "400",
   },
   applyCustomButton: {
     backgroundColor: "#E15816",
