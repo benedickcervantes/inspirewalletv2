@@ -149,7 +149,7 @@ export default function CardsTab({
               <Text style={styles.cardItemTitle}>
                 {t("cards.diamondElite")}
               </Text>
-              <Text style={styles.cardItemSubtitle}>10M Deposit</Text>
+              <Text style={styles.cardItemSubtitle}>100,000,000 Deposit</Text>
 
               <TouchableOpacity style={styles.upgradeButton}>
                 <Text style={styles.upgradeButtonText}>
@@ -166,13 +166,13 @@ export default function CardsTab({
                 imageStyle={styles.cardPreviewImageStyle}
                 resizeMode="cover">
                 <View style={styles.vipBadge}>
-                  <Text style={styles.vipBadgeText}>10,000</Text>
+                  <Text style={styles.vipBadgeText}>{t("cards.vip")}</Text>
                 </View>
               </ImageBackground>
             </View>
             <View style={styles.cardInfo}>
               <Text style={styles.cardItemTitle}>{t("cards.goldElite")}</Text>
-              <Text style={styles.cardItemSubtitle}>Monthly Sub</Text>
+              <Text style={styles.cardItemSubtitle}>10,000 Monthly Sub</Text>
 
               <TouchableOpacity style={styles.getStartedButton}>
                 <Text style={styles.getStartedButtonText}>
@@ -208,14 +208,14 @@ export default function CardsTab({
                 <View style={styles.premiumGradientGold}>
                   <Text style={styles.premiumLabel}>Premium</Text>
                 </View>
+                <View style={styles.priceBadge}>
+                  <Text style={styles.priceText}>₱250</Text>
+                </View>
               </ImageBackground>
             </View>
 
             <View style={styles.cardInfo}>
               <Text style={styles.cardItemTitle}>{t("cards.royalCurve")}</Text>
-              <Text style={styles.cardItemSubtitle}>
-                {t("cards.signUpOnly")}
-              </Text>
 
               <TouchableOpacity style={styles.upgradeButton}>
                 <Text style={styles.upgradeButtonText}>Tap to Buy</Text>
@@ -232,14 +232,13 @@ export default function CardsTab({
                 <View style={styles.premiumGradient}>
                   <Text style={styles.premiumLabel}>Premium</Text>
                 </View>
+                <View style={styles.priceBadge}>
+                  <Text style={styles.priceText}>₱5,000</Text>
+                </View>
               </ImageBackground>
             </View>
             <View style={styles.cardInfo}>
               <Text style={styles.cardItemTitle}>{t("cards.orangeElite")}</Text>
-              <Text style={styles.cardItemSubtitle}>
-                {t("cards.signUpOnly")}
-              </Text>
-
               <TouchableOpacity style={styles.upgradeButton}>
                 <Text style={styles.upgradeButtonText}>Tap to Buy</Text>
               </TouchableOpacity>
@@ -461,7 +460,7 @@ const styles = StyleSheet.create({
   },
   lockedOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    backgroundColor: "rgba(0, 0, 0, 0.21)",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -473,7 +472,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   vipBadgeText: {
-    fontSize: 10,
+    fontSize: 8,
     fontWeight: "700",
     color: "#333",
     letterSpacing: 0.5,
@@ -608,7 +607,22 @@ const styles = StyleSheet.create({
   cardBase: {
     width: "100%",
     height: "100%",
-    borderRadius: 12,
+    borderRadius: 10,
     overflow: "hidden",
+  },
+  priceBadge: {
+    position: "absolute",
+    bottom: 8,
+    left: 8,
+    backgroundColor: "rgba(0,0,0,0.75)",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  priceText: {
+    fontSize: 8,
+    fontWeight: "700",
+    color: "#FFFFFF",
+    letterSpacing: 0.5,
   },
 });
