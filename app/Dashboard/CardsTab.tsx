@@ -1,5 +1,6 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
+import { useState } from "react";
 import {
   Animated,
   ImageBackground,
@@ -13,7 +14,11 @@ import {
 import { useLanguage } from "../../context/LanguageContext";
 
 interface CardsTabProps {
-  userData: { firstName?: string; lastName?: string; accountNumber?: string } | null;
+  userData: {
+    firstName?: string;
+    lastName?: string;
+    accountNumber?: string;
+  } | null;
   availableBalance: number;
   formatCurrency: (amount: number) => string;
   flipAnimation: Animated.Value;
@@ -34,6 +39,9 @@ export default function CardsTab({
   const { width } = useWindowDimensions();
   const horizontalPadding = width < 375 ? 16 : 20;
   const cardItemWidth = (width - horizontalPadding * 2 - 12) / 2;
+  const ownedCards = 1;
+  const totalCards = 5;
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   const frontInterpolate = flipAnimation.interpolate({
     inputRange: [0, 180],
@@ -69,8 +77,7 @@ export default function CardsTab({
               source={require("../../assets/images/Eecard 2.0.png")}
               style={styles.mainCard}
               imageStyle={styles.mainCardImage}
-              resizeMode="cover"
-            >
+              resizeMode="cover">
               <View style={styles.mainCardContent}>
                 <View style={styles.cardDetailsBottom}>
                   <Text style={styles.cardNumber}>
@@ -82,7 +89,9 @@ export default function CardsTab({
                       .join(" ")
                       .toUpperCase() || "ARIES"}
                   </Text>
-                  <Text style={styles.cardBalanceLabel}>{t("cards.availableBalance")}</Text>
+                  <Text style={styles.cardBalanceLabel}>
+                    {t("cards.availableBalance")}
+                  </Text>
                   <Text style={styles.cardBalanceAmount}>
                     ₱ {formatCurrency(availableBalance)}
                   </Text>
@@ -94,8 +103,7 @@ export default function CardsTab({
 
         <Animated.View
           style={[styles.cardFace, styles.cardBack, backAnimatedStyle]}
-          pointerEvents={isCardFlipped ? "auto" : "none"}
-        >
+          pointerEvents={isCardFlipped ? "auto" : "none"}>
           <TouchableOpacity activeOpacity={0.8} onPress={flipCard}>
             <ImageBackground
               source={require("../../assets/cards/default/card2.0 back.png")}
@@ -111,9 +119,13 @@ export default function CardsTab({
         <View style={styles.collectionHeader}>
           <View style={styles.collectionTitleRow}>
             <MaterialCommunityIcons name="crown" size={20} color="#FFD700" />
-            <Text style={styles.collectionTitle}>{t("cards.vipCollection")}</Text>
+            <Text style={styles.collectionTitle}>
+              {t("cards.vipCollection")}
+            </Text>
           </View>
-          <Text style={styles.collectionSubtitle}>{t("cards.vipPhysicalRequired")}</Text>
+          <Text style={styles.collectionSubtitle}>
+            {t("cards.vipPhysicalRequired")}
+          </Text>
         </View>
 
         <View style={styles.cardsGrid}>
@@ -123,8 +135,7 @@ export default function CardsTab({
                 source={require("../../assets/cards/vip/vip7/front.png")}
                 style={styles.cardPreviewImage}
                 imageStyle={styles.cardPreviewImageStyle}
-                resizeMode="cover"
-              >
+                resizeMode="cover">
                 <View style={styles.vipBadge}>
                   <Text style={styles.vipBadgeText}>{t("cards.vip")}</Text>
                 </View>
@@ -135,7 +146,9 @@ export default function CardsTab({
             </View>
 
             <View style={styles.cardInfo}>
-              <Text style={styles.cardItemTitle}>{t("cards.diamondElite")}</Text>
+              <Text style={styles.cardItemTitle}>
+                {t("cards.diamondElite")}
+              </Text>
               <Text style={styles.cardItemSubtitle}>10M Deposit</Text>
 
               <TouchableOpacity style={styles.upgradeButton}>
@@ -151,8 +164,7 @@ export default function CardsTab({
                 source={require("../../assets/cards/vip/vip4/front.png")}
                 style={styles.cardPreviewImage}
                 imageStyle={styles.cardPreviewImageStyle}
-                resizeMode="cover"
-              >
+                resizeMode="cover">
                 <View style={styles.vipBadge}>
                   <Text style={styles.vipBadgeText}>10,000</Text>
                 </View>
@@ -176,9 +188,13 @@ export default function CardsTab({
         <View style={styles.collectionHeader}>
           <View style={styles.collectionTitleRow}>
             <MaterialCommunityIcons name="palette" size={20} color="#E15816" />
-            <Text style={styles.collectionTitle}>{t("cards.designCollection")}</Text>
+            <Text style={styles.collectionTitle}>
+              {t("cards.designCollection")}
+            </Text>
           </View>
-          <Text style={styles.collectionSubtitle}>{t("cards.premiumVisualStyles")}</Text>
+          <Text style={styles.collectionSubtitle}>
+            {t("cards.premiumVisualStyles")}
+          </Text>
         </View>
 
         <View style={styles.cardsGrid}>
@@ -188,8 +204,7 @@ export default function CardsTab({
                 source={require("../../assets/cards/vip/vip2/front.png")}
                 style={styles.cardPreviewImage}
                 imageStyle={styles.cardPreviewImageStyle}
-                resizeMode="cover"
-              >
+                resizeMode="cover">
                 <View style={styles.premiumGradientGold}>
                   <Text style={styles.premiumLabel}>Premium</Text>
                 </View>
@@ -198,7 +213,9 @@ export default function CardsTab({
 
             <View style={styles.cardInfo}>
               <Text style={styles.cardItemTitle}>{t("cards.royalCurve")}</Text>
-              <Text style={styles.cardItemSubtitle}>{t("cards.signUpOnly")}</Text>
+              <Text style={styles.cardItemSubtitle}>
+                {t("cards.signUpOnly")}
+              </Text>
 
               <TouchableOpacity style={styles.upgradeButton}>
                 <Text style={styles.upgradeButtonText}>Tap to Buy</Text>
@@ -208,11 +225,10 @@ export default function CardsTab({
           <View style={styles.cardItem}>
             <View style={styles.cardPreview}>
               <ImageBackground
-                source={require("../../assets/cards/vip/vip2/front.png")} // mali yung kulay black dapat
+                source={require("../../assets/cards/design/cd2/front.png")}
                 style={styles.cardPreviewImage}
                 imageStyle={styles.cardPreviewImageStyle}
-                resizeMode="cover"
-              >
+                resizeMode="cover">
                 <View style={styles.premiumGradient}>
                   <Text style={styles.premiumLabel}>Premium</Text>
                 </View>
@@ -220,7 +236,9 @@ export default function CardsTab({
             </View>
             <View style={styles.cardInfo}>
               <Text style={styles.cardItemTitle}>{t("cards.orangeElite")}</Text>
-              <Text style={styles.cardItemSubtitle}>{t("cards.signUpOnly")}</Text>
+              <Text style={styles.cardItemSubtitle}>
+                {t("cards.signUpOnly")}
+              </Text>
 
               <TouchableOpacity style={styles.upgradeButton}>
                 <Text style={styles.upgradeButtonText}>Tap to Buy</Text>
@@ -232,34 +250,64 @@ export default function CardsTab({
 
       <View style={styles.collectionSection}>
         <View style={styles.collectionHeader}>
-          <Text style={styles.yourCollectionTitle}>{t("cards.yourCollection")}</Text>
-          <Text style={styles.collectionCount}>1/5</Text>
+          <Text style={styles.yourCollectionTitle}>
+            {t("cards.yourCollection")}
+          </Text>
+          <Text style={styles.collectionCount}>
+            {ownedCards}/{totalCards}
+          </Text>
         </View>
 
-        <View style={styles.yourCollectionGrid}>
-          <View style={[styles.yourCollectionItem, { width: cardItemWidth }]}>
+        <ScrollView
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          snapToInterval={cardItemWidth + 12}
+          decelerationRate="fast"
+          onMomentumScrollEnd={(e) => {
+            const index = Math.round(
+              e.nativeEvent.contentOffset.x / (cardItemWidth + 12),
+            );
+            setCurrentIndex(index);
+          }}
+          contentContainerStyle={{ paddingRight: 12 }}>
+          <View
+            style={[
+              styles.yourCollectionItem,
+              { width: cardItemWidth, marginRight: 12 },
+            ]}>
             <ImageBackground
               source={require("../../assets/images/Eecard 2.0.png")}
               style={styles.yourCollectionCard}
               imageStyle={styles.yourCollectionCardImage}
-              resizeMode="cover"
-            >
+              resizeMode="cover">
               <View style={styles.activeCardBadge}>
-                <MaterialCommunityIcons name="check-circle" size={16} color="#4CAF50" />
-                <Text style={styles.activeCardText}>{t("cards.activeCard")}</Text>
+                <MaterialCommunityIcons
+                  name="check-circle"
+                  size={16}
+                  color="#4CAF50"
+                />
+                <Text style={styles.activeCardText}>
+                  {t("cards.activeCard")}
+                </Text>
               </View>
             </ImageBackground>
           </View>
 
           {[1, 2, 3, 4].map((item) => (
-            <View key={item} style={[styles.yourCollectionItem, { width: cardItemWidth }]}>
+            <View
+              key={item}
+              style={[
+                styles.yourCollectionItem,
+                { width: cardItemWidth, marginRight: 12 },
+              ]}>
               <View style={styles.emptySlot}>
                 <Ionicons name="add-circle-outline" size={32} color="#CCC" />
                 <Text style={styles.emptySlotText}>{t("cards.emptySlot")}</Text>
               </View>
             </View>
           ))}
-        </View>
+        </ScrollView>
       </View>
 
       <View style={{ height: 40 }} />
@@ -394,7 +442,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.12,
     shadowRadius: 10,
     elevation: 5,
-},
+  },
   cardPreview: {
     width: "100%",
     aspectRatio: 1.4,
@@ -482,17 +530,13 @@ const styles = StyleSheet.create({
   },
   yourCollectionGrid: {
     flexDirection: "row",
-    flexWrap: "wrap",
     gap: 12,
   },
   yourCollectionItem: {
     aspectRatio: 1.6,
   },
   yourCollectionCard: {
-    width: "100%",
-    height: "100%",
-    borderRadius: 12,
-    overflow: "hidden",
+    flex: 1,
     padding: 12,
     justifyContent: "flex-end",
   },
@@ -515,6 +559,7 @@ const styles = StyleSheet.create({
     color: "#4CAF50",
   },
   emptySlot: {
+    flex: 1,
     width: "100%",
     height: "100%",
     backgroundColor: "#FFFFFF",
@@ -531,33 +576,39 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   cardInfo: {
-  padding: 14,
-  backgroundColor: "#FAFAFA",
- },
- overlayGradient: {
-  ...StyleSheet.absoluteFillObject,
-  backgroundColor: "rgba(0,0,0,0.4)",
+    padding: 14,
+    backgroundColor: "#FAFAFA",
+  },
+  overlayGradient: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.4)",
   },
   premiumGradient: {
-  ...StyleSheet.absoluteFillObject,
-  backgroundColor: "rgba(0,0,0,0.08)",
-},
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.08)",
+  },
   premiumGradientGold: {
-  ...StyleSheet.absoluteFillObject,
-  backgroundColor: "rgba(255,165,0,0.15)",
-},
-premiumLabel: {
-  position: "absolute",
-  top: 12,
-  left: 12,
-  fontSize: 11,
-  fontWeight: "700",
-  color: "rgba(0,0,0,0.4)",
-  letterSpacing: 1,
-},
-premiumLogo: {
-  position: "absolute",
-  top: 10,
-  right: 12,
-},
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(255,165,0,0.15)",
+  },
+  premiumLabel: {
+    position: "absolute",
+    top: 12,
+    left: 12,
+    fontSize: 11,
+    fontWeight: "700",
+    color: "rgba(0,0,0,0.4)",
+    letterSpacing: 1,
+  },
+  premiumLogo: {
+    position: "absolute",
+    top: 10,
+    right: 12,
+  },
+  cardBase: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 12,
+    overflow: "hidden",
+  },
 });
