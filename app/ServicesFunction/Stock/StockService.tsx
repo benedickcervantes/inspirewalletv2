@@ -12,10 +12,11 @@ import {
     StyleSheet,
     Text,
     TouchableOpacity,
-    View,
+    View
 } from "react-native";
-import { useLanguage } from "../../../context/LanguageContext";
 import { getStockInvestmentDepositRequests } from "../../../configs/api";
+import { useLanguage } from "../../../context/LanguageContext";
+import { isServiceUnderMaintenance } from "../../../lib/maintenance";
 
 const THEME_COLOR = "#E15816";
 const STOCK_RATE_PHP = 2_000_000;
@@ -55,6 +56,8 @@ export default function StockService() {
   const [requests, setRequests] = useState<StockRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [isUnderMaintenance, setIsUnderMaintenance] = useState(false);
+  const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
 
   const fetchData = useCallback(async () => {
     const accessToken = await AsyncStorage.getItem("access_token");
@@ -97,8 +100,30 @@ export default function StockService() {
 
   useFocusEffect(
     useCallback(() => {
-      setLoading(true);
-      fetchData();
+      // Check maintenance status when screen is focused
+      const checkMaintenance = async () => {
+        try {
+          console.log("[StockService] Checking maintenance status...");
+          const isMaintenance = await isServiceUnderMaintenance("stock");
+          console.log("[StockService] Maintenance status:", isMaintenance);
+          setIsUnderMaintenance(isMaintenance);
+          if (isMaintenance) {
+            console.log("[StockService] Stock is under maintenance, showing modal");
+            setShowMaintenanceModal(true);
+            setLoading(false);
+            return;
+          }
+          // Only fetch data if not under maintenance
+          console.log("[StockService] Stock is online, fetching data");
+          setLoading(true);
+          await fetchData();
+        } catch (error) {
+          console.error("Error checking maintenance:", error);
+          setLoading(false);
+        }
+      };
+      
+      checkMaintenance();
     }, [fetchData])
   );
 

@@ -1,18 +1,20 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
-  Platform,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Platform,
+    SafeAreaView,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { useLanguage } from "../../../context/LanguageContext";
+import { isServiceUnderMaintenance } from "../../../lib/maintenance";
 
 const THEME_COLOR = "#E15816";
 const ORANGE_GRADIENT: readonly [string, string] = ["#E25A17", "#F28934"];
@@ -44,11 +46,60 @@ export default function PlayEarnServices() {
   const [isBuy, setIsBuy] = useState(true);
   const [spendingAmount, setSpendingAmount] = useState("0.00");
   const [availableBalance] = useState(205115);
+  const [isUnderMaintenance, setIsUnderMaintenance] = useState(false);
+  const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
+  const [checkingMaintenance, setCheckingMaintenance] = useState(true);
+
+  // Check maintenance status on focus
+  useFocusEffect(
+    useCallback(() => {
+      setCheckingMaintenance(true);
+      const checkMaintenance = async () => {
+        try {
+          const isMaintenance = await isServiceUnderMaintenance("trading");
+          setIsUnderMaintenance(isMaintenance);
+          if (isMaintenance) {
+            setShowMaintenanceModal(true);
+          }
+        } catch (error) {
+          console.error("Error checking maintenance:", error);
+        } finally {
+          setCheckingMaintenance(false);
+        }
+      };
+      checkMaintenance();
+    }, [])
+  );
 
   const handlePercentagePress = (pct: number): void => {
     const amount = (availableBalance * pct) / 100;
     setSpendingAmount(amount.toFixed(2));
   };
+
+  if (checkingMaintenance) {
+    return (
+      <View style={styles.container}>
+        <SafeAreaView style={styles.safeArea}>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={THEME_COLOR} />
+          </View>
+        </SafeAreaView>
+      </View>
+    );
+  }
+
+  if (isUnderMaintenance) {
+    return (
+      <View style={styles.container}>
+        <SafeAreaView style={styles.safeArea}>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={THEME_COLOR} />
+            <Text style={styles.loadingText}>Service under maintenance</Text>
+          </View>
+        </SafeAreaView>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
