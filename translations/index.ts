@@ -499,7 +499,7 @@ const en: TranslationMap = {
   "travel.infoBannerDays": "5-7 working days",
   "travel.infoBannerAfter": "after payment confirmation.",
   "travel.protectionFee": "Protection Fee",
-  "travel.discountedRate": "DISCOUNTED RATE (TIME DEPOSIT HOLDER)",
+  "travel.discountedRate": "DISCOUNTED FEE",
   "travel.standardRate": "STANDARD PROTECTION RATE",
   "travel.loading": "Loading...",
   "travel.contactInfo": "Contact Information",
