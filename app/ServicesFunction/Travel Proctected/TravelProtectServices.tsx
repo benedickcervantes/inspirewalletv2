@@ -5,18 +5,17 @@ import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRef, useState } from "react";
 import {
-    ActivityIndicator,
-    Keyboard,
-    Modal,
-    Platform,
-    Pressable,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  Keyboard,
+  Modal,
+  Platform,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -187,6 +186,7 @@ export default function TravelProtection() {
   const [userTimeDeposit, setUserTimeDeposit] = useState(0);
 
   // Text input refs for Step 1
+  const scrollViewRef = useRef<KeyboardAwareScrollView>(null);
   const emailRef = useRef<TextInput>(null);
   const mobileRef = useRef<TextInput>(null);
   const landlineRef = useRef<TextInput>(null);
@@ -484,7 +484,7 @@ export default function TravelProtection() {
   const dynamicStyles = {
     scrollContent: {
       paddingHorizontal: horizontalPadding,
-      paddingBottom: verticalScale(20),
+      paddingBottom: verticalScale(150),
     },
     heroCard: { padding: scale(24), marginTop: verticalScale(16), marginBottom: verticalScale(16) },
     heroIconContainer: { width: scale(80), height: scale(80), marginBottom: verticalScale(16) },
@@ -496,18 +496,13 @@ export default function TravelProtection() {
     stepIndicator: { gap: scale(12), marginBottom: verticalScale(24) },
     stepDot: { width: scale(32), height: scale(32) },
     formCard: { padding: scale(20) },
-    buttonContainer: {
-      paddingHorizontal: horizontalPadding,
-      paddingVertical: verticalScale(16),
-      paddingBottom: Platform.OS === "ios" ? verticalScale(32) : verticalScale(16),
-    },
   };
 
   return (
     <>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-      <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-        {/* Top: Back arrow + Header card */}
+      <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
+        {/* Top: Back arrow only */}
         <View style={[styles.topSection, { paddingHorizontal: horizontalPadding }]}>
           <TouchableOpacity
             style={styles.backButton}
@@ -515,7 +510,22 @@ export default function TravelProtection() {
           >
             <Ionicons name="arrow-back" size={scale(28)} color="#E25A17" />
           </TouchableOpacity>
+        </View>
 
+        <KeyboardAwareScrollView
+          ref={scrollViewRef}
+          style={styles.container}
+          contentContainerStyle={[styles.scrollContent, dynamicStyles.scrollContent]}
+          enableOnAndroid={true}
+          enableAutomaticScroll={true}
+          extraScrollHeight={Platform.OS === 'ios' ? 150 : 120}
+          extraHeight={Platform.OS === 'android' ? 150 : 120}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          keyboardOpeningTime={0}
+          enableResetScrollToCoords={false}
+        >
+          {/* Header card inside scroll */}
           <View style={styles.headerCard}>
             <LinearGradient
               colors={["#E25A17", "#F28934"]}
@@ -533,18 +543,6 @@ export default function TravelProtection() {
               <Text style={[styles.heroSubtitle, dynamicStyles.heroSubtitle]}>{t("travel.subtitle")}</Text>
             </LinearGradient>
           </View>
-        </View>
-
-        <KeyboardAwareScrollView
-          style={styles.container}
-          contentContainerStyle={[styles.scrollContent, dynamicStyles.scrollContent]}
-          enableOnAndroid={true}
-          enableAutomaticScroll={true}
-          extraScrollHeight={150}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
-          <Pressable onPress={Keyboard.dismiss}>
 
           {loading ? (
             <View style={styles.loadingContainer}>
@@ -655,6 +653,11 @@ export default function TravelProtection() {
                       autoCapitalize="none"
                       returnKeyType="next"
                       onSubmitEditing={() => mobileRef.current?.focus()}
+                      onFocus={() => {
+                        setTimeout(() => {
+                          scrollViewRef.current?.scrollToFocusedInput(emailRef.current as any, 70);
+                        }, 100);
+                      }}
                     />
                     {emailError && (
                       <Text style={styles.errorMessage}>{emailError}</Text>
@@ -694,6 +697,11 @@ export default function TravelProtection() {
                         returnKeyType="next"
                         onSubmitEditing={() => landlineRef.current?.focus()}
                         maxLength={11}
+                        onFocus={() => {
+                          setTimeout(() => {
+                            scrollViewRef.current?.scrollToFocusedInput(mobileRef.current as any);
+                          }, 100);
+                        }}
                       />
                     </View>
                     {showCountryDropdown && (
@@ -741,6 +749,11 @@ export default function TravelProtection() {
                       returnKeyType="next"
                       onSubmitEditing={() => homeAddressRef.current?.focus()}
                       maxLength={8}
+                      onFocus={() => {
+                        setTimeout(() => {
+                          scrollViewRef.current?.scrollToFocusedInput(landlineRef.current as any);
+                        }, 100);
+                      }}
                     />
                     {landlineError && (
                       <Text style={styles.errorMessage}>{landlineError}</Text>
@@ -763,6 +776,11 @@ export default function TravelProtection() {
                       textAlignVertical="top"
                       returnKeyType="done"
                       onSubmitEditing={Keyboard.dismiss}
+                      onFocus={() => {
+                        setTimeout(() => {
+                          scrollViewRef.current?.scrollToFocusedInput(homeAddressRef.current as any);
+                        }, 100);
+                      }}
                     />
                   </View>
                 </View>
@@ -858,25 +876,25 @@ export default function TravelProtection() {
               )}
             </>
           )}
-            
-            <View style={[styles.buttonContainer, dynamicStyles.buttonContainer]}>
-              <TouchableOpacity style={styles.backButtonBottom} onPress={handleBack}>
-                <Text style={styles.backButtonText}>{t("travel.back")}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
-                <LinearGradient
-                  colors={["#E25A17", "#F28934"]}
-                  style={styles.nextButtonGradient}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                >
-                  <Text style={styles.nextButtonText}>
-                    {currentStep === 6 ? t("travel.apply") : t("travel.next")}
-                  </Text>
-                </LinearGradient>
-              </TouchableOpacity>
-            </View>
-          </Pressable>
+
+          {/* Buttons at bottom of scroll content */}
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity style={styles.backButtonBottom} onPress={handleBack}>
+              <Text style={styles.backButtonText}>{t("travel.back")}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
+              <LinearGradient
+                colors={["#E25A17", "#F28934"]}
+                style={styles.nextButtonGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+              >
+                <Text style={styles.nextButtonText}>
+                  {currentStep === 6 ? t("travel.apply") : t("travel.next")}
+                </Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
         </KeyboardAwareScrollView>
       </SafeAreaView>
 
@@ -916,14 +934,14 @@ const styles = StyleSheet.create({
   topSection: {
     paddingHorizontal: 20,
     paddingTop: 12,
-    paddingBottom: 16,
+    paddingBottom: 0,
     backgroundColor: "#FFFFFF",
   },
   backButton: {
     width: 40,
     height: 40,
     justifyContent: "center",
-    marginBottom: 12,
+    marginBottom: 0,
   },
   headerCard: {
     borderRadius: 20,
@@ -933,6 +951,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 5,
+    marginBottom: 16,
   },
   headerGradient: {
     padding: 24,
@@ -1220,12 +1239,10 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
   buttonContainer: {
-    position: "relative",
     backgroundColor: "transparent",
     paddingHorizontal: 0,
-    paddingVertical: 0,
-    borderTopWidth: 1,
-    borderTopColor: "#E0E0E0",
+    paddingTop: 24,
+    paddingBottom: 0,
     flexDirection: "row",
     gap: 12,
   },
@@ -1234,14 +1251,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 2,
     borderColor: "#E25A17",
+    backgroundColor: "#FFFFFF",
     paddingVertical: 16,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
   },
   backButtonText: {
     fontSize: 16,
@@ -1252,22 +1265,12 @@ const styles = StyleSheet.create({
   nextButton: {
     flex: 1,
     borderRadius: 12,
-    overflow: "visible",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 5,
+    overflow: "hidden",
   },
   nextButtonGradient: {
     paddingVertical: 16,
     alignItems: "center",
     borderRadius: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
   },
   nextButtonText: {
     fontSize: 16,

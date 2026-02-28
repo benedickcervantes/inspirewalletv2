@@ -114,6 +114,9 @@ export default function HistoryScreen() {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [itemsPerPage] = useState(20);
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const [showCustomDatePicker, setShowCustomDatePicker] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<string>("all");
@@ -269,6 +272,10 @@ export default function HistoryScreen() {
 
           setTransactions(mapped);
           setHasMore(mapped.length >= (loadMore ? currentCount + 20 : 20));
+          
+          // Calculate total pages (estimate based on current data)
+          const estimatedTotal = Math.ceil(mapped.length / itemsPerPage);
+          setTotalPages(Math.max(estimatedTotal, currentPage + (mapped.length >= itemsPerPage ? 1 : 0)));
         }
       } catch (error) {
         console.error("Failed to fetch transactions:", error);
@@ -367,7 +374,54 @@ export default function HistoryScreen() {
         dateRange.start ?? undefined,
         dateRange.end ?? undefined,
       );
+      setCurrentPage((prev) => prev + 1);
     }
+  };
+
+  const handlePageChange = (page: number) => {
+    if (page === currentPage || loadingMore) return;
+    
+    setCurrentPage(page);
+    const offset = (page - 1) * itemsPerPage;
+    fetchTransactions(
+      true,
+      offset + itemsPerPage,
+      dateRange.start ?? undefined,
+      dateRange.end ?? undefined,
+    );
+  };
+
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      handlePageChange(currentPage - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages && hasMore) {
+      handlePageChange(currentPage + 1);
+    }
+  };
+
+  const getVisiblePages = () => {
+    const pages: (number | string)[] = [];
+    const maxVisible = 3;
+    
+    if (totalPages <= maxVisible) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      if (currentPage <= 2) {
+        pages.push(1, 2, 3);
+      } else if (currentPage >= totalPages - 1) {
+        pages.push(totalPages - 2, totalPages - 1, totalPages);
+      } else {
+        pages.push(currentPage - 1, currentPage, currentPage + 1);
+      }
+    }
+    
+    return pages;
   };
 
   const handleDeleteClick = () => {
@@ -794,23 +848,92 @@ export default function HistoryScreen() {
             </View>
           )}
 
-          {displayTransactions.length > 0 && (
-            <TouchableOpacity
-              style={styles.loadMoreButton}
-              onPress={handleLoadMore}
-              disabled={loadingMore || !hasMore}
-              activeOpacity={0.7}
-            >
-              {loadingMore ? (
-                <ActivityIndicator size="small" color="#999" />
-              ) : (
-                <Text style={styles.loadMoreText}>
-                  {t("history.loadMore").toUpperCase()}
-                </Text>
-              )}
-            </TouchableOpacity>
+          {displayTransactions.length > 0 && !hasMore && currentPage >= totalPages && (
+            <View style={styles.endOfListContainer}>
+              <Ionicons name="checkmark-circle" size={20} color="#10B981" />
+              <Text style={styles.endOfListText}>
+                All transactions loaded
+              </Text>
+            </View>
           )}
         </ScrollView>
+
+        {/* Pagination Bar - Fixed at Bottom */}
+        {displayTransactions.length > 0 && (
+          <View style={styles.paginationContainer}>
+            <View style={styles.paginationRow}>
+              <Text style={styles.paginationResultText}>
+                Result {displayTransactions.length}/{transactions.length > 0 ? transactions.length : displayTransactions.length}
+              </Text>
+              
+              <View style={styles.paginationButtons}>
+                {/* Previous Button */}
+                <TouchableOpacity
+                  style={[
+                    styles.paginationArrow,
+                    currentPage === 1 && styles.paginationArrowDisabled,
+                  ]}
+                  onPress={handlePreviousPage}
+                  disabled={currentPage === 1 || loadingMore}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons 
+                    name="chevron-back" 
+                    size={18} 
+                    color={currentPage === 1 ? "#CCC" : "#687076"} 
+                  />
+                </TouchableOpacity>
+
+                {/* Page Numbers */}
+                {getVisiblePages().map((page, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={[
+                      styles.pageButton,
+                      page === currentPage && styles.pageButtonActive,
+                    ]}
+                    onPress={() => typeof page === 'number' && handlePageChange(page)}
+                    disabled={loadingMore || page === currentPage}
+                    activeOpacity={0.7}
+                  >
+                    <Text
+                      style={[
+                        styles.pageButtonText,
+                        page === currentPage && styles.pageButtonTextActive,
+                      ]}
+                    >
+                      {page}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+
+                {/* Next Button */}
+                <TouchableOpacity
+                  style={[
+                    styles.paginationArrow,
+                    (!hasMore || currentPage >= totalPages) && styles.paginationArrowDisabled,
+                  ]}
+                  onPress={handleNextPage}
+                  disabled={!hasMore || currentPage >= totalPages || loadingMore}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons 
+                    name="chevron-forward" 
+                    size={18} 
+                    color={(!hasMore || currentPage >= totalPages) ? "#CCC" : "#687076"} 
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {loadingMore && (
+              <View style={styles.paginationLoading}>
+                <ActivityIndicator size="small" color="#E15816" />
+                <Text style={styles.paginationLoadingText}>Loading...</Text>
+              </View>
+            )}
+          </View>
+        )}
 
         {/* filter modal removed; using dropdown menu anchored to filter icon */}
 
@@ -1152,6 +1275,87 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#999",
     letterSpacing: 0.5,
+  },
+  paginationContainer: {
+    backgroundColor: "#FFFFFF",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderTopWidth: 1,
+    borderTopColor: "#E0E0E0",
+  },
+  paginationRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  paginationResultText: {
+    fontSize: 13,
+    fontWeight: "500",
+    color: "#687076",
+  },
+  paginationButtons: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  paginationArrow: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1.5,
+    borderColor: "#E0E0E0",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  paginationArrowDisabled: {
+    opacity: 0.4,
+  },
+  pageButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1.5,
+    borderColor: "#E0E0E0",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  pageButtonActive: {
+    backgroundColor: "#E15816",
+    borderColor: "#E15816",
+  },
+  pageButtonText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#11181C",
+  },
+  pageButtonTextActive: {
+    color: "#FFFFFF",
+  },
+  paginationLoading: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginTop: 8,
+  },
+  paginationLoadingText: {
+    fontSize: 12,
+    color: "#687076",
+    fontWeight: "500",
+  },
+  endOfListContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 20,
+    marginTop: 8,
+  },
+  endOfListText: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#10B981",
   },
   modalOverlay: {
     flex: 1,
