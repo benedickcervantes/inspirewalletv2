@@ -381,16 +381,16 @@ const styles = StyleSheet.create({
   },
   backButtonBottom: {
     flex: 1,
-    backgroundColor: "#E0E0E0",
-    borderRadius: 12,
+    backgroundColor: "#E25A17",
+    borderRadius: 30,
     paddingVertical: 16,
     alignItems: "center",
     justifyContent: "center",
   },
   backButtonText: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: "700",
-    color: "#666",
+    color: "#FFFFFF",
   },
   confirmButton: {
     flex: 1,

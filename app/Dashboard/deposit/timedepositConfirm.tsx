@@ -93,7 +93,7 @@ export default function TimeDepositConfirm() {
     setShowSuccessModal(false);
     navigation.reset({
       index: 0,
-      routes: [{ name: "Main" }],
+      routes: [{ name: "Main" }], // Navigate to Main and then to Investments tab
     });
   };
 
@@ -290,7 +290,7 @@ export default function TimeDepositConfirm() {
                   style={styles.successButton}
                   onPress={goToMain}>
                   <Text style={styles.successButtonText}>
-                    {t("deposit.goToDashboard")}
+                    {t("kyc.sourceInvestments")}
                   </Text>
                 </TouchableOpacity>
               </LinearGradient>
@@ -523,16 +523,16 @@ const styles = StyleSheet.create({
   },
   backButtonBottom: {
     flex: 1,
-    backgroundColor: "#E0E0E0",
-    borderRadius: 12,
+    backgroundColor: "#E25A17",
+    borderRadius: 30,
     paddingVertical: 16,
     alignItems: "center",
     justifyContent: "center",
   },
   backButtonText: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: "700",
-    color: "#666",
+    color: "#FFFFFF",
   },
   confirmButton: {
     flex: 1,
