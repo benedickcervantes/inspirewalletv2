@@ -1,15 +1,36 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import {
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
+    Modal,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from "react-native";
 
 import { useLanguage } from "../../../context/LanguageContext";
 
 const EMPTY_PLACEHOLDER = "__empty__";
+
+const MONTH_KEYS = [
+  "banking.january",
+  "banking.february",
+  "banking.march",
+  "banking.april",
+  "banking.may",
+  "banking.june",
+  "banking.july",
+  "banking.august",
+  "banking.september",
+  "banking.october",
+  "banking.november",
+  "banking.december",
+] as const;
+const DAYS = Array.from({ length: 31 }, (_, i) => (i + 1).toString());
+const YEARS = Array.from({ length: 11 }, (_, i) => (new Date().getFullYear() + i).toString());
+const HOURS = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
+const MINUTES = Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, '0'));
 
 export interface TravelProtectDetailsProps {
   destinationAddress: string;
@@ -37,6 +58,12 @@ export interface TravelProtectDetailsProps {
   setPassportNumber: (value: string) => void;
   purposeOfTravel: string;
   setPurposeOfTravel: (value: string) => void;
+  showCheckInModal: boolean;
+  showDepartureTimePicker: boolean;
+  showArrivalTimePicker: boolean;
+  applyCheckInDateFromTemp: (month: number, day: number, year: number) => void;
+  applyDepartureTimeFromTemp: (hour: number, minute: number) => void;
+  applyArrivalTimeFromTemp: (hour: number, minute: number) => void;
 }
 
 export default function TravelProtectDetails({
@@ -44,22 +71,35 @@ export default function TravelProtectDetails({
   setDestinationAddress,
   checkInDateText,
   setShowCheckInModal,
+  tempCheckInDate,
+  setTempCheckInDate,
   duration,
   setDuration,
   airline,
   setAirline,
   departureTimeText,
   setShowDepartureTimePicker,
+  tempDepartureTime,
+  setTempDepartureTime,
   arrivalTimeText,
   setShowArrivalTimePicker,
+  tempArrivalTime,
+  setTempArrivalTime,
   passportNumber,
   setPassportNumber,
   purposeOfTravel,
   setPurposeOfTravel,
+  showCheckInModal,
+  showDepartureTimePicker,
+  showArrivalTimePicker,
+  applyCheckInDateFromTemp,
+  applyDepartureTimeFromTemp,
+  applyArrivalTimeFromTemp,
 }: TravelProtectDetailsProps) {
   const { t } = useLanguage();
 
   return (
+    <>
     <View style={styles.container}>
       <View style={styles.formCard}>
         
@@ -265,6 +305,235 @@ export default function TravelProtectDetails({
 
       </View>
     </View>
+
+    {/* Check-In Date Modal */}
+    <Modal
+      visible={showCheckInModal}
+      transparent
+      animationType="slide"
+      onRequestClose={() => setShowCheckInModal(false)}
+    >
+      <View style={styles.dateModalOverlay}>
+        <TouchableOpacity
+          style={styles.dateModalBackdrop}
+          activeOpacity={1}
+          onPress={() => setShowCheckInModal(false)}
+        />
+        <View style={styles.dateModalContainer}>
+          <View style={styles.dateModalHeader}>
+            <Text style={styles.dateModalTitle}>
+              {t("travel.selectCheckIn")}
+            </Text>
+            <TouchableOpacity onPress={() => setShowCheckInModal(false)}>
+              <Ionicons name="close" size={24} color="#333" />
+            </TouchableOpacity>
+          </View>
+          <View style={styles.datePickerRow}>
+            <View style={styles.datePickerColumn}>
+              <Text style={styles.datePickerLabel}>{t("banking.month")}</Text>
+              <ScrollView
+                style={styles.dateScroll}
+                showsVerticalScrollIndicator={false}
+              >
+                {MONTH_KEYS.map((key, i) => (
+                  <TouchableOpacity
+                    key={key}
+                    style={[
+                      styles.dateOption,
+                      tempCheckInDate.month === i && styles.dateOptionSelected,
+                    ]}
+                    onPress={() => applyCheckInDateFromTemp(i, tempCheckInDate.day, tempCheckInDate.year)}
+                  >
+                    <Text style={styles.dateOptionText}>{t(key)}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+            <View style={styles.datePickerColumn}>
+              <Text style={styles.datePickerLabel}>{t("banking.day")}</Text>
+              <ScrollView
+                style={styles.dateScroll}
+                showsVerticalScrollIndicator={false}
+              >
+                {DAYS.map((d) => (
+                  <TouchableOpacity
+                    key={d}
+                    style={[
+                      styles.dateOption,
+                      tempCheckInDate.day === parseInt(d, 10) &&
+                        styles.dateOptionSelected,
+                    ]}
+                    onPress={() => applyCheckInDateFromTemp(tempCheckInDate.month, parseInt(d, 10), tempCheckInDate.year)}
+                  >
+                    <Text style={styles.dateOptionText}>{d}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+            <View style={styles.datePickerColumn}>
+              <Text style={styles.datePickerLabel}>{t("banking.year")}</Text>
+              <ScrollView
+                style={styles.dateScroll}
+                showsVerticalScrollIndicator={false}
+              >
+                {YEARS.map((y) => (
+                  <TouchableOpacity
+                    key={y}
+                    style={[
+                      styles.dateOption,
+                      tempCheckInDate.year === parseInt(y, 10) &&
+                        styles.dateOptionSelected,
+                    ]}
+                    onPress={() => applyCheckInDateFromTemp(tempCheckInDate.month, tempCheckInDate.day, parseInt(y, 10))}
+                  >
+                    <Text style={styles.dateOptionText}>{y}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          </View>
+        </View>
+      </View>
+    </Modal>
+
+    {/* Departure Time Modal */}
+    <Modal
+      visible={showDepartureTimePicker}
+      transparent
+      animationType="slide"
+      onRequestClose={() => setShowDepartureTimePicker(false)}
+    >
+      <View style={styles.dateModalOverlay}>
+        <TouchableOpacity
+          style={styles.dateModalBackdrop}
+          activeOpacity={1}
+          onPress={() => setShowDepartureTimePicker(false)}
+        />
+        <View style={styles.dateModalContainer}>
+          <View style={styles.dateModalHeader}>
+            <Text style={styles.dateModalTitle}>
+              {t("travel.selectDeparture")}
+            </Text>
+            <TouchableOpacity onPress={() => setShowDepartureTimePicker(false)}>
+              <Ionicons name="close" size={24} color="#333" />
+            </TouchableOpacity>
+          </View>
+          <View style={styles.datePickerRow}>
+            <View style={styles.datePickerColumn}>
+              <Text style={styles.datePickerLabel}>Hour</Text>
+              <ScrollView
+                style={styles.dateScroll}
+                showsVerticalScrollIndicator={false}
+              >
+                {HOURS.map((h) => (
+                  <TouchableOpacity
+                    key={h}
+                    style={[
+                      styles.dateOption,
+                      tempDepartureTime.hour === parseInt(h, 10) && styles.dateOptionSelected,
+                    ]}
+                    onPress={() => applyDepartureTimeFromTemp(parseInt(h, 10), tempDepartureTime.minute)}
+                  >
+                    <Text style={styles.dateOptionText}>{h}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+            <View style={styles.datePickerColumn}>
+              <Text style={styles.datePickerLabel}>Minute</Text>
+              <ScrollView
+                style={styles.dateScroll}
+                showsVerticalScrollIndicator={false}
+              >
+                {MINUTES.map((m) => (
+                  <TouchableOpacity
+                    key={m}
+                    style={[
+                      styles.dateOption,
+                      tempDepartureTime.minute === parseInt(m, 10) &&
+                        styles.dateOptionSelected,
+                    ]}
+                    onPress={() => applyDepartureTimeFromTemp(tempDepartureTime.hour, parseInt(m, 10))}
+                  >
+                    <Text style={styles.dateOptionText}>{m}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          </View>
+        </View>
+      </View>
+    </Modal>
+
+    {/* Arrival Time Modal */}
+    <Modal
+      visible={showArrivalTimePicker}
+      transparent
+      animationType="slide"
+      onRequestClose={() => setShowArrivalTimePicker(false)}
+    >
+      <View style={styles.dateModalOverlay}>
+        <TouchableOpacity
+          style={styles.dateModalBackdrop}
+          activeOpacity={1}
+          onPress={() => setShowArrivalTimePicker(false)}
+        />
+        <View style={styles.dateModalContainer}>
+          <View style={styles.dateModalHeader}>
+            <Text style={styles.dateModalTitle}>
+              {t("travel.selectArrival")}
+            </Text>
+            <TouchableOpacity onPress={() => setShowArrivalTimePicker(false)}>
+              <Ionicons name="close" size={24} color="#333" />
+            </TouchableOpacity>
+          </View>
+          <View style={styles.datePickerRow}>
+            <View style={styles.datePickerColumn}>
+              <Text style={styles.datePickerLabel}>Hour</Text>
+              <ScrollView
+                style={styles.dateScroll}
+                showsVerticalScrollIndicator={false}
+              >
+                {HOURS.map((h) => (
+                  <TouchableOpacity
+                    key={h}
+                    style={[
+                      styles.dateOption,
+                      tempArrivalTime.hour === parseInt(h, 10) && styles.dateOptionSelected,
+                    ]}
+                    onPress={() => applyArrivalTimeFromTemp(parseInt(h, 10), tempArrivalTime.minute)}
+                  >
+                    <Text style={styles.dateOptionText}>{h}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+            <View style={styles.datePickerColumn}>
+              <Text style={styles.datePickerLabel}>Minute</Text>
+              <ScrollView
+                style={styles.dateScroll}
+                showsVerticalScrollIndicator={false}
+              >
+                {MINUTES.map((m) => (
+                  <TouchableOpacity
+                    key={m}
+                    style={[
+                      styles.dateOption,
+                      tempArrivalTime.minute === parseInt(m, 10) &&
+                        styles.dateOptionSelected,
+                    ]}
+                    onPress={() => applyArrivalTimeFromTemp(tempArrivalTime.hour, parseInt(m, 10))}
+                  >
+                    <Text style={styles.dateOptionText}>{m}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          </View>
+        </View>
+      </View>
+    </Modal>
+    </>
   );
 }
 
@@ -366,4 +635,67 @@ const styles = StyleSheet.create({
     color: "#999",
   },
 
+  dateModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "flex-end",
+  },
+  dateModalBackdrop: {
+    flex: 1,
+  },
+  dateModalContainer: {
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: "70%",
+  },
+  dateModalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E0E0E0",
+  },
+  dateModalTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#333",
+  },
+  datePickerRow: {
+    flexDirection: "row",
+    padding: 16,
+    gap: 12,
+  },
+  datePickerColumn: {
+    flex: 1,
+  },
+  datePickerLabel: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#666",
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  dateScroll: {
+    maxHeight: 180,
+  },
+  dateOption: {
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+    marginBottom: 4,
+    alignItems: "center",
+    backgroundColor: "#F9F9F9",
+  },
+  dateOptionSelected: {
+    backgroundColor: "rgba(226, 90, 23, 0.12)",
+    borderWidth: 1,
+    borderColor: "rgba(226, 90, 23, 0.3)",
+  },
+  dateOptionText: {
+    fontSize: 14,
+    color: "#333",
+    fontWeight: "500",
+  },
 });

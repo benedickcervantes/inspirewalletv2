@@ -1,24 +1,26 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
-import { useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
-  Keyboard,
-  Modal,
-  Platform,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
+    ActivityIndicator,
+    Keyboard,
+    Modal,
+    Platform,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { getTimeDeposits } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
 import type { RootStackParamList } from "../../../types/navigation";
 import { useResponsive } from "../../../utils/responsive";
@@ -29,6 +31,29 @@ import TravelProtectReviewSubmit from "./TravelProtectReview&Submit";
 import TravelRequiredDocu from "./TravelRequiredDocu";
 
 const EMPTY_PLACEHOLDER = "__empty__";
+
+interface TimeDeposit {
+  id: string;
+  amount?: string | number;
+  principal?: string | number;
+  status?: string;
+  [key: string]: unknown;
+}
+
+function parseDepositAmount(d: TimeDeposit): number {
+  const val = d?.amount ?? d?.principal ?? 0;
+  const n = typeof val === "number" ? val : parseFloat(String(val).replace(/,/g, ""));
+  return Number.isNaN(n) ? 0 : n;
+}
+
+function computeTimeDepositTotal(deposits: TimeDeposit[]): number {
+  return deposits
+    .filter((d) => {
+      const s = String(d?.status ?? "").toUpperCase();
+      return s === "ACTIVE" || s === "MATURED" || s === "PENDING";
+    })
+    .reduce((sum, d) => sum + parseDepositAmount(d), 0);
+}
 
 const MONTH_KEYS = [
   "banking.january", "banking.february", "banking.march", "banking.april", "banking.may", "banking.june",
@@ -182,8 +207,31 @@ export default function TravelProtection() {
 
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [protectionFee, setProtectionFee] = useState(1250);
   const [userTimeDeposit, setUserTimeDeposit] = useState(0);
+
+  // Travel protection fee: ₱625 if time deposit >= 200,000, otherwise ₱1,250
+  const protectionFee = userTimeDeposit >= 50000 ? 625 : 1250;
+
+  // Fetch user's time deposit total from backend
+  const fetchTimeDeposits = useCallback(async () => {
+    const accessToken = await AsyncStorage.getItem("access_token");
+    if (!accessToken) return;
+    const result = await getTimeDeposits(accessToken);
+    if (!result.success || !Array.isArray(result.deposits)) return;
+    const list = result.deposits as TimeDeposit[];
+    const total = computeTimeDepositTotal(list);
+    setUserTimeDeposit(total);
+  }, []);
+
+  useEffect(() => {
+    fetchTimeDeposits();
+  }, [fetchTimeDeposits]);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchTimeDeposits();
+    }, [fetchTimeDeposits])
+  );
 
   // Text input refs for Step 1
   const scrollViewRef = useRef<KeyboardAwareScrollView>(null);
@@ -379,15 +427,67 @@ export default function TravelProtection() {
     }
   };
 
-  const handleSubmit = () => {
-    showAlert(
-      t("travel.applicationSubmitted"),
-      t("travel.applicationSuccess"),
-      "success"
-    );
-    setTimeout(() => {
-      navigation.goBack();
-    }, 2000);
+  const handleSubmit = async () => {
+    setLoading(true);
+    try {
+      const accessToken = await AsyncStorage.getItem('access_token');
+      if (!accessToken) {
+        showAlert(t("travel.error"), "Not authenticated", "error");
+        return;
+      }
+
+      // Prepare the data
+      const applicationData = {
+        // Step 1: Contact Information
+        emailAddress,
+        mobileNumber: `${selectedCountry.dialCode}${mobileNumber}`,
+        landlineNumber: landlineNumber || undefined,
+        homeAddress,
+        
+        // Step 2: Personal Details
+        gender,
+        dateOfBirth: dateOfBirth?.toISOString(),
+        civilStatus,
+        citizenship,
+        
+        // Step 3: Financial Information
+        sourceOfFund,
+        grossMonthlyIncome,
+        cashOnHand,
+        
+        // Step 4: Travel Details
+        destinationAddress,
+        checkInDate: checkInDate?.toISOString(),
+        duration: parseInt(duration, 10),
+        airline,
+        departureTime: departureTime.toISOString(),
+        arrivalTime: arrivalTime.toISOString(),
+        passportNumber,
+        purposeOfTravel,
+        
+        // Step 5: Documents (base64 or URLs)
+        passportPhoto,
+        governmentId,
+        
+        // Additional info
+        protectionFee,
+        userTimeDeposit,
+      };
+
+      showAlert(
+        t("travel.applicationSubmitted"),
+        t("travel.applicationSuccess"),
+        "success"
+      );
+      
+      setTimeout(() => {
+        navigation.goBack();
+      }, 2000);
+    } catch (error) {
+      showAlert(t("travel.error"), "An unexpected error occurred", "error");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const formatDateOfBirth = (d: Date) => {
@@ -578,11 +678,6 @@ export default function TravelProtection() {
                 </View>
                 <Text style={[styles.feeAmount, dynamicStyles.feeAmount]}>
                   ₱ {protectionFee.toLocaleString()}
-                </Text>
-                <Text style={styles.feeSubtext}>
-                  {userTimeDeposit > 0
-                    ? t("travel.discountedRate")
-                    : t("travel.standardRate")}
                 </Text>
               </View>
 
@@ -849,6 +944,12 @@ export default function TravelProtection() {
                   setPassportNumber={setPassportNumber}
                   purposeOfTravel={purposeOfTravel}
                   setPurposeOfTravel={setPurposeOfTravel}
+                  showCheckInModal={showCheckInModal}
+                  showDepartureTimePicker={showDepartureTimePicker}
+                  showArrivalTimePicker={showArrivalTimePicker}
+                  applyCheckInDateFromTemp={applyCheckInDateFromTemp}
+                  applyDepartureTimeFromTemp={applyDepartureTimeFromTemp}
+                  applyArrivalTimeFromTemp={applyArrivalTimeFromTemp}
                 />
               )}
 
@@ -1050,11 +1151,14 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#E25A17",
     marginBottom: 4,
+    textAlign: "center",
   },
   feeSubtext: {
     fontSize: 11,
     color: "#999",
     letterSpacing: 0.5,
+    textAlign: "center",
+    alignSelf: "center",
   },
   stepIndicatorContainer: {
     flexDirection: "row",
@@ -1242,7 +1346,7 @@ const styles = StyleSheet.create({
     backgroundColor: "transparent",
     paddingHorizontal: 0,
     paddingTop: 24,
-    paddingBottom: 0,
+    paddingBottom: 24,
     flexDirection: "row",
     gap: 12,
   },
@@ -1252,7 +1356,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "#E25A17",
     backgroundColor: "#FFFFFF",
-    paddingVertical: 16,
+    paddingVertical: 14,
     alignItems: "center",
     justifyContent: "center",
   },
