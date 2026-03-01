@@ -494,8 +494,6 @@ export default function TravelProtection() {
         passportNumber,
         purposeOfTravel,
         passportPhoto: passportPhotoBase64,
-        protectionFee,
-        userTimeDeposit,
       };
 
       const result = await submitTravelProtection(accessToken, applicationData);
