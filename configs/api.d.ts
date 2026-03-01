@@ -178,3 +178,8 @@ export function getReferralTree(
   };
   error?: string;
 }>;
+
+export function submitTravelProtection(
+  accessToken: string,
+  body: Record<string, unknown>
+): Promise<{ success: boolean; data?: unknown; error?: string }>;

@@ -2,6 +2,7 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import * as FileSystem from "expo-file-system/legacy";
 import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -20,7 +21,7 @@ import {
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { getTimeDeposits } from "../../../configs/api";
+import { getTimeDeposits, submitTravelProtection } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
 import type { RootStackParamList } from "../../../types/navigation";
 import { useResponsive } from "../../../utils/responsive";
@@ -31,6 +32,32 @@ import TravelProtectReviewSubmit from "./TravelProtectReview&Submit";
 import TravelRequiredDocu from "./TravelRequiredDocu";
 
 const EMPTY_PLACEHOLDER = "__empty__";
+
+/** Convert a local file URI to base64 data URL for API submission */
+async function uriToBase64DataUrl(uri: string): Promise<string> {
+  if (Platform.OS === "web") {
+    if (uri.startsWith("data:")) return uri;
+    const response = await fetch(uri);
+    const blob = await response.blob();
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  const base64 = await FileSystem.readAsStringAsync(uri, {
+    encoding: 'base64',
+  });
+  const ext = uri.split(".").pop()?.toLowerCase() ?? "jpg";
+  const mime =
+    ext === "png" ? "image/png" :
+    ext === "gif" ? "image/gif" :
+    ext === "webp" ? "image/webp" :
+    "image/jpeg";
+  return `data:${mime};base64,${base64}`;
+}
 
 interface TimeDeposit {
   id: string;
@@ -436,54 +463,57 @@ export default function TravelProtection() {
         return;
       }
 
+      let passportPhotoBase64: string | undefined;
+      if (passportPhoto) {
+        passportPhotoBase64 = await uriToBase64DataUrl(passportPhoto);
+      }
+
+      // Formulate the time strings like "08:00 AM"
+      const formatTime = (d: Date) => d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const formatDate = (d: Date | null) => d ? d.toISOString().split('T')[0] : "";
+
       // Prepare the data
       const applicationData = {
-        // Step 1: Contact Information
-        emailAddress,
-        mobileNumber: `${selectedCountry.dialCode}${mobileNumber}`,
-        landlineNumber: landlineNumber || undefined,
+        email: emailAddress,
+        mobile: `${selectedCountry.dialCode}${mobileNumber}`,
+        landline: landlineNumber || undefined,
         homeAddress,
-        
-        // Step 2: Personal Details
         gender,
-        dateOfBirth: dateOfBirth?.toISOString(),
+        dateOfBirth: formatDate(dateOfBirth),
         civilStatus,
         citizenship,
-        
-        // Step 3: Financial Information
         sourceOfFund,
         grossMonthlyIncome,
         cashOnHand,
-        
-        // Step 4: Travel Details
         destinationAddress,
-        checkInDate: checkInDate?.toISOString(),
-        duration: parseInt(duration, 10),
-        airline,
-        departureTime: departureTime.toISOString(),
-        arrivalTime: arrivalTime.toISOString(),
+        checkInDate: formatDate(checkInDate),
+        duration: duration,
+        airlineType: airline,
+        departureTime: formatTime(departureTime),
+        arrivalTime: formatTime(arrivalTime),
         passportNumber,
         purposeOfTravel,
-        
-        // Step 5: Documents (base64 or URLs)
-        passportPhoto,
-        governmentId,
-        
-        // Additional info
+        passportPhoto: passportPhotoBase64,
         protectionFee,
         userTimeDeposit,
       };
 
-      showAlert(
-        t("travel.applicationSubmitted"),
-        t("travel.applicationSuccess"),
-        "success"
-      );
-      
-      setTimeout(() => {
-        navigation.goBack();
-      }, 2000);
+      const result = await submitTravelProtection(accessToken, applicationData);
+
+      if (result.success) {
+        showAlert(
+          t("travel.applicationSubmitted"),
+          t("travel.applicationSuccess"),
+          "success"
+        );
+        setTimeout(() => {
+          navigation.goBack();
+        }, 2000);
+      } else {
+        showAlert(t("travel.error"), result.error || "Failed to submit application", "error");
+      }
     } catch (error) {
+      console.error("Travel protection API error:", error);
       showAlert(t("travel.error"), "An unexpected error occurred", "error");
     } finally {
       setLoading(false);
