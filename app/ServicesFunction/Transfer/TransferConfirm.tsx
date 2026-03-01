@@ -1,12 +1,15 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useEffect, useState } from "react";
 import {
     ActivityIndicator,
     Dimensions,
+    KeyboardAvoidingView,
     Modal,
+    Platform,
     SafeAreaView,
     ScrollView,
     StyleSheet,
@@ -15,6 +18,7 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
+import { useLanguage } from "../../../context/LanguageContext";
 import { createBeneficiary, getOrCreateMainWallet, submitTransfer } from "../../../configs/api";
 
 const { width } = Dimensions.get("window");
@@ -31,6 +35,7 @@ export const getUserInitials = (name: string) => {
 
 export default function TransferConfirm() {
   const { t } = useLanguage();
+  const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const route = useRoute();
   const params = (route.params || {}) as {
@@ -363,7 +368,11 @@ export default function TransferConfirm() {
           animationType="fade"
           onRequestClose={() => !isProcessing && setShowPasscodeModal(false)}
         >
-          <View style={styles.modalOverlay}>
+          <KeyboardAvoidingView
+            style={styles.modalOverlay}
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            keyboardVerticalOffset={Platform.OS === "ios" ? 40 : 0}
+          >
             <View style={styles.passcodeModalContent}>
               <Text style={styles.passcodeModalTitle}>Enter your passcode</Text>
               <TextInput
@@ -396,7 +405,7 @@ export default function TransferConfirm() {
                 </TouchableOpacity>
               </View>
             </View>
-          </View>
+          </KeyboardAvoidingView>
         </Modal>
 
         {/* Success Modal */}

@@ -6,19 +6,19 @@ import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useEffect, useState } from "react";
 import {
-  Alert,
-  Image,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
+    Alert,
+    Image,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    useWindowDimensions,
+    View,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { getMe } from "../../configs/api";
@@ -100,6 +100,8 @@ export default function KYCVerification() {
   const [selfieUri, setSelfieUri] = useState<string | null>(null);
   const [confirmAccuracy, setConfirmAccuracy] = useState(false);
   const [viewingImageUri, setViewingImageUri] = useState<string | null>(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showConfirmRequiredModal, setShowConfirmRequiredModal] = useState(false);
 
   const fetchUserData = useCallback(async () => {
     try {
@@ -202,8 +204,16 @@ export default function KYCVerification() {
   };
 
   const handleConfirmSubmit = () => {
-    if (!confirmAccuracy) return;
+    if (!confirmAccuracy) {
+      setShowConfirmRequiredModal(true);
+      return;
+    }
     // Future: submit KYC to backend
+    setShowSuccessModal(true);
+  };
+
+  const handleSuccessModalClose = () => {
+    setShowSuccessModal(false);
     navigation.goBack();
   };
 
@@ -211,16 +221,21 @@ export default function KYCVerification() {
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea} edges={["bottom"]}>
         {/* Header: fully up — bar extends to top, content below status bar */}
-        <View style={[styles.header, { paddingHorizontal: horizontalPadding, paddingTop: safePaddingTop }]}>
+        <LinearGradient
+          colors={["#E15816", "#F48F38"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={[styles.header, { paddingHorizontal: horizontalPadding, paddingTop: safePaddingTop }]}
+        >
           <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-            <Ionicons name="arrow-back" size={24} color={THEME_COLOR} />
+            <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
           </TouchableOpacity>
           <Text style={styles.headerTitle} numberOfLines={1}>{t("kyc.title")}</Text>
           <View style={styles.headerSpacer} />
-        </View>
+        </LinearGradient>
 
         {/* Progress: 4 horizontal lines (active = current step, completed = steps before) */}
-        <View style={[styles.progressContainer, { paddingHorizontal: horizontalPadding }]}>
+        <View style={[styles.progressContainer, { paddingHorizontal: horizontalPadding, marginBottom: 20 }]}>
           <View style={[styles.progressRow, { gap: Math.round(8 * scale) }]}>
             {[1, 2, 3, 4].map((step) => (
               <View
@@ -244,7 +259,7 @@ export default function KYCVerification() {
               styles.scrollContent,
               {
                 paddingHorizontal: horizontalPadding,
-                paddingTop: 0,
+                paddingTop: 4,
                 paddingBottom: 24 + safePaddingBottom,
               },
             ]}
@@ -1112,6 +1127,56 @@ export default function KYCVerification() {
           </View>
         </TouchableOpacity>
       </Modal>
+
+      {/* Success confirmation modal - shown when KYC submission is complete */}
+      <Modal
+        visible={showSuccessModal}
+        transparent
+        animationType="fade"
+        onRequestClose={handleSuccessModalClose}
+      >
+        <View style={styles.successModalOverlay}>
+          <View style={styles.successModalContent}>
+            <View style={styles.successModalIconContainer}>
+              <Ionicons name="checkmark-circle" size={64} color={GREEN_UPLOADED} />
+            </View>
+            <Text style={styles.successModalTitle}>{t("kyc.submissionSuccess")}</Text>
+            <Text style={styles.successModalMessage}>{t("kyc.submissionSuccessMessage")}</Text>
+            <TouchableOpacity
+              style={styles.successModalButton}
+              onPress={handleSuccessModalClose}
+              activeOpacity={0.9}
+            >
+              <Text style={styles.successModalButtonText}>{t("kyc.ok")}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Confirm required modal - shown when user submits without checking the confirmation box */}
+      <Modal
+        visible={showConfirmRequiredModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowConfirmRequiredModal(false)}
+      >
+        <View style={styles.successModalOverlay}>
+          <View style={styles.successModalContent}>
+            <View style={styles.successModalIconContainer}>
+              <Ionicons name="alert-circle-outline" size={64} color={THEME_COLOR} />
+            </View>
+            <Text style={styles.successModalTitle}>{t("kyc.confirmRequiredTitle")}</Text>
+            <Text style={styles.successModalMessage}>{t("kyc.confirmRequiredMessage")}</Text>
+            <TouchableOpacity
+              style={styles.successModalButton}
+              onPress={() => setShowConfirmRequiredModal(false)}
+              activeOpacity={0.9}
+            >
+              <Text style={styles.successModalButtonText}>{t("kyc.ok")}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -1131,7 +1196,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: 16,
     paddingVertical: 16,
-    backgroundColor: "#FFFFFF",
   },
   backButton: {
     width: 40,
@@ -1142,7 +1206,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#000000",
+    color: "#FFFFFF",
     flex: 1,
     textAlign: "center",
   },
@@ -1150,8 +1214,8 @@ const styles = StyleSheet.create({
     width: 40,
   },
   progressContainer: {
-    paddingTop: 12,
-    paddingBottom: 0,
+    paddingTop: 16,
+    paddingBottom: 16,
     paddingHorizontal: 24,
     backgroundColor: "#FFFFFF",
   },
@@ -1656,5 +1720,56 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: Platform.OS === "ios" ? 50 : 40,
     right: 20,
+  },
+  successModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  successModalContent: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    padding: 28,
+    width: "100%",
+    maxWidth: 360,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 8,
+    alignItems: "center",
+  },
+  successModalIconContainer: {
+    marginBottom: 20,
+  },
+  successModalTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#000000",
+    marginBottom: 12,
+    textAlign: "center",
+  },
+  successModalMessage: {
+    fontSize: 15,
+    color: "#666",
+    lineHeight: 22,
+    textAlign: "center",
+    marginBottom: 24,
+  },
+  successModalButton: {
+    backgroundColor: THEME_COLOR,
+    paddingVertical: 14,
+    paddingHorizontal: 40,
+    borderRadius: 14,
+    width: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  successModalButtonText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#FFFFFF",
   },
 });

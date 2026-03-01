@@ -1,20 +1,16 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
-import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useRef, useState } from "react";
-import { Image, StyleSheet, Text, View } from "react-native";
 import { getMe } from "../configs/api";
-import { useResponsive } from "../utils/responsive";
 import type { RootStackParamList } from "../types/navigation";
+import CustomLoader from "./Loader/CustomLoader";
 
-const LOADER_IMAGE = require("../assets/images/InpireLogo.png");
 const MIN_SPLASH_MS = 3000;
 
 type ScreenName = keyof RootStackParamList;
 
 export default function AuthLoader() {
   const navigation = useNavigation();
-  const { scale } = useResponsive();
   const [loading, setLoading] = useState(true);
   const hasInitializedRef = useRef(false);
   const navigationHandledRef = useRef(false);
@@ -102,39 +98,5 @@ export default function AuthLoader() {
 
   if (!loading) return null;
 
-  return (
-    <LinearGradient colors={["#E25A17", "#F28934"]} style={styles.container}>
-      <View style={styles.logoContainer}>
-        <Image source={LOADER_IMAGE} style={[styles.logo, { width: scale(250), height: scale(250) }]} resizeMode="contain" />
-        <Text style={styles.createdByText}>CREATED BY INSPIRE</Text>
-      </View>
-    </LinearGradient>
-  );
+  return <CustomLoader text="LOADING" />;
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  logoContainer: {
-    justifyContent: "center",
-    alignItems: "center",
-    flex: 1,
-  },
-  logo: {
-    maxWidth: "80%",
-    maxHeight: "45%",
-    aspectRatio: 1,
-  },
-  createdByText: {
-    color: "#FFFFFF",
-    fontSize: 12,
-    fontWeight: "400",
-    fontStyle: "normal",
-    letterSpacing: 1,
-    position: "absolute",
-    bottom: 50,
-  },
-});

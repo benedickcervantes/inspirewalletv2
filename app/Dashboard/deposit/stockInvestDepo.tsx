@@ -1,10 +1,9 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   Modal,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
@@ -12,6 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useLanguage } from "../../../context/LanguageContext";
 
 export default function StockInvestment() {
@@ -21,7 +21,10 @@ export default function StockInvestment() {
   const [showCurrencyModal, setShowCurrencyModal] = useState(false);
   const [amount, setAmount] = useState("");
   const [showAlertModal, setShowAlertModal] = useState(false);
-  const [alertConfig, setAlertConfig] = useState<{ title: string; message: string }>({ title: "", message: "" });
+  const [alertConfig, setAlertConfig] = useState<{
+    title: string;
+    message: string;
+  }>({ title: "", message: "" });
 
   const currencies = [
     { code: "PHP", name: "Philippine Peso", flag: "🇵🇭", symbol: "₱" },
@@ -60,12 +63,10 @@ export default function StockInvestment() {
           colors={["#E25A17", "#F28934"]}
           style={styles.header}
           start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-        >
+          end={{ x: 1, y: 0 }}>
           <TouchableOpacity
             style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
+            onPress={() => navigation.goBack()}>
             <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
           </TouchableOpacity>
 
@@ -90,11 +91,12 @@ export default function StockInvestment() {
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
+          showsVerticalScrollIndicator={false}>
           {/* Title */}
           <View style={styles.titleContainer}>
-            <Text style={styles.title}>{t("deposit.stockInvestmentTitle")}</Text>
+            <Text style={styles.title}>
+              {t("deposit.stockInvestmentTitle")}
+            </Text>
             <Text style={styles.subtitle}>{t("deposit.stockMinShort")}</Text>
           </View>
 
@@ -112,13 +114,14 @@ export default function StockInvestment() {
                     color="#E25A17"
                   />
                 </View>
-                <Text style={styles.sectionTitle}>{t("deposit.selectCurrency")}</Text>
+                <Text style={styles.sectionTitle}>
+                  {t("deposit.selectCurrency")}
+                </Text>
               </View>
 
               <TouchableOpacity
                 style={styles.currencySelector}
-                onPress={() => setShowCurrencyModal(true)}
-              >
+                onPress={() => setShowCurrencyModal(true)}>
                 <View style={styles.flagContainer}>
                   <Text style={styles.flagEmoji}>
                     {getSelectedCurrency().flag}
@@ -135,7 +138,11 @@ export default function StockInvestment() {
             <View style={styles.formSection}>
               <View style={styles.sectionHeader}>
                 <View style={styles.iconBox}>
-                  <MaterialCommunityIcons name="cash" size={20} color="#E25A17" />
+                  <MaterialCommunityIcons
+                    name="cash"
+                    size={20}
+                    color="#E25A17"
+                  />
                 </View>
                 <Text style={styles.sectionTitle}>{t("deposit.amount")}</Text>
               </View>
@@ -159,14 +166,12 @@ export default function StockInvestment() {
           {/* Continue Button */}
           <TouchableOpacity
             style={styles.continueButton}
-            onPress={handleContinue}
-          >
+            onPress={handleContinue}>
             <LinearGradient
               colors={["#E25A17", "#F28934"]}
               style={styles.continueGradient}
               start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-            >
+              end={{ x: 1, y: 0 }}>
               <Text style={styles.continueText}>{t("deposit.continue")}</Text>
               <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
             </LinearGradient>
@@ -180,12 +185,13 @@ export default function StockInvestment() {
           visible={showCurrencyModal}
           transparent={true}
           animationType="slide"
-          onRequestClose={() => setShowCurrencyModal(false)}
-        >
+          onRequestClose={() => setShowCurrencyModal(false)}>
           <View style={styles.modalOverlay}>
             <View style={styles.modalContainer}>
               <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>{t("deposit.selectCurrency")}</Text>
+                <Text style={styles.modalTitle}>
+                  {t("deposit.selectCurrency")}
+                </Text>
                 <TouchableOpacity onPress={() => setShowCurrencyModal(false)}>
                   <Ionicons name="close" size={24} color="#333" />
                 </TouchableOpacity>
@@ -202,8 +208,7 @@ export default function StockInvestment() {
                     onPress={() => {
                       setSelectedCurrency(currency.code);
                       setShowCurrencyModal(false);
-                    }}
-                  >
+                    }}>
                     <Text style={styles.currencyFlag}>{currency.flag}</Text>
                     <View style={styles.currencyInfo}>
                       <Text style={styles.currencyCode}>{currency.code}</Text>
@@ -228,21 +233,18 @@ export default function StockInvestment() {
           visible={showAlertModal}
           transparent={true}
           animationType="fade"
-          onRequestClose={() => setShowAlertModal(false)}
-        >
+          onRequestClose={() => setShowAlertModal(false)}>
           <View style={styles.alertOverlay}>
             <LinearGradient
               colors={["#E15816", "#F48F38"]}
               style={styles.alertContainer}
               start={{ x: 0, y: 0 }}
-              end={{ x: 0, y: 1 }}
-            >
+              end={{ x: 0, y: 1 }}>
               <Text style={styles.alertTitle}>{alertConfig.title}</Text>
               <Text style={styles.alertMessage}>{alertConfig.message}</Text>
               <TouchableOpacity
                 style={styles.alertButton}
-                onPress={() => setShowAlertModal(false)}
-              >
+                onPress={() => setShowAlertModal(false)}>
                 <Text style={styles.alertButtonText}>{t("deposit.ok")}</Text>
               </TouchableOpacity>
             </LinearGradient>

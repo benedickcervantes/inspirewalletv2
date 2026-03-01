@@ -3,12 +3,12 @@ import {
   StyleSheet,
   Text,
   View,
-  SafeAreaView,
   TouchableOpacity,
   TextInput,
   ScrollView,
   Modal,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -35,7 +35,7 @@ export default function TopUpBalance() {
     if (!amount || parseFloat(amount) <= 0) {
       setAlertConfig({
         title: t("deposit.invalidAmount"),
-        message: t("deposit.enterAmount")
+        message: t("deposit.enterAmount") // can enter a letter, but still contiune to confirm, need to validate if the input is a number and greater than 0
       });
       setShowAlertModal(true);
       return;

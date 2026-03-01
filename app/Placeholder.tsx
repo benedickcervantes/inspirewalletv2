@@ -5,25 +5,25 @@ import { LinearGradient } from "expo-linear-gradient";
 import { doc, getDoc } from "firebase/firestore";
 import { useCallback, useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
+    ActivityIndicator,
+    Alert,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    useWindowDimensions,
+    View,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { getMe, updateProfile } from "../configs/api";
 import { auth, firestore } from "../configs/firebase";
-import { useLanguage } from "../context/LanguageContext";
 import { DEFAULT_LANGUAGE, normalizeLanguage, SUPPORTED_LANGUAGES } from "../constants/locales";
+import { useLanguage } from "../context/LanguageContext";
 
 const THEME_COLOR = "#E15816";
 const USER_PREFERRED_LANGUAGE_KEY = "user_preferred_language";
@@ -177,6 +177,10 @@ export default function Placeholder() {
     setShowPhoneModal(true);
   };
 
+  const openCompanyModal = () => {
+    (navigation as any).navigate("KYCcompany");
+  };
+
   const fullName = userData?.firstName && userData?.lastName 
     ? `${userData.firstName} ${userData.lastName}`
     : userData?.displayName || userData?.name || t("common.user");
@@ -184,8 +188,8 @@ export default function Placeholder() {
   const isAgent = userData?.isAgent || userData?.role === "agent" || false;
   const isPremium = userData?.isPremium || userData?.accountLevel === "premium" || false;
   const accountNumber = userData?.accountNumber || userData?.id || "000053126300";
-  const companyName = userData?.companyName || "Inspire Holdings Inc";
-  const contactNumber = userData?.phone ?? userData?.phoneNumber ?? "+63";
+  const companyName = userData?.companyName || t("Tap to add company name") || "Tap to add company name";
+  const contactNumber = userData?.phone ?? userData?.phoneNumber ?? t("Tap to add phone number") ?? "Tap to add phone number";
   const lineLink = userData?.lineAccountLink ?? userData?.lineLink ?? t("common.notProvided");
   const viberLink = userData?.viberLink || t("common.notProvided");
   const whatsappLink = userData?.whatsappLink || t("common.notProvided");
@@ -318,6 +322,8 @@ export default function Placeholder() {
             label={t("profile.companyName")}
             value={companyName}
             editable
+            onEdit={openCompanyModal}
+            isPlaceholder={!userData?.companyName}
           />
           <DetailItem
             icon="call-outline"
@@ -325,6 +331,7 @@ export default function Placeholder() {
             value={contactNumber}
             editable
             onEdit={openPhoneModal}
+            isPlaceholder={!userData?.phone && !userData?.phoneNumber}
           />
           <DetailItem
             icon="link-outline"
@@ -510,11 +517,12 @@ export default function Placeholder() {
             </View>
             <View style={styles.modalBody}>
               <Text style={styles.inputLabel}>Contact Number *</Text>
+              <Text style={styles.inputHint}>Include country code (e.g., +1, +81, +82, +966, +63)</Text>
               <TextInput
                 style={styles.input}
                 value={editPhone}
                 onChangeText={setEditPhone}
-                placeholder="+63..."
+                placeholder="+1234567890"
                 placeholderTextColor="#999"
                 keyboardType="phone-pad"
                 editable={!saving}
@@ -636,6 +644,7 @@ interface DetailItemProps {
   onVerifyPress?: () => void;
   verifyButtonLabel?: string;
   onEdit?: () => void;
+  isPlaceholder?: boolean;
 }
 
 function DetailItem({
@@ -651,6 +660,7 @@ function DetailItem({
   showVerifyButton,
   onVerifyPress,
   verifyButtonLabel = "Verify",
+  isPlaceholder = false,
 }: DetailItemProps) {
   const onEditHandler = onEditPress ?? onEdit;
   const handlePress = editable && onEditHandler ? onEditHandler : undefined;
@@ -661,7 +671,7 @@ function DetailItem({
         <Text style={styles.detailLabel}>{label}</Text>
       </View>
       <View style={styles.detailValueContainer}>
-        <Text style={styles.detailValue}>{value}</Text>
+        <Text style={isPlaceholder ? styles.detailValuePlaceholder : styles.detailValue}>{value}</Text>
         {badge && (
           <View style={[styles.badge, { backgroundColor: badgeColor }]}>
             <Text style={styles.badgeTextSmall}>{badge}</Text>
@@ -738,15 +748,17 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     justifyContent: "center",
     alignItems: "center",
+    borderWidth: 4,
+    borderColor: "rgba(255,255,255,0.3)",
     ...Platform.select({
       ios: {
         shadowColor: "#000",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.2,
-        shadowRadius: 8,
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.3,
+        shadowRadius: 12,
       },
       android: {
-        elevation: 5,
+        elevation: 8,
       },
     }),
   },
@@ -803,11 +815,17 @@ const styles = StyleSheet.create({
     marginTop: 16,
     borderRadius: 16,
     padding: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
   },
   sectionHeader: {
     flexDirection: "row",
@@ -821,9 +839,9 @@ const styles = StyleSheet.create({
     color: "#333",
   },
   detailItem: {
-    paddingVertical: 12,
+    paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: "#F0F0F0",
+    borderBottomColor: "#F5F5F5",
   },
   detailHeader: {
     flexDirection: "row",
@@ -845,8 +863,16 @@ const styles = StyleSheet.create({
   },
   detailValue: {
     fontSize: 15,
+    fontWeight: "500",
     color: "#333",
     flex: 1,
+  },
+  detailValuePlaceholder: {
+    fontSize: 15,
+    fontWeight: "500",
+    color: "#999",
+    flex: 1,
+    fontStyle: "italic",
   },
   badge: {
     flexDirection: "row",
@@ -951,16 +977,29 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: 14,
+    paddingVertical: 16,
     paddingHorizontal: 16,
     borderRadius: 12,
-    marginBottom: 6,
-    backgroundColor: "#F5F5F5",
+    marginBottom: 8,
+    backgroundColor: "#F8F8F8",
+    borderWidth: 1,
+    borderColor: "transparent",
   },
   languageOptionSelected: {
     backgroundColor: "#FFF0E8",
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: "#E15816",
+    ...Platform.select({
+      ios: {
+        shadowColor: "#E15816",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.15,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
   },
   languageOptionFlag: {
     fontSize: 22,
@@ -1032,14 +1071,21 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     marginTop: 12,
   },
+  inputHint: {
+    fontSize: 12,
+    color: "#666",
+    marginBottom: 8,
+    fontStyle: "italic",
+  },
   input: {
     borderWidth: 2,
     borderColor: "#E0E0E0",
     borderRadius: 12,
-    paddingVertical: 12,
+    paddingVertical: 14,
     paddingHorizontal: 16,
     fontSize: 16,
     color: "#333",
+    backgroundColor: "#FAFAFA",
   },
   saveButton: {
     marginHorizontal: 20,
@@ -1049,6 +1095,17 @@ const styles = StyleSheet.create({
     backgroundColor: THEME_COLOR,
     alignItems: "center",
     justifyContent: "center",
+    ...Platform.select({
+      ios: {
+        shadowColor: THEME_COLOR,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
   },
   saveButtonDisabled: {
     opacity: 0.7,

@@ -1,13 +1,14 @@
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { collection, doc, getDoc, getDocs, limit, orderBy, query } from "firebase/firestore";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useLanguage } from "../../../context/LanguageContext";
 import { auth, firestore } from "../../../configs/firebase";
+import { useLanguage } from "../../../context/LanguageContext";
+import { isServiceUnderMaintenance } from "../../../lib/maintenance";
 
 interface TaskItem {
   id: string;
@@ -32,10 +33,32 @@ export default function TaskServices() {
   const [accumulatedPoints, setAccumulatedPoints] = useState(0);
   const [historyItems, setHistoryItems] = useState<HistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isUnderMaintenance, setIsUnderMaintenance] = useState(false);
+  const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
+
+  // Check maintenance status on focus
+  useFocusEffect(
+    useCallback(() => {
+      const checkMaintenance = async () => {
+        try {
+          const isMaintenance = await isServiceUnderMaintenance("task");
+          setIsUnderMaintenance(isMaintenance);
+          if (isMaintenance) {
+            setShowMaintenanceModal(true);
+          }
+        } catch (error) {
+          console.error("Error checking maintenance:", error);
+        }
+      };
+      checkMaintenance();
+    }, [])
+  );
   
   useEffect(() => {
-    fetchTaskData();
-  }, []);
+    if (!isUnderMaintenance) {
+      fetchTaskData();
+    }
+  }, [isUnderMaintenance]);
 
   const fetchTaskData = async () => {
     try {
@@ -114,6 +137,17 @@ export default function TaskServices() {
           <ActivityIndicator size="large" color="#E15816" />
         </View>
       </SafeAreaView>
+    );
+  }
+
+  if (isUnderMaintenance) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#E15816" />
+          <Text style={styles.loadingText}>Service under maintenance</Text>
+        </View>
+      </View>
     );
   }
 
