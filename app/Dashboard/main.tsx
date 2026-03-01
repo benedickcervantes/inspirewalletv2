@@ -536,8 +536,11 @@ export default function Dashboard() {
     }
   }, [activeTab]);
 
+<<<<<<< HEAD
+=======
 
 
+>>>>>>> dev
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentLanguageIndex((prevIndex) => {

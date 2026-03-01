@@ -1,3 +1,11 @@
+/** Accumulated banking application data passed through the multi-step flow */
+export interface BankingApplicationData {
+  contactInfo?: { email: string; mobileNumber: string; landlineNumber?: string };
+  personalInfo?: { gender: string; dateOfBirth: string; civilStatus: string; citizenship: string };
+  addressInfo?: { completeAddress: string };
+  financialInfo?: { sourceOfFund: string; grossMonthlyIncome: string; grossMonthlyIncomeCurrency: string };
+}
+
 export type NavProp = {
   navigate: (name: string, params?: object) => void;
   replace: (name: string, params?: object) => void;
@@ -39,10 +47,10 @@ export type RootStackParamList = {
   Bdo: undefined;
   Message: undefined;
   BankingContactInfo: { selectedBank: string };
-  BankingPersonalInfo: { selectedBank: string };
-  BankingAddressInfo: { selectedBank: string };
-  BankingFinancialInfo: { selectedBank: string };
-  BankingRequiredInfo: { selectedBank: string };
+  BankingPersonalInfo: { selectedBank: string; applicationData: BankingApplicationData };
+  BankingAddressInfo: { selectedBank: string; applicationData: BankingApplicationData };
+  BankingFinancialInfo: { selectedBank: string; applicationData: BankingApplicationData };
+  BankingRequiredInfo: { selectedBank: string; applicationData: BankingApplicationData };
   Travel: undefined;
   History: undefined;
   Maya: undefined;

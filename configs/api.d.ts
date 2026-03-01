@@ -40,6 +40,10 @@ export function submitWithdrawalRequest(
   accessToken: string,
   body: Record<string, string | undefined>
 ): Promise<{ success: boolean; data?: unknown; error?: string }>;
+export function submitBankingApplication(
+  accessToken: string,
+  body: Record<string, unknown>
+): Promise<{ success: boolean; data?: unknown; error?: string }>;
 export function getTimeDeposits(
   accessToken: string
 ): Promise<GetTimeDepositsResult>;

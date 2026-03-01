@@ -39,6 +39,7 @@ export default function BankingPersonalInfo() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, "BankingPersonalInfo">>();
   const route = useRoute<RouteProp<RootStackParamList, "BankingPersonalInfo">>();
   const selectedBank = route.params?.selectedBank ?? "Security Bank";
+  const applicationData = route.params?.applicationData ?? {};
 
   const [gender, setGender] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState<Date | null>(null);
@@ -74,7 +75,14 @@ export default function BankingPersonalInfo() {
     if (!dateOfBirth) return;
     if (!civilStatus.trim()) return;
     if (!citizenship.trim()) return;
-    navigation.navigate("BankingAddressInfo", { selectedBank });
+    const dateStr = `${dateOfBirth.getFullYear()}-${String(dateOfBirth.getMonth() + 1).padStart(2, "0")}-${String(dateOfBirth.getDate()).padStart(2, "0")}`;
+    navigation.navigate("BankingAddressInfo", {
+      selectedBank,
+      applicationData: {
+        ...applicationData,
+        personalInfo: { gender, dateOfBirth: dateStr, civilStatus, citizenship },
+      },
+    });
   };
 
   return (

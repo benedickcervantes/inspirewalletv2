@@ -43,7 +43,12 @@ export default function BankingContactInfo() {
     // Basic validation for required fields
     if (!email.trim()) return;
     if (!mobileNumber.trim()) return;
-    navigation.navigate("BankingPersonalInfo", { selectedBank });
+    navigation.navigate("BankingPersonalInfo", {
+      selectedBank,
+      applicationData: {
+        contactInfo: { email: email.trim(), mobileNumber: mobileNumber.trim(), landlineNumber: landlineNumber.trim() || undefined },
+      },
+    });
   };
 
   return (

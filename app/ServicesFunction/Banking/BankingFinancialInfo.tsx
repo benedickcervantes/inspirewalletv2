@@ -45,6 +45,7 @@ export default function BankingFinancialInfo() {
   const route = useRoute<RouteProp<RootStackParamList, "BankingFinancialInfo">>();
   const { t } = useLanguage();
   const selectedBank = route.params?.selectedBank ?? "UnionBank";
+  const applicationData = route.params?.applicationData ?? {};
 
   const [sourceOfFund, setSourceOfFund] = useState("");
   const [grossMonthlyIncome, setGrossMonthlyIncome] = useState("");
@@ -62,7 +63,17 @@ export default function BankingFinancialInfo() {
     if (!sourceOfFund.trim()) return;
     if (!grossMonthlyIncomeCurrency) return;
     if (!grossMonthlyIncome.trim()) return;
-    navigation.navigate("BankingRequiredInfo", { selectedBank });
+    navigation.navigate("BankingRequiredInfo", {
+      selectedBank,
+      applicationData: {
+        ...applicationData,
+        financialInfo: {
+          sourceOfFund,
+          grossMonthlyIncome: grossMonthlyIncome.trim(),
+          grossMonthlyIncomeCurrency,
+        },
+      },
+    });
   };
 
   return (

@@ -1,7 +1,9 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import type { RouteProp } from "@react-navigation/native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import * as FileSystem from "expo-file-system";
 import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useState } from "react";
@@ -18,6 +20,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { submitBankingApplication } from "../../../configs/api";
 import CustomLoader from "../../Loader/CustomLoader";
 import { useLanguage } from "../../../context/LanguageContext";
 import type { RootStackParamList } from "../../../types/navigation";
@@ -35,26 +38,38 @@ const ID_TYPE_KEY: Record<IdType, string> = {
   "None of these": "banking.idNone",
 };
 
+/** Convert a local file URI to base64 data URL for API submission */
+async function uriToBase64DataUrl(uri: string): Promise<string> {
+  const base64 = await FileSystem.readAsStringAsync(uri, {
+    encoding: FileSystem.EncodingType.Base64,
+  });
+  const ext = uri.split(".").pop()?.toLowerCase() ?? "jpg";
+  const mime =
+    ext === "png" ? "image/png" :
+    ext === "gif" ? "image/gif" :
+    ext === "webp" ? "image/webp" :
+    "image/jpeg";
+  return `data:${mime};base64,${base64}`;
+}
+
 export default function BankingRequiredInfo() {
   const { t } = useLanguage();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, "BankingRequiredInfo">>();
   const route = useRoute<RouteProp<RootStackParamList, "BankingRequiredInfo">>();
   const selectedBank = route.params?.selectedBank ?? "UnionBank";
+  const applicationData = route.params?.applicationData ?? {};
 
   const [idType, setIdType] = useState<IdType | "">("");
   const [showIdTypeModal, setShowIdTypeModal] = useState(false);
   const [passportPhoto, setPassportPhoto] = useState<string | null>(null);
   const [idFront, setIdFront] = useState<string | null>(null);
   const [idBack, setIdBack] = useState<string | null>(null);
-  const [uploading, setUploading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const currentStep = 6;
 
   const pickPassportPhoto = async () => {
-    setUploading(true);
     try {
-      // Let the loading overlay mount before opening the picker
-      await new Promise((r) => setTimeout(r, 300));
       const permissionResult =
         await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (permissionResult.granted === false) {
@@ -78,17 +93,13 @@ export default function BankingRequiredInfo() {
     } catch (error) {
       console.error("Error picking passport photo:", error);
       Alert.alert(t("banking.error"), t("banking.failedToPickImage"));
-    } finally {
-      setUploading(false);
     }
   };
 
   const pickIdImage = async (
     setter: (uri: string) => void
   ) => {
-    setUploading(true);
     try {
-      await new Promise((r) => setTimeout(r, 300));
       const permissionResult =
         await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (permissionResult.granted === false) {
@@ -111,8 +122,6 @@ export default function BankingRequiredInfo() {
     } catch (error) {
       console.error("Error picking image:", error);
       Alert.alert(t("banking.error"), t("banking.failedToPickImage"));
-    } finally {
-      setUploading(false);
     }
   };
 
@@ -128,7 +137,7 @@ export default function BankingRequiredInfo() {
     return false;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!idType) {
       Alert.alert(t("banking.required"), t("banking.selectIdType"));
       return;
@@ -142,8 +151,78 @@ export default function BankingRequiredInfo() {
       Alert.alert(t("banking.required"), t("banking.uploadGovIdRequired"));
       return;
     }
-    // TODO: Submit application to backend
-    navigation.navigate("Main");
+    const { contactInfo, personalInfo, addressInfo, financialInfo } = applicationData;
+    if (!contactInfo || !personalInfo || !addressInfo || !financialInfo) {
+      Alert.alert(t("banking.error"), t("banking.submitFailed"));
+      navigation.navigate("Main");
+      return;
+    }
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      const accessToken = await AsyncStorage.getItem("access_token");
+      if (!accessToken) {
+        Alert.alert(t("banking.error"), t("banking.submitFailed"));
+        setIsSubmitting(false);
+        return;
+      }
+      let user: { firstName?: string; lastName?: string; fullName?: string } = {};
+      try {
+        const userJson = await AsyncStorage.getItem("user");
+        if (userJson) user = JSON.parse(userJson);
+      } catch {
+        /* ignore */
+      }
+      let passportPhotoBase64: string | undefined;
+      let idFrontBase64: string | undefined;
+      let idBackBase64: string | undefined;
+      if (idType === "Passport" && passportPhoto) {
+        passportPhotoBase64 = await uriToBase64DataUrl(passportPhoto);
+      } else if ((idType === "Driver License" || idType === "National ID") && idFront && idBack) {
+        idFrontBase64 = await uriToBase64DataUrl(idFront);
+        idBackBase64 = await uriToBase64DataUrl(idBack);
+      }
+      const payload: Record<string, unknown> = {
+        applicationType: "BANKING",
+        bank: selectedBank,
+        sourceOfFund: financialInfo.sourceOfFund,
+        grossMonthlyIncome: financialInfo.grossMonthlyIncome,
+        grossMonthlyIncomeCurrency: financialInfo.grossMonthlyIncomeCurrency,
+        idType,
+        personalInfo: {
+          firstName: user.firstName ?? user.fullName ?? "",
+          lastName: user.lastName ?? "",
+          middleName: "",
+          gender: personalInfo.gender,
+          dateOfBirth: personalInfo.dateOfBirth,
+          civilStatus: personalInfo.civilStatus,
+          citizenship: personalInfo.citizenship,
+        },
+        contactInfo: {
+          phone: contactInfo.mobileNumber,
+          email: contactInfo.email,
+        },
+        addressInfo: {
+          completeAddress: addressInfo.completeAddress,
+        },
+        ...(passportPhotoBase64 && { passportPhoto: passportPhotoBase64 }),
+        ...(idFrontBase64 && { idFront: idFrontBase64 }),
+        ...(idBackBase64 && { idBack: idBackBase64 }),
+      };
+      const result = await submitBankingApplication(accessToken, payload);
+      if (result.success) {
+        Alert.alert("Success", t("banking.submitSuccess"), () => {
+          navigation.navigate("Main");
+        });
+      } else {
+        Alert.alert(t("banking.error"), result.error ?? t("banking.submitFailed"));
+      }
+    } catch (error) {
+      console.error("Error submitting banking application:", error);
+      Alert.alert(t("banking.error"), t("banking.submitFailed"));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const goToMessage = () => {
@@ -152,10 +231,10 @@ export default function BankingRequiredInfo() {
 
   return (
     <View style={styles.container}>
-      {/* Full-screen loading overlay when picking/uploading image */}
-      <Modal visible={uploading} transparent animationType="fade">
+      {/* Full-screen loading overlay only when user confirms and clicks Submit */}
+      <Modal visible={isSubmitting} transparent animationType="fade">
         <View style={styles.loadingOverlay}>
-          <CustomLoader text={t("banking.uploading")} />
+          <CustomLoader text={t("banking.submitting")} />
         </View>
       </Modal>
       <SafeAreaView style={styles.safeArea}>
@@ -409,10 +488,10 @@ export default function BankingRequiredInfo() {
               <Text style={styles.backButtonText}>{t("banking.back")}</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.nextButton, !canSubmit() && styles.nextButtonDisabled]}
+              style={[styles.nextButton, (!canSubmit() || isSubmitting) && styles.nextButtonDisabled]}
               onPress={handleSubmit}
               activeOpacity={0.9}
-              disabled={!canSubmit()}
+              disabled={!canSubmit() || isSubmitting}
             >
               <LinearGradient
                 colors={canSubmit() ? ORANGE_GRADIENT : ["#BDBDBD", "#9E9E9E"]}
@@ -420,7 +499,9 @@ export default function BankingRequiredInfo() {
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
               >
-                <Text style={styles.nextButtonText}>{t("banking.submit")}</Text>
+                <Text style={styles.nextButtonText}>
+                  {isSubmitting ? t("banking.submitting") : t("banking.submit")}
+                </Text>
               </LinearGradient>
             </TouchableOpacity>
           </View>
