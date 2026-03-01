@@ -89,9 +89,10 @@ export default function CreatePasscode() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const btnSize = width >= 768 ? 70 : Math.min(60, Math.max(44, width * 0.18));
-  const padWidth = width >= 768 ? '60%' : '85%';
-  const maxPadWidth = width >= 768 ? 380 : Math.min(320, width - 48);
+  const btnSize = width >= 768 ? 80 : Math.min(72, Math.max(56, width * 0.22));
+  const delBtnSize = width >= 768 ? 80 : Math.min(72, Math.max(56, width * 0.22));
+  const padWidth = width >= 768 ? '65%' : '88%';
+  const maxPadWidth = width >= 768 ? 420 : Math.min(360, width - 48);
 
   const [step, setStep] = useState<'create' | 'confirm'>('create');
   const [pin, setPin] = useState('');
@@ -226,39 +227,41 @@ export default function CreatePasscode() {
         locations={[0, 1]}
         style={[styles.gradient, { paddingTop: insets.top, paddingBottom: insets.bottom }]}
       >
-        <View style={styles.header}>
-          <View style={styles.headerSpacer} />
-          <View style={styles.logoWrap}>
+        <TouchableOpacity
+          style={[styles.helpButtonTopRight, { top: insets.top + 12 }]}
+          onPress={handleHelp}
+        >
+          <Ionicons name="help-circle" size={28} color={WHITE} />
+        </TouchableOpacity>
+
+        <View style={styles.centerContent}>
+          <View style={styles.logoWrapCentered}>
             <Image
               source={require('../../assets/images/InpireLogo.png')}
               style={styles.logo}
               contentFit="contain"
             />
           </View>
-          <TouchableOpacity style={styles.helpButton} onPress={handleHelp}>
-            <Ionicons name="help-circle" size={28} color={WHITE} />
-          </TouchableOpacity>
-        </View>
 
-        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+          {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
-        <Animated.View style={[styles.dotsWrap, { transform: [{ translateX: shakeAnim }] }]}>
-          {[0, 1, 2, 3].map((i) => (
-            <View
-              key={i}
-              style={[
-                styles.dot,
-                currentPin.length > i && styles.dotFilled,
-              ]}
-            />
-          ))}
-        </Animated.View>
+          <Animated.View style={[styles.dotsWrap, { transform: [{ translateX: shakeAnim }] }]}>
+            {[0, 1, 2, 3].map((i) => (
+              <View
+                key={i}
+                style={[
+                  styles.dot,
+                  currentPin.length > i && styles.dotFilled,
+                ]}
+              />
+            ))}
+          </Animated.View>
 
-        <Text style={styles.instructionText}>
-          {step === 'create' ? 'Create a 4-digit PIN' : 'Confirm your 4-digit PIN'}
-        </Text>
+          <Text style={styles.instructionText}>
+            {step === 'create' ? 'Create a 4-digit PIN' : 'Confirm your 4-digit PIN'}
+          </Text>
 
-        <View style={[styles.padContainer, { width: padWidth, maxWidth: maxPadWidth }]}>
+          <View style={[styles.padContainer, { width: padWidth, maxWidth: maxPadWidth }]}>
           {[['1', '2', '3'], ['4', '5', '6'], ['7', '8', '9']].map((row, ri) => (
             <View key={ri} style={styles.padRow}>
               {row.map((key) => (
@@ -282,13 +285,14 @@ export default function CreatePasscode() {
               <Text style={styles.padButtonText}>0</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.padButton, styles.padButtonDel]}
+              style={[styles.padButton, styles.padButtonDel, { width: delBtnSize, height: delBtnSize, borderRadius: delBtnSize / 2 }]}
               onPress={() => handlePress('Del')}
               disabled={loading}
             >
-              <Ionicons name="backspace-outline" size={24} color={WHITE} />
+              <Ionicons name="backspace-outline" size={28} color={WHITE} />
             </TouchableOpacity>
           </View>
+        </View>
         </View>
 
         {loading && (
@@ -313,28 +317,31 @@ export default function CreatePasscode() {
 const styles = StyleSheet.create({
   gradient: {
     flex: 1,
-    paddingHorizontal: 20,
+    paddingHorizontal: 24,
     alignItems: 'center',
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    width: '100%',
-    paddingHorizontal: 8,
-    marginBottom: 24,
-  },
-  headerSpacer: { width: 44 },
-  logoWrap: { flex: 1, alignItems: 'center' },
-  logo: {
-    width: 140,
-    height: 50,
-  },
-  helpButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+  helpButtonTopRight: {
+    position: 'absolute',
+    right: 24,
+    zIndex: 10,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  logoWrapCentered: {
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  logo: {
+    width: 200,
+    height: 72,
+  },
+  centerContent: {
+    flex: 1,
+    width: '100%',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -342,20 +349,20 @@ const styles = StyleSheet.create({
     color: WHITE,
     fontSize: 16,
     fontWeight: '600',
-    marginBottom: 16,
+    marginBottom: 20,
     textAlign: 'center',
   },
   dotsWrap: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 20,
-    marginBottom: 12,
+    gap: 24,
+    marginBottom: 20,
   },
   dot: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
     borderWidth: 2,
     borderColor: WHITE,
     backgroundColor: 'rgba(255,255,255,0.4)',
@@ -364,25 +371,27 @@ const styles = StyleSheet.create({
     backgroundColor: WHITE,
   },
   instructionText: {
-    fontSize: 18,
+    fontSize: 20,
     color: WHITE,
     fontWeight: '500',
-    marginBottom: 50,
+    marginBottom: 40,
+    marginTop: 4,
     textAlign: 'center',
   },
   padContainer: {
-    marginBottom: 20,
+    marginTop: 8,
+    marginBottom: 24,
   },
   padRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 15,
+    marginBottom: 20,
   },
   padRowLast: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 15,
+    marginBottom: 0,
     position: 'relative',
   },
   padButton: {
@@ -391,8 +400,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
     elevation: 3,
   },
   padButtonDel: {
@@ -403,7 +412,7 @@ const styles = StyleSheet.create({
     right: 0,
   },
   padButtonText: {
-    fontSize: 26,
+    fontSize: 30,
     fontWeight: '600',
     color: WHITE,
   },

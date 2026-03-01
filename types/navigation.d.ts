@@ -1,3 +1,11 @@
+/** Accumulated banking application data passed through the multi-step flow */
+export interface BankingApplicationData {
+  contactInfo?: { email: string; mobileNumber: string; landlineNumber?: string };
+  personalInfo?: { gender: string; dateOfBirth: string; civilStatus: string; citizenship: string };
+  addressInfo?: { completeAddress: string };
+  financialInfo?: { sourceOfFund: string; grossMonthlyIncome: string; grossMonthlyIncomeCurrency: string };
+}
+
 export type NavProp = {
   navigate: (name: string, params?: object) => void;
   replace: (name: string, params?: object) => void;
@@ -8,14 +16,18 @@ export type NavProp = {
 export type RootStackParamList = {
   AuthLoader: undefined;
   Welcome: undefined;
-  Login: undefined;
+  Login: { fromSignOut?: boolean } | undefined;
   Register: undefined;
   CreatePasscode: undefined;
   Passcode: undefined;
   Main: undefined;
   Personal: undefined;
+  KYCVerification: undefined;
+  KYCcompany: undefined;
+  KYCAddressInformation: undefined;
   Notification: undefined;
   Settings: undefined;
+  ChangePasscode: undefined;
   Aboutus: undefined;
   DeleteAccount: undefined;
   HelpCenter: undefined;
@@ -30,14 +42,15 @@ export type RootStackParamList = {
     description?: string;
     recipientName: string;
     recipientId: string;
+    mainWalletId?: string;
   };
   Bdo: undefined;
   Message: undefined;
   BankingContactInfo: { selectedBank: string };
-  BankingPersonalInfo: { selectedBank: string };
-  BankingAddressInfo: { selectedBank: string };
-  BankingFinancialInfo: { selectedBank: string };
-  BankingRequiredInfo: { selectedBank: string };
+  BankingPersonalInfo: { selectedBank: string; applicationData: BankingApplicationData };
+  BankingAddressInfo: { selectedBank: string; applicationData: BankingApplicationData };
+  BankingFinancialInfo: { selectedBank: string; applicationData: BankingApplicationData };
+  BankingRequiredInfo: { selectedBank: string; applicationData: BankingApplicationData };
   Travel: undefined;
   History: undefined;
   Maya: undefined;

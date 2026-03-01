@@ -2,24 +2,32 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
-import React, { useState } from "react";
+import { useState } from "react";
 import {
-    Modal,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { getOrCreateMainWallet, submitTimeDepositRequest } from "../../../configs/api";
+import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  getOrCreateMainWallet,
+  submitTimeDepositRequest,
+} from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
 
 export default function TimeDepositConfirm() {
   const navigation = useNavigation();
   const route = useRoute();
   const { t } = useLanguage();
-  const params = (route.params || {}) as { depositMethod?: string; contractPeriod?: string; amount?: string; currency?: string };
+  const params = (route.params || {}) as {
+    depositMethod?: string;
+    contractPeriod?: string;
+    amount?: string;
+    currency?: string;
+  };
 
   const [loading, setLoading] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -31,7 +39,8 @@ export default function TimeDepositConfirm() {
   const currency = params.currency || "PHP";
 
   const getMaturityDate = () => {
-    const months = contractPeriod === "6 Months" ? 6 : contractPeriod === "1 Year" ? 12 : 24;
+    const months =
+      contractPeriod === "6 Months" ? 6 : contractPeriod === "1 Year" ? 12 : 24;
     return `${months} Months`;
   };
 
@@ -50,7 +59,9 @@ export default function TimeDepositConfirm() {
         amount: String(parseFloat(amount)),
         contractPeriod,
         depositMethod:
-          depositMethod === "Available Balance" ? "available_balance" : "request_amount",
+          depositMethod === "Available Balance"
+            ? "available_balance"
+            : "request_amount",
       };
 
       if (depositMethod === "Available Balance") {
@@ -82,7 +93,7 @@ export default function TimeDepositConfirm() {
     setShowSuccessModal(false);
     navigation.reset({
       index: 0,
-      routes: [{ name: "Main" }],
+      routes: [{ name: "Main" }], // Navigate to Main and then to Investments tab
     });
   };
 
@@ -94,12 +105,10 @@ export default function TimeDepositConfirm() {
           colors={["#E25A17", "#F28934"]}
           style={styles.header}
           start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-        >
+          end={{ x: 1, y: 0 }}>
           <TouchableOpacity
             style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
+            onPress={() => navigation.goBack()}>
             <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
           </TouchableOpacity>
 
@@ -122,7 +131,11 @@ export default function TimeDepositConfirm() {
             </View>
             <View style={[styles.stepLine, styles.stepLineActive]} />
             <View style={[styles.stepCircle, styles.stepActive]}>
-              <MaterialCommunityIcons name="clipboard-check" size={16} color="#FFFFFF" />
+              <MaterialCommunityIcons
+                name="clipboard-check"
+                size={16}
+                color="#FFFFFF"
+              />
             </View>
           </View>
         </View>
@@ -130,8 +143,7 @@ export default function TimeDepositConfirm() {
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
+          showsVerticalScrollIndicator={false}>
           {/* Title */}
           <View style={styles.titleContainer}>
             <Text style={styles.title}>Review & Confirm</Text>
@@ -148,12 +160,16 @@ export default function TimeDepositConfirm() {
               </View>
 
               <View style={styles.detailItem}>
-                <Text style={styles.detailLabel}>{t("deposit.contractPeriod")}</Text>
+                <Text style={styles.detailLabel}>
+                  {t("deposit.contractPeriod")}
+                </Text>
                 <Text style={styles.detailValue}>{contractPeriod}</Text>
               </View>
 
               <View style={styles.detailItem}>
-                <Text style={styles.detailLabel}>{t("deposit.depositMethod")}</Text>
+                <Text style={styles.detailLabel}>
+                  {t("deposit.depositMethod")}
+                </Text>
                 <Text style={styles.detailValue}>{depositMethod}</Text>
               </View>
             </View>
@@ -163,12 +179,17 @@ export default function TimeDepositConfirm() {
               colors={["#F28934", "#E25A17"]}
               style={styles.amountCard}
               start={{ x: 0, y: 0 }}
-              end={{ x: 0, y: 1 }}
-            >
-              <Text style={styles.amountCardTitle}>{t("deposit.investmentAmount")}</Text>
+              end={{ x: 0, y: 1 }}>
+              <Text style={styles.amountCardTitle}>
+                {t("deposit.investmentAmount")}
+              </Text>
               <View style={styles.amountDisplay}>
                 <Text style={styles.amountValue}>
-                  {currency} {parseFloat(amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  {currency}{" "}
+                  {parseFloat(amount).toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
                 </Text>
               </View>
             </LinearGradient>
@@ -176,13 +197,21 @@ export default function TimeDepositConfirm() {
 
           {/* Deposit Summary Card */}
           <View style={styles.summaryCard}>
-            <Text style={styles.summaryTitle}>{t("deposit.depositSummary")}</Text>
+            <Text style={styles.summaryTitle}>
+              {t("deposit.depositSummary")}
+            </Text>
 
             <View style={styles.summaryRow}>
               <View style={styles.summaryItem}>
-                <Text style={styles.summaryLabel}>{t("deposit.principalAmount")}</Text>
+                <Text style={styles.summaryLabel}>
+                  {t("deposit.principalAmount")}
+                </Text>
                 <Text style={styles.summaryValue}>
-                  {currency} {parseFloat(amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  {currency}{" "}
+                  {parseFloat(amount).toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
                 </Text>
               </View>
 
@@ -209,26 +238,25 @@ export default function TimeDepositConfirm() {
           <View style={styles.buttonContainer}>
             <TouchableOpacity
               style={styles.backButtonBottom}
-              onPress={() => navigation.goBack()}
-            >
+              onPress={() => navigation.goBack()}>
               <Text style={styles.backButtonText}>{t("deposit.back")}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.confirmButton}
               onPress={handleConfirm}
-              disabled={loading}
-            >
+              disabled={loading}>
               <LinearGradient
                 colors={["#E25A17", "#F28934"]}
                 style={styles.confirmGradient}
                 start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-              >
+                end={{ x: 1, y: 0 }}>
                 <Text style={styles.confirmText}>
                   {loading ? t("deposit.processing") : t("deposit.confirm")}
                 </Text>
-                {!loading && <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />}
+                {!loading && (
+                  <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
+                )}
               </LinearGradient>
             </TouchableOpacity>
           </View>
@@ -241,28 +269,29 @@ export default function TimeDepositConfirm() {
           visible={showSuccessModal}
           transparent={true}
           animationType="fade"
-          onRequestClose={goToMain}
-        >
+          onRequestClose={goToMain}>
           <View style={styles.successModalOverlay}>
             <View style={styles.successModalContent}>
               <LinearGradient
                 colors={["#E15816", "#F48F38"]}
                 style={styles.successModalGradient}
                 start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
+                end={{ x: 1, y: 1 }}>
                 <View style={styles.successIconContainer}>
                   <Ionicons name="checkmark-circle" size={64} color="#FFFFFF" />
                 </View>
-                <Text style={styles.successTitle}>{t("deposit.successTitle")}</Text>
+                <Text style={styles.successTitle}>
+                  {t("deposit.successTitle")}
+                </Text>
                 <Text style={styles.successMessage}>
                   {t("deposit.successMessage")}
                 </Text>
                 <TouchableOpacity
                   style={styles.successButton}
-                  onPress={goToMain}
-                >
-                  <Text style={styles.successButtonText}>{t("deposit.goToDashboard")}</Text>
+                  onPress={goToMain}>
+                  <Text style={styles.successButtonText}>
+                    {t("kyc.sourceInvestments")}
+                  </Text>
                 </TouchableOpacity>
               </LinearGradient>
             </View>
@@ -359,46 +388,48 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     flexDirection: "row",
-    gap: 16,
-    marginBottom: 20,
+    gap: 12,
+    marginBottom: 24,
   },
   detailsSection: {
     flex: 1,
     backgroundColor: "#FFFFFF",
     borderRadius: 12,
-    padding: 16,
+    paddingVertical: 18,
+    paddingHorizontal: 16,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
     borderLeftWidth: 4,
     borderLeftColor: "#E25A17",
   },
   detailItem: {
-    marginBottom: 20,
+    marginBottom: 18,
   },
   detailLabel: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#333",
+  },
+  detailValue: {
     fontSize: 13,
     color: "#999",
     marginBottom: 4,
   },
-  detailValue: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: "#333",
-  },
   amountCard: {
-    width: 180,
-    borderRadius: 12,
-    padding: 20,
+    width: 170,
+    borderRadius: 14,
+    paddingVertical: 24,
+    paddingHorizontal: 16,
     justifyContent: "center",
     alignItems: "center",
     shadowColor: "#E25A17",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 7,
   },
   amountCardTitle: {
     fontSize: 14,
@@ -408,26 +439,28 @@ const styles = StyleSheet.create({
   },
   amountDisplay: {
     backgroundColor: "rgba(255, 255, 255, 0.2)",
-    borderRadius: 8,
-    padding: 16,
+    borderRadius: 10,
+    paddingVertical: 14,
+    paddingHorizontal: 10,
     width: "100%",
     alignItems: "center",
   },
   amountValue: {
-    fontSize: 20,
-    fontWeight: "700",
+    fontSize: 22,
+    fontWeight: "800",
     color: "#FFFFFF",
+    letterSpacing: 0.5,
   },
   summaryCard: {
     backgroundColor: "#FFFFFF",
-    borderRadius: 12,
+    borderRadius: 14,
     padding: 20,
-    marginBottom: 20,
+    marginBottom: 24,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
   },
   summaryTitle: {
     fontSize: 16,
@@ -490,16 +523,16 @@ const styles = StyleSheet.create({
   },
   backButtonBottom: {
     flex: 1,
-    backgroundColor: "#E0E0E0",
-    borderRadius: 12,
+    backgroundColor: "#E25A17",
+    borderRadius: 30,
     paddingVertical: 16,
     alignItems: "center",
     justifyContent: "center",
   },
   backButtonText: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: "700",
-    color: "#666",
+    color: "#FFFFFF",
   },
   confirmButton: {
     flex: 1,

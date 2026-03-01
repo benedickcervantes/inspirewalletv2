@@ -2,14 +2,10 @@ import { useNavigation } from '@react-navigation/native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useState } from 'react';
-import {
-    Pressable,
-    StyleSheet,
-    Text,
-    useWindowDimensions,
-    View,
-} from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import CustomLoader from '../Loader/CustomLoader';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useResponsive } from '../../utils/responsive';
 
 const GRADIENT_START = '#E15816';
 const GRADIENT_END = '#F48F38';
@@ -20,31 +16,23 @@ const WHITE = '#FFFFFF';
 export default function Welcome() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
-  const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = useWindowDimensions();
+  const { horizontalPadding } = useResponsive();
   const [showStartup, setShowStartup] = useState(true);
 
   useEffect(() => {
-    const t = setTimeout(() => setShowStartup(false), 2500);
+    const t = setTimeout(() => setShowStartup(false), 4000);
     return () => clearTimeout(t);
   }, []);
 
   if (showStartup) {
-    return (
-      <View style={styles.startupContainer}>
-        <Image
-          source={require('../../assets/images/Startup [DONE].png')}
-          style={[styles.startupImage, { width: SCREEN_WIDTH, height: SCREEN_HEIGHT }]}
-          contentFit="cover"
-        />
-      </View>
-    );
+    return <CustomLoader text="LOADING" />;
   }
 
   return (
     <LinearGradient
       colors={[GRADIENT_START, GRADIENT_END]}
       locations={[0, 1]}
-      style={[styles.welcomeContainer, { paddingTop: insets.top, paddingBottom: insets.bottom }]}
+      style={[styles.welcomeContainer, { paddingTop: insets.top, paddingBottom: insets.bottom, paddingHorizontal: horizontalPadding }]}
     >
       <View style={styles.welcomeContent}>
         <Image
@@ -81,18 +69,8 @@ export default function Welcome() {
 }
 
 const styles = StyleSheet.create({
-  startupContainer: {
-    flex: 1,
-    backgroundColor: WHITE,
-  },
-  startupImage: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-  },
   welcomeContainer: {
     flex: 1,
-    paddingHorizontal: 28,
     justifyContent: 'space-between',
   },
   welcomeContent: {
@@ -112,6 +90,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 320,
     gap: 16,
+    paddingHorizontal: 4,
   },
   button: {
     paddingVertical: 18,

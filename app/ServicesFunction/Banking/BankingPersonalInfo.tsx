@@ -5,17 +5,18 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useState } from "react";
 import {
-    Modal,
-    Platform,
-    SafeAreaView,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Modal,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { useLanguage } from "../../../context/LanguageContext";
+import { useResponsive } from "../../../utils/responsive";
 import type { RootStackParamList } from "../../../types/navigation";
 
 const THEME_COLOR = "#E15816";
@@ -34,9 +35,11 @@ const YEARS = Array.from({ length: 71 }, (_, i) => (2010 - i).toString());
 
 export default function BankingPersonalInfo() {
   const { t } = useLanguage();
+  const { horizontalPadding } = useResponsive();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, "BankingPersonalInfo">>();
   const route = useRoute<RouteProp<RootStackParamList, "BankingPersonalInfo">>();
   const selectedBank = route.params?.selectedBank ?? "Security Bank";
+  const applicationData = route.params?.applicationData ?? {};
 
   const [gender, setGender] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState<Date | null>(null);
@@ -72,7 +75,14 @@ export default function BankingPersonalInfo() {
     if (!dateOfBirth) return;
     if (!civilStatus.trim()) return;
     if (!citizenship.trim()) return;
-    navigation.navigate("BankingAddressInfo", { selectedBank });
+    const dateStr = `${dateOfBirth.getFullYear()}-${String(dateOfBirth.getMonth() + 1).padStart(2, "0")}-${String(dateOfBirth.getDate()).padStart(2, "0")}`;
+    navigation.navigate("BankingAddressInfo", {
+      selectedBank,
+      applicationData: {
+        ...applicationData,
+        personalInfo: { gender, dateOfBirth: dateStr, civilStatus, citizenship },
+      },
+    });
   };
 
   return (
@@ -143,7 +153,7 @@ export default function BankingPersonalInfo() {
 
         <ScrollView
           style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, { paddingHorizontal: horizontalPadding }]}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >

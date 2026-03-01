@@ -1,29 +1,91 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import DateTimePicker, {
-  type DateTimePickerEvent,
-} from "@react-native-community/datetimepicker";
-import { useNavigation } from "@react-navigation/native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import * as FileSystem from "expo-file-system/legacy";
 import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
-  Modal,
-  Platform,
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Keyboard,
+    Modal,
+    Platform,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { getTimeDeposits, submitTravelProtection } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
 import type { RootStackParamList } from "../../../types/navigation";
+import { useResponsive } from "../../../utils/responsive";
+import TravelProtectDetails from "./TravelProtectDetails";
+import TravelProtectFinanInfo from "./TravelProtectFinanInfo";
+import TravelProtectPerDeatails from "./TravelProtectPerDeatails";
+import TravelProtectReviewSubmit from "./TravelProtectReview&Submit";
+import TravelRequiredDocu from "./TravelRequiredDocu";
 
 const EMPTY_PLACEHOLDER = "__empty__";
+
+/** Convert a local file URI to base64 data URL for API submission */
+async function uriToBase64DataUrl(uri: string): Promise<string> {
+  if (Platform.OS === "web") {
+    if (uri.startsWith("data:")) return uri;
+    const response = await fetch(uri);
+    const blob = await response.blob();
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  const base64 = await FileSystem.readAsStringAsync(uri, {
+    encoding: 'base64',
+  });
+  const ext = uri.split(".").pop()?.toLowerCase() ?? "jpg";
+  const mime =
+    ext === "png" ? "image/png" :
+    ext === "gif" ? "image/gif" :
+    ext === "webp" ? "image/webp" :
+    "image/jpeg";
+  return `data:${mime};base64,${base64}`;
+}
+
+interface TimeDeposit {
+  id: string;
+  amount?: string | number;
+  principal?: string | number;
+  status?: string;
+  [key: string]: unknown;
+}
+
+function parseDepositAmount(d: TimeDeposit): number {
+  const val = d?.amount ?? d?.principal ?? 0;
+  const n = typeof val === "number" ? val : parseFloat(String(val).replace(/,/g, ""));
+  return Number.isNaN(n) ? 0 : n;
+}
+
+function computeTimeDepositTotal(deposits: TimeDeposit[]): number {
+  return deposits
+    .filter((d) => {
+      const s = String(d?.status ?? "").toUpperCase();
+      return s === "ACTIVE" || s === "MATURED" || s === "PENDING";
+    })
+    .reduce((sum, d) => sum + parseDepositAmount(d), 0);
+}
+
+const MONTH_KEYS = [
+  "banking.january", "banking.february", "banking.march", "banking.april", "banking.may", "banking.june",
+  "banking.july", "banking.august", "banking.september", "banking.october", "banking.november", "banking.december",
+] as const;
 
 type AlertType = "success" | "error" | "warning" | "info";
 
@@ -166,25 +228,73 @@ interface AlertConfig {
 
 export default function TravelProtection() {
   const { t } = useLanguage();
+  const { scale, verticalScale, horizontalPadding } = useResponsive();
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList, "Travel">>();
 
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [protectionFee, setProtectionFee] = useState(1250);
   const [userTimeDeposit, setUserTimeDeposit] = useState(0);
+
+  // Travel protection fee: ₱625 if time deposit >= 200,000, otherwise ₱1,250
+  const protectionFee = userTimeDeposit >= 50000 ? 625 : 1250;
+
+  // Fetch user's time deposit total from backend
+  const fetchTimeDeposits = useCallback(async () => {
+    const accessToken = await AsyncStorage.getItem("access_token");
+    if (!accessToken) return;
+    const result = await getTimeDeposits(accessToken);
+    if (!result.success || !Array.isArray(result.deposits)) return;
+    const list = result.deposits as TimeDeposit[];
+    const total = computeTimeDepositTotal(list);
+    setUserTimeDeposit(total);
+  }, []);
+
+  useEffect(() => {
+    fetchTimeDeposits();
+  }, [fetchTimeDeposits]);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchTimeDeposits();
+    }, [fetchTimeDeposits])
+  );
+
+  // Text input refs for Step 1
+  const scrollViewRef = useRef<KeyboardAwareScrollView>(null);
+  const emailRef = useRef<TextInput>(null);
+  const mobileRef = useRef<TextInput>(null);
+  const landlineRef = useRef<TextInput>(null);
+  const homeAddressRef = useRef<TextInput>(null);
 
   // Form fields - Step 1
   const [emailAddress, setEmailAddress] = useState("");
   const [mobileNumber, setMobileNumber] = useState("");
   const [landlineNumber, setLandlineNumber] = useState("");
   const [homeAddress, setHomeAddress] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [mobileError, setMobileError] = useState("");
+  const [landlineError, setLandlineError] = useState("");
+  const [selectedCountry, setSelectedCountry] = useState({ code: "PH", flag: "🇵🇭", dialCode: "+63", name: "Philippines", example: "9171234567" });
+  const [showCountryDropdown, setShowCountryDropdown] = useState(false);
+
+  const countries = [
+      { code: "PH", flag: "🇵🇭", dialCode: "+63", name: "Philippines", example: "9171234567" },
+      { code: "US", flag: "🇺🇸", dialCode: "+1", name: "United States", example: "2025551234" },
+      { code: "KR", flag: "🇰🇷", dialCode: "+82", name: "South Korea", example: "1012345678" },
+      { code: "SA", flag: "🇸🇦", dialCode: "+966", name: "Saudi Arabia", example: "501234567" },
+      { code: "JP", flag: "🇯🇵", dialCode: "+81", name: "Japan", example: "9012345678" },
+      { code: "CN", flag: "🇨🇳", dialCode: "+86", name: "China", example: "13912345678" },
+      { code: "MY", flag: "🇲🇾", dialCode: "+60", name: "Malaysia", example: "123456789" },
+      { code: "VN", flag: "🇻🇳", dialCode: "+84", name: "Vietnam", example: "912345678" },
+    ];
 
   // Form fields - Step 2 (store internal values for dropdowns; display via t())
   const [gender, setGender] = useState("");
-  const [dateOfBirth, setDateOfBirth] = useState(new Date());
-  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [dateOfBirth, setDateOfBirth] = useState<Date | null>(null);
+  const [showDateModal, setShowDateModal] = useState(false);
   const [dateOfBirthText, setDateOfBirthText] = useState(EMPTY_PLACEHOLDER);
+  const [tempDate, setTempDate] = useState({ month: 0, day: 1, year: 2000 });
   const [civilStatus, setCivilStatus] = useState("Single");
   const [citizenship, setCitizenship] = useState("");
 
@@ -195,17 +305,30 @@ export default function TravelProtection() {
 
   // Form fields - Step 4
   const [destinationAddress, setDestinationAddress] = useState("");
-  const [checkInDate, setCheckInDate] = useState(new Date());
-  const [showCheckInPicker, setShowCheckInPicker] = useState(false);
+  const [checkInDate, setCheckInDate] = useState<Date | null>(null);
+  const [showCheckInModal, setShowCheckInModal] = useState(false);
   const [checkInDateText, setCheckInDateText] = useState(EMPTY_PLACEHOLDER);
+  const [tempCheckInDate, setTempCheckInDate] = useState({
+    month: new Date().getMonth(),
+    day: new Date().getDate(),
+    year: new Date().getFullYear(),
+  });
   const [duration, setDuration] = useState("");
   const [airline, setAirline] = useState("");
   const [departureTime, setDepartureTime] = useState(new Date());
   const [showDepartureTimePicker, setShowDepartureTimePicker] = useState(false);
   const [departureTimeText, setDepartureTimeText] = useState(EMPTY_PLACEHOLDER);
+  const [tempDepartureTime, setTempDepartureTime] = useState({
+    hour: new Date().getHours(),
+    minute: new Date().getMinutes(),
+  });
   const [arrivalTime, setArrivalTime] = useState(new Date());
   const [showArrivalTimePicker, setShowArrivalTimePicker] = useState(false);
   const [arrivalTimeText, setArrivalTimeText] = useState(EMPTY_PLACEHOLDER);
+  const [tempArrivalTime, setTempArrivalTime] = useState({
+    hour: new Date().getHours(),
+    minute: new Date().getMinutes(),
+  });
   const [passportNumber, setPassportNumber] = useState("");
   const [purposeOfTravel, setPurposeOfTravel] = useState("");
 
@@ -240,12 +363,41 @@ export default function TravelProtection() {
     setAlertVisible(true);
   };
 
+  const validateEmail = (email: string): boolean => {
+    return email.includes("@");
+  };
+
+  const validateMobileNumber = (mobile: string): boolean => {
+    const digitsOnly = mobile.replace(/\D/g, "");
+    return digitsOnly.length >= 10 && digitsOnly.length <= 11;
+  };
+
+  const validateLandlineNumber = (landline: string): boolean => {
+    const digitsOnly = landline.replace(/\D/g, "");
+    return digitsOnly.length === 8;
+  };
+
   const handleNext = () => {
     if (currentStep === 1) {
       if (!emailAddress || !mobileNumber || !homeAddress) {
         showAlert(t("travel.requiredFields"), t("travel.fillRequired"), "error");
         return;
       }
+      if (!validateEmail(emailAddress)) {
+        setEmailError(t("Please Enter Valid Email") || "Invalid email");
+        return;
+      }
+      if (!validateMobileNumber(mobileNumber)) {
+        setMobileError(t("Please Enter Valid Number") || "Mobile must be 10-11 digits");
+        return;
+      }
+      if (landlineNumber && !validateLandlineNumber(landlineNumber)) {
+        setLandlineError(t("Please Enter Valid Landline Number") || "Landline must be 8 digits");
+        return;
+      }
+      setEmailError("");
+      setMobileError("");
+      setLandlineError("");
       setCurrentStep(2);
     } else if (currentStep === 2) {
       if (
@@ -302,86 +454,102 @@ export default function TravelProtection() {
     }
   };
 
-  const handleSubmit = () => {
-    showAlert(
-      t("travel.applicationSubmitted"),
-      t("travel.applicationSuccess"),
-      "success"
+  const handleSubmit = async () => {
+    setLoading(true);
+    try {
+      const accessToken = await AsyncStorage.getItem('access_token');
+      if (!accessToken) {
+        showAlert(t("travel.error"), "Not authenticated", "error");
+        return;
+      }
+
+      let passportPhotoBase64: string | undefined;
+      if (passportPhoto) {
+        passportPhotoBase64 = await uriToBase64DataUrl(passportPhoto);
+      }
+
+      // Formulate the time strings like "08:00 AM"
+      const formatTime = (d: Date) => d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const formatDate = (d: Date | null) => d ? d.toISOString().split('T')[0] : "";
+
+      // Prepare the data
+      const applicationData = {
+        email: emailAddress,
+        mobile: `${selectedCountry.dialCode}${mobileNumber}`,
+        landline: landlineNumber || undefined,
+        homeAddress,
+        gender,
+        dateOfBirth: formatDate(dateOfBirth),
+        civilStatus,
+        citizenship,
+        sourceOfFund,
+        grossMonthlyIncome,
+        cashOnHand,
+        destinationAddress,
+        checkInDate: formatDate(checkInDate),
+        duration: duration,
+        airlineType: airline,
+        departureTime: formatTime(departureTime),
+        arrivalTime: formatTime(arrivalTime),
+        passportNumber,
+        purposeOfTravel,
+        passportPhoto: passportPhotoBase64,
+      };
+
+      const result = await submitTravelProtection(accessToken, applicationData);
+
+      if (result.success) {
+        showAlert(
+          t("travel.applicationSubmitted"),
+          t("travel.applicationSuccess"),
+          "success"
+        );
+        setTimeout(() => {
+          navigation.goBack();
+        }, 2000);
+      } else {
+        showAlert(t("travel.error"), result.error || "Failed to submit application", "error");
+      }
+    } catch (error) {
+      console.error("Travel protection API error:", error);
+      showAlert(t("travel.error"), "An unexpected error occurred", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatDateOfBirth = (d: Date) => {
+    return `${t(MONTH_KEYS[d.getMonth()])} ${d.getDate()}, ${d.getFullYear()}`;
+  };
+
+  const applyDateFromTemp = (month: number, day: number, year: number) => {
+    const d = new Date(year, month, day);
+    setDateOfBirth(d);
+    setDateOfBirthText(formatDateOfBirth(d));
+  };
+
+  const applyCheckInDateFromTemp = (month: number, day: number, year: number) => {
+    const d = new Date(year, month, day);
+    setCheckInDate(d);
+    setCheckInDateText(formatDateOfBirth(d));
+  };
+
+  const applyDepartureTimeFromTemp = (hour: number, minute: number) => {
+    const d = new Date();
+    d.setHours(hour, minute, 0, 0);
+    setDepartureTime(d);
+    setDepartureTimeText(
+      d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
     );
-    setTimeout(() => {
-      navigation.goBack();
-    }, 2000);
   };
 
-  const onDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
-    if (Platform.OS === "android") {
-      setShowDatePicker(false);
-    }
-    if (event.type === "set" && selectedDate) {
-      setDateOfBirth(selectedDate);
-      setDateOfBirthText(selectedDate.toLocaleDateString());
-    }
-    if (Platform.OS === "ios" && event.type === "dismissed") {
-      setShowDatePicker(false);
-    }
-  };
-
-  const onCheckInDateChange = (
-    event: DateTimePickerEvent,
-    selectedDate?: Date
-  ) => {
-    if (Platform.OS === "android") {
-      setShowCheckInPicker(false);
-    }
-    if (event.type === "set" && selectedDate) {
-      setCheckInDate(selectedDate);
-      setCheckInDateText(selectedDate.toLocaleDateString());
-    }
-    if (Platform.OS === "ios" && event.type === "dismissed") {
-      setShowCheckInPicker(false);
-    }
-  };
-
-  const onDepartureTimeChange = (
-    event: DateTimePickerEvent,
-    selectedTime?: Date
-  ) => {
-    if (Platform.OS === "android") {
-      setShowDepartureTimePicker(false);
-    }
-    if (event.type === "set" && selectedTime) {
-      setDepartureTime(selectedTime);
-      setDepartureTimeText(
-        selectedTime.toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        })
-      );
-    }
-    if (Platform.OS === "ios" && event.type === "dismissed") {
-      setShowDepartureTimePicker(false);
-    }
-  };
-
-  const onArrivalTimeChange = (
-    event: DateTimePickerEvent,
-    selectedTime?: Date
-  ) => {
-    if (Platform.OS === "android") {
-      setShowArrivalTimePicker(false);
-    }
-    if (event.type === "set" && selectedTime) {
-      setArrivalTime(selectedTime);
-      setArrivalTimeText(
-        selectedTime.toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        })
-      );
-    }
-    if (Platform.OS === "ios" && event.type === "dismissed") {
-      setShowArrivalTimePicker(false);
-    }
+  const applyArrivalTimeFromTemp = (hour: number, minute: number) => {
+    const d = new Date();
+    d.setHours(hour, minute, 0, 0);
+    setArrivalTime(d);
+    setArrivalTimeText(
+      d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+    );
   };
 
   const pickPassportPhoto = async () => {
@@ -441,79 +609,78 @@ export default function TravelProtection() {
     }
   };
 
-  const renderStepIndicator = () => {
-    return (
-      <View style={styles.stepIndicatorContainer}>
-        {[1, 2, 3, 4, 5, 6].map((step) => (
-          <View
-            key={step}
-            style={[
-              styles.stepDot,
-              currentStep === step && styles.stepDotActive,
-              currentStep > step && styles.stepDotCompleted,
-            ]}
-          >
-            {currentStep > step ? (
-              <Ionicons name="checkmark" size={16} color="#FFFFFF" />
-            ) : (
-              <Text
-                style={[
-                  styles.stepDotText,
-                  currentStep === step && styles.stepDotTextActive,
-                ]}
-              >
-                {step}
-              </Text>
-            )}
-          </View>
-        ))}
-      </View>
-    );
+  const dynamicStyles = {
+    scrollContent: {
+      paddingHorizontal: horizontalPadding,
+      paddingBottom: verticalScale(150),
+    },
+    heroCard: { padding: scale(24), marginTop: verticalScale(16), marginBottom: verticalScale(16) },
+    heroIconContainer: { width: scale(80), height: scale(80), marginBottom: verticalScale(16) },
+    heroTitle: { fontSize: scale(22) },
+    heroSubtitle: { fontSize: scale(14) },
+    infoBanner: { padding: scale(16), marginBottom: verticalScale(16) },
+    feeCard: { padding: scale(20), marginBottom: verticalScale(16) },
+    feeAmount: { fontSize: scale(32) },
+    stepIndicator: { gap: scale(12), marginBottom: verticalScale(24) },
+    stepDot: { width: scale(32), height: scale(32) },
+    formCard: { padding: scale(20) },
   };
 
   return (
     <>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-      <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
+      <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
+        {/* Top: Back arrow only */}
+        <View style={[styles.topSection, { paddingHorizontal: horizontalPadding }]}>
           <TouchableOpacity
             style={styles.backButton}
             onPress={() => navigation.goBack()}
           >
-            <Ionicons name="arrow-back" size={24} color="#E25A17" />
+            <Ionicons name="arrow-back" size={scale(28)} color="#E25A17" />
           </TouchableOpacity>
         </View>
 
-        {loading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#E25A17" />
-            <Text style={styles.loadingText}>{t("travel.loading")}</Text>
-          </View>
-        ) : (
-          <>
-            <ScrollView
-              style={styles.scrollView}
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={styles.scrollContent}
+        <KeyboardAwareScrollView
+          ref={scrollViewRef}
+          style={styles.container}
+          contentContainerStyle={[styles.scrollContent, dynamicStyles.scrollContent]}
+          enableOnAndroid={true}
+          enableAutomaticScroll={true}
+          extraScrollHeight={Platform.OS === 'ios' ? 150 : 120}
+          extraHeight={Platform.OS === 'android' ? 150 : 120}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          keyboardOpeningTime={0}
+          enableResetScrollToCoords={false}
+        >
+          {/* Header card inside scroll */}
+          <View style={styles.headerCard}>
+            <LinearGradient
+              colors={["#E25A17", "#F28934"]}
+              style={styles.headerGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 0, y: 1 }}
             >
-              <LinearGradient
-                colors={["#E25A17", "#F28934"]}
-                style={styles.heroCard}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <View style={styles.heroIconContainer}>
-                  <MaterialCommunityIcons
-                    name="airplane"
-                    size={40}
-                    color="#FFFFFF"
-                  />
-                </View>
-                <Text style={styles.heroTitle}>{t("travel.title")}</Text>
-                <Text style={styles.heroSubtitle}>{t("travel.subtitle")}</Text>
-              </LinearGradient>
+              <MaterialCommunityIcons
+                name="airplane"
+                size={scale(40)}
+                color="#FFFFFF"
+                style={styles.headerIcon}
+              />
+              <Text style={[styles.heroTitle, dynamicStyles.heroTitle]}>{t("travel.title")}</Text>
+              <Text style={[styles.heroSubtitle, dynamicStyles.heroSubtitle]}>{t("travel.subtitle")}</Text>
+            </LinearGradient>
+          </View>
 
-              <View style={styles.infoBanner}>
+          {loading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#E25A17" />
+              <Text style={[styles.loadingText, { fontSize: scale(14) }]}>{t("travel.loading")}</Text>
+            </View>
+          ) : (
+            <>
+
+              <View style={[styles.infoBanner, dynamicStyles.infoBanner]}>
                 <View style={styles.infoBannerIcon}>
                   <MaterialCommunityIcons
                     name="information"
@@ -528,7 +695,7 @@ export default function TravelProtection() {
                 </Text>
               </View>
 
-              <View style={styles.feeCard}>
+              <View style={[styles.feeCard, dynamicStyles.feeCard]}>
                 <View style={styles.feeHeader}>
                   <MaterialCommunityIcons
                     name="shield-check"
@@ -537,21 +704,41 @@ export default function TravelProtection() {
                   />
                   <Text style={styles.feeLabel}>{t("travel.protectionFee")}</Text>
                 </View>
-                <Text style={styles.feeAmount}>
+                <Text style={[styles.feeAmount, dynamicStyles.feeAmount]}>
                   ₱ {protectionFee.toLocaleString()}
-                </Text>
-                <Text style={styles.feeSubtext}>
-                  {userTimeDeposit > 0
-                    ? t("travel.discountedRate")
-                    : t("travel.standardRate")}
                 </Text>
               </View>
 
-              {renderStepIndicator()}
+              <View style={[styles.stepIndicatorContainer, dynamicStyles.stepIndicator]}>
+                {[1, 2, 3, 4, 5, 6].map((step) => (
+                  <View
+                    key={step}
+                    style={[
+                      styles.stepDot,
+                      dynamicStyles.stepDot,
+                      currentStep === step && styles.stepDotActive,
+                      currentStep > step && styles.stepDotCompleted,
+                    ]}
+                  >
+                    {currentStep > step ? (
+                      <Ionicons name="checkmark" size={scale(16)} color="#FFFFFF" />
+                    ) : (
+                      <Text
+                        style={[
+                          styles.stepDotText,
+                          currentStep === step && styles.stepDotTextActive,
+                        ]}
+                      >
+                        {step}
+                      </Text>
+                    )}
+                  </View>
+                ))}
+              </View>
 
               {/* Step 1: Contact Information */}
               {currentStep === 1 && (
-                <View style={styles.formCard}>
+                <View style={[styles.formCard, dynamicStyles.formCard]}>
                   <View style={styles.formHeader}>
                     <View style={styles.formIconContainer}>
                       <MaterialCommunityIcons
@@ -573,40 +760,127 @@ export default function TravelProtection() {
                       {t("travel.emailAddress")} <Text style={styles.required}>*</Text>
                     </Text>
                     <TextInput
-                      style={styles.input}
+                      ref={emailRef}
+                      style={[
+                        styles.input,
+                        emailError && styles.inputError
+                      ]}
                       placeholder={t("travel.placeholderEmail")}
                       placeholderTextColor="#999"
                       value={emailAddress}
-                      onChangeText={setEmailAddress}
+                      onChangeText={(text) => {
+                        setEmailAddress(text);
+                        if (emailError) setEmailError("");
+                      }}
                       keyboardType="email-address"
                       autoCapitalize="none"
+                      returnKeyType="next"
+                      onSubmitEditing={() => mobileRef.current?.focus()}
+                      onFocus={() => {
+                        setTimeout(() => {
+                          scrollViewRef.current?.scrollToFocusedInput(emailRef.current as any, 70);
+                        }, 100);
+                      }}
                     />
+                    {emailError && (
+                      <Text style={styles.errorMessage}>{emailError}</Text>
+                    )}
                   </View>
 
                   <View style={styles.inputGroup}>
                     <Text style={styles.inputLabel}>
                       {t("travel.mobileNumber")} <Text style={styles.required}>*</Text>
                     </Text>
-                    <TextInput
-                      style={styles.input}
-                      placeholder={t("travel.placeholderMobile")}
-                      placeholderTextColor="#999"
-                      value={mobileNumber}
-                      onChangeText={setMobileNumber}
-                      keyboardType="phone-pad"
-                    />
+                    <View style={styles.mobileInputContainer}>
+                      <TouchableOpacity
+                        style={styles.countryDropdown}
+                        onPress={() => setShowCountryDropdown(!showCountryDropdown)}
+                      >
+                        <Text style={styles.countryFlag}>{selectedCountry.flag}</Text>
+                        <Text style={styles.countryCode}>{selectedCountry.dialCode}</Text>
+                        <Ionicons name="chevron-down" size={16} color="#666" />
+                      </TouchableOpacity>
+                      <TextInput
+                        ref={mobileRef}
+                        style={[
+                          styles.mobileInput,
+                          mobileError && styles.inputError
+                        ]}
+                        placeholder={selectedCountry.example}
+                        placeholderTextColor="#999"
+                        value={mobileNumber}
+                        onChangeText={(text) => {
+                          const digitsOnly = text.replace(/\D/g, "");
+                          if (digitsOnly.length <= 11) {
+                            setMobileNumber(digitsOnly);
+                            if (mobileError) setMobileError("");
+                          }
+                        }}
+                        keyboardType="phone-pad"
+                        returnKeyType="next"
+                        onSubmitEditing={() => landlineRef.current?.focus()}
+                        maxLength={11}
+                        onFocus={() => {
+                          setTimeout(() => {
+                            scrollViewRef.current?.scrollToFocusedInput(mobileRef.current as any);
+                          }, 100);
+                        }}
+                      />
+                    </View>
+                    {showCountryDropdown && (
+                      <ScrollView style={styles.dropdownMenu} scrollEnabled={true} nestedScrollEnabled={true}>
+                        {countries.map((country) => (
+                          <TouchableOpacity
+                            key={country.code}
+                            style={styles.dropdownItem}
+                            onPress={() => {
+                              setSelectedCountry(country);
+                              setShowCountryDropdown(false);
+                            }}
+                          >
+                            <Text style={styles.dropdownItemContent}>
+                              {country.flag} {country.dialCode} {country.name}
+                            </Text>
+                          </TouchableOpacity>
+                        ))}
+                      </ScrollView>
+                    )}
+                    {mobileError && (
+                      <Text style={styles.errorMessage}>{mobileError}</Text>
+                    )}
                   </View>
 
                   <View style={styles.inputGroup}>
                     <Text style={styles.inputLabel}>{t("travel.landlineNumber")}</Text>
                     <TextInput
-                      style={styles.input}
+                      ref={landlineRef}
+                      style={[
+                        styles.input,
+                        landlineError && styles.inputError
+                      ]}
                       placeholder={t("travel.placeholderLandline")}
                       placeholderTextColor="#999"
                       value={landlineNumber}
-                      onChangeText={setLandlineNumber}
+                      onChangeText={(text) => {
+                        const digitsOnly = text.replace(/\D/g, "");
+                        if (digitsOnly.length <= 8) {
+                          setLandlineNumber(digitsOnly);
+                          if (landlineError) setLandlineError("");
+                        }
+                      }}
                       keyboardType="phone-pad"
+                      returnKeyType="next"
+                      onSubmitEditing={() => homeAddressRef.current?.focus()}
+                      maxLength={8}
+                      onFocus={() => {
+                        setTimeout(() => {
+                          scrollViewRef.current?.scrollToFocusedInput(landlineRef.current as any);
+                        }, 100);
+                      }}
                     />
+                    {landlineError && (
+                      <Text style={styles.errorMessage}>{landlineError}</Text>
+                    )}
                   </View>
 
                   <View style={styles.inputGroup}>
@@ -614,6 +888,7 @@ export default function TravelProtection() {
                       {t("travel.homeAddress")} <Text style={styles.required}>*</Text>
                     </Text>
                     <TextInput
+                      ref={homeAddressRef}
                       style={[styles.input, styles.textArea]}
                       placeholder={t("travel.placeholderHomeAddress")}
                       placeholderTextColor="#999"
@@ -622,6 +897,13 @@ export default function TravelProtection() {
                       multiline
                       numberOfLines={3}
                       textAlignVertical="top"
+                      returnKeyType="done"
+                      onSubmitEditing={Keyboard.dismiss}
+                      onFocus={() => {
+                        setTimeout(() => {
+                          scrollViewRef.current?.scrollToFocusedInput(homeAddressRef.current as any);
+                        }, 100);
+                      }}
                     />
                   </View>
                 </View>
@@ -629,622 +911,120 @@ export default function TravelProtection() {
 
               {/* Step 2: Personal Details */}
               {currentStep === 2 && (
-                <View style={styles.formCard}>
-                  <View style={styles.formHeader}>
-                    <View style={styles.formIconContainer}>
-                      <MaterialCommunityIcons
-                        name="account-circle"
-                        size={24}
-                        color="#E25A17"
-                      />
-                    </View>
-                    <View>
-                      <Text style={styles.formTitle}>{t("travel.personalDetails")}</Text>
-                      <Text style={styles.formSubtitle}>
-                        {t("travel.personalSubtitle")}
-                      </Text>
-                    </View>
-                  </View>
-
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>
-                      {t("travel.gender")} <Text style={styles.required}>*</Text>
-                    </Text>
-                    <TouchableOpacity
-                      style={styles.dropdown}
-                      onPress={() => setShowGenderDropdown(!showGenderDropdown)}
-                    >
-                      <Text
-                        style={[
-                          styles.dropdownText,
-                          !gender && styles.dropdownPlaceholder,
-                        ]}
-                      >
-                        {gender
-                          ? gender === "Male"
-                            ? t("travel.genderMale")
-                            : gender === "Female"
-                              ? t("travel.genderFemale")
-                              : t("travel.genderOther")
-                          : t("travel.selectGender")}
-                      </Text>
-                      <Ionicons name="chevron-down" size={20} color="#666" />
-                    </TouchableOpacity>
-                    {showGenderDropdown && (
-                      <View style={styles.dropdownMenu}>
-                        {(["Male", "Female", "Other"] as const).map((option) => (
-                          <TouchableOpacity
-                            key={option}
-                            style={styles.dropdownItem}
-                            onPress={() => {
-                              setGender(option);
-                              setShowGenderDropdown(false);
-                            }}
-                          >
-                            <Text style={styles.dropdownItemText}>
-                              {option === "Male"
-                                ? t("travel.genderMale")
-                                : option === "Female"
-                                  ? t("travel.genderFemale")
-                                  : t("travel.genderOther")}
-                            </Text>
-                          </TouchableOpacity>
-                        ))}
-                      </View>
-                    )}
-                  </View>
-
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>
-                      {t("travel.dateOfBirth")} <Text style={styles.required}>*</Text>
-                    </Text>
-                    <TouchableOpacity
-                      style={styles.dropdown}
-                      onPress={() => setShowDatePicker(true)}
-                    >
-                      <Text
-                        style={[
-                          styles.dropdownText,
-                          dateOfBirthText === EMPTY_PLACEHOLDER &&
-                            styles.dropdownPlaceholder,
-                        ]}
-                      >
-                        {dateOfBirthText === EMPTY_PLACEHOLDER
-                          ? t("travel.selectBirthdate")
-                          : dateOfBirthText}
-                      </Text>
-                      <Ionicons name="calendar" size={20} color="#666" />
-                    </TouchableOpacity>
-                    {showDatePicker && (
-                      <DateTimePicker
-                        value={dateOfBirth}
-                        mode="date"
-                        display={
-                          Platform.OS === "ios" ? "spinner" : "default"
-                        }
-                        onChange={onDateChange}
-                        maximumDate={new Date()}
-                      />
-                    )}
-                  </View>
-
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>
-                      {t("travel.civilStatus")} <Text style={styles.required}>*</Text>
-                    </Text>
-                    <TouchableOpacity
-                      style={styles.dropdown}
-                      onPress={() =>
-                        setShowCivilStatusDropdown(!showCivilStatusDropdown)
-                      }
-                    >
-                      <Text style={styles.dropdownText}>
-                        {civilStatus === "Single"
-                          ? t("travel.single")
-                          : civilStatus === "Married"
-                            ? t("travel.married")
-                            : civilStatus === "Divorced"
-                              ? t("travel.divorced")
-                              : t("travel.widowed")}
-                      </Text>
-                      <Ionicons name="chevron-down" size={20} color="#666" />
-                    </TouchableOpacity>
-                    {showCivilStatusDropdown && (
-                      <View style={styles.dropdownMenu}>
-                        {(["Single", "Married", "Divorced", "Widowed"] as const).map(
-                          (option) => (
-                            <TouchableOpacity
-                              key={option}
-                              style={styles.dropdownItem}
-                              onPress={() => {
-                                setCivilStatus(option);
-                                setShowCivilStatusDropdown(false);
-                              }}
-                            >
-                              <Text style={styles.dropdownItemText}>
-                                {option === "Single"
-                                  ? t("travel.single")
-                                  : option === "Married"
-                                    ? t("travel.married")
-                                    : option === "Divorced"
-                                      ? t("travel.divorced")
-                                      : t("travel.widowed")}
-                              </Text>
-                            </TouchableOpacity>
-                          )
-                        )}
-                      </View>
-                    )}
-                  </View>
-
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>
-                      {t("travel.citizenship")} <Text style={styles.required}>*</Text>
-                    </Text>
-                    <TextInput
-                      style={styles.input}
-                      placeholder={t("travel.placeholderCitizenship")}
-                      placeholderTextColor="#999"
-                      value={citizenship}
-                      onChangeText={setCitizenship}
-                    />
-                  </View>
-                </View>
+                <TravelProtectPerDeatails
+                  gender={gender}
+                  setGender={setGender}
+                  dateOfBirth={dateOfBirth}
+                  dateOfBirthText={dateOfBirthText}
+                  showDateModal={showDateModal}
+                  setShowDateModal={setShowDateModal}
+                  tempDate={tempDate}
+                  setTempDate={setTempDate}
+                  civilStatus={civilStatus}
+                  setCivilStatus={setCivilStatus}
+                  citizenship={citizenship}
+                  setCitizenship={setCitizenship}
+                  showGenderDropdown={showGenderDropdown}
+                  setShowGenderDropdown={setShowGenderDropdown}
+                  showCivilStatusDropdown={showCivilStatusDropdown}
+                  setShowCivilStatusDropdown={setShowCivilStatusDropdown}
+                  applyDateFromTemp={applyDateFromTemp}
+                />
               )}
 
               {/* Step 3: Financial Information */}
               {currentStep === 3 && (
-                <View style={styles.formCard}>
-                  <View style={styles.formHeader}>
-                    <View style={styles.formIconContainer}>
-                      <MaterialCommunityIcons
-                        name="cash-multiple"
-                        size={24}
-                        color="#E25A17"
-                      />
-                    </View>
-                    <View>
-                      <Text style={styles.formTitle}>
-                        {t("travel.financialInfo")}
-                      </Text>
-                      <Text style={styles.formSubtitle}>
-                        {t("travel.financialSubtitle")}
-                      </Text>
-                    </View>
-                  </View>
-
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>
-                      {t("travel.sourceOfFund")} <Text style={styles.required}>*</Text>
-                    </Text>
-                    <TextInput
-                      style={styles.input}
-                      placeholder={t("travel.placeholderSourceOfFund")}
-                      placeholderTextColor="#999"
-                      value={sourceOfFund}
-                      onChangeText={setSourceOfFund}
-                    />
-                  </View>
-
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>
-                      {t("travel.grossMonthlyIncome")}{" "}
-                      <Text style={styles.required}>*</Text>
-                    </Text>
-                    <TextInput
-                      style={styles.input}
-                      placeholder="0"
-                      placeholderTextColor="#999"
-                      value={grossMonthlyIncome}
-                      onChangeText={setGrossMonthlyIncome}
-                      keyboardType="numeric"
-                    />
-                  </View>
-
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>
-                      {t("travel.cashOnHand")} <Text style={styles.required}>*</Text>
-                    </Text>
-                    <TextInput
-                      style={styles.input}
-                      placeholder="0"
-                      placeholderTextColor="#999"
-                      value={cashOnHand}
-                      onChangeText={setCashOnHand}
-                      keyboardType="numeric"
-                    />
-                  </View>
-                </View>
+                <TravelProtectFinanInfo
+                  sourceOfFund={sourceOfFund}
+                  setSourceOfFund={setSourceOfFund}
+                  grossMonthlyIncome={grossMonthlyIncome}
+                  setGrossMonthlyIncome={setGrossMonthlyIncome}
+                  cashOnHand={cashOnHand}
+                  setCashOnHand={setCashOnHand}
+                />
               )}
 
               {/* Step 4: Travel Details */}
               {currentStep === 4 && (
-                <View style={styles.formCard}>
-                  <View style={styles.formHeader}>
-                    <View style={styles.formIconContainer}>
-                      <MaterialCommunityIcons
-                        name="airplane-takeoff"
-                        size={24}
-                        color="#E25A17"
-                      />
-                    </View>
-                    <View>
-                      <Text style={styles.formTitle}>{t("travel.travelDetails")}</Text>
-                      <Text style={styles.formSubtitle}>
-                        {t("travel.travelSubtitle")}
-                      </Text>
-                    </View>
-                  </View>
-
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>
-                      {t("travel.destinationAddress")}{" "}
-                      <Text style={styles.required}>*</Text>
-                    </Text>
-                    <TextInput
-                      style={[styles.input, styles.textArea]}
-                      placeholder={t("travel.placeholderDestination")}
-                      placeholderTextColor="#999"
-                      value={destinationAddress}
-                      onChangeText={setDestinationAddress}
-                      multiline
-                      numberOfLines={2}
-                      textAlignVertical="top"
-                    />
-                  </View>
-
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>
-                      {t("travel.checkInDate")} <Text style={styles.required}>*</Text>
-                    </Text>
-                    <TouchableOpacity
-                      style={styles.dropdown}
-                      onPress={() => setShowCheckInPicker(true)}
-                    >
-                      <Text
-                        style={[
-                          styles.dropdownText,
-                          checkInDateText === EMPTY_PLACEHOLDER &&
-                            styles.dropdownPlaceholder,
-                        ]}
-                      >
-                        {checkInDateText === EMPTY_PLACEHOLDER
-                          ? t("travel.selectCheckIn")
-                          : checkInDateText}
-                      </Text>
-                      <Ionicons name="calendar" size={20} color="#666" />
-                    </TouchableOpacity>
-                    {showCheckInPicker && (
-                      <DateTimePicker
-                        value={checkInDate}
-                        mode="date"
-                        display={
-                          Platform.OS === "ios" ? "spinner" : "default"
-                        }
-                        onChange={onCheckInDateChange}
-                        minimumDate={new Date()}
-                      />
-                    )}
-                  </View>
-
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>
-                      {t("travel.durationDays")} <Text style={styles.required}>*</Text>
-                    </Text>
-                    <TextInput
-                      style={styles.input}
-                      placeholder="0"
-                      placeholderTextColor="#999"
-                      value={duration}
-                      onChangeText={setDuration}
-                      keyboardType="numeric"
-                    />
-                  </View>
-
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>
-                      {t("travel.airline")} <Text style={styles.required}>*</Text>
-                    </Text>
-                    <TextInput
-                      style={styles.input}
-                      placeholder={t("travel.placeholderAirline")}
-                      placeholderTextColor="#999"
-                      value={airline}
-                      onChangeText={setAirline}
-                    />
-                  </View>
-
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>
-                      {t("travel.departureTime")} <Text style={styles.required}>*</Text>
-                    </Text>
-                    <TouchableOpacity
-                      style={styles.dropdown}
-                      onPress={() => setShowDepartureTimePicker(true)}
-                    >
-                      <Text
-                        style={[
-                          styles.dropdownText,
-                          departureTimeText === EMPTY_PLACEHOLDER &&
-                            styles.dropdownPlaceholder,
-                        ]}
-                      >
-                        {departureTimeText === EMPTY_PLACEHOLDER
-                          ? t("travel.selectDeparture")
-                          : departureTimeText}
-                      </Text>
-                      <Ionicons name="time" size={20} color="#666" />
-                    </TouchableOpacity>
-                    {showDepartureTimePicker && (
-                      <DateTimePicker
-                        value={departureTime}
-                        mode="time"
-                        display={
-                          Platform.OS === "ios" ? "spinner" : "default"
-                        }
-                        onChange={onDepartureTimeChange}
-                      />
-                    )}
-                  </View>
-
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>
-                      {t("travel.arrivalTime")} <Text style={styles.required}>*</Text>
-                    </Text>
-                    <TouchableOpacity
-                      style={styles.dropdown}
-                      onPress={() => setShowArrivalTimePicker(true)}
-                    >
-                      <Text
-                        style={[
-                          styles.dropdownText,
-                          arrivalTimeText === EMPTY_PLACEHOLDER &&
-                            styles.dropdownPlaceholder,
-                        ]}
-                      >
-                        {arrivalTimeText === EMPTY_PLACEHOLDER
-                          ? t("travel.selectArrival")
-                          : arrivalTimeText}
-                      </Text>
-                      <Ionicons name="time" size={20} color="#666" />
-                    </TouchableOpacity>
-                    {showArrivalTimePicker && (
-                      <DateTimePicker
-                        value={arrivalTime}
-                        mode="time"
-                        display={
-                          Platform.OS === "ios" ? "spinner" : "default"
-                        }
-                        onChange={onArrivalTimeChange}
-                      />
-                    )}
-                  </View>
-
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>
-                      {t("travel.passportNumber")} <Text style={styles.required}>*</Text>
-                    </Text>
-                    <TextInput
-                      style={styles.input}
-                      placeholder={t("travel.placeholderPassport")}
-                      placeholderTextColor="#999"
-                      value={passportNumber}
-                      onChangeText={setPassportNumber}
-                      autoCapitalize="characters"
-                    />
-                  </View>
-
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>
-                      {t("travel.purposeOfTravel")} <Text style={styles.required}>*</Text>
-                    </Text>
-                    <TextInput
-                      style={[styles.input, styles.textArea]}
-                      placeholder={t("travel.placeholderPurpose")}
-                      placeholderTextColor="#999"
-                      value={purposeOfTravel}
-                      onChangeText={setPurposeOfTravel}
-                      multiline
-                      numberOfLines={3}
-                      textAlignVertical="top"
-                    />
-                  </View>
-                </View>
+                <TravelProtectDetails
+                  destinationAddress={destinationAddress}
+                  setDestinationAddress={setDestinationAddress}
+                  checkInDate={checkInDate}
+                  checkInDateText={checkInDateText}
+                  setShowCheckInModal={setShowCheckInModal}
+                  tempCheckInDate={tempCheckInDate}
+                  setTempCheckInDate={setTempCheckInDate}
+                  duration={duration}
+                  setDuration={setDuration}
+                  airline={airline}
+                  setAirline={setAirline}
+                  departureTime={departureTime}
+                  departureTimeText={departureTimeText}
+                  setShowDepartureTimePicker={setShowDepartureTimePicker}
+                  tempDepartureTime={tempDepartureTime}
+                  setTempDepartureTime={setTempDepartureTime}
+                  arrivalTime={arrivalTime}
+                  arrivalTimeText={arrivalTimeText}
+                  setShowArrivalTimePicker={setShowArrivalTimePicker}
+                  tempArrivalTime={tempArrivalTime}
+                  setTempArrivalTime={setTempArrivalTime}
+                  passportNumber={passportNumber}
+                  setPassportNumber={setPassportNumber}
+                  purposeOfTravel={purposeOfTravel}
+                  setPurposeOfTravel={setPurposeOfTravel}
+                  showCheckInModal={showCheckInModal}
+                  showDepartureTimePicker={showDepartureTimePicker}
+                  showArrivalTimePicker={showArrivalTimePicker}
+                  applyCheckInDateFromTemp={applyCheckInDateFromTemp}
+                  applyDepartureTimeFromTemp={applyDepartureTimeFromTemp}
+                  applyArrivalTimeFromTemp={applyArrivalTimeFromTemp}
+                />
               )}
 
               {/* Step 5: Required Documents */}
               {currentStep === 5 && (
-                <View style={styles.formCard}>
-                  <View style={styles.formHeader}>
-                    <View style={styles.formIconContainer}>
-                      <MaterialCommunityIcons
-                        name="file-document"
-                        size={24}
-                        color="#E25A17"
-                      />
-                    </View>
-                    <View>
-                      <Text style={styles.formTitle}>
-                        {t("travel.requiredDocs")}
-                      </Text>
-                      <Text style={styles.formSubtitle}>
-                        {t("travel.requiredDocsSubtitle")}
-                      </Text>
-                    </View>
-                  </View>
-
-                  {/* Passport Photo */}
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>
-                      {t("travel.passportPhoto")} <Text style={styles.required}>*</Text>
-                    </Text>
-                    <TouchableOpacity
-                      style={styles.uploadBox}
-                      onPress={pickPassportPhoto}
-                    >
-                      <MaterialCommunityIcons
-                        name="camera"
-                        size={40}
-                        color={passportPhoto ? "#4CAF50" : "#E25A17"}
-                      />
-                      <Text
-                        style={[
-                          styles.uploadText,
-                          passportPhoto && styles.uploadTextSuccess,
-                        ]}
-                      >
-                        {passportPhoto
-                          ? t("travel.passportUploaded")
-                          : t("travel.uploadPassport")}
-                      </Text>
-                      <Text style={styles.uploadSubtext}>{t("travel.tapToSelectImage")}</Text>
-                    </TouchableOpacity>
-                  </View>
-
-                  {/* Government ID */}
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>
-                      {t("travel.governmentId")} <Text style={styles.required}>*</Text>
-                    </Text>
-                    <TouchableOpacity
-                      style={styles.uploadBox}
-                      onPress={pickGovernmentId}
-                    >
-                      <MaterialCommunityIcons
-                        name="card-account-details"
-                        size={40}
-                        color={governmentId ? "#4CAF50" : "#E25A17"}
-                      />
-                      <Text
-                        style={[
-                          styles.uploadText,
-                          governmentId && styles.uploadTextSuccess,
-                        ]}
-                      >
-                        {governmentId
-                          ? t("travel.governmentIdUploaded")
-                          : t("travel.uploadGovernmentId")}
-                      </Text>
-                      <Text style={styles.uploadSubtext}>
-                        {t("travel.tapToUploadGovId")}
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
+                <TravelRequiredDocu
+                  passportPhoto={passportPhoto}
+                  governmentId={governmentId}
+                  onPickPassportPhoto={pickPassportPhoto}
+                  onPickGovernmentId={pickGovernmentId}
+                />
               )}
 
               {/* Step 6: Review & Submit */}
               {currentStep === 6 && (
-                <View style={styles.formCard}>
-                  <View style={styles.formHeader}>
-                    <View style={styles.formIconContainer}>
-                      <MaterialCommunityIcons
-                        name="clipboard-check"
-                        size={24}
-                        color="#E25A17"
-                      />
-                    </View>
-                    <View>
-                      <Text style={styles.formTitle}>{t("travel.reviewSubmit")}</Text>
-                      <Text style={styles.formSubtitle}>
-                        {t("travel.reviewSubtitle")}
-                      </Text>
-                    </View>
-                  </View>
-
-                  {/* Contact Information Summary */}
-                  <View style={styles.reviewSection}>
-                    <View style={styles.reviewSectionHeader}>
-                      <MaterialCommunityIcons
-                        name="home-account"
-                        size={18}
-                        color="#E25A17"
-                      />
-                      <Text style={styles.reviewSectionTitle}>
-                        {t("travel.reviewContactInfo")}
-                      </Text>
-                    </View>
-                    <View style={styles.reviewItem}>
-                      <Text style={styles.reviewLabel}>{t("travel.labelEmail")}</Text>
-                      <Text style={styles.reviewValue}>{emailAddress}</Text>
-                    </View>
-                    <View style={styles.reviewItem}>
-                      <Text style={styles.reviewLabel}>{t("travel.labelMobile")}</Text>
-                      <Text style={styles.reviewValue}>{mobileNumber}</Text>
-                    </View>
-                    {landlineNumber && (
-                      <View style={styles.reviewItem}>
-                        <Text style={styles.reviewLabel}>{t("travel.labelLandline")}</Text>
-                        <Text style={styles.reviewValue}>{landlineNumber}</Text>
-                      </View>
-                    )}
-                    <View style={styles.reviewItem}>
-                      <Text style={styles.reviewLabel}>{t("travel.labelHomeAddress")}</Text>
-                      <Text style={styles.reviewValue}>{homeAddress}</Text>
-                    </View>
-                  </View>
-
-                  {/* Travel Details Summary */}
-                  <View style={styles.reviewSection}>
-                    <View style={styles.reviewSectionHeader}>
-                      <MaterialCommunityIcons
-                        name="airplane-takeoff"
-                        size={18}
-                        color="#E25A17"
-                      />
-                      <Text style={styles.reviewSectionTitle}>
-                        {t("travel.reviewTravelDetails")}
-                      </Text>
-                    </View>
-                    <View style={styles.reviewItem}>
-                      <Text style={styles.reviewLabel}>
-                        {t("travel.labelDestination")}
-                      </Text>
-                      <Text style={styles.reviewValue}>
-                        {destinationAddress || t("travel.na")}
-                      </Text>
-                    </View>
-                    <View style={styles.reviewItem}>
-                      <Text style={styles.reviewLabel}>{t("travel.labelAirline")}</Text>
-                      <Text style={styles.reviewValue}>{airline || t("travel.na")}</Text>
-                    </View>
-                    <View style={styles.reviewItem}>
-                      <Text style={styles.reviewLabel}>{t("travel.labelPassport")}</Text>
-                      <Text style={styles.reviewValue}>
-                        {passportNumber || t("travel.na")}
-                      </Text>
-                    </View>
-                  </View>
-
-                  {/* Terms & Conditions */}
-                  <View style={styles.termsBox}>
-                    <Text style={styles.termsText}>
-                      {t("travel.termsText")}
-                    </Text>
-                  </View>
-                </View>
+                <TravelProtectReviewSubmit
+                  emailAddress={emailAddress}
+                  mobileNumber={mobileNumber}
+                  landlineNumber={landlineNumber}
+                  homeAddress={homeAddress}
+                  destinationAddress={destinationAddress}
+                  airline={airline}
+                  passportNumber={passportNumber}
+                />
               )}
-            </ScrollView>
+            </>
+          )}
 
-            <View style={styles.buttonContainer}>
-              <TouchableOpacity style={styles.backButtonBottom} onPress={handleBack}>
-                <Text style={styles.backButtonText}>{t("travel.back")}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
-                <LinearGradient
-                  colors={["#E25A17", "#F28934"]}
-                  style={styles.nextButtonGradient}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                >
-                  <Text style={styles.nextButtonText}>
-                    {currentStep === 6 ? t("travel.apply") : t("travel.next")}
-                  </Text>
-                </LinearGradient>
-              </TouchableOpacity>
-            </View>
-          </>
-        )}
+          {/* Buttons at bottom of scroll content */}
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity style={styles.backButtonBottom} onPress={handleBack}>
+              <Text style={styles.backButtonText}>{t("travel.back")}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
+              <LinearGradient
+                colors={["#E25A17", "#F28934"]}
+                style={styles.nextButtonGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+              >
+                <Text style={styles.nextButtonText}>
+                  {currentStep === 6 ? t("travel.apply") : t("travel.next")}
+                </Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+        </KeyboardAwareScrollView>
       </SafeAreaView>
 
       {/* Custom Alert Modal */}
@@ -1280,17 +1060,41 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     backgroundColor: "#FFFFFF",
   },
+  topSection: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 0,
+    backgroundColor: "#FFFFFF",
+  },
   backButton: {
     width: 40,
     height: 40,
     justifyContent: "center",
+    marginBottom: 0,
+  },
+  headerCard: {
+    borderRadius: 20,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 5,
+    marginBottom: 16,
+  },
+  headerGradient: {
+    padding: 24,
+    alignItems: "center",
+  },
+  headerIcon: {
+    marginBottom: 12,
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
     paddingHorizontal: 20,
-    paddingBottom: 100,
+    paddingBottom: 20,
   },
   heroCard: {
     borderRadius: 20,
@@ -1375,11 +1179,14 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#E25A17",
     marginBottom: 4,
+    textAlign: "center",
   },
   feeSubtext: {
     fontSize: 11,
     color: "#999",
     letterSpacing: 0.5,
+    textAlign: "center",
+    alignSelf: "center",
   },
   stepIndicatorContainer: {
     flexDirection: "row",
@@ -1466,6 +1273,53 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#E0E0E0",
   },
+  inputError: {
+    borderColor: "#E25A17",
+    borderWidth: 2,
+  },
+  errorMessage: {
+    fontSize: 12,
+    color: "#E25A17",
+    marginTop: 6,
+    fontWeight: "500",
+  },
+  mobileInputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  countryDropdown: {
+    backgroundColor: "#F8F8F8",
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+  },
+  countryFlag: {
+    fontSize: 20,
+    lineHeight: 20,
+  },
+  countryCode: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#333",
+  },
+  mobileInput: {
+    flex: 1,
+    backgroundColor: "#F8F8F8",
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 14,
+    color: "#333",
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+  },
   textArea: {
     height: 80,
     paddingTop: 14,
@@ -1499,6 +1353,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    maxHeight: 250,
   },
   dropdownItem: {
     paddingHorizontal: 16,
@@ -1510,16 +1365,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#333",
   },
+  dropdownItemContent: {
+    fontSize: 14,
+    color: "#333",
+    fontWeight: "500",
+  },
   buttonContainer: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: "#FFFFFF",
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderTopWidth: 1,
-    borderTopColor: "#E0E0E0",
+    backgroundColor: "transparent",
+    paddingHorizontal: 0,
+    paddingTop: 24,
+    paddingBottom: 24,
     flexDirection: "row",
     gap: 12,
   },
@@ -1528,7 +1383,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 2,
     borderColor: "#E25A17",
-    paddingVertical: 16,
+    backgroundColor: "#FFFFFF",
+    paddingVertical: 14,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -1542,88 +1398,16 @@ const styles = StyleSheet.create({
     flex: 1,
     borderRadius: 12,
     overflow: "hidden",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 5,
   },
   nextButtonGradient: {
     paddingVertical: 16,
     alignItems: "center",
+    borderRadius: 12,
   },
   nextButtonText: {
     fontSize: 16,
     fontWeight: "700",
     color: "#FFFFFF",
     letterSpacing: 0.5,
-  },
-  uploadBox: {
-    backgroundColor: "#F8F8F8",
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: "#E0E0E0",
-    borderStyle: "dashed",
-    paddingVertical: 40,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  uploadText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#E25A17",
-    marginTop: 12,
-  },
-  uploadTextSuccess: {
-    color: "#4CAF50",
-  },
-  uploadSubtext: {
-    fontSize: 12,
-    color: "#999",
-    marginTop: 4,
-  },
-  reviewSection: {
-    marginBottom: 20,
-    paddingBottom: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: "#F0F0F0",
-  },
-  reviewSectionHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 16,
-  },
-  reviewSectionTitle: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#E25A17",
-  },
-  reviewItem: {
-    marginBottom: 12,
-  },
-  reviewLabel: {
-    fontSize: 11,
-    fontWeight: "600",
-    color: "#999",
-    marginBottom: 4,
-    letterSpacing: 0.5,
-  },
-  reviewValue: {
-    fontSize: 14,
-    color: "#333",
-    lineHeight: 20,
-  },
-  termsBox: {
-    backgroundColor: "#FFF5F0",
-    borderRadius: 12,
-    padding: 16,
-    borderLeftWidth: 4,
-    borderLeftColor: "#E25A17",
-  },
-  termsText: {
-    fontSize: 12,
-    color: "#666",
-    lineHeight: 18,
   },
 });

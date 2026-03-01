@@ -21,6 +21,7 @@ import {
 } from 'react-native';
 import { register as registerApi } from '../../configs/api';
 import type { NavProp } from '../../types/navigation';
+import { useResponsive } from '../../utils/responsive';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const isValidEmail = (email: string) => EMAIL_REGEX.test((email || '').trim().toLowerCase());
@@ -39,6 +40,7 @@ const COUNTRY_OPTIONS = [
 export default function Register() {
   const navigation = useNavigation();
   const { width } = useWindowDimensions();
+  const { horizontalPadding } = useResponsive();
   const [currentStep, setCurrentStep] = useState(1);
 
   const [firstName, setFirstName] = useState('');
@@ -154,7 +156,7 @@ export default function Register() {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
     } else {
-      navigation.goBack();
+      (navigation as unknown as NavProp).replace('Welcome');
     }
   };
 
@@ -166,7 +168,7 @@ export default function Register() {
           behavior={Platform.OS === 'web' ? undefined : Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.keyboardView}
         >
-          <View style={styles.header}>
+          <View style={[styles.header, { paddingHorizontal: horizontalPadding }]}>
             <TouchableOpacity style={styles.backButton} onPress={handleBackStep}>
               <Ionicons name="arrow-back" size={24} color="#E25A17" />
             </TouchableOpacity>
@@ -205,7 +207,7 @@ export default function Register() {
           <ScrollView
             style={styles.scrollView}
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.scrollContent}
+            contentContainerStyle={[styles.scrollContent, { paddingTop: 20, paddingHorizontal: horizontalPadding, paddingBottom: 100 }]}
             keyboardShouldPersistTaps="handled"
           >
             {currentStep === 1 && (

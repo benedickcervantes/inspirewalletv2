@@ -4,34 +4,33 @@ import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useCallback, useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
-  Modal,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-  useWindowDimensions,
+    ActivityIndicator,
+    Modal,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from 'react-native';
-import { useLanguage } from '../../context/LanguageContext';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { getReferralCode, resendVerification, verifyEmail } from '../../configs/api';
+import { useLanguage } from '../../context/LanguageContext';
 import type { NavProp } from '../../types/navigation';
+import { useResponsive } from '../../utils/responsive';
+import CustomLoader from '../Loader/CustomLoader';
 
 interface UserData {
   email?: string;
   emailVerified?: boolean;
 }
 
-const BASE_WIDTH = 375;
-
 const Settings = () => {
   const navigation = useNavigation();
   const { t } = useLanguage();
-  const { width: screenWidth } = useWindowDimensions();
-  const scale = Math.min(screenWidth / BASE_WIDTH, 1.35);
-  const scaled = (n: number) => Math.round(n * scale);
+  const { width: screenWidth, scale: scaleFn } = useResponsive();
+  const scaled = (n: number) => Math.round(scaleFn(n));
 
   const [userData, setUserData] = useState<UserData | null>(null);
   const [referralCode, setReferralCode] = useState<string | null>(null);
@@ -43,6 +42,7 @@ const Settings = () => {
   const [emailVerifyError, setEmailVerifyError] = useState<string | null>(null);
   const [emailVerifySuccess, setEmailVerifySuccess] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
 
   const loadUser = useCallback(async () => {
     const userJson = await AsyncStorage.getItem('user');
@@ -81,11 +81,14 @@ const Settings = () => {
     loadReferralCode();
   }, [loadReferralCode]);
 
+  /** Sign out: navigate to Passcode page while keeping session active (tokens remain). */
   const handleSignOut = async () => {
     try {
-      await AsyncStorage.multiRemove(['access_token', 'user', 'userEmail', 'userPassword', 'passcodeLoginComplete', 'registrationPasscodePending']);
+      // Only clear the passcode login flag, keep tokens and user data intact
+      await AsyncStorage.removeItem('passcodeLoginComplete');
     } catch (_) {}
-    (navigation as unknown as NavProp).replace('Login');
+
+    (navigation as unknown as NavProp).reset({ index: 0, routes: [{ name: 'Passcode' }] });
   };
 
   const handleRefreshReferralCode = () => {
@@ -163,9 +166,9 @@ const Settings = () => {
     {
       id: 1,
       icon: 'lock-closed-outline' as const,
-      titleKey: 'settings.passcode',
-      subtitleKey: 'settings.changePin',
-      onPress: () => {},
+      titleKey: 'settings.changePasscode',
+      subtitleKey: 'settings.updatePinSubtitle',
+      onPress: () => (navigation as { navigate: (name: string) => void }).navigate('ChangePasscode'),
     },
     {
       id: 2,
@@ -184,14 +187,17 @@ const Settings = () => {
     { id: 5, icon: 'document-text-outline' as const, titleKey: 'settings.termsAndCondition', onPress: () => (navigation as { navigate: (name: string) => void }).navigate('TermsConditions') },
   ];
 
-  const securityOptionsWithLabels = securityOptions.map((o) => ({
-    ...o,
-    title: t(o.titleKey),
-    subtitle: o.subtitleKey ? t(o.subtitleKey) : '',
-  }));
+  const securityOptionsWithLabels = securityOptions.map((o) => {
+    const opt = o as { title?: string; titleKey?: string };
+    return {
+      ...o,
+      title: opt.title ?? (opt.titleKey ? t(opt.titleKey) : ''),
+      subtitle: o.subtitleKey ? t(o.subtitleKey) : '',
+    };
+  });
   const customerRelationshipOptionsWithLabels = customerRelationshipOptions.map((o) => ({
     ...o,
-    title: t(o.titleKey),
+    title: t(o.titleKey ?? ''),
   }));
 
   const r = {
@@ -250,19 +256,25 @@ const Settings = () => {
     backIconSize: scaled(28),
   };
 
+  if (signingOut) {
+    return <CustomLoader text="SIGNING OUT" />;
+  }
+
   return (
-    <SafeAreaView style={styles.container}>
-      <LinearGradient
-        colors={['#DE5212', '#F38B35']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        locations={[0.01, 1]}
-        style={[styles.header, r.header]}
-      >
-        <View style={styles.headerTop}>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('Main')}
-            style={[styles.backButton, r.backButton]}
+    <>
+      <StatusBar barStyle="light-content" backgroundColor="#DE5212" />
+      <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+        <LinearGradient
+          colors={['#DE5212', '#F38B35']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          locations={[0.01, 1]}
+          style={[styles.header, r.header]}
+        >
+          <View style={styles.headerTop}>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('Main')}
+              style={[styles.backButton, r.backButton]}
             activeOpacity={0.7}
             hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
           >
@@ -461,7 +473,8 @@ const Settings = () => {
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
+      </SafeAreaView>
+    </>
   );
 };
 

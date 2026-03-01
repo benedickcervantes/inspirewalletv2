@@ -4,14 +4,17 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useState } from "react";
 import {
+    KeyboardAvoidingView,
     Modal,
-    SafeAreaView,
+    Platform,
     ScrollView,
     StyleSheet,
     Text,
+    TextInput,
     TouchableOpacity,
     View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { getOrCreateMainWallet, submitWithdrawalRequest } from "../../../configs/api";
 
 export default function WithdrawLocalBConfirm() {
@@ -21,6 +24,9 @@ export default function WithdrawLocalBConfirm() {
   const [showAlertModal, setShowAlertModal] = useState(false);
   const [alertConfig, setAlertConfig] = useState<{ title: string; message: string }>({ title: "", message: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPasscodeModal, setShowPasscodeModal] = useState(false);
+  const [passcode, setPasscode] = useState("");
+  const [hasPasscode, setHasPasscode] = useState(false);
 
   const method = params?.method || "local-bank";
   const accountNumber = params?.accountNumber || "";
@@ -30,36 +36,38 @@ export default function WithdrawLocalBConfirm() {
   const amount = params?.amount || "0";
   const email = params?.email || "";
 
-  const handleConfirm = async () => {
-    if (isSubmitting) return;
+  React.useEffect(() => {
+    (async () => {
+      const userJson = await AsyncStorage.getItem("user");
+      if (userJson) {
+        try {
+          const user = JSON.parse(userJson) as { hasPasscode?: boolean };
+          setHasPasscode(!!user?.hasPasscode);
+        } catch (_) {}
+      }
+    })();
+  }, []);
 
+  const submitWithdrawal = async (passcodeToSend?: string) => {
+    if (isSubmitting) return;
     setIsSubmitting(true);
     setAlertConfig({ title: "", message: "" });
-
     try {
       const accessToken = await AsyncStorage.getItem("access_token");
       if (!accessToken) {
-        setAlertConfig({
-          title: "Error",
-          message: "Please log in to submit a withdrawal request.",
-        });
+        setAlertConfig({ title: "Error", message: "Please log in to submit a withdrawal request." });
         setShowAlertModal(true);
         setIsSubmitting(false);
         return;
       }
-
       const { success: walletSuccess, wallet } = await getOrCreateMainWallet(accessToken);
       if (!walletSuccess || !wallet?.id) {
-        setAlertConfig({
-          title: "Error",
-          message: "Could not load wallet. Please try again.",
-        });
+        setAlertConfig({ title: "Error", message: "Could not load wallet. Please try again." });
         setShowAlertModal(true);
         setIsSubmitting(false);
         return;
       }
-
-      const result = await submitWithdrawalRequest(accessToken, {
+      const body: Record<string, string | undefined> = {
         walletId: wallet.id as string,
         amount: String(parseFloat(amount)),
         method: "local_bank",
@@ -68,9 +76,13 @@ export default function WithdrawLocalBConfirm() {
         accountHolderName,
         bankName,
         branchName: branchName || undefined,
-      });
+      };
+      if (hasPasscode && passcodeToSend) body.passcode = passcodeToSend;
+      const result = await submitWithdrawalRequest(accessToken, body);
 
       if (result.success) {
+        setShowPasscodeModal(false);
+        setPasscode("");
         setAlertConfig({
           title: "Success",
           message: "Your withdrawal request has been submitted successfully!",
@@ -86,17 +98,29 @@ export default function WithdrawLocalBConfirm() {
           message: result.error || "Failed to submit withdrawal request. Please try again.",
         });
         setShowAlertModal(true);
+        if (passcodeToSend) setPasscode("");
       }
     } catch (error) {
       console.error("Error submitting withdrawal:", error);
-      setAlertConfig({
-        title: "Error",
-        message: "An unexpected error occurred. Please try again.",
-      });
+      setAlertConfig({ title: "Error", message: "An unexpected error occurred. Please try again." });
       setShowAlertModal(true);
+      if (passcodeToSend) setPasscode("");
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleConfirm = async () => {
+    if (hasPasscode) {
+      setShowPasscodeModal(true);
+      return;
+    }
+    await submitWithdrawal();
+  };
+
+  const handlePasscodeConfirm = () => {
+    if (passcode.length !== 4) return;
+    submitWithdrawal(passcode);
   };
 
   const formatAmount = (value: string) => {
@@ -151,6 +175,7 @@ export default function WithdrawLocalBConfirm() {
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
           {/* Title */}
           <View style={styles.titleContainer}>
@@ -246,6 +271,55 @@ export default function WithdrawLocalBConfirm() {
 
           <View style={styles.bottomPadding} />
         </ScrollView>
+
+        {/* Passcode modal (when user has passcode set) */}
+        <Modal
+          visible={showPasscodeModal}
+          transparent
+          animationType="fade"
+          onRequestClose={() => !isSubmitting && setShowPasscodeModal(false)}
+        >
+          <KeyboardAvoidingView
+            style={styles.passcodeModalOverlay}
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            keyboardVerticalOffset={Platform.OS === "ios" ? 40 : 0}
+          >
+          <View style={styles.alertOverlay}>
+            <View style={styles.passcodeModalContent}>
+              <Text style={styles.passcodeModalTitle}>Enter your passcode</Text>
+              <TextInput
+                style={styles.passcodeInput}
+                value={passcode}
+                onChangeText={(t) => setPasscode(t.replace(/\D/g, "").slice(0, 4))}
+                placeholder="••••"
+                placeholderTextColor="#999"
+                secureTextEntry
+                maxLength={4}
+                keyboardType="number-pad"
+                editable={!isSubmitting}
+              />
+              <View style={styles.passcodeModalButtons}>
+                <TouchableOpacity
+                  style={[styles.passcodeModalButton, styles.passcodeModalButtonCancel]}
+                  onPress={() => { setShowPasscodeModal(false); setPasscode(""); }}
+                  disabled={isSubmitting}
+                >
+                  <Text style={styles.passcodeModalButtonCancelText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.passcodeModalButton, styles.passcodeModalButtonConfirm]}
+                  onPress={handlePasscodeConfirm}
+                  disabled={isSubmitting || passcode.length !== 4}
+                >
+                  <LinearGradient colors={["#E25A17", "#F28934"]} style={styles.passcodeModalButtonGradient}>
+                    <Text style={styles.passcodeModalButtonConfirmText}>Confirm</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+          </KeyboardAvoidingView>
+        </Modal>
 
         {/* Custom Alert Modal */}
         <Modal
@@ -473,6 +547,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  passcodeModalOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   alertContainer: {
     borderRadius: 12,
     padding: 24,
@@ -508,5 +587,60 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: "#E15816",
+  },
+  passcodeModalContent: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 24,
+    width: "85%",
+    maxWidth: 340,
+  },
+  passcodeModalTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#333",
+    marginBottom: 16,
+    textAlign: "center",
+  },
+  passcodeInput: {
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 18,
+    textAlign: "center",
+    letterSpacing: 8,
+    marginBottom: 20,
+  },
+  passcodeModalButtons: {
+    flexDirection: "row",
+    gap: 12,
+    justifyContent: "center",
+  },
+  passcodeModalButton: {
+    minWidth: 100,
+    borderRadius: 8,
+    overflow: "hidden",
+  },
+  passcodeModalButtonCancel: {
+    backgroundColor: "#E8E8E8",
+    paddingVertical: 12,
+    alignItems: "center",
+  },
+  passcodeModalButtonCancelText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#666",
+  },
+  passcodeModalButtonConfirm: {},
+  passcodeModalButtonGradient: {
+    paddingVertical: 12,
+    alignItems: "center",
+  },
+  passcodeModalButtonConfirmText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#FFFFFF",
   },
 });

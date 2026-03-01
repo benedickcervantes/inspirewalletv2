@@ -23,6 +23,8 @@ import BankWithdrawal from './app/Dashboard/withdraw/withdrawLocalB';
 import WithdrawLocalBConfirm from './app/Dashboard/withdraw/withdrawLocalBconfirm';
 import WithdrawMethodScreen from './app/Dashboard/withdraw/withdrawMethod';
 import History from './app/History/history';
+import KYCcompany from './app/KYC/KYCcompany';
+import KYCVerification from './app/KYC/KYCVerification';
 import NotificationScreen from './app/Notification/notification';
 import CreatePasscode from './app/Outside/CreatePasscode';
 import Login from './app/Outside/Login';
@@ -54,6 +56,7 @@ import TransferRecipient from './app/ServicesFunction/Transfer/TransferRecipient
 import SendMoney from './app/ServicesFunction/Transfer/TransferService';
 import TravelProtection from './app/ServicesFunction/Travel Proctected/TravelProtectServices';
 import Aboutus from './app/Settings/Aboutus';
+import ChangePasscode from './app/Settings/ChangePasscode';
 import DeleteAccount from './app/Settings/DeleteAccount';
 import HelpCenter from './app/Settings/HelpCenter';
 import PrivacyPolicy from './app/Settings/PrivacyPolicy';
@@ -76,12 +79,23 @@ export default function App() {
         <Stack.Screen name="Welcome" component={Welcome} />
         <Stack.Screen name="Login" component={Login} />
         <Stack.Screen name="Register" component={Register} />
-        <Stack.Screen name="CreatePasscode" component={CreatePasscode} />
-        <Stack.Screen name="Passcode" component={Passcode} />
+        <Stack.Screen
+          name="CreatePasscode"
+          component={CreatePasscode}
+          options={{ gestureEnabled: false }}
+        />
+        <Stack.Screen
+          name="Passcode"
+          component={Passcode}
+          options={{ gestureEnabled: false }}
+        />
         <Stack.Screen name="Main" component={Dashboard} />
         <Stack.Screen name="Personal" component={Placeholder} />
+        <Stack.Screen name="KYCVerification" component={KYCVerification} />
+        <Stack.Screen name="KYCcompany" component={KYCcompany} />
         <Stack.Screen name="Notification" component={NotificationScreen} />
         <Stack.Screen name="Settings" component={Settings} />
+        <Stack.Screen name="ChangePasscode" component={ChangePasscode} />
         <Stack.Screen name="Aboutus" component={Aboutus} />
         <Stack.Screen name="DeleteAccount" component={DeleteAccount} />
         <Stack.Screen name="HelpCenter" component={HelpCenter} />

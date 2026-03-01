@@ -1,21 +1,25 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
-import { useLanguage } from "../../../context/LanguageContext";
-import { addDoc, collection, doc, getDoc, serverTimestamp, updateDoc } from "firebase/firestore";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Dimensions,
-  Modal,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Dimensions,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    SafeAreaView,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { auth, firestore } from "../../../configs/firebase";
+import { useLanguage } from "../../../context/LanguageContext";
+import { createBeneficiary, getOrCreateMainWallet, submitTransfer } from "../../../configs/api";
 
 const { width } = Dimensions.get("window");
 
@@ -29,138 +33,26 @@ export const getUserInitials = (name: string) => {
   return name.substring(0, 2).toUpperCase();
 };
 
-// Reusable function to process transfer transaction
-export const processTransfer = async (
-  senderId: string,
-  recipientId: string,
-  amount: number,
-  balanceType: string,
-  description: string,
-  recipientName: string,
-  recipientAccountNumber: string
-) => {
-  if (!firestore) {
-    return { success: false, message: "Firebase not configured" };
-  }
-  try {
-    // Get sender data
-    const senderDoc = await getDoc(doc(firestore, "users", senderId));
-    const senderData = senderDoc.data() as Record<string, unknown>;
-
-    // Get recipient data
-    const recipientDoc = await getDoc(doc(firestore, "users", recipientId));
-    const recipientData = recipientDoc.data() as Record<string, unknown>;
-
-    // Calculate balances
-    let senderBalance = 0;
-    if (balanceType === "available") {
-      senderBalance = Number(senderData?.balance ?? senderData?.availBalanceAmount ?? 0) || 0;
-    } else {
-      senderBalance = Number(senderData?.agentWallet ?? senderData?.agentWalletAmount ?? 0) || 0;
-    }
-
-    const recipientBalance = Number(recipientData?.balance ?? recipientData?.availBalanceAmount ?? 0) || 0;
-
-    // Update sender balance
-    const senderRef = doc(firestore, "users", senderId);
-    if (balanceType === "available") {
-      await updateDoc(senderRef, {
-        balance: senderBalance - amount,
-        availBalanceAmount: senderBalance - amount,
-      });
-    } else {
-      await updateDoc(senderRef, {
-        agentWallet: senderBalance - amount,
-        agentWalletAmount: senderBalance - amount,
-      });
-    }
-
-    // Update recipient balance
-    const recipientRef = doc(firestore, "users", recipientId);
-    await updateDoc(recipientRef, {
-      balance: recipientBalance + amount,
-      availBalanceAmount: recipientBalance + amount,
-    });
-
-    // Create transaction record for sender
-    await addDoc(collection(firestore, "transactions"), {
-      userId: senderId,
-      type: "transfer_sent",
-      amount: -amount,
-      balanceType: balanceType,
-      recipientId: recipientId,
-      recipientName: recipientName,
-      recipientAccountNumber: recipientAccountNumber,
-      description: description,
-      status: "completed",
-      createdAt: serverTimestamp(),
-      timestamp: new Date().toISOString(),
-    });
-
-    // Create transaction record for recipient
-    await addDoc(collection(firestore, "transactions"), {
-      userId: recipientId,
-      type: "transfer_received",
-      amount: amount,
-      balanceType: "available",
-      senderId: senderId,
-      senderName: senderData.fullName || senderData.name || "Unknown",
-      senderAccountNumber: senderData.accountNumber,
-      description: description,
-      status: "completed",
-      createdAt: serverTimestamp(),
-      timestamp: new Date().toISOString(),
-    });
-
-    return {
-      success: true,
-      message: "Transfer completed successfully"
-    };
-  } catch (error) {
-    console.error("Error processing transfer:", error);
-    return {
-      success: false,
-      message: (error as { message?: string })?.message || "Transfer failed. Please try again."
-    };
-  }
-};
-
-// Reusable function to fetch current balance
-export const fetchCurrentBalance = async (userId: string, balanceType: string) => {
-  if (!firestore) {
-    throw new Error("Firebase not configured");
-  }
-  try {
-    const userDoc = await getDoc(doc(firestore, "users", userId));
-    if (!userDoc.exists()) {
-      throw new Error("User document not found");
-    }
-
-    const userData = userDoc.data() as Record<string, unknown>;
-    if (balanceType === "available") {
-      return Number(userData?.balance ?? userData?.availBalanceAmount ?? 0) || 0;
-    } else {
-      return Number(userData?.agentWallet ?? userData?.agentWalletAmount ?? 0) || 0;
-    }
-  } catch (error) {
-    console.error("Error fetching balance:", error);
-    throw error;
-  }
-};
-
 export default function TransferConfirm() {
   const { t } = useLanguage();
+  const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const route = useRoute();
-  const insets = useSafeAreaInsets();
-  
-  const params = (route.params || {}) as { balanceType?: string; accountNumber?: string; amount?: string; description?: string; recipientName?: string; recipientId?: string };
+  const params = (route.params || {}) as {
+    balanceType?: string;
+    accountNumber?: string;
+    amount?: string;
+    description?: string;
+    recipientName?: string;
+    recipientId?: string;
+    mainWalletId?: string;
+  };
   const balanceType = params.balanceType || "";
   const accountNumber = params.accountNumber || "";
   const amount = Number(parseFloat(params.amount || "0")) || 0;
   const description = params.description || "N/A";
   const recipientName = params.recipientName || "";
-  const recipientId = params.recipientId || "";
+  const mainWalletId = params.mainWalletId || "";
 
   const [currentBalance, setCurrentBalance] = useState(0);
   const [newBalance, setNewBalance] = useState(0);
@@ -168,18 +60,30 @@ export default function TransferConfirm() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [showPasscodeModal, setShowPasscodeModal] = useState(false);
+  const [passcode, setPasscode] = useState("");
+  const [hasPasscode, setHasPasscode] = useState(false);
 
   useEffect(() => {
     loadBalance();
+    (async () => {
+      const userJson = await AsyncStorage.getItem("user");
+      if (userJson) {
+        try {
+          const user = JSON.parse(userJson) as { hasPasscode?: boolean };
+          setHasPasscode(!!user?.hasPasscode);
+        } catch (_) {}
+      }
+    })();
   }, []);
 
   const loadBalance = async () => {
-    if (!auth || !firestore) return;
     try {
-      const user = auth.currentUser;
-      if (user) {
-        const balance = await fetchCurrentBalance(user.uid, balanceType);
-        const balanceNum = Number(balance) || 0;
+      const accessToken = await AsyncStorage.getItem("access_token");
+      if (!accessToken) return;
+      const { success, wallet } = await getOrCreateMainWallet(accessToken);
+      if (success && wallet?.balance != null && balanceType === "available") {
+        const balanceNum = parseFloat(String(wallet.balance)) || 0;
         setCurrentBalance(balanceNum);
         setNewBalance(Math.max(0, balanceNum - amount));
       }
@@ -188,41 +92,87 @@ export default function TransferConfirm() {
     }
   };
 
-  const handleConfirm = async () => {
-    if (!auth || !firestore) return;
+  const doTransfer = async (passcodeToSend?: string) => {
+    const accessToken = await AsyncStorage.getItem("access_token");
+    if (!accessToken) {
+      setErrorMessage("Please log in to continue.");
+      setShowErrorModal(true);
+      return;
+    }
+    if (!mainWalletId) {
+      setErrorMessage("Recipient wallet could not be resolved. Please try again.");
+      setShowErrorModal(true);
+      return;
+    }
     setIsProcessing(true);
     try {
-      const user = auth.currentUser;
-      if (!user) {
-        setErrorMessage(t("sendMoney.userNotAuthenticated"));
+      const { success: walletSuccess, wallet } = await getOrCreateMainWallet(accessToken);
+      if (!walletSuccess || !wallet?.id) {
+        setErrorMessage("Could not load your wallet. Please try again.");
         setShowErrorModal(true);
         setIsProcessing(false);
         return;
       }
-
-      const result = await processTransfer(
-        user.uid,
-        recipientId,
-        amount,
-        balanceType,
-        description,
-        recipientName,
-        accountNumber
-      );
-
+      const fromWalletId = balanceType === "available" ? (wallet.id as string) : undefined;
+      const beneficiaryBody: Record<string, string> = {
+        nickname: recipientName || "Recipient",
+        accountIdentifier: mainWalletId,
+        type: "WALLET_ID",
+      };
+      if (hasPasscode && passcodeToSend) beneficiaryBody.passcode = passcodeToSend;
+      const createRes = await createBeneficiary(accessToken, beneficiaryBody);
+      if (!createRes.success || !createRes.data) {
+        setErrorMessage(createRes.error || "Failed to set up recipient. Please try again.");
+        setShowErrorModal(true);
+        if (passcodeToSend) setPasscode("");
+        setIsProcessing(false);
+        return;
+      }
+      const beneficiaryId = (createRes.data as { id?: string }).id;
+      if (!beneficiaryId) {
+        setErrorMessage("Invalid response from server. Please try again.");
+        setShowErrorModal(true);
+        setIsProcessing(false);
+        return;
+      }
+      const transferBody: Record<string, string> = {
+        beneficiaryId,
+        amount: amount.toFixed(2),
+        description: description || "",
+      };
+      if (fromWalletId) transferBody.fromWalletId = fromWalletId;
+      if (hasPasscode && passcodeToSend) transferBody.passcode = passcodeToSend;
+      const result = await submitTransfer(accessToken, transferBody);
       if (result.success) {
+        setShowPasscodeModal(false);
+        setPasscode("");
         setShowSuccessModal(true);
       } else {
-        setErrorMessage(result.message || t("sendMoney.transferFailed"));
+        setErrorMessage(result.error || "Transfer failed. Please try again.");
         setShowErrorModal(true);
+        if (passcodeToSend) setPasscode("");
       }
     } catch (error) {
       console.error("Error processing transfer:", error);
       setErrorMessage(t("sendMoney.transferFailed"));
       setShowErrorModal(true);
+      if (passcodeToSend) setPasscode("");
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  const handleConfirm = async () => {
+    if (hasPasscode) {
+      setShowPasscodeModal(true);
+      return;
+    }
+    await doTransfer();
+  };
+
+  const handlePasscodeConfirm = () => {
+    if (passcode.length !== 4) return;
+    doTransfer(passcode);
   };
 
   const handleSuccessOk = () => {
@@ -410,6 +360,53 @@ export default function TransferConfirm() {
 
           <View style={styles.bottomPadding} />
         </ScrollView>
+
+        {/* Passcode modal (when user has passcode set) */}
+        <Modal
+          visible={showPasscodeModal}
+          transparent
+          animationType="fade"
+          onRequestClose={() => !isProcessing && setShowPasscodeModal(false)}
+        >
+          <KeyboardAvoidingView
+            style={styles.modalOverlay}
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            keyboardVerticalOffset={Platform.OS === "ios" ? 40 : 0}
+          >
+            <View style={styles.passcodeModalContent}>
+              <Text style={styles.passcodeModalTitle}>Enter your passcode</Text>
+              <TextInput
+                style={styles.passcodeInput}
+                value={passcode}
+                onChangeText={(t) => setPasscode(t.replace(/\D/g, "").slice(0, 4))}
+                placeholder="••••"
+                placeholderTextColor="#999"
+                secureTextEntry
+                maxLength={4}
+                keyboardType="number-pad"
+                editable={!isProcessing}
+              />
+              <View style={styles.passcodeModalButtons}>
+                <TouchableOpacity
+                  style={[styles.passcodeModalButton, styles.passcodeModalButtonCancel]}
+                  onPress={() => { setShowPasscodeModal(false); setPasscode(""); }}
+                  disabled={isProcessing}
+                >
+                  <Text style={styles.passcodeModalButtonCancelText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.passcodeModalButton, styles.passcodeModalButtonConfirm]}
+                  onPress={handlePasscodeConfirm}
+                  disabled={isProcessing || passcode.length !== 4}
+                >
+                  <LinearGradient colors={["#E25A17", "#F28934"]} style={styles.passcodeModalButtonGradient}>
+                    <Text style={styles.passcodeModalButtonConfirmText}>Confirm</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </KeyboardAvoidingView>
+        </Modal>
 
         {/* Success Modal */}
         <Modal
@@ -810,5 +807,60 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#E25A17",
     textAlign: "center",
+  },
+  passcodeModalContent: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 24,
+    width: "85%",
+    maxWidth: 340,
+  },
+  passcodeModalTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#333",
+    marginBottom: 16,
+    textAlign: "center",
+  },
+  passcodeInput: {
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 18,
+    textAlign: "center",
+    letterSpacing: 8,
+    marginBottom: 20,
+  },
+  passcodeModalButtons: {
+    flexDirection: "row",
+    gap: 12,
+    justifyContent: "center",
+  },
+  passcodeModalButton: {
+    minWidth: 100,
+    borderRadius: 8,
+    overflow: "hidden",
+  },
+  passcodeModalButtonCancel: {
+    backgroundColor: "#E8E8E8",
+    paddingVertical: 12,
+    alignItems: "center",
+  },
+  passcodeModalButtonCancelText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#666",
+  },
+  passcodeModalButtonConfirm: {},
+  passcodeModalButtonGradient: {
+    paddingVertical: 12,
+    alignItems: "center",
+  },
+  passcodeModalButtonConfirmText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#FFFFFF",
   },
 });

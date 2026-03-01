@@ -38,20 +38,23 @@ Creates a new user and returns an access token and user object (you can log the 
 
 **Request body**
 
-| Field        | Type   | Required | Validation                          | Description                |
-|-------------|--------|----------|-------------------------------------|----------------------------|
-| `email`     | string | Yes      | Valid email format                  | Login identifier           |
-| `password`  | string | Yes      | Min 8 characters, max 128          | Plain text (sent over HTTPS) |
-| `firstName` | string | Yes      | 1–100 characters                   | Given name                 |
-| `lastName`  | string | Yes      | 1–100 characters                   | Family name                |
-| `middleName`| string | No       | 1–100 characters                   | Middle name                |
-| `phone`     | string | No       | Max 30 characters                  | Phone number               |
-| `dateOfBirth` | string | No     | ISO 8601 date (e.g. `1990-01-15`)  | Date of birth              |
-| `countryCode` | string | No     | Exactly 2 characters (e.g. `US`)  | ISO country code           |
-| `referralCode` | string | No    | 4–20 characters                   | Referrer's **referral ID** when signing up via referral link. See [API-REFERRALS.md](API-REFERRALS.md) |
-| `companyName` | string | No     | Max 200 characters                | Company name (when user checks "I have a company") |
-| `lineAccountLink` | string | No  | Max 500 characters                | LINE Account Link URL (optional) |
-| `isAgent`     | boolean | No   |                                   | Whether user is an agent (default: false) |
+| Field             | Type    | Required | Validation                                        | Description                                                                                            |
+| ----------------- | ------- | -------- | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `email`           | string  | Yes      | Valid email format                                | Login identifier                                                                                       |
+| `password`        | string  | Yes      | Min 8 characters, max 128                         | Plain text (sent over HTTPS)                                                                           |
+| `firstName`       | string  | Yes      | 1–100 characters                                  | Given name                                                                                             |
+| `lastName`        | string  | Yes      | 1–100 characters                                  | Family name                                                                                            |
+| `middleName`      | string  | No       | 1–100 characters                                  | Middle name                                                                                            |
+| `phone`           | string  | No       | Max 30 characters                                 | Phone number                                                                                           |
+| `dateOfBirth`     | string  | No       | ISO 8601 date (e.g. `1990-01-15`)                 | Date of birth                                                                                          |
+| `countryCode`     | string  | No       | Exactly 2 characters (e.g. `US`)                  | ISO country code                                                                                       |
+| `referralCode`    | string  | No       | 4–20 characters                                   | Referrer's **referral ID** when signing up via referral link. See [API-REFERRALS.md](API-REFERRALS.md) |
+| `companyName`     | string  | No       | Max 200 characters                                | Company name (when user checks "I have a company")                                                     |
+| `lineAccountLink` | string  | No       | Max 500 characters                                | LINE Account Link URL (optional)                                                                       |
+| `viberLink`       | string  | No       | Max 500 characters                                | Viber account link (optional)                                                                          |
+| `whatsappLink`    | string  | No       | Max 500 characters                                | WhatsApp account link (optional)                                                                       |
+| `language`        | string  | No       | One of: `ENGLISH`, `ARABIC`, `JAPANESE`, `KOREAN` | User UI language preference                                                                            |
+| `isAgent`         | boolean | No       |                                                   | Whether user is an agent (default: false)                                                              |
 
 **Example request**
 
@@ -86,12 +89,18 @@ Creates a new user and returns an access token and user object (you can log the 
     "hasPasscode": false,
     "companyName": null,
     "lineAccountLink": null,
-    "isAgent": false
+    "viberLink": null,
+    "whatsappLink": null,
+    "language": null,
+    "isAgent": false,
+    "createdAt": "2025-01-15T10:00:00.000Z",
+    "referrerName": null
   }
 }
 ```
 
 After registration, an **OTP verification email** is sent to the user's email address. Users can verify by either:
+
 1. Typing the 6-digit OTP via `POST /auth/verify-email`, or
 2. Clicking the verification link in the email (for users who prefer not to type the OTP). The link goes to your frontend; the frontend calls `POST /auth/verify-email-link` with the `token` from the URL.
 
@@ -101,11 +110,15 @@ Each user also receives a unique **referral ID** (8 characters, e.g. `ABC12XYZ`)
 
 **Error responses**
 
-- **409 Conflict** – Email already registered  
+- **409 Conflict** – Email already registered
   ```json
-  { "statusCode": 409, "message": "User with this email already exists", "error": "Conflict" }
+  {
+    "statusCode": 409,
+    "message": "User with this email already exists",
+    "error": "Conflict"
+  }
   ```
-- **400 Bad Request** – Validation failed (invalid or missing fields)  
+- **400 Bad Request** – Validation failed (invalid or missing fields)
   ```json
   {
     "statusCode": 400,
@@ -124,10 +137,10 @@ Verifies the user's email address using the 6-digit OTP sent during registration
 
 **Request body**
 
-| Field  | Type   | Required | Validation        |
-|--------|--------|----------|-------------------|
-| `email`| string | Yes      | Valid email       |
-| `otp`  | string | Yes      | Exactly 6 digits  |
+| Field   | Type   | Required | Validation       |
+| ------- | ------ | -------- | ---------------- |
+| `email` | string | Yes      | Valid email      |
+| `otp`   | string | Yes      | Exactly 6 digits |
 
 **Example request**
 
@@ -148,12 +161,20 @@ Verifies the user's email address using the 6-digit OTP sent during registration
 
 **Error responses**
 
-- **400 Bad Request** – Invalid email, invalid OTP, or OTP expired  
+- **400 Bad Request** – Invalid email, invalid OTP, or OTP expired
   ```json
-  { "statusCode": 400, "message": "Invalid email or OTP", "error": "Bad Request" }
+  {
+    "statusCode": 400,
+    "message": "Invalid email or OTP",
+    "error": "Bad Request"
+  }
   ```
   ```json
-  { "statusCode": 400, "message": "OTP has expired. Please request a new one.", "error": "Bad Request" }
+  {
+    "statusCode": 400,
+    "message": "OTP has expired. Please request a new one.",
+    "error": "Bad Request"
+  }
   ```
 
 ---
@@ -177,8 +198,8 @@ If the link points to your frontend, the frontend extracts the token and calls t
 
 **Request body**
 
-| Field   | Type   | Required | Validation |
-|---------|--------|----------|------------|
+| Field   | Type   | Required | Validation                                       |
+| ------- | ------ | -------- | ------------------------------------------------ |
 | `token` | string | Yes      | Token from the verification link URL query param |
 
 **Example request**
@@ -199,12 +220,20 @@ If the link points to your frontend, the frontend extracts the token and calls t
 
 **Error responses**
 
-- **400 Bad Request** – Invalid or expired link  
+- **400 Bad Request** – Invalid or expired link
   ```json
-  { "statusCode": 400, "message": "Invalid or expired verification link", "error": "Bad Request" }
+  {
+    "statusCode": 400,
+    "message": "Invalid or expired verification link",
+    "error": "Bad Request"
+  }
   ```
   ```json
-  { "statusCode": 400, "message": "Verification link has expired. Please request a new one.", "error": "Bad Request" }
+  {
+    "statusCode": 400,
+    "message": "Verification link has expired. Please request a new one.",
+    "error": "Bad Request"
+  }
   ```
 
 ---
@@ -218,7 +247,7 @@ Sends a new OTP verification email. Use when the user did not receive the email 
 **Request body**
 
 | Field   | Type   | Required | Validation  |
-|---------|--------|----------|-------------|
+| ------- | ------ | -------- | ----------- |
 | `email` | string | Yes      | Valid email |
 
 **Example request**
@@ -251,10 +280,10 @@ Authenticates with email and password and returns an access token and user objec
 
 **Request body**
 
-| Field      | Type   | Required | Validation     |
-|-----------|--------|----------|----------------|
-| `email`   | string | Yes      | Valid email    |
-| `password`| string | Yes      | Non-empty      |
+| Field      | Type   | Required | Validation  |
+| ---------- | ------ | -------- | ----------- |
+| `email`    | string | Yes      | Valid email |
+| `password` | string | Yes      | Non-empty   |
 
 **Example request**
 
@@ -282,16 +311,25 @@ Authenticates with email and password and returns an access token and user objec
     "hasPasscode": false,
     "companyName": null,
     "lineAccountLink": null,
-    "isAgent": false
+    "viberLink": null,
+    "whatsappLink": null,
+    "language": null,
+    "isAgent": false,
+    "createdAt": "2025-01-15T10:00:00.000Z",
+    "referrerName": null
   }
 }
 ```
 
 **Error responses**
 
-- **401 Unauthorized** – Invalid email or password  
+- **401 Unauthorized** – Invalid email or password
   ```json
-  { "statusCode": 401, "message": "Invalid email or password", "error": "Unauthorized" }
+  {
+    "statusCode": 401,
+    "message": "Invalid email or password",
+    "error": "Unauthorized"
+  }
   ```
 - **400 Bad Request** – Validation failed (e.g. missing email/password)
 
@@ -324,9 +362,16 @@ Returns the profile of the authenticated user.
   "hasPasscode": false,
   "companyName": null,
   "lineAccountLink": null,
-  "isAgent": false
+  "viberLink": null,
+  "whatsappLink": null,
+  "language": null,
+  "isAgent": false,
+  "createdAt": "2025-01-15T10:00:00.000Z",
+  "referrerName": null
 }
 ```
+
+Use `GET /auth/me` for the **Personal Information** page (Dashboard → person icon → Personal). Display editable fields (firstName, lastName, middleName, phone, dateOfBirth, countryCode, companyName, lineAccountLink, viberLink, whatsappLink, language) and persist changes with `PATCH /auth/profile`. Use `createdAt` for "Member Since" and `referrerName` for "Agent Referrer".
 
 `role` is one of `USER`, `ADMIN`, or `PAYMENT_SERVICE`. Use it to gate admin-only UI (e.g. admin portal) or to verify the user can access admin endpoints.
 
@@ -334,7 +379,7 @@ The `hasPasscode` field indicates whether the user has set a 4-digit passcode. I
 
 **Error responses**
 
-- **401 Unauthorized** – Missing or invalid/expired token  
+- **401 Unauthorized** – Missing or invalid/expired token
   ```json
   { "statusCode": 401, "message": "Unauthorized" }
   ```
@@ -350,15 +395,20 @@ Updates the authenticated user's profile. All body fields are optional; only pro
 
 **Request body**
 
-| Field        | Type   | Required | Validation                     | Description                |
-|-------------|--------|----------|--------------------------------|----------------------------|
-| `firstName` | string | No       | 1–100 characters               | Given name                 |
-| `lastName`  | string | No       | 1–100 characters               | Family name                |
-| `middleName`| string | No       | 1–100 characters               | Middle name                |
-| `phone`     | string | No       | Max 30 characters              | Phone number               |
-| `dateOfBirth` | string | No     | ISO 8601 date (e.g. `1990-01-15`) | Date of birth           |
-| `countryCode` | string | No     | Exactly 2 characters (e.g. `US`) | ISO country code        |
-| `passcode`  | string | Conditional | Exactly 4 digits (0–9)     | Required when user has passcode set |
+| Field             | Type   | Required    | Validation                                        | Description                           |
+| ----------------- | ------ | ----------- | ------------------------------------------------- | ------------------------------------- |
+| `firstName`       | string | No          | 1–100 characters                                  | Given name                            |
+| `lastName`        | string | No          | 1–100 characters                                  | Family name                           |
+| `middleName`      | string | No          | 1–100 characters                                  | Middle name                           |
+| `phone`           | string | No          | Max 30 characters                                 | Phone number                          |
+| `dateOfBirth`     | string | No          | ISO 8601 date (e.g. `1990-01-15`)                 | Date of birth                         |
+| `countryCode`     | string | No          | Exactly 2 characters (e.g. `US`)                  | ISO country code                      |
+| `companyName`     | string | No          | Max 200 characters                                | Company name (Personal page)          |
+| `lineAccountLink` | string | No          | Max 500 characters                                | LINE Account Link URL (Personal page) |
+| `viberLink`       | string | No          | Max 500 characters                                | Viber account link                    |
+| `whatsappLink`    | string | No          | Max 500 characters                                | WhatsApp account link                 |
+| `language`        | string | No          | One of: `ENGLISH`, `ARABIC`, `JAPANESE`, `KOREAN` | User UI language preference           |
+| `passcode`        | string | Conditional | Exactly 4 digits (0–9)                            | Required when user has passcode set   |
 
 **Example request**
 
@@ -367,6 +417,11 @@ Updates the authenticated user's profile. All body fields are optional; only pro
   "firstName": "Jane",
   "lastName": "Smith",
   "middleName": "Marie",
+  "companyName": "Acme Inc",
+  "lineAccountLink": "https://line.me/ti/p/~jane_doe",
+  "viberLink": "https://viber.click/jane_doe",
+  "whatsappLink": "https://wa.me/1234567890",
+  "language": "ENGLISH",
   "passcode": "1234"
 }
 ```
@@ -377,14 +432,22 @@ Same shape as `GET /auth/me` (including `hasPasscode`).
 
 **Error responses**
 
-- **400 Bad Request** – Passcode required but missing or incorrect (when user has passcode set)  
+- **400 Bad Request** – Passcode required but missing or incorrect (when user has passcode set)
   ```json
-  { "statusCode": 400, "message": "Passcode is required for this operation. Set a passcode first or provide your current passcode.", "error": "Bad Request" }
+  {
+    "statusCode": 400,
+    "message": "Passcode is required for this operation. Set a passcode first or provide your current passcode.",
+    "error": "Bad Request"
+  }
   ```
   ```json
-  { "statusCode": 400, "message": "Passcode is incorrect", "error": "Bad Request" }
+  {
+    "statusCode": 400,
+    "message": "Passcode is incorrect",
+    "error": "Bad Request"
+  }
   ```
-- **401 Unauthorized** – Missing or invalid/expired token  
+- **401 Unauthorized** – Missing or invalid/expired token
 
 ---
 
@@ -397,9 +460,9 @@ Verifies the user's 4-digit passcode. Use for the app-entry gate: after login, i
 
 **Request body**
 
-| Field      | Type   | Required | Validation        |
-|-----------|--------|----------|-------------------|
-| `passcode`| string | Yes      | Exactly 4 digits (0–9) |
+| Field      | Type   | Required | Validation             |
+| ---------- | ------ | -------- | ---------------------- |
+| `passcode` | string | Yes      | Exactly 4 digits (0–9) |
 
 **Example request**
 
@@ -419,15 +482,23 @@ Verifies the user's 4-digit passcode. Use for the app-entry gate: after login, i
 
 **Error responses**
 
-- **400 Bad Request** – User has no passcode set  
+- **400 Bad Request** – User has no passcode set
   ```json
-  { "statusCode": 400, "message": "No passcode set. Set a passcode first.", "error": "Bad Request" }
+  {
+    "statusCode": 400,
+    "message": "No passcode set. Set a passcode first.",
+    "error": "Bad Request"
+  }
   ```
-- **400 Bad Request** – Passcode is incorrect  
+- **400 Bad Request** – Passcode is incorrect
   ```json
-  { "statusCode": 400, "message": "Passcode is incorrect", "error": "Bad Request" }
+  {
+    "statusCode": 400,
+    "message": "Passcode is incorrect",
+    "error": "Bad Request"
+  }
   ```
-- **401 Unauthorized** – Missing or invalid/expired token  
+- **401 Unauthorized** – Missing or invalid/expired token
 
 ---
 
@@ -447,25 +518,32 @@ All passcode endpoints require JWT authentication. The passcode is encrypted at 
 
 The **user** object returned by register, login, `GET /auth/me`, and `PATCH /auth/profile` has the same shape:
 
-| Field          | Type    | Description                                              |
-|----------------|---------|----------------------------------------------------------|
-| `id`           | string  | Unique user ID (cuid)                                   |
-| `email`        | string  | Email address                                           |
-| `accountNumber`| string  | 12-digit account number, formatted as **XXXX XXXX XXXX** (e.g. `1234 5678 9012`). Unique per user; use for receiving transfers and sharing with others. |
-| `firstName`    | string  | First name                                              |
-| `lastName`     | string  | Last name                                               |
-| `middleName`   | string \| null | Middle name (optional)                        |
-| `status`       | string  | One of: `PENDING`, `ACTIVE`, `SUSPENDED`                |
-| `role`         | string  | One of: `USER`, `ADMIN`, `PAYMENT_SERVICE`              |
-| `emailVerified`| boolean | Whether the user has verified their email via OTP. New users receive an OTP email; call `POST /auth/verify-email` to verify. |
-| `hasPasscode`  | boolean | Whether the user has set a 4-digit passcode. Use to decide when to prompt for passcode on transfers, profile updates, etc. |
-| `companyName`  | string \| null | Company name (optional)                      |
-| `lineAccountLink` | string \| null | LINE Account Link URL (optional)         |
-| `isAgent`      | boolean | Whether the user is an agent (default: false)           |
+| Field             | Type           | Description                                                                                                                                             |
+| ----------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`              | string         | Unique user ID (cuid)                                                                                                                                   |
+| `email`           | string         | Email address                                                                                                                                           |
+| `accountNumber`   | string         | 12-digit account number, formatted as **XXXX XXXX XXXX** (e.g. `1234 5678 9012`). Unique per user; use for receiving transfers and sharing with others. |
+| `firstName`       | string         | First name                                                                                                                                              |
+| `lastName`        | string         | Last name                                                                                                                                               |
+| `middleName`      | string \| null | Middle name (optional)                                                                                                                                  |
+| `status`          | string         | One of: `PENDING`, `ACTIVE`, `SUSPENDED`                                                                                                                |
+| `role`            | string         | One of: `USER`, `ADMIN`, `PAYMENT_SERVICE`                                                                                                              |
+| `emailVerified`   | boolean        | Whether the user has verified their email via OTP. New users receive an OTP email; call `POST /auth/verify-email` to verify.                            |
+| `hasPasscode`     | boolean        | Whether the user has set a 4-digit passcode. Use to decide when to prompt for passcode on transfers, profile updates, etc.                              |
+| `companyName`     | string \| null | Company name (optional). Editable via `PATCH /auth/profile`.                                                                                            |
+| `lineAccountLink` | string \| null | LINE Account Link URL (optional). Editable via `PATCH /auth/profile`.                                                                                   |
+| `viberLink`       | string \| null | Viber account link (optional). Editable via `PATCH /auth/profile`.                                                                                      |
+| `whatsappLink`    | string \| null | WhatsApp account link (optional). Editable via `PATCH /auth/profile`.                                                                                   |
+| `language`        | string \| null | User UI language: `ENGLISH`, `ARABIC`, `JAPANESE`, or `KOREAN`. Editable via `PATCH /auth/profile`.                                                     |
+| `isAgent`         | boolean        | Whether the user is an agent (default: false)                                                                                                           |
+| `createdAt`       | string         | ISO 8601 date (e.g. `2025-01-15T10:00:00.000Z`). Registration date; use for "Member Since" on Personal page.                                            |
+| `referrerName`    | string \| null | Agent referrer display name (firstName + lastName). null if user has no referrer. Use for "Agent Referrer" on Personal page.                            |
 
 Every user (new and existing) has an account number. New users receive one at registration; existing users were backfilled via migration.
 
 To show or update profile, use `GET /auth/me` and `PATCH /auth/profile`. Sensible fields (e.g. phone, dateOfBirth, countryCode) are stored and encrypted on the backend; include them in the profile update body to change them.
+
+**Personal Information page:** For the Personal page (Dashboard → person icon → Personal), use `GET /auth/me` for display and `PATCH /auth/profile` for updates. Supported editable fields: firstName, lastName, middleName, phone, dateOfBirth, countryCode, companyName, lineAccountLink, viberLink, whatsappLink, language. Use `createdAt` for "Member Since" and `referrerName` for "Agent Referrer".
 
 ---
 
@@ -482,13 +560,13 @@ Returns a paginated list of users with decrypted PII. Supports search by email a
 
 **Query parameters**
 
-| Param   | Type    | Required | Description                                      |
-|---------|---------|----------|--------------------------------------------------|
-| `page`  | number  | No       | Page number (default: 1)                         |
-| `limit` | number  | No       | Items per page, 1–100 (default: 20)              |
-| `search`| string  | No       | Partial match on email (case-insensitive)        |
-| `status`| string  | No       | Filter by status: `PENDING`, `ACTIVE`, `SUSPENDED` |
-| `agent` | boolean | No       | Filter by agent: `true` or `false`               |
+| Param    | Type    | Required | Description                                        |
+| -------- | ------- | -------- | -------------------------------------------------- |
+| `page`   | number  | No       | Page number (default: 1)                           |
+| `limit`  | number  | No       | Items per page, 1–100 (default: 20)                |
+| `search` | string  | No       | Partial match on email (case-insensitive)          |
+| `status` | string  | No       | Filter by status: `PENDING`, `ACTIVE`, `SUSPENDED` |
+| `agent`  | boolean | No       | Filter by agent: `true` or `false`                 |
 
 **Example request**
 
@@ -542,17 +620,17 @@ Returns a single user's details including decrypted PII, referral info, and thei
 
 **Response fields**
 
-| Field | Type | Description |
-|-------|------|--------------|
-| `id` | string | User ID (cuid) |
-| `email` | string | Email address |
-| `accountNumber` | string | 12-digit account number (e.g. `"1234 5678 9012"`) |
-| `firstName` | string | First name |
-| `lastName` | string | Last name |
-| `referralCode` | string \| null | User's unique referral ID (8 chars, e.g. `"ABC12XYZ"`). Use for sharing sign-up links. See [API-REFERRALS.md](API-REFERRALS.md). |
-| `referredById` | string \| null | User ID of the referrer (who referred this user), if any. |
-| `wallets` | array | User's wallets with `balance` and `agentCommission`. |
-| ... | | Plus other user fields (status, role, emailVerified, isAgent, createdAt, etc.) |
+| Field           | Type           | Description                                                                                                                      |
+| --------------- | -------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `id`            | string         | User ID (cuid)                                                                                                                   |
+| `email`         | string         | Email address                                                                                                                    |
+| `accountNumber` | string         | 12-digit account number (e.g. `"1234 5678 9012"`)                                                                                |
+| `firstName`     | string         | First name                                                                                                                       |
+| `lastName`      | string         | Last name                                                                                                                        |
+| `referralCode`  | string \| null | User's unique referral ID (8 chars, e.g. `"ABC12XYZ"`). Use for sharing sign-up links. See [API-REFERRALS.md](API-REFERRALS.md). |
+| `referredById`  | string \| null | User ID of the referrer (who referred this user), if any.                                                                        |
+| `wallets`       | array          | User's wallets with `balance` and `agentCommission`.                                                                             |
+| ...             |                | Plus other user fields (status, role, emailVerified, isAgent, createdAt, etc.)                                                   |
 
 **Request**
 
@@ -614,15 +692,15 @@ Permanently deletes a user. Referral cascading: users who had this user as refer
 
 **Error responses**
 
-- **401 Unauthorized** – Missing or invalid/expired token, or caller is not ADMIN  
+- **401 Unauthorized** – Missing or invalid/expired token, or caller is not ADMIN
   ```json
   { "statusCode": 401, "message": "Unauthorized" }
   ```
-- **403 Forbidden** – Caller does not have ADMIN role  
+- **403 Forbidden** – Caller does not have ADMIN role
   ```json
   { "statusCode": 403, "message": "Forbidden resource", "error": "Forbidden" }
   ```
-- **404 Not Found** – User does not exist  
+- **404 Not Found** – User does not exist
   ```json
   { "statusCode": 404, "message": "User not found", "error": "Not Found" }
   ```

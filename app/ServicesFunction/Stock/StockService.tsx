@@ -4,18 +4,18 @@ import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useState } from "react";
 import {
-    ActivityIndicator,
-    Platform,
-    RefreshControl,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from "react-native";
-import { useLanguage } from "../../../context/LanguageContext";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { getStockInvestmentDepositRequests } from "../../../configs/api";
+import { useLanguage } from "../../../context/LanguageContext";
+import { isServiceUnderMaintenance } from "../../../lib/maintenance";
 
 const THEME_COLOR = "#E15816";
 const STOCK_RATE_PHP = 2_000_000;
@@ -55,6 +55,8 @@ export default function StockService() {
   const [requests, setRequests] = useState<StockRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [isUnderMaintenance, setIsUnderMaintenance] = useState(false);
+  const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
 
   const fetchData = useCallback(async () => {
     const accessToken = await AsyncStorage.getItem("access_token");
@@ -97,8 +99,30 @@ export default function StockService() {
 
   useFocusEffect(
     useCallback(() => {
-      setLoading(true);
-      fetchData();
+      // Check maintenance status when screen is focused
+      const checkMaintenance = async () => {
+        try {
+          console.log("[StockService] Checking maintenance status...");
+          const isMaintenance = await isServiceUnderMaintenance("stock");
+          console.log("[StockService] Maintenance status:", isMaintenance);
+          setIsUnderMaintenance(isMaintenance);
+          if (isMaintenance) {
+            console.log("[StockService] Stock is under maintenance, showing modal");
+            setShowMaintenanceModal(true);
+            setLoading(false);
+            return;
+          }
+          // Only fetch data if not under maintenance
+          console.log("[StockService] Stock is online, fetching data");
+          setLoading(true);
+          await fetchData();
+        } catch (error) {
+          console.error("Error checking maintenance:", error);
+          setLoading(false);
+        }
+      };
+      
+      checkMaintenance();
     }, [fetchData])
   );
 
@@ -154,19 +178,23 @@ export default function StockService() {
   };
 
   return (
-    <View style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Ionicons name="arrow-back" size={28} color={THEME_COLOR} />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>{t("stock.title")}</Text>
-          <View style={styles.headerSpacer} />
-        </View>
+    <SafeAreaView style={styles.container}>
+      {/* Header */}
+      <LinearGradient
+        colors={["#E25A17", "#F28934"]}
+        style={styles.header}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+      >
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>{t("stock.title")}</Text>
+        <View style={styles.headerSpacer} />
+      </LinearGradient>
 
         {loading ? (
           <View style={styles.loadingContainer}>
@@ -226,7 +254,7 @@ export default function StockService() {
                   <MaterialCommunityIcons
                     name="wallet-outline"
                     size={22}
-                    color="#000"
+                    color="#FFFFFF"
                   />
                   <Text style={styles.portfolioValueLabel}>
                     {t("stock.totalPortfolioValue")}
@@ -246,7 +274,7 @@ export default function StockService() {
                 activeOpacity={0.9}
               >
                 <View style={styles.buyButtonIcon}>
-                  <Ionicons name="add" size={24} color="#FFFFFF" />
+                  <Ionicons name="add" size={20} color="#FFFFFF" />
                 </View>
                 <Text style={styles.buyButtonText}>{t("stock.buy")}</Text>
               </TouchableOpacity>
@@ -257,7 +285,7 @@ export default function StockService() {
                 activeOpacity={0.9}
               >
                 <View style={styles.sellButtonIcon}>
-                  <Ionicons name="arrow-forward" size={24} color="#FFFFFF" />
+                  <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
                 </View>
                 <Text style={styles.sellButtonText}>{t("stock.sell")}</Text>
               </TouchableOpacity>
@@ -292,8 +320,7 @@ export default function StockService() {
             <View style={styles.bottomSpacing} />
           </ScrollView>
         )}
-      </SafeAreaView>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -302,28 +329,29 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#F5F5F5",
   },
-  safeArea: {
-    flex: 1,
-    paddingTop: Platform.OS === "android" ? 24 : 0,
-  },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    paddingTop: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
   },
   backButton: {
-    padding: 4,
+    width: 40,
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: "700",
-    color: THEME_COLOR,
+    color: "#FFFFFF",
+    flex: 1,
+    textAlign: "center",
   },
   headerSpacer: {
-    width: 36,
+    width: 40,
+    height: 40,
   },
   loadingContainer: {
     flex: 1,
@@ -423,64 +451,69 @@ const styles = StyleSheet.create({
   },
   portfolioValueLabel: {
     fontSize: 14,
-    color: "rgba(0,0,0,0.8)",
+    color: "#FFFFFF",
     fontWeight: "500",
   },
   portfolioValue: {
     fontSize: 24,
     fontWeight: "700",
-    color: "#000",
+    color: "#FFFFFF",
   },
   actionButtons: {
     flexDirection: "row",
     gap: 12,
     marginBottom: 20,
+    justifyContent: "center",
   },
   buyButton: {
-    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#2E7D32",
-    paddingVertical: 16,
-    borderRadius: 12,
-    gap: 10,
+    backgroundColor: "transparent",
+    borderWidth: 2,
+    borderColor: "#2E7D32",
+    paddingVertical: 10,
+    paddingHorizontal: 40,
+    borderRadius: 24,
+    gap: 8,
   },
   buyButtonIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "rgba(255,255,255,0.3)",
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "#2E7D32",
     justifyContent: "center",
     alignItems: "center",
   },
   buyButtonText: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "700",
-    color: "#FFFFFF",
+    color: "#2E7D32",
   },
   sellButton: {
-    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#C62828",
-    paddingVertical: 16,
-    borderRadius: 12,
-    gap: 10,
+    backgroundColor: "transparent",
+    borderWidth: 2,
+    borderColor: "#C62828",
+    paddingVertical: 10,
+    paddingHorizontal: 40,
+    borderRadius: 24,
+    gap: 8,
   },
   sellButtonIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "rgba(255,255,255,0.3)",
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "#C62828",
     justifyContent: "center",
     alignItems: "center",
   },
   sellButtonText: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "700",
-    color: "#FFFFFF",
+    color: "#C62828",
   },
   transactionCard: {
     backgroundColor: "#E8E8E8",

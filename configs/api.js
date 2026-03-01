@@ -320,6 +320,74 @@ export async function submitWithdrawalRequest(accessToken, body) {
 }
 
 /**
+ * Submit a banking application via the backend.
+ * POST /applications/banking
+ * Body: JSON with base64-encoded images (see FRONTEND-BANKING-EWALLET-INTEGRATION.md).
+ * @param {string} accessToken - Backend JWT
+ * @param {Object} body - Full application payload (bank, sourceOfFund, grossMonthlyIncome, grossMonthlyIncomeCurrency, idType, personalInfo, contactInfo, addressInfo, passportPhoto/idFront/idBack as base64)
+ * @returns {Promise<{ success: boolean, data?: object, error?: string }>}
+ */
+export async function submitBankingApplication(accessToken, body) {
+  const url = buildUrl('/applications/banking');
+  if (!url) return { success: false, error: 'Backend URL not configured. Set EXPO_PUBLIC_WALLET_BACKEND_URL in .env and restart the app.' };
+  if (!accessToken) return { success: false, error: 'Not authenticated' };
+  try {
+    if (__DEV__) console.log('[Banking API] POST', url, '(payload keys:', Object.keys(body), ')');
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (__DEV__) console.log('[Banking API] Response', res.status, data);
+    if (!res.ok) {
+      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    return { success: true, data: data.data ?? data };
+  } catch (e) {
+    if (__DEV__) console.error('[Banking API] Error', e);
+    return { success: false, error: e.message || 'Network error. Is the backend running?' };
+  }
+}
+
+/**
+ * Submit a travel protection request via the backend.
+ * POST /travel-protection
+ * @param {string} accessToken - Backend JWT
+ * @param {Object} body - Full application payload
+ * @returns {Promise<{ success: boolean, data?: object, error?: string }>}
+ */
+export async function submitTravelProtection(accessToken, body) {
+  const url = buildUrl('/travel-protection');
+  if (!url) return { success: false, error: 'Backend URL not configured.' };
+  if (!accessToken) return { success: false, error: 'Not authenticated' };
+  try {
+    if (__DEV__) console.log('[TravelProtection API] POST', url);
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    return { success: true, data: data.data ?? data };
+  } catch (e) {
+    if (__DEV__) console.error('[TravelProtection API] Error', e);
+    return { success: false, error: e.message || 'Network error.' };
+  }
+}
+
+/**
  * Get user's withdrawal requests.
  * GET /withdrawal-requests
  * @param {string} accessToken - Backend JWT
@@ -422,6 +490,37 @@ export async function getMe(accessToken) {
 }
 
 /**
+ * PATCH /auth/profile — requires JWT
+ * Updates the authenticated user's profile. When user has passcode set, passcode must be included.
+ * @param {string} accessToken
+ * @param {Object} body - { firstName?, lastName?, middleName?, phone?, dateOfBirth?, countryCode?, passcode? (required when hasPasscode) }
+ * @returns {{ success: boolean, user?: object, error?: string }}
+ */
+export async function updateProfile(accessToken, body) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: 'Backend URL not configured' };
+  if (!accessToken) return { success: false, error: 'No token' };
+  try {
+    const res = await fetch(`${base}/auth/profile`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || 'Failed to update profile';
+      return { success: false, error: msg };
+    }
+    return { success: true, user: data };
+  } catch (e) {
+    return { success: false, error: e.message || 'Network error' };
+  }
+}
+
+/**
  * POST /auth/passcode — requires JWT
  * Sets a 4-digit passcode for the authenticated user.
  * @param {string} accessToken
@@ -474,6 +573,38 @@ export async function verifyPasscode(accessToken, passcode) {
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
       return { success: false, error: data.message || 'Passcode incorrect' };
+    }
+    return { success: true };
+  } catch (e) {
+    return { success: false, error: e.message || 'Network error' };
+  }
+}
+
+/**
+ * PATCH /auth/passcode — requires JWT
+ * Updates the user's passcode. Requires current passcode for verification.
+ * @param {string} accessToken
+ * @param {string} currentPasscode — exactly 4 digits
+ * @param {string} newPasscode — exactly 4 digits
+ * @returns {{ success: boolean, error?: string }}
+ */
+export async function updatePasscode(accessToken, currentPasscode, newPasscode) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: 'Backend URL not configured' };
+  if (!accessToken) return { success: false, error: 'No token' };
+  try {
+    const res = await fetch(`${base}/auth/passcode`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ currentPasscode, newPasscode }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message) ? data.message[0] : data.message || 'Failed to update passcode';
+      return { success: false, error: msg };
     }
     return { success: true };
   } catch (e) {
@@ -660,6 +791,127 @@ export async function getOrCreateMainWallet(accessToken) {
       return { success: false, error: data.message || 'Failed to get wallet' };
     }
     return { success: true, wallet: data };
+  } catch (e) {
+    return { success: false, error: e.message || 'Network error' };
+  }
+}
+
+// --- Transfers & Beneficiaries API ---
+
+/**
+ * GET /transfers/recipient-by-account-number?accountNumber=xxx — requires JWT
+ * Optional backend endpoint: resolve recipient by account number for transfer flow.
+ * Returns minimal recipient info (e.g. userId, mainWalletId, firstName, lastName) or 404.
+ * @param {string} accessToken
+ * @param {string} accountNumber — 12-digit with or without spaces
+ * @returns {{ success: boolean, data?: { userId, mainWalletId, accountNumber, firstName?, lastName? }, error?: string }}
+ */
+export async function getRecipientByAccountNumber(accessToken, accountNumber) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: 'Backend URL not configured' };
+  if (!accessToken) return { success: false, error: 'No token' };
+  const normalized = String(accountNumber || '').replace(/\s/g, '').trim();
+  if (!normalized) return { success: false, error: 'Account number is required' };
+  try {
+    const url = `${base}/transfers/recipient-by-account-number?accountNumber=${encodeURIComponent(normalized)}`;
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (res.status === 404) {
+      return { success: false, error: 'Recipient not found', notFound: true };
+    }
+    if (!res.ok) {
+      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || 'Failed to lookup recipient';
+      return { success: false, error: msg };
+    }
+    return { success: true, data: data.data ?? data };
+  } catch (e) {
+    return { success: false, error: e.message || 'Network error' };
+  }
+}
+
+/**
+ * GET /beneficiaries — requires JWT
+ * @param {string} accessToken
+ * @returns {{ success: boolean, beneficiaries?: Array, error?: string }}
+ */
+export async function getBeneficiaries(accessToken) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: 'Backend URL not configured' };
+  if (!accessToken) return { success: false, error: 'No token' };
+  try {
+    const res = await fetch(`${base}/beneficiaries`, {
+      method: 'GET',
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      return { success: false, error: data.message || 'Failed to get beneficiaries' };
+    }
+    const list = Array.isArray(data) ? data : data.data ?? data.beneficiaries ?? [];
+    return { success: true, beneficiaries: list };
+  } catch (e) {
+    return { success: false, error: e.message || 'Network error' };
+  }
+}
+
+/**
+ * POST /beneficiaries — requires JWT. When user has passcode, include passcode in body.
+ * @param {string} accessToken
+ * @param {Object} body — { nickname, accountIdentifier, type: 'PHONE'|'EMAIL'|'WALLET_ID', isVerified?, passcode? }
+ * @returns {{ success: boolean, data?: object, error?: string }}
+ */
+export async function createBeneficiary(accessToken, body) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: 'Backend URL not configured' };
+  if (!accessToken) return { success: false, error: 'No token' };
+  try {
+    const res = await fetch(`${base}/beneficiaries`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || 'Failed to create beneficiary';
+      return { success: false, error: msg };
+    }
+    return { success: true, data: data.data ?? data };
+  } catch (e) {
+    return { success: false, error: e.message || 'Network error' };
+  }
+}
+
+/**
+ * POST /transfers — requires JWT. When user has passcode, include passcode in body.
+ * @param {string} accessToken
+ * @param {Object} body — { beneficiaryId, fromWalletId?, amount, description?, passcode? }
+ * @returns {{ success: boolean, data?: object, error?: string }}
+ */
+export async function submitTransfer(accessToken, body) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: 'Backend URL not configured' };
+  if (!accessToken) return { success: false, error: 'No token' };
+  try {
+    const res = await fetch(`${base}/transfers`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || 'Transfer failed';
+      return { success: false, error: msg };
+    }
+    return { success: true, data: data.data ?? data };
   } catch (e) {
     return { success: false, error: e.message || 'Network error' };
   }

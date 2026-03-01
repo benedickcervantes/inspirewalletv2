@@ -28,6 +28,7 @@ export default function BankingAddressInfo() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, "BankingAddressInfo">>();
   const route = useRoute<RouteProp<RootStackParamList, "BankingAddressInfo">>();
   const selectedBank = route.params?.selectedBank ?? "Security Bank";
+  const applicationData = route.params?.applicationData ?? {};
 
   const [completeAddress, setCompleteAddress] = useState("");
 
@@ -39,7 +40,13 @@ export default function BankingAddressInfo() {
 
   const handleNext = () => {
     if (!completeAddress.trim()) return;
-    navigation.navigate("BankingFinancialInfo", { selectedBank });
+    navigation.navigate("BankingFinancialInfo", {
+      selectedBank,
+      applicationData: {
+        ...applicationData,
+        addressInfo: { completeAddress: completeAddress.trim() },
+      },
+    });
   };
 
   return (

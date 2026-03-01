@@ -1,27 +1,30 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useRef, useState } from 'react';
 import {
-    ActivityIndicator,
-    Animated,
-    Keyboard,
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Animated,
+  BackHandler,
+  Keyboard,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import type { NavProp } from '../../types/navigation';
+import CustomLoader from '../Loader/CustomLoader';
 import { login } from '../../configs/api';
+import type { NavProp } from '../../types/navigation';
+import { useResponsive } from '../../utils/responsive';
 
 
 const GRADIENT_START = '#E15816';
@@ -209,7 +212,16 @@ interface ModalConfig {
 
 export default function Login() {
   const navigation = useNavigation();
+  const route = useRoute();
   const insets = useSafeAreaInsets();
+  const { scale, verticalScale, moderateScale, horizontalPadding } = useResponsive();
+  const fromSignOut = (route.params as { fromSignOut?: boolean } | undefined)?.fromSignOut;
+
+  useEffect(() => {
+    if (!fromSignOut) return;
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => true);
+    return () => sub.remove();
+  }, [fromSignOut]);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -264,10 +276,14 @@ export default function Login() {
     }
 
     setLoading(true);
+    const loaderStart = Date.now();
+    const MIN_LOADER_MS = 2000;
+
     try {
       const result = await login(trimmedEmail, password);
 
       if (!result.success) {
+        setLoading(false);
         showModal({
           title: 'Login Failed',
           message: result.error || 'Invalid email or password. Please try again.',
@@ -280,24 +296,32 @@ export default function Login() {
       await AsyncStorage.setItem('user', JSON.stringify(result.user || {}));
       await AsyncStorage.removeItem('passcodeLoginComplete');
 
+      const elapsed = Date.now() - loaderStart;
+      const remaining = Math.max(0, MIN_LOADER_MS - elapsed);
+      await new Promise((r) => setTimeout(r, remaining));
+
       const user = result.user as { hasPasscode?: boolean } | undefined;
       if (user?.hasPasscode) {
         (navigation as unknown as NavProp).replace('Passcode');
       } else {
-        (navigation as unknown as NavProp).replace('Main');
+        await AsyncStorage.setItem('registrationPasscodePending', 'true');
+        (navigation as unknown as NavProp).replace('CreatePasscode');
       }
     } catch (_) {
+      setLoading(false);
       showModal({
         title: 'Login Error',
         message: 'An unexpected error occurred. Please try again.',
         type: 'error',
       });
-    } finally {
-      setLoading(false);
     }
   };
 
   const isWeb = Platform.OS === 'web';
+
+  if (loading) {
+    return <CustomLoader text="LOGGING IN" />;
+  }
 
   return (
     <>
@@ -311,29 +335,34 @@ export default function Login() {
           locations={[0, 1]}
           style={[styles.gradient, { paddingTop: insets.top, paddingBottom: insets.bottom }]}
         >
-            <View style={styles.header}>
-              <TouchableOpacity
-                style={styles.backButton}
-                onPress={() => navigation.goBack()}
-                activeOpacity={0.7}
-              >
-                <Ionicons name="arrow-back" size={26} color={WHITE} />
-              </TouchableOpacity>
+            <View style={[styles.header, { paddingHorizontal: horizontalPadding }]}>
+              {fromSignOut ? (
+                <View style={[styles.backButton, { width: scale(44), height: scale(44), borderRadius: scale(22) }]} />
+              ) : (
+                <TouchableOpacity
+                  style={[styles.backButton, { width: scale(44), height: scale(44), borderRadius: scale(22) }]}
+                  onPress={() => (navigation as unknown as NavProp).replace('Welcome')}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="arrow-back" size={26} color={WHITE} />
+                </TouchableOpacity>
+              )}
             </View>
 
             <ScrollView
               style={styles.scroll}
-              contentContainerStyle={[styles.scrollContent, { paddingBottom: 100 }]}
+              contentContainerStyle={[styles.scrollContent, { paddingHorizontal: horizontalPadding, paddingBottom: verticalScale(100) }]}
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
               bounces={false}
             >
-              <View style={styles.logoWrap}>
+              <View style={[styles.logoWrap, { marginBottom: verticalScale(32) }]}>
                 <Image
                   source={require('../../assets/images/InpireLogo.png')}
-                  style={styles.logo}
+                  style={[styles.logo, { width: scale(260), height: scale(140) }]}
                   contentFit="contain"
-                  accessible={false}
+                  accessible={true}
+                  accessibilityLabel="Inspire company logo"
                 />
               </View>
 
@@ -484,22 +513,18 @@ const styles = StyleSheet.create({
   scroll: { flex: 1 },
   scrollContent: {
     flexGrow: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 28,
     minHeight: '100%',
   },
   logoWrap: {
-    marginTop: 8,
-    marginBottom: 24,
+    alignSelf: 'center',
   },
-  logo: {
-    width: '100%',
-    maxWidth: 280,
-    height: 160,
-  },
+  logo: {},
   form: {
     width: '100%',
     maxWidth: 360,
+    alignSelf: 'center',
   },
   input: {
     backgroundColor: 'rgba(255,255,255,0.28)',
@@ -528,6 +553,10 @@ const styles = StyleSheet.create({
   },
   eyeButton: {
     padding: 14,
+    minWidth: 44,
+    minHeight: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   passcodeLinkWrap: {
     alignItems: 'center',

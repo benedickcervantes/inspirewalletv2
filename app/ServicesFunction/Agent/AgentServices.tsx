@@ -1,25 +1,26 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
-  Animated,
-  Keyboard,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-  type TextStyle
+    ActivityIndicator,
+    Animated,
+    Keyboard,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    SafeAreaView,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
+    type TextStyle
 } from "react-native";
 import { useLanguage } from "../../../context/LanguageContext";
+import { isServiceUnderMaintenance } from "../../../lib/maintenance";
 import type { RootStackParamList } from "../../../types/navigation";
 
 // Static theme - no backend
@@ -210,6 +211,30 @@ const ProfessionalModal = ({
 export default function AgentServices() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, "AgentRequest">>();
   const { t, language } = useLanguage();
+  const [isUnderMaintenance, setIsUnderMaintenance] = useState(false);
+  const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
+  const [checkingMaintenance, setCheckingMaintenance] = useState(true);
+
+  // Check maintenance status on focus
+  useFocusEffect(
+    useCallback(() => {
+      setCheckingMaintenance(true);
+      const checkMaintenance = async () => {
+        try {
+          const isMaintenance = await isServiceUnderMaintenance("agent");
+          setIsUnderMaintenance(isMaintenance);
+          if (isMaintenance) {
+            setShowMaintenanceModal(true);
+          }
+        } catch (error) {
+          console.error("Error checking maintenance:", error);
+        } finally {
+          setCheckingMaintenance(false);
+        }
+      };
+      checkMaintenance();
+    }, [])
+  );
 
   // Static mock user data
   const [firstName, setFirstName] = useState("John");
@@ -414,6 +439,23 @@ export default function AgentServices() {
       setLoading(false);
     }, 1000);
   };
+
+  if (checkingMaintenance) {
+    return (
+      <View style={[styles.container, styles.loadingContainer]}>
+        <ActivityIndicator size="large" color={THEME_COLOR} />
+      </View>
+    );
+  }
+
+  if (isUnderMaintenance) {
+    return (
+      <View style={[styles.container, styles.loadingContainer]}>
+        <ActivityIndicator size="large" color={THEME_COLOR} />
+        <Text style={styles.loadingText}>Service under maintenance</Text>
+      </View>
+    );
+  }
 
   if (loading) {
     return (

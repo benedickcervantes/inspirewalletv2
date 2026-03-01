@@ -28,6 +28,7 @@ const DeleteAccount = () => {
   const [reasonKey, setReasonKey] = useState('');
   const [additionalDetails, setAdditionalDetails] = useState('');
   const [showReasonModal, setShowReasonModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   const handleConfirmNo = () => {
@@ -49,12 +50,12 @@ const DeleteAccount = () => {
     await new Promise((r) => setTimeout(r, 800));
     setSubmitting(false);
     setStep('done');
+    setShowSuccessModal(true);
+  };
 
-    Alert.alert(
-      t('delete.requestSubmitted'),
-      t('delete.successMessage'),
-      [{ text: t('common.ok'), onPress: () => (navigation as unknown as NavProp).goBack() }]
-    );
+  const handleSuccessModalClose = () => {
+    setShowSuccessModal(false);
+    (navigation as unknown as NavProp).goBack();
   };
 
   return (
@@ -182,6 +183,33 @@ const DeleteAccount = () => {
               ))}
             </ScrollView>
           </View>
+        </View>
+      </Modal>
+
+      {/* Request Submitted Success Modal */}
+      <Modal
+        visible={showSuccessModal}
+        transparent
+        animationType="fade"
+        onRequestClose={handleSuccessModalClose}
+      >
+        <View style={styles.successModalOverlay}>
+          <LinearGradient
+            colors={['#E15816', '#F48F38']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.successModalContainer}
+          >
+            <Text style={styles.successModalTitle}>{t('delete.requestSubmitted')}</Text>
+            <Text style={styles.successModalMessage}>{t('delete.successMessage')}</Text>
+            <TouchableOpacity
+              style={styles.successModalButton}
+              onPress={handleSuccessModalClose}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.successModalButtonText}>{t('common.ok')}</Text>
+            </TouchableOpacity>
+          </LinearGradient>
         </View>
       </Modal>
     </SafeAreaView>
@@ -409,6 +437,50 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333',
     fontWeight: '500',
+  },
+  // Request Submitted success modal - orange gradient (#E15816 → #F48F38)
+  successModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  successModalContainer: {
+    borderRadius: 16,
+    padding: 24,
+    width: '100%',
+    maxWidth: 340,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  successModalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 12,
+  },
+  successModalMessage: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    lineHeight: 24,
+    marginBottom: 24,
+    opacity: 0.95,
+  },
+  successModalButton: {
+    alignSelf: 'flex-end',
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 10,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+  },
+  successModalButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#E15816',
   },
 });
 

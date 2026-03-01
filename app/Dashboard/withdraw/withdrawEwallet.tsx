@@ -2,17 +2,19 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { doc, getDoc } from "firebase/firestore";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
-    Modal,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { auth, firestore } from "../../../configs/firebase";
 import { useLanguage } from "../../../context/LanguageContext";
 
@@ -105,6 +107,19 @@ export default function EWalletWithdrawal() {
       return;
     }
 
+    // Check if withdrawal amount exceeds available balance
+    const availableBalance = (userData?.availBalanceAmount as number) || 0;
+    const requestedAmount = parseFloat(withdrawalAmount);
+
+    if (requestedAmount > availableBalance) {
+      setAlertConfig({
+        title: "Insufficient Balance",
+        message: `Your withdrawal amount (₱${requestedAmount.toLocaleString()}) exceeds your available balance (₱${availableBalance.toLocaleString()}). Please enter a lower amount.`
+      });
+      setShowAlertModal(true);
+      return;
+    }
+
     navigation.navigate("WithdrawEwalletConfirm", {
       method: "e-wallet",
       walletType: selectedWallet,
@@ -152,10 +167,17 @@ export default function EWalletWithdrawal() {
           </View>
         </View>
 
+        <KeyboardAvoidingView
+          style={styles.keyboardAvoid}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+        >
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
         >
           {/* Title */}
           <View style={styles.titleContainer}>
@@ -276,6 +298,7 @@ export default function EWalletWithdrawal() {
 
           <View style={styles.bottomPadding} />
         </ScrollView>
+        </KeyboardAvoidingView>
 
         {/* Custom Alert Modal */}
         <Modal
@@ -369,11 +392,15 @@ const styles = StyleSheet.create({
   stepLineActive: {
     backgroundColor: "#E25A17",
   },
+  keyboardAvoid: {
+    flex: 1,
+  },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
     padding: 20,
+    paddingBottom: 120,
   },
   titleContainer: {
     alignItems: "center",
@@ -510,7 +537,7 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
   },
   bottomPadding: {
-    height: 20,
+    height: 40,
   },
   // Alert Modal Styles
   alertOverlay: {

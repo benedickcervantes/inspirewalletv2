@@ -1,16 +1,16 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
-    Modal,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { auth, doc, firestore, getDoc } from "../../../configs/firebase";
 import { useLanguage } from "../../../context/LanguageContext";
 
@@ -22,10 +22,15 @@ export default function TimeDeposit() {
   const [selectedCurrency, setSelectedCurrency] = useState("PHP");
   const [showCurrencyModal, setShowCurrencyModal] = useState(false);
   const [contractPeriod, setContractPeriod] = useState("");
-  const [userData, setUserData] = useState<Record<string, unknown> | null>(null);
+  const [userData, setUserData] = useState<Record<string, unknown> | null>(
+    null,
+  );
   const [availableBalance, setAvailableBalance] = useState(0);
   const [showAlertModal, setShowAlertModal] = useState(false);
-  const [alertConfig, setAlertConfig] = useState<{ title: string; message: string }>({ title: "", message: "" });
+  const [alertConfig, setAlertConfig] = useState<{
+    title: string;
+    message: string;
+  }>({ title: "", message: "" });
 
   const currencies = [
     { code: "PHP", name: "Philippine Peso", flag: "🇵🇭", symbol: "₱" },
@@ -93,12 +98,10 @@ export default function TimeDeposit() {
           colors={["#E25A17", "#F28934"]}
           style={styles.header}
           start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-        >
+          end={{ x: 1, y: 0 }}>
           <TouchableOpacity
             style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
+            onPress={() => navigation.goBack()}>
             <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
           </TouchableOpacity>
 
@@ -116,25 +119,32 @@ export default function TimeDeposit() {
               <Ionicons name="checkmark" size={16} color="#FFFFFF" />
             </View>
             <View style={styles.stepLine} />
-            <View style={[styles.stepCircle, currentStep >= 2 && styles.stepActive]}>
+            <View
+              style={[
+                styles.stepCircle,
+                currentStep >= 2 && styles.stepActive,
+              ]}>
               {currentStep >= 2 ? (
                 <Ionicons name="checkmark" size={16} color="#FFFFFF" />
               ) : null}
             </View>
             <View style={styles.stepLine} />
-            <View style={[styles.stepCircle, currentStep >= 3 && styles.stepActive]} />
+            <View
+              style={[styles.stepCircle, currentStep >= 3 && styles.stepActive]}
+            />
           </View>
         </View>
 
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
+          showsVerticalScrollIndicator={false}>
           {/* Title */}
           <View style={styles.titleContainer}>
             <Text style={styles.title}>{t("deposit.timeDeposit")}</Text>
-            <Text style={styles.subtitle}>{t("deposit.timeDepositMinShort")}</Text>
+            <Text style={styles.subtitle}>
+              {t("deposit.timeDepositMinShort")}
+            </Text>
           </View>
 
           {/* Form Card */}
@@ -145,39 +155,49 @@ export default function TimeDeposit() {
             <View style={styles.formSection}>
               <View style={styles.sectionHeader}>
                 <View style={styles.iconBox}>
-                  <MaterialCommunityIcons name="cash-multiple" size={20} color="#E25A17" />
+                  <MaterialCommunityIcons
+                    name="cash-multiple"
+                    size={20}
+                    color="#E25A17"
+                  />
                 </View>
-                <Text style={styles.sectionTitle}>{t("deposit.depositMethod")}</Text>
+                <Text style={styles.sectionTitle}>
+                  {t("deposit.depositMethod")}
+                </Text>
               </View>
 
               <TouchableOpacity
                 style={[
                   styles.radioOption,
-                  depositMethod === "Request Amount" && styles.radioOptionSelected,
+                  depositMethod === "Request Amount" &&
+                    styles.radioOptionSelected,
                 ]}
-                onPress={() => setDepositMethod("Request Amount")}
-              >
+                onPress={() => setDepositMethod("Request Amount")}>
                 <View style={styles.radioCircle}>
                   {depositMethod === "Request Amount" && (
                     <View style={styles.radioInner} />
                   )}
                 </View>
-                <Text style={styles.radioLabel}>{t("investment.requestAmount")}</Text>
+                <Text style={styles.radioLabel}>
+                  {t("investment.requestAmount")}
+                </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={[
                   styles.radioOption,
-                  depositMethod === "Available Balance" && styles.radioOptionSelected,
+                  depositMethod === "Available Balance" &&
+                    styles.radioOptionSelected,
                 ]}
-                onPress={() => setDepositMethod("Available Balance")}
-              >
+                onPress={() => setDepositMethod("Available Balance")}>
                 <View style={styles.radioCircle}>
                   {depositMethod === "Available Balance" && (
                     <View style={styles.radioInner} />
                   )}
                 </View>
-                <Text style={styles.radioLabel}>{t("investment.availableBalance")}</Text>
+                <Text style={styles.radioLabel}>
+                  {t("investment.availableBalance")}
+                </Text>
               </TouchableOpacity>
             </View>
 
@@ -185,19 +205,28 @@ export default function TimeDeposit() {
             <View style={styles.formSection}>
               <View style={styles.sectionHeader}>
                 <View style={styles.iconBox}>
-                  <MaterialCommunityIcons name="currency-usd" size={20} color="#E25A17" />
+                  <MaterialCommunityIcons
+                    name="currency-usd"
+                    size={20}
+                    color="#E25A17"
+                  />
                 </View>
-                <Text style={styles.sectionTitle}>{t("deposit.selectCurrency")}</Text>
+                <Text style={styles.sectionTitle}>
+                  {t("deposit.selectCurrency")}
+                </Text>
               </View>
 
               <TouchableOpacity
                 style={styles.currencySelector}
-                onPress={() => setShowCurrencyModal(true)}
-              >
+                onPress={() => setShowCurrencyModal(true)}>
                 <View style={styles.flagContainer}>
-                  <Text style={styles.flagEmoji}>{getSelectedCurrency().flag}</Text>
+                  <Text style={styles.flagEmoji}>
+                    {getSelectedCurrency().flag}
+                  </Text>
                 </View>
-                <Text style={styles.currencyText}>{getSelectedCurrency().code}</Text>
+                <Text style={styles.currencyText}>
+                  {getSelectedCurrency().code}
+                </Text>
                 <Ionicons name="chevron-down" size={20} color="#999" />
               </TouchableOpacity>
             </View>
@@ -206,9 +235,15 @@ export default function TimeDeposit() {
             <View style={styles.formSection}>
               <View style={styles.sectionHeader}>
                 <View style={styles.iconBox}>
-                  <MaterialCommunityIcons name="calendar-clock" size={20} color="#E25A17" />
+                  <MaterialCommunityIcons
+                    name="calendar-clock"
+                    size={20}
+                    color="#E25A17"
+                  />
                 </View>
-                <Text style={styles.sectionTitle}>{t("deposit.contractPeriod")}</Text>
+                <Text style={styles.sectionTitle}>
+                  {t("deposit.contractPeriod")}
+                </Text>
               </View>
 
               {contractOptions.map((option) => (
@@ -216,10 +251,10 @@ export default function TimeDeposit() {
                   key={option.value}
                   style={[
                     styles.contractOption,
-                    contractPeriod === option.value && styles.contractOptionSelected,
+                    contractPeriod === option.value &&
+                      styles.contractOptionSelected,
                   ]}
-                  onPress={() => setContractPeriod(option.value)}
-                >
+                  onPress={() => setContractPeriod(option.value)}>
                   <Text style={styles.contractLabel}>{t(option.labelKey)}</Text>
                 </TouchableOpacity>
               ))}
@@ -229,14 +264,12 @@ export default function TimeDeposit() {
           {/* Continue Button */}
           <TouchableOpacity
             style={styles.continueButton}
-            onPress={handleContinue}
-          >
+            onPress={handleContinue}>
             <LinearGradient
               colors={["#E25A17", "#F28934"]}
               style={styles.continueGradient}
               start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-            >
+              end={{ x: 1, y: 0 }}>
               <Text style={styles.continueText}>{t("deposit.continue")}</Text>
               <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
             </LinearGradient>
@@ -250,12 +283,13 @@ export default function TimeDeposit() {
           visible={showCurrencyModal}
           transparent={true}
           animationType="slide"
-          onRequestClose={() => setShowCurrencyModal(false)}
-        >
+          onRequestClose={() => setShowCurrencyModal(false)}>
           <View style={styles.modalOverlay}>
             <View style={styles.modalContainer}>
               <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>{t("deposit.selectCurrency")}</Text>
+                <Text style={styles.modalTitle}>
+                  {t("deposit.selectCurrency")}
+                </Text>
                 <TouchableOpacity onPress={() => setShowCurrencyModal(false)}>
                   <Ionicons name="close" size={24} color="#333" />
                 </TouchableOpacity>
@@ -266,20 +300,24 @@ export default function TimeDeposit() {
                     key={currency.code}
                     style={[
                       styles.currencyOption,
-                      selectedCurrency === currency.code && styles.currencyOptionSelected,
+                      selectedCurrency === currency.code &&
+                        styles.currencyOptionSelected,
                     ]}
                     onPress={() => {
                       setSelectedCurrency(currency.code);
                       setShowCurrencyModal(false);
-                    }}
-                  >
+                    }}>
                     <Text style={styles.currencyFlag}>{currency.flag}</Text>
                     <View style={styles.currencyInfo}>
                       <Text style={styles.currencyCode}>{currency.code}</Text>
                       <Text style={styles.currencyName}>{currency.name}</Text>
                     </View>
                     {selectedCurrency === currency.code && (
-                      <Ionicons name="checkmark-circle" size={24} color="#E25A17" />
+                      <Ionicons
+                        name="checkmark-circle"
+                        size={24}
+                        color="#E25A17"
+                      />
                     )}
                   </TouchableOpacity>
                 ))}
@@ -293,21 +331,18 @@ export default function TimeDeposit() {
           visible={showAlertModal}
           transparent={true}
           animationType="fade"
-          onRequestClose={() => setShowAlertModal(false)}
-        >
+          onRequestClose={() => setShowAlertModal(false)}>
           <View style={styles.alertOverlay}>
             <LinearGradient
               colors={["#E15816", "#F48F38"]}
               style={styles.alertContainer}
               start={{ x: 0, y: 0 }}
-              end={{ x: 0, y: 1 }}
-            >
+              end={{ x: 0, y: 1 }}>
               <Text style={styles.alertTitle}>{alertConfig.title}</Text>
               <Text style={styles.alertMessage}>{alertConfig.message}</Text>
               <TouchableOpacity
                 style={styles.alertButton}
-                onPress={() => setShowAlertModal(false)}
-              >
+                onPress={() => setShowAlertModal(false)}>
                 <Text style={styles.alertButtonText}>{t("deposit.ok")}</Text>
               </TouchableOpacity>
             </LinearGradient>
