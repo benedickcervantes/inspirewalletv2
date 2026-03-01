@@ -7,7 +7,7 @@ This document describes the **referral hierarchy**, how each user's **referral I
 ## Overview: Each User Has Their Own Referral ID
 
 - **Every user** has a unique **referral ID** (stored as `referralCode` in the API). It is created at registration.
-- Format: **8 uppercase alphanumeric characters** (A–Z excluding O/I, digits 2–9) — e.g. `ABC12XYZ`, `K7MN2PQR`.
+- Format: **5 uppercase alphanumeric characters** (A–Z excluding O/I, digits 2–9) — e.g. `ABCDE`, `K7M2P`.
 - Users share their referral ID in links (e.g. sign-up URLs) so new users can register under them.
 - Each user can have **at most one referrer**: `referredById` points to the referrer's user id (or is null for root users).
 - **Tree structure**: referrer → referred users. No cycles (enforced by application logic).
@@ -58,6 +58,21 @@ Returns the current user's referral ID, referrer, ancestor chain, and counts.
 
 Returns `{ "referralCode": "..." }`. This is the user's referral ID. Creates it if the user does not have one yet.
 
+### Get QR Payload
+
+**`GET /referrals/qr-payload`**
+
+Returns the information necessary for the frontend to generate a QR code for referrals, including the user's name, referral code, and a fully qualified registration URL.
+
+**Response**
+```json
+{
+  "referralCode": "ABCDE",
+  "referralUrl": "http://localhost:3000/register?ref=ABCDE",
+  "referrerName": "John Doe"
+}
+```
+
 ### Generate referral code
 
 **`POST /referrals/generate`**
@@ -70,7 +85,52 @@ Generates the current user's referral ID. If the user already has one, returns i
 
 **`POST /auth/register`**
 
-Request body may include optional `referralCode` (4–20 chars). This should be the **referrer's referral ID**. If present and valid (matches an active user), the new user's `referredById` is set to that user's id.
+Request body may include optional `referralCode` (5 chars). This should be the **referrer's referral ID**. If present and valid (matches an active user), the new user's `referredById` is set to that user's id.
+
+---
+
+## Admin Assignment
+
+**`PATCH /users/:id/referral-code`**
+
+Assigns a custom, manual 5-character referral code to a specific user. This endpoint allows admins to give users vanity codes or override existing ones.
+- **Requires Admin Role.**
+
+Request body:
+```json
+{
+  "referralCode": "VANIT"
+}
+```
+
+Response:
+```json
+{
+  "referralCode": "VANIT"
+}
+```
+
+### Reassign Referrer (Change Hierarchy)
+
+**`PATCH /users/:id/referrer`**
+
+Changes a user's position in the referral hierarchy by explicitly reassigning their referrer. The system will protect against circular references (e.g., trying to place user A under user B, when user B is already under user A).
+- **Requires Admin Role.**
+
+Request body:
+```json
+{
+  "referrerId": "new-referrer-user-id"
+}
+```
+*(Pass `null` or omit the field to remove the user's referrer and make them a root user)*
+
+Response:
+```json
+{
+  "success": true
+}
+```
 
 ---
 

@@ -1,24 +1,26 @@
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
-import React, { useCallback, useState } from "react";
+import { useCallback, useState } from "react";
 import {
-  ActivityIndicator,
-  RefreshControl,
-  ScrollView,
-  Share,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
+    ActivityIndicator,
+    RefreshControl,
+    ScrollView,
+    Share,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    useWindowDimensions,
+    View,
 } from "react-native";
+import QRCode from "react-native-qrcode-svg";
 import { SafeAreaView } from "react-native-safe-area-context";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
-  getOrCreateMainWallet,
-  getReferralTree,
-  getTransactions,
+    getOrCreateMainWallet,
+    getReferralQrPayload,
+    getReferralTree,
+    getTransactions,
 } from "../../configs/api";
 import { useLanguage } from "../../context/LanguageContext";
 
@@ -41,6 +43,7 @@ export default function AgentDashboard() {
   const [agentCommission, setAgentCommission] = useState(0);
   const [currencySymbol, setCurrencySymbol] = useState("₱");
   const [referralCode, setReferralCode] = useState<string | null>(null);
+  const [referralUrl, setReferralUrl] = useState<string | null>(null);
   const [directReferralCount, setDirectReferralCount] = useState(0);
   const [totalDescendantCount, setTotalDescendantCount] = useState(0);
   const [directReferrals, setDirectReferrals] = useState<
@@ -62,9 +65,10 @@ export default function AgentDashboard() {
     }
     setError(null);
     try {
-      const [walletRes, treeRes] = await Promise.all([
+      const [walletRes, treeRes, qrRes] = await Promise.all([
         getOrCreateMainWallet(accessToken),
         getReferralTree(accessToken),
+        getReferralQrPayload(accessToken),
       ]);
 
       // Agent Commission from wallet
@@ -74,6 +78,11 @@ export default function AgentDashboard() {
         setAgentCommission(Number.isNaN(commission) ? 0 : commission);
         const curr = wallet.currency as Record<string, string> | undefined;
         if (curr?.symbol) setCurrencySymbol(curr.symbol);
+      }
+
+      // Referral QR Payload
+      if (qrRes.success && qrRes.payload) {
+        setReferralUrl(qrRes.payload.referralUrl ?? null);
       }
 
       // Referral tree (referral code, counts, and direct referrals if present)
@@ -144,8 +153,12 @@ export default function AgentDashboard() {
   const handleShareReferralCode = async () => {
     if (!referralCode) return;
     try {
+      const shareMessage = referralUrl 
+        ? `${t("agent.shareMessagePrefix")} ${referralUrl}` 
+        : `${t("agent.shareMessagePrefix")} ${referralCode}`;
+
       await Share.share({
-        message: `${t("agent.shareMessagePrefix")} ${referralCode}`,
+        message: shareMessage,
         title: t("agent.shareTitle"),
       });
     } catch {
@@ -226,6 +239,18 @@ export default function AgentDashboard() {
           {/* Referral Code & Share */}
           <View style={styles.referralCard}>
             <Text style={styles.sectionTitle}>{t("agent.yourReferralCode")}</Text>
+            
+            {referralUrl && (
+              <View style={styles.qrCodeContainer}>
+                <QRCode
+                  value={referralUrl}
+                  size={160}
+                  color="#1F2937"
+                  backgroundColor="#FFFFFF"
+                />
+              </View>
+            )}
+
             <View style={styles.referralCodeRow}>
               <View style={styles.referralCodeBox}>
                 <Text style={styles.referralCodeText}>
@@ -385,6 +410,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   sectionTitle: { fontSize: 16, fontWeight: "600", color: "#1F2937", marginBottom: 12 },
+  qrCodeContainer: { alignItems: "center", marginVertical: 16 },
   referralCodeRow: { flexDirection: "row", alignItems: "center", gap: 12 },
   referralCodeBox: {
     flex: 1,
