@@ -193,7 +193,7 @@ export default function CardsTab({
           <View style={styles.cardItem}>
             <View style={styles.cardPreview}>
               <ImageBackground
-                source={require("../../assets/cards/vip/vip7/front.png")}
+                source={require("../../assets/cards/vip_collection/vp2/front.png")}
                 style={styles.cardPreviewImage}
                 imageStyle={styles.cardPreviewImageStyle}
                 resizeMode="cover">
@@ -212,7 +212,7 @@ export default function CardsTab({
               </Text>
               <Text style={styles.cardItemSubtitle}>{t("ct.deposit10M")}</Text>
 
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.upgradeButton}
                 onPress={() => setIsVipModalVisible(true)}>
                 <Text style={styles.upgradeButtonText}>
@@ -224,7 +224,7 @@ export default function CardsTab({
           <View style={styles.cardItem}>
             <View style={styles.cardPreview}>
               <ImageBackground
-                source={require("../../assets/cards/vip/vip4/front.png")}
+                source={require("../../assets/cards/vip_collection/vp1/front.png")}
                 style={styles.cardPreviewImage}
                 imageStyle={styles.cardPreviewImageStyle}
                 resizeMode="cover">
@@ -237,7 +237,7 @@ export default function CardsTab({
               <Text style={styles.cardItemTitle}>{t("ct.goldElite")}</Text>
               <Text style={styles.cardItemSubtitle}>{t("ct.sub10KMonthly")}</Text>
 
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.getStartedButton}
                 onPress={() => setIsPurchaseModalVisible(true)}>
                 <Text style={styles.getStartedButtonText}>
@@ -266,7 +266,7 @@ export default function CardsTab({
           <View style={styles.cardItem}>
             <View style={styles.cardPreview}>
               <ImageBackground
-                source={require("../../assets/cards/vip/vip2/front.png")}
+                source={require("../../assets/cards/design_collection/dc2/front.png")}
                 style={styles.cardPreviewImage}
                 imageStyle={styles.cardPreviewImageStyle}
                 resizeMode="cover">
@@ -282,7 +282,7 @@ export default function CardsTab({
             <View style={styles.cardInfo}>
               <Text style={styles.cardItemTitle}>{t("ct.royalCurve")}</Text>
 
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[
                   styles.upgradeButton,
                   availableBalance >= 250 && styles.activeUpgradeButton
@@ -291,8 +291,8 @@ export default function CardsTab({
                   setSelectedDesignCard({
                     title: t("ct.royalCurve") || "Royal Curve",
                     price: 250,
-                    image: require("../../assets/cards/vip/vip2/front.png"),
-                    backImage: require("../../assets/cards/vip/vip2/back.png")
+                    image: require("../../assets/cards/design_collection/dc2/front.png"),
+                    backImage: require("../../assets/cards/design_collection/dc2/back.png")
                   });
                   setIsDesignModalVisible(true);
                 }}>
@@ -306,7 +306,7 @@ export default function CardsTab({
           <View style={styles.cardItem}>
             <View style={styles.cardPreview}>
               <ImageBackground
-                source={require("../../assets/cards/design/cd2/front.png")}
+                source={require("../../assets/cards/design_collection/dc1/front.png")}
                 style={styles.cardPreviewImage}
                 imageStyle={styles.cardPreviewImageStyle}
                 resizeMode="cover">
@@ -320,7 +320,7 @@ export default function CardsTab({
             </View>
             <View style={styles.cardInfo}>
               <Text style={styles.cardItemTitle}>{t("ct.orangeElite")}</Text>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[
                   styles.upgradeButton,
                   availableBalance >= 5000 && styles.activeUpgradeButton
@@ -329,8 +329,8 @@ export default function CardsTab({
                   setSelectedDesignCard({
                     title: t("ct.orangeElite") || "Orange Elite",
                     price: 5000,
-                    image: require("../../assets/cards/design/cd2/front.png"),
-                    backImage: require("../../assets/cards/design/cd2/back.png")
+                    image: require("../../assets/cards/design_collection/dc1/front.png"),
+                    backImage: require("../../assets/cards/design_collection/dc1/back.png")
                   });
                   setIsDesignModalVisible(true);
                 }}>
@@ -497,13 +497,13 @@ export default function CardsTab({
 
             <ScrollView style={styles.purchaseModalBody} contentContainerStyle={styles.purchaseModalScrollContent} showsVerticalScrollIndicator={false}>
               <Text style={styles.cardPreviewLabel}>{t("ct.cardPreviewLabel")}</Text>
-              
+
               <View style={styles.purchaseCardPreviewContainer}>
                 <TouchableOpacity activeOpacity={0.9} onPress={flipVipCard}>
                   <View style={styles.modalFlipContainer}>
                     <Animated.View style={[styles.modalCardFace, { transform: [{ rotateY: vipFrontInterpolate }] }]}>
                       <ImageBackground
-                        source={require("../../assets/cards/vip/vip4/front.png")}
+                        source={require("../../assets/cards/vip_collection/vp1/front.png")}
                         style={styles.purchaseCardPreview}
                         imageStyle={styles.purchaseCardPreviewImage}
                         resizeMode="contain"
@@ -529,7 +529,7 @@ export default function CardsTab({
                     </Animated.View>
                     <Animated.View style={[styles.modalCardFace, styles.modalCardBack, { transform: [{ rotateY: vipBackInterpolate }] }]}>
                       <ImageBackground
-                        source={require("../../assets/cards/vip/vip4/back.png")}
+                        source={require("../../assets/cards/vip_collection/vp1/back.png")}
                         style={styles.purchaseCardPreview}
                         imageStyle={styles.purchaseCardPreviewImage}
                         resizeMode="contain"
@@ -576,7 +576,7 @@ export default function CardsTab({
                     <Text style={styles.monthlyBadgeText}>{t("ct.monthly")}</Text>
                   </View>
                 </View>
-                
+
                 <View style={styles.subscriptionDetailRow}>
                   <Ionicons name="time" size={14} color="#666" />
                   <Text style={styles.subscriptionDetailText}>{t("ct.duration30Days")}</Text>
@@ -595,10 +595,10 @@ export default function CardsTab({
                 <TouchableOpacity style={styles.cancelButton} onPress={() => setIsPurchaseModalVisible(false)} activeOpacity={0.7}>
                   <Text style={styles.cancelButtonText}>{t("common.cancel")}</Text>
                 </TouchableOpacity>
-                
-                <TouchableOpacity 
+
+                <TouchableOpacity
                   style={[
-                    styles.confirmPurchaseButton, 
+                    styles.confirmPurchaseButton,
                     availableBalance < 10000 && styles.disabledPurchaseButton
                   ]}
                   disabled={availableBalance < 10000}
@@ -644,7 +644,7 @@ export default function CardsTab({
 
             <ScrollView style={styles.purchaseModalBody} contentContainerStyle={styles.purchaseModalScrollContent} showsVerticalScrollIndicator={false}>
               <Text style={styles.cardPreviewLabel}>{t("ct.cardPreviewLabel")}</Text>
-              
+
               <View style={styles.purchaseCardPreviewContainer}>
                 <TouchableOpacity activeOpacity={0.9} onPress={flipDesignCard}>
                   <View style={styles.modalFlipContainer}>
@@ -715,10 +715,10 @@ export default function CardsTab({
                 <TouchableOpacity style={styles.cancelButton} onPress={() => setIsDesignModalVisible(false)} activeOpacity={0.7}>
                   <Text style={styles.cancelButtonText}>{t("common.cancel")}</Text>
                 </TouchableOpacity>
-                
-                <TouchableOpacity 
+
+                <TouchableOpacity
                   style={[
-                    styles.confirmPurchaseButton, 
+                    styles.confirmPurchaseButton,
                     availableBalance < selectedDesignCard.price && styles.disabledPurchaseButton
                   ]}
                   disabled={availableBalance < selectedDesignCard.price}
