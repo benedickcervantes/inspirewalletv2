@@ -1,6 +1,8 @@
 # Backend: Banking & E-Wallet Applications API
 
-This document specifies the backend API and models required to support **Banking** and **E-Wallet** application flows in the InspireWallet frontend. The frontend collects application data (bank/provider, personal info, address, contact, financial info, and ID documents) and will submit it to the backend once these endpoints and models exist.
+This document specifies the backend API and models required to support **Banking** and **E-Wallet** application flows in the InspireWallet frontend.
+
+> **Frontend integration:** See [FRONTEND-BANKING-EWALLET-INTEGRATION.md](./FRONTEND-BANKING-EWALLET-INTEGRATION.md) for how to send requests (JSON + base64 images) so documents reach Supabase. The frontend collects application data (bank/provider, personal info, address, contact, financial info, and ID documents) and will submit it to the backend once these endpoints and models exist.
 
 ---
 
@@ -203,6 +205,71 @@ After implementing, update this document or [API-AUTH-AND-USERS.md](API-AUTH-AND
 
 - **400**: Validation errors (missing/invalid fields, image type/size).
 - **401**: Missing or invalid JWT.
+
+---
+
+## Admin API (Banking Applications)
+
+Admin can list banking applications, view full details (including applicant info and uploaded ID documents), view each ID image, and approve or reject.
+
+### Admin endpoints
+
+| Method | Path                                                             | Auth        | Description                                                                                     |
+| ------ | ---------------------------------------------------------------- | ----------- | ----------------------------------------------------------------------------------------------- |
+| GET    | `/applications/admin/banking`                                    | JWT + Admin | List banking applications (optional `?status=PENDING` \| `APPROVED` \| `REJECTED`).             |
+| GET    | `/applications/admin/banking/:id`                                | JWT + Admin | Get one banking application with full details and ID document view info.                        |
+| PATCH  | `/applications/admin/banking/:id`                                | JWT + Admin | Update status: approve or reject. Body: `{ "status": "APPROVED" \| "REJECTED" }`.               |
+| GET    | `/applications/admin/banking/:appId/documents/:documentId/image` | JWT + Admin | Stream the uploaded ID document image (decrypted). Use in `<img src="...">` or open in new tab. |
+
+### List response (GET admin/banking)
+
+Each item includes:
+
+| Field                        | Type    | Description                                                |
+| ---------------------------- | ------- | ---------------------------------------------------------- |
+| `id`                         | string  | Application ID.                                            |
+| `userId`                     | string  | Applicant user ID.                                         |
+| `bank`                       | string  | Bank requested (e.g. UnionBank, Security Bank, CTBC, BDO). |
+| `accountNumber`              | string  | Applicant’s account number (12-digit).                     |
+| `grossMonthlyIncome`         | string  | Monthly income amount.                                     |
+| `grossMonthlyIncomeCurrency` | string  | PHP, USD, or EUR.                                          |
+| `sourceOfFund`               | string  | Employment, Business, Investment, etc.                     |
+| `idType`                     | string  | Passport, Driver License, National ID, or OTHER.           |
+| `status`                     | string  | PENDING, APPROVED, or REJECTED.                            |
+| `dateRequested`              | string  | ISO date/time of submission.                               |
+| `createdAt`                  | string  | Same as dateRequested.                                     |
+| `user`                       | object? | `{ firstName, lastName, email }` (decrypted).              |
+
+### Detail response (GET admin/banking/:id)
+
+Extends the list fields with:
+
+| Field          | Type           | Description                                                                                |
+| -------------- | -------------- | ------------------------------------------------------------------------------------------ |
+| `personalInfo` | object \| null | Decrypted: firstName, lastName, middleName, gender, dateOfBirth, civilStatus, citizenship. |
+| `contactInfo`  | object \| null | Decrypted: phone, email.                                                                   |
+| `addressInfo`  | object \| null | Decrypted: completeAddress and/or street, city, province, zip.                             |
+| `documents`    | array          | Uploaded ID documents (passport and/or id_front, id_back).                                 |
+
+Each element of `documents`:
+
+| Field      | Type           | Description                                                                                                                 |
+| ---------- | -------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `id`       | string         | Document ID.                                                                                                                |
+| `kind`     | string         | PASSPORT_PHOTO, ID_FRONT, ID_BACK.                                                                                          |
+| `label`    | string         | Human label (e.g. "Passport photo", "ID (front)").                                                                          |
+| `viewUrl`  | string \| null | Short-lived signed URL to storage (if available).                                                                           |
+| `imageUrl` | string         | Relative path to backend image endpoint. Use as: `GET ${API_BASE}/${imageUrl}` to load the image in `<img src>` or new tab. |
+
+### Viewing uploaded IDs
+
+- **Option 1:** Use `documents[].imageUrl`: `GET /applications/admin/banking/:appId/documents/:documentId/image` with the same JWT. Response is the image binary with correct `Content-Type`. Frontend can use `<img src="${API_BASE}/applications/admin/banking/${appId}/documents/${docId}/image" />` with credentials (e.g. fetch with credentials and blob URL, or pass JWT in header if using a custom header).
+- **Option 2:** If `viewUrl` is present, open it in a new tab (signed URL, no auth needed for the duration).
+
+### PATCH admin/banking/:id (approve/reject)
+
+- **Body:** `{ "status": "APPROVED" | "REJECTED" }`.
+- **Response:** Same shape as one list item (bank, accountNumber, grossMonthlyIncome, dateRequested, idType, status, etc.).
 
 ---
 

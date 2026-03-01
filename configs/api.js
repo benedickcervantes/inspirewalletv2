@@ -320,6 +320,41 @@ export async function submitWithdrawalRequest(accessToken, body) {
 }
 
 /**
+ * Submit a banking application via the backend.
+ * POST /applications/banking
+ * Body: JSON with base64-encoded images (see FRONTEND-BANKING-EWALLET-INTEGRATION.md).
+ * @param {string} accessToken - Backend JWT
+ * @param {Object} body - Full application payload (bank, sourceOfFund, grossMonthlyIncome, grossMonthlyIncomeCurrency, idType, personalInfo, contactInfo, addressInfo, passportPhoto/idFront/idBack as base64)
+ * @returns {Promise<{ success: boolean, data?: object, error?: string }>}
+ */
+export async function submitBankingApplication(accessToken, body) {
+  const url = buildUrl('/applications/banking');
+  if (!url) return { success: false, error: 'Backend URL not configured. Set EXPO_PUBLIC_WALLET_BACKEND_URL in .env and restart the app.' };
+  if (!accessToken) return { success: false, error: 'Not authenticated' };
+  try {
+    if (__DEV__) console.log('[Banking API] POST', url, '(payload keys:', Object.keys(body), ')');
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (__DEV__) console.log('[Banking API] Response', res.status, data);
+    if (!res.ok) {
+      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    return { success: true, data: data.data ?? data };
+  } catch (e) {
+    if (__DEV__) console.error('[Banking API] Error', e);
+    return { success: false, error: e.message || 'Network error. Is the backend running?' };
+  }
+}
+
+/**
  * Get user's withdrawal requests.
  * GET /withdrawal-requests
  * @param {string} accessToken - Backend JWT

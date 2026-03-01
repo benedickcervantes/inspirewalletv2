@@ -528,22 +528,6 @@ export default function Dashboard() {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentBannerIndex((prevIndex) => {
-        const nextIndex = (prevIndex + 1) % banners.length;
-        if (bannerScrollRef.current) {
-          bannerScrollRef.current.scrollTo({
-            x: nextIndex * carouselWidth,
-            animated: true,
-          });
-        }
-        return nextIndex;
-      });
-    }, 3000);
-    return () => clearInterval(interval);
-  }, [carouselWidth]);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
       setCurrentLanguageIndex((prevIndex) => {
         const nextIndex = (prevIndex + 1) % languageSlides.length;
         if (languageScrollRef.current) {
