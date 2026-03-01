@@ -42,7 +42,6 @@ const Settings = () => {
   const [emailVerifyError, setEmailVerifyError] = useState<string | null>(null);
   const [emailVerifySuccess, setEmailVerifySuccess] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
-  const [signingOut, setSigningOut] = useState(false);
 
   const loadUser = useCallback(async () => {
     const userJson = await AsyncStorage.getItem('user');
@@ -256,8 +255,8 @@ const Settings = () => {
     backIconSize: scaled(28),
   };
 
-  if (signingOut) {
-    return <CustomLoader text="SIGNING OUT" />;
+  if (!userData) {
+    return <CustomLoader text="LOADING" />;
   }
 
   return (
