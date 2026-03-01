@@ -74,6 +74,19 @@ export default function BankWithdrawal() {
       return;
     }
 
+    // Check if withdrawal amount exceeds available balance
+    const availableBalance = (userData?.availBalanceAmount as number) || 0;
+    const requestedAmount = parseFloat(withdrawalAmount);
+
+    if (requestedAmount > availableBalance) {
+      setAlertConfig({
+        title: "Insufficient Balance",
+        message: `Your withdrawal amount (₱${requestedAmount.toLocaleString()}) exceeds your available balance (₱${availableBalance.toLocaleString()}). Please enter a lower amount.`
+      });
+      setShowAlertModal(true);
+      return;
+    }
+
     // Navigate to confirm screen with data
     navigation.navigate("WithdrawLocalBConfirm", {
       method: "local-bank",

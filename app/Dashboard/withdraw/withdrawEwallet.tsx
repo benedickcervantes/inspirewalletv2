@@ -2,17 +2,17 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { doc, getDoc } from "firebase/firestore";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { auth, firestore } from "../../../configs/firebase";
@@ -102,6 +102,19 @@ export default function EWalletWithdrawal() {
       setAlertConfig({
         title: "Invalid Amount",
         message: "Please enter a valid withdrawal amount"
+      });
+      setShowAlertModal(true);
+      return;
+    }
+
+    // Check if withdrawal amount exceeds available balance
+    const availableBalance = (userData?.availBalanceAmount as number) || 0;
+    const requestedAmount = parseFloat(withdrawalAmount);
+
+    if (requestedAmount > availableBalance) {
+      setAlertConfig({
+        title: "Insufficient Balance",
+        message: `Your withdrawal amount (₱${requestedAmount.toLocaleString()}) exceeds your available balance (₱${availableBalance.toLocaleString()}). Please enter a lower amount.`
       });
       setShowAlertModal(true);
       return;
