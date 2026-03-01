@@ -161,6 +161,18 @@ export function getReferralCode(
   accessToken: string
 ): Promise<{ success: boolean; referralCode?: string; error?: string }>;
 
+export function getReferralQrPayload(
+  accessToken: string
+): Promise<{
+  success: boolean;
+  payload?: {
+    referralCode: string;
+    referralUrl: string;
+    referrerName: string;
+  };
+  error?: string;
+}>;
+
 export function getReferralTree(
   accessToken: string
 ): Promise<{

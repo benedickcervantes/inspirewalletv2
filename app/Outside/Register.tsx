@@ -1,23 +1,24 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
 import {
-  ActivityIndicator,
-  Dimensions,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  useWindowDimensions,
-  View
+    ActivityIndicator,
+    Dimensions,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    SafeAreaView,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    useWindowDimensions,
+    View
 } from 'react-native';
 import { register as registerApi } from '../../configs/api';
 import type { NavProp } from '../../types/navigation';
@@ -63,6 +64,8 @@ export default function Register() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [isCountryModalVisible, setIsCountryModalVisible] = useState(false);
+  const [isQRScannerVisible, setIsQRScannerVisible] = useState(false);
+  const [permission, requestPermission] = useCameraPermissions();
 
   const handleNextStep = () => {
     setRegisterError('');
@@ -158,6 +161,39 @@ export default function Register() {
     } else {
       (navigation as unknown as NavProp).replace('Welcome');
     }
+  };
+
+  const handleBarCodeScanned = ({ data }: { type: string; data: string }) => {
+    setIsQRScannerVisible(false);
+    
+    // Check if the scanned data is a URL with a 'ref' parameter
+    try {
+      if (data.includes('ref=')) {
+        // e.g. http://localhost:3000/register?ref=ABCDE
+        const urlParams = new URL(data);
+        const ref = urlParams.searchParams.get('ref');
+        if (ref) {
+          setReferralCode(ref);
+          return;
+        }
+      }
+    } catch (e) {
+      // Not a valid URL, ignore URL parsing error
+    }
+
+    // fallback to setting exactly what was scanned
+    setReferralCode(data);
+  };
+
+  const openScanner = async () => {
+    if (!permission?.granted) {
+      const response = await requestPermission();
+      if (!response.granted) {
+        alert("Camera permission is required to scan QR codes.");
+        return;
+      }
+    }
+    setIsQRScannerVisible(true);
   };
 
   return (
@@ -365,13 +401,19 @@ export default function Register() {
                   )}
                   <View style={[styles.inputGroup, { marginTop: 20 }]}>
                     <Text style={styles.inputLabel}>Referrer's code (Optional)</Text>
-                    <TextInput
-                      style={styles.input}
-                      placeholder="Enter referrer's code"
-                      placeholderTextColor="#999"
-                      value={referralCode}
-                      onChangeText={setReferralCode}
-                    />
+                    <View style={styles.scannerInputContainer}>
+                      <TextInput
+                        style={styles.scannerInput}
+                        placeholder="Enter referrer's code"
+                        placeholderTextColor="#999"
+                        value={referralCode}
+                        onChangeText={setReferralCode}
+                        autoCapitalize="characters"
+                      />
+                      <TouchableOpacity style={styles.scannerButton} onPress={openScanner}>
+                        <Ionicons name="qr-code-outline" size={20} color="#E25A17" />
+                      </TouchableOpacity>
+                    </View>
                     <Text style={styles.helperText}>
                       Enter your referrer's code if you were invited by someone.
                     </Text>
@@ -498,6 +540,62 @@ export default function Register() {
                 ))}
               </ScrollView>
             </View>
+          </View>
+        </Modal>
+
+        {/* QR Scanner Modal */}
+        <Modal
+          visible={isQRScannerVisible}
+          animationType="slide"
+          transparent={false}
+          onRequestClose={() => setIsQRScannerVisible(false)}
+        >
+          <View style={styles.qrScannerContainer}>
+            {!permission?.granted ? (
+              <View style={styles.qrPermissionContainer}>
+                <Ionicons name="camera-outline" size={64} color="#666" />
+                <Text style={styles.qrPermissionText}>Camera Access Required</Text>
+                <Text style={styles.qrPermissionSubText}>
+                  Please grant camera permission to scan referral QR codes.
+                </Text>
+                <TouchableOpacity style={styles.qrCloseButton} onPress={() => setIsQRScannerVisible(false)}>
+                  <Text style={styles.qrCloseButtonText}>Go Back</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <CameraView
+                style={styles.qrCamera}
+                facing="back"
+                barcodeScannerSettings={{
+                  barcodeTypes: ["qr"],
+                }}
+                onBarcodeScanned={handleBarCodeScanned}
+              >
+                <View style={styles.qrOverlay}>
+                  <View style={styles.qrTopOverlay}>
+                    <Text style={styles.qrInstructionText}>Scan Referrer's QR Code</Text>
+                  </View>
+                  <View style={styles.qrCenterRow}>
+                    <View style={styles.qrSideOverlay} />
+                    <View style={styles.qrFrameContainer}>
+                      <View style={[styles.qrCorner, styles.qrTopLeft]} />
+                      <View style={[styles.qrCorner, styles.qrTopRight]} />
+                      <View style={[styles.qrCorner, styles.qrBottomLeft]} />
+                      <View style={[styles.qrCorner, styles.qrBottomRight]} />
+                    </View>
+                    <View style={styles.qrSideOverlay} />
+                  </View>
+                  <View style={styles.qrBottomOverlay}>
+                    <TouchableOpacity
+                      style={styles.qrCancelButton}
+                      onPress={() => setIsQRScannerVisible(false)}
+                    >
+                      <Text style={styles.qrCancelButtonText}>Cancel</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </CameraView>
+            )}
           </View>
         </Modal>
 
@@ -645,6 +743,25 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#333',
     backgroundColor: '#FAFAFA',
+  },
+  scannerInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 8,
+    backgroundColor: '#FAFAFA',
+  },
+  scannerInput: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 14,
+    color: '#333',
+  },
+  scannerButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
   qrButton: {
     width: 48,

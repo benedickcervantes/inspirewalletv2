@@ -691,6 +691,31 @@ export async function getReferralCode(accessToken) {
 }
 
 /**
+ * GET /referrals/qr-payload — requires JWT
+ * Returns the information necessary for the frontend to generate a QR code.
+ * @param {string} accessToken
+ * @returns {{ success: boolean, payload?: object, error?: string }}
+ */
+export async function getReferralQrPayload(accessToken) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: 'Backend URL not configured' };
+  if (!accessToken) return { success: false, error: 'No token' };
+  try {
+    const res = await fetch(`${base}/referrals/qr-payload`, {
+      method: 'GET',
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      return { success: false, error: data.message || 'Failed to get referral QR payload' };
+    }
+    return { success: true, payload: data };
+  } catch (e) {
+    return { success: false, error: e.message || 'Network error' };
+  }
+}
+
+/**
  * GET /referrals/tree — requires JWT
  * Returns the current user's referral tree (referralCode, referrer, ancestors, directReferralCount, totalDescendantCount).
  * @param {string} accessToken
