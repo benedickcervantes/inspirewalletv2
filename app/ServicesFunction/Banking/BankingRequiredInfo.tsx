@@ -1,9 +1,9 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { RouteProp } from "@react-navigation/native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import * as FileSystem from "expo-file-system";
+import * as FileSystem from "expo-file-system/legacy";
 import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useState } from "react";
@@ -21,9 +21,9 @@ import {
   View,
 } from "react-native";
 import { submitBankingApplication } from "../../../configs/api";
-import CustomLoader from "../../Loader/CustomLoader";
 import { useLanguage } from "../../../context/LanguageContext";
 import type { RootStackParamList } from "../../../types/navigation";
+import CustomLoader from "../../Loader/CustomLoader";
 
 const THEME_COLOR = "#E15816";
 const ORANGE_GRADIENT = ["#E25A17", "#F28934"] as const;
@@ -40,8 +40,20 @@ const ID_TYPE_KEY: Record<IdType, string> = {
 
 /** Convert a local file URI to base64 data URL for API submission */
 async function uriToBase64DataUrl(uri: string): Promise<string> {
+  if (Platform.OS === "web") {
+    if (uri.startsWith("data:")) return uri;
+    const response = await fetch(uri);
+    const blob = await response.blob();
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  }
+
   const base64 = await FileSystem.readAsStringAsync(uri, {
-    encoding: FileSystem.EncodingType.Base64,
+    encoding: 'base64',
   });
   const ext = uri.split(".").pop()?.toLowerCase() ?? "jpg";
   const mime =
@@ -183,7 +195,6 @@ export default function BankingRequiredInfo() {
         idBackBase64 = await uriToBase64DataUrl(idBack);
       }
       const payload: Record<string, unknown> = {
-        applicationType: "BANKING",
         bank: selectedBank,
         sourceOfFund: financialInfo.sourceOfFund,
         grossMonthlyIncome: financialInfo.grossMonthlyIncome,
@@ -200,6 +211,7 @@ export default function BankingRequiredInfo() {
         },
         contactInfo: {
           phone: contactInfo.mobileNumber,
+          landline: contactInfo.landlineNumber,
           email: contactInfo.email,
         },
         addressInfo: {
@@ -211,9 +223,14 @@ export default function BankingRequiredInfo() {
       };
       const result = await submitBankingApplication(accessToken, payload);
       if (result.success) {
-        Alert.alert("Success", t("banking.submitSuccess"), () => {
-          navigation.navigate("Main");
-        });
+        Alert.alert("Success", t("banking.submitSuccess"), [
+          {
+            text: "OK",
+            onPress: () => {
+              navigation.navigate("Main");
+            },
+          },
+        ]);
       } else {
         Alert.alert(t("banking.error"), result.error ?? t("banking.submitFailed"));
       }
@@ -232,7 +249,7 @@ export default function BankingRequiredInfo() {
   return (
     <View style={styles.container}>
       {/* Full-screen loading overlay only when user confirms and clicks Submit */}
-      <Modal visible={isSubmitting} transparent animationType="fade">
+      <Modal visible={isSubmitting} transparent animationType="fade" statusBarTranslucent>
         <View style={styles.loadingOverlay}>
           <CustomLoader text={t("banking.submitting")} />
         </View>
@@ -556,10 +573,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#F5F5F5",
   },
   loadingOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.3)",
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.4)",
     justifyContent: "center",
     alignItems: "center",
+    zIndex: 9999,
   },
   safeArea: {
     flex: 1,

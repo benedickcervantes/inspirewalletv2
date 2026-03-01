@@ -21,24 +21,32 @@ This document specifies the backend API and models required to support **Banking
 
 The frontend will send the following fields when submitting an application. All fields from prior steps (personal, contact, address) should be included in the payload or sent in a single multipart request.
 
+### API Constraints & Payload Limits
+
+By default, the NestJS backend is configured to accept larger payload sizes than the Express default (100kb).
+- **JSON Body Limit:** `50mb`
+- **URL-Encoded Body Limit:** `50mb`
+
+This is to support potentially large payloads such as base64 encoded images (like `passportPhoto`, `idFront`, `idBack`) when submitting applications. You can find this configured in `src/main.ts`.
+
 ### Common (both Banking and E-Wallet)
 
-| Field                        | Type   | Required | Validation                                                                        | Description                 |
-| ---------------------------- | ------ | -------- | --------------------------------------------------------------------------------- | --------------------------- |
-| `applicationType`            | string | Yes      | `"BANKING"` or `"EWALLET"`                                                        | Type of application         |
-| `sourceOfFund`               | string | Yes      | One of: `Employment`, `Business`, `Investment`, `Inheritance`, `Pension`, `Other` | Source of fund              |
-| `grossMonthlyIncome`         | string | Yes      | Numeric (user-entered amount)                                                     | Gross monthly income amount |
-| `grossMonthlyIncomeCurrency` | string | Yes      | One of: `PHP`, `USD`, `EUR`                                                       | Currency for income         |
+| Field                       | Type   | Required | Validation                                                                        | Description                    |
+| --------------------------- | ------ | -------- | --------------------------------------------------------------------------------- | ------------------------------ |
+| `applicationType`           | string | Yes      | `"BANKING"` or `"EWALLET"`                                                        | Type of application            |
+| `sourceOfFund`              | string | Yes      | One of: `Employment`, `Business`, `Investment`, `Inheritance`, `Pension`, `Other` | Source of fund                 |
+| `grossMonthlyIncome`       | string | Yes      | Numeric (user-entered amount)                                                     | Gross monthly income amount    |
+| `grossMonthlyIncomeCurrency`| string | Yes      | One of: `PHP`, `USD`, `EUR`                                                       | Currency for income            |
 
 ### Banking only
 
-| Field           | Type        | Required    | Validation                                                   | Description                                    |
-| --------------- | ----------- | ----------- | ------------------------------------------------------------ | ---------------------------------------------- |
-| `bank`          | string      | Yes         | One of: `UnionBank`, `Security Bank`, `CTBC`, `BDO`          | Selected bank                                  |
-| `idType`        | string      | Yes         | One of: `Passport`, `Driver License`, `National ID`, `OTHER` | ID type chosen (see below)                     |
-| `passportPhoto` | file/base64 | Conditional | Single image                                                 | When `idType === "Passport"`                   |
-| `idFront`       | file/base64 | Conditional | Image                                                        | When `idType` is Driver License or National ID |
-| `idBack`        | file/base64 | Conditional | Image                                                        | When `idType` is Driver License or National ID |
+| Field     | Type        | Required | Validation                                           | Description           |
+| --------- | ----------- | -------- | ---------------------------------------------------- | --------------------- |
+| `bank`    | string      | Yes      | One of: `UnionBank`, `Security Bank`, `CTBC`, `BDO`  | Selected bank         |
+| `idType`  | string      | Yes      | One of: `Passport`, `Driver License`, `National ID`, `OTHER` | ID type chosen (see below) |
+| `passportPhoto` | file/base64 | Conditional | Single image                                        | When `idType === "Passport"` |
+| `idFront` | file/base64 | Conditional | Image                                                | When `idType` is Driver License or National ID |
+| `idBack`  | file/base64 | Conditional | Image                                                | When `idType` is Driver License or National ID |
 
 **ID rules:**
 
@@ -48,9 +56,9 @@ The frontend will send the following fields when submitting an application. All 
 
 ### E-Wallet only
 
-| Field      | Type   | Required | Validation             | Description       |
-| ---------- | ------ | -------- | ---------------------- | ----------------- |
-| `provider` | string | Yes      | e.g. GCash, Maya, etc. | E-Wallet provider |
+| Field      | Type   | Required | Validation              | Description          |
+| ---------- | ------ | -------- | ----------------------- | -------------------- |
+| `provider` | string | Yes      | e.g. GCash, Maya, etc.  | E-Wallet provider    |
 
 E-Wallet flow has no ID step; no `idType` or document fields.
 
@@ -59,7 +67,7 @@ E-Wallet flow has no ID step; no `idType` or document fields.
 Include fields collected in Contact Info, Personal Info, and Address Info screens (e.g. name, phone, date of birth, civil status, citizenship, full address). Exact key names should align with the frontend form state; backend can define a single application DTO that includes:
 
 - Personal: `firstName`, `lastName`, `middleName`, `gender`, `dateOfBirth`, `civilStatus`, `citizenship`
-- Contact: `phone`, `email` (from auth)
+- Contact: `phone`, `landline`, `email` (from auth)
 - Address: `completeAddress` or structured fields (street, city, province, zip, etc.)
 
 ---
@@ -170,14 +178,14 @@ For Driver License / National ID, send `idFront` and `idBack` instead of `passpo
 
 ## Summary Checklist for Backend
 
-| Task                                                        | Priority |
-| ----------------------------------------------------------- | -------- |
-| Create BankingApplication model (and migration)             | High     |
-| Create EwalletApplication model (and migration)             | High     |
-| Document storage for passport/idFront/idBack                | High     |
-| POST /applications/banking (or /applications)               | High     |
-| POST /applications/ewallet (or /applications)               | High     |
-| Validate enums (bank, sourceOfFund, currency, idType)       | High     |
+| Task                                              | Priority |
+| ------------------------------------------------- | -------- |
+| Create BankingApplication model (and migration)   | High     |
+| Create EwalletApplication model (and migration)   | High     |
+| Document storage for passport/idFront/idBack      | High     |
+| POST /applications/banking (or /applications)     | High     |
+| POST /applications/ewallet (or /applications)     | High     |
+| Validate enums (bank, sourceOfFund, currency, idType) | High |
 | Include personal/contact/address in payload or linked model | Medium   |
 
 After implementing, update this document or [API-AUTH-AND-USERS.md](API-AUTH-AND-USERS.md) with the final endpoint paths and request/response shapes.
@@ -188,10 +196,10 @@ After implementing, update this document or [API-AUTH-AND-USERS.md](API-AUTH-AND
 
 ### Endpoints
 
-| Method | Path                    | Auth | Description                                              |
-| ------ | ----------------------- | ---- | -------------------------------------------------------- |
-| POST   | `/applications/banking` | JWT  | Create banking application (with optional ID documents). |
-| POST   | `/applications/ewallet` | JWT  | Create e-wallet application.                             |
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| POST | `/applications/banking` | JWT | Create banking application (with optional ID documents). |
+| POST | `/applications/ewallet` | JWT | Create e-wallet application. |
 
 ### Request / Response
 
@@ -203,7 +211,7 @@ After implementing, update this document or [API-AUTH-AND-USERS.md](API-AUTH-AND
   Body: JSON (see Example Request (E-Wallet) above). Same optional `personalInfo`, `contactInfo`, `addressInfo`.  
   Response **201**: `{ id, provider, sourceOfFund, grossMonthlyIncome, grossMonthlyIncomeCurrency, status, createdAt }`.
 
-- **400**: Validation errors (missing/invalid fields, image type/size).
+- **400**: Validation errors (missing/invalid fields, image type/size).  
 - **401**: Missing or invalid JWT.
 
 ---
@@ -214,52 +222,52 @@ Admin can list banking applications, view full details (including applicant info
 
 ### Admin endpoints
 
-| Method | Path                                                             | Auth        | Description                                                                                     |
-| ------ | ---------------------------------------------------------------- | ----------- | ----------------------------------------------------------------------------------------------- |
-| GET    | `/applications/admin/banking`                                    | JWT + Admin | List banking applications (optional `?status=PENDING` \| `APPROVED` \| `REJECTED`).             |
-| GET    | `/applications/admin/banking/:id`                                | JWT + Admin | Get one banking application with full details and ID document view info.                        |
-| PATCH  | `/applications/admin/banking/:id`                                | JWT + Admin | Update status: approve or reject. Body: `{ "status": "APPROVED" \| "REJECTED" }`.               |
-| GET    | `/applications/admin/banking/:appId/documents/:documentId/image` | JWT + Admin | Stream the uploaded ID document image (decrypted). Use in `<img src="...">` or open in new tab. |
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/applications/admin/banking` | JWT + Admin | List banking applications (optional `?status=PENDING` \| `APPROVED` \| `REJECTED`). |
+| GET | `/applications/admin/banking/:id` | JWT + Admin | Get one banking application with full details and ID document view info. |
+| PATCH | `/applications/admin/banking/:id` | JWT + Admin | Update status: approve or reject. Body: `{ "status": "APPROVED" \| "REJECTED" }`. |
+| GET | `/applications/admin/banking/:appId/documents/:documentId/image` | JWT + Admin | Stream the uploaded ID document image (decrypted). Use in `<img src="...">` or open in new tab. |
 
 ### List response (GET admin/banking)
 
 Each item includes:
 
-| Field                        | Type    | Description                                                |
-| ---------------------------- | ------- | ---------------------------------------------------------- |
-| `id`                         | string  | Application ID.                                            |
-| `userId`                     | string  | Applicant user ID.                                         |
-| `bank`                       | string  | Bank requested (e.g. UnionBank, Security Bank, CTBC, BDO). |
-| `accountNumber`              | string  | Applicant’s account number (12-digit).                     |
-| `grossMonthlyIncome`         | string  | Monthly income amount.                                     |
-| `grossMonthlyIncomeCurrency` | string  | PHP, USD, or EUR.                                          |
-| `sourceOfFund`               | string  | Employment, Business, Investment, etc.                     |
-| `idType`                     | string  | Passport, Driver License, National ID, or OTHER.           |
-| `status`                     | string  | PENDING, APPROVED, or REJECTED.                            |
-| `dateRequested`              | string  | ISO date/time of submission.                               |
-| `createdAt`                  | string  | Same as dateRequested.                                     |
-| `user`                       | object? | `{ firstName, lastName, email }` (decrypted).              |
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | Application ID. |
+| `userId` | string | Applicant user ID. |
+| `bank` | string | Bank requested (e.g. UnionBank, Security Bank, CTBC, BDO). |
+| `accountNumber` | string | Applicant’s account number (12-digit). |
+| `grossMonthlyIncome` | string | Monthly income amount. |
+| `grossMonthlyIncomeCurrency` | string | PHP, USD, or EUR. |
+| `sourceOfFund` | string | Employment, Business, Investment, etc. |
+| `idType` | string | Passport, Driver License, National ID, or OTHER. |
+| `status` | string | PENDING, APPROVED, or REJECTED. |
+| `dateRequested` | string | ISO date/time of submission. |
+| `createdAt` | string | Same as dateRequested. |
+| `user` | object? | `{ firstName, lastName, email }` (decrypted). |
 
 ### Detail response (GET admin/banking/:id)
 
 Extends the list fields with:
 
-| Field          | Type           | Description                                                                                |
-| -------------- | -------------- | ------------------------------------------------------------------------------------------ |
+| Field | Type | Description |
+|-------|------|-------------|
 | `personalInfo` | object \| null | Decrypted: firstName, lastName, middleName, gender, dateOfBirth, civilStatus, citizenship. |
-| `contactInfo`  | object \| null | Decrypted: phone, email.                                                                   |
-| `addressInfo`  | object \| null | Decrypted: completeAddress and/or street, city, province, zip.                             |
-| `documents`    | array          | Uploaded ID documents (passport and/or id_front, id_back).                                 |
+| `contactInfo` | object \| null | Decrypted: phone, landline, email. |
+| `addressInfo` | object \| null | Decrypted: completeAddress and/or street, city, province, zip. |
+| `documents` | array | Uploaded ID documents (passport and/or id_front, id_back). |
 
 Each element of `documents`:
 
-| Field      | Type           | Description                                                                                                                 |
-| ---------- | -------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| `id`       | string         | Document ID.                                                                                                                |
-| `kind`     | string         | PASSPORT_PHOTO, ID_FRONT, ID_BACK.                                                                                          |
-| `label`    | string         | Human label (e.g. "Passport photo", "ID (front)").                                                                          |
-| `viewUrl`  | string \| null | Short-lived signed URL to storage (if available).                                                                           |
-| `imageUrl` | string         | Relative path to backend image endpoint. Use as: `GET ${API_BASE}/${imageUrl}` to load the image in `<img src>` or new tab. |
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | Document ID. |
+| `kind` | string | PASSPORT_PHOTO, ID_FRONT, ID_BACK. |
+| `label` | string | Human label (e.g. "Passport photo", "ID (front)"). |
+| `viewUrl` | string \| null | Short-lived signed URL to storage (if available). |
+| `imageUrl` | string | Relative path to backend image endpoint. Use as: `GET ${API_BASE}/${imageUrl}` to load the image in `<img src>` or new tab. |
 
 ### Viewing uploaded IDs
 
@@ -285,25 +293,25 @@ ID document images (passport, idFront, idBack) are:
 - **Bucket name:** `uniqueID-files`
 - **Path pattern:** `{userId}-{date}-{idType}/{documentId}.{ext}`
 
-| Part         | Example       | Description                         |
-| ------------ | ------------- | ----------------------------------- |
-| `userId`     | `clx1abc2...` | Application owner’s user ID (cuid). |
-| `date`       | `2026-02-26`  | Date of upload (YYYY-MM-DD).        |
-| `idType`     | see below     | Document type folder name.          |
-| `documentId` | `clx9doc3...` | ApplicationDocument ID (cuid).      |
-| `ext`        | `jpeg`, `png` | From image MIME type.               |
+| Part        | Example        | Description                                      |
+| ----------- | --------------- | ------------------------------------------------- |
+| `userId`    | `clx1abc2...`   | Application owner’s user ID (cuid).              |
+| `date`      | `2026-02-26`    | Date of upload (YYYY-MM-DD).                     |
+| `idType`    | see below       | Document type folder name.                       |
+| `documentId`| `clx9doc3...`   | ApplicationDocument ID (cuid).                    |
+| `ext`       | `jpeg`, `png`   | From image MIME type.                            |
 
 **`idType` folder names:**
 
 - `passport` — passport photo
 - `id_front` — ID front image
-- `id_back` — ID back image
+- `id_back`  — ID back image
 
 **Examples:**
 
 - Passport: `uniqueID-files/clx1abc2...-2026-02-26-passport/clx9doc3....jpeg`
 - ID front: `uniqueID-files/clx1abc2...-2026-02-26-id_front/clx9doc4....png`
-- ID back: `uniqueID-files/clx1abc2...-2026-02-26-id_back/clx9doc5....jpeg`
+- ID back:  `uniqueID-files/clx1abc2...-2026-02-26-id_back/clx9doc5....jpeg`
 
 The backend stores the full object path in `ApplicationDocument.storagePath` (e.g. `userId-date-passport/documentId.jpeg`) for reference. The bucket **`uniqueID-files`** must exist in Supabase Storage (create it in the Supabase dashboard or via API if needed).
 
