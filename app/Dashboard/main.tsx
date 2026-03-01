@@ -3,35 +3,35 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-    Animated,
-    Image,
-    Linking,
-    Modal,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  Animated,
+  Image,
+  Linking,
+  Modal,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import {
-    SafeAreaView,
-    useSafeAreaInsets,
+  SafeAreaView,
+  useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import {
-    getMe,
-    getOrCreateMainWallet,
-    getReferralTree,
-    getTimeDeposits,
-    getTransactions,
+  getMe,
+  getOrCreateMainWallet,
+  getReferralTree,
+  getTimeDeposits,
+  getTransactions,
 } from "../../configs/api";
 import {
-    createRealtimeConnection,
-    startHeartbeat,
+  createRealtimeConnection,
+  startHeartbeat,
 } from "../../configs/realtime";
 import {
-    languageChoiceDoneKey,
-    SUPPORTED_LANGUAGES,
+  languageChoiceDoneKey,
+  SUPPORTED_LANGUAGES,
 } from "../../constants/locales";
 import { useLanguage } from "../../context/LanguageContext";
 import { setConnectionStatus } from "../../lib/connectionStatus";
@@ -228,12 +228,22 @@ export default function Dashboard() {
   } | null>(null);
   const [showFirstTimeLanguageModal, setShowFirstTimeLanguageModal] =
     useState(false);
-  const [maintenanceStatus, setMaintenanceStatus] = useState<Record<string, boolean>>({});
-  const [selectedMaintenanceService, setSelectedMaintenanceService] = useState<string | null>(null);
+  const [maintenanceStatus, setMaintenanceStatus] = useState<
+    Record<string, boolean>
+  >({});
+  const [selectedMaintenanceService, setSelectedMaintenanceService] = useState<
+    string | null
+  >(null);
 
   const languageSlides = [
-    { image: require("../../assets/banner/DeskHRX.png"), url: "https://www.deskhrx.com/" },
-    { image: require("../../assets/banner/Loopwork.png"), url: "https://www.inspire-loopwork.com" },
+    {
+      image: require("../../assets/banner/DeskHRX.png"),
+      url: "https://www.deskhrx.com/",
+    },
+    {
+      image: require("../../assets/banner/Loopwork.png"),
+      url: "https://www.inspire-loopwork.com",
+    },
     { image: require("../../assets/banner/BuyCards.png"), action: "cards" },
     { image: require("../../assets/banner/CryptoinIwallet.png") },
     { image: require("../../assets/banner/DepositviaCrypto.png") },
@@ -536,11 +546,6 @@ export default function Dashboard() {
     }
   }, [activeTab]);
 
-<<<<<<< HEAD
-=======
-
-
->>>>>>> dev
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentLanguageIndex((prevIndex) => {
@@ -640,7 +645,8 @@ export default function Dashboard() {
             </View>
             <Text style={styles.maintenanceModalTitle}>Coming Soon</Text>
             <Text style={styles.maintenanceModalMessage}>
-              This service is currently under maintenance. We're working hard to bring you an improved experience. Please check back soon!
+              This service is currently under maintenance. We're working hard to
+              bring you an improved experience. Please check back soon!
             </Text>
             <TouchableOpacity
               style={styles.maintenanceModalButton}
@@ -870,20 +876,24 @@ export default function Dashboard() {
                 {menuItems.map((item, index) => {
                   // Map route names to service IDs
                   const routeToServiceMap: Record<string, string> = {
-                    "EwalletService": "ewallet",
-                    "Message": "message",
-                    "Stockholder": "stock",
-                    "Task": "task",
-                    "AgentRequest": "agent",
-                    "PlayEarn": "trading",
+                    EwalletService: "ewallet",
+                    Message: "message",
+                    Stockholder: "stock",
+                    Task: "task",
+                    AgentRequest: "agent",
+                    PlayEarn: "trading",
                   };
-                  const serviceId = routeToServiceMap[item.route] || item.route.toLowerCase();
+                  const serviceId =
+                    routeToServiceMap[item.route] || item.route.toLowerCase();
                   const isUnderMaintenance = maintenanceStatus[serviceId];
-                  
+
                   return (
                     <TouchableOpacity
                       key={index}
-                      style={[styles.menuItem, isUnderMaintenance && styles.menuItemDisabled]}
+                      style={[
+                        styles.menuItem,
+                        isUnderMaintenance && styles.menuItemDisabled,
+                      ]}
                       onPress={() => {
                         if (isUnderMaintenance) {
                           setSelectedMaintenanceService(item.labelKey);
@@ -895,7 +905,12 @@ export default function Dashboard() {
                       }}
                       activeOpacity={0.7}
                     >
-                      <View style={[styles.menuIcon, isUnderMaintenance && styles.menuIconDisabled]}>
+                      <View
+                        style={[
+                          styles.menuIcon,
+                          isUnderMaintenance && styles.menuIconDisabled,
+                        ]}
+                      >
                         <MaterialCommunityIcons
                           name={
                             item.icon as React.ComponentProps<
@@ -906,7 +921,12 @@ export default function Dashboard() {
                           color={isUnderMaintenance ? "#CCCCCC" : "#000000"}
                         />
                       </View>
-                      <Text style={[styles.menuLabel, isUnderMaintenance && styles.menuLabelDisabled]}>
+                      <Text
+                        style={[
+                          styles.menuLabel,
+                          isUnderMaintenance && styles.menuLabelDisabled,
+                        ]}
+                      >
                         {t(item.labelKey)}
                       </Text>
                       {isUnderMaintenance && (
@@ -949,7 +969,9 @@ export default function Dashboard() {
                     >
                       {slide.url || slide.action ? (
                         <TouchableOpacity
-                          onPress={() => handleBannerPress(slide.url, slide.action)}
+                          onPress={() =>
+                            handleBannerPress(slide.url, slide.action)
+                          }
                           activeOpacity={0.8}
                           style={styles.languageSlideImageContainer}
                         >
