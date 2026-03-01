@@ -4,15 +4,15 @@ import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useCallback, useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
-  Modal,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
+    ActivityIndicator,
+    Modal,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getReferralCode, resendVerification, verifyEmail } from '../../configs/api';
@@ -81,20 +81,14 @@ const Settings = () => {
     loadReferralCode();
   }, [loadReferralCode]);
 
-  /** Sign out: always full sign out and go directly to Welcome (login/register), no Passcode/PIN screen. */
+  /** Sign out: navigate to Passcode page while keeping session active (tokens remain). */
   const handleSignOut = async () => {
     try {
-      await AsyncStorage.multiRemove([
-        'access_token',
-        'user',
-        'userEmail',
-        'userPassword',
-        'passcodeLoginComplete',
-        'registrationPasscodePending',
-      ]);
+      // Only clear the passcode login flag, keep tokens and user data intact
+      await AsyncStorage.removeItem('passcodeLoginComplete');
     } catch (_) {}
 
-    (navigation as unknown as NavProp).reset({ index: 0, routes: [{ name: 'Welcome' }] });
+    (navigation as unknown as NavProp).reset({ index: 0, routes: [{ name: 'Passcode' }] });
   };
 
   const handleRefreshReferralCode = () => {
