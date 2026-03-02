@@ -1,17 +1,19 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Modal,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { getAvailableCurrencies, getStockInvestmentMinAmount } from "../../../configs/currencies";
 import { useLanguage } from "../../../context/LanguageContext";
 
 export default function StockInvestment() {
@@ -25,16 +27,39 @@ export default function StockInvestment() {
     title: string;
     message: string;
   }>({ title: "", message: "" });
+  const [currencies, setCurrencies] = useState<
+    Array<{ code: string; name: string; flag: string; symbol: string }>
+  >([]);
+  const [isLoadingCurrencies, setIsLoadingCurrencies] = useState(true);
+  const [minAmount, setMinAmount] = useState(2000000); // Default fallback
 
-  const currencies = [
-    { code: "PHP", name: "Philippine Peso", flag: "🇵🇭", symbol: "₱" },
-    { code: "JPY", name: "Japanese Yen", flag: "🇯🇵", symbol: "¥" },
-    { code: "SAR", name: "Saudi Riyal", flag: "🇸🇦", symbol: "﷼" },
-    { code: "KRW", name: "Korean Won", flag: "🇰🇷", symbol: "₩" },
-  ];
+  // Fetch currencies and minimum amount on mount
+  useEffect(() => {
+    const loadConfig = async () => {
+      try {
+        setIsLoadingCurrencies(true);
+        const [availableCurrencies, minStockAmount] = await Promise.all([
+          getAvailableCurrencies(),
+          getStockInvestmentMinAmount(),
+        ]);
+        setCurrencies(availableCurrencies);
+        setMinAmount(minStockAmount);
+      } catch (error) {
+        console.error("Failed to load configuration:", error);
+        // Fallback to defaults if fetch fails
+        setCurrencies([
+          { code: "PHP", name: "Philippine Peso", flag: "🇵🇭", symbol: "₱" },
+        ]);
+        setMinAmount(2000000);
+      } finally {
+        setIsLoadingCurrencies(false);
+      }
+    };
+    loadConfig();
+  }, []);
 
   const handleContinue = () => {
-    if (!amount || parseFloat(amount) < 2000000) {
+    if (!amount || parseFloat(amount) < minAmount) {
       setAlertConfig({
         title: t("deposit.invalidAmount"),
         message: t("deposit.minStock"),
@@ -52,6 +77,10 @@ export default function StockInvestment() {
   };
 
   const getSelectedCurrency = () => {
+    if (currencies.length === 0) {
+      // Fallback when currencies are still loading
+      return { code: "PHP", name: "Philippine Peso", flag: "🇵🇭", symbol: "₱" };
+    }
     return currencies.find((c) => c.code === selectedCurrency) || currencies[0];
   };
 
@@ -121,17 +150,42 @@ export default function StockInvestment() {
 
               <TouchableOpacity
                 style={styles.currencySelector}
-                onPress={() => setShowCurrencyModal(true)}>
-                <View style={styles.flagContainer}>
-                  <Text style={styles.flagEmoji}>
-                    {getSelectedCurrency().flag}
-                  </Text>
-                </View>
-                <Text style={styles.currencyText}>
-                  {getSelectedCurrency().code}
-                </Text>
-                <Ionicons name="chevron-down" size={20} color="#999" />
+                onPress={() => setShowCurrencyModal(true)}
+                disabled={isLoadingCurrencies}>
+                {isLoadingCurrencies ? (
+                  <ActivityIndicator size="small" color="#E25A17" />
+                ) : (
+                  <>
+                    <View style={styles.flagContainer}>
+                      <Text style={styles.flagEmoji}>
+                        {getSelectedCurrency().flag}
+                      </Text>
+                    </View>
+                    <Text style={styles.currencyText}>
+                      {getSelectedCurrency().code}
+                    </Text>
+                    <Ionicons name="chevron-down" size={20} color="#999" />
+                  </>
+                )}
               </TouchableOpacity>
+            </View>
+
+            {/* Stock Rate Info Box */}
+            <View style={styles.infoBox}>
+              <View style={styles.infoIconContainer}>
+                <MaterialCommunityIcons
+                  name="information"
+                  size={20}
+                  color="#E25A17"
+                />
+              </View>
+              <View style={styles.infoContent}>
+                <Text style={styles.infoTitle}>Stock Rate</Text>
+                <Text style={styles.infoValue}>
+                  1 Stock = {getSelectedCurrency().symbol}
+                  {isLoadingCurrencies ? "..." : minAmount.toLocaleString()}
+                </Text>
+              </View>
             </View>
 
             {/* Amount */}
@@ -542,5 +596,37 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: "#E15816",
+  },
+  infoBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFF5F0",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: "#FFE5D9",
+  },
+  infoIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#FFFFFF",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  },
+  infoContent: {
+    flex: 1,
+  },
+  infoTitle: {
+    fontSize: 12,
+    color: "#999",
+    marginBottom: 4,
+  },
+  infoValue: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#E25A17",
   },
 });
