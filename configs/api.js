@@ -1118,6 +1118,78 @@ export async function markAllMessagesAsRead(accessToken) {
   }
 }
 
+/**
+ * PATCH /messages/:id — requires JWT
+ * Edit a message content.
+ * @param {string} accessToken
+ * @param {string} messageId
+ * @param {string} content — New message content (1–10000 chars)
+ * @returns {{ success: boolean, error?: string }}
+ */
+export async function editMessage(accessToken, messageId, content) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: 'Backend URL not configured' };
+  if (!accessToken) return { success: false, error: 'Not authenticated' };
+  if (!messageId) return { success: false, error: 'Message ID required' };
+  const trimmed = typeof content === 'string' ? content.trim() : '';
+  if (!trimmed) return { success: false, error: 'Message content is required' };
+  try {
+    const url = `${base}/messages/${encodeURIComponent(messageId)}`;
+    const res = await fetch(url, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ content: trimmed }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    return { success: true };
+  } catch (e) {
+    if (__DEV__) console.error('[Messages API] Error', e);
+    return { success: false, error: e.message || 'Network error' };
+  }
+}
+
+/**
+ * DELETE /messages/:id — requires JWT
+ * Delete a message. Can specify deleteForEveryone flag.
+ * @param {string} accessToken
+ * @param {string} messageId
+ * @param {boolean} deleteForEveryone — If true, deletes for all users; if false, only for sender
+ * @returns {{ success: boolean, error?: string }}
+ */
+export async function deleteMessage(accessToken, messageId, deleteForEveryone = false) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: 'Backend URL not configured' };
+  if (!accessToken) return { success: false, error: 'Not authenticated' };
+  if (!messageId) return { success: false, error: 'Message ID required' };
+  try {
+    const url = `${base}/messages/${encodeURIComponent(messageId)}`;
+    const res = await fetch(url, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ deleteForEveryone }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    return { success: true };
+  } catch (e) {
+    if (__DEV__) console.error('[Messages API] Error', e);
+    return { success: false, error: e.message || 'Network error' };
+  }
+}
+
 // --- User Activity API (Admin) ---
 
 /**

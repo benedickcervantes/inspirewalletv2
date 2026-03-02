@@ -131,6 +131,16 @@ export function markMessageAsRead(
 export function markAllMessagesAsRead(
   accessToken: string
 ): Promise<{ success: boolean; count?: number; error?: string }>;
+export function editMessage(
+  accessToken: string,
+  messageId: string,
+  content: string
+): Promise<{ success: boolean; error?: string }>;
+export function deleteMessage(
+  accessToken: string,
+  messageId: string,
+  deleteForEveryone?: boolean
+): Promise<{ success: boolean; error?: string }>;
 
 // User Activity API (Admin)
 export function getUserActivity(
