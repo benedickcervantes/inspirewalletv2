@@ -4,20 +4,19 @@ import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useCallback, useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    Modal,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  Modal,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getReferralCode, resendVerification, verifyEmail } from '../../configs/api';
 import { useLanguage } from '../../context/LanguageContext';
-import type { NavProp } from '../../types/navigation';
 import { useResponsive } from '../../utils/responsive';
 import CustomLoader from '../Loader/CustomLoader';
 
@@ -50,6 +49,9 @@ const Settings = () => {
         const user = JSON.parse(userJson) as UserData;
         setUserData({ email: user.email, emailVerified: user.emailVerified });
       } catch (_) {}
+    } else {
+      // If no user data in AsyncStorage, set empty user object so we don't show loading screen
+      setUserData({ email: undefined, emailVerified: false });
     }
   }, []);
 
@@ -74,7 +76,21 @@ const Settings = () => {
 
   useEffect(() => {
     loadUser();
-  }, [loadUser]);
+    
+    // Check if user is still authenticated
+    const checkAuth = async () => {
+      const accessToken = await AsyncStorage.getItem('access_token');
+      if (!accessToken) {
+        // User is not authenticated, redirect to Passcode
+        (navigation as any).reset({
+          index: 0,
+          routes: [{ name: 'Passcode' }],
+        });
+      }
+    };
+    
+    checkAuth();
+  }, [loadUser, navigation]);
 
   useEffect(() => {
     loadReferralCode();
@@ -83,11 +99,17 @@ const Settings = () => {
   /** Sign out: navigate to Passcode page while keeping session active (tokens remain). */
   const handleSignOut = async () => {
     try {
-      // Only clear the passcode login flag, keep tokens and user data intact
+      // Clear the passcode login flag
       await AsyncStorage.removeItem('passcodeLoginComplete');
+      // Clear user data
+      await AsyncStorage.removeItem('user');
     } catch (_) {}
 
-    (navigation as unknown as NavProp).reset({ index: 0, routes: [{ name: 'Passcode' }] });
+    // Navigate to Passcode screen
+    (navigation as any).reset({
+      index: 0,
+      routes: [{ name: 'Passcode' }],
+    });
   };
 
   const handleRefreshReferralCode = () => {
