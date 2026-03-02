@@ -1,9 +1,9 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { useEffect, useRef, useState } from "react";
-import { getMe } from "../configs/api";
-import type { RootStackParamList } from "../types/navigation";
-import CustomLoader from "./Loader/CustomLoader";
+import { getMe } from "../../configs/api";
+import type { RootStackParamList } from "../../types/navigation";
+import CustomLoader from "../Loader/CustomLoader";
 
 const MIN_SPLASH_MS = 3000;
 

@@ -5,25 +5,25 @@ import { LinearGradient } from "expo-linear-gradient";
 import { doc, getDoc } from "firebase/firestore";
 import { useCallback, useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    useWindowDimensions,
-    View,
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { getMe, updateProfile } from "../configs/api";
-import { auth, firestore } from "../configs/firebase";
-import { DEFAULT_LANGUAGE, normalizeLanguage, SUPPORTED_LANGUAGES } from "../constants/locales";
-import { useLanguage } from "../context/LanguageContext";
+import { getMe, updateProfile } from "../../configs/api";
+import { auth, firestore } from "../../configs/firebase";
+import { DEFAULT_LANGUAGE, normalizeLanguage, SUPPORTED_LANGUAGES } from "../../constants/locales";
+import { useLanguage } from "../../context/LanguageContext";
 
 const THEME_COLOR = "#E15816";
 const USER_PREFERRED_LANGUAGE_KEY = "user_preferred_language";
