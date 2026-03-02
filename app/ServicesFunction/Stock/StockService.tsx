@@ -4,13 +4,13 @@ import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useState } from "react";
 import {
-  ActivityIndicator,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View
+    ActivityIndicator,
+    RefreshControl,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { getStockInvestmentDepositRequests } from "../../../configs/api";
@@ -44,9 +44,24 @@ function formatTransactionDate(isoDate?: string): string {
   return `${month} ${day}. ${year}`;
 }
 
-function formatCurrency(value: number | string): string {
+function formatCurrency(value: number | string, decimals: number = 2): string {
   const num = typeof value === "string" ? parseFloat(value) || 0 : value;
-  return num.toLocaleString("en-PH", { minimumFractionDigits: 2 });
+  return num.toLocaleString("en-PH", { 
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals 
+  });
+}
+
+function formatStockCount(value: number): string {
+  // Round to 4 decimal places
+  const rounded = Math.round(value * 10000) / 10000;
+  // Convert to string and remove trailing zeros
+  const str = rounded.toFixed(4);
+  const trimmed = str.replace(/\.?0+$/, '');
+  // Add thousand separators if needed
+  const parts = trimmed.split('.');
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return parts.join('.');
 }
 
 export default function StockService() {
@@ -136,7 +151,7 @@ export default function StockService() {
     (sum, r) => sum + (typeof r.amount === "string" ? parseFloat(r.amount) || 0 : Number(r.amount)),
     0
   );
-  const stockCount = Math.floor(totalPortfolioValue / STOCK_RATE_PHP);
+  const stockCount = totalPortfolioValue / STOCK_RATE_PHP;
 
   const transactions: TransactionItem[] =
     requests.length > 0
@@ -248,7 +263,7 @@ export default function StockService() {
                 </View>
                 <Text style={styles.portfolioLabel}>{t("stock.yourPortfolio")}</Text>
                 <Text style={styles.portfolioStocks}>
-                  {stockCount} {stockCount !== 1 ? t("stock.stocks") : t("stock.stock")}
+                  {formatStockCount(stockCount)} {stockCount !== 1 ? t("stock.stocks") : t("stock.stock")}
                 </Text>
                 <View style={styles.portfolioValueRow}>
                   <MaterialCommunityIcons
