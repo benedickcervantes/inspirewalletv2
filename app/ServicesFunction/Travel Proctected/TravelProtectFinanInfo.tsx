@@ -1,11 +1,8 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import {
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
-} from "react-native";
+import { StyleSheet, Text, TextInput, View } from "react-native";
 import { useLanguage } from "../../../context/LanguageContext";
+
+const THEME_COLOR = "#E15816";
 
 export interface TravelProtectFinanInfoProps {
   sourceOfFund: string;
@@ -33,7 +30,7 @@ export default function TravelProtectFinanInfo({
           <MaterialCommunityIcons
             name="cash-multiple"
             size={24}
-            color="#E25A17"
+            color={THEME_COLOR}
           />
         </View>
         <View>
@@ -92,13 +89,13 @@ export default function TravelProtectFinanInfo({
 const styles = StyleSheet.create({
   formCard: {
     backgroundColor: "#FFFFFF",
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: 20,
+    padding: 24,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
   },
   formHeader: {
     flexDirection: "row",
@@ -110,40 +107,41 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: "#FFF5F0",
+    backgroundColor: "rgba(225, 88, 22, 0.12)",
     justifyContent: "center",
     alignItems: "center",
   },
   formTitle: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#333",
+    color: "#000000",
     marginBottom: 2,
   },
   formSubtitle: {
     fontSize: 12,
-    color: "#999",
+    color: "#9E9E9E",
   },
   inputGroup: {
     marginBottom: 20,
   },
   inputLabel: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: "600",
-    color: "#333",
-    marginBottom: 8,
+    color: "#000000",
+    marginBottom: 10,
   },
   required: {
-    color: "#E25A17",
+    color: THEME_COLOR,
   },
   input: {
-    backgroundColor: "#F8F8F8",
+    backgroundColor: "#FFFFFF",
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
-    fontSize: 14,
-    color: "#333",
-    borderWidth: 1,
+    fontSize: 16,
+    color: "#000000",
+    fontWeight: "500",
+    borderWidth: 2,
     borderColor: "#E0E0E0",
   },
 });
