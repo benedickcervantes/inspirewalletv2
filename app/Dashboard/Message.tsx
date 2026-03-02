@@ -21,6 +21,8 @@ import { subscribeToConnectionStatus } from "../../lib/connectionStatus";
 import { isServiceUnderMaintenance } from "../../lib/maintenance";
 import { subscribeToNewSupportMessage } from "../../lib/messagingEvents";
 import type { NavProp } from "../../types/navigation";
+import TicketCreation from "../Tickets/TicketCreation";
+import TicketList from "../Tickets/TicketList";
 
 interface ApiMessage {
   id: string;
@@ -79,6 +81,9 @@ export default function Message() {
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const [isUnderMaintenance, setIsUnderMaintenance] = useState(false);
   const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
+  const [showTicketCreation, setShowTicketCreation] = useState(false);
+  const [viewMode, setViewMode] = useState<"messages" | "tickets">("messages");
+  const [accessToken, setAccessToken] = useState<string | null>(null);
 
   // Check maintenance status on focus
   useFocusEffect(
@@ -101,21 +106,23 @@ export default function Message() {
   const fetchMessages = useCallback(async () => {
     if (isUnderMaintenance) return;
     
-    const accessToken = await AsyncStorage.getItem("access_token");
-    if (!accessToken) {
+    const token = await AsyncStorage.getItem("access_token");
+    setAccessToken(token);
+    
+    if (!token) {
       setError("Please log in to view messages.");
       setLoading(false);
       setRefreshing(false);
       return;
     }
 
-    const result = await getMessages(accessToken, { page: 1, limit: 100 });
+    const result = await getMessages(token, { page: 1, limit: 100 });
     if (result.success && result.messages) {
       setMessages(mapApiToDisplay(result.messages as ApiMessage[]));
       setError(null);
       // Mark all as read when viewing, then refetch to show updated status
-      await markAllMessagesAsRead(accessToken);
-      const refetch = await getMessages(accessToken, { page: 1, limit: 100 });
+      await markAllMessagesAsRead(token);
+      const refetch = await getMessages(token, { page: 1, limit: 100 });
       if (refetch.success && refetch.messages) {
         setMessages(mapApiToDisplay(refetch.messages as ApiMessage[]));
       }
@@ -240,6 +247,35 @@ export default function Message() {
         </TouchableOpacity>
       </View>
 
+      {/* View Mode Tabs */}
+      <View style={styles.tabsContainer}>
+        <TouchableOpacity
+          style={[styles.tab, viewMode === "messages" && styles.tabActive]}
+          onPress={() => setViewMode("messages")}
+        >
+          <Text style={[styles.tabText, viewMode === "messages" && styles.tabTextActive]}>
+            Messages
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, viewMode === "tickets" && styles.tabActive]}
+          onPress={() => setViewMode("tickets")}
+        >
+          <Text style={[styles.tabText, viewMode === "tickets" && styles.tabTextActive]}>
+            Tickets
+          </Text>
+        </TouchableOpacity>
+        {viewMode === "tickets" && accessToken && (
+          <TouchableOpacity
+            style={styles.createTicketButton}
+            onPress={() => setShowTicketCreation(true)}
+          >
+            <MaterialCommunityIcons name="plus" size={20} color="#FFFFFF" />
+            <Text style={styles.createTicketButtonText}>Create</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+
       {loading && messages.length === 0 ? (
         <View style={styles.centerContent}>
           <ActivityIndicator size="large" color="#E15816" />
@@ -253,6 +289,8 @@ export default function Message() {
             <Text style={styles.retryButtonText}>Retry</Text>
           </TouchableOpacity>
         </View>
+      ) : viewMode === "tickets" && accessToken ? (
+        <TicketList accessToken={accessToken} />
       ) : (
         <KeyboardAvoidingView
           style={styles.keyboardView}
@@ -385,6 +423,16 @@ export default function Message() {
           </View>
         </KeyboardAvoidingView>
       )}
+
+      {/* Ticket Creation Modal */}
+      {accessToken && (
+        <TicketCreation
+          open={showTicketCreation}
+          onClose={() => setShowTicketCreation(false)}
+          onSuccess={() => setViewMode("tickets")}
+          accessToken={accessToken}
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -397,6 +445,46 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 12,
     backgroundColor: "#E15816",
+  },
+  tabsContainer: {
+    flexDirection: "row",
+    backgroundColor: "#FFFFFF",
+    borderBottomWidth: 1,
+    borderBottomColor: "#E0E0E0",
+    alignItems: "center",
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: "center",
+    borderBottomWidth: 3,
+    borderBottomColor: "transparent",
+  },
+  tabActive: {
+    borderBottomColor: "#E15816",
+  },
+  tabText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#999",
+  },
+  tabTextActive: {
+    color: "#E15816",
+  },
+  createTicketButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginRight: 8,
+    backgroundColor: "#E15816",
+    borderRadius: 8,
+  },
+  createTicketButtonText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "600",
   },
   backButton: {
     padding: 8,

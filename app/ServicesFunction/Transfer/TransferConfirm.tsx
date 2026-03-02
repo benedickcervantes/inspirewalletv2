@@ -1,25 +1,24 @@
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Dimensions,
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Dimensions,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from "react-native";
-import { useLanguage } from "../../../context/LanguageContext";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { createBeneficiary, getOrCreateMainWallet, submitTransfer } from "../../../configs/api";
+import { useLanguage } from "../../../context/LanguageContext";
 
 const { width } = Dimensions.get("window");
 
@@ -285,18 +284,20 @@ export default function TransferConfirm() {
                 maximumFractionDigits: 2
               })}
             </Text>
-            <View style={styles.detailsRow}>
+            <View style={styles.detailsRowColumn}>
               <Text style={styles.detailsRowLabel}>{t("sendMoney.from")}</Text>
-              <View style={styles.detailsRowValue}>
+              <View style={styles.detailsRowValueWrap}>
                 <Text style={styles.detailsRowText}>
                   {balanceType === "available" ? t("sendMoney.availableBalance") : t("sendMoney.agentWallet")}
                 </Text>
               </View>
             </View>
-            <View style={styles.detailsRow}>
+            <View style={styles.detailsRowColumn}>
               <Text style={styles.detailsRowLabel}>{t("sendMoney.descriptionOptional")}</Text>
-              <View style={styles.detailsRowValue}>
-                <Text style={styles.detailsRowText}>{description}</Text>
+              <View style={styles.detailsRowValueWrap}>
+                <Text style={styles.detailsRowTextWrap} numberOfLines={4} ellipsizeMode="tail">
+                  {description}
+                </Text>
               </View>
             </View>
           </LinearGradient>
@@ -659,10 +660,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 12,
   },
+  detailsRowColumn: {
+    flexDirection: "column",
+    marginBottom: 12,
+    width: "100%",
+  },
   detailsRowLabel: {
     fontSize: 13,
     color: "#FFFFFF",
     opacity: 0.9,
+    marginBottom: 8,
   },
   detailsRowValue: {
     backgroundColor: "rgba(255, 255, 255, 0.2)",
@@ -670,10 +677,24 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 8,
   },
+  detailsRowValueWrap: {
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 7,
+    width: "100%",
+  },
   detailsRowText: {
     fontSize: 13,
     color: "#FFFFFF",
     fontWeight: "600",
+  },
+  detailsRowTextWrap: {
+    fontSize: 13,
+    color: "#FFFFFF",
+    fontWeight: "600",
+    flexWrap: "wrap",
+    lineHeight: 18,
   },
   summaryCard: {
     backgroundColor: "#FFFFFF",

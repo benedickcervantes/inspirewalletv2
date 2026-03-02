@@ -1,6 +1,7 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
 import {
@@ -48,9 +49,11 @@ export default function Register() {
   const [hasCompany, setHasCompany] = useState(false);
   const [companyName, setCompanyName] = useState('');
 
-  const [lineAccountLink, setLineAccountLink] = useState('');
   const [selectedCountryCode, setSelectedCountryCode] = useState('+63');
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [lineContact, setLineContact] = useState('');
+  const [viberContact, setViberContact] = useState('');
+  const [whatsappContact, setWhatsappContact] = useState('');
   const [isAgent, setIsAgent] = useState<boolean | null>(null);
   const [referralCode, setReferralCode] = useState('');
   const [registerLoading, setRegisterLoading] = useState(false);
@@ -63,6 +66,9 @@ export default function Register() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [isCountryModalVisible, setIsCountryModalVisible] = useState(false);
+  const [isQRScannerVisible, setIsQRScannerVisible] = useState(false);
+  const [activeQRField, setActiveQRField] = useState<'referral' | 'line' | 'viber' | 'whatsapp' | null>(null);
+  const [permission, requestPermission] = useCameraPermissions();
 
   const handleNextStep = () => {
     setRegisterError('');
@@ -81,10 +87,6 @@ export default function Register() {
       }
       setCurrentStep(2);
     } else if (currentStep === 2) {
-      if (!phoneNumber.trim()) {
-        alert('Please enter your contact number');
-        return;
-      }
       if (isAgent === null) {
         alert('Please select if you are an agent or investor');
         return;
@@ -131,7 +133,9 @@ export default function Register() {
         countryCode: country?.iso,
         referralCode: referralCode.trim() || undefined,
         companyName: hasCompany && companyName.trim() ? companyName.trim() : undefined,
-        lineAccountLink: lineAccountLink.trim() || undefined,
+        lineContact: lineContact.trim() || undefined,
+        viberContact: viberContact.trim() || undefined,
+        whatsappContact: whatsappContact.trim() || undefined,
         isAgent: isAgent ?? false,
       };
       const result = await registerApi(body);
@@ -158,6 +162,51 @@ export default function Register() {
     } else {
       (navigation as unknown as NavProp).replace('Welcome');
     }
+  };
+
+  const handleBarCodeScanned = ({ data }: { type: string; data: string }) => {
+    setIsQRScannerVisible(false);
+    
+    // Handle based on which field's QR scanner was opened
+    if (activeQRField === 'referral') {
+      // Check if the scanned data is a URL with a 'ref' parameter
+      try {
+        if (data.includes('ref=')) {
+          // e.g. http://localhost:3000/register?ref=ABCDE
+          const urlParams = new URL(data);
+          const ref = urlParams.searchParams.get('ref');
+          if (ref) {
+            setReferralCode(ref.toUpperCase());
+            setActiveQRField(null);
+            return;
+          }
+        }
+      } catch (e) {
+        // Not a valid URL, ignore URL parsing error
+      }
+      // fallback to setting exactly what was scanned
+      setReferralCode(data.toUpperCase());
+    } else if (activeQRField === 'line') {
+      setLineContact(data);
+    } else if (activeQRField === 'viber') {
+      setViberContact(data);
+    } else if (activeQRField === 'whatsapp') {
+      setWhatsappContact(data);
+    }
+    
+    setActiveQRField(null);
+  };
+
+  const openScanner = async (fieldType: 'referral' | 'line' | 'viber' | 'whatsapp') => {
+    if (!permission?.granted) {
+      const response = await requestPermission();
+      if (!response.granted) {
+        alert("Camera permission is required to scan QR codes.");
+        return;
+      }
+    }
+    setActiveQRField(fieldType);
+    setIsQRScannerVisible(true);
   };
 
   return (
@@ -299,38 +348,62 @@ export default function Register() {
             {currentStep === 2 && (
               <>
                 <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>Contact Information</Text>
+                  <Text style={styles.sectionTitle}>Contact Information (Optional)</Text>
                   <View style={styles.sectionUnderline} />
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>LINE Account Link (Optional)</Text>
-                    <TextInput
-                      style={styles.input}
-                      placeholder="e.g. your LINE link"
-                      placeholderTextColor="#999"
-                      value={lineAccountLink}
-                      onChangeText={setLineAccountLink}
-                    />
-                  </View>
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>
-                      Contact Number <Text style={styles.required}>*</Text>
-                    </Text>
-                    <View style={styles.phoneInputContainer}>
-                      <TouchableOpacity style={styles.countrySelector} onPress={() => setIsCountryModalVisible(true)}>
-                        <Text style={styles.countryFlag}>
-                          {COUNTRY_OPTIONS.find((c) => c.code === selectedCountryCode)?.flag}
-                        </Text>
-                        <Text style={styles.countryCode}>{selectedCountryCode}</Text>
-                        <Ionicons name="chevron-down" size={16} color="#666" />
-                      </TouchableOpacity>
-                      <TextInput
-                        style={styles.phoneInput}
-                        placeholder="e.g. 555 123 4567"
-                        placeholderTextColor="#999"
-                        keyboardType="phone-pad"
-                        value={phoneNumber}
-                        onChangeText={setPhoneNumber}
-                      />
+                  <View style={width < 768 ? styles.contactFieldsContainerMobile : styles.contactFieldsContainerDesktop}>
+                    <View style={styles.inputGroup}>
+                      <Text style={styles.inputLabel}>LINE Account Link</Text>
+                      <View style={styles.scannerInputContainer}>
+                        <MaterialCommunityIcons name="chat" size={20} color="#00B900" style={{ marginLeft: 12 }} />
+                        <TextInput
+                          style={styles.scannerInput}
+                          placeholder="Enter your LINE Account Link"
+                          placeholderTextColor="#999"
+                          keyboardType="default"
+                          autoComplete="off"
+                          value={lineContact}
+                          onChangeText={setLineContact}
+                        />
+                        <TouchableOpacity style={styles.scannerButton} onPress={() => openScanner('line')}>
+                          <Ionicons name="qr-code-outline" size={20} color="#E25A17" />
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                    <View style={styles.inputGroup}>
+                      <Text style={styles.inputLabel}>Viber</Text>
+                      <View style={styles.scannerInputContainer}>
+                        <MaterialCommunityIcons name="phone" size={20} color="#7360F2" style={{ marginLeft: 12 }} />
+                        <TextInput
+                          style={styles.scannerInput}
+                          placeholder="Enter your Viber contact"
+                          placeholderTextColor="#999"
+                          keyboardType="default"
+                          autoComplete="off"
+                          value={viberContact}
+                          onChangeText={setViberContact}
+                        />
+                        <TouchableOpacity style={styles.scannerButton} onPress={() => openScanner('viber')}>
+                          <Ionicons name="qr-code-outline" size={20} color="#E25A17" />
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                    <View style={styles.inputGroup}>
+                      <Text style={styles.inputLabel}>WhatsApp</Text>
+                      <View style={styles.scannerInputContainer}>
+                        <MaterialCommunityIcons name="whatsapp" size={20} color="#25D366" style={{ marginLeft: 12 }} />
+                        <TextInput
+                          style={styles.scannerInput}
+                          placeholder="Enter your WhatsApp contact"
+                          placeholderTextColor="#999"
+                          keyboardType="default"
+                          autoComplete="off"
+                          value={whatsappContact}
+                          onChangeText={setWhatsappContact}
+                        />
+                        <TouchableOpacity style={styles.scannerButton} onPress={() => openScanner('whatsapp')}>
+                          <Ionicons name="qr-code-outline" size={20} color="#E25A17" />
+                        </TouchableOpacity>
+                      </View>
                     </View>
                   </View>
                 </View>
@@ -365,15 +438,25 @@ export default function Register() {
                   )}
                   <View style={[styles.inputGroup, { marginTop: 20 }]}>
                     <Text style={styles.inputLabel}>Referrer's code (Optional)</Text>
-                    <TextInput
-                      style={styles.input}
-                      placeholder="Enter referrer's code"
-                      placeholderTextColor="#999"
-                      value={referralCode}
-                      onChangeText={setReferralCode}
-                    />
+                    <View style={styles.scannerInputContainer}>
+                      <TextInput
+                        style={styles.scannerInput}
+                        placeholder="Enter referrer's code"
+                        placeholderTextColor="#999"
+                        value={referralCode}
+                        onChangeText={(text) => setReferralCode(text.toUpperCase())}
+                        autoCapitalize="characters"
+                        maxLength={5}
+                      />
+                      <TouchableOpacity style={styles.scannerButton} onPress={() => openScanner('referral')}>
+                        <Ionicons name="qr-code-outline" size={20} color="#E25A17" />
+                      </TouchableOpacity>
+                    </View>
                     <Text style={styles.helperText}>
                       Enter your referrer's code if you were invited by someone.
+                    </Text>
+                    <Text style={[styles.helperText, { marginTop: 4 }]}>
+                      Maximum 5 characters
                     </Text>
                   </View>
                 </View>
@@ -498,6 +581,70 @@ export default function Register() {
                 ))}
               </ScrollView>
             </View>
+          </View>
+        </Modal>
+
+        {/* QR Scanner Modal */}
+        <Modal
+          visible={isQRScannerVisible}
+          animationType="slide"
+          transparent={false}
+          onRequestClose={() => setIsQRScannerVisible(false)}
+        >
+          <View style={styles.qrScannerContainer}>
+            {!permission?.granted ? (
+              <View style={styles.qrPermissionContainer}>
+                <Ionicons name="camera-outline" size={64} color="#666" />
+                <Text style={styles.qrPermissionText}>Camera Access Required</Text>
+                <Text style={styles.qrPermissionSubText}>
+                  Please grant camera permission to scan referral QR codes.
+                </Text>
+                <TouchableOpacity style={styles.qrCloseButton} onPress={() => setIsQRScannerVisible(false)}>
+                  <Text style={styles.qrCloseButtonText}>Go Back</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <CameraView
+                style={styles.qrCamera}
+                facing="back"
+                barcodeScannerSettings={{
+                  barcodeTypes: ["qr"],
+                }}
+                onBarcodeScanned={handleBarCodeScanned}
+              >
+                <View style={styles.qrOverlay}>
+                  <View style={styles.qrTopOverlay}>
+                    <Text style={styles.qrInstructionText}>
+                      {activeQRField === 'referral' && "Scan Referrer's QR Code"}
+                      {activeQRField === 'line' && "Scan LINE QR Code"}
+                      {activeQRField === 'viber' && "Scan Viber QR Code"}
+                      {activeQRField === 'whatsapp' && "Scan WhatsApp QR Code"}
+                    </Text>
+                  </View>
+                  <View style={styles.qrCenterRow}>
+                    <View style={styles.qrSideOverlay} />
+                    <View style={styles.qrFrameContainer}>
+                      <View style={[styles.qrCorner, styles.qrTopLeft]} />
+                      <View style={[styles.qrCorner, styles.qrTopRight]} />
+                      <View style={[styles.qrCorner, styles.qrBottomLeft]} />
+                      <View style={[styles.qrCorner, styles.qrBottomRight]} />
+                    </View>
+                    <View style={styles.qrSideOverlay} />
+                  </View>
+                  <View style={styles.qrBottomOverlay}>
+                    <TouchableOpacity
+                      style={styles.qrCancelButton}
+                      onPress={() => {
+                        setIsQRScannerVisible(false);
+                        setActiveQRField(null);
+                      }}
+                    >
+                      <Text style={styles.qrCancelButtonText}>Cancel</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </CameraView>
+            )}
           </View>
         </Modal>
 
@@ -645,6 +792,25 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#333',
     backgroundColor: '#FAFAFA',
+  },
+  scannerInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 8,
+    backgroundColor: '#FAFAFA',
+  },
+  scannerInput: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 14,
+    color: '#333',
+  },
+  scannerButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
   qrButton: {
     width: 48,
@@ -919,4 +1085,12 @@ const styles = StyleSheet.create({
   },
   agentQRShareButtonText: { fontSize: 16, fontWeight: '700', color: '#E25A17' },
   agentQRHelpText: { fontSize: 12, color: '#FFFFFF', opacity: 0.8, textAlign: 'center', lineHeight: 18 },
+  contactFieldsContainerMobile: {
+    flexDirection: 'column',
+    gap: 16,
+  },
+  contactFieldsContainerDesktop: {
+    flexDirection: 'row',
+    gap: 12,
+  },
 });
