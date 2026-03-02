@@ -416,58 +416,90 @@ export default function CardsTab({
         onRequestClose={() => setIsVipModalVisible(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <View style={styles.modalHeaderContent}>
-                <View style={styles.headerIconContainer}>
-                  <MaterialCommunityIcons name="diamond" size={24} color="#FFD700" />
+          <View style={styles.diamondModalContent}>
+            <View style={styles.diamondModalHeader}>
+              <View style={styles.diamondHeaderLeft}>
+                <View style={styles.diamondIconContainer}>
+                  <Ionicons name="card" size={24} color="#FFFFFF" />
                 </View>
                 <View>
-                  <Text style={styles.modalTitle}>{t("ct.vipDiamondEliteTitle")}</Text>
-                  <Text style={styles.modalSubtitle}>{t("ct.exclusiveClaimable")}</Text>
+                  <Text style={styles.diamondModalTitle}>Card purchase</Text>
+                  <Text style={styles.diamondModalSubtitle}>Review your selection</Text>
                 </View>
               </View>
-              <TouchableOpacity style={styles.closeButton} onPress={() => setIsVipModalVisible(false)} activeOpacity={0.7}>
-                <Ionicons name="close" size={20} color="#Fe7e43" />
+              <TouchableOpacity 
+                style={styles.diamondCloseButton} 
+                onPress={() => setIsVipModalVisible(false)} 
+                activeOpacity={0.7}
+              >
+                <Ionicons name="close" size={24} color="#333" />
               </TouchableOpacity>
             </View>
 
-            <View style={styles.modalBody}>
-              <View style={styles.infoSection}>
-                <View style={styles.infoHeader}>
-                  <Ionicons name="information-circle" size={20} color="#4CAF50" />
-                  <Text style={styles.infoTitle}>{t("ct.howToGet")}</Text>
+            <ScrollView 
+              style={styles.diamondModalScrollView}
+              contentContainerStyle={styles.diamondModalBody}
+              showsVerticalScrollIndicator={false}
+            >
+              <Text style={styles.diamondCardPreviewLabel}>CARD PREVIEW</Text>
+
+              <View style={styles.diamondCardPreviewContainer}>
+                <ImageBackground
+                  source={require("../../assets/cards/vip_collection/vp2/front.png")}
+                  style={styles.diamondCardPreview}
+                  imageStyle={styles.diamondCardPreviewImage}
+                  resizeMode="contain"
+                />
+              </View>
+
+              <View style={styles.diamondTitleContainer}>
+                <Text style={styles.diamondCardName}>Diamond Elite</Text>
+                <View style={styles.diamondBadgesRow}>
+                  <View style={styles.diamondVipBadge}>
+                    <MaterialCommunityIcons name="crown" size={12} color="#D4B106" />
+                    <Text style={styles.diamondVipText}>VIP</Text>
+                  </View>
+                  <View style={styles.diamondExclusiveBadge}>
+                    <Text style={styles.diamondExclusiveText}>Exclusive Claimable Card</Text>
+                  </View>
                 </View>
-                <Text style={styles.infoText}>
-                  {t("ct.claimDescription")}
+              </View>
+
+              <View style={styles.diamondInfoBox}>
+                <View style={styles.diamondInfoHeader}>
+                  <Ionicons name="checkmark-circle" size={20} color="#4CAF50" />
+                  <Text style={styles.diamondInfoTitle}>How to get this card</Text>
+                </View>
+                <Text style={styles.diamondInfoText}>
+                  This exclusive VIP card can be claimed by users with ₱10,000,000 or more in time deposits. Click the "Claim" button to add it to your collection.
                 </Text>
               </View>
 
-              <View style={styles.infoSection}>
-                <View style={styles.infoHeader}>
+              <View style={styles.diamondInfoBox}>
+                <View style={styles.diamondInfoHeader}>
                   <Ionicons name="checkmark-circle" size={20} color="#4CAF50" />
-                  <Text style={styles.infoTitle}>{t("ct.requirementsTitle")}</Text>
+                  <Text style={styles.diamondInfoTitle}>Requirements</Text>
                 </View>
-                <Text style={styles.listItem}>{t("ct.reqDepositAmount")}</Text>
-                <Text style={styles.listItem}>{t("ct.reqClickClaim")}</Text>
-                <Text style={styles.listItem}>{t("ct.reqNoPurchase")}</Text>
+                <Text style={styles.diamondListItem}>• Time Deposit Amount:</Text>
+                <Text style={styles.diamondListItem}>• Click "Claim" button to add to your collection.</Text>
+                <Text style={styles.diamondListItem}>• No purchase required.</Text>
               </View>
 
-              <View style={styles.infoSection}>
-                <View style={styles.infoHeader}>
-                  <Ionicons name="star" size={20} color="#FFD700" />
-                  <Text style={styles.infoTitle}>{t("ct.yourStatusTitle")}</Text>
-                </View>
-                <View style={styles.statusBox}>
-                  <Ionicons name="close-circle" size={20} color="#F44336" />
-                  <Text style={styles.statusText}>{t("ct.needDepositStatus")}</Text>
-                </View>
+              <View style={styles.diamondWarningBox}>
+                <Ionicons name="warning" size={18} color="#F44336" />
+                <Text style={styles.diamondWarningText}>
+                  You need ₱10,000,000+ in time deposits.
+                </Text>
               </View>
 
-              <TouchableOpacity style={styles.gotItButton} onPress={() => setIsVipModalVisible(false)} activeOpacity={0.8}>
-                <Text style={styles.gotItButtonText}>{t("ct.gotIt")}</Text>
+              <TouchableOpacity 
+                style={styles.diamondGotItButton} 
+                onPress={() => setIsVipModalVisible(false)} 
+                activeOpacity={0.7}
+              >
+                <Text style={styles.diamondGotItButtonText}>Got it</Text>
               </TouchableOpacity>
-            </View>
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -480,59 +512,49 @@ export default function CardsTab({
         onDismiss={() => { vipFlipAnim.setValue(0); setIsVipCardFlipped(false); }}
       >
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { maxHeight: '90%' }]}>
-            <View style={styles.modalHeader}>
-              <View style={styles.modalHeaderContent}>
-                <View style={styles.headerIconContainer}>
-                  <Ionicons name="trophy" size={24} color="#FFD700" />
+          <View style={styles.vipModalContent}>
+            <View style={styles.vipModalHeader}>
+              <View style={styles.vipHeaderLeft}>
+                <View style={styles.vipIconContainer}>
+                  <Ionicons name="card" size={24} color="#FFFFFF" />
                 </View>
                 <View>
-                  <Text style={styles.modalTitle}>{t("ct.vipCardPurchase")}</Text>
-                  <Text style={styles.modalSubtitle}>{t("ct.previewConfirm")}</Text>
+                  <Text style={styles.vipModalTitle}>Card purchase</Text>
+                  <Text style={styles.vipModalSubtitle}>Review your selection</Text>
                 </View>
               </View>
-              <TouchableOpacity style={styles.closeButton} onPress={() => setIsPurchaseModalVisible(false)} activeOpacity={0.7}>
-                <Ionicons name="close" size={20} color="#Fe7e43" />
+              <TouchableOpacity 
+                style={styles.vipCloseButton} 
+                onPress={() => setIsPurchaseModalVisible(false)} 
+                activeOpacity={0.7}
+              >
+                <Ionicons name="close" size={24} color="#333" />
               </TouchableOpacity>
             </View>
 
-            <ScrollView style={styles.purchaseModalBody} contentContainerStyle={styles.purchaseModalScrollContent} showsVerticalScrollIndicator={false}>
-              <Text style={styles.cardPreviewLabel}>{t("ct.cardPreviewLabel")}</Text>
+            <ScrollView 
+              style={styles.vipModalScrollView}
+              contentContainerStyle={styles.vipModalBody}
+              showsVerticalScrollIndicator={false}
+            >
+              <Text style={styles.vipCardPreviewLabel}>CARD PREVIEW</Text>
 
-              <View style={styles.purchaseCardPreviewContainer}>
+              <View style={styles.vipCardPreviewContainer}>
                 <TouchableOpacity activeOpacity={0.9} onPress={flipVipCard}>
-                  <View style={styles.modalFlipContainer}>
+                  <View style={styles.vipModalFlipContainer}>
                     <Animated.View style={[styles.modalCardFace, { transform: [{ rotateY: vipFrontInterpolate }] }]}>
                       <ImageBackground
                         source={require("../../assets/cards/vip_collection/vp1/front.png")}
-                        style={styles.purchaseCardPreview}
-                        imageStyle={styles.purchaseCardPreviewImage}
+                        style={styles.vipCardPreview}
+                        imageStyle={styles.vipCardPreviewImage}
                         resizeMode="contain"
-                      >
-                        <View style={styles.purchaseCardOverlay}>
-                          <Text style={[styles.purchaseCardNumber, { color: '#555' }]}>
-                            {userData?.accountNumber ? userData.accountNumber.replace(/(.{4})/g, '$1 ').trim() : t("ct.placeholderAccount")}
-                          </Text>
-                          <Text style={[styles.purchaseCardName, { color: '#555' }]}>
-                            {[userData?.firstName, userData?.lastName]
-                              .filter(Boolean)
-                              .join(" ")
-                              .toUpperCase() || t("ct.placeholderName")}
-                          </Text>
-                          <Text style={[styles.purchaseCardBalanceLabel, { color: '#555' }]}>
-                            {t("ct.availableBalance")}
-                          </Text>
-                          <Text style={[styles.purchaseCardBalanceAmount, { color: '#555' }]}>
-                            ₱ {formatCurrency(availableBalance || 0)}
-                          </Text>
-                        </View>
-                      </ImageBackground>
+                      />
                     </Animated.View>
                     <Animated.View style={[styles.modalCardFace, styles.modalCardBack, { transform: [{ rotateY: vipBackInterpolate }] }]}>
                       <ImageBackground
                         source={require("../../assets/cards/vip_collection/vp1/back.png")}
-                        style={styles.purchaseCardPreview}
-                        imageStyle={styles.purchaseCardPreviewImage}
+                        style={styles.vipCardPreview}
+                        imageStyle={styles.vipCardPreviewImage}
                         resizeMode="contain"
                       />
                     </Animated.View>
@@ -540,78 +562,65 @@ export default function CardsTab({
                 </TouchableOpacity>
               </View>
 
-              <View style={styles.purchaseTitleRow}>
-                <Text style={styles.purchaseCardTitle}>{t("ct.goldElite") || "Golden Elite"}</Text>
-                <View style={styles.purchaseVipBadge}>
-                  <MaterialCommunityIcons name="diamond-outline" size={14} color="#D4B106" />
-                  <Text style={styles.purchaseVipBadgeText}>{t("ct.vip")}</Text>
+              <View style={styles.vipTitleContainer}>
+                <Text style={styles.vipCardName}>Gold Elite</Text>
+                <View style={styles.vipPremiumBadge}>
+                  <MaterialCommunityIcons name="crown" size={14} color="#D4B106" />
+                  <Text style={styles.vipPremiumText}>VIP</Text>
                 </View>
               </View>
 
-              <View style={styles.priceContainer}>
-                <Text style={styles.priceLabel}>{t("ct.priceLabel")}</Text>
-                <Text style={styles.priceAmount}>₱ {formatCurrency(10000)}</Text>
+              <View style={styles.vipPriceSection}>
+                <Text style={styles.vipTotalPriceLabel}>TOTAL PRICE</Text>
+                <Text style={styles.vipTotalPrice}>₱ 10,000.00</Text>
               </View>
 
-              <View style={styles.balanceRow}>
-                <Text style={styles.balanceLabel}>{t("ct.availableBalanceLabel")}</Text>
-                <Text style={[styles.balanceAmount, availableBalance < 10000 && styles.textRed]}>
-                  ₱{formatCurrency(availableBalance || 0)}
-                </Text>
+              <View style={styles.vipBalanceRow}>
+                <Text style={styles.vipBalanceLabel}>Your Balance:</Text>
+                <Text style={styles.vipBalanceAmount}>₱ {formatCurrency(availableBalance || 0)}</Text>
               </View>
 
-              {availableBalance < 10000 && (
-                <View style={styles.amountNeededBox}>
-                  <Ionicons name="warning" size={16} color="#F44336" />
-                  <Text style={styles.amountNeededText}>
-                    {t("ct.needMoreAmount").replace("{amount}", formatCurrency(10000 - availableBalance))}
-                  </Text>
-                </View>
-              )}
-
-              <View style={styles.subscriptionBox}>
-                <View style={styles.subscriptionHeaderRow}>
-                  <Text style={styles.subscriptionBoxTitle}>{t("ct.subscriptionType")}</Text>
-                  <View style={styles.monthlyBadge}>
-                    <Ionicons name="calendar" size={12} color="#D4B106" />
-                    <Text style={styles.monthlyBadgeText}>{t("ct.monthly")}</Text>
+              <View style={styles.vipSubscriptionBox}>
+                <View style={styles.vipSubscriptionHeaderRow}>
+                  <Text style={styles.vipSubscriptionTitle}>Subscription Type</Text>
+                  <View style={styles.vipMonthlyBadge}>
+                    <Ionicons name="calendar-outline" size={12} color="#D4B106" />
+                    <Text style={styles.vipMonthlyText}>Monthly</Text>
                   </View>
                 </View>
 
-                <View style={styles.subscriptionDetailRow}>
-                  <Ionicons name="time" size={14} color="#666" />
-                  <Text style={styles.subscriptionDetailText}>{t("ct.duration30Days")}</Text>
+                <View style={styles.vipSubscriptionDetailRow}>
+                  <Ionicons name="time-outline" size={16} color="#666" />
+                  <Text style={styles.vipSubscriptionDetailText}>Duration: 30 days</Text>
                 </View>
-                <View style={styles.subscriptionDetailRow}>
-                  <Ionicons name="refresh" size={14} color="#666" />
-                  <Text style={styles.subscriptionDetailText}>{t("ct.autoRenewalManual")}</Text>
+                <View style={styles.vipSubscriptionDetailRow}>
+                  <Ionicons name="refresh-outline" size={16} color="#666" />
+                  <Text style={styles.vipSubscriptionDetailText}>Auto-renewal: Manual (renew each month)</Text>
                 </View>
-                <View style={styles.subscriptionDetailRow}>
-                  <Ionicons name="information-circle" size={14} color="#666" />
-                  <Text style={styles.subscriptionDetailText}>{t("ct.accessExpires")}</Text>
+                <View style={styles.vipSubscriptionDetailRow}>
+                  <Ionicons name="information-circle-outline" size={16} color="#666" />
+                  <Text style={styles.vipSubscriptionDetailText}>Access expires after 30 days</Text>
                 </View>
               </View>
 
-              <View style={styles.purchaseActionContainer}>
-                <TouchableOpacity style={styles.cancelButton} onPress={() => setIsPurchaseModalVisible(false)} activeOpacity={0.7}>
-                  <Text style={styles.cancelButtonText}>{t("common.cancel")}</Text>
+              <View style={styles.vipActionButtons}>
+                <TouchableOpacity 
+                  style={styles.vipCancelButton} 
+                  onPress={() => setIsPurchaseModalVisible(false)} 
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.vipCancelButtonText}>Cancel</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
                   style={[
-                    styles.confirmPurchaseButton,
-                    availableBalance < 10000 && styles.disabledPurchaseButton
+                    styles.vipBuyButton,
+                    availableBalance < 10000 && styles.vipBuyButtonDisabled
                   ]}
                   disabled={availableBalance < 10000}
                   activeOpacity={0.7}
                 >
-
-                  <Text style={[
-                    styles.confirmPurchaseText,
-                    availableBalance < 10000 && styles.disabledPurchaseText
-                  ]}>
-                    {availableBalance < 10000 ? t("ct.insufficientBalance") : t("ct.purchaseCard")}
-                  </Text>
+                  <Text style={styles.vipBuyButtonText}>Buy Card</Text>
                 </TouchableOpacity>
               </View>
             </ScrollView>
@@ -1610,6 +1619,417 @@ const styles = StyleSheet.create({
     backgroundColor: '#CCCCCC',
   },
   designBuyButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  // VIP Modal Styles
+  vipModalContent: {
+    width: '100%',
+    maxWidth: 400,
+    maxHeight: '85%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    overflow: 'hidden',
+  },
+  vipModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    paddingBottom: 16,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  vipHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+  },
+  vipIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: '#DE5212',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  vipModalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#333',
+  },
+  vipModalSubtitle: {
+    fontSize: 12,
+    color: '#999',
+    marginTop: 2,
+  },
+  vipCloseButton: {
+    width: 32,
+    height: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  vipModalScrollView: {
+    maxHeight: '100%',
+  },
+  vipModalBody: {
+    padding: 20,
+    paddingTop: 16,
+  },
+  vipCardPreviewLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#888',
+    textAlign: 'center',
+    marginBottom: 12,
+    letterSpacing: 1.5,
+  },
+  vipCardPreviewContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 12,
+    marginBottom: 16,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  vipModalFlipContainer: {
+    width: 220,
+    aspectRatio: 1.586,
+  },
+  vipCardPreview: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 12,
+  },
+  vipCardPreviewImage: {
+    borderRadius: 12,
+  },
+  vipTitleContainer: {
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  vipCardName: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#333',
+    marginBottom: 6,
+  },
+  vipPremiumBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF9E6',
+    borderWidth: 1,
+    borderColor: '#FFE58F',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    gap: 6,
+  },
+  vipPremiumText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#D4B106',
+  },
+  vipPriceSection: {
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  vipTotalPriceLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#888',
+    marginBottom: 4,
+    letterSpacing: 1.2,
+  },
+  vipTotalPrice: {
+    fontSize: 36,
+    fontWeight: '700',
+    color: '#DE5212',
+  },
+  vipBalanceRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+    paddingHorizontal: 0,
+  },
+  vipBalanceLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+  },
+  vipBalanceAmount: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#333',
+  },
+  vipSubscriptionBox: {
+    backgroundColor: '#FFF9E6',
+    borderWidth: 1,
+    borderColor: '#FFE58F',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 16,
+  },
+  vipSubscriptionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  vipSubscriptionTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#333',
+  },
+  vipMonthlyBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#FFE58F',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    gap: 4,
+  },
+  vipMonthlyText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#D4B106',
+  },
+  vipSubscriptionDetailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 6,
+  },
+  vipSubscriptionDetailText: {
+    fontSize: 12,
+    color: '#666',
+    flex: 1,
+  },
+  vipActionButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 0,
+  },
+  vipCancelButton: {
+    flex: 1,
+    paddingVertical: 14,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 2,
+    borderColor: '#DDDDDD',
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  vipCancelButtonText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#666',
+  },
+  vipBuyButton: {
+    flex: 1,
+    paddingVertical: 14,
+    backgroundColor: '#DE5212',
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  vipBuyButtonDisabled: {
+    backgroundColor: '#CCCCCC',
+  },
+  vipBuyButtonText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  // Diamond Elite Modal Styles
+  diamondModalContent: {
+    width: '100%',
+    maxWidth: 400,
+    maxHeight: '85%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    overflow: 'hidden',
+  },
+  diamondModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    paddingBottom: 16,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  diamondHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+  },
+  diamondIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: '#DE5212',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  diamondModalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#333',
+  },
+  diamondModalSubtitle: {
+    fontSize: 12,
+    color: '#999',
+    marginTop: 2,
+  },
+  diamondCloseButton: {
+    width: 32,
+    height: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  diamondModalScrollView: {
+    maxHeight: '100%',
+  },
+  diamondModalBody: {
+    padding: 20,
+    paddingTop: 16,
+  },
+  diamondCardPreviewLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#888',
+    textAlign: 'center',
+    marginBottom: 12,
+    letterSpacing: 1.5,
+  },
+  diamondCardPreviewContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 20,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  diamondCardPreview: {
+    width: 280,
+    aspectRatio: 1.586,
+    borderRadius: 12,
+  },
+  diamondCardPreviewImage: {
+    borderRadius: 12,
+  },
+  diamondTitleContainer: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  diamondCardName: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#333',
+    marginBottom: 8,
+  },
+  diamondBadgesRow: {
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
+  },
+  diamondVipBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF9E6',
+    borderWidth: 1,
+    borderColor: '#FFE58F',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    gap: 4,
+  },
+  diamondVipText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#D4B106',
+  },
+  diamondExclusiveBadge: {
+    backgroundColor: '#8B6914',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  diamondExclusiveText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  diamondInfoBox: {
+    backgroundColor: '#FFF5F0',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 12,
+  },
+  diamondInfoHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  diamondInfoTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#333',
+  },
+  diamondInfoText: {
+    fontSize: 13,
+    color: '#666',
+    lineHeight: 20,
+  },
+  diamondListItem: {
+    fontSize: 13,
+    color: '#666',
+    marginBottom: 4,
+  },
+  diamondWarningBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFEBEE',
+    padding: 14,
+    borderRadius: 12,
+    marginBottom: 20,
+    gap: 10,
+    borderWidth: 1,
+    borderColor: '#FFCDD2',
+  },
+  diamondWarningText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#F44336',
+    flex: 1,
+  },
+  diamondGotItButton: {
+    backgroundColor: '#DE5212',
+    paddingVertical: 16,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  diamondGotItButtonText: {
     fontSize: 16,
     fontWeight: '700',
     color: '#FFFFFF',
