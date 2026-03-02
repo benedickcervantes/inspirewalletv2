@@ -21,8 +21,8 @@ import { subscribeToConnectionStatus } from "../../lib/connectionStatus";
 import { isServiceUnderMaintenance } from "../../lib/maintenance";
 import { subscribeToNewSupportMessage } from "../../lib/messagingEvents";
 import type { NavProp } from "../../types/navigation";
-import TicketCreation from "../TicketCreation";
-import TicketList from "../TicketList";
+import TicketCreation from "../Tickets/TicketCreation";
+import TicketList from "../Tickets/TicketList";
 
 interface ApiMessage {
   id: string;
