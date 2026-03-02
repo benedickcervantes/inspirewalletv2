@@ -1,16 +1,26 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import {
-    Modal,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { useLanguage } from "../../../context/LanguageContext";
 
 const EMPTY_PLACEHOLDER = "__empty__";
+const THEME_COLOR = "#E15816";
+
+const GENDER_OPTIONS = ["Male", "Female", "Other"] as const;
+const CIVIL_STATUS_OPTIONS = [
+  "Single",
+  "Married",
+  "Widowed",
+  "Separated",
+  "Divorced",
+] as const;
 
 const MONTH_KEYS = [
   "banking.january",
@@ -70,6 +80,11 @@ export default function TravelProtectPerDeatails({
 }: TravelProtectPerDeatailsProps) {
   const { t } = useLanguage();
 
+  const handleDateConfirm = () => {
+    applyDateFromTemp(tempDate.month, tempDate.day, tempDate.year);
+    setShowDateModal(false);
+  };
+
   return (
     <>
       <View style={styles.formCard}>
@@ -78,7 +93,7 @@ export default function TravelProtectPerDeatails({
             <MaterialCommunityIcons
               name="account-circle"
               size={24}
-              color="#E25A17"
+              color={THEME_COLOR}
             />
           </View>
           <View>
@@ -95,7 +110,7 @@ export default function TravelProtectPerDeatails({
           </Text>
           <TouchableOpacity
             style={styles.dropdown}
-            onPress={() => setShowGenderDropdown(!showGenderDropdown)}
+            onPress={() => setShowGenderDropdown(true)}
           >
             <Text
               style={[
@@ -111,30 +126,8 @@ export default function TravelProtectPerDeatails({
                     : t("travel.genderOther")
                 : t("travel.selectGender")}
             </Text>
-            <Ionicons name="chevron-down" size={20} color="#666" />
+            <Ionicons name="chevron-down" size={20} color="#999" />
           </TouchableOpacity>
-          {showGenderDropdown && (
-            <View style={styles.dropdownMenu}>
-              {(["Male", "Female", "Other"] as const).map((option) => (
-                <TouchableOpacity
-                  key={option}
-                  style={styles.dropdownItem}
-                  onPress={() => {
-                    setGender(option);
-                    setShowGenderDropdown(false);
-                  }}
-                >
-                  <Text style={styles.dropdownItemText}>
-                    {option === "Male"
-                      ? t("travel.genderMale")
-                      : option === "Female"
-                        ? t("travel.genderFemale")
-                        : t("travel.genderOther")}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
         </View>
 
         <View style={styles.inputGroup}>
@@ -157,14 +150,15 @@ export default function TravelProtectPerDeatails({
             <Text
               style={[
                 styles.dropdownText,
-                dateOfBirthText === EMPTY_PLACEHOLDER && styles.dropdownPlaceholder,
+                dateOfBirthText === EMPTY_PLACEHOLDER &&
+                  styles.dropdownPlaceholder,
               ]}
             >
               {dateOfBirthText === EMPTY_PLACEHOLDER
                 ? t("travel.selectBirthdate")
                 : dateOfBirthText}
             </Text>
-            <Ionicons name="calendar" size={20} color="#666" />
+            <Ionicons name="calendar-outline" size={20} color="#999" />
           </TouchableOpacity>
         </View>
 
@@ -174,47 +168,26 @@ export default function TravelProtectPerDeatails({
           </Text>
           <TouchableOpacity
             style={styles.dropdown}
-            onPress={() =>
-              setShowCivilStatusDropdown(!showCivilStatusDropdown)
-            }
+            onPress={() => setShowCivilStatusDropdown(true)}
           >
-            <Text style={styles.dropdownText}>
-              {civilStatus === "Single"
-                ? t("travel.single")
-                : civilStatus === "Married"
-                  ? t("travel.married")
-                  : civilStatus === "Divorced"
-                    ? t("travel.divorced")
-                    : t("travel.widowed")}
+            <Text
+              style={[
+                styles.dropdownText,
+                !civilStatus && styles.dropdownPlaceholder,
+              ]}
+            >
+              {civilStatus
+                ? civilStatus === "Single"
+                  ? t("travel.single")
+                  : civilStatus === "Married"
+                    ? t("travel.married")
+                    : civilStatus === "Divorced"
+                      ? t("travel.divorced")
+                      : t("travel.widowed")
+                : t("travel.selectCivilStatus")}
             </Text>
-            <Ionicons name="chevron-down" size={20} color="#666" />
+            <Ionicons name="chevron-down" size={20} color="#999" />
           </TouchableOpacity>
-          {showCivilStatusDropdown && (
-            <View style={styles.dropdownMenu}>
-              {(["Single", "Married", "Divorced", "Widowed"] as const).map(
-                (option) => (
-                  <TouchableOpacity
-                    key={option}
-                    style={styles.dropdownItem}
-                    onPress={() => {
-                      setCivilStatus(option);
-                      setShowCivilStatusDropdown(false);
-                    }}
-                  >
-                    <Text style={styles.dropdownItemText}>
-                      {option === "Single"
-                        ? t("travel.single")
-                        : option === "Married"
-                          ? t("travel.married")
-                          : option === "Divorced"
-                            ? t("travel.divorced")
-                            : t("travel.widowed")}
-                    </Text>
-                  </TouchableOpacity>
-                )
-              )}
-            </View>
-          )}
         </View>
 
         <View style={styles.inputGroup}>
@@ -231,6 +204,114 @@ export default function TravelProtectPerDeatails({
         </View>
       </View>
 
+      {/* Gender Modal */}
+      <Modal
+        visible={showGenderDropdown}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowGenderDropdown(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>
+                {t("banking.modalSelectGender")}
+              </Text>
+              <TouchableOpacity onPress={() => setShowGenderDropdown(false)}>
+                <Ionicons name="close" size={24} color="#333" />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={styles.modalContent}>
+              {GENDER_OPTIONS.map((opt) => (
+                <TouchableOpacity
+                  key={opt}
+                  style={[
+                    styles.optionRow,
+                    gender === opt && styles.optionRowSelected,
+                  ]}
+                  onPress={() => {
+                    setGender(opt);
+                    setShowGenderDropdown(false);
+                  }}
+                >
+                  <Text style={styles.optionText}>
+                    {opt === "Male"
+                      ? t("travel.genderMale")
+                      : opt === "Female"
+                        ? t("travel.genderFemale")
+                        : t("travel.genderOther")}
+                  </Text>
+                  {gender === opt && (
+                    <Ionicons
+                      name="checkmark-circle"
+                      size={22}
+                      color={THEME_COLOR}
+                    />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Civil Status Modal */}
+      <Modal
+        visible={showCivilStatusDropdown}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowCivilStatusDropdown(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>
+                {t("banking.modalSelectCivilStatus")}
+              </Text>
+              <TouchableOpacity
+                onPress={() => setShowCivilStatusDropdown(false)}
+              >
+                <Ionicons name="close" size={24} color="#333" />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={styles.modalContent}>
+              {CIVIL_STATUS_OPTIONS.map((opt) => (
+                <TouchableOpacity
+                  key={opt}
+                  style={[
+                    styles.optionRow,
+                    civilStatus === opt && styles.optionRowSelected,
+                  ]}
+                  onPress={() => {
+                    setCivilStatus(opt);
+                    setShowCivilStatusDropdown(false);
+                  }}
+                >
+                  <Text style={styles.optionText}>
+                    {opt === "Single"
+                      ? t("travel.single")
+                      : opt === "Married"
+                        ? t("travel.married")
+                        : opt === "Widowed"
+                          ? t("travel.widowed")
+                          : opt === "Separated"
+                            ? t("travel.separated")
+                            : t("travel.divorced")}
+                  </Text>
+                  {civilStatus === opt && (
+                    <Ionicons
+                      name="checkmark-circle"
+                      size={22}
+                      color={THEME_COLOR}
+                    />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
       {/* Date of Birth Modal */}
       <Modal
         visible={showDateModal}
@@ -238,15 +319,10 @@ export default function TravelProtectPerDeatails({
         animationType="slide"
         onRequestClose={() => setShowDateModal(false)}
       >
-        <View style={styles.dateModalOverlay}>
-          <TouchableOpacity
-            style={styles.dateModalBackdrop}
-            activeOpacity={1}
-            onPress={() => setShowDateModal(false)}
-          />
-          <View style={styles.dateModalContainer}>
-            <View style={styles.dateModalHeader}>
-              <Text style={styles.dateModalTitle}>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContainer, styles.dateModalContainer]}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>
                 {t("travel.selectBirthdate")}
               </Text>
               <TouchableOpacity onPress={() => setShowDateModal(false)}>
@@ -268,9 +344,7 @@ export default function TravelProtectPerDeatails({
                         tempDate.month === i && styles.dateOptionSelected,
                       ]}
                       onPress={() => {
-                        const next = { ...tempDate, month: i };
-                        setTempDate(next);
-                        applyDateFromTemp(next.month, next.day, next.year);
+                        setTempDate({ ...tempDate, month: i });
                       }}
                     >
                       <Text style={styles.dateOptionText}>{t(key)}</Text>
@@ -293,9 +367,7 @@ export default function TravelProtectPerDeatails({
                           styles.dateOptionSelected,
                       ]}
                       onPress={() => {
-                        const next = { ...tempDate, day: parseInt(d, 10) };
-                        setTempDate(next);
-                        applyDateFromTemp(next.month, next.day, next.year);
+                        setTempDate({ ...tempDate, day: parseInt(d, 10) });
                       }}
                     >
                       <Text style={styles.dateOptionText}>{d}</Text>
@@ -318,9 +390,7 @@ export default function TravelProtectPerDeatails({
                           styles.dateOptionSelected,
                       ]}
                       onPress={() => {
-                        const next = { ...tempDate, year: parseInt(y, 10) };
-                        setTempDate(next);
-                        applyDateFromTemp(next.month, next.day, next.year);
+                        setTempDate({ ...tempDate, year: parseInt(y, 10) });
                       }}
                     >
                       <Text style={styles.dateOptionText}>{y}</Text>
@@ -329,6 +399,12 @@ export default function TravelProtectPerDeatails({
                 </ScrollView>
               </View>
             </View>
+            <TouchableOpacity
+              style={styles.dateConfirmButton}
+              onPress={handleDateConfirm}
+            >
+              <Text style={styles.dateConfirmText}>{t("banking.confirm")}</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -339,13 +415,13 @@ export default function TravelProtectPerDeatails({
 const styles = StyleSheet.create({
   formCard: {
     backgroundColor: "#FFFFFF",
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: 20,
+    padding: 24,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
   },
   formHeader: {
     flexDirection: "row",
@@ -357,97 +433,78 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: "#FFF5F0",
+    backgroundColor: "rgba(225, 88, 22, 0.12)",
     justifyContent: "center",
     alignItems: "center",
   },
   formTitle: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#333",
+    color: "#000000",
     marginBottom: 2,
   },
   formSubtitle: {
     fontSize: 12,
-    color: "#999",
+    color: "#9E9E9E",
   },
   inputGroup: {
     marginBottom: 20,
   },
   inputLabel: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: "600",
-    color: "#333",
-    marginBottom: 8,
+    color: "#000000",
+    marginBottom: 10,
   },
   required: {
-    color: "#E25A17",
+    color: THEME_COLOR,
   },
   input: {
-    backgroundColor: "#F8F8F8",
+    backgroundColor: "#FFFFFF",
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
-    fontSize: 14,
-    color: "#333",
-    borderWidth: 1,
+    fontSize: 16,
+    color: "#000000",
+    fontWeight: "500",
+    borderWidth: 2,
     borderColor: "#E0E0E0",
   },
   dropdown: {
-    backgroundColor: "#F8F8F8",
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    borderWidth: 1,
+    justifyContent: "space-between",
+    backgroundColor: "#FFFFFF",
+    borderWidth: 2,
     borderColor: "#E0E0E0",
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
   },
   dropdownText: {
-    fontSize: 14,
-    color: "#333",
+    fontSize: 16,
+    color: "#000000",
+    fontWeight: "500",
   },
   dropdownPlaceholder: {
-    color: "#999",
+    color: "#9E9E9E",
+    fontWeight: "400",
   },
-  dropdownMenu: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    marginTop: 8,
-    borderWidth: 1,
-    borderColor: "#E0E0E0",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  dropdownItem: {
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: "#F0F0F0",
-  },
-  dropdownItemText: {
-    fontSize: 14,
-    color: "#333",
-  },
-  dateModalOverlay: {
+  modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.5)",
     justifyContent: "flex-end",
   },
-  dateModalBackdrop: {
-    flex: 1,
-  },
-  dateModalContainer: {
+  modalContainer: {
     backgroundColor: "#FFFFFF",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
+    maxHeight: "60%",
+  },
+  dateModalContainer: {
     maxHeight: "70%",
   },
-  dateModalHeader: {
+  modalHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
@@ -455,10 +512,33 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#E0E0E0",
   },
-  dateModalTitle: {
+  modalTitle: {
     fontSize: 18,
     fontWeight: "700",
     color: "#333",
+  },
+  modalContent: {
+    padding: 16,
+  },
+  optionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    marginBottom: 4,
+    backgroundColor: "#F9F9F9",
+  },
+  optionRowSelected: {
+    backgroundColor: "rgba(225, 88, 22, 0.08)",
+    borderWidth: 1,
+    borderColor: "rgba(225, 88, 22, 0.3)",
+  },
+  optionText: {
+    fontSize: 16,
+    color: "#333",
+    fontWeight: "500",
   },
   datePickerRow: {
     flexDirection: "row",
@@ -495,5 +575,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#333",
     fontWeight: "500",
+  },
+  dateConfirmButton: {
+    margin: 20,
+    paddingVertical: 16,
+    borderRadius: 14,
+    backgroundColor: THEME_COLOR,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  dateConfirmText: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#FFFFFF",
   },
 });

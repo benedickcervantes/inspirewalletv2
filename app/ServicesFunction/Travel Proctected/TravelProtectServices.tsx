@@ -7,17 +7,17 @@ import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-    ActivityIndicator,
-    Keyboard,
-    Modal,
-    Platform,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  Keyboard,
+  Modal,
+  Platform,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -48,14 +48,17 @@ async function uriToBase64DataUrl(uri: string): Promise<string> {
   }
 
   const base64 = await FileSystem.readAsStringAsync(uri, {
-    encoding: 'base64',
+    encoding: "base64",
   });
   const ext = uri.split(".").pop()?.toLowerCase() ?? "jpg";
   const mime =
-    ext === "png" ? "image/png" :
-    ext === "gif" ? "image/gif" :
-    ext === "webp" ? "image/webp" :
-    "image/jpeg";
+    ext === "png"
+      ? "image/png"
+      : ext === "gif"
+        ? "image/gif"
+        : ext === "webp"
+          ? "image/webp"
+          : "image/jpeg";
   return `data:${mime};base64,${base64}`;
 }
 
@@ -69,7 +72,8 @@ interface TimeDeposit {
 
 function parseDepositAmount(d: TimeDeposit): number {
   const val = d?.amount ?? d?.principal ?? 0;
-  const n = typeof val === "number" ? val : parseFloat(String(val).replace(/,/g, ""));
+  const n =
+    typeof val === "number" ? val : parseFloat(String(val).replace(/,/g, ""));
   return Number.isNaN(n) ? 0 : n;
 }
 
@@ -83,8 +87,18 @@ function computeTimeDepositTotal(deposits: TimeDeposit[]): number {
 }
 
 const MONTH_KEYS = [
-  "banking.january", "banking.february", "banking.march", "banking.april", "banking.may", "banking.june",
-  "banking.july", "banking.august", "banking.september", "banking.october", "banking.november", "banking.december",
+  "banking.january",
+  "banking.february",
+  "banking.march",
+  "banking.april",
+  "banking.may",
+  "banking.june",
+  "banking.july",
+  "banking.august",
+  "banking.september",
+  "banking.october",
+  "banking.november",
+  "banking.december",
 ] as const;
 
 type AlertType = "success" | "error" | "warning" | "info";
@@ -134,7 +148,9 @@ const CustomAlertModal = ({
             end={{ x: 1, y: 1 }}
           >
             <View style={customAlertStyles.iconContainer}>
-              <Text style={[customAlertStyles.iconText, { color }]}>{icon}</Text>
+              <Text style={[customAlertStyles.iconText, { color }]}>
+                {icon}
+              </Text>
             </View>
             <Text style={customAlertStyles.modalTitle}>{title}</Text>
             <Text style={customAlertStyles.modalMessage}>{message}</Text>
@@ -257,7 +273,7 @@ export default function TravelProtection() {
   useFocusEffect(
     useCallback(() => {
       fetchTimeDeposits();
-    }, [fetchTimeDeposits])
+    }, [fetchTimeDeposits]),
   );
 
   // Text input refs for Step 1
@@ -275,19 +291,73 @@ export default function TravelProtection() {
   const [emailError, setEmailError] = useState("");
   const [mobileError, setMobileError] = useState("");
   const [landlineError, setLandlineError] = useState("");
-  const [selectedCountry, setSelectedCountry] = useState({ code: "PH", flag: "🇵🇭", dialCode: "+63", name: "Philippines", example: "9171234567" });
+  const [selectedCountry, setSelectedCountry] = useState({
+    code: "PH",
+    flag: "🇵🇭",
+    dialCode: "+63",
+    name: "Philippines",
+    example: "9171234567",
+  });
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
 
   const countries = [
-      { code: "PH", flag: "🇵🇭", dialCode: "+63", name: "Philippines", example: "9171234567" },
-      { code: "US", flag: "🇺🇸", dialCode: "+1", name: "United States", example: "2025551234" },
-      { code: "KR", flag: "🇰🇷", dialCode: "+82", name: "South Korea", example: "1012345678" },
-      { code: "SA", flag: "🇸🇦", dialCode: "+966", name: "Saudi Arabia", example: "501234567" },
-      { code: "JP", flag: "🇯🇵", dialCode: "+81", name: "Japan", example: "9012345678" },
-      { code: "CN", flag: "🇨🇳", dialCode: "+86", name: "China", example: "13912345678" },
-      { code: "MY", flag: "🇲🇾", dialCode: "+60", name: "Malaysia", example: "123456789" },
-      { code: "VN", flag: "🇻🇳", dialCode: "+84", name: "Vietnam", example: "912345678" },
-    ];
+    {
+      code: "PH",
+      flag: "🇵🇭",
+      dialCode: "+63",
+      name: "Philippines",
+      example: "9171234567",
+    },
+    {
+      code: "US",
+      flag: "🇺🇸",
+      dialCode: "+1",
+      name: "United States",
+      example: "2025551234",
+    },
+    {
+      code: "KR",
+      flag: "🇰🇷",
+      dialCode: "+82",
+      name: "South Korea",
+      example: "1012345678",
+    },
+    {
+      code: "SA",
+      flag: "🇸🇦",
+      dialCode: "+966",
+      name: "Saudi Arabia",
+      example: "501234567",
+    },
+    {
+      code: "JP",
+      flag: "🇯🇵",
+      dialCode: "+81",
+      name: "Japan",
+      example: "9012345678",
+    },
+    {
+      code: "CN",
+      flag: "🇨🇳",
+      dialCode: "+86",
+      name: "China",
+      example: "13912345678",
+    },
+    {
+      code: "MY",
+      flag: "🇲🇾",
+      dialCode: "+60",
+      name: "Malaysia",
+      example: "123456789",
+    },
+    {
+      code: "VN",
+      flag: "🇻🇳",
+      dialCode: "+84",
+      name: "Vietnam",
+      example: "912345678",
+    },
+  ];
 
   // Form fields - Step 2 (store internal values for dropdowns; display via t())
   const [gender, setGender] = useState("");
@@ -352,7 +422,7 @@ export default function TravelProtection() {
   const showAlert = (
     title: string,
     message: string,
-    type: AlertType = "error"
+    type: AlertType = "error",
   ) => {
     setAlertConfig({
       title,
@@ -380,7 +450,11 @@ export default function TravelProtection() {
   const handleNext = () => {
     if (currentStep === 1) {
       if (!emailAddress || !mobileNumber || !homeAddress) {
-        showAlert(t("travel.requiredFields"), t("travel.fillRequired"), "error");
+        showAlert(
+          t("travel.requiredFields"),
+          t("travel.fillRequired"),
+          "error",
+        );
         return;
       }
       if (!validateEmail(emailAddress)) {
@@ -388,11 +462,16 @@ export default function TravelProtection() {
         return;
       }
       if (!validateMobileNumber(mobileNumber)) {
-        setMobileError(t("Please Enter Valid Number") || "Mobile must be 10-11 digits");
+        setMobileError(
+          t("Please Enter Valid Number") || "Mobile must be 10-11 digits",
+        );
         return;
       }
       if (landlineNumber && !validateLandlineNumber(landlineNumber)) {
-        setLandlineError(t("Please Enter Valid Landline Number") || "Landline must be 8 digits");
+        setLandlineError(
+          t("Please Enter Valid Landline Number") ||
+            "Landline must be 8 digits",
+        );
         return;
       }
       setEmailError("");
@@ -406,13 +485,21 @@ export default function TravelProtection() {
         !civilStatus ||
         !citizenship
       ) {
-        showAlert(t("travel.requiredFields"), t("travel.fillRequired"), "error");
+        showAlert(
+          t("travel.requiredFields"),
+          t("travel.fillRequired"),
+          "error",
+        );
         return;
       }
       setCurrentStep(3);
     } else if (currentStep === 3) {
       if (!sourceOfFund || !grossMonthlyIncome || !cashOnHand) {
-        showAlert(t("travel.requiredFields"), t("travel.fillRequired"), "error");
+        showAlert(
+          t("travel.requiredFields"),
+          t("travel.fillRequired"),
+          "error",
+        );
         return;
       }
       setCurrentStep(4);
@@ -427,7 +514,11 @@ export default function TravelProtection() {
         !passportNumber ||
         !purposeOfTravel
       ) {
-        showAlert(t("travel.requiredFields"), t("travel.fillRequired"), "error");
+        showAlert(
+          t("travel.requiredFields"),
+          t("travel.fillRequired"),
+          "error",
+        );
         return;
       }
       setCurrentStep(5);
@@ -436,7 +527,7 @@ export default function TravelProtection() {
         showAlert(
           t("travel.requiredDocuments"),
           t("travel.uploadBothDocs"),
-          "error"
+          "error",
         );
         return;
       }
@@ -457,7 +548,7 @@ export default function TravelProtection() {
   const handleSubmit = async () => {
     setLoading(true);
     try {
-      const accessToken = await AsyncStorage.getItem('access_token');
+      const accessToken = await AsyncStorage.getItem("access_token");
       if (!accessToken) {
         showAlert(t("travel.error"), "Not authenticated", "error");
         return;
@@ -469,8 +560,10 @@ export default function TravelProtection() {
       }
 
       // Formulate the time strings like "08:00 AM"
-      const formatTime = (d: Date) => d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      const formatDate = (d: Date | null) => d ? d.toISOString().split('T')[0] : "";
+      const formatTime = (d: Date) =>
+        d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      const formatDate = (d: Date | null) =>
+        d ? d.toISOString().split("T")[0] : "";
 
       // Prepare the data
       const applicationData = {
@@ -494,6 +587,8 @@ export default function TravelProtection() {
         passportNumber,
         purposeOfTravel,
         passportPhoto: passportPhotoBase64,
+        protectionFee,
+        userTimeDeposit,
       };
 
       const result = await submitTravelProtection(accessToken, applicationData);
@@ -502,13 +597,17 @@ export default function TravelProtection() {
         showAlert(
           t("travel.applicationSubmitted"),
           t("travel.applicationSuccess"),
-          "success"
+          "success",
         );
         setTimeout(() => {
           navigation.goBack();
         }, 2000);
       } else {
-        showAlert(t("travel.error"), result.error || "Failed to submit application", "error");
+        showAlert(
+          t("travel.error"),
+          result.error || "Failed to submit application",
+          "error",
+        );
       }
     } catch (error) {
       console.error("Travel protection API error:", error);
@@ -528,7 +627,11 @@ export default function TravelProtection() {
     setDateOfBirthText(formatDateOfBirth(d));
   };
 
-  const applyCheckInDateFromTemp = (month: number, day: number, year: number) => {
+  const applyCheckInDateFromTemp = (
+    month: number,
+    day: number,
+    year: number,
+  ) => {
     const d = new Date(year, month, day);
     setCheckInDate(d);
     setCheckInDateText(formatDateOfBirth(d));
@@ -539,7 +642,7 @@ export default function TravelProtection() {
     d.setHours(hour, minute, 0, 0);
     setDepartureTime(d);
     setDepartureTimeText(
-      d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+      d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     );
   };
 
@@ -548,7 +651,7 @@ export default function TravelProtection() {
     d.setHours(hour, minute, 0, 0);
     setArrivalTime(d);
     setArrivalTimeText(
-      d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+      d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     );
   };
 
@@ -560,7 +663,7 @@ export default function TravelProtection() {
         showAlert(
           t("travel.permissionRequired"),
           t("travel.allowPhotos"),
-          "warning"
+          "warning",
         );
         return;
       }
@@ -589,7 +692,7 @@ export default function TravelProtection() {
         showAlert(
           t("travel.permissionRequired"),
           t("travel.allowPhotos"),
-          "warning"
+          "warning",
         );
         return;
       }
@@ -614,8 +717,16 @@ export default function TravelProtection() {
       paddingHorizontal: horizontalPadding,
       paddingBottom: verticalScale(150),
     },
-    heroCard: { padding: scale(24), marginTop: verticalScale(16), marginBottom: verticalScale(16) },
-    heroIconContainer: { width: scale(80), height: scale(80), marginBottom: verticalScale(16) },
+    heroCard: {
+      padding: scale(24),
+      marginTop: verticalScale(16),
+      marginBottom: verticalScale(16),
+    },
+    heroIconContainer: {
+      width: scale(80),
+      height: scale(80),
+      marginBottom: verticalScale(16),
+    },
     heroTitle: { fontSize: scale(22) },
     heroSubtitle: { fontSize: scale(14) },
     infoBanner: { padding: scale(16), marginBottom: verticalScale(16) },
@@ -629,9 +740,14 @@ export default function TravelProtection() {
   return (
     <>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-      <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
+      <SafeAreaView
+        style={styles.container}
+        edges={["top", "left", "right", "bottom"]}
+      >
         {/* Top: Back arrow only */}
-        <View style={[styles.topSection, { paddingHorizontal: horizontalPadding }]}>
+        <View
+          style={[styles.topSection, { paddingHorizontal: horizontalPadding }]}
+        >
           <TouchableOpacity
             style={styles.backButton}
             onPress={() => navigation.goBack()}
@@ -643,11 +759,14 @@ export default function TravelProtection() {
         <KeyboardAwareScrollView
           ref={scrollViewRef}
           style={styles.container}
-          contentContainerStyle={[styles.scrollContent, dynamicStyles.scrollContent]}
+          contentContainerStyle={[
+            styles.scrollContent,
+            dynamicStyles.scrollContent,
+          ]}
           enableOnAndroid={true}
           enableAutomaticScroll={true}
-          extraScrollHeight={Platform.OS === 'ios' ? 150 : 120}
-          extraHeight={Platform.OS === 'android' ? 150 : 120}
+          extraScrollHeight={Platform.OS === "ios" ? 150 : 120}
+          extraHeight={Platform.OS === "android" ? 150 : 120}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
           keyboardOpeningTime={0}
@@ -667,19 +786,24 @@ export default function TravelProtection() {
                 color="#FFFFFF"
                 style={styles.headerIcon}
               />
-              <Text style={[styles.heroTitle, dynamicStyles.heroTitle]}>{t("travel.title")}</Text>
-              <Text style={[styles.heroSubtitle, dynamicStyles.heroSubtitle]}>{t("travel.subtitle")}</Text>
+              <Text style={[styles.heroTitle, dynamicStyles.heroTitle]}>
+                {t("travel.title")}
+              </Text>
+              <Text style={[styles.heroSubtitle, dynamicStyles.heroSubtitle]}>
+                {t("travel.subtitle")}
+              </Text>
             </LinearGradient>
           </View>
 
           {loading ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color="#E25A17" />
-              <Text style={[styles.loadingText, { fontSize: scale(14) }]}>{t("travel.loading")}</Text>
+              <Text style={[styles.loadingText, { fontSize: scale(14) }]}>
+                {t("travel.loading")}
+              </Text>
             </View>
           ) : (
             <>
-
               <View style={[styles.infoBanner, dynamicStyles.infoBanner]}>
                 <View style={styles.infoBannerIcon}>
                   <MaterialCommunityIcons
@@ -690,7 +814,9 @@ export default function TravelProtection() {
                 </View>
                 <Text style={styles.infoBannerText}>
                   {t("travel.infoBanner")}{" "}
-                  <Text style={styles.infoBannerBold}>{t("travel.infoBannerDays")}</Text>{" "}
+                  <Text style={styles.infoBannerBold}>
+                    {t("travel.infoBannerDays")}
+                  </Text>{" "}
                   {t("travel.infoBannerAfter")}
                 </Text>
               </View>
@@ -702,14 +828,21 @@ export default function TravelProtection() {
                     size={20}
                     color="#E25A17"
                   />
-                  <Text style={styles.feeLabel}>{t("travel.protectionFee")}</Text>
+                  <Text style={styles.feeLabel}>
+                    {t("travel.protectionFee")}
+                  </Text>
                 </View>
                 <Text style={[styles.feeAmount, dynamicStyles.feeAmount]}>
                   ₱ {protectionFee.toLocaleString()}
                 </Text>
               </View>
 
-              <View style={[styles.stepIndicatorContainer, dynamicStyles.stepIndicator]}>
+              <View
+                style={[
+                  styles.stepIndicatorContainer,
+                  dynamicStyles.stepIndicator,
+                ]}
+              >
                 {[1, 2, 3, 4, 5, 6].map((step) => (
                   <View
                     key={step}
@@ -721,7 +854,11 @@ export default function TravelProtection() {
                     ]}
                   >
                     {currentStep > step ? (
-                      <Ionicons name="checkmark" size={scale(16)} color="#FFFFFF" />
+                      <Ionicons
+                        name="checkmark"
+                        size={scale(16)}
+                        color="#FFFFFF"
+                      />
                     ) : (
                       <Text
                         style={[
@@ -748,7 +885,9 @@ export default function TravelProtection() {
                       />
                     </View>
                     <View>
-                      <Text style={styles.formTitle}>{t("travel.contactInfo")}</Text>
+                      <Text style={styles.formTitle}>
+                        {t("travel.contactInfo")}
+                      </Text>
                       <Text style={styles.formSubtitle}>
                         {t("travel.contactSubtitle")}
                       </Text>
@@ -757,14 +896,12 @@ export default function TravelProtection() {
 
                   <View style={styles.inputGroup}>
                     <Text style={styles.inputLabel}>
-                      {t("travel.emailAddress")} <Text style={styles.required}>*</Text>
+                      {t("travel.emailAddress")}{" "}
+                      <Text style={styles.required}>*</Text>
                     </Text>
                     <TextInput
                       ref={emailRef}
-                      style={[
-                        styles.input,
-                        emailError && styles.inputError
-                      ]}
+                      style={[styles.input, emailError && styles.inputError]}
                       placeholder={t("travel.placeholderEmail")}
                       placeholderTextColor="#999"
                       value={emailAddress}
@@ -778,7 +915,10 @@ export default function TravelProtection() {
                       onSubmitEditing={() => mobileRef.current?.focus()}
                       onFocus={() => {
                         setTimeout(() => {
-                          scrollViewRef.current?.scrollToFocusedInput(emailRef.current as any, 70);
+                          scrollViewRef.current?.scrollToFocusedInput(
+                            emailRef.current as any,
+                            70,
+                          );
                         }, 100);
                       }}
                     />
@@ -789,22 +929,27 @@ export default function TravelProtection() {
 
                   <View style={styles.inputGroup}>
                     <Text style={styles.inputLabel}>
-                      {t("travel.mobileNumber")} <Text style={styles.required}>*</Text>
+                      {t("travel.mobileNumber")}{" "}
+                      <Text style={styles.required}>*</Text>
                     </Text>
                     <View style={styles.mobileInputContainer}>
                       <TouchableOpacity
                         style={styles.countryDropdown}
-                        onPress={() => setShowCountryDropdown(!showCountryDropdown)}
+                        onPress={() => setShowCountryDropdown(true)}
                       >
-                        <Text style={styles.countryFlag}>{selectedCountry.flag}</Text>
-                        <Text style={styles.countryCode}>{selectedCountry.dialCode}</Text>
-                        <Ionicons name="chevron-down" size={16} color="#666" />
+                        <Text style={styles.countryFlag}>
+                          {selectedCountry.flag}
+                        </Text>
+                        <Text style={styles.countryCode}>
+                          {selectedCountry.dialCode}
+                        </Text>
+                        <Ionicons name="chevron-down" size={18} color="#666" />
                       </TouchableOpacity>
                       <TextInput
                         ref={mobileRef}
                         style={[
                           styles.mobileInput,
-                          mobileError && styles.inputError
+                          mobileError && styles.inputError,
                         ]}
                         placeholder={selectedCountry.example}
                         placeholderTextColor="#999"
@@ -822,42 +967,67 @@ export default function TravelProtection() {
                         maxLength={11}
                         onFocus={() => {
                           setTimeout(() => {
-                            scrollViewRef.current?.scrollToFocusedInput(mobileRef.current as any);
+                            scrollViewRef.current?.scrollToFocusedInput(
+                              mobileRef.current as any,
+                            );
                           }, 100);
                         }}
                       />
                     </View>
-                    {showCountryDropdown && (
-                      <ScrollView style={styles.dropdownMenu} scrollEnabled={true} nestedScrollEnabled={true}>
-                        {countries.map((country) => (
-                          <TouchableOpacity
-                            key={country.code}
-                            style={styles.dropdownItem}
-                            onPress={() => {
-                              setSelectedCountry(country);
-                              setShowCountryDropdown(false);
-                            }}
-                          >
-                            <Text style={styles.dropdownItemContent}>
-                              {country.flag} {country.dialCode} {country.name}
+                    <Modal
+                      visible={showCountryDropdown}
+                      transparent
+                      animationType="slide"
+                      onRequestClose={() => setShowCountryDropdown(false)}
+                    >
+                      <View style={styles.modalOverlay}>
+                        <View style={styles.modalContainer}>
+                          <View style={styles.modalHeader}>
+                            <Text style={styles.modalTitle}>
+                              {t("travel.selectCountry") || "Select Country"}
                             </Text>
-                          </TouchableOpacity>
-                        ))}
-                      </ScrollView>
-                    )}
+                            <TouchableOpacity
+                              onPress={() => setShowCountryDropdown(false)}
+                            >
+                              <Ionicons name="close" size={24} color="#333" />
+                            </TouchableOpacity>
+                          </View>
+                          <ScrollView style={styles.dropdownMenu}>
+                            {countries.map((country) => (
+                              <TouchableOpacity
+                                key={country.code}
+                                style={[
+                                  styles.dropdownItem,
+                                  selectedCountry.code === country.code &&
+                                    styles.dropdownItemSelected,
+                                ]}
+                                onPress={() => {
+                                  setSelectedCountry(country);
+                                  setShowCountryDropdown(false);
+                                }}
+                              >
+                                <Text style={styles.dropdownItemContent}>
+                                  {country.flag} {country.dialCode}{" "}
+                                  {country.name}
+                                </Text>
+                              </TouchableOpacity>
+                            ))}
+                          </ScrollView>
+                        </View>
+                      </View>
+                    </Modal>
                     {mobileError && (
                       <Text style={styles.errorMessage}>{mobileError}</Text>
                     )}
                   </View>
 
                   <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>{t("travel.landlineNumber")}</Text>
+                    <Text style={styles.inputLabel}>
+                      {t("travel.landlineNumber")}
+                    </Text>
                     <TextInput
                       ref={landlineRef}
-                      style={[
-                        styles.input,
-                        landlineError && styles.inputError
-                      ]}
+                      style={[styles.input, landlineError && styles.inputError]}
                       placeholder={t("travel.placeholderLandline")}
                       placeholderTextColor="#999"
                       value={landlineNumber}
@@ -874,7 +1044,9 @@ export default function TravelProtection() {
                       maxLength={8}
                       onFocus={() => {
                         setTimeout(() => {
-                          scrollViewRef.current?.scrollToFocusedInput(landlineRef.current as any);
+                          scrollViewRef.current?.scrollToFocusedInput(
+                            landlineRef.current as any,
+                          );
                         }, 100);
                       }}
                     />
@@ -885,7 +1057,8 @@ export default function TravelProtection() {
 
                   <View style={styles.inputGroup}>
                     <Text style={styles.inputLabel}>
-                      {t("travel.homeAddress")} <Text style={styles.required}>*</Text>
+                      {t("travel.homeAddress")}{" "}
+                      <Text style={styles.required}>*</Text>
                     </Text>
                     <TextInput
                       ref={homeAddressRef}
@@ -901,7 +1074,9 @@ export default function TravelProtection() {
                       onSubmitEditing={Keyboard.dismiss}
                       onFocus={() => {
                         setTimeout(() => {
-                          scrollViewRef.current?.scrollToFocusedInput(homeAddressRef.current as any);
+                          scrollViewRef.current?.scrollToFocusedInput(
+                            homeAddressRef.current as any,
+                          );
                         }, 100);
                       }}
                     />
@@ -1008,7 +1183,10 @@ export default function TravelProtection() {
 
           {/* Buttons at bottom of scroll content */}
           <View style={styles.buttonContainer}>
-            <TouchableOpacity style={styles.backButtonBottom} onPress={handleBack}>
+            <TouchableOpacity
+              style={styles.backButtonBottom}
+              onPress={handleBack}
+            >
               <Text style={styles.backButtonText}>{t("travel.back")}</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
@@ -1039,6 +1217,8 @@ export default function TravelProtection() {
     </>
   );
 }
+
+const THEME_COLOR = "#E15816";
 
 const styles = StyleSheet.create({
   container: {
@@ -1135,7 +1315,7 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 16,
     borderLeftWidth: 4,
-    borderLeftColor: "#E25A17",
+    borderLeftColor: THEME_COLOR,
   },
   infoBannerIcon: {
     marginRight: 12,
@@ -1149,7 +1329,7 @@ const styles = StyleSheet.create({
   },
   infoBannerBold: {
     fontWeight: "700",
-    color: "#E25A17",
+    color: THEME_COLOR,
   },
   feeCard: {
     backgroundColor: "#FFFFFF",
@@ -1177,7 +1357,7 @@ const styles = StyleSheet.create({
   feeAmount: {
     fontSize: 36,
     fontWeight: "700",
-    color: "#E25A17",
+    color: THEME_COLOR,
     marginBottom: 4,
     textAlign: "center",
   },
@@ -1204,7 +1384,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   stepDotActive: {
-    backgroundColor: "#E25A17",
+    backgroundColor: THEME_COLOR,
   },
   stepDotCompleted: {
     backgroundColor: "#4CAF50",
@@ -1219,13 +1399,13 @@ const styles = StyleSheet.create({
   },
   formCard: {
     backgroundColor: "#FFFFFF",
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: 20,
+    padding: 24,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
   },
   formHeader: {
     flexDirection: "row",
@@ -1237,49 +1417,50 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: "#FFF5F0",
+    backgroundColor: "rgba(225, 88, 22, 0.12)",
     justifyContent: "center",
     alignItems: "center",
   },
   formTitle: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#333",
+    color: "#000000",
     marginBottom: 2,
   },
   formSubtitle: {
     fontSize: 12,
-    color: "#999",
+    color: "#9E9E9E",
   },
   inputGroup: {
     marginBottom: 20,
   },
   inputLabel: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: "600",
-    color: "#333",
-    marginBottom: 8,
+    color: "#000000",
+    marginBottom: 10,
   },
   required: {
-    color: "#E25A17",
+    color: THEME_COLOR,
   },
   input: {
-    backgroundColor: "#F8F8F8",
+    backgroundColor: "#FFFFFF",
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
-    fontSize: 14,
-    color: "#333",
-    borderWidth: 1,
+    fontSize: 16,
+    color: "#000000",
+    fontWeight: "500",
+    borderWidth: 2,
     borderColor: "#E0E0E0",
   },
   inputError: {
-    borderColor: "#E25A17",
+    borderColor: THEME_COLOR,
     borderWidth: 2,
   },
   errorMessage: {
     fontSize: 12,
-    color: "#E25A17",
+    color: THEME_COLOR,
     marginTop: 6,
     fontWeight: "500",
   },
@@ -1289,15 +1470,15 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   countryDropdown: {
-    backgroundColor: "#F8F8F8",
+    backgroundColor: "#FFFFFF",
     borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 6,
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: "#E0E0E0",
   },
   countryFlag: {
@@ -1305,68 +1486,87 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   countryCode: {
-    fontSize: 13,
+    fontSize: 16,
     fontWeight: "600",
-    color: "#333",
+    color: "#000000",
   },
   mobileInput: {
     flex: 1,
-    backgroundColor: "#F8F8F8",
+    backgroundColor: "#FFFFFF",
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
-    fontSize: 14,
-    color: "#333",
-    borderWidth: 1,
+    fontSize: 16,
+    color: "#000000",
+    fontWeight: "500",
+    borderWidth: 2,
     borderColor: "#E0E0E0",
   },
   textArea: {
-    height: 80,
+    height: 100,
     paddingTop: 14,
   },
   dropdown: {
-    backgroundColor: "#F8F8F8",
+    backgroundColor: "#FFFFFF",
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: "#E0E0E0",
   },
   dropdownText: {
-    fontSize: 14,
-    color: "#333",
+    fontSize: 16,
+    color: "#000000",
+    fontWeight: "500",
   },
   dropdownPlaceholder: {
-    color: "#999",
+    color: "#9E9E9E",
+    fontWeight: "400",
   },
-  dropdownMenu: {
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "flex-end",
+  },
+  modalContainer: {
     backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    marginTop: 8,
-    borderWidth: 1,
-    borderColor: "#E0E0E0",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    maxHeight: 250,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: "60%",
   },
-  dropdownItem: {
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: "#F0F0F0",
+    borderBottomColor: "#E0E0E0",
   },
-  dropdownItemText: {
-    fontSize: 14,
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "700",
     color: "#333",
   },
+  dropdownMenu: {
+    padding: 16,
+  },
+  dropdownItem: {
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    marginBottom: 8,
+    backgroundColor: "#F9F9F9",
+  },
+  dropdownItemSelected: {
+    backgroundColor: "rgba(225, 88, 22, 0.12)",
+    borderWidth: 1,
+    borderColor: "rgba(225, 88, 22, 0.3)",
+  },
   dropdownItemContent: {
-    fontSize: 14,
+    fontSize: 16,
     color: "#333",
     fontWeight: "500",
   },
@@ -1382,7 +1582,7 @@ const styles = StyleSheet.create({
     flex: 1,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: "#E25A17",
+    borderColor: THEME_COLOR,
     backgroundColor: "#FFFFFF",
     paddingVertical: 14,
     alignItems: "center",
@@ -1391,7 +1591,7 @@ const styles = StyleSheet.create({
   backButtonText: {
     fontSize: 16,
     fontWeight: "700",
-    color: "#E25A17",
+    color: THEME_COLOR,
     letterSpacing: 0.5,
   },
   nextButton: {

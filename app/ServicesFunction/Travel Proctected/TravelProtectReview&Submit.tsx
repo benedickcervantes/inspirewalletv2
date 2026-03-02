@@ -1,10 +1,8 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import {
-    StyleSheet,
-    Text,
-    View,
-} from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { useLanguage } from "../../../context/LanguageContext";
+
+const THEME_COLOR = "#E15816";
 
 export interface TravelProtectReviewSubmitProps {
   emailAddress: string;
@@ -34,14 +32,12 @@ export default function TravelProtectReviewSubmit({
           <MaterialCommunityIcons
             name="clipboard-check"
             size={24}
-            color="#E25A17"
+            color={THEME_COLOR}
           />
         </View>
         <View>
           <Text style={styles.formTitle}>{t("travel.reviewSubmit")}</Text>
-          <Text style={styles.formSubtitle}>
-            {t("travel.reviewSubtitle")}
-          </Text>
+          <Text style={styles.formSubtitle}>{t("travel.reviewSubtitle")}</Text>
         </View>
       </View>
 
@@ -51,7 +47,7 @@ export default function TravelProtectReviewSubmit({
           <MaterialCommunityIcons
             name="home-account"
             size={18}
-            color="#E25A17"
+            color={THEME_COLOR}
           />
           <Text style={styles.reviewSectionTitle}>
             {t("travel.reviewContactInfo")}
@@ -83,16 +79,14 @@ export default function TravelProtectReviewSubmit({
           <MaterialCommunityIcons
             name="airplane-takeoff"
             size={18}
-            color="#E25A17"
+            color={THEME_COLOR}
           />
           <Text style={styles.reviewSectionTitle}>
             {t("travel.reviewTravelDetails")}
           </Text>
         </View>
         <View style={styles.reviewItem}>
-          <Text style={styles.reviewLabel}>
-            {t("travel.labelDestination")}
-          </Text>
+          <Text style={styles.reviewLabel}>{t("travel.labelDestination")}</Text>
           <Text style={styles.reviewValue}>
             {destinationAddress || t("travel.na")}
           </Text>
@@ -111,9 +105,7 @@ export default function TravelProtectReviewSubmit({
 
       {/* Terms & Conditions */}
       <View style={styles.termsBox}>
-        <Text style={styles.termsText}>
-          {t("travel.termsText")}
-        </Text>
+        <Text style={styles.termsText}>{t("travel.termsText")}</Text>
       </View>
     </View>
   );
@@ -122,13 +114,13 @@ export default function TravelProtectReviewSubmit({
 const styles = StyleSheet.create({
   formCard: {
     backgroundColor: "#FFFFFF",
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: 20,
+    padding: 24,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
   },
   formHeader: {
     flexDirection: "row",
@@ -140,19 +132,19 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: "#FFF5F0",
+    backgroundColor: "rgba(225, 88, 22, 0.12)",
     justifyContent: "center",
     alignItems: "center",
   },
   formTitle: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#333",
+    color: "#000000",
     marginBottom: 2,
   },
   formSubtitle: {
     fontSize: 12,
-    color: "#999",
+    color: "#9E9E9E",
   },
   reviewSection: {
     marginBottom: 20,
@@ -169,7 +161,7 @@ const styles = StyleSheet.create({
   reviewSectionTitle: {
     fontSize: 14,
     fontWeight: "700",
-    color: "#E25A17",
+    color: THEME_COLOR,
   },
   reviewItem: {
     marginBottom: 12,
@@ -187,11 +179,11 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   termsBox: {
-    backgroundColor: "#FFF5F0",
+    backgroundColor: "rgba(255, 235, 205, 0.4)",
     borderRadius: 12,
     padding: 16,
     borderLeftWidth: 4,
-    borderLeftColor: "#E25A17",
+    borderLeftColor: THEME_COLOR,
   },
   termsText: {
     fontSize: 12,

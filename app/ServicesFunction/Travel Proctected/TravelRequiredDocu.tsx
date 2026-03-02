@@ -1,11 +1,8 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import {
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
-} from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useLanguage } from "../../../context/LanguageContext";
+
+const THEME_COLOR = "#E15816";
 
 export interface TravelRequiredDocuProps {
   passportPhoto: string | null;
@@ -29,13 +26,11 @@ export default function TravelRequiredDocu({
           <MaterialCommunityIcons
             name="file-document"
             size={24}
-            color="#E25A17"
+            color={THEME_COLOR}
           />
         </View>
         <View>
-          <Text style={styles.formTitle}>
-            {t("travel.requiredDocs")}
-          </Text>
+          <Text style={styles.formTitle}>{t("travel.requiredDocs")}</Text>
           <Text style={styles.formSubtitle}>
             {t("travel.requiredDocsSubtitle")}
           </Text>
@@ -48,13 +43,13 @@ export default function TravelRequiredDocu({
           {t("travel.passportPhoto")} <Text style={styles.required}>*</Text>
         </Text>
         <TouchableOpacity
-          style={styles.uploadBox}
+          style={[styles.uploadBox, passportPhoto && styles.uploadBoxSuccess]}
           onPress={onPickPassportPhoto}
         >
           <MaterialCommunityIcons
             name="camera"
             size={40}
-            color={passportPhoto ? "#4CAF50" : "#E25A17"}
+            color={passportPhoto ? "#10B981" : THEME_COLOR}
           />
           <Text
             style={[
@@ -66,7 +61,9 @@ export default function TravelRequiredDocu({
               ? t("travel.passportUploaded")
               : t("travel.uploadPassport")}
           </Text>
-          <Text style={styles.uploadSubtext}>{t("travel.tapToSelectImage")}</Text>
+          <Text style={styles.uploadSubtext}>
+            {t("travel.tapToSelectImage")}
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -76,13 +73,13 @@ export default function TravelRequiredDocu({
           {t("travel.governmentId")} <Text style={styles.required}>*</Text>
         </Text>
         <TouchableOpacity
-          style={styles.uploadBox}
+          style={[styles.uploadBox, governmentId && styles.uploadBoxSuccess]}
           onPress={onPickGovernmentId}
         >
           <MaterialCommunityIcons
             name="card-account-details"
             size={40}
-            color={governmentId ? "#4CAF50" : "#E25A17"}
+            color={governmentId ? "#10B981" : THEME_COLOR}
           />
           <Text
             style={[
@@ -106,13 +103,13 @@ export default function TravelRequiredDocu({
 const styles = StyleSheet.create({
   formCard: {
     backgroundColor: "#FFFFFF",
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: 20,
+    padding: 24,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
   },
   formHeader: {
     flexDirection: "row",
@@ -124,54 +121,59 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: "#FFF5F0",
+    backgroundColor: "rgba(225, 88, 22, 0.12)",
     justifyContent: "center",
     alignItems: "center",
   },
   formTitle: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#333",
+    color: "#000000",
     marginBottom: 2,
   },
   formSubtitle: {
     fontSize: 12,
-    color: "#999",
+    color: "#9E9E9E",
   },
   inputGroup: {
     marginBottom: 20,
   },
   inputLabel: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: "600",
-    color: "#333",
-    marginBottom: 8,
+    color: "#000000",
+    marginBottom: 10,
   },
   required: {
-    color: "#E25A17",
+    color: THEME_COLOR,
   },
   uploadBox: {
-    backgroundColor: "#F8F8F8",
+    backgroundColor: "#F9F9F9",
     borderRadius: 12,
     borderWidth: 2,
     borderColor: "#E0E0E0",
     borderStyle: "dashed",
-    paddingVertical: 40,
+    paddingVertical: 32,
     alignItems: "center",
     justifyContent: "center",
   },
+  uploadBoxSuccess: {
+    borderColor: "#10B981",
+    backgroundColor: "rgba(16, 185, 129, 0.05)",
+    borderStyle: "solid",
+  },
   uploadText: {
     fontSize: 14,
-    fontWeight: "600",
-    color: "#E25A17",
+    fontWeight: "700",
+    color: THEME_COLOR,
     marginTop: 12,
   },
   uploadTextSuccess: {
-    color: "#4CAF50",
+    color: "#10B981",
   },
   uploadSubtext: {
     fontSize: 12,
-    color: "#999",
+    color: "#9E9E9E",
     marginTop: 4,
   },
 });
