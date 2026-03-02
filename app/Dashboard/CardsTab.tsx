@@ -3,6 +3,7 @@ import { useNavigation } from "@react-navigation/native";
 import { useRef, useState } from "react";
 import {
   Animated,
+  Image,
   ImageBackground,
   Modal,
   ScrollView,
@@ -10,7 +11,7 @@ import {
   Text,
   TouchableOpacity,
   useWindowDimensions,
-  View,
+  View
 } from "react-native";
 import { useLanguage } from "../../context/LanguageContext";
 
@@ -266,11 +267,11 @@ export default function CardsTab({
           <View style={styles.cardItem}>
             <View style={styles.cardPreview}>
               <ImageBackground
-                source={require("../../assets/cards/design_collection/dc2/front.png")}
+                source={require("../../assets/cards/design_collection/dc1/front.png")}
                 style={styles.cardPreviewImage}
                 imageStyle={styles.cardPreviewImageStyle}
                 resizeMode="cover">
-                <View style={styles.premiumGradientGold}>
+                <View style={styles.premiumGradient}>
                   <Text style={styles.premiumLabel}>{t("ct.premiumBadge")}</Text>
                 </View>
                 <View style={styles.priceBadge}>
@@ -278,10 +279,8 @@ export default function CardsTab({
                 </View>
               </ImageBackground>
             </View>
-
             <View style={styles.cardInfo}>
-              <Text style={styles.cardItemTitle}>{t("ct.royalCurve")}</Text>
-
+              <Text style={styles.cardItemTitle}>{t("ct.orangeElite")}</Text>
               <TouchableOpacity
                 style={[
                   styles.upgradeButton,
@@ -289,10 +288,10 @@ export default function CardsTab({
                 ]}
                 onPress={() => {
                   setSelectedDesignCard({
-                    title: t("ct.royalCurve") || "Royal Curve",
+                    title: t("ct.orangeElite") || "Orange Elite",
                     price: 250,
-                    image: require("../../assets/cards/design_collection/dc2/front.png"),
-                    backImage: require("../../assets/cards/design_collection/dc2/back.png")
+                    image: require("../../assets/cards/design_collection/dc1/front.png"),
+                    backImage: require("../../assets/cards/design_collection/dc1/back.png")
                   });
                   setIsDesignModalVisible(true);
                 }}>
@@ -306,11 +305,11 @@ export default function CardsTab({
           <View style={styles.cardItem}>
             <View style={styles.cardPreview}>
               <ImageBackground
-                source={require("../../assets/cards/design_collection/dc1/front.png")}
+                source={require("../../assets/cards/design_collection/dc2/front.png")}
                 style={styles.cardPreviewImage}
                 imageStyle={styles.cardPreviewImageStyle}
                 resizeMode="cover">
-                <View style={styles.premiumGradient}>
+                <View style={styles.premiumGradientGold}>
                   <Text style={styles.premiumLabel}>{t("ct.premiumBadge")}</Text>
                 </View>
                 <View style={styles.priceBadge}>
@@ -318,8 +317,10 @@ export default function CardsTab({
                 </View>
               </ImageBackground>
             </View>
+
             <View style={styles.cardInfo}>
-              <Text style={styles.cardItemTitle}>{t("ct.orangeElite")}</Text>
+              <Text style={styles.cardItemTitle}>{t("ct.royalCurve")}</Text>
+
               <TouchableOpacity
                 style={[
                   styles.upgradeButton,
@@ -327,10 +328,10 @@ export default function CardsTab({
                 ]}
                 onPress={() => {
                   setSelectedDesignCard({
-                    title: t("ct.orangeElite") || "Orange Elite",
+                    title: t("ct.royalCurve") || "Royal Curve",
                     price: 5000,
-                    image: require("../../assets/cards/design_collection/dc1/front.png"),
-                    backImage: require("../../assets/cards/design_collection/dc1/back.png")
+                    image: require("../../assets/cards/design_collection/dc2/front.png"),
+                    backImage: require("../../assets/cards/design_collection/dc2/back.png")
                   });
                   setIsDesignModalVisible(true);
                 }}>
@@ -626,59 +627,45 @@ export default function CardsTab({
         onDismiss={() => { designFlipAnim.setValue(0); setIsDesignCardFlipped(false); }}
       >
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { maxHeight: '90%' }]}>
-            <View style={styles.modalHeader}>
-              <View style={styles.modalHeaderContent}>
-                <View style={styles.headerIconContainer}>
+          <View style={styles.designModalContent}>
+            <View style={styles.designModalHeader}>
+              <View style={styles.designHeaderLeft}>
+                <View style={styles.designIconContainer}>
                   <Ionicons name="card" size={24} color="#FFFFFF" />
                 </View>
                 <View>
-                  <Text style={styles.modalTitle}>{t("ct.cardPurchase")}</Text>
-                  <Text style={styles.modalSubtitle}>{t("ct.previewConfirm")}</Text>
+                  <Text style={styles.designModalTitle}>Card purchase</Text>
+                  <Text style={styles.designModalSubtitle}>Review your selection</Text>
                 </View>
               </View>
-              <TouchableOpacity style={styles.closeButton} onPress={() => setIsDesignModalVisible(false)} activeOpacity={0.7}>
-                <Ionicons name="close" size={20} color="#Fe7e43" />
+              <TouchableOpacity 
+                style={styles.designCloseButton} 
+                onPress={() => setIsDesignModalVisible(false)} 
+                activeOpacity={0.7}
+              >
+                <Ionicons name="close" size={24} color="#333" />
               </TouchableOpacity>
             </View>
 
-            <ScrollView style={styles.purchaseModalBody} contentContainerStyle={styles.purchaseModalScrollContent} showsVerticalScrollIndicator={false}>
-              <Text style={styles.cardPreviewLabel}>{t("ct.cardPreviewLabel")}</Text>
+            <View style={styles.designModalBody}>
+              <Text style={styles.designCardPreviewLabel}>CARD PREVIEW</Text>
 
-              <View style={styles.purchaseCardPreviewContainer}>
+              <View style={styles.designCardPreviewContainer}>
                 <TouchableOpacity activeOpacity={0.9} onPress={flipDesignCard}>
-                  <View style={styles.modalFlipContainer}>
+                  <View style={styles.designModalFlipContainer}>
                     <Animated.View style={[styles.modalCardFace, { transform: [{ rotateY: designFrontInterpolate }] }]}>
                       <ImageBackground
                         source={selectedDesignCard.image}
-                        style={styles.purchaseCardPreview}
-                        imageStyle={styles.purchaseCardPreviewImage}
+                        style={styles.designCardPreview}
+                        imageStyle={styles.designCardPreviewImage}
                         resizeMode="contain"
-                      >
-                        <View style={styles.purchaseCardOverlay}>
-                          <Text style={styles.purchaseCardNumber}>
-                            {userData?.accountNumber ? userData.accountNumber.replace(/(.{4})/g, '$1 ').trim() : t("ct.placeholderAccount")}
-                          </Text>
-                          <Text style={styles.purchaseCardName}>
-                            {[userData?.firstName, userData?.lastName]
-                              .filter(Boolean)
-                              .join(" ")
-                              .toUpperCase() || t("ct.placeholderName")}
-                          </Text>
-                          <Text style={styles.purchaseCardBalanceLabel}>
-                            {t("ct.availableBalance")}
-                          </Text>
-                          <Text style={styles.purchaseCardBalanceAmount}>
-                            ₱ {formatCurrency(availableBalance || 0)}
-                          </Text>
-                        </View>
-                      </ImageBackground>
+                      />
                     </Animated.View>
                     <Animated.View style={[styles.modalCardFace, styles.modalCardBack, { transform: [{ rotateY: designBackInterpolate }] }]}>
                       <ImageBackground
                         source={selectedDesignCard.backImage}
-                        style={styles.purchaseCardPreview}
-                        imageStyle={styles.purchaseCardPreviewImage}
+                        style={styles.designCardPreview}
+                        imageStyle={styles.designCardPreviewImage}
                         resizeMode="contain"
                       />
                     </Animated.View>
@@ -686,54 +673,58 @@ export default function CardsTab({
                 </TouchableOpacity>
               </View>
 
-              <View style={styles.purchaseTitleRow}>
-                <Text style={styles.designCardTitle}>{selectedDesignCard.title}</Text>
+              <View style={styles.designTitleContainer}>
+                <Text style={styles.designCardName}>{selectedDesignCard.title}</Text>
+                <View style={styles.designPremiumBadge}>
+                  <Image 
+                    source={require("../../assets/images/diadesu.png.png")} 
+                    style={styles.designDiamondIcon}
+                    resizeMode="contain"
+                  />
+                  <Text style={styles.designPremiumText}>Premium</Text>
+                </View>
               </View>
 
-              <View style={styles.priceContainer}>
-                <Text style={styles.priceLabel}>{t("ct.priceLabel")}</Text>
-                <Text style={styles.designPriceAmount}>₱{formatCurrency(selectedDesignCard.price || 0)}</Text>
+              <View style={styles.designPriceSection}>
+                <Text style={styles.designTotalPriceLabel}>TOTAL PRICE</Text>
+                <Text style={styles.designTotalPrice}>₱ {formatCurrency(selectedDesignCard.price || 0)}</Text>
               </View>
 
-              <View style={styles.balanceRow}>
-                <Text style={styles.balanceLabel}>{t("ct.availableBalanceLabel")}</Text>
-                <Text style={[styles.balanceAmount, availableBalance < selectedDesignCard.price && styles.textRed]}>
-                  ₱{formatCurrency(availableBalance || 0)}
-                </Text>
+              <View style={styles.designBalanceRow}>
+                <Text style={styles.designBalanceLabel}>Your Balance:</Text>
+                <Text style={styles.designBalanceAmount}>₱ {formatCurrency(availableBalance || 0)}</Text>
               </View>
 
               {availableBalance < selectedDesignCard.price && (
-                <View style={styles.amountNeededBox}>
-                  <Ionicons name="warning" size={16} color="#F44336" />
-                  <Text style={styles.amountNeededText}>
-                    {t("ct.needMoreAmount").replace("{amount}", formatCurrency(selectedDesignCard.price - availableBalance))}
+                <View style={styles.designWarningBox}>
+                  <Ionicons name="warning" size={18} color="#F44336" />
+                  <Text style={styles.designWarningText}>
+                    Need ₱{formatCurrency(selectedDesignCard.price - availableBalance)} more
                   </Text>
                 </View>
               )}
 
-              <View style={styles.purchaseActionContainer}>
-                <TouchableOpacity style={styles.cancelButton} onPress={() => setIsDesignModalVisible(false)} activeOpacity={0.7}>
-                  <Text style={styles.cancelButtonText}>{t("common.cancel")}</Text>
+              <View style={styles.designActionButtons}>
+                <TouchableOpacity 
+                  style={styles.designCancelButton} 
+                  onPress={() => setIsDesignModalVisible(false)} 
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.designCancelButtonText}>Cancel</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
                   style={[
-                    styles.confirmPurchaseButton,
-                    availableBalance < selectedDesignCard.price && styles.disabledPurchaseButton
+                    styles.designBuyButton,
+                    availableBalance < selectedDesignCard.price && styles.designBuyButtonDisabled
                   ]}
                   disabled={availableBalance < selectedDesignCard.price}
                   activeOpacity={0.7}
                 >
-
-                  <Text style={[
-                    styles.confirmPurchaseText,
-                    availableBalance < selectedDesignCard.price && styles.disabledPurchaseText
-                  ]}>
-                    {availableBalance < selectedDesignCard.price ? t("ct.insufficientBalance") : t("ct.purchaseCard")}
-                  </Text>
+                  <Text style={styles.designBuyButtonText}>Buy</Text>
                 </TouchableOpacity>
               </View>
-            </ScrollView>
+            </View>
           </View>
         </View>
       </Modal>
@@ -1375,7 +1366,7 @@ const styles = StyleSheet.create({
     color: '#Fe7e43',
   },
   activeUpgradeButton: {
-    backgroundColor: '#Fe7e43',
+    backgroundColor: '#DE5212',
   },
   activeUpgradeButtonText: {
     color: '#FFFFFF',
@@ -1423,5 +1414,204 @@ const styles = StyleSheet.create({
   modalCardBack: {
     position: 'absolute',
     top: 0,
+  },
+  // New Design Modal Styles
+  designModalContent: {
+    width: '100%',
+    maxWidth: 400,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    overflow: 'hidden',
+  },
+  designModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    paddingBottom: 16,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  designHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+  },
+  designIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: '#DE5212',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  designModalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#333',
+  },
+  designModalSubtitle: {
+    fontSize: 12,
+    color: '#999',
+    marginTop: 2,
+  },
+  designCloseButton: {
+    width: 32,
+    height: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  designModalBody: {
+    padding: 24,
+    paddingTop: 20,
+  },
+  designCardPreviewLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#888',
+    textAlign: 'center',
+    marginBottom: 20,
+    letterSpacing: 1.5,
+  },
+  designCardPreviewContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 24,
+    marginBottom: 24,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  designModalFlipContainer: {
+    width: 300,
+    aspectRatio: 1.586,
+  },
+  designCardPreview: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 12,
+  },
+  designCardPreviewImage: {
+    borderRadius: 12,
+  },
+  designTitleContainer: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  designCardName: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#333',
+    marginBottom: 6,
+  },
+  designPremiumBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#666',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    gap: 6,
+  },
+  designDiamondIcon: {
+    width: 14,
+    height: 14,
+    tintColor: '#FFFFFF',
+  },
+  designPremiumText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  designPriceSection: {
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  designTotalPriceLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#888',
+    marginBottom: 8,
+    letterSpacing: 1.2,
+  },
+  designTotalPrice: {
+    fontSize: 48,
+    fontWeight: '700',
+    color: '#DE5212',
+  },
+  designBalanceRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+    paddingHorizontal: 0,
+  },
+  designBalanceLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+  },
+  designBalanceAmount: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#333',
+  },
+  designWarningBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFEBEE',
+    padding: 14,
+    borderRadius: 12,
+    marginBottom: 24,
+    gap: 10,
+    borderWidth: 1,
+    borderColor: '#FFCDD2',
+  },
+  designWarningText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#F44336',
+    flex: 1,
+  },
+  designActionButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 4,
+  },
+  designCancelButton: {
+    flex: 1,
+    paddingVertical: 16,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 2,
+    borderColor: '#DDDDDD',
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  designCancelButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#666',
+  },
+  designBuyButton: {
+    flex: 1,
+    paddingVertical: 16,
+    backgroundColor: '#DE5212',
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  designBuyButtonDisabled: {
+    backgroundColor: '#CCCCCC',
+  },
+  designBuyButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
 });
