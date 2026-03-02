@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation, useRoute } from "@react-navigation/native";
+import * as Contacts from "expo-contacts";
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useState } from "react";
 import {
@@ -27,6 +28,7 @@ interface Contact {
   id: string;
   name?: string;
   accountNumber?: string;
+  phoneNumbers?: string[];
 }
 
 // Reusable function to fetch user balance by type (backend only)
@@ -41,9 +43,32 @@ export const fetchBalanceByType = async (balanceType: string) => {
   return 0;
 };
 
-// Reusable function to load user contacts (backend has no contacts API in this flow; return empty)
+// Reusable function to load user contacts (loads from device contacts)
 export const loadUserContacts = async (): Promise<Contact[]> => {
-  return [];
+  try {
+    const { status } = await Contacts.requestPermissionsAsync();
+    if (status !== "granted") {
+      console.log("Contact permission not granted");
+      return [];
+    }
+
+    const { data } = await Contacts.getContactsAsync({
+      fields: [Contacts.Fields.PhoneNumbers, Contacts.Fields.Name],
+    });
+
+    if (data.length > 0) {
+      return data.map((contact: any, index: number) => ({
+        id: contact.id || `contact-${index}`,
+        name: contact.name || "Unknown",
+        phoneNumbers: contact.phoneNumbers?.map((phone: any) => phone.number || "") || [],
+        accountNumber: contact.phoneNumbers?.[0]?.number?.replace(/\D/g, "") || "",
+      }));
+    }
+    return [];
+  } catch (error) {
+    console.error("Error loading contacts:", error);
+    return [];
+  }
 };
 
 // Reusable function to validate transfer form (returns translation keys for message)
@@ -92,6 +117,8 @@ export default function TransferRecipient() {
   const [isLoading, setIsLoading] = useState(false);
   const [showContactsModal, setShowContactsModal] = useState(false);
   const [contacts, setContacts] = useState<Contact[]>([]);
+  const [filteredContacts, setFilteredContacts] = useState<Contact[]>([]);
+  const [contactSearchQuery, setContactSearchQuery] = useState("");
   const [showAlertModal, setShowAlertModal] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
 
@@ -113,9 +140,25 @@ export default function TransferRecipient() {
     try {
       const contactsList = await loadUserContacts();
       setContacts(contactsList as Contact[]);
+      setFilteredContacts(contactsList as Contact[]);
     } catch (error) {
       console.error("Error loading contacts:", error);
     }
+  };
+
+  const handleContactSearch = (query: string) => {
+    setContactSearchQuery(query);
+    if (!query.trim()) {
+      setFilteredContacts(contacts);
+      return;
+    }
+    const filtered = contacts.filter((contact) => {
+      const name = contact.name?.toLowerCase() || "";
+      const phone = contact.phoneNumbers?.join(" ").toLowerCase() || "";
+      const searchLower = query.toLowerCase();
+      return name.includes(searchLower) || phone.includes(searchLower);
+    });
+    setFilteredContacts(filtered);
   };
 
   const handleContinue = async () => {
@@ -162,8 +205,11 @@ export default function TransferRecipient() {
   };
 
   const selectContact = (contact: Contact) => {
-    setAccountNumber(contact.accountNumber ?? "");
+    // Use phone number as account number (remove non-digits)
+    const phoneNumber = contact.phoneNumbers?.[0] || contact.accountNumber || "";
+    setAccountNumber(phoneNumber.replace(/\D/g, ""));
     setShowContactsModal(false);
+    setContactSearchQuery("");
   };
 
   return (
@@ -218,7 +264,10 @@ export default function TransferRecipient() {
               <Text style={styles.quickActionText}>{t("sendMoney.scanQr")}</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.quickActionButton}>
+            <TouchableOpacity 
+              style={styles.quickActionButton}
+              onPress={() => setShowContactsModal(true)}
+            >
               <View style={styles.quickActionIcon}>
                 <Ionicons name="people" size={28} color="#E25A17" />
               </View>
@@ -388,24 +437,50 @@ export default function TransferRecipient() {
           visible={showContactsModal}
           transparent={true}
           animationType="slide"
-          onRequestClose={() => setShowContactsModal(false)}
+          onRequestClose={() => {
+            setShowContactsModal(false);
+            setContactSearchQuery("");
+          }}
         >
           <View style={styles.modalOverlay}>
             <View style={styles.contactsModalContainer}>
               <View style={styles.contactsModalHeader}>
                 <Text style={styles.contactsModalTitle}>{t("sendMoney.selectContact")}</Text>
-                <TouchableOpacity onPress={() => setShowContactsModal(false)}>
+                <TouchableOpacity onPress={() => {
+                  setShowContactsModal(false);
+                  setContactSearchQuery("");
+                }}>
                   <Ionicons name="close" size={24} color="#333" />
                 </TouchableOpacity>
               </View>
+              
+              {/* Search Bar */}
+              <View style={styles.searchContainer}>
+                <Ionicons name="search" size={20} color="#999" style={styles.searchIcon} />
+                <TextInput
+                  style={styles.searchInput}
+                  placeholder="Search contacts..."
+                  placeholderTextColor="#999"
+                  value={contactSearchQuery}
+                  onChangeText={handleContactSearch}
+                />
+                {contactSearchQuery.length > 0 && (
+                  <TouchableOpacity onPress={() => handleContactSearch("")}>
+                    <Ionicons name="close-circle" size={20} color="#999" />
+                  </TouchableOpacity>
+                )}
+              </View>
+
               <ScrollView style={styles.contactsModalContent}>
-                {contacts.length === 0 ? (
+                {filteredContacts.length === 0 ? (
                   <View style={styles.emptyState}>
                     <Ionicons name="people-outline" size={48} color="#CCC" />
-                    <Text style={styles.emptyStateText}>{t("sendMoney.noContactsFound")}</Text>
+                    <Text style={styles.emptyStateText}>
+                      {contactSearchQuery ? "No contacts found" : t("sendMoney.noContactsFound")}
+                    </Text>
                   </View>
                 ) : (
-                  contacts.map((contact) => (
+                  filteredContacts.map((contact) => (
                     <TouchableOpacity
                       key={contact.id}
                       style={styles.contactItem}
@@ -416,7 +491,9 @@ export default function TransferRecipient() {
                       </View>
                       <View style={styles.contactInfo}>
                         <Text style={styles.contactName}>{contact.name ?? ""}</Text>
-                        <Text style={styles.contactAccount}>{contact.accountNumber ?? ""}</Text>
+                        <Text style={styles.contactAccount}>
+                          {contact.phoneNumbers?.[0] || contact.accountNumber || "No phone"}
+                        </Text>
                       </View>
                       <Ionicons name="chevron-forward" size={20} color="#999" />
                     </TouchableOpacity>
@@ -433,7 +510,7 @@ export default function TransferRecipient() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F5F5F5",
+    backgroundColor: "#FFFFFF",
   },
   header: {
     flexDirection: "row",
@@ -486,15 +563,17 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 8,
-    shadowColor: "#000",
+    shadowColor: "#E25A17",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 3,
+    borderWidth: 1,
+    borderColor: "#FFE8DC",
   },
   quickActionText: {
     fontSize: width * 0.034,
-    fontWeight: "500",
+    fontWeight: "600",
     color: "#333",
   },
   stepIndicatorContainer: {
@@ -511,20 +590,24 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: "#E0E0E0",
+    backgroundColor: "#FFE8DC",
     justifyContent: "center",
     alignItems: "center",
+    borderWidth: 2,
+    borderColor: "#E0E0E0",
   },
   stepCircleActive: {
     backgroundColor: "#E25A17",
+    borderColor: "#E25A17",
   },
   stepCircleCompleted: {
     backgroundColor: "#E25A17",
+    borderColor: "#E25A17",
   },
   stepLine: {
     flex: 1,
     height: 3,
-    backgroundColor: "#E0E0E0",
+    backgroundColor: "#FFE8DC",
     marginHorizontal: 8,
   },
   stepLineCompleted: {
@@ -535,7 +618,7 @@ const styles = StyleSheet.create({
     color: "#E25A17",
     textAlign: "left",
     marginBottom: 16,
-    fontWeight: "500",
+    fontWeight: "600",
   },
   stepTitle: {
     fontSize: 22,
@@ -546,7 +629,7 @@ const styles = StyleSheet.create({
   },
   stepSubtitle: {
     fontSize: 14,
-    color: "#999",
+    color: "#666",
     textAlign: "center",
     marginBottom: 24,
   },
@@ -574,8 +657,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     fontSize: 16,
     color: "#333",
-    borderWidth: 1,
-    borderColor: "#E0E0E0",
+    borderWidth: 1.5,
+    borderColor: "#FFE8DC",
+    shadowColor: "#E25A17",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   inputWithButton: {
     position: "relative",
@@ -591,6 +679,8 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 8,
     gap: 4,
+    borderWidth: 1,
+    borderColor: "#FFE8DC",
   },
   contactsButtonText: {
     fontSize: 13,
@@ -599,8 +689,9 @@ const styles = StyleSheet.create({
   },
   availableText: {
     fontSize: 13,
-    color: "#999",
+    color: "#666",
     marginTop: 8,
+    fontWeight: "500",
   },
   textArea: {
     height: 100,
@@ -643,7 +734,7 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    backgroundColor: "rgba(226, 90, 23, 0.15)",
     justifyContent: "center",
     alignItems: "center",
     padding: 20,
@@ -653,7 +744,7 @@ const styles = StyleSheet.create({
     maxWidth: 400,
     borderRadius: 20,
     overflow: "hidden",
-    shadowColor: "#000",
+    shadowColor: "#E25A17",
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.3,
     shadowRadius: 20,
@@ -707,6 +798,11 @@ const styles = StyleSheet.create({
     width: "100%",
     position: "absolute",
     bottom: 0,
+    shadowColor: "#E25A17",
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 8,
   },
   contactsModalHeader: {
     flexDirection: "row",
@@ -714,7 +810,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: "#F0F0F0",
+    borderBottomColor: "#FFE8DC",
+    backgroundColor: "#FFFFFF",
   },
   contactsModalTitle: {
     fontSize: 18,
@@ -723,6 +820,27 @@ const styles = StyleSheet.create({
   },
   contactsModalContent: {
     padding: 16,
+  },
+  searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F5F5F5",
+    borderRadius: 12,
+    marginHorizontal: 16,
+    marginBottom: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderColor: "#FFE8DC",
+  },
+  searchIcon: {
+    marginRight: 8,
+    color: "#E25A17",
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: "#333",
   },
   emptyState: {
     alignItems: "center",
@@ -737,18 +855,27 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     padding: 16,
-    backgroundColor: "#F9F9F9",
+    backgroundColor: "#FFFFFF",
     borderRadius: 12,
     marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "#FFE8DC",
+    shadowColor: "#E25A17",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   contactAvatar: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: "#FFF5F0",
+    backgroundColor: "#FFFFFF",
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
+    borderWidth: 2,
+    borderColor: "#FFE8DC",
   },
   contactInfo: {
     flex: 1,
@@ -761,6 +888,6 @@ const styles = StyleSheet.create({
   },
   contactAccount: {
     fontSize: 14,
-    color: "#999",
+    color: "#666",
   },
 });
