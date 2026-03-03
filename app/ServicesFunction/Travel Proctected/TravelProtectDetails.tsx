@@ -29,7 +29,9 @@ const MONTH_KEYS = [
   "banking.december",
 ] as const;
 const DAYS = Array.from({ length: 31 }, (_, i) => (i + 1).toString());
-const YEARS = Array.from({ length: 11 }, (_, i) => (2010 + i).toString()); // Keep nearby years for travel
+const YEARS = Array.from({ length: 20 }, (_, i) =>
+  (new Date().getFullYear() + i).toString(),
+); // Travel check-in can be current year or future
 const HOURS = Array.from({ length: 24 }, (_, i) =>
   i.toString().padStart(2, "0"),
 );
@@ -39,8 +41,10 @@ const MINUTES = Array.from({ length: 60 }, (_, i) =>
 
 export interface TravelProtectDetailsProps {
   destinationAddress: string;
+  destinationAddressError?: string;
   setDestinationAddress: (value: string) => void;
   checkInDate: Date | null;
+  checkInDateError?: string;
   checkInDateText: string;
   setShowCheckInModal: (value: boolean) => void;
   tempCheckInDate: { month: number; day: number; year: number };
@@ -50,22 +54,25 @@ export interface TravelProtectDetailsProps {
     year: number;
   }) => void;
   duration: string;
+  durationError?: string;
   setDuration: (value: string) => void;
-  airline: string;
-  setAirline: (value: string) => void;
   departureTime: Date;
+  departureTimeError?: string;
   departureTimeText: string;
   setShowDepartureTimePicker: (value: boolean) => void;
   tempDepartureTime: { hour: number; minute: number };
   setTempDepartureTime: (value: { hour: number; minute: number }) => void;
   arrivalTime: Date;
+  arrivalTimeError?: string;
   arrivalTimeText: string;
   setShowArrivalTimePicker: (value: boolean) => void;
   tempArrivalTime: { hour: number; minute: number };
   setTempArrivalTime: (value: { hour: number; minute: number }) => void;
   passportNumber: string;
+  passportNumberError?: string;
   setPassportNumber: (value: string) => void;
   purposeOfTravel: string;
+  purposeOfTravelError?: string;
   setPurposeOfTravel: (value: string) => void;
   showCheckInModal: boolean;
   showDepartureTimePicker: boolean;
@@ -77,26 +84,31 @@ export interface TravelProtectDetailsProps {
 
 export default function TravelProtectDetails({
   destinationAddress,
+  destinationAddressError,
   setDestinationAddress,
   checkInDateText,
+  checkInDateError,
   setShowCheckInModal,
   tempCheckInDate,
   setTempCheckInDate,
   duration,
+  durationError,
   setDuration,
-  airline,
-  setAirline,
   departureTimeText,
+  departureTimeError,
   setShowDepartureTimePicker,
   tempDepartureTime,
   setTempDepartureTime,
   arrivalTimeText,
+  arrivalTimeError,
   setShowArrivalTimePicker,
   tempArrivalTime,
   setTempArrivalTime,
   passportNumber,
+  passportNumberError,
   setPassportNumber,
   purposeOfTravel,
+  purposeOfTravelError,
   setPurposeOfTravel,
   showCheckInModal,
   showDepartureTimePicker,
@@ -160,7 +172,11 @@ export default function TravelProtectDetails({
             </Text>
 
             <TextInput
-              style={[styles.input, styles.textArea]}
+              style={[
+                styles.input,
+                styles.textArea,
+                destinationAddressError ? styles.inputError : null,
+              ]}
               placeholder={t("travel.placeholderDestination")}
               placeholderTextColor="#999"
               value={destinationAddress}
@@ -169,6 +185,9 @@ export default function TravelProtectDetails({
               textAlignVertical="top"
               returnKeyType="next"
             />
+            {destinationAddressError ? (
+              <Text style={styles.errorText}>{destinationAddressError}</Text>
+            ) : null}
           </View>
 
           {/* CHECK IN DATE */}
@@ -178,7 +197,10 @@ export default function TravelProtectDetails({
             </Text>
 
             <TouchableOpacity
-              style={styles.dropdown}
+              style={[
+                styles.dropdown,
+                checkInDateError ? styles.inputError : null,
+              ]}
               onPress={() => setShowCheckInModal(true)}
             >
               <Text
@@ -195,6 +217,9 @@ export default function TravelProtectDetails({
 
               <Ionicons name="calendar-outline" size={20} color="#999" />
             </TouchableOpacity>
+            {checkInDateError ? (
+              <Text style={styles.errorText}>{checkInDateError}</Text>
+            ) : null}
           </View>
 
           {/* DURATION */}
@@ -204,7 +229,7 @@ export default function TravelProtectDetails({
             </Text>
 
             <TextInput
-              style={styles.input}
+              style={[styles.input, durationError ? styles.inputError : null]}
               placeholder="0"
               placeholderTextColor="#999"
               value={duration}
@@ -212,22 +237,9 @@ export default function TravelProtectDetails({
               keyboardType="numeric"
               returnKeyType="next"
             />
-          </View>
-
-          {/* AIRLINE */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>
-              {t("travel.airline")} <Text style={styles.required}>*</Text>
-            </Text>
-
-            <TextInput
-              style={styles.input}
-              placeholder={t("travel.placeholderAirline")}
-              placeholderTextColor="#999"
-              value={airline}
-              onChangeText={setAirline}
-              returnKeyType="next"
-            />
+            {durationError ? (
+              <Text style={styles.errorText}>{durationError}</Text>
+            ) : null}
           </View>
 
           {/* DEPARTURE TIME */}
@@ -237,7 +249,10 @@ export default function TravelProtectDetails({
             </Text>
 
             <TouchableOpacity
-              style={styles.dropdown}
+              style={[
+                styles.dropdown,
+                departureTimeError ? styles.inputError : null,
+              ]}
               onPress={() => setShowDepartureTimePicker(true)}
             >
               <Text
@@ -254,6 +269,9 @@ export default function TravelProtectDetails({
 
               <Ionicons name="time-outline" size={20} color="#999" />
             </TouchableOpacity>
+            {departureTimeError ? (
+              <Text style={styles.errorText}>{departureTimeError}</Text>
+            ) : null}
           </View>
 
           {/* ARRIVAL TIME */}
@@ -263,7 +281,10 @@ export default function TravelProtectDetails({
             </Text>
 
             <TouchableOpacity
-              style={styles.dropdown}
+              style={[
+                styles.dropdown,
+                arrivalTimeError ? styles.inputError : null,
+              ]}
               onPress={() => setShowArrivalTimePicker(true)}
             >
               <Text
@@ -280,6 +301,9 @@ export default function TravelProtectDetails({
 
               <Ionicons name="time-outline" size={20} color="#999" />
             </TouchableOpacity>
+            {arrivalTimeError ? (
+              <Text style={styles.errorText}>{arrivalTimeError}</Text>
+            ) : null}
           </View>
 
           {/* PASSPORT */}
@@ -290,7 +314,10 @@ export default function TravelProtectDetails({
             </Text>
 
             <TextInput
-              style={styles.input}
+              style={[
+                styles.input,
+                passportNumberError ? styles.inputError : null,
+              ]}
               placeholder={t("travel.placeholderPassport")}
               placeholderTextColor="#999"
               value={passportNumber}
@@ -298,6 +325,9 @@ export default function TravelProtectDetails({
               autoCapitalize="characters"
               returnKeyType="next"
             />
+            {passportNumberError ? (
+              <Text style={styles.errorText}>{passportNumberError}</Text>
+            ) : null}
           </View>
 
           {/* PURPOSE */}
@@ -308,7 +338,11 @@ export default function TravelProtectDetails({
             </Text>
 
             <TextInput
-              style={[styles.input, styles.textArea]}
+              style={[
+                styles.input,
+                styles.textArea,
+                purposeOfTravelError ? styles.inputError : null,
+              ]}
               placeholder={t("travel.placeholderPurpose")}
               placeholderTextColor="#999"
               value={purposeOfTravel}
@@ -316,6 +350,9 @@ export default function TravelProtectDetails({
               multiline
               textAlignVertical="top"
             />
+            {purposeOfTravelError ? (
+              <Text style={styles.errorText}>{purposeOfTravelError}</Text>
+            ) : null}
           </View>
         </View>
       </View>
@@ -774,5 +811,14 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "700",
     color: "#FFFFFF",
+  },
+  inputError: {
+    borderColor: "#FF3B30",
+  },
+  errorText: {
+    color: "#FF3B30",
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 4,
   },
 });

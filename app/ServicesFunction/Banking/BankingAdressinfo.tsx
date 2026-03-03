@@ -23,14 +23,21 @@ const THEME_COLOR = "#E15816";
 const ORANGE_GRADIENT = ["#E25A17", "#F28934"] as const;
 const GREEN_COMPLETE = "#10B981";
 
+const filterAddressInput = (text: string) =>
+  text.replace(/[^A-Za-zÑñ0-9,.\- ]/g, "");
+
 export default function BankingAddressInfo() {
   const { t } = useLanguage();
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, "BankingAddressInfo">>();
+  const navigation =
+    useNavigation<
+      NativeStackNavigationProp<RootStackParamList, "BankingAddressInfo">
+    >();
   const route = useRoute<RouteProp<RootStackParamList, "BankingAddressInfo">>();
   const selectedBank = route.params?.selectedBank ?? "Security Bank";
   const applicationData = route.params?.applicationData ?? {};
 
   const [completeAddress, setCompleteAddress] = useState("");
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   const currentStep = 4;
 
@@ -39,7 +46,11 @@ export default function BankingAddressInfo() {
   };
 
   const handleNext = () => {
-    if (!completeAddress.trim()) return;
+    if (!completeAddress.trim()) {
+      setErrors({ completeAddress: t("banking.errorAddress") });
+      return;
+    }
+
     navigation.navigate("BankingFinancialInfo", {
       selectedBank,
       applicationData: {
@@ -58,10 +69,7 @@ export default function BankingAddressInfo() {
         >
           {/* Top: Back arrow + Header card */}
           <View style={styles.topSection}>
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={handleBack}
-            >
+            <TouchableOpacity style={styles.backButton} onPress={handleBack}>
               <Ionicons name="arrow-back" size={28} color={THEME_COLOR} />
             </TouchableOpacity>
 
@@ -78,8 +86,12 @@ export default function BankingAddressInfo() {
                   color="#FFFFFF"
                   style={styles.headerIcon}
                 />
-                <Text style={styles.headerTitle}>Bank Account Services</Text>
-                <Text style={styles.headerSubtitle}>Professional Banking Solutions</Text>
+                <Text style={styles.headerTitle}>
+                  {t("banking.headerTitle")}
+                </Text>
+                <Text style={styles.headerSubtitle}>
+                  {t("banking.headerSubtitle")}
+                </Text>
               </LinearGradient>
             </View>
           </View>
@@ -133,25 +145,42 @@ export default function BankingAddressInfo() {
               <View style={styles.stepIconWrapper}>
                 <Ionicons name="location" size={28} color={THEME_COLOR} />
               </View>
-              <Text style={styles.contentTitle}>{t("banking.addressInfo")}</Text>
+              <Text style={styles.contentTitle}>
+                {t("banking.addressInfo")}
+              </Text>
               <Text style={styles.contentDescription}>
                 {t("banking.addressInfoDesc")}
               </Text>
 
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>
-                  {t("banking.completeAddress")}<Text style={styles.required}>*</Text>
+                  {t("banking.completeAddress")}
+                  <Text style={styles.required}>*</Text>
                 </Text>
                 <TextInput
-                  style={styles.addressInput}
+                  style={[
+                    styles.addressInput,
+                    errors.completeAddress && styles.inputError,
+                  ]}
                   placeholder={t("banking.placeholderAddress")}
                   placeholderTextColor="#9E9E9E"
                   value={completeAddress}
-                  onChangeText={setCompleteAddress}
+                  onChangeText={(text) => {
+                    setCompleteAddress(filterAddressInput(text));
+                    if (errors.completeAddress) {
+                      setErrors((prev) => {
+                        const { completeAddress, ...rest } = prev;
+                        return rest;
+                      });
+                    }
+                  }}
                   multiline
                   numberOfLines={4}
                   textAlignVertical="top"
                 />
+                {errors.completeAddress && (
+                  <Text style={styles.errorText}>{errors.completeAddress}</Text>
+                )}
               </View>
             </View>
 
@@ -160,12 +189,7 @@ export default function BankingAddressInfo() {
               <View style={styles.infoIconCircle}>
                 <Text style={styles.infoIconText}>i</Text>
               </View>
-              <Text style={styles.infoText}>
-                By submitting these details, we will send you an email
-                confirmation with your application status. Please note that this
-                process will take approximately 5-7 working days for review and
-                approval by the selected bank.
-              </Text>
+              <Text style={styles.infoText}>{t("banking.infoNote")}</Text>
             </View>
 
             <View style={styles.bottomSpacing} />
@@ -361,6 +385,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#000000",
     minHeight: 100,
+  },
+  inputError: {
+    borderColor: "#FF3B30",
+  },
+  errorText: {
+    color: "#FF3B30",
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 4,
+    fontWeight: "500",
   },
   infoBox: {
     flexDirection: "row",

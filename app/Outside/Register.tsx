@@ -230,7 +230,7 @@ export default function Register() {
       await AsyncStorage.setItem("user", JSON.stringify(result.user || {}));
       await AsyncStorage.setItem("registrationPasscodePending", "true");
       (navigation as unknown as NavProp).replace("CreatePasscode");
-    } catch (_err) {
+    } catch {
       setRegisterError("An unexpected error occurred. Please try again.");
     } finally {
       setRegisterLoading(false);
@@ -262,7 +262,7 @@ export default function Register() {
             return;
           }
         }
-      } catch (_urlErr) {
+      } catch {
         // Not a valid URL, ignore URL parsing error
       }
       // fallback to setting exactly what was scanned

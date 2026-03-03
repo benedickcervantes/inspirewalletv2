@@ -3,7 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import * as Contacts from "expo-contacts";
 import { LinearGradient } from "expo-linear-gradient";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Dimensions,
@@ -15,10 +15,13 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { getOrCreateMainWallet, getRecipientByAccountNumber } from "../../../configs/api";
+import {
+  getOrCreateMainWallet,
+  getRecipientByAccountNumber,
+} from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
 import { useResponsive } from "../../../utils/responsive";
 
@@ -60,8 +63,10 @@ export const loadUserContacts = async (): Promise<Contact[]> => {
       return data.map((contact: any, index: number) => ({
         id: contact.id || `contact-${index}`,
         name: contact.name || "Unknown",
-        phoneNumbers: contact.phoneNumbers?.map((phone: any) => phone.number || "") || [],
-        accountNumber: contact.phoneNumbers?.[0]?.number?.replace(/\D/g, "") || "",
+        phoneNumbers:
+          contact.phoneNumbers?.map((phone: any) => phone.number || "") || [],
+        accountNumber:
+          contact.phoneNumbers?.[0]?.number?.replace(/\D/g, "") || "",
       }));
     }
     return [];
@@ -72,7 +77,11 @@ export const loadUserContacts = async (): Promise<Contact[]> => {
 };
 
 // Reusable function to validate transfer form (returns translation keys for message)
-export const validateTransferForm = (accountNumber: string, amount: string, availableBalance: number) => {
+export const validateTransferForm = (
+  accountNumber: string,
+  amount: string,
+  availableBalance: number,
+) => {
   if (!accountNumber || !amount) {
     return {
       isValid: false,
@@ -122,21 +131,16 @@ export default function TransferRecipient() {
   const [showAlertModal, setShowAlertModal] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
 
-  useEffect(() => {
-    fetchBalance();
-    loadContacts();
-  }, []);
-
-  const fetchBalance = async () => {
+  const fetchBalance = useCallback(async () => {
     try {
-      const balance = await fetchBalanceByType(balanceType ?? 'available');
+      const balance = await fetchBalanceByType(balanceType ?? "available");
       setAvailableBalance(Number(balance) || 0);
     } catch (error) {
       console.error("Error fetching balance:", error);
     }
-  };
+  }, [balanceType]);
 
-  const loadContacts = async () => {
+  const loadContacts = useCallback(async () => {
     try {
       const contactsList = await loadUserContacts();
       setContacts(contactsList as Contact[]);
@@ -144,7 +148,12 @@ export default function TransferRecipient() {
     } catch (error) {
       console.error("Error loading contacts:", error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchBalance();
+    loadContacts();
+  }, [fetchBalance, loadContacts]);
 
   const handleContactSearch = (query: string) => {
     setContactSearchQuery(query);
@@ -162,7 +171,11 @@ export default function TransferRecipient() {
   };
 
   const handleContinue = async () => {
-    const validation = validateTransferForm(accountNumber, amount, Number(availableBalance) || 0);
+    const validation = validateTransferForm(
+      accountNumber,
+      amount,
+      Number(availableBalance) || 0,
+    );
     if (!validation.isValid && validation.messageKey) {
       setAlertMessage(t(validation.messageKey));
       setShowAlertModal(true);
@@ -177,15 +190,24 @@ export default function TransferRecipient() {
         setIsLoading(false);
         return;
       }
-      const recipientResult = await getRecipientByAccountNumber(accessToken, accountNumber);
+      const recipientResult = await getRecipientByAccountNumber(
+        accessToken,
+        accountNumber,
+      );
       if (!recipientResult.success || !recipientResult.data) {
         setAlertMessage(recipientResult.error || "Recipient account not found");
         setShowAlertModal(true);
         setIsLoading(false);
         return;
       }
-      const data = recipientResult.data as { mainWalletId?: string; firstName?: string; lastName?: string; accountNumber?: string };
-      const recipientName = [data.firstName, data.lastName].filter(Boolean).join(" ") || "Unknown";
+      const data = recipientResult.data as {
+        mainWalletId?: string;
+        firstName?: string;
+        lastName?: string;
+        accountNumber?: string;
+      };
+      const recipientName =
+        [data.firstName, data.lastName].filter(Boolean).join(" ") || "Unknown";
       navigation.navigate("TransferConfirm", {
         balanceType: balanceType ?? "available",
         accountNumber,
@@ -206,7 +228,8 @@ export default function TransferRecipient() {
 
   const selectContact = (contact: Contact) => {
     // Use phone number as account number (remove non-digits)
-    const phoneNumber = contact.phoneNumbers?.[0] || contact.accountNumber || "";
+    const phoneNumber =
+      contact.phoneNumbers?.[0] || contact.accountNumber || "";
     setAccountNumber(phoneNumber.replace(/\D/g, ""));
     setShowContactsModal(false);
     setContactSearchQuery("");
@@ -233,16 +256,19 @@ export default function TransferRecipient() {
         </TouchableOpacity>
       </LinearGradient>
 
-        <KeyboardAvoidingView
-          style={styles.keyboardView}
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
-        >
+      <KeyboardAvoidingView
+        style={styles.keyboardView}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+      >
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={[
             styles.scrollContent,
-            { paddingHorizontal: horizontalPadding, paddingBottom: Math.max(insets.bottom, 24) }
+            {
+              paddingHorizontal: horizontalPadding,
+              paddingBottom: Math.max(insets.bottom, 24),
+            },
           ]}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
@@ -261,17 +287,21 @@ export default function TransferRecipient() {
               <View style={styles.quickActionIcon}>
                 <Ionicons name="scan" size={28} color="#E25A17" />
               </View>
-              <Text style={styles.quickActionText}>{t("sendMoney.scanQr")}</Text>
+              <Text style={styles.quickActionText}>
+                {t("sendMoney.scanQr")}
+              </Text>
             </TouchableOpacity>
 
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.quickActionButton}
               onPress={() => setShowContactsModal(true)}
             >
               <View style={styles.quickActionIcon}>
                 <Ionicons name="people" size={28} color="#E25A17" />
               </View>
-              <Text style={styles.quickActionText}>{t("sendMoney.contacts")}</Text>
+              <Text style={styles.quickActionText}>
+                {t("sendMoney.contacts")}
+              </Text>
             </TouchableOpacity>
           </View>
 
@@ -298,7 +328,9 @@ export default function TransferRecipient() {
 
           {/* Step Title */}
           <Text style={styles.stepTitle}>{t("sendMoney.transferDetails")}</Text>
-          <Text style={styles.stepSubtitle}>{t("sendMoney.enterRecipientAndAmount")}</Text>
+          <Text style={styles.stepSubtitle}>
+            {t("sendMoney.enterRecipientAndAmount")}
+          </Text>
 
           {/* Form */}
           <View style={styles.formContainer}>
@@ -306,7 +338,9 @@ export default function TransferRecipient() {
             <View style={styles.inputSection}>
               <View style={styles.labelRow}>
                 <Ionicons name="person-outline" size={20} color="#E25A17" />
-                <Text style={styles.inputLabel}>{t("sendMoney.recipientAccountNumber")}</Text>
+                <Text style={styles.inputLabel}>
+                  {t("sendMoney.recipientAccountNumber")}
+                </Text>
               </View>
               <View style={styles.inputWithButton}>
                 <TextInput
@@ -321,7 +355,9 @@ export default function TransferRecipient() {
                   style={styles.contactsButton}
                   onPress={() => setShowContactsModal(true)}
                 >
-                  <Text style={styles.contactsButtonText}>{t("sendMoney.showContacts")}</Text>
+                  <Text style={styles.contactsButtonText}>
+                    {t("sendMoney.showContacts")}
+                  </Text>
                   <Ionicons name="chevron-down" size={16} color="#E25A17" />
                 </TouchableOpacity>
               </View>
@@ -342,9 +378,10 @@ export default function TransferRecipient() {
                 keyboardType="decimal-pad"
               />
               <Text style={styles.availableText}>
-                {t("sendMoney.availableLabel")}: PHP {availableBalance.toLocaleString("en-PH", {
+                {t("sendMoney.availableLabel")}: PHP{" "}
+                {availableBalance.toLocaleString("en-PH", {
                   minimumFractionDigits: 2,
-                  maximumFractionDigits: 2
+                  maximumFractionDigits: 2,
                 })}
               </Text>
             </View>
@@ -352,8 +389,14 @@ export default function TransferRecipient() {
             {/* Description */}
             <View style={styles.inputSection}>
               <View style={styles.labelRow}>
-                <Ionicons name="document-text-outline" size={20} color="#E25A17" />
-                <Text style={styles.inputLabel}>{t("sendMoney.descriptionOptional")}</Text>
+                <Ionicons
+                  name="document-text-outline"
+                  size={20}
+                  color="#E25A17"
+                />
+                <Text style={styles.inputLabel}>
+                  {t("sendMoney.descriptionOptional")}
+                </Text>
               </View>
               <TextInput
                 style={[styles.input, styles.textArea]}
@@ -373,14 +416,16 @@ export default function TransferRecipient() {
           <TouchableOpacity
             style={[
               styles.continueButton,
-              (!accountNumber || !amount) && styles.continueButtonDisabled
+              (!accountNumber || !amount) && styles.continueButtonDisabled,
             ]}
             onPress={handleContinue}
             disabled={!accountNumber || !amount || isLoading}
           >
             <LinearGradient
               colors={
-                (!accountNumber || !amount) ? ["#CCC", "#999"] : ["#E25A17", "#F28934"]
+                !accountNumber || !amount
+                  ? ["#CCC", "#999"]
+                  : ["#E25A17", "#F28934"]
               }
               style={styles.continueGradient}
               start={{ x: 0, y: 0 }}
@@ -390,7 +435,9 @@ export default function TransferRecipient() {
                 <ActivityIndicator size="small" color="#FFFFFF" />
               ) : (
                 <>
-                  <Text style={styles.continueText}>{t("sendMoney.continue")}</Text>
+                  <Text style={styles.continueText}>
+                    {t("sendMoney.continue")}
+                  </Text>
                   <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
                 </>
               )}
@@ -399,110 +446,125 @@ export default function TransferRecipient() {
 
           <View style={styles.bottomPadding} />
         </ScrollView>
-        </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
 
-        {/* Alert Modal */}
-        <Modal
-          visible={showAlertModal}
-          transparent={true}
-          animationType="fade"
-          onRequestClose={() => setShowAlertModal(false)}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <LinearGradient
-                colors={["#E25A17", "#F28934"]}
-                style={styles.modalGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
+      {/* Alert Modal */}
+      <Modal
+        visible={showAlertModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowAlertModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <LinearGradient
+              colors={["#E25A17", "#F28934"]}
+              style={styles.modalGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            >
+              <View style={styles.iconContainer}>
+                <Ionicons name="alert-circle" size={80} color="#FFFFFF" />
+              </View>
+              <Text style={styles.modalTitle}>{t("sendMoney.alert")}</Text>
+              <Text style={styles.modalMessage}>{t(alertMessage)}</Text>
+              <TouchableOpacity
+                style={styles.modalButton}
+                onPress={() => setShowAlertModal(false)}
               >
-                <View style={styles.iconContainer}>
-                  <Ionicons name="alert-circle" size={80} color="#FFFFFF" />
-                </View>
-                <Text style={styles.modalTitle}>{t("sendMoney.alert")}</Text>
-                <Text style={styles.modalMessage}>{t(alertMessage)}</Text>
-                <TouchableOpacity
-                  style={styles.modalButton}
-                  onPress={() => setShowAlertModal(false)}
-                >
-                  <Text style={styles.modalButtonText}>{t("common.ok")}</Text>
-                </TouchableOpacity>
-              </LinearGradient>
-            </View>
+                <Text style={styles.modalButtonText}>{t("common.ok")}</Text>
+              </TouchableOpacity>
+            </LinearGradient>
           </View>
-        </Modal>
+        </View>
+      </Modal>
 
-        {/* Contacts Modal */}
-        <Modal
-          visible={showContactsModal}
-          transparent={true}
-          animationType="slide"
-          onRequestClose={() => {
-            setShowContactsModal(false);
-            setContactSearchQuery("");
-          }}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={styles.contactsModalContainer}>
-              <View style={styles.contactsModalHeader}>
-                <Text style={styles.contactsModalTitle}>{t("sendMoney.selectContact")}</Text>
-                <TouchableOpacity onPress={() => {
+      {/* Contacts Modal */}
+      <Modal
+        visible={showContactsModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => {
+          setShowContactsModal(false);
+          setContactSearchQuery("");
+        }}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.contactsModalContainer}>
+            <View style={styles.contactsModalHeader}>
+              <Text style={styles.contactsModalTitle}>
+                {t("sendMoney.selectContact")}
+              </Text>
+              <TouchableOpacity
+                onPress={() => {
                   setShowContactsModal(false);
                   setContactSearchQuery("");
-                }}>
-                  <Ionicons name="close" size={24} color="#333" />
-                </TouchableOpacity>
-              </View>
-              
-              {/* Search Bar */}
-              <View style={styles.searchContainer}>
-                <Ionicons name="search" size={20} color="#999" style={styles.searchIcon} />
-                <TextInput
-                  style={styles.searchInput}
-                  placeholder="Search contacts..."
-                  placeholderTextColor="#999"
-                  value={contactSearchQuery}
-                  onChangeText={handleContactSearch}
-                />
-                {contactSearchQuery.length > 0 && (
-                  <TouchableOpacity onPress={() => handleContactSearch("")}>
-                    <Ionicons name="close-circle" size={20} color="#999" />
-                  </TouchableOpacity>
-                )}
-              </View>
-
-              <ScrollView style={styles.contactsModalContent}>
-                {filteredContacts.length === 0 ? (
-                  <View style={styles.emptyState}>
-                    <Ionicons name="people-outline" size={48} color="#CCC" />
-                    <Text style={styles.emptyStateText}>
-                      {contactSearchQuery ? "No contacts found" : t("sendMoney.noContactsFound")}
-                    </Text>
-                  </View>
-                ) : (
-                  filteredContacts.map((contact) => (
-                    <TouchableOpacity
-                      key={contact.id}
-                      style={styles.contactItem}
-                      onPress={() => selectContact(contact)}
-                    >
-                      <View style={styles.contactAvatar}>
-                        <Ionicons name="person" size={24} color="#E25A17" />
-                      </View>
-                      <View style={styles.contactInfo}>
-                        <Text style={styles.contactName}>{contact.name ?? ""}</Text>
-                        <Text style={styles.contactAccount}>
-                          {contact.phoneNumbers?.[0] || contact.accountNumber || "No phone"}
-                        </Text>
-                      </View>
-                      <Ionicons name="chevron-forward" size={20} color="#999" />
-                    </TouchableOpacity>
-                  ))
-                )}
-              </ScrollView>
+                }}
+              >
+                <Ionicons name="close" size={24} color="#333" />
+              </TouchableOpacity>
             </View>
+
+            {/* Search Bar */}
+            <View style={styles.searchContainer}>
+              <Ionicons
+                name="search"
+                size={20}
+                color="#999"
+                style={styles.searchIcon}
+              />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search contacts..."
+                placeholderTextColor="#999"
+                value={contactSearchQuery}
+                onChangeText={handleContactSearch}
+              />
+              {contactSearchQuery.length > 0 && (
+                <TouchableOpacity onPress={() => handleContactSearch("")}>
+                  <Ionicons name="close-circle" size={20} color="#999" />
+                </TouchableOpacity>
+              )}
+            </View>
+
+            <ScrollView style={styles.contactsModalContent}>
+              {filteredContacts.length === 0 ? (
+                <View style={styles.emptyState}>
+                  <Ionicons name="people-outline" size={48} color="#CCC" />
+                  <Text style={styles.emptyStateText}>
+                    {contactSearchQuery
+                      ? "No contacts found"
+                      : t("sendMoney.noContactsFound")}
+                  </Text>
+                </View>
+              ) : (
+                filteredContacts.map((contact) => (
+                  <TouchableOpacity
+                    key={contact.id}
+                    style={styles.contactItem}
+                    onPress={() => selectContact(contact)}
+                  >
+                    <View style={styles.contactAvatar}>
+                      <Ionicons name="person" size={24} color="#E25A17" />
+                    </View>
+                    <View style={styles.contactInfo}>
+                      <Text style={styles.contactName}>
+                        {contact.name ?? ""}
+                      </Text>
+                      <Text style={styles.contactAccount}>
+                        {contact.phoneNumbers?.[0] ||
+                          contact.accountNumber ||
+                          "No phone"}
+                      </Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={20} color="#999" />
+                  </TouchableOpacity>
+                ))
+              )}
+            </ScrollView>
           </View>
-        </Modal>
+        </View>
+      </Modal>
     </View>
   );
 }

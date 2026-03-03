@@ -35,7 +35,8 @@ const en: TranslationMap = {
   "profile.active": "Active",
   "profile.memberSince": "MEMBER SINCE",
   "profile.selectLanguage": "Select Language",
-  "profile.defaultIsEnglish": "Default is English. Choose your preferred language.",
+  "profile.defaultIsEnglish":
+    "Default is English. Choose your preferred language.",
   "profile.premium": "Premium",
 
   // KYC Verification
@@ -70,18 +71,22 @@ const en: TranslationMap = {
   "kyc.fullAddress": "Full Address",
   "kyc.postalCode": "Postal Code",
   "kyc.placeholderCountry": "Select country",
-  "kyc.placeholderFullAddress": "House/Unit no., Street, Barangay, City, Province, ZIP Code",
+  "kyc.placeholderFullAddress":
+    "House/Unit no., Street, Barangay, City, Province, ZIP Code",
   "kyc.placeholderPostalCode": "Enter postal code",
   "kyc.back": "Back",
   "kyc.modalSelectCountry": "Select Country",
   "kyc.personalDocuments": "Personal Documents",
-  "kyc.personalDocumentsDesc": "Please upload a photo of your government ID (both sides) and a selfie for identity verification.",
+  "kyc.personalDocumentsDesc":
+    "Please upload a photo of your government ID (both sides) and a selfie for identity verification.",
   "kyc.govIdFront": "Government ID front",
   "kyc.govIdBack": "Government ID back",
   "kyc.selfiePhoto": "Selfie Photo",
   "kyc.uploadGovernmentId": "Upload Government ID",
-  "kyc.uploadGovIdFrontHint": "Upload a clear photo of the front of your government-issued ID",
-  "kyc.uploadGovIdBackHint": "Upload a clear photo of the back of your government-issued ID",
+  "kyc.uploadGovIdFrontHint":
+    "Upload a clear photo of the front of your government-issued ID",
+  "kyc.uploadGovIdBackHint":
+    "Upload a clear photo of the back of your government-issued ID",
   "kyc.uploadSelfiePhoto": "Upload Selfie Photo",
   "kyc.uploadSelfieHint": "Take a clear selfie photo for verification",
   "kyc.uploaded": "Uploaded",
@@ -99,12 +104,15 @@ const en: TranslationMap = {
   "kyc.reviewIdBack": "ID Back",
   "kyc.reviewGovId": "Government ID",
   "kyc.reviewBiometrics": "Biometrics",
-  "kyc.confirmAccuracy": "By submitting this application, you confirm that all information provided is accurate.",
+  "kyc.confirmAccuracy":
+    "By submitting this application, you confirm that all information provided is accurate.",
   "kyc.confirmAndSubmit": "Confirm and Submit",
   "kyc.submissionSuccess": "KYC Submitted Successfully",
-  "kyc.submissionSuccessMessage": "Your application has been submitted. We will review it and notify you once verification is complete.",
+  "kyc.submissionSuccessMessage":
+    "Your application has been submitted. We will review it and notify you once verification is complete.",
   "kyc.confirmRequiredTitle": "Confirmation Required",
-  "kyc.confirmRequiredMessage": "Please confirm that all information provided is accurate by checking the confirmation box before submitting.",
+  "kyc.confirmRequiredMessage":
+    "Please confirm that all information provided is accurate by checking the confirmation box before submitting.",
   "kyc.ok": "OK",
 
   // Dashboard
@@ -140,7 +148,8 @@ const en: TranslationMap = {
   "withdraw.selectType": "Select Withdrawal Type",
   "withdraw.selectMethod": "Select Withdrawal Method",
   "withdraw.chooseHowToWithdraw": "Choose how you want to withdraw",
-  "withdraw.selectTypeToContinue": "Please select a withdrawal type to continue",
+  "withdraw.selectTypeToContinue":
+    "Please select a withdrawal type to continue",
   "withdraw.walletInformation": "Wallet Information",
 
   // Transaction types
@@ -174,9 +183,11 @@ const en: TranslationMap = {
   "investment.noActiveContracts": "No active contracts",
   "investment.noCompletedContracts": "No completed contracts",
   "investment.noPendingContracts": "No pending contracts",
-  "investment.emptyPending": "Submitted deposits will appear here once created.",
+  "investment.emptyPending":
+    "Submitted deposits will appear here once created.",
   "investment.emptyActive": "Approved time deposits will appear here.",
-  "investment.emptyCompleted": "Matured or cancelled contracts will appear here.",
+  "investment.emptyCompleted":
+    "Matured or cancelled contracts will appear here.",
   "investment.contractDetails": "Contract Details",
   "investment.amount": "Amount",
   "investment.interestRate": "Interest Rate",
@@ -229,8 +240,10 @@ const en: TranslationMap = {
   "deposit.stockInvestmentTitle": "Stock Investment",
   "deposit.minStock": "Minimum ₱2,000,000 for stock investment",
   "deposit.stockMinShort": "Minimum ₱2,000,000 for Stock · Enter amount below",
-  "deposit.pleaseLoginStock": "Please log in to submit a stock investment request.",
-  "deposit.stockSubmitted": "Your stock investment request has been submitted successfully!",
+  "deposit.pleaseLoginStock":
+    "Please log in to submit a stock investment request.",
+  "deposit.stockSubmitted":
+    "Your stock investment request has been submitted successfully!",
   "deposit.ok": "OK",
   "deposit.pleaseLoginDeposit": "Please log in to submit a deposit request.",
   "deposit.walletLoadError": "Could not load wallet. Please try again.",
@@ -248,14 +261,16 @@ const en: TranslationMap = {
   "deposit.confirm": "Confirm",
   "deposit.processing": "Processing...",
   "deposit.successTitle": "Deposit Submitted",
-  "deposit.successMessage": "Your time deposit request has been submitted successfully.",
+  "deposit.successMessage":
+    "Your time deposit request has been submitted successfully.",
   "deposit.goToDashboard": "Go to Dashboard",
   "deposit.reviewConfirm": "Review & Confirm",
   "deposit.reviewDetails": "Review your deposit details",
   "deposit.depositType": "Deposit Type",
   "deposit.topUpSubtitle": "Add funds to your available balance",
   "deposit.pleaseLoginTopup": "Please log in to submit a top-up request.",
-  "deposit.topUpSuccess": "Your top-up request has been submitted successfully.",
+  "deposit.topUpSuccess":
+    "Your top-up request has been submitted successfully.",
 
   // Settings
   "settings.title": "Settings",
@@ -302,7 +317,8 @@ const en: TranslationMap = {
   "agent.shareMessagePrefix": "Join InspireWallet with my referral code:",
   "agent.shareTitle": "Referral Code",
   "agent.commission": "Agent Commission",
-  "agent.commissionHint": "Earned from referred clients' approved time deposits",
+  "agent.commissionHint":
+    "Earned from referred clients' approved time deposits",
   "agent.yourReferralCode": "Your Referral Code",
   "agent.share": "Share",
   "agent.directReferrals": "Direct Referrals",
@@ -312,10 +328,13 @@ const en: TranslationMap = {
   "agent.directReferralInNetwork": "direct referral in your network",
   "agent.directReferralsInNetwork": "direct referrals in your network",
   "agent.referredClientsTitle": "Referred Clients with Time Deposits",
-  "agent.referredClientsSubtitle": "Clients you referred who had approved time deposits (commission earned)",
+  "agent.referredClientsSubtitle":
+    "Clients you referred who had approved time deposits (commission earned)",
   "agent.commissionFromClient": "Commission from referred client",
-  "agent.emptyReferredClients": "No referred clients with approved time deposits yet",
-  "agent.emptyReferredClientsHint": "When your referrals create time deposits and they get approved, you'll earn commission and see them here.",
+  "agent.emptyReferredClients":
+    "No referred clients with approved time deposits yet",
+  "agent.emptyReferredClientsHint":
+    "When your referrals create time deposits and they get approved, you'll earn commission and see them here.",
 
   // About
   "about.title": "About Inspire",
@@ -326,17 +345,23 @@ const en: TranslationMap = {
   "about.feature2": "Manage stocks",
   "about.feature3": "Track withdrawals",
   "about.feature4": "Keep a clear record of all your financial transactions",
-  "about.ourCompanyDesc": "At Inspire Alliance Fund Group Inc., we are driven by a powerful purpose: to empower dreams and ignite meaningful change. Founded on the belief that lasting progress begins with opportunity, we exist to support individuals who are ready to make a difference—not just in their own lives, but in the communities around them. We go beyond traditional funding. We are a dynamic movement that bridges passionate visionaries with the support, trust, and resources they need to transform ideas into lasting impact.",
-  "about.ourMissionDesc": "At Inspire Alliance Fund Group Inc, our mission is to ignite change by empowering dreams. We believe that real progress begins when individuals are given the resources, trust, and opportunities to build a better future not just for themselves, but for their communities and beyond. We are more than a funding platform; we are a movement that connects purpose-driven people with the support they need to turn ideas into impact. By investing in human potential, we cultivate a ripple effect supporting lives, strengthening economies, and shaping a future where hope and innovation thrive together.",
-  "about.inspireWalletIntro": "Inspire Wallet, our flagship app for Inspire investors, embodies this vision. Designed as your all-in-one financial companion, Inspire Wallet allows you to:",
-  "about.blockquote": "Whether you're a seasoned investor or just getting started, our app provides all the tools you need to manage your portfolio with ease and confidence.",
+  "about.ourCompanyDesc":
+    "At Inspire Alliance Fund Group Inc., we are driven by a powerful purpose: to empower dreams and ignite meaningful change. Founded on the belief that lasting progress begins with opportunity, we exist to support individuals who are ready to make a difference—not just in their own lives, but in the communities around them. We go beyond traditional funding. We are a dynamic movement that bridges passionate visionaries with the support, trust, and resources they need to transform ideas into lasting impact.",
+  "about.ourMissionDesc":
+    "At Inspire Alliance Fund Group Inc, our mission is to ignite change by empowering dreams. We believe that real progress begins when individuals are given the resources, trust, and opportunities to build a better future not just for themselves, but for their communities and beyond. We are more than a funding platform; we are a movement that connects purpose-driven people with the support they need to turn ideas into impact. By investing in human potential, we cultivate a ripple effect supporting lives, strengthening economies, and shaping a future where hope and innovation thrive together.",
+  "about.inspireWalletIntro":
+    "Inspire Wallet, our flagship app for Inspire investors, embodies this vision. Designed as your all-in-one financial companion, Inspire Wallet allows you to:",
+  "about.blockquote":
+    "Whether you're a seasoned investor or just getting started, our app provides all the tools you need to manage your portfolio with ease and confidence.",
   "about.readyToGetStarted": "Ready to Get Started?",
-  "about.ctaText": "Join us at Inspire Alliance Fund Group Incorporated and together, let's shape a prosperous future. Take control of your financial journey now!",
+  "about.ctaText":
+    "Join us at Inspire Alliance Fund Group Incorporated and together, let's shape a prosperous future. Take control of your financial journey now!",
 
   // Help Center
   "help.title": "Help Center",
   "help.submitRequest": "Submit Your Request",
-  "help.bannerSubtitle": "Need help with something? Fill out this form and our support team will get back to you as soon as possible.",
+  "help.bannerSubtitle":
+    "Need help with something? Fill out this form and our support team will get back to you as soon as possible.",
   "help.personalInfo": "PERSONAL INFORMATION",
   "help.firstName": "First Name",
   "help.lastName": "Last Name",
@@ -352,8 +377,10 @@ const en: TranslationMap = {
   "help.placeholderTitle": "Brief title describing your issue",
   "help.selectPriority": "Select priority level",
   "help.selectCategory": "Select category",
-  "help.placeholderConcern": "Please describe your concern or question in detail...",
-  "help.note": "By submitting this form, we will receive your help request via email. Our support team will review your concern and respond within 24-48 hours during business days. Thank you for reaching out to us!",
+  "help.placeholderConcern":
+    "Please describe your concern or question in detail...",
+  "help.note":
+    "By submitting this form, we will receive your help request via email. Our support team will review your concern and respond within 24-48 hours during business days. Thank you for reaching out to us!",
   "help.submitRequestButton": "SUBMIT REQUEST",
   "help.selectPriorityTitle": "Select Priority Level",
   "help.selectCategoryTitle": "Select Category",
@@ -368,7 +395,8 @@ const en: TranslationMap = {
   "help.categoryTechnical": "Technical Issue",
   "help.categoryOther": "Other",
   "help.requestSubmitted": "Request Submitted",
-  "help.thankYouMessage": "Thank you for reaching out! Our support team will review your concern and respond within 24-48 hours during business days.",
+  "help.thankYouMessage":
+    "Thank you for reaching out! Our support team will review your concern and respond within 24-48 hours during business days.",
   "help.validationFirst": "Please enter your first name.",
   "help.validationLast": "Please enter your last name.",
   "help.validationEmail": "Please enter your email address.",
@@ -383,11 +411,13 @@ const en: TranslationMap = {
   // Delete Account
   "delete.title": "Delete Account",
   "delete.confirmTitle": "Do you really want to delete your account?",
-  "delete.confirmSubtitle": "This action cannot be undone. All your data, including investments and transaction history, will be permanently removed.",
+  "delete.confirmSubtitle":
+    "This action cannot be undone. All your data, including investments and transaction history, will be permanently removed.",
   "delete.noKeepAccount": "No, keep my account",
   "delete.yesDeleteAccount": "Yes, delete my account",
   "delete.tellUsWhy": "Tell us why you're leaving",
-  "delete.reasonSubtitle": "Your feedback helps us improve. Please select a reason and feel free to add more details.",
+  "delete.reasonSubtitle":
+    "Your feedback helps us improve. Please select a reason and feel free to add more details.",
   "delete.reason": "Reason",
   "delete.selectReason": "Select reason",
   "delete.additionalDetails": "Additional details (optional)",
@@ -402,68 +432,89 @@ const en: TranslationMap = {
   "delete.reasonTechnical": "Technical issues",
   "delete.reasonOther": "Other",
   "delete.requestSubmitted": "Request Submitted",
-  "delete.successMessage": "Your account deletion request has been submitted. Our admin team will process your request within 2-3 business days. You will be notified via email once your account has been deleted. Thank you for being part of Inspire Wallet.",
+  "delete.successMessage":
+    "Your account deletion request has been submitted. Our admin team will process your request within 2-3 business days. You will be notified via email once your account has been deleted. Thank you for being part of Inspire Wallet.",
   "delete.requiredReason": "Please select a reason for deleting your account.",
   "delete.required": "Required",
 
   // Privacy Policy
   "privacy.title": "Privacy Policy",
   "privacy.h1": "We Value Your Privacy",
-  "privacy.b1": "This policy explains how we collect, use, and protect your information when you use Inspire Wallet. We are committed to maintaining the trust and confidence of our users.",
+  "privacy.b1":
+    "This policy explains how we collect, use, and protect your information when you use Inspire Wallet. We are committed to maintaining the trust and confidence of our users.",
   "privacy.h2": "What Information We Collect",
   "privacy.i2": "We collect the following types of data:",
-  "privacy.b2_1": "Personal Information: Your name, email address, and other details you provide.",
-  "privacy.b2_2": "Usage Data: Information like your device type, IP address, and how you use the app.",
+  "privacy.b2_1":
+    "Personal Information: Your name, email address, and other details you provide.",
+  "privacy.b2_2":
+    "Usage Data: Information like your device type, IP address, and how you use the app.",
   "privacy.h3": "How We Use Your Information",
   "privacy.i3": "We use your information to:",
   "privacy.b3_1": "Provide and improve your services.",
   "privacy.b3_2": "Contact you with updates or important notices.",
   "privacy.b3_3": "Monitor how the app is used to enhance performance.",
   "privacy.h4": "Sharing Your Information",
-  "privacy.b4": "We may share your data with service providers who help us run the app, business partners, or authorities if required by law.",
+  "privacy.b4":
+    "We may share your data with service providers who help us run the app, business partners, or authorities if required by law.",
   "privacy.h5": "Data Security",
-  "privacy.b5": "We take steps to protect your information, but no system is 100% secure. Always be cautious when sharing data online.",
+  "privacy.b5":
+    "We take steps to protect your information, but no system is 100% secure. Always be cautious when sharing data online.",
   "privacy.h6": "Children's Privacy",
-  "privacy.b6": "We do not collect data from anyone under 13. If you believe your child has shared data with us, contact us to remove it.",
+  "privacy.b6":
+    "We do not collect data from anyone under 13. If you believe your child has shared data with us, contact us to remove it.",
   "privacy.h7": "Your Rights",
-  "privacy.b7": "You can update or delete your personal data by logging into your account or contacting us.",
+  "privacy.b7":
+    "You can update or delete your personal data by logging into your account or contacting us.",
   "privacy.h8": "Changes To This Policy",
-  "privacy.b8": "We may update this policy periodically. Check this page for the latest version.",
+  "privacy.b8":
+    "We may update this policy periodically. Check this page for the latest version.",
   "privacy.h9": "Contact US",
   "privacy.i9": "If you have any questions, email us at:",
 
   // Terms & Conditions
   "terms.title": "Terms and Conditions",
   "terms.h1": "Welcome to Inspire Wallet!",
-  "terms.b1": "Please read these terms and conditions carefully before accessing, using, or obtaining any materials, information, products or services. By accessing the Inspire Wallet (collectively, \"the app\"), you agree to be bound by these terms and conditions (\"Terms\") and our Privacy Policy. In these \"Terms\", \"we\", \"us\", \"our\" and \"Inspire Wallet\" refers to Inspire Wallet, and \"you\" and \"your\" refers to you, the user of our application.",
+  "terms.b1":
+    'Please read these terms and conditions carefully before accessing, using, or obtaining any materials, information, products or services. By accessing the Inspire Wallet (collectively, "the app"), you agree to be bound by these terms and conditions ("Terms") and our Privacy Policy. In these "Terms", "we", "us", "our" and "Inspire Wallet" refers to Inspire Wallet, and "you" and "your" refers to you, the user of our application.',
   "terms.h2": "Eligibility",
-  "terms.b2": "You must be at least 18 years old and have the legal capacity to enter into contracts. By using our app, you represent that you meet these requirements. If you are located in a jurisdiction where investment services are restricted, you may not use the app.",
+  "terms.b2":
+    "You must be at least 18 years old and have the legal capacity to enter into contracts. By using our app, you represent that you meet these requirements. If you are located in a jurisdiction where investment services are restricted, you may not use the app.",
   "terms.h3": "Account Registration",
-  "terms.i3": "To access the maximum capacity of the app, you must create an account. You agree to:",
+  "terms.i3":
+    "To access the maximum capacity of the app, you must create an account. You agree to:",
   "terms.b3_1": "Provide accurate and complete information",
   "terms.b3_2": "Maintain the security of your password",
-  "terms.b3_3": "In case of any unauthorized use of your account, kindly notify us immediately",
+  "terms.b3_3":
+    "In case of any unauthorized use of your account, kindly notify us immediately",
   "terms.h4": "Services Provided",
-  "terms.b4": "Inspire Wallet tracks your stocks and investments and lets you monitor your money before and after withdrawal. Every transaction shall be made through email and not directly with the bank. Inspire Alliance Fund Group will process your transaction, not the app itself. The process could take approximately five (5) to seven (7) working days to reflect on your Inspire Wallet account.",
+  "terms.b4":
+    "Inspire Wallet tracks your stocks and investments and lets you monitor your money before and after withdrawal. Every transaction shall be made through email and not directly with the bank. Inspire Alliance Fund Group will process your transaction, not the app itself. The process could take approximately five (5) to seven (7) working days to reflect on your Inspire Wallet account.",
   "terms.h5": "Fees and Charges",
-  "terms.b5": "Details about fees associated with transactions, account maintenance, and other services will be provided in-app and may change from time to time.",
+  "terms.b5":
+    "Details about fees associated with transactions, account maintenance, and other services will be provided in-app and may change from time to time.",
   "terms.h6": "User Responsibilities",
-  "terms.b6": "You agree to use the app for lawful purposes and to abide by all applicable laws and regulations. You are responsible for your account and investment decisions.",
+  "terms.b6":
+    "You agree to use the app for lawful purposes and to abide by all applicable laws and regulations. You are responsible for your account and investment decisions.",
   "terms.h7": "Intellectual Property",
-  "terms.b7": "All content, trademarks, and software related to Inspire Wallet are owned by Inspire Alliance Fund Group or its licensors. You are granted a limited, non-exclusive license to use the app for personal purposes.",
+  "terms.b7":
+    "All content, trademarks, and software related to Inspire Wallet are owned by Inspire Alliance Fund Group or its licensors. You are granted a limited, non-exclusive license to use the app for personal purposes.",
   "terms.h8": "Privacy Policy",
-  "terms.b8": "Your use of the app is also governed by our Privacy Policy, which details how we collect, use, and protect your personal information. The app only collects data such as your name, email address and bank details.",
+  "terms.b8":
+    "Your use of the app is also governed by our Privacy Policy, which details how we collect, use, and protect your personal information. The app only collects data such as your name, email address and bank details.",
   "terms.h9": "Changes to Terms",
-  "terms.b9": "We may modify these terms at any time. We will notify you of significant changes through the app or via email. Your continued use of the app after changes constitutes acceptance of the new terms.",
+  "terms.b9":
+    "We may modify these terms at any time. We will notify you of significant changes through the app or via email. Your continued use of the app after changes constitutes acceptance of the new terms.",
   "terms.h10": "Contact",
-  "terms.i10": "For questions or concerns regarding these terms, please contact us at",
+  "terms.i10":
+    "For questions or concerns regarding these terms, please contact us at",
   "terms.contactText": "inspireholdings.ph: 85963571",
 
   // Notification
   "notification.title": "Notifications",
   "notification.loginToView": "Please log in to view notifications",
   "notification.noNotifications": "No notifications yet",
-  "notification.noNotificationsSubtext": "You'll see notifications here when you have updates",
+  "notification.noNotificationsSubtext":
+    "You'll see notifications here when you have updates",
   "notification.supportMessage": "Support Message",
   "notification.yourMessage": "Your Message",
   "notification.newBadge": "NEW",
@@ -494,10 +545,11 @@ const en: TranslationMap = {
   "ct.vipDiamondEliteTitle": "VIP Card - Diamond Elite",
   "ct.exclusiveClaimable": "Exclusive Claimable Card",
   "ct.howToGet": "How to Get This Card",
-  "ct.claimDescription": "This exclusive VIP card can be claimed by users with ₱10,000,000 or more in time deposits. Click the \"Claim\" button to add it to your collection.",
+  "ct.claimDescription":
+    'This exclusive VIP card can be claimed by users with ₱10,000,000 or more in time deposits. Click the "Claim" button to add it to your collection.',
   "ct.requirementsTitle": "Requirements",
   "ct.reqDepositAmount": "• Time Deposit Amount: ₱10,000,000+",
-  "ct.reqClickClaim": "• Click \"Claim\" button to add to your collection",
+  "ct.reqClickClaim": '• Click "Claim" button to add to your collection',
   "ct.reqNoPurchase": "• No purchase required",
   "ct.yourStatusTitle": "Your Status",
   "ct.needDepositStatus": "You need ₱10,000,000+ in time deposits",
@@ -526,7 +578,8 @@ const en: TranslationMap = {
   // Travel Protection
   "travel.title": "Travel Protection",
   "travel.subtitle": "Secure your journey",
-  "travel.infoBanner": "Complete this form to subscribe. Your application will be processed within",
+  "travel.infoBanner":
+    "Complete this form to subscribe. Your application will be processed within",
   "travel.infoBannerDays": "5-7 working days",
   "travel.infoBannerAfter": "after payment confirmation.",
   "travel.protectionFee": "Protection Fee",
@@ -542,35 +595,62 @@ const en: TranslationMap = {
   "travel.placeholderEmail": "youremail@example.com",
   "travel.placeholderMobile": "+63 9XX XXX XXXX",
   "travel.placeholderLandline": "(02) XXXX XXXX",
-  "travel.placeholderHomeAddress": "House/Unit no., Street, Barangay City, Province, ZIP Code",
+  "travel.placeholderHomeAddress":
+    "House/Unit no., Street, Barangay City, Province, ZIP Code",
   "travel.personalDetails": "Personal Details",
   "travel.personalSubtitle": "Please provide your personal information",
   "travel.gender": "Gender",
   "travel.selectGender": "Select your gender",
   "travel.genderMale": "Male",
   "travel.genderFemale": "Female",
-  "travel.genderOther": "Other",
+  "travel.genderOther": "Prefer not to say",
   "travel.dateOfBirth": "Date of Birth",
   "travel.selectBirthdate": "Select your birthdate",
   "travel.civilStatus": "Civil Status",
+  "travel.selectCivilStatus": "Select your civil status",
+
   "travel.single": "Single",
   "travel.married": "Married",
   "travel.divorced": "Divorced",
   "travel.widowed": "Widowed",
+
   "travel.citizenship": "Citizenship",
+  "travel.selectCitizenship": "Select your citizenship",
   "travel.placeholderCitizenship": "Filipino",
+
   "travel.financialInfo": "Financial Information",
   "travel.financialSubtitle": "Please provide your financial information",
   "travel.sourceOfFund": "Source of Fund",
-  "travel.placeholderSourceOfFund": "e.g., Employment, Business, Investment etc.",
+  "travel.selectSourceOfFund": "Select Source of Fund",
+  "travel.modalSelectSourceOfFund": "Select Source of Fund",
+  "travel.sourceEmployment": "Employment",
+  "travel.sourceBusiness": "Business",
+  "travel.sourceInvestment": "Investment",
+  "travel.sourceInheritance": "Inheritance",
+  "travel.sourcePension": "Pension",
+  "travel.sourceOther": "Other",
+  "travel.placeholderSourceOfFund":
+    "e.g., Employment, Business, Investment etc.",
+  "travel.selectIncome": "Select Income Range",
+  "travel.modalSelectIncome": "Select Income Range",
   "travel.grossMonthlyIncome": "Gross Monthly Income",
   "travel.cashOnHand": "Cash on Hand",
+  "travel.selectCurrency": "Select Currency",
+  "travel.modalSelectCurrency": "Select Currency",
+  "travel.currencyPHP": "PHP",
+  "travel.currencyUSD": "USD",
+  "travel.currencyEUR": "EUR",
+  "travel.currencyKRW": "KRW",
+
   "travel.travelDetails": "Travel Details",
   "travel.travelSubtitle": "Please provide your travel information",
   "travel.destinationAddress": "Destination Address",
-  "travel.placeholderDestination": "Hotel/Accommodation address where you'll be staying",
+  "travel.placeholderDestination":
+    "Hotel/Accommodation address where you'll be staying",
   "travel.checkInDate": "Check-in Date",
   "travel.selectCheckIn": "Select check-in date",
+  "travel.selectCountry": "Select Country",
+  "travel.separated": "Separated",
   "travel.durationDays": "Duration (Days)",
   "travel.airline": "Airline",
   "travel.placeholderAirline": "e.g., Philippine Airlines, Cebu Pacific, etc.",
@@ -581,7 +661,8 @@ const en: TranslationMap = {
   "travel.passportNumber": "Passport Number",
   "travel.placeholderPassport": "P1234567",
   "travel.purposeOfTravel": "Purpose of Travel",
-  "travel.placeholderPurpose": "Describe the purpose of your travel (business, vacation, family, visit, etc.)",
+  "travel.placeholderPurpose":
+    "Describe the purpose of your travel (business, vacation, family, visit, etc.)",
   "travel.requiredDocs": "Required Documents",
   "travel.requiredDocsSubtitle": "Please upload your required documents",
   "travel.passportPhoto": "Passport Photo",
@@ -604,7 +685,8 @@ const en: TranslationMap = {
   "travel.labelAirline": "AIRLINE",
   "travel.labelPassport": "PASSPORT NUMBER",
   "travel.na": "N/A",
-  "travel.termsText": "By submitting this application, you confirm that all information provided is accurate. Payment will be processed securely through PayPal. Your travel protection coverage will be activated within 5-7 working days after successful payment and document verification.",
+  "travel.termsText":
+    "By submitting this application, you confirm that all information provided is accurate. Payment will be processed securely through PayPal. Your travel protection coverage will be activated within 5-7 working days after successful payment and document verification.",
   "travel.back": "Back",
   "travel.next": "Next",
   "travel.apply": "Apply",
@@ -613,16 +695,19 @@ const en: TranslationMap = {
   "travel.requiredDocuments": "Required Documents",
   "travel.uploadBothDocs": "Please upload both required documents",
   "travel.applicationSubmitted": "Application Submitted",
-  "travel.applicationSuccess": "Your travel protection application has been submitted successfully! We will process your request within 5-7 working days.",
+  "travel.applicationSuccess":
+    "Your travel protection application has been submitted successfully! We will process your request within 5-7 working days.",
   "travel.permissionRequired": "Permission Required",
-  "travel.allowPhotos": "Please allow access to your photos to upload documents.",
+  "travel.allowPhotos":
+    "Please allow access to your photos to upload documents.",
   "travel.error": "Error",
   "travel.failedToPickImage": "Failed to pick image. Please try again.",
 
   // Banking Services
   "banking.headerTitle": "Bank Account Services",
   "banking.headerSubtitle": "Professional Banking Solutions",
-  "banking.infoNote": "By submitting these details, we will send you an email confirmation with your application status. Please note that this process will take approximately 5-7 working days for review and approval by the selected bank.",
+  "banking.infoNote":
+    "By submitting these details, we will send you an email confirmation with your application status. Please note that this process will take approximately 5-7 working days for review and approval by the selected bank.",
   "banking.next": "Next",
   "banking.back": "Back",
   "banking.submit": "Submit",
@@ -630,11 +715,13 @@ const en: TranslationMap = {
   "banking.submitSuccess": "Your application has been submitted successfully.",
   "banking.submitFailed": "Failed to submit application. Please try again.",
   "banking.chooseBank": "Choose Your Bank",
-  "banking.chooseBankDesc": "Select your preferred bank account opening. This will determine which banking services and features you'll have access to.",
+  "banking.chooseBankDesc":
+    "Select your preferred bank account opening. This will determine which banking services and features you'll have access to.",
   "banking.preferredBank": "Preferred Bank",
   "banking.selectBank": "Select Bank",
   "banking.contactInfo": "Contact Information",
-  "banking.contactInfoDesc": "Provide your contact details so we can reach you regarding your application status and account updates.",
+  "banking.contactInfoDesc":
+    "Provide your contact details so we can reach you regarding your application status and account updates.",
   "banking.emailAddress": "Email Address",
   "banking.mobileNumber": "Mobile Number",
   "banking.landlineNumber": "Landline Number",
@@ -642,7 +729,8 @@ const en: TranslationMap = {
   "banking.placeholderMobile": "+63 9XX XXX XXXX",
   "banking.placeholderLandline": "(02) XXXX XXXX",
   "banking.personalDetails": "Personal Details",
-  "banking.personalDetailsDesc": "Tell us about yourself. This information is required for identity verification and compliance purposes.",
+  "banking.personalDetailsDesc":
+    "Tell us about yourself. This information is required for identity verification and compliance purposes.",
   "banking.gender": "Gender",
   "banking.selectGender": "Select your gender",
   "banking.dateOfBirth": "Date of Birth",
@@ -657,7 +745,7 @@ const en: TranslationMap = {
   "banking.modalSelectCitizenship": "Select Citizenship",
   "banking.genderMale": "Male",
   "banking.genderFemale": "Female",
-  "banking.genderOther": "Other",
+  "banking.genderOther": "Prefer not to say",
   "banking.single": "Single",
   "banking.married": "Married",
   "banking.widowed": "Widowed",
@@ -685,16 +773,30 @@ const en: TranslationMap = {
   "banking.november": "November",
   "banking.december": "December",
   "banking.addressInfo": "Address Information",
-  "banking.addressInfoDesc": "Provide your complete address for verification and account setup purposes.",
+  "banking.addressInfoDesc":
+    "Provide your complete address for verification and account setup purposes.",
   "banking.completeAddress": "Complete Address",
-  "banking.placeholderAddress": "House/Unit No., Street, Barangay, City, Province, ZIP Code",
+  "banking.placeholderAddress":
+    "House/Unit No., Street, Barangay, City, Province, ZIP Code",
   "banking.financialInfo": "Financial Information",
-  "banking.financialInfoDesc": "Share your financial details to help us understand your banking needs and ensure compliance.",
+  "banking.financialInfoDesc":
+    "Share your financial details to help us understand your banking needs and ensure compliance.",
   "banking.sourceOfFund": "Source of Fund",
   "banking.grossMonthlyIncome": "Gross Monthly Income",
-  "banking.placeholderSourceOfFund": "e.g., Employment, Business, Investment etc.",
+
+  "banking.incomeBelow15000": "Below 15,000",
+  "banking.income15000To30000": "15,000 - 30,000",
+  "banking.income30001To50000": "30,001 - 50,000",
+  "banking.income50001To100000": "50,001 - 100,000",
+  "banking.income100001To500000": "100,001 - 500,000",
+  "banking.incomeAbove500000": "Above 500,000",
+  "banking.selectIncome": "Select Income Range",
+  "banking.modalSelectIncome": "Select Income Range",
+  "banking.placeholderSourceOfFund":
+    "e.g., Employment, Business, Investment etc.",
   "banking.requiredDocs": "Required Documents",
-  "banking.requiredDocsDesc": "Upload required documents for identity verification and account opening process.",
+  "banking.requiredDocsDesc":
+    "Upload required documents for identity verification and account opening process.",
   "banking.passportPhoto": "Passport Photo",
   "banking.governmentId": "Government ID",
   "banking.uploaded": "Uploaded",
@@ -703,10 +805,20 @@ const en: TranslationMap = {
   "banking.uploadGovernmentId": "Upload Government ID.",
   "banking.uploadGovIdHint": "Driver's License, SSS, etc.",
   "banking.permissionRequired": "Permission Required",
-  "banking.allowPhotos": "Please allow access to your photos to upload documents.",
+  "banking.allowPhotos":
+    "Please allow access to your photos to upload documents.",
   "banking.error": "Error",
   "banking.failedToPickImage": "Failed to pick image. Please try again.",
   "banking.required": "Required",
+  "banking.errorEmail": "Please enter a valid email address.",
+  "banking.errorMobile": "Please enter your mobile number.",
+  "banking.errorAddress": "Please enter your complete address.",
+  "banking.errorGender": "Please select your gender.",
+  "banking.errorBirthdate": "Please select your birthdate.",
+  "banking.errorCivilStatus": "Please select your civil status.",
+  "banking.errorCitizenship": "Please select your citizenship.",
+  "banking.errorSourceOfFund": "Please enter your source of fund.",
+  "banking.errorMonthlyIncome": "Please enter your monthly income.",
   "banking.uploadPassportRequired": "Please upload your passport photo.",
   "banking.uploadGovIdRequired": "Please upload your government ID.",
   "banking.selectSourceOfFund": "Select source of fund",
@@ -721,6 +833,8 @@ const en: TranslationMap = {
   "banking.currencyPHP": "PHP",
   "banking.currencyUSD": "USD",
   "banking.currencyEUR": "EUR",
+  "banking.currencyKRW": "KRW",
+
   "banking.modalSelectCurrency": "Select Currency",
   "banking.idType": "ID Type",
   "banking.idPassport": "Passport",
@@ -753,7 +867,8 @@ const en: TranslationMap = {
   "sendMoney.insufficient": "Insufficient",
   "sendMoney.continue": "Continue",
   "sendMoney.selectionRequired": "Selection Required",
-  "sendMoney.selectBalanceToContinue": "Please select a balance type to continue",
+  "sendMoney.selectBalanceToContinue":
+    "Please select a balance type to continue",
   "sendMoney.transferDetails": "Transfer Details",
   "sendMoney.enterRecipientAndAmount": "Enter recipient and amount",
   "sendMoney.recipientAccountNumber": "Recipient Account Number",
@@ -767,7 +882,8 @@ const en: TranslationMap = {
   "sendMoney.enterValidAmount": "Please enter a valid amount",
   "sendMoney.insufficientBalance": "Insufficient balance",
   "sendMoney.recipientNotFound": "Recipient account not found",
-  "sendMoney.errorVerifyingRecipient": "Error verifying recipient. Please try again.",
+  "sendMoney.errorVerifyingRecipient":
+    "Error verifying recipient. Please try again.",
   "sendMoney.alert": "Alert",
   "sendMoney.selectContact": "Select Contact",
   "sendMoney.noContactsFound": "No contacts found",
@@ -781,7 +897,8 @@ const en: TranslationMap = {
   "sendMoney.transferAmount": "Transfer Amount",
   "sendMoney.confirm": "Confirm",
   "sendMoney.transferComplete": "Transfer Complete!",
-  "sendMoney.transferSuccessMessage": "Your transfer of PHP {amount} to {name} has been completed successfully.",
+  "sendMoney.transferSuccessMessage":
+    "Your transfer of PHP {amount} to {name} has been completed successfully.",
   "sendMoney.error": "Error",
   "sendMoney.transferFailed": "Transfer failed. Please try again.",
   "sendMoney.userNotAuthenticated": "User not authenticated",
@@ -807,10 +924,12 @@ const en: TranslationMap = {
   "ewallet.headerTitle": "E-Wallet Account Opening",
   "ewallet.headerSubtitle": "Digital Banking Made Simple",
   "ewallet.chooseProvider": "Choose Your E-Wallet Provider",
-  "ewallet.chooseProviderDesc": "This will determine which digital banking services you'll have access to.",
+  "ewallet.chooseProviderDesc":
+    "This will determine which digital banking services you'll have access to.",
   "ewallet.selectEwalletType": "Select E-Wallet type",
   "ewallet.selectPreferred": "Select your preferred E-Wallet",
-  "ewallet.infoNote": "By submitting these details, we will send you an email confirmation with your application status. Please note that this process will take approximately 5-7 working days for review and approval.",
+  "ewallet.infoNote":
+    "By submitting these details, we will send you an email confirmation with your application status. Please note that this process will take approximately 5-7 working days for review and approval.",
   "ewallet.next": "Next",
   "ewallet.back": "Back",
   "ewallet.submit": "Submit",
@@ -857,43 +976,59 @@ const en: TranslationMap = {
   // Agent Request (Services)
   "agentRequest.header.title": "Agent Request",
   "agentRequest.content.headerTitle": "Become an Agent",
-  "agentRequest.content.headerSubtitle": "Submit your request to join our agent network",
+  "agentRequest.content.headerSubtitle":
+    "Submit your request to join our agent network",
   "agentRequest.content.requestInformation.title": "Request Information",
-  "agentRequest.content.requestInformation.text": "Fill out the form below to submit your agent application. You will need to generate an agent number and optionally select a parent agent.",
+  "agentRequest.content.requestInformation.text":
+    "Fill out the form below to submit your agent application. You will need to generate an agent number and optionally select a parent agent.",
   "agentRequest.content.form.title": "Agent Request Form",
   "agentRequest.content.form.personalInformation.title": "Personal Information",
   "agentRequest.content.form.personalInformation.fullNameLabel": "Full Name",
   "agentRequest.content.form.agentNumber.title": "Agent Number",
-  "agentRequest.content.form.agentNumber.generateLabel": "Generate Agent Number",
+  "agentRequest.content.form.agentNumber.generateLabel":
+    "Generate Agent Number",
   "agentRequest.content.form.agentNumber.placeholder": "Tap Generate to create",
   "agentRequest.content.form.agentNumber.generateButton": "Generate",
-  "agentRequest.content.form.agentNumber.hint": "Your unique 5-character agent identifier",
+  "agentRequest.content.form.agentNumber.hint":
+    "Your unique 5-character agent identifier",
   "agentRequest.content.form.parentAgent.title": "Parent Agent (Optional)",
   "agentRequest.content.form.parentAgent.searchLabel": "Search by Agent Number",
-  "agentRequest.content.form.parentAgent.searchPlaceholder": "Enter agent number",
-  "agentRequest.content.form.parentAgent.searchHint": "Search for your referrer's agent number to link accounts",
+  "agentRequest.content.form.parentAgent.searchPlaceholder":
+    "Enter agent number",
+  "agentRequest.content.form.parentAgent.searchHint":
+    "Search for your referrer's agent number to link accounts",
   "agentRequest.content.form.parentAgent.selectedAgent": "Selected Agent",
   "agentRequest.content.form.parentAgent.parentAgentCode": "Parent Agent Code:",
   "agentRequest.content.form.parentAgent.yourAgentCode": "Your Agent Code:",
-  "agentRequest.content.form.parentAgent.noResults": "No agent found for: {query}",
+  "agentRequest.content.form.parentAgent.noResults":
+    "No agent found for: {query}",
   "agentRequest.content.submitButton.submit": "Submit Request",
   "agentRequest.content.submitButton.submitting": "Submitting...",
   "agentRequest.modals.accessRestricted.title": "Access Restricted",
-  "agentRequest.modals.accessRestricted.message": "This feature requires a Premium account. Your current plan: {accountType}",
+  "agentRequest.modals.accessRestricted.message":
+    "This feature requires a Premium account. Your current plan: {accountType}",
   "agentRequest.modals.alreadyAgent.title": "Already an Agent",
-  "agentRequest.modals.alreadyAgent.message": "You are already registered as an agent.",
+  "agentRequest.modals.alreadyAgent.message":
+    "You are already registered as an agent.",
   "agentRequest.modals.agentNumberGenerated.title": "Agent Number Generated",
-  "agentRequest.modals.agentNumberGenerated.message": "Your agent number is: {agentNumber}",
+  "agentRequest.modals.agentNumberGenerated.message":
+    "Your agent number is: {agentNumber}",
   "agentRequest.modals.agentFound.title": "Agent Found",
-  "agentRequest.modals.agentFound.message": "{firstName} {lastName} (Agent #{agentNumber})",
+  "agentRequest.modals.agentFound.message":
+    "{firstName} {lastName} (Agent #{agentNumber})",
   "agentRequest.modals.requestSubmitted.title": "Request Submitted",
-  "agentRequest.modals.requestSubmitted.message": "Your agent request has been submitted successfully. ID: {requestId}",
+  "agentRequest.modals.requestSubmitted.message":
+    "Your agent request has been submitted successfully. ID: {requestId}",
   "agentRequest.modals.error.title": "Error",
-  "agentRequest.modals.error.message": "Something went wrong. Please try again.",
-  "agentRequest.modals.error.generationFailed": "Failed to generate unique agent code.",
-  "agentRequest.modals.error.submitFailed": "Failed to submit request. Please try again.",
+  "agentRequest.modals.error.message":
+    "Something went wrong. Please try again.",
+  "agentRequest.modals.error.generationFailed":
+    "Failed to generate unique agent code.",
+  "agentRequest.modals.error.submitFailed":
+    "Failed to submit request. Please try again.",
   "agentRequest.modals.missingAgentNumber.title": "Missing Agent Number",
-  "agentRequest.modals.missingAgentNumber.message": "Please generate an agent number first.",
+  "agentRequest.modals.missingAgentNumber.message":
+    "Please generate an agent number first.",
 };
 
 const ko: TranslationMap = {
@@ -961,13 +1096,16 @@ const ko: TranslationMap = {
   "kyc.back": "뒤로",
   "kyc.modalSelectCountry": "국가 선택",
   "kyc.personalDocuments": "개인 서류",
-  "kyc.personalDocumentsDesc": "정부 발급 신분증(앞뒤) 사진과 셀카를 업로드해 주세요.",
+  "kyc.personalDocumentsDesc":
+    "정부 발급 신분증(앞뒤) 사진과 셀카를 업로드해 주세요.",
   "kyc.govIdFront": "신분증 앞면",
   "kyc.govIdBack": "신분증 뒷면",
   "kyc.selfiePhoto": "셀카",
   "kyc.uploadGovernmentId": "신분증 업로드",
-  "kyc.uploadGovIdFrontHint": "정부 발급 신분증 앞면의 선명한 사진을 업로드하세요",
-  "kyc.uploadGovIdBackHint": "정부 발급 신분증 뒷면의 선명한 사진을 업로드하세요",
+  "kyc.uploadGovIdFrontHint":
+    "정부 발급 신분증 앞면의 선명한 사진을 업로드하세요",
+  "kyc.uploadGovIdBackHint":
+    "정부 발급 신분증 뒷면의 선명한 사진을 업로드하세요",
   "kyc.uploadSelfiePhoto": "셀카 업로드",
   "kyc.uploadSelfieHint": "확인용 선명한 셀카를 촬영하세요",
   "kyc.uploaded": "업로드됨",
@@ -985,12 +1123,15 @@ const ko: TranslationMap = {
   "kyc.reviewIdBack": "신분증 뒷면",
   "kyc.reviewGovId": "정부 발급 신분증",
   "kyc.reviewBiometrics": "생체 인증",
-  "kyc.confirmAccuracy": "이 신청을 제출함으로써 제공한 모든 정보가 정확함을 확인합니다.",
+  "kyc.confirmAccuracy":
+    "이 신청을 제출함으로써 제공한 모든 정보가 정확함을 확인합니다.",
   "kyc.confirmAndSubmit": "확인 후 제출",
   "kyc.submissionSuccess": "KYC 제출 완료",
-  "kyc.submissionSuccessMessage": "신청이 제출되었습니다. 검토 후 인증이 완료되면 알려드리겠습니다.",
+  "kyc.submissionSuccessMessage":
+    "신청이 제출되었습니다. 검토 후 인증이 완료되면 알려드리겠습니다.",
   "kyc.confirmRequiredTitle": "확인 필요",
-  "kyc.confirmRequiredMessage": "제출 전 확인란을 선택하여 제공한 모든 정보가 정확함을 확인해 주세요.",
+  "kyc.confirmRequiredMessage":
+    "제출 전 확인란을 선택하여 제공한 모든 정보가 정확함을 확인해 주세요.",
   "kyc.ok": "확인",
   "dashboard.goodMorning": "좋은 아침이에요",
   "dashboard.goodAfternoon": "좋은 오후에요",
@@ -1111,7 +1252,8 @@ const ko: TranslationMap = {
   "deposit.pleaseLoginDeposit": "예금 요청을 제출하려면 로그인하세요.",
   "deposit.walletLoadError": "지갑을 불러올 수 없습니다. 다시 시도하세요.",
   "deposit.submitError": "예금 요청 제출에 실패했습니다.",
-  "deposit.unexpectedError": "예기치 않은 오류가 발생했습니다. 다시 시도하세요.",
+  "deposit.unexpectedError":
+    "예기치 않은 오류가 발생했습니다. 다시 시도하세요.",
   "deposit.success": "성공",
   "deposit.error": "오류",
   "deposit.confirmDeposit": "예금 확인",
@@ -1167,10 +1309,13 @@ const ko: TranslationMap = {
   "agent.directReferralInNetwork": "명의 직접 추천이 네트워크에 있습니다",
   "agent.directReferralsInNetwork": "명의 직접 추천이 네트워크에 있습니다",
   "agent.referredClientsTitle": "정기예금 보유 추천 고객",
-  "agent.referredClientsSubtitle": "승인된 정기예금을 보유한 추천 고객 (수수료 발생)",
+  "agent.referredClientsSubtitle":
+    "승인된 정기예금을 보유한 추천 고객 (수수료 발생)",
   "agent.commissionFromClient": "추천 고객 수수료",
-  "agent.emptyReferredClients": "아직 승인된 정기예금 보유 추천 고객이 없습니다",
-  "agent.emptyReferredClientsHint": "추천인이 정기예금을 만들고 승인되면 수수료를 받고 여기에 표시됩니다.",
+  "agent.emptyReferredClients":
+    "아직 승인된 정기예금 보유 추천 고객이 없습니다",
+  "agent.emptyReferredClientsHint":
+    "추천인이 정기예금을 만들고 승인되면 수수료를 받고 여기에 표시됩니다.",
   "settings.helpCenter": "고객센터",
   "settings.privacyPolicy": "개인정보 처리방침",
   "settings.termsAndCondition": "이용약관",
@@ -1191,15 +1336,21 @@ const ko: TranslationMap = {
   "about.feature2": "주식 관리",
   "about.feature3": "출금 추적",
   "about.feature4": "모든 금융 거래 기록 관리",
-  "about.ourCompanyDesc": "Inspire Alliance Fund Group Inc.는 꿈을 지원하고 의미 있는 변화를 이끄는 데 힘을 씁니다. 지속 가능한 성장은 기회에서 시작된다는 신념으로, 자신의 삶과 지역사회에 변화를 만들 준비가 된 분들을 지원합니다. 우리는 단순한 자금 조달을 넘어, 열정적인 비전가들과 지원, 신뢰, 자원을 연결하여 아이디어를 lasting impact로 바꾸는 움직임입니다.",
-  "about.ourMissionDesc": "Inspire Alliance Fund Group Inc의 미션은 꿈을 지원하여 변화를 일으키는 것입니다. 진정한 성장은 개인에게 자원, 신뢰, 기회가 주어져 자신과 지역사회를 위한 더 나은 미래를 만들 때 시작됩니다. 우리는 자금 조달 플랫폼을 넘어, 목표 지향적인 사람들과 아이디어를 현실로 바꾸는 데 필요한 지원을 연결하는 움직임입니다.",
-  "about.inspireWalletIntro": "Inspire Wallet은 Inspire 투자자를 위한 플래그십 앱으로, 올인원 금융 동반자로서 다음을 할 수 있게 합니다:",
-  "about.blockquote": "경험 많은 투자자이든 막 시작한 분이든, 포트폴리오를 쉽고 자신 있게 관리할 수 있는 모든 도구를 제공합니다.",
+  "about.ourCompanyDesc":
+    "Inspire Alliance Fund Group Inc.는 꿈을 지원하고 의미 있는 변화를 이끄는 데 힘을 씁니다. 지속 가능한 성장은 기회에서 시작된다는 신념으로, 자신의 삶과 지역사회에 변화를 만들 준비가 된 분들을 지원합니다. 우리는 단순한 자금 조달을 넘어, 열정적인 비전가들과 지원, 신뢰, 자원을 연결하여 아이디어를 lasting impact로 바꾸는 움직임입니다.",
+  "about.ourMissionDesc":
+    "Inspire Alliance Fund Group Inc의 미션은 꿈을 지원하여 변화를 일으키는 것입니다. 진정한 성장은 개인에게 자원, 신뢰, 기회가 주어져 자신과 지역사회를 위한 더 나은 미래를 만들 때 시작됩니다. 우리는 자금 조달 플랫폼을 넘어, 목표 지향적인 사람들과 아이디어를 현실로 바꾸는 데 필요한 지원을 연결하는 움직임입니다.",
+  "about.inspireWalletIntro":
+    "Inspire Wallet은 Inspire 투자자를 위한 플래그십 앱으로, 올인원 금융 동반자로서 다음을 할 수 있게 합니다:",
+  "about.blockquote":
+    "경험 많은 투자자이든 막 시작한 분이든, 포트폴리오를 쉽고 자신 있게 관리할 수 있는 모든 도구를 제공합니다.",
   "about.readyToGetStarted": "시작할 준비가 되셨나요?",
-  "about.ctaText": "Inspire Alliance Fund Group과 함께 번영하는 미래를 만들어 가세요. 지금 바로 금융 여정을 시작하세요!",
+  "about.ctaText":
+    "Inspire Alliance Fund Group과 함께 번영하는 미래를 만들어 가세요. 지금 바로 금융 여정을 시작하세요!",
   "help.title": "고객센터",
   "help.submitRequest": "문의하기",
-  "help.bannerSubtitle": "도움이 필요하신가요? 양식을 작성해 주시면 지원팀이 최대한 빨리 연락드리겠습니다.",
+  "help.bannerSubtitle":
+    "도움이 필요하신가요? 양식을 작성해 주시면 지원팀이 최대한 빨리 연락드리겠습니다.",
   "help.personalInfo": "개인 정보",
   "help.firstName": "이름",
   "help.lastName": "성",
@@ -1216,7 +1367,8 @@ const ko: TranslationMap = {
   "help.selectPriority": "우선순위 선택",
   "help.selectCategory": "카테고리 선택",
   "help.placeholderConcern": "문의 내용을 자세히 입력해 주세요...",
-  "help.note": "양식을 제출하시면 이메일로 문의를 받습니다. 영업일 기준 24-48시간 내에 답변드립니다.",
+  "help.note":
+    "양식을 제출하시면 이메일로 문의를 받습니다. 영업일 기준 24-48시간 내에 답변드립니다.",
   "help.submitRequestButton": "문의 제출",
   "help.selectPriorityTitle": "우선순위 선택",
   "help.selectCategoryTitle": "카테고리 선택",
@@ -1231,7 +1383,8 @@ const ko: TranslationMap = {
   "help.categoryTechnical": "기술 문제",
   "help.categoryOther": "기타",
   "help.requestSubmitted": "문의 접수",
-  "help.thankYouMessage": "문의해 주셔서 감사합니다. 지원팀이 24-48시간 내에 답변드리겠습니다.",
+  "help.thankYouMessage":
+    "문의해 주셔서 감사합니다. 지원팀이 24-48시간 내에 답변드리겠습니다.",
   "help.validationFirst": "이름을 입력해 주세요.",
   "help.validationLast": "성을 입력해 주세요.",
   "help.validationEmail": "이메일을 입력해 주세요.",
@@ -1244,11 +1397,13 @@ const ko: TranslationMap = {
   "common.ok": "확인",
   "delete.title": "계정 삭제",
   "delete.confirmTitle": "정말 계정을 삭제하시겠습니까?",
-  "delete.confirmSubtitle": "이 작업은 되돌릴 수 없습니다. 투자 및 거래 내역을 포함한 모든 데이터가 영구적으로 삭제됩니다.",
+  "delete.confirmSubtitle":
+    "이 작업은 되돌릴 수 없습니다. 투자 및 거래 내역을 포함한 모든 데이터가 영구적으로 삭제됩니다.",
   "delete.noKeepAccount": "아니요, 계정 유지",
   "delete.yesDeleteAccount": "예, 계정 삭제",
   "delete.tellUsWhy": "탈퇴 사유를 알려주세요",
-  "delete.reasonSubtitle": "소중한 의견을 남겨 주시면 서비스 개선에 도움이 됩니다.",
+  "delete.reasonSubtitle":
+    "소중한 의견을 남겨 주시면 서비스 개선에 도움이 됩니다.",
   "delete.reason": "사유",
   "delete.selectReason": "사유 선택",
   "delete.additionalDetails": "추가 설명 (선택)",
@@ -1263,12 +1418,14 @@ const ko: TranslationMap = {
   "delete.reasonTechnical": "기술적 문제",
   "delete.reasonOther": "기타",
   "delete.requestSubmitted": "요청 접수",
-  "delete.successMessage": "계정 삭제 요청이 접수되었습니다. 2-3 영업일 내에 처리되며, 삭제 완료 시 이메일로 안내드립니다.",
+  "delete.successMessage":
+    "계정 삭제 요청이 접수되었습니다. 2-3 영업일 내에 처리되며, 삭제 완료 시 이메일로 안내드립니다.",
   "delete.requiredReason": "탈퇴 사유를 선택해 주세요.",
   "delete.required": "필수",
   "privacy.title": "개인정보 처리방침",
   "privacy.h1": "당신의 개인정보를 소중히 합니다",
-  "privacy.b1": "본 정책은 Inspire Wallet 이용 시 수집·이용·보호하는 정보에 대해 설명합니다. 저희는 이용자의 신뢰와 신뢰를 유지하기 위해 노력합니다.",
+  "privacy.b1":
+    "본 정책은 Inspire Wallet 이용 시 수집·이용·보호하는 정보에 대해 설명합니다. 저희는 이용자의 신뢰와 신뢰를 유지하기 위해 노력합니다.",
   "privacy.h2": "수집하는 정보",
   "privacy.i2": "다음과 같은 데이터를 수집합니다:",
   "privacy.b2_1": "개인정보: 이름, 이메일 주소 및 귀하가 제공한 기타 정보.",
@@ -1279,46 +1436,61 @@ const ko: TranslationMap = {
   "privacy.b3_2": "업데이트 또는 중요 안내 연락.",
   "privacy.b3_3": "앱 이용 현황 모니터링 및 성능 개선.",
   "privacy.h4": "정보 공유",
-  "privacy.b4": "앱 운영을 지원하는 서비스 제공업체, 비즈니스 파트너 또는 법률에 따라 당국과 데이터를 공유할 수 있습니다.",
+  "privacy.b4":
+    "앱 운영을 지원하는 서비스 제공업체, 비즈니스 파트너 또는 법률에 따라 당국과 데이터를 공유할 수 있습니다.",
   "privacy.h5": "데이터 보안",
-  "privacy.b5": "귀하의 정보를 보호하기 위한 조치를 취하지만, 어떤 시스템도 100% 안전하지는 않습니다. 온라인에서 데이터를 공유할 때 항상 주의하세요.",
+  "privacy.b5":
+    "귀하의 정보를 보호하기 위한 조치를 취하지만, 어떤 시스템도 100% 안전하지는 않습니다. 온라인에서 데이터를 공유할 때 항상 주의하세요.",
   "privacy.h6": "아동 개인정보",
-  "privacy.b6": "만 13세 미만의 데이터는 수집하지 않습니다. 자녀가 저희와 데이터를 공유했다고 생각되시면 연락해 주시면 삭제하겠습니다.",
+  "privacy.b6":
+    "만 13세 미만의 데이터는 수집하지 않습니다. 자녀가 저희와 데이터를 공유했다고 생각되시면 연락해 주시면 삭제하겠습니다.",
   "privacy.h7": "귀하의 권리",
-  "privacy.b7": "계정 로그인 또는 저희 연락을 통해 개인 데이터를 업데이트하거나 삭제할 수 있습니다.",
+  "privacy.b7":
+    "계정 로그인 또는 저희 연락을 통해 개인 데이터를 업데이트하거나 삭제할 수 있습니다.",
   "privacy.h8": "정책 변경",
-  "privacy.b8": "본 정책을 수시로 업데이트할 수 있습니다. 최신 내용은 이 페이지를 확인하세요.",
+  "privacy.b8":
+    "본 정책을 수시로 업데이트할 수 있습니다. 최신 내용은 이 페이지를 확인하세요.",
   "privacy.h9": "문의",
   "privacy.i9": "문의사항이 있으시면 이메일:",
   "terms.title": "이용약관",
   "terms.h1": "Inspire Wallet에 오신 것을 환영합니다!",
-  "terms.b1": "자료, 정보, 제품 또는 서비스에 접근·이용·취득하기 전에 본 약관을 carefully 읽어 주세요. Inspire Wallet(통칭 \"앱\")에 접근함으로써 귀하는 본 약관 및 개인정보 처리방침에 동의하는 것입니다. 본 \"약관\"에서 \"당사\", \"우리\", \"Inspire Wallet\"은 Inspire Wallet을, \"귀하\"는 앱 이용자를 의미합니다.",
+  "terms.b1":
+    '자료, 정보, 제품 또는 서비스에 접근·이용·취득하기 전에 본 약관을 carefully 읽어 주세요. Inspire Wallet(통칭 "앱")에 접근함으로써 귀하는 본 약관 및 개인정보 처리방침에 동의하는 것입니다. 본 "약관"에서 "당사", "우리", "Inspire Wallet"은 Inspire Wallet을, "귀하"는 앱 이용자를 의미합니다.',
   "terms.h2": "자격",
-  "terms.b2": "만 18세 이상이며 계약 체결 능력이 있어야 합니다. 앱 이용 시 위 요건을 충족함을 표시합니다. 투자 서비스가 제한된 관할권에 있는 경우 앱을 이용할 수 없습니다.",
+  "terms.b2":
+    "만 18세 이상이며 계약 체결 능력이 있어야 합니다. 앱 이용 시 위 요건을 충족함을 표시합니다. 투자 서비스가 제한된 관할권에 있는 경우 앱을 이용할 수 없습니다.",
   "terms.h3": "계정 등록",
-  "terms.i3": "앱의 최대 기능을 이용하려면 계정을 만들어야 합니다. 다음에 동의합니다:",
+  "terms.i3":
+    "앱의 최대 기능을 이용하려면 계정을 만들어야 합니다. 다음에 동의합니다:",
   "terms.b3_1": "정확하고 완전한 정보 제공",
   "terms.b3_2": "비밀번호 보안 유지",
   "terms.b3_3": "계정 무단 사용 시 즉시 당사에 알림",
   "terms.h4": "제공 서비스",
-  "terms.b4": "Inspire Wallet은 주식 및 투자를 추적하고 출금 전후 자금을 모니터링합니다. 모든 거래는 은행이 아닌 이메일로 진행됩니다. Inspire Alliance Fund Group이 거래를 처리하며, 앱 자체가 아닙니다. Inspire Wallet 계정에 반영되기까지 약 5~7 영업일이 소요될 수 있습니다.",
+  "terms.b4":
+    "Inspire Wallet은 주식 및 투자를 추적하고 출금 전후 자금을 모니터링합니다. 모든 거래는 은행이 아닌 이메일로 진행됩니다. Inspire Alliance Fund Group이 거래를 처리하며, 앱 자체가 아닙니다. Inspire Wallet 계정에 반영되기까지 약 5~7 영업일이 소요될 수 있습니다.",
   "terms.h5": "수수료",
-  "terms.b5": "거래, 계정 유지 및 기타 서비스와 관련된 수수료는 앱 내에서 안내하며 변경될 수 있습니다.",
+  "terms.b5":
+    "거래, 계정 유지 및 기타 서비스와 관련된 수수료는 앱 내에서 안내하며 변경될 수 있습니다.",
   "terms.h6": "이용자 책임",
-  "terms.b6": "앱을 합법적 목적으로 사용하고 관련 법규를 준수하기로 동의합니다. 계정 및 투자 결정에 대한 책임은 귀하에게 있습니다.",
+  "terms.b6":
+    "앱을 합법적 목적으로 사용하고 관련 법규를 준수하기로 동의합니다. 계정 및 투자 결정에 대한 책임은 귀하에게 있습니다.",
   "terms.h7": "지적 재산권",
-  "terms.b7": "Inspire Wallet 관련 모든 콘텐츠, 상표, 소프트웨어는 Inspire Alliance Fund Group 또는 라이선스 제공자가 소유합니다. 개인 목적으로 앱을 사용할 수 있는 제한적·비독점 라이선스가 부여됩니다.",
+  "terms.b7":
+    "Inspire Wallet 관련 모든 콘텐츠, 상표, 소프트웨어는 Inspire Alliance Fund Group 또는 라이선스 제공자가 소유합니다. 개인 목적으로 앱을 사용할 수 있는 제한적·비독점 라이선스가 부여됩니다.",
   "terms.h8": "개인정보 처리방침",
-  "terms.b8": "앱 이용은 개인정보 처리방침에도 따르며, 개인정보 수집·이용·보호 방법을 설명합니다. 앱은 이름, 이메일, 은행 정보 등만 수집합니다.",
+  "terms.b8":
+    "앱 이용은 개인정보 처리방침에도 따르며, 개인정보 수집·이용·보호 방법을 설명합니다. 앱은 이름, 이메일, 은행 정보 등만 수집합니다.",
   "terms.h9": "약관 변경",
-  "terms.b9": "당사는 언제든 본 약관을 수정할 수 있습니다. 중요한 변경 사항은 앱 또는 이메일로 안내합니다. 변경 후에도 앱을 계속 이용하면 새 약관에 동의한 것으로 봅니다.",
+  "terms.b9":
+    "당사는 언제든 본 약관을 수정할 수 있습니다. 중요한 변경 사항은 앱 또는 이메일로 안내합니다. 변경 후에도 앱을 계속 이용하면 새 약관에 동의한 것으로 봅니다.",
   "terms.h10": "문의",
   "terms.i10": "본 약관에 대한 문의나 불만 사항은 다음으로 연락해 주세요.",
   "terms.contactText": "inspireholdings.ph: 85963571",
   "notification.title": "알림",
   "notification.loginToView": "알림을 보려면 로그인하세요",
   "notification.noNotifications": "알림이 없습니다",
-  "notification.noNotificationsSubtext": "업데이트가 있으면 여기에 알림이 표시됩니다",
+  "notification.noNotificationsSubtext":
+    "업데이트가 있으면 여기에 알림이 표시됩니다",
   "notification.supportMessage": "고객 지원 메시지",
   "notification.yourMessage": "내 메시지",
   "notification.newBadge": "새 알림",
@@ -1347,10 +1519,11 @@ const ko: TranslationMap = {
   "ct.vipDiamondEliteTitle": "VIP 카드 - 다이아몬드 엘리트",
   "ct.exclusiveClaimable": "독점 수령 가능 카드",
   "ct.howToGet": "이 카드를 받는 방법",
-  "ct.claimDescription": "이 독점 VIP 가드는 정기 예금에 10,000,000페소 이상을 보유한 사용자가 수령할 수 있습니다. \"수령\" 버튼을 클릭하여 컬렉션에 추가하세요.",
+  "ct.claimDescription":
+    '이 독점 VIP 가드는 정기 예금에 10,000,000페소 이상을 보유한 사용자가 수령할 수 있습니다. "수령" 버튼을 클릭하여 컬렉션에 추가하세요.',
   "ct.requirementsTitle": "요건",
   "ct.reqDepositAmount": "• 정기 예금 금액: ₱10,000,000+",
-  "ct.reqClickClaim": "• \"수령\" 버튼을 클릭하여 컬렉션에 추가",
+  "ct.reqClickClaim": '• "수령" 버튼을 클릭하여 컬렉션에 추가',
   "ct.reqNoPurchase": "• 구매 불필요",
   "ct.yourStatusTitle": "내 상태",
   "ct.needDepositStatus": "정기 예금에 10,000,000페소 이상이 필요합니다",
@@ -1405,18 +1578,48 @@ const ko: TranslationMap = {
   "travel.dateOfBirth": "생년월일",
   "travel.selectBirthdate": "생년월일 선택",
   "travel.civilStatus": "혼인 상태",
+  "travel.selectCivilStatus": "혼인 상태를 선택하세요",
+
   "travel.single": "미혼",
   "travel.married": "기혼",
   "travel.divorced": "이혼",
   "travel.widowed": "사별",
+  "travel.separated": "별거",
+
   "travel.citizenship": "국적",
+  "travel.selectCitizenship": "국적을 선택하세요",
   "travel.placeholderCitizenship": "한국인",
+
   "travel.financialInfo": "재정 정보",
   "travel.financialSubtitle": "재정 정보를 입력해 주세요",
   "travel.sourceOfFund": "자금 출처",
+  "travel.selectSourceOfFund": "자금 출처 선택",
+  "travel.modalSelectSourceOfFund": "자금 출처 선택",
+  "travel.sourceEmployment": "고용",
+  "travel.sourceBusiness": "사업",
+  "travel.sourceInvestment": "투자",
+  "travel.sourceInheritance": "상속",
+  "travel.sourcePension": "연금",
+  "travel.sourceOther": "기타",
   "travel.placeholderSourceOfFund": "예: 직장, 사업, 투자 등",
+
+  "travel.incomeBelow15000": "15,000 미만",
+  "travel.income15000To30000": "15,000 - 30,000",
+  "travel.income30001To50000": "30,001 - 50,000",
+  "travel.income50001To100000": "50,001 - 100,000",
+  "travel.income100001To500000": "100,001 - 500,000",
+  "travel.incomeAbove500000": "500,000 초과",
+  "travel.selectIncome": "소득 범위 선택",
+  "travel.modalSelectIncome": "소득 범위 선택",
   "travel.grossMonthlyIncome": "월 총 소득",
   "travel.cashOnHand": "보유 현금",
+  "travel.selectCurrency": "통화 선택",
+  "travel.modalSelectCurrency": "통화 선택",
+  "travel.currencyPHP": "PHP",
+  "travel.currencyUSD": "USD",
+  "travel.currencyEUR": "EUR",
+  "travel.currencyKRW": "KRW",
+
   "travel.travelDetails": "여행 정보",
   "travel.travelSubtitle": "여행 정보를 입력해 주세요",
   "travel.destinationAddress": "목적지 주소",
@@ -1433,7 +1636,8 @@ const ko: TranslationMap = {
   "travel.passportNumber": "여권 번호",
   "travel.placeholderPassport": "M12345678",
   "travel.purposeOfTravel": "여행 목적",
-  "travel.placeholderPurpose": "여행 목적을 입력하세요 (업무, 휴가, 가족 방문 등)",
+  "travel.placeholderPurpose":
+    "여행 목적을 입력하세요 (업무, 휴가, 가족 방문 등)",
   "travel.requiredDocs": "필수 서류",
   "travel.requiredDocsSubtitle": "필수 서류를 업로드해 주세요",
   "travel.passportPhoto": "여권 사진",
@@ -1456,7 +1660,8 @@ const ko: TranslationMap = {
   "travel.labelAirline": "항공사",
   "travel.labelPassport": "여권 번호",
   "travel.na": "해당 없음",
-  "travel.termsText": "제출하면 제공한 정보가 정확함을 확인합니다. 결제는 PayPal을 통해 안전하게 처리됩니다. 결제 및 서류 확인 완료 후 5-7 영업일 이내에 여행 보험이 활성화됩니다.",
+  "travel.termsText":
+    "제출하면 제공한 정보가 정확함을 확인합니다. 결제는 PayPal을 통해 안전하게 처리됩니다. 결제 및 서류 확인 완료 후 5-7 영업일 이내에 여행 보험이 활성화됩니다.",
   "travel.back": "뒤로",
   "travel.next": "다음",
   "travel.apply": "신청",
@@ -1465,15 +1670,18 @@ const ko: TranslationMap = {
   "travel.requiredDocuments": "필수 서류",
   "travel.uploadBothDocs": "필수 서류를 모두 업로드해 주세요",
   "travel.applicationSubmitted": "신청 완료",
-  "travel.applicationSuccess": "여행 보호 신청이 성공적으로 제출되었습니다. 5-7 영업일 이내에 처리됩니다.",
+  "travel.applicationSuccess":
+    "여행 보호 신청이 성공적으로 제출되었습니다. 5-7 영업일 이내에 처리됩니다.",
   "travel.permissionRequired": "권한 필요",
   "travel.allowPhotos": "서류 업로드를 위해 사진 접근을 허용해 주세요.",
   "travel.error": "오류",
-  "travel.failedToPickImage": "이미지를 선택하지 못했습니다. 다시 시도해 주세요.",
+  "travel.failedToPickImage":
+    "이미지를 선택하지 못했습니다. 다시 시도해 주세요.",
 
   "banking.headerTitle": "뱅크 계정 서비스",
   "banking.headerSubtitle": "전문 뱅킹 솔루션",
-  "banking.infoNote": "이 정보를 제출하시면 신청 상태에 대한 이메일 확인을 보내드립니다. 선택한 은행의 검토 및 승인에는 약 5-7 영업일이 소요됩니다.",
+  "banking.infoNote":
+    "이 정보를 제출하시면 신청 상태에 대한 이메일 확인을 보내드립니다. 선택한 은행의 검토 및 승인에는 약 5-7 영업일이 소요됩니다.",
   "banking.next": "다음",
   "banking.back": "뒤로",
   "banking.submit": "제출",
@@ -1481,11 +1689,13 @@ const ko: TranslationMap = {
   "banking.submitSuccess": "신청서가 성공적으로 제출되었습니다.",
   "banking.submitFailed": "신청서 제출에 실패했습니다. 다시 시도해 주세요.",
   "banking.chooseBank": "은행 선택",
-  "banking.chooseBankDesc": "선호하는 은행 계좌 개설을 선택하세요. 이용 가능한 뱅킹 서비스와 기능이 결정됩니다.",
+  "banking.chooseBankDesc":
+    "선호하는 은행 계좌 개설을 선택하세요. 이용 가능한 뱅킹 서비스와 기능이 결정됩니다.",
   "banking.preferredBank": "선호 은행",
   "banking.selectBank": "은행 선택",
   "banking.contactInfo": "연락처 정보",
-  "banking.contactInfoDesc": "신청 상태 및 계정 업데이트와 관련하여 연락할 수 있도록 연락처를 입력해 주세요.",
+  "banking.contactInfoDesc":
+    "신청 상태 및 계정 업데이트와 관련하여 연락할 수 있도록 연락처를 입력해 주세요.",
   "banking.emailAddress": "이메일 주소",
   "banking.mobileNumber": "휴대폰 번호",
   "banking.landlineNumber": "유선 전화 번호",
@@ -1493,7 +1703,8 @@ const ko: TranslationMap = {
   "banking.placeholderMobile": "+82 10 XXXX XXXX",
   "banking.placeholderLandline": "(02) XXXX XXXX",
   "banking.personalDetails": "개인 정보",
-  "banking.personalDetailsDesc": "본인 정보를 알려 주세요. 신원 확인 및 규정 준수를 위해 필요합니다.",
+  "banking.personalDetailsDesc":
+    "본인 정보를 알려 주세요. 신원 확인 및 규정 준수를 위해 필요합니다.",
   "banking.gender": "성별",
   "banking.selectGender": "성별 선택",
   "banking.dateOfBirth": "생년월일",
@@ -1536,16 +1747,19 @@ const ko: TranslationMap = {
   "banking.november": "11월",
   "banking.december": "12월",
   "banking.addressInfo": "주소 정보",
-  "banking.addressInfoDesc": "확인 및 계정 설정을 위해 전체 주소를 입력해 주세요.",
+  "banking.addressInfoDesc":
+    "확인 및 계정 설정을 위해 전체 주소를 입력해 주세요.",
   "banking.completeAddress": "전체 주소",
   "banking.placeholderAddress": "동/호, 거리, 구/군, 시, 도, 우편번호",
   "banking.financialInfo": "재정 정보",
-  "banking.financialInfoDesc": "뱅킹 니즈 파악 및 규정 준수를 위해 재정 정보를 공유해 주세요.",
+  "banking.financialInfoDesc":
+    "뱅킹 니즈 파악 및 규정 준수를 위해 재정 정보를 공유해 주세요.",
   "banking.sourceOfFund": "자금 출처",
   "banking.grossMonthlyIncome": "월 총 소득",
   "banking.placeholderSourceOfFund": "예: 직장, 사업, 투자 등",
   "banking.requiredDocs": "필수 서류",
-  "banking.requiredDocsDesc": "신원 확인 및 계좌 개설을 위해 필수 서류를 업로드해 주세요.",
+  "banking.requiredDocsDesc":
+    "신원 확인 및 계좌 개설을 위해 필수 서류를 업로드해 주세요.",
   "banking.passportPhoto": "여권 사진",
   "banking.governmentId": "신분증",
   "banking.uploaded": "업로드됨",
@@ -1556,7 +1770,8 @@ const ko: TranslationMap = {
   "banking.permissionRequired": "권한 필요",
   "banking.allowPhotos": "서류 업로드를 위해 사진 접근을 허용해 주세요.",
   "banking.error": "오류",
-  "banking.failedToPickImage": "이미지를 선택하지 못했습니다. 다시 시도해 주세요.",
+  "banking.failedToPickImage":
+    "이미지를 선택하지 못했습니다. 다시 시도해 주세요.",
   "banking.required": "필수",
   "banking.uploadPassportRequired": "여권 사진을 업로드해 주세요.",
   "banking.uploadGovIdRequired": "신분증을 업로드해 주세요.",
@@ -1617,7 +1832,8 @@ const ko: TranslationMap = {
   "sendMoney.enterValidAmount": "올바른 금액을 입력해 주세요",
   "sendMoney.insufficientBalance": "잔액 부족",
   "sendMoney.recipientNotFound": "수령인 계정을 찾을 수 없습니다",
-  "sendMoney.errorVerifyingRecipient": "수령인 확인 중 오류가 발생했습니다. 다시 시도해 주세요.",
+  "sendMoney.errorVerifyingRecipient":
+    "수령인 확인 중 오류가 발생했습니다. 다시 시도해 주세요.",
   "sendMoney.alert": "알림",
   "sendMoney.selectContact": "연락처 선택",
   "sendMoney.noContactsFound": "연락처 없음",
@@ -1631,7 +1847,8 @@ const ko: TranslationMap = {
   "sendMoney.transferAmount": "송금 금액",
   "sendMoney.confirm": "확인",
   "sendMoney.transferComplete": "송금 완료!",
-  "sendMoney.transferSuccessMessage": "PHP {amount}을(를) {name}님에게 성공적으로 송금했습니다.",
+  "sendMoney.transferSuccessMessage":
+    "PHP {amount}을(를) {name}님에게 성공적으로 송금했습니다.",
   "sendMoney.error": "오류",
   "sendMoney.transferFailed": "송금에 실패했습니다. 다시 시도해 주세요.",
   "sendMoney.userNotAuthenticated": "사용자 인증되지 않음",
@@ -1656,7 +1873,8 @@ const ko: TranslationMap = {
   "ewallet.chooseProviderDesc": "이용 가능한 디지털 뱅킹 서비스가 결정됩니다.",
   "ewallet.selectEwalletType": "이월렛 유형 선택",
   "ewallet.selectPreferred": "선호하는 이월렛을 선택하세요",
-  "ewallet.infoNote": "제출하시면 신청 상태를 이메일로 안내해 드립니다. 검토 및 승인에는 약 5-7 영업일이 소요됩니다.",
+  "ewallet.infoNote":
+    "제출하시면 신청 상태를 이메일로 안내해 드립니다. 검토 및 승인에는 약 5-7 영업일이 소요됩니다.",
   "ewallet.next": "다음",
   "ewallet.back": "뒤로",
   "ewallet.submit": "제출",
@@ -1697,43 +1915,58 @@ const ko: TranslationMap = {
   "task.pointsLabel": "포인트",
   "agentRequest.header.title": "에이전트 신청",
   "agentRequest.content.headerTitle": "에이전트 되기",
-  "agentRequest.content.headerSubtitle": "에이전트 네트워크 가입을 위해 신청해 주세요.",
+  "agentRequest.content.headerSubtitle":
+    "에이전트 네트워크 가입을 위해 신청해 주세요.",
   "agentRequest.content.requestInformation.title": "신청 안내",
-  "agentRequest.content.requestInformation.text": "아래 양식을 작성하여 에이전트 신청을 제출하세요. 에이전트 번호를 생성하고, 선택 사항으로 상위 에이전트를 선택할 수 있습니다.",
+  "agentRequest.content.requestInformation.text":
+    "아래 양식을 작성하여 에이전트 신청을 제출하세요. 에이전트 번호를 생성하고, 선택 사항으로 상위 에이전트를 선택할 수 있습니다.",
   "agentRequest.content.form.title": "에이전트 신청 양식",
   "agentRequest.content.form.personalInformation.title": "개인 정보",
   "agentRequest.content.form.personalInformation.fullNameLabel": "성명",
   "agentRequest.content.form.agentNumber.title": "에이전트 번호",
   "agentRequest.content.form.agentNumber.generateLabel": "에이전트 번호 생성",
-  "agentRequest.content.form.agentNumber.placeholder": "생성 버튼을 눌러 만드세요",
+  "agentRequest.content.form.agentNumber.placeholder":
+    "생성 버튼을 눌러 만드세요",
   "agentRequest.content.form.agentNumber.generateButton": "생성",
   "agentRequest.content.form.agentNumber.hint": "고유 5자 에이전트 식별자",
   "agentRequest.content.form.parentAgent.title": "상위 에이전트 (선택)",
   "agentRequest.content.form.parentAgent.searchLabel": "에이전트 번호로 검색",
-  "agentRequest.content.form.parentAgent.searchPlaceholder": "에이전트 번호 입력",
-  "agentRequest.content.form.parentAgent.searchHint": "계정을 연결할 추천인의 에이전트 번호를 검색하세요",
+  "agentRequest.content.form.parentAgent.searchPlaceholder":
+    "에이전트 번호 입력",
+  "agentRequest.content.form.parentAgent.searchHint":
+    "계정을 연결할 추천인의 에이전트 번호를 검색하세요",
   "agentRequest.content.form.parentAgent.selectedAgent": "선택된 에이전트",
-  "agentRequest.content.form.parentAgent.parentAgentCode": "상위 에이전트 코드:",
+  "agentRequest.content.form.parentAgent.parentAgentCode":
+    "상위 에이전트 코드:",
   "agentRequest.content.form.parentAgent.yourAgentCode": "내 에이전트 코드:",
   "agentRequest.content.form.parentAgent.noResults": "검색 결과 없음: {query}",
   "agentRequest.content.submitButton.submit": "신청 제출",
   "agentRequest.content.submitButton.submitting": "제출 중...",
   "agentRequest.modals.accessRestricted.title": "접근 제한",
-  "agentRequest.modals.accessRestricted.message": "이 기능은 프리미엄 계정이 필요합니다. 현재 플랜: {accountType}",
+  "agentRequest.modals.accessRestricted.message":
+    "이 기능은 프리미엄 계정이 필요합니다. 현재 플랜: {accountType}",
   "agentRequest.modals.alreadyAgent.title": "이미 에이전트",
-  "agentRequest.modals.alreadyAgent.message": "이미 에이전트로 등록되어 있습니다.",
+  "agentRequest.modals.alreadyAgent.message":
+    "이미 에이전트로 등록되어 있습니다.",
   "agentRequest.modals.agentNumberGenerated.title": "에이전트 번호 생성됨",
-  "agentRequest.modals.agentNumberGenerated.message": "에이전트 번호: {agentNumber}",
+  "agentRequest.modals.agentNumberGenerated.message":
+    "에이전트 번호: {agentNumber}",
   "agentRequest.modals.agentFound.title": "에이전트 찾음",
-  "agentRequest.modals.agentFound.message": "{firstName} {lastName} (에이전트 #{agentNumber})",
+  "agentRequest.modals.agentFound.message":
+    "{firstName} {lastName} (에이전트 #{agentNumber})",
   "agentRequest.modals.requestSubmitted.title": "신청 접수",
-  "agentRequest.modals.requestSubmitted.message": "에이전트 신청이 접수되었습니다. ID: {requestId}",
+  "agentRequest.modals.requestSubmitted.message":
+    "에이전트 신청이 접수되었습니다. ID: {requestId}",
   "agentRequest.modals.error.title": "오류",
-  "agentRequest.modals.error.message": "문제가 발생했습니다. 다시 시도해 주세요.",
-  "agentRequest.modals.error.generationFailed": "고유 에이전트 코드 생성에 실패했습니다.",
-  "agentRequest.modals.error.submitFailed": "신청 제출에 실패했습니다. 다시 시도해 주세요.",
+  "agentRequest.modals.error.message":
+    "문제가 발생했습니다. 다시 시도해 주세요.",
+  "agentRequest.modals.error.generationFailed":
+    "고유 에이전트 코드 생성에 실패했습니다.",
+  "agentRequest.modals.error.submitFailed":
+    "신청 제출에 실패했습니다. 다시 시도해 주세요.",
   "agentRequest.modals.missingAgentNumber.title": "에이전트 번호 없음",
-  "agentRequest.modals.missingAgentNumber.message": "먼저 에이전트 번호를 생성해 주세요.",
+  "agentRequest.modals.missingAgentNumber.message":
+    "먼저 에이전트 번호를 생성해 주세요.",
 };
 
 const ja: TranslationMap = {
@@ -1763,7 +1996,8 @@ const ja: TranslationMap = {
   "profile.active": "有効",
   "profile.memberSince": "入会日",
   "profile.selectLanguage": "言語を選択",
-  "profile.defaultIsEnglish": "デフォルトは英語です。希望の言語を選択してください。",
+  "profile.defaultIsEnglish":
+    "デフォルトは英語です。希望の言語を選択してください。",
   "profile.premium": "プレミアム",
   "kyc.title": "KYC本人確認",
   "kyc.personalDetails": "個人情報",
@@ -1796,23 +2030,28 @@ const ja: TranslationMap = {
   "kyc.fullAddress": "住所全体",
   "kyc.postalCode": "郵便番号",
   "kyc.placeholderCountry": "国を選択",
-  "kyc.placeholderFullAddress": "建物/部屋番号、通り、バランガイ、市、州、郵便番号",
+  "kyc.placeholderFullAddress":
+    "建物/部屋番号、通り、バランガイ、市、州、郵便番号",
   "kyc.placeholderPostalCode": "郵便番号を入力",
   "kyc.back": "戻る",
   "kyc.modalSelectCountry": "国を選択",
   "kyc.personalDocuments": "本人書類",
-  "kyc.personalDocumentsDesc": "政府発行ID（表裏）の写真とセルフィーをアップロードしてください。",
+  "kyc.personalDocumentsDesc":
+    "政府発行ID（表裏）の写真とセルフィーをアップロードしてください。",
   "kyc.govIdFront": "政府発行ID 表面",
   "kyc.govIdBack": "政府発行ID 裏面",
   "kyc.selfiePhoto": "セルフィー写真",
   "kyc.uploadGovernmentId": "政府発行IDをアップロード",
-  "kyc.uploadGovIdFrontHint": "政府発行IDの表面の鮮明な写真をアップロードしてください",
-  "kyc.uploadGovIdBackHint": "政府発行IDの裏面の鮮明な写真をアップロードしてください",
+  "kyc.uploadGovIdFrontHint":
+    "政府発行IDの表面の鮮明な写真をアップロードしてください",
+  "kyc.uploadGovIdBackHint":
+    "政府発行IDの裏面の鮮明な写真をアップロードしてください",
   "kyc.uploadSelfiePhoto": "セルフィーをアップロード",
   "kyc.uploadSelfieHint": "確認用の鮮明なセルフィーを撮影してください",
   "kyc.uploaded": "アップロード済み",
   "kyc.permissionRequired": "権限が必要です",
-  "kyc.allowPhotos": "画像をアップロードするには写真へのアクセスを許可してください。",
+  "kyc.allowPhotos":
+    "画像をアップロードするには写真へのアクセスを許可してください。",
   "kyc.error": "エラー",
   "kyc.failedToPickImage": "画像の選択に失敗しました",
   "kyc.reviewSubmit": "確認して送信",
@@ -1825,7 +2064,8 @@ const ja: TranslationMap = {
   "kyc.reviewIdBack": "ID裏面",
   "kyc.reviewGovId": "政府発行ID",
   "kyc.reviewBiometrics": "生体認証",
-  "kyc.confirmAccuracy": "この申請を送信することで、提供した情報が正確であることを確認します。",
+  "kyc.confirmAccuracy":
+    "この申請を送信することで、提供した情報が正確であることを確認します。",
   "kyc.confirmAndSubmit": "確認して送信",
   "dashboard.goodMorning": "おはようございます",
   "dashboard.goodAfternoon": "こんにちは",
@@ -1887,7 +2127,8 @@ const ja: TranslationMap = {
   "investment.noPendingContracts": "保留中の契約はありません",
   "investment.emptyPending": "申請した預金は作成後にここに表示されます。",
   "investment.emptyActive": "承認された定期預金がここに表示されます。",
-  "investment.emptyCompleted": "満期またはキャンセルされた契約がここに表示されます。",
+  "investment.emptyCompleted":
+    "満期またはキャンセルされた契約がここに表示されます。",
   "investment.contractDetails": "契約詳細",
   "investment.amount": "金額",
   "investment.interestRate": "金利",
@@ -1944,9 +2185,11 @@ const ja: TranslationMap = {
   "deposit.stockSubmitted": "株式投資の申請が完了しました！",
   "deposit.ok": "OK",
   "deposit.pleaseLoginDeposit": "預金を申請するにはログインしてください。",
-  "deposit.walletLoadError": "ウォレットを読み込めませんでした。もう一度お試しください。",
+  "deposit.walletLoadError":
+    "ウォレットを読み込めませんでした。もう一度お試しください。",
   "deposit.submitError": "預金の申請に失敗しました。",
-  "deposit.unexpectedError": "予期しないエラーが発生しました。もう一度お試しください。",
+  "deposit.unexpectedError":
+    "予期しないエラーが発生しました。もう一度お試しください。",
   "deposit.success": "成功",
   "deposit.error": "エラー",
   "deposit.confirmDeposit": "預金確認",
@@ -2002,10 +2245,12 @@ const ja: TranslationMap = {
   "agent.directReferralInNetwork": "件の直接紹介がネットワークにあります",
   "agent.directReferralsInNetwork": "件の直接紹介がネットワークにあります",
   "agent.referredClientsTitle": "定期預金保有の紹介先",
-  "agent.referredClientsSubtitle": "承認済み定期預金を保有する紹介先（手数料発生）",
+  "agent.referredClientsSubtitle":
+    "承認済み定期預金を保有する紹介先（手数料発生）",
   "agent.commissionFromClient": "紹介先からの手数料",
   "agent.emptyReferredClients": "承認済み定期預金の紹介先はまだありません",
-  "agent.emptyReferredClientsHint": "紹介先が定期預金を作成し承認されると、手数料が発生しここに表示されます。",
+  "agent.emptyReferredClientsHint":
+    "紹介先が定期預金を作成し承認されると、手数料が発生しここに表示されます。",
   "settings.helpCenter": "ヘルプセンター",
   "settings.privacyPolicy": "プライバシーポリシー",
   "settings.termsAndCondition": "利用規約",
@@ -2026,15 +2271,21 @@ const ja: TranslationMap = {
   "about.feature2": "株の管理",
   "about.feature3": "出金の追跡",
   "about.feature4": "取引履歴の管理",
-  "about.ourCompanyDesc": "Inspire Alliance Fund Group Inc.は、夢を支え意味ある変化を起こすことを使命としています。持続可能な成長は機会から始まるとの信念のもと、自分と地域社会に変化をもたらす準備ができた方を支援します。従来の資金提供を超え、情熱的なビジョナリーと支援・信頼・リソースを結び、アイデアを持続的なインパクトに変えるムーブメントです。",
-  "about.ourMissionDesc": "Inspire Alliance Fund Group Incのミッションは、夢を支えて変化を起こすことです。真の成長は、個人にリソース、信頼、機会が与えられ、自分と地域のより良い未来を築くときに始まります。資金調達プラットフォームを超え、目的意識のある人々とアイデアを実現する支援を結びつけるムーブメントです。",
-  "about.inspireWalletIntro": "Inspire Walletは、Inspire投資家向けのフラッグシップアプリです。オールインワンの金融パートナーとして、次のことができます：",
-  "about.blockquote": "経験豊富な投資家でも初心者でも、ポートフォリオを簡単に管理できるツールをご用意しています。",
+  "about.ourCompanyDesc":
+    "Inspire Alliance Fund Group Inc.は、夢を支え意味ある変化を起こすことを使命としています。持続可能な成長は機会から始まるとの信念のもと、自分と地域社会に変化をもたらす準備ができた方を支援します。従来の資金提供を超え、情熱的なビジョナリーと支援・信頼・リソースを結び、アイデアを持続的なインパクトに変えるムーブメントです。",
+  "about.ourMissionDesc":
+    "Inspire Alliance Fund Group Incのミッションは、夢を支えて変化を起こすことです。真の成長は、個人にリソース、信頼、機会が与えられ、自分と地域のより良い未来を築くときに始まります。資金調達プラットフォームを超え、目的意識のある人々とアイデアを実現する支援を結びつけるムーブメントです。",
+  "about.inspireWalletIntro":
+    "Inspire Walletは、Inspire投資家向けのフラッグシップアプリです。オールインワンの金融パートナーとして、次のことができます：",
+  "about.blockquote":
+    "経験豊富な投資家でも初心者でも、ポートフォリオを簡単に管理できるツールをご用意しています。",
   "about.readyToGetStarted": "始める準備はできましたか？",
-  "about.ctaText": "Inspire Alliance Fund Groupとともに、豊かな未来を築きましょう。",
+  "about.ctaText":
+    "Inspire Alliance Fund Groupとともに、豊かな未来を築きましょう。",
   "help.title": "ヘルプセンター",
   "help.submitRequest": "お問い合わせ",
-  "help.bannerSubtitle": "お困りですか？フォームにご記入いただければ、サポートチームが折り返しご連絡します。",
+  "help.bannerSubtitle":
+    "お困りですか？フォームにご記入いただければ、サポートチームが折り返しご連絡します。",
   "help.personalInfo": "個人情報",
   "help.firstName": "名",
   "help.lastName": "姓",
@@ -2066,7 +2317,8 @@ const ja: TranslationMap = {
   "help.categoryTechnical": "技術的な問題",
   "help.categoryOther": "その他",
   "help.requestSubmitted": "送信完了",
-  "help.thankYouMessage": "お問い合わせありがとうございます。24-48営業時間以内にご連絡します。",
+  "help.thankYouMessage":
+    "お問い合わせありがとうございます。24-48営業時間以内にご連絡します。",
   "help.validationFirst": "名を入力してください。",
   "help.validationLast": "姓を入力してください。",
   "help.validationEmail": "メールアドレスを入力してください。",
@@ -2079,7 +2331,8 @@ const ja: TranslationMap = {
   "common.ok": "OK",
   "delete.title": "アカウント削除",
   "delete.confirmTitle": "本当にアカウントを削除しますか？",
-  "delete.confirmSubtitle": "この操作は取り消せません。投資・取引履歴を含むすべてのデータが完全に削除されます。",
+  "delete.confirmSubtitle":
+    "この操作は取り消せません。投資・取引履歴を含むすべてのデータが完全に削除されます。",
   "delete.noKeepAccount": "いいえ、アカウントを維持",
   "delete.yesDeleteAccount": "はい、アカウントを削除",
   "delete.tellUsWhy": "退会理由をお聞かせください",
@@ -2098,55 +2351,73 @@ const ja: TranslationMap = {
   "delete.reasonTechnical": "技術的な問題",
   "delete.reasonOther": "その他",
   "delete.requestSubmitted": "送信完了",
-  "delete.successMessage": "アカウント削除リクエストを受け付けました。2-3営業日以内に処理し、完了次第メールでお知らせします。",
+  "delete.successMessage":
+    "アカウント削除リクエストを受け付けました。2-3営業日以内に処理し、完了次第メールでお知らせします。",
   "delete.requiredReason": "退会理由を選択してください。",
   "delete.required": "必須",
   "privacy.title": "プライバシーポリシー",
   "privacy.h1": "プライバシーを大切にしています",
-  "privacy.b1": "本ポリシーは、Inspire Walletのご利用時に当社が収集・利用・保護する情報について説明します。ユーザーの信頼を維持することをお約束します。",
+  "privacy.b1":
+    "本ポリシーは、Inspire Walletのご利用時に当社が収集・利用・保護する情報について説明します。ユーザーの信頼を維持することをお約束します。",
   "privacy.h2": "収集する情報",
   "privacy.i2": "以下のデータを収集します:",
-  "privacy.b2_1": "個人情報: 氏名、メールアドレス、その他ご提供いただいた情報。",
-  "privacy.b2_2": "利用データ: デバイス種類、IPアドレス、アプリの利用方法など。",
+  "privacy.b2_1":
+    "個人情報: 氏名、メールアドレス、その他ご提供いただいた情報。",
+  "privacy.b2_2":
+    "利用データ: デバイス種類、IPアドレス、アプリの利用方法など。",
   "privacy.h3": "情報の利用目的",
   "privacy.i3": "お客様の情報は次の目的で使用します:",
   "privacy.b3_1": "サービスの提供と改善。",
   "privacy.b3_2": "更新や重要なお知らせの連絡。",
   "privacy.b3_3": "アプリの利用状況の把握とパフォーマンス向上。",
   "privacy.h4": "情報の共有",
-  "privacy.b4": "アプリ運営を支援するサービス提供者、ビジネスパートナー、または法令に基づき当局とデータを共有することがあります。",
+  "privacy.b4":
+    "アプリ運営を支援するサービス提供者、ビジネスパートナー、または法令に基づき当局とデータを共有することがあります。",
   "privacy.h5": "データのセキュリティ",
-  "privacy.b5": "お客様の情報を保護する措置を講じていますが、100%安全なシステムはありません。オンラインでデータを共有する際はご注意ください。",
+  "privacy.b5":
+    "お客様の情報を保護する措置を講じていますが、100%安全なシステムはありません。オンラインでデータを共有する際はご注意ください。",
   "privacy.h6": "子供のプライバシー",
-  "privacy.b6": "13歳未満の方のデータは収集しません。お子様が当社にデータを提供したと思われる場合は、削除のためご連絡ください。",
+  "privacy.b6":
+    "13歳未満の方のデータは収集しません。お子様が当社にデータを提供したと思われる場合は、削除のためご連絡ください。",
   "privacy.h7": "お客様の権利",
-  "privacy.b7": "アカウントにログインするか、当社に連絡することで個人データの更新または削除ができます。",
+  "privacy.b7":
+    "アカウントにログインするか、当社に連絡することで個人データの更新または削除ができます。",
   "privacy.h8": "本ポリシーの変更",
-  "privacy.b8": "本ポリシーは随時更新することがあります。最新版は本ページをご確認ください。",
+  "privacy.b8":
+    "本ポリシーは随時更新することがあります。最新版は本ページをご確認ください。",
   "privacy.h9": "お問い合わせ",
   "privacy.i9": "ご質問はメールで:",
   "terms.title": "利用規約",
   "terms.h1": "Inspire Walletへようこそ！",
-  "terms.b1": "資料・情報・製品・サービスにアクセス・利用・取得する前に、本利用規約をよくお読みください。Inspire Wallet（以下「アプリ」）にアクセスすることで、本利用規約およびプライバシーポリシーに同意したものとみなされます。本「規約」において「当社」「弊社」「Inspire Wallet」はInspire Walletを、「お客様」はアプリの利用者を指します。",
+  "terms.b1":
+    "資料・情報・製品・サービスにアクセス・利用・取得する前に、本利用規約をよくお読みください。Inspire Wallet（以下「アプリ」）にアクセスすることで、本利用規約およびプライバシーポリシーに同意したものとみなされます。本「規約」において「当社」「弊社」「Inspire Wallet」はInspire Walletを、「お客様」はアプリの利用者を指します。",
   "terms.h2": "利用資格",
-  "terms.b2": "満18歳以上で契約を締結する能力が必要です。アプリの利用により、上記を満たしていることを表明したものとみなされます。投資サービスが制限されている地域にお住まいの場合は、アプリを利用できません。",
+  "terms.b2":
+    "満18歳以上で契約を締結する能力が必要です。アプリの利用により、上記を満たしていることを表明したものとみなされます。投資サービスが制限されている地域にお住まいの場合は、アプリを利用できません。",
   "terms.h3": "アカウント登録",
-  "terms.i3": "アプリの機能を最大限利用するにはアカウント作成が必要です。以下に同意するものとします:",
+  "terms.i3":
+    "アプリの機能を最大限利用するにはアカウント作成が必要です。以下に同意するものとします:",
   "terms.b3_1": "正確かつ完全な情報の提供",
   "terms.b3_2": "パスワードの管理",
   "terms.b3_3": "アカウントの不正利用に気づいた場合は速やかに当社に連絡",
   "terms.h4": "提供サービス",
-  "terms.b4": "Inspire Walletは株式・投資を追跡し、出金前後の資金を確認できます。取引はすべてメールで行われ、銀行直接ではありません。Inspire Alliance Fund Groupが取引を処理し、アプリ自体ではありません。Inspire Walletアカウントに反映までに約5〜7営業日かかることがあります。",
+  "terms.b4":
+    "Inspire Walletは株式・投資を追跡し、出金前後の資金を確認できます。取引はすべてメールで行われ、銀行直接ではありません。Inspire Alliance Fund Groupが取引を処理し、アプリ自体ではありません。Inspire Walletアカウントに反映までに約5〜7営業日かかることがあります。",
   "terms.h5": "手数料",
-  "terms.b5": "取引・アカウント維持・その他サービスに関する手数料はアプリ内で案内し、変更することがあります。",
+  "terms.b5":
+    "取引・アカウント維持・その他サービスに関する手数料はアプリ内で案内し、変更することがあります。",
   "terms.h6": "利用者の責任",
-  "terms.b6": "アプリを合法的な目的で利用し、適用される法令を遵守することに同意します。アカウントおよび投資判断の責任はお客様にあります。",
+  "terms.b6":
+    "アプリを合法的な目的で利用し、適用される法令を遵守することに同意します。アカウントおよび投資判断の責任はお客様にあります。",
   "terms.h7": "知的財産権",
-  "terms.b7": "Inspire Walletに関するコンテンツ・商標・ソフトウェアは、Inspire Alliance Fund Groupまたはそのライセンス提供者が所有しています。個人利用のための限定・非独占ライセンスが付与されます。",
+  "terms.b7":
+    "Inspire Walletに関するコンテンツ・商標・ソフトウェアは、Inspire Alliance Fund Groupまたはそのライセンス提供者が所有しています。個人利用のための限定・非独占ライセンスが付与されます。",
   "terms.h8": "プライバシーポリシー",
-  "terms.b8": "アプリの利用はプライバシーポリシーにも準拠し、個人情報の収集・利用・保護について定めています。アプリが収集するのは氏名、メールアドレス、銀行情報などのみです。",
+  "terms.b8":
+    "アプリの利用はプライバシーポリシーにも準拠し、個人情報の収集・利用・保護について定めています。アプリが収集するのは氏名、メールアドレス、銀行情報などのみです。",
   "terms.h9": "規約の変更",
-  "terms.b9": "当社はいつでも本規約を変更できるものとします。重要な変更はアプリまたはメールでお知らせします。変更後もアプリを利用し続けることで、新規約に同意したものとみなされます。",
+  "terms.b9":
+    "当社はいつでも本規約を変更できるものとします。重要な変更はアプリまたはメールでお知らせします。変更後もアプリを利用し続けることで、新規約に同意したものとみなされます。",
   "terms.h10": "お問い合わせ",
   "terms.i10": "本規約に関するご質問・ご要望は以下までご連絡ください。",
   "terms.contactText": "inspireholdings.ph: 85963571",
@@ -2182,7 +2453,8 @@ const ja: TranslationMap = {
   "ct.vipDiamondEliteTitle": "VIPカード - ダイヤモンドエリート",
   "ct.exclusiveClaimable": "独占請求可能カード",
   "ct.howToGet": "このカードを入手する方法",
-  "ct.claimDescription": "この独占VIPカードは、定期預金に10,000,000ペソ以上を保有しているユーザーが請求できます。「請求」ボタンをクリックしてコレクションに追加してください。",
+  "ct.claimDescription":
+    "この独占VIPカードは、定期預金に10,000,000ペソ以上を保有しているユーザーが請求できます。「請求」ボタンをクリックしてコレクションに追加してください。",
   "ct.requirementsTitle": "要件",
   "ct.reqDepositAmount": "• 定期預金金額: ₱10,000,000+",
   "ct.reqClickClaim": "• 「請求」ボタンをクリックしてコレクションに追加",
@@ -2213,7 +2485,8 @@ const ja: TranslationMap = {
 
   "travel.title": "旅行保護",
   "travel.subtitle": "旅の安全を守る",
-  "travel.infoBanner": "申し込みにはこのフォームを記入してください。お支払い確認後",
+  "travel.infoBanner":
+    "申し込みにはこのフォームを記入してください。お支払い確認後",
   "travel.infoBannerDays": "5〜7営業日",
   "travel.infoBannerAfter": "以内に申請が処理されます。",
   "travel.protectionFee": "保護料金",
@@ -2240,18 +2513,48 @@ const ja: TranslationMap = {
   "travel.dateOfBirth": "生年月日",
   "travel.selectBirthdate": "生年月日を選択",
   "travel.civilStatus": "婚姻状況",
+  "travel.selectCivilStatus": "婚姻状況を選択してください",
+
   "travel.single": "独身",
   "travel.married": "既婚",
   "travel.divorced": "離婚",
   "travel.widowed": "死別",
+  "travel.separated": "別居",
+
   "travel.citizenship": "国籍",
+  "travel.selectCitizenship": "国籍を選択してください",
   "travel.placeholderCitizenship": "日本人",
+
   "travel.financialInfo": "財務情報",
   "travel.financialSubtitle": "財務情報をご入力ください",
   "travel.sourceOfFund": "資金源",
+  "travel.selectSourceOfFund": "資金源を選択",
+  "travel.modalSelectSourceOfFund": "資金源を選択",
+  "travel.sourceEmployment": "雇用",
+  "travel.sourceBusiness": "事業",
+  "travel.sourceInvestment": "投資",
+  "travel.sourceInheritance": "相続",
+  "travel.sourcePension": "年金",
+  "travel.sourceOther": "その他",
   "travel.placeholderSourceOfFund": "例：雇用、事業、投資など",
+
+  "travel.incomeBelow15000": "15,000 未満",
+  "travel.income15000To30000": "15,000 - 30,000",
+  "travel.income30001To50000": "30,001 - 50,000",
+  "travel.income50001To100000": "50,001 - 100,000",
+  "travel.income100001To500000": "100,001 - 500,000",
+  "travel.incomeAbove500000": "500,000 超過",
+  "travel.selectIncome": "収入範囲を選択",
+  "travel.modalSelectIncome": "収入範囲を選択",
   "travel.grossMonthlyIncome": "月間総収入",
-  "travel.cashOnHand": "手持ち現金",
+  "travel.cashOnHand": "手元現金",
+  "travel.selectCurrency": "通貨を選択",
+  "travel.modalSelectCurrency": "通貨を選択",
+  "travel.currencyPHP": "PHP",
+  "travel.currencyUSD": "USD",
+  "travel.currencyEUR": "EUR",
+  "travel.currencyKRW": "KRW",
+
   "travel.travelDetails": "旅行詳細",
   "travel.travelSubtitle": "旅行情報をご入力ください",
   "travel.destinationAddress": "目的地住所",
@@ -2291,7 +2594,8 @@ const ja: TranslationMap = {
   "travel.labelAirline": "航空会社",
   "travel.labelPassport": "パスポート番号",
   "travel.na": "該当なし",
-  "travel.termsText": "送信により、ご記入の情報が正確であることを確認します。お支払いはPayPalで安全に処理されます。お支払いと書類確認完了後、5〜7営業日以内に旅行保護が有効になります。",
+  "travel.termsText":
+    "送信により、ご記入の情報が正確であることを確認します。お支払いはPayPalで安全に処理されます。お支払いと書類確認完了後、5〜7営業日以内に旅行保護が有効になります。",
   "travel.back": "戻る",
   "travel.next": "次へ",
   "travel.apply": "申し込む",
@@ -2300,15 +2604,19 @@ const ja: TranslationMap = {
   "travel.requiredDocuments": "必要書類",
   "travel.uploadBothDocs": "必要書類を両方アップロードしてください",
   "travel.applicationSubmitted": "申請完了",
-  "travel.applicationSuccess": "旅行保護の申請が正常に送信されました。5〜7営業日以内に処理いたします。",
+  "travel.applicationSuccess":
+    "旅行保護の申請が正常に送信されました。5〜7営業日以内に処理いたします。",
   "travel.permissionRequired": "権限が必要です",
-  "travel.allowPhotos": "書類をアップロードするには写真へのアクセスを許可してください。",
+  "travel.allowPhotos":
+    "書類をアップロードするには写真へのアクセスを許可してください。",
   "travel.error": "エラー",
-  "travel.failedToPickImage": "画像の選択に失敗しました。もう一度お試しください。",
+  "travel.failedToPickImage":
+    "画像の選択に失敗しました。もう一度お試しください。",
 
   "banking.headerTitle": "銀行口座サービス",
   "banking.headerSubtitle": "プロのバンキングソリューション",
-  "banking.infoNote": "ご記入の内容を送信いただくと、申請状況の確認メールをお送りします。選択した銀行による審査・承認には約5〜7営業日かかります。",
+  "banking.infoNote":
+    "ご記入の内容を送信いただくと、申請状況の確認メールをお送りします。選択した銀行による審査・承認には約5〜7営業日かかります。",
   "banking.next": "次へ",
   "banking.back": "戻る",
   "banking.submit": "送信",
@@ -2316,11 +2624,13 @@ const ja: TranslationMap = {
   "banking.submitSuccess": "申請が正常に送信されました。",
   "banking.submitFailed": "申請の送信に失敗しました。もう一度お試しください。",
   "banking.chooseBank": "銀行を選択",
-  "banking.chooseBankDesc": "ご希望の銀行口座開設を選択してください。利用可能な銀行サービスと機能が決まります。",
+  "banking.chooseBankDesc":
+    "ご希望の銀行口座開設を選択してください。利用可能な銀行サービスと機能が決まります。",
   "banking.preferredBank": "希望銀行",
   "banking.selectBank": "銀行を選択",
   "banking.contactInfo": "連絡先",
-  "banking.contactInfoDesc": "申請状況とアカウント更新のご連絡のため、連絡先をご入力ください。",
+  "banking.contactInfoDesc":
+    "申請状況とアカウント更新のご連絡のため、連絡先をご入力ください。",
   "banking.emailAddress": "メールアドレス",
   "banking.mobileNumber": "携帯電話番号",
   "banking.landlineNumber": "固定電話番号",
@@ -2328,7 +2638,8 @@ const ja: TranslationMap = {
   "banking.placeholderMobile": "+81 90 XXXX XXXX",
   "banking.placeholderLandline": "(03) XXXX XXXX",
   "banking.personalDetails": "個人情報",
-  "banking.personalDetailsDesc": "本人確認およびコンプライアンスのため、情報をご記入ください。",
+  "banking.personalDetailsDesc":
+    "本人確認およびコンプライアンスのため、情報をご記入ください。",
   "banking.gender": "性別",
   "banking.selectGender": "性別を選択",
   "banking.dateOfBirth": "生年月日",
@@ -2371,16 +2682,19 @@ const ja: TranslationMap = {
   "banking.november": "11月",
   "banking.december": "12月",
   "banking.addressInfo": "住所",
-  "banking.addressInfoDesc": "確認および口座設定のため、住所の全体をご記入ください。",
+  "banking.addressInfoDesc":
+    "確認および口座設定のため、住所の全体をご記入ください。",
   "banking.completeAddress": "住所（全体）",
   "banking.placeholderAddress": "番地、通り、市区町村、都道府県、郵便番号",
   "banking.financialInfo": "財務情報",
-  "banking.financialInfoDesc": "銀行ニーズの把握とコンプライアンスのため、財務情報をご記入ください。",
+  "banking.financialInfoDesc":
+    "銀行ニーズの把握とコンプライアンスのため、財務情報をご記入ください。",
   "banking.sourceOfFund": "資金源",
   "banking.grossMonthlyIncome": "月間総収入",
   "banking.placeholderSourceOfFund": "例：雇用、事業、投資など",
   "banking.requiredDocs": "必要書類",
-  "banking.requiredDocsDesc": "本人確認および口座開設のため、必要書類をアップロードしてください。",
+  "banking.requiredDocsDesc":
+    "本人確認および口座開設のため、必要書類をアップロードしてください。",
   "banking.passportPhoto": "パスポート写真",
   "banking.governmentId": "身分証明書",
   "banking.uploaded": "アップロード済み",
@@ -2389,11 +2703,14 @@ const ja: TranslationMap = {
   "banking.uploadGovernmentId": "身分証明書をアップロード",
   "banking.uploadGovIdHint": "運転免許証、SSSなど",
   "banking.permissionRequired": "権限が必要です",
-  "banking.allowPhotos": "書類をアップロードするには写真へのアクセスを許可してください。",
+  "banking.allowPhotos":
+    "書類をアップロードするには写真へのアクセスを許可してください。",
   "banking.error": "エラー",
-  "banking.failedToPickImage": "画像の選択に失敗しました。もう一度お試しください。",
+  "banking.failedToPickImage":
+    "画像の選択に失敗しました。もう一度お試しください。",
   "banking.required": "必須",
-  "banking.uploadPassportRequired": "パスポート写真をアップロードしてください。",
+  "banking.uploadPassportRequired":
+    "パスポート写真をアップロードしてください。",
   "banking.uploadGovIdRequired": "身分証明書をアップロードしてください。",
   "banking.selectSourceOfFund": "資金源を選択",
   "banking.sourceEmployment": "雇用",
@@ -2452,7 +2769,8 @@ const ja: TranslationMap = {
   "sendMoney.enterValidAmount": "有効な金額を入力してください",
   "sendMoney.insufficientBalance": "残高不足",
   "sendMoney.recipientNotFound": "受取人アカウントが見つかりません",
-  "sendMoney.errorVerifyingRecipient": "受取人の確認中にエラーが発生しました。もう一度お試しください。",
+  "sendMoney.errorVerifyingRecipient":
+    "受取人の確認中にエラーが発生しました。もう一度お試しください。",
   "sendMoney.alert": "アラート",
   "sendMoney.selectContact": "連絡先を選択",
   "sendMoney.noContactsFound": "連絡先がありません",
@@ -2470,7 +2788,8 @@ const ja: TranslationMap = {
   "sendMoney.error": "エラー",
   "sendMoney.transferFailed": "送金に失敗しました。もう一度お試しください。",
   "sendMoney.userNotAuthenticated": "認証されていません",
-  "sendMoney.agentWalletInsufficient": "エージェントウォレットの残高が不足しています",
+  "sendMoney.agentWalletInsufficient":
+    "エージェントウォレットの残高が不足しています",
   "stock.title": "株主ダッシュボード",
   "stock.stockRate": "株価",
   "stock.stockRateValue": "1株 = ₱2,000,000.00",
@@ -2488,10 +2807,12 @@ const ja: TranslationMap = {
   "ewallet.headerTitle": "電子ウォレット口座開設",
   "ewallet.headerSubtitle": "シンプルなデジタルバンキング",
   "ewallet.chooseProvider": "電子ウォレット提供元を選択",
-  "ewallet.chooseProviderDesc": "利用できるデジタルバンキングサービスが決まります。",
+  "ewallet.chooseProviderDesc":
+    "利用できるデジタルバンキングサービスが決まります。",
   "ewallet.selectEwalletType": "電子ウォレットの種類を選択",
   "ewallet.selectPreferred": "ご希望の電子ウォレットを選択",
-  "ewallet.infoNote": "送信いただくと申請状況をメールでお知らせします。審査・承認に約5〜7営業日かかります。",
+  "ewallet.infoNote":
+    "送信いただくと申請状況をメールでお知らせします。審査・承認に約5〜7営業日かかります。",
   "ewallet.next": "次へ",
   "ewallet.back": "戻る",
   "ewallet.submit": "送信",
@@ -2517,7 +2838,8 @@ const ja: TranslationMap = {
   "task.followFacebook": "Inspire Next Global Inc.をFacebookでフォロー！",
   "task.followInstagram": "Inspire Next Global Inc.をInstagramでフォロー！",
   "task.followTiktok": "Tiktokアカウントをフォロー！",
-  "task.followHoldingsInstagram": "Inspire Holdings Inc.をInstagramでフォロー！",
+  "task.followHoldingsInstagram":
+    "Inspire Holdings Inc.をInstagramでフォロー！",
   "task.followHoldingsFacebook": "Inspire Holdings Inc.をFacebookでフォロー！",
   "task.subscribeYoutube": "Inspire Next Global YouTubeチャンネルを登録！",
   "task.noHistory": "まだタスク履歴がありません",
@@ -2532,43 +2854,62 @@ const ja: TranslationMap = {
   "task.pointsLabel": "ポイント",
   "agentRequest.header.title": "エージェント申請",
   "agentRequest.content.headerTitle": "エージェントになる",
-  "agentRequest.content.headerSubtitle": "エージェントネットワークに参加するには申請してください。",
+  "agentRequest.content.headerSubtitle":
+    "エージェントネットワークに参加するには申請してください。",
   "agentRequest.content.requestInformation.title": "申請案内",
-  "agentRequest.content.requestInformation.text": "以下のフォームに記入してエージェント申請を送信してください。エージェント番号を生成し、任意で親エージェントを選択できます。",
+  "agentRequest.content.requestInformation.text":
+    "以下のフォームに記入してエージェント申請を送信してください。エージェント番号を生成し、任意で親エージェントを選択できます。",
   "agentRequest.content.form.title": "エージェント申請フォーム",
   "agentRequest.content.form.personalInformation.title": "個人情報",
   "agentRequest.content.form.personalInformation.fullNameLabel": "氏名",
   "agentRequest.content.form.agentNumber.title": "エージェント番号",
-  "agentRequest.content.form.agentNumber.generateLabel": "エージェント番号を生成",
+  "agentRequest.content.form.agentNumber.generateLabel":
+    "エージェント番号を生成",
   "agentRequest.content.form.agentNumber.placeholder": "生成ボタンを押して作成",
   "agentRequest.content.form.agentNumber.generateButton": "生成",
-  "agentRequest.content.form.agentNumber.hint": "固有の5文字のエージェント識別子",
+  "agentRequest.content.form.agentNumber.hint":
+    "固有の5文字のエージェント識別子",
   "agentRequest.content.form.parentAgent.title": "親エージェント（任意）",
   "agentRequest.content.form.parentAgent.searchLabel": "エージェント番号で検索",
-  "agentRequest.content.form.parentAgent.searchPlaceholder": "エージェント番号を入力",
-  "agentRequest.content.form.parentAgent.searchHint": "紹介者のエージェント番号を検索してアカウントをリンク",
+  "agentRequest.content.form.parentAgent.searchPlaceholder":
+    "エージェント番号を入力",
+  "agentRequest.content.form.parentAgent.searchHint":
+    "紹介者のエージェント番号を検索してアカウントをリンク",
   "agentRequest.content.form.parentAgent.selectedAgent": "選択したエージェント",
-  "agentRequest.content.form.parentAgent.parentAgentCode": "親エージェントコード:",
-  "agentRequest.content.form.parentAgent.yourAgentCode": "あなたのエージェントコード:",
+  "agentRequest.content.form.parentAgent.parentAgentCode":
+    "親エージェントコード:",
+  "agentRequest.content.form.parentAgent.yourAgentCode":
+    "あなたのエージェントコード:",
   "agentRequest.content.form.parentAgent.noResults": "見つかりません: {query}",
   "agentRequest.content.submitButton.submit": "申請を送信",
   "agentRequest.content.submitButton.submitting": "送信中...",
   "agentRequest.modals.accessRestricted.title": "アクセス制限",
-  "agentRequest.modals.accessRestricted.message": "この機能にはプレミアムアカウントが必要です。現在のプラン: {accountType}",
+  "agentRequest.modals.accessRestricted.message":
+    "この機能にはプレミアムアカウントが必要です。現在のプラン: {accountType}",
   "agentRequest.modals.alreadyAgent.title": "すでにエージェント",
-  "agentRequest.modals.alreadyAgent.message": "すでにエージェントとして登録されています。",
-  "agentRequest.modals.agentNumberGenerated.title": "エージェント番号を生成しました",
-  "agentRequest.modals.agentNumberGenerated.message": "エージェント番号: {agentNumber}",
+  "agentRequest.modals.alreadyAgent.message":
+    "すでにエージェントとして登録されています。",
+  "agentRequest.modals.agentNumberGenerated.title":
+    "エージェント番号を生成しました",
+  "agentRequest.modals.agentNumberGenerated.message":
+    "エージェント番号: {agentNumber}",
   "agentRequest.modals.agentFound.title": "エージェントが見つかりました",
-  "agentRequest.modals.agentFound.message": "{firstName} {lastName}（エージェント #{agentNumber}）",
+  "agentRequest.modals.agentFound.message":
+    "{firstName} {lastName}（エージェント #{agentNumber}）",
   "agentRequest.modals.requestSubmitted.title": "申請を受け付けました",
-  "agentRequest.modals.requestSubmitted.message": "エージェント申請が送信されました。ID: {requestId}",
+  "agentRequest.modals.requestSubmitted.message":
+    "エージェント申請が送信されました。ID: {requestId}",
   "agentRequest.modals.error.title": "エラー",
-  "agentRequest.modals.error.message": "問題が発生しました。もう一度お試しください。",
-  "agentRequest.modals.error.generationFailed": "固有のエージェントコードの生成に失敗しました。",
-  "agentRequest.modals.error.submitFailed": "申請の送信に失敗しました。もう一度お試しください。",
-  "agentRequest.modals.missingAgentNumber.title": "エージェント番号がありません",
-  "agentRequest.modals.missingAgentNumber.message": "まずエージェント番号を生成してください。",
+  "agentRequest.modals.error.message":
+    "問題が発生しました。もう一度お試しください。",
+  "agentRequest.modals.error.generationFailed":
+    "固有のエージェントコードの生成に失敗しました。",
+  "agentRequest.modals.error.submitFailed":
+    "申請の送信に失敗しました。もう一度お試しください。",
+  "agentRequest.modals.missingAgentNumber.title":
+    "エージェント番号がありません",
+  "agentRequest.modals.missingAgentNumber.message":
+    "まずエージェント番号を生成してください。",
 };
 
 const ar: TranslationMap = {
@@ -2631,12 +2972,14 @@ const ar: TranslationMap = {
   "kyc.fullAddress": "العنوان الكامل",
   "kyc.postalCode": "الرمز البريدي",
   "kyc.placeholderCountry": "اختر الدولة",
-  "kyc.placeholderFullAddress": "رقم المنزل/الوحدة، الشارع، البارانغاي، المدينة، المحافظة، الرمز البريدي",
+  "kyc.placeholderFullAddress":
+    "رقم المنزل/الوحدة، الشارع، البارانغاي، المدينة، المحافظة، الرمز البريدي",
   "kyc.placeholderPostalCode": "أدخل الرمز البريدي",
   "kyc.back": "رجوع",
   "kyc.modalSelectCountry": "اختر الدولة",
   "kyc.personalDocuments": "المستندات الشخصية",
-  "kyc.personalDocumentsDesc": "يرجى تحميل صورة بطاقة الهوية الحكومية (الوجهين) وصورة selfie للتحقق من الهوية.",
+  "kyc.personalDocumentsDesc":
+    "يرجى تحميل صورة بطاقة الهوية الحكومية (الوجهين) وصورة selfie للتحقق من الهوية.",
   "kyc.govIdFront": "بطاقة الهوية - الأمام",
   "kyc.govIdBack": "بطاقة الهوية - الخلف",
   "kyc.selfiePhoto": "صورة Selfie",
@@ -2660,7 +3003,8 @@ const ar: TranslationMap = {
   "kyc.reviewIdBack": "الهوية - الخلف",
   "kyc.reviewGovId": "بطاقة الهوية الحكومية",
   "kyc.reviewBiometrics": "البيومترية",
-  "kyc.confirmAccuracy": "بإرسال هذا الطلب، تؤكد أن جميع المعلومات المقدمة دقيقة.",
+  "kyc.confirmAccuracy":
+    "بإرسال هذا الطلب، تؤكد أن جميع المعلومات المقدمة دقيقة.",
   "kyc.confirmAndSubmit": "تأكيد وإرسال",
   "dashboard.goodMorning": "صباح الخير",
   "dashboard.goodAfternoon": "مساء الخير",
@@ -2837,10 +3181,12 @@ const ar: TranslationMap = {
   "agent.directReferralInNetwork": "إحالة مباشرة في شبكتك",
   "agent.directReferralsInNetwork": "إحالات مباشرة في شبكتك",
   "agent.referredClientsTitle": "العملاء المُحالون مع ودائع زمنية",
-  "agent.referredClientsSubtitle": "عملاء أَحلتهم ولديهم ودائع زمنية معتمدة (عمولة مُكتسبة)",
+  "agent.referredClientsSubtitle":
+    "عملاء أَحلتهم ولديهم ودائع زمنية معتمدة (عمولة مُكتسبة)",
   "agent.commissionFromClient": "عمولة من عميل مُحال",
   "agent.emptyReferredClients": "لا يوجد عملاء مُحالون بودائع زمنية معتمدة بعد",
-  "agent.emptyReferredClientsHint": "عندما ينشئ المُحالون ودائعاً زمنية وتُعتمد، ستحصل على عمولة وستظهر هنا.",
+  "agent.emptyReferredClientsHint":
+    "عندما ينشئ المُحالون ودائعاً زمنية وتُعتمد، ستحصل على عمولة وستظهر هنا.",
   "settings.helpCenter": "مركز المساعدة",
   "settings.privacyPolicy": "سياسة الخصوصية",
   "settings.termsAndCondition": "الشروط والأحكام",
@@ -2861,15 +3207,21 @@ const ar: TranslationMap = {
   "about.feature2": "إدارة الأسهم",
   "about.feature3": "تتبع السحوبات",
   "about.feature4": "سجل واضح لجميع المعاملات المالية",
-  "about.ourCompanyDesc": "في Inspire Alliance Fund Group Inc.، نحن مدفوعون بهدف قوي: تمكين الأحلام وإيقاد التغيير المعني. تأسسنا على الإيمان بأن التقدم الدائم يبدأ بالفرصة، ونحن ندعم الأفراد المستعدين لإحداث فرق—في حياتهم ومجتمعاتهم. نحن أكثر من تمويل تقليدي؛ نحن حركة تربط أصحاب الرؤية بالدعم والثقة والموارد لتحويل الأفكار إلى أثر دائم.",
-  "about.ourMissionDesc": "مهمتنا في Inspire Alliance Fund Group Inc. هي إشعال التغيير بتمكين الأحلام. نؤمن بأن التقدم الحقيقي يبدأ عندما يُمنح الأفراد الموارد والثقة والفرص لبناء مستقبل أفضل لأنفسهم ومجتمعاتهم. نحن أكثر من منصة تمويل؛ نحن حركة تربط أصحاب الهدف بالدعم اللازم لتحويل الأفكار إلى أثر.",
-  "about.inspireWalletIntro": "تطبيق Inspire Wallet، تطبيقنا الرئيسي لمستثمري Inspire، يجسد هذه الرؤية. مصمم كرفيقك المالي الشامل، يتيح لك Inspire Wallet:",
-  "about.blockquote": "سواء كنت مستثمراً مخضرماً أو مبتدئاً، نوفر لك الأدوات لإدارة محفظتك بسهولة وثقة.",
+  "about.ourCompanyDesc":
+    "في Inspire Alliance Fund Group Inc.، نحن مدفوعون بهدف قوي: تمكين الأحلام وإيقاد التغيير المعني. تأسسنا على الإيمان بأن التقدم الدائم يبدأ بالفرصة، ونحن ندعم الأفراد المستعدين لإحداث فرق—في حياتهم ومجتمعاتهم. نحن أكثر من تمويل تقليدي؛ نحن حركة تربط أصحاب الرؤية بالدعم والثقة والموارد لتحويل الأفكار إلى أثر دائم.",
+  "about.ourMissionDesc":
+    "مهمتنا في Inspire Alliance Fund Group Inc. هي إشعال التغيير بتمكين الأحلام. نؤمن بأن التقدم الحقيقي يبدأ عندما يُمنح الأفراد الموارد والثقة والفرص لبناء مستقبل أفضل لأنفسهم ومجتمعاتهم. نحن أكثر من منصة تمويل؛ نحن حركة تربط أصحاب الهدف بالدعم اللازم لتحويل الأفكار إلى أثر.",
+  "about.inspireWalletIntro":
+    "تطبيق Inspire Wallet، تطبيقنا الرئيسي لمستثمري Inspire، يجسد هذه الرؤية. مصمم كرفيقك المالي الشامل، يتيح لك Inspire Wallet:",
+  "about.blockquote":
+    "سواء كنت مستثمراً مخضرماً أو مبتدئاً، نوفر لك الأدوات لإدارة محفظتك بسهولة وثقة.",
   "about.readyToGetStarted": "هل أنت مستعد للبدء؟",
-  "about.ctaText": "انضم إلينا في Inspire Alliance Fund Group وشاركنا تشكيل مستقبل مزدهر.",
+  "about.ctaText":
+    "انضم إلينا في Inspire Alliance Fund Group وشاركنا تشكيل مستقبل مزدهر.",
   "help.title": "مركز المساعدة",
   "help.submitRequest": "إرسال طلب",
-  "help.bannerSubtitle": "تحتاج مساعدة؟ املأ النموذج وسيتواصل معك فريق الدعم في أقرب وقت.",
+  "help.bannerSubtitle":
+    "تحتاج مساعدة؟ املأ النموذج وسيتواصل معك فريق الدعم في أقرب وقت.",
   "help.personalInfo": "المعلومات الشخصية",
   "help.firstName": "الاسم الأول",
   "help.lastName": "اسم العائلة",
@@ -2886,7 +3238,8 @@ const ar: TranslationMap = {
   "help.selectPriority": "اختر مستوى الأولوية",
   "help.selectCategory": "اختر الفئة",
   "help.placeholderConcern": "صف استفسارك بالتفصيل...",
-  "help.note": "بإرسال هذا النموذج سنستلم طلبك. سيرد فريق الدعم خلال 24-48 ساعة في أيام العمل.",
+  "help.note":
+    "بإرسال هذا النموذج سنستلم طلبك. سيرد فريق الدعم خلال 24-48 ساعة في أيام العمل.",
   "help.submitRequestButton": "إرسال الطلب",
   "help.selectPriorityTitle": "اختر مستوى الأولوية",
   "help.selectCategoryTitle": "اختر الفئة",
@@ -2914,11 +3267,13 @@ const ar: TranslationMap = {
   "common.ok": "موافق",
   "delete.title": "حذف الحساب",
   "delete.confirmTitle": "هل تريد حقاً حذف حسابك؟",
-  "delete.confirmSubtitle": "لا يمكن التراجع. سيتم حذف جميع بياناتك نهائياً بما فيها الاستثمارات والسجل.",
+  "delete.confirmSubtitle":
+    "لا يمكن التراجع. سيتم حذف جميع بياناتك نهائياً بما فيها الاستثمارات والسجل.",
   "delete.noKeepAccount": "لا، احتفظ بحسابي",
   "delete.yesDeleteAccount": "نعم، احذف حسابي",
   "delete.tellUsWhy": "لماذا تغادر؟",
-  "delete.reasonSubtitle": "ملاحظاتك تساعدنا على التحسين. اختر سبباً وأضف تفاصيل إن أردت.",
+  "delete.reasonSubtitle":
+    "ملاحظاتك تساعدنا على التحسين. اختر سبباً وأضف تفاصيل إن أردت.",
   "delete.reason": "السبب",
   "delete.selectReason": "اختر السبب",
   "delete.additionalDetails": "تفاصيل إضافية (اختياري)",
@@ -2933,55 +3288,71 @@ const ar: TranslationMap = {
   "delete.reasonTechnical": "مشاكل تقنية",
   "delete.reasonOther": "أخرى",
   "delete.requestSubmitted": "تم إرسال الطلب",
-  "delete.successMessage": "تم استلام طلب حذف الحساب. سنعالجه خلال 2-3 أيام عمل وسنخبرك بالبريد عند الحذف.",
+  "delete.successMessage":
+    "تم استلام طلب حذف الحساب. سنعالجه خلال 2-3 أيام عمل وسنخبرك بالبريد عند الحذف.",
   "delete.requiredReason": "يرجى اختيار سبب حذف الحساب.",
   "delete.required": "مطلوب",
   "privacy.title": "سياسة الخصوصية",
   "privacy.h1": "نحن نقدر خصوصيتك",
-  "privacy.b1": "توضح هذه السياسة كيف نجمع ونستخدم ونحمي معلوماتك عند استخدام Inspire Wallet. نحن ملتزمون بالحفاظ على ثقة مستخدمينا.",
+  "privacy.b1":
+    "توضح هذه السياسة كيف نجمع ونستخدم ونحمي معلوماتك عند استخدام Inspire Wallet. نحن ملتزمون بالحفاظ على ثقة مستخدمينا.",
   "privacy.h2": "ما هي المعلومات التي نجمعها",
   "privacy.i2": "نجمع الأنواع التالية من البيانات:",
-  "privacy.b2_1": "المعلومات الشخصية: الاسم، البريد الإلكتروني، وغيرها مما تقدمه.",
-  "privacy.b2_2": "بيانات الاستخدام: نوع الجهاز، عنوان IP، وكيفية استخدام التطبيق.",
+  "privacy.b2_1":
+    "المعلومات الشخصية: الاسم، البريد الإلكتروني، وغيرها مما تقدمه.",
+  "privacy.b2_2":
+    "بيانات الاستخدام: نوع الجهاز، عنوان IP، وكيفية استخدام التطبيق.",
   "privacy.h3": "كيف نستخدم معلوماتك",
   "privacy.i3": "نستخدم معلوماتك من أجل:",
   "privacy.b3_1": "تقديم الخدمات وتحسينها.",
   "privacy.b3_2": "التواصل معك بالتحديثات أو الإشعارات المهمة.",
   "privacy.b3_3": "مراقبة استخدام التطبيق لتحسين الأداء.",
   "privacy.h4": "مشاركة معلوماتك",
-  "privacy.b4": "قد نشارك بياناتك مع مقدمي الخدمات أو الشركاء أو السلطات عند الاقتضاء بموجب القانون.",
+  "privacy.b4":
+    "قد نشارك بياناتك مع مقدمي الخدمات أو الشركاء أو السلطات عند الاقتضاء بموجب القانون.",
   "privacy.h5": "أمان البيانات",
-  "privacy.b5": "نتخذ إجراءات لحماية معلوماتك، لكن لا يوجد نظام آمن 100%. كن حذراً عند مشاركة البيانات عبر الإنترنت.",
+  "privacy.b5":
+    "نتخذ إجراءات لحماية معلوماتك، لكن لا يوجد نظام آمن 100%. كن حذراً عند مشاركة البيانات عبر الإنترنت.",
   "privacy.h6": "خصوصية الأطفال",
-  "privacy.b6": "لا نجمع بيانات من أي شخص دون 13 عاماً. إن اعتقدت أن طفلك شارك بيانات معنا، تواصل معنا للحذف.",
+  "privacy.b6":
+    "لا نجمع بيانات من أي شخص دون 13 عاماً. إن اعتقدت أن طفلك شارك بيانات معنا، تواصل معنا للحذف.",
   "privacy.h7": "حقوقك",
-  "privacy.b7": "يمكنك تحديث أو حذف بياناتك الشخصية عبر تسجيل الدخول أو الاتصال بنا.",
+  "privacy.b7":
+    "يمكنك تحديث أو حذف بياناتك الشخصية عبر تسجيل الدخول أو الاتصال بنا.",
   "privacy.h8": "تغييرات هذه السياسة",
   "privacy.b8": "قد نحدّث هذه السياسة من وقت لآخر. راجع هذه الصفحة لأحدث نسخة.",
   "privacy.h9": "اتصل بنا",
   "privacy.i9": "لأي استفسارات، راسلنا على:",
   "terms.title": "الشروط والأحكام",
   "terms.h1": "مرحباً بك في Inspire Wallet!",
-  "terms.b1": "يرجى قراءة هذه الشروط والأحكام بعناية قبل الوصول أو الاستخدام أو الحصول على أي مواد أو معلومات أو منتجات أو خدمات. بالوصول إلى Inspire Wallet (\"التطبيق\") فإنك توافق على الالتزام بهذه الشروط وسياسة الخصوصية. في هذه \"الشروط\"، \"نحن\" و\"Inspire Wallet\" تشير إلى Inspire Wallet، و\"أنت\" تشير إلى مستخدم التطبيق.",
+  "terms.b1":
+    'يرجى قراءة هذه الشروط والأحكام بعناية قبل الوصول أو الاستخدام أو الحصول على أي مواد أو معلومات أو منتجات أو خدمات. بالوصول إلى Inspire Wallet ("التطبيق") فإنك توافق على الالتزام بهذه الشروط وسياسة الخصوصية. في هذه "الشروط"، "نحن" و"Inspire Wallet" تشير إلى Inspire Wallet، و"أنت" تشير إلى مستخدم التطبيق.',
   "terms.h2": "الأهلية",
-  "terms.b2": "يجب أن تكون عمرك 18 عاماً على الأقل ولديك الأهلية القانونية لإبرام العقود. باستخدام التطبيق، فإنك تؤكد استيفاء هذه المتطلبات. إن كنت في منطقة تُقيّد فيها خدمات الاستثمار، فلا يجوز لك استخدام التطبيق.",
+  "terms.b2":
+    "يجب أن تكون عمرك 18 عاماً على الأقل ولديك الأهلية القانونية لإبرام العقود. باستخدام التطبيق، فإنك تؤكد استيفاء هذه المتطلبات. إن كنت في منطقة تُقيّد فيها خدمات الاستثمار، فلا يجوز لك استخدام التطبيق.",
   "terms.h3": "تسجيل الحساب",
   "terms.i3": "للوصول إلى أقصى إمكانيات التطبيق يجب إنشاء حساب. أنت توافق على:",
   "terms.b3_1": "تقديم معلومات دقيقة وكاملة",
   "terms.b3_2": "الحفاظ على أمان كلمة المرور",
   "terms.b3_3": "إبلاغنا فوراً في حال أي استخدام غير مصرح لحسابك",
   "terms.h4": "الخدمات المقدمة",
-  "terms.b4": "Inspire Wallet يتتبع أسهمك واستثماراتك ويتيح مراقبة أموالك قبل وبعد السحب. تتم كل المعاملات عبر البريد الإلكتروني وليس مع البنك مباشرة. Inspire Alliance Fund Group هي من تعالج المعاملة وليس التطبيق. قد يستغرق الأمر حوالي 5 إلى 7 أيام عمل لانعكاس ذلك على حساب Inspire Wallet.",
+  "terms.b4":
+    "Inspire Wallet يتتبع أسهمك واستثماراتك ويتيح مراقبة أموالك قبل وبعد السحب. تتم كل المعاملات عبر البريد الإلكتروني وليس مع البنك مباشرة. Inspire Alliance Fund Group هي من تعالج المعاملة وليس التطبيق. قد يستغرق الأمر حوالي 5 إلى 7 أيام عمل لانعكاس ذلك على حساب Inspire Wallet.",
   "terms.h5": "الرسوم والعمولات",
-  "terms.b5": "تفاصيل الرسوم المرتبطة بالمعاملات وصيانة الحساب والخدمات الأخرى تُقدّم داخل التطبيق وقد تتغير.",
+  "terms.b5":
+    "تفاصيل الرسوم المرتبطة بالمعاملات وصيانة الحساب والخدمات الأخرى تُقدّم داخل التطبيق وقد تتغير.",
   "terms.h6": "مسؤوليات المستخدم",
-  "terms.b6": "أنت توافق على استخدام التطبيق لأغراض قانونية والالتزام بالقوانين المعمول بها. أنت مسؤول عن حسابك وقراراتك الاستثمارية.",
+  "terms.b6":
+    "أنت توافق على استخدام التطبيق لأغراض قانونية والالتزام بالقوانين المعمول بها. أنت مسؤول عن حسابك وقراراتك الاستثمارية.",
   "terms.h7": "الملكية الفكرية",
-  "terms.b7": "جميع المحتوى والعلامات والبرمجيات المتعلقة بـ Inspire Wallet مملوكة لـ Inspire Alliance Fund Group أو المرخصين. يُمنح لك ترخيص محدود وغير حصري لاستخدام التطبيق لأغراض شخصية.",
+  "terms.b7":
+    "جميع المحتوى والعلامات والبرمجيات المتعلقة بـ Inspire Wallet مملوكة لـ Inspire Alliance Fund Group أو المرخصين. يُمنح لك ترخيص محدود وغير حصري لاستخدام التطبيق لأغراض شخصية.",
   "terms.h8": "سياسة الخصوصية",
-  "terms.b8": "استخدامك للتطبيق يخضع أيضاً لسياسة الخصوصية التي توضح كيفية جمع واستخدام وحماية معلوماتك الشخصية. التطبيق يجمع فقط بيانات مثل الاسم والبريد الإلكتروني والتفاصيل المصرفية.",
+  "terms.b8":
+    "استخدامك للتطبيق يخضع أيضاً لسياسة الخصوصية التي توضح كيفية جمع واستخدام وحماية معلوماتك الشخصية. التطبيق يجمع فقط بيانات مثل الاسم والبريد الإلكتروني والتفاصيل المصرفية.",
   "terms.h9": "تغييرات الشروط",
-  "terms.b9": "قد نعدّل هذه الشروط في أي وقت. سنخبرك بالتغييرات المهمة عبر التطبيق أو البريد. استمرارك في استخدام التطبيق بعد التعديلات يعني قبولك للشروط الجديدة.",
+  "terms.b9":
+    "قد نعدّل هذه الشروط في أي وقت. سنخبرك بالتغييرات المهمة عبر التطبيق أو البريد. استمرارك في استخدام التطبيق بعد التعديلات يعني قبولك للشروط الجديدة.",
   "terms.h10": "الاتصال",
   "terms.i10": "للاستفسارات أو المخاوف بخصوص هذه الشروط، يرجى الاتصال بنا على",
   "terms.contactText": "inspireholdings.ph: 85963571",
@@ -3017,10 +3388,11 @@ const ar: TranslationMap = {
   "ct.vipDiamondEliteTitle": "بطاقة VIP - دايموند إيليت",
   "ct.exclusiveClaimable": "بطاقة حصرية قابلة للمطالبة",
   "ct.howToGet": "كيفية الحصول على هذه البطاقة",
-  "ct.claimDescription": "يمكن المطالبة بهذه البطاقة الحصرية لكبار الشخصيات من قبل المستخدمين الذين لديهم 10,000,000 بيزو فلبيني أو أكثر في الودائع لأجل. انقر فوق زر \"مطالبة\" لإضافتها إلى مجموعتك.",
+  "ct.claimDescription":
+    'يمكن المطالبة بهذه البطاقة الحصرية لكبار الشخصيات من قبل المستخدمين الذين لديهم 10,000,000 بيزو فلبيني أو أكثر في الودائع لأجل. انقر فوق زر "مطالبة" لإضافتها إلى مجموعتك.',
   "ct.requirementsTitle": "المتطلبات",
   "ct.reqDepositAmount": "• مبلغ الوديعة لأجل: ₱10,000,000+",
-  "ct.reqClickClaim": "• انقر فوق زر \"مطالبة\" للإضافة إلى مجموعتك",
+  "ct.reqClickClaim": '• انقر فوق زر "مطالبة" للإضافة إلى مجموعتك',
   "ct.reqNoPurchase": "• لا يلزم الشراء",
   "ct.yourStatusTitle": "حالتك",
   "ct.needDepositStatus": "تحتاج إلى 10,000,000+ بيزو في الودائع لأجل",
@@ -3049,6 +3421,7 @@ const ar: TranslationMap = {
   "travel.title": "حماية السفر",
   "travel.subtitle": "تأمين رحلتك",
   "travel.infoBanner": "أكمل هذا النموذج للاشتراك. سيتم معالجة طلبك خلال",
+  "travel.infoBannerDays": "5-7 أيام عمل",
   "travel.infoBannerAfter": "بعد تأكيد الدفع.",
   "travel.protectionFee": "رسوم الحماية",
   "travel.discountedRate": "سعر مخفّض (حامل الوديعة لأجل)",
@@ -3063,7 +3436,8 @@ const ar: TranslationMap = {
   "travel.placeholderEmail": "youremail@example.com",
   "travel.placeholderMobile": "+966 5X XXX XXXX",
   "travel.placeholderLandline": "(011) XXXX XXXX",
-  "travel.placeholderHomeAddress": "المنزل/الوحدة، الشارع، الحي، المدينة، المحافظة، الرمز البريدي",
+  "travel.placeholderHomeAddress":
+    "المنزل/الوحدة، الشارع، الحي، المدينة، المحافظة، الرمز البريدي",
   "travel.personalDetails": "البيانات الشخصية",
   "travel.personalSubtitle": "يرجى تقديم بياناتك الشخصية",
   "travel.gender": "الجنس",
@@ -3074,18 +3448,48 @@ const ar: TranslationMap = {
   "travel.dateOfBirth": "تاريخ الميلاد",
   "travel.selectBirthdate": "اختر تاريخ ميلادك",
   "travel.civilStatus": "الحالة الاجتماعية",
+  "travel.selectCivilStatus": "اختر حالتك الاجتماعية",
+
   "travel.single": "أعزب",
   "travel.married": "متزوج",
   "travel.divorced": "مطلق",
   "travel.widowed": "أرمل",
+  "travel.separated": "منفصل",
+
   "travel.citizenship": "الجنسية",
+  "travel.selectCitizenship": "اختر جنسيتك",
   "travel.placeholderCitizenship": "فلبيني",
+
   "travel.financialInfo": "المعلومات المالية",
   "travel.financialSubtitle": "يرجى تقديم معلوماتك المالية",
   "travel.sourceOfFund": "مصدر الأموال",
+  "travel.selectSourceOfFund": "اختر مصدر الأموال",
+  "travel.modalSelectSourceOfFund": "اختر مصدر الأموال",
+  "travel.sourceEmployment": "توظيف",
+  "travel.sourceBusiness": "عمل تجاري",
+  "travel.sourceInvestment": "استثمار",
+  "travel.sourceInheritance": "ميراث",
+  "travel.sourcePension": "معاش تقاعدي",
+  "travel.sourceOther": "آخر",
   "travel.placeholderSourceOfFund": "مثل: العمل، الأعمال، الاستثمار إلخ.",
+
+  "travel.incomeBelow15000": "أقل من 15,000",
+  "travel.income15000To30000": "15,000 - 30,000",
+  "travel.income30001To50000": "30,001 - 50,000",
+  "travel.income50001To100000": "50,001 - 100,000",
+  "travel.income100001To500000": "100,001 - 500,000",
+  "travel.incomeAbove500000": "أكثر من 500,000",
+  "travel.selectIncome": "اختر نطاق الدخل",
+  "travel.modalSelectIncome": "اختر نطاق الدخل",
   "travel.grossMonthlyIncome": "إجمالي الدخل الشهري",
   "travel.cashOnHand": "النقد المتوفر",
+  "travel.selectCurrency": "اختر العملة",
+  "travel.modalSelectCurrency": "اختر العملة",
+  "travel.currencyPHP": "PHP",
+  "travel.currencyUSD": "USD",
+  "travel.currencyEUR": "EUR",
+  "travel.currencyKRW": "KRW",
+
   "travel.travelDetails": "تفاصيل السفر",
   "travel.travelSubtitle": "يرجى تقديم معلومات السفر",
   "travel.destinationAddress": "عنوان الوجهة",
@@ -3125,7 +3529,8 @@ const ar: TranslationMap = {
   "travel.labelAirline": "الخطوط الجوية",
   "travel.labelPassport": "رقم جواز السفر",
   "travel.na": "غير متوفر",
-  "travel.termsText": "بإرسال هذا الطلب، تؤكد صحة جميع المعلومات. سيتم معالجة الدفع بشكل آمن عبر PayPal. سيتم تفعيل تغطية حماية السفر خلال 5-7 أيام عمل بعد الدفع والتحقق من المستندات.",
+  "travel.termsText":
+    "بإرسال هذا الطلب، تؤكد صحة جميع المعلومات. سيتم معالجة الدفع بشكل آمن عبر PayPal. سيتم تفعيل تغطية حماية السفر خلال 5-7 أيام عمل بعد الدفع والتحقق من المستندات.",
   "travel.back": "رجوع",
   "travel.next": "التالي",
   "travel.apply": "تقدم",
@@ -3134,7 +3539,8 @@ const ar: TranslationMap = {
   "travel.requiredDocuments": "المستندات المطلوبة",
   "travel.uploadBothDocs": "يرجى رفع المستندين المطلوبين",
   "travel.applicationSubmitted": "تم إرسال الطلب",
-  "travel.applicationSuccess": "تم إرسال طلب حماية السفر بنجاح! سنعالج طلبك خلال 5-7 أيام عمل.",
+  "travel.applicationSuccess":
+    "تم إرسال طلب حماية السفر بنجاح! سنعالج طلبك خلال 5-7 أيام عمل.",
   "travel.permissionRequired": "الإذن مطلوب",
   "travel.allowPhotos": "يرجى السماح بالوصول إلى الصور لرفع المستندات.",
   "travel.error": "خطأ",
@@ -3142,7 +3548,8 @@ const ar: TranslationMap = {
 
   "banking.headerTitle": "خدمات الحساب البنكي",
   "banking.headerSubtitle": "حلول بنكية احترافية",
-  "banking.infoNote": "بإرسال هذه التفاصيل، سنرسل لك تأكيدًا بالبريد الإلكتروني بحالة طلبك. يرجى ملاحظة أن هذه العملية تستغرق حوالي 5-7 أيام عمل للمراجعة والموافقة من قبل البنك المحدد.",
+  "banking.infoNote":
+    "بإرسال هذه التفاصيل، سنرسل لك تأكيدًا بالبريد الإلكتروني بحالة طلبك. يرجى ملاحظة أن هذه العملية تستغرق حوالي 5-7 أيام عمل للمراجعة والموافقة من قبل البنك المحدد.",
   "banking.next": "التالي",
   "banking.back": "رجوع",
   "banking.submit": "إرسال",
@@ -3150,11 +3557,13 @@ const ar: TranslationMap = {
   "banking.submitSuccess": "تم إرسال طلبك بنجاح.",
   "banking.submitFailed": "فشل إرسال الطلب. يرجى المحاولة مرة أخرى.",
   "banking.chooseBank": "اختر البنك",
-  "banking.chooseBankDesc": "اختر فتح الحساب البنكي المفضل. سيحدد ذلك خدمات وميزات البنك المتاحة لك.",
+  "banking.chooseBankDesc":
+    "اختر فتح الحساب البنكي المفضل. سيحدد ذلك خدمات وميزات البنك المتاحة لك.",
   "banking.preferredBank": "البنك المفضل",
   "banking.selectBank": "اختر البنك",
   "banking.contactInfo": "معلومات الاتصال",
-  "banking.contactInfoDesc": "قدم بيانات الاتصال للتواصل معك بخصوص حالة الطلب وتحديثات الحساب.",
+  "banking.contactInfoDesc":
+    "قدم بيانات الاتصال للتواصل معك بخصوص حالة الطلب وتحديثات الحساب.",
   "banking.emailAddress": "البريد الإلكتروني",
   "banking.mobileNumber": "رقم الجوال",
   "banking.landlineNumber": "الهاتف الأرضي",
@@ -3162,7 +3571,8 @@ const ar: TranslationMap = {
   "banking.placeholderMobile": "+966 5X XXX XXXX",
   "banking.placeholderLandline": "(011) XXXX XXXX",
   "banking.personalDetails": "البيانات الشخصية",
-  "banking.personalDetailsDesc": "أخبرنا عن نفسك. هذه المعلومات مطلوبة للتحقق من الهوية والامتثال.",
+  "banking.personalDetailsDesc":
+    "أخبرنا عن نفسك. هذه المعلومات مطلوبة للتحقق من الهوية والامتثال.",
   "banking.gender": "الجنس",
   "banking.selectGender": "اختر جنسك",
   "banking.dateOfBirth": "تاريخ الميلاد",
@@ -3207,14 +3617,17 @@ const ar: TranslationMap = {
   "banking.addressInfo": "العنوان",
   "banking.addressInfoDesc": "قدم عنوانك الكامل للتحقق وإعداد الحساب.",
   "banking.completeAddress": "العنوان الكامل",
-  "banking.placeholderAddress": "المنزل/الوحدة، الشارع، الحي، المدينة، المحافظة، الرمز البريدي",
+  "banking.placeholderAddress":
+    "المنزل/الوحدة، الشارع، الحي، المدينة، المحافظة، الرمز البريدي",
   "banking.financialInfo": "المعلومات المالية",
-  "banking.financialInfoDesc": "شارك تفاصيلك المالية لمساعدتنا على فهم احتياجاتك البنكية وضمان الامتثال.",
+  "banking.financialInfoDesc":
+    "شارك تفاصيلك المالية لمساعدتنا على فهم احتياجاتك البنكية وضمان الامتثال.",
   "banking.sourceOfFund": "مصدر الأموال",
   "banking.grossMonthlyIncome": "إجمالي الدخل الشهري",
   "banking.placeholderSourceOfFund": "مثل: العمل، الأعمال، الاستثمار إلخ.",
   "banking.requiredDocs": "المستندات المطلوبة",
-  "banking.requiredDocsDesc": "ارفع المستندات المطلوبة للتحقق من الهوية وفتح الحساب.",
+  "banking.requiredDocsDesc":
+    "ارفع المستندات المطلوبة للتحقق من الهوية وفتح الحساب.",
   "banking.passportPhoto": "صورة جواز السفر",
   "banking.governmentId": "الهوية الرسمية",
   "banking.uploaded": "تم الرفع",
@@ -3286,7 +3699,8 @@ const ar: TranslationMap = {
   "sendMoney.enterValidAmount": "يرجى إدخال مبلغ صالح",
   "sendMoney.insufficientBalance": "رصيد غير كافٍ",
   "sendMoney.recipientNotFound": "لم يتم العثور على حساب المستلم",
-  "sendMoney.errorVerifyingRecipient": "خطأ في التحقق من المستلم. يرجى المحاولة مرة أخرى.",
+  "sendMoney.errorVerifyingRecipient":
+    "خطأ في التحقق من المستلم. يرجى المحاولة مرة أخرى.",
   "sendMoney.alert": "تنبيه",
   "sendMoney.selectContact": "اختر جهة اتصال",
   "sendMoney.noContactsFound": "لا توجد جهات اتصال",
@@ -3325,7 +3739,8 @@ const ar: TranslationMap = {
   "ewallet.chooseProviderDesc": "سيحدد ذلك خدمات الدفع الرقمي المتاحة لك.",
   "ewallet.selectEwalletType": "اختر نوع المحفظة الإلكترونية",
   "ewallet.selectPreferred": "اختر المحفظة الإلكترونية المفضلة",
-  "ewallet.infoNote": "بإرسال هذه التفاصيل سنرسل لك تأكيداً بالبريد مع حالة الطلب. المعالجة تستغرق حوالي 5-7 أيام عمل للمراجعة والموافقة.",
+  "ewallet.infoNote":
+    "بإرسال هذه التفاصيل سنرسل لك تأكيداً بالبريد مع حالة الطلب. المعالجة تستغرق حوالي 5-7 أيام عمل للمراجعة والموافقة.",
   "ewallet.next": "التالي",
   "ewallet.back": "رجوع",
   "ewallet.submit": "إرسال",
@@ -3368,41 +3783,52 @@ const ar: TranslationMap = {
   "agentRequest.content.headerTitle": "كن وكيلاً",
   "agentRequest.content.headerSubtitle": "قدّم طلبك للانضمام إلى شبكة الوكلاء.",
   "agentRequest.content.requestInformation.title": "معلومات الطلب",
-  "agentRequest.content.requestInformation.text": "املأ النموذج أدناه لتقديم طلب الوكيل. ستحتاج إلى إنشاء رقم وكيل واختيار وكيل أب اختيارياً.",
+  "agentRequest.content.requestInformation.text":
+    "املأ النموذج أدناه لتقديم طلب الوكيل. ستحتاج إلى إنشاء رقم وكيل واختيار وكيل أب اختيارياً.",
   "agentRequest.content.form.title": "نموذج طلب الوكيل",
   "agentRequest.content.form.personalInformation.title": "المعلومات الشخصية",
   "agentRequest.content.form.personalInformation.fullNameLabel": "الاسم الكامل",
   "agentRequest.content.form.agentNumber.title": "رقم الوكيل",
   "agentRequest.content.form.agentNumber.generateLabel": "إنشاء رقم الوكيل",
-  "agentRequest.content.form.agentNumber.placeholder": "اضغط إنشاء لإنشاء الرقم",
+  "agentRequest.content.form.agentNumber.placeholder":
+    "اضغط إنشاء لإنشاء الرقم",
   "agentRequest.content.form.agentNumber.generateButton": "إنشاء",
-  "agentRequest.content.form.agentNumber.hint": "معرّف الوكيل الفريد المكوّن من 5 أحرف",
+  "agentRequest.content.form.agentNumber.hint":
+    "معرّف الوكيل الفريد المكوّن من 5 أحرف",
   "agentRequest.content.form.parentAgent.title": "الوكيل الأب (اختياري)",
   "agentRequest.content.form.parentAgent.searchLabel": "البحث برقم الوكيل",
   "agentRequest.content.form.parentAgent.searchPlaceholder": "أدخل رقم الوكيل",
-  "agentRequest.content.form.parentAgent.searchHint": "ابحث عن رقم وكيل المُحيل لربط الحسابات",
+  "agentRequest.content.form.parentAgent.searchHint":
+    "ابحث عن رقم وكيل المُحيل لربط الحسابات",
   "agentRequest.content.form.parentAgent.selectedAgent": "الوكيل المحدد",
   "agentRequest.content.form.parentAgent.parentAgentCode": "رمز الوكيل الأب:",
   "agentRequest.content.form.parentAgent.yourAgentCode": "رمز وكيلك:",
-  "agentRequest.content.form.parentAgent.noResults": "لم يتم العثور على وكيل: {query}",
+  "agentRequest.content.form.parentAgent.noResults":
+    "لم يتم العثور على وكيل: {query}",
   "agentRequest.content.submitButton.submit": "إرسال الطلب",
   "agentRequest.content.submitButton.submitting": "جاري الإرسال...",
   "agentRequest.modals.accessRestricted.title": "وصول مقيد",
-  "agentRequest.modals.accessRestricted.message": "هذه الميزة تتطلب حساب بريميوم. خطتك الحالية: {accountType}",
+  "agentRequest.modals.accessRestricted.message":
+    "هذه الميزة تتطلب حساب بريميوم. خطتك الحالية: {accountType}",
   "agentRequest.modals.alreadyAgent.title": "أنت وكيل بالفعل",
   "agentRequest.modals.alreadyAgent.message": "أنت مسجّل بالفعل كوكيل.",
   "agentRequest.modals.agentNumberGenerated.title": "تم إنشاء رقم الوكيل",
-  "agentRequest.modals.agentNumberGenerated.message": "رقم وكيلك: {agentNumber}",
+  "agentRequest.modals.agentNumberGenerated.message":
+    "رقم وكيلك: {agentNumber}",
   "agentRequest.modals.agentFound.title": "تم العثور على الوكيل",
-  "agentRequest.modals.agentFound.message": "{firstName} {lastName} (وكيل #{agentNumber})",
+  "agentRequest.modals.agentFound.message":
+    "{firstName} {lastName} (وكيل #{agentNumber})",
   "agentRequest.modals.requestSubmitted.title": "تم إرسال الطلب",
-  "agentRequest.modals.requestSubmitted.message": "تم إرسال طلب الوكيل بنجاح. المعرّف: {requestId}",
+  "agentRequest.modals.requestSubmitted.message":
+    "تم إرسال طلب الوكيل بنجاح. المعرّف: {requestId}",
   "agentRequest.modals.error.title": "خطأ",
   "agentRequest.modals.error.message": "حدث خطأ ما. يرجى المحاولة مرة أخرى.",
   "agentRequest.modals.error.generationFailed": "فشل إنشاء رمز الوكيل الفريد.",
-  "agentRequest.modals.error.submitFailed": "فشل إرسال الطلب. يرجى المحاولة مرة أخرى.",
+  "agentRequest.modals.error.submitFailed":
+    "فشل إرسال الطلب. يرجى المحاولة مرة أخرى.",
   "agentRequest.modals.missingAgentNumber.title": "رقم الوكيل مفقود",
-  "agentRequest.modals.missingAgentNumber.message": "يرجى إنشاء رقم الوكيل أولاً.",
+  "agentRequest.modals.missingAgentNumber.message":
+    "يرجى إنشاء رقم الوكيل أولاً.",
 };
 
 export const translations: Record<string, TranslationMap> = { en, ko, ja, ar };

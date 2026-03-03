@@ -22,16 +22,28 @@ import type { RootStackParamList } from "../../../types/navigation";
 const THEME_COLOR = "#E15816";
 const ORANGE_GRADIENT = ["#E25A17", "#F28934"] as const;
 const GREEN_COMPLETE = "#10B981";
+const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+const isValidEmail = (email: string) =>
+  EMAIL_REGEX.test((email || "").trim().toLowerCase());
+
+const filterEmailInput = (text: string) =>
+  text.replace(/[^A-Za-z0-9.@\-_]/g, "");
+
+const filterPhoneInput = (text: string) => text.replace(/[^0-9]/g, "");
 
 export default function BankingContactInfo() {
   const { t } = useLanguage();
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, "BankingContactInfo">>();
+  const navigation =
+    useNavigation<
+      NativeStackNavigationProp<RootStackParamList, "BankingContactInfo">
+    >();
   const route = useRoute<RouteProp<RootStackParamList, "BankingContactInfo">>();
   const selectedBank = route.params?.selectedBank ?? "Security Bank";
 
   const [email, setEmail] = useState("");
   const [mobileNumber, setMobileNumber] = useState("");
   const [landlineNumber, setLandlineNumber] = useState("");
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   const currentStep = 2;
 
@@ -40,13 +52,34 @@ export default function BankingContactInfo() {
   };
 
   const handleNext = () => {
-    // Basic validation for required fields
-    if (!email.trim()) return;
-    if (!mobileNumber.trim()) return;
+    const newErrors: { [key: string]: string } = {};
+
+    const emailTrimmed = email.trim();
+    if (!emailTrimmed) {
+      newErrors.email = t("banking.errorEmail");
+    } else if (!isValidEmail(emailTrimmed)) {
+      newErrors.email = t("banking.errorEmail");
+    }
+
+    if (!mobileNumber.trim()) {
+      newErrors.mobileNumber = t("banking.errorMobile");
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    setErrors({});
+
     navigation.navigate("BankingPersonalInfo", {
       selectedBank,
       applicationData: {
-        contactInfo: { email: email.trim(), mobileNumber: mobileNumber.trim(), landlineNumber: landlineNumber.trim() || undefined },
+        contactInfo: {
+          email: email.trim(),
+          mobileNumber: mobileNumber.trim(),
+          landlineNumber: landlineNumber.trim() || undefined,
+        },
       },
     });
   };
@@ -58,12 +91,8 @@ export default function BankingContactInfo() {
           style={styles.keyboardView}
           behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
-          {/* Top: Back arrow + Header card */}
           <View style={styles.topSection}>
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={handleBack}
-            >
+            <TouchableOpacity style={styles.backButton} onPress={handleBack}>
               <Ionicons name="arrow-back" size={28} color={THEME_COLOR} />
             </TouchableOpacity>
 
@@ -80,13 +109,16 @@ export default function BankingContactInfo() {
                   color="#FFFFFF"
                   style={styles.headerIcon}
                 />
-                <Text style={styles.headerTitle}>{t("banking.headerTitle")}</Text>
-                <Text style={styles.headerSubtitle}>{t("banking.headerSubtitle")}</Text>
+                <Text style={styles.headerTitle}>
+                  {t("banking.headerTitle")}
+                </Text>
+                <Text style={styles.headerSubtitle}>
+                  {t("banking.headerSubtitle")}
+                </Text>
               </LinearGradient>
             </View>
           </View>
 
-          {/* Progress Stepper - Step 1 complete (green), Step 2 active */}
           <View style={styles.progressContainer}>
             <View style={styles.stepRow}>
               {[1, 2, 3, 4, 5, 6].map((step) => (
@@ -130,73 +162,101 @@ export default function BankingContactInfo() {
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
-            {/* Main Content Card - Contact Information */}
             <View style={styles.contentCard}>
               <View style={styles.stepIconWrapper}>
                 <Ionicons name="call" size={28} color={THEME_COLOR} />
               </View>
-              <Text style={styles.contentTitle}>{t("banking.contactInfo")}</Text>
+              <Text style={styles.contentTitle}>
+                {t("banking.contactInfo")}
+              </Text>
               <Text style={styles.contentDescription}>
                 {t("banking.contactInfoDesc")}
               </Text>
 
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>
-                  {t("banking.emailAddress")}<Text style={styles.required}>*</Text>
+                  {t("banking.emailAddress")}
+                  <Text style={styles.required}>*</Text>
                 </Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, errors.email && styles.inputError]}
                   placeholder={t("banking.placeholderEmail")}
                   placeholderTextColor="#9E9E9E"
                   value={email}
-                  onChangeText={setEmail}
+                  onChangeText={(text) => {
+                    setEmail(filterEmailInput(text));
+                    if (errors.email) {
+                      setErrors((prev) => {
+                        const { email, ...rest } = prev;
+                        return rest;
+                      });
+                    }
+                  }}
                   keyboardType="email-address"
                   autoCapitalize="none"
                   autoCorrect={false}
                 />
+                {errors.email && (
+                  <Text style={styles.errorText}>{errors.email}</Text>
+                )}
               </View>
 
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>
-                  {t("banking.mobileNumber")}<Text style={styles.required}>*</Text>
+                  {t("banking.mobileNumber")}
+                  <Text style={styles.required}>*</Text>
                 </Text>
                 <TextInput
-                  style={styles.input}
+                  style={[
+                    styles.input,
+                    errors.mobileNumber && styles.inputError,
+                  ]}
                   placeholder={t("banking.placeholderMobile")}
                   placeholderTextColor="#9E9E9E"
                   value={mobileNumber}
-                  onChangeText={setMobileNumber}
+                  onChangeText={(text) => {
+                    setMobileNumber(filterPhoneInput(text));
+                    if (errors.mobileNumber) {
+                      setErrors((prev) => {
+                        const { mobileNumber, ...rest } = prev;
+                        return rest;
+                      });
+                    }
+                  }}
                   keyboardType="phone-pad"
                 />
+                {errors.mobileNumber && (
+                  <Text style={styles.errorText}>{errors.mobileNumber}</Text>
+                )}
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>{t("banking.landlineNumber")}</Text>
+                <Text style={styles.inputLabel}>
+                  {t("banking.landlineNumber")}
+                </Text>
                 <TextInput
                   style={styles.input}
                   placeholder={t("banking.placeholderLandline")}
                   placeholderTextColor="#9E9E9E"
                   value={landlineNumber}
-                  onChangeText={setLandlineNumber}
+                  onChangeText={(text) =>
+                    setLandlineNumber(filterPhoneInput(text))
+                  }
                   keyboardType="phone-pad"
                 />
               </View>
             </View>
 
-            {/* Info Box */}
             <View style={styles.infoBox}>
               <View style={styles.infoIconCircle}>
                 <Text style={styles.infoIconText}>i</Text>
               </View>
-              <Text style={styles.infoText}>
-                {t("banking.infoNote")}
-              </Text>
+              <Text style={styles.infoText}>{t("banking.infoNote")}</Text>
             </View>
 
             <View style={styles.bottomSpacing} />
           </ScrollView>
 
-          {/* Back & Next Buttons */}
           <View style={styles.footer}>
             <View style={styles.buttonRow}>
               <TouchableOpacity
@@ -385,6 +445,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     fontSize: 16,
     color: "#000000",
+  },
+  inputError: {
+    borderColor: "#FF3B30",
+  },
+  errorText: {
+    color: "#FF3B30",
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 4,
+    fontWeight: "500",
   },
   infoBox: {
     flexDirection: "row",
