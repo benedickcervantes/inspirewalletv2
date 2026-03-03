@@ -37,14 +37,14 @@ const WHITE = "#FFFFFF";
 interface PasswordResetRequiredModalProps {
   visible: boolean;
   onClose: () => void;
-  onNavigateAfterClose: () => void;
+  onSentOk: () => void;
   email: string;
 }
 
 function PasswordResetRequiredModal({
   visible,
   onClose,
-  onNavigateAfterClose,
+  onSentOk,
   email,
 }: PasswordResetRequiredModalProps) {
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -114,11 +114,8 @@ function PasswordResetRequiredModal({
       message: `Your account (${email}) requires a password update for security purposes.\n\nTap "Send Reset Email" to receive a secure link in your inbox to set a new password.`,
       primaryText: "Send Reset Email",
       primaryAction: handleSend,
-      secondaryText: "Skip for Now",
-      secondaryAction: () => {
-        onClose();
-        onNavigateAfterClose();
-      },
+      secondaryText: null,
+      secondaryAction: null,
     },
     sending: {
       icon: "…",
@@ -132,12 +129,9 @@ function PasswordResetRequiredModal({
     sent: {
       icon: "✓",
       title: "Email Sent!",
-      message: `A password reset link has been sent to ${email}.\n\nCheck your inbox (and spam folder) and follow the link to set your new password.`,
-      primaryText: "OK",
-      primaryAction: () => {
-        onClose();
-        onNavigateAfterClose();
-      },
+      message: `A password reset link has been sent to ${email}.\n\nCheck your inbox (and spam folder), follow the link to set your new password, then log in again.`,
+      primaryText: "Back to Login",
+      primaryAction: onSentOk,
       secondaryText: null,
       secondaryAction: null,
     },
@@ -147,11 +141,8 @@ function PasswordResetRequiredModal({
       message: errorMsg,
       primaryText: "Try Again",
       primaryAction: () => setPhase("prompt"),
-      secondaryText: "Skip for Now",
-      secondaryAction: () => {
-        onClose();
-        onNavigateAfterClose();
-      },
+      secondaryText: null,
+      secondaryAction: null,
     },
   }[phase];
 
@@ -760,11 +751,15 @@ export default function Login() {
 
       <PasswordResetRequiredModal
         visible={resetModalVisible}
-        onClose={() => setResetModalVisible(false)}
-        onNavigateAfterClose={() => {
-          const pending = pendingNavRef.current;
+        onClose={() => {
+          setResetModalVisible(false);
           pendingNavRef.current = null;
-          if (pending) doNavigate(pending.hasPasscode);
+        }}
+        onSentOk={() => {
+          setResetModalVisible(false);
+          pendingNavRef.current = null;
+          // Clear password so the user must type their new password on next attempt
+          setPassword('');
         }}
         email={resetModalEmail}
       />
