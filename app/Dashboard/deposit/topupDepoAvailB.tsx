@@ -1,17 +1,17 @@
-import React, { useState } from "react";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
+import { LinearGradient } from "expo-linear-gradient";
+import { useState } from "react";
 import {
-  StyleSheet,
-  Text,
-  View,
-  TouchableOpacity,
-  TextInput,
-  ScrollView,
-  Modal,
+    Modal,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useNavigation } from "@react-navigation/native";
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import { useLanguage } from "../../../context/LanguageContext";
 
 export default function TopUpBalance() {
@@ -20,8 +20,7 @@ export default function TopUpBalance() {
   const [selectedCurrency, setSelectedCurrency] = useState("PHP");
   const [showCurrencyModal, setShowCurrencyModal] = useState(false);
   const [amount, setAmount] = useState("");
-  const [showAlertModal, setShowAlertModal] = useState(false);
-  const [alertConfig, setAlertConfig] = useState<{ title: string; message: string }>({ title: "", message: "" });
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const currencies = [
     { code: "PHP", name: "Philippine Peso", flag: "🇵🇭", symbol: "₱" },
@@ -31,15 +30,24 @@ export default function TopUpBalance() {
   ];
 
   const handleContinue = () => {
-    // Validation
-    if (!amount || parseFloat(amount) <= 0) {
-      setAlertConfig({
-        title: t("deposit.invalidAmount"),
-        message: t("deposit.enterAmount") // can enter a letter, but still contiune to confirm, need to validate if the input is a number and greater than 0
-      });
-      setShowAlertModal(true);
+    const newErrors: Record<string, string> = {};
+    const amountStr = amount.trim();
+
+    if (!amountStr) {
+      newErrors.amount = "Amount is required";
+    } else {
+      const amountNum = parseFloat(amountStr);
+      if (isNaN(amountNum) || amountNum <= 0) {
+        newErrors.amount = "Please enter a valid amount greater than 0";
+      }
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
+
+    setErrors({});
 
     // Navigate to confirm page with parameters
     const selectedCurrencyData = getSelectedCurrency();
@@ -51,7 +59,7 @@ export default function TopUpBalance() {
   };
 
   const getSelectedCurrency = () => {
-    return currencies.find(c => c.code === selectedCurrency) || currencies[0];
+    return currencies.find((c) => c.code === selectedCurrency) || currencies[0];
   };
 
   return (
@@ -108,19 +116,29 @@ export default function TopUpBalance() {
             <View style={styles.formSection}>
               <View style={styles.sectionHeader}>
                 <View style={styles.iconBox}>
-                  <MaterialCommunityIcons name="currency-usd" size={20} color="#E25A17" />
+                  <MaterialCommunityIcons
+                    name="currency-usd"
+                    size={20}
+                    color="#E25A17"
+                  />
                 </View>
-                <Text style={styles.sectionTitle}>{t("deposit.selectCurrency")}</Text>
+                <Text style={styles.sectionTitle}>
+                  {t("deposit.selectCurrency")}
+                </Text>
               </View>
 
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.currencySelector}
                 onPress={() => setShowCurrencyModal(true)}
               >
                 <View style={styles.flagContainer}>
-                  <Text style={styles.flagEmoji}>{getSelectedCurrency().flag}</Text>
+                  <Text style={styles.flagEmoji}>
+                    {getSelectedCurrency().flag}
+                  </Text>
                 </View>
-                <Text style={styles.currencyText}>{getSelectedCurrency().code}</Text>
+                <Text style={styles.currencyText}>
+                  {getSelectedCurrency().code}
+                </Text>
                 <Ionicons name="chevron-down" size={20} color="#999" />
               </TouchableOpacity>
             </View>
@@ -129,22 +147,42 @@ export default function TopUpBalance() {
             <View style={styles.formSection}>
               <View style={styles.sectionHeader}>
                 <View style={styles.iconBox}>
-                  <MaterialCommunityIcons name="cash" size={20} color="#E25A17" />
+                  <MaterialCommunityIcons
+                    name="cash"
+                    size={20}
+                    color="#E25A17"
+                  />
                 </View>
                 <Text style={styles.sectionTitle}>{t("deposit.amount")}</Text>
               </View>
 
-              <View style={styles.amountInput}>
-                <Text style={styles.currencySymbol}>{getSelectedCurrency().symbol}</Text>
+              <View
+                style={[styles.amountInput, errors.amount && styles.inputError]}
+              >
+                <Text style={styles.currencySymbol}>
+                  {getSelectedCurrency().symbol}
+                </Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="Enter investment amount"
+                  placeholder="0.00"
                   placeholderTextColor="#999"
                   keyboardType="numeric"
                   value={amount}
-                  onChangeText={setAmount}
+                  onChangeText={(text) => {
+                    const filtered = text.replace(/[^0-9.]/g, "");
+                    setAmount(filtered);
+                    if (errors.amount) {
+                      setErrors((prev) => {
+                        const { amount, ...rest } = prev;
+                        return rest;
+                      });
+                    }
+                  }}
                 />
               </View>
+              {errors.amount && (
+                <Text style={styles.errorText}>{errors.amount}</Text>
+              )}
             </View>
           </View>
 
@@ -177,7 +215,9 @@ export default function TopUpBalance() {
           <View style={styles.modalOverlay}>
             <View style={styles.modalContainer}>
               <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>{t("deposit.selectCurrency")}</Text>
+                <Text style={styles.modalTitle}>
+                  {t("deposit.selectCurrency")}
+                </Text>
                 <TouchableOpacity onPress={() => setShowCurrencyModal(false)}>
                   <Ionicons name="close" size={24} color="#333" />
                 </TouchableOpacity>
@@ -188,7 +228,8 @@ export default function TopUpBalance() {
                     key={currency.code}
                     style={[
                       styles.currencyOption,
-                      selectedCurrency === currency.code && styles.currencyOptionSelected
+                      selectedCurrency === currency.code &&
+                        styles.currencyOptionSelected,
                     ]}
                     onPress={() => {
                       setSelectedCurrency(currency.code);
@@ -201,38 +242,16 @@ export default function TopUpBalance() {
                       <Text style={styles.currencyName}>{currency.name}</Text>
                     </View>
                     {selectedCurrency === currency.code && (
-                      <Ionicons name="checkmark-circle" size={24} color="#E25A17" />
+                      <Ionicons
+                        name="checkmark-circle"
+                        size={24}
+                        color="#E25A17"
+                      />
                     )}
                   </TouchableOpacity>
                 ))}
               </ScrollView>
             </View>
-          </View>
-        </Modal>
-
-        {/* Custom Alert Modal */}
-        <Modal
-          visible={showAlertModal}
-          transparent={true}
-          animationType="fade"
-          onRequestClose={() => setShowAlertModal(false)}
-        >
-          <View style={styles.alertOverlay}>
-            <LinearGradient
-              colors={["#E15816", "#F48F38"]}
-              style={styles.alertContainer}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 0, y: 1 }}
-            >
-              <Text style={styles.alertTitle}>{alertConfig.title}</Text>
-              <Text style={styles.alertMessage}>{alertConfig.message}</Text>
-              <TouchableOpacity
-                style={styles.alertButton}
-                onPress={() => setShowAlertModal(false)}
-              >
-                <Text style={styles.alertButtonText}>{t("deposit.ok")}</Text>
-              </TouchableOpacity>
-            </LinearGradient>
           </View>
         </Modal>
       </SafeAreaView>
@@ -391,6 +410,16 @@ const styles = StyleSheet.create({
     backgroundColor: "#F9F9F9",
     paddingHorizontal: 16,
     borderRadius: 8,
+  },
+  inputError: {
+    borderColor: "#FF3B30",
+    borderWidth: 1,
+  },
+  errorText: {
+    color: "#FF3B30",
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 0,
   },
   currencySymbol: {
     fontSize: 18,

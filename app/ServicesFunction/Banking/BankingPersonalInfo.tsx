@@ -16,19 +16,39 @@ import {
   View,
 } from "react-native";
 import { useLanguage } from "../../../context/LanguageContext";
-import { useResponsive } from "../../../utils/responsive";
 import type { RootStackParamList } from "../../../types/navigation";
+import { useResponsive } from "../../../utils/responsive";
 
 const THEME_COLOR = "#E15816";
 const ORANGE_GRADIENT = ["#E25A17", "#F28934"] as const;
 const GREEN_COMPLETE = "#10B981";
 
 const GENDER_OPTIONS = ["Male", "Female", "Other"] as const;
-const CIVIL_STATUS_OPTIONS = ["Single", "Married", "Widowed", "Separated", "Divorced"] as const;
-const CITIZENSHIP_OPTIONS = ["Filipino", "Dual Citizen", "Foreign National"] as const;
+const CIVIL_STATUS_OPTIONS = [
+  "Single",
+  "Married",
+  "Widowed",
+  "Separated",
+  "Divorced",
+] as const;
+const CITIZENSHIP_OPTIONS = [
+  "Filipino",
+  "Dual Citizen",
+  "Foreign National",
+] as const;
 const MONTH_KEYS = [
-  "banking.january", "banking.february", "banking.march", "banking.april", "banking.may", "banking.june",
-  "banking.july", "banking.august", "banking.september", "banking.october", "banking.november", "banking.december",
+  "banking.january",
+  "banking.february",
+  "banking.march",
+  "banking.april",
+  "banking.may",
+  "banking.june",
+  "banking.july",
+  "banking.august",
+  "banking.september",
+  "banking.october",
+  "banking.november",
+  "banking.december",
 ] as const;
 const DAYS = Array.from({ length: 31 }, (_, i) => (i + 1).toString());
 const YEARS = Array.from({ length: 71 }, (_, i) => (2010 - i).toString());
@@ -36,8 +56,12 @@ const YEARS = Array.from({ length: 71 }, (_, i) => (2010 - i).toString());
 export default function BankingPersonalInfo() {
   const { t } = useLanguage();
   const { horizontalPadding } = useResponsive();
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, "BankingPersonalInfo">>();
-  const route = useRoute<RouteProp<RootStackParamList, "BankingPersonalInfo">>();
+  const navigation =
+    useNavigation<
+      NativeStackNavigationProp<RootStackParamList, "BankingPersonalInfo">
+    >();
+  const route =
+    useRoute<RouteProp<RootStackParamList, "BankingPersonalInfo">>();
   const selectedBank = route.params?.selectedBank ?? "Security Bank";
   const applicationData = route.params?.applicationData ?? {};
 
@@ -52,6 +76,7 @@ export default function BankingPersonalInfo() {
   const [showCitizenshipModal, setShowCitizenshipModal] = useState(false);
 
   const [tempDate, setTempDate] = useState({ month: 0, day: 1, year: 2000 });
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   const currentStep = 3;
 
@@ -71,16 +96,30 @@ export default function BankingPersonalInfo() {
   };
 
   const handleNext = () => {
-    if (!gender.trim()) return;
-    if (!dateOfBirth) return;
-    if (!civilStatus.trim()) return;
-    if (!citizenship.trim()) return;
-    const dateStr = `${dateOfBirth.getFullYear()}-${String(dateOfBirth.getMonth() + 1).padStart(2, "0")}-${String(dateOfBirth.getDate()).padStart(2, "0")}`;
+    const newErrors: { [key: string]: string } = {};
+    if (!gender.trim()) newErrors.gender = t("banking.errorGender");
+    if (!dateOfBirth) newErrors.dateOfBirth = t("banking.errorBirthdate");
+    if (!civilStatus.trim())
+      newErrors.civilStatus = t("banking.errorCivilStatus");
+    if (!citizenship.trim())
+      newErrors.citizenship = t("banking.errorCitizenship");
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    const dateStr = `${dateOfBirth!.getFullYear()}-${String(dateOfBirth!.getMonth() + 1).padStart(2, "0")}-${String(dateOfBirth!.getDate()).padStart(2, "0")}`;
     navigation.navigate("BankingAddressInfo", {
       selectedBank,
       applicationData: {
         ...applicationData,
-        personalInfo: { gender, dateOfBirth: dateStr, civilStatus, citizenship },
+        personalInfo: {
+          gender,
+          dateOfBirth: dateStr,
+          civilStatus,
+          citizenship,
+        },
       },
     });
   };
@@ -108,7 +147,9 @@ export default function BankingPersonalInfo() {
                 style={styles.headerIcon}
               />
               <Text style={styles.headerTitle}>{t("banking.headerTitle")}</Text>
-              <Text style={styles.headerSubtitle}>{t("banking.headerSubtitle")}</Text>
+              <Text style={styles.headerSubtitle}>
+                {t("banking.headerSubtitle")}
+              </Text>
             </LinearGradient>
           </View>
         </View>
@@ -153,7 +194,10 @@ export default function BankingPersonalInfo() {
 
         <ScrollView
           style={styles.scrollView}
-          contentContainerStyle={[styles.scrollContent, { paddingHorizontal: horizontalPadding }]}
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingHorizontal: horizontalPadding },
+          ]}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
@@ -162,18 +206,29 @@ export default function BankingPersonalInfo() {
             <View style={styles.stepIconWrapper}>
               <Ionicons name="person-outline" size={28} color={THEME_COLOR} />
             </View>
-            <Text style={styles.contentTitle}>{t("banking.personalDetails")}</Text>
+            <Text style={styles.contentTitle}>
+              {t("banking.personalDetails")}
+            </Text>
             <Text style={styles.contentDescription}>
               {t("banking.personalDetailsDesc")}
             </Text>
 
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>
-                {t("banking.gender")}<Text style={styles.required}>*</Text>
+                {t("banking.gender")}
+                <Text style={styles.required}>*</Text>
               </Text>
               <TouchableOpacity
-                style={styles.dropdown}
-                onPress={() => setShowGenderModal(true)}
+                style={[styles.dropdown, errors.gender && styles.inputError]}
+                onPress={() => {
+                  setShowGenderModal(true);
+                  if (errors.gender) {
+                    setErrors((prev) => {
+                      const { gender, ...rest } = prev;
+                      return rest;
+                    });
+                  }
+                }}
               >
                 <Text
                   style={[
@@ -181,18 +236,31 @@ export default function BankingPersonalInfo() {
                     !gender && styles.dropdownPlaceholder,
                   ]}
                 >
-                  {gender ? (gender === "Male" ? t("banking.genderMale") : gender === "Female" ? t("banking.genderFemale") : t("banking.genderOther")) : t("banking.selectGender")}
+                  {gender
+                    ? gender === "Male"
+                      ? t("banking.genderMale")
+                      : gender === "Female"
+                        ? t("banking.genderFemale")
+                        : t("banking.genderOther")
+                    : t("banking.selectGender")}
                 </Text>
                 <Ionicons name="chevron-down" size={20} color="#999" />
               </TouchableOpacity>
+              {errors.gender && (
+                <Text style={styles.errorText}>{errors.gender}</Text>
+              )}
             </View>
 
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>
-                {t("banking.dateOfBirth")}<Text style={styles.required}>*</Text>
+                {t("banking.dateOfBirth")}
+                <Text style={styles.required}>*</Text>
               </Text>
               <TouchableOpacity
-                style={styles.dropdown}
+                style={[
+                  styles.dropdown,
+                  errors.dateOfBirth && styles.inputError,
+                ]}
                 onPress={() => {
                   if (dateOfBirth) {
                     setTempDate({
@@ -202,6 +270,12 @@ export default function BankingPersonalInfo() {
                     });
                   }
                   setShowDateModal(true);
+                  if (errors.dateOfBirth) {
+                    setErrors((prev) => {
+                      const { dateOfBirth, ...rest } = prev;
+                      return rest;
+                    });
+                  }
                 }}
               >
                 <Text
@@ -210,19 +284,36 @@ export default function BankingPersonalInfo() {
                     !dateOfBirth && styles.dropdownPlaceholder,
                   ]}
                 >
-                  {dateOfBirth ? formatDate(dateOfBirth) : t("banking.selectBirthdate")}
+                  {dateOfBirth
+                    ? formatDate(dateOfBirth)
+                    : t("banking.selectBirthdate")}
                 </Text>
                 <Ionicons name="calendar-outline" size={20} color="#999" />
               </TouchableOpacity>
+              {errors.dateOfBirth && (
+                <Text style={styles.errorText}>{errors.dateOfBirth}</Text>
+              )}
             </View>
 
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>
-                {t("banking.civilStatus")}<Text style={styles.required}>*</Text>
+                {t("banking.civilStatus")}
+                <Text style={styles.required}>*</Text>
               </Text>
               <TouchableOpacity
-                style={styles.dropdown}
-                onPress={() => setShowCivilStatusModal(true)}
+                style={[
+                  styles.dropdown,
+                  errors.civilStatus && styles.inputError,
+                ]}
+                onPress={() => {
+                  setShowCivilStatusModal(true);
+                  if (errors.civilStatus) {
+                    setErrors((prev) => {
+                      const { civilStatus, ...rest } = prev;
+                      return rest;
+                    });
+                  }
+                }}
               >
                 <Text
                   style={[
@@ -230,19 +321,44 @@ export default function BankingPersonalInfo() {
                     !civilStatus && styles.dropdownPlaceholder,
                   ]}
                 >
-                  {civilStatus ? (civilStatus === "Single" ? t("banking.single") : civilStatus === "Married" ? t("banking.married") : civilStatus === "Widowed" ? t("banking.widowed") : civilStatus === "Separated" ? t("banking.separated") : t("banking.divorced")) : t("banking.selectCivilStatus")}
+                  {civilStatus
+                    ? civilStatus === "Single"
+                      ? t("banking.single")
+                      : civilStatus === "Married"
+                        ? t("banking.married")
+                        : civilStatus === "Widowed"
+                          ? t("banking.widowed")
+                          : civilStatus === "Separated"
+                            ? t("banking.separated")
+                            : t("banking.divorced")
+                    : t("banking.selectCivilStatus")}
                 </Text>
                 <Ionicons name="chevron-down" size={20} color="#999" />
               </TouchableOpacity>
+              {errors.civilStatus && (
+                <Text style={styles.errorText}>{errors.civilStatus}</Text>
+              )}
             </View>
 
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>
-                {t("banking.citizenship")}<Text style={styles.required}>*</Text>
+                {t("banking.citizenship")}
+                <Text style={styles.required}>*</Text>
               </Text>
               <TouchableOpacity
-                style={styles.dropdown}
-                onPress={() => setShowCitizenshipModal(true)}
+                style={[
+                  styles.dropdown,
+                  errors.citizenship && styles.inputError,
+                ]}
+                onPress={() => {
+                  setShowCitizenshipModal(true);
+                  if (errors.citizenship) {
+                    setErrors((prev) => {
+                      const { citizenship, ...rest } = prev;
+                      return rest;
+                    });
+                  }
+                }}
               >
                 <Text
                   style={[
@@ -250,10 +366,19 @@ export default function BankingPersonalInfo() {
                     !citizenship && styles.dropdownPlaceholder,
                   ]}
                 >
-                  {citizenship ? (citizenship === "Filipino" ? t("banking.filipino") : citizenship === "Dual Citizen" ? t("banking.dualCitizen") : t("banking.foreignNational")) : t("banking.selectCitizenship")}
+                  {citizenship
+                    ? citizenship === "Filipino"
+                      ? t("banking.filipino")
+                      : citizenship === "Dual Citizen"
+                        ? t("banking.dualCitizen")
+                        : t("banking.foreignNational")
+                    : t("banking.selectCitizenship")}
                 </Text>
                 <Ionicons name="chevron-down" size={20} color="#999" />
               </TouchableOpacity>
+              {errors.citizenship && (
+                <Text style={styles.errorText}>{errors.citizenship}</Text>
+              )}
             </View>
           </View>
 
@@ -262,9 +387,7 @@ export default function BankingPersonalInfo() {
             <View style={styles.infoIconCircle}>
               <Text style={styles.infoIconText}>i</Text>
             </View>
-            <Text style={styles.infoText}>
-              {t("banking.infoNote")}
-            </Text>
+            <Text style={styles.infoText}>{t("banking.infoNote")}</Text>
           </View>
 
           <View style={styles.bottomSpacing} />
@@ -308,7 +431,9 @@ export default function BankingPersonalInfo() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{t("banking.modalSelectGender")}</Text>
+              <Text style={styles.modalTitle}>
+                {t("banking.modalSelectGender")}
+              </Text>
               <TouchableOpacity onPress={() => setShowGenderModal(false)}>
                 <Ionicons name="close" size={24} color="#333" />
               </TouchableOpacity>
@@ -317,15 +442,28 @@ export default function BankingPersonalInfo() {
               {GENDER_OPTIONS.map((opt) => (
                 <TouchableOpacity
                   key={opt}
-                  style={[styles.optionRow, gender === opt && styles.optionRowSelected]}
+                  style={[
+                    styles.optionRow,
+                    gender === opt && styles.optionRowSelected,
+                  ]}
                   onPress={() => {
                     setGender(opt);
                     setShowGenderModal(false);
                   }}
                 >
-                  <Text style={styles.optionText}>{opt === "Male" ? t("banking.genderMale") : opt === "Female" ? t("banking.genderFemale") : t("banking.genderOther")}</Text>
+                  <Text style={styles.optionText}>
+                    {opt === "Male"
+                      ? t("banking.genderMale")
+                      : opt === "Female"
+                        ? t("banking.genderFemale")
+                        : t("banking.genderOther")}
+                  </Text>
                   {gender === opt && (
-                    <Ionicons name="checkmark-circle" size={22} color={THEME_COLOR} />
+                    <Ionicons
+                      name="checkmark-circle"
+                      size={22}
+                      color={THEME_COLOR}
+                    />
                   )}
                 </TouchableOpacity>
               ))}
@@ -344,7 +482,9 @@ export default function BankingPersonalInfo() {
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContainer, styles.dateModalContainer]}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{t("banking.modalSelectBirthdate")}</Text>
+              <Text style={styles.modalTitle}>
+                {t("banking.modalSelectBirthdate")}
+              </Text>
               <TouchableOpacity onPress={() => setShowDateModal(false)}>
                 <Ionicons name="close" size={24} color="#333" />
               </TouchableOpacity>
@@ -352,7 +492,10 @@ export default function BankingPersonalInfo() {
             <View style={styles.datePickerRow}>
               <View style={styles.datePickerColumn}>
                 <Text style={styles.datePickerLabel}>{t("banking.month")}</Text>
-                <ScrollView style={styles.dateScroll} showsVerticalScrollIndicator={false}>
+                <ScrollView
+                  style={styles.dateScroll}
+                  showsVerticalScrollIndicator={false}
+                >
                   {MONTH_KEYS.map((key, i) => (
                     <TouchableOpacity
                       key={key}
@@ -369,15 +512,21 @@ export default function BankingPersonalInfo() {
               </View>
               <View style={styles.datePickerColumn}>
                 <Text style={styles.datePickerLabel}>{t("banking.day")}</Text>
-                <ScrollView style={styles.dateScroll} showsVerticalScrollIndicator={false}>
+                <ScrollView
+                  style={styles.dateScroll}
+                  showsVerticalScrollIndicator={false}
+                >
                   {DAYS.map((d) => (
                     <TouchableOpacity
                       key={d}
                       style={[
                         styles.dateOption,
-                        tempDate.day === parseInt(d, 10) && styles.dateOptionSelected,
+                        tempDate.day === parseInt(d, 10) &&
+                          styles.dateOptionSelected,
                       ]}
-                      onPress={() => setTempDate((p) => ({ ...p, day: parseInt(d, 10) }))}
+                      onPress={() =>
+                        setTempDate((p) => ({ ...p, day: parseInt(d, 10) }))
+                      }
                     >
                       <Text style={styles.dateOptionText}>{d}</Text>
                     </TouchableOpacity>
@@ -386,15 +535,21 @@ export default function BankingPersonalInfo() {
               </View>
               <View style={styles.datePickerColumn}>
                 <Text style={styles.datePickerLabel}>{t("banking.year")}</Text>
-                <ScrollView style={styles.dateScroll} showsVerticalScrollIndicator={false}>
+                <ScrollView
+                  style={styles.dateScroll}
+                  showsVerticalScrollIndicator={false}
+                >
                   {YEARS.map((y) => (
                     <TouchableOpacity
                       key={y}
                       style={[
                         styles.dateOption,
-                        tempDate.year === parseInt(y, 10) && styles.dateOptionSelected,
+                        tempDate.year === parseInt(y, 10) &&
+                          styles.dateOptionSelected,
                       ]}
-                      onPress={() => setTempDate((p) => ({ ...p, year: parseInt(y, 10) }))}
+                      onPress={() =>
+                        setTempDate((p) => ({ ...p, year: parseInt(y, 10) }))
+                      }
                     >
                       <Text style={styles.dateOptionText}>{y}</Text>
                     </TouchableOpacity>
@@ -422,7 +577,9 @@ export default function BankingPersonalInfo() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{t("banking.modalSelectCivilStatus")}</Text>
+              <Text style={styles.modalTitle}>
+                {t("banking.modalSelectCivilStatus")}
+              </Text>
               <TouchableOpacity onPress={() => setShowCivilStatusModal(false)}>
                 <Ionicons name="close" size={24} color="#333" />
               </TouchableOpacity>
@@ -431,15 +588,32 @@ export default function BankingPersonalInfo() {
               {CIVIL_STATUS_OPTIONS.map((opt) => (
                 <TouchableOpacity
                   key={opt}
-                  style={[styles.optionRow, civilStatus === opt && styles.optionRowSelected]}
+                  style={[
+                    styles.optionRow,
+                    civilStatus === opt && styles.optionRowSelected,
+                  ]}
                   onPress={() => {
                     setCivilStatus(opt);
                     setShowCivilStatusModal(false);
                   }}
                 >
-                  <Text style={styles.optionText}>{opt === "Single" ? t("banking.single") : opt === "Married" ? t("banking.married") : opt === "Widowed" ? t("banking.widowed") : opt === "Separated" ? t("banking.separated") : t("banking.divorced")}</Text>
+                  <Text style={styles.optionText}>
+                    {opt === "Single"
+                      ? t("banking.single")
+                      : opt === "Married"
+                        ? t("banking.married")
+                        : opt === "Widowed"
+                          ? t("banking.widowed")
+                          : opt === "Separated"
+                            ? t("banking.separated")
+                            : t("banking.divorced")}
+                  </Text>
                   {civilStatus === opt && (
-                    <Ionicons name="checkmark-circle" size={22} color={THEME_COLOR} />
+                    <Ionicons
+                      name="checkmark-circle"
+                      size={22}
+                      color={THEME_COLOR}
+                    />
                   )}
                 </TouchableOpacity>
               ))}
@@ -458,7 +632,9 @@ export default function BankingPersonalInfo() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{t("banking.modalSelectCitizenship")}</Text>
+              <Text style={styles.modalTitle}>
+                {t("banking.modalSelectCitizenship")}
+              </Text>
               <TouchableOpacity onPress={() => setShowCitizenshipModal(false)}>
                 <Ionicons name="close" size={24} color="#333" />
               </TouchableOpacity>
@@ -467,15 +643,28 @@ export default function BankingPersonalInfo() {
               {CITIZENSHIP_OPTIONS.map((opt) => (
                 <TouchableOpacity
                   key={opt}
-                  style={[styles.optionRow, citizenship === opt && styles.optionRowSelected]}
+                  style={[
+                    styles.optionRow,
+                    citizenship === opt && styles.optionRowSelected,
+                  ]}
                   onPress={() => {
                     setCitizenship(opt);
                     setShowCitizenshipModal(false);
                   }}
                 >
-                  <Text style={styles.optionText}>{opt === "Filipino" ? t("banking.filipino") : opt === "Dual Citizen" ? t("banking.dualCitizen") : t("banking.foreignNational")}</Text>
+                  <Text style={styles.optionText}>
+                    {opt === "Filipino"
+                      ? t("banking.filipino")
+                      : opt === "Dual Citizen"
+                        ? t("banking.dualCitizen")
+                        : t("banking.foreignNational")}
+                  </Text>
                   {citizenship === opt && (
-                    <Ionicons name="checkmark-circle" size={22} color={THEME_COLOR} />
+                    <Ionicons
+                      name="checkmark-circle"
+                      size={22}
+                      color={THEME_COLOR}
+                    />
                   )}
                 </TouchableOpacity>
               ))}
@@ -651,6 +840,16 @@ const styles = StyleSheet.create({
   dropdownPlaceholder: {
     color: "#9E9E9E",
     fontWeight: "400",
+  },
+  inputError: {
+    borderColor: "#FF3B30",
+  },
+  errorText: {
+    color: "#FF3B30",
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 4,
+    fontWeight: "500",
   },
   infoBox: {
     flexDirection: "row",

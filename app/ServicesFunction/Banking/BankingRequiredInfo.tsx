@@ -29,7 +29,12 @@ const THEME_COLOR = "#E15816";
 const ORANGE_GRADIENT = ["#E25A17", "#F28934"] as const;
 const GREEN_COMPLETE = "#10B981";
 
-const ID_TYPE_OPTIONS = ["Passport", "Driver License", "National ID", "None of these"] as const;
+const ID_TYPE_OPTIONS = [
+  "Passport",
+  "Driver License",
+  "National ID",
+  "None of these",
+] as const;
 type IdType = (typeof ID_TYPE_OPTIONS)[number];
 const ID_TYPE_KEY: Record<IdType, string> = {
   Passport: "banking.idPassport",
@@ -53,21 +58,28 @@ async function uriToBase64DataUrl(uri: string): Promise<string> {
   }
 
   const base64 = await FileSystem.readAsStringAsync(uri, {
-    encoding: 'base64',
+    encoding: "base64",
   });
   const ext = uri.split(".").pop()?.toLowerCase() ?? "jpg";
   const mime =
-    ext === "png" ? "image/png" :
-    ext === "gif" ? "image/gif" :
-    ext === "webp" ? "image/webp" :
-    "image/jpeg";
+    ext === "png"
+      ? "image/png"
+      : ext === "gif"
+        ? "image/gif"
+        : ext === "webp"
+          ? "image/webp"
+          : "image/jpeg";
   return `data:${mime};base64,${base64}`;
 }
 
 export default function BankingRequiredInfo() {
   const { t } = useLanguage();
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, "BankingRequiredInfo">>();
-  const route = useRoute<RouteProp<RootStackParamList, "BankingRequiredInfo">>();
+  const navigation =
+    useNavigation<
+      NativeStackNavigationProp<RootStackParamList, "BankingRequiredInfo">
+    >();
+  const route =
+    useRoute<RouteProp<RootStackParamList, "BankingRequiredInfo">>();
   const selectedBank = route.params?.selectedBank ?? "UnionBank";
   const applicationData = route.params?.applicationData ?? {};
 
@@ -77,6 +89,7 @@ export default function BankingRequiredInfo() {
   const [idFront, setIdFront] = useState<string | null>(null);
   const [idBack, setIdBack] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   const currentStep = 6;
 
@@ -85,10 +98,7 @@ export default function BankingRequiredInfo() {
       const permissionResult =
         await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (permissionResult.granted === false) {
-        Alert.alert(
-          t("banking.permissionRequired"),
-          t("banking.allowPhotos")
-        );
+        Alert.alert(t("banking.permissionRequired"), t("banking.allowPhotos"));
         return;
       }
 
@@ -108,17 +118,12 @@ export default function BankingRequiredInfo() {
     }
   };
 
-  const pickIdImage = async (
-    setter: (uri: string) => void
-  ) => {
+  const pickIdImage = async (setter: (uri: string) => void) => {
     try {
       const permissionResult =
         await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (permissionResult.granted === false) {
-        Alert.alert(
-          t("banking.permissionRequired"),
-          t("banking.allowPhotos")
-        );
+        Alert.alert(t("banking.permissionRequired"), t("banking.allowPhotos"));
         return;
       }
 
@@ -145,25 +150,31 @@ export default function BankingRequiredInfo() {
     if (!idType) return false;
     if (idType === "None of these") return false;
     if (idType === "Passport") return !!passportPhoto;
-    if (idType === "Driver License" || idType === "National ID") return !!(idFront && idBack);
+    if (idType === "Driver License" || idType === "National ID")
+      return !!(idFront && idBack);
     return false;
   };
 
   const handleSubmit = async () => {
+    const newErrors: { [key: string]: string } = {};
+
     if (!idType) {
-      Alert.alert(t("banking.required"), t("banking.selectIdType"));
+      newErrors.idType = t("banking.selectIdType");
+    } else if (idType === "None of these") {
+      return;
+    } else if (idType === "Passport" && !passportPhoto) {
+      newErrors.passportPhoto = t("banking.uploadPassportRequired");
+    } else if (idType === "Driver License" || idType === "National ID") {
+      if (!idFront) newErrors.idFront = t("banking.errorGovId");
+      if (!idBack) newErrors.idBack = t("banking.errorGovId");
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
-    if (idType === "None of these") return; // button disabled, no-op
-    if (idType === "Passport" && !passportPhoto) {
-      Alert.alert(t("banking.required"), t("banking.uploadPassportRequired"));
-      return;
-    }
-    if ((idType === "Driver License" || idType === "National ID") && (!idFront || !idBack)) {
-      Alert.alert(t("banking.required"), t("banking.uploadGovIdRequired"));
-      return;
-    }
-    const { contactInfo, personalInfo, addressInfo, financialInfo } = applicationData;
+    const { contactInfo, personalInfo, addressInfo, financialInfo } =
+      applicationData;
     if (!contactInfo || !personalInfo || !addressInfo || !financialInfo) {
       Alert.alert(t("banking.error"), t("banking.submitFailed"));
       navigation.navigate("Main");
@@ -178,7 +189,8 @@ export default function BankingRequiredInfo() {
         setIsSubmitting(false);
         return;
       }
-      let user: { firstName?: string; lastName?: string; fullName?: string } = {};
+      let user: { firstName?: string; lastName?: string; fullName?: string } =
+        {};
       try {
         const userJson = await AsyncStorage.getItem("user");
         if (userJson) user = JSON.parse(userJson);
@@ -190,7 +202,11 @@ export default function BankingRequiredInfo() {
       let idBackBase64: string | undefined;
       if (idType === "Passport" && passportPhoto) {
         passportPhotoBase64 = await uriToBase64DataUrl(passportPhoto);
-      } else if ((idType === "Driver License" || idType === "National ID") && idFront && idBack) {
+      } else if (
+        (idType === "Driver License" || idType === "National ID") &&
+        idFront &&
+        idBack
+      ) {
         idFrontBase64 = await uriToBase64DataUrl(idFront);
         idBackBase64 = await uriToBase64DataUrl(idBack);
       }
@@ -232,7 +248,10 @@ export default function BankingRequiredInfo() {
           },
         ]);
       } else {
-        Alert.alert(t("banking.error"), result.error ?? t("banking.submitFailed"));
+        Alert.alert(
+          t("banking.error"),
+          result.error ?? t("banking.submitFailed"),
+        );
       }
     } catch (error) {
       console.error("Error submitting banking application:", error);
@@ -249,7 +268,12 @@ export default function BankingRequiredInfo() {
   return (
     <View style={styles.container}>
       {/* Full-screen loading overlay only when user confirms and clicks Submit */}
-      <Modal visible={isSubmitting} transparent animationType="fade" statusBarTranslucent>
+      <Modal
+        visible={isSubmitting}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+      >
         <View style={styles.loadingOverlay}>
           <CustomLoader text={t("banking.submitting")} />
         </View>
@@ -257,10 +281,7 @@ export default function BankingRequiredInfo() {
       <SafeAreaView style={styles.safeArea}>
         {/* Top: Back arrow + Header card */}
         <View style={styles.topSection}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={handleBack}
-          >
+          <TouchableOpacity style={styles.backButton} onPress={handleBack}>
             <Ionicons name="arrow-back" size={28} color={THEME_COLOR} />
           </TouchableOpacity>
 
@@ -278,7 +299,9 @@ export default function BankingRequiredInfo() {
                 style={styles.headerIcon}
               />
               <Text style={styles.headerTitle}>{t("banking.headerTitle")}</Text>
-              <Text style={styles.headerSubtitle}>{t("banking.headerSubtitle")}</Text>
+              <Text style={styles.headerSubtitle}>
+                {t("banking.headerSubtitle")}
+              </Text>
             </LinearGradient>
           </View>
         </View>
@@ -339,11 +362,20 @@ export default function BankingRequiredInfo() {
             {/* ID Type Dropdown */}
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>
-                {t("banking.idType")}<Text style={styles.required}>*</Text>
+                {t("banking.idType")}
+                <Text style={styles.required}>*</Text>
               </Text>
               <TouchableOpacity
-                style={styles.dropdown}
-                onPress={() => setShowIdTypeModal(true)}
+                style={[styles.dropdown, errors.idType && styles.inputError]}
+                onPress={() => {
+                  setShowIdTypeModal(true);
+                  if (errors.idType) {
+                    setErrors((prev) => {
+                      const { idType, ...rest } = prev;
+                      return rest;
+                    });
+                  }
+                }}
               >
                 <Text
                   style={[
@@ -355,17 +387,32 @@ export default function BankingRequiredInfo() {
                 </Text>
                 <Ionicons name="chevron-down" size={20} color="#999" />
               </TouchableOpacity>
+              {errors.idType && (
+                <Text style={styles.errorText}>{errors.idType}</Text>
+              )}
             </View>
 
             {/* Passport: 1 image only */}
             {idType === "Passport" && (
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>
-                  {t("banking.passportPhoto")}<Text style={styles.required}>*</Text>
+                  {t("banking.passportPhoto")}
+                  <Text style={styles.required}>*</Text>
                 </Text>
                 <TouchableOpacity
-                  style={styles.uploadArea}
-                  onPress={pickPassportPhoto}
+                  style={[
+                    styles.uploadArea,
+                    errors.passportPhoto && styles.inputError,
+                  ]}
+                  onPress={() => {
+                    pickPassportPhoto();
+                    if (errors.passportPhoto) {
+                      setErrors((prev) => {
+                        const { passportPhoto, ...rest } = prev;
+                        return rest;
+                      });
+                    }
+                  }}
                   activeOpacity={0.8}
                 >
                   {passportPhoto ? (
@@ -376,18 +423,36 @@ export default function BankingRequiredInfo() {
                         resizeMode="cover"
                       />
                       <View style={styles.uploadedOverlay}>
-                        <Ionicons name="checkmark-circle" size={32} color={GREEN_COMPLETE} />
-                        <Text style={styles.uploadedText}>{t("banking.uploaded")}</Text>
+                        <Ionicons
+                          name="checkmark-circle"
+                          size={32}
+                          color={GREEN_COMPLETE}
+                        />
+                        <Text style={styles.uploadedText}>
+                          {t("banking.uploaded")}
+                        </Text>
                       </View>
                     </View>
                   ) : (
                     <>
-                      <Ionicons name="camera" size={40} color={THEME_COLOR} style={styles.uploadIcon} />
-                      <Text style={styles.uploadLabel}>{t("banking.uploadPassport")}</Text>
-                      <Text style={styles.uploadHint}>{t("banking.tapToSelectImage")}</Text>
+                      <Ionicons
+                        name="camera"
+                        size={40}
+                        color={THEME_COLOR}
+                        style={styles.uploadIcon}
+                      />
+                      <Text style={styles.uploadLabel}>
+                        {t("banking.uploadPassport")}
+                      </Text>
+                      <Text style={styles.uploadHint}>
+                        {t("banking.tapToSelectImage")}
+                      </Text>
                     </>
                   )}
                 </TouchableOpacity>
+                {errors.passportPhoto && (
+                  <Text style={styles.errorText}>{errors.passportPhoto}</Text>
+                )}
               </View>
             )}
 
@@ -396,11 +461,23 @@ export default function BankingRequiredInfo() {
               <>
                 <View style={styles.inputGroup}>
                   <Text style={styles.inputLabel}>
-                    {t("banking.uploadIdFront")}<Text style={styles.required}>*</Text>
+                    {t("banking.uploadIdFront")}
+                    <Text style={styles.required}>*</Text>
                   </Text>
                   <TouchableOpacity
-                    style={styles.uploadArea}
-                    onPress={() => pickIdImage(setIdFront)}
+                    style={[
+                      styles.uploadArea,
+                      errors.idFront && styles.inputError,
+                    ]}
+                    onPress={() => {
+                      pickIdImage(setIdFront);
+                      if (errors.idFront) {
+                        setErrors((prev) => {
+                          const { idFront, ...rest } = prev;
+                          return rest;
+                        });
+                      }
+                    }}
                     activeOpacity={0.8}
                   >
                     {idFront ? (
@@ -411,8 +488,14 @@ export default function BankingRequiredInfo() {
                           resizeMode="cover"
                         />
                         <View style={styles.uploadedOverlay}>
-                          <Ionicons name="checkmark-circle" size={32} color={GREEN_COMPLETE} />
-                          <Text style={styles.uploadedText}>{t("banking.uploaded")}</Text>
+                          <Ionicons
+                            name="checkmark-circle"
+                            size={32}
+                            color={GREEN_COMPLETE}
+                          />
+                          <Text style={styles.uploadedText}>
+                            {t("banking.uploaded")}
+                          </Text>
                         </View>
                       </View>
                     ) : (
@@ -423,19 +506,38 @@ export default function BankingRequiredInfo() {
                           color={THEME_COLOR}
                           style={styles.uploadIcon}
                         />
-                        <Text style={styles.uploadLabel}>{t("banking.uploadIdFront")}</Text>
-                        <Text style={styles.uploadHint}>{t("banking.tapToSelectImage")}</Text>
+                        <Text style={styles.uploadLabel}>
+                          {t("banking.uploadIdFront")}
+                        </Text>
+                        <Text style={styles.uploadHint}>
+                          {t("banking.tapToSelectImage")}
+                        </Text>
                       </>
                     )}
                   </TouchableOpacity>
+                  {errors.idFront && (
+                    <Text style={styles.errorText}>{errors.idFront}</Text>
+                  )}
                 </View>
                 <View style={styles.inputGroup}>
                   <Text style={styles.inputLabel}>
-                    {t("banking.uploadIdBack")}<Text style={styles.required}>*</Text>
+                    {t("banking.uploadIdBack")}
+                    <Text style={styles.required}>*</Text>
                   </Text>
                   <TouchableOpacity
-                    style={styles.uploadArea}
-                    onPress={() => pickIdImage(setIdBack)}
+                    style={[
+                      styles.uploadArea,
+                      errors.idBack && styles.inputError,
+                    ]}
+                    onPress={() => {
+                      pickIdImage(setIdBack);
+                      if (errors.idBack) {
+                        setErrors((prev) => {
+                          const { idBack, ...rest } = prev;
+                          return rest;
+                        });
+                      }
+                    }}
                     activeOpacity={0.8}
                   >
                     {idBack ? (
@@ -446,8 +548,14 @@ export default function BankingRequiredInfo() {
                           resizeMode="cover"
                         />
                         <View style={styles.uploadedOverlay}>
-                          <Ionicons name="checkmark-circle" size={32} color={GREEN_COMPLETE} />
-                          <Text style={styles.uploadedText}>{t("banking.uploaded")}</Text>
+                          <Ionicons
+                            name="checkmark-circle"
+                            size={32}
+                            color={GREEN_COMPLETE}
+                          />
+                          <Text style={styles.uploadedText}>
+                            {t("banking.uploaded")}
+                          </Text>
                         </View>
                       </View>
                     ) : (
@@ -458,11 +566,18 @@ export default function BankingRequiredInfo() {
                           color={THEME_COLOR}
                           style={styles.uploadIcon}
                         />
-                        <Text style={styles.uploadLabel}>{t("banking.uploadIdBack")}</Text>
-                        <Text style={styles.uploadHint}>{t("banking.tapToSelectImage")}</Text>
+                        <Text style={styles.uploadLabel}>
+                          {t("banking.uploadIdBack")}
+                        </Text>
+                        <Text style={styles.uploadHint}>
+                          {t("banking.tapToSelectImage")}
+                        </Text>
                       </>
                     )}
                   </TouchableOpacity>
+                  {errors.idBack && (
+                    <Text style={styles.errorText}>{errors.idBack}</Text>
+                  )}
                 </View>
               </>
             )}
@@ -486,9 +601,7 @@ export default function BankingRequiredInfo() {
             <View style={styles.infoIconCircle}>
               <Text style={styles.infoIconText}>i</Text>
             </View>
-            <Text style={styles.infoText}>
-              {t("banking.infoNote")}
-            </Text>
+            <Text style={styles.infoText}>{t("banking.infoNote")}</Text>
           </View>
 
           <View style={styles.bottomSpacing} />
@@ -505,7 +618,10 @@ export default function BankingRequiredInfo() {
               <Text style={styles.backButtonText}>{t("banking.back")}</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.nextButton, (!canSubmit() || isSubmitting) && styles.nextButtonDisabled]}
+              style={[
+                styles.nextButton,
+                (!canSubmit() || isSubmitting) && styles.nextButtonDisabled,
+              ]}
               onPress={handleSubmit}
               activeOpacity={0.9}
               disabled={!canSubmit() || isSubmitting}
@@ -535,7 +651,9 @@ export default function BankingRequiredInfo() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{t("banking.modalSelectIdType")}</Text>
+              <Text style={styles.modalTitle}>
+                {t("banking.modalSelectIdType")}
+              </Text>
               <TouchableOpacity onPress={() => setShowIdTypeModal(false)}>
                 <Ionicons name="close" size={24} color="#333" />
               </TouchableOpacity>
@@ -555,7 +673,11 @@ export default function BankingRequiredInfo() {
                 >
                   <Text style={styles.optionText}>{t(ID_TYPE_KEY[opt])}</Text>
                   {idType === opt && (
-                    <Ionicons name="checkmark-circle" size={22} color={THEME_COLOR} />
+                    <Ionicons
+                      name="checkmark-circle"
+                      size={22}
+                      color={THEME_COLOR}
+                    />
                   )}
                 </TouchableOpacity>
               ))}
@@ -739,6 +861,16 @@ const styles = StyleSheet.create({
   dropdownPlaceholder: {
     color: "#9E9E9E",
     fontWeight: "400",
+  },
+  inputError: {
+    borderColor: "#FF3B30",
+  },
+  errorText: {
+    color: "#FF3B30",
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 4,
+    fontWeight: "500",
   },
   idNoneBox: {
     backgroundColor: "rgba(255, 235, 205, 0.9)",

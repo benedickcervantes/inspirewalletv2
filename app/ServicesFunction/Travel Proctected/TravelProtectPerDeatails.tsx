@@ -4,7 +4,6 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -20,6 +19,11 @@ const CIVIL_STATUS_OPTIONS = [
   "Widowed",
   "Separated",
   "Divorced",
+] as const;
+const CITIZENSHIP_OPTIONS = [
+  "Filipino",
+  "Dual Citizen",
+  "Foreign National",
 ] as const;
 
 const MONTH_KEYS = [
@@ -37,45 +41,59 @@ const MONTH_KEYS = [
   "banking.december",
 ] as const;
 const DAYS = Array.from({ length: 31 }, (_, i) => (i + 1).toString());
-const YEARS = Array.from({ length: 71 }, (_, i) => (2010 - i).toString());
+const YEARS = Array.from({ length: 100 }, (_, i) =>
+  (new Date().getFullYear() - i).toString(),
+);
 
 export interface TravelProtectPerDeatailsProps {
   gender: string;
+  genderError?: string;
   setGender: (value: string) => void;
   dateOfBirth: Date | null;
+  dateOfBirthError?: string;
   dateOfBirthText: string;
   showDateModal: boolean;
   setShowDateModal: (value: boolean) => void;
   tempDate: { month: number; day: number; year: number };
   setTempDate: (value: { month: number; day: number; year: number }) => void;
   civilStatus: string;
+  civilStatusError?: string;
   setCivilStatus: (value: string) => void;
   citizenship: string;
+  citizenshipError?: string;
   setCitizenship: (value: string) => void;
   showGenderDropdown: boolean;
   setShowGenderDropdown: (value: boolean) => void;
   showCivilStatusDropdown: boolean;
   setShowCivilStatusDropdown: (value: boolean) => void;
+  showCitizenshipDropdown: boolean;
+  setShowCitizenshipDropdown: (value: boolean) => void;
   applyDateFromTemp: (month: number, day: number, year: number) => void;
 }
 
 export default function TravelProtectPerDeatails({
   gender,
+  genderError,
   setGender,
   dateOfBirth,
+  dateOfBirthError,
   dateOfBirthText,
   showDateModal,
   setShowDateModal,
   tempDate,
   setTempDate,
   civilStatus,
+  civilStatusError,
   setCivilStatus,
   citizenship,
+  citizenshipError,
   setCitizenship,
   showGenderDropdown,
   setShowGenderDropdown,
   showCivilStatusDropdown,
   setShowCivilStatusDropdown,
+  showCitizenshipDropdown,
+  setShowCitizenshipDropdown,
   applyDateFromTemp,
 }: TravelProtectPerDeatailsProps) {
   const { t } = useLanguage();
@@ -109,7 +127,7 @@ export default function TravelProtectPerDeatails({
             {t("travel.gender")} <Text style={styles.required}>*</Text>
           </Text>
           <TouchableOpacity
-            style={styles.dropdown}
+            style={[styles.dropdown, genderError ? styles.inputError : null]}
             onPress={() => setShowGenderDropdown(true)}
           >
             <Text
@@ -128,6 +146,9 @@ export default function TravelProtectPerDeatails({
             </Text>
             <Ionicons name="chevron-down" size={20} color="#999" />
           </TouchableOpacity>
+          {genderError ? (
+            <Text style={styles.errorText}>{genderError}</Text>
+          ) : null}
         </View>
 
         <View style={styles.inputGroup}>
@@ -135,7 +156,10 @@ export default function TravelProtectPerDeatails({
             {t("travel.dateOfBirth")} <Text style={styles.required}>*</Text>
           </Text>
           <TouchableOpacity
-            style={styles.dropdown}
+            style={[
+              styles.dropdown,
+              dateOfBirthError ? styles.inputError : null,
+            ]}
             onPress={() => {
               if (dateOfBirth) {
                 setTempDate({
@@ -160,6 +184,9 @@ export default function TravelProtectPerDeatails({
             </Text>
             <Ionicons name="calendar-outline" size={20} color="#999" />
           </TouchableOpacity>
+          {dateOfBirthError ? (
+            <Text style={styles.errorText}>{dateOfBirthError}</Text>
+          ) : null}
         </View>
 
         <View style={styles.inputGroup}>
@@ -167,7 +194,10 @@ export default function TravelProtectPerDeatails({
             {t("travel.civilStatus")} <Text style={styles.required}>*</Text>
           </Text>
           <TouchableOpacity
-            style={styles.dropdown}
+            style={[
+              styles.dropdown,
+              civilStatusError ? styles.inputError : null,
+            ]}
             onPress={() => setShowCivilStatusDropdown(true)}
           >
             <Text
@@ -183,24 +213,48 @@ export default function TravelProtectPerDeatails({
                     ? t("travel.married")
                     : civilStatus === "Divorced"
                       ? t("travel.divorced")
-                      : t("travel.widowed")
+                      : civilStatus === "Widowed"
+                        ? t("travel.widowed")
+                        : t("travel.separated")
                 : t("travel.selectCivilStatus")}
             </Text>
             <Ionicons name="chevron-down" size={20} color="#999" />
           </TouchableOpacity>
+          {civilStatusError ? (
+            <Text style={styles.errorText}>{civilStatusError}</Text>
+          ) : null}
         </View>
 
         <View style={styles.inputGroup}>
           <Text style={styles.inputLabel}>
             {t("travel.citizenship")} <Text style={styles.required}>*</Text>
           </Text>
-          <TextInput
-            style={styles.input}
-            placeholder={t("travel.placeholderCitizenship")}
-            placeholderTextColor="#999"
-            value={citizenship}
-            onChangeText={setCitizenship}
-          />
+          <TouchableOpacity
+            style={[
+              styles.dropdown,
+              citizenshipError ? styles.inputError : null,
+            ]}
+            onPress={() => setShowCitizenshipDropdown(true)}
+          >
+            <Text
+              style={[
+                styles.dropdownText,
+                !citizenship && styles.dropdownPlaceholder,
+              ]}
+            >
+              {citizenship
+                ? citizenship === "Filipino"
+                  ? t("banking.filipino")
+                  : citizenship === "Dual Citizen"
+                    ? t("banking.dualCitizen")
+                    : t("banking.foreignNational")
+                : t("travel.selectCitizenship")}
+            </Text>
+            <Ionicons name="chevron-down" size={20} color="#999" />
+          </TouchableOpacity>
+          {citizenshipError ? (
+            <Text style={styles.errorText}>{citizenshipError}</Text>
+          ) : null}
         </View>
       </View>
 
@@ -408,6 +462,58 @@ export default function TravelProtectPerDeatails({
           </View>
         </View>
       </Modal>
+      {/* Citizenship Modal */}
+      <Modal
+        visible={showCitizenshipDropdown}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowCitizenshipDropdown(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>
+                {t("banking.modalSelectCitizenship")}
+              </Text>
+              <TouchableOpacity
+                onPress={() => setShowCitizenshipDropdown(false)}
+              >
+                <Ionicons name="close" size={24} color="#333" />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={styles.modalContent}>
+              {CITIZENSHIP_OPTIONS.map((opt) => (
+                <TouchableOpacity
+                  key={opt}
+                  style={[
+                    styles.optionRow,
+                    citizenship === opt && styles.optionRowSelected,
+                  ]}
+                  onPress={() => {
+                    setCitizenship(opt);
+                    setShowCitizenshipDropdown(false);
+                  }}
+                >
+                  <Text style={styles.optionText}>
+                    {opt === "Filipino"
+                      ? t("banking.filipino")
+                      : opt === "Dual Citizen"
+                        ? t("banking.dualCitizen")
+                        : t("banking.foreignNational")}
+                  </Text>
+                  {citizenship === opt && (
+                    <Ionicons
+                      name="checkmark-circle"
+                      size={22}
+                      color={THEME_COLOR}
+                    />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </>
   );
 }
@@ -588,5 +694,14 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "700",
     color: "#FFFFFF",
+  },
+  inputError: {
+    borderColor: "#FF3B30",
+  },
+  errorText: {
+    color: "#FF3B30",
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 4,
   },
 });
