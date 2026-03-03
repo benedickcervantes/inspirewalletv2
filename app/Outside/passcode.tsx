@@ -150,14 +150,11 @@ export default function Passcode() {
 
     const loadPasscode = async () => {
       const accessToken = await AsyncStorage.getItem('access_token');
-      const userJson = await AsyncStorage.getItem('user');
-      const user = userJson ? (JSON.parse(userJson) as { hasPasscode?: boolean }) : null;
       if (!cancelled) {
         if (!accessToken) {
           setNeedsAuth(true);
-        } else if (!user?.hasPasscode) {
-          (navigation as unknown as NavProp).replace('Main');
         }
+        // If access token exists, show passcode entry screen (don't redirect to Main)
         setLoadingPasscode(false);
       }
     };
