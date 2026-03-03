@@ -25,6 +25,17 @@ const getApiPrefix = () => {
   return p ? `/${p.replace(/^\/|\/$/g, "")}` : "";
 };
 
+
+// Custom fetch wrapper to inject API key
+const _originalFetch = global.fetch || fetch;
+async function apiFetch(url, options = {}) {
+  const headers = options.headers || {};
+  if (process.env.EXPO_PUBLIC_API_KEY) {
+    headers['x-api-key'] = process.env.EXPO_PUBLIC_API_KEY;
+  }
+  return _originalFetch(url, { ...options, headers });
+}
+
 const buildUrl = (path) => {
   const base = getWalletBackendUrl();
   if (!base) return null;
@@ -44,7 +55,7 @@ export async function getWallets(accessToken) {
   if (!accessToken) return { success: false, error: 'Not authenticated' };
   const url = `${base}/wallets`;
   try {
-    const res = await fetch(url, {
+    const res = await apiFetch(url, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -82,7 +93,7 @@ export async function submitTimeDepositRequest(accessToken, body) {
   const url = `${base}/time-deposits`;
   try {
     if (__DEV__) console.log("[Deposit API] POST", url, body);
-    const res = await fetch(url, {
+    const res = await apiFetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -141,7 +152,7 @@ export async function getTimeDeposits(accessToken) {
 
   try {
     if (__DEV__) console.log("[TimeDeposits API] GET", url);
-    const res = await fetch(url, {
+    const res = await apiFetch(url, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -208,7 +219,7 @@ export async function getTimeDepositInterestRates(accessToken, contractType) {
     url += `?contractType=${encodeURIComponent(contractType)}`;
   }
   try {
-    const res = await fetch(url, {
+    const res = await apiFetch(url, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -248,7 +259,7 @@ export async function submitTopUpRequest(accessToken, body) {
   if (!accessToken) return { success: false, error: "Not authenticated" };
   try {
     if (__DEV__) console.log("[Deposit API] POST", url, body);
-    const res = await fetch(url, {
+    const res = await apiFetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -292,7 +303,7 @@ export async function submitStockInvestmentRequest(accessToken, body) {
   if (!accessToken) return { success: false, error: "Not authenticated" };
   try {
     if (__DEV__) console.log("[Deposit API] POST", url, body);
-    const res = await fetch(url, {
+    const res = await apiFetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -329,7 +340,7 @@ export async function getTopUpDepositRequests(accessToken) {
   if (!url) return { success: false, error: "Backend URL not configured" };
   if (!accessToken) return { success: false, error: "Not authenticated" };
   try {
-    const res = await fetch(url, {
+    const res = await apiFetch(url, {
       method: "GET",
       headers: { Authorization: `Bearer ${accessToken}` },
     });
@@ -360,7 +371,7 @@ export async function getStockInvestmentDepositRequests(accessToken) {
   if (!url) return { success: false, error: "Backend URL not configured" };
   if (!accessToken) return { success: false, error: "Not authenticated" };
   try {
-    const res = await fetch(url, {
+    const res = await apiFetch(url, {
       method: "GET",
       headers: { Authorization: `Bearer ${accessToken}` },
     });
@@ -401,7 +412,7 @@ export async function submitWithdrawalRequest(accessToken, body) {
   if (!accessToken) return { success: false, error: "Not authenticated" };
   try {
     if (__DEV__) console.log("[Withdrawal API] POST", url, body);
-    const res = await fetch(url, {
+    const res = await apiFetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -453,7 +464,7 @@ export async function submitBankingApplication(accessToken, body) {
         Object.keys(body),
         ")",
       );
-    const res = await fetch(url, {
+    const res = await apiFetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -492,7 +503,7 @@ export async function submitTravelProtection(accessToken, body) {
   if (!accessToken) return { success: false, error: "Not authenticated" };
   try {
     if (__DEV__) console.log("[TravelProtection API] POST", url);
-    const res = await fetch(url, {
+    const res = await apiFetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -525,7 +536,7 @@ export async function getWithdrawalRequests(accessToken) {
   if (!url) return { success: false, error: "Backend URL not configured" };
   if (!accessToken) return { success: false, error: "Not authenticated" };
   try {
-    const res = await fetch(url, {
+    const res = await apiFetch(url, {
       method: "GET",
       headers: { Authorization: `Bearer ${accessToken}` },
     });
@@ -555,7 +566,7 @@ export async function login(email, password) {
   const base = getBaseUrl();
   if (!base) return { success: false, error: "Backend URL not configured" };
   try {
-    const res = await fetch(`${base}/auth/login`, {
+    const res = await apiFetch(`${base}/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email: email.trim(), password }),
@@ -591,7 +602,7 @@ export async function forgotPassword(email) {
   const base = getBaseUrl();
   if (!base) return { success: false, error: "Backend URL not configured" };
   try {
-    const res = await fetch(`${base}/auth/forgot-password`, {
+    const res = await apiFetch(`${base}/auth/forgot-password`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email: email.trim() }),
@@ -621,7 +632,7 @@ export async function register(body) {
   const base = getBaseUrl();
   if (!base) return { success: false, error: "Backend URL not configured" };
   try {
-    const res = await fetch(`${base}/auth/register`, {
+    const res = await apiFetch(`${base}/auth/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
@@ -652,7 +663,7 @@ export async function getMe(accessToken) {
   if (!base) return { success: false, error: "Backend URL not configured" };
   if (!accessToken) return { success: false, error: "No token" };
   try {
-    const res = await fetch(`${base}/auth/me`, {
+    const res = await apiFetch(`${base}/auth/me`, {
       method: "GET",
       headers: { Authorization: `Bearer ${accessToken}` },
     });
@@ -678,7 +689,7 @@ export async function updateProfile(accessToken, body) {
   if (!base) return { success: false, error: "Backend URL not configured" };
   if (!accessToken) return { success: false, error: "No token" };
   try {
-    const res = await fetch(`${base}/auth/profile`, {
+    const res = await apiFetch(`${base}/auth/profile`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -711,7 +722,7 @@ export async function setPasscode(accessToken, passcode) {
   if (!base) return { success: false, error: "Backend URL not configured" };
   if (!accessToken) return { success: false, error: "No token" };
   try {
-    const res = await fetch(`${base}/auth/passcode`, {
+    const res = await apiFetch(`${base}/auth/passcode`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -743,7 +754,7 @@ export async function verifyPasscode(accessToken, passcode) {
   if (!base) return { success: false, error: "Backend URL not configured" };
   if (!accessToken) return { success: false, error: "No token" };
   try {
-    const res = await fetch(`${base}/auth/verify-passcode`, {
+    const res = await apiFetch(`${base}/auth/verify-passcode`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -778,7 +789,7 @@ export async function updatePasscode(
   if (!base) return { success: false, error: "Backend URL not configured" };
   if (!accessToken) return { success: false, error: "No token" };
   try {
-    const res = await fetch(`${base}/auth/passcode`, {
+    const res = await apiFetch(`${base}/auth/passcode`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -810,7 +821,7 @@ export async function verifyEmail(email, otp) {
   const base = getBaseUrl();
   if (!base) return { success: false, error: "Backend URL not configured" };
   try {
-    const res = await fetch(`${base}/auth/verify-email`, {
+    const res = await apiFetch(`${base}/auth/verify-email`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email: email.trim(), otp }),
@@ -835,7 +846,7 @@ export async function resendVerification(email) {
   const base = getBaseUrl();
   if (!base) return { success: false, error: "Backend URL not configured" };
   try {
-    const res = await fetch(`${base}/auth/resend-verification`, {
+    const res = await apiFetch(`${base}/auth/resend-verification`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email: email.trim() }),
@@ -863,7 +874,7 @@ export async function getReferralCode(accessToken) {
   if (!base) return { success: false, error: "Backend URL not configured" };
   if (!accessToken) return { success: false, error: "No token" };
   try {
-    const res = await fetch(`${base}/referrals/code`, {
+    const res = await apiFetch(`${base}/referrals/code`, {
       method: "GET",
       headers: { Authorization: `Bearer ${accessToken}` },
     });
@@ -891,7 +902,7 @@ export async function getReferralQrPayload(accessToken) {
   if (!base) return { success: false, error: "Backend URL not configured" };
   if (!accessToken) return { success: false, error: "No token" };
   try {
-    const res = await fetch(`${base}/referrals/qr-payload`, {
+    const res = await apiFetch(`${base}/referrals/qr-payload`, {
       method: "GET",
       headers: { Authorization: `Bearer ${accessToken}` },
     });
@@ -919,7 +930,7 @@ export async function getReferralTree(accessToken) {
   if (!base) return { success: false, error: "Backend URL not configured" };
   if (!accessToken) return { success: false, error: "No token" };
   try {
-    const res = await fetch(`${base}/referrals/tree`, {
+    const res = await apiFetch(`${base}/referrals/tree`, {
       method: "GET",
       headers: { Authorization: `Bearer ${accessToken}` },
     });
@@ -947,7 +958,7 @@ export async function generateReferralCode(accessToken) {
   if (!base) return { success: false, error: "Backend URL not configured" };
   if (!accessToken) return { success: false, error: "No token" };
   try {
-    const res = await fetch(`${base}/referrals/generate`, {
+    const res = await apiFetch(`${base}/referrals/generate`, {
       method: "POST",
       headers: { Authorization: `Bearer ${accessToken}` },
     });
@@ -967,31 +978,6 @@ export async function generateReferralCode(accessToken) {
 // --- Wallets API ---
 
 /**
- * GET /wallets — requires JWT
- * Returns all wallets for the authenticated user.
- * @param {string} accessToken
- * @returns {{ success: boolean, wallets?: Array, error?: string }}
- */
-export async function getWallets(accessToken) {
-  const base = getBaseUrl();
-  if (!base) return { success: false, error: "Backend URL not configured" };
-  if (!accessToken) return { success: false, error: "No token" };
-  try {
-    const res = await fetch(`${base}/wallets`, {
-      method: "GET",
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      return { success: false, error: data.message || "Failed to get wallets" };
-    }
-    return { success: true, wallets: Array.isArray(data) ? data : [] };
-  } catch (e) {
-    return { success: false, error: e.message || "Network error" };
-  }
-}
-
-/**
  * POST /wallets/main — requires JWT
  * Gets or creates the user's main (PHP) wallet. Idempotent.
  * @param {string} accessToken
@@ -1002,7 +988,7 @@ export async function getOrCreateMainWallet(accessToken) {
   if (!base) return { success: false, error: "Backend URL not configured" };
   if (!accessToken) return { success: false, error: "No token" };
   try {
-    const res = await fetch(`${base}/wallets/main`, {
+    const res = await apiFetch(`${base}/wallets/main`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -1041,7 +1027,7 @@ export async function getRecipientByAccountNumber(accessToken, accountNumber) {
     return { success: false, error: "Account number is required" };
   try {
     const url = `${base}/transfers/recipient-by-account-number?accountNumber=${encodeURIComponent(normalized)}`;
-    const res = await fetch(url, {
+    const res = await apiFetch(url, {
       method: "GET",
       headers: { Authorization: `Bearer ${accessToken}` },
     });
@@ -1071,7 +1057,7 @@ export async function getBeneficiaries(accessToken) {
   if (!base) return { success: false, error: "Backend URL not configured" };
   if (!accessToken) return { success: false, error: "No token" };
   try {
-    const res = await fetch(`${base}/beneficiaries`, {
+    const res = await apiFetch(`${base}/beneficiaries`, {
       method: "GET",
       headers: { Authorization: `Bearer ${accessToken}` },
     });
@@ -1102,7 +1088,7 @@ export async function createBeneficiary(accessToken, body) {
   if (!base) return { success: false, error: "Backend URL not configured" };
   if (!accessToken) return { success: false, error: "No token" };
   try {
-    const res = await fetch(`${base}/beneficiaries`, {
+    const res = await apiFetch(`${base}/beneficiaries`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -1134,7 +1120,7 @@ export async function submitTransfer(accessToken, body) {
   if (!base) return { success: false, error: "Backend URL not configured" };
   if (!accessToken) return { success: false, error: "No token" };
   try {
-    const res = await fetch(`${base}/transfers`, {
+    const res = await apiFetch(`${base}/transfers`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -1176,7 +1162,7 @@ export async function getTransactions(accessToken, opts = {}) {
     if (opts.type) params.set("type", opts.type);
     const qs = params.toString();
     const url = `${base}/transactions${qs ? `?${qs}` : ""}`;
-    const res = await fetch(url, {
+    const res = await apiFetch(url, {
       method: "GET",
       headers: { Authorization: `Bearer ${accessToken}` },
     });
@@ -1210,7 +1196,7 @@ export async function sendMessage(accessToken, content) {
   if (!trimmed) return { success: false, error: "Message content is required" };
   try {
     const url = `${base}/messages`;
-    const res = await fetch(url, {
+    const res = await apiFetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -1249,7 +1235,7 @@ export async function getMessages(accessToken, opts = {}) {
     if (opts.limit != null) params.set("limit", String(opts.limit));
     const qs = params.toString();
     const url = `${base}/messages${qs ? `?${qs}` : ""}`;
-    const res = await fetch(url, {
+    const res = await apiFetch(url, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -1288,7 +1274,7 @@ export async function markMessageAsRead(accessToken, messageId) {
   if (!messageId) return { success: false, error: "Message ID required" };
   try {
     const url = `${base}/messages/${encodeURIComponent(messageId)}/read`;
-    const res = await fetch(url, {
+    const res = await apiFetch(url, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -1321,7 +1307,7 @@ export async function markAllMessagesAsRead(accessToken) {
   if (!accessToken) return { success: false, error: "Not authenticated" };
   try {
     const url = `${base}/messages/read-all`;
-    const res = await fetch(url, {
+    const res = await apiFetch(url, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -1359,7 +1345,7 @@ export async function editMessage(accessToken, messageId, content) {
   if (!trimmed) return { success: false, error: "Message content is required" };
   try {
     const url = `${base}/messages/${encodeURIComponent(messageId)}`;
-    const res = await fetch(url, {
+    const res = await apiFetch(url, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -1400,7 +1386,7 @@ export async function deleteMessage(
   if (!messageId) return { success: false, error: "Message ID required" };
   try {
     const url = `${base}/messages/${encodeURIComponent(messageId)}`;
-    const res = await fetch(url, {
+    const res = await apiFetch(url, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
@@ -1438,7 +1424,7 @@ export async function getUserActivity(adminToken, userId) {
   if (!userId) return { success: false, error: "User ID required" };
   try {
     const url = `${base}/user-activity/${encodeURIComponent(userId)}`;
-    const res = await fetch(url, {
+    const res = await apiFetch(url, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -1482,7 +1468,7 @@ export async function getBulkUserActivity(adminToken, userIds) {
     const idsParam = userIds.filter(Boolean).join(",");
     if (!idsParam) return { success: false, error: "User IDs required" };
     const url = `${base}/user-activity/bulk?userIds=${encodeURIComponent(idsParam)}`;
-    const res = await fetch(url, {
+    const res = await apiFetch(url, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -1516,7 +1502,7 @@ export async function submitStockSellRequest(accessToken, body) {
   const url = buildUrl('/deposit-requests/stock-sell');
   try {
     if (__DEV__) console.log('[StockSell API] POST', url, body);
-    const res = await fetch(url, {
+    const res = await apiFetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -1548,7 +1534,7 @@ export async function getStockSellRequests(accessToken) {
   if (!accessToken) return { success: false, error: 'Not authenticated' };
   const url = buildUrl('/deposit-requests/stock-sell');
   try {
-    const res = await fetch(url, {
+    const res = await apiFetch(url, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
