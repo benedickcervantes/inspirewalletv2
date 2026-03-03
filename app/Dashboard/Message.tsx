@@ -3,19 +3,19 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  Keyboard,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
+    ActivityIndicator,
+    Alert,
+    Keyboard,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    RefreshControl,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { deleteMessage, editMessage, getMessages, markAllMessagesAsRead, sendMessage } from "../../configs/api";
@@ -90,6 +90,7 @@ export default function Message() {
   const [showMessageActions, setShowMessageActions] = useState(false);
   const [editingMessage, setEditingMessage] = useState<DisplayMessage | null>(null);
   const [editText, setEditText] = useState("");
+  const [ticketSelected, setTicketSelected] = useState(false);
 
   // Check maintenance status on focus
   useFocusEffect(
@@ -349,15 +350,6 @@ export default function Message() {
             Tickets
           </Text>
         </TouchableOpacity>
-        {viewMode === "tickets" && accessToken && (
-          <TouchableOpacity
-            style={styles.createTicketButton}
-            onPress={() => setShowTicketCreation(true)}
-          >
-            <MaterialCommunityIcons name="plus" size={20} color="#FFFFFF" />
-            <Text style={styles.createTicketButtonText}>Create</Text>
-          </TouchableOpacity>
-        )}
       </View>
 
       {loading && messages.length === 0 ? (
@@ -374,7 +366,18 @@ export default function Message() {
           </TouchableOpacity>
         </View>
       ) : viewMode === "tickets" && accessToken ? (
-        <TicketList accessToken={accessToken} />
+        <View style={styles.ticketsContainer}>
+          <TicketList accessToken={accessToken} onTicketSelected={setTicketSelected} />
+          {/* Circular Create Button - Below Tickets */}
+          {!ticketSelected && (
+            <TouchableOpacity
+              style={styles.circularCreateButton}
+              onPress={() => setShowTicketCreation(true)}
+            >
+              <MaterialCommunityIcons name="plus" size={28} color="#FFFFFF" />
+            </TouchableOpacity>
+          )}
+        </View>
       ) : (
         <KeyboardAvoidingView
           style={styles.keyboardView}
@@ -654,20 +657,27 @@ const styles = StyleSheet.create({
   tabTextActive: {
     color: "#E15816",
   },
-  createTicketButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    marginRight: 8,
-    backgroundColor: "#E15816",
-    borderRadius: 8,
+  ticketsContainer: {
+    flex: 1,
+    position: "relative",
   },
-  createTicketButtonText: {
-    color: "#FFFFFF",
-    fontSize: 13,
-    fontWeight: "600",
+  circularCreateButton: {
+    position: "absolute",
+    bottom: 20,
+    left: "50%",
+    marginLeft: -30,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: "#E15816",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+    zIndex: 10,
   },
   backButton: {
     padding: 8,
