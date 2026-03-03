@@ -242,3 +242,25 @@ export function submitTravelProtection(
   accessToken: string,
   body: Record<string, unknown>,
 ): Promise<{ success: boolean; data?: unknown; error?: string }>;
+
+export interface ApiWalletFull {
+  id: string;
+  balance?: string;
+  currency?: { code?: string };
+  currencyCode?: string;
+  [key: string]: unknown;
+}
+
+export function getWallets(
+  accessToken: string
+): Promise<{ success: boolean; wallets?: ApiWalletFull[]; error?: string }>;
+
+export function submitStockSellRequest(
+  accessToken: string,
+  body: { walletId: string; stocksToSell: number }
+): Promise<{ success: boolean; data?: unknown; error?: string }>;
+
+export function getStockSellRequests(
+  accessToken: string
+): Promise<{ success: boolean; data?: unknown[]; error?: string }>;
+

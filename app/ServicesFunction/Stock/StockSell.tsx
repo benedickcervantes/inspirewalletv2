@@ -1,7 +1,8 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   Modal,
   SafeAreaView,
@@ -10,8 +11,9 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
+import { getWallets, submitStockSellRequest } from "../../../configs/api";
 
 const THEME_COLOR = "#E15816";
 const STOCK_RATE_PHP = 2_000_000;
@@ -30,6 +32,7 @@ export default function StockSell() {
 
   const [step, setStep] = useState<Step>("form");
   const [stocksToSell, setStocksToSell] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const [showAlertModal, setShowAlertModal] = useState(false);
   const [alertConfig, setAlertConfig] = useState({ title: "", message: "" });
 
@@ -56,17 +59,59 @@ export default function StockSell() {
     setStep("confirm");
   };
 
-  const handleConfirm = () => {
-    setAlertConfig({
-      title: "Request Submitted",
-      message:
-        "Your sell request has been submitted. You will be notified when it is processed.",
-    });
-    setShowAlertModal(true);
-    setTimeout(() => {
-      setShowAlertModal(false);
-      navigation.navigate("Stockholder");
-    }, 2000);
+  const handleConfirm = async () => {
+    setIsLoading(true);
+    try {
+      const accessToken = await AsyncStorage.getItem("access_token");
+      if (!accessToken) {
+        setAlertConfig({ title: "Not Authenticated", message: "Please log in and try again." });
+        setShowAlertModal(true);
+        return;
+      }
+
+      // Fetch the user's PHP wallet to get walletId
+      const walletsRes = await getWallets(accessToken);
+      const wallets = walletsRes?.wallets ?? [];
+      const phpWallet = Array.isArray(wallets)
+        ? wallets.find((w: { currency?: { code?: string }; currencyCode?: string }) =>
+          (w.currency?.code ?? w.currencyCode) === "PHP"
+        )
+        : null;
+
+      if (!phpWallet?.id) {
+        setAlertConfig({ title: "Wallet Not Found", message: "Could not find your PHP wallet. Please try again." });
+        setShowAlertModal(true);
+        return;
+      }
+
+      const result = await submitStockSellRequest(accessToken, {
+        walletId: phpWallet.id,
+        stocksToSell: stocksNum,
+      });
+
+      if (result.success) {
+        setAlertConfig({
+          title: "Request Submitted",
+          message: "Your sell request has been submitted. You will be notified when it is processed.",
+        });
+        setShowAlertModal(true);
+        setTimeout(() => {
+          setShowAlertModal(false);
+          navigation.navigate("Stockholder" as never);
+        }, 2000);
+      } else {
+        setAlertConfig({
+          title: "Submission Failed",
+          message: result.error ?? "Something went wrong. Please try again.",
+        });
+        setShowAlertModal(true);
+      }
+    } catch (err) {
+      setAlertConfig({ title: "Error", message: "An unexpected error occurred. Please try again." });
+      setShowAlertModal(true);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleBack = () => {

@@ -4,16 +4,16 @@ import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useState } from "react";
 import {
-    ActivityIndicator,
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { getStockInvestmentDepositRequests } from "../../../configs/api";
+import { getStockInvestmentDepositRequests, getStockSellRequests } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
 import { isServiceUnderMaintenance } from "../../../lib/maintenance";
 
@@ -26,6 +26,7 @@ interface StockRequest {
   amount: string | number;
   status: string;
   createdAt?: string;
+  type: 'BUY' | 'SELL';
 }
 
 interface TransactionItem {
@@ -46,9 +47,9 @@ function formatTransactionDate(isoDate?: string): string {
 
 function formatCurrency(value: number | string, decimals: number = 2): string {
   const num = typeof value === "string" ? parseFloat(value) || 0 : value;
-  return num.toLocaleString("en-PH", { 
+  return num.toLocaleString("en-PH", {
     minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals 
+    maximumFractionDigits: decimals
   });
 }
 
@@ -81,30 +82,42 @@ export default function StockService() {
       return;
     }
     try {
-      const res = await getStockInvestmentDepositRequests(accessToken);
-      if (res.success && res.requests) {
-        const items: StockRequest[] = (res.requests as Record<string, unknown>[]).map(
-          (r) => {
-            const amt = r.amount;
-            const amount: string | number =
-              typeof amt === "number"
-                ? amt
-                : typeof amt === "string"
-                  ? amt
-                  : Number(amt) || 0;
-            return {
-              id: String(r.id ?? ""),
-              amount,
-              status: String(r.status ?? ""),
-              createdAt: r.createdAt as string | undefined,
-            };
-          }
+      const [buyRes, sellRes] = await Promise.all([
+        getStockInvestmentDepositRequests(accessToken),
+        getStockSellRequests(accessToken)
+      ]);
+
+      let allItems: StockRequest[] = [];
+
+      if (buyRes.success && buyRes.requests) {
+        const buyItems: StockRequest[] = (buyRes.requests as Record<string, unknown>[]).map(
+          (r) => ({
+            id: String(r.id ?? ""),
+            amount: Number(r.amount) || 0,
+            status: String(r.status ?? ""),
+            createdAt: r.createdAt as string | undefined,
+            type: 'BUY',
+          })
         );
-        setRequests(items);
-      } else {
-        setRequests([]);
+        allItems = [...allItems, ...buyItems];
       }
-    } catch {
+
+      if (sellRes.success && sellRes.data) {
+        const sellItems: StockRequest[] = (sellRes.data as Record<string, unknown>[]).map(
+          (r) => ({
+            id: String(r.id ?? ""),
+            amount: Number(r.amount) || 0,
+            status: String(r.status ?? ""),
+            createdAt: r.createdAt as string | undefined,
+            type: 'SELL',
+          })
+        );
+        allItems = [...allItems, ...sellItems];
+      }
+
+      setRequests(allItems);
+    } catch (e) {
+      console.error("[StockService] Error fetching data:", e);
       setRequests([]);
     } finally {
       setLoading(false);
@@ -136,7 +149,7 @@ export default function StockService() {
           setLoading(false);
         }
       };
-      
+
       checkMaintenance();
     }, [fetchData])
   );
@@ -148,38 +161,41 @@ export default function StockService() {
 
   const approvedRequests = requests.filter((r) => r.status === "APPROVED");
   const totalPortfolioValue = approvedRequests.reduce(
-    (sum, r) => sum + (typeof r.amount === "string" ? parseFloat(r.amount) || 0 : Number(r.amount)),
+    (sum, r) => {
+      const val = typeof r.amount === "string" ? parseFloat(r.amount) : Number(r.amount);
+      return r.type === 'BUY' ? sum + val : sum - val;
+    },
     0
   );
-  const stockCount = totalPortfolioValue / STOCK_RATE_PHP;
+  const stockCount = Math.max(0, totalPortfolioValue / STOCK_RATE_PHP);
 
   const transactions: TransactionItem[] =
     requests.length > 0
       ? requests
-          .sort((a, b) => {
-            const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-            const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-            return dateB - dateA;
-          })
-          .map((r) => ({
-            id: r.id,
-            label:
-              r.status === "APPROVED"
-                ? t("stock.stockPurchase")
-                : r.status === "PENDING"
-                  ? t("stock.stockRequest")
-                  : t("stock.stockRequestRejected"),
-            date: formatTransactionDate(r.createdAt),
-            amount: `-₱${formatCurrency(r.amount)}`,
-          }))
+        .sort((a, b) => {
+          const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return dateB - dateA;
+        })
+        .map((r) => ({
+          id: r.id,
+          label:
+            r.status === "APPROVED"
+              ? (r.type === 'BUY' ? t("stock.stockPurchase") : t("stocks.stockSell"))
+              : r.status === "PENDING"
+                ? (r.type === 'BUY' ? t("stock.stockRequest") : t("stock.stockSellRequest"))
+                : (r.type === 'BUY' ? t("stock.stockRequestRejected") : t("stock.stockSellRejected")),
+          date: formatTransactionDate(r.createdAt),
+          amount: `${r.type === 'BUY' ? '-' : '+'}₱${formatCurrency(r.amount)}`,
+        }))
       : [
-          {
-            id: "placeholder",
-            label: t("stock.createdAccount"),
-            date: "Jan 29. 2026",
-            amount: "-₱0.00",
-          },
-        ];
+        {
+          id: "placeholder",
+          label: t("stock.createdAccount"),
+          date: "Jan 29. 2026",
+          amount: "-₱0.00",
+        },
+      ];
 
   const handleBuy = () => {
     (navigation as { navigate: (name: string, params?: object) => void }).navigate("StockBuy");
@@ -211,130 +227,130 @@ export default function StockService() {
         <View style={styles.headerSpacer} />
       </LinearGradient>
 
-        {loading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={THEME_COLOR} />
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={THEME_COLOR} />
+        </View>
+      ) : (
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={THEME_COLOR}
+            />
+          }
+        >
+          {/* Stock Rate Card */}
+          <View style={styles.stockRateCard}>
+            <LinearGradient
+              colors={["#B8E0FF", "#F8FBFF"]}
+              style={styles.stockRateGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            >
+              <View style={styles.stockRateIconCircle}>
+                <Text style={styles.stockRateIconText}>!</Text>
+              </View>
+              <Text style={styles.stockRateLabel}>{t("stock.stockRate")}</Text>
+              <Text style={styles.stockRateValue}>
+                {t("stock.stockRateValue")}
+              </Text>
+            </LinearGradient>
           </View>
-        ) : (
-          <ScrollView
-            style={styles.scrollView}
-            contentContainerStyle={styles.scrollContent}
-            showsVerticalScrollIndicator={false}
-            refreshControl={
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={onRefresh}
-                tintColor={THEME_COLOR}
-              />
-            }
-          >
-            {/* Stock Rate Card */}
-            <View style={styles.stockRateCard}>
-              <LinearGradient
-                colors={["#B8E0FF", "#F8FBFF"]}
-                style={styles.stockRateGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <View style={styles.stockRateIconCircle}>
-                  <Text style={styles.stockRateIconText}>!</Text>
-                </View>
-                <Text style={styles.stockRateLabel}>{t("stock.stockRate")}</Text>
-                <Text style={styles.stockRateValue}>
-                  {t("stock.stockRateValue")}
-                </Text>
-              </LinearGradient>
-            </View>
 
-            {/* Portfolio Card */}
-            <View style={styles.portfolioCard}>
-              <LinearGradient
-                colors={["#F28934", "#E25A17"]}
-                style={styles.portfolioGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 0, y: 1 }}
-              >
-                <View style={styles.portfolioIconWrapper}>
-                  <MaterialCommunityIcons
-                    name="chart-line"
-                    size={28}
-                    color="#FFFFFF"
-                  />
-                </View>
-                <Text style={styles.portfolioLabel}>{t("stock.yourPortfolio")}</Text>
-                <Text style={styles.portfolioStocks}>
-                  {formatStockCount(stockCount)} {stockCount !== 1 ? t("stock.stocks") : t("stock.stock")}
-                </Text>
-                <View style={styles.portfolioValueRow}>
-                  <MaterialCommunityIcons
-                    name="wallet-outline"
-                    size={22}
-                    color="#FFFFFF"
-                  />
-                  <Text style={styles.portfolioValueLabel}>
-                    {t("stock.totalPortfolioValue")}
-                  </Text>
-                </View>
-                <Text style={styles.portfolioValue}>
-                  ₱{formatCurrency(totalPortfolioValue)}
-                </Text>
-              </LinearGradient>
-            </View>
-
-            {/* BUY / SELL Buttons */}
-            <View style={styles.actionButtons}>
-              <TouchableOpacity
-                style={styles.buyButton}
-                onPress={handleBuy}
-                activeOpacity={0.9}
-              >
-                <View style={styles.buyButtonIcon}>
-                  <Ionicons name="add" size={20} color="#FFFFFF" />
-                </View>
-                <Text style={styles.buyButtonText}>{t("stock.buy")}</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.sellButton}
-                onPress={handleSell}
-                activeOpacity={0.9}
-              >
-                <View style={styles.sellButtonIcon}>
-                  <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
-                </View>
-                <Text style={styles.sellButtonText}>{t("stock.sell")}</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Transaction History Card */}
-            <View style={styles.transactionCard}>
-              <View style={styles.transactionHeader}>
-                <Ionicons name="time-outline" size={22} color={THEME_COLOR} />
-                <Text style={styles.transactionTitle}>{t("stock.transactionHistory")}</Text>
+          {/* Portfolio Card */}
+          <View style={styles.portfolioCard}>
+            <LinearGradient
+              colors={["#F28934", "#E25A17"]}
+              style={styles.portfolioGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 0, y: 1 }}
+            >
+              <View style={styles.portfolioIconWrapper}>
+                <MaterialCommunityIcons
+                  name="chart-line"
+                  size={28}
+                  color="#FFFFFF"
+                />
               </View>
-              <View style={styles.transactionList}>
-                {transactions.map((tx) => (
-                  <View key={tx.id} style={styles.transactionItem}>
-                    <View style={styles.transactionIcon}>
-                      <MaterialCommunityIcons
-                        name="swap-horizontal"
-                        size={24}
-                        color={THEME_COLOR}
-                      />
-                    </View>
-                    <View style={styles.transactionDetails}>
-                      <Text style={styles.transactionName}>{tx.label}</Text>
-                      <Text style={styles.transactionDate}>{tx.date}</Text>
-                    </View>
-                    <Text style={styles.transactionAmount}>{tx.amount}</Text>
+              <Text style={styles.portfolioLabel}>{t("stock.yourPortfolio")}</Text>
+              <Text style={styles.portfolioStocks}>
+                {formatStockCount(stockCount)} {stockCount !== 1 ? t("stock.stocks") : t("stock.stock")}
+              </Text>
+              <View style={styles.portfolioValueRow}>
+                <MaterialCommunityIcons
+                  name="wallet-outline"
+                  size={22}
+                  color="#FFFFFF"
+                />
+                <Text style={styles.portfolioValueLabel}>
+                  {t("stock.totalPortfolioValue")}
+                </Text>
+              </View>
+              <Text style={styles.portfolioValue}>
+                ₱{formatCurrency(totalPortfolioValue)}
+              </Text>
+            </LinearGradient>
+          </View>
+
+          {/* BUY / SELL Buttons */}
+          <View style={styles.actionButtons}>
+            <TouchableOpacity
+              style={styles.buyButton}
+              onPress={handleBuy}
+              activeOpacity={0.9}
+            >
+              <View style={styles.buyButtonIcon}>
+                <Ionicons name="add" size={20} color="#FFFFFF" />
+              </View>
+              <Text style={styles.buyButtonText}>{t("stock.buy")}</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.sellButton}
+              onPress={handleSell}
+              activeOpacity={0.9}
+            >
+              <View style={styles.sellButtonIcon}>
+                <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
+              </View>
+              <Text style={styles.sellButtonText}>{t("stock.sell")}</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Transaction History Card */}
+          <View style={styles.transactionCard}>
+            <View style={styles.transactionHeader}>
+              <Ionicons name="time-outline" size={22} color={THEME_COLOR} />
+              <Text style={styles.transactionTitle}>{t("stock.transactionHistory")}</Text>
+            </View>
+            <View style={styles.transactionList}>
+              {transactions.map((tx) => (
+                <View key={tx.id} style={styles.transactionItem}>
+                  <View style={styles.transactionIcon}>
+                    <MaterialCommunityIcons
+                      name="swap-horizontal"
+                      size={24}
+                      color={THEME_COLOR}
+                    />
                   </View>
-                ))}
-              </View>
+                  <View style={styles.transactionDetails}>
+                    <Text style={styles.transactionName}>{tx.label}</Text>
+                    <Text style={styles.transactionDate}>{tx.date}</Text>
+                  </View>
+                  <Text style={styles.transactionAmount}>{tx.amount}</Text>
+                </View>
+              ))}
             </View>
+          </View>
 
-            <View style={styles.bottomSpacing} />
-          </ScrollView>
-        )}
+          <View style={styles.bottomSpacing} />
+        </ScrollView>
+      )}
     </SafeAreaView>
   );
 }
