@@ -3,7 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import * as Contacts from "expo-contacts";
 import { LinearGradient } from "expo-linear-gradient";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Dimensions,
@@ -15,15 +15,15 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
+import QRCode from "react-native-qrcode-svg";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import {
-  getOrCreateMainWallet,
-  getRecipientByAccountNumber,
-} from "../../../configs/api";
+import { getOrCreateMainWallet, getRecipientByAccountNumber } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
 import { useResponsive } from "../../../utils/responsive";
+import ContactsModal from "./ContactsModal";
+import QRScanner from "./QRScanner";
 
 const { width } = Dimensions.get("window");
 
@@ -63,10 +63,8 @@ export const loadUserContacts = async (): Promise<Contact[]> => {
       return data.map((contact: any, index: number) => ({
         id: contact.id || `contact-${index}`,
         name: contact.name || "Unknown",
-        phoneNumbers:
-          contact.phoneNumbers?.map((phone: any) => phone.number || "") || [],
-        accountNumber:
-          contact.phoneNumbers?.[0]?.number?.replace(/\D/g, "") || "",
+        phoneNumbers: contact.phoneNumbers?.map((phone: any) => phone.number || "") || [],
+        accountNumber: contact.phoneNumbers?.[0]?.number?.replace(/\D/g, "") || "",
       }));
     }
     return [];
@@ -77,11 +75,7 @@ export const loadUserContacts = async (): Promise<Contact[]> => {
 };
 
 // Reusable function to validate transfer form (returns translation keys for message)
-export const validateTransferForm = (
-  accountNumber: string,
-  amount: string,
-  availableBalance: number,
-) => {
+export const validateTransferForm = (accountNumber: string, amount: string, availableBalance: number) => {
   if (!accountNumber || !amount) {
     return {
       isValid: false,
@@ -116,10 +110,10 @@ export default function TransferRecipient() {
   const route = useRoute();
   const insets = useSafeAreaInsets();
   const { horizontalPadding } = useResponsive();
-  const params = (route.params || {}) as { balanceType?: string };
+  const params = (route.params || {}) as { balanceType?: string; scannedAccount?: string };
   const balanceType = params.balanceType;
 
-  const [accountNumber, setAccountNumber] = useState("");
+  const [accountNumber, setAccountNumber] = useState(params.scannedAccount || "");
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
   const [availableBalance, setAvailableBalance] = useState(0);
@@ -130,17 +124,27 @@ export default function TransferRecipient() {
   const [contactSearchQuery, setContactSearchQuery] = useState("");
   const [showAlertModal, setShowAlertModal] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
+  const [showQRModal, setShowQRModal] = useState(false);
+  const [userAccountNumber, setUserAccountNumber] = useState("");
+  const [userName, setUserName] = useState("");
+  const [showQRScanner, setShowQRScanner] = useState(false);
 
-  const fetchBalance = useCallback(async () => {
+  useEffect(() => {
+    fetchBalance();
+    loadContacts();
+    loadUserAccountNumber();
+  }, []);
+
+  const fetchBalance = async () => {
     try {
-      const balance = await fetchBalanceByType(balanceType ?? "available");
+      const balance = await fetchBalanceByType(balanceType ?? 'available');
       setAvailableBalance(Number(balance) || 0);
     } catch (error) {
       console.error("Error fetching balance:", error);
     }
-  }, [balanceType]);
+  };
 
-  const loadContacts = useCallback(async () => {
+  const loadContacts = async () => {
     try {
       const contactsList = await loadUserContacts();
       setContacts(contactsList as Contact[]);
@@ -148,12 +152,21 @@ export default function TransferRecipient() {
     } catch (error) {
       console.error("Error loading contacts:", error);
     }
-  }, []);
+  };
 
-  useEffect(() => {
-    fetchBalance();
-    loadContacts();
-  }, [fetchBalance, loadContacts]);
+  const loadUserAccountNumber = async () => {
+    try {
+      const userJson = await AsyncStorage.getItem("user");
+      if (userJson) {
+        const user = JSON.parse(userJson) as { accountNumber?: string; firstName?: string; lastName?: string };
+        setUserAccountNumber(user?.accountNumber || "");
+        const fullName = [user?.firstName, user?.lastName].filter(Boolean).join(" ");
+        setUserName(fullName || "User");
+      }
+    } catch (error) {
+      console.error("Error loading user account number:", error);
+    }
+  };
 
   const handleContactSearch = (query: string) => {
     setContactSearchQuery(query);
@@ -171,11 +184,7 @@ export default function TransferRecipient() {
   };
 
   const handleContinue = async () => {
-    const validation = validateTransferForm(
-      accountNumber,
-      amount,
-      Number(availableBalance) || 0,
-    );
+    const validation = validateTransferForm(accountNumber, amount, Number(availableBalance) || 0);
     if (!validation.isValid && validation.messageKey) {
       setAlertMessage(t(validation.messageKey));
       setShowAlertModal(true);
@@ -190,24 +199,15 @@ export default function TransferRecipient() {
         setIsLoading(false);
         return;
       }
-      const recipientResult = await getRecipientByAccountNumber(
-        accessToken,
-        accountNumber,
-      );
+      const recipientResult = await getRecipientByAccountNumber(accessToken, accountNumber);
       if (!recipientResult.success || !recipientResult.data) {
         setAlertMessage(recipientResult.error || "Recipient account not found");
         setShowAlertModal(true);
         setIsLoading(false);
         return;
       }
-      const data = recipientResult.data as {
-        mainWalletId?: string;
-        firstName?: string;
-        lastName?: string;
-        accountNumber?: string;
-      };
-      const recipientName =
-        [data.firstName, data.lastName].filter(Boolean).join(" ") || "Unknown";
+      const data = recipientResult.data as { mainWalletId?: string; firstName?: string; lastName?: string; accountNumber?: string };
+      const recipientName = [data.firstName, data.lastName].filter(Boolean).join(" ") || "Unknown";
       navigation.navigate("TransferConfirm", {
         balanceType: balanceType ?? "available",
         accountNumber,
@@ -227,12 +227,16 @@ export default function TransferRecipient() {
   };
 
   const selectContact = (contact: Contact) => {
-    // Use phone number as account number (remove non-digits)
-    const phoneNumber =
-      contact.phoneNumbers?.[0] || contact.accountNumber || "";
-    setAccountNumber(phoneNumber.replace(/\D/g, ""));
+    // Use account number from contact
+    const accountNum = contact.accountNumber || contact.phoneNumbers?.[0]?.replace(/\D/g, "") || "";
+    setAccountNumber(accountNum);
     setShowContactsModal(false);
     setContactSearchQuery("");
+  };
+
+  const handleQRScan = (scannedData: string) => {
+    setAccountNumber(scannedData);
+    setShowQRScanner(false);
   };
 
   return (
@@ -256,19 +260,16 @@ export default function TransferRecipient() {
         </TouchableOpacity>
       </LinearGradient>
 
-      <KeyboardAvoidingView
-        style={styles.keyboardView}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
-      >
+        <KeyboardAvoidingView
+          style={styles.keyboardView}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+        >
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={[
             styles.scrollContent,
-            {
-              paddingHorizontal: horizontalPadding,
-              paddingBottom: Math.max(insets.bottom, 24),
-            },
+            { paddingHorizontal: horizontalPadding, paddingBottom: Math.max(insets.bottom, 24) }
           ]}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
@@ -276,32 +277,34 @@ export default function TransferRecipient() {
         >
           {/* Quick Actions */}
           <View style={styles.quickActionsContainer}>
-            <TouchableOpacity style={styles.quickActionButton}>
+            <TouchableOpacity 
+              style={styles.quickActionButton}
+              onPress={() => setShowQRModal(true)}
+            >
               <View style={styles.quickActionIcon}>
                 <Ionicons name="qr-code" size={28} color="#E25A17" />
               </View>
               <Text style={styles.quickActionText}>{t("sendMoney.myQr")}</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.quickActionButton}>
+            <TouchableOpacity 
+              style={styles.quickActionButton}
+              onPress={() => setShowQRScanner(true)}
+            >
               <View style={styles.quickActionIcon}>
                 <Ionicons name="scan" size={28} color="#E25A17" />
               </View>
-              <Text style={styles.quickActionText}>
-                {t("sendMoney.scanQr")}
-              </Text>
+              <Text style={styles.quickActionText}>{t("sendMoney.scanQr")}</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity
+            <TouchableOpacity 
               style={styles.quickActionButton}
               onPress={() => setShowContactsModal(true)}
             >
               <View style={styles.quickActionIcon}>
                 <Ionicons name="people" size={28} color="#E25A17" />
               </View>
-              <Text style={styles.quickActionText}>
-                {t("sendMoney.contacts")}
-              </Text>
+              <Text style={styles.quickActionText}>{t("sendMoney.contacts")}</Text>
             </TouchableOpacity>
           </View>
 
@@ -328,9 +331,7 @@ export default function TransferRecipient() {
 
           {/* Step Title */}
           <Text style={styles.stepTitle}>{t("sendMoney.transferDetails")}</Text>
-          <Text style={styles.stepSubtitle}>
-            {t("sendMoney.enterRecipientAndAmount")}
-          </Text>
+          <Text style={styles.stepSubtitle}>{t("sendMoney.enterRecipientAndAmount")}</Text>
 
           {/* Form */}
           <View style={styles.formContainer}>
@@ -338,9 +339,7 @@ export default function TransferRecipient() {
             <View style={styles.inputSection}>
               <View style={styles.labelRow}>
                 <Ionicons name="person-outline" size={20} color="#E25A17" />
-                <Text style={styles.inputLabel}>
-                  {t("sendMoney.recipientAccountNumber")}
-                </Text>
+                <Text style={styles.inputLabel}>{t("sendMoney.recipientAccountNumber")}</Text>
               </View>
               <View style={styles.inputWithButton}>
                 <TextInput
@@ -355,9 +354,7 @@ export default function TransferRecipient() {
                   style={styles.contactsButton}
                   onPress={() => setShowContactsModal(true)}
                 >
-                  <Text style={styles.contactsButtonText}>
-                    {t("sendMoney.showContacts")}
-                  </Text>
+                  <Text style={styles.contactsButtonText}>{t("sendMoney.showContacts")}</Text>
                   <Ionicons name="chevron-down" size={16} color="#E25A17" />
                 </TouchableOpacity>
               </View>
@@ -378,10 +375,9 @@ export default function TransferRecipient() {
                 keyboardType="decimal-pad"
               />
               <Text style={styles.availableText}>
-                {t("sendMoney.availableLabel")}: PHP{" "}
-                {availableBalance.toLocaleString("en-PH", {
+                {t("sendMoney.availableLabel")}: PHP {availableBalance.toLocaleString("en-PH", {
                   minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
+                  maximumFractionDigits: 2
                 })}
               </Text>
             </View>
@@ -389,14 +385,8 @@ export default function TransferRecipient() {
             {/* Description */}
             <View style={styles.inputSection}>
               <View style={styles.labelRow}>
-                <Ionicons
-                  name="document-text-outline"
-                  size={20}
-                  color="#E25A17"
-                />
-                <Text style={styles.inputLabel}>
-                  {t("sendMoney.descriptionOptional")}
-                </Text>
+                <Ionicons name="document-text-outline" size={20} color="#E25A17" />
+                <Text style={styles.inputLabel}>{t("sendMoney.descriptionOptional")}</Text>
               </View>
               <TextInput
                 style={[styles.input, styles.textArea]}
@@ -416,16 +406,14 @@ export default function TransferRecipient() {
           <TouchableOpacity
             style={[
               styles.continueButton,
-              (!accountNumber || !amount) && styles.continueButtonDisabled,
+              (!accountNumber || !amount) && styles.continueButtonDisabled
             ]}
             onPress={handleContinue}
             disabled={!accountNumber || !amount || isLoading}
           >
             <LinearGradient
               colors={
-                !accountNumber || !amount
-                  ? ["#CCC", "#999"]
-                  : ["#E25A17", "#F28934"]
+                (!accountNumber || !amount) ? ["#CCC", "#999"] : ["#E25A17", "#F28934"]
               }
               style={styles.continueGradient}
               start={{ x: 0, y: 0 }}
@@ -435,9 +423,7 @@ export default function TransferRecipient() {
                 <ActivityIndicator size="small" color="#FFFFFF" />
               ) : (
                 <>
-                  <Text style={styles.continueText}>
-                    {t("sendMoney.continue")}
-                  </Text>
+                  <Text style={styles.continueText}>{t("sendMoney.continue")}</Text>
                   <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
                 </>
               )}
@@ -446,125 +432,133 @@ export default function TransferRecipient() {
 
           <View style={styles.bottomPadding} />
         </ScrollView>
-      </KeyboardAvoidingView>
+        </KeyboardAvoidingView>
 
-      {/* Alert Modal */}
-      <Modal
-        visible={showAlertModal}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setShowAlertModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <LinearGradient
-              colors={["#E25A17", "#F28934"]}
-              style={styles.modalGradient}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-            >
-              <View style={styles.iconContainer}>
-                <Ionicons name="alert-circle" size={80} color="#FFFFFF" />
-              </View>
-              <Text style={styles.modalTitle}>{t("sendMoney.alert")}</Text>
-              <Text style={styles.modalMessage}>{t(alertMessage)}</Text>
-              <TouchableOpacity
-                style={styles.modalButton}
-                onPress={() => setShowAlertModal(false)}
+        {/* Alert Modal */}
+        <Modal
+          visible={showAlertModal}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setShowAlertModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <LinearGradient
+                colors={["#E25A17", "#F28934"]}
+                style={styles.modalGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
               >
-                <Text style={styles.modalButtonText}>{t("common.ok")}</Text>
-              </TouchableOpacity>
-            </LinearGradient>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Contacts Modal */}
-      <Modal
-        visible={showContactsModal}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => {
-          setShowContactsModal(false);
-          setContactSearchQuery("");
-        }}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.contactsModalContainer}>
-            <View style={styles.contactsModalHeader}>
-              <Text style={styles.contactsModalTitle}>
-                {t("sendMoney.selectContact")}
-              </Text>
-              <TouchableOpacity
-                onPress={() => {
-                  setShowContactsModal(false);
-                  setContactSearchQuery("");
-                }}
-              >
-                <Ionicons name="close" size={24} color="#333" />
-              </TouchableOpacity>
-            </View>
-
-            {/* Search Bar */}
-            <View style={styles.searchContainer}>
-              <Ionicons
-                name="search"
-                size={20}
-                color="#999"
-                style={styles.searchIcon}
-              />
-              <TextInput
-                style={styles.searchInput}
-                placeholder="Search contacts..."
-                placeholderTextColor="#999"
-                value={contactSearchQuery}
-                onChangeText={handleContactSearch}
-              />
-              {contactSearchQuery.length > 0 && (
-                <TouchableOpacity onPress={() => handleContactSearch("")}>
-                  <Ionicons name="close-circle" size={20} color="#999" />
+                <View style={styles.iconContainer}>
+                  <Ionicons name="alert-circle" size={80} color="#FFFFFF" />
+                </View>
+                <Text style={styles.modalTitle}>{t("sendMoney.alert")}</Text>
+                <Text style={styles.modalMessage}>{t(alertMessage)}</Text>
+                <TouchableOpacity
+                  style={styles.modalButton}
+                  onPress={() => setShowAlertModal(false)}
+                >
+                  <Text style={styles.modalButtonText}>{t("common.ok")}</Text>
                 </TouchableOpacity>
-              )}
+              </LinearGradient>
             </View>
+          </View>
+        </Modal>
 
-            <ScrollView style={styles.contactsModalContent}>
-              {filteredContacts.length === 0 ? (
-                <View style={styles.emptyState}>
-                  <Ionicons name="people-outline" size={48} color="#CCC" />
-                  <Text style={styles.emptyStateText}>
-                    {contactSearchQuery
-                      ? "No contacts found"
-                      : t("sendMoney.noContactsFound")}
+        {/* Contacts Modal */}
+        <ContactsModal
+          visible={showContactsModal}
+          onClose={() => {
+            setShowContactsModal(false);
+            setContactSearchQuery("");
+          }}
+          onSelectContact={(contact) => {
+            const accountNum = contact.accountNumber || contact.phoneNumbers?.[0]?.replace(/\D/g, "") || "";
+            setAccountNumber(accountNum);
+            setShowContactsModal(false);
+            setContactSearchQuery("");
+          }}
+        />
+
+        {/* QR Code Modal */}
+        <Modal
+          visible={showQRModal}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={() => setShowQRModal(false)}
+        >
+          <View style={styles.qrModalOverlay}>
+            <View style={styles.qrModalContent}>
+              <View style={styles.qrModalHeader}>
+                <Text style={styles.qrModalTitle}>{t("sendMoney.myQr")}</Text>
+                <TouchableOpacity onPress={() => setShowQRModal(false)}>
+                  <Ionicons name="close" size={28} color="#3d3737ff" />
+                </TouchableOpacity>
+              </View>
+              
+              <View style={styles.qrModalBody}>
+                <Text style={styles.qrShareText}>Share this QR code for others to transfer money to you</Text>
+                
+                <View style={styles.qrUserInfoCard}>
+                  <Text style={styles.qrUserName}>{userName}</Text>
+                  <Text style={styles.qrUserAccount}>{userAccountNumber || "N/A"}</Text>
+                  
+                  <View style={styles.qrCodeWrapper}>
+                    {userAccountNumber ? (
+                      <QRCode
+                        value={userAccountNumber}
+                        size={200}
+                        color="#E25A17"
+                        backgroundColor="#FFFFFF"
+                        logo={require("../../../assets/images/TranferLogo.png")}
+                        logoSize={40}
+                        logoBackgroundColor="transparent"
+                        logoMargin={2}
+                        logoBorderRadius={8}
+                      />
+                    ) : (
+                      <View style={styles.qrPlaceholder}>
+                        <Ionicons name="qr-code-outline" size={80} color="#CCC" />
+                        <Text style={styles.qrPlaceholderText}>No account number available</Text>
+                      </View>
+                    )}
+                  </View>
+                  
+                  <View style={styles.secureCodeBadge}>
+                    <Ionicons name="shield-checkmark" size={16} color="#4CAF50" />
+                    <Text style={styles.secureCodeText}>Secure Transfer Code</Text>
+                  </View>
+                </View>
+                
+                <TouchableOpacity style={styles.shareQRButton}>
+                  <LinearGradient
+                    colors={["#E25A17", "#F28934"]}
+                    style={styles.shareQRGradient}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                  >
+                    <Ionicons name="share-social" size={20} color="#FFFFFF" />
+                    <Text style={styles.shareQRButtonText}>Share QR Code</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+                
+                <View style={styles.qrInfoFooter}>
+                  <Ionicons name="information-circle-outline" size={16} color="#8B4A4A" />
+                  <Text style={styles.qrInfoFooterText}>
+                    This QR code contains your account information for receiving transfers
                   </Text>
                 </View>
-              ) : (
-                filteredContacts.map((contact) => (
-                  <TouchableOpacity
-                    key={contact.id}
-                    style={styles.contactItem}
-                    onPress={() => selectContact(contact)}
-                  >
-                    <View style={styles.contactAvatar}>
-                      <Ionicons name="person" size={24} color="#E25A17" />
-                    </View>
-                    <View style={styles.contactInfo}>
-                      <Text style={styles.contactName}>
-                        {contact.name ?? ""}
-                      </Text>
-                      <Text style={styles.contactAccount}>
-                        {contact.phoneNumbers?.[0] ||
-                          contact.accountNumber ||
-                          "No phone"}
-                      </Text>
-                    </View>
-                    <Ionicons name="chevron-forward" size={20} color="#999" />
-                  </TouchableOpacity>
-                ))
-              )}
-            </ScrollView>
+              </View>
+            </View>
           </View>
-        </View>
-      </Modal>
+        </Modal>
+
+        {/* QR Scanner */}
+        <QRScanner
+          visible={showQRScanner}
+          onClose={() => setShowQRScanner(false)}
+          onScan={handleQRScan}
+        />
     </View>
   );
 }
@@ -951,5 +945,127 @@ const styles = StyleSheet.create({
   contactAccount: {
     fontSize: 14,
     color: "#666",
+  },
+  qrModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  qrModalContent: {
+    backgroundColor: "#fbeaeaff",
+    borderRadius: 24,
+    paddingTop: 20,
+    paddingBottom: 40,
+    maxHeight: "90%",
+    width: "100%",
+    maxWidth: 500,
+  },
+  qrModalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 24,
+    marginBottom: 16,
+  },
+  qrModalTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#8B4A4A",
+  },
+  qrModalBody: {
+    paddingHorizontal: 24,
+  },
+  qrShareText: {
+    fontSize: 14,
+    color: "#8B4A4A",
+    textAlign: "center",
+    marginBottom: 20,
+    lineHeight: 20,
+  },
+  qrUserInfoCard: {
+    backgroundColor: "#e3d7d2ff",
+    borderRadius: 20,
+    padding: 24,
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  qrUserName: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#333",
+    marginBottom: 4,
+  },
+  qrUserAccount: {
+    fontSize: 16,
+    color: "#666",
+    marginBottom: 24,
+  },
+  qrCodeWrapper: {
+    backgroundColor: "#FFFFFF",
+    padding: 20,
+    borderRadius: 16,
+    marginBottom: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  qrPlaceholder: {
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 40,
+  },
+  qrPlaceholderText: {
+    fontSize: 14,
+    color: "#999",
+    marginTop: 12,
+    textAlign: "center",
+  },
+  secureCodeBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  secureCodeText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#4CAF50",
+  },
+  shareQRButton: {
+    borderRadius: 28,
+    overflow: "hidden",
+    marginBottom: 16,
+    shadowColor: "#E25A17",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  shareQRGradient: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 16,
+    gap: 8,
+  },
+  shareQRButtonText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#FFFFFF",
+  },
+  qrInfoFooter: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 8,
+    paddingHorizontal: 8,
+  },
+  qrInfoFooterText: {
+    flex: 1,
+    fontSize: 12,
+    color: "#8B4A4A",
+    lineHeight: 18,
   },
 });
