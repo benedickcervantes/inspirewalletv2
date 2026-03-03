@@ -314,11 +314,11 @@ export default function Dashboard() {
       const treeRes = await getReferralTree(accessToken);
       if (treeRes.success && treeRes.tree) {
         const tree = treeRes.tree as {
-          ancestors?: Array<{
+          ancestors?: {
             referralCode?: string;
             firstName?: string;
             lastName?: string;
-          }>;
+          }[];
         };
         const first = tree.ancestors?.[0];
         if (
@@ -400,11 +400,11 @@ export default function Dashboard() {
     const treeRes = await getReferralTree(accessToken);
     if (treeRes.success && treeRes.tree) {
       const tree = treeRes.tree as {
-        ancestors?: Array<{
+        ancestors?: {
           referralCode?: string;
           firstName?: string;
           lastName?: string;
-        }>;
+        }[];
       };
       const first = tree.ancestors?.[0];
       if (

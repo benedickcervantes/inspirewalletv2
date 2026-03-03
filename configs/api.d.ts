@@ -71,7 +71,7 @@ export function getTimeDepositInterestRates(
   contractType?: string,
 ): Promise<{
   success: boolean;
-  tiers?: Array<{ contractType: string; amount: string; interestRate: string }>;
+  tiers?: { contractType: string; amount: string; interestRate: string }[];
   error?: string;
 }>;
 export function getTransactions(
@@ -144,14 +144,14 @@ export function getMessages(
   opts?: { page?: number; limit?: number },
 ): Promise<{
   success: boolean;
-  messages?: Array<{
+  messages?: {
     id: string;
     content: string;
     createdAt: string;
     status: string;
     senderName?: string;
     direction?: "ADMIN_TO_USER" | "USER_TO_ADMIN";
-  }>;
+  }[];
   pagination?: {
     total?: number;
     page?: number;
@@ -228,12 +228,12 @@ export function getReferralTree(accessToken: string): Promise<{
     referralCode?: string;
     directReferralCount?: number;
     totalDescendantCount?: number;
-    directReferrals?: Array<{
+    directReferrals?: {
       userId: string;
       referralCode?: string;
       firstName?: string;
       lastName?: string;
-    }>;
+    }[];
   };
   error?: string;
 }>;
@@ -241,4 +241,54 @@ export function getReferralTree(accessToken: string): Promise<{
 export function submitTravelProtection(
   accessToken: string,
   body: Record<string, unknown>,
+): Promise<{ success: boolean; data?: unknown; error?: string }>;
+
+// Card Collection API
+export function getCardCatalog(
+  accessToken: string,
+): Promise<{
+  success: boolean;
+  catalog?: {
+    design: string;
+    category: string;
+    price: number | null;
+    isOwned: boolean;
+    isActive: boolean;
+    isEligible: boolean;
+    collectionItem: unknown | null;
+  }[];
+  error?: string;
+}>;
+
+export function getMyCardCollection(
+  accessToken: string,
+): Promise<{
+  success: boolean;
+  data?: {
+    cardDisplayData?: {
+      accountNumber?: string;
+      firstName?: string;
+      lastName?: string;
+      middleName?: string;
+      companyName?: string | null;
+      availableBalance?: string;
+    };
+    collection?: {
+      id: string;
+      userId: string;
+      design: string;
+      category: string;
+      status: string;
+      unlockedAt: string;
+      updatedAt: string;
+      subscription: unknown | null;
+    }[];
+    activeCard?: unknown | null;
+  };
+  error?: string;
+}>;
+
+export function buyCard(
+  accessToken: string,
+  design: string,
 ): Promise<{ success: boolean; data?: unknown; error?: string }>;

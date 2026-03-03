@@ -1472,3 +1472,99 @@ export async function getBulkUserActivity(adminToken, userIds) {
     return { success: false, error: e.message || "Network error" };
   }
 }
+
+// --- Card Collection API ---
+
+/**
+ * GET /card-collection/catalog — requires JWT
+ * @param {string} accessToken
+ * @returns {Promise<{ success: boolean, catalog?: Array, error?: string }>}
+ */
+export async function getCardCatalog(accessToken) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
+  try {
+    const url = `${base}/card-collection/catalog`;
+    const res = await fetch(url, {
+      method: "GET",
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    return { success: true, catalog: data.catalog ?? data };
+  } catch (e) {
+    if (__DEV__) console.error("[CardCollection API] Error", e);
+    return { success: false, error: e.message || "Network error" };
+  }
+}
+
+/**
+ * GET /card-collection/my-collection — requires JWT
+ * @param {string} accessToken
+ * @returns {Promise<{ success: boolean, data?: object, error?: string }>}
+ */
+export async function getMyCardCollection(accessToken) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
+  try {
+    const url = `${base}/card-collection/my-collection`;
+    const res = await fetch(url, {
+      method: "GET",
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    return { success: true, data };
+  } catch (e) {
+    if (__DEV__) console.error("[CardCollection API] Error", e);
+    return { success: false, error: e.message || "Network error" };
+  }
+}
+
+/**
+ * POST /card-collection/buy — requires JWT
+ * @param {string} accessToken
+ * @param {string} design
+ * @returns {Promise<{ success: boolean, data?: object, error?: string }>}
+ */
+export async function buyCard(accessToken, design) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
+  if (!design) return { success: false, error: "Design identifier required" };
+  try {
+    const url = `${base}/card-collection/buy`;
+    if (__DEV__) console.log("[CardCollection API] POST", url, { design });
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ design }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    return { success: true, data };
+  } catch (e) {
+    if (__DEV__) console.error("[CardCollection API] Error", e);
+    return { success: false, error: e.message || "Network error" };
+  }
+}

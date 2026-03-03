@@ -96,14 +96,14 @@ function getReferrer(dep: TimeDeposit): ReferrerInfo | null {
     };
   }
   const comm = dep.commission as {
-    distribution?: Array<{
+    distribution?: {
       referralCode?: string;
       referral_code?: string;
       firstName?: string;
       first_name?: string;
       lastName?: string;
       last_name?: string;
-    }>;
+    }[];
   } | undefined;
   const dist = comm?.distribution;
   if (Array.isArray(dist) && dist.length > 0) {
