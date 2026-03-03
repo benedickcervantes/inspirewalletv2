@@ -3,20 +3,22 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-    ActivityIndicator,
-    Keyboard,
-    KeyboardAvoidingView,
-    Platform,
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  Keyboard,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { getMessages, markAllMessagesAsRead, sendMessage } from "../../configs/api";
+import { deleteMessage, editMessage, getMessages, markAllMessagesAsRead, sendMessage } from "../../configs/api";
 import { subscribeToConnectionStatus } from "../../lib/connectionStatus";
 import { isServiceUnderMaintenance } from "../../lib/maintenance";
 import { subscribeToNewSupportMessage } from "../../lib/messagingEvents";
@@ -84,6 +86,10 @@ export default function Message() {
   const [showTicketCreation, setShowTicketCreation] = useState(false);
   const [viewMode, setViewMode] = useState<"messages" | "tickets">("messages");
   const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [selectedMessage, setSelectedMessage] = useState<DisplayMessage | null>(null);
+  const [showMessageActions, setShowMessageActions] = useState(false);
+  const [editingMessage, setEditingMessage] = useState<DisplayMessage | null>(null);
+  const [editText, setEditText] = useState("");
 
   // Check maintenance status on focus
   useFocusEffect(
@@ -163,6 +169,84 @@ export default function Message() {
     }
   }, [message, sending, fetchMessages]);
 
+  const handleLongPress = useCallback((msg: DisplayMessage) => {
+    if (!msg.isSent) return; // Only allow actions on sent messages
+    setSelectedMessage(msg);
+    setShowMessageActions(true);
+  }, []);
+
+  const handleEdit = useCallback(() => {
+    if (!selectedMessage) return;
+    setEditingMessage(selectedMessage);
+    setEditText(selectedMessage.text);
+    setShowMessageActions(false);
+  }, [selectedMessage]);
+
+  const handleDelete = useCallback(() => {
+    if (!selectedMessage) return;
+    setShowMessageActions(false);
+    
+    Alert.alert(
+      "Delete Message",
+      "Choose delete option:",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Delete for Me",
+          onPress: async () => {
+            const token = await AsyncStorage.getItem("access_token");
+            if (!token) return;
+            const result = await deleteMessage(token, selectedMessage.id, false);
+            if (result.success) {
+              await fetchMessages();
+            } else {
+              Alert.alert("Error", result.error || "Failed to delete message");
+            }
+          },
+        },
+        {
+          text: "Delete for Everyone",
+          style: "destructive",
+          onPress: async () => {
+            const token = await AsyncStorage.getItem("access_token");
+            if (!token) return;
+            const result = await deleteMessage(token, selectedMessage.id, true);
+            if (result.success) {
+              await fetchMessages();
+            } else {
+              Alert.alert("Error", result.error || "Failed to delete message");
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+  }, [selectedMessage, fetchMessages]);
+
+  const handleSaveEdit = useCallback(async () => {
+    if (!editingMessage || !editText.trim()) return;
+    
+    const token = await AsyncStorage.getItem("access_token");
+    if (!token) return;
+
+    const result = await editMessage(token, editingMessage.id, editText.trim());
+    if (result.success) {
+      setEditingMessage(null);
+      setEditText("");
+      await fetchMessages();
+    } else {
+      Alert.alert("Error", result.error || "Failed to edit message");
+    }
+  }, [editingMessage, editText, fetchMessages]);
+
+  const handleCancelEdit = useCallback(() => {
+    setEditingMessage(null);
+    setEditText("");
+  }, []);
+
   useFocusEffect(
     useCallback(() => {
       setLoading(true);
@@ -210,7 +294,7 @@ export default function Message() {
   if (isUnderMaintenance) {
     return (
       <View style={styles.container}>
-        <View style={styles.loadingContainer}>
+        <View style={styles.centerContent}>
           <ActivityIndicator size="large" color="#E15816" />
           <Text style={styles.loadingText}>Service under maintenance</Text>
         </View>
@@ -324,8 +408,10 @@ export default function Message() {
             </View>
           ) : (
             messages.map((msg) => (
-              <View
+              <TouchableOpacity
                 key={msg.id}
+                onLongPress={() => handleLongPress(msg)}
+                activeOpacity={0.9}
                 style={[
                   styles.bubbleRow,
                   msg.isSent ? styles.bubbleRowSent : styles.bubbleRowReceived,
@@ -375,7 +461,7 @@ export default function Message() {
                     ) : null}
                   </View>
                 </View>
-              </View>
+              </TouchableOpacity>
             ))
           )}
           </ScrollView>
@@ -433,6 +519,103 @@ export default function Message() {
           accessToken={accessToken}
         />
       )}
+
+      {/* Message Actions Modal */}
+      <Modal
+        visible={showMessageActions}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowMessageActions(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowMessageActions(false)}
+        >
+          <View style={styles.actionSheet}>
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={handleEdit}
+            >
+              <MaterialCommunityIcons name="pencil" size={22} color="#333" />
+              <Text style={styles.actionButtonText}>Edit Message</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={handleDelete}
+            >
+              <MaterialCommunityIcons name="delete" size={22} color="#E15816" />
+              <Text style={[styles.actionButtonText, styles.actionButtonTextDanger]}>Delete Message</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.actionButton, styles.actionButtonCancel]}
+              onPress={() => setShowMessageActions(false)}
+            >
+              <Text style={styles.actionButtonCancelText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* Edit Message Modal */}
+      <Modal
+        visible={!!editingMessage}
+        transparent
+        animationType="slide"
+        onRequestClose={handleCancelEdit}
+      >
+        <KeyboardAvoidingView
+          style={styles.modalOverlay}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+        >
+          <TouchableOpacity
+            style={styles.modalOverlay}
+            activeOpacity={1}
+            onPress={handleCancelEdit}
+          >
+            <TouchableOpacity
+              activeOpacity={1}
+              style={styles.editModal}
+              onPress={(e) => e.stopPropagation()}
+            >
+              <View style={styles.editModalHeader}>
+                <Text style={styles.editModalTitle}>Edit Message</Text>
+                <TouchableOpacity onPress={handleCancelEdit}>
+                  <Ionicons name="close" size={24} color="#333" />
+                </TouchableOpacity>
+              </View>
+              <TextInput
+                style={styles.editInput}
+                value={editText}
+                onChangeText={setEditText}
+                multiline
+                maxLength={10000}
+                autoFocus
+                placeholder="Edit your message..."
+                placeholderTextColor="#999"
+              />
+              <View style={styles.editModalActions}>
+                <TouchableOpacity
+                  style={styles.editCancelButton}
+                  onPress={handleCancelEdit}
+                >
+                  <Text style={styles.editCancelButtonText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.editSaveButton,
+                    !editText.trim() && styles.editSaveButtonDisabled,
+                  ]}
+                  onPress={handleSaveEdit}
+                  disabled={!editText.trim()}
+                >
+                  <Text style={styles.editSaveButtonText}>Save</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </KeyboardAvoidingView>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -683,5 +866,107 @@ const styles = StyleSheet.create({
   },
   sendButtonDisabled: {
     backgroundColor: "#E8E8E8",
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
+  },
+  actionSheet: {
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingTop: 12,
+    paddingBottom: 24,
+    paddingHorizontal: 16,
+  },
+  actionButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    marginBottom: 8,
+    backgroundColor: "#F8F8F8",
+  },
+  actionButtonCancel: {
+    backgroundColor: "#E8E8E8",
+    marginTop: 8,
+  },
+  actionButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
+  },
+  actionButtonTextDanger: {
+    color: "#E15816",
+  },
+  actionButtonCancelText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#666",
+    textAlign: "center",
+    flex: 1,
+  },
+  editModal: {
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    maxHeight: "80%",
+  },
+  editModalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  editModalTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#333",
+  },
+  editInput: {
+    backgroundColor: "#F0F0F0",
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 16,
+    color: "#333",
+    minHeight: 120,
+    maxHeight: 300,
+    textAlignVertical: "top",
+  },
+  editModalActions: {
+    flexDirection: "row",
+    gap: 12,
+    marginTop: 16,
+  },
+  editCancelButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    backgroundColor: "#E8E8E8",
+    alignItems: "center",
+  },
+  editCancelButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#666",
+  },
+  editSaveButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    backgroundColor: "#E15816",
+    alignItems: "center",
+  },
+  editSaveButtonDisabled: {
+    backgroundColor: "#E8E8E8",
+  },
+  editSaveButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#FFFFFF",
   },
 });

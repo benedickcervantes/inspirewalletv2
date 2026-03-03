@@ -1,42 +1,227 @@
-import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useNavigation, useRoute } from '@react-navigation/native';
-import { Image } from 'expo-image';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useEffect, useRef, useState } from 'react';
+import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useNavigation, useRoute } from "@react-navigation/native";
+import { Image } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
+import { useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
-  Animated,
-  BackHandler,
-  Keyboard,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import CustomLoader from '../Loader/CustomLoader';
-import { login } from '../../configs/api';
-import type { NavProp } from '../../types/navigation';
-import { useResponsive } from '../../utils/responsive';
+    ActivityIndicator,
+    Animated,
+    BackHandler,
+    Keyboard,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { forgotPassword, login } from "../../configs/api";
+import type { NavProp } from "../../types/navigation";
+import { useResponsive } from "../../utils/responsive";
+import CustomLoader from "../Loader/CustomLoader";
 
+const GRADIENT_START = "#E15816";
+const GRADIENT_END = "#F48F38";
+const WHITE = "#FFFFFF";
 
-const GRADIENT_START = '#E15816';
-const GRADIENT_END = '#F48F38';
-const WHITE = '#FFFFFF';
+// ---------------------------------------------------------------------------
+// PasswordResetRequiredModal
+// Shown when the backend signals requiresPasswordReset = true after login.
+// ---------------------------------------------------------------------------
+interface PasswordResetRequiredModalProps {
+  visible: boolean;
+  onClose: () => void;
+  onNavigateAfterClose: () => void;
+  email: string;
+}
+
+function PasswordResetRequiredModal({
+  visible,
+  onClose,
+  onNavigateAfterClose,
+  email,
+}: PasswordResetRequiredModalProps) {
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0.9)).current;
+  const [phase, setPhase] = useState<"prompt" | "sending" | "sent" | "error">(
+    "prompt",
+  );
+  const [errorMsg, setErrorMsg] = useState("");
+
+  useEffect(() => {
+    if (visible) {
+      setPhase("prompt");
+      setErrorMsg("");
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          tension: 100,
+          friction: 8,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 0.9,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [visible]);
+
+  if (!visible) return null;
+
+  const handleSend = async () => {
+    setPhase("sending");
+    try {
+      const result = await forgotPassword(email);
+      if (result.success) {
+        setPhase("sent");
+      } else {
+        setErrorMsg(
+          result.error || "Failed to send reset email. Please try again.",
+        );
+        setPhase("error");
+      }
+    } catch {
+      setErrorMsg("Network error. Please try again.");
+      setPhase("error");
+    }
+  };
+
+  const content = {
+    prompt: {
+      icon: "!",
+      title: "Password Update Required",
+      message: `Your account (${email}) requires a password update for security purposes.\n\nTap "Send Reset Email" to receive a secure link in your inbox to set a new password.`,
+      primaryText: "Send Reset Email",
+      primaryAction: handleSend,
+      secondaryText: "Skip for Now",
+      secondaryAction: () => {
+        onClose();
+        onNavigateAfterClose();
+      },
+    },
+    sending: {
+      icon: "…",
+      title: "Sending Email",
+      message: `Sending password reset link to ${email}…`,
+      primaryText: null,
+      primaryAction: null,
+      secondaryText: null,
+      secondaryAction: null,
+    },
+    sent: {
+      icon: "✓",
+      title: "Email Sent!",
+      message: `A password reset link has been sent to ${email}.\n\nCheck your inbox (and spam folder) and follow the link to set your new password.`,
+      primaryText: "OK",
+      primaryAction: () => {
+        onClose();
+        onNavigateAfterClose();
+      },
+      secondaryText: null,
+      secondaryAction: null,
+    },
+    error: {
+      icon: "!",
+      title: "Could Not Send Email",
+      message: errorMsg,
+      primaryText: "Try Again",
+      primaryAction: () => setPhase("prompt"),
+      secondaryText: "Skip for Now",
+      secondaryAction: () => {
+        onClose();
+        onNavigateAfterClose();
+      },
+    },
+  }[phase];
+
+  return (
+    <Modal transparent animationType="none" visible={visible}>
+      <Animated.View style={[modalStyles.overlay, { opacity: fadeAnim }]}>
+        <Animated.View
+          style={[modalStyles.box, { transform: [{ scale: scaleAnim }] }]}
+        >
+          <View
+            style={[
+              modalStyles.iconWrap,
+              phase === "sent" && { backgroundColor: "rgba(34,197,94,0.18)" },
+            ]}
+          >
+            <Text
+              style={[
+                modalStyles.iconText,
+                phase === "sent" && { color: "#22c55e" },
+              ]}
+            >
+              {content.icon}
+            </Text>
+          </View>
+          <Text style={modalStyles.title}>{content.title}</Text>
+          <Text style={modalStyles.message}>{content.message}</Text>
+          {phase === "sending" ? (
+            <ActivityIndicator
+              color={GRADIENT_START}
+              size="large"
+              style={{ marginTop: 4 }}
+            />
+          ) : (
+            <View style={modalStyles.buttonsRow}>
+              {content.secondaryText && content.secondaryAction ? (
+                <TouchableOpacity
+                  style={[modalStyles.button, modalStyles.buttonSecondary]}
+                  onPress={content.secondaryAction}
+                  activeOpacity={0.8}
+                >
+                  <Text style={modalStyles.buttonSecondaryText}>
+                    {content.secondaryText}
+                  </Text>
+                </TouchableOpacity>
+              ) : null}
+              {content.primaryText && content.primaryAction ? (
+                <TouchableOpacity
+                  style={modalStyles.button}
+                  onPress={content.primaryAction}
+                  activeOpacity={0.8}
+                >
+                  <Text style={modalStyles.buttonText}>
+                    {content.primaryText}
+                  </Text>
+                </TouchableOpacity>
+              ) : null}
+            </View>
+          )}
+        </Animated.View>
+      </Animated.View>
+    </Modal>
+  );
+}
 
 interface MessageModalProps {
   visible: boolean;
   onClose: () => void;
   title: string;
   message: string;
-  type?: 'info' | 'success' | 'error' | 'warning';
+  type?: "info" | "success" | "error" | "warning";
   confirmText?: string;
   onConfirm?: (() => void) | null;
   secondaryText?: string;
@@ -48,8 +233,8 @@ function MessageModal({
   onClose,
   title,
   message,
-  type = 'info',
-  confirmText = 'OK',
+  type = "info",
+  confirmText = "OK",
   onConfirm,
   secondaryText,
   onSecondary,
@@ -74,21 +259,31 @@ function MessageModal({
       ]).start();
     } else {
       Animated.parallel([
-        Animated.timing(fadeAnim, { toValue: 0, duration: 150, useNativeDriver: true }),
-        Animated.timing(scaleAnim, { toValue: 0.9, duration: 150, useNativeDriver: true }),
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 0.9,
+          duration: 150,
+          useNativeDriver: true,
+        }),
       ]).start();
     }
   }, [visible]);
 
   if (!visible) return null;
 
-  const icon = type === 'success' ? '✓' : type === 'error' ? '!' : 'i';
+  const icon = type === "success" ? "✓" : type === "error" ? "!" : "i";
 
   return (
     <Modal transparent animationType="none" visible={visible}>
       <Animated.View style={[modalStyles.overlay, { opacity: fadeAnim }]}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-        <Animated.View style={[modalStyles.box, { transform: [{ scale: scaleAnim }] }]}>
+        <Animated.View
+          style={[modalStyles.box, { transform: [{ scale: scaleAnim }] }]}
+        >
           <View style={modalStyles.iconWrap}>
             <Text style={modalStyles.iconText}>{icon}</Text>
           </View>
@@ -104,7 +299,9 @@ function MessageModal({
                 }}
                 activeOpacity={0.8}
               >
-                <Text style={modalStyles.buttonSecondaryText}>{secondaryText}</Text>
+                <Text style={modalStyles.buttonSecondaryText}>
+                  {secondaryText}
+                </Text>
               </TouchableOpacity>
             ) : null}
             <TouchableOpacity
@@ -127,9 +324,9 @@ function MessageModal({
 const modalStyles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0,0,0,0.6)",
+    justifyContent: "center",
+    alignItems: "center",
     padding: 24,
   },
   box: {
@@ -137,43 +334,43 @@ const modalStyles = StyleSheet.create({
     borderRadius: 20,
     paddingVertical: 28,
     paddingHorizontal: 28,
-    width: '100%',
+    width: "100%",
     maxWidth: 340,
-    alignItems: 'center',
+    alignItems: "center",
   },
   iconWrap: {
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: 'rgba(225,88,22,0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(225,88,22,0.2)",
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 16,
   },
   iconText: {
     fontSize: 28,
-    fontWeight: '800',
+    fontWeight: "800",
     color: GRADIENT_START,
   },
   title: {
     fontSize: 20,
-    fontWeight: '700',
-    color: '#333',
+    fontWeight: "700",
+    color: "#333",
     marginBottom: 10,
-    textAlign: 'center',
+    textAlign: "center",
   },
   message: {
     fontSize: 15,
-    color: '#666',
-    textAlign: 'center',
+    color: "#666",
+    textAlign: "center",
     marginBottom: 24,
     lineHeight: 22,
   },
   buttonsRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 12,
-    flexWrap: 'wrap',
-    justifyContent: 'center',
+    flexWrap: "wrap",
+    justifyContent: "center",
   },
   button: {
     backgroundColor: GRADIENT_START,
@@ -181,29 +378,29 @@ const modalStyles = StyleSheet.create({
     paddingHorizontal: 32,
     borderRadius: 999,
     minWidth: 120,
-    alignItems: 'center',
+    alignItems: "center",
   },
   buttonSecondary: {
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
     borderWidth: 2,
     borderColor: GRADIENT_START,
   },
   buttonText: {
     color: WHITE,
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   buttonSecondaryText: {
     color: GRADIENT_START,
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 });
 
 interface ModalConfig {
   title: string;
   message: string;
-  type: 'info' | 'success' | 'error' | 'warning';
+  type: "info" | "success" | "error" | "warning";
   confirmText: string;
   onConfirm: (() => void) | null;
   secondaryText?: string;
@@ -214,36 +411,40 @@ export default function Login() {
   const navigation = useNavigation();
   const route = useRoute();
   const insets = useSafeAreaInsets();
-  const { scale, verticalScale, moderateScale, horizontalPadding } = useResponsive();
-  const fromSignOut = (route.params as { fromSignOut?: boolean } | undefined)?.fromSignOut;
+  const { scale, verticalScale, moderateScale, horizontalPadding } =
+    useResponsive();
+  const fromSignOut = (route.params as { fromSignOut?: boolean } | undefined)
+    ?.fromSignOut;
 
   useEffect(() => {
     if (!fromSignOut) return;
-    const sub = BackHandler.addEventListener('hardwareBackPress', () => true);
+    const sub = BackHandler.addEventListener("hardwareBackPress", () => true);
     return () => sub.remove();
   }, [fromSignOut]);
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [modalConfig, setModalConfig] = useState<ModalConfig>({
-    title: '',
-    message: '',
-    type: 'info',
-    confirmText: 'OK',
+    title: "",
+    message: "",
+    type: "info",
+    confirmText: "OK",
     onConfirm: null,
     secondaryText: undefined,
     onSecondary: undefined,
   });
+  const [resetModalVisible, setResetModalVisible] = useState(false);
+  const [resetModalEmail, setResetModalEmail] = useState("");
 
   const showModal = (config: Partial<ModalConfig>) => {
     setModalConfig({
-      title: '',
-      message: '',
-      type: 'info',
-      confirmText: 'OK',
+      title: "",
+      message: "",
+      type: "info",
+      confirmText: "OK",
       onConfirm: null,
       secondaryText: undefined,
       onSecondary: undefined,
@@ -254,23 +455,36 @@ export default function Login() {
 
   const hideModal = () => setModalVisible(false);
 
+  // Stores user/nav info to execute after the reset modal closes
+  const pendingNavRef = useRef<{ hasPasscode: boolean } | null>(null);
+
+  const doNavigate = (hasPasscode: boolean) => {
+    if (hasPasscode) {
+      (navigation as unknown as NavProp).replace("Passcode");
+    } else {
+      AsyncStorage.setItem("registrationPasscodePending", "true").then(() => {
+        (navigation as unknown as NavProp).replace("CreatePasscode");
+      });
+    }
+  };
+
   const SignIn = async () => {
     Keyboard.dismiss();
 
     const trimmedEmail = email.trim();
     if (!trimmedEmail) {
       showModal({
-        title: 'Missing Information',
-        message: 'Please enter your email address.',
-        type: 'warning',
+        title: "Missing Information",
+        message: "Please enter your email address.",
+        type: "warning",
       });
       return;
     }
     if (!password) {
       showModal({
-        title: 'Missing Information',
-        message: 'Please enter your password.',
-        type: 'warning',
+        title: "Missing Information",
+        message: "Please enter your password.",
+        type: "warning",
       });
       return;
     }
@@ -285,39 +499,47 @@ export default function Login() {
       if (!result.success) {
         setLoading(false);
         showModal({
-          title: 'Login Failed',
-          message: result.error || 'Invalid email or password. Please try again.',
-          type: 'error',
+          title: "Login Failed",
+          message:
+            result.error || "Invalid email or password. Please try again.",
+          type: "error",
         });
         return;
       }
 
-      await AsyncStorage.setItem('access_token', result.access_token || '');
-      await AsyncStorage.setItem('user', JSON.stringify(result.user || {}));
-      await AsyncStorage.removeItem('passcodeLoginComplete');
+      await AsyncStorage.setItem("access_token", result.access_token || "");
+      await AsyncStorage.setItem("user", JSON.stringify(result.user || {}));
+      await AsyncStorage.removeItem("passcodeLoginComplete");
 
       const elapsed = Date.now() - loaderStart;
       const remaining = Math.max(0, MIN_LOADER_MS - elapsed);
       await new Promise((r) => setTimeout(r, remaining));
 
-      const user = result.user as { hasPasscode?: boolean } | undefined;
-      if (user?.hasPasscode) {
-        (navigation as unknown as NavProp).replace('Passcode');
-      } else {
-        await AsyncStorage.setItem('registrationPasscodePending', 'true');
-        (navigation as unknown as NavProp).replace('CreatePasscode');
+      const user = result.user as
+        | { hasPasscode?: boolean; requiresPasswordReset?: boolean }
+        | undefined;
+      setLoading(false);
+
+      // If the account is flagged to require a password reset, show the modal
+      if (result.requiresPasswordReset || user?.requiresPasswordReset) {
+        pendingNavRef.current = { hasPasscode: !!user?.hasPasscode };
+        setResetModalEmail(trimmedEmail);
+        setResetModalVisible(true);
+        return;
       }
+
+      doNavigate(!!user?.hasPasscode);
     } catch (_) {
       setLoading(false);
       showModal({
-        title: 'Login Error',
-        message: 'An unexpected error occurred. Please try again.',
-        type: 'error',
+        title: "Login Error",
+        message: "An unexpected error occurred. Please try again.",
+        type: "error",
       });
     }
   };
 
-  const isWeb = Platform.OS === 'web';
+  const isWeb = Platform.OS === "web";
 
   if (loading) {
     return <CustomLoader text="LOGGING IN" />;
@@ -327,153 +549,201 @@ export default function Login() {
     <>
       <KeyboardAvoidingView
         style={styles.flex1}
-        behavior={isWeb ? undefined : Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+        behavior={
+          isWeb ? undefined : Platform.OS === "ios" ? "padding" : "height"
+        }
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
       >
         <LinearGradient
           colors={[GRADIENT_START, GRADIENT_END]}
           locations={[0, 1]}
-          style={[styles.gradient, { paddingTop: insets.top, paddingBottom: insets.bottom }]}
+          style={[
+            styles.gradient,
+            { paddingTop: insets.top, paddingBottom: insets.bottom },
+          ]}
         >
-            <View style={[styles.header, { paddingHorizontal: horizontalPadding }]}>
-              {fromSignOut ? (
-                <View style={[styles.backButton, { width: scale(44), height: scale(44), borderRadius: scale(22) }]} />
-              ) : (
-                <TouchableOpacity
-                  style={[styles.backButton, { width: scale(44), height: scale(44), borderRadius: scale(22) }]}
-                  onPress={() => (navigation as unknown as NavProp).replace('Welcome')}
-                  activeOpacity={0.7}
-                >
-                  <Ionicons name="arrow-back" size={26} color={WHITE} />
-                </TouchableOpacity>
-              )}
+          <View
+            style={[styles.header, { paddingHorizontal: horizontalPadding }]}
+          >
+            {fromSignOut ? (
+              <View
+                style={[
+                  styles.backButton,
+                  {
+                    width: scale(44),
+                    height: scale(44),
+                    borderRadius: scale(22),
+                  },
+                ]}
+              />
+            ) : (
+              <TouchableOpacity
+                style={[
+                  styles.backButton,
+                  {
+                    width: scale(44),
+                    height: scale(44),
+                    borderRadius: scale(22),
+                  },
+                ]}
+                onPress={() =>
+                  (navigation as unknown as NavProp).replace("Welcome")
+                }
+                activeOpacity={0.7}
+              >
+                <Ionicons name="arrow-back" size={26} color={WHITE} />
+              </TouchableOpacity>
+            )}
+          </View>
+
+          <ScrollView
+            style={styles.scroll}
+            contentContainerStyle={[
+              styles.scrollContent,
+              {
+                paddingHorizontal: horizontalPadding,
+                paddingBottom: verticalScale(100),
+              },
+            ]}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            bounces={false}
+          >
+            <View
+              style={[styles.logoWrap, { marginBottom: verticalScale(32) }]}
+            >
+              <Image
+                source={require("../../assets/images/InpireLogo.png")}
+                style={[styles.logo, { width: scale(260), height: scale(140) }]}
+                contentFit="contain"
+                accessible={true}
+                accessibilityLabel="Inspire company logo"
+              />
             </View>
 
-            <ScrollView
-              style={styles.scroll}
-              contentContainerStyle={[styles.scrollContent, { paddingHorizontal: horizontalPadding, paddingBottom: verticalScale(100) }]}
-              showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
-              bounces={false}
-            >
-              <View style={[styles.logoWrap, { marginBottom: verticalScale(32) }]}>
-                <Image
-                  source={require('../../assets/images/InpireLogo.png')}
-                  style={[styles.logo, { width: scale(260), height: scale(140) }]}
-                  contentFit="contain"
-                  accessible={true}
-                  accessibilityLabel="Inspire company logo"
-                />
-              </View>
+            <View style={styles.form}>
+              <TextInput
+                style={styles.input}
+                placeholder="Email Address"
+                placeholderTextColor="rgba(255,255,255,0.85)"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                editable={!loading}
+                autoComplete="email"
+              />
 
-              <View style={styles.form}>
+              <View style={styles.passwordRow}>
                 <TextInput
-                  style={styles.input}
-                  placeholder="Email Address"
+                  style={styles.passwordInput}
+                  placeholder="Enter password"
                   placeholderTextColor="rgba(255,255,255,0.85)"
-                  value={email}
-                  onChangeText={setEmail}
-                  keyboardType="email-address"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
                   autoCapitalize="none"
                   autoCorrect={false}
                   editable={!loading}
-                  autoComplete="email"
+                  autoComplete="password"
                 />
-
-                <View style={styles.passwordRow}>
-                  <TextInput
-                    style={styles.passwordInput}
-                    placeholder="Enter password"
-                    placeholderTextColor="rgba(255,255,255,0.85)"
-                    value={password}
-                    onChangeText={setPassword}
-                    secureTextEntry={!showPassword}
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    editable={!loading}
-                    autoComplete="password"
+                <TouchableOpacity
+                  style={styles.eyeButton}
+                  onPress={() => setShowPassword((s) => !s)}
+                >
+                  <Ionicons
+                    name={showPassword ? "eye-off-outline" : "eye-outline"}
+                    size={22}
+                    color={WHITE}
                   />
-                  <TouchableOpacity
-                    style={styles.eyeButton}
-                    onPress={() => setShowPassword((s) => !s)}
-                  >
-                    <Ionicons
-                      name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                      size={22}
-                      color={WHITE}
-                    />
-                  </TouchableOpacity>
-                </View>
-
-                <TouchableOpacity
-                  style={styles.passcodeLinkWrap}
-                  onPress={async () => {
-                    const token = await AsyncStorage.getItem('access_token');
-                    const userJson = await AsyncStorage.getItem('user');
-                    const user = userJson ? (JSON.parse(userJson) as { hasPasscode?: boolean }) : null;
-                    if (token && user?.hasPasscode) {
-                      (navigation as unknown as NavProp).replace('Passcode');
-                    } else if (!token) {
-                      showModal({
-                        title: 'Passcode Login',
-                        message:
-                          'To use passcode, you need to sign in with your email and password first. Don\'t have an account? Please register to create one.',
-                        type: 'info',
-                        confirmText: 'OK',
-                        secondaryText: 'Register',
-                        onSecondary: () => (navigation as unknown as NavProp).replace('Register'),
-                      });
-                    } else {
-                      showModal({
-                        title: 'No Passcode Set',
-                        message:
-                          'You haven\'t set up a passcode yet. Sign in with your email and password, then you can set up passcode in Settings after logging in.',
-                        type: 'info',
-                      });
-                    }
-                  }}
-                >
-                  <Text style={styles.passcodeLinkText}>Use Passcode Instead</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[styles.loginButton, loading && styles.loginButtonDisabled]}
-                  onPress={SignIn}
-                  disabled={loading}
-                  activeOpacity={0.85}
-                >
-                  {loading ? (
-                    <ActivityIndicator color={WHITE} size="small" />
-                  ) : (
-                    <Text style={styles.loginButtonText}>Login</Text>
-                  )}
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.forgotWrap}
-                  onPress={() => {
-                    showModal({
-                      title: 'Forgot Password',
-                      message: 'Password reset is not supported at this time. Please contact support for assistance.',
-                      type: 'info',
-                    });
-                  }}
-                >
-                  <Text style={styles.forgotText}>Forgot Password?</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.registerWrap}
-                  onPress={() => navigation.navigate('Register')}
-                >
-                  <Text style={styles.registerText}>Don't have an account? </Text>
-                  <Text style={styles.registerLink}>Register</Text>
                 </TouchableOpacity>
               </View>
-            </ScrollView>
 
-            <Text style={styles.footer}>CREATED BY INSPIRE</Text>
-          </LinearGradient>
+              <TouchableOpacity
+                style={styles.passcodeLinkWrap}
+                onPress={async () => {
+                  const token = await AsyncStorage.getItem("access_token");
+                  const userJson = await AsyncStorage.getItem("user");
+                  const user = userJson
+                    ? (JSON.parse(userJson) as { hasPasscode?: boolean })
+                    : null;
+                  if (token && user?.hasPasscode) {
+                    (navigation as unknown as NavProp).replace("Passcode");
+                  } else if (!token) {
+                    showModal({
+                      title: "Passcode Login",
+                      message:
+                        "To use passcode, you need to sign in with your email and password first. Don't have an account? Please register to create one.",
+                      type: "info",
+                      confirmText: "OK",
+                      secondaryText: "Register",
+                      onSecondary: () =>
+                        (navigation as unknown as NavProp).replace("Register"),
+                    });
+                  } else {
+                    showModal({
+                      title: "No Passcode Set",
+                      message:
+                        "You haven't set up a passcode yet. Sign in with your email and password, then you can set up passcode in Settings after logging in.",
+                      type: "info",
+                    });
+                  }
+                }}
+              >
+                <Text style={styles.passcodeLinkText}>
+                  Use Passcode Instead
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.loginButton,
+                  loading && styles.loginButtonDisabled,
+                ]}
+                onPress={SignIn}
+                disabled={loading}
+                activeOpacity={0.85}
+              >
+                {loading ? (
+                  <ActivityIndicator color={WHITE} size="small" />
+                ) : (
+                  <Text style={styles.loginButtonText}>Login</Text>
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.forgotWrap}
+                onPress={async () => {
+                  const trimmedEmail = email.trim();
+                  if (!trimmedEmail) {
+                    showModal({
+                      title: "Enter Your Email",
+                      message:
+                        'Please enter your email address in the field above, then tap "Forgot Password" again.',
+                      type: "info",
+                    });
+                    return;
+                  }
+                  setResetModalEmail(trimmedEmail);
+                  setResetModalVisible(true);
+                }}
+              >
+                <Text style={styles.forgotText}>Forgot Password?</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.registerWrap}
+                onPress={() => navigation.navigate("Register")}
+              >
+                <Text style={styles.registerText}>Don't have an account? </Text>
+                <Text style={styles.registerLink}>Register</Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+
+          <Text style={styles.footer}>CREATED BY INSPIRE</Text>
+        </LinearGradient>
       </KeyboardAvoidingView>
 
       <MessageModal
@@ -487,6 +757,17 @@ export default function Login() {
         secondaryText={modalConfig.secondaryText}
         onSecondary={modalConfig.onSecondary}
       />
+
+      <PasswordResetRequiredModal
+        visible={resetModalVisible}
+        onClose={() => setResetModalVisible(false)}
+        onNavigateAfterClose={() => {
+          const pending = pendingNavRef.current;
+          pendingNavRef.current = null;
+          if (pending) doNavigate(pending.hasPasscode);
+        }}
+        email={resetModalEmail}
+      />
     </>
   );
 }
@@ -495,8 +776,8 @@ const styles = StyleSheet.create({
   flex1: { flex: 1 },
   gradient: {
     flex: 1,
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
   },
   header: {
     paddingHorizontal: 16,
@@ -506,28 +787,28 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: 'rgba(255,255,255,0.22)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(255,255,255,0.22)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   scroll: { flex: 1 },
   scrollContent: {
     flexGrow: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    minHeight: '100%',
+    justifyContent: "center",
+    alignItems: "center",
+    minHeight: "100%",
   },
   logoWrap: {
-    alignSelf: 'center',
+    alignSelf: "center",
   },
   logo: {},
   form: {
-    width: '100%',
+    width: "100%",
     maxWidth: 360,
-    alignSelf: 'center',
+    alignSelf: "center",
   },
   input: {
-    backgroundColor: 'rgba(255,255,255,0.28)',
+    backgroundColor: "rgba(255,255,255,0.28)",
     borderRadius: 999,
     paddingHorizontal: 20,
     paddingVertical: 16,
@@ -537,9 +818,9 @@ const styles = StyleSheet.create({
     minHeight: 54,
   },
   passwordRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.28)',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(255,255,255,0.28)",
     borderRadius: 999,
     minHeight: 54,
     marginBottom: 16,
@@ -555,25 +836,25 @@ const styles = StyleSheet.create({
     padding: 14,
     minWidth: 44,
     minHeight: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   passcodeLinkWrap: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 24,
   },
   passcodeLinkText: {
     color: WHITE,
     fontSize: 16,
-    fontWeight: '400',
+    fontWeight: "400",
   },
   loginButton: {
     backgroundColor: GRADIENT_START,
     borderRadius: 999,
     minHeight: 54,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
     shadowRadius: 6,
@@ -585,40 +866,40 @@ const styles = StyleSheet.create({
   loginButtonText: {
     color: WHITE,
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   forgotWrap: {
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 20,
   },
   forgotText: {
     color: WHITE,
     fontSize: 14,
-    fontWeight: '400',
+    fontWeight: "400",
   },
   registerWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     marginTop: 24,
   },
   registerText: {
     color: WHITE,
     fontSize: 15,
-    fontWeight: '400',
+    fontWeight: "400",
   },
   registerLink: {
     color: WHITE,
     fontSize: 15,
-    fontWeight: '600',
-    textDecorationLine: 'underline',
+    fontWeight: "600",
+    textDecorationLine: "underline",
   },
   footer: {
     fontSize: 11,
-    fontWeight: '600',
-    color: 'rgba(255,255,255,0.75)',
+    fontWeight: "600",
+    color: "rgba(255,255,255,0.75)",
     letterSpacing: 1.2,
-    textAlign: 'center',
+    textAlign: "center",
     paddingVertical: 16,
   },
 });

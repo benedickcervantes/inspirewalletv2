@@ -1,9 +1,9 @@
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useNavigation } from '@react-navigation/native';
-import { CameraView, useCameraPermissions } from 'expo-camera';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useState } from 'react';
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useNavigation } from "@react-navigation/native";
+import { CameraView, useCameraPermissions } from "expo-camera";
+import { LinearGradient } from "expo-linear-gradient";
+import { useState } from "react";
 import {
   ActivityIndicator,
   Dimensions,
@@ -18,25 +18,86 @@ import {
   TextInput,
   TouchableOpacity,
   useWindowDimensions,
-  View
-} from 'react-native';
-import { register as registerApi } from '../../configs/api';
-import type { NavProp } from '../../types/navigation';
-import { useResponsive } from '../../utils/responsive';
+  View,
+} from "react-native";
+import { register as registerApi } from "../../configs/api";
+import type { NavProp } from "../../types/navigation";
+import { useResponsive } from "../../utils/responsive";
 
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-const isValidEmail = (email: string) => EMAIL_REGEX.test((email || '').trim().toLowerCase());
+const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+const filterCompanyInput = (text: string) =>
+  text.replace(/[^A-Za-zÑñ0-9 ]/g, "");
+const isValidEmail = (email: string) =>
+  EMAIL_REGEX.test((email || "").trim().toLowerCase());
+
+const filterEmailInput = (text: string) =>
+  text.replace(/[^A-Za-z0-9.@\-_]/g, "");
+
+// Allow only English letters (A–Z, a–z), Ñ/ñ, and spaces for name fields
+const filterNameInput = (text: string) => text.replace(/[^A-Za-zÑñ ]/g, "");
+
+// Allow digits only for phone number
+const filterPhoneInput = (text: string) => text.replace(/[^0-9]/g, "");
 
 const capitalizeWords = (text: string) =>
   text.replace(/\b\w/g, (char) => char.toUpperCase());
 
 const COUNTRY_OPTIONS = [
-  { code: '+63', label: 'Philippines', flag: '🇵🇭', iso: 'PH' },
-  { code: '+81', label: 'Japan', flag: '🇯🇵', iso: 'JP' },
-  { code: '+966', label: 'Saudi Arabia', flag: '🇸🇦', iso: 'SA' },
-  { code: '+82', label: 'Korea', flag: '🇰🇷', iso: 'KR' },
-  { code: '+1', label: 'United States', flag: '🇺🇸', iso: 'US' },
+  {
+    code: "+63",
+    label: "Philippines",
+    flag: "🇵🇭",
+    iso: "PH",
+    mask: "#### ### ###",
+    maxLength: 10,
+  },
+  {
+    code: "+81",
+    label: "Japan",
+    flag: "🇯🇵",
+    iso: "JP",
+    mask: "## #### ####",
+    maxLength: 10,
+  },
+  {
+    code: "+966",
+    label: "Saudi Arabia",
+    flag: "🇸🇦",
+    iso: "SA",
+    mask: "## ### ####",
+    maxLength: 9,
+  },
+  {
+    code: "+82",
+    label: "Korea",
+    flag: "🇰🇷",
+    iso: "KR",
+    mask: "## #### ####",
+    maxLength: 10,
+  },
+  {
+    code: "+1",
+    label: "United States",
+    flag: "🇺🇸",
+    iso: "US",
+    mask: "### ### ####",
+    maxLength: 10,
+  },
 ];
+
+const formatWithMask = (text: string, mask: string) => {
+  const digits = text.replace(/\D/g, "");
+  let formatted = "";
+  let digitIndex = 0;
+  for (let i = 0; i < mask.length && digitIndex < digits.length; i++) {
+    if (mask[i] === "#") {
+      formatted += digits[digitIndex++];
+    } else {
+      formatted += mask[i];
+    }
+  }
+  return formatted;
+};
 
 export default function Register() {
   const navigation = useNavigation();
@@ -44,86 +105,103 @@ export default function Register() {
   const { horizontalPadding } = useResponsive();
   const [currentStep, setCurrentStep] = useState(1);
 
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [hasCompany, setHasCompany] = useState(false);
-  const [companyName, setCompanyName] = useState('');
+  const [companyName, setCompanyName] = useState("");
 
-  const [selectedCountryCode, setSelectedCountryCode] = useState('+63');
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [lineContact, setLineContact] = useState('');
-  const [viberContact, setViberContact] = useState('');
-  const [whatsappContact, setWhatsappContact] = useState('');
+  const [selectedCountryCode, setSelectedCountryCode] = useState("+63");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [lineContact, setLineContact] = useState("");
+  const [viberContact, setViberContact] = useState("");
+  const [whatsappContact, setWhatsappContact] = useState("");
   const [isAgent, setIsAgent] = useState<boolean | null>(null);
-  const [referralCode, setReferralCode] = useState('');
+  const [referralCode, setReferralCode] = useState("");
   const [registerLoading, setRegisterLoading] = useState(false);
-  const [registerError, setRegisterError] = useState('');
+  const [registerError, setRegisterError] = useState("");
 
-  const [emailAddress, setEmailAddress] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [emailAddress, setEmailAddress] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const [isCountryModalVisible, setIsCountryModalVisible] = useState(false);
   const [isQRScannerVisible, setIsQRScannerVisible] = useState(false);
-  const [activeQRField, setActiveQRField] = useState<'referral' | 'line' | 'viber' | 'whatsapp' | null>(null);
+  const [activeQRField, setActiveQRField] = useState<
+    "referral" | "line" | "viber" | "whatsapp" | null
+  >(null);
   const [permission, requestPermission] = useCameraPermissions();
 
   const handleNextStep = () => {
-    setRegisterError('');
+    setRegisterError("");
+    const newErrors: Record<string, string> = {};
+
     if (currentStep === 1) {
       if (!firstName.trim()) {
-        alert('Please enter your first name');
-        return;
+        newErrors.firstName = "Please enter your first name";
       }
       if (!lastName.trim()) {
-        alert('Please enter your last name');
-        return;
+        newErrors.lastName = "Please enter your last name";
       }
       if (hasCompany && !companyName.trim()) {
-        alert('Please enter your company name');
+        newErrors.companyName = "Please enter your company name";
+      }
+
+      if (Object.keys(newErrors).length > 0) {
+        setErrors(newErrors);
         return;
       }
+      setErrors({});
       setCurrentStep(2);
     } else if (currentStep === 2) {
       if (isAgent === null) {
-        alert('Please select if you are an agent or investor');
+        newErrors.isAgent = "Please select if you are an agent or investor";
+      }
+
+      if (Object.keys(newErrors).length > 0) {
+        setErrors(newErrors);
         return;
       }
+      setErrors({});
       setCurrentStep(3);
     } else if (currentStep === 3) {
       const email = emailAddress.trim();
       if (!email) {
-        alert('Please enter your email address');
-        return;
-      }
-      if (!isValidEmail(email)) {
-        alert('Please enter a valid email address (e.g. name@example.com)');
-        return;
+        newErrors.emailAddress = "Please enter your email address";
+      } else if (!isValidEmail(email)) {
+        newErrors.emailAddress =
+          "Please enter a valid email address (e.g. name@example.com)";
       }
       if (!password.trim()) {
-        alert('Please enter a password');
-        return;
-      }
-      if (password.length < 8) {
-        alert('Password must be at least 8 characters');
-        return;
+        newErrors.password = "Please enter a password";
+      } else if (password.length < 8) {
+        newErrors.password = "Password must be at least 8 characters";
       }
       if (password !== confirmPassword) {
-        alert('Passwords do not match');
+        newErrors.confirmPassword = "Passwords do not match";
+      }
+
+      if (Object.keys(newErrors).length > 0) {
+        setErrors(newErrors);
         return;
       }
+      setErrors({});
       handleRegister();
     }
   };
 
   const handleRegister = async () => {
-    setRegisterError('');
+    setRegisterError("");
     setRegisterLoading(true);
     try {
-      const country = COUNTRY_OPTIONS.find((c) => c.code === selectedCountryCode);
-      const phone = selectedCountryCode + phoneNumber;
+      const country = COUNTRY_OPTIONS.find(
+        (c) => c.code === selectedCountryCode,
+      );
+      // Strip non-digits from phoneNumber before prepending country code
+      const phoneDigits = phoneNumber.replace(/\D/g, "");
+      const phone = phoneDigits ? selectedCountryCode + phoneDigits : "";
       const body: Record<string, unknown> = {
         email: emailAddress.trim(),
         password,
@@ -132,7 +210,8 @@ export default function Register() {
         phone: phone.length > 0 && phone.length <= 30 ? phone : undefined,
         countryCode: country?.iso,
         referralCode: referralCode.trim() || undefined,
-        companyName: hasCompany && companyName.trim() ? companyName.trim() : undefined,
+        companyName:
+          hasCompany && companyName.trim() ? companyName.trim() : undefined,
         lineContact: lineContact.trim() || undefined,
         viberContact: viberContact.trim() || undefined,
         whatsappContact: whatsappContact.trim() || undefined,
@@ -141,16 +220,18 @@ export default function Register() {
       const result = await registerApi(body);
 
       if (!result.success) {
-        setRegisterError(result.error || 'Registration failed. Please try again.');
+        setRegisterError(
+          result.error || "Registration failed. Please try again.",
+        );
         return;
       }
 
-      await AsyncStorage.setItem('access_token', result.access_token || '');
-      await AsyncStorage.setItem('user', JSON.stringify(result.user || {}));
-      await AsyncStorage.setItem('registrationPasscodePending', 'true');
-      (navigation as unknown as NavProp).replace('CreatePasscode');
-    } catch (_) {
-      setRegisterError('An unexpected error occurred. Please try again.');
+      await AsyncStorage.setItem("access_token", result.access_token || "");
+      await AsyncStorage.setItem("user", JSON.stringify(result.user || {}));
+      await AsyncStorage.setItem("registrationPasscodePending", "true");
+      (navigation as unknown as NavProp).replace("CreatePasscode");
+    } catch (_err) {
+      setRegisterError("An unexpected error occurred. Please try again.");
     } finally {
       setRegisterLoading(false);
     }
@@ -160,44 +241,46 @@ export default function Register() {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
     } else {
-      (navigation as unknown as NavProp).replace('Welcome');
+      (navigation as unknown as NavProp).replace("Welcome");
     }
   };
 
   const handleBarCodeScanned = ({ data }: { type: string; data: string }) => {
     setIsQRScannerVisible(false);
-    
+
     // Handle based on which field's QR scanner was opened
-    if (activeQRField === 'referral') {
+    if (activeQRField === "referral") {
       // Check if the scanned data is a URL with a 'ref' parameter
       try {
-        if (data.includes('ref=')) {
+        if (data.includes("ref=")) {
           // e.g. http://localhost:3000/register?ref=ABCDE
           const urlParams = new URL(data);
-          const ref = urlParams.searchParams.get('ref');
+          const ref = urlParams.searchParams.get("ref");
           if (ref) {
             setReferralCode(ref.toUpperCase());
             setActiveQRField(null);
             return;
           }
         }
-      } catch (e) {
+      } catch (_urlErr) {
         // Not a valid URL, ignore URL parsing error
       }
       // fallback to setting exactly what was scanned
       setReferralCode(data.toUpperCase());
-    } else if (activeQRField === 'line') {
+    } else if (activeQRField === "line") {
       setLineContact(data);
-    } else if (activeQRField === 'viber') {
+    } else if (activeQRField === "viber") {
       setViberContact(data);
-    } else if (activeQRField === 'whatsapp') {
+    } else if (activeQRField === "whatsapp") {
       setWhatsappContact(data);
     }
-    
+
     setActiveQRField(null);
   };
 
-  const openScanner = async (fieldType: 'referral' | 'line' | 'viber' | 'whatsapp') => {
+  const openScanner = async (
+    fieldType: "referral" | "line" | "viber" | "whatsapp",
+  ) => {
     if (!permission?.granted) {
       const response = await requestPermission();
       if (!response.granted) {
@@ -214,11 +297,22 @@ export default function Register() {
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       <SafeAreaView style={styles.container}>
         <KeyboardAvoidingView
-          behavior={Platform.OS === 'web' ? undefined : Platform.OS === 'ios' ? 'padding' : 'height'}
+          behavior={
+            Platform.OS === "web"
+              ? undefined
+              : Platform.OS === "ios"
+                ? "padding"
+                : "height"
+          }
           style={styles.keyboardView}
         >
-          <View style={[styles.header, { paddingHorizontal: horizontalPadding }]}>
-            <TouchableOpacity style={styles.backButton} onPress={handleBackStep}>
+          <View
+            style={[styles.header, { paddingHorizontal: horizontalPadding }]}
+          >
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={handleBackStep}
+            >
               <Ionicons name="arrow-back" size={24} color="#E25A17" />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>Account Registration</Text>
@@ -234,21 +328,49 @@ export default function Register() {
                   <Ionicons name="person" size={20} color="#FFFFFF" />
                 )}
               </View>
-              <View style={[styles.stepLine, currentStep > 1 && styles.stepLineActive]} />
+              <View
+                style={[
+                  styles.stepLine,
+                  currentStep > 1 && styles.stepLineActive,
+                ]}
+              />
             </View>
             <View style={styles.stepItem}>
-              <View style={[styles.stepCircle, currentStep >= 2 && styles.stepActive]}>
+              <View
+                style={[
+                  styles.stepCircle,
+                  currentStep >= 2 && styles.stepActive,
+                ]}
+              >
                 {currentStep > 2 ? (
                   <Ionicons name="checkmark" size={24} color="#FFFFFF" />
                 ) : (
-                  <Ionicons name="call" size={20} color={currentStep >= 2 ? '#FFFFFF' : '#E25A17'} />
+                  <Ionicons
+                    name="call"
+                    size={20}
+                    color={currentStep >= 2 ? "#FFFFFF" : "#E25A17"}
+                  />
                 )}
               </View>
-              <View style={[styles.stepLine, currentStep > 2 && styles.stepLineActive]} />
+              <View
+                style={[
+                  styles.stepLine,
+                  currentStep > 2 && styles.stepLineActive,
+                ]}
+              />
             </View>
             <View style={styles.stepItem}>
-              <View style={[styles.stepCircle, currentStep >= 3 && styles.stepActive]}>
-                <Ionicons name="lock-closed" size={20} color={currentStep >= 3 ? '#FFFFFF' : '#E25A17'} />
+              <View
+                style={[
+                  styles.stepCircle,
+                  currentStep >= 3 && styles.stepActive,
+                ]}
+              >
+                <Ionicons
+                  name="lock-closed"
+                  size={20}
+                  color={currentStep >= 3 ? "#FFFFFF" : "#E25A17"}
+                />
               </View>
             </View>
           </View>
@@ -256,19 +378,33 @@ export default function Register() {
           <ScrollView
             style={styles.scrollView}
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={[styles.scrollContent, { paddingTop: 20, paddingHorizontal: horizontalPadding, paddingBottom: 100 }]}
+            contentContainerStyle={[
+              styles.scrollContent,
+              {
+                paddingTop: 20,
+                paddingHorizontal: horizontalPadding,
+                paddingBottom: 100,
+              },
+            ]}
             keyboardShouldPersistTaps="handled"
           >
             {currentStep === 1 && (
               <>
                 <Text style={styles.welcomeText}>Welcome Investor!</Text>
                 <View style={styles.infoBanner}>
-                  <MaterialCommunityIcons name="office-building" size={24} color="#E25A17" />
+                  <MaterialCommunityIcons
+                    name="office-building"
+                    size={24}
+                    color="#E25A17"
+                  />
                   <View style={styles.infoBannerTextContainer}>
                     <Text style={styles.infoBannerText}>
-                      Start your investment journey with <Text style={styles.infoBannerBold}>Inspire Wallet.</Text>
+                      Start your investment journey with{" "}
+                      <Text style={styles.infoBannerBold}>Inspire Wallet.</Text>
                     </Text>
-                    <Text style={styles.infoBannerText}>Complete your profile to unlock all features.</Text>
+                    <Text style={styles.infoBannerText}>
+                      Complete your profile to unlock all features.
+                    </Text>
                   </View>
                 </View>
                 <View style={styles.section}>
@@ -279,50 +415,115 @@ export default function Register() {
                       First Name <Text style={styles.required}>*</Text>
                     </Text>
                     <TextInput
-                      style={styles.input}
+                      style={[
+                        styles.input,
+                        errors.firstName && styles.inputError,
+                      ]}
                       placeholder="e.g. John"
                       placeholderTextColor="#999"
                       autoCapitalize="words"
                       value={firstName}
-                      onChangeText={(text) => setFirstName(capitalizeWords(text))}
+                      onChangeText={(text) => {
+                        setFirstName(capitalizeWords(filterNameInput(text)));
+                        if (errors.firstName) {
+                          setErrors((prev) => {
+                            const { firstName, ...rest } = prev;
+                            return rest;
+                          });
+                        }
+                      }}
                     />
+                    {errors.firstName && (
+                      <Text style={styles.errorText}>{errors.firstName}</Text>
+                    )}
                   </View>
                   <View style={styles.inputGroup}>
                     <Text style={styles.inputLabel}>
                       Last Name <Text style={styles.required}>*</Text>
                     </Text>
                     <TextInput
-                      style={styles.input}
+                      style={[
+                        styles.input,
+                        errors.lastName && styles.inputError,
+                      ]}
                       placeholder="e.g. Doe"
                       placeholderTextColor="#999"
                       autoCapitalize="words"
                       value={lastName}
-                      onChangeText={(text) => setLastName(capitalizeWords(text))}
+                      onChangeText={(text) => {
+                        setLastName(capitalizeWords(filterNameInput(text)));
+                        if (errors.lastName) {
+                          setErrors((prev) => {
+                            const { lastName, ...rest } = prev;
+                            return rest;
+                          });
+                        }
+                      }}
                     />
+                    {errors.lastName && (
+                      <Text style={styles.errorText}>{errors.lastName}</Text>
+                    )}
                   </View>
                   <View style={styles.inputGroup}>
                     <Text style={styles.inputLabel}>Phone Number</Text>
                     <View style={styles.phoneInputContainer}>
-                      <TouchableOpacity style={styles.countrySelector} onPress={() => setIsCountryModalVisible(true)}>
+                      <TouchableOpacity
+                        style={styles.countrySelector}
+                        onPress={() => setIsCountryModalVisible(true)}
+                      >
                         <Text style={styles.countryFlag}>
-                          {COUNTRY_OPTIONS.find((c) => c.code === selectedCountryCode)?.flag}
+                          {
+                            COUNTRY_OPTIONS.find(
+                              (c) => c.code === selectedCountryCode,
+                            )?.flag
+                          }
                         </Text>
-                        <Text style={styles.countryCode}>{selectedCountryCode}</Text>
+                        <Text style={styles.countryCode}>
+                          {selectedCountryCode}
+                        </Text>
                         <Ionicons name="chevron-down" size={16} color="#666" />
                       </TouchableOpacity>
                       <TextInput
                         style={styles.phoneInput}
-                        placeholder="e.g. 555 123 4567"
+                        placeholder={
+                          COUNTRY_OPTIONS.find(
+                            (c) => c.code === selectedCountryCode,
+                          )?.mask.replace(/#/g, "0") || "000 000 0000"
+                        }
                         placeholderTextColor="#999"
-                        keyboardType="phone-pad"
+                        keyboardType="numeric"
                         value={phoneNumber}
-                        onChangeText={setPhoneNumber}
+                        onChangeText={(text) => {
+                          const country = COUNTRY_OPTIONS.find(
+                            (c) => c.code === selectedCountryCode,
+                          );
+                          if (country) {
+                            setPhoneNumber(formatWithMask(text, country.mask));
+                          } else {
+                            setPhoneNumber(filterPhoneInput(text));
+                          }
+                        }}
+                        maxLength={
+                          COUNTRY_OPTIONS.find(
+                            (c) => c.code === selectedCountryCode,
+                          )?.mask.length
+                        }
                       />
                     </View>
                   </View>
-                  <TouchableOpacity style={styles.checkboxContainer} onPress={() => setHasCompany(!hasCompany)}>
-                    <View style={[styles.checkbox, hasCompany && styles.checkboxChecked]}>
-                      {hasCompany && <Ionicons name="checkmark" size={16} color="#E25A17" />}
+                  <TouchableOpacity
+                    style={styles.checkboxContainer}
+                    onPress={() => setHasCompany(!hasCompany)}
+                  >
+                    <View
+                      style={[
+                        styles.checkbox,
+                        hasCompany && styles.checkboxChecked,
+                      ]}
+                    >
+                      {hasCompany && (
+                        <Ionicons name="checkmark" size={16} color="#E25A17" />
+                      )}
                     </View>
                     <Text style={styles.checkboxLabel}>I have a company</Text>
                   </TouchableOpacity>
@@ -332,13 +533,31 @@ export default function Register() {
                         Company Name <Text style={styles.required}>*</Text>
                       </Text>
                       <TextInput
-                        style={styles.input}
+                        style={[
+                          styles.input,
+                          errors.companyName && styles.inputError,
+                        ]}
                         placeholder="Enter your company name"
                         placeholderTextColor="#999"
                         autoCapitalize="words"
                         value={companyName}
-                        onChangeText={(text) => setCompanyName(capitalizeWords(text))}
+                        onChangeText={(text) => {
+                          setCompanyName(
+                            capitalizeWords(filterCompanyInput(text)),
+                          );
+                          if (errors.companyName) {
+                            setErrors((prev) => {
+                              const { companyName, ...rest } = prev;
+                              return rest;
+                            });
+                          }
+                        }}
                       />
+                      {errors.companyName && (
+                        <Text style={styles.errorText}>
+                          {errors.companyName}
+                        </Text>
+                      )}
                     </View>
                   )}
                 </View>
@@ -348,13 +567,26 @@ export default function Register() {
             {currentStep === 2 && (
               <>
                 <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>Contact Information (Optional)</Text>
+                  <Text style={styles.sectionTitle}>
+                    Contact Information (Optional)
+                  </Text>
                   <View style={styles.sectionUnderline} />
-                  <View style={width < 768 ? styles.contactFieldsContainerMobile : styles.contactFieldsContainerDesktop}>
+                  <View
+                    style={
+                      width < 768
+                        ? styles.contactFieldsContainerMobile
+                        : styles.contactFieldsContainerDesktop
+                    }
+                  >
                     <View style={styles.inputGroup}>
                       <Text style={styles.inputLabel}>LINE Account Link</Text>
                       <View style={styles.scannerInputContainer}>
-                        <MaterialCommunityIcons name="chat" size={20} color="#00B900" style={{ marginLeft: 12 }} />
+                        <MaterialCommunityIcons
+                          name="chat"
+                          size={20}
+                          color="#00B900"
+                          style={{ marginLeft: 12 }}
+                        />
                         <TextInput
                           style={styles.scannerInput}
                           placeholder="Enter your LINE Account Link"
@@ -364,15 +596,27 @@ export default function Register() {
                           value={lineContact}
                           onChangeText={setLineContact}
                         />
-                        <TouchableOpacity style={styles.scannerButton} onPress={() => openScanner('line')}>
-                          <Ionicons name="qr-code-outline" size={20} color="#E25A17" />
+                        <TouchableOpacity
+                          style={styles.scannerButton}
+                          onPress={() => openScanner("line")}
+                        >
+                          <Ionicons
+                            name="qr-code-outline"
+                            size={20}
+                            color="#E25A17"
+                          />
                         </TouchableOpacity>
                       </View>
                     </View>
                     <View style={styles.inputGroup}>
                       <Text style={styles.inputLabel}>Viber</Text>
                       <View style={styles.scannerInputContainer}>
-                        <MaterialCommunityIcons name="phone" size={20} color="#7360F2" style={{ marginLeft: 12 }} />
+                        <MaterialCommunityIcons
+                          name="phone"
+                          size={20}
+                          color="#7360F2"
+                          style={{ marginLeft: 12 }}
+                        />
                         <TextInput
                           style={styles.scannerInput}
                           placeholder="Enter your Viber contact"
@@ -382,15 +626,27 @@ export default function Register() {
                           value={viberContact}
                           onChangeText={setViberContact}
                         />
-                        <TouchableOpacity style={styles.scannerButton} onPress={() => openScanner('viber')}>
-                          <Ionicons name="qr-code-outline" size={20} color="#E25A17" />
+                        <TouchableOpacity
+                          style={styles.scannerButton}
+                          onPress={() => openScanner("viber")}
+                        >
+                          <Ionicons
+                            name="qr-code-outline"
+                            size={20}
+                            color="#E25A17"
+                          />
                         </TouchableOpacity>
                       </View>
                     </View>
                     <View style={styles.inputGroup}>
                       <Text style={styles.inputLabel}>WhatsApp</Text>
                       <View style={styles.scannerInputContainer}>
-                        <MaterialCommunityIcons name="whatsapp" size={20} color="#25D366" style={{ marginLeft: 12 }} />
+                        <MaterialCommunityIcons
+                          name="whatsapp"
+                          size={20}
+                          color="#25D366"
+                          style={{ marginLeft: 12 }}
+                        />
                         <TextInput
                           style={styles.scannerInput}
                           placeholder="Enter your WhatsApp contact"
@@ -400,8 +656,15 @@ export default function Register() {
                           value={whatsappContact}
                           onChangeText={setWhatsappContact}
                         />
-                        <TouchableOpacity style={styles.scannerButton} onPress={() => openScanner('whatsapp')}>
-                          <Ionicons name="qr-code-outline" size={20} color="#E25A17" />
+                        <TouchableOpacity
+                          style={styles.scannerButton}
+                          onPress={() => openScanner("whatsapp")}
+                        >
+                          <Ionicons
+                            name="qr-code-outline"
+                            size={20}
+                            color="#E25A17"
+                          />
                         </TouchableOpacity>
                       </View>
                     </View>
@@ -411,49 +674,86 @@ export default function Register() {
                   <Text style={styles.sectionTitle}>Account Type</Text>
                   <View style={styles.sectionUnderline} />
                   <Text style={styles.inputLabel}>
-                    Are you an agent or investor? <Text style={styles.required}>*</Text>
+                    Are you an agent or investor?{" "}
+                    <Text style={styles.required}>*</Text>
                   </Text>
-                  <TouchableOpacity style={styles.radioContainer} onPress={() => setIsAgent(true)}>
-                    <View style={[styles.radio, isAgent === true && styles.radioChecked]}>
+                  <TouchableOpacity
+                    style={styles.radioContainer}
+                    onPress={() => setIsAgent(true)}
+                  >
+                    <View
+                      style={[
+                        styles.radio,
+                        isAgent === true && styles.radioChecked,
+                      ]}
+                    >
                       {isAgent === true && <View style={styles.radioDot} />}
                     </View>
-                    <Text style={styles.radioLabel}>I'm an agent</Text>
+                    <Text style={styles.radioLabel}>I&apos;m an agent</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.radioContainer} onPress={() => setIsAgent(false)}>
-                    <View style={[styles.radio, isAgent === false && styles.radioChecked]}>
+                  <TouchableOpacity
+                    style={styles.radioContainer}
+                    onPress={() => setIsAgent(false)}
+                  >
+                    <View
+                      style={[
+                        styles.radio,
+                        isAgent === false && styles.radioChecked,
+                      ]}
+                    >
                       {isAgent === false && <View style={styles.radioDot} />}
                     </View>
-                    <Text style={styles.radioLabel}>I'm an investor</Text>
+                    <Text style={styles.radioLabel}>I&apos;m an investor</Text>
                   </TouchableOpacity>
+                  {errors.isAgent && (
+                    <Text style={styles.errorText}>{errors.isAgent}</Text>
+                  )}
                   {isAgent !== null && (
                     <View style={styles.agentQRSection}>
                       <View style={styles.agentQRHeader}>
-                        <MaterialCommunityIcons name="shield-star" size={24} color="#E25A17" />
+                        <MaterialCommunityIcons
+                          name="shield-star"
+                          size={24}
+                          color="#E25A17"
+                        />
                         <Text style={styles.agentQRTitle}>Referral Code</Text>
                       </View>
                       <Text style={styles.agentNumberSubtext}>
-                        You will receive your unique referral code after registration. Share it so others can register under you.
+                        You will receive your unique referral code after
+                        registration. Share it so others can register under you.
                       </Text>
                     </View>
                   )}
                   <View style={[styles.inputGroup, { marginTop: 20 }]}>
-                    <Text style={styles.inputLabel}>Referrer's code (Optional)</Text>
+                    <Text style={styles.inputLabel}>
+                      Referrer&apos;s code (Optional)
+                    </Text>
                     <View style={styles.scannerInputContainer}>
                       <TextInput
                         style={styles.scannerInput}
                         placeholder="Enter referrer's code"
                         placeholderTextColor="#999"
                         value={referralCode}
-                        onChangeText={(text) => setReferralCode(text.toUpperCase())}
+                        onChangeText={(text) =>
+                          setReferralCode(text.toUpperCase())
+                        }
                         autoCapitalize="characters"
                         maxLength={5}
                       />
-                      <TouchableOpacity style={styles.scannerButton} onPress={() => openScanner('referral')}>
-                        <Ionicons name="qr-code-outline" size={20} color="#E25A17" />
+                      <TouchableOpacity
+                        style={styles.scannerButton}
+                        onPress={() => openScanner("referral")}
+                      >
+                        <Ionicons
+                          name="qr-code-outline"
+                          size={20}
+                          color="#E25A17"
+                        />
                       </TouchableOpacity>
                     </View>
                     <Text style={styles.helperText}>
-                      Enter your referrer's code if you were invited by someone.
+                      Enter your referrer&apos;s code if you were invited by
+                      someone.
                     </Text>
                     <Text style={[styles.helperText, { marginTop: 4 }]}>
                       Maximum 5 characters
@@ -473,30 +773,66 @@ export default function Register() {
                       Email Address <Text style={styles.required}>*</Text>
                     </Text>
                     <TextInput
-                      style={styles.input}
+                      style={[
+                        styles.input,
+                        errors.emailAddress && styles.inputError,
+                      ]}
                       placeholder="your.email@example.com"
                       placeholderTextColor="#999"
                       keyboardType="email-address"
                       autoCapitalize="none"
                       value={emailAddress}
-                      onChangeText={setEmailAddress}
+                      onChangeText={(text) => {
+                        setEmailAddress(filterEmailInput(text));
+                        if (errors.emailAddress) {
+                          setErrors((prev) => {
+                            const { emailAddress, ...rest } = prev;
+                            return rest;
+                          });
+                        }
+                      }}
                     />
+                    {errors.emailAddress && (
+                      <Text style={styles.errorText}>
+                        {errors.emailAddress}
+                      </Text>
+                    )}
                   </View>
                   <View style={styles.inputGroup}>
                     <Text style={styles.inputLabel}>
                       Password <Text style={styles.required}>*</Text>
                     </Text>
-                    <View style={styles.passwordContainer}>
+                    <View
+                      style={[
+                        styles.passwordContainer,
+                        errors.password && styles.inputError,
+                      ]}
+                    >
                       <TextInput
                         style={styles.passwordInput}
                         placeholder="Create a secure password"
                         placeholderTextColor="#999"
                         secureTextEntry={!showPassword}
                         value={password}
-                        onChangeText={setPassword}
+                        onChangeText={(text) => {
+                          setPassword(text);
+                          if (errors.password) {
+                            setErrors((prev) => {
+                              const { password, ...rest } = prev;
+                              return rest;
+                            });
+                          }
+                        }}
                       />
-                      <TouchableOpacity style={styles.eyeButton} onPress={() => setShowPassword(!showPassword)}>
-                        <Ionicons name={showPassword ? 'eye-off' : 'eye'} size={20} color="#666" />
+                      <TouchableOpacity
+                        style={styles.eyeButton}
+                        onPress={() => setShowPassword(!showPassword)}
+                      >
+                        <Ionicons
+                          name={showPassword ? "eye-off" : "eye"}
+                          size={20}
+                          color="#666"
+                        />
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -504,22 +840,49 @@ export default function Register() {
                     <Text style={styles.inputLabel}>
                       Confirm Password <Text style={styles.required}>*</Text>
                     </Text>
-                    <View style={styles.passwordContainer}>
+                    <View
+                      style={[
+                        styles.passwordContainer,
+                        errors.confirmPassword && styles.inputError,
+                      ]}
+                    >
                       <TextInput
                         style={styles.passwordInput}
                         placeholder="Re-enter your password"
                         placeholderTextColor="#999"
                         secureTextEntry={!showConfirmPassword}
                         value={confirmPassword}
-                        onChangeText={setConfirmPassword}
+                        onChangeText={(text) => {
+                          setConfirmPassword(text);
+                          if (errors.confirmPassword) {
+                            setErrors((prev) => {
+                              const { confirmPassword, ...rest } = prev;
+                              return rest;
+                            });
+                          }
+                        }}
                       />
                       <TouchableOpacity
                         style={styles.eyeButton}
-                        onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                        onPress={() =>
+                          setShowConfirmPassword(!showConfirmPassword)
+                        }
                       >
-                        <Ionicons name={showConfirmPassword ? 'eye-off' : 'eye'} size={20} color="#666" />
+                        <Ionicons
+                          name={showConfirmPassword ? "eye-off" : "eye"}
+                          size={20}
+                          color="#666"
+                        />
                       </TouchableOpacity>
                     </View>
+                    {errors.confirmPassword && (
+                      <Text style={styles.errorText}>
+                        {errors.confirmPassword}
+                      </Text>
+                    )}
+                    {errors.password && (
+                      <Text style={styles.errorText}>{errors.password}</Text>
+                    )}
                   </View>
                 </View>
                 {registerError ? (
@@ -533,20 +896,30 @@ export default function Register() {
 
           <View style={styles.footer}>
             <TouchableOpacity
-              style={[styles.nextButton, registerLoading && styles.nextButtonDisabled]}
+              style={[
+                styles.nextButton,
+                registerLoading && styles.nextButtonDisabled,
+              ]}
               onPress={handleNextStep}
               activeOpacity={0.8}
               disabled={registerLoading}
             >
-              <LinearGradient colors={['#E25A17', '#F28934']} style={styles.nextButtonGradient}>
+              <LinearGradient
+                colors={["#E25A17", "#F28934"]}
+                style={styles.nextButtonGradient}
+              >
                 {registerLoading ? (
                   <ActivityIndicator color="#FFFFFF" size="small" />
                 ) : (
-                  <Text style={styles.nextButtonText}>{currentStep === 3 ? 'Register' : 'Next Step'}</Text>
+                  <Text style={styles.nextButtonText}>
+                    {currentStep === 3 ? "Register" : "Next Step"}
+                  </Text>
                 )}
               </LinearGradient>
             </TouchableOpacity>
-            <Text style={styles.termsText}>By continuing, you agree to our Terms of Service</Text>
+            <Text style={styles.termsText}>
+              By continuing, you agree to our Terms of Service
+            </Text>
           </View>
         </KeyboardAvoidingView>
 
@@ -560,7 +933,9 @@ export default function Register() {
             <View style={styles.modalContainer}>
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>Select Country</Text>
-                <TouchableOpacity onPress={() => setIsCountryModalVisible(false)}>
+                <TouchableOpacity
+                  onPress={() => setIsCountryModalVisible(false)}
+                >
                   <Ionicons name="close" size={24} color="#333" />
                 </TouchableOpacity>
               </View>
@@ -571,11 +946,14 @@ export default function Register() {
                     style={styles.countryOption}
                     onPress={() => {
                       setSelectedCountryCode(country.code);
+                      setPhoneNumber(""); // Reset phone number when country changes
                       setIsCountryModalVisible(false);
                     }}
                   >
                     <Text style={styles.countryOptionFlag}>{country.flag}</Text>
-                    <Text style={styles.countryOptionLabel}>{country.label}</Text>
+                    <Text style={styles.countryOptionLabel}>
+                      {country.label}
+                    </Text>
                     <Text style={styles.countryOptionCode}>{country.code}</Text>
                   </TouchableOpacity>
                 ))}
@@ -595,11 +973,16 @@ export default function Register() {
             {!permission?.granted ? (
               <View style={styles.qrPermissionContainer}>
                 <Ionicons name="camera-outline" size={64} color="#666" />
-                <Text style={styles.qrPermissionText}>Camera Access Required</Text>
+                <Text style={styles.qrPermissionText}>
+                  Camera Access Required
+                </Text>
                 <Text style={styles.qrPermissionSubText}>
                   Please grant camera permission to scan referral QR codes.
                 </Text>
-                <TouchableOpacity style={styles.qrCloseButton} onPress={() => setIsQRScannerVisible(false)}>
+                <TouchableOpacity
+                  style={styles.qrCloseButton}
+                  onPress={() => setIsQRScannerVisible(false)}
+                >
                   <Text style={styles.qrCloseButtonText}>Go Back</Text>
                 </TouchableOpacity>
               </View>
@@ -615,10 +998,11 @@ export default function Register() {
                 <View style={styles.qrOverlay}>
                   <View style={styles.qrTopOverlay}>
                     <Text style={styles.qrInstructionText}>
-                      {activeQRField === 'referral' && "Scan Referrer's QR Code"}
-                      {activeQRField === 'line' && "Scan LINE QR Code"}
-                      {activeQRField === 'viber' && "Scan Viber QR Code"}
-                      {activeQRField === 'whatsapp' && "Scan WhatsApp QR Code"}
+                      {activeQRField === "referral" &&
+                        "Scan Referrer's QR Code"}
+                      {activeQRField === "line" && "Scan LINE QR Code"}
+                      {activeQRField === "viber" && "Scan Viber QR Code"}
+                      {activeQRField === "whatsapp" && "Scan WhatsApp QR Code"}
                     </Text>
                   </View>
                   <View style={styles.qrCenterRow}>
@@ -647,166 +1031,203 @@ export default function Register() {
             )}
           </View>
         </Modal>
-
       </SafeAreaView>
     </>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F5F5F5' },
+  container: { flex: 1, backgroundColor: "#F5F5F5" },
   keyboardView: { flex: 1 },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: 20,
     paddingVertical: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
   },
-  backButton: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
-  headerTitle: { fontSize: 18, fontWeight: '600', color: '#E25A17' },
+  backButton: {
+    width: 40,
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  headerTitle: { fontSize: 18, fontWeight: "600", color: "#E25A17" },
   placeholder: { width: 40 },
   progressContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     paddingVertical: 24,
     paddingHorizontal: 40,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
   },
-  stepItem: { flexDirection: 'row', alignItems: 'center' },
+  stepItem: { flexDirection: "row", alignItems: "center" },
   stepCircle: {
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: '#FFF',
+    backgroundColor: "#FFF",
     borderWidth: 2,
-    borderColor: '#E25A17',
-    justifyContent: 'center',
-    alignItems: 'center',
+    borderColor: "#E25A17",
+    justifyContent: "center",
+    alignItems: "center",
   },
-  stepActive: { backgroundColor: '#E25A17' },
-  stepLine: { width: 60, height: 2, backgroundColor: '#E0E0E0' },
-  stepLineActive: { backgroundColor: '#E25A17' },
+  stepActive: { backgroundColor: "#E25A17" },
+  stepLine: { width: 60, height: 2, backgroundColor: "#E0E0E0" },
+  stepLineActive: { backgroundColor: "#E25A17" },
   scrollView: { flex: 1 },
   scrollContent: { padding: 20, paddingBottom: 100 },
-  welcomeText: { fontSize: 24, fontWeight: 'bold', color: '#333', marginBottom: 16 },
+  welcomeText: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 16,
+  },
   infoBanner: {
-    flexDirection: 'row',
-    backgroundColor: '#FFF5F0',
+    flexDirection: "row",
+    backgroundColor: "#FFF5F0",
     borderRadius: 12,
     padding: 16,
     marginBottom: 24,
     borderLeftWidth: 4,
-    borderLeftColor: '#E25A17',
+    borderLeftColor: "#E25A17",
   },
   infoBannerTextContainer: { flex: 1, marginLeft: 12 },
-  infoBannerText: { fontSize: 13, color: '#666', lineHeight: 20 },
-  infoBannerBold: { fontWeight: '700', color: '#E25A17' },
+  infoBannerText: { fontSize: 13, color: "#666", lineHeight: 20 },
+  infoBannerBold: { fontWeight: "700", color: "#E25A17" },
   section: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 16,
     padding: 20,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
   },
-  sectionTitle: { fontSize: 16, fontWeight: '600', color: '#333', marginBottom: 8 },
-  sectionUnderline: { height: 2, backgroundColor: '#E25A17', width: 60, marginBottom: 20 },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 8,
+  },
+  sectionUnderline: {
+    height: 2,
+    backgroundColor: "#E25A17",
+    width: 60,
+    marginBottom: 20,
+  },
   inputGroup: { marginBottom: 20 },
-  inputLabel: { fontSize: 14, fontWeight: '500', color: '#333', marginBottom: 8 },
-  required: { color: '#E25A17' },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#333",
+    marginBottom: 8,
+  },
+  required: { color: "#E25A17" },
   input: {
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: "#E0E0E0",
     borderRadius: 8,
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 14,
-    color: '#333',
-    backgroundColor: '#FAFAFA',
+    color: "#333",
+    backgroundColor: "#FAFAFA",
   },
-  phoneInputContainer: { flexDirection: 'row', gap: 8 },
+  phoneInputContainer: { flexDirection: "row", gap: 8 },
   countrySelector: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: "#E0E0E0",
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 12,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: "#FAFAFA",
     gap: 6,
   },
   countryFlag: { fontSize: 20 },
-  countryCode: { fontSize: 14, color: '#333', fontWeight: '500' },
+  countryCode: { fontSize: 14, color: "#333", fontWeight: "500" },
   phoneInput: {
     flex: 1,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: "#E0E0E0",
     borderRadius: 8,
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 14,
-    color: '#333',
-    backgroundColor: '#FAFAFA',
+    color: "#333",
+    backgroundColor: "#FAFAFA",
   },
-  checkboxContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
+  checkboxContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 20,
+  },
   checkbox: {
     width: 20,
     height: 20,
     borderRadius: 4,
     borderWidth: 2,
-    borderColor: '#E25A17',
+    borderColor: "#E25A17",
     marginRight: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
-  checkboxChecked: { backgroundColor: '#FFF5F0' },
-  checkboxLabel: { fontSize: 14, color: '#333' },
-  radioContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
+  checkboxChecked: { backgroundColor: "#FFF5F0" },
+  checkboxLabel: { fontSize: 14, color: "#333" },
+  radioContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 16,
+  },
   radio: {
     width: 20,
     height: 20,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: '#E25A17',
+    borderColor: "#E25A17",
     marginRight: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
-  radioChecked: { borderColor: '#E25A17' },
-  radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#E25A17' },
-  radioLabel: { fontSize: 14, color: '#333' },
-  searchInputContainer: { flexDirection: 'row', gap: 8 },
+  radioChecked: { borderColor: "#E25A17" },
+  radioDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: "#E25A17",
+  },
+  radioLabel: { fontSize: 14, color: "#333" },
+  searchInputContainer: { flexDirection: "row", gap: 8 },
   searchInput: {
     flex: 1,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: "#E0E0E0",
     borderRadius: 8,
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 14,
-    color: '#333',
-    backgroundColor: '#FAFAFA',
+    color: "#333",
+    backgroundColor: "#FAFAFA",
   },
   scannerInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: "#E0E0E0",
     borderRadius: 8,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: "#FAFAFA",
   },
   scannerInput: {
     flex: 1,
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 14,
-    color: '#333',
+    color: "#333",
   },
   scannerButton: {
     paddingHorizontal: 16,
@@ -816,281 +1237,409 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: "#E0E0E0",
     borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#FAFAFA',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#FAFAFA",
   },
-  helperText: { fontSize: 12, color: '#999', marginTop: 8, lineHeight: 16 },
+  helperText: { fontSize: 12, color: "#999", marginTop: 8, lineHeight: 16 },
   passwordContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: "#E0E0E0",
     borderRadius: 8,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: "#FAFAFA",
   },
-  passwordInput: { flex: 1, paddingHorizontal: 16, paddingVertical: 12, fontSize: 14, color: '#333' },
+  passwordInput: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 14,
+    color: "#333",
+  },
   eyeButton: { padding: 12 },
   footer: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
+    borderTopColor: "#E0E0E0",
   },
-  nextButton: { borderRadius: 12, overflow: 'hidden', marginBottom: 12 },
+  nextButton: { borderRadius: 12, overflow: "hidden", marginBottom: 12 },
   nextButtonDisabled: { opacity: 0.7 },
-  nextButtonGradient: { paddingVertical: 16, alignItems: 'center' },
-  nextButtonText: { fontSize: 16, fontWeight: '600', color: '#FFFFFF' },
+  nextButtonGradient: { paddingVertical: 16, alignItems: "center" },
+  nextButtonText: { fontSize: 16, fontWeight: "600", color: "#FFFFFF" },
   errorBanner: {
-    backgroundColor: '#FEE2E2',
+    backgroundColor: "#FEE2E2",
     borderRadius: 8,
     padding: 12,
     marginTop: 16,
     borderLeftWidth: 4,
-    borderLeftColor: '#DC2626',
+    borderLeftColor: "#DC2626",
   },
-  errorBannerText: { fontSize: 14, color: '#DC2626' },
-  termsText: { fontSize: 12, color: '#999', textAlign: 'center' },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.5)', justifyContent: 'flex-end' },
-  modalContainer: { backgroundColor: '#FFFFFF', borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '70%' },
+  errorBannerText: { fontSize: 14, color: "#DC2626" },
+  termsText: { fontSize: 12, color: "#999", textAlign: "center" },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "flex-end",
+  },
+  modalContainer: {
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: "70%",
+  },
   modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: "#E0E0E0",
   },
-  modalTitle: { fontSize: 18, fontWeight: '600', color: '#333' },
+  modalTitle: { fontSize: 18, fontWeight: "600", color: "#333" },
   countryOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: "#F0F0F0",
   },
   countryOptionFlag: { fontSize: 24, marginRight: 12 },
-  countryOptionLabel: { flex: 1, fontSize: 14, color: '#333' },
-  countryOptionCode: { fontSize: 14, color: '#666', fontWeight: '500' },
+  countryOptionLabel: { flex: 1, fontSize: 14, color: "#333" },
+  countryOptionCode: { fontSize: 14, color: "#666", fontWeight: "500" },
   successModalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
   },
   successModalContent: {
-    width: '100%',
+    width: "100%",
     maxWidth: 400,
     borderRadius: 20,
-    overflow: 'hidden',
-    shadowColor: '#000',
+    overflow: "hidden",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
   },
-  successModalGradient: { padding: 32, alignItems: 'center' },
+  successModalGradient: { padding: 32, alignItems: "center" },
   successIconContainer: { marginBottom: 20 },
-  successTitle: { fontSize: 24, fontWeight: '700', color: '#FFFFFF', marginBottom: 12, textAlign: 'center' },
+  successTitle: {
+    fontSize: 24,
+    fontWeight: "700",
+    color: "#FFFFFF",
+    marginBottom: 12,
+    textAlign: "center",
+  },
   successMessage: {
     fontSize: 14,
-    color: '#FFFFFF',
-    textAlign: 'center',
+    color: "#FFFFFF",
+    textAlign: "center",
     marginBottom: 24,
     lineHeight: 20,
     opacity: 0.95,
   },
   successButton: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     paddingVertical: 14,
     paddingHorizontal: 32,
     borderRadius: 25,
-    width: '100%',
-    alignItems: 'center',
+    width: "100%",
+    alignItems: "center",
     marginBottom: 12,
   },
-  successButtonText: { fontSize: 16, fontWeight: '700', color: '#E25A17' },
+  successButtonText: { fontSize: 16, fontWeight: "700", color: "#E25A17" },
   successButtonSecondary: {
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
     paddingVertical: 14,
     paddingHorizontal: 32,
     borderRadius: 25,
-    width: '100%',
-    alignItems: 'center',
+    width: "100%",
+    alignItems: "center",
     borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.9)',
+    borderColor: "rgba(255,255,255,0.9)",
   },
-  successButtonSecondaryText: { fontSize: 16, fontWeight: '600', color: '#FFFFFF' },
-  qrScannerContainer: { flex: 1, backgroundColor: '#000' },
+  successButtonSecondaryText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#FFFFFF",
+  },
+  qrScannerContainer: { flex: 1, backgroundColor: "#000" },
   qrPermissionContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#000',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#000",
     padding: 20,
   },
-  qrPermissionText: { color: '#fff', fontSize: 18, fontWeight: '600', marginTop: 20, textAlign: 'center' },
-  qrPermissionSubText: { color: '#999', fontSize: 14, marginTop: 10, textAlign: 'center', paddingHorizontal: 40 },
-  qrCloseButton: { backgroundColor: '#E25A17', paddingHorizontal: 40, paddingVertical: 14, borderRadius: 25, marginTop: 20 },
-  qrCloseButtonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  qrCamera: { flex: 1, width: '100%' },
-  qrOverlay: { flex: 1, backgroundColor: 'transparent' },
+  qrPermissionText: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "600",
+    marginTop: 20,
+    textAlign: "center",
+  },
+  qrPermissionSubText: {
+    color: "#999",
+    fontSize: 14,
+    marginTop: 10,
+    textAlign: "center",
+    paddingHorizontal: 40,
+  },
+  qrCloseButton: {
+    backgroundColor: "#E25A17",
+    paddingHorizontal: 40,
+    paddingVertical: 14,
+    borderRadius: 25,
+    marginTop: 20,
+  },
+  qrCloseButtonText: { color: "#fff", fontSize: 16, fontWeight: "600" },
+  qrCamera: { flex: 1, width: "100%" },
+  qrOverlay: { flex: 1, backgroundColor: "transparent" },
   qrTopOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    justifyContent: 'flex-end',
-    alignItems: 'center',
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    justifyContent: "flex-end",
+    alignItems: "center",
     paddingBottom: 20,
   },
-  qrCenterRow: { flexDirection: 'row', height: Dimensions.get('window').width * 0.7 },
-  qrSideOverlay: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.7)' },
-  qrFrameContainer: {
-    width: Dimensions.get('window').width * 0.7,
-    height: Dimensions.get('window').width * 0.7,
-    position: 'relative' as const,
-    justifyContent: 'center',
-    alignItems: 'center',
+  qrCenterRow: {
+    flexDirection: "row",
+    height: Dimensions.get("window").width * 0.7,
   },
-  qrCorner: { position: 'absolute', width: 40, height: 40, borderColor: '#E25A17' },
+  qrSideOverlay: { flex: 1, backgroundColor: "rgba(0, 0, 0, 0.7)" },
+  qrFrameContainer: {
+    width: Dimensions.get("window").width * 0.7,
+    height: Dimensions.get("window").width * 0.7,
+    position: "relative" as const,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  qrCorner: {
+    position: "absolute",
+    width: 40,
+    height: 40,
+    borderColor: "#E25A17",
+  },
   qrTopLeft: { top: 0, left: 0, borderTopWidth: 4, borderLeftWidth: 4 },
   qrTopRight: { top: 0, right: 0, borderTopWidth: 4, borderRightWidth: 4 },
-  qrBottomLeft: { bottom: 0, left: 0, borderBottomWidth: 4, borderLeftWidth: 4 },
-  qrBottomRight: { bottom: 0, right: 0, borderBottomWidth: 4, borderRightWidth: 4 },
+  qrBottomLeft: {
+    bottom: 0,
+    left: 0,
+    borderBottomWidth: 4,
+    borderLeftWidth: 4,
+  },
+  qrBottomRight: {
+    bottom: 0,
+    right: 0,
+    borderBottomWidth: 4,
+    borderRightWidth: 4,
+  },
   qrBottomOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    justifyContent: "center",
+    alignItems: "center",
   },
-  qrInstructionText: { color: '#fff', fontSize: 16, textAlign: 'center', fontWeight: '500' },
-  qrCancelButton: { backgroundColor: 'rgba(255, 255, 255, 0.9)', paddingHorizontal: 40, paddingVertical: 14, borderRadius: 25 },
-  qrCancelButtonText: { color: '#E25A17', fontSize: 16, fontWeight: '600' },
-  qrScannedOverlay: { alignItems: 'center' },
-  qrScannedText: { color: '#fff', fontSize: 16, fontWeight: '600', marginTop: 10 },
+  qrInstructionText: {
+    color: "#fff",
+    fontSize: 16,
+    textAlign: "center",
+    fontWeight: "500",
+  },
+  qrCancelButton: {
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    paddingHorizontal: 40,
+    paddingVertical: 14,
+    borderRadius: 25,
+  },
+  qrCancelButtonText: { color: "#E25A17", fontSize: 16, fontWeight: "600" },
+  qrScannedOverlay: { alignItems: "center" },
+  qrScannedText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+    marginTop: 10,
+  },
   agentQRSection: {
     marginTop: 24,
-    backgroundColor: '#FFF5F0',
+    backgroundColor: "#FFF5F0",
     borderRadius: 12,
     padding: 16,
     borderWidth: 2,
-    borderColor: '#E25A17',
+    borderColor: "#E25A17",
   },
-  agentQRHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 },
-  agentQRTitle: { fontSize: 16, fontWeight: '700', color: '#E25A17' },
+  agentQRHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 16,
+  },
+  agentQRTitle: { fontSize: 16, fontWeight: "700", color: "#E25A17" },
   agentNumberCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 8,
     padding: 16,
     marginBottom: 12,
-    alignItems: 'center',
+    alignItems: "center",
   },
-  agentNumberLabel: { fontSize: 12, color: '#999', marginBottom: 4 },
-  agentNumberValue: { fontSize: 24, fontWeight: '700', color: '#E25A17', marginBottom: 8 },
-  agentNumberSubtext: { fontSize: 12, color: '#666', textAlign: 'center', lineHeight: 16 },
+  agentNumberLabel: { fontSize: 12, color: "#999", marginBottom: 4 },
+  agentNumberValue: {
+    fontSize: 24,
+    fontWeight: "700",
+    color: "#E25A17",
+    marginBottom: 8,
+  },
+  agentNumberSubtext: {
+    fontSize: 12,
+    color: "#666",
+    textAlign: "center",
+    lineHeight: 16,
+  },
   viewQRButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#E25A17',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#E25A17",
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 8,
     gap: 8,
   },
-  viewQRButtonText: { color: '#FFFFFF', fontSize: 14, fontWeight: '600' },
+  viewQRButtonText: { color: "#FFFFFF", fontSize: 14, fontWeight: "600" },
   agentQRModalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
   },
   agentQRModalContent: {
-    width: '100%',
+    width: "100%",
     maxWidth: 400,
     borderRadius: 20,
-    overflow: 'hidden',
-    shadowColor: '#000',
+    overflow: "hidden",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
   },
-  agentQRModalGradient: { padding: 24, alignItems: 'center' },
+  agentQRModalGradient: { padding: 24, alignItems: "center" },
   agentQRCloseButton: {
-    position: 'absolute',
+    position: "absolute",
     top: 16,
     right: 16,
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    justifyContent: "center",
+    alignItems: "center",
     zIndex: 10,
   },
   agentQRIconContainer: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 16,
     marginTop: 20,
   },
-  agentQRModalTitle: { fontSize: 22, fontWeight: '700', color: '#FFFFFF', marginBottom: 8, textAlign: 'center' },
-  agentQRModalSubtitle: { fontSize: 14, color: '#FFFFFF', opacity: 0.9, marginBottom: 24, textAlign: 'center' },
+  agentQRModalTitle: {
+    fontSize: 22,
+    fontWeight: "700",
+    color: "#FFFFFF",
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  agentQRModalSubtitle: {
+    fontSize: 14,
+    color: "#FFFFFF",
+    opacity: 0.9,
+    marginBottom: 24,
+    textAlign: "center",
+  },
   qrCodeContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     padding: 20,
     borderRadius: 16,
     marginBottom: 20,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
   },
   agentQRInfoCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
     borderRadius: 12,
     padding: 16,
-    width: '100%',
-    alignItems: 'center',
+    width: "100%",
+    alignItems: "center",
     marginBottom: 16,
   },
-  agentQRInfoLabel: { fontSize: 12, color: '#FFFFFF', opacity: 0.8, marginBottom: 4 },
-  agentQRInfoValue: { fontSize: 20, fontWeight: '700', color: '#FFFFFF', marginBottom: 4 },
-  agentQRInfoName: { fontSize: 14, color: '#FFFFFF', opacity: 0.9 },
+  agentQRInfoLabel: {
+    fontSize: 12,
+    color: "#FFFFFF",
+    opacity: 0.8,
+    marginBottom: 4,
+  },
+  agentQRInfoValue: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#FFFFFF",
+    marginBottom: 4,
+  },
+  agentQRInfoName: { fontSize: 14, color: "#FFFFFF", opacity: 0.9 },
   agentQRShareButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFFFFF",
     paddingVertical: 14,
     paddingHorizontal: 32,
     borderRadius: 25,
-    width: '100%',
+    width: "100%",
     gap: 8,
     marginBottom: 16,
   },
-  agentQRShareButtonText: { fontSize: 16, fontWeight: '700', color: '#E25A17' },
-  agentQRHelpText: { fontSize: 12, color: '#FFFFFF', opacity: 0.8, textAlign: 'center', lineHeight: 18 },
+  agentQRShareButtonText: { fontSize: 16, fontWeight: "700", color: "#E25A17" },
+  agentQRHelpText: {
+    fontSize: 12,
+    color: "#FFFFFF",
+    opacity: 0.8,
+    textAlign: "center",
+    lineHeight: 18,
+  },
   contactFieldsContainerMobile: {
-    flexDirection: 'column',
+    flexDirection: "column",
     gap: 16,
   },
   contactFieldsContainerDesktop: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 12,
+  },
+  inputError: {
+    borderColor: "#FF3B30",
+  },
+  errorText: {
+    color: "#FF3B30",
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 4,
   },
 });
