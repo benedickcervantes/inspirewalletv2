@@ -14,7 +14,7 @@
 const getBaseUrl = () => {
   const url = process.env.EXPO_PUBLIC_WALLET_BACKEND_URL;
   if (!url) return null;
-  return url.replace(/\/$/, '');
+  return url.replace(/\/$/, "");
 };
 
 const getWalletBackendUrl = getBaseUrl;
@@ -22,14 +22,14 @@ const getWalletBackendUrl = getBaseUrl;
 // Only set EXPO_PUBLIC_API_PREFIX=api if backend mounts ALL routes under /api (docs say no prefix)
 const getApiPrefix = () => {
   const p = process.env.EXPO_PUBLIC_API_PREFIX;
-  return p ? `/${p.replace(/^\/|\/$/g, '')}` : '';
+  return p ? `/${p.replace(/^\/|\/$/g, "")}` : "";
 };
 
 const buildUrl = (path) => {
   const base = getWalletBackendUrl();
   if (!base) return null;
   const prefix = getApiPrefix();
-  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  const cleanPath = path.startsWith("/") ? path : `/${path}`;
   return `${base}${prefix}${cleanPath}`;
 };
 
@@ -72,29 +72,41 @@ export async function getWallets(accessToken) {
  */
 export async function submitTimeDepositRequest(accessToken, body) {
   const base = getBaseUrl();
-  if (!base) return { success: false, error: 'Backend URL not configured. Set EXPO_PUBLIC_WALLET_BACKEND_URL in .env.' };
-  if (!accessToken) return { success: false, error: 'Not authenticated' };
+  if (!base)
+    return {
+      success: false,
+      error:
+        "Backend URL not configured. Set EXPO_PUBLIC_WALLET_BACKEND_URL in .env.",
+    };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
   const url = `${base}/time-deposits`;
   try {
-    if (__DEV__) console.log('[Deposit API] POST', url, body);
+    if (__DEV__) console.log("[Deposit API] POST", url, body);
     const res = await fetch(url, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify(body),
     });
     const data = await res.json().catch(() => ({}));
-    if (__DEV__) console.log('[Deposit API] Response', res.status, data);
+    if (__DEV__) console.log("[Deposit API] Response", res.status, data);
     if (!res.ok) {
-      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || `Request failed (${res.status})`;
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || `Request failed (${res.status})`;
       return { success: false, error: msg };
     }
     return { success: true, data: data.data ?? data };
   } catch (e) {
-    if (__DEV__) console.error('[Deposit API] Error', e);
-    return { success: false, error: e.message || 'Network error. Is the backend running? Check EXPO_PUBLIC_WALLET_BACKEND_URL and network.' };
+    if (__DEV__) console.error("[Deposit API] Error", e);
+    return {
+      success: false,
+      error:
+        e.message ||
+        "Network error. Is the backend running? Check EXPO_PUBLIC_WALLET_BACKEND_URL and network.",
+    };
   }
 }
 
@@ -117,41 +129,66 @@ function parseTimeDepositsResponse(data) {
  */
 export async function getTimeDeposits(accessToken) {
   const base = getBaseUrl();
-  if (!base) return { success: false, error: 'Backend URL not configured. Set EXPO_PUBLIC_WALLET_BACKEND_URL in .env.' };
-  if (!accessToken) return { success: false, error: 'Not authenticated' };
+  if (!base)
+    return {
+      success: false,
+      error:
+        "Backend URL not configured. Set EXPO_PUBLIC_WALLET_BACKEND_URL in .env.",
+    };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
 
   const url = `${base}/time-deposits`;
 
   try {
-    if (__DEV__) console.log('[TimeDeposits API] GET', url);
+    if (__DEV__) console.log("[TimeDeposits API] GET", url);
     const res = await fetch(url, {
-      method: 'GET',
+      method: "GET",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         Authorization: `Bearer ${accessToken}`,
       },
     });
     const data = await res.json().catch(() => ({}));
-    if (__DEV__) console.log('[TimeDeposits API] Response', res.status, Array.isArray(data) ? `array[${data.length}]` : typeof data);
+    if (__DEV__)
+      console.log(
+        "[TimeDeposits API] Response",
+        res.status,
+        Array.isArray(data) ? `array[${data.length}]` : typeof data,
+      );
 
     if (!res.ok) {
-      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || `Request failed (${res.status})`;
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || `Request failed (${res.status})`;
       return { success: false, error: msg };
     }
 
     const list = parseTimeDepositsResponse(data);
     const deposits = Array.isArray(list) ? list : [];
     if (__DEV__) {
-      console.log('[TimeDeposits API] Parsed count:', deposits.length, deposits[0] ? `first: status=${deposits[0].status} amount=${deposits[0].amount}` : '');
+      console.log(
+        "[TimeDeposits API] Parsed count:",
+        deposits.length,
+        deposits[0]
+          ? `first: status=${deposits[0].status} amount=${deposits[0].amount}`
+          : "",
+      );
       if (deposits[0]) {
         const d = deposits[0];
-        console.log('[TimeDeposits API] First deposit referrer:', d.referrer, 'commission:', d.commission ? 'present' : 'absent', 'keys:', d.referrer ? Object.keys(d.referrer) : []);
+        console.log(
+          "[TimeDeposits API] First deposit referrer:",
+          d.referrer,
+          "commission:",
+          d.commission ? "present" : "absent",
+          "keys:",
+          d.referrer ? Object.keys(d.referrer) : [],
+        );
       }
     }
     return { success: true, deposits };
   } catch (e) {
-    if (__DEV__) console.error('[TimeDeposits API] Error', e);
-    return { success: false, error: e.message || 'Network error' };
+    if (__DEV__) console.error("[TimeDeposits API] Error", e);
+    return { success: false, error: e.message || "Network error" };
   }
 }
 
@@ -164,29 +201,32 @@ export async function getTimeDeposits(accessToken) {
  */
 export async function getTimeDepositInterestRates(accessToken, contractType) {
   const base = getBaseUrl();
-  if (!base) return { success: false, error: 'Backend URL not configured.' };
-  if (!accessToken) return { success: false, error: 'Not authenticated' };
+  if (!base) return { success: false, error: "Backend URL not configured." };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
   let url = `${base}/time-deposits/interest-rates`;
   if (contractType) {
     url += `?contractType=${encodeURIComponent(contractType)}`;
   }
   try {
     const res = await fetch(url, {
-      method: 'GET',
+      method: "GET",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         Authorization: `Bearer ${accessToken}`,
       },
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      return { success: false, error: data.message || data.error || `Request failed (${res.status})` };
+      return {
+        success: false,
+        error: data.message || data.error || `Request failed (${res.status})`,
+      };
     }
     const tiers = Array.isArray(data) ? data : (data.tiers ?? data.data ?? []);
     return { success: true, tiers };
   } catch (e) {
-    if (__DEV__) console.error('[InterestRates API] Error', e);
-    return { success: false, error: e.message || 'Network error' };
+    if (__DEV__) console.error("[InterestRates API] Error", e);
+    return { success: false, error: e.message || "Network error" };
   }
 }
 
@@ -198,29 +238,39 @@ export async function getTimeDepositInterestRates(accessToken, contractType) {
  * @returns {Promise<{ success: boolean, data?: object, error?: string }>}
  */
 export async function submitTopUpRequest(accessToken, body) {
-  const url = buildUrl('/deposit-requests/top-up');
-  if (!url) return { success: false, error: 'Backend URL not configured. Set EXPO_PUBLIC_WALLET_BACKEND_URL in .env and restart the app.' };
-  if (!accessToken) return { success: false, error: 'Not authenticated' };
+  const url = buildUrl("/deposit-requests/top-up");
+  if (!url)
+    return {
+      success: false,
+      error:
+        "Backend URL not configured. Set EXPO_PUBLIC_WALLET_BACKEND_URL in .env and restart the app.",
+    };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
   try {
-    if (__DEV__) console.log('[Deposit API] POST', url, body);
+    if (__DEV__) console.log("[Deposit API] POST", url, body);
     const res = await fetch(url, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify(body),
     });
     const data = await res.json().catch(() => ({}));
-    if (__DEV__) console.log('[Deposit API] Response', res.status, data);
+    if (__DEV__) console.log("[Deposit API] Response", res.status, data);
     if (!res.ok) {
-      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || `Request failed (${res.status})`;
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || `Request failed (${res.status})`;
       return { success: false, error: msg };
     }
     return { success: true, data: data.data ?? data };
   } catch (e) {
-    if (__DEV__) console.error('[Deposit API] Error', e);
-    return { success: false, error: e.message || 'Network error. Is the backend running?' };
+    if (__DEV__) console.error("[Deposit API] Error", e);
+    return {
+      success: false,
+      error: e.message || "Network error. Is the backend running?",
+    };
   }
 }
 
@@ -232,29 +282,39 @@ export async function submitTopUpRequest(accessToken, body) {
  * @returns {Promise<{ success: boolean, data?: object, error?: string }>}
  */
 export async function submitStockInvestmentRequest(accessToken, body) {
-  const url = buildUrl('/deposit-requests/stock-investment');
-  if (!url) return { success: false, error: 'Backend URL not configured. Set EXPO_PUBLIC_WALLET_BACKEND_URL in .env and restart the app.' };
-  if (!accessToken) return { success: false, error: 'Not authenticated' };
+  const url = buildUrl("/deposit-requests/stock-investment");
+  if (!url)
+    return {
+      success: false,
+      error:
+        "Backend URL not configured. Set EXPO_PUBLIC_WALLET_BACKEND_URL in .env and restart the app.",
+    };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
   try {
-    if (__DEV__) console.log('[Deposit API] POST', url, body);
+    if (__DEV__) console.log("[Deposit API] POST", url, body);
     const res = await fetch(url, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify(body),
     });
     const data = await res.json().catch(() => ({}));
-    if (__DEV__) console.log('[Deposit API] Response', res.status, data);
+    if (__DEV__) console.log("[Deposit API] Response", res.status, data);
     if (!res.ok) {
-      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || `Request failed (${res.status})`;
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || `Request failed (${res.status})`;
       return { success: false, error: msg };
     }
     return { success: true, data: data.data ?? data };
   } catch (e) {
-    if (__DEV__) console.error('[Deposit API] Error', e);
-    return { success: false, error: e.message || 'Network error. Is the backend running?' };
+    if (__DEV__) console.error("[Deposit API] Error", e);
+    return {
+      success: false,
+      error: e.message || "Network error. Is the backend running?",
+    };
   }
 }
 
@@ -265,23 +325,27 @@ export async function submitStockInvestmentRequest(accessToken, body) {
  * @returns {Promise<{ success: boolean, requests?: Array, error?: string }>}
  */
 export async function getTopUpDepositRequests(accessToken) {
-  const url = buildUrl('/deposit-requests/top-up');
-  if (!url) return { success: false, error: 'Backend URL not configured' };
-  if (!accessToken) return { success: false, error: 'Not authenticated' };
+  const url = buildUrl("/deposit-requests/top-up");
+  if (!url) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
   try {
     const res = await fetch(url, {
-      method: 'GET',
+      method: "GET",
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || `Request failed (${res.status})`;
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || `Request failed (${res.status})`;
       return { success: false, error: msg };
     }
-    const list = Array.isArray(data) ? data : data.data ?? data.requests ?? [];
+    const list = Array.isArray(data)
+      ? data
+      : (data.data ?? data.requests ?? []);
     return { success: true, requests: list };
   } catch (e) {
-    return { success: false, error: e.message || 'Network error' };
+    return { success: false, error: e.message || "Network error" };
   }
 }
 
@@ -292,23 +356,27 @@ export async function getTopUpDepositRequests(accessToken) {
  * @returns {Promise<{ success: boolean, requests?: Array, error?: string }>}
  */
 export async function getStockInvestmentDepositRequests(accessToken) {
-  const url = buildUrl('/deposit-requests/stock-investment');
-  if (!url) return { success: false, error: 'Backend URL not configured' };
-  if (!accessToken) return { success: false, error: 'Not authenticated' };
+  const url = buildUrl("/deposit-requests/stock-investment");
+  if (!url) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
   try {
     const res = await fetch(url, {
-      method: 'GET',
+      method: "GET",
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || `Request failed (${res.status})`;
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || `Request failed (${res.status})`;
       return { success: false, error: msg };
     }
-    const list = Array.isArray(data) ? data : data.data ?? data.requests ?? [];
+    const list = Array.isArray(data)
+      ? data
+      : (data.data ?? data.requests ?? []);
     return { success: true, requests: list };
   } catch (e) {
-    return { success: false, error: e.message || 'Network error' };
+    return { success: false, error: e.message || "Network error" };
   }
 }
 
@@ -323,29 +391,39 @@ export async function getStockInvestmentDepositRequests(accessToken) {
  * @returns {Promise<{ success: boolean, data?: object, error?: string }>}
  */
 export async function submitWithdrawalRequest(accessToken, body) {
-  const url = buildUrl('/withdrawal-requests');
-  if (!url) return { success: false, error: 'Backend URL not configured. Set EXPO_PUBLIC_WALLET_BACKEND_URL in .env and restart the app.' };
-  if (!accessToken) return { success: false, error: 'Not authenticated' };
+  const url = buildUrl("/withdrawal-requests");
+  if (!url)
+    return {
+      success: false,
+      error:
+        "Backend URL not configured. Set EXPO_PUBLIC_WALLET_BACKEND_URL in .env and restart the app.",
+    };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
   try {
-    if (__DEV__) console.log('[Withdrawal API] POST', url, body);
+    if (__DEV__) console.log("[Withdrawal API] POST", url, body);
     const res = await fetch(url, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify(body),
     });
     const data = await res.json().catch(() => ({}));
-    if (__DEV__) console.log('[Withdrawal API] Response', res.status, data);
+    if (__DEV__) console.log("[Withdrawal API] Response", res.status, data);
     if (!res.ok) {
-      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || `Request failed (${res.status})`;
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || `Request failed (${res.status})`;
       return { success: false, error: msg };
     }
     return { success: true, data: data.data ?? data };
   } catch (e) {
-    if (__DEV__) console.error('[Withdrawal API] Error', e);
-    return { success: false, error: e.message || 'Network error. Is the backend running?' };
+    if (__DEV__) console.error("[Withdrawal API] Error", e);
+    return {
+      success: false,
+      error: e.message || "Network error. Is the backend running?",
+    };
   }
 }
 
@@ -358,29 +436,46 @@ export async function submitWithdrawalRequest(accessToken, body) {
  * @returns {Promise<{ success: boolean, data?: object, error?: string }>}
  */
 export async function submitBankingApplication(accessToken, body) {
-  const url = buildUrl('/applications/banking');
-  if (!url) return { success: false, error: 'Backend URL not configured. Set EXPO_PUBLIC_WALLET_BACKEND_URL in .env and restart the app.' };
-  if (!accessToken) return { success: false, error: 'Not authenticated' };
+  const url = buildUrl("/applications/banking");
+  if (!url)
+    return {
+      success: false,
+      error:
+        "Backend URL not configured. Set EXPO_PUBLIC_WALLET_BACKEND_URL in .env and restart the app.",
+    };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
   try {
-    if (__DEV__) console.log('[Banking API] POST', url, '(payload keys:', Object.keys(body), ')');
+    if (__DEV__)
+      console.log(
+        "[Banking API] POST",
+        url,
+        "(payload keys:",
+        Object.keys(body),
+        ")",
+      );
     const res = await fetch(url, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify(body),
     });
     const data = await res.json().catch(() => ({}));
-    if (__DEV__) console.log('[Banking API] Response', res.status, data);
+    if (__DEV__) console.log("[Banking API] Response", res.status, data);
     if (!res.ok) {
-      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || `Request failed (${res.status})`;
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || `Request failed (${res.status})`;
       return { success: false, error: msg };
     }
     return { success: true, data: data.data ?? data };
   } catch (e) {
-    if (__DEV__) console.error('[Banking API] Error', e);
-    return { success: false, error: e.message || 'Network error. Is the backend running?' };
+    if (__DEV__) console.error("[Banking API] Error", e);
+    return {
+      success: false,
+      error: e.message || "Network error. Is the backend running?",
+    };
   }
 }
 
@@ -392,28 +487,30 @@ export async function submitBankingApplication(accessToken, body) {
  * @returns {Promise<{ success: boolean, data?: object, error?: string }>}
  */
 export async function submitTravelProtection(accessToken, body) {
-  const url = buildUrl('/travel-protection');
-  if (!url) return { success: false, error: 'Backend URL not configured.' };
-  if (!accessToken) return { success: false, error: 'Not authenticated' };
+  const url = buildUrl("/travel-protection");
+  if (!url) return { success: false, error: "Backend URL not configured." };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
   try {
-    if (__DEV__) console.log('[TravelProtection API] POST', url);
+    if (__DEV__) console.log("[TravelProtection API] POST", url);
     const res = await fetch(url, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify(body),
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || `Request failed (${res.status})`;
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || `Request failed (${res.status})`;
       return { success: false, error: msg };
     }
     return { success: true, data: data.data ?? data };
   } catch (e) {
-    if (__DEV__) console.error('[TravelProtection API] Error', e);
-    return { success: false, error: e.message || 'Network error.' };
+    if (__DEV__) console.error("[TravelProtection API] Error", e);
+    return { success: false, error: e.message || "Network error." };
   }
 }
 
@@ -424,23 +521,27 @@ export async function submitTravelProtection(accessToken, body) {
  * @returns {Promise<{ success: boolean, requests?: Array, error?: string }>}
  */
 export async function getWithdrawalRequests(accessToken) {
-  const url = buildUrl('/withdrawal-requests');
-  if (!url) return { success: false, error: 'Backend URL not configured' };
-  if (!accessToken) return { success: false, error: 'Not authenticated' };
+  const url = buildUrl("/withdrawal-requests");
+  if (!url) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
   try {
     const res = await fetch(url, {
-      method: 'GET',
+      method: "GET",
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || `Request failed (${res.status})`;
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || `Request failed (${res.status})`;
       return { success: false, error: msg };
     }
-    const list = Array.isArray(data) ? data : data.data ?? data.requests ?? [];
+    const list = Array.isArray(data)
+      ? data
+      : (data.data ?? data.requests ?? []);
     return { success: true, requests: list };
   } catch (e) {
-    return { success: false, error: e.message || 'Network error' };
+    return { success: false, error: e.message || "Network error" };
   }
 }
 
@@ -452,21 +553,62 @@ export async function getWithdrawalRequests(accessToken) {
  */
 export async function login(email, password) {
   const base = getBaseUrl();
-  if (!base) return { success: false, error: 'Backend URL not configured' };
+  if (!base) return { success: false, error: "Backend URL not configured" };
   try {
     const res = await fetch(`${base}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email: email.trim(), password }),
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      const msg = Array.isArray(data.message) ? data.message[0] : data.message || `Request failed (${res.status})`;
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || `Request failed (${res.status})`;
       return { success: false, error: msg };
     }
-    return { success: true, access_token: data.access_token, user: data.user };
+    return {
+      success: true,
+      access_token: data.access_token,
+      user: data.user,
+      requiresPasswordReset: data.requiresPasswordReset === true,
+    };
   } catch (e) {
-    return { success: false, error: e.message || 'Network error. Is the backend running?' };
+    return {
+      success: false,
+      error: e.message || "Network error. Is the backend running?",
+    };
+  }
+}
+
+/**
+ * POST /auth/forgot-password
+ * Sends a one-time password-reset link to the user's registered email.
+ * @param {string} email
+ * @returns {{ success: boolean, message?: string, error?: string }}
+ */
+export async function forgotPassword(email) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  try {
+    const res = await fetch(`${base}/auth/forgot-password`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: email.trim() }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || `Request failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    return { success: true, message: data.message };
+  } catch (e) {
+    return {
+      success: false,
+      error: e.message || "Network error. Is the backend running?",
+    };
   }
 }
 
@@ -477,21 +619,26 @@ export async function login(email, password) {
  */
 export async function register(body) {
   const base = getBaseUrl();
-  if (!base) return { success: false, error: 'Backend URL not configured' };
+  if (!base) return { success: false, error: "Backend URL not configured" };
   try {
     const res = await fetch(`${base}/auth/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      const msg = Array.isArray(data.message) ? data.message[0] : data.message || `Request failed (${res.status})`;
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || `Request failed (${res.status})`;
       return { success: false, error: msg };
     }
     return { success: true, access_token: data.access_token, user: data.user };
   } catch (e) {
-    return { success: false, error: e.message || 'Network error. Is the backend running?' };
+    return {
+      success: false,
+      error: e.message || "Network error. Is the backend running?",
+    };
   }
 }
 
@@ -502,20 +649,20 @@ export async function register(body) {
  */
 export async function getMe(accessToken) {
   const base = getBaseUrl();
-  if (!base) return { success: false, error: 'Backend URL not configured' };
-  if (!accessToken) return { success: false, error: 'No token' };
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "No token" };
   try {
     const res = await fetch(`${base}/auth/me`, {
-      method: 'GET',
+      method: "GET",
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      return { success: false, error: data.message || 'Unauthorized' };
+      return { success: false, error: data.message || "Unauthorized" };
     }
     return { success: true, user: data };
   } catch (e) {
-    return { success: false, error: e.message || 'Network error' };
+    return { success: false, error: e.message || "Network error" };
   }
 }
 
@@ -528,25 +675,27 @@ export async function getMe(accessToken) {
  */
 export async function updateProfile(accessToken, body) {
   const base = getBaseUrl();
-  if (!base) return { success: false, error: 'Backend URL not configured' };
-  if (!accessToken) return { success: false, error: 'No token' };
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "No token" };
   try {
     const res = await fetch(`${base}/auth/profile`, {
-      method: 'PATCH',
+      method: "PATCH",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify(body),
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || 'Failed to update profile';
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || "Failed to update profile";
       return { success: false, error: msg };
     }
     return { success: true, user: data };
   } catch (e) {
-    return { success: false, error: e.message || 'Network error' };
+    return { success: false, error: e.message || "Network error" };
   }
 }
 
@@ -559,25 +708,27 @@ export async function updateProfile(accessToken, body) {
  */
 export async function setPasscode(accessToken, passcode) {
   const base = getBaseUrl();
-  if (!base) return { success: false, error: 'Backend URL not configured' };
-  if (!accessToken) return { success: false, error: 'No token' };
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "No token" };
   try {
     const res = await fetch(`${base}/auth/passcode`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify({ passcode }),
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      const msg = Array.isArray(data.message) ? data.message[0] : data.message || 'Failed to set passcode';
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || "Failed to set passcode";
       return { success: false, error: msg };
     }
     return { success: true };
   } catch (e) {
-    return { success: false, error: e.message || 'Network error' };
+    return { success: false, error: e.message || "Network error" };
   }
 }
 
@@ -589,24 +740,24 @@ export async function setPasscode(accessToken, passcode) {
  */
 export async function verifyPasscode(accessToken, passcode) {
   const base = getBaseUrl();
-  if (!base) return { success: false, error: 'Backend URL not configured' };
-  if (!accessToken) return { success: false, error: 'No token' };
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "No token" };
   try {
     const res = await fetch(`${base}/auth/verify-passcode`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify({ passcode }),
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      return { success: false, error: data.message || 'Passcode incorrect' };
+      return { success: false, error: data.message || "Passcode incorrect" };
     }
     return { success: true };
   } catch (e) {
-    return { success: false, error: e.message || 'Network error' };
+    return { success: false, error: e.message || "Network error" };
   }
 }
 
@@ -618,27 +769,33 @@ export async function verifyPasscode(accessToken, passcode) {
  * @param {string} newPasscode — exactly 4 digits
  * @returns {{ success: boolean, error?: string }}
  */
-export async function updatePasscode(accessToken, currentPasscode, newPasscode) {
+export async function updatePasscode(
+  accessToken,
+  currentPasscode,
+  newPasscode,
+) {
   const base = getBaseUrl();
-  if (!base) return { success: false, error: 'Backend URL not configured' };
-  if (!accessToken) return { success: false, error: 'No token' };
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "No token" };
   try {
     const res = await fetch(`${base}/auth/passcode`, {
-      method: 'PATCH',
+      method: "PATCH",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify({ currentPasscode, newPasscode }),
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      const msg = Array.isArray(data.message) ? data.message[0] : data.message || 'Failed to update passcode';
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || "Failed to update passcode";
       return { success: false, error: msg };
     }
     return { success: true };
   } catch (e) {
-    return { success: false, error: e.message || 'Network error' };
+    return { success: false, error: e.message || "Network error" };
   }
 }
 
@@ -651,20 +808,20 @@ export async function updatePasscode(accessToken, currentPasscode, newPasscode) 
  */
 export async function verifyEmail(email, otp) {
   const base = getBaseUrl();
-  if (!base) return { success: false, error: 'Backend URL not configured' };
+  if (!base) return { success: false, error: "Backend URL not configured" };
   try {
     const res = await fetch(`${base}/auth/verify-email`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email: email.trim(), otp }),
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      return { success: false, error: data.message || 'Verification failed' };
+      return { success: false, error: data.message || "Verification failed" };
     }
     return { success: true };
   } catch (e) {
-    return { success: false, error: e.message || 'Network error' };
+    return { success: false, error: e.message || "Network error" };
   }
 }
 
@@ -676,20 +833,20 @@ export async function verifyEmail(email, otp) {
  */
 export async function resendVerification(email) {
   const base = getBaseUrl();
-  if (!base) return { success: false, error: 'Backend URL not configured' };
+  if (!base) return { success: false, error: "Backend URL not configured" };
   try {
     const res = await fetch(`${base}/auth/resend-verification`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email: email.trim() }),
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      return { success: false, error: data.message || 'Failed to resend' };
+      return { success: false, error: data.message || "Failed to resend" };
     }
     return { success: true };
   } catch (e) {
-    return { success: false, error: e.message || 'Network error' };
+    return { success: false, error: e.message || "Network error" };
   }
 }
 
@@ -703,20 +860,23 @@ export async function resendVerification(email) {
  */
 export async function getReferralCode(accessToken) {
   const base = getBaseUrl();
-  if (!base) return { success: false, error: 'Backend URL not configured' };
-  if (!accessToken) return { success: false, error: 'No token' };
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "No token" };
   try {
     const res = await fetch(`${base}/referrals/code`, {
-      method: 'GET',
+      method: "GET",
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      return { success: false, error: data.message || 'Failed to get referral code' };
+      return {
+        success: false,
+        error: data.message || "Failed to get referral code",
+      };
     }
     return { success: true, referralCode: data.referralCode };
   } catch (e) {
-    return { success: false, error: e.message || 'Network error' };
+    return { success: false, error: e.message || "Network error" };
   }
 }
 
@@ -728,20 +888,23 @@ export async function getReferralCode(accessToken) {
  */
 export async function getReferralQrPayload(accessToken) {
   const base = getBaseUrl();
-  if (!base) return { success: false, error: 'Backend URL not configured' };
-  if (!accessToken) return { success: false, error: 'No token' };
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "No token" };
   try {
     const res = await fetch(`${base}/referrals/qr-payload`, {
-      method: 'GET',
+      method: "GET",
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      return { success: false, error: data.message || 'Failed to get referral QR payload' };
+      return {
+        success: false,
+        error: data.message || "Failed to get referral QR payload",
+      };
     }
     return { success: true, payload: data };
   } catch (e) {
-    return { success: false, error: e.message || 'Network error' };
+    return { success: false, error: e.message || "Network error" };
   }
 }
 
@@ -753,20 +916,23 @@ export async function getReferralQrPayload(accessToken) {
  */
 export async function getReferralTree(accessToken) {
   const base = getBaseUrl();
-  if (!base) return { success: false, error: 'Backend URL not configured' };
-  if (!accessToken) return { success: false, error: 'No token' };
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "No token" };
   try {
     const res = await fetch(`${base}/referrals/tree`, {
-      method: 'GET',
+      method: "GET",
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      return { success: false, error: data.message || 'Failed to get referral tree' };
+      return {
+        success: false,
+        error: data.message || "Failed to get referral tree",
+      };
     }
     return { success: true, tree: data };
   } catch (e) {
-    return { success: false, error: e.message || 'Network error' };
+    return { success: false, error: e.message || "Network error" };
   }
 }
 
@@ -778,25 +944,52 @@ export async function getReferralTree(accessToken) {
  */
 export async function generateReferralCode(accessToken) {
   const base = getBaseUrl();
-  if (!base) return { success: false, error: 'Backend URL not configured' };
-  if (!accessToken) return { success: false, error: 'No token' };
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "No token" };
   try {
     const res = await fetch(`${base}/referrals/generate`, {
-      method: 'POST',
+      method: "POST",
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      return { success: false, error: data.message || 'Failed to generate referral code' };
+      return {
+        success: false,
+        error: data.message || "Failed to generate referral code",
+      };
     }
     return { success: true, referralCode: data.referralCode };
   } catch (e) {
-    return { success: false, error: e.message || 'Network error' };
+    return { success: false, error: e.message || "Network error" };
   }
 }
 
 // --- Wallets API ---
 
+/**
+ * GET /wallets — requires JWT
+ * Returns all wallets for the authenticated user.
+ * @param {string} accessToken
+ * @returns {{ success: boolean, wallets?: Array, error?: string }}
+ */
+export async function getWallets(accessToken) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "No token" };
+  try {
+    const res = await fetch(`${base}/wallets`, {
+      method: "GET",
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      return { success: false, error: data.message || "Failed to get wallets" };
+    }
+    return { success: true, wallets: Array.isArray(data) ? data : [] };
+  } catch (e) {
+    return { success: false, error: e.message || "Network error" };
+  }
+}
 
 /**
  * POST /wallets/main — requires JWT
@@ -806,24 +999,24 @@ export async function generateReferralCode(accessToken) {
  */
 export async function getOrCreateMainWallet(accessToken) {
   const base = getBaseUrl();
-  if (!base) return { success: false, error: 'Backend URL not configured' };
-  if (!accessToken) return { success: false, error: 'No token' };
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "No token" };
   try {
     const res = await fetch(`${base}/wallets/main`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify({}),
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      return { success: false, error: data.message || 'Failed to get wallet' };
+      return { success: false, error: data.message || "Failed to get wallet" };
     }
     return { success: true, wallet: data };
   } catch (e) {
-    return { success: false, error: e.message || 'Network error' };
+    return { success: false, error: e.message || "Network error" };
   }
 }
 
@@ -839,27 +1032,32 @@ export async function getOrCreateMainWallet(accessToken) {
  */
 export async function getRecipientByAccountNumber(accessToken, accountNumber) {
   const base = getBaseUrl();
-  if (!base) return { success: false, error: 'Backend URL not configured' };
-  if (!accessToken) return { success: false, error: 'No token' };
-  const normalized = String(accountNumber || '').replace(/\s/g, '').trim();
-  if (!normalized) return { success: false, error: 'Account number is required' };
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "No token" };
+  const normalized = String(accountNumber || "")
+    .replace(/\s/g, "")
+    .trim();
+  if (!normalized)
+    return { success: false, error: "Account number is required" };
   try {
     const url = `${base}/transfers/recipient-by-account-number?accountNumber=${encodeURIComponent(normalized)}`;
     const res = await fetch(url, {
-      method: 'GET',
+      method: "GET",
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     const data = await res.json().catch(() => ({}));
     if (res.status === 404) {
-      return { success: false, error: 'Recipient not found', notFound: true };
+      return { success: false, error: "Recipient not found", notFound: true };
     }
     if (!res.ok) {
-      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || 'Failed to lookup recipient';
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || "Failed to lookup recipient";
       return { success: false, error: msg };
     }
     return { success: true, data: data.data ?? data };
   } catch (e) {
-    return { success: false, error: e.message || 'Network error' };
+    return { success: false, error: e.message || "Network error" };
   }
 }
 
@@ -870,21 +1068,26 @@ export async function getRecipientByAccountNumber(accessToken, accountNumber) {
  */
 export async function getBeneficiaries(accessToken) {
   const base = getBaseUrl();
-  if (!base) return { success: false, error: 'Backend URL not configured' };
-  if (!accessToken) return { success: false, error: 'No token' };
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "No token" };
   try {
     const res = await fetch(`${base}/beneficiaries`, {
-      method: 'GET',
+      method: "GET",
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      return { success: false, error: data.message || 'Failed to get beneficiaries' };
+      return {
+        success: false,
+        error: data.message || "Failed to get beneficiaries",
+      };
     }
-    const list = Array.isArray(data) ? data : data.data ?? data.beneficiaries ?? [];
+    const list = Array.isArray(data)
+      ? data
+      : (data.data ?? data.beneficiaries ?? []);
     return { success: true, beneficiaries: list };
   } catch (e) {
-    return { success: false, error: e.message || 'Network error' };
+    return { success: false, error: e.message || "Network error" };
   }
 }
 
@@ -896,25 +1099,27 @@ export async function getBeneficiaries(accessToken) {
  */
 export async function createBeneficiary(accessToken, body) {
   const base = getBaseUrl();
-  if (!base) return { success: false, error: 'Backend URL not configured' };
-  if (!accessToken) return { success: false, error: 'No token' };
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "No token" };
   try {
     const res = await fetch(`${base}/beneficiaries`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify(body),
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || 'Failed to create beneficiary';
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || "Failed to create beneficiary";
       return { success: false, error: msg };
     }
     return { success: true, data: data.data ?? data };
   } catch (e) {
-    return { success: false, error: e.message || 'Network error' };
+    return { success: false, error: e.message || "Network error" };
   }
 }
 
@@ -926,25 +1131,27 @@ export async function createBeneficiary(accessToken, body) {
  */
 export async function submitTransfer(accessToken, body) {
   const base = getBaseUrl();
-  if (!base) return { success: false, error: 'Backend URL not configured' };
-  if (!accessToken) return { success: false, error: 'No token' };
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "No token" };
   try {
     const res = await fetch(`${base}/transfers`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify(body),
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || 'Transfer failed';
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || "Transfer failed";
       return { success: false, error: msg };
     }
     return { success: true, data: data.data ?? data };
   } catch (e) {
-    return { success: false, error: e.message || 'Network error' };
+    return { success: false, error: e.message || "Network error" };
   }
 }
 
@@ -959,27 +1166,30 @@ export async function submitTransfer(accessToken, body) {
  */
 export async function getTransactions(accessToken, opts = {}) {
   const base = getBaseUrl();
-  if (!base) return { success: false, error: 'Backend URL not configured' };
-  if (!accessToken) return { success: false, error: 'No token' };
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "No token" };
   try {
     const params = new URLSearchParams();
-    if (opts.walletId) params.set('walletId', opts.walletId);
-    if (opts.limit != null) params.set('limit', String(opts.limit));
-    if (opts.cursor) params.set('cursor', opts.cursor);
-    if (opts.type) params.set('type', opts.type);
+    if (opts.walletId) params.set("walletId", opts.walletId);
+    if (opts.limit != null) params.set("limit", String(opts.limit));
+    if (opts.cursor) params.set("cursor", opts.cursor);
+    if (opts.type) params.set("type", opts.type);
     const qs = params.toString();
-    const url = `${base}/transactions${qs ? `?${qs}` : ''}`;
+    const url = `${base}/transactions${qs ? `?${qs}` : ""}`;
     const res = await fetch(url, {
-      method: 'GET',
+      method: "GET",
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      return { success: false, error: data.message || 'Failed to get transactions' };
+      return {
+        success: false,
+        error: data.message || "Failed to get transactions",
+      };
     }
     return { success: true, transactions: Array.isArray(data) ? data : [] };
   } catch (e) {
-    return { success: false, error: e.message || 'Network error' };
+    return { success: false, error: e.message || "Network error" };
   }
 }
 
@@ -994,29 +1204,31 @@ export async function getTransactions(accessToken, opts = {}) {
  */
 export async function sendMessage(accessToken, content) {
   const base = getBaseUrl();
-  if (!base) return { success: false, error: 'Backend URL not configured' };
-  if (!accessToken) return { success: false, error: 'Not authenticated' };
-  const trimmed = typeof content === 'string' ? content.trim() : '';
-  if (!trimmed) return { success: false, error: 'Message content is required' };
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
+  const trimmed = typeof content === "string" ? content.trim() : "";
+  if (!trimmed) return { success: false, error: "Message content is required" };
   try {
     const url = `${base}/messages`;
     const res = await fetch(url, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify({ content: trimmed }),
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || `Request failed (${res.status})`;
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || `Request failed (${res.status})`;
       return { success: false, error: msg };
     }
     return { success: true, id: data.id };
   } catch (e) {
-    if (__DEV__) console.error('[Messages API] Error', e);
-    return { success: false, error: e.message || 'Network error' };
+    if (__DEV__) console.error("[Messages API] Error", e);
+    return { success: false, error: e.message || "Network error" };
   }
 }
 
@@ -1029,24 +1241,26 @@ export async function sendMessage(accessToken, content) {
  */
 export async function getMessages(accessToken, opts = {}) {
   const base = getBaseUrl();
-  if (!base) return { success: false, error: 'Backend URL not configured' };
-  if (!accessToken) return { success: false, error: 'Not authenticated' };
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
   try {
     const params = new URLSearchParams();
-    if (opts.page != null) params.set('page', String(opts.page));
-    if (opts.limit != null) params.set('limit', String(opts.limit));
+    if (opts.page != null) params.set("page", String(opts.page));
+    if (opts.limit != null) params.set("limit", String(opts.limit));
     const qs = params.toString();
-    const url = `${base}/messages${qs ? `?${qs}` : ''}`;
+    const url = `${base}/messages${qs ? `?${qs}` : ""}`;
     const res = await fetch(url, {
-      method: 'GET',
+      method: "GET",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         Authorization: `Bearer ${accessToken}`,
       },
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || `Request failed (${res.status})`;
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || `Request failed (${res.status})`;
       return { success: false, error: msg };
     }
     return {
@@ -1055,8 +1269,8 @@ export async function getMessages(accessToken, opts = {}) {
       pagination: data.pagination ?? {},
     };
   } catch (e) {
-    if (__DEV__) console.error('[Messages API] Error', e);
-    return { success: false, error: e.message || 'Network error' };
+    if (__DEV__) console.error("[Messages API] Error", e);
+    return { success: false, error: e.message || "Network error" };
   }
 }
 
@@ -1069,27 +1283,29 @@ export async function getMessages(accessToken, opts = {}) {
  */
 export async function markMessageAsRead(accessToken, messageId) {
   const base = getBaseUrl();
-  if (!base) return { success: false, error: 'Backend URL not configured' };
-  if (!accessToken) return { success: false, error: 'Not authenticated' };
-  if (!messageId) return { success: false, error: 'Message ID required' };
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
+  if (!messageId) return { success: false, error: "Message ID required" };
   try {
     const url = `${base}/messages/${encodeURIComponent(messageId)}/read`;
     const res = await fetch(url, {
-      method: 'PATCH',
+      method: "PATCH",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         Authorization: `Bearer ${accessToken}`,
       },
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || `Request failed (${res.status})`;
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || `Request failed (${res.status})`;
       return { success: false, error: msg };
     }
     return { success: true };
   } catch (e) {
-    if (__DEV__) console.error('[Messages API] Error', e);
-    return { success: false, error: e.message || 'Network error' };
+    if (__DEV__) console.error("[Messages API] Error", e);
+    return { success: false, error: e.message || "Network error" };
   }
 }
 
@@ -1101,26 +1317,28 @@ export async function markMessageAsRead(accessToken, messageId) {
  */
 export async function markAllMessagesAsRead(accessToken) {
   const base = getBaseUrl();
-  if (!base) return { success: false, error: 'Backend URL not configured' };
-  if (!accessToken) return { success: false, error: 'Not authenticated' };
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
   try {
     const url = `${base}/messages/read-all`;
     const res = await fetch(url, {
-      method: 'PATCH',
+      method: "PATCH",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         Authorization: `Bearer ${accessToken}`,
       },
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || `Request failed (${res.status})`;
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || `Request failed (${res.status})`;
       return { success: false, error: msg };
     }
     return { success: true, count: data.count ?? 0 };
   } catch (e) {
-    if (__DEV__) console.error('[Messages API] Error', e);
-    return { success: false, error: e.message || 'Network error' };
+    if (__DEV__) console.error("[Messages API] Error", e);
+    return { success: false, error: e.message || "Network error" };
   }
 }
 
@@ -1134,30 +1352,32 @@ export async function markAllMessagesAsRead(accessToken) {
  */
 export async function editMessage(accessToken, messageId, content) {
   const base = getBaseUrl();
-  if (!base) return { success: false, error: 'Backend URL not configured' };
-  if (!accessToken) return { success: false, error: 'Not authenticated' };
-  if (!messageId) return { success: false, error: 'Message ID required' };
-  const trimmed = typeof content === 'string' ? content.trim() : '';
-  if (!trimmed) return { success: false, error: 'Message content is required' };
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
+  if (!messageId) return { success: false, error: "Message ID required" };
+  const trimmed = typeof content === "string" ? content.trim() : "";
+  if (!trimmed) return { success: false, error: "Message content is required" };
   try {
     const url = `${base}/messages/${encodeURIComponent(messageId)}`;
     const res = await fetch(url, {
-      method: 'PATCH',
+      method: "PATCH",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify({ content: trimmed }),
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || `Request failed (${res.status})`;
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || `Request failed (${res.status})`;
       return { success: false, error: msg };
     }
     return { success: true };
   } catch (e) {
-    if (__DEV__) console.error('[Messages API] Error', e);
-    return { success: false, error: e.message || 'Network error' };
+    if (__DEV__) console.error("[Messages API] Error", e);
+    return { success: false, error: e.message || "Network error" };
   }
 }
 
@@ -1169,30 +1389,36 @@ export async function editMessage(accessToken, messageId, content) {
  * @param {boolean} deleteForEveryone — If true, deletes for all users; if false, only for sender
  * @returns {{ success: boolean, error?: string }}
  */
-export async function deleteMessage(accessToken, messageId, deleteForEveryone = false) {
+export async function deleteMessage(
+  accessToken,
+  messageId,
+  deleteForEveryone = false,
+) {
   const base = getBaseUrl();
-  if (!base) return { success: false, error: 'Backend URL not configured' };
-  if (!accessToken) return { success: false, error: 'Not authenticated' };
-  if (!messageId) return { success: false, error: 'Message ID required' };
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
+  if (!messageId) return { success: false, error: "Message ID required" };
   try {
     const url = `${base}/messages/${encodeURIComponent(messageId)}`;
     const res = await fetch(url, {
-      method: 'DELETE',
+      method: "DELETE",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify({ deleteForEveryone }),
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || `Request failed (${res.status})`;
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || `Request failed (${res.status})`;
       return { success: false, error: msg };
     }
     return { success: true };
   } catch (e) {
-    if (__DEV__) console.error('[Messages API] Error', e);
-    return { success: false, error: e.message || 'Network error' };
+    if (__DEV__) console.error("[Messages API] Error", e);
+    return { success: false, error: e.message || "Network error" };
   }
 }
 
@@ -1207,21 +1433,23 @@ export async function deleteMessage(accessToken, messageId, deleteForEveryone = 
  */
 export async function getUserActivity(adminToken, userId) {
   const base = getBaseUrl();
-  if (!base) return { success: false, error: 'Backend URL not configured' };
-  if (!adminToken) return { success: false, error: 'Not authenticated' };
-  if (!userId) return { success: false, error: 'User ID required' };
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!adminToken) return { success: false, error: "Not authenticated" };
+  if (!userId) return { success: false, error: "User ID required" };
   try {
     const url = `${base}/user-activity/${encodeURIComponent(userId)}`;
     const res = await fetch(url, {
-      method: 'GET',
+      method: "GET",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         Authorization: `Bearer ${adminToken}`,
       },
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || `Request failed (${res.status})`;
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || `Request failed (${res.status})`;
       return { success: false, error: msg };
     }
     return {
@@ -1232,8 +1460,8 @@ export async function getUserActivity(adminToken, userId) {
       lastLoginAt: data.lastLoginAt,
     };
   } catch (e) {
-    if (__DEV__) console.error('[UserActivity API] Error', e);
-    return { success: false, error: e.message || 'Network error' };
+    if (__DEV__) console.error("[UserActivity API] Error", e);
+    return { success: false, error: e.message || "Network error" };
   }
 }
 
@@ -1246,29 +1474,32 @@ export async function getUserActivity(adminToken, userId) {
  */
 export async function getBulkUserActivity(adminToken, userIds) {
   const base = getBaseUrl();
-  if (!base) return { success: false, error: 'Backend URL not configured' };
-  if (!adminToken) return { success: false, error: 'Not authenticated' };
-  if (!Array.isArray(userIds) || userIds.length === 0) return { success: false, error: 'User IDs required' };
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!adminToken) return { success: false, error: "Not authenticated" };
+  if (!Array.isArray(userIds) || userIds.length === 0)
+    return { success: false, error: "User IDs required" };
   try {
-    const idsParam = userIds.filter(Boolean).join(',');
-    if (!idsParam) return { success: false, error: 'User IDs required' };
+    const idsParam = userIds.filter(Boolean).join(",");
+    if (!idsParam) return { success: false, error: "User IDs required" };
     const url = `${base}/user-activity/bulk?userIds=${encodeURIComponent(idsParam)}`;
     const res = await fetch(url, {
-      method: 'GET',
+      method: "GET",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         Authorization: `Bearer ${adminToken}`,
       },
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || `Request failed (${res.status})`;
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || `Request failed (${res.status})`;
       return { success: false, error: msg };
     }
     return { success: true, activities: data };
   } catch (e) {
-    if (__DEV__) console.error('[UserActivity API] Error', e);
-    return { success: false, error: e.message || 'Network error' };
+    if (__DEV__) console.error("[UserActivity API] Error", e);
+    return { success: false, error: e.message || "Network error" };
   }
 }
 

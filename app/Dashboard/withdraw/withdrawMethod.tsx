@@ -1,26 +1,21 @@
-import React, { useState, useEffect } from "react";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
+import { LinearGradient } from "expo-linear-gradient";
+import React, { useState } from "react";
 import {
-  StyleSheet,
-  Text,
-  View,
-  TouchableOpacity,
-  ScrollView,
-  Modal,
-  Image,
+    Image,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useNavigation } from "@react-navigation/native";
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
-import { auth, firestore } from "../../../configs/firebase";
-import { doc, getDoc } from "firebase/firestore";
 
 export default function WithdrawRequest() {
   const navigation = useNavigation();
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
-  const [showAlertModal, setShowAlertModal] = useState(false);
-  const [alertConfig, setAlertConfig] = useState<{ title: string; message: string }>({ title: "", message: "" });
-  const [userData, setUserData] = useState<Record<string, unknown> | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const withdrawalMethods = [
     {
@@ -39,37 +34,15 @@ export default function WithdrawRequest() {
     },
   ];
 
-  useEffect(() => {
-    fetchUserData();
-  }, []);
-
-  const fetchUserData = async () => {
-    if (!auth || !firestore) return;
-    try {
-      const user = auth.currentUser;
-      if (user) {
-        const userDocRef = doc(firestore, "users", user.uid);
-        const userDocSnap = await getDoc(userDocRef);
-
-        if (userDocSnap.exists()) {
-          const data = userDocSnap.data() as Record<string, unknown>;
-          setUserData(data);
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching user data:", error);
-    }
-  };
-
   const handleContinue = () => {
     if (!selectedMethod) {
-      setAlertConfig({
-        title: "Selection Required",
-        message: "Please select a withdrawal method to continue"
+      setErrors({
+        selectedMethod: "Please select a withdrawal method to continue",
       });
-      setShowAlertModal(true);
       return;
     }
+
+    setErrors({});
 
     // Navigate to next step based on selected method
     if (selectedMethod === "local-bank") {
@@ -119,7 +92,11 @@ export default function WithdrawRequest() {
         >
           {/* Icon Circle */}
           <View style={styles.iconCircle}>
-            <MaterialCommunityIcons name="credit-card-outline" size={48} color="#FFFFFF" />
+            <MaterialCommunityIcons
+              name="credit-card-outline"
+              size={48}
+              color="#FFFFFF"
+            />
           </View>
 
           {/* Title */}
@@ -135,9 +112,14 @@ export default function WithdrawRequest() {
                 key={method.id}
                 style={[
                   styles.methodOption,
-                  selectedMethod === method.id && styles.methodOptionSelected
+                  selectedMethod === method.id && styles.methodOptionSelected,
                 ]}
-                onPress={() => setSelectedMethod(method.id)}
+                onPress={() => {
+                  setSelectedMethod(method.id);
+                  if (errors.selectedMethod) {
+                    setErrors({});
+                  }
+                }}
                 activeOpacity={0.7}
               >
                 <View style={styles.methodIconBox}>
@@ -149,7 +131,11 @@ export default function WithdrawRequest() {
                     />
                   ) : (
                     <MaterialCommunityIcons
-                      name={method.icon as React.ComponentProps<typeof MaterialCommunityIcons>['name']}
+                      name={
+                        method.icon as React.ComponentProps<
+                          typeof MaterialCommunityIcons
+                        >["name"]
+                      }
                       size={28}
                       color="#E25A17"
                     />
@@ -166,6 +152,9 @@ export default function WithdrawRequest() {
                 </View>
               </TouchableOpacity>
             ))}
+            {errors.selectedMethod && (
+              <Text style={styles.errorText}>{errors.selectedMethod}</Text>
+            )}
           </View>
 
           {/* Action Buttons */}
@@ -196,32 +185,6 @@ export default function WithdrawRequest() {
 
           <View style={styles.bottomPadding} />
         </ScrollView>
-
-        {/* Custom Alert Modal */}
-        <Modal
-          visible={showAlertModal}
-          transparent={true}
-          animationType="fade"
-          onRequestClose={() => setShowAlertModal(false)}
-        >
-          <View style={styles.alertOverlay}>
-            <LinearGradient
-              colors={["#E15816", "#F48F38"]}
-              style={styles.alertContainer}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 0, y: 1 }}
-            >
-              <Text style={styles.alertTitle}>{alertConfig.title}</Text>
-              <Text style={styles.alertMessage}>{alertConfig.message}</Text>
-              <TouchableOpacity
-                style={styles.alertButton}
-                onPress={() => setShowAlertModal(false)}
-              >
-                <Text style={styles.alertButtonText}>OK</Text>
-              </TouchableOpacity>
-            </LinearGradient>
-          </View>
-        </Modal>
       </SafeAreaView>
     </View>
   );
@@ -339,6 +302,12 @@ const styles = StyleSheet.create({
   methodOptionSelected: {
     borderColor: "#E25A17",
     backgroundColor: "#FFF5F0",
+  },
+  errorText: {
+    color: "#FF3B30",
+    fontSize: 14,
+    textAlign: "center",
+    marginTop: 8,
   },
   methodIconBox: {
     width: 56,

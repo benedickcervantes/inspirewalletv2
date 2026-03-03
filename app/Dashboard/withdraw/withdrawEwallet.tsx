@@ -2,10 +2,9 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { doc, getDoc } from "firebase/firestore";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   KeyboardAvoidingView,
-  Modal,
   Platform,
   ScrollView,
   StyleSheet,
@@ -18,6 +17,20 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { auth, firestore } from "../../../configs/firebase";
 import { useLanguage } from "../../../context/LanguageContext";
 
+const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+const isValidEmail = (email: string) =>
+  EMAIL_REGEX.test((email || "").trim().toLowerCase());
+
+const filterEmailInput = (text: string) =>
+  text.replace(/[^A-Za-z0-9.@\-_]/g, "");
+
+const filterNameInput = (text: string) => text.replace(/[^A-Za-zÑñ ]/g, "");
+
+const filterPhoneInput = (text: string) => text.replace(/[^0-9]/g, "");
+
+const capitalizeWords = (text: string) =>
+  text.replace(/\b\w/g, (char) => char.toUpperCase());
+
 export default function EWalletWithdrawal() {
   const navigation = useNavigation();
   const { t } = useLanguage();
@@ -26,9 +39,10 @@ export default function EWalletWithdrawal() {
   const [accountName, setAccountName] = useState("");
   const [withdrawalAmount, setWithdrawalAmount] = useState("");
   const [emailAddress, setEmailAddress] = useState("");
-  const [showAlertModal, setShowAlertModal] = useState(false);
-  const [alertConfig, setAlertConfig] = useState<{ title: string; message: string }>({ title: "", message: "" });
-  const [userData, setUserData] = useState<Record<string, unknown> | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [userData, setUserData] = useState<Record<string, unknown> | null>(
+    null,
+  );
 
   const walletTypes = [
     {
@@ -45,20 +59,18 @@ export default function EWalletWithdrawal() {
     },
   ];
 
-  useEffect(() => {
-    fetchUserData();
-  }, []);
-
-  const fetchUserData = async () => {
+  const fetchUserData = useCallback(async () => {
+    if (!auth || !firestore) return;
     try {
-      if (!auth || !firestore) return;
       const user = auth.currentUser;
       if (user) {
         const userDocRef = doc(firestore, "users", user.uid);
         const userDocSnap = await getDoc(userDocRef);
 
         if (userDocSnap.exists()) {
-          const data = userDocSnap.data() as Record<string, unknown> & { email?: string };
+          const data = userDocSnap.data() as Record<string, unknown> & {
+            email?: string;
+          };
           setUserData(data);
           setEmailAddress(data.email || "");
         }
@@ -66,59 +78,53 @@ export default function EWalletWithdrawal() {
     } catch (error) {
       console.error("Error fetching user data:", error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchUserData();
+  }, [fetchUserData]);
 
   const handleContinue = () => {
-    // Validation
+    const newErrors: Record<string, string> = {};
+
     if (!selectedWallet) {
-      setAlertConfig({
-        title: "Selection Required",
-        message: "Please select an e-wallet type"
-      });
-      setShowAlertModal(true);
+      newErrors.selectedWallet = "Please select an e-wallet type";
+    }
+
+    if (!accountNumber.trim())
+      newErrors.accountNumber = "Wallet account number is required";
+    if (!accountName.trim())
+      newErrors.accountName = "Wallet account name is required";
+
+    const amountStr = withdrawalAmount.trim();
+    if (!amountStr) {
+      newErrors.withdrawalAmount = "Withdrawal amount is required";
+    } else {
+      const amountNum = parseFloat(amountStr);
+      if (isNaN(amountNum) || amountNum <= 0) {
+        newErrors.withdrawalAmount =
+          "Please enter a valid amount greater than 0";
+      } else {
+        const availableBalance = (userData?.availBalanceAmount as number) || 0;
+        if (amountNum > availableBalance) {
+          newErrors.withdrawalAmount = `Insufficient balance. Available: ₱${availableBalance.toLocaleString()}`;
+        }
+      }
+    }
+
+    const email = emailAddress.trim();
+    if (!email) {
+      newErrors.emailAddress = "Email address is required";
+    } else if (!isValidEmail(email)) {
+      newErrors.emailAddress = "Please enter a valid email address";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
 
-    if (!accountNumber || !accountName) {
-      setAlertConfig({
-        title: "Missing Information",
-        message: "Please fill in all required fields"
-      });
-      setShowAlertModal(true);
-      return;
-    }
-
-    if (!withdrawalAmount || !emailAddress) {
-      setAlertConfig({
-        title: "Missing Information",
-        message: "Please enter withdrawal amount and email address"
-      });
-      setShowAlertModal(true);
-      return;
-    }
-
-    const amountNum = parseFloat(withdrawalAmount);
-    if (isNaN(amountNum) || amountNum <= 0) {
-      setAlertConfig({
-        title: "Invalid Amount",
-        message: "Please enter a valid withdrawal amount"
-      });
-      setShowAlertModal(true);
-      return;
-    }
-
-    // Check if withdrawal amount exceeds available balance
-    const availableBalance = (userData?.availBalanceAmount as number) || 0;
-    const requestedAmount = parseFloat(withdrawalAmount);
-
-    if (requestedAmount > availableBalance) {
-      setAlertConfig({
-        title: "Insufficient Balance",
-        message: `Your withdrawal amount (₱${requestedAmount.toLocaleString()}) exceeds your available balance (₱${availableBalance.toLocaleString()}). Please enter a lower amount.`
-      });
-      setShowAlertModal(true);
-      return;
-    }
+    setErrors({});
 
     navigation.navigate("WithdrawEwalletConfirm", {
       method: "e-wallet",
@@ -172,159 +178,213 @@ export default function EWalletWithdrawal() {
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
         >
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-          keyboardDismissMode="on-drag"
-        >
-          {/* Title */}
-          <View style={styles.titleContainer}>
-            <Text style={styles.title}>{t("withdraw.walletInformation")}</Text>
-            <Text style={styles.subtitle}>{t("withdraw.fromAvailableBalance")}</Text>
-          </View>
-
-          {/* Select E-Wallet Type */}
-          <View style={styles.sectionContainer}>
-            <Text style={styles.sectionTitle}>Select E-Wallet Type</Text>
-
-            <View style={styles.walletOptionsContainer}>
-              {walletTypes.map((wallet) => (
-                <TouchableOpacity
-                  key={wallet.id}
-                  style={[
-                    styles.walletOption,
-                    selectedWallet === wallet.id && styles.walletOptionSelected
-                  ]}
-                  onPress={() => setSelectedWallet(wallet.id)}
-                  activeOpacity={0.7}
-                >
-                  <View style={styles.walletIconBox}>
-                    <MaterialCommunityIcons
-                      name={wallet.icon}
-                      size={32}
-                      color="#E25A17"
-                    />
-                  </View>
-                  <Text style={styles.walletName}>{wallet.name}</Text>
-                </TouchableOpacity>
-              ))}
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+          >
+            {/* Title */}
+            <View style={styles.titleContainer}>
+              <Text style={styles.title}>
+                {t("withdraw.walletInformation")}
+              </Text>
+              <Text style={styles.subtitle}>
+                {t("withdraw.fromAvailableBalance")}
+              </Text>
             </View>
-          </View>
 
-          {/* Wallet Account Number */}
-          <View style={styles.inputContainer}>
-            <View style={styles.labelWithIcon}>
-              <MaterialCommunityIcons name="wallet" size={20} color="#E25A17" />
-              <Text style={styles.inputLabel}>Wallet Account Number</Text>
-            </View>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter wallet account number"
-              placeholderTextColor="#CCC"
-              value={accountNumber}
-              onChangeText={setAccountNumber}
-              keyboardType="numeric"
-            />
-          </View>
+            {/* Select E-Wallet Type */}
+            <View style={styles.sectionContainer}>
+              <Text style={styles.sectionTitle}>Select E-Wallet Type</Text>
 
-          {/* Wallet Account Name */}
-          <View style={styles.inputContainer}>
-            <View style={styles.labelWithIcon}>
-              <MaterialCommunityIcons name="account" size={20} color="#E25A17" />
-              <Text style={styles.inputLabel}>Wallet Account Name</Text>
+              <View style={styles.walletOptionsContainer}>
+                {walletTypes.map((wallet) => (
+                  <TouchableOpacity
+                    key={wallet.id}
+                    style={[
+                      styles.walletOption,
+                      selectedWallet === wallet.id &&
+                        styles.walletOptionSelected,
+                    ]}
+                    onPress={() => {
+                      setSelectedWallet(wallet.id);
+                      if (errors.selectedWallet) {
+                        setErrors((prev) => {
+                          const { selectedWallet, ...rest } = prev;
+                          return rest;
+                        });
+                      }
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <View style={styles.walletIconBox}>
+                      <MaterialCommunityIcons
+                        name={wallet.icon}
+                        size={32}
+                        color="#E25A17"
+                      />
+                    </View>
+                    <Text style={styles.walletName}>{wallet.name}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+              {errors.selectedWallet && (
+                <Text style={styles.errorText}>{errors.selectedWallet}</Text>
+              )}
             </View>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter wallet account holder name"
-              placeholderTextColor="#CCC"
-              value={accountName}
-              onChangeText={setAccountName}
-            />
-          </View>
 
-          {/* Withdrawal Amount */}
-          <View style={styles.inputContainer}>
-            <View style={styles.labelWithIcon}>
-              <MaterialCommunityIcons name="cash" size={20} color="#E25A17" />
-              <Text style={styles.inputLabel}>Withdrawal Amount (₱) *</Text>
-            </View>
-            <View style={styles.amountInputContainer}>
-              <Text style={styles.currencySymbol}>₱</Text>
+            {/* Wallet Account Number */}
+            <View style={styles.inputContainer}>
+              <View style={styles.labelWithIcon}>
+                <MaterialCommunityIcons
+                  name="wallet"
+                  size={20}
+                  color="#E25A17"
+                />
+                <Text style={styles.inputLabel}>Wallet Account Number</Text>
+              </View>
               <TextInput
-                style={styles.amountInput}
-                placeholder="Enter amount"
+                style={[
+                  styles.input,
+                  errors.accountNumber && styles.inputError,
+                ]}
+                placeholder="Enter wallet account number"
                 placeholderTextColor="#CCC"
-                value={withdrawalAmount}
-                onChangeText={setWithdrawalAmount}
+                value={accountNumber}
+                onChangeText={(text) => {
+                  setAccountNumber(filterPhoneInput(text));
+                  if (errors.accountNumber) {
+                    setErrors((prev) => {
+                      const { accountNumber, ...rest } = prev;
+                      return rest;
+                    });
+                  }
+                }}
                 keyboardType="numeric"
               />
+              {errors.accountNumber && (
+                <Text style={styles.errorText}>{errors.accountNumber}</Text>
+              )}
             </View>
-          </View>
 
-          {/* Email Address */}
-          <View style={styles.inputContainer}>
-            <View style={styles.labelWithIcon}>
-              <MaterialCommunityIcons name="email-outline" size={20} color="#E25A17" />
-              <Text style={styles.inputLabel}>Email Address *</Text>
+            {/* Wallet Account Name */}
+            <View style={styles.inputContainer}>
+              <View style={styles.labelWithIcon}>
+                <MaterialCommunityIcons
+                  name="account"
+                  size={20}
+                  color="#E25A17"
+                />
+                <Text style={styles.inputLabel}>Wallet Account Name</Text>
+              </View>
+              <TextInput
+                style={[styles.input, errors.accountName && styles.inputError]}
+                placeholder="Enter wallet account holder name"
+                placeholderTextColor="#CCC"
+                value={accountName}
+                onChangeText={(text) => {
+                  setAccountName(capitalizeWords(filterNameInput(text)));
+                  if (errors.accountName) {
+                    setErrors((prev) => {
+                      const { accountName, ...rest } = prev;
+                      return rest;
+                    });
+                  }
+                }}
+              />
+              {errors.accountName && (
+                <Text style={styles.errorText}>{errors.accountName}</Text>
+              )}
             </View>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter email address"
-              placeholderTextColor="#CCC"
-              value={emailAddress}
-              onChangeText={setEmailAddress}
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-          </View>
 
-          {/* Continue Button */}
-          <TouchableOpacity
-            style={styles.continueButton}
-            onPress={handleContinue}
-          >
-            <LinearGradient
-              colors={["#E25A17", "#F28934"]}
-              style={styles.continueGradient}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-            >
-              <Text style={styles.continueText}>Continue</Text>
-              <Ionicons name="play" size={20} color="#FFFFFF" />
-            </LinearGradient>
-          </TouchableOpacity>
-
-          <View style={styles.bottomPadding} />
-        </ScrollView>
-        </KeyboardAvoidingView>
-
-        {/* Custom Alert Modal */}
-        <Modal
-          visible={showAlertModal}
-          transparent={true}
-          animationType="fade"
-          onRequestClose={() => setShowAlertModal(false)}
-        >
-          <View style={styles.alertOverlay}>
-            <LinearGradient
-              colors={["#E15816", "#F48F38"]}
-              style={styles.alertContainer}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 0, y: 1 }}
-            >
-              <Text style={styles.alertTitle}>{alertConfig.title}</Text>
-              <Text style={styles.alertMessage}>{alertConfig.message}</Text>
-              <TouchableOpacity
-                style={styles.alertButton}
-                onPress={() => setShowAlertModal(false)}
+            {/* Withdrawal Amount */}
+            <View style={styles.inputContainer}>
+              <View style={styles.labelWithIcon}>
+                <MaterialCommunityIcons name="cash" size={20} color="#E25A17" />
+                <Text style={styles.inputLabel}>Withdrawal Amount (₱) *</Text>
+              </View>
+              <View
+                style={[
+                  styles.amountInputContainer,
+                  errors.withdrawalAmount && styles.inputError,
+                ]}
               >
-                <Text style={styles.alertButtonText}>OK</Text>
-              </TouchableOpacity>
-            </LinearGradient>
-          </View>
-        </Modal>
+                <Text style={styles.currencySymbol}>₱</Text>
+                <TextInput
+                  style={styles.amountInput}
+                  placeholder="0.00"
+                  placeholderTextColor="#CCC"
+                  value={withdrawalAmount}
+                  onChangeText={(text) => {
+                    setWithdrawalAmount(text.replace(/[^0-9.]/g, ""));
+                    if (errors.withdrawalAmount) {
+                      setErrors((prev) => {
+                        const { withdrawalAmount, ...rest } = prev;
+                        return rest;
+                      });
+                    }
+                  }}
+                  keyboardType="numeric"
+                />
+              </View>
+              {errors.withdrawalAmount && (
+                <Text style={styles.errorText}>{errors.withdrawalAmount}</Text>
+              )}
+            </View>
+
+            {/* Email Address */}
+            <View style={styles.inputContainer}>
+              <View style={styles.labelWithIcon}>
+                <MaterialCommunityIcons
+                  name="email-outline"
+                  size={20}
+                  color="#E25A17"
+                />
+                <Text style={styles.inputLabel}>Email Address *</Text>
+              </View>
+              <TextInput
+                style={[styles.input, errors.emailAddress && styles.inputError]}
+                placeholder="Enter email address"
+                placeholderTextColor="#CCC"
+                value={emailAddress}
+                onChangeText={(text) => {
+                  setEmailAddress(filterEmailInput(text));
+                  if (errors.emailAddress) {
+                    setErrors((prev) => {
+                      const { emailAddress, ...rest } = prev;
+                      return rest;
+                    });
+                  }
+                }}
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+              {errors.emailAddress && (
+                <Text style={styles.errorText}>{errors.emailAddress}</Text>
+              )}
+            </View>
+
+            {/* Continue Button */}
+            <TouchableOpacity
+              style={styles.continueButton}
+              onPress={handleContinue}
+            >
+              <LinearGradient
+                colors={["#E25A17", "#F28934"]}
+                style={styles.continueGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+              >
+                <Text style={styles.continueText}>Continue</Text>
+                <Ionicons name="play" size={20} color="#FFFFFF" />
+              </LinearGradient>
+            </TouchableOpacity>
+
+            <View style={styles.bottomPadding} />
+          </ScrollView>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </View>
   );
@@ -493,6 +553,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#E0E0E0",
   },
+  inputError: {
+    borderColor: "#FF3B30",
+  },
+  errorText: {
+    color: "#FF3B30",
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 0,
+  },
   amountInputContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -538,48 +607,5 @@ const styles = StyleSheet.create({
   },
   bottomPadding: {
     height: 40,
-  },
-  // Alert Modal Styles
-  alertOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.6)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  alertContainer: {
-    borderRadius: 12,
-    padding: 24,
-    width: "85%",
-    maxWidth: 400,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  alertTitle: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#FFFFFF",
-    marginBottom: 12,
-  },
-  alertMessage: {
-    fontSize: 16,
-    color: "#FFFFFF",
-    lineHeight: 24,
-    marginBottom: 24,
-    opacity: 0.95,
-  },
-  alertButton: {
-    alignSelf: "flex-end",
-    backgroundColor: "#FFFFFF",
-    paddingVertical: 10,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-  },
-  alertButtonText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#E15816",
   },
 });

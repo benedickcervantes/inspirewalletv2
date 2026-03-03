@@ -7,6 +7,8 @@ const THEME_COLOR = "#E15816";
 export interface TravelRequiredDocuProps {
   passportPhoto: string | null;
   governmentId: string | null;
+  passportPhotoError?: string;
+  governmentIdError?: string;
   onPickPassportPhoto: () => void;
   onPickGovernmentId: () => void;
 }
@@ -14,6 +16,8 @@ export interface TravelRequiredDocuProps {
 export default function TravelRequiredDocu({
   passportPhoto,
   governmentId,
+  passportPhotoError,
+  governmentIdError,
   onPickPassportPhoto,
   onPickGovernmentId,
 }: TravelRequiredDocuProps) {
@@ -43,7 +47,11 @@ export default function TravelRequiredDocu({
           {t("travel.passportPhoto")} <Text style={styles.required}>*</Text>
         </Text>
         <TouchableOpacity
-          style={[styles.uploadBox, passportPhoto && styles.uploadBoxSuccess]}
+          style={[
+            styles.uploadBox,
+            passportPhoto && styles.uploadBoxSuccess,
+            passportPhotoError ? styles.uploadBoxError : null,
+          ]}
           onPress={onPickPassportPhoto}
         >
           <MaterialCommunityIcons
@@ -65,6 +73,9 @@ export default function TravelRequiredDocu({
             {t("travel.tapToSelectImage")}
           </Text>
         </TouchableOpacity>
+        {passportPhotoError ? (
+          <Text style={styles.errorText}>{passportPhotoError}</Text>
+        ) : null}
       </View>
 
       {/* Government ID */}
@@ -73,7 +84,11 @@ export default function TravelRequiredDocu({
           {t("travel.governmentId")} <Text style={styles.required}>*</Text>
         </Text>
         <TouchableOpacity
-          style={[styles.uploadBox, governmentId && styles.uploadBoxSuccess]}
+          style={[
+            styles.uploadBox,
+            governmentId && styles.uploadBoxSuccess,
+            governmentIdError ? styles.uploadBoxError : null,
+          ]}
           onPress={onPickGovernmentId}
         >
           <MaterialCommunityIcons
@@ -95,6 +110,9 @@ export default function TravelRequiredDocu({
             {t("travel.tapToUploadGovId")}
           </Text>
         </TouchableOpacity>
+        {governmentIdError ? (
+          <Text style={styles.errorText}>{governmentIdError}</Text>
+        ) : null}
       </View>
     </View>
   );
@@ -175,5 +193,15 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#9E9E9E",
     marginTop: 4,
+  },
+  uploadBoxError: {
+    borderColor: "#FF3B30",
+    backgroundColor: "rgba(255, 59, 48, 0.05)",
+  },
+  errorText: {
+    color: "#FF3B30",
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 4,
   },
 });

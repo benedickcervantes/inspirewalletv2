@@ -2,10 +2,9 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { doc, getDoc } from "firebase/firestore";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   KeyboardAvoidingView,
-  Modal,
   Platform,
   ScrollView,
   StyleSheet,
@@ -18,6 +17,20 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { auth, firestore } from "../../../configs/firebase";
 import { useLanguage } from "../../../context/LanguageContext";
 
+const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+const isValidEmail = (email: string) =>
+  EMAIL_REGEX.test((email || "").trim().toLowerCase());
+
+const filterEmailInput = (text: string) =>
+  text.replace(/[^A-Za-z0-9.@\-_]/g, "");
+
+const filterNameInput = (text: string) => text.replace(/[^A-Za-zÑñ ]/g, "");
+
+const filterPhoneInput = (text: string) => text.replace(/[^0-9]/g, "");
+
+const capitalizeWords = (text: string) =>
+  text.replace(/\b\w/g, (char) => char.toUpperCase());
+
 export default function BankWithdrawal() {
   const navigation = useNavigation();
   const { t } = useLanguage();
@@ -27,15 +40,12 @@ export default function BankWithdrawal() {
   const [branchName, setBranchName] = useState("");
   const [withdrawalAmount, setWithdrawalAmount] = useState("");
   const [emailAddress, setEmailAddress] = useState("");
-  const [showAlertModal, setShowAlertModal] = useState(false);
-  const [alertConfig, setAlertConfig] = useState<{ title: string; message: string }>({ title: "", message: "" });
-  const [userData, setUserData] = useState<Record<string, unknown> | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [userData, setUserData] = useState<Record<string, unknown> | null>(
+    null,
+  );
 
-  useEffect(() => {
-    fetchUserData();
-  }, []);
-
-  const fetchUserData = async () => {
+  const fetchUserData = useCallback(async () => {
     if (!auth || !firestore) return;
     try {
       const user = auth.currentUser;
@@ -44,7 +54,9 @@ export default function BankWithdrawal() {
         const userDocSnap = await getDoc(userDocRef);
 
         if (userDocSnap.exists()) {
-          const data = userDocSnap.data() as Record<string, unknown> & { email?: string };
+          const data = userDocSnap.data() as Record<string, unknown> & {
+            email?: string;
+          };
           setUserData(data);
           setEmailAddress(data.email || "");
         }
@@ -52,40 +64,51 @@ export default function BankWithdrawal() {
     } catch (error) {
       console.error("Error fetching user data:", error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchUserData();
+  }, [fetchUserData]);
 
   const handleContinue = () => {
-    // Validation
-    if (!accountNumber || !accountHolderName || !bankName || !branchName || !withdrawalAmount || !emailAddress) {
-      setAlertConfig({
-        title: "Missing Information",
-        message: "Please fill in all required fields"
-      });
-      setShowAlertModal(true);
+    const newErrors: Record<string, string> = {};
+
+    if (!accountNumber.trim())
+      newErrors.accountNumber = "Account number is required";
+    if (!accountHolderName.trim())
+      newErrors.accountHolderName = "Account holder name is required";
+    if (!bankName.trim()) newErrors.bankName = "Bank name is required";
+    if (!branchName.trim()) newErrors.branchName = "Branch name is required";
+
+    const amountStr = withdrawalAmount.trim();
+    if (!amountStr) {
+      newErrors.withdrawalAmount = "Withdrawal amount is required";
+    } else {
+      const amountNum = parseFloat(amountStr);
+      if (amountNum <= 0) {
+        newErrors.withdrawalAmount =
+          "Please enter a valid amount greater than 0";
+      } else {
+        const availableBalance = (userData?.availBalanceAmount as number) || 0;
+        if (amountNum > availableBalance) {
+          newErrors.withdrawalAmount = `Insufficient balance. Available: ₱${availableBalance.toLocaleString()}`;
+        }
+      }
+    }
+
+    const email = emailAddress.trim();
+    if (!email) {
+      newErrors.emailAddress = "Email address is required";
+    } else if (!isValidEmail(email)) {
+      newErrors.emailAddress = "Please enter a valid email address";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
 
-    if (parseFloat(withdrawalAmount) <= 0) {
-      setAlertConfig({
-        title: "Invalid Amount",
-        message: "Please enter a valid withdrawal amount"
-      });
-      setShowAlertModal(true);
-      return;
-    }
-
-    // Check if withdrawal amount exceeds available balance
-    const availableBalance = (userData?.availBalanceAmount as number) || 0;
-    const requestedAmount = parseFloat(withdrawalAmount);
-
-    if (requestedAmount > availableBalance) {
-      setAlertConfig({
-        title: "Insufficient Balance",
-        message: `Your withdrawal amount (₱${requestedAmount.toLocaleString()}) exceeds your available balance (₱${availableBalance.toLocaleString()}). Please enter a lower amount.`
-      });
-      setShowAlertModal(true);
-      return;
-    }
+    setErrors({});
 
     // Navigate to confirm screen with data
     navigation.navigate("WithdrawLocalBConfirm", {
@@ -143,169 +166,245 @@ export default function BankWithdrawal() {
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
         >
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-          keyboardDismissMode="on-drag"
-        >
-          {/* Title */}
-          <View style={styles.titleContainer}>
-            <Text style={styles.title}>{t("dashboard.availableBalance")}</Text>
-            <Text style={styles.subtitle}>{t("withdraw.fromAvailableBalance")}</Text>
-          </View>
-
-          {/* Banking Information Card */}
-          <View style={styles.formCard}>
-            <View style={styles.leftBorder} />
-
-            <View style={styles.cardHeader}>
-              <Text style={styles.cardTitle}>Banking Information</Text>
-              <Text style={styles.cardSubtitle}>Enter your banking information</Text>
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+          >
+            {/* Title */}
+            <View style={styles.titleContainer}>
+              <Text style={styles.title}>
+                {t("dashboard.availableBalance")}
+              </Text>
+              <Text style={styles.subtitle}>
+                {t("withdraw.fromAvailableBalance")}
+              </Text>
             </View>
 
-            {/* Bank Account Number */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Bank Account Number *</Text>
-              <TextInput
-                style={styles.input}
-                placeholder=""
-                placeholderTextColor="#CCC"
-                value={accountNumber}
-                onChangeText={setAccountNumber}
-                keyboardType="numeric"
-              />
-            </View>
+            {/* Banking Information Card */}
+            <View style={styles.formCard}>
+              <View style={styles.leftBorder} />
 
-            {/* Account Holder Name */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Account Holder Name *</Text>
-              <TextInput
-                style={styles.input}
-                placeholder=""
-                placeholderTextColor="#CCC"
-                value={accountHolderName}
-                onChangeText={setAccountHolderName}
-              />
-            </View>
-
-            {/* Bank Name */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Bank Name *</Text>
-              <TextInput
-                style={styles.input}
-                placeholder=""
-                placeholderTextColor="#CCC"
-                value={bankName}
-                onChangeText={setBankName}
-              />
-            </View>
-
-            {/* Branch Name */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Branch Name *</Text>
-              <TextInput
-                style={styles.input}
-                placeholder=""
-                placeholderTextColor="#CCC"
-                value={branchName}
-                onChangeText={setBranchName}
-              />
-            </View>
-          </View>
-
-          {/* Withdrawal Amount Card */}
-          <View style={styles.formCard}>
-            <View style={styles.leftBorder} />
-
-            <View style={styles.cardHeader}>
-              <Text style={styles.cardTitle}>Withdrawal Amount</Text>
-              <Text style={styles.cardSubtitle}>Enter withdrawal amount and contact information</Text>
-            </View>
-
-            {/* Withdrawal Amount */}
-            <View style={styles.inputGroup}>
-              <View style={styles.labelWithIcon}>
-                <MaterialCommunityIcons name="cash" size={18} color="#E25A17" />
-                <Text style={styles.inputLabel}>Withdrawal Amount (₱) *</Text>
+              <View style={styles.cardHeader}>
+                <Text style={styles.cardTitle}>Banking Information</Text>
+                <Text style={styles.cardSubtitle}>
+                  Enter your banking information
+                </Text>
               </View>
-              <View style={styles.amountInputContainer}>
-                <Text style={styles.currencySymbol}>₱</Text>
+
+              {/* Bank Account Number */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Bank Account Number *</Text>
                 <TextInput
-                  style={styles.amountInput}
-                  placeholder=""
+                  style={[
+                    styles.input,
+                    errors.accountNumber && styles.inputError,
+                  ]}
+                  placeholder="Enter account number"
                   placeholderTextColor="#CCC"
-                  value={withdrawalAmount}
-                  onChangeText={setWithdrawalAmount}
+                  value={accountNumber}
+                  onChangeText={(text) => {
+                    setAccountNumber(filterPhoneInput(text));
+                    if (errors.accountNumber) {
+                      setErrors((prev) => {
+                        const { accountNumber, ...rest } = prev;
+                        return rest;
+                      });
+                    }
+                  }}
                   keyboardType="numeric"
                 />
+                {errors.accountNumber && (
+                  <Text style={styles.errorText}>{errors.accountNumber}</Text>
+                )}
+              </View>
+
+              {/* Account Holder Name */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Account Holder Name *</Text>
+                <TextInput
+                  style={[
+                    styles.input,
+                    errors.accountHolderName && styles.inputError,
+                  ]}
+                  placeholder="e.g. John Doe"
+                  placeholderTextColor="#CCC"
+                  value={accountHolderName}
+                  onChangeText={(text) => {
+                    setAccountHolderName(
+                      capitalizeWords(filterNameInput(text)),
+                    );
+                    if (errors.accountHolderName) {
+                      setErrors((prev) => {
+                        const { accountHolderName, ...rest } = prev;
+                        return rest;
+                      });
+                    }
+                  }}
+                />
+                {errors.accountHolderName && (
+                  <Text style={styles.errorText}>
+                    {errors.accountHolderName}
+                  </Text>
+                )}
+              </View>
+
+              {/* Bank Name */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Bank Name *</Text>
+                <TextInput
+                  style={[styles.input, errors.bankName && styles.inputError]}
+                  placeholder="e.g. Security Bank"
+                  placeholderTextColor="#CCC"
+                  value={bankName}
+                  onChangeText={(text) => {
+                    setBankName(capitalizeWords(text));
+                    if (errors.bankName) {
+                      setErrors((prev) => {
+                        const { bankName, ...rest } = prev;
+                        return rest;
+                      });
+                    }
+                  }}
+                />
+                {errors.bankName && (
+                  <Text style={styles.errorText}>{errors.bankName}</Text>
+                )}
+              </View>
+
+              {/* Branch Name */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Branch Name *</Text>
+                <TextInput
+                  style={[styles.input, errors.branchName && styles.inputError]}
+                  placeholder="e.g. Makati Branch"
+                  placeholderTextColor="#CCC"
+                  value={branchName}
+                  onChangeText={(text) => {
+                    setBranchName(capitalizeWords(text));
+                    if (errors.branchName) {
+                      setErrors((prev) => {
+                        const { branchName, ...rest } = prev;
+                        return rest;
+                      });
+                    }
+                  }}
+                />
+                {errors.branchName && (
+                  <Text style={styles.errorText}>{errors.branchName}</Text>
+                )}
               </View>
             </View>
 
-            {/* Email Address */}
-            <View style={styles.inputGroup}>
-              <View style={styles.labelWithIcon}>
-                <MaterialCommunityIcons name="email-outline" size={18} color="#E25A17" />
-                <Text style={styles.inputLabel}>Email Address *</Text>
+            {/* Withdrawal Amount Card */}
+            <View style={styles.formCard}>
+              <View style={styles.leftBorder} />
+
+              <View style={styles.cardHeader}>
+                <Text style={styles.cardTitle}>Withdrawal Amount</Text>
+                <Text style={styles.cardSubtitle}>
+                  Enter withdrawal amount and contact information
+                </Text>
               </View>
-              <TextInput
-                style={styles.input}
-                placeholder=""
-                placeholderTextColor="#CCC"
-                value={emailAddress}
-                onChangeText={setEmailAddress}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
+
+              {/* Withdrawal Amount */}
+              <View style={styles.inputGroup}>
+                <View style={styles.labelWithIcon}>
+                  <MaterialCommunityIcons
+                    name="cash"
+                    size={18}
+                    color="#E25A17"
+                  />
+                  <Text style={styles.inputLabel}>Withdrawal Amount (₱) *</Text>
+                </View>
+                <View
+                  style={[
+                    styles.amountInputContainer,
+                    errors.withdrawalAmount && styles.inputError,
+                  ]}
+                >
+                  <Text style={styles.currencySymbol}>₱</Text>
+                  <TextInput
+                    style={styles.amountInput}
+                    placeholder="0.00"
+                    placeholderTextColor="#CCC"
+                    value={withdrawalAmount}
+                    onChangeText={(text) => {
+                      setWithdrawalAmount(text.replace(/[^0-9.]/g, ""));
+                      if (errors.withdrawalAmount) {
+                        setErrors((prev) => {
+                          const { withdrawalAmount, ...rest } = prev;
+                          return rest;
+                        });
+                      }
+                    }}
+                    keyboardType="numeric"
+                  />
+                </View>
+                {errors.withdrawalAmount && (
+                  <Text style={styles.errorText}>
+                    {errors.withdrawalAmount}
+                  </Text>
+                )}
+              </View>
+
+              {/* Email Address */}
+              <View style={styles.inputGroup}>
+                <View style={styles.labelWithIcon}>
+                  <MaterialCommunityIcons
+                    name="email-outline"
+                    size={18}
+                    color="#E25A17"
+                  />
+                  <Text style={styles.inputLabel}>Email Address *</Text>
+                </View>
+                <TextInput
+                  style={[
+                    styles.input,
+                    errors.emailAddress && styles.inputError,
+                  ]}
+                  placeholder="e.g. name@example.com"
+                  placeholderTextColor="#CCC"
+                  value={emailAddress}
+                  onChangeText={(text) => {
+                    setEmailAddress(filterEmailInput(text));
+                    if (errors.emailAddress) {
+                      setErrors((prev) => {
+                        const { emailAddress, ...rest } = prev;
+                        return rest;
+                      });
+                    }
+                  }}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
+                {errors.emailAddress && (
+                  <Text style={styles.errorText}>{errors.emailAddress}</Text>
+                )}
+              </View>
             </View>
-          </View>
 
-          {/* Continue Button */}
-          <TouchableOpacity
-            style={styles.continueButton}
-            onPress={handleContinue}
-          >
-            <LinearGradient
-              colors={["#E25A17", "#F28934"]}
-              style={styles.continueGradient}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
+            {/* Continue Button */}
+            <TouchableOpacity
+              style={styles.continueButton}
+              onPress={handleContinue}
             >
-              <Text style={styles.continueText}>Continue</Text>
-              <Ionicons name="play" size={20} color="#FFFFFF" />
-            </LinearGradient>
-          </TouchableOpacity>
-
-          <View style={styles.bottomPadding} />
-        </ScrollView>
-        </KeyboardAvoidingView>
-
-        {/* Custom Alert Modal */}
-        <Modal
-          visible={showAlertModal}
-          transparent={true}
-          animationType="fade"
-          onRequestClose={() => setShowAlertModal(false)}
-        >
-          <View style={styles.alertOverlay}>
-            <LinearGradient
-              colors={["#E15816", "#F48F38"]}
-              style={styles.alertContainer}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 0, y: 1 }}
-            >
-              <Text style={styles.alertTitle}>{alertConfig.title}</Text>
-              <Text style={styles.alertMessage}>{alertConfig.message}</Text>
-              <TouchableOpacity
-                style={styles.alertButton}
-                onPress={() => setShowAlertModal(false)}
+              <LinearGradient
+                colors={["#E25A17", "#F28934"]}
+                style={styles.continueGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
               >
-                <Text style={styles.alertButtonText}>OK</Text>
-              </TouchableOpacity>
-            </LinearGradient>
-          </View>
-        </Modal>
+                <Text style={styles.continueText}>Continue</Text>
+                <Ionicons name="play" size={20} color="#FFFFFF" />
+              </LinearGradient>
+            </TouchableOpacity>
+
+            <View style={styles.bottomPadding} />
+          </ScrollView>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </View>
   );
@@ -458,6 +557,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#E0E0E0",
   },
+  inputError: {
+    borderColor: "#FF3B30",
+  },
+  errorText: {
+    color: "#FF3B30",
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 4,
+  },
   amountInputContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -503,48 +611,5 @@ const styles = StyleSheet.create({
   },
   bottomPadding: {
     height: 40,
-  },
-  // Alert Modal Styles
-  alertOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.6)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  alertContainer: {
-    borderRadius: 12,
-    padding: 24,
-    width: "85%",
-    maxWidth: 400,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  alertTitle: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#FFFFFF",
-    marginBottom: 12,
-  },
-  alertMessage: {
-    fontSize: 16,
-    color: "#FFFFFF",
-    lineHeight: 24,
-    marginBottom: 24,
-    opacity: 0.95,
-  },
-  alertButton: {
-    alignSelf: "flex-end",
-    backgroundColor: "#FFFFFF",
-    paddingVertical: 10,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-  },
-  alertButtonText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#E15816",
   },
 });

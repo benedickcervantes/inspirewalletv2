@@ -7,17 +7,17 @@ import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
-  Keyboard,
-  Modal,
-  Platform,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Keyboard,
+    Modal,
+    Platform,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -51,6 +51,7 @@ async function uriToBase64DataUrl(uri: string): Promise<string> {
     encoding: "base64",
   });
   const ext = uri.split(".").pop()?.toLowerCase() ?? "jpg";
+
   const mime =
     ext === "png"
       ? "image/png"
@@ -296,9 +297,10 @@ export default function TravelProtection() {
     flag: "🇵🇭",
     dialCode: "+63",
     name: "Philippines",
-    example: "9171234567",
+    example: "0000 000 000",
   });
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
+  const [homeAddressError, setHomeAddressError] = useState("");
 
   const countries = [
     {
@@ -306,76 +308,70 @@ export default function TravelProtection() {
       flag: "🇵🇭",
       dialCode: "+63",
       name: "Philippines",
-      example: "9171234567",
-    },
-    {
-      code: "US",
-      flag: "🇺🇸",
-      dialCode: "+1",
-      name: "United States",
-      example: "2025551234",
-    },
-    {
-      code: "KR",
-      flag: "🇰🇷",
-      dialCode: "+82",
-      name: "South Korea",
-      example: "1012345678",
-    },
-    {
-      code: "SA",
-      flag: "🇸🇦",
-      dialCode: "+966",
-      name: "Saudi Arabia",
-      example: "501234567",
+      example: "0000 000 000",
     },
     {
       code: "JP",
       flag: "🇯🇵",
       dialCode: "+81",
       name: "Japan",
-      example: "9012345678",
+      example: "00 0000 00000",
     },
     {
-      code: "CN",
-      flag: "🇨🇳",
-      dialCode: "+86",
-      name: "China",
-      example: "13912345678",
+      code: "SA",
+      flag: "🇸🇦",
+      dialCode: "+966",
+      name: "Saudi Arabia",
+      example: "50 000 0000",
     },
     {
-      code: "MY",
-      flag: "🇲🇾",
-      dialCode: "+60",
-      name: "Malaysia",
-      example: "123456789",
+      code: "KR",
+      flag: "🇰🇷",
+      dialCode: "+82",
+      name: "South Korea",
+      example: "00 0000 00000",
     },
     {
-      code: "VN",
-      flag: "🇻🇳",
-      dialCode: "+84",
-      name: "Vietnam",
-      example: "912345678",
+      code: "US",
+      flag: "🇺🇸",
+      dialCode: "+1",
+      name: "United States",
+      example: "000 000 0000",
     },
   ];
 
   // Form fields - Step 2 (store internal values for dropdowns; display via t())
   const [gender, setGender] = useState("");
+  const [genderError, setGenderError] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState<Date | null>(null);
+  const [dateOfBirthError, setDateOfBirthError] = useState("");
   const [showDateModal, setShowDateModal] = useState(false);
   const [dateOfBirthText, setDateOfBirthText] = useState(EMPTY_PLACEHOLDER);
-  const [tempDate, setTempDate] = useState({ month: 0, day: 1, year: 2000 });
+  const [tempDate, setTempDate] = useState({
+    month: new Date().getMonth(),
+    day: new Date().getDate(),
+    year: new Date().getFullYear(),
+  });
   const [civilStatus, setCivilStatus] = useState("Single");
+  const [civilStatusError, setCivilStatusError] = useState("");
   const [citizenship, setCitizenship] = useState("");
+  const [citizenshipError, setCitizenshipError] = useState("");
 
   // Form fields - Step 3
   const [sourceOfFund, setSourceOfFund] = useState("");
+  const [sourceOfFundError, setSourceOfFundError] = useState("");
   const [grossMonthlyIncome, setGrossMonthlyIncome] = useState("");
+  const [grossMonthlyIncomeCurrency, setGrossMonthlyIncomeCurrency] =
+    useState("PHP");
+  const [grossMonthlyIncomeError, setGrossMonthlyIncomeError] = useState("");
   const [cashOnHand, setCashOnHand] = useState("");
+  const [cashOnHandError, setCashOnHandError] = useState("");
 
   // Form fields - Step 4
   const [destinationAddress, setDestinationAddress] = useState("");
+  const [destinationAddressError, setDestinationAddressError] = useState("");
   const [checkInDate, setCheckInDate] = useState<Date | null>(null);
+  const [checkInDateError, setCheckInDateError] = useState("");
   const [showCheckInModal, setShowCheckInModal] = useState(false);
   const [checkInDateText, setCheckInDateText] = useState(EMPTY_PLACEHOLDER);
   const [tempCheckInDate, setTempCheckInDate] = useState({
@@ -384,8 +380,10 @@ export default function TravelProtection() {
     year: new Date().getFullYear(),
   });
   const [duration, setDuration] = useState("");
-  const [airline, setAirline] = useState("");
+  const [durationError, setDurationError] = useState("");
   const [departureTime, setDepartureTime] = useState(new Date());
+
+  const [departureTimeError, setDepartureTimeError] = useState("");
   const [showDepartureTimePicker, setShowDepartureTimePicker] = useState(false);
   const [departureTimeText, setDepartureTimeText] = useState(EMPTY_PLACEHOLDER);
   const [tempDepartureTime, setTempDepartureTime] = useState({
@@ -393,6 +391,7 @@ export default function TravelProtection() {
     minute: new Date().getMinutes(),
   });
   const [arrivalTime, setArrivalTime] = useState(new Date());
+  const [arrivalTimeError, setArrivalTimeError] = useState("");
   const [showArrivalTimePicker, setShowArrivalTimePicker] = useState(false);
   const [arrivalTimeText, setArrivalTimeText] = useState(EMPTY_PLACEHOLDER);
   const [tempArrivalTime, setTempArrivalTime] = useState({
@@ -400,15 +399,20 @@ export default function TravelProtection() {
     minute: new Date().getMinutes(),
   });
   const [passportNumber, setPassportNumber] = useState("");
+  const [passportNumberError, setPassportNumberError] = useState("");
   const [purposeOfTravel, setPurposeOfTravel] = useState("");
+  const [purposeOfTravelError, setPurposeOfTravelError] = useState("");
 
   // Form fields - Step 5
   const [passportPhoto, setPassportPhoto] = useState<string | null>(null);
+  const [passportPhotoError, setPassportPhotoError] = useState("");
   const [governmentId, setGovernmentId] = useState<string | null>(null);
+  const [governmentIdError, setGovernmentIdError] = useState("");
 
   // Dropdown states
   const [showGenderDropdown, setShowGenderDropdown] = useState(false);
   const [showCivilStatusDropdown, setShowCivilStatusDropdown] = useState(false);
+  const [showCitizenshipDropdown, setShowCitizenshipDropdown] = useState(false);
 
   // Custom alert modal states
   const [alertVisible, setAlertVisible] = useState(false);
@@ -448,8 +452,46 @@ export default function TravelProtection() {
   };
 
   const handleNext = () => {
+    // Reset errors for current step
     if (currentStep === 1) {
-      if (!emailAddress || !mobileNumber || !homeAddress) {
+      setEmailError("");
+      setMobileError("");
+      setLandlineError("");
+      setHomeAddressError("");
+
+      let hasError = false;
+      if (!emailAddress) {
+        setEmailError(t("travel.fieldRequired") || "Required");
+        hasError = true;
+      } else if (!validateEmail(emailAddress)) {
+        setEmailError(t("Please Enter Valid Email") || "Invalid email");
+        hasError = true;
+      }
+
+      if (!mobileNumber) {
+        setMobileError(t("travel.fieldRequired") || "Required");
+        hasError = true;
+      } else if (!validateMobileNumber(mobileNumber)) {
+        setMobileError(
+          t("Please Enter Valid Number") || "Mobile must be 10-11 digits",
+        );
+        hasError = true;
+      }
+
+      if (!homeAddress) {
+        setHomeAddressError(t("travel.fieldRequired") || "Required");
+        hasError = true;
+      }
+
+      if (landlineNumber && !validateLandlineNumber(landlineNumber)) {
+        setLandlineError(
+          t("Please Enter Valid Landline Number") ||
+            "Landline must be 8 digits",
+        );
+        hasError = true;
+      }
+
+      if (hasError) {
         showAlert(
           t("travel.requiredFields"),
           t("travel.fillRequired"),
@@ -457,34 +499,32 @@ export default function TravelProtection() {
         );
         return;
       }
-      if (!validateEmail(emailAddress)) {
-        setEmailError(t("Please Enter Valid Email") || "Invalid email");
-        return;
-      }
-      if (!validateMobileNumber(mobileNumber)) {
-        setMobileError(
-          t("Please Enter Valid Number") || "Mobile must be 10-11 digits",
-        );
-        return;
-      }
-      if (landlineNumber && !validateLandlineNumber(landlineNumber)) {
-        setLandlineError(
-          t("Please Enter Valid Landline Number") ||
-            "Landline must be 8 digits",
-        );
-        return;
-      }
-      setEmailError("");
-      setMobileError("");
-      setLandlineError("");
       setCurrentStep(2);
     } else if (currentStep === 2) {
-      if (
-        !gender ||
-        dateOfBirthText === EMPTY_PLACEHOLDER ||
-        !civilStatus ||
-        !citizenship
-      ) {
+      setGenderError("");
+      setDateOfBirthError("");
+      setCivilStatusError("");
+      setCitizenshipError("");
+
+      let hasError = false;
+      if (!gender) {
+        setGenderError(t("travel.fieldRequired") || "Required");
+        hasError = true;
+      }
+      if (dateOfBirthText === EMPTY_PLACEHOLDER) {
+        setDateOfBirthError(t("travel.fieldRequired") || "Required");
+        hasError = true;
+      }
+      if (!civilStatus) {
+        setCivilStatusError(t("travel.fieldRequired") || "Required");
+        hasError = true;
+      }
+      if (!citizenship) {
+        setCitizenshipError(t("travel.fieldRequired") || "Required");
+        hasError = true;
+      }
+
+      if (hasError) {
         showAlert(
           t("travel.requiredFields"),
           t("travel.fillRequired"),
@@ -494,7 +534,25 @@ export default function TravelProtection() {
       }
       setCurrentStep(3);
     } else if (currentStep === 3) {
-      if (!sourceOfFund || !grossMonthlyIncome || !cashOnHand) {
+      setSourceOfFundError("");
+      setGrossMonthlyIncomeError("");
+      setCashOnHandError("");
+
+      let hasError = false;
+      if (!sourceOfFund) {
+        setSourceOfFundError(t("travel.fieldRequired") || "Required");
+        hasError = true;
+      }
+      if (!grossMonthlyIncome) {
+        setGrossMonthlyIncomeError(t("travel.fieldRequired") || "Required");
+        hasError = true;
+      }
+      if (!cashOnHand) {
+        setCashOnHandError(t("travel.fieldRequired") || "Required");
+        hasError = true;
+      }
+
+      if (hasError) {
         showAlert(
           t("travel.requiredFields"),
           t("travel.fillRequired"),
@@ -504,16 +562,45 @@ export default function TravelProtection() {
       }
       setCurrentStep(4);
     } else if (currentStep === 4) {
-      if (
-        !destinationAddress ||
-        checkInDateText === EMPTY_PLACEHOLDER ||
-        !duration ||
-        !airline ||
-        departureTimeText === EMPTY_PLACEHOLDER ||
-        arrivalTimeText === EMPTY_PLACEHOLDER ||
-        !passportNumber ||
-        !purposeOfTravel
-      ) {
+      setDestinationAddressError("");
+      setCheckInDateError("");
+      setDurationError("");
+      setDepartureTimeError("");
+      setArrivalTimeError("");
+      setPassportNumberError("");
+      setPurposeOfTravelError("");
+
+      let hasError = false;
+      if (!destinationAddress) {
+        setDestinationAddressError(t("travel.fieldRequired") || "Required");
+        hasError = true;
+      }
+      if (checkInDateText === EMPTY_PLACEHOLDER) {
+        setCheckInDateError(t("travel.fieldRequired") || "Required");
+        hasError = true;
+      }
+      if (!duration) {
+        setDurationError(t("travel.fieldRequired") || "Required");
+        hasError = true;
+      }
+      if (departureTimeText === EMPTY_PLACEHOLDER) {
+        setDepartureTimeError(t("travel.fieldRequired") || "Required");
+        hasError = true;
+      }
+      if (arrivalTimeText === EMPTY_PLACEHOLDER) {
+        setArrivalTimeError(t("travel.fieldRequired") || "Required");
+        hasError = true;
+      }
+      if (!passportNumber) {
+        setPassportNumberError(t("travel.fieldRequired") || "Required");
+        hasError = true;
+      }
+      if (!purposeOfTravel) {
+        setPurposeOfTravelError(t("travel.fieldRequired") || "Required");
+        hasError = true;
+      }
+
+      if (hasError) {
         showAlert(
           t("travel.requiredFields"),
           t("travel.fillRequired"),
@@ -523,7 +610,20 @@ export default function TravelProtection() {
       }
       setCurrentStep(5);
     } else if (currentStep === 5) {
-      if (!passportPhoto || !governmentId) {
+      setPassportPhotoError("");
+      setGovernmentIdError("");
+
+      let hasError = false;
+      if (!passportPhoto) {
+        setPassportPhotoError(t("travel.fieldRequired") || "Required");
+        hasError = true;
+      }
+      if (!governmentId) {
+        setGovernmentIdError(t("travel.fieldRequired") || "Required");
+        hasError = true;
+      }
+
+      if (hasError) {
         showAlert(
           t("travel.requiredDocuments"),
           t("travel.uploadBothDocs"),
@@ -576,19 +676,17 @@ export default function TravelProtection() {
         civilStatus,
         citizenship,
         sourceOfFund,
-        grossMonthlyIncome,
+        grossMonthlyIncome: `${grossMonthlyIncome} ${grossMonthlyIncomeCurrency}`,
         cashOnHand,
         destinationAddress,
         checkInDate: formatDate(checkInDate),
-        duration: duration,
-        airlineType: airline,
+        duration,
+        airlineType: "Commercial", // Backend requires this field
         departureTime: formatTime(departureTime),
         arrivalTime: formatTime(arrivalTime),
         passportNumber,
         purposeOfTravel,
         passportPhoto: passportPhotoBase64,
-        protectionFee,
-        userTimeDeposit,
       };
 
       const result = await submitTravelProtection(accessToken, applicationData);
@@ -984,7 +1082,7 @@ export default function TravelProtection() {
                         <View style={styles.modalContainer}>
                           <View style={styles.modalHeader}>
                             <Text style={styles.modalTitle}>
-                              {t("travel.selectCountry") || "Select Country"}
+                              {t("travel.selectCountry")}
                             </Text>
                             <TouchableOpacity
                               onPress={() => setShowCountryDropdown(false)}
@@ -1062,11 +1160,18 @@ export default function TravelProtection() {
                     </Text>
                     <TextInput
                       ref={homeAddressRef}
-                      style={[styles.input, styles.textArea]}
+                      style={[
+                        styles.input,
+                        styles.textArea,
+                        homeAddressError ? styles.inputError : null,
+                      ]}
                       placeholder={t("travel.placeholderHomeAddress")}
                       placeholderTextColor="#999"
                       value={homeAddress}
-                      onChangeText={setHomeAddress}
+                      onChangeText={(text) => {
+                        setHomeAddress(text);
+                        if (homeAddressError) setHomeAddressError("");
+                      }}
                       multiline
                       numberOfLines={3}
                       textAlignVertical="top"
@@ -1080,6 +1185,11 @@ export default function TravelProtection() {
                         }, 100);
                       }}
                     />
+                    {homeAddressError && (
+                      <Text style={styles.errorMessage}>
+                        {homeAddressError}
+                      </Text>
+                    )}
                   </View>
                 </View>
               )}
@@ -1088,22 +1198,40 @@ export default function TravelProtection() {
               {currentStep === 2 && (
                 <TravelProtectPerDeatails
                   gender={gender}
-                  setGender={setGender}
+                  genderError={genderError}
+                  setGender={(val) => {
+                    setGender(val);
+                    if (genderError) setGenderError("");
+                  }}
                   dateOfBirth={dateOfBirth}
+                  dateOfBirthError={dateOfBirthError}
                   dateOfBirthText={dateOfBirthText}
                   showDateModal={showDateModal}
                   setShowDateModal={setShowDateModal}
                   tempDate={tempDate}
                   setTempDate={setTempDate}
                   civilStatus={civilStatus}
-                  setCivilStatus={setCivilStatus}
+                  civilStatusError={civilStatusError}
+                  setCivilStatus={(val) => {
+                    setCivilStatus(val);
+                    if (civilStatusError) setCivilStatusError("");
+                  }}
                   citizenship={citizenship}
-                  setCitizenship={setCitizenship}
+                  citizenshipError={citizenshipError}
+                  setCitizenship={(val) => {
+                    setCitizenship(val);
+                    if (citizenshipError) setCitizenshipError("");
+                  }}
                   showGenderDropdown={showGenderDropdown}
                   setShowGenderDropdown={setShowGenderDropdown}
                   showCivilStatusDropdown={showCivilStatusDropdown}
                   setShowCivilStatusDropdown={setShowCivilStatusDropdown}
-                  applyDateFromTemp={applyDateFromTemp}
+                  showCitizenshipDropdown={showCitizenshipDropdown}
+                  setShowCitizenshipDropdown={setShowCitizenshipDropdown}
+                  applyDateFromTemp={(m, d, y) => {
+                    applyDateFromTemp(m, d, y);
+                    if (dateOfBirthError) setDateOfBirthError("");
+                  }}
                 />
               )}
 
@@ -1111,11 +1239,25 @@ export default function TravelProtection() {
               {currentStep === 3 && (
                 <TravelProtectFinanInfo
                   sourceOfFund={sourceOfFund}
-                  setSourceOfFund={setSourceOfFund}
+                  sourceOfFundError={sourceOfFundError}
+                  setSourceOfFund={(val) => {
+                    setSourceOfFund(val);
+                    if (sourceOfFundError) setSourceOfFundError("");
+                  }}
                   grossMonthlyIncome={grossMonthlyIncome}
-                  setGrossMonthlyIncome={setGrossMonthlyIncome}
+                  grossMonthlyIncomeError={grossMonthlyIncomeError}
+                  grossMonthlyIncomeCurrency={grossMonthlyIncomeCurrency}
+                  setGrossMonthlyIncome={(val) => {
+                    setGrossMonthlyIncome(val);
+                    if (grossMonthlyIncomeError) setGrossMonthlyIncomeError("");
+                  }}
+                  setGrossMonthlyIncomeCurrency={setGrossMonthlyIncomeCurrency}
                   cashOnHand={cashOnHand}
-                  setCashOnHand={setCashOnHand}
+                  cashOnHandError={cashOnHandError}
+                  setCashOnHand={(val) => {
+                    setCashOnHand(val);
+                    if (cashOnHandError) setCashOnHandError("");
+                  }}
                 />
               )}
 
@@ -1123,36 +1265,62 @@ export default function TravelProtection() {
               {currentStep === 4 && (
                 <TravelProtectDetails
                   destinationAddress={destinationAddress}
-                  setDestinationAddress={setDestinationAddress}
+                  destinationAddressError={destinationAddressError}
+                  setDestinationAddress={(val) => {
+                    setDestinationAddress(val);
+                    if (destinationAddressError) setDestinationAddressError("");
+                  }}
                   checkInDate={checkInDate}
+                  checkInDateError={checkInDateError}
                   checkInDateText={checkInDateText}
                   setShowCheckInModal={setShowCheckInModal}
                   tempCheckInDate={tempCheckInDate}
                   setTempCheckInDate={setTempCheckInDate}
                   duration={duration}
-                  setDuration={setDuration}
-                  airline={airline}
-                  setAirline={setAirline}
+                  durationError={durationError}
+                  setDuration={(val) => {
+                    setDuration(val);
+                    if (durationError) setDurationError("");
+                  }}
                   departureTime={departureTime}
+                  departureTimeError={departureTimeError}
                   departureTimeText={departureTimeText}
                   setShowDepartureTimePicker={setShowDepartureTimePicker}
                   tempDepartureTime={tempDepartureTime}
                   setTempDepartureTime={setTempDepartureTime}
                   arrivalTime={arrivalTime}
+                  arrivalTimeError={arrivalTimeError}
                   arrivalTimeText={arrivalTimeText}
                   setShowArrivalTimePicker={setShowArrivalTimePicker}
                   tempArrivalTime={tempArrivalTime}
                   setTempArrivalTime={setTempArrivalTime}
                   passportNumber={passportNumber}
-                  setPassportNumber={setPassportNumber}
+                  passportNumberError={passportNumberError}
+                  setPassportNumber={(val) => {
+                    setPassportNumber(val);
+                    if (passportNumberError) setPassportNumberError("");
+                  }}
                   purposeOfTravel={purposeOfTravel}
-                  setPurposeOfTravel={setPurposeOfTravel}
+                  purposeOfTravelError={purposeOfTravelError}
+                  setPurposeOfTravel={(val) => {
+                    setPurposeOfTravel(val);
+                    if (purposeOfTravelError) setPurposeOfTravelError("");
+                  }}
                   showCheckInModal={showCheckInModal}
                   showDepartureTimePicker={showDepartureTimePicker}
                   showArrivalTimePicker={showArrivalTimePicker}
-                  applyCheckInDateFromTemp={applyCheckInDateFromTemp}
-                  applyDepartureTimeFromTemp={applyDepartureTimeFromTemp}
-                  applyArrivalTimeFromTemp={applyArrivalTimeFromTemp}
+                  applyCheckInDateFromTemp={(m, d, y) => {
+                    applyCheckInDateFromTemp(m, d, y);
+                    if (checkInDateError) setCheckInDateError("");
+                  }}
+                  applyDepartureTimeFromTemp={(h, mi) => {
+                    applyDepartureTimeFromTemp(h, mi);
+                    if (departureTimeError) setDepartureTimeError("");
+                  }}
+                  applyArrivalTimeFromTemp={(h, mi) => {
+                    applyArrivalTimeFromTemp(h, mi);
+                    if (arrivalTimeError) setArrivalTimeError("");
+                  }}
                 />
               )}
 
@@ -1160,9 +1328,17 @@ export default function TravelProtection() {
               {currentStep === 5 && (
                 <TravelRequiredDocu
                   passportPhoto={passportPhoto}
+                  passportPhotoError={passportPhotoError}
                   governmentId={governmentId}
-                  onPickPassportPhoto={pickPassportPhoto}
-                  onPickGovernmentId={pickGovernmentId}
+                  governmentIdError={governmentIdError}
+                  onPickPassportPhoto={() => {
+                    pickPassportPhoto();
+                    if (passportPhotoError) setPassportPhotoError("");
+                  }}
+                  onPickGovernmentId={() => {
+                    pickGovernmentId();
+                    if (governmentIdError) setGovernmentIdError("");
+                  }}
                 />
               )}
 
@@ -1174,7 +1350,6 @@ export default function TravelProtection() {
                   landlineNumber={landlineNumber}
                   homeAddress={homeAddress}
                   destinationAddress={destinationAddress}
-                  airline={airline}
                   passportNumber={passportNumber}
                 />
               )}
@@ -1468,6 +1643,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
+    width: "100%",
   },
   countryDropdown: {
     backgroundColor: "#FFFFFF",
@@ -1480,6 +1656,7 @@ const styles = StyleSheet.create({
     gap: 6,
     borderWidth: 2,
     borderColor: "#E0E0E0",
+    flexShrink: 0,
   },
   countryFlag: {
     fontSize: 20,
@@ -1492,6 +1669,7 @@ const styles = StyleSheet.create({
   },
   mobileInput: {
     flex: 1,
+    minWidth: 0,
     backgroundColor: "#FFFFFF",
     borderRadius: 12,
     paddingHorizontal: 16,
