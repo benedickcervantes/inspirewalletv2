@@ -8,8 +8,6 @@ import {
   signInWithEmailAndPassword,
   type Auth,
 } from "firebase/auth";
-
-const getReactNativePersistence = (firebaseAuth as { getReactNativePersistence?: (storage: unknown) => unknown }).getReactNativePersistence;
 import {
   collection,
   doc,
@@ -26,6 +24,8 @@ import {
   type Firestore,
   type Unsubscribe,
 } from "firebase/firestore";
+
+const getReactNativePersistence = (firebaseAuth as { getReactNativePersistence?: (storage: unknown) => unknown }).getReactNativePersistence;
 
 const firebaseConfig = {
   apiKey: "AIzaSyD2MVTPMsY3XlgzcIjDWqfJTWP1CsdnFvY",

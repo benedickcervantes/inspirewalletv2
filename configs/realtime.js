@@ -25,7 +25,7 @@ export function createRealtimeConnection(accessToken, handlers = {}) {
   if (!baseUrl || !accessToken) return null;
 
   try {
-    // eslint-disable-next-line global-require
+     
     const { io } = require('socket.io-client');
 
     const socket = io(baseUrl, {
