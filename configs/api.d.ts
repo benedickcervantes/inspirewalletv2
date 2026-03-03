@@ -243,52 +243,24 @@ export function submitTravelProtection(
   body: Record<string, unknown>,
 ): Promise<{ success: boolean; data?: unknown; error?: string }>;
 
-// Card Collection API
-export function getCardCatalog(
-  accessToken: string,
-): Promise<{
-  success: boolean;
-  catalog?: {
-    design: string;
-    category: string;
-    price: number | null;
-    isOwned: boolean;
-    isActive: boolean;
-    isEligible: boolean;
-    collectionItem: unknown | null;
-  }[];
-  error?: string;
-}>;
+export interface ApiWalletFull {
+  id: string;
+  balance?: string;
+  currency?: { code?: string };
+  currencyCode?: string;
+  [key: string]: unknown;
+}
 
-export function getMyCardCollection(
-  accessToken: string,
-): Promise<{
-  success: boolean;
-  data?: {
-    cardDisplayData?: {
-      accountNumber?: string;
-      firstName?: string;
-      lastName?: string;
-      middleName?: string;
-      companyName?: string | null;
-      availableBalance?: string;
-    };
-    collection?: {
-      id: string;
-      userId: string;
-      design: string;
-      category: string;
-      status: string;
-      unlockedAt: string;
-      updatedAt: string;
-      subscription: unknown | null;
-    }[];
-    activeCard?: unknown | null;
-  };
-  error?: string;
-}>;
+export function getWallets(
+  accessToken: string
+): Promise<{ success: boolean; wallets?: ApiWalletFull[]; error?: string }>;
 
-export function buyCard(
+export function submitStockSellRequest(
   accessToken: string,
-  design: string,
+  body: { walletId: string; stocksToSell: number }
 ): Promise<{ success: boolean; data?: unknown; error?: string }>;
+
+export function getStockSellRequests(
+  accessToken: string
+): Promise<{ success: boolean; data?: unknown[]; error?: string }>;
+

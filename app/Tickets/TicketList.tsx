@@ -2,20 +2,22 @@ import { listUserTickets, type Ticket } from "@/lib/tickets";
 import { useFocusEffect } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    RefreshControl,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
+import TicketDetail from "./TicketDetail";
 
 interface TicketListProps {
   accessToken: string;
+  onTicketSelected?: (selected: boolean) => void;
 }
 
-function TicketList({ accessToken }: TicketListProps) {
+function TicketList({ accessToken, onTicketSelected }: TicketListProps) {
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -95,19 +97,15 @@ function TicketList({ accessToken }: TicketListProps) {
 
   if (selectedTicket) {
     return (
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => setSelectedTicket(null)}>
-            <Text style={styles.backButton}>← Back</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Ticket Details</Text>
-          <View style={{ width: 50 }} />
-        </View>
-        <ScrollView style={styles.detailContent}>
-          <Text style={styles.detailTitle}>{selectedTicket.title}</Text>
-          <Text style={styles.detailDescription}>{selectedTicket.description}</Text>
-        </ScrollView>
-      </View>
+      <TicketDetail
+        ticket={selectedTicket}
+        accessToken={accessToken}
+        onBack={() => {
+          setSelectedTicket(null);
+          onTicketSelected?.(false);
+        }}
+        onUpdate={loadTickets}
+      />
     );
   }
 
@@ -129,7 +127,10 @@ function TicketList({ accessToken }: TicketListProps) {
             <TouchableOpacity
               key={ticket.id}
               style={styles.ticketCard}
-              onPress={() => setSelectedTicket(ticket)}
+              onPress={() => {
+                setSelectedTicket(ticket);
+                onTicketSelected?.(true);
+              }}
             >
               <View style={styles.ticketHeader}>
                 <Text style={styles.ticketTitle} numberOfLines={2}>
@@ -322,40 +323,5 @@ const styles = StyleSheet.create({
   },
   disabled: {
     opacity: 0.5,
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: "#fff",
-    borderBottomWidth: 1,
-    borderBottomColor: "#e5e5e5",
-  },
-  backButton: {
-    fontSize: 16,
-    color: "#3b82f6",
-    fontWeight: "600",
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#333",
-  },
-  detailContent: {
-    flex: 1,
-    padding: 16,
-  },
-  detailTitle: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#333",
-    marginBottom: 12,
-  },
-  detailDescription: {
-    fontSize: 14,
-    color: "#666",
-    lineHeight: 20,
   },
 });

@@ -34,6 +34,36 @@ const buildUrl = (path) => {
 };
 
 /**
+ * Fetch the current user's wallets.
+ * GET /wallets
+ * @param {string} accessToken - Backend JWT
+ */
+export async function getWallets(accessToken) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: 'Backend URL not configured' };
+  if (!accessToken) return { success: false, error: 'Not authenticated' };
+  const url = `${base}/wallets`;
+  try {
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    return { success: true, wallets: Array.isArray(data) ? data : (data.wallets ?? data.data ?? []) };
+  } catch (e) {
+    if (__DEV__) console.error('[Wallets API] Error', e);
+    return { success: false, error: e.message || 'Network error' };
+  }
+}
+
+/**
  * Submit a time deposit request via the backend.
  * POST /time-deposits (no /api prefix)
  * @param {string} accessToken - Backend JWT from AsyncStorage
@@ -1473,98 +1503,67 @@ export async function getBulkUserActivity(adminToken, userIds) {
   }
 }
 
-// --- Card Collection API ---
-
 /**
- * GET /card-collection/catalog — requires JWT
- * @param {string} accessToken
- * @returns {Promise<{ success: boolean, catalog?: Array, error?: string }>}
+ * Submit a stock sell request.
+ * POST /deposit-requests/stock-sell
+ * @param {string} accessToken - Backend JWT
+ * @param {{ walletId: string, stocksToSell: number }} body
  */
-export async function getCardCatalog(accessToken) {
+export async function submitStockSellRequest(accessToken, body) {
   const base = getBaseUrl();
-  if (!base) return { success: false, error: "Backend URL not configured" };
-  if (!accessToken) return { success: false, error: "Not authenticated" };
+  if (!base) return { success: false, error: 'Backend URL not configured. Set EXPO_PUBLIC_WALLET_BACKEND_URL in .env.' };
+  if (!accessToken) return { success: false, error: 'Not authenticated' };
+  const url = buildUrl('/deposit-requests/stock-sell');
   try {
-    const url = `${base}/card-collection/catalog`;
+    if (__DEV__) console.log('[StockSell API] POST', url, body);
     const res = await fetch(url, {
-      method: "GET",
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      const msg = Array.isArray(data.message)
-        ? data.message[0]
-        : data.message || data.error || `Request failed (${res.status})`;
-      return { success: false, error: msg };
-    }
-    return { success: true, catalog: data.catalog ?? data };
-  } catch (e) {
-    if (__DEV__) console.error("[CardCollection API] Error", e);
-    return { success: false, error: e.message || "Network error" };
-  }
-}
-
-/**
- * GET /card-collection/my-collection — requires JWT
- * @param {string} accessToken
- * @returns {Promise<{ success: boolean, data?: object, error?: string }>}
- */
-export async function getMyCardCollection(accessToken) {
-  const base = getBaseUrl();
-  if (!base) return { success: false, error: "Backend URL not configured" };
-  if (!accessToken) return { success: false, error: "Not authenticated" };
-  try {
-    const url = `${base}/card-collection/my-collection`;
-    const res = await fetch(url, {
-      method: "GET",
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      const msg = Array.isArray(data.message)
-        ? data.message[0]
-        : data.message || data.error || `Request failed (${res.status})`;
-      return { success: false, error: msg };
-    }
-    return { success: true, data };
-  } catch (e) {
-    if (__DEV__) console.error("[CardCollection API] Error", e);
-    return { success: false, error: e.message || "Network error" };
-  }
-}
-
-/**
- * POST /card-collection/buy — requires JWT
- * @param {string} accessToken
- * @param {string} design
- * @returns {Promise<{ success: boolean, data?: object, error?: string }>}
- */
-export async function buyCard(accessToken, design) {
-  const base = getBaseUrl();
-  if (!base) return { success: false, error: "Backend URL not configured" };
-  if (!accessToken) return { success: false, error: "Not authenticated" };
-  if (!design) return { success: false, error: "Design identifier required" };
-  try {
-    const url = `${base}/card-collection/buy`;
-    if (__DEV__) console.log("[CardCollection API] POST", url, { design });
-    const res = await fetch(url, {
-      method: "POST",
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
         Authorization: `Bearer ${accessToken}`,
       },
-      body: JSON.stringify({ design }),
+      body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (__DEV__) console.log('[StockSell API] Response', res.status, data);
+    if (!res.ok) {
+      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    return { success: true, data: data.data ?? data };
+  } catch (e) {
+    if (__DEV__) console.error('[StockSell API] Error', e);
+    return { success: false, error: e.message || 'Network error. Check EXPO_PUBLIC_WALLET_BACKEND_URL.' };
+  }
+}
+
+/**
+ * Fetch the current user's stock sell requests.
+ * GET /deposit-requests/stock-sell
+ * @param {string} accessToken - Backend JWT
+ */
+export async function getStockSellRequests(accessToken) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: 'Backend URL not configured' };
+  if (!accessToken) return { success: false, error: 'Not authenticated' };
+  const url = buildUrl('/deposit-requests/stock-sell');
+  try {
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      const msg = Array.isArray(data.message)
-        ? data.message[0]
-        : data.message || data.error || `Request failed (${res.status})`;
+      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || `Request failed (${res.status})`;
       return { success: false, error: msg };
     }
-    return { success: true, data };
+    return { success: true, data: Array.isArray(data) ? data : (data.data ?? []) };
   } catch (e) {
-    if (__DEV__) console.error("[CardCollection API] Error", e);
-    return { success: false, error: e.message || "Network error" };
+    if (__DEV__) console.error('[StockSell API] Error', e);
+    return { success: false, error: e.message || 'Network error' };
   }
 }
+
