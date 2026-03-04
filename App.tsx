@@ -99,7 +99,6 @@ export default function App() {
             <Stack.Screen name="ChangePasscode" component={ChangePasscode} />
             <Stack.Screen name="Aboutus" component={Aboutus} />
             <Stack.Screen name="DeleteAccount" component={DeleteAccount} />
-            <Stack.Screen name="HelpCenter" component={HelpCenter} />
             <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicy} />
             <Stack.Screen name="TermsConditions" component={TermsConditions} />
             <Stack.Screen name="Transfer" component={SendMoney} />
