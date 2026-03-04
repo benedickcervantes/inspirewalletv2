@@ -5,25 +5,33 @@ import { LinearGradient } from "expo-linear-gradient";
 import { doc, getDoc } from "firebase/firestore";
 import { useCallback, useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
+    ActivityIndicator,
+    Alert,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    useWindowDimensions,
+    View,
 } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+    SafeAreaView,
+    useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { getMe, updateProfile } from "../../configs/api";
 import { auth, firestore } from "../../configs/firebase";
-import { DEFAULT_LANGUAGE, normalizeLanguage, SUPPORTED_LANGUAGES } from "../../constants/locales";
+import {
+    DEFAULT_LANGUAGE,
+    normalizeLanguage,
+    SUPPORTED_LANGUAGES,
+} from "../../constants/locales";
 import { useLanguage } from "../../context/LanguageContext";
+import CustomLoader from "../Loader/CustomLoader";
 
 const THEME_COLOR = "#E15816";
 const USER_PREFERRED_LANGUAGE_KEY = "user_preferred_language";
@@ -57,7 +65,9 @@ export default function Placeholder() {
 
   const fetchUserData = useCallback(async () => {
     try {
-      const preferredLang = await AsyncStorage.getItem(USER_PREFERRED_LANGUAGE_KEY);
+      const preferredLang = await AsyncStorage.getItem(
+        USER_PREFERRED_LANGUAGE_KEY,
+      );
       const accessToken = await AsyncStorage.getItem("access_token");
       if (accessToken) {
         const result = await getMe(accessToken);
@@ -65,7 +75,8 @@ export default function Placeholder() {
           const u = result.user as Record<string, unknown>;
           const merged = {
             ...u,
-            language: (u.language as string) ?? preferredLang ?? DEFAULT_LANGUAGE,
+            language:
+              (u.language as string) ?? preferredLang ?? DEFAULT_LANGUAGE,
           };
           setUserData(merged);
           setLoading(false);
@@ -80,7 +91,9 @@ export default function Placeholder() {
           const data = userDoc.data();
           setUserData({
             ...data,
-            language: normalizeLanguage((data?.language as string) ?? preferredLang),
+            language: normalizeLanguage(
+              (data?.language as string) ?? preferredLang,
+            ),
           });
         }
       }
@@ -186,21 +199,39 @@ export default function Placeholder() {
     : userData?.displayName || userData?.name || t("common.user");
   const email = userData?.email || "user@example.com";
   const isAgent = userData?.isAgent || userData?.role === "agent" || false;
-  const isPremium = userData?.isPremium || userData?.accountLevel === "premium" || false;
-  const accountNumber = userData?.accountNumber || userData?.id || "000053126300";
-  const companyName = userData?.companyName || t("Tap to add company name") || "Tap to add company name";
-  const contactNumber = userData?.phone ?? userData?.phoneNumber ?? t("Tap to add phone number") ?? "Tap to add phone number";
-  const lineLink = userData?.lineAccountLink ?? userData?.lineLink ?? t("common.notProvided");
+  const isPremium =
+    userData?.isPremium || userData?.accountLevel === "premium" || false;
+  const accountNumber =
+    userData?.accountNumber || userData?.id || "000053126300";
+  const companyName =
+    userData?.companyName ||
+    t("Tap to add company name") ||
+    "Tap to add company name";
+  const contactNumber =
+    userData?.phone ??
+    userData?.phoneNumber ??
+    t("Tap to add phone number") ??
+    "Tap to add phone number";
+  const lineLink =
+    userData?.lineAccountLink ?? userData?.lineLink ?? t("common.notProvided");
   const viberLink = userData?.viberLink || t("common.notProvided");
   const whatsappLink = userData?.whatsappLink || t("common.notProvided");
-  const accountLevelLabel = isPremium ? t("profile.premium") : t("profile.basic");
-  const referrerName = userData?.referrerName ?? userData?.agentReferrer ?? userData?.referredBy ?? null;
+  const accountLevelLabel = isPremium
+    ? t("profile.premium")
+    : t("profile.basic");
+  const referrerName =
+    userData?.referrerName ??
+    userData?.agentReferrer ??
+    userData?.referredBy ??
+    null;
   const agentReferrer = referrerName ?? t("common.notProvided");
   const language = normalizeLanguage(userData?.language ?? contextLanguage);
 
   const handleSelectLanguage = async (selectedLabel: string) => {
     setLanguage(selectedLabel);
-    setUserData((prev: any) => (prev ? { ...prev, language: selectedLabel } : null));
+    setUserData((prev: any) =>
+      prev ? { ...prev, language: selectedLabel } : null,
+    );
     await AsyncStorage.setItem(USER_PREFERRED_LANGUAGE_KEY, selectedLabel);
     const userJson = await AsyncStorage.getItem("user");
     if (userJson) {
@@ -208,7 +239,7 @@ export default function Placeholder() {
         const user = JSON.parse(userJson);
         await AsyncStorage.setItem(
           "user",
-          JSON.stringify({ ...user, language: selectedLabel })
+          JSON.stringify({ ...user, language: selectedLabel }),
         );
       } catch (_) { }
     }
@@ -228,14 +259,7 @@ export default function Placeholder() {
   const status = statusRaw === "Active" ? t("profile.active") : statusRaw;
 
   if (loading) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={THEME_COLOR} />
-          <Text style={styles.loadingText}>Loading profile...</Text>
-        </View>
-      </SafeAreaView>
-    );
+    return <CustomLoader text="LOADING" />;
   }
 
   return (
@@ -262,7 +286,10 @@ export default function Placeholder() {
           end={{ x: 1, y: 1 }}
         >
           <TouchableOpacity
-            style={[styles.backButton, { top: headerPaddingTop, left: headerPaddingHorizontal }]}
+            style={[
+              styles.backButton,
+              { top: headerPaddingTop, left: headerPaddingHorizontal },
+            ]}
             onPress={() => navigation.goBack()}
             activeOpacity={0.7}
           >
@@ -273,16 +300,37 @@ export default function Placeholder() {
 
           {/* Profile Avatar */}
           <View style={styles.avatarContainer}>
-            <View style={[styles.avatar, { width: avatarSize, height: avatarSize, borderRadius: avatarSize / 2 }]}>
-              <Ionicons name="person" size={Math.round(40 * scale)} color="#E15816" />
+            <View
+              style={[
+                styles.avatar,
+                {
+                  width: avatarSize,
+                  height: avatarSize,
+                  borderRadius: avatarSize / 2,
+                },
+              ]}
+            >
+              <Ionicons
+                name="person"
+                size={Math.round(40 * scale)}
+                color="#E15816"
+              />
             </View>
           </View>
 
           {/* User Info */}
-          <Text style={[styles.userName, { fontSize: Math.round(22 * scale) }]} numberOfLines={1} ellipsizeMode="tail">
+          <Text
+            style={[styles.userName, { fontSize: Math.round(22 * scale) }]}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
             {fullName}
           </Text>
-          <Text style={[styles.userEmail, { fontSize: Math.round(14 * scale) }]} numberOfLines={1} ellipsizeMode="tail">
+          <Text
+            style={[styles.userEmail, { fontSize: Math.round(14 * scale) }]}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
             {email}
           </Text>
 
@@ -290,8 +338,14 @@ export default function Placeholder() {
           <View style={styles.badgesContainer}>
             {isAgent ? (
               <View style={styles.agentBadge}>
-                <MaterialCommunityIcons name="shield-account" size={16} color="#FFFFFF" />
-                <Text style={styles.badgeText}>{t("profile.agent").toUpperCase()}</Text>
+                <MaterialCommunityIcons
+                  name="shield-account"
+                  size={16}
+                  color="#FFFFFF"
+                />
+                <Text style={styles.badgeText}>
+                  {t("profile.agent").toUpperCase()}
+                </Text>
               </View>
             ) : (
               <View style={styles.investorBadge}>
@@ -302,17 +356,34 @@ export default function Placeholder() {
             {isPremium && (
               <View style={styles.premiumBadge}>
                 <Ionicons name="diamond" size={16} color="#333" />
-                <Text style={styles.premiumBadgeText}>{t("profile.premium").toUpperCase()}</Text>
+                <Text style={styles.premiumBadgeText}>
+                  {t("profile.premium").toUpperCase()}
+                </Text>
               </View>
             )}
           </View>
         </LinearGradient>
 
         {/* Account Details Section */}
-        <View style={[styles.section, { marginHorizontal: sectionMarginHorizontal, padding: sectionPadding }]}>
+        <View
+          style={[
+            styles.section,
+            {
+              marginHorizontal: sectionMarginHorizontal,
+              padding: sectionPadding,
+            },
+          ]}
+        >
           <View style={styles.sectionHeader}>
             <Ionicons name="person-circle-outline" size={22} color="#E15816" />
-            <Text style={[styles.sectionTitle, { fontSize: Math.round(16 * scale) }]}>{t("profile.accountDetails")}</Text>
+            <Text
+              style={[
+                styles.sectionTitle,
+                { fontSize: Math.round(16 * scale) },
+              ]}
+            >
+              {t("profile.accountDetails")}
+            </Text>
           </View>
 
           <DetailItem
@@ -377,7 +448,11 @@ export default function Placeholder() {
             badgeColor={isPremium ? "#FFD700" : "#999"}
             verified={isPremium}
             showVerifyButton={!isPremium}
-            onVerifyPress={() => (navigation as { navigate: (name: string) => void }).navigate("KYCVerification")}
+            onVerifyPress={() =>
+              (navigation as { navigate: (name: string) => void }).navigate(
+                "KYCVerification",
+              )
+            }
             verifyButtonLabel={t("profile.verify")}
           />
           <DetailItem
@@ -402,10 +477,29 @@ export default function Placeholder() {
         </View>
 
         {/* Account Status Section */}
-        <View style={[styles.section, { marginHorizontal: sectionMarginHorizontal, padding: sectionPadding }]}>
+        <View
+          style={[
+            styles.section,
+            {
+              marginHorizontal: sectionMarginHorizontal,
+              padding: sectionPadding,
+            },
+          ]}
+        >
           <View style={styles.sectionHeader}>
-            <Ionicons name="information-circle-outline" size={22} color="#E15816" />
-            <Text style={[styles.sectionTitle, { fontSize: Math.round(16 * scale) }]}>{t("profile.accountStatus")}</Text>
+            <Ionicons
+              name="information-circle-outline"
+              size={22}
+              color="#E15816"
+            />
+            <Text
+              style={[
+                styles.sectionTitle,
+                { fontSize: Math.round(16 * scale) },
+              ]}
+            >
+              {t("profile.accountStatus")}
+            </Text>
           </View>
 
           <DetailItem
@@ -439,7 +533,10 @@ export default function Placeholder() {
                 <Ionicons name="close" size={24} color="#333" />
               </TouchableOpacity>
             </View>
-            <ScrollView keyboardShouldPersistTaps="handled" style={styles.modalScroll}>
+            <ScrollView
+              keyboardShouldPersistTaps="handled"
+              style={styles.modalScroll}
+            >
               <View style={styles.modalBody}>
                 <Text style={styles.inputLabel}>First Name *</Text>
                 <TextInput
@@ -522,7 +619,9 @@ export default function Placeholder() {
             </View>
             <View style={styles.modalBody}>
               <Text style={styles.inputLabel}>Contact Number *</Text>
-              <Text style={styles.inputHint}>Include country code (e.g., +1, +81, +82, +966, +63)</Text>
+              <Text style={styles.inputHint}>
+                Include country code (e.g., +1, +81, +82, +966, +63)
+              </Text>
               <TextInput
                 style={styles.input}
                 value={editPhone}
@@ -576,7 +675,10 @@ export default function Placeholder() {
           activeOpacity={1}
           onPress={() => setLanguageModalVisible(false)}
         >
-          <View style={styles.languageModalContent} onStartShouldSetResponder={() => true}>
+          <View
+            style={styles.languageModalContent}
+            onStartShouldSetResponder={() => true}
+          >
             <View style={styles.languageMapHeader}>
               <View style={styles.languageMapGlobe}>
                 <Ionicons name="globe-outline" size={40} color="#E15816" />
@@ -594,7 +696,9 @@ export default function Placeholder() {
                   </View>
                 ))}
               </View>
-              <Text style={styles.languageModalTitle}>{t("profile.selectLanguage")}</Text>
+              <Text style={styles.languageModalTitle}>
+                {t("profile.selectLanguage")}
+              </Text>
               <Text style={styles.languageModalSubtitle}>
                 {t("profile.defaultIsEnglish")}
               </Text>
@@ -627,7 +731,9 @@ export default function Placeholder() {
               style={styles.languageModalCancel}
               onPress={() => setLanguageModalVisible(false)}
             >
-              <Text style={styles.languageModalCancelText}>{t("common.cancel")}</Text>
+              <Text style={styles.languageModalCancelText}>
+                {t("common.cancel")}
+              </Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
@@ -676,12 +782,23 @@ function DetailItem({
         <Text style={styles.detailLabel}>{label}</Text>
       </View>
       <View style={styles.detailValueContainer}>
-        <Text style={isPlaceholder ? styles.detailValuePlaceholder : styles.detailValue}>{value}</Text>
+        <Text
+          style={
+            isPlaceholder ? styles.detailValuePlaceholder : styles.detailValue
+          }
+        >
+          {value}
+        </Text>
         {badge && (
           <View style={[styles.badge, { backgroundColor: badgeColor }]}>
             <Text style={styles.badgeTextSmall}>{badge}</Text>
             {verified && (
-              <Ionicons name="checkmark-circle" size={14} color="#333" style={{ marginLeft: 4 }} />
+              <Ionicons
+                name="checkmark-circle"
+                size={14}
+                color="#333"
+                style={{ marginLeft: 4 }}
+              />
             )}
           </View>
         )}

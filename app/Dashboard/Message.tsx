@@ -3,8 +3,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
   Alert,
+  Image,
   Keyboard,
   KeyboardAvoidingView,
   Modal,
@@ -15,10 +15,19 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { deleteMessage, editMessage, getMessages, markAllMessagesAsRead, sendMessage } from "../../configs/api";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
+import {
+  deleteMessage,
+  editMessage,
+  getMessages,
+  markAllMessagesAsRead,
+  sendMessage,
+} from "../../configs/api";
 import { subscribeToConnectionStatus } from "../../lib/connectionStatus";
 import { isServiceUnderMaintenance } from "../../lib/maintenance";
 import { subscribeToNewSupportMessage } from "../../lib/messagingEvents";
@@ -86,11 +95,20 @@ export default function Message() {
   const [showTicketCreation, setShowTicketCreation] = useState(false);
   const [viewMode, setViewMode] = useState<"messages" | "tickets">("messages");
   const [accessToken, setAccessToken] = useState<string | null>(null);
-  const [selectedMessage, setSelectedMessage] = useState<DisplayMessage | null>(null);
+  const [selectedMessage, setSelectedMessage] = useState<DisplayMessage | null>(
+    null,
+  );
   const [showMessageActions, setShowMessageActions] = useState(false);
-  const [editingMessage, setEditingMessage] = useState<DisplayMessage | null>(null);
+  const [editingMessage, setEditingMessage] = useState<DisplayMessage | null>(
+    null,
+  );
   const [editText, setEditText] = useState("");
   const [ticketSelected, setTicketSelected] = useState(false);
+
+  // Debug ticket selection
+  useEffect(() => {
+    console.log("[Message] ticketSelected state changed:", ticketSelected);
+  }, [ticketSelected]);
 
   // Check maintenance status on focus
   useFocusEffect(
@@ -107,15 +125,15 @@ export default function Message() {
         }
       };
       checkMaintenance();
-    }, [])
+    }, []),
   );
 
   const fetchMessages = useCallback(async () => {
     if (isUnderMaintenance) return;
-    
+
     const token = await AsyncStorage.getItem("access_token");
     setAccessToken(token);
-    
+
     if (!token) {
       setError("Please log in to view messages.");
       setLoading(false);
@@ -186,7 +204,7 @@ export default function Message() {
   const handleDelete = useCallback(() => {
     if (!selectedMessage) return;
     setShowMessageActions(false);
-    
+
     Alert.alert(
       "Delete Message",
       "Choose delete option:",
@@ -200,7 +218,11 @@ export default function Message() {
           onPress: async () => {
             const token = await AsyncStorage.getItem("access_token");
             if (!token) return;
-            const result = await deleteMessage(token, selectedMessage.id, false);
+            const result = await deleteMessage(
+              token,
+              selectedMessage.id,
+              false,
+            );
             if (result.success) {
               await fetchMessages();
             } else {
@@ -223,13 +245,13 @@ export default function Message() {
           },
         },
       ],
-      { cancelable: true }
+      { cancelable: true },
     );
   }, [selectedMessage, fetchMessages]);
 
   const handleSaveEdit = useCallback(async () => {
     if (!editingMessage || !editText.trim()) return;
-    
+
     const token = await AsyncStorage.getItem("access_token");
     if (!token) return;
 
@@ -252,29 +274,33 @@ export default function Message() {
     useCallback(() => {
       setLoading(true);
       fetchMessages();
-    }, [fetchMessages])
+    }, [fetchMessages]),
   );
 
   useEffect(() => {
     const unsubscribe = subscribeToNewSupportMessage(() => {
       fetchMessages();
     });
-    return () => { unsubscribe(); };
+    return () => {
+      unsubscribe();
+    };
   }, [fetchMessages]);
 
   useEffect(() => {
     const unsubscribe = subscribeToConnectionStatus(setIsOnline);
-    return () => { unsubscribe(); };
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   useEffect(() => {
     const showSub = Keyboard.addListener(
       Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
-      () => setKeyboardVisible(true)
+      () => setKeyboardVisible(true),
     );
     const hideSub = Keyboard.addListener(
       Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
-      () => setKeyboardVisible(false)
+      () => setKeyboardVisible(false),
     );
     return () => {
       showSub.remove();
@@ -296,7 +322,11 @@ export default function Message() {
     return (
       <View style={styles.container}>
         <View style={styles.centerContent}>
-          <ActivityIndicator size="large" color="#E15816" />
+          <Image
+            source={require("../../assets/icons/loader.gif")}
+            style={{ width: 80, height: 80 }}
+            resizeMode="contain"
+          />
           <Text style={styles.loadingText}>Service under maintenance</Text>
         </View>
       </View>
@@ -314,16 +344,14 @@ export default function Message() {
         </TouchableOpacity>
         <View style={styles.headerCenter}>
           <View style={styles.headerAvatar}>
-            <MaterialCommunityIcons
-              name="headset"
-              size={22}
-              color="#E15816"
-            />
+            <MaterialCommunityIcons name="headset" size={22} color="#E15816" />
           </View>
           <View>
             <Text style={styles.headerTitle}>Support</Text>
             <Text style={styles.headerSubtitle}>
-              {isOnline ? "Online • You're connected" : "Offline • Connect for real-time updates"}
+              {isOnline
+                ? "Online • You're connected"
+                : "Offline • Connect for real-time updates"}
             </Text>
           </View>
         </View>
@@ -338,7 +366,12 @@ export default function Message() {
           style={[styles.tab, viewMode === "messages" && styles.tabActive]}
           onPress={() => setViewMode("messages")}
         >
-          <Text style={[styles.tabText, viewMode === "messages" && styles.tabTextActive]}>
+          <Text
+            style={[
+              styles.tabText,
+              viewMode === "messages" && styles.tabTextActive,
+            ]}
+          >
             Messages
           </Text>
         </TouchableOpacity>
@@ -346,7 +379,12 @@ export default function Message() {
           style={[styles.tab, viewMode === "tickets" && styles.tabActive]}
           onPress={() => setViewMode("tickets")}
         >
-          <Text style={[styles.tabText, viewMode === "tickets" && styles.tabTextActive]}>
+          <Text
+            style={[
+              styles.tabText,
+              viewMode === "tickets" && styles.tabTextActive,
+            ]}
+          >
             Tickets
           </Text>
         </TouchableOpacity>
@@ -354,12 +392,20 @@ export default function Message() {
 
       {loading && messages.length === 0 ? (
         <View style={styles.centerContent}>
-          <ActivityIndicator size="large" color="#E15816" />
+          <Image
+            source={require("../../assets/icons/loader.gif")}
+            style={{ width: 80, height: 80 }}
+            resizeMode="contain"
+          />
           <Text style={styles.loadingText}>Loading messages...</Text>
         </View>
       ) : error && messages.length === 0 ? (
         <View style={styles.centerContent}>
-          <MaterialCommunityIcons name="alert-circle-outline" size={48} color="#999" />
+          <MaterialCommunityIcons
+            name="alert-circle-outline"
+            size={48}
+            color="#999"
+          />
           <Text style={styles.errorText}>{error}</Text>
           <TouchableOpacity style={styles.retryButton} onPress={onRefresh}>
             <Text style={styles.retryButtonText}>Retry</Text>
@@ -368,7 +414,10 @@ export default function Message() {
       ) : viewMode === "tickets" && accessToken ? (
         <>
           <View style={styles.ticketsContainer}>
-            <TicketList accessToken={accessToken} onTicketSelected={setTicketSelected} />
+            <TicketList
+              accessToken={accessToken}
+              onTicketSelected={setTicketSelected}
+            />
           </View>
           {/* Circular Create Button - Below Tickets */}
           {!ticketSelected && (
@@ -390,85 +439,105 @@ export default function Message() {
             ref={scrollRef}
             style={styles.messagesScroll}
             contentContainerStyle={[
-            styles.messagesContent,
-            messages.length === 0 && styles.messagesContentEmpty,
-          ]}
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              tintColor="#E15816"
-            />
-          }
-        >
-          {messages.length === 0 ? (
-            <View style={styles.emptyState}>
-              <MaterialCommunityIcons name="message-outline" size={64} color="#CCC" />
-              <Text style={styles.emptyTitle}>No messages yet</Text>
-              <Text style={styles.emptySubtitle}>
-                Start a conversation with Inspire Wallet Support. Send a message below
-                or wait for support to contact you.
-              </Text>
-            </View>
-          ) : (
-            messages.map((msg) => (
-              <TouchableOpacity
-                key={msg.id}
-                onLongPress={() => handleLongPress(msg)}
-                activeOpacity={0.9}
-                style={[
-                  styles.bubbleRow,
-                  msg.isSent ? styles.bubbleRowSent : styles.bubbleRowReceived,
-                ]}
-              >
-                <View
+              styles.messagesContent,
+              messages.length === 0 && styles.messagesContentEmpty,
+            ]}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                tintColor="#E15816"
+              />
+            }
+          >
+            {messages.length === 0 ? (
+              <View style={styles.emptyState}>
+                <MaterialCommunityIcons
+                  name="message-outline"
+                  size={64}
+                  color="#CCC"
+                />
+                <Text style={styles.emptyTitle}>No messages yet</Text>
+                <Text style={styles.emptySubtitle}>
+                  Start a conversation with Inspire Wallet Support. Send a
+                  message below or wait for support to contact you.
+                </Text>
+              </View>
+            ) : (
+              messages.map((msg) => (
+                <TouchableOpacity
+                  key={msg.id}
+                  onLongPress={() => handleLongPress(msg)}
+                  activeOpacity={0.9}
                   style={[
-                    styles.bubble,
-                    msg.isSent ? styles.bubbleSent : styles.bubbleReceived,
+                    styles.bubbleRow,
+                    msg.isSent
+                      ? styles.bubbleRowSent
+                      : styles.bubbleRowReceived,
                   ]}
                 >
-                  <Text
+                  <View
                     style={[
-                      styles.bubbleText,
-                      msg.isSent ? styles.bubbleTextSent : styles.bubbleTextReceived,
+                      styles.bubble,
+                      msg.isSent ? styles.bubbleSent : styles.bubbleReceived,
                     ]}
                   >
-                    {msg.text}
-                  </Text>
-                  <View style={styles.bubbleFooter}>
                     <Text
                       style={[
-                        styles.bubbleTime,
-                        msg.isSent ? styles.bubbleTimeSent : styles.bubbleTimeReceived,
+                        styles.bubbleText,
+                        msg.isSent
+                          ? styles.bubbleTextSent
+                          : styles.bubbleTextReceived,
                       ]}
                     >
-                      {formatTime(msg.timestamp)}
+                      {msg.text}
                     </Text>
-                    {msg.isSent ? (
-                      <View style={styles.readStatus}>
-                        <Ionicons
-                          name={msg.status === "READ" ? "checkmark-done" : "checkmark"}
-                          size={14}
-                          color={msg.status === "READ" ? "#4FC3F7" : "rgba(255,255,255,0.8)"}
-                        />
-                        <Text
-                          style={[
-                            styles.readStatusText,
-                            msg.status === "READ" ? styles.readStatusRead : styles.readStatusSent,
-                          ]}
-                        >
-                          {msg.status === "READ" ? "Read" : "Sent"}
-                        </Text>
-                      </View>
-                    ) : msg.status === "SENT" ? (
-                      <View style={styles.unreadDot} />
-                    ) : null}
+                    <View style={styles.bubbleFooter}>
+                      <Text
+                        style={[
+                          styles.bubbleTime,
+                          msg.isSent
+                            ? styles.bubbleTimeSent
+                            : styles.bubbleTimeReceived,
+                        ]}
+                      >
+                        {formatTime(msg.timestamp)}
+                      </Text>
+                      {msg.isSent ? (
+                        <View style={styles.readStatus}>
+                          <Ionicons
+                            name={
+                              msg.status === "READ"
+                                ? "checkmark-done"
+                                : "checkmark"
+                            }
+                            size={14}
+                            color={
+                              msg.status === "READ"
+                                ? "#4FC3F7"
+                                : "rgba(255,255,255,0.8)"
+                            }
+                          />
+                          <Text
+                            style={[
+                              styles.readStatusText,
+                              msg.status === "READ"
+                                ? styles.readStatusRead
+                                : styles.readStatusSent,
+                            ]}
+                          >
+                            {msg.status === "READ" ? "Read" : "Sent"}
+                          </Text>
+                        </View>
+                      ) : msg.status === "SENT" ? (
+                        <View style={styles.unreadDot} />
+                      ) : null}
+                    </View>
                   </View>
-                </View>
-              </TouchableOpacity>
-            ))
-          )}
+                </TouchableOpacity>
+              ))
+            )}
           </ScrollView>
 
           <View
@@ -502,7 +571,11 @@ export default function Message() {
               disabled={!message.trim() || sending}
             >
               {sending ? (
-                <ActivityIndicator size="small" color="#999" />
+                <Image
+                  source={require("../../assets/icons/loader.gif")}
+                  style={{ width: 24, height: 24 }}
+                  resizeMode="contain"
+                />
               ) : (
                 <MaterialCommunityIcons
                   name="send"
@@ -538,10 +611,7 @@ export default function Message() {
           onPress={() => setShowMessageActions(false)}
         >
           <View style={styles.actionSheet}>
-            <TouchableOpacity
-              style={styles.actionButton}
-              onPress={handleEdit}
-            >
+            <TouchableOpacity style={styles.actionButton} onPress={handleEdit}>
               <MaterialCommunityIcons name="pencil" size={22} color="#333" />
               <Text style={styles.actionButtonText}>Edit Message</Text>
             </TouchableOpacity>
@@ -550,7 +620,11 @@ export default function Message() {
               onPress={handleDelete}
             >
               <MaterialCommunityIcons name="delete" size={22} color="#E15816" />
-              <Text style={[styles.actionButtonText, styles.actionButtonTextDanger]}>Delete Message</Text>
+              <Text
+                style={[styles.actionButtonText, styles.actionButtonTextDanger]}
+              >
+                Delete Message
+              </Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.actionButton, styles.actionButtonCancel]}

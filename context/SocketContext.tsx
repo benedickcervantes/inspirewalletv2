@@ -6,7 +6,7 @@ import { notifyNewTicketMessage } from '../lib/ticketingEvents';
 
 interface SocketContextType {
     isConnected: boolean;
-    socket: any | null;
+    getSocket: () => any | null;
     refreshConnection: () => Promise<void>;
 }
 
@@ -100,8 +100,11 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         await connect();
     };
 
+    // Provide a getter function to always access the current socket
+    const getSocket = () => socketRef.current;
+
     return (
-        <SocketContext.Provider value={{ isConnected, socket: socketRef.current, refreshConnection }}>
+        <SocketContext.Provider value={{ isConnected, getSocket, refreshConnection }}>
             {children}
         </SocketContext.Provider>
     );
