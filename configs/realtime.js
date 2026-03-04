@@ -35,6 +35,7 @@ export function createRealtimeConnection(accessToken, handlers = {}) {
     });
 
     socket.on('WALLET_UPDATE', (payload) => {
+      console.log('[realtime.js] WALLET_UPDATE received');
       handlers.onWalletUpdate?.(payload);
     });
 
@@ -43,7 +44,13 @@ export function createRealtimeConnection(accessToken, handlers = {}) {
     });
 
     socket.on('NEW_SUPPORT_MESSAGE', (payload) => {
+      console.log('[realtime.js] NEW_SUPPORT_MESSAGE received');
       handlers.onNewSupportMessage?.(payload);
+    });
+
+    socket.on('TICKET_MESSAGE', (payload) => {
+      console.log('[realtime.js] TICKET_MESSAGE received:', payload?.id);
+      handlers.onTicketMessage?.(payload);
     });
 
     socket.on('connect', () => {
@@ -71,7 +78,7 @@ export function createRealtimeConnection(accessToken, handlers = {}) {
  * @returns {function} cleanup function to clear the interval
  */
 export function startHeartbeat(socket) {
-  if (!socket) return () => {};
+  if (!socket) return () => { };
   const pingInterval = setInterval(() => {
     if (socket.connected) socket.emit('PING');
   }, 30000);

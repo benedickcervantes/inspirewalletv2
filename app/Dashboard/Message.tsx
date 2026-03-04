@@ -3,19 +3,19 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    Keyboard,
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  Alert,
+  Keyboard,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { deleteMessage, editMessage, getMessages, markAllMessagesAsRead, sendMessage } from "../../configs/api";
@@ -366,8 +366,10 @@ export default function Message() {
           </TouchableOpacity>
         </View>
       ) : viewMode === "tickets" && accessToken ? (
-        <View style={styles.ticketsContainer}>
-          <TicketList accessToken={accessToken} onTicketSelected={setTicketSelected} />
+        <>
+          <View style={styles.ticketsContainer}>
+            <TicketList accessToken={accessToken} onTicketSelected={setTicketSelected} />
+          </View>
           {/* Circular Create Button - Below Tickets */}
           {!ticketSelected && (
             <TouchableOpacity
@@ -377,7 +379,7 @@ export default function Message() {
               <MaterialCommunityIcons name="plus" size={28} color="#FFFFFF" />
             </TouchableOpacity>
           )}
-        </View>
+        </>
       ) : (
         <KeyboardAvoidingView
           style={styles.keyboardView}
@@ -659,7 +661,6 @@ const styles = StyleSheet.create({
   },
   ticketsContainer: {
     flex: 1,
-    position: "relative",
   },
   circularCreateButton: {
     position: "absolute",

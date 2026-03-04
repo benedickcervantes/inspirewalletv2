@@ -1,14 +1,15 @@
+import { subscribeToNewTicketMessage } from "@/lib/ticketingEvents";
 import { listUserTickets, type Ticket } from "@/lib/tickets";
 import { useFocusEffect } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import TicketDetail from "./TicketDetail";
 
@@ -34,6 +35,21 @@ function TicketList({ accessToken, onTicketSelected }: TicketListProps) {
       loadTickets();
     }, [])
   );
+
+  // Setup WebSocket listener for real-time ticket updates
+  useEffect(() => {
+    if (!accessToken) return;
+
+    // Subscribe to ticket message events
+    const unsubscribe = subscribeToNewTicketMessage(() => {
+      console.log("[TicketList] Received ticket message notification, refetching tickets");
+      loadTickets();
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [accessToken]);
 
   const loadTickets = async () => {
     if (page === 1) setLoading(true);
