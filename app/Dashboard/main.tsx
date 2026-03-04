@@ -26,17 +26,13 @@ import {
   getTransactions,
 } from "../../configs/api";
 import {
-  createRealtimeConnection,
-  startHeartbeat,
-} from "../../configs/realtime";
-import {
   languageChoiceDoneKey,
   SUPPORTED_LANGUAGES,
 } from "../../constants/locales";
 import { useLanguage } from "../../context/LanguageContext";
+import { useSocket } from "../../context/SocketContext";
 import { setConnectionStatus } from "../../lib/connectionStatus";
 import { getMaintenanceStatus } from "../../lib/maintenance";
-import { notifyNewSupportMessage } from "../../lib/messagingEvents";
 import type { NavProp } from "../../types/navigation";
 import { useResponsive } from "../../utils/responsive";
 import CardsTab from "./CardsTab";
@@ -217,8 +213,6 @@ export default function Dashboard() {
   const languageScrollRef = useRef<ScrollView | null>(null);
   const mainWalletIdRef = useRef<string | null>(null);
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const socketRef = useRef<{ disconnect: () => void } | null>(null);
-  const heartbeatCleanupRef = useRef<(() => void) | null>(null);
   const [currentLanguageIndex, setCurrentLanguageIndex] = useState(0);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [userReferrer, setUserReferrer] = useState<{
@@ -448,9 +442,9 @@ export default function Dashboard() {
     }
   }, []);
 
-  useEffect(() => {
-    let cancelled = false;
+  const { socket, isConnected: isSocketConnected } = useSocket();
 
+  useEffect(() => {
     const startPolling = () => {
       if (pollIntervalRef.current) return;
       refetchJwtData();
@@ -464,65 +458,45 @@ export default function Dashboard() {
       }
     };
 
-    AsyncStorage.getItem("access_token").then((token) => {
-      if (cancelled || !token) return;
-
+    if (!isSocketConnected) {
       startPolling();
+    } else {
+      stopPolling();
+    }
 
-      const socket = createRealtimeConnection(token, {
-        onWalletUpdate: (payload: {
-          walletId?: string;
-          balance?: number | string;
-        }) => {
-          if (
-            payload?.walletId === mainWalletIdRef.current &&
-            payload?.balance != null
-          ) {
-            const bal = parseFloat(String(payload.balance));
-            setAvailableBalance(Number.isNaN(bal) ? 0 : bal);
-          }
-        },
-        onTransactionCreated: () => {
-          refetchJwtData();
-        },
-        onNewSupportMessage: () => {
-          notifyNewSupportMessage();
-        },
-        onConnect: () => {
-          setConnectionStatus(true);
-          stopPolling();
-          if (socket) {
-            heartbeatCleanupRef.current = startHeartbeat(socket) as () => void;
-          }
-        },
-        onDisconnect: () => {
-          setConnectionStatus(false);
-          heartbeatCleanupRef.current?.();
-          heartbeatCleanupRef.current = null;
-          startPolling();
-        },
-        onError: () => {
-          startPolling();
-        },
-      });
+    setConnectionStatus(isSocketConnected);
 
-      if (socket) {
-        socketRef.current = socket as { disconnect: () => void };
-      }
-    });
+    if (socket && isSocketConnected) {
+      const handleWalletUpdate = (payload: {
+        walletId?: string;
+        balance?: number | string;
+      }) => {
+        if (
+          payload?.walletId === mainWalletIdRef.current &&
+          payload?.balance != null
+        ) {
+          const bal = parseFloat(String(payload.balance));
+          setAvailableBalance(Number.isNaN(bal) ? 0 : bal);
+        }
+      };
+
+      const handleTransactionCreated = () => {
+        refetchJwtData();
+      };
+
+      socket.on("WALLET_UPDATE", handleWalletUpdate);
+      socket.on("TRANSACTION_CREATED", handleTransactionCreated);
+
+      return () => {
+        socket.off("WALLET_UPDATE", handleWalletUpdate);
+        socket.off("TRANSACTION_CREATED", handleTransactionCreated);
+      };
+    }
 
     return () => {
-      cancelled = true;
-      setConnectionStatus(false);
       stopPolling();
-      heartbeatCleanupRef.current?.();
-      heartbeatCleanupRef.current = null;
-      if (socketRef.current) {
-        socketRef.current.disconnect();
-        socketRef.current = null;
-      }
     };
-  }, [refetchJwtData]);
+  }, [isSocketConnected, socket, refetchJwtData]);
 
   useFocusEffect(
     useCallback(() => {
@@ -661,7 +635,7 @@ export default function Dashboard() {
         visible={showFirstTimeLanguageModal}
         transparent
         animationType="fade"
-        onRequestClose={() => {}}
+        onRequestClose={() => { }}
       >
         <View style={styles.languageModalOverlay}>
           <View style={styles.languageModalContent}>
@@ -999,7 +973,7 @@ export default function Dashboard() {
                     style={[
                       styles.languageDot,
                       currentLanguageIndex === index &&
-                        styles.languageActiveDot,
+                      styles.languageActiveDot,
                     ]}
                   />
                 ))}
