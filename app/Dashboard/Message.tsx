@@ -3,19 +3,19 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  Keyboard,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
+    ActivityIndicator,
+    Alert,
+    Keyboard,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    RefreshControl,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { deleteMessage, editMessage, getMessages, markAllMessagesAsRead, sendMessage } from "../../configs/api";
@@ -91,6 +91,11 @@ export default function Message() {
   const [editingMessage, setEditingMessage] = useState<DisplayMessage | null>(null);
   const [editText, setEditText] = useState("");
   const [ticketSelected, setTicketSelected] = useState(false);
+
+  // Debug ticket selection
+  useEffect(() => {
+    console.log("[Message] ticketSelected state changed:", ticketSelected);
+  }, [ticketSelected]);
 
   // Check maintenance status on focus
   useFocusEffect(

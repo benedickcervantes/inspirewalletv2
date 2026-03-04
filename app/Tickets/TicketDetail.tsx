@@ -12,7 +12,8 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
-import { createRealtimeConnection } from "../../configs/realtime";
+import { useSocket } from "../../context/SocketContext";
+import { subscribeToNewTicketMessage } from "../../lib/ticketingEvents";
 
 interface TicketDetailProps {
   ticket: Ticket;
@@ -63,7 +64,14 @@ function TicketDetail({
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [wsConnected, setWsConnected] = useState(false);
-  const socketRef = useRef<any>(null);
+
+  const { isConnected: isSocketConnected, getSocket } = useSocket();
+  const socket = getSocket();
+
+  // Sync WS connection state with global socket
+  useEffect(() => {
+    setWsConnected(isSocketConnected);
+  }, [isSocketConnected]);
 
   // Derived state
   const hasAdminReply = messages.some((m) => !m.isCustomer);
@@ -105,6 +113,9 @@ function TicketDetail({
           headers: {
             Authorization: `Bearer ${accessToken}`,
             "Content-Type": "application/json",
+            ...(process.env.EXPO_PUBLIC_API_KEY && {
+              "x-api-key": process.env.EXPO_PUBLIC_API_KEY,
+            }),
           },
           signal: controller.signal,
         }
@@ -171,60 +182,57 @@ function TicketDetail({
     fetchMessages();
   }, [ticket.id, accessToken]);
 
-  // Setup dedicated WebSocket connection for this ticket
+  // Setup subscription to global ticket events and handle ROOM joining
   useEffect(() => {
-    console.log(`[TicketDetail] Setting up dedicated WebSocket for ticket ${ticket.id}`);
+    console.log(`[TicketDetail] Setting up subscription/room for ticket ${ticket.id}`);
+    
+    const socket = getSocket();
+    console.log(`[TicketDetail] Socket connected: ${isSocketConnected}, Socket exists: ${!!socket}`);
 
-    // Create a dedicated socket connection for this ticket
-    const socket = createRealtimeConnection(accessToken, {
-      onConnect: () => {
-        console.log(`[TicketDetail] WebSocket connected for ticket ${ticket.id}`);
-        setWsConnected(true);
-        
-        // Join the ticket room
-        if (socket) {
-          socket.emit('join', `ticket:${ticket.id}`);
-          console.log(`[TicketDetail] Joined room ticket:${ticket.id}`);
-        }
-      },
-      onDisconnect: () => {
-        console.log(`[TicketDetail] WebSocket disconnected for ticket ${ticket.id}`);
-        setWsConnected(false);
-      },
-      onTicketMessage: (newMessage: any) => {
-        console.log("[TicketDetail] Received ticket message:", newMessage.id, "for ticket:", newMessage.ticketId);
-        
-        // Only process messages for this specific ticket
-        if (newMessage.ticketId === ticket.id) {
-          setMessages((prev) => {
-            // Avoid duplicates
-            if (prev.some((m) => m.id === newMessage.id)) return prev;
-            console.log("[TicketDetail] Adding new message to state");
-            return [...prev, newMessage];
-          });
-        }
-      },
-      onError: (err: any) => {
-        console.error(`[TicketDetail] WebSocket error for ticket ${ticket.id}:`, err);
+    // Subscribe to ticket message events first
+    const unsubscribe = subscribeToNewTicketMessage((newMessage: any) => {
+      console.log("[TicketDetail] Event received in subscription:", newMessage?.id, "for ticket:", newMessage?.ticketId);
+      console.log("[TicketDetail] Current ticket ID:", ticket.id);
+      console.log("[TicketDetail] Message matches ticket:", newMessage?.ticketId === ticket.id);
+      
+      if (newMessage.ticketId === ticket.id) {
+        setMessages((prev) => {
+          const isDuplicate = prev.some((m) => m.id === newMessage.id);
+          console.log("[TicketDetail] Is duplicate:", isDuplicate);
+          if (isDuplicate) return prev;
+          console.log("[TicketDetail] Adding new message to state");
+          return [...prev, newMessage];
+        });
       }
     });
 
-    if (!socket) {
-      console.error('[TicketDetail] Failed to create WebSocket connection');
-      return;
+    // Join the ticket room if socket is available
+    if (socket && isSocketConnected) {
+      const roomName = `ticket:${ticket.id}`;
+      console.log(`[TicketDetail] Attempting to join room: ${roomName}`);
+      console.log(`[TicketDetail] Socket ID: ${socket.id}`);
+      console.log(`[TicketDetail] Socket connected state: ${socket.connected}`);
+      
+      // Emit join event
+      socket.emit('join', roomName);
+      console.log(`[TicketDetail] Join event emitted for room: ${roomName}`);
+    } else {
+      console.warn(`[TicketDetail] Cannot join room - Socket not ready: connected=${isSocketConnected}, hasSocket=${!!socket}`);
     }
 
-    socketRef.current = socket;
-
-    // Cleanup on unmount
     return () => {
-      console.log(`[TicketDetail] Cleaning up WebSocket for ticket ${ticket.id}`);
-      if (socketRef.current) {
-        socketRef.current.disconnect();
-        socketRef.current = null;
+      console.log(`[TicketDetail] Cleaning up for ticket ${ticket.id}`);
+      unsubscribe();
+      
+      // Leave the room on cleanup
+      const currentSocket = getSocket();
+      if (currentSocket && currentSocket.connected) {
+        const roomName = `ticket:${ticket.id}`;
+        currentSocket.emit('leave', roomName);
+        console.log(`[TicketDetail] Left room: ${roomName}`);
       }
     };
-  }, [ticket.id, accessToken]);
+  }, [ticket.id, getSocket, isSocketConnected]);
 
   // Refetch on reconnection
   useEffect(() => {
@@ -330,6 +338,9 @@ function TicketDetail({
           headers: {
             Authorization: `Bearer ${accessToken}`,
             "Content-Type": "application/json",
+            ...(process.env.EXPO_PUBLIC_API_KEY && {
+              "x-api-key": process.env.EXPO_PUBLIC_API_KEY,
+            }),
           },
           body: JSON.stringify({ content: trimmed }),
           signal: controller.signal,
