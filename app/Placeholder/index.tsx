@@ -181,7 +181,7 @@ export default function Placeholder() {
     (navigation as any).navigate("KYCcompany");
   };
 
-  const fullName = userData?.firstName && userData?.lastName 
+  const fullName = userData?.firstName && userData?.lastName
     ? `${userData.firstName} ${userData.lastName}`
     : userData?.displayName || userData?.name || t("common.user");
   const email = userData?.email || "user@example.com";
@@ -210,19 +210,19 @@ export default function Placeholder() {
           "user",
           JSON.stringify({ ...user, language: selectedLabel })
         );
-      } catch (_) {}
+      } catch (_) { }
     }
     setLanguageModalVisible(false);
   };
 
-  const memberSince = userData?.createdAt
+  const memberSince = userData?.createdAt || userData?.joinedAt
     ? new Date(
-        userData.createdAt?.seconds
-          ? userData.createdAt.seconds * 1000
-          : typeof userData.createdAt === "string"
-            ? userData.createdAt
-            : userData.createdAt
-      ).toLocaleDateString()
+      userData.createdAt?.seconds
+        ? userData.createdAt.seconds * 1000
+        : userData.joinedAt?.seconds
+          ? userData.joinedAt.seconds * 1000
+          : userData.createdAt || userData.joinedAt
+    ).toLocaleDateString()
     : "—";
   const statusRaw = userData?.status || "Active";
   const status = statusRaw === "Active" ? t("profile.active") : statusRaw;
@@ -288,10 +288,15 @@ export default function Placeholder() {
 
           {/* Badges */}
           <View style={styles.badgesContainer}>
-            {isAgent && (
+            {isAgent ? (
               <View style={styles.agentBadge}>
                 <MaterialCommunityIcons name="shield-account" size={16} color="#FFFFFF" />
                 <Text style={styles.badgeText}>{t("profile.agent").toUpperCase()}</Text>
+              </View>
+            ) : (
+              <View style={styles.investorBadge}>
+                <MaterialCommunityIcons name="shield-account" size={16} color="#FFFFFF" />
+                <Text style={styles.badgeText}>{t("profile.investor").toUpperCase()}</Text>
               </View>
             )}
             {isPremium && (
@@ -436,52 +441,52 @@ export default function Placeholder() {
             </View>
             <ScrollView keyboardShouldPersistTaps="handled" style={styles.modalScroll}>
               <View style={styles.modalBody}>
-              <Text style={styles.inputLabel}>First Name *</Text>
-              <TextInput
-                style={styles.input}
-                value={editFirstName}
-                onChangeText={setEditFirstName}
-                placeholder="First name"
-                placeholderTextColor="#999"
-                editable={!saving}
-                autoCapitalize="words"
-              />
-              <Text style={styles.inputLabel}>Last Name *</Text>
-              <TextInput
-                style={styles.input}
-                value={editLastName}
-                onChangeText={setEditLastName}
-                placeholder="Last name"
-                placeholderTextColor="#999"
-                editable={!saving}
-                autoCapitalize="words"
-              />
-              <Text style={styles.inputLabel}>Middle Name (optional)</Text>
-              <TextInput
-                style={styles.input}
-                value={editMiddleName}
-                onChangeText={setEditMiddleName}
-                placeholder="Middle name"
-                placeholderTextColor="#999"
-                editable={!saving}
-                autoCapitalize="words"
-              />
-              {hasPasscode && (
-                <>
-                  <Text style={styles.inputLabel}>Passcode *</Text>
-                  <TextInput
-                    style={styles.input}
-                    value={passcode}
-                    onChangeText={setPasscode}
-                    placeholder="4-digit passcode"
-                    placeholderTextColor="#999"
-                    keyboardType="number-pad"
-                    maxLength={4}
-                    secureTextEntry
-                    editable={!saving}
-                  />
-                </>
-              )}
+                <Text style={styles.inputLabel}>First Name *</Text>
+                <TextInput
+                  style={styles.input}
+                  value={editFirstName}
+                  onChangeText={setEditFirstName}
+                  placeholder="First name"
+                  placeholderTextColor="#999"
+                  editable={!saving}
+                  autoCapitalize="words"
+                />
+                <Text style={styles.inputLabel}>Last Name *</Text>
+                <TextInput
+                  style={styles.input}
+                  value={editLastName}
+                  onChangeText={setEditLastName}
+                  placeholder="Last name"
+                  placeholderTextColor="#999"
+                  editable={!saving}
+                  autoCapitalize="words"
+                />
+                <Text style={styles.inputLabel}>Middle Name (optional)</Text>
+                <TextInput
+                  style={styles.input}
+                  value={editMiddleName}
+                  onChangeText={setEditMiddleName}
+                  placeholder="Middle name"
+                  placeholderTextColor="#999"
+                  editable={!saving}
+                  autoCapitalize="words"
+                />
+                {hasPasscode && (
+                  <>
+                    <Text style={styles.inputLabel}>Passcode *</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={passcode}
+                      onChangeText={setPasscode}
+                      placeholder="4-digit passcode"
+                      placeholderTextColor="#999"
+                      keyboardType="number-pad"
+                      maxLength={4}
+                      secureTextEntry
+                      editable={!saving}
+                    />
+                  </>
+                )}
               </View>
             </ScrollView>
             <TouchableOpacity
@@ -784,6 +789,15 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "rgba(139, 0, 0, 0.9)",
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    gap: 4,
+  },
+  investorBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#2E7D32", // Professional green for Investor
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 16,
