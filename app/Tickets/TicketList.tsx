@@ -3,13 +3,13 @@ import { listUserTickets, type Ticket } from "@/lib/tickets";
 import { useFocusEffect } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    RefreshControl,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import TicketDetail from "./TicketDetail";
 
@@ -25,6 +25,11 @@ function TicketList({ accessToken, onTicketSelected }: TicketListProps) {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+
+  // Debug selected ticket changes
+  useEffect(() => {
+    console.log("[TicketList] selectedTicket changed:", selectedTicket ? selectedTicket.id : "null");
+  }, [selectedTicket]);
 
   useEffect(() => {
     loadTickets();
@@ -112,11 +117,13 @@ function TicketList({ accessToken, onTicketSelected }: TicketListProps) {
   };
 
   if (selectedTicket) {
+    console.log("[TicketList] Rendering TicketDetail for:", selectedTicket.id);
     return (
       <TicketDetail
         ticket={selectedTicket}
         accessToken={accessToken}
         onBack={() => {
+          console.log("[TicketList] Back button pressed");
           setSelectedTicket(null);
           onTicketSelected?.(false);
         }}
@@ -144,8 +151,10 @@ function TicketList({ accessToken, onTicketSelected }: TicketListProps) {
               key={ticket.id}
               style={styles.ticketCard}
               onPress={() => {
+                console.log("[TicketList] Ticket clicked:", ticket.id, ticket.title);
                 setSelectedTicket(ticket);
                 onTicketSelected?.(true);
+                console.log("[TicketList] Selected ticket set");
               }}
             >
               <View style={styles.ticketHeader}>

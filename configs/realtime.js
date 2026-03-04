@@ -49,7 +49,8 @@ export function createRealtimeConnection(accessToken, handlers = {}) {
     });
 
     socket.on('TICKET_MESSAGE', (payload) => {
-      console.log('[realtime.js] TICKET_MESSAGE received:', payload?.id);
+      console.log('[realtime.js] TICKET_MESSAGE received:', payload?.id, 'for ticket:', payload?.ticketId);
+      console.log('[realtime.js] Full payload:', JSON.stringify(payload));
       handlers.onTicketMessage?.(payload);
     });
 
