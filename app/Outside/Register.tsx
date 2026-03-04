@@ -5,20 +5,20 @@ import { CameraView, useCameraPermissions } from "expo-camera";
 import { LinearGradient } from "expo-linear-gradient";
 import { useState } from "react";
 import {
-  ActivityIndicator,
-  Dimensions,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
+    ActivityIndicator,
+    Dimensions,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    SafeAreaView,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    useWindowDimensions,
+    View,
 } from "react-native";
 import { register as registerApi } from "../../configs/api";
 import type { NavProp } from "../../types/navigation";
@@ -102,7 +102,7 @@ const formatWithMask = (text: string, mask: string) => {
 export default function Register() {
   const navigation = useNavigation();
   const { width } = useWindowDimensions();
-  const { horizontalPadding } = useResponsive();
+  const { horizontalPadding, moderateScale } = useResponsive();
   const [currentStep, setCurrentStep] = useState(1);
 
   const [firstName, setFirstName] = useState("");
@@ -1132,10 +1132,11 @@ const styles = StyleSheet.create({
     borderColor: "#E0E0E0",
     borderRadius: 8,
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 14,
+    paddingVertical: 14,
+    fontSize: 15,
     color: "#333",
     backgroundColor: "#FAFAFA",
+    minHeight: 50,
   },
   phoneInputContainer: { flexDirection: "row", gap: 8 },
   countrySelector: {
@@ -1157,10 +1158,11 @@ const styles = StyleSheet.create({
     borderColor: "#E0E0E0",
     borderRadius: 8,
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 14,
+    paddingVertical: 14,
+    fontSize: 15,
     color: "#333",
     backgroundColor: "#FAFAFA",
+    minHeight: 50,
   },
   checkboxContainer: {
     flexDirection: "row",

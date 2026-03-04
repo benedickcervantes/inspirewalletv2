@@ -3,9 +3,9 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import CustomLoader from '../Loader/CustomLoader';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useResponsive } from '../../utils/responsive';
+import CustomLoader from '../Loader/CustomLoader';
 
 const GRADIENT_START = '#E15816';
 const GRADIENT_END = '#F48F38';
@@ -36,7 +36,7 @@ export default function Welcome() {
     >
       <View style={styles.welcomeContent}>
         <Image
-          source={require('../../assets/images/INSPIREWORD.png')}
+          source={require('../../assets/images/IAFG.png')}
           style={styles.logo}
           contentFit="contain"
         />
@@ -77,13 +77,14 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    marginTop: -80,
   },
   logo: {
     width: '100%',
-    maxWidth: 400,
-    height: 240,
-    maxHeight: 280,
-    marginBottom: 40,
+    maxWidth: 700,
+    height: 480,
+    maxHeight: 520,
+    marginBottom: -80,
     alignSelf: 'center',
   },
   actions: {
