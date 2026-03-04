@@ -243,6 +243,42 @@ export function submitTravelProtection(
   body: Record<string, unknown>,
 ): Promise<{ success: boolean; data?: unknown; error?: string }>;
 
+// Card Collection API
+export interface CardCatalogItem {
+  design: string;
+  category?: string;
+  price?: number | null;
+  isOwned?: boolean;
+  isActive?: boolean;
+  isEligible?: boolean;
+  [key: string]: unknown;
+}
+
+export interface CardCollectionResponse {
+  cardDisplayData?: Record<string, unknown>;
+  collection?: unknown[];
+  activeCard?: unknown | null;
+  [key: string]: unknown;
+}
+
+export function getCardCatalog(
+  accessToken: string,
+): Promise<{ success: boolean; catalog?: CardCatalogItem[]; error?: string }>;
+
+export function getMyCardCollection(
+  accessToken: string,
+): Promise<{ success: boolean; data?: CardCollectionResponse; error?: string }>;
+
+export function buyCard(
+  accessToken: string,
+  design: string,
+): Promise<{ success: boolean; data?: unknown; error?: string }>;
+
+export function setActiveCard(
+  accessToken: string,
+  cardCollectionItemId: string,
+): Promise<{ success: boolean; data?: CardCollectionResponse; error?: string }>;
+
 export interface ApiWalletFull {
   id: string;
   balance?: string;

@@ -1552,4 +1552,138 @@ export async function getStockSellRequests(accessToken) {
     return { success: false, error: e.message || 'Network error' };
   }
 }
+// --- Card Collection API ---
+
+/**
+ * Get card catalog with per-user eligibility/ownership flags.
+ * GET /card-collection/catalog
+ * @param {string} accessToken - Backend JWT
+ */
+export async function getCardCatalog(accessToken) {
+  const url = buildUrl("/card-collection/catalog");
+  if (!url) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
+  try {
+    const res = await apiFetch(url, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    const catalog = Array.isArray(data.catalog)
+      ? data.catalog
+      : Array.isArray(data)
+        ? data
+        : [];
+    return { success: true, catalog };
+  } catch (e) {
+    if (__DEV__) console.error("[CardCollection API] getCardCatalog error", e);
+    return { success: false, error: e.message || "Network error" };
+  }
+}
+
+/**
+ * Get current user's card collection and active card.
+ * GET /card-collection/my-collection
+ * @param {string} accessToken - Backend JWT
+ */
+export async function getMyCardCollection(accessToken) {
+  const url = buildUrl("/card-collection/my-collection");
+  if (!url) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
+  try {
+    const res = await apiFetch(url, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    return { success: true, data };
+  } catch (e) {
+    if (__DEV__) console.error("[CardCollection API] getMyCardCollection error", e);
+    return { success: false, error: e.message || "Network error" };
+  }
+}
+
+/**
+ * Buy or unlock a card design.
+ * POST /card-collection/buy
+ * @param {string} accessToken - Backend JWT
+ * @param {string} design - Card design slug (e.g. DIAMOND_ELITE)
+ */
+export async function buyCard(accessToken, design) {
+  const url = buildUrl("/card-collection/buy");
+  if (!url) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
+  if (!design) return { success: false, error: "Design is required" };
+  try {
+    const res = await apiFetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ design }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    return { success: true, data: data.data ?? data };
+  } catch (e) {
+    if (__DEV__) console.error("[CardCollection API] buyCard error", e);
+    return { success: false, error: e.message || "Network error" };
+  }
+}
+
+/**
+ * Select which owned card should be treated as the active design.
+ * POST /card-collection/set-active
+ * @param {string} accessToken - Backend JWT
+ * @param {string} cardCollectionItemId - ID from my-collection.collection[].id
+ */
+export async function setActiveCard(accessToken, cardCollectionItemId) {
+  const url = buildUrl("/card-collection/set-active");
+  if (!url) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
+  if (!cardCollectionItemId) return { success: false, error: "Card ID is required" };
+  try {
+    const res = await apiFetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ cardCollectionItemId }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    return { success: true, data };
+  } catch (e) {
+    if (__DEV__) console.error("[CardCollection API] setActiveCard error", e);
+    return { success: false, error: e.message || "Network error" };
+  }
+}
 
