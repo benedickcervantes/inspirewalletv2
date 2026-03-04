@@ -967,31 +967,6 @@ export async function generateReferralCode(accessToken) {
 // --- Wallets API ---
 
 /**
- * GET /wallets — requires JWT
- * Returns all wallets for the authenticated user.
- * @param {string} accessToken
- * @returns {{ success: boolean, wallets?: Array, error?: string }}
- */
-export async function getWallets(accessToken) {
-  const base = getBaseUrl();
-  if (!base) return { success: false, error: "Backend URL not configured" };
-  if (!accessToken) return { success: false, error: "No token" };
-  try {
-    const res = await fetch(`${base}/wallets`, {
-      method: "GET",
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      return { success: false, error: data.message || "Failed to get wallets" };
-    }
-    return { success: true, wallets: Array.isArray(data) ? data : [] };
-  } catch (e) {
-    return { success: false, error: e.message || "Network error" };
-  }
-}
-
-/**
  * POST /wallets/main — requires JWT
  * Gets or creates the user's main (PHP) wallet. Idempotent.
  * @param {string} accessToken
