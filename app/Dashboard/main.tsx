@@ -228,6 +228,10 @@ export default function Dashboard() {
   const [selectedMaintenanceService, setSelectedMaintenanceService] = useState<
     string | null
   >(null);
+  const [activeCardDesign, setActiveCardDesign] = useState<string | null>(null);
+
+  const getActiveCardStorageKey = (accountNumber?: string) =>
+    accountNumber ? `active_card_design_${accountNumber}` : "active_card_design";
 
   const languageSlides = [
     {
@@ -281,6 +285,22 @@ export default function Dashboard() {
           email: user.email,
           accountNumber: user.accountNumber,
         });
+
+        // Load cached active card design once we know the account number
+        try {
+          const accountNumber = (user as { accountNumber?: string })?.accountNumber;
+          if (accountNumber) {
+            const key = getActiveCardStorageKey(accountNumber);
+            const cachedDesign = await AsyncStorage.getItem(key);
+            if (cachedDesign) {
+              setActiveCardDesign(cachedDesign);
+            }
+          }
+        } catch (e) {
+          if (__DEV__) {
+            console.error("[Dashboard] Failed to load cached active card design", e);
+          }
+        }
       }
 
       setAvailableBalance(0);
@@ -759,6 +779,8 @@ export default function Dashboard() {
               flipAnimation={flipAnimation}
               isCardFlipped={isCardFlipped}
               flipCard={flipCard}
+              initialDesign={activeCardDesign}
+              onActiveDesignChange={setActiveCardDesign}
             />
           )}
           {activeTab === "Investment" && (

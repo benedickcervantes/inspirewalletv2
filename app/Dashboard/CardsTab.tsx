@@ -3,6 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { useEffect, useRef, useState } from "react";
 import {
+  Alert,
   Animated,
   Image,
   ImageBackground,
@@ -14,8 +15,9 @@ import {
   useWindowDimensions,
   View
 } from "react-native";
-import { buyCard, getCardCatalog, getMyCardCollection } from "../../configs/api";
+import { buyCard, getCardCatalog, getMyCardCollection, setActiveCard as setActiveCardApi } from "../../configs/api";
 import { useLanguage } from "../../context/LanguageContext";
+import { getCardTheme } from "../theme/cardThemes";
 
 interface CardsTabProps {
   userData: {
@@ -28,7 +30,14 @@ interface CardsTabProps {
   flipAnimation: Animated.Value;
   isCardFlipped: boolean;
   flipCard: () => void;
+  /** Optional initial design from parent (to avoid default flash on tab switch). */
+  initialDesign?: string | null;
+  /** Notify parent when active card design changes. */
+  onActiveDesignChange?: (design: string | null) => void;
 }
+
+const getActiveCardStorageKey = (accountNumber?: string) =>
+  accountNumber ? `active_card_design_${accountNumber}` : "active_card_design";
 
 export default function CardsTab({
   userData,
@@ -37,6 +46,8 @@ export default function CardsTab({
   flipAnimation,
   isCardFlipped,
   flipCard,
+  initialDesign,
+  onActiveDesignChange,
 }: CardsTabProps) {
   const navigation = useNavigation();
   const { t } = useLanguage();
@@ -63,7 +74,9 @@ export default function CardsTab({
 
   const [cardCatalog, setCardCatalog] = useState<any[]>([]);
   const [myCollection, setMyCollection] = useState<any[]>([]);
-  const [activeCard, setActiveCard] = useState<any>(null);
+  const [activeCard, setActiveCard] = useState<any>(
+    initialDesign ? { design: initialDesign } : null,
+  );
   const [isLoading, setIsLoading] = useState(true);
 
   // Derive Diamond Elite eligibility from catalog data
@@ -71,6 +84,17 @@ export default function CardsTab({
   const isDiamondEligible = diamondCatalog?.isEligible ?? false;
   const isDiamondOwned = diamondCatalog?.isOwned ?? false;
   const isDiamondActive = diamondCatalog?.isActive ?? false;
+
+  // Derive Gold Elite state from catalog data
+  const goldCatalog = cardCatalog.find((c: any) => c.design === 'GOLD_ELITE');
+  const isGoldOwned = goldCatalog?.isOwned ?? false;
+  const isGoldActive = goldCatalog?.isActive ?? false;
+
+  // Derive Design Collection state from catalog data
+  const orangeCatalog = cardCatalog.find((c: any) => c.design === 'ORANGE_ELITE');
+  const royalCatalog = cardCatalog.find((c: any) => c.design === 'ROYAL_CURVE');
+  const isOrangeOwned = orangeCatalog?.isOwned ?? false;
+  const isRoyalOwned = royalCatalog?.isOwned ?? false;
 
   const fetchCardsData = async () => {
     try {
@@ -80,7 +104,7 @@ export default function CardsTab({
 
       const [catalogRes, collectionRes] = await Promise.all([
         getCardCatalog(token),
-        getMyCardCollection(token)
+        getMyCardCollection(token),
       ]);
 
       if (catalogRes.success && catalogRes.catalog) {
@@ -88,8 +112,25 @@ export default function CardsTab({
       }
 
       if (collectionRes.success && collectionRes.data) {
-        setMyCollection(collectionRes.data.collection || []);
-        setActiveCard(collectionRes.data.activeCard || null);
+        const nextCollection = collectionRes.data.collection || [];
+        const nextActive = collectionRes.data.activeCard || null;
+        setMyCollection(nextCollection);
+        setActiveCard(nextActive);
+
+        // Notify parent about the resolved active design
+        if (onActiveDesignChange) {
+          onActiveDesignChange((nextActive?.design as string | undefined) ?? null);
+        }
+
+        // Persist active design so we can show correct skin immediately on next app load.
+        const designToCache =
+          (nextActive?.design as string | undefined) || null;
+        const storageKey = getActiveCardStorageKey(userData?.accountNumber);
+        if (designToCache) {
+          await AsyncStorage.setItem(storageKey, designToCache);
+        } else {
+          await AsyncStorage.removeItem(storageKey);
+        }
       }
     } catch (e) {
       console.error("Failed to fetch cards data", e);
@@ -99,7 +140,23 @@ export default function CardsTab({
   };
 
   useEffect(() => {
-    fetchCardsData();
+    // On mount, try to use cached active design so card skin is instant,
+    // then refresh from backend.
+    const init = async () => {
+      try {
+        const storageKey = getActiveCardStorageKey(userData?.accountNumber);
+        const cachedDesign = await AsyncStorage.getItem(storageKey);
+        if (cachedDesign && !activeCard) {
+          setActiveCard({ design: cachedDesign });
+        }
+      } catch (e) {
+        console.error("Failed to load cached active card", e);
+      }
+      await fetchCardsData();
+    };
+
+    init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleBuyCard = async (designSlug: string, price: number) => {
@@ -195,25 +252,97 @@ export default function CardsTab({
     transform: [{ rotateY: backInterpolate }],
   };
 
-  const getCardFrontImage = () => {
-    switch (activeCard?.design) {
-      case "DIAMOND_ELITE": return require("../../assets/cards/vip_collection/vp2/front.png");
-      case "GOLD_ELITE": return require("../../assets/cards/vip_collection/vp1/front.png");
-      case "ORANGE_ELITE": return require("../../assets/cards/design_collection/dc1/front.png");
-      case "ROYAL_CURVE": return require("../../assets/cards/design_collection/dc2/front.png");
-      default: return require("../../assets/images/Eecard 2.0.png");
+  const getDesignFrontImage = (design?: string) => {
+    switch (design) {
+      case "DIAMOND_ELITE":
+        return require("../../assets/cards/vip_collection/vp2/front.png");
+      case "GOLD_ELITE":
+        return require("../../assets/cards/vip_collection/vp1/front.png");
+      case "ORANGE_ELITE":
+        return require("../../assets/cards/design_collection/dc1/front.png");
+      case "ROYAL_CURVE":
+        return require("../../assets/cards/design_collection/dc2/front.png");
+      default:
+        return require("../../assets/images/Eecard 2.0.png");
     }
   };
 
-  const getCardBackImage = () => {
-    switch (activeCard?.design) {
-      case "DIAMOND_ELITE": return require("../../assets/cards/vip_collection/vp2/back.png");
-      case "GOLD_ELITE": return require("../../assets/cards/vip_collection/vp1/back.png");
-      case "ORANGE_ELITE": return require("../../assets/cards/design_collection/dc1/back.png");
-      case "ROYAL_CURVE": return require("../../assets/cards/design_collection/dc2/back.png");
-      default: return require("../../assets/cards/default/card2.0 back.png");
+  const getDesignBackImage = (design?: string) => {
+    switch (design) {
+      case "DIAMOND_ELITE":
+        return require("../../assets/cards/vip_collection/vp2/back.png");
+      case "GOLD_ELITE":
+        return require("../../assets/cards/vip_collection/vp1/back.png");
+      case "ORANGE_ELITE":
+        return require("../../assets/cards/design_collection/dc1/back.png");
+      case "ROYAL_CURVE":
+        return require("../../assets/cards/design_collection/dc2/back.png");
+      default:
+        return require("../../assets/cards/default/card2.0 back.png");
     }
   };
+
+  const getCardFrontImage = () => getDesignFrontImage(activeCard?.design);
+  const getCardBackImage = () => getDesignBackImage(activeCard?.design);
+
+  const handleSelectActiveCard = async (cardCollectionItemId: string | null) => {
+    if (!cardCollectionItemId) return;
+
+    // Optimistic update: switch active card immediately in UI
+    const localItem = myCollection.find((i: any) => i.id === cardCollectionItemId);
+    if (localItem) {
+      setActiveCard(localItem);
+      if (onActiveDesignChange) {
+        onActiveDesignChange(localItem.design as string);
+      }
+    }
+
+    try {
+      const token = await AsyncStorage.getItem("access_token");
+      if (!token) return;
+      setIsLoading(true);
+      const res = await setActiveCardApi(token, cardCollectionItemId);
+      if (res.success && res.data) {
+        const nextCollection = res.data.collection || [];
+        const nextActive = res.data.activeCard || null;
+        setMyCollection(nextCollection);
+        setActiveCard(nextActive);
+
+        // Persist active design for instant card skin on next load.
+        const storageKey = getActiveCardStorageKey(userData?.accountNumber);
+        const designToCache =
+          (nextActive?.design as string | undefined) ||
+          (localItem?.design as string | undefined) ||
+          null;
+        if (designToCache) {
+          await AsyncStorage.setItem(storageKey, designToCache);
+        } else {
+          await AsyncStorage.removeItem(storageKey);
+        }
+
+        if (onActiveDesignChange) {
+          onActiveDesignChange(designToCache);
+        }
+      }
+    } catch (e) {
+      console.error("Failed to set active card", e);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSelectDefaultCard = () => {
+    // Locally revert to default skin (no activeCard). This is not yet
+    // persisted to backend, but gives immediate UX for this session.
+    setActiveCard(null);
+    const storageKey = getActiveCardStorageKey(userData?.accountNumber);
+    AsyncStorage.removeItem(storageKey).catch(() => {});
+    if (onActiveDesignChange) {
+      onActiveDesignChange(null);
+    }
+  };
+
+  const theme = getCardTheme(activeCard?.design as string | null | undefined);
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -234,19 +363,23 @@ export default function CardsTab({
               resizeMode="cover">
               <View style={styles.mainCardContent}>
                 <View style={styles.cardDetailsBottom}>
-                  <Text style={styles.cardNumber}>
+                  <Text style={[styles.cardNumber, { color: theme.primaryText }]}>
                     {userData?.accountNumber || t("ct.placeholderAccount")}
                   </Text>
-                  <Text style={styles.cardName}>
+                  <Text style={[styles.cardName, { color: theme.primaryText }]}>
                     {[userData?.firstName, userData?.lastName]
                       .filter(Boolean)
                       .join(" ")
                       .toUpperCase() || t("ct.placeholderName")}
                   </Text>
-                  <Text style={styles.cardBalanceLabel}>
+                  <Text
+                    style={[styles.cardBalanceLabel, { color: theme.secondaryText }]}
+                  >
                     {t("ct.availableBalance")}
                   </Text>
-                  <Text style={styles.cardBalanceAmount}>
+                  <Text
+                    style={[styles.cardBalanceAmount, { color: theme.primaryText }]}
+                  >
                     ₱ {formatCurrency(availableBalance)}
                   </Text>
                 </View>
@@ -293,15 +426,9 @@ export default function CardsTab({
                 <View style={styles.vipBadge}>
                   <Text style={styles.vipBadgeText}>{t("ct.vip")}</Text>
                 </View>
-                {!isDiamondEligible && !isDiamondOwned && (
+                {!isDiamondOwned && (
                   <View style={styles.lockedOverlay}>
                     <Ionicons name="lock-closed" size={30} color="#E0E0E0" />
-                  </View>
-                )}
-                {isDiamondActive && (
-                  <View style={styles.activeCardBadge}>
-                    <MaterialCommunityIcons name="check-circle" size={16} color="#4CAF50" />
-                    <Text style={styles.activeCardText}>{t("ct.activeCard")}</Text>
                   </View>
                 )}
               </ImageBackground>
@@ -346,6 +473,11 @@ export default function CardsTab({
                 <View style={styles.vipBadge}>
                   <Text style={styles.vipBadgeText}>{t("ct.vip")}</Text>
                 </View>
+                {!isGoldOwned && (
+                  <View style={styles.lockedOverlay}>
+                    <Ionicons name="lock-closed" size={30} color="#E0E0E0" />
+                  </View>
+                )}
               </ImageBackground>
             </View>
             <View style={styles.cardInfo}>
@@ -353,10 +485,17 @@ export default function CardsTab({
               <Text style={styles.cardItemSubtitle}>{t("ct.sub10KMonthly")}</Text>
 
               <TouchableOpacity
-                style={styles.getStartedButton}
-                onPress={() => setIsPurchaseModalVisible(true)}>
-                <Text style={styles.getStartedButtonText}>
-                  {t("ct.getStarted")}
+                style={[
+                  styles.getStartedButton,
+                  isGoldOwned && styles.activeUpgradeButton
+                ]}
+                onPress={() => setIsPurchaseModalVisible(true)}
+              >
+                <Text style={[
+                  styles.getStartedButtonText,
+                  isGoldOwned && styles.activeUpgradeButtonText
+                ]}>
+                  {isGoldOwned ? (t("ct.renewSubscription") || "Renew") : t("ct.getStarted")}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -391,30 +530,43 @@ export default function CardsTab({
                 <View style={styles.priceBadge}>
                   <Text style={styles.priceText}>₱ {formatCurrency(250)}</Text>
                 </View>
+                {!isOrangeOwned && (
+                  <View style={styles.lockedOverlay}>
+                    <Ionicons name="lock-closed" size={30} color="#E0E0E0" />
+                  </View>
+                )}
               </ImageBackground>
             </View>
             <View style={styles.cardInfo}>
               <Text style={styles.cardItemTitle}>{t("ct.orangeElite")}</Text>
-              <TouchableOpacity
-                style={[
-                  styles.upgradeButton,
-                  availableBalance >= 250 && styles.activeUpgradeButton
-                ]}
-                onPress={() => {
-                  setSelectedDesignCard({
-                    id: 'ORANGE_ELITE',
-                    title: t("ct.orangeElite") || "Orange Elite",
-                    price: 250,
-                    image: require("../../assets/cards/design_collection/dc1/front.png"),
-                    backImage: require("../../assets/cards/design_collection/dc1/back.png")
-                  });
-                  setIsDesignModalVisible(true);
-                }}>
-                <Text style={[
-                  styles.upgradeButtonText,
-                  availableBalance >= 250 && styles.activeUpgradeButtonText
-                ]}>{t("ct.tapToBuy")}</Text>
-              </TouchableOpacity>
+              {isOrangeOwned ? (
+                <View style={styles.upgradeButton}>
+                  <Text style={styles.upgradeButtonText}>
+                    {t("ct.inCollection") || "Lifetime card"}
+                  </Text>
+                </View>
+              ) : (
+                <TouchableOpacity
+                  style={[
+                    styles.upgradeButton,
+                    availableBalance >= 250 && styles.activeUpgradeButton
+                  ]}
+                  onPress={() => {
+                    setSelectedDesignCard({
+                      id: 'ORANGE_ELITE',
+                      title: t("ct.orangeElite") || "Orange Elite",
+                      price: 250,
+                      image: require("../../assets/cards/design_collection/dc1/front.png"),
+                      backImage: require("../../assets/cards/design_collection/dc1/back.png")
+                    });
+                    setIsDesignModalVisible(true);
+                  }}>
+                  <Text style={[
+                    styles.upgradeButtonText,
+                    availableBalance >= 250 && styles.activeUpgradeButtonText
+                  ]}>{t("ct.tapToBuy")}</Text>
+                </TouchableOpacity>
+              )}
             </View>
           </View>
           <View style={styles.cardItem}>
@@ -430,32 +582,45 @@ export default function CardsTab({
                 <View style={styles.priceBadge}>
                   <Text style={styles.priceText}>₱ {formatCurrency(5000)}</Text>
                 </View>
+                {!isRoyalOwned && (
+                  <View style={styles.lockedOverlay}>
+                    <Ionicons name="lock-closed" size={30} color="#E0E0E0" />
+                  </View>
+                )}
               </ImageBackground>
             </View>
 
             <View style={styles.cardInfo}>
               <Text style={styles.cardItemTitle}>{t("ct.royalCurve")}</Text>
 
-              <TouchableOpacity
-                style={[
-                  styles.upgradeButton,
-                  availableBalance >= 5000 && styles.activeUpgradeButton
-                ]}
-                onPress={() => {
-                  setSelectedDesignCard({
-                    id: 'ROYAL_CURVE',
-                    title: t("ct.royalCurve") || "Royal Curve",
-                    price: 5000,
-                    image: require("../../assets/cards/design_collection/dc2/front.png"),
-                    backImage: require("../../assets/cards/design_collection/dc2/back.png")
-                  });
-                  setIsDesignModalVisible(true);
-                }}>
-                <Text style={[
-                  styles.upgradeButtonText,
-                  availableBalance >= 5000 && styles.activeUpgradeButtonText
-                ]}>{t("ct.tapToBuy")}</Text>
-              </TouchableOpacity>
+              {isRoyalOwned ? (
+                <View style={styles.upgradeButton}>
+                  <Text style={styles.upgradeButtonText}>
+                    {t("ct.inCollection") || "In your collection"}
+                  </Text>
+                </View>
+              ) : (
+                <TouchableOpacity
+                  style={[
+                    styles.upgradeButton,
+                    availableBalance >= 5000 && styles.activeUpgradeButton
+                  ]}
+                  onPress={() => {
+                    setSelectedDesignCard({
+                      id: 'ROYAL_CURVE',
+                      title: t("ct.royalCurve") || "Royal Curve",
+                      price: 5000,
+                      image: require("../../assets/cards/design_collection/dc2/front.png"),
+                      backImage: require("../../assets/cards/design_collection/dc2/back.png")
+                    });
+                    setIsDesignModalVisible(true);
+                  }}>
+                  <Text style={[
+                    styles.upgradeButtonText,
+                    availableBalance >= 5000 && styles.activeUpgradeButtonText
+                  ]}>{t("ct.tapToBuy")}</Text>
+                </TouchableOpacity>
+              )}
             </View>
           </View>
         </View>
@@ -484,32 +649,76 @@ export default function CardsTab({
             setCurrentIndex(index);
           }}
           contentContainerStyle={{ paddingRight: 12 }}>
-          <View
+          {/* Default card slot (always present) */}
+          <TouchableOpacity
+            activeOpacity={0.8}
             style={[
               styles.yourCollectionItem,
               { width: cardItemWidth, marginRight: 12 },
-            ]}>
+            ]}
+            onPress={handleSelectDefaultCard}
+          >
             <ImageBackground
-              source={require("../../assets/images/Eecard 2.0.png")}
+              source={getDesignFrontImage("DEFAULT")}
               style={styles.yourCollectionCard}
               imageStyle={styles.yourCollectionCardImage}
               resizeMode="cover">
-              <View style={styles.activeCardBadge}>
-                <MaterialCommunityIcons
-                  name="check-circle"
-                  size={16}
-                  color="#4CAF50"
-                />
-                <Text style={styles.activeCardText}>
-                  {t("ct.activeCard")}
-                </Text>
-              </View>
+              {!activeCard && (
+                <View style={styles.activeCardBadge}>
+                  <MaterialCommunityIcons
+                    name="check-circle"
+                    size={16}
+                    color="#4CAF50"
+                  />
+                  <Text style={styles.activeCardText}>
+                    {t("ct.activeCard")}
+                  </Text>
+                </View>
+              )}
             </ImageBackground>
-          </View>
+          </TouchableOpacity>
 
-          {[1, 2, 3, 4].map((item) => (
+          {/* Owned collection items */}
+          {myCollection.map((item: any) => (
+            <TouchableOpacity
+              key={item.id}
+              activeOpacity={0.8}
+              style={[
+                styles.yourCollectionItem,
+                { width: cardItemWidth, marginRight: 12 },
+              ]}
+              onPress={() => handleSelectActiveCard(item.id)}
+            >
+              <ImageBackground
+                source={getDesignFrontImage(item.design)}
+                style={styles.yourCollectionCard}
+                imageStyle={styles.yourCollectionCardImage}
+                resizeMode="cover">
+                {activeCard?.id === item.id && (
+                  <View style={styles.activeCardBadge}>
+                    <MaterialCommunityIcons
+                      name="check-circle"
+                      size={16}
+                      color="#4CAF50"
+                    />
+                    <Text style={styles.activeCardText}>
+                      {t("ct.activeCard")}
+                    </Text>
+                  </View>
+                )}
+              </ImageBackground>
+            </TouchableOpacity>
+          ))}
+
+          {/* Empty slots to reach total of 5 cards (Default + 4 designs) */}
+          {Array.from({
+            length: Math.max(
+              0,
+              (cardCatalog.length || 5) - (1 + myCollection.length), // +1 for Default slot
+            ),
+          }).map((_, idx) => (
             <View
-              key={item}
+              key={`empty-${idx}`}
               style={[
                 styles.yourCollectionItem,
                 { width: cardItemWidth, marginRight: 12 },
@@ -759,6 +968,14 @@ export default function CardsTab({
                   ]}
                   disabled={availableBalance < 10000}
                   activeOpacity={0.7}
+                  onPress={async () => {
+                    try {
+                      await handleBuyCard("GOLD_ELITE", 10000);
+                    } catch (err) {
+                      console.error(err);
+                      Alert.alert("Error", "Failed to subscribe to Gold Elite.");
+                    }
+                  }}
                 >
                   <Text style={styles.vipBuyButtonText}>Buy Card</Text>
                 </TouchableOpacity>
@@ -869,6 +1086,14 @@ export default function CardsTab({
                   ]}
                   disabled={availableBalance < selectedDesignCard.price}
                   activeOpacity={0.7}
+                  onPress={async () => {
+                    try {
+                      await handleBuyCard(selectedDesignCard.id as string, selectedDesignCard.price);
+                    } catch (err) {
+                      console.error(err);
+                      Alert.alert("Error", "Failed to buy design card.");
+                    }
+                  }}
                 >
                   <Text style={styles.designBuyButtonText}>Buy</Text>
                 </TouchableOpacity>
@@ -909,8 +1134,8 @@ const styles = StyleSheet.create({
   },
   mainCardContainer: {
     paddingHorizontal: 20,
-    marginBottom: 20,
-    height: 200,
+    marginBottom: 28,
+    height: 240,
     alignItems: "center",
   },
   cardFace: {
@@ -925,21 +1150,21 @@ const styles = StyleSheet.create({
   },
   mainCard: {
     width: "100%",
-    height: 200,
-    borderRadius: 16,
+    height: 230,
+    borderRadius: 20,
     overflow: "hidden",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 8,
   },
   mainCardImage: {
-    borderRadius: 16,
+    borderRadius: 20,
   },
   mainCardContent: {
     flex: 1,
-    padding: 20,
+    padding: 24,
     justifyContent: "flex-end",
   },
   cardDetailsBottom: {

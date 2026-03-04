@@ -1,9 +1,11 @@
 import { useNavigation } from "@react-navigation/native";
-import { useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useEffect, useState } from "react";
 import { Animated, ImageBackground, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SvgXml } from "react-native-svg";
 import { useLanguage } from "../../context/LanguageContext";
 import { useResponsive } from "../../utils/responsive";
+import { getCardTheme } from "../theme/cardThemes";
 
 const depositSvg = `<svg width="20" height="20" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
 <path d="M8.07099 0.999942L0.999919 8.07101M0.999919 8.07101L1.20195 2.21213M0.999919 8.07101L6.8588 7.86898" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -31,6 +33,39 @@ interface WalletTabProps {
   flipCard: () => void;
 }
 
+const getDesignFrontImage = (design?: string) => {
+  switch (design) {
+    case "DIAMOND_ELITE":
+      return require("../../assets/cards/vip_collection/vp2/front.png");
+    case "GOLD_ELITE":
+      return require("../../assets/cards/vip_collection/vp1/front.png");
+    case "ORANGE_ELITE":
+      return require("../../assets/cards/design_collection/dc1/front.png");
+    case "ROYAL_CURVE":
+      return require("../../assets/cards/design_collection/dc2/front.png");
+    default:
+      return require("../../assets/images/Eecard 2.0.png");
+  }
+};
+
+const getDesignBackImage = (design?: string) => {
+  switch (design) {
+    case "DIAMOND_ELITE":
+      return require("../../assets/cards/vip_collection/vp2/back.png");
+    case "GOLD_ELITE":
+      return require("../../assets/cards/vip_collection/vp1/back.png");
+    case "ORANGE_ELITE":
+      return require("../../assets/cards/design_collection/dc1/back.png");
+    case "ROYAL_CURVE":
+      return require("../../assets/cards/design_collection/dc2/back.png");
+    default:
+      return require("../../assets/cards/default/card2.0 back.png");
+  }
+};
+
+const getActiveCardStorageKey = (accountNumber?: string) =>
+  accountNumber ? `active_card_design_${accountNumber}` : "active_card_design";
+
 export default function WalletTab({
   userData,
   availableBalance,
@@ -43,6 +78,7 @@ export default function WalletTab({
   const { t } = useLanguage();
   const { horizontalPadding } = useResponsive();
   const [isBalanceVisible, setIsBalanceVisible] = useState(true);
+  const [activeDesign, setActiveDesign] = useState<string | null>(null);
 
   const toggleBalanceVisibility = () => {
     setIsBalanceVisible(!isBalanceVisible);
@@ -52,6 +88,23 @@ export default function WalletTab({
     const formattedBalance = formatCurrency(balance);
     return formattedBalance.replace(/./g, '•');
   };
+
+  // Keep wallet card skin in sync with Cards tab (uses same cached design key).
+  useEffect(() => {
+    const loadActiveDesign = async () => {
+      try {
+        const key = getActiveCardStorageKey(userData?.accountNumber);
+        const cached = await AsyncStorage.getItem(key);
+        if (cached) setActiveDesign(cached);
+        else setActiveDesign(null);
+      } catch (e) {
+        console.error("Failed to load active card design for wallet", e);
+      }
+    };
+    loadActiveDesign();
+  }, [userData?.accountNumber]);
+
+  const theme = getCardTheme(activeDesign);
 
   const frontInterpolate = flipAnimation.interpolate({
     inputRange: [0, 180],
@@ -75,7 +128,7 @@ export default function WalletTab({
     <View style={[styles.balanceCardContainer, { marginHorizontal: horizontalPadding }]}>
       <Animated.View style={[styles.cardFace, frontAnimatedStyle]}>
         <ImageBackground
-          source={require("../../assets/images/Eecard 2.0.png")}
+          source={getDesignFrontImage(activeDesign || undefined)}
           style={styles.balanceCard}
           imageStyle={styles.balanceCardImage}
           resizeMode="cover"
@@ -88,7 +141,9 @@ export default function WalletTab({
               style={styles.cardFlipArea}
             >
               <View style={styles.balanceHeader}>
-                <Text style={styles.balanceLabel}>{t("dashboard.availableBalance")}</Text>
+                <Text style={[styles.balanceLabel, { color: theme.secondaryText }]}>
+                  {t("dashboard.availableBalance")}
+                </Text>
                 <TouchableOpacity onPress={toggleBalanceVisibility} activeOpacity={0.7}>
                   <SvgXml 
                     xml={isBalanceVisible ? openEyeSvg : closeEyeSvg} 
@@ -98,8 +153,10 @@ export default function WalletTab({
                 </TouchableOpacity>
               </View>
               <View style={styles.balanceAmountContainer}>
-                <Text style={styles.currency}>PHP</Text>
-                <Text style={styles.balanceAmount}>
+                <Text style={[styles.currency, { color: theme.secondaryText }]}>
+                  PHP
+                </Text>
+                <Text style={[styles.balanceAmount, { color: theme.primaryText }]}>
                   {isBalanceVisible ? formatCurrency(availableBalance) : maskBalance(availableBalance)}
                 </Text>
               </View>
@@ -108,12 +165,22 @@ export default function WalletTab({
 
             <View style={styles.cardActionsRow} pointerEvents="box-none">
               <TouchableOpacity
-                style={styles.cardButtonDeposit}
+                style={[
+                  styles.cardButtonDeposit,
+                  { backgroundColor: theme.actionButtonBg },
+                ]}
                 onPress={() => navigation.navigate("Deposit")}
                 activeOpacity={0.7}
               >
                 <SvgXml xml={depositSvg} width={15} height={15} />
-                <Text style={styles.cardButtonDepositText}>{t("dashboard.deposit")}</Text>
+                <Text
+                  style={[
+                    styles.cardButtonDepositText,
+                    { color: theme.actionButtonText },
+                  ]}
+                >
+                  {t("dashboard.deposit")}
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.cardButtonWithdraw}
@@ -138,7 +205,7 @@ export default function WalletTab({
           style={styles.cardBackTouchable}
         >
           <ImageBackground
-            source={require("../../assets/cards/default/card2.0 back.png")}
+            source={getDesignBackImage(activeDesign || undefined)}
             style={styles.balanceCard}
             imageStyle={styles.balanceCardImage}
             resizeMode="cover"
@@ -152,7 +219,7 @@ export default function WalletTab({
 const styles = StyleSheet.create({
   balanceCardContainer: {
     marginBottom: 10,
-    height: 220,
+    height: 240,
   },
   cardFace: {
     position: "absolute",
@@ -171,7 +238,7 @@ const styles = StyleSheet.create({
   },
   balanceCard: {
     padding: 20,
-    borderRadius: 24,
+    borderRadius: 20,
     overflow: "hidden",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
@@ -179,10 +246,10 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 8,
     position: "relative",
-    height: 220,
+    height: 230,
   },
   balanceCardImage: {
-    borderRadius: 24,
+    borderRadius: 20,
   },
   balanceCardInner: {
     flex: 1,
@@ -252,6 +319,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
+    // Solid light background to ensure contrast on bright card skins
     backgroundColor: "#FFFFFF",
     paddingVertical: 14,
     borderRadius: 15,
