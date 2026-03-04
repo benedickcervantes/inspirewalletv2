@@ -166,14 +166,6 @@ export default function AgentDashboard() {
     }
   };
 
-  if (loading && !refreshing) {
-    return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#E25A17" />
-      </View>
-    );
-  }
-
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
@@ -209,7 +201,7 @@ export default function AgentDashboard() {
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
-              refreshing={refreshing && !loading}
+              refreshing={loading || refreshing}
               onRefresh={onRefresh}
               tintColor="#E25A17"
             />
