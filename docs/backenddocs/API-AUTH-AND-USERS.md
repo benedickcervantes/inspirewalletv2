@@ -22,7 +22,7 @@ This document describes how the frontend should use the **Auth** and **Users** A
 - **No refresh token:** There is no refresh token flow. JWT expiry is configurable (default 7 days). On 401, clear the token and redirect to Login.
 - **Unverified email:** Users with `emailVerified: false` can use the app (view balance, transfer, etc.). Email verification is encouraged but not enforced.
 - **Referral vs agent:** Use `referralCode` (8 chars, e.g. `ABC12XYZ`) for the referrer field. Do not use `agentNumber` (e.g. `AG12345678`). See [API-REFERRALS.md](API-REFERRALS.md).
-- **Forgot password:** Not supported. Hide or disable the Forgot Password UI.
+- **Forgot password:** Fully supported. See [Forgot Password](#6-forgot-password) and [Reset Password](#7-reset-password) below.
 
 ---
 
@@ -38,23 +38,20 @@ Creates a new user and returns an access token and user object (you can log the 
 
 **Request body**
 
-| Field             | Type    | Required | Validation                                        | Description                                                                                            |
-| ----------------- | ------- | -------- | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `email`           | string  | Yes      | Valid email format                                | Login identifier                                                                                       |
-| `password`        | string  | Yes      | Min 8 characters, max 128                         | Plain text (sent over HTTPS)                                                                           |
-| `firstName`       | string  | Yes      | 1–100 characters                                  | Given name                                                                                             |
-| `lastName`        | string  | Yes      | 1–100 characters                                  | Family name                                                                                            |
-| `middleName`      | string  | No       | 1–100 characters                                  | Middle name                                                                                            |
-| `phone`           | string  | No       | Max 30 characters                                 | Phone number                                                                                           |
-| `dateOfBirth`     | string  | No       | ISO 8601 date (e.g. `1990-01-15`)                 | Date of birth                                                                                          |
-| `countryCode`     | string  | No       | Exactly 2 characters (e.g. `US`)                  | ISO country code                                                                                       |
-| `referralCode`    | string  | No       | 4–20 characters                                   | Referrer's **referral ID** when signing up via referral link. See [API-REFERRALS.md](API-REFERRALS.md) |
-| `companyName`     | string  | No       | Max 200 characters                                | Company name (when user checks "I have a company")                                                     |
-| `lineAccountLink` | string  | No       | Max 500 characters                                | LINE Account Link URL (optional)                                                                       |
-| `viberLink`       | string  | No       | Max 500 characters                                | Viber account link (optional)                                                                          |
-| `whatsappLink`    | string  | No       | Max 500 characters                                | WhatsApp account link (optional)                                                                       |
-| `language`        | string  | No       | One of: `ENGLISH`, `ARABIC`, `JAPANESE`, `KOREAN` | User UI language preference                                                                            |
-| `isAgent`         | boolean | No       |                                                   | Whether user is an agent (default: false)                                                              |
+| Field        | Type   | Required | Validation                          | Description                |
+|-------------|--------|----------|-------------------------------------|----------------------------|
+| `email`     | string | Yes      | Valid email format                  | Login identifier           |
+| `password`  | string | Yes      | Min 8 characters, max 128          | Plain text (sent over HTTPS) |
+| `firstName` | string | Yes      | 1–100 characters                   | Given name                 |
+| `lastName`  | string | Yes      | 1–100 characters                   | Family name                |
+| `middleName`| string | No       | 1–100 characters                   | Middle name                |
+| `phone`     | string | No       | Max 30 characters                  | Phone number               |
+| `dateOfBirth` | string | No     | ISO 8601 date (e.g. `1990-01-15`)  | Date of birth              |
+| `countryCode` | string | No     | Exactly 2 characters (e.g. `US`)  | ISO country code           |
+| `referralCode` | string | No    | 4–20 characters                   | Referrer's **referral ID** when signing up via referral link. See [API-REFERRALS.md](API-REFERRALS.md) |
+| `companyName` | string | No     | Max 200 characters                | Company name (when user checks "I have a company") |
+| `lineAccountLink` | string | No  | Max 500 characters                | LINE Account Link URL (optional) |
+| `isAgent`     | boolean | No   |                                   | Whether user is an agent (default: false) |
 
 **Example request**
 
@@ -89,18 +86,12 @@ Creates a new user and returns an access token and user object (you can log the 
     "hasPasscode": false,
     "companyName": null,
     "lineAccountLink": null,
-    "viberLink": null,
-    "whatsappLink": null,
-    "language": null,
-    "isAgent": false,
-    "createdAt": "2025-01-15T10:00:00.000Z",
-    "referrerName": null
+    "isAgent": false
   }
 }
 ```
 
 After registration, an **OTP verification email** is sent to the user's email address. Users can verify by either:
-
 1. Typing the 6-digit OTP via `POST /auth/verify-email`, or
 2. Clicking the verification link in the email (for users who prefer not to type the OTP). The link goes to your frontend; the frontend calls `POST /auth/verify-email-link` with the `token` from the URL.
 
@@ -110,15 +101,11 @@ Each user also receives a unique **referral ID** (8 characters, e.g. `ABC12XYZ`)
 
 **Error responses**
 
-- **409 Conflict** – Email already registered
+- **409 Conflict** – Email already registered  
   ```json
-  {
-    "statusCode": 409,
-    "message": "User with this email already exists",
-    "error": "Conflict"
-  }
+  { "statusCode": 409, "message": "User with this email already exists", "error": "Conflict" }
   ```
-- **400 Bad Request** – Validation failed (invalid or missing fields)
+- **400 Bad Request** – Validation failed (invalid or missing fields)  
   ```json
   {
     "statusCode": 400,
@@ -137,10 +124,10 @@ Verifies the user's email address using the 6-digit OTP sent during registration
 
 **Request body**
 
-| Field   | Type   | Required | Validation       |
-| ------- | ------ | -------- | ---------------- |
-| `email` | string | Yes      | Valid email      |
-| `otp`   | string | Yes      | Exactly 6 digits |
+| Field  | Type   | Required | Validation        |
+|--------|--------|----------|-------------------|
+| `email`| string | Yes      | Valid email       |
+| `otp`  | string | Yes      | Exactly 6 digits  |
 
 **Example request**
 
@@ -161,20 +148,12 @@ Verifies the user's email address using the 6-digit OTP sent during registration
 
 **Error responses**
 
-- **400 Bad Request** – Invalid email, invalid OTP, or OTP expired
+- **400 Bad Request** – Invalid email, invalid OTP, or OTP expired  
   ```json
-  {
-    "statusCode": 400,
-    "message": "Invalid email or OTP",
-    "error": "Bad Request"
-  }
+  { "statusCode": 400, "message": "Invalid email or OTP", "error": "Bad Request" }
   ```
   ```json
-  {
-    "statusCode": 400,
-    "message": "OTP has expired. Please request a new one.",
-    "error": "Bad Request"
-  }
+  { "statusCode": 400, "message": "OTP has expired. Please request a new one.", "error": "Bad Request" }
   ```
 
 ---
@@ -198,8 +177,8 @@ If the link points to your frontend, the frontend extracts the token and calls t
 
 **Request body**
 
-| Field   | Type   | Required | Validation                                       |
-| ------- | ------ | -------- | ------------------------------------------------ |
+| Field   | Type   | Required | Validation |
+|---------|--------|----------|------------|
 | `token` | string | Yes      | Token from the verification link URL query param |
 
 **Example request**
@@ -220,20 +199,12 @@ If the link points to your frontend, the frontend extracts the token and calls t
 
 **Error responses**
 
-- **400 Bad Request** – Invalid or expired link
+- **400 Bad Request** – Invalid or expired link  
   ```json
-  {
-    "statusCode": 400,
-    "message": "Invalid or expired verification link",
-    "error": "Bad Request"
-  }
+  { "statusCode": 400, "message": "Invalid or expired verification link", "error": "Bad Request" }
   ```
   ```json
-  {
-    "statusCode": 400,
-    "message": "Verification link has expired. Please request a new one.",
-    "error": "Bad Request"
-  }
+  { "statusCode": 400, "message": "Verification link has expired. Please request a new one.", "error": "Bad Request" }
   ```
 
 ---
@@ -247,7 +218,7 @@ Sends a new OTP verification email. Use when the user did not receive the email 
 **Request body**
 
 | Field   | Type   | Required | Validation  |
-| ------- | ------ | -------- | ----------- |
+|---------|--------|----------|-------------|
 | `email` | string | Yes      | Valid email |
 
 **Example request**
@@ -280,10 +251,10 @@ Authenticates with email and password and returns an access token and user objec
 
 **Request body**
 
-| Field      | Type   | Required | Validation  |
-| ---------- | ------ | -------- | ----------- |
-| `email`    | string | Yes      | Valid email |
-| `password` | string | Yes      | Non-empty   |
+| Field      | Type   | Required | Validation     |
+|-----------|--------|----------|----------------|
+| `email`   | string | Yes      | Valid email    |
+| `password`| string | Yes      | Non-empty      |
 
 **Example request**
 
@@ -294,11 +265,12 @@ Authenticates with email and password and returns an access token and user objec
 }
 ```
 
-**Example success response** `200`
+**Example success response** `200` — normal login
 
 ```json
 {
   "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "requiresPasswordReset": false,
   "user": {
     "id": "clxx...",
     "email": "jane@example.com",
@@ -311,31 +283,130 @@ Authenticates with email and password and returns an access token and user objec
     "hasPasscode": false,
     "companyName": null,
     "lineAccountLink": null,
-    "viberLink": null,
-    "whatsappLink": null,
-    "language": null,
     "isAgent": false,
-    "createdAt": "2025-01-15T10:00:00.000Z",
-    "referrerName": null
+    "requiresPasswordReset": false
+  }
+}
+```
+
+**Example success response** `200` — **migrated user who has no password yet**
+
+Users imported from an older system have no real password set. They can still log in (any password value is accepted so they can access the app), but the response includes `requiresPasswordReset: true`.
+
+> **Frontend action:** When `requiresPasswordReset` is `true`, show a full-screen prompt/modal telling the user they need to set a new password. Direct them to use Forgot Password (send reset email) or call `POST /auth/reset-password` directly with a token they receive via email. Do **not** allow full app access until the password is updated.
+
+```json
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "requiresPasswordReset": true,
+  "user": {
+    "id": "clxx...",
+    "email": "jane@example.com",
+    "accountNumber": "1234 5678 9012",
+    "firstName": "Jane",
+    "lastName": "Doe",
+    "requiresPasswordReset": true,
+    "...": "other fields"
   }
 }
 ```
 
 **Error responses**
 
-- **401 Unauthorized** – Invalid email or password
+- **401 Unauthorized** – Invalid email or password  
   ```json
-  {
-    "statusCode": 401,
-    "message": "Invalid email or password",
-    "error": "Unauthorized"
-  }
+  { "statusCode": 401, "message": "Invalid email or password", "error": "Unauthorized" }
   ```
 - **400 Bad Request** – Validation failed (e.g. missing email/password)
 
 ---
 
-### 6. Get current user (Me)
+### 6. Forgot Password
+
+**`POST /auth/forgot-password`**
+
+Sends a password-reset email to the user. Always returns the same generic success message to prevent email enumeration (i.e. you cannot tell if the email exists or not from the response).
+
+The email contains a **reset link** that points to `{APP_URL}/auth/reset-password?token=xxx&email=user@example.com` (or `RESET_PASSWORD_LINK_BASE_URL` if set). The link is valid for **30 minutes**.
+
+**Request body**
+
+| Field   | Type   | Required | Validation  |
+|---------|--------|----------|-------------|
+| `email` | string | Yes      | Valid email |
+
+**Example request**
+
+```json
+{
+  "email": "jane@example.com"
+}
+```
+
+**Example success response** `200` (same message regardless of whether the email exists)
+
+```json
+{
+  "message": "If an account exists, a password reset email has been sent."
+}
+```
+
+> **Frontend UX tip:** Show this message as-is. Do not try to infer whether the account exists from the response.
+
+---
+
+### 7. Reset Password
+
+Two steps: first the user clicks the link in the email (token is in the URL), then they submit the new password.
+
+#### Step 1 — Show the reset form (browser link from email)
+
+**`GET /auth/reset-password?token=xxx&email=jane@example.com`**
+
+The reset link in the email points directly to the backend, which serves a ready-made HTML form. No frontend action needed for this step — the backend handles it entirely.
+
+If you want to host the reset form on your own frontend instead, set `RESET_PASSWORD_LINK_BASE_URL` in `.env` to your frontend URL. The token and email will be appended as query params (`?token=xxx&email=jane@example.com`). Your frontend then extracts `token` from the URL and calls Step 2.
+
+#### Step 2 — Submit new password
+
+**`POST /auth/reset-password`**
+
+Validates the reset token and updates the user's password. On success, the token is invalidated. The `requiresPasswordReset` flag is automatically cleared.
+
+**Request body**
+
+| Field         | Type   | Required | Validation                        |
+|---------------|--------|----------|-----------------------------------|
+| `token`       | string | Yes      | The raw token from the URL (`?token=xxx`) |
+| `newPassword` | string | Yes      | Min 8 characters                  |
+
+**Example request**
+
+```json
+{
+  "token": "a1b2c3d4e5f6...",
+  "newPassword": "MyNewSecurePass1!"
+}
+```
+
+**Example success response** `200`
+
+```json
+{
+  "message": "Password updated successfully. You can now log in."
+}
+```
+
+**Error responses**
+
+- **400 Bad Request** – Token is invalid, already used, or expired  
+  ```json
+  { "statusCode": 400, "message": "Invalid or expired reset link.", "error": "Bad Request" }
+  ```
+
+---
+
+### 8. Get current user (Me)
 
 **`GET /auth/me`**  
 **Protected:** Yes — requires `Authorization: Bearer <access_token>`.
@@ -362,16 +433,9 @@ Returns the profile of the authenticated user.
   "hasPasscode": false,
   "companyName": null,
   "lineAccountLink": null,
-  "viberLink": null,
-  "whatsappLink": null,
-  "language": null,
-  "isAgent": false,
-  "createdAt": "2025-01-15T10:00:00.000Z",
-  "referrerName": null
+  "isAgent": false
 }
 ```
-
-Use `GET /auth/me` for the **Personal Information** page (Dashboard → person icon → Personal). Display editable fields (firstName, lastName, middleName, phone, dateOfBirth, countryCode, companyName, lineAccountLink, viberLink, whatsappLink, language) and persist changes with `PATCH /auth/profile`. Use `createdAt` for "Member Since" and `referrerName` for "Agent Referrer".
 
 `role` is one of `USER`, `ADMIN`, or `PAYMENT_SERVICE`. Use it to gate admin-only UI (e.g. admin portal) or to verify the user can access admin endpoints.
 
@@ -379,7 +443,7 @@ The `hasPasscode` field indicates whether the user has set a 4-digit passcode. I
 
 **Error responses**
 
-- **401 Unauthorized** – Missing or invalid/expired token
+- **401 Unauthorized** – Missing or invalid/expired token  
   ```json
   { "statusCode": 401, "message": "Unauthorized" }
   ```
@@ -395,20 +459,15 @@ Updates the authenticated user's profile. All body fields are optional; only pro
 
 **Request body**
 
-| Field             | Type   | Required    | Validation                                        | Description                           |
-| ----------------- | ------ | ----------- | ------------------------------------------------- | ------------------------------------- |
-| `firstName`       | string | No          | 1–100 characters                                  | Given name                            |
-| `lastName`        | string | No          | 1–100 characters                                  | Family name                           |
-| `middleName`      | string | No          | 1–100 characters                                  | Middle name                           |
-| `phone`           | string | No          | Max 30 characters                                 | Phone number                          |
-| `dateOfBirth`     | string | No          | ISO 8601 date (e.g. `1990-01-15`)                 | Date of birth                         |
-| `countryCode`     | string | No          | Exactly 2 characters (e.g. `US`)                  | ISO country code                      |
-| `companyName`     | string | No          | Max 200 characters                                | Company name (Personal page)          |
-| `lineAccountLink` | string | No          | Max 500 characters                                | LINE Account Link URL (Personal page) |
-| `viberLink`       | string | No          | Max 500 characters                                | Viber account link                    |
-| `whatsappLink`    | string | No          | Max 500 characters                                | WhatsApp account link                 |
-| `language`        | string | No          | One of: `ENGLISH`, `ARABIC`, `JAPANESE`, `KOREAN` | User UI language preference           |
-| `passcode`        | string | Conditional | Exactly 4 digits (0–9)                            | Required when user has passcode set   |
+| Field        | Type   | Required | Validation                     | Description                |
+|-------------|--------|----------|--------------------------------|----------------------------|
+| `firstName` | string | No       | 1–100 characters               | Given name                 |
+| `lastName`  | string | No       | 1–100 characters               | Family name                |
+| `middleName`| string | No       | 1–100 characters               | Middle name                |
+| `phone`     | string | No       | Max 30 characters              | Phone number               |
+| `dateOfBirth` | string | No     | ISO 8601 date (e.g. `1990-01-15`) | Date of birth           |
+| `countryCode` | string | No     | Exactly 2 characters (e.g. `US`) | ISO country code        |
+| `passcode`  | string | Conditional | Exactly 4 digits (0–9)     | Required when user has passcode set |
 
 **Example request**
 
@@ -417,11 +476,6 @@ Updates the authenticated user's profile. All body fields are optional; only pro
   "firstName": "Jane",
   "lastName": "Smith",
   "middleName": "Marie",
-  "companyName": "Acme Inc",
-  "lineAccountLink": "https://line.me/ti/p/~jane_doe",
-  "viberLink": "https://viber.click/jane_doe",
-  "whatsappLink": "https://wa.me/1234567890",
-  "language": "ENGLISH",
   "passcode": "1234"
 }
 ```
@@ -432,26 +486,18 @@ Same shape as `GET /auth/me` (including `hasPasscode`).
 
 **Error responses**
 
-- **400 Bad Request** – Passcode required but missing or incorrect (when user has passcode set)
+- **400 Bad Request** – Passcode required but missing or incorrect (when user has passcode set)  
   ```json
-  {
-    "statusCode": 400,
-    "message": "Passcode is required for this operation. Set a passcode first or provide your current passcode.",
-    "error": "Bad Request"
-  }
+  { "statusCode": 400, "message": "Passcode is required for this operation. Set a passcode first or provide your current passcode.", "error": "Bad Request" }
   ```
   ```json
-  {
-    "statusCode": 400,
-    "message": "Passcode is incorrect",
-    "error": "Bad Request"
-  }
+  { "statusCode": 400, "message": "Passcode is incorrect", "error": "Bad Request" }
   ```
-- **401 Unauthorized** – Missing or invalid/expired token
+- **401 Unauthorized** – Missing or invalid/expired token  
 
 ---
 
-### 8. Verify passcode
+### 9. Verify passcode
 
 **`POST /auth/verify-passcode`**  
 **Protected:** Yes — requires `Authorization: Bearer <access_token>`.
@@ -460,9 +506,9 @@ Verifies the user's 4-digit passcode. Use for the app-entry gate: after login, i
 
 **Request body**
 
-| Field      | Type   | Required | Validation             |
-| ---------- | ------ | -------- | ---------------------- |
-| `passcode` | string | Yes      | Exactly 4 digits (0–9) |
+| Field      | Type   | Required | Validation        |
+|-----------|--------|----------|-------------------|
+| `passcode`| string | Yes      | Exactly 4 digits (0–9) |
 
 **Example request**
 
@@ -482,27 +528,19 @@ Verifies the user's 4-digit passcode. Use for the app-entry gate: after login, i
 
 **Error responses**
 
-- **400 Bad Request** – User has no passcode set
+- **400 Bad Request** – User has no passcode set  
   ```json
-  {
-    "statusCode": 400,
-    "message": "No passcode set. Set a passcode first.",
-    "error": "Bad Request"
-  }
+  { "statusCode": 400, "message": "No passcode set. Set a passcode first.", "error": "Bad Request" }
   ```
-- **400 Bad Request** – Passcode is incorrect
+- **400 Bad Request** – Passcode is incorrect  
   ```json
-  {
-    "statusCode": 400,
-    "message": "Passcode is incorrect",
-    "error": "Bad Request"
-  }
+  { "statusCode": 400, "message": "Passcode is incorrect", "error": "Bad Request" }
   ```
-- **401 Unauthorized** – Missing or invalid/expired token
+- **401 Unauthorized** – Missing or invalid/expired token  
 
 ---
 
-### 9. Passcode
+### 10. Passcode
 
 Each user can optionally set a **4-digit passcode** for additional security. See **[API-PASSCODE.md](API-PASSCODE.md)** for full documentation of:
 
@@ -518,32 +556,26 @@ All passcode endpoints require JWT authentication. The passcode is encrypted at 
 
 The **user** object returned by register, login, `GET /auth/me`, and `PATCH /auth/profile` has the same shape:
 
-| Field             | Type           | Description                                                                                                                                             |
-| ----------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `id`              | string         | Unique user ID (cuid)                                                                                                                                   |
-| `email`           | string         | Email address                                                                                                                                           |
-| `accountNumber`   | string         | 12-digit account number, formatted as **XXXX XXXX XXXX** (e.g. `1234 5678 9012`). Unique per user; use for receiving transfers and sharing with others. |
-| `firstName`       | string         | First name                                                                                                                                              |
-| `lastName`        | string         | Last name                                                                                                                                               |
-| `middleName`      | string \| null | Middle name (optional)                                                                                                                                  |
-| `status`          | string         | One of: `PENDING`, `ACTIVE`, `SUSPENDED`                                                                                                                |
-| `role`            | string         | One of: `USER`, `ADMIN`, `PAYMENT_SERVICE`                                                                                                              |
-| `emailVerified`   | boolean        | Whether the user has verified their email via OTP. New users receive an OTP email; call `POST /auth/verify-email` to verify.                            |
-| `hasPasscode`     | boolean        | Whether the user has set a 4-digit passcode. Use to decide when to prompt for passcode on transfers, profile updates, etc.                              |
-| `companyName`     | string \| null | Company name (optional). Editable via `PATCH /auth/profile`.                                                                                            |
-| `lineAccountLink` | string \| null | LINE Account Link URL (optional). Editable via `PATCH /auth/profile`.                                                                                   |
-| `viberLink`       | string \| null | Viber account link (optional). Editable via `PATCH /auth/profile`.                                                                                      |
-| `whatsappLink`    | string \| null | WhatsApp account link (optional). Editable via `PATCH /auth/profile`.                                                                                   |
-| `language`        | string \| null | User UI language: `ENGLISH`, `ARABIC`, `JAPANESE`, or `KOREAN`. Editable via `PATCH /auth/profile`.                                                     |
-| `isAgent`         | boolean        | Whether the user is an agent (default: false)                                                                                                           |
-| `createdAt`       | string         | ISO 8601 date (e.g. `2025-01-15T10:00:00.000Z`). Registration date; use for "Member Since" on Personal page.                                            |
-| `referrerName`    | string \| null | Agent referrer display name (firstName + lastName). null if user has no referrer. Use for "Agent Referrer" on Personal page.                            |
+| Field          | Type    | Description                                              |
+|----------------|---------|----------------------------------------------------------|
+| `id`           | string  | Unique user ID (cuid)                                   |
+| `email`        | string  | Email address                                           |
+| `accountNumber`| string  | 12-digit account number, formatted as **XXXX XXXX XXXX** (e.g. `1234 5678 9012`). Unique per user; use for receiving transfers and sharing with others. |
+| `firstName`    | string  | First name                                              |
+| `lastName`     | string  | Last name                                               |
+| `middleName`   | string \| null | Middle name (optional)                        |
+| `status`       | string  | One of: `PENDING`, `ACTIVE`, `SUSPENDED`                |
+| `role`         | string  | One of: `USER`, `ADMIN`, `PAYMENT_SERVICE`              |
+| `emailVerified`| boolean | Whether the user has verified their email via OTP. New users receive an OTP email; call `POST /auth/verify-email` to verify. |
+| `hasPasscode`  | boolean | Whether the user has set a 4-digit passcode. Use to decide when to prompt for passcode on transfers, profile updates, etc. |
+| `requiresPasswordReset` | boolean | `true` for users imported from the old system who have not yet set a password. Show a full-screen prompt and block app access until they complete the reset flow. |
+| `companyName`  | string \| null | Company name (optional)                      |
+| `lineAccountLink` | string \| null | LINE Account Link URL (optional)         |
+| `isAgent`      | boolean | Whether the user is an agent (default: false)           |
 
 Every user (new and existing) has an account number. New users receive one at registration; existing users were backfilled via migration.
 
 To show or update profile, use `GET /auth/me` and `PATCH /auth/profile`. Sensible fields (e.g. phone, dateOfBirth, countryCode) are stored and encrypted on the backend; include them in the profile update body to change them.
-
-**Personal Information page:** For the Personal page (Dashboard → person icon → Personal), use `GET /auth/me` for display and `PATCH /auth/profile` for updates. Supported editable fields: firstName, lastName, middleName, phone, dateOfBirth, countryCode, companyName, lineAccountLink, viberLink, whatsappLink, language. Use `createdAt` for "Member Since" and `referrerName` for "Agent Referrer".
 
 ---
 
@@ -560,13 +592,13 @@ Returns a paginated list of users with decrypted PII. Supports search by email a
 
 **Query parameters**
 
-| Param    | Type    | Required | Description                                        |
-| -------- | ------- | -------- | -------------------------------------------------- |
-| `page`   | number  | No       | Page number (default: 1)                           |
-| `limit`  | number  | No       | Items per page, 1–100 (default: 20)                |
-| `search` | string  | No       | Partial match on email (case-insensitive)          |
-| `status` | string  | No       | Filter by status: `PENDING`, `ACTIVE`, `SUSPENDED` |
-| `agent`  | boolean | No       | Filter by agent: `true` or `false`                 |
+| Param   | Type    | Required | Description                                      |
+|---------|---------|----------|--------------------------------------------------|
+| `page`  | number  | No       | Page number (default: 1)                         |
+| `limit` | number  | No       | Items per page, 1–100 (default: 20)              |
+| `search`| string  | No       | Partial match on email (case-insensitive)        |
+| `status`| string  | No       | Filter by status: `PENDING`, `ACTIVE`, `SUSPENDED` |
+| `agent` | boolean | No       | Filter by agent: `true` or `false`               |
 
 **Example request**
 
@@ -620,17 +652,17 @@ Returns a single user's details including decrypted PII, referral info, and thei
 
 **Response fields**
 
-| Field           | Type           | Description                                                                                                                      |
-| --------------- | -------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `id`            | string         | User ID (cuid)                                                                                                                   |
-| `email`         | string         | Email address                                                                                                                    |
-| `accountNumber` | string         | 12-digit account number (e.g. `"1234 5678 9012"`)                                                                                |
-| `firstName`     | string         | First name                                                                                                                       |
-| `lastName`      | string         | Last name                                                                                                                        |
-| `referralCode`  | string \| null | User's unique referral ID (8 chars, e.g. `"ABC12XYZ"`). Use for sharing sign-up links. See [API-REFERRALS.md](API-REFERRALS.md). |
-| `referredById`  | string \| null | User ID of the referrer (who referred this user), if any.                                                                        |
-| `wallets`       | array          | User's wallets with `balance` and `agentCommission`.                                                                             |
-| ...             |                | Plus other user fields (status, role, emailVerified, isAgent, createdAt, etc.)                                                   |
+| Field | Type | Description |
+|-------|------|--------------|
+| `id` | string | User ID (cuid) |
+| `email` | string | Email address |
+| `accountNumber` | string | 12-digit account number (e.g. `"1234 5678 9012"`) |
+| `firstName` | string | First name |
+| `lastName` | string | Last name |
+| `referralCode` | string \| null | User's unique referral ID (8 chars, e.g. `"ABC12XYZ"`). Use for sharing sign-up links. See [API-REFERRALS.md](API-REFERRALS.md). |
+| `referredById` | string \| null | User ID of the referrer (who referred this user), if any. |
+| `wallets` | array | User's wallets with `balance` and `agentCommission`. |
+| ... | | Plus other user fields (status, role, emailVerified, isAgent, createdAt, etc.) |
 
 **Request**
 
@@ -692,15 +724,15 @@ Permanently deletes a user. Referral cascading: users who had this user as refer
 
 **Error responses**
 
-- **401 Unauthorized** – Missing or invalid/expired token, or caller is not ADMIN
+- **401 Unauthorized** – Missing or invalid/expired token, or caller is not ADMIN  
   ```json
   { "statusCode": 401, "message": "Unauthorized" }
   ```
-- **403 Forbidden** – Caller does not have ADMIN role
+- **403 Forbidden** – Caller does not have ADMIN role  
   ```json
   { "statusCode": 403, "message": "Forbidden resource", "error": "Forbidden" }
   ```
-- **404 Not Found** – User does not exist
+- **404 Not Found** – User does not exist  
   ```json
   { "statusCode": 404, "message": "User not found", "error": "Not Found" }
   ```
@@ -764,9 +796,15 @@ Time Deposit, Top Up, and Stock Investment. See **[API-TIME-DEPOSITS.md](API-TIM
 
 ## Typical frontend flow
 
-1. **Register:** `POST /auth/register` with email, password, firstName, lastName (and optional fields: middleName, phone, dateOfBirth, countryCode). Store `access_token` and optionally `user` (e.g. in memory, secure storage, or auth context).
-2. **Login:** `POST /auth/login` with email and password. Store `access_token` and optionally `user`.
-3. **Authenticated requests:** For any protected route, send `Authorization: Bearer <access_token>`.
-4. **Current user:** Call `GET /auth/me` with the stored token to get the latest profile (e.g. on app load or after token refresh).
+1. **Register:** `POST /auth/register` → store `access_token` and `user`.
+2. **Login:** `POST /auth/login` → store `access_token` and `user`.
+   - If `requiresPasswordReset: true` → block app access and show a "Please set your password" screen. Trigger `POST /auth/forgot-password` with the user's email to send a reset link, or instruct the user to check their email.
+3. **Authenticated requests:** Send `Authorization: Bearer <access_token>` for all protected routes.
+4. **Current user:** `GET /auth/me` on app load to get the latest profile.
+5. **Forgot password flow:**
+   - User taps "Forgot Password" → show email input screen.
+   - Call `POST /auth/forgot-password` with the email → show generic success message.
+   - User receives email with reset link → clicks it → arrives at the backend-hosted HTML form (or your frontend form if `RESET_PASSWORD_LINK_BASE_URL` is set).
+   - User submits new password → `POST /auth/reset-password` with `{ token, newPassword }` → on success, redirect to login.
 
-Token expiry is configured on the backend (e.g. 7 days). When the backend returns **401** on a protected route, clear the stored token and redirect the user to login (or trigger refresh if you add a refresh flow later).
+Token expiry is configured on the backend (default 7 days). When the backend returns **401**, clear the stored token and redirect to Login.

@@ -3,6 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
+import { registerIndieID } from 'native-notify';
 import { useEffect, useRef, useState } from "react";
 import {
     ActivityIndicator,
@@ -129,7 +130,7 @@ function PasswordResetRequiredModal({
     sent: {
       icon: "✓",
       title: "Email Sent!",
-      message: `A password reset link has been sent to ${email}.\n\nCheck your inbox (and spam folder), follow the link to set your new password, then log in again.`,
+      message: `If an account exists for ${email}, a password reset link has been sent.\n\nCheck your inbox (and spam folder), follow the link to set your new password, then log in again.`,
       primaryText: "Back to Login",
       primaryAction: onSentOk,
       secondaryText: null,
@@ -206,6 +207,168 @@ function PasswordResetRequiredModal({
     </Modal>
   );
 }
+
+// ---------------------------------------------------------------------------
+// ForgotPasswordInputModal
+// Shown when user taps "Forgot Password?" — lets them enter email and send
+// the reset link without needing to first type in the Login email field.
+// ---------------------------------------------------------------------------
+interface ForgotPasswordInputModalProps {
+  visible: boolean;
+  initialEmail: string;
+  onClose: () => void;
+}
+
+function ForgotPasswordInputModal({
+  visible,
+  initialEmail,
+  onClose,
+}: ForgotPasswordInputModalProps) {
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0.9)).current;
+  const [inputEmail, setInputEmail] = useState(initialEmail);
+  const [phase, setPhase] = useState<'input' | 'sending' | 'sent' | 'error'>('input');
+  const [errorMsg, setErrorMsg] = useState('');
+
+  // Sync initialEmail when modal opens
+  useEffect(() => {
+    if (visible) {
+      setInputEmail(initialEmail);
+      setPhase('input');
+      setErrorMsg('');
+      Animated.parallel([
+        Animated.timing(fadeAnim, { toValue: 1, duration: 200, useNativeDriver: true }),
+        Animated.spring(scaleAnim, { toValue: 1, tension: 100, friction: 8, useNativeDriver: true }),
+      ]).start();
+    } else {
+      Animated.parallel([
+        Animated.timing(fadeAnim, { toValue: 0, duration: 150, useNativeDriver: true }),
+        Animated.timing(scaleAnim, { toValue: 0.9, duration: 150, useNativeDriver: true }),
+      ]).start();
+    }
+  }, [visible]);
+
+  if (!visible) return null;
+
+  const handleSend = async () => {
+    const trimmed = inputEmail.trim();
+    if (!trimmed) {
+      setErrorMsg('Please enter your email address.');
+      setPhase('error');
+      return;
+    }
+    setPhase('sending');
+    try {
+      const result = await forgotPassword(trimmed);
+      if (result.success) {
+        setPhase('sent');
+      } else {
+        setErrorMsg(result.error || 'Failed to send reset email. Please try again.');
+        setPhase('error');
+      }
+    } catch {
+      setErrorMsg('Network error. Please try again.');
+      setPhase('error');
+    }
+  };
+
+  return (
+    <Modal transparent animationType="none" visible={visible}>
+      <Animated.View style={[modalStyles.overlay, { opacity: fadeAnim }]}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={phase === 'sent' ? onClose : undefined} />
+        <Animated.View style={[modalStyles.box, { transform: [{ scale: scaleAnim }] }]}>
+          {phase === 'sent' ? (
+            <>
+              <View style={[modalStyles.iconWrap, { backgroundColor: 'rgba(34,197,94,0.18)' }]}>
+                <Text style={[modalStyles.iconText, { color: '#22c55e' }]}>✓</Text>
+              </View>
+              <Text style={modalStyles.title}>Email Sent!</Text>
+              <Text style={modalStyles.message}>
+                {`If an account exists for ${inputEmail.trim()}, a password reset link has been sent.\n\nCheck your inbox (and spam folder), follow the link to set your new password, then log in again.`}
+              </Text>
+              <View style={modalStyles.buttonsRow}>
+                <TouchableOpacity style={modalStyles.button} onPress={onClose} activeOpacity={0.8}>
+                  <Text style={modalStyles.buttonText}>Back to Login</Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          ) : phase === 'sending' ? (
+            <>
+              <View style={modalStyles.iconWrap}>
+                <Text style={modalStyles.iconText}>…</Text>
+              </View>
+              <Text style={modalStyles.title}>Sending Email</Text>
+              <Text style={modalStyles.message}>Sending password reset link…</Text>
+              <ActivityIndicator color={GRADIENT_START} size="large" style={{ marginTop: 4 }} />
+            </>
+          ) : (
+            <>
+              <View style={modalStyles.iconWrap}>
+                <Text style={modalStyles.iconText}>🔑</Text>
+              </View>
+              <Text style={modalStyles.title}>Forgot Password?</Text>
+              <Text style={[modalStyles.message, { marginBottom: 12 }]}>
+                Enter your registered email address and we'll send you a secure reset link.
+              </Text>
+              {phase === 'error' && (
+                <Text style={forgotInputStyles.errorText}>{errorMsg}</Text>
+              )}
+              <TextInput
+                style={forgotInputStyles.emailInput}
+                placeholder="Email Address"
+                placeholderTextColor="#AAAAAA"
+                value={inputEmail}
+                onChangeText={(t) => { setInputEmail(t); if (phase === 'error') setPhase('input'); }}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                autoComplete="email"
+                editable
+              />
+              <View style={[modalStyles.buttonsRow, { marginTop: 4 }]}>
+                <TouchableOpacity
+                  style={[modalStyles.button, modalStyles.buttonSecondary]}
+                  onPress={onClose}
+                  activeOpacity={0.8}
+                >
+                  <Text style={modalStyles.buttonSecondaryText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={modalStyles.button}
+                  onPress={handleSend}
+                  activeOpacity={0.8}
+                >
+                  <Text style={modalStyles.buttonText}>Send Link</Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          )}
+        </Animated.View>
+      </Animated.View>
+    </Modal>
+  );
+}
+
+const forgotInputStyles = StyleSheet.create({
+  emailInput: {
+    width: '100%',
+    borderWidth: 1.5,
+    borderColor: '#E0E0E0',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 13,
+    fontSize: 15,
+    color: '#333',
+    marginBottom: 16,
+    backgroundColor: '#FAFAFA',
+  },
+  errorText: {
+    fontSize: 13,
+    color: '#E53E3E',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+});
 
 interface MessageModalProps {
   visible: boolean;
@@ -429,6 +592,7 @@ export default function Login() {
   });
   const [resetModalVisible, setResetModalVisible] = useState(false);
   const [resetModalEmail, setResetModalEmail] = useState("");
+  const [forgotModalVisible, setForgotModalVisible] = useState(false);
 
   const showModal = (config: Partial<ModalConfig>) => {
     setModalConfig({
@@ -501,6 +665,16 @@ export default function Login() {
       await AsyncStorage.setItem("access_token", result.access_token || "");
       await AsyncStorage.setItem("user", JSON.stringify(result.user || {}));
       await AsyncStorage.removeItem("passcodeLoginComplete");
+
+      // Register device for Indie Push Notifications
+      const userObj = result.user as any;
+      const userId = userObj?.id || userObj?._id;
+      const appId = process.env.EXPO_PUBLIC_NATIVE_NOTIFY_APP_ID;
+      const appToken = process.env.EXPO_PUBLIC_NATIVE_NOTIFY_APP_TOKEN;
+
+      if (userId && appId && appToken) {
+        registerIndieID(String(userId), Number(appId), appToken);
+      }
 
       const elapsed = Date.now() - loaderStart;
       const remaining = Math.max(0, MIN_LOADER_MS - elapsed);
@@ -705,20 +879,7 @@ export default function Login() {
 
               <TouchableOpacity
                 style={styles.forgotWrap}
-                onPress={async () => {
-                  const trimmedEmail = email.trim();
-                  if (!trimmedEmail) {
-                    showModal({
-                      title: "Enter Your Email",
-                      message:
-                        'Please enter your email address in the field above, then tap "Forgot Password" again.',
-                      type: "info",
-                    });
-                    return;
-                  }
-                  setResetModalEmail(trimmedEmail);
-                  setResetModalVisible(true);
-                }}
+                onPress={() => setForgotModalVisible(true)}
               >
                 <Text style={styles.forgotText}>Forgot Password?</Text>
               </TouchableOpacity>
@@ -762,6 +923,12 @@ export default function Login() {
           setPassword('');
         }}
         email={resetModalEmail}
+      />
+
+      <ForgotPasswordInputModal
+        visible={forgotModalVisible}
+        initialEmail={email.trim()}
+        onClose={() => setForgotModalVisible(false)}
       />
     </>
   );

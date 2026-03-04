@@ -2,17 +2,18 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { unregisterIndieDevice } from 'native-notify';
 import { useCallback, useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
-  Modal,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
+    ActivityIndicator,
+    Modal,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getReferralCode, resendVerification, verifyEmail } from '../../configs/api';
@@ -101,6 +102,19 @@ const Settings = () => {
     try {
       // Clear the passcode login flag
       await AsyncStorage.removeItem('passcodeLoginComplete');
+      
+      // Unregister Push Notifications
+      const userStr = await AsyncStorage.getItem('user');
+      if (userStr) {
+        const userObj = JSON.parse(userStr);
+        const userId = userObj?.id || userObj?._id;
+        const appId = process.env.EXPO_PUBLIC_NATIVE_NOTIFY_APP_ID;
+        const appToken = process.env.EXPO_PUBLIC_NATIVE_NOTIFY_APP_TOKEN;
+        if (userId && appId && appToken) {
+          unregisterIndieDevice(String(userId), Number(appId), appToken);
+        }
+      }
+
       // Clear user data
       await AsyncStorage.removeItem('user');
     } catch (_) {}

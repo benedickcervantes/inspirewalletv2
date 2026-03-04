@@ -164,6 +164,27 @@ export function markMessageAsRead(
   accessToken: string,
   messageId: string,
 ): Promise<{ success: boolean; error?: string }>;
+
+// Notifications API
+export function getNotifications(
+  accessToken: string,
+  opts?: { limit?: number }
+): Promise<{
+  success: boolean;
+  data?: {
+    id: string;
+    title: string;
+    message: string;
+    isRead: boolean;
+    createdAt: string;
+  }[];
+  error?: string;
+}>;
+
+export function markNotificationAsRead(
+  accessToken: string,
+  notificationId: string,
+): Promise<{ success: boolean; error?: string }>;
 export function markAllMessagesAsRead(
   accessToken: string,
 ): Promise<{ success: boolean; count?: number; error?: string }>;
@@ -209,6 +230,10 @@ export function getBulkUserActivity(
 
 // Referral API
 export function getReferralCode(
+  accessToken: string,
+): Promise<{ success: boolean; referralCode?: string; error?: string }>;
+
+export function generateReferralCode(
   accessToken: string,
 ): Promise<{ success: boolean; referralCode?: string; error?: string }>;
 

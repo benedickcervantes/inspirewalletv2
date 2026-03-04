@@ -17,7 +17,9 @@ import {
 import QRCode from "react-native-qrcode-svg";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
+    generateReferralCode,
     getOrCreateMainWallet,
+    getReferralCode,
     getReferralQrPayload,
     getReferralTree,
     getTransactions,
@@ -65,14 +67,27 @@ export default function AgentDashboard() {
     }
     setError(null);
     try {
-      const [walletRes, treeRes, qrRes] = await Promise.all([
+      // Use allSettled so a failure in one call doesn't cancel the others
+      const [walletResult, treeResult, qrResult, codeResult] = await Promise.allSettled([
         getOrCreateMainWallet(accessToken),
         getReferralTree(accessToken),
         getReferralQrPayload(accessToken),
+        getReferralCode(accessToken),
       ]);
 
+      const walletRes = walletResult.status === "fulfilled" ? walletResult.value : null;
+      const treeRes = treeResult.status === "fulfilled" ? treeResult.value : null;
+      const qrRes = qrResult.status === "fulfilled" ? qrResult.value : null;
+      const codeRes = codeResult.status === "fulfilled" ? codeResult.value : null;
+
+      if (__DEV__) {
+        console.log("[AgentDashboard] codeRes:", JSON.stringify(codeRes));
+        console.log("[AgentDashboard] qrRes:", JSON.stringify(qrRes));
+        console.log("[AgentDashboard] treeRes:", JSON.stringify(treeRes));
+      }
+
       // Agent Commission from wallet
-      if (walletRes.success && walletRes.wallet) {
+      if (walletRes?.success && walletRes.wallet) {
         const wallet = walletRes.wallet as Record<string, unknown>;
         const commission = parseFloat(String(wallet.agentCommission ?? 0));
         setAgentCommission(Number.isNaN(commission) ? 0 : commission);
@@ -81,14 +96,39 @@ export default function AgentDashboard() {
       }
 
       // Referral QR Payload
-      if (qrRes.success && qrRes.payload) {
-        setReferralUrl(qrRes.payload.referralUrl ?? null);
+      if (qrRes?.success && qrRes.payload) {
+        setReferralUrl((qrRes.payload as Record<string, string>).referralUrl ?? null);
       }
 
-      // Referral tree (referral code, counts, and direct referrals if present)
-      if (treeRes.success && treeRes.tree) {
+      // Referral Code — try dedicated /referrals/code first, then qr payload, then tree
+      let resolvedCode: string | null = null;
+      if (codeRes?.success && codeRes.referralCode) {
+        resolvedCode = codeRes.referralCode;
+      } else if (qrRes?.success && qrRes.payload) {
+        const p = qrRes.payload as Record<string, string>;
+        if (p.referralCode) resolvedCode = p.referralCode;
+      } else if (treeRes?.success && treeRes.tree) {
         const tree = treeRes.tree as Record<string, unknown>;
-        setReferralCode((tree.referralCode as string) ?? null);
+        if (tree.referralCode) resolvedCode = tree.referralCode as string;
+      }
+
+      // Last resort: POST /referrals/generate to create one if none found
+      if (!resolvedCode) {
+        if (__DEV__) console.log("[AgentDashboard] No code found, calling generateReferralCode...");
+        try {
+          const genRes = await generateReferralCode(accessToken);
+          if (genRes.success && genRes.referralCode) resolvedCode = genRes.referralCode;
+          if (__DEV__) console.log("[AgentDashboard] generateReferralCode result:", JSON.stringify(genRes));
+        } catch (genErr) {
+          if (__DEV__) console.warn("[AgentDashboard] generateReferralCode failed:", genErr);
+        }
+      }
+
+      setReferralCode(resolvedCode);
+
+      // Referral tree (counts and direct referrals)
+      if (treeRes?.success && treeRes.tree) {
+        const tree = treeRes.tree as Record<string, unknown>;
         setDirectReferralCount(Number(tree.directReferralCount ?? 0));
         setTotalDescendantCount(Number(tree.totalDescendantCount ?? 0));
         const refs = tree.directReferrals as
@@ -99,7 +139,7 @@ export default function AgentDashboard() {
       }
 
       // Referred clients who successfully added time deposit = AGENT_COMMISSION transactions
-      const walletId = walletRes.success && walletRes.wallet
+      const walletId = walletRes?.success && walletRes.wallet
         ? (walletRes.wallet as Record<string, string>).id
         : undefined;
       const txRes = await getTransactions(accessToken, {

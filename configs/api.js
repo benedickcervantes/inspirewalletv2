@@ -1261,6 +1261,73 @@ export async function getMessages(accessToken, opts = {}) {
 }
 
 /**
+ * GET /notifications — requires JWT
+ * Fetch the current user's push notification history.
+ * @param {string} accessToken
+ * @param {{ limit?: number }} opts
+ */
+export async function getNotifications(accessToken, opts = {}) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
+  try {
+    const params = new URLSearchParams();
+    if (opts.limit != null) params.set("limit", String(opts.limit));
+    const qs = params.toString();
+    const url = `${base}/notifications${qs ? `?${qs}` : ""}`;
+    const res = await apiFetch(url, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    return {
+      success: true,
+      data: Array.isArray(data) ? data : [],
+    };
+  } catch (e) {
+    if (__DEV__) console.error("[Notifications API] Error", e);
+    return { success: false, error: e.message || "Network error" };
+  }
+}
+
+/**
+ * PATCH /notifications/:id/read — requires JWT
+ * Mark notification as read.
+ * @param {string} accessToken
+ * @param {string} notificationId
+ */
+export async function markNotificationAsRead(accessToken, notificationId) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
+  try {
+    const url = `${base}/notifications/${encodeURIComponent(notificationId)}/read`;
+    const res = await apiFetch(url, {
+      method: "PATCH",
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || 'Failed';
+      return { success: false, error: msg };
+    }
+    return { success: true };
+  } catch (e) {
+    if (__DEV__) console.error("[Notifications API] Error", e);
+    return { success: false, error: e.message || "Network error" };
+  }
+}
+
+/**
  * PATCH /messages/:id/read — requires JWT
  * Mark a single message as read.
  * @param {string} accessToken

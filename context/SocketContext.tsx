@@ -6,6 +6,7 @@ import { notifyNewTicketMessage } from '../lib/ticketingEvents';
 
 interface SocketContextType {
     isConnected: boolean;
+    isServerOffline: boolean;
     getSocket: () => any | null;
     refreshConnection: () => Promise<void>;
 }
@@ -14,6 +15,7 @@ const SocketContext = createContext<SocketContextType | undefined>(undefined);
 
 export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [isConnected, setIsConnected] = useState(false);
+    const [isServerOffline, setIsServerOffline] = useState(false);
     const socketRef = useRef<any>(null);
     const heartbeatCleanupRef = useRef<(() => void) | null>(null);
 
@@ -35,15 +37,21 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             onConnect: () => {
                 console.log('[SocketProvider] Connected');
                 setIsConnected(true);
+                setIsServerOffline(false);
                 if (socket) {
                     heartbeatCleanupRef.current = startHeartbeat(socket) as () => void;
                 }
             },
-            onDisconnect: () => {
-                console.log('[SocketProvider] Disconnected');
+            onDisconnect: (reason?: string) => {
+                console.log('[SocketProvider] Disconnected, reason:', reason);
                 setIsConnected(false);
                 heartbeatCleanupRef.current?.();
                 heartbeatCleanupRef.current = null;
+                
+                // If it's a transport close or ping timeout, server might be offline
+                if (reason === 'transport close' || reason === 'transport error' || reason === 'ping timeout') {
+                    setIsServerOffline(true);
+                }
             },
             onNewSupportMessage: () => {
                 notifyNewSupportMessage();
@@ -59,7 +67,21 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                 console.log('[SocketProvider] Transaction created');
             },
             onError: (err: any) => {
-                console.error('[SocketProvider] Error:', err);
+                console.error('[SocketProvider] Error:', err?.message || err);
+                // Broaden the offline detection for any connection error
+                if (
+                    err?.message?.includes('websocket error') || 
+                    String(err).includes('websocket error') ||
+                    err?.message?.includes('xhr poll error') ||
+                    err?.message?.includes('Network Error') ||
+                    err?.message?.includes('timeout') ||
+                    err?.type === 'TransportError'
+                ) {
+                    setIsServerOffline(true);
+                } else {
+                    // Fallback: any connect_error might mean server is offline for socket.io
+                    setIsServerOffline(true);
+                }
             }
         });
 
@@ -97,6 +119,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             socketRef.current.disconnect();
             socketRef.current = null;
         }
+        setIsServerOffline(false); // Optimistically set false so UI updates
         await connect();
     };
 
@@ -104,7 +127,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const getSocket = () => socketRef.current;
 
     return (
-        <SocketContext.Provider value={{ isConnected, getSocket, refreshConnection }}>
+        <SocketContext.Provider value={{ isConnected, isServerOffline, getSocket, refreshConnection }}>
             {children}
         </SocketContext.Provider>
     );
