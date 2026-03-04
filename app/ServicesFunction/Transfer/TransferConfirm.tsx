@@ -4,22 +4,27 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Dimensions,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
+    ActivityIndicator,
+    Dimensions,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import QRCode from "react-native-qrcode-svg";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { createBeneficiary, getOrCreateMainWallet, submitTransfer } from "../../../configs/api";
+import {
+    createBeneficiary,
+    getOrCreateMainWallet,
+    submitTransfer,
+} from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
+import CustomLoader from "../../Loader/CustomLoader";
 import ContactsModal from "./ContactsModal";
 import QRScanner from "./QRScanner";
 
@@ -104,9 +109,15 @@ export default function TransferConfirm() {
     try {
       const userJson = await AsyncStorage.getItem("user");
       if (userJson) {
-        const user = JSON.parse(userJson) as { accountNumber?: string; firstName?: string; lastName?: string };
+        const user = JSON.parse(userJson) as {
+          accountNumber?: string;
+          firstName?: string;
+          lastName?: string;
+        };
         setUserAccountNumber(user?.accountNumber || "");
-        const fullName = [user?.firstName, user?.lastName].filter(Boolean).join(" ");
+        const fullName = [user?.firstName, user?.lastName]
+          .filter(Boolean)
+          .join(" ");
         setUserName(fullName || "User");
       }
     } catch (error) {
@@ -122,29 +133,36 @@ export default function TransferConfirm() {
       return;
     }
     if (!mainWalletId) {
-      setErrorMessage("Recipient wallet could not be resolved. Please try again.");
+      setErrorMessage(
+        "Recipient wallet could not be resolved. Please try again.",
+      );
       setShowErrorModal(true);
       return;
     }
     setIsProcessing(true);
     try {
-      const { success: walletSuccess, wallet } = await getOrCreateMainWallet(accessToken);
+      const { success: walletSuccess, wallet } =
+        await getOrCreateMainWallet(accessToken);
       if (!walletSuccess || !wallet?.id) {
         setErrorMessage("Could not load your wallet. Please try again.");
         setShowErrorModal(true);
         setIsProcessing(false);
         return;
       }
-      const fromWalletId = balanceType === "available" ? (wallet.id as string) : undefined;
+      const fromWalletId =
+        balanceType === "available" ? (wallet.id as string) : undefined;
       const beneficiaryBody: Record<string, string> = {
         nickname: recipientName || "Recipient",
         accountIdentifier: mainWalletId,
         type: "WALLET_ID",
       };
-      if (hasPasscode && passcodeToSend) beneficiaryBody.passcode = passcodeToSend;
+      if (hasPasscode && passcodeToSend)
+        beneficiaryBody.passcode = passcodeToSend;
       const createRes = await createBeneficiary(accessToken, beneficiaryBody);
       if (!createRes.success || !createRes.data) {
-        setErrorMessage(createRes.error || "Failed to set up recipient. Please try again.");
+        setErrorMessage(
+          createRes.error || "Failed to set up recipient. Please try again.",
+        );
         setShowErrorModal(true);
         if (passcodeToSend) setPasscode("");
         setIsProcessing(false);
@@ -202,6 +220,10 @@ export default function TransferConfirm() {
     navigation.navigate("Main");
   };
 
+  if (isProcessing) {
+    return <CustomLoader text="PROCESSING..." />;
+  }
+
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       {/* Header */}
@@ -223,383 +245,444 @@ export default function TransferConfirm() {
         </TouchableOpacity>
       </LinearGradient>
 
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Quick Actions */}
-          <View style={styles.quickActionsContainer}>
-            <TouchableOpacity 
-              style={styles.quickActionButton}
-              onPress={() => setShowQRModal(true)}
-            >
-              <View style={styles.quickActionIcon}>
-                <Ionicons name="qr-code" size={28} color="#E25A17" />
-              </View>
-              <Text style={styles.quickActionText}>{t("sendMoney.myQr")}</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={styles.quickActionButton}
-              onPress={() => setShowQRScanner(true)}
-            >
-              <View style={styles.quickActionIcon}>
-                <Ionicons name="scan" size={28} color="#E25A17" />
-              </View>
-              <Text style={styles.quickActionText}>{t("sendMoney.scanQr")}</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={styles.quickActionButton}
-              onPress={() => setShowContactsModal(true)}
-            >
-              <View style={styles.quickActionIcon}>
-                <Ionicons name="people" size={28} color="#E25A17" />
-              </View>
-              <Text style={styles.quickActionText}>{t("sendMoney.contacts")}</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Step Indicator */}
-          <View style={styles.stepIndicatorContainer}>
-            <View style={styles.stepItem}>
-              <View style={[styles.stepCircle, styles.stepCircleCompleted]}>
-                <Ionicons name="checkmark" size={16} color="#FFFFFF" />
-              </View>
-            </View>
-            <View style={[styles.stepLine, styles.stepLineCompleted]} />
-            <View style={styles.stepItem}>
-              <View style={[styles.stepCircle, styles.stepCircleCompleted]}>
-                <Ionicons name="checkmark" size={16} color="#FFFFFF" />
-              </View>
-            </View>
-            <View style={[styles.stepLine, styles.stepLineCompleted]} />
-            <View style={styles.stepItem}>
-              <View style={[styles.stepCircle, styles.stepCircleActive]}>
-                <Ionicons name="checkmark" size={16} color="#FFFFFF" />
-              </View>
-            </View>
-          </View>
-
-          {/* Step Title */}
-          <Text style={styles.stepTitle}>{t("sendMoney.confirmTransfer")}</Text>
-          <Text style={styles.stepSubtitle}>{t("sendMoney.reviewTransferDetails")}</Text>
-
-          {/* Recipient Card */}
-          <View style={styles.recipientCard}>
-            <Text style={styles.recipientLabel}>{t("sendMoney.to")}</Text>
-            <View style={styles.recipientInfo}>
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>{getUserInitials(recipientName)}</Text>
-              </View>
-              <View style={styles.recipientDetails}>
-                <Text style={styles.recipientName}>{recipientName}</Text>
-                <Text style={styles.recipientAccount}>{accountNumber}</Text>
-              </View>
-            </View>
-          </View>
-
-          {/* Transfer Details Card */}
-          <LinearGradient
-            colors={["#F28934", "#E25A17"]}
-            style={styles.detailsCard}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Quick Actions */}
+        <View style={styles.quickActionsContainer}>
+          <TouchableOpacity
+            style={styles.quickActionButton}
+            onPress={() => setShowQRModal(true)}
           >
-            <View style={styles.detailsHeader}>
-              <Text style={styles.detailsLabel}>{t("sendMoney.amountToTransfer")}</Text>
+            <View style={styles.quickActionIcon}>
+              <Ionicons name="qr-code" size={28} color="#E25A17" />
             </View>
-            <Text style={styles.amountText}>
-              PHP {amount.toLocaleString("en-PH", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-              })}
-            </Text>
-            <View style={styles.detailsRowColumn}>
-              <Text style={styles.detailsRowLabel}>{t("sendMoney.from")}</Text>
-              <View style={styles.detailsRowValueWrap}>
-                <Text style={styles.detailsRowText}>
-                  {balanceType === "available" ? t("sendMoney.availableBalance") : t("sendMoney.agentWallet")}
-                </Text>
-              </View>
-            </View>
-            <View style={styles.detailsRowColumn}>
-              <Text style={styles.detailsRowLabel}>{t("sendMoney.descriptionOptional")}</Text>
-              <View style={styles.detailsRowValueWrap}>
-                <Text style={styles.detailsRowTextWrap} numberOfLines={4} ellipsizeMode="tail">
-                  {description}
-                </Text>
-              </View>
-            </View>
-          </LinearGradient>
+            <Text style={styles.quickActionText}>{t("sendMoney.myQr")}</Text>
+          </TouchableOpacity>
 
-          {/* Balance Summary */}
-          <View style={styles.summaryCard}>
-            <View style={styles.summaryRow}>
-              <View style={styles.summaryItem}>
-                <Text style={styles.summaryLabel}>Current Balance</Text>
-                <Text style={styles.summaryValue}>
-                  PHP {currentBalance.toLocaleString("en-PH", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                  })}
-                </Text>
-              </View>
-              <View style={styles.summaryDivider} />
-              <View style={styles.summaryItem}>
-                <Text style={styles.summaryLabel}>{t("sendMoney.newBalance")}</Text>
-                <Text style={styles.summaryValue}>
-                  PHP {newBalance.toLocaleString("en-PH", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                  })}
-                </Text>
-              </View>
+          <TouchableOpacity
+            style={styles.quickActionButton}
+            onPress={() => setShowQRScanner(true)}
+          >
+            <View style={styles.quickActionIcon}>
+              <Ionicons name="scan" size={28} color="#E25A17" />
             </View>
-            <View style={styles.transferAmountRow}>
-              <Text style={styles.transferAmountLabel}>{t("sendMoney.transferAmount")}</Text>
-              <Text style={styles.transferAmountValue}>
-                -{amount.toLocaleString("en-PH", {
+            <Text style={styles.quickActionText}>{t("sendMoney.scanQr")}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.quickActionButton}
+            onPress={() => setShowContactsModal(true)}
+          >
+            <View style={styles.quickActionIcon}>
+              <Ionicons name="people" size={28} color="#E25A17" />
+            </View>
+            <Text style={styles.quickActionText}>
+              {t("sendMoney.contacts")}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Step Indicator */}
+        <View style={styles.stepIndicatorContainer}>
+          <View style={styles.stepItem}>
+            <View style={[styles.stepCircle, styles.stepCircleCompleted]}>
+              <Ionicons name="checkmark" size={16} color="#FFFFFF" />
+            </View>
+          </View>
+          <View style={[styles.stepLine, styles.stepLineCompleted]} />
+          <View style={styles.stepItem}>
+            <View style={[styles.stepCircle, styles.stepCircleCompleted]}>
+              <Ionicons name="checkmark" size={16} color="#FFFFFF" />
+            </View>
+          </View>
+          <View style={[styles.stepLine, styles.stepLineCompleted]} />
+          <View style={styles.stepItem}>
+            <View style={[styles.stepCircle, styles.stepCircleActive]}>
+              <Ionicons name="checkmark" size={16} color="#FFFFFF" />
+            </View>
+          </View>
+        </View>
+
+        {/* Step Title */}
+        <Text style={styles.stepTitle}>{t("sendMoney.confirmTransfer")}</Text>
+        <Text style={styles.stepSubtitle}>
+          {t("sendMoney.reviewTransferDetails")}
+        </Text>
+
+        {/* Recipient Card */}
+        <View style={styles.recipientCard}>
+          <Text style={styles.recipientLabel}>{t("sendMoney.to")}</Text>
+          <View style={styles.recipientInfo}>
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>
+                {getUserInitials(recipientName)}
+              </Text>
+            </View>
+            <View style={styles.recipientDetails}>
+              <Text style={styles.recipientName}>{recipientName}</Text>
+              <Text style={styles.recipientAccount}>{accountNumber}</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Transfer Details Card */}
+        <LinearGradient
+          colors={["#F28934", "#E25A17"]}
+          style={styles.detailsCard}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        >
+          <View style={styles.detailsHeader}>
+            <Text style={styles.detailsLabel}>
+              {t("sendMoney.amountToTransfer")}
+            </Text>
+          </View>
+          <Text style={styles.amountText}>
+            PHP{" "}
+            {amount.toLocaleString("en-PH", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
+          </Text>
+          <View style={styles.detailsRowColumn}>
+            <Text style={styles.detailsRowLabel}>{t("sendMoney.from")}</Text>
+            <View style={styles.detailsRowValueWrap}>
+              <Text style={styles.detailsRowText}>
+                {balanceType === "available"
+                  ? t("sendMoney.availableBalance")
+                  : t("sendMoney.agentWallet")}
+              </Text>
+            </View>
+          </View>
+          <View style={styles.detailsRowColumn}>
+            <Text style={styles.detailsRowLabel}>
+              {t("sendMoney.descriptionOptional")}
+            </Text>
+            <View style={styles.detailsRowValueWrap}>
+              <Text
+                style={styles.detailsRowTextWrap}
+                numberOfLines={4}
+                ellipsizeMode="tail"
+              >
+                {description}
+              </Text>
+            </View>
+          </View>
+        </LinearGradient>
+
+        {/* Balance Summary */}
+        <View style={styles.summaryCard}>
+          <View style={styles.summaryRow}>
+            <View style={styles.summaryItem}>
+              <Text style={styles.summaryLabel}>Current Balance</Text>
+              <Text style={styles.summaryValue}>
+                PHP{" "}
+                {currentBalance.toLocaleString("en-PH", {
                   minimumFractionDigits: 2,
-                  maximumFractionDigits: 2
+                  maximumFractionDigits: 2,
+                })}
+              </Text>
+            </View>
+            <View style={styles.summaryDivider} />
+            <View style={styles.summaryItem}>
+              <Text style={styles.summaryLabel}>
+                {t("sendMoney.newBalance")}
+              </Text>
+              <Text style={styles.summaryValue}>
+                PHP{" "}
+                {newBalance.toLocaleString("en-PH", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
                 })}
               </Text>
             </View>
           </View>
+          <View style={styles.transferAmountRow}>
+            <Text style={styles.transferAmountLabel}>
+              {t("sendMoney.transferAmount")}
+            </Text>
+            <Text style={styles.transferAmountValue}>
+              -
+              {amount.toLocaleString("en-PH", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
+            </Text>
+          </View>
+        </View>
 
-          {/* Confirm Button */}
-          <TouchableOpacity
-            style={styles.confirmButton}
-            onPress={handleConfirm}
-            disabled={isProcessing}
+        {/* Confirm Button */}
+        <TouchableOpacity
+          style={styles.confirmButton}
+          onPress={handleConfirm}
+          disabled={isProcessing}
+        >
+          <LinearGradient
+            colors={["#E25A17", "#F28934"]}
+            style={styles.confirmGradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
           >
+            {isProcessing ? (
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            ) : (
+              <>
+                <Text style={styles.confirmText}>{t("sendMoney.confirm")}</Text>
+                <Ionicons name="checkmark-circle" size={20} color="#FFFFFF" />
+              </>
+            )}
+          </LinearGradient>
+        </TouchableOpacity>
+
+        <View style={styles.bottomPadding} />
+      </ScrollView>
+
+      {/* Passcode modal (when user has passcode set) */}
+      <Modal
+        visible={showPasscodeModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => !isProcessing && setShowPasscodeModal(false)}
+      >
+        <KeyboardAvoidingView
+          style={styles.modalOverlay}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 40 : 0}
+        >
+          <View style={styles.passcodeModalContent}>
+            <Text style={styles.passcodeModalTitle}>Enter your passcode</Text>
+            <TextInput
+              style={styles.passcodeInput}
+              value={passcode}
+              onChangeText={(t) =>
+                setPasscode(t.replace(/\D/g, "").slice(0, 4))
+              }
+              placeholder="••••"
+              placeholderTextColor="#999"
+              secureTextEntry
+              maxLength={4}
+              keyboardType="number-pad"
+              editable={!isProcessing}
+            />
+            <View style={styles.passcodeModalButtons}>
+              <TouchableOpacity
+                style={[
+                  styles.passcodeModalButton,
+                  styles.passcodeModalButtonCancel,
+                ]}
+                onPress={() => {
+                  setShowPasscodeModal(false);
+                  setPasscode("");
+                }}
+                disabled={isProcessing}
+              >
+                <Text style={styles.passcodeModalButtonCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.passcodeModalButton,
+                  styles.passcodeModalButtonConfirm,
+                ]}
+                onPress={handlePasscodeConfirm}
+                disabled={isProcessing || passcode.length !== 4}
+              >
+                <LinearGradient
+                  colors={["#E25A17", "#F28934"]}
+                  style={styles.passcodeModalButtonGradient}
+                >
+                  <Text style={styles.passcodeModalButtonConfirmText}>
+                    Confirm
+                  </Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* Success Modal */}
+      <Modal
+        visible={showSuccessModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => {}}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
             <LinearGradient
               colors={["#E25A17", "#F28934"]}
-              style={styles.confirmGradient}
+              style={styles.modalGradient}
               start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
+              end={{ x: 1, y: 1 }}
             >
-              {isProcessing ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
-              ) : (
-                <>
-                  <Text style={styles.confirmText}>{t("sendMoney.confirm")}</Text>
-                  <Ionicons name="checkmark-circle" size={20} color="#FFFFFF" />
-                </>
-              )}
+              <View style={styles.checkIconContainer}>
+                <Ionicons name="checkmark-circle" size={80} color="#FFFFFF" />
+              </View>
+              <Text style={styles.modalTitle}>
+                {t("sendMoney.transferComplete")}
+              </Text>
+              <Text style={styles.modalMessage}>
+                {t("sendMoney.transferSuccessMessage")
+                  .replace(
+                    "{amount}",
+                    amount.toLocaleString("en-PH", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    }),
+                  )
+                  .replace("{name}", recipientName)}
+              </Text>
+              <TouchableOpacity
+                style={styles.modalButton}
+                onPress={handleSuccessOk}
+              >
+                <Text style={styles.modalButtonText}>{t("common.ok")}</Text>
+              </TouchableOpacity>
             </LinearGradient>
-          </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
-          <View style={styles.bottomPadding} />
-        </ScrollView>
-
-        {/* Passcode modal (when user has passcode set) */}
-        <Modal
-          visible={showPasscodeModal}
-          transparent
-          animationType="fade"
-          onRequestClose={() => !isProcessing && setShowPasscodeModal(false)}
-        >
-          <KeyboardAvoidingView
-            style={styles.modalOverlay}
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
-            keyboardVerticalOffset={Platform.OS === "ios" ? 40 : 0}
-          >
-            <View style={styles.passcodeModalContent}>
-              <Text style={styles.passcodeModalTitle}>Enter your passcode</Text>
-              <TextInput
-                style={styles.passcodeInput}
-                value={passcode}
-                onChangeText={(t) => setPasscode(t.replace(/\D/g, "").slice(0, 4))}
-                placeholder="••••"
-                placeholderTextColor="#999"
-                secureTextEntry
-                maxLength={4}
-                keyboardType="number-pad"
-                editable={!isProcessing}
-              />
-              <View style={styles.passcodeModalButtons}>
-                <TouchableOpacity
-                  style={[styles.passcodeModalButton, styles.passcodeModalButtonCancel]}
-                  onPress={() => { setShowPasscodeModal(false); setPasscode(""); }}
-                  disabled={isProcessing}
-                >
-                  <Text style={styles.passcodeModalButtonCancelText}>Cancel</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.passcodeModalButton, styles.passcodeModalButtonConfirm]}
-                  onPress={handlePasscodeConfirm}
-                  disabled={isProcessing || passcode.length !== 4}
-                >
-                  <LinearGradient colors={["#E25A17", "#F28934"]} style={styles.passcodeModalButtonGradient}>
-                    <Text style={styles.passcodeModalButtonConfirmText}>Confirm</Text>
-                  </LinearGradient>
-                </TouchableOpacity>
+      {/* Error Modal */}
+      <Modal
+        visible={showErrorModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowErrorModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <LinearGradient
+              colors={["#E25A17", "#F28934"]}
+              style={styles.modalGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            >
+              <View style={styles.checkIconContainer}>
+                <Ionicons name="alert-circle" size={80} color="#FFFFFF" />
               </View>
-            </View>
-          </KeyboardAvoidingView>
-        </Modal>
-
-        {/* Success Modal */}
-        <Modal
-          visible={showSuccessModal}
-          transparent={true}
-          animationType="fade"
-          onRequestClose={() => {}}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <LinearGradient
-                colors={["#E25A17", "#F28934"]}
-                style={styles.modalGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
+              <Text style={styles.modalTitle}>{t("sendMoney.error")}</Text>
+              <Text style={styles.modalMessage}>{errorMessage}</Text>
+              <TouchableOpacity
+                style={styles.modalButton}
+                onPress={() => setShowErrorModal(false)}
               >
-                <View style={styles.checkIconContainer}>
-                  <Ionicons name="checkmark-circle" size={80} color="#FFFFFF" />
-                </View>
-                <Text style={styles.modalTitle}>{t("sendMoney.transferComplete")}</Text>
-                <Text style={styles.modalMessage}>
-                  {t("sendMoney.transferSuccessMessage")
-                    .replace("{amount}", amount.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 }))
-                    .replace("{name}", recipientName)}
+                <Text style={styles.modalButtonText}>{t("common.ok")}</Text>
+              </TouchableOpacity>
+            </LinearGradient>
+          </View>
+        </View>
+      </Modal>
+
+      {/* QR Code Modal */}
+      <Modal
+        visible={showQRModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowQRModal(false)}
+      >
+        <View style={styles.qrModalOverlay}>
+          <View style={styles.qrModalContent}>
+            <View style={styles.qrModalHeader}>
+              <Text style={styles.qrModalTitle}>{t("sendMoney.myQr")}</Text>
+              <TouchableOpacity onPress={() => setShowQRModal(false)}>
+                <Ionicons name="close" size={28} color="#3d3737ff" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.qrModalBody}>
+              <Text style={styles.qrShareText}>
+                Share this QR code for others to transfer money to you
+              </Text>
+
+              <View style={styles.qrUserInfoCard}>
+                <Text style={styles.qrUserName}>{userName}</Text>
+                <Text style={styles.qrUserAccount}>
+                  {userAccountNumber || "N/A"}
                 </Text>
-                <TouchableOpacity
-                  style={styles.modalButton}
-                  onPress={handleSuccessOk}
-                >
-                  <Text style={styles.modalButtonText}>{t("common.ok")}</Text>
-                </TouchableOpacity>
-              </LinearGradient>
-            </View>
-          </View>
-        </Modal>
 
-        {/* Error Modal */}
-        <Modal
-          visible={showErrorModal}
-          transparent={true}
-          animationType="fade"
-          onRequestClose={() => setShowErrorModal(false)}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <LinearGradient
-                colors={["#E25A17", "#F28934"]}
-                style={styles.modalGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <View style={styles.checkIconContainer}>
-                  <Ionicons name="alert-circle" size={80} color="#FFFFFF" />
+                <View style={styles.qrCodeWrapper}>
+                  {userAccountNumber ? (
+                    <QRCode
+                      value={userAccountNumber}
+                      size={200}
+                      color="#E25A17"
+                      backgroundColor="#FFFFFF"
+                      logo={require("../../../assets/images/TranferLogo.png")}
+                      logoSize={40}
+                      logoBackgroundColor="transparent"
+                      logoMargin={2}
+                      logoBorderRadius={8}
+                    />
+                  ) : (
+                    <View style={styles.qrPlaceholder}>
+                      <Ionicons name="qr-code-outline" size={80} color="#CCC" />
+                      <Text style={styles.qrPlaceholderText}>
+                        No account number available
+                      </Text>
+                    </View>
+                  )}
                 </View>
-                <Text style={styles.modalTitle}>{t("sendMoney.error")}</Text>
-                <Text style={styles.modalMessage}>{errorMessage}</Text>
-                <TouchableOpacity
-                  style={styles.modalButton}
-                  onPress={() => setShowErrorModal(false)}
-                >
-                  <Text style={styles.modalButtonText}>{t("common.ok")}</Text>
-                </TouchableOpacity>
-              </LinearGradient>
-            </View>
-          </View>
-        </Modal>
 
-        {/* QR Code Modal */}
-        <Modal
-          visible={showQRModal}
-          transparent={true}
-          animationType="slide"
-          onRequestClose={() => setShowQRModal(false)}
-        >
-          <View style={styles.qrModalOverlay}>
-            <View style={styles.qrModalContent}>
-              <View style={styles.qrModalHeader}>
-                <Text style={styles.qrModalTitle}>{t("sendMoney.myQr")}</Text>
-                <TouchableOpacity onPress={() => setShowQRModal(false)}>
-                  <Ionicons name="close" size={28} color="#3d3737ff" />
-                </TouchableOpacity>
-              </View>
-              
-              <View style={styles.qrModalBody}>
-                <Text style={styles.qrShareText}>Share this QR code for others to transfer money to you</Text>
-                
-                <View style={styles.qrUserInfoCard}>
-                  <Text style={styles.qrUserName}>{userName}</Text>
-                  <Text style={styles.qrUserAccount}>{userAccountNumber || "N/A"}</Text>
-                  
-                  <View style={styles.qrCodeWrapper}>
-                    {userAccountNumber ? (
-                      <QRCode
-                        value={userAccountNumber}
-                        size={200}
-                        color="#E25A17"
-                        backgroundColor="#FFFFFF"
-                        logo={require("../../../assets/images/TranferLogo.png")}
-                        logoSize={40}
-                        logoBackgroundColor="transparent"
-                        logoMargin={2}
-                        logoBorderRadius={8}
-                      />
-                    ) : (
-                      <View style={styles.qrPlaceholder}>
-                        <Ionicons name="qr-code-outline" size={80} color="#CCC" />
-                        <Text style={styles.qrPlaceholderText}>No account number available</Text>
-                      </View>
-                    )}
-                  </View>
-                  
-                  <View style={styles.secureCodeBadge}>
-                    <Ionicons name="shield-checkmark" size={16} color="#4CAF50" />
-                    <Text style={styles.secureCodeText}>Secure Transfer Code</Text>
-                  </View>
-                </View>
-                
-                <TouchableOpacity style={styles.shareQRButton}>
-                  <LinearGradient
-                    colors={["#E25A17", "#F28934"]}
-                    style={styles.shareQRGradient}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                  >
-                    <Ionicons name="share-social" size={20} color="#FFFFFF" />
-                    <Text style={styles.shareQRButtonText}>Share QR Code</Text>
-                  </LinearGradient>
-                </TouchableOpacity>
-                
-                <View style={styles.qrInfoFooter}>
-                  <Ionicons name="information-circle-outline" size={16} color="#8B4A4A" />
-                  <Text style={styles.qrInfoFooterText}>
-                    This QR code contains your account information for receiving transfers
+                <View style={styles.secureCodeBadge}>
+                  <Ionicons name="shield-checkmark" size={16} color="#4CAF50" />
+                  <Text style={styles.secureCodeText}>
+                    Secure Transfer Code
                   </Text>
                 </View>
               </View>
+
+              <TouchableOpacity style={styles.shareQRButton}>
+                <LinearGradient
+                  colors={["#E25A17", "#F28934"]}
+                  style={styles.shareQRGradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                >
+                  <Ionicons name="share-social" size={20} color="#FFFFFF" />
+                  <Text style={styles.shareQRButtonText}>Share QR Code</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+
+              <View style={styles.qrInfoFooter}>
+                <Ionicons
+                  name="information-circle-outline"
+                  size={16}
+                  color="#8B4A4A"
+                />
+                <Text style={styles.qrInfoFooterText}>
+                  This QR code contains your account information for receiving
+                  transfers
+                </Text>
+              </View>
             </View>
           </View>
-        </Modal>
+        </View>
+      </Modal>
 
-        {/* Contacts Modal */}
-        <ContactsModal
-          visible={showContactsModal}
-          onClose={() => setShowContactsModal(false)}
-          onSelectContact={(contact) => {
-            setShowContactsModal(false);
-            // Note: This is the confirm screen, showing contacts for reference
-          }}
-        />
+      {/* Contacts Modal */}
+      <ContactsModal
+        visible={showContactsModal}
+        onClose={() => setShowContactsModal(false)}
+        onSelectContact={(contact) => {
+          setShowContactsModal(false);
+          // Note: This is the confirm screen, showing contacts for reference
+        }}
+      />
 
-        {/* QR Scanner */}
-        <QRScanner
-          visible={showQRScanner}
-          onClose={() => setShowQRScanner(false)}
-          onScan={(data: string) => {
-            setShowQRScanner(false);
-            // Note: This is the confirm screen, scanning here would be for reference only
-            // You might want to navigate back or show the scanned account
-          }}
-        />
+      {/* QR Scanner */}
+      <QRScanner
+        visible={showQRScanner}
+        onClose={() => setShowQRScanner(false)}
+        onScan={(data: string) => {
+          setShowQRScanner(false);
+          // Note: This is the confirm screen, scanning here would be for reference only
+          // You might want to navigate back or show the scanned account
+        }}
+      />
     </View>
   );
 }

@@ -3,25 +3,26 @@ import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-    ActivityIndicator,
-    Animated,
-    Keyboard,
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    SafeAreaView,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
-    type TextStyle
+  ActivityIndicator,
+  Animated,
+  Keyboard,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+  type TextStyle,
 } from "react-native";
 import { useLanguage } from "../../../context/LanguageContext";
 import { isServiceUnderMaintenance } from "../../../lib/maintenance";
 import type { RootStackParamList } from "../../../types/navigation";
+import CustomLoader from "../../Loader/CustomLoader";
 
 // Static theme - no backend
 const THEME_COLOR = "#E15816";
@@ -129,7 +130,11 @@ const ProfessionalModal = ({
     }
   }, [visible, fadeAnim, scaleAnim, iconScaleAnim]);
 
-  const getIconAndColor = (): { icon: string; color: string; bgColor: string } => {
+  const getIconAndColor = (): {
+    icon: string;
+    color: string;
+    bgColor: string;
+  } => {
     switch (type) {
       case "success":
         return { icon: "✓", color: "#10B981", bgColor: "#ECFDF5" };
@@ -157,10 +162,7 @@ const ProfessionalModal = ({
             ]}
           >
             <View
-              style={[
-                modalStyles.iconContainer,
-                { backgroundColor: bgColor },
-              ]}
+              style={[modalStyles.iconContainer, { backgroundColor: bgColor }]}
             >
               <Animated.Text
                 style={[
@@ -178,10 +180,7 @@ const ProfessionalModal = ({
             <View style={modalStyles.buttonContainer}>
               {showCloseButton && (
                 <TouchableOpacity
-                  style={[
-                    modalStyles.modalButton,
-                    { backgroundColor: color },
-                  ]}
+                  style={[modalStyles.modalButton, { backgroundColor: color }]}
                   onPress={onConfirm ?? onClose}
                 >
                   <Text style={modalStyles.confirmButtonText}>
@@ -195,9 +194,7 @@ const ProfessionalModal = ({
                   style={[modalStyles.modalButton, modalStyles.cancelButton]}
                   onPress={onClose}
                 >
-                  <Text style={modalStyles.cancelButtonText}>
-                    {cancelText}
-                  </Text>
+                  <Text style={modalStyles.cancelButtonText}>{cancelText}</Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -209,7 +206,10 @@ const ProfessionalModal = ({
 };
 
 export default function AgentServices() {
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, "AgentRequest">>();
+  const navigation =
+    useNavigation<
+      NativeStackNavigationProp<RootStackParamList, "AgentRequest">
+    >();
   const { t, language } = useLanguage();
   const [isUnderMaintenance, setIsUnderMaintenance] = useState(false);
   const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
@@ -233,7 +233,7 @@ export default function AgentServices() {
         }
       };
       checkMaintenance();
-    }, [])
+    }, []),
   );
 
   // Static mock user data
@@ -334,7 +334,7 @@ export default function AgentServices() {
         title: t("agentRequest.modals.agentNumberGenerated.title"),
         message: t("agentRequest.modals.agentNumberGenerated.message").replace(
           "{agentNumber}",
-          newCode
+          newCode,
         ),
         type: "success",
       });
@@ -428,7 +428,7 @@ export default function AgentServices() {
         title: t("agentRequest.modals.requestSubmitted.title"),
         message: t("agentRequest.modals.requestSubmitted.message").replace(
           "{requestId}",
-          mockRequestId
+          mockRequestId,
         ),
         type: "success",
         onConfirm: () => {
@@ -441,28 +441,16 @@ export default function AgentServices() {
   };
 
   if (checkingMaintenance) {
-    return (
-      <View style={[styles.container, styles.loadingContainer]}>
-        <ActivityIndicator size="large" color={THEME_COLOR} />
-      </View>
-    );
+    return <CustomLoader text="CHECKING..." />;
   }
 
   if (isUnderMaintenance) {
-    return (
-      <View style={[styles.container, styles.loadingContainer]}>
-        <ActivityIndicator size="large" color={THEME_COLOR} />
-        <Text style={styles.loadingText}>Service under maintenance</Text>
-      </View>
-    );
+    return <CustomLoader text="UNDER MAINTENANCE" />;
   }
 
   if (loading) {
     return (
-      <View style={[styles.container, styles.loadingContainer]}>
-        <ActivityIndicator size="large" color={THEME_COLOR} />
-        <Text style={styles.loadingText}>{t("agentRequest.content.submitButton.submitting")}</Text>
-      </View>
+      <CustomLoader text={t("agentRequest.content.submitButton.submitting")} />
     );
   }
 
@@ -530,7 +518,9 @@ export default function AgentServices() {
 
                 <View style={styles.inputGroup}>
                   <Text style={[styles.inputLabel, getRTLStyles(language)]}>
-                    {t("agentRequest.content.form.personalInformation.fullNameLabel")}
+                    {t(
+                      "agentRequest.content.form.personalInformation.fullNameLabel",
+                    )}
                   </Text>
                   <View style={styles.readOnlyInput}>
                     <Text style={[styles.readOnlyText, getRTLStyles(language)]}>
@@ -565,7 +555,9 @@ export default function AgentServices() {
                         ]}
                       >
                         {agentNumber ||
-                          t("agentRequest.content.form.agentNumber.placeholder")}
+                          t(
+                            "agentRequest.content.form.agentNumber.placeholder",
+                          )}
                       </Text>
                     </View>
                     <TouchableOpacity
@@ -580,7 +572,9 @@ export default function AgentServices() {
                         <ActivityIndicator size="small" color="white" />
                       ) : (
                         <Text style={styles.generateButtonText}>
-                          {t("agentRequest.content.form.agentNumber.generateButton")}
+                          {t(
+                            "agentRequest.content.form.agentNumber.generateButton",
+                          )}
                         </Text>
                       )}
                     </TouchableOpacity>
@@ -604,7 +598,9 @@ export default function AgentServices() {
                   <View style={styles.searchContainer}>
                     <TextInput
                       style={[styles.searchInput, getRTLStyles(language)]}
-                      placeholder={t("agentRequest.content.form.parentAgent.searchPlaceholder")}
+                      placeholder={t(
+                        "agentRequest.content.form.parentAgent.searchPlaceholder",
+                      )}
                       placeholderTextColor="#999"
                       value={searchQuery}
                       onChangeText={handleSearchChange}
@@ -624,20 +620,46 @@ export default function AgentServices() {
                     <View style={styles.selectedUserContainer}>
                       <View style={styles.selectedUserHeader}>
                         <Ionicons name="person" size={16} color={THEME_COLOR} />
-                        <Text style={[styles.selectedUserTitle, getRTLStyles(language)]}>
-                          {t("agentRequest.content.form.parentAgent.selectedAgent")}
+                        <Text
+                          style={[
+                            styles.selectedUserTitle,
+                            getRTLStyles(language),
+                          ]}
+                        >
+                          {t(
+                            "agentRequest.content.form.parentAgent.selectedAgent",
+                          )}
                         </Text>
                       </View>
-                      <Text style={[styles.selectedUserName, getRTLStyles(language)]}>
+                      <Text
+                        style={[
+                          styles.selectedUserName,
+                          getRTLStyles(language),
+                        ]}
+                      >
                         {selectedUser.firstName} {selectedUser.lastName}
                       </Text>
-                      <Text style={[styles.selectedUserAgentCode, getRTLStyles(language)]}>
-                        {t("agentRequest.content.form.parentAgent.parentAgentCode")}{" "}
+                      <Text
+                        style={[
+                          styles.selectedUserAgentCode,
+                          getRTLStyles(language),
+                        ]}
+                      >
+                        {t(
+                          "agentRequest.content.form.parentAgent.parentAgentCode",
+                        )}{" "}
                         {selectedUser.agentCode}
                       </Text>
                       {hierarchicalAgentCode ? (
-                        <Text style={[styles.hierarchicalAgentCode, getRTLStyles(language)]}>
-                          {t("agentRequest.content.form.parentAgent.yourAgentCode")}{" "}
+                        <Text
+                          style={[
+                            styles.hierarchicalAgentCode,
+                            getRTLStyles(language),
+                          ]}
+                        >
+                          {t(
+                            "agentRequest.content.form.parentAgent.yourAgentCode",
+                          )}{" "}
                           {hierarchicalAgentCode}
                         </Text>
                       ) : null}
@@ -648,11 +670,12 @@ export default function AgentServices() {
                     searchResults.length === 0 &&
                     !isSearching && (
                       <View style={styles.noResultsContainer}>
-                        <Text style={[styles.noResultsText, getRTLStyles(language)]}>
-                          {t("agentRequest.content.form.parentAgent.noResults").replace(
-                            "{query}",
-                            searchQuery
-                          )}
+                        <Text
+                          style={[styles.noResultsText, getRTLStyles(language)]}
+                        >
+                          {t(
+                            "agentRequest.content.form.parentAgent.noResults",
+                          ).replace("{query}", searchQuery)}
                         </Text>
                       </View>
                     )}
@@ -662,13 +685,20 @@ export default function AgentServices() {
 
             {/* Submit Button */}
             <TouchableOpacity
-              style={[styles.submitButton, loading && styles.submitButtonDisabled]}
+              style={[
+                styles.submitButton,
+                loading && styles.submitButtonDisabled,
+              ]}
               onPress={submitAgentRequest}
               disabled={loading}
             >
               <View style={styles.submitButtonContent}>
                 {loading ? (
-                  <ActivityIndicator size="small" color="white" style={styles.loadingIcon} />
+                  <ActivityIndicator
+                    size="small"
+                    color="white"
+                    style={styles.loadingIcon}
+                  />
                 ) : (
                   <Ionicons
                     name="send-outline"

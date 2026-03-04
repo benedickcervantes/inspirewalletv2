@@ -4,16 +4,17 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useState } from "react";
 import {
-  Modal,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
+    Modal,
+    SafeAreaView,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { getWallets, submitStockSellRequest } from "../../../configs/api";
+import CustomLoader from "../../Loader/CustomLoader";
 
 const THEME_COLOR = "#E15816";
 const STOCK_RATE_PHP = 2_000_000;
@@ -64,7 +65,10 @@ export default function StockSell() {
     try {
       const accessToken = await AsyncStorage.getItem("access_token");
       if (!accessToken) {
-        setAlertConfig({ title: "Not Authenticated", message: "Please log in and try again." });
+        setAlertConfig({
+          title: "Not Authenticated",
+          message: "Please log in and try again.",
+        });
         setShowAlertModal(true);
         return;
       }
@@ -73,13 +77,17 @@ export default function StockSell() {
       const walletsRes = await getWallets(accessToken);
       const wallets = walletsRes?.wallets ?? [];
       const phpWallet = Array.isArray(wallets)
-        ? wallets.find((w: { currency?: { code?: string }; currencyCode?: string }) =>
-          (w.currency?.code ?? w.currencyCode) === "PHP"
-        )
+        ? wallets.find(
+            (w: { currency?: { code?: string }; currencyCode?: string }) =>
+              (w.currency?.code ?? w.currencyCode) === "PHP",
+          )
         : null;
 
       if (!phpWallet?.id) {
-        setAlertConfig({ title: "Wallet Not Found", message: "Could not find your PHP wallet. Please try again." });
+        setAlertConfig({
+          title: "Wallet Not Found",
+          message: "Could not find your PHP wallet. Please try again.",
+        });
         setShowAlertModal(true);
         return;
       }
@@ -92,7 +100,8 @@ export default function StockSell() {
       if (result.success) {
         setAlertConfig({
           title: "Request Submitted",
-          message: "Your sell request has been submitted. You will be notified when it is processed.",
+          message:
+            "Your sell request has been submitted. You will be notified when it is processed.",
         });
         setShowAlertModal(true);
         setTimeout(() => {
@@ -107,7 +116,10 @@ export default function StockSell() {
         setShowAlertModal(true);
       }
     } catch (err) {
-      setAlertConfig({ title: "Error", message: "An unexpected error occurred. Please try again." });
+      setAlertConfig({
+        title: "Error",
+        message: "An unexpected error occurred. Please try again.",
+      });
       setShowAlertModal(true);
     } finally {
       setIsLoading(false);
@@ -121,6 +133,10 @@ export default function StockSell() {
       navigation.goBack();
     }
   };
+
+  if (isLoading) {
+    return <CustomLoader text="PROCESSING..." />;
+  }
 
   return (
     <View style={styles.container}>
@@ -148,7 +164,10 @@ export default function StockSell() {
               <Ionicons name="checkmark" size={16} color="#FFFFFF" />
             </View>
             <View
-              style={[styles.stepLine, step === "confirm" && styles.stepLineActive]}
+              style={[
+                styles.stepLine,
+                step === "confirm" && styles.stepLineActive,
+              ]}
             />
             <View
               style={[
