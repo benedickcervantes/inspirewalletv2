@@ -105,6 +105,11 @@ export default function Message() {
   const [editText, setEditText] = useState("");
   const [ticketSelected, setTicketSelected] = useState(false);
 
+  // Debug ticket selection
+  useEffect(() => {
+    console.log("[Message] ticketSelected state changed:", ticketSelected);
+  }, [ticketSelected]);
+
   // Check maintenance status on focus
   useFocusEffect(
     useCallback(() => {

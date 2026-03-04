@@ -137,6 +137,9 @@ export default function HistoryScreen() {
   const [isSelectMode, setIsSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [showDeleteOptions, setShowDeleteOptions] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-PH", {
@@ -305,6 +308,16 @@ export default function HistoryScreen() {
     let unsub: (() => void) | undefined;
 
     const init = async () => {
+      // Load deleted IDs from AsyncStorage
+      try {
+        const savedDeletedIds = await AsyncStorage.getItem("deleted_transaction_ids");
+        if (savedDeletedIds) {
+          setDeletedIds(new Set(JSON.parse(savedDeletedIds)));
+        }
+      } catch (error) {
+        console.error("Failed to load deleted IDs:", error);
+      }
+
       const accessToken = await AsyncStorage.getItem("access_token");
       if (accessToken) {
         await fetchTransactions();
@@ -349,6 +362,24 @@ export default function HistoryScreen() {
     };
   }, []);
 
+  // Save deleted IDs to AsyncStorage whenever they change
+  useEffect(() => {
+    const saveDeletedIds = async () => {
+      try {
+        await AsyncStorage.setItem(
+          "deleted_transaction_ids",
+          JSON.stringify([...deletedIds])
+        );
+      } catch (error) {
+        console.error("Failed to save deleted IDs:", error);
+      }
+    };
+    
+    if (deletedIds.size > 0) {
+      saveDeletedIds();
+    }
+  }, [deletedIds]);
+
   const handleBack = () => {
     if (isSelectMode) {
       setIsSelectMode(false);
@@ -367,8 +398,10 @@ export default function HistoryScreen() {
         newSelected.add(tx.id);
       }
       setSelectedIds(newSelected);
+      setShowDeleteOptions(newSelected.size > 0);
     } else {
-      (navigation as unknown as NavProp).navigate("Main");
+      setSelectedTransaction(tx);
+      setShowDetailModal(true);
     }
   };
 
@@ -438,7 +471,6 @@ export default function HistoryScreen() {
     setIsSelectMode(!isSelectMode);
     if (isSelectMode) {
       setSelectedIds(new Set());
-      setShowDeleteOptions(false);
     }
   };
 
@@ -447,7 +479,6 @@ export default function HistoryScreen() {
     setTransactions((prev) => prev.filter((tx) => !selectedIds.has(tx.id)));
     setSelectedIds(new Set());
     setIsSelectMode(false);
-    setShowDeleteOptions(false);
   };
 
   const handleKeepSelected = () => {
@@ -455,7 +486,6 @@ export default function HistoryScreen() {
     setTransactions((prev) => prev.filter((tx) => selectedIds.has(tx.id)));
     setSelectedIds(new Set());
     setIsSelectMode(false);
-    setShowDeleteOptions(false);
   };
 
   const applyDateFilter = (filterType: string) => {
@@ -940,6 +970,23 @@ export default function HistoryScreen() {
                   />
                 </TouchableOpacity>
               </View>
+
+              {/* Next Button */}
+              <TouchableOpacity
+                style={[
+                  styles.paginationArrow,
+                  (!hasMore || currentPage >= totalPages) && styles.paginationArrowDisabled,
+                ]}
+                onPress={handleNextPage}
+                disabled={!hasMore || currentPage >= totalPages || loadingMore}
+                activeOpacity={0.7}
+              >
+                <Ionicons 
+                  name="chevron-forward" 
+                  size={22} 
+                  color={(!hasMore || currentPage >= totalPages) ? "#CCC" : "#E15816"} 
+                />
+              </TouchableOpacity>
             </View>
 
             {loadingMore && (
@@ -1137,11 +1184,11 @@ export default function HistoryScreen() {
                 }}
                 activeOpacity={0.7}
               >
-                <Text style={styles.remainActionButtonText}>Remain</Text>
+                <Text style={styles.remainActionButtonText}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.deleteActionButton}
-                onPress={() => setShowDeleteOptions(true)}
+                onPress={() => handleBulkDelete()}
                 activeOpacity={0.7}
               >
                 <Text style={styles.deleteActionButtonText}>Delete</Text>
@@ -1149,6 +1196,76 @@ export default function HistoryScreen() {
             </View>
           </View>
         )}
+
+        {/* Transaction Detail Modal */}
+        <Modal
+          visible={showDetailModal}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setShowDetailModal(false)}
+        >
+          <View style={styles.detailModalOverlay}>
+            <View style={styles.detailModalContainer}>
+              <View style={styles.detailModalHeader}>
+                <View style={styles.detailModalIconContainer}>
+                  <Ionicons
+                    name={selectedTransaction ? getTransactionIcon(selectedTransaction) as keyof typeof Ionicons.glyphMap : "swap-horizontal"}
+                    size={24}
+                    color="#E15816"
+                  />
+                </View>
+                <Text style={styles.detailModalTitle}>Transaction Details</Text>
+                <TouchableOpacity onPress={() => setShowDetailModal(false)}>
+                  <Ionicons name="close" size={24} color="#333" />
+                </TouchableOpacity>
+              </View>
+              <ScrollView style={styles.detailModalContent} showsVerticalScrollIndicator={false}>
+                <View style={styles.detailAmountContainer}>
+                  <Text style={styles.detailAmountLabel}>AMOUNT</Text>
+                  <Text style={styles.detailAmountValue}>
+                    {CURRENCY_SYMBOL} {formatCurrency(selectedTransaction?.amount ?? 0)}
+                  </Text>
+                </View>
+
+                <View style={styles.detailInfoRow}>
+                  <Text style={styles.detailInfoLabel}>Type</Text>
+                  <Text style={styles.detailInfoValue}>
+                    {selectedTransaction ? getTransactionTypeLabel(selectedTransaction.type) : "-"}
+                  </Text>
+                </View>
+
+                <View style={styles.detailInfoRow}>
+                  <Text style={styles.detailInfoLabel}>Description</Text>
+                  <Text style={styles.detailInfoValue}>
+                    {selectedTransaction ? getTransactionDisplayName(selectedTransaction) : "-"}
+                  </Text>
+                </View>
+
+                <View style={styles.detailInfoRow}>
+                  <Text style={styles.detailInfoLabel}>Date & Time</Text>
+                  <Text style={styles.detailInfoValue}>
+                    {selectedTransaction ? formatDateTime(selectedTransaction) : "-"}
+                  </Text>
+                </View>
+
+                <View style={styles.detailInfoRow}>
+                  <Text style={styles.detailInfoLabel}>Transaction ID</Text>
+                  <Text style={[styles.detailInfoValue, styles.detailInfoValueMono]}>
+                    {selectedTransaction?.id ?? "-"}
+                  </Text>
+                </View>
+
+                <TouchableOpacity
+                  style={styles.detailModalCloseButton}
+                  onPress={() => setShowDetailModal(false)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.detailModalCloseButtonText}>Close</Text>
+                </TouchableOpacity>
+              </ScrollView>
+            </View>
+          </View>
+        </Modal>
       </SafeAreaView>
     </>
   );
@@ -1318,61 +1435,39 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   paginationContainer: {
-    backgroundColor: "#FFFFFF",
-    paddingVertical: 12,
+    backgroundColor: "transparent",
+    paddingVertical: 16,
     paddingHorizontal: 16,
-    borderTopWidth: 1,
-    borderTopColor: "#E0E0E0",
   },
   paginationRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-  },
-  paginationResultText: {
-    fontSize: 13,
-    fontWeight: "500",
-    color: "#687076",
-  },
-  paginationButtons: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
+    justifyContent: "center",
+    gap: 24,
   },
   paginationArrow: {
-    width: 36,
-    height: 36,
-    borderRadius: 8,
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1.5,
-    borderColor: "#E0E0E0",
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "transparent",
     justifyContent: "center",
     alignItems: "center",
   },
   paginationArrowDisabled: {
-    opacity: 0.4,
+    opacity: 0.3,
   },
-  pageButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 8,
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1.5,
-    borderColor: "#E0E0E0",
-    justifyContent: "center",
+  pageNumberContainer: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    backgroundColor: "transparent",
+    minWidth: 80,
     alignItems: "center",
   },
-  pageButtonActive: {
-    backgroundColor: "#E15816",
-    borderColor: "#E15816",
-  },
-  pageButtonText: {
-    fontSize: 14,
-    fontWeight: "600",
+  pageNumberText: {
+    fontSize: 15,
+    fontWeight: "700",
     color: "#11181C",
-  },
-  pageButtonTextActive: {
-    color: "#FFFFFF",
+    letterSpacing: 0.5,
   },
   paginationLoading: {
     flexDirection: "row",
@@ -1649,5 +1744,103 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "600",
     color: "#687076",
+  },
+  detailModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "flex-end",
+  },
+  detailModalContainer: {
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: "60%",
+  },
+  detailModalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E0E0E0",
+  },
+  detailModalIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(225, 88, 22, 0.12)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  detailModalTitle: {
+    flex: 1,
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#333",
+    marginLeft: 12,
+  },
+  detailModalContent: {
+    padding: 16,
+  },
+  detailAmountContainer: {
+    backgroundColor: "rgba(225, 88, 22, 0.08)",
+    borderRadius: 10,
+    padding: 16,
+    alignItems: "center",
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "rgba(225, 88, 22, 0.3)",
+  },
+  detailAmountLabel: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#687076",
+    letterSpacing: 0.5,
+    marginBottom: 6,
+  },
+  detailAmountValue: {
+    fontSize: 24,
+    fontWeight: "700",
+    color: "#E15816",
+  },
+  detailInfoRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    marginBottom: 4,
+    backgroundColor: "#F9F9F9",
+  },
+  detailInfoLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#333",
+  },
+  detailInfoValue: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#333",
+    textAlign: "right",
+    flex: 1,
+    marginLeft: 12,
+  },
+  detailInfoValueMono: {
+    fontFamily: Platform.OS === "ios" ? "Courier" : "monospace",
+    fontSize: 12,
+  },
+  detailModalCloseButton: {
+    backgroundColor: "#E15816",
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: "center",
+    marginTop: 16,
+    marginBottom: 24,
+  },
+  detailModalCloseButtonText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#FFFFFF",
   },
 });
