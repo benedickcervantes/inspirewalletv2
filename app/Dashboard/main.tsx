@@ -35,6 +35,7 @@ import { setConnectionStatus } from "../../lib/connectionStatus";
 import { getMaintenanceStatus } from "../../lib/maintenance";
 import type { NavProp } from "../../types/navigation";
 import { useResponsive } from "../../utils/responsive";
+import CustomLoader from "../Loader/CustomLoader";
 import CardsTab from "./CardsTab";
 import SavingsTab from "./SavingsTab";
 import WalletTab from "./WalletTab";
@@ -198,6 +199,8 @@ export default function Dashboard() {
   const insets = useSafeAreaInsets();
   const { width, horizontalPadding } = useResponsive();
   const carouselWidth = width - horizontalPadding * 2;
+  const [navigatingToProfile, setNavigatingToProfile] = useState(false);
+  const [navigatingAction, setNavigatingAction] = useState<string | null>(null);
   const [userData, setUserData] = useState<Record<string, unknown> | null>(
     null,
   );
@@ -603,6 +606,18 @@ export default function Dashboard() {
     }
   };
 
+  if (navigatingToProfile) {
+    return <CustomLoader text="LOADING" />;
+  }
+
+  if (navigatingAction === "AgentRequest") {
+    return <CustomLoader text="LOADING AGENT..." />;
+  }
+
+  if (navigatingAction === "Message") {
+    return <CustomLoader text="LOADING SUPPORT..." />;
+  }
+
   return (
     <>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
@@ -635,7 +650,7 @@ export default function Dashboard() {
         visible={showFirstTimeLanguageModal}
         transparent
         animationType="fade"
-        onRequestClose={() => { }}
+        onRequestClose={() => {}}
       >
         <View style={styles.languageModalOverlay}>
           <View style={styles.languageModalContent}>
@@ -671,7 +686,13 @@ export default function Dashboard() {
         <View style={[styles.header, { paddingTop: Math.max(insets.top, 12) }]}>
           <View style={styles.headerLeft}>
             <TouchableOpacity
-              onPress={() => navigation.navigate("Personal")}
+              onPress={() => {
+                setNavigatingToProfile(true);
+                setTimeout(() => {
+                  setNavigatingToProfile(false);
+                  navigation.navigate("Personal");
+                }, 800);
+              }}
               activeOpacity={0.7}
               style={styles.avatar}
             >
@@ -872,9 +893,24 @@ export default function Dashboard() {
                         if (isUnderMaintenance) {
                           setSelectedMaintenanceService(item.labelKey);
                         } else {
-                          (
-                            navigation as { navigate: (name: string) => void }
-                          ).navigate(item.route);
+                          if (
+                            item.route === "AgentRequest" ||
+                            item.route === "Message"
+                          ) {
+                            setNavigatingAction(item.route);
+                            setTimeout(() => {
+                              setNavigatingAction(null);
+                              (
+                                navigation as {
+                                  navigate: (name: string) => void;
+                                }
+                              ).navigate(item.route);
+                            }, 800);
+                          } else {
+                            (
+                              navigation as { navigate: (name: string) => void }
+                            ).navigate(item.route);
+                          }
                         }
                       }}
                       activeOpacity={0.7}
@@ -973,7 +1009,7 @@ export default function Dashboard() {
                     style={[
                       styles.languageDot,
                       currentLanguageIndex === index &&
-                      styles.languageActiveDot,
+                        styles.languageActiveDot,
                     ]}
                   />
                 ))}
