@@ -1048,7 +1048,7 @@ export default function Dashboard() {
                 </Text>
               </View>
               {recentTransactions.length > 0 ? (
-                recentTransactions.map((transaction) => (
+                recentTransactions.slice(0, 3).map((transaction) => (
                   <View key={transaction.id} style={styles.transactionItem}>
                     <View style={styles.transactionIcon}>
                       <MaterialCommunityIcons
