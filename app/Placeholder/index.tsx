@@ -194,10 +194,9 @@ export default function Placeholder() {
     (navigation as any).navigate("KYCcompany");
   };
 
-  const fullName =
-    userData?.firstName && userData?.lastName
-      ? `${userData.firstName} ${userData.lastName}`
-      : userData?.displayName || userData?.name || t("common.user");
+  const fullName = userData?.firstName && userData?.lastName
+    ? `${userData.firstName} ${userData.lastName}`
+    : userData?.displayName || userData?.name || t("common.user");
   const email = userData?.email || "user@example.com";
   const isAgent = userData?.isAgent || userData?.role === "agent" || false;
   const isPremium =
@@ -242,19 +241,19 @@ export default function Placeholder() {
           "user",
           JSON.stringify({ ...user, language: selectedLabel }),
         );
-      } catch (_) {}
+      } catch (_) { }
     }
     setLanguageModalVisible(false);
   };
 
-  const memberSince = userData?.createdAt
+  const memberSince = userData?.createdAt || userData?.joinedAt
     ? new Date(
-        userData.createdAt?.seconds
-          ? userData.createdAt.seconds * 1000
-          : typeof userData.createdAt === "string"
-            ? userData.createdAt
-            : userData.createdAt,
-      ).toLocaleDateString()
+      userData.createdAt?.seconds
+        ? userData.createdAt.seconds * 1000
+        : userData.joinedAt?.seconds
+          ? userData.joinedAt.seconds * 1000
+          : userData.createdAt || userData.joinedAt
+    ).toLocaleDateString()
     : "—";
   const statusRaw = userData?.status || "Active";
   const status = statusRaw === "Active" ? t("profile.active") : statusRaw;
@@ -337,7 +336,7 @@ export default function Placeholder() {
 
           {/* Badges */}
           <View style={styles.badgesContainer}>
-            {isAgent && (
+            {isAgent ? (
               <View style={styles.agentBadge}>
                 <MaterialCommunityIcons
                   name="shield-account"
@@ -347,6 +346,11 @@ export default function Placeholder() {
                 <Text style={styles.badgeText}>
                   {t("profile.agent").toUpperCase()}
                 </Text>
+              </View>
+            ) : (
+              <View style={styles.investorBadge}>
+                <MaterialCommunityIcons name="shield-account" size={16} color="#FFFFFF" />
+                <Text style={styles.badgeText}>{t("profile.investor").toUpperCase()}</Text>
               </View>
             )}
             {isPremium && (
@@ -902,6 +906,15 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "rgba(139, 0, 0, 0.9)",
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    gap: 4,
+  },
+  investorBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#2E7D32", // Professional green for Investor
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 16,

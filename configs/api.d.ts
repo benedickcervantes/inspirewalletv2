@@ -110,7 +110,7 @@ export function getMe(accessToken: string): Promise<{
 }>;
 export function updateProfile(
   accessToken: string,
-  body: Record<string, string>,
+  body: Record<string, string | undefined | null>,
 ): Promise<{ success: boolean; user?: object; error?: string }>;
 export function setPasscode(
   accessToken: string,
