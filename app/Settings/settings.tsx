@@ -203,9 +203,8 @@ const Settings = () => {
   const customerRelationshipOptions = [
     { id: 1, icon: 'information-circle-outline' as const, titleKey: 'settings.aboutUs', onPress: () => (navigation as { navigate: (name: string) => void }).navigate('Aboutus') },
     { id: 2, icon: 'people-outline' as const, titleKey: 'settings.agentDashboard', onPress: () => (navigation as { navigate: (name: string) => void }).navigate('AgentRequest') },
-    { id: 3, icon: 'headset-outline' as const, titleKey: 'settings.helpCenter', onPress: () => (navigation as { navigate: (name: string) => void }).navigate('HelpCenter') },
-    { id: 4, icon: 'shield-outline' as const, titleKey: 'settings.privacyPolicy', onPress: () => (navigation as { navigate: (name: string) => void }).navigate('PrivacyPolicy') },
-    { id: 5, icon: 'document-text-outline' as const, titleKey: 'settings.termsAndCondition', onPress: () => (navigation as { navigate: (name: string) => void }).navigate('TermsConditions') },
+    { id: 3, icon: 'shield-outline' as const, titleKey: 'settings.privacyPolicy', onPress: () => (navigation as { navigate: (name: string) => void }).navigate('PrivacyPolicy') },
+    { id: 4, icon: 'document-text-outline' as const, titleKey: 'settings.termsAndCondition', onPress: () => (navigation as { navigate: (name: string) => void }).navigate('TermsConditions') },
   ];
 
   const securityOptionsWithLabels = securityOptions.map((o) => {

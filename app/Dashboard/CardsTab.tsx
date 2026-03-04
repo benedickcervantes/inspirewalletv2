@@ -1,6 +1,7 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Animated,
   Image,
@@ -13,6 +14,7 @@ import {
   useWindowDimensions,
   View
 } from "react-native";
+import { buyCard, getCardCatalog, getMyCardCollection } from "../../configs/api";
 import { useLanguage } from "../../context/LanguageContext";
 
 interface CardsTabProps {
@@ -41,23 +43,93 @@ export default function CardsTab({
   const { width } = useWindowDimensions();
   const horizontalPadding = width < 375 ? 16 : 20;
   const cardItemWidth = (width - horizontalPadding * 2 - 12) / 2;
-  const ownedCards = 1;
-  const totalCards = 5;
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isVipModalVisible, setIsVipModalVisible] = useState(false);
   const [isPurchaseModalVisible, setIsPurchaseModalVisible] = useState(false);
   const [isDesignModalVisible, setIsDesignModalVisible] = useState(false);
   const [selectedDesignCard, setSelectedDesignCard] = useState<{
+    id?: string;
     title: string;
     price: number;
     image: any;
     backImage: any;
   }>({
+    id: undefined,
     title: '',
     price: 0,
     image: undefined,
     backImage: undefined,
   });
+
+  const [cardCatalog, setCardCatalog] = useState<any[]>([]);
+  const [myCollection, setMyCollection] = useState<any[]>([]);
+  const [activeCard, setActiveCard] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Derive Diamond Elite eligibility from catalog data
+  const diamondCatalog = cardCatalog.find((c: any) => c.design === 'DIAMOND_ELITE');
+  const isDiamondEligible = diamondCatalog?.isEligible ?? false;
+  const isDiamondOwned = diamondCatalog?.isOwned ?? false;
+  const isDiamondActive = diamondCatalog?.isActive ?? false;
+
+  const fetchCardsData = async () => {
+    try {
+      setIsLoading(true);
+      const token = await AsyncStorage.getItem("access_token");
+      if (!token) return;
+
+      const [catalogRes, collectionRes] = await Promise.all([
+        getCardCatalog(token),
+        getMyCardCollection(token)
+      ]);
+
+      if (catalogRes.success && catalogRes.catalog) {
+        setCardCatalog(catalogRes.catalog);
+      }
+
+      if (collectionRes.success && collectionRes.data) {
+        setMyCollection(collectionRes.data.collection || []);
+        setActiveCard(collectionRes.data.activeCard || null);
+      }
+    } catch (e) {
+      console.error("Failed to fetch cards data", e);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCardsData();
+  }, []);
+
+  const handleBuyCard = async (designSlug: string, price: number) => {
+    if (availableBalance < price) {
+      alert(t("ct.insufficientBalance") || "Insufficient Balance");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const token = await AsyncStorage.getItem("access_token");
+      if (!token) return;
+
+      const res = await buyCard(token, designSlug);
+      if (res.success) {
+        Alert.alert(t("ct.purchaseSuccessTitle") || "Success!", t("ct.purchaseSuccess") || "Card Purchased successfully!");
+        setIsDesignModalVisible(false);
+        setIsPurchaseModalVisible(false);
+        setIsVipModalVisible(false);
+        await fetchCardsData();
+      } else {
+        alert(res.error || "Failed to purchase card");
+      }
+    } catch (e) {
+      console.error(e);
+      alert("An error occurred during purchase");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // VIP Purchase modal flip animation
   const vipFlipAnim = useRef(new Animated.Value(0)).current;
@@ -123,6 +195,26 @@ export default function CardsTab({
     transform: [{ rotateY: backInterpolate }],
   };
 
+  const getCardFrontImage = () => {
+    switch (activeCard?.design) {
+      case "DIAMOND_ELITE": return require("../../assets/cards/vip_collection/vp2/front.png");
+      case "GOLD_ELITE": return require("../../assets/cards/vip_collection/vp1/front.png");
+      case "ORANGE_ELITE": return require("../../assets/cards/design_collection/dc1/front.png");
+      case "ROYAL_CURVE": return require("../../assets/cards/design_collection/dc2/front.png");
+      default: return require("../../assets/images/Eecard 2.0.png");
+    }
+  };
+
+  const getCardBackImage = () => {
+    switch (activeCard?.design) {
+      case "DIAMOND_ELITE": return require("../../assets/cards/vip_collection/vp2/back.png");
+      case "GOLD_ELITE": return require("../../assets/cards/vip_collection/vp1/back.png");
+      case "ORANGE_ELITE": return require("../../assets/cards/design_collection/dc1/back.png");
+      case "ROYAL_CURVE": return require("../../assets/cards/design_collection/dc2/back.png");
+      default: return require("../../assets/cards/default/card2.0 back.png");
+    }
+  };
+
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.section}>
@@ -136,7 +228,7 @@ export default function CardsTab({
         <Animated.View style={[styles.cardFace, frontAnimatedStyle]}>
           <TouchableOpacity activeOpacity={0.8} onPress={flipCard}>
             <ImageBackground
-              source={require("../../assets/images/Eecard 2.0.png")}
+              source={getCardFrontImage()}
               style={styles.mainCard}
               imageStyle={styles.mainCardImage}
               resizeMode="cover">
@@ -168,7 +260,7 @@ export default function CardsTab({
           pointerEvents={isCardFlipped ? "auto" : "none"}>
           <TouchableOpacity activeOpacity={0.8} onPress={flipCard}>
             <ImageBackground
-              source={require("../../assets/cards/default/card2.0 back.png")}
+              source={getCardBackImage()}
               style={styles.mainCard}
               imageStyle={styles.mainCardImage}
               resizeMode="cover"
@@ -201,9 +293,17 @@ export default function CardsTab({
                 <View style={styles.vipBadge}>
                   <Text style={styles.vipBadgeText}>{t("ct.vip")}</Text>
                 </View>
-                <View style={styles.lockedOverlay}>
-                  <Ionicons name="lock-closed" size={30} color="#E0E0E0" />
-                </View>
+                {!isDiamondEligible && !isDiamondOwned && (
+                  <View style={styles.lockedOverlay}>
+                    <Ionicons name="lock-closed" size={30} color="#E0E0E0" />
+                  </View>
+                )}
+                {isDiamondActive && (
+                  <View style={styles.activeCardBadge}>
+                    <MaterialCommunityIcons name="check-circle" size={16} color="#4CAF50" />
+                    <Text style={styles.activeCardText}>{t("ct.activeCard")}</Text>
+                  </View>
+                )}
               </ImageBackground>
             </View>
 
@@ -213,13 +313,27 @@ export default function CardsTab({
               </Text>
               <Text style={styles.cardItemSubtitle}>{t("ct.deposit10M")}</Text>
 
-              <TouchableOpacity
-                style={styles.upgradeButton}
-                onPress={() => setIsVipModalVisible(true)}>
-                <Text style={styles.upgradeButtonText}>
-                  {t("ct.upgradeRequired")}
-                </Text>
-              </TouchableOpacity>
+              {isDiamondActive ? (
+                <View style={[styles.upgradeButton, styles.activeUpgradeButton]}>
+                  <Text style={[styles.upgradeButtonText, styles.activeUpgradeButtonText]}>
+                    ✓ Claimed
+                  </Text>
+                </View>
+              ) : (
+                <TouchableOpacity
+                  style={[
+                    styles.upgradeButton,
+                    isDiamondEligible && styles.activeUpgradeButton
+                  ]}
+                  onPress={() => setIsVipModalVisible(true)}>
+                  <Text style={[
+                    styles.upgradeButtonText,
+                    isDiamondEligible && styles.activeUpgradeButtonText
+                  ]}>
+                    {isDiamondEligible ? (t("ct.claimCard") || "Claim Card") : t("ct.upgradeRequired")}
+                  </Text>
+                </TouchableOpacity>
+              )}
             </View>
           </View>
           <View style={styles.cardItem}>
@@ -288,6 +402,7 @@ export default function CardsTab({
                 ]}
                 onPress={() => {
                   setSelectedDesignCard({
+                    id: 'ORANGE_ELITE',
                     title: t("ct.orangeElite") || "Orange Elite",
                     price: 250,
                     image: require("../../assets/cards/design_collection/dc1/front.png"),
@@ -328,6 +443,7 @@ export default function CardsTab({
                 ]}
                 onPress={() => {
                   setSelectedDesignCard({
+                    id: 'ROYAL_CURVE',
                     title: t("ct.royalCurve") || "Royal Curve",
                     price: 5000,
                     image: require("../../assets/cards/design_collection/dc2/front.png"),
@@ -351,7 +467,7 @@ export default function CardsTab({
             {t("ct.yourCollection")}
           </Text>
           <Text style={styles.collectionCount}>
-            {ownedCards}/{totalCards}
+            {myCollection.length}/{cardCatalog.length || 5}
           </Text>
         </View>
 
@@ -427,16 +543,16 @@ export default function CardsTab({
                   <Text style={styles.diamondModalSubtitle}>Review your selection</Text>
                 </View>
               </View>
-              <TouchableOpacity 
-                style={styles.diamondCloseButton} 
-                onPress={() => setIsVipModalVisible(false)} 
+              <TouchableOpacity
+                style={styles.diamondCloseButton}
+                onPress={() => setIsVipModalVisible(false)}
                 activeOpacity={0.7}
               >
                 <Ionicons name="close" size={24} color="#333" />
               </TouchableOpacity>
             </View>
 
-            <ScrollView 
+            <ScrollView
               style={styles.diamondModalScrollView}
               contentContainerStyle={styles.diamondModalBody}
               showsVerticalScrollIndicator={false}
@@ -485,20 +601,44 @@ export default function CardsTab({
                 <Text style={styles.diamondListItem}>• No purchase required.</Text>
               </View>
 
-              <View style={styles.diamondWarningBox}>
-                <Ionicons name="warning" size={18} color="#F44336" />
-                <Text style={styles.diamondWarningText}>
-                  You need ₱10,000,000+ in time deposits.
-                </Text>
-              </View>
+              {!isDiamondEligible && !isDiamondOwned && (
+                <View style={styles.diamondWarningBox}>
+                  <Ionicons name="warning" size={18} color="#F44336" />
+                  <Text style={styles.diamondWarningText}>
+                    You need ₱10,000,000+ in a single time deposit contract.
+                  </Text>
+                </View>
+              )}
 
-              <TouchableOpacity 
-                style={styles.diamondGotItButton} 
-                onPress={() => setIsVipModalVisible(false)} 
-                activeOpacity={0.7}
-              >
-                <Text style={styles.diamondGotItButtonText}>Got it</Text>
-              </TouchableOpacity>
+              {isDiamondEligible && !isDiamondActive && (
+                <View style={[styles.diamondInfoBox, { backgroundColor: '#E8F5E9', borderColor: '#4CAF50' }]}>
+                  <View style={styles.diamondInfoHeader}>
+                    <Ionicons name="checkmark-circle" size={20} color="#4CAF50" />
+                    <Text style={[styles.diamondInfoTitle, { color: '#2E7D32' }]}>You're eligible!</Text>
+                  </View>
+                  <Text style={styles.diamondInfoText}>
+                    You have a qualifying time deposit of ₱10,000,000+. Tap the button below to claim your Diamond Elite card.
+                  </Text>
+                </View>
+              )}
+
+              {isDiamondEligible && !isDiamondActive ? (
+                <TouchableOpacity
+                  style={styles.diamondGotItButton}
+                  onPress={() => handleBuyCard('DIAMOND_ELITE', 0)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.diamondGotItButtonText}>Claim Card</Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  style={styles.diamondGotItButton}
+                  onPress={() => setIsVipModalVisible(false)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.diamondGotItButtonText}>{isDiamondActive ? 'Already Claimed' : 'Got it'}</Text>
+                </TouchableOpacity>
+              )}
             </ScrollView>
           </View>
         </View>
@@ -523,16 +663,16 @@ export default function CardsTab({
                   <Text style={styles.vipModalSubtitle}>Review your selection</Text>
                 </View>
               </View>
-              <TouchableOpacity 
-                style={styles.vipCloseButton} 
-                onPress={() => setIsPurchaseModalVisible(false)} 
+              <TouchableOpacity
+                style={styles.vipCloseButton}
+                onPress={() => setIsPurchaseModalVisible(false)}
                 activeOpacity={0.7}
               >
                 <Ionicons name="close" size={24} color="#333" />
               </TouchableOpacity>
             </View>
 
-            <ScrollView 
+            <ScrollView
               style={styles.vipModalScrollView}
               contentContainerStyle={styles.vipModalBody}
               showsVerticalScrollIndicator={false}
@@ -604,9 +744,9 @@ export default function CardsTab({
               </View>
 
               <View style={styles.vipActionButtons}>
-                <TouchableOpacity 
-                  style={styles.vipCancelButton} 
-                  onPress={() => setIsPurchaseModalVisible(false)} 
+                <TouchableOpacity
+                  style={styles.vipCancelButton}
+                  onPress={() => setIsPurchaseModalVisible(false)}
                   activeOpacity={0.7}
                 >
                   <Text style={styles.vipCancelButtonText}>Cancel</Text>
@@ -647,9 +787,9 @@ export default function CardsTab({
                   <Text style={styles.designModalSubtitle}>Review your selection</Text>
                 </View>
               </View>
-              <TouchableOpacity 
-                style={styles.designCloseButton} 
-                onPress={() => setIsDesignModalVisible(false)} 
+              <TouchableOpacity
+                style={styles.designCloseButton}
+                onPress={() => setIsDesignModalVisible(false)}
                 activeOpacity={0.7}
               >
                 <Ionicons name="close" size={24} color="#333" />
@@ -685,8 +825,8 @@ export default function CardsTab({
               <View style={styles.designTitleContainer}>
                 <Text style={styles.designCardName}>{selectedDesignCard.title}</Text>
                 <View style={styles.designPremiumBadge}>
-                  <Image 
-                    source={require("../../assets/images/diadesu.png.png")} 
+                  <Image
+                    source={require("../../assets/images/diadesu.png.png")}
                     style={styles.designDiamondIcon}
                     resizeMode="contain"
                   />
@@ -714,9 +854,9 @@ export default function CardsTab({
               )}
 
               <View style={styles.designActionButtons}>
-                <TouchableOpacity 
-                  style={styles.designCancelButton} 
-                  onPress={() => setIsDesignModalVisible(false)} 
+                <TouchableOpacity
+                  style={styles.designCancelButton}
+                  onPress={() => setIsDesignModalVisible(false)}
                   activeOpacity={0.7}
                 >
                   <Text style={styles.designCancelButtonText}>Cancel</Text>

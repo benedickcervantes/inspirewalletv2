@@ -47,7 +47,7 @@ export default function AgentDashboard() {
   const [directReferralCount, setDirectReferralCount] = useState(0);
   const [totalDescendantCount, setTotalDescendantCount] = useState(0);
   const [directReferrals, setDirectReferrals] = useState<
-    Array<{ userId: string; referralCode?: string; firstName?: string; lastName?: string }>
+    { userId: string; referralCode?: string; firstName?: string; lastName?: string }[]
   >([]);
   const [referredClientsWithDeposits, setReferredClientsWithDeposits] = useState<
     CommissionTransaction[]
@@ -92,7 +92,7 @@ export default function AgentDashboard() {
         setDirectReferralCount(Number(tree.directReferralCount ?? 0));
         setTotalDescendantCount(Number(tree.totalDescendantCount ?? 0));
         const refs = tree.directReferrals as
-          | Array<{ userId: string; referralCode?: string; firstName?: string; lastName?: string }>
+          | { userId: string; referralCode?: string; firstName?: string; lastName?: string }[]
           | undefined;
         if (Array.isArray(refs)) setDirectReferrals(refs);
         else setDirectReferrals([]);

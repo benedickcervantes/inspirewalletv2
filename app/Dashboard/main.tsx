@@ -308,11 +308,11 @@ export default function Dashboard() {
       const treeRes = await getReferralTree(accessToken);
       if (treeRes.success && treeRes.tree) {
         const tree = treeRes.tree as {
-          ancestors?: Array<{
+          ancestors?: {
             referralCode?: string;
             firstName?: string;
             lastName?: string;
-          }>;
+          }[];
         };
         const first = tree.ancestors?.[0];
         if (
@@ -394,11 +394,11 @@ export default function Dashboard() {
     const treeRes = await getReferralTree(accessToken);
     if (treeRes.success && treeRes.tree) {
       const tree = treeRes.tree as {
-        ancestors?: Array<{
+        ancestors?: {
           referralCode?: string;
           firstName?: string;
           lastName?: string;
-        }>;
+        }[];
       };
       const first = tree.ancestors?.[0];
       if (
@@ -569,7 +569,7 @@ export default function Dashboard() {
       labelKey: "dashboard.eWallet",
       route: "EwalletService",
     },
-    { icon: "message-text", labelKey: "dashboard.message", route: "Message" },
+    { icon: "headset", labelKey: "Support", route: "Message" },
     { icon: "chart-line", labelKey: "dashboard.stock", route: "Stockholder" },
     { icon: "format-list-bulleted", labelKey: "dashboard.task", route: "Task" },
     { icon: "account", labelKey: "dashboard.agent", route: "AgentRequest" },
@@ -1230,19 +1230,25 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: "50%",
     left: "50%",
-    width: 70,
-    height: 20,
-    backgroundColor: "#E15816",
+    width: 60,
+    height: 14,
+    backgroundColor: "#FFB84D",
     justifyContent: "center",
     alignItems: "center",
-    borderRadius: 2,
-    transform: [{ translateX: -35 }, { translateY: -10 }, { rotate: "-45deg" }],
+    borderRadius: 1,
+    transform: [{ translateX: -30 }, { translateY: -7 }, { rotate: "-45deg" }],
     zIndex: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.15,
+    shadowRadius: 2,
+    elevation: 2,
   },
   comingSoonText: {
-    fontSize: 8,
+    fontSize: 6.5,
     fontWeight: "700",
     color: "#FFFFFF",
+    letterSpacing: 0.2,
   },
   languageCarouselContainer: { marginVertical: 16 },
   languageCarouselWrapper: { position: "relative", marginBottom: 12 },

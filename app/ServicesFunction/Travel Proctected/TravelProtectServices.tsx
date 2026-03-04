@@ -7,17 +7,17 @@ import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
-  Keyboard,
-  Modal,
-  Platform,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Keyboard,
+    Modal,
+    Platform,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -676,21 +676,17 @@ export default function TravelProtection() {
         civilStatus,
         citizenship,
         sourceOfFund,
-        grossMonthlyIncome,
-        grossMonthlyIncomeCurrency,
+        grossMonthlyIncome: `${grossMonthlyIncome} ${grossMonthlyIncomeCurrency}`,
         cashOnHand,
-
         destinationAddress,
         checkInDate: formatDate(checkInDate),
         duration,
+        airlineType: "Commercial", // Backend requires this field
         departureTime: formatTime(departureTime),
         arrivalTime: formatTime(arrivalTime),
         passportNumber,
         purposeOfTravel,
-
         passportPhoto: passportPhotoBase64,
-        protectionFee,
-        userTimeDeposit,
       };
 
       const result = await submitTravelProtection(accessToken, applicationData);

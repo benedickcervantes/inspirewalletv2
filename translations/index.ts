@@ -918,6 +918,9 @@ const en: TranslationMap = {
   "stock.stockPurchase": "Stock Purchase",
   "stock.stockRequest": "Stock Request",
   "stock.stockRequestRejected": "Stock Request (Rejected)",
+  "stock.stockSell": "Stock Sell",
+  "stock.stockSellRequest": "Stock Sell Request",
+  "stock.stockSellRejected": "Stock Sell (Rejected)",
   "stock.createdAccount": "Created Account",
 
   // E-Wallet Service

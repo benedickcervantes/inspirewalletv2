@@ -58,7 +58,6 @@ import TravelProtection from './app/ServicesFunction/Travel Proctected/TravelPro
 import Aboutus from './app/Settings/Aboutus';
 import ChangePasscode from './app/Settings/ChangePasscode';
 import DeleteAccount from './app/Settings/DeleteAccount';
-import HelpCenter from './app/Settings/HelpCenter';
 import PrivacyPolicy from './app/Settings/PrivacyPolicy';
 import Settings from './app/Settings/settings';
 import TermsConditions from './app/Settings/TermsConditions';
