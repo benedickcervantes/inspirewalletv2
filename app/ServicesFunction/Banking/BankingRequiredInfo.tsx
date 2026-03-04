@@ -8,17 +8,17 @@ import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useState } from "react";
 import {
-  Alert,
-  Image,
-  Modal,
-  Platform,
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Alert,
+    Image,
+    Modal,
+    Platform,
+    SafeAreaView,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { submitBankingApplication } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
@@ -90,6 +90,7 @@ export default function BankingRequiredInfo() {
   const [idBack, setIdBack] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const currentStep = 6;
 
@@ -239,14 +240,7 @@ export default function BankingRequiredInfo() {
       };
       const result = await submitBankingApplication(accessToken, payload);
       if (result.success) {
-        Alert.alert("Success", t("banking.submitSuccess"), [
-          {
-            text: "OK",
-            onPress: () => {
-              navigation.navigate("Main");
-            },
-          },
-        ]);
+        setShowSuccessModal(true);
       } else {
         Alert.alert(
           t("banking.error"),
@@ -267,18 +261,11 @@ export default function BankingRequiredInfo() {
 
   return (
     <View style={styles.container}>
-      {/* Full-screen loading overlay only when user confirms and clicks Submit */}
-      <Modal
-        visible={isSubmitting}
-        transparent
-        animationType="fade"
-        statusBarTranslucent
-      >
-        <View style={styles.loadingOverlay}>
-          <CustomLoader text={t("banking.submitting")} />
-        </View>
-      </Modal>
-      <SafeAreaView style={styles.safeArea}>
+      {isSubmitting ? (
+        <CustomLoader text={t("banking.submitting")} />
+      ) : (
+        <>
+          <SafeAreaView style={styles.safeArea}>
         {/* Top: Back arrow + Header card */}
         <View style={styles.topSection}>
           <TouchableOpacity style={styles.backButton} onPress={handleBack}>
@@ -685,6 +672,42 @@ export default function BankingRequiredInfo() {
           </View>
         </View>
       </Modal>
+
+      {/* Custom Success Modal */}
+      <Modal
+        visible={showSuccessModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowSuccessModal(false)}
+      >
+        <View style={styles.successModalOverlay}>
+          <View style={styles.successModalContainer}>
+            <LinearGradient
+              colors={["#F38B35", "#DE5212"]}
+              style={styles.successModalGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 0, y: 1 }}
+            >
+              <Ionicons name="checkmark-circle" size={60} color="#FFFFFF" />
+              <Text style={styles.successModalTitle}>Success</Text>
+              <Text style={styles.successModalMessage}>
+                {t("banking.submitSuccess")}
+              </Text>
+              <TouchableOpacity
+                style={styles.successModalButton}
+                onPress={() => {
+                  setShowSuccessModal(false);
+                  navigation.navigate("Main");
+                }}
+              >
+                <Text style={styles.successModalButtonText}>OK</Text>
+              </TouchableOpacity>
+            </LinearGradient>
+          </View>
+        </View>
+      </Modal>
+        </>
+      )}
     </View>
   );
 }
@@ -1057,6 +1080,49 @@ const styles = StyleSheet.create({
   nextButtonText: {
     fontSize: 18,
     fontWeight: "700",
+    color: "#FFFFFF",
+  },
+  successModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  successModalContainer: {
+    width: "80%",
+    maxWidth: 320,
+    borderRadius: 20,
+    overflow: "hidden",
+  },
+  successModalGradient: {
+    padding: 32,
+    alignItems: "center",
+  },
+  successModalTitle: {
+    fontSize: 24,
+    fontWeight: "700",
+    color: "#FFFFFF",
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  successModalMessage: {
+    fontSize: 16,
+    color: "#FFFFFF",
+    textAlign: "center",
+    marginBottom: 24,
+    lineHeight: 22,
+  },
+  successModalButton: {
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    paddingVertical: 12,
+    paddingHorizontal: 32,
+    borderRadius: 25,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.3)",
+  },
+  successModalButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
     color: "#FFFFFF",
   },
 });
