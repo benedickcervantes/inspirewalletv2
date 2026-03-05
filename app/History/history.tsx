@@ -970,23 +970,6 @@ export default function HistoryScreen() {
                   />
                 </TouchableOpacity>
               </View>
-
-              {/* Next Button */}
-              <TouchableOpacity
-                style={[
-                  styles.paginationArrow,
-                  (!hasMore || currentPage >= totalPages) && styles.paginationArrowDisabled,
-                ]}
-                onPress={handleNextPage}
-                disabled={!hasMore || currentPage >= totalPages || loadingMore}
-                activeOpacity={0.7}
-              >
-                <Ionicons 
-                  name="chevron-forward" 
-                  size={22} 
-                  color={(!hasMore || currentPage >= totalPages) ? "#CCC" : "#E15816"} 
-                />
-              </TouchableOpacity>
             </View>
 
             {loadingMore && (
@@ -1442,8 +1425,18 @@ const styles = StyleSheet.create({
   paginationRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "space-between",
     gap: 24,
+  },
+  paginationResultText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#687076",
+  },
+  paginationButtons: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
   },
   paginationArrow: {
     width: 44,
@@ -1455,6 +1448,26 @@ const styles = StyleSheet.create({
   },
   paginationArrowDisabled: {
     opacity: 0.3,
+  },
+  pageButton: {
+    minWidth: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "transparent",
+  },
+  pageButtonActive: {
+    backgroundColor: "#E15816",
+  },
+  pageButtonText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#687076",
+  },
+  pageButtonTextActive: {
+    color: "#FFFFFF",
+    fontWeight: "700",
   },
   pageNumberContainer: {
     paddingHorizontal: 20,
