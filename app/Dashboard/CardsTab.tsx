@@ -74,10 +74,13 @@ export default function CardsTab({
 
   const [cardCatalog, setCardCatalog] = useState<any[]>([]);
   const [myCollection, setMyCollection] = useState<any[]>([]);
-  const [activeCard, setActiveCard] = useState<any>(
+  const [activeCard, setActiveCard] = useState<{ design?: string; id?: string } | null>(
     initialDesign ? { design: initialDesign } : null,
   );
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Animated value for the indicator line
+  const scrollIndicatorAnim = useRef(new Animated.Value(0)).current;
 
   // Derive Diamond Elite eligibility from catalog data
   const diamondCatalog = cardCatalog.find((c: any) => c.design === 'DIAMOND_ELITE');
@@ -113,7 +116,7 @@ export default function CardsTab({
 
       if (collectionRes.success && collectionRes.data) {
         const nextCollection = collectionRes.data.collection || [];
-        const nextActive = collectionRes.data.activeCard || null;
+        const nextActive: { design?: string; id?: string } | null = collectionRes.data.activeCard || null;
         setMyCollection(nextCollection);
         setActiveCard(nextActive);
 
@@ -304,7 +307,7 @@ export default function CardsTab({
       const res = await setActiveCardApi(token, cardCollectionItemId);
       if (res.success && res.data) {
         const nextCollection = res.data.collection || [];
-        const nextActive = res.data.activeCard || null;
+        const nextActive: { design?: string; id?: string } | null = res.data.activeCard || null;
         setMyCollection(nextCollection);
         setActiveCard(nextActive);
 
@@ -441,8 +444,8 @@ export default function CardsTab({
               <Text style={styles.cardItemSubtitle}>{t("ct.deposit10M")}</Text>
 
               {isDiamondActive ? (
-                <View style={[styles.upgradeButton, styles.activeUpgradeButton]}>
-                  <Text style={[styles.upgradeButtonText, styles.activeUpgradeButtonText]}>
+                <View style={[styles.upgradeButton, styles.claimedButton]}>
+                  <Text style={[styles.upgradeButtonText, styles.claimedButtonText]}>
                     ✓ Claimed
                   </Text>
                 </View>
@@ -491,12 +494,21 @@ export default function CardsTab({
                 ]}
                 onPress={() => setIsPurchaseModalVisible(true)}
               >
-                <Text style={[
-                  styles.getStartedButtonText,
-                  isGoldOwned && styles.activeUpgradeButtonText
-                ]}>
-                  {isGoldOwned ? (t("ct.renewSubscription") || "Renew") : t("ct.getStarted")}
-                </Text>
+                {isGoldOwned ? (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    <MaterialCommunityIcons name="autorenew" size={16} color={styles.activeUpgradeButtonText.color || "#FFFFFF"} />
+                    <Text style={[
+                      styles.getStartedButtonText,
+                      styles.activeUpgradeButtonText
+                    ]}>
+                      Renew Plan
+                    </Text>
+                  </View>
+                ) : (
+                  <Text style={styles.getStartedButtonText}>
+                    {t("ct.getStarted")}
+                  </Text>
+                )}
               </TouchableOpacity>
             </View>
           </View>
@@ -642,6 +654,11 @@ export default function CardsTab({
           showsHorizontalScrollIndicator={false}
           snapToInterval={cardItemWidth + 12}
           decelerationRate="fast"
+          onScroll={Animated.event(
+            [{ nativeEvent: { contentOffset: { x: scrollIndicatorAnim } } }],
+            { useNativeDriver: false }
+          )}
+          scrollEventThrottle={16}
           onMomentumScrollEnd={(e) => {
             const index = Math.round(
               e.nativeEvent.contentOffset.x / (cardItemWidth + 12),
@@ -730,6 +747,29 @@ export default function CardsTab({
             </View>
           ))}
         </ScrollView>
+
+        {/* Animated indicator line */}
+        <View style={styles.indicatorContainer}>
+          <View style={styles.indicatorTrack}>
+            <Animated.View
+              style={[
+                styles.indicatorLine,
+                {
+                  width: `${100 / (myCollection.length + 1 + Math.max(0, (cardCatalog.length || 5) - (1 + myCollection.length)))}%`,
+                  transform: [
+                    {
+                      translateX: scrollIndicatorAnim.interpolate({
+                        inputRange: [0, (cardItemWidth + 12) * (myCollection.length + Math.max(0, (cardCatalog.length || 5) - (1 + myCollection.length)))],
+                        outputRange: [0, width - horizontalPadding * 2],
+                        extrapolate: 'clamp',
+                      }),
+                    },
+                  ],
+                },
+              ]}
+            />
+          </View>
+        </View>
       </View>
 
       <View style={{ height: 40 }} />
@@ -1745,6 +1785,12 @@ const styles = StyleSheet.create({
   activeUpgradeButtonText: {
     color: '#FFFFFF',
   },
+  claimedButton: {
+    backgroundColor: '#4CAF50',
+  },
+  claimedButtonText: {
+    color: '#FFFFFF',
+  },
   purchaseCardOverlay: {
     flex: 1,
     padding: 16,
@@ -2398,5 +2444,23 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: '#FFFFFF',
+  },
+  // Indicator line styles
+  indicatorContainer: {
+    marginTop: 16,
+    overflow: 'hidden',
+  },
+  indicatorTrack: {
+    height: 3,
+    backgroundColor: '#E0E0E0',
+    borderRadius: 2,
+    position: 'relative',
+  },
+  indicatorLine: {
+    height: '100%',
+    backgroundColor: '#666666',
+    borderRadius: 2,
+    position: 'absolute',
+    left: 0,
   },
 });

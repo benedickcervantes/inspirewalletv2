@@ -1,5 +1,5 @@
-import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useNavigation } from "@react-navigation/native";
 import { useEffect, useState } from "react";
 import { Animated, ImageBackground, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SvgXml } from "react-native-svg";
@@ -183,12 +183,23 @@ export default function WalletTab({
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={styles.cardButtonWithdraw}
+                style={[
+                  styles.cardButtonWithdraw,
+                  { backgroundColor: theme.withdrawButtonBg },
+                ]}
                 onPress={() => navigation.navigate("Withdraw")}
                 activeOpacity={0.7}
               >
-                <SvgXml xml={withdrawSvg} width={15} height={15} />
-                <Text style={styles.cardButtonWithdrawText}>{t("dashboard.withdraw")}</Text>
+                <SvgXml 
+                  xml={`<svg width="20" height="20" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M1.00006 8.0711L8.07113 1.00004M8.07113 1.00004L7.8691 6.85892M8.07113 1.00004L2.21224 1.20207" stroke="${theme.withdrawButtonText}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>`}
+                  width={15} 
+                  height={15} 
+                />
+                <Text style={[styles.cardButtonWithdrawText, { color: theme.withdrawButtonText }]}>
+                  {t("dashboard.withdraw")}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -319,14 +330,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    // Solid light background to ensure contrast on bright card skins
-    backgroundColor: "#FFFFFF",
+    // Background and text colors are now theme-based
     paddingVertical: 14,
     borderRadius: 15,
   },
   cardButtonWithdrawText: {
     fontSize: 15,
     fontWeight: "600",
-    color: "#FC821D",
+    // Color is now theme-based
   },
 });

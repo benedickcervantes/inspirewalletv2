@@ -14,6 +14,10 @@ interface CardTheme {
   actionButtonBg: string;
   /** Text color for primary action buttons. */
   actionButtonText: string;
+  /** Background color for withdraw button. */
+  withdrawButtonBg: string;
+  /** Text color for withdraw button. */
+  withdrawButtonText: string;
 }
 
 const CARD_THEMES: Record<CardDesignKey, CardTheme> = {
@@ -22,32 +26,41 @@ const CARD_THEMES: Record<CardDesignKey, CardTheme> = {
     secondaryText: "#F0F0F0",
     actionButtonBg: "rgba(255, 255, 255, 0.3)",
     actionButtonText: "#FFFFFF",
+    withdrawButtonBg: "#FFFFFF",
+    withdrawButtonText: "#FC821D",
   },
   DIAMOND_ELITE: {
     primaryText: "#FFFFFF",
     secondaryText: "#E5E7EB",
     actionButtonBg: "rgba(255, 255, 255, 0.3)",
     actionButtonText: "#FFFFFF",
+    withdrawButtonBg: "#ffffffde",
+    withdrawButtonText: "#000000",
   },
   GOLD_ELITE: {
-    primaryText: "#1F2933",
-    secondaryText: "#374151",
-    // Darker overlay so white text is readable on bright gold background
-    actionButtonBg: "rgba(0, 0, 0, 0.45)",
+    primaryText: "#4D3E20",
+    secondaryText: "#4D3E20",
+    actionButtonBg: "rgba(89, 68, 25, 0.35)",
     actionButtonText: "#FFFFFF",
+    withdrawButtonBg: "#594419e1",
+    withdrawButtonText: "#FFFFFF",
   },
   ORANGE_ELITE: {
     primaryText: "#FFFFFF",
-    secondaryText: "#FFE8D6",
+    secondaryText: "#ebebebff",
     actionButtonBg: "rgba(255, 255, 255, 0.3)",
     actionButtonText: "#FFFFFF",
+    withdrawButtonBg: "#ffffffde",
+    withdrawButtonText: "#6E6E6E",
   },
   ROYAL_CURVE: {
     primaryText: "#FFFFFF",
-    secondaryText: "#E5E7EB",
+    secondaryText: "#FFFFFF",
     actionButtonBg: "rgba(255, 255, 255, 0.3)",
     actionButtonText: "#FFFFFF",
-  },
+    withdrawButtonBg: "#ffffffde",
+    withdrawButtonText: "#D5AF58",
+    },
 };
 
 export const getCardTheme = (design?: string | null): CardTheme => {
