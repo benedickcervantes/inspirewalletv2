@@ -18,7 +18,7 @@
                 "buildType": "apk"
             },
             "env": {
-                "EXPO_PUBLIC_WALLET_BACKEND_URL": "http://inspire-wallet-alb-1293229516.ap-southeast-2.elb.amazonaws.com",
+                "EXPO_PUBLIC_WALLET_BACKEND_URL": "https://api.inspirewallet.app",
                 "EXPO_PUBLIC_API_KEY": "eb207ddd91dfd36433dfcf7a32528c793f0694589f0a6485d34061a6f74c5ff1",
                 "EXPO_PUBLIC_NATIVE_NOTIFY_APP_ID": "33489",
                 "EXPO_PUBLIC_NATIVE_NOTIFY_APP_TOKEN": "usmMgLOOPspxAgj8pD214K"
@@ -32,7 +32,7 @@
                 "buildType": "apk"
             },
             "env": {
-                "EXPO_PUBLIC_WALLET_BACKEND_URL": "http://inspire-wallet-alb-1293229516.ap-southeast-2.elb.amazonaws.com",
+                "EXPO_PUBLIC_WALLET_BACKEND_URL": "https://api.inspirewallet.app",
                 "EXPO_PUBLIC_API_KEY": "eb207ddd91dfd36433dfcf7a32528c793f0694589f0a6485d34061a6f74c5ff1",
                 "EXPO_PUBLIC_NATIVE_NOTIFY_APP_ID": "33489",
                 "EXPO_PUBLIC_NATIVE_NOTIFY_APP_TOKEN": "usmMgLOOPspxAgj8pD214K"
@@ -51,7 +51,7 @@
                 "buildType": "app-bundle"
             },
             "env": {
-                "EXPO_PUBLIC_WALLET_BACKEND_URL": "http://inspire-wallet-alb-1293229516.ap-southeast-2.elb.amazonaws.com",
+                "EXPO_PUBLIC_WALLET_BACKEND_URL": "https://api.inspirewallet.app",
                 "EXPO_PUBLIC_API_KEY": "eb207ddd91dfd36433dfcf7a32528c793f0694589f0a6485d34061a6f74c5ff1",
                 "EXPO_PUBLIC_NATIVE_NOTIFY_APP_ID": "33489",
                 "EXPO_PUBLIC_NATIVE_NOTIFY_APP_TOKEN": "usmMgLOOPspxAgj8pD214K"
@@ -63,7 +63,7 @@
                 "simulator": true
             },
             "env": {
-                "EXPO_PUBLIC_WALLET_BACKEND_URL": "http://inspire-wallet-alb-1293229516.ap-southeast-2.elb.amazonaws.com",
+                "EXPO_PUBLIC_WALLET_BACKEND_URL": "https://api.inspirewallet.app",
                 "EXPO_PUBLIC_API_KEY": "eb207ddd91dfd36433dfcf7a32528c793f0694589f0a6485d34061a6f74c5ff1",
                 "EXPO_PUBLIC_NATIVE_NOTIFY_APP_ID": "33489",
                 "EXPO_PUBLIC_NATIVE_NOTIFY_APP_TOKEN": "usmMgLOOPspxAgj8pD214K"

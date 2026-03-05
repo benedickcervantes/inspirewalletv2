@@ -50,17 +50,6 @@
         {
           "contactsPermission": "Allow InspireWallet to access your contacts to select transfer recipients."
         }
-      ],
-      [
-        "expo-build-properties",
-        {
-          "android": {
-            "usesCleartextTraffic": true
-          },
-          "ios": {
-            "usesCleartextTraffic": true
-          }
-        }
       ]
     ],
     "experiments": {
