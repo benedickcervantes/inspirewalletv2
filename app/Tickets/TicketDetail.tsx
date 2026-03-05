@@ -20,7 +20,6 @@ interface TicketDetailProps {
   ticket: Ticket;
   accessToken: string;
   onBack: () => void;
-  onUpdate: () => void;
 }
 
 interface SenderInfo {
@@ -39,21 +38,10 @@ interface TicketMessage {
   sender?: SenderInfo;
 }
 
-interface TicketDetailState {
-  messages: TicketMessage[];
-  message: string;
-  loading: boolean;
-  sending: boolean;
-  error: string | null;
-  wsConnected: boolean;
-  hasAdminReply: boolean;
-}
-
 function TicketDetail({
   ticket,
   accessToken,
   onBack,
-  onUpdate,
 }: TicketDetailProps) {
   const scrollRef = useRef<ScrollView>(null);
   const scrollPositionRef = useRef({ offset: 0, contentHeight: 0, layoutHeight: 0 });
@@ -67,8 +55,7 @@ function TicketDetail({
   const [wsConnected, setWsConnected] = useState(false);
   const { t, language } = useLanguage();
 
-  const { isConnected: isSocketConnected, getSocket } = useSocket();
-  const socket = getSocket();
+  const { isConnected: isSocketConnected } = useSocket();
 
   // Sync WS connection state with global socket
   useEffect(() => {
@@ -95,9 +82,9 @@ function TicketDetail({
   };
 
   // Fetch messages from backend
-  const fetchMessages = async () => {
+  const fetchMessages = async (showLoader = true) => {
     try {
-      setLoading(true);
+      if (showLoader) setLoading(true);
       setError(null);
 
       if (!accessToken) {
@@ -176,7 +163,7 @@ function TicketDetail({
       }
       console.error("[TicketDetail] Fetch messages error:", err);
     } finally {
-      setLoading(false);
+      if (showLoader) setLoading(false);
     }
   };
 
@@ -185,7 +172,7 @@ function TicketDetail({
     fetchMessages();
   }, [ticket.id, accessToken]);
 
-  // Setup subscription to global ticket events and handle ROOM joining
+  // Setup subscription to global ticket events
   useEffect(() => {
     console.log(`[TicketDetail] Setting up subscription/room for ticket ${ticket.id}`);
 
@@ -199,13 +186,8 @@ function TicketDetail({
       console.log("[TicketDetail] Message matches ticket:", newMessage?.ticketId === ticket.id);
 
       if (newMessage.ticketId === ticket.id) {
-        setMessages((prev) => {
-          const isDuplicate = prev.some((m) => m.id === newMessage.id);
-          console.log("[TicketDetail] Is duplicate:", isDuplicate);
-          if (isDuplicate) return prev;
-          console.log("[TicketDetail] Adding new message to state");
-          return [...prev, newMessage];
-        });
+        // Just add the new message instead of refetching all
+        setMessages((prev) => [...prev, newMessage]);
       }
     });
 
@@ -224,7 +206,7 @@ function TicketDetail({
     }
 
     return () => {
-      console.log(`[TicketDetail] Cleaning up for ticket ${ticket.id}`);
+      console.log(`[TicketDetail] Cleaning up subscription for ticket ${ticket.id}`);
       unsubscribe();
 
       // Leave the room on cleanup
@@ -235,7 +217,7 @@ function TicketDetail({
         console.log(`[TicketDetail] Left room: ${roomName}`);
       }
     };
-  }, [ticket.id, getSocket, isSocketConnected]);
+  }, [ticket.id]);
 
   // Refetch on reconnection
   useEffect(() => {
@@ -244,6 +226,16 @@ function TicketDetail({
       fetchMessages();
     }
   }, [wsConnected]);
+
+  // Fallback: Auto-refresh every 10 seconds if WebSocket isn't delivering messages
+  useEffect(() => {
+    const interval = setInterval(() => {
+      console.log("[TicketDetail] Background refresh (fallback)");
+      fetchMessages(false);
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, [ticket.id, accessToken]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -441,7 +433,7 @@ function TicketDetail({
             <Text style={styles.statusText}>{wsConnected ? t("support.realTimeReady") : t("support.reconnecting")}</Text>
           </View>
         </View>
-        <TouchableOpacity onPress={fetchMessages} style={styles.refreshButton}>
+        <TouchableOpacity onPress={() => fetchMessages(true)} style={styles.refreshButton}>
           <Ionicons name="refresh" size={20} color="#FFFFFF" />
         </TouchableOpacity>
         <View style={{ width: 10 }} />

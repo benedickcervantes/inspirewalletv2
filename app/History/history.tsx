@@ -1428,8 +1428,18 @@ const styles = StyleSheet.create({
   paginationRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "space-between",
     gap: 24,
+  },
+  paginationResultText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#687076",
+  },
+  paginationButtons: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
   },
   paginationArrow: {
     width: 44,
