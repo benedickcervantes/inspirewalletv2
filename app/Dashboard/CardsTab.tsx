@@ -78,7 +78,7 @@ export default function CardsTab({
     initialDesign ? { design: initialDesign } : null,
   );
   const [isLoading, setIsLoading] = useState(true);
-  
+
   // Animated value for the indicator line
   const scrollIndicatorAnim = useRef(new Animated.Value(0)).current;
 
@@ -185,7 +185,7 @@ export default function CardsTab({
       }
     } catch (e) {
       console.error(e);
-      alert("An error occurred during purchase");
+      alert(t("ct.purchaseError") || "An error occurred during purchase");
     } finally {
       setIsLoading(false);
     }
@@ -339,7 +339,7 @@ export default function CardsTab({
     // persisted to backend, but gives immediate UX for this session.
     setActiveCard(null);
     const storageKey = getActiveCardStorageKey(userData?.accountNumber);
-    AsyncStorage.removeItem(storageKey).catch(() => {});
+    AsyncStorage.removeItem(storageKey).catch(() => { });
     if (onActiveDesignChange) {
       onActiveDesignChange(null);
     }
@@ -446,7 +446,7 @@ export default function CardsTab({
               {isDiamondActive ? (
                 <View style={[styles.upgradeButton, styles.claimedButton]}>
                   <Text style={[styles.upgradeButtonText, styles.claimedButtonText]}>
-                    ✓ Claimed
+                    ✓ {t("ct.alreadyClaimed")}
                   </Text>
                 </View>
               ) : (
@@ -501,7 +501,7 @@ export default function CardsTab({
                       styles.getStartedButtonText,
                       styles.activeUpgradeButtonText
                     ]}>
-                      Renew Plan
+                      {t("ct.renewPlan")}
                     </Text>
                   </View>
                 ) : (
@@ -788,8 +788,8 @@ export default function CardsTab({
                   <Ionicons name="card" size={24} color="#FFFFFF" />
                 </View>
                 <View>
-                  <Text style={styles.diamondModalTitle}>Card purchase</Text>
-                  <Text style={styles.diamondModalSubtitle}>Review your selection</Text>
+                  <Text style={styles.diamondModalTitle}>{t("ct.cardPurchaseTitle")}</Text>
+                  <Text style={styles.diamondModalSubtitle}>{t("ct.reviewYourSelection")}</Text>
                 </View>
               </View>
               <TouchableOpacity
@@ -806,7 +806,7 @@ export default function CardsTab({
               contentContainerStyle={styles.diamondModalBody}
               showsVerticalScrollIndicator={false}
             >
-              <Text style={styles.diamondCardPreviewLabel}>CARD PREVIEW</Text>
+              <Text style={styles.diamondCardPreviewLabel}>{t("ct.cardPreviewLabel")}</Text>
 
               <View style={styles.diamondCardPreviewContainer}>
                 <ImageBackground
@@ -818,14 +818,14 @@ export default function CardsTab({
               </View>
 
               <View style={styles.diamondTitleContainer}>
-                <Text style={styles.diamondCardName}>Diamond Elite</Text>
+                <Text style={styles.diamondCardName}>{t("ct.diamondElite")}</Text>
                 <View style={styles.diamondBadgesRow}>
                   <View style={styles.diamondVipBadge}>
                     <MaterialCommunityIcons name="crown" size={12} color="#D4B106" />
-                    <Text style={styles.diamondVipText}>VIP</Text>
+                    <Text style={styles.diamondVipText}>{t("ct.vip")}</Text>
                   </View>
                   <View style={styles.diamondExclusiveBadge}>
-                    <Text style={styles.diamondExclusiveText}>Exclusive Claimable Card</Text>
+                    <Text style={styles.diamondExclusiveText}>{t("ct.exclusiveClaimable")}</Text>
                   </View>
                 </View>
               </View>
@@ -833,28 +833,28 @@ export default function CardsTab({
               <View style={styles.diamondInfoBox}>
                 <View style={styles.diamondInfoHeader}>
                   <Ionicons name="checkmark-circle" size={20} color="#4CAF50" />
-                  <Text style={styles.diamondInfoTitle}>How to get this card</Text>
+                  <Text style={styles.diamondInfoTitle}>{t("ct.howToGetCard")}</Text>
                 </View>
                 <Text style={styles.diamondInfoText}>
-                  This exclusive VIP card can be claimed by users with ₱10,000,000 or more in time deposits. Click the "Claim" button to add it to your collection.
+                  {t("ct.claimDescription")}
                 </Text>
               </View>
 
               <View style={styles.diamondInfoBox}>
                 <View style={styles.diamondInfoHeader}>
                   <Ionicons name="checkmark-circle" size={20} color="#4CAF50" />
-                  <Text style={styles.diamondInfoTitle}>Requirements</Text>
+                  <Text style={styles.diamondInfoTitle}>{t("ct.requirementsTitle")}</Text>
                 </View>
-                <Text style={styles.diamondListItem}>• Time Deposit Amount:</Text>
-                <Text style={styles.diamondListItem}>• Click "Claim" button to add to your collection.</Text>
-                <Text style={styles.diamondListItem}>• No purchase required.</Text>
+                <Text style={styles.diamondListItem}>{t("ct.reqDepositAmount")}</Text>
+                <Text style={styles.diamondListItem}>{t("ct.reqClickClaim")}</Text>
+                <Text style={styles.diamondListItem}>{t("ct.reqNoPurchase")}</Text>
               </View>
 
               {!isDiamondEligible && !isDiamondOwned && (
                 <View style={styles.diamondWarningBox}>
                   <Ionicons name="warning" size={18} color="#F44336" />
                   <Text style={styles.diamondWarningText}>
-                    You need ₱10,000,000+ in a single time deposit contract.
+                    {t("ct.needWarningText")}
                   </Text>
                 </View>
               )}
@@ -863,10 +863,10 @@ export default function CardsTab({
                 <View style={[styles.diamondInfoBox, { backgroundColor: '#E8F5E9', borderColor: '#4CAF50' }]}>
                   <View style={styles.diamondInfoHeader}>
                     <Ionicons name="checkmark-circle" size={20} color="#4CAF50" />
-                    <Text style={[styles.diamondInfoTitle, { color: '#2E7D32' }]}>You're eligible!</Text>
+                    <Text style={[styles.diamondInfoTitle, { color: '#2E7D32' }]}>{t("ct.eligibleTitle")}</Text>
                   </View>
                   <Text style={styles.diamondInfoText}>
-                    You have a qualifying time deposit of ₱10,000,000+. Tap the button below to claim your Diamond Elite card.
+                    {t("ct.eligibleDesc")}
                   </Text>
                 </View>
               )}
@@ -877,7 +877,7 @@ export default function CardsTab({
                   onPress={() => handleBuyCard('DIAMOND_ELITE', 0)}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.diamondGotItButtonText}>Claim Card</Text>
+                  <Text style={styles.diamondGotItButtonText}>{t("ct.claimCard")}</Text>
                 </TouchableOpacity>
               ) : (
                 <TouchableOpacity
@@ -885,7 +885,7 @@ export default function CardsTab({
                   onPress={() => setIsVipModalVisible(false)}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.diamondGotItButtonText}>{isDiamondActive ? 'Already Claimed' : 'Got it'}</Text>
+                  <Text style={styles.diamondGotItButtonText}>{isDiamondActive ? t("ct.alreadyClaimed") : t("ct.gotIt")}</Text>
                 </TouchableOpacity>
               )}
             </ScrollView>
@@ -908,8 +908,8 @@ export default function CardsTab({
                   <Ionicons name="card" size={24} color="#FFFFFF" />
                 </View>
                 <View>
-                  <Text style={styles.vipModalTitle}>Card purchase</Text>
-                  <Text style={styles.vipModalSubtitle}>Review your selection</Text>
+                  <Text style={styles.vipModalTitle}>{t("ct.cardPurchaseTitle")}</Text>
+                  <Text style={styles.vipModalSubtitle}>{t("ct.reviewYourSelection")}</Text>
                 </View>
               </View>
               <TouchableOpacity
@@ -926,7 +926,7 @@ export default function CardsTab({
               contentContainerStyle={styles.vipModalBody}
               showsVerticalScrollIndicator={false}
             >
-              <Text style={styles.vipCardPreviewLabel}>CARD PREVIEW</Text>
+              <Text style={styles.vipCardPreviewLabel}>{t("ct.cardPreviewLabel")}</Text>
 
               <View style={styles.vipCardPreviewContainer}>
                 <TouchableOpacity activeOpacity={0.9} onPress={flipVipCard}>
@@ -952,43 +952,43 @@ export default function CardsTab({
               </View>
 
               <View style={styles.vipTitleContainer}>
-                <Text style={styles.vipCardName}>Gold Elite</Text>
+                <Text style={styles.vipCardName}>{t("ct.goldName")}</Text>
                 <View style={styles.vipPremiumBadge}>
                   <MaterialCommunityIcons name="crown" size={14} color="#D4B106" />
-                  <Text style={styles.vipPremiumText}>VIP</Text>
+                  <Text style={styles.vipPremiumText}>{t("ct.vip")}</Text>
                 </View>
               </View>
 
               <View style={styles.vipPriceSection}>
-                <Text style={styles.vipTotalPriceLabel}>TOTAL PRICE</Text>
+                <Text style={styles.vipTotalPriceLabel}>{t("ct.totalPrice")}</Text>
                 <Text style={styles.vipTotalPrice}>₱ 10,000.00</Text>
               </View>
 
               <View style={styles.vipBalanceRow}>
-                <Text style={styles.vipBalanceLabel}>Your Balance:</Text>
+                <Text style={styles.vipBalanceLabel}>{t("ct.yourBalance")}</Text>
                 <Text style={styles.vipBalanceAmount}>₱ {formatCurrency(availableBalance || 0)}</Text>
               </View>
 
               <View style={styles.vipSubscriptionBox}>
                 <View style={styles.vipSubscriptionHeaderRow}>
-                  <Text style={styles.vipSubscriptionTitle}>Subscription Type</Text>
+                  <Text style={styles.vipSubscriptionTitle}>{t("ct.subscriptionType")}</Text>
                   <View style={styles.vipMonthlyBadge}>
                     <Ionicons name="calendar-outline" size={12} color="#D4B106" />
-                    <Text style={styles.vipMonthlyText}>Monthly</Text>
+                    <Text style={styles.vipMonthlyText}>{t("ct.monthly")}</Text>
                   </View>
                 </View>
 
                 <View style={styles.vipSubscriptionDetailRow}>
                   <Ionicons name="time-outline" size={16} color="#666" />
-                  <Text style={styles.vipSubscriptionDetailText}>Duration: 30 days</Text>
+                  <Text style={styles.vipSubscriptionDetailText}>{t("ct.duration30Days")}</Text>
                 </View>
                 <View style={styles.vipSubscriptionDetailRow}>
                   <Ionicons name="refresh-outline" size={16} color="#666" />
-                  <Text style={styles.vipSubscriptionDetailText}>Auto-renewal: Manual (renew each month)</Text>
+                  <Text style={styles.vipSubscriptionDetailText}>{t("ct.autoRenewalManual")}</Text>
                 </View>
                 <View style={styles.vipSubscriptionDetailRow}>
                   <Ionicons name="information-circle-outline" size={16} color="#666" />
-                  <Text style={styles.vipSubscriptionDetailText}>Access expires after 30 days</Text>
+                  <Text style={styles.vipSubscriptionDetailText}>{t("ct.accessExpires")}</Text>
                 </View>
               </View>
 
@@ -998,7 +998,7 @@ export default function CardsTab({
                   onPress={() => setIsPurchaseModalVisible(false)}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.vipCancelButtonText}>Cancel</Text>
+                  <Text style={styles.vipCancelButtonText}>{t("ct.cancel")}</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -1017,7 +1017,7 @@ export default function CardsTab({
                     }
                   }}
                 >
-                  <Text style={styles.vipBuyButtonText}>Buy Card</Text>
+                  <Text style={styles.vipBuyButtonText}>{t("ct.buyCard")}</Text>
                 </TouchableOpacity>
               </View>
             </ScrollView>
@@ -1040,8 +1040,8 @@ export default function CardsTab({
                   <Ionicons name="card" size={24} color="#FFFFFF" />
                 </View>
                 <View>
-                  <Text style={styles.designModalTitle}>Card purchase</Text>
-                  <Text style={styles.designModalSubtitle}>Review your selection</Text>
+                  <Text style={styles.designModalTitle}>{t("ct.cardPurchaseTitle")}</Text>
+                  <Text style={styles.designModalSubtitle}>{t("ct.reviewYourSelection")}</Text>
                 </View>
               </View>
               <TouchableOpacity
@@ -1054,7 +1054,7 @@ export default function CardsTab({
             </View>
 
             <View style={styles.designModalBody}>
-              <Text style={styles.designCardPreviewLabel}>CARD PREVIEW</Text>
+              <Text style={styles.designCardPreviewLabel}>{t("ct.cardPreviewLabel")}</Text>
 
               <View style={styles.designCardPreviewContainer}>
                 <TouchableOpacity activeOpacity={0.9} onPress={flipDesignCard}>
@@ -1092,12 +1092,12 @@ export default function CardsTab({
               </View>
 
               <View style={styles.designPriceSection}>
-                <Text style={styles.designTotalPriceLabel}>TOTAL PRICE</Text>
+                <Text style={styles.designTotalPriceLabel}>{t("ct.totalPrice")}</Text>
                 <Text style={styles.designTotalPrice}>₱ {formatCurrency(selectedDesignCard.price || 0)}</Text>
               </View>
 
               <View style={styles.designBalanceRow}>
-                <Text style={styles.designBalanceLabel}>Your Balance:</Text>
+                <Text style={styles.designBalanceLabel}>{t("ct.yourBalance")}</Text>
                 <Text style={styles.designBalanceAmount}>₱ {formatCurrency(availableBalance || 0)}</Text>
               </View>
 
@@ -1105,7 +1105,7 @@ export default function CardsTab({
                 <View style={styles.designWarningBox}>
                   <Ionicons name="warning" size={18} color="#F44336" />
                   <Text style={styles.designWarningText}>
-                    Need ₱{formatCurrency(selectedDesignCard.price - availableBalance)} more
+                    {t("ct.needMoreAmount").replace("{amount}", `₱${formatCurrency(selectedDesignCard.price - availableBalance)}`)}
                   </Text>
                 </View>
               )}
@@ -1116,7 +1116,7 @@ export default function CardsTab({
                   onPress={() => setIsDesignModalVisible(false)}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.designCancelButtonText}>Cancel</Text>
+                  <Text style={styles.designCancelButtonText}>{t("ct.cancel")}</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -1135,7 +1135,7 @@ export default function CardsTab({
                     }
                   }}
                 >
-                  <Text style={styles.designBuyButtonText}>Buy</Text>
+                  <Text style={styles.designBuyButtonText}>{t("ct.buy")}</Text>
                 </TouchableOpacity>
               </View>
             </View>

@@ -74,33 +74,32 @@ export default function BankWithdrawal() {
     const newErrors: Record<string, string> = {};
 
     if (!accountNumber.trim())
-      newErrors.accountNumber = "Account number is required";
+      newErrors.accountNumber = t("withdraw.validation.accNumber");
     if (!accountHolderName.trim())
-      newErrors.accountHolderName = "Account holder name is required";
-    if (!bankName.trim()) newErrors.bankName = "Bank name is required";
-    if (!branchName.trim()) newErrors.branchName = "Branch name is required";
+      newErrors.accountHolderName = t("withdraw.validation.accName");
+    if (!bankName.trim()) newErrors.bankName = t("withdraw.validation.bankName");
+    if (!branchName.trim()) newErrors.branchName = t("withdraw.validation.branchName");
 
     const amountStr = withdrawalAmount.trim();
     if (!amountStr) {
-      newErrors.withdrawalAmount = "Withdrawal amount is required";
+      newErrors.withdrawalAmount = t("withdraw.validation.amount");
     } else {
       const amountNum = parseFloat(amountStr);
       if (amountNum <= 0) {
-        newErrors.withdrawalAmount =
-          "Please enter a valid amount greater than 0";
+        newErrors.withdrawalAmount = t("withdraw.validation.invalidAmount");
       } else {
         const availableBalance = (userData?.availBalanceAmount as number) || 0;
         if (amountNum > availableBalance) {
-          newErrors.withdrawalAmount = `Insufficient balance. Available: ₱${availableBalance.toLocaleString()}`;
+          newErrors.withdrawalAmount = t("withdraw.validation.insufficient").replace("{balance}", availableBalance.toLocaleString());
         }
       }
     }
 
     const email = emailAddress.trim();
     if (!email) {
-      newErrors.emailAddress = "Email address is required";
+      newErrors.emailAddress = t("withdraw.validation.email");
     } else if (!isValidEmail(email)) {
-      newErrors.emailAddress = "Please enter a valid email address";
+      newErrors.emailAddress = t("withdraw.validation.invalidEmail");
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -139,7 +138,7 @@ export default function BankWithdrawal() {
             <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
           </TouchableOpacity>
 
-          <Text style={styles.headerTitle}>Withdrawal Request</Text>
+          <Text style={styles.headerTitle}>{t("withdraw.title")}</Text>
 
           <TouchableOpacity style={styles.refreshButton}>
             <Ionicons name="refresh" size={24} color="#FFFFFF" />
@@ -188,21 +187,21 @@ export default function BankWithdrawal() {
               <View style={styles.leftBorder} />
 
               <View style={styles.cardHeader}>
-                <Text style={styles.cardTitle}>Banking Information</Text>
+                <Text style={styles.cardTitle}>{t("withdraw.bankInfo")}</Text>
                 <Text style={styles.cardSubtitle}>
-                  Enter your banking information
+                  {t("withdraw.bankInfoSubtitle")}
                 </Text>
               </View>
 
               {/* Bank Account Number */}
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Bank Account Number *</Text>
+                <Text style={styles.inputLabel}>{t("withdraw.accNumber")}</Text>
                 <TextInput
                   style={[
                     styles.input,
                     errors.accountNumber && styles.inputError,
                   ]}
-                  placeholder="Enter account number"
+                  placeholder={t("withdraw.placeholder.accNumber")}
                   placeholderTextColor="#CCC"
                   value={accountNumber}
                   onChangeText={(text) => {
@@ -223,13 +222,13 @@ export default function BankWithdrawal() {
 
               {/* Account Holder Name */}
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Account Holder Name *</Text>
+                <Text style={styles.inputLabel}>{t("withdraw.accHolder")}</Text>
                 <TextInput
                   style={[
                     styles.input,
                     errors.accountHolderName && styles.inputError,
                   ]}
-                  placeholder="e.g. John Doe"
+                  placeholder={t("withdraw.placeholder.accHolder")}
                   placeholderTextColor="#CCC"
                   value={accountHolderName}
                   onChangeText={(text) => {
@@ -253,10 +252,10 @@ export default function BankWithdrawal() {
 
               {/* Bank Name */}
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Bank Name *</Text>
+                <Text style={styles.inputLabel}>{t("withdraw.bankName")}</Text>
                 <TextInput
                   style={[styles.input, errors.bankName && styles.inputError]}
-                  placeholder="e.g. Security Bank"
+                  placeholder={t("withdraw.placeholder.bankName")}
                   placeholderTextColor="#CCC"
                   value={bankName}
                   onChangeText={(text) => {
@@ -276,10 +275,10 @@ export default function BankWithdrawal() {
 
               {/* Branch Name */}
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Branch Name *</Text>
+                <Text style={styles.inputLabel}>{t("withdraw.branchName")}</Text>
                 <TextInput
                   style={[styles.input, errors.branchName && styles.inputError]}
-                  placeholder="e.g. Makati Branch"
+                  placeholder={t("withdraw.placeholder.branchName")}
                   placeholderTextColor="#CCC"
                   value={branchName}
                   onChangeText={(text) => {
@@ -303,9 +302,9 @@ export default function BankWithdrawal() {
               <View style={styles.leftBorder} />
 
               <View style={styles.cardHeader}>
-                <Text style={styles.cardTitle}>Withdrawal Amount</Text>
+                <Text style={styles.cardTitle}>{t("withdraw.details")}</Text>
                 <Text style={styles.cardSubtitle}>
-                  Enter withdrawal amount and contact information
+                  {t("withdraw.detailsSubtitle")}
                 </Text>
               </View>
 
@@ -317,7 +316,7 @@ export default function BankWithdrawal() {
                     size={18}
                     color="#E25A17"
                   />
-                  <Text style={styles.inputLabel}>Withdrawal Amount (₱) *</Text>
+                  <Text style={styles.inputLabel}>{t("withdraw.amountLabel")}</Text>
                 </View>
                 <View
                   style={[
@@ -358,14 +357,14 @@ export default function BankWithdrawal() {
                     size={18}
                     color="#E25A17"
                   />
-                  <Text style={styles.inputLabel}>Email Address *</Text>
+                  <Text style={styles.inputLabel}>{t("withdraw.email")}</Text>
                 </View>
                 <TextInput
                   style={[
                     styles.input,
                     errors.emailAddress && styles.inputError,
                   ]}
-                  placeholder="e.g. name@example.com"
+                  placeholder={t("withdraw.placeholder.email")}
                   placeholderTextColor="#CCC"
                   value={emailAddress}
                   onChangeText={(text) => {
@@ -397,7 +396,7 @@ export default function BankWithdrawal() {
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
               >
-                <Text style={styles.continueText}>Continue</Text>
+                <Text style={styles.continueText}>{t("withdraw.continue")}</Text>
                 <Ionicons name="play" size={20} color="#FFFFFF" />
               </LinearGradient>
             </TouchableOpacity>

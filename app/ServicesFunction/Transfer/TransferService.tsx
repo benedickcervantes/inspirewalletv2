@@ -59,14 +59,14 @@ export const validateBalanceSelection = (selectedBalance: string | null, agentWa
   if (!selectedBalance) {
     return {
       isValid: false,
-      message: "Please select a balance type to continue",
+      message: "sendMoney.selectBalanceToContinue",
     };
   }
 
   if (selectedBalance === "agent" && agentWallet === 0) {
     return {
       isValid: false,
-      message: "Agent wallet has insufficient balance",
+      message: "sendMoney.agentWalletInsufficient",
     };
   }
 
@@ -126,7 +126,7 @@ export default function SendMoney() {
         const user = JSON.parse(userJson) as { accountNumber?: string; firstName?: string; lastName?: string };
         setUserAccountNumber(user?.accountNumber || "");
         const fullName = [user?.firstName, user?.lastName].filter(Boolean).join(" ");
-        setUserName(fullName || "User");
+        setUserName(fullName || t("common.user"));
       }
     } catch (error) {
       console.error("Error loading user account number:", error);
@@ -135,13 +135,9 @@ export default function SendMoney() {
 
   const handleContinue = () => {
     const validation = validateBalanceSelection(selectedBalance, agentWallet);
-    
+
     if (!validation.isValid) {
-      setAlertMessageKey(
-        validation.message === "Agent wallet has insufficient balance"
-          ? "sendMoney.agentWalletInsufficient"
-          : "sendMoney.selectBalanceToContinue"
-      );
+      setAlertMessageKey(validation.message);
       setShowAlertModal(true);
       return;
     }
@@ -171,314 +167,314 @@ export default function SendMoney() {
         </TouchableOpacity>
       </LinearGradient>
 
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Quick Actions */}
-          <View style={styles.quickActionsContainer}>
-            <TouchableOpacity 
-              style={styles.quickActionButton}
-              onPress={() => setShowQRModal(true)}
-            >
-              <View style={styles.quickActionIcon}>
-                <Ionicons name="qr-code" size={28} color="#E25A17" />
-              </View>
-              <Text style={styles.quickActionText}>{t("sendMoney.myQr")}</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={styles.quickActionButton}
-              onPress={() => setShowQRScanner(true)}
-            >
-              <View style={styles.quickActionIcon}>
-                <Ionicons name="scan" size={28} color="#E25A17" />
-              </View>
-              <Text style={styles.quickActionText}>{t("sendMoney.scanQr")}</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={styles.quickActionButton}
-              onPress={() => setShowContactsModal(true)}
-            >
-              <View style={styles.quickActionIcon}>
-                <Ionicons name="people" size={28} color="#E25A17" />
-              </View>
-              <Text style={styles.quickActionText}>{t("sendMoney.contacts")}</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Step Indicator */}
-          <View style={styles.stepIndicatorContainer}>
-            <View style={styles.stepItem}>
-              <View style={[styles.stepCircle, styles.stepCircleActive]}>
-                <Ionicons name="checkmark" size={16} color="#FFFFFF" />
-              </View>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Quick Actions */}
+        <View style={styles.quickActionsContainer}>
+          <TouchableOpacity
+            style={styles.quickActionButton}
+            onPress={() => setShowQRModal(true)}
+          >
+            <View style={styles.quickActionIcon}>
+              <Ionicons name="qr-code" size={28} color="#E25A17" />
             </View>
-            <View style={styles.stepLine} />
-            <View style={styles.stepItem}>
-              <View style={styles.stepCircle} />
+            <Text style={styles.quickActionText}>{t("sendMoney.myQr")}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.quickActionButton}
+            onPress={() => setShowQRScanner(true)}
+          >
+            <View style={styles.quickActionIcon}>
+              <Ionicons name="scan" size={28} color="#E25A17" />
             </View>
-            <View style={styles.stepLine} />
-            <View style={styles.stepItem}>
-              <View style={styles.stepCircle} />
+            <Text style={styles.quickActionText}>{t("sendMoney.scanQr")}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.quickActionButton}
+            onPress={() => setShowContactsModal(true)}
+          >
+            <View style={styles.quickActionIcon}>
+              <Ionicons name="people" size={28} color="#E25A17" />
+            </View>
+            <Text style={styles.quickActionText}>{t("sendMoney.contacts")}</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Step Indicator */}
+        <View style={styles.stepIndicatorContainer}>
+          <View style={styles.stepItem}>
+            <View style={[styles.stepCircle, styles.stepCircleActive]}>
+              <Ionicons name="checkmark" size={16} color="#FFFFFF" />
             </View>
           </View>
+          <View style={styles.stepLine} />
+          <View style={styles.stepItem}>
+            <View style={styles.stepCircle} />
+          </View>
+          <View style={styles.stepLine} />
+          <View style={styles.stepItem}>
+            <View style={styles.stepCircle} />
+          </View>
+        </View>
 
-          <Text style={styles.stepLabel}>{t("sendMoney.step1Of3")}</Text>
+        <Text style={styles.stepLabel}>{t("sendMoney.step1Of3")}</Text>
 
-          {/* Step Title */}
-          <Text style={styles.stepTitle}>{t("sendMoney.selectBalanceType")}</Text>
-          <Text style={styles.stepSubtitle}>
-            {t("sendMoney.selectBalanceSubtitle")}
-          </Text>
+        {/* Step Title */}
+        <Text style={styles.stepTitle}>{t("sendMoney.selectBalanceType")}</Text>
+        <Text style={styles.stepSubtitle}>
+          {t("sendMoney.selectBalanceSubtitle")}
+        </Text>
 
-          {/* Balance Cards */}
-          <View style={styles.balanceCardsContainer}>
-            {/* Available Balance Card */}
-            <TouchableOpacity
-              style={[
-                styles.balanceCard,
-                selectedBalance === "available" && styles.balanceCardSelected,
-              ]}
-              onPress={() => setSelectedBalance("available")}
-            >
-              <View style={styles.balanceCardHeader}>
-                <View style={styles.balanceIconContainer}>
-                  <Ionicons name="wallet" size={24} color="#E25A17" />
-                </View>
-                <View style={styles.balanceInfo}>
-                  <Text style={styles.balanceTitle}>{t("sendMoney.availableBalance")}</Text>
-                  <Text style={styles.balanceSubtitle}>{t("sendMoney.mainWalletBalance")}</Text>
-                </View>
-                <View
-                  style={[
-                    styles.radioButton,
-                    selectedBalance === "available" && styles.radioButtonSelected,
-                  ]}
-                >
-                  {selectedBalance === "available" && (
-                    <View style={styles.radioButtonInner} />
-                  )}
-                </View>
+        {/* Balance Cards */}
+        <View style={styles.balanceCardsContainer}>
+          {/* Available Balance Card */}
+          <TouchableOpacity
+            style={[
+              styles.balanceCard,
+              selectedBalance === "available" && styles.balanceCardSelected,
+            ]}
+            onPress={() => setSelectedBalance("available")}
+          >
+            <View style={styles.balanceCardHeader}>
+              <View style={styles.balanceIconContainer}>
+                <Ionicons name="wallet" size={24} color="#E25A17" />
               </View>
-              <View style={styles.balanceAmountContainer}>
-                <Text style={styles.balanceAmount}>
-                  PHP {formatCurrency(availableBalance)}
-                </Text>
+              <View style={styles.balanceInfo}>
+                <Text style={styles.balanceTitle}>{t("sendMoney.availableBalance")}</Text>
+                <Text style={styles.balanceSubtitle}>{t("sendMoney.mainWalletBalance")}</Text>
+              </View>
+              <View
+                style={[
+                  styles.radioButton,
+                  selectedBalance === "available" && styles.radioButtonSelected,
+                ]}
+              >
+                {selectedBalance === "available" && (
+                  <View style={styles.radioButtonInner} />
+                )}
+              </View>
+            </View>
+            <View style={styles.balanceAmountContainer}>
+              <Text style={styles.balanceAmount}>
+                PHP {formatCurrency(availableBalance)}
+              </Text>
+              <View style={styles.availableBadge}>
+                <Ionicons name="checkmark-circle" size={14} color="#4CAF50" />
+                <Text style={styles.availableBadgeText}>{t("sendMoney.available")}</Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+
+          {/* Agent Wallet Card */}
+          <TouchableOpacity
+            style={[
+              styles.balanceCard,
+              selectedBalance === "agent" && styles.balanceCardSelected,
+              agentWallet === 0 && styles.balanceCardDisabled,
+            ]}
+            onPress={() => agentWallet > 0 && setSelectedBalance("agent")}
+            disabled={agentWallet === 0}
+          >
+            <View style={styles.balanceCardHeader}>
+              <View style={styles.balanceIconContainer}>
+                <Ionicons name="briefcase" size={24} color="#E25A17" />
+              </View>
+              <View style={styles.balanceInfo}>
+                <Text style={styles.balanceTitle}>{t("sendMoney.agentWallet")}</Text>
+                <Text style={styles.balanceSubtitle}>{t("sendMoney.commissionEarnings")}</Text>
+              </View>
+              <View
+                style={[
+                  styles.radioButton,
+                  selectedBalance === "agent" && styles.radioButtonSelected,
+                ]}
+              >
+                {selectedBalance === "agent" && (
+                  <View style={styles.radioButtonInner} />
+                )}
+              </View>
+            </View>
+            <View style={styles.balanceAmountContainer}>
+              <Text style={styles.balanceAmount}>
+                PHP {formatCurrency(agentWallet)}
+              </Text>
+              {agentWallet === 0 ? (
+                <View style={styles.insufficientBadge}>
+                  <Ionicons name="alert-circle" size={14} color="#F44336" />
+                  <Text style={styles.insufficientBadgeText}>{t("sendMoney.insufficient")}</Text>
+                </View>
+              ) : (
                 <View style={styles.availableBadge}>
                   <Ionicons name="checkmark-circle" size={14} color="#4CAF50" />
                   <Text style={styles.availableBadgeText}>{t("sendMoney.available")}</Text>
                 </View>
-              </View>
-            </TouchableOpacity>
+              )}
+            </View>
+          </TouchableOpacity>
+        </View>
 
-            {/* Agent Wallet Card */}
-            <TouchableOpacity
-              style={[
-                styles.balanceCard,
-                selectedBalance === "agent" && styles.balanceCardSelected,
-                agentWallet === 0 && styles.balanceCardDisabled,
-              ]}
-              onPress={() => agentWallet > 0 && setSelectedBalance("agent")}
-              disabled={agentWallet === 0}
+        {/* Continue Button */}
+        <TouchableOpacity
+          style={[
+            styles.continueButton,
+            !selectedBalance && styles.continueButtonDisabled,
+          ]}
+          onPress={handleContinue}
+          disabled={!selectedBalance}
+        >
+          <LinearGradient
+            colors={
+              !selectedBalance ? ["#CCC", "#999"] : ["#E25A17", "#F28934"]
+            }
+            style={styles.continueGradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+          >
+            <Text style={styles.continueText}>{t("sendMoney.continue")}</Text>
+            <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
+          </LinearGradient>
+        </TouchableOpacity>
+
+        <View style={styles.bottomPadding} />
+      </ScrollView>
+
+      {/* Alert Modal */}
+      <Modal
+        visible={showAlertModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowAlertModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <LinearGradient
+              colors={["#E25A17", "#F28934"]}
+              style={styles.modalGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
             >
-              <View style={styles.balanceCardHeader}>
-                <View style={styles.balanceIconContainer}>
-                  <Ionicons name="briefcase" size={24} color="#E25A17" />
-                </View>
-                <View style={styles.balanceInfo}>
-                  <Text style={styles.balanceTitle}>{t("sendMoney.agentWallet")}</Text>
-                  <Text style={styles.balanceSubtitle}>{t("sendMoney.commissionEarnings")}</Text>
-                </View>
-                <View
-                  style={[
-                    styles.radioButton,
-                    selectedBalance === "agent" && styles.radioButtonSelected,
-                  ]}
-                >
-                  {selectedBalance === "agent" && (
-                    <View style={styles.radioButtonInner} />
+              <View style={styles.iconContainer}>
+                <Ionicons name="alert-circle" size={80} color="#FFFFFF" />
+              </View>
+              <Text style={styles.modalTitle}>{t("sendMoney.selectionRequired")}</Text>
+              <Text style={styles.modalMessage}>
+                {t(alertMessageKey)}
+              </Text>
+              <TouchableOpacity
+                style={styles.modalButton}
+                onPress={() => setShowAlertModal(false)}
+              >
+                <Text style={styles.modalButtonText}>{t("common.ok")}</Text>
+              </TouchableOpacity>
+            </LinearGradient>
+          </View>
+        </View>
+      </Modal>
+
+      {/* QR Code Modal */}
+      <Modal
+        visible={showQRModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowQRModal(false)}
+      >
+        <View style={styles.qrModalOverlay}>
+          <View style={styles.qrModalContent}>
+            <View style={styles.qrModalHeader}>
+              <Text style={styles.qrModalTitle}>{t("sendMoney.myQr")}</Text>
+              <TouchableOpacity onPress={() => setShowQRModal(false)}>
+                <Ionicons name="close" size={28} color="#3d3737ff" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.qrModalBody}>
+              <View style={styles.qrUserInfoCard}>
+                <Text style={styles.qrUserName}>{userName}</Text>
+                <Text style={styles.qrUserAccount}>{userAccountNumber || t("common.na")}</Text>
+
+                <View style={styles.qrCodeWrapper}>
+                  {userAccountNumber ? (
+                    <QRCode
+                      value={userAccountNumber}
+                      size={200}
+                      color="#E25A17"
+                      backgroundColor="#FFFFFF"
+                      logo={require("../../../assets/images/TranferLogo.png")}
+                      logoSize={40}
+                      logoBackgroundColor="transparent"
+                      logoMargin={2}
+                      logoBorderRadius={8}
+                    />
+                  ) : (
+                    <View style={styles.qrPlaceholder}>
+                      <Ionicons name="qr-code-outline" size={80} color="#CCC" />
+                      <Text style={styles.qrPlaceholderText}>{t("sendMoney.noAccountNumber")}</Text>
+                    </View>
                   )}
                 </View>
-              </View>
-              <View style={styles.balanceAmountContainer}>
-                <Text style={styles.balanceAmount}>
-                  PHP {formatCurrency(agentWallet)}
-                </Text>
-                {agentWallet === 0 ? (
-                  <View style={styles.insufficientBadge}>
-                    <Ionicons name="alert-circle" size={14} color="#F44336" />
-                    <Text style={styles.insufficientBadgeText}>{t("sendMoney.insufficient")}</Text>
-                  </View>
-                ) : (
-                  <View style={styles.availableBadge}>
-                    <Ionicons name="checkmark-circle" size={14} color="#4CAF50" />
-                    <Text style={styles.availableBadgeText}>{t("sendMoney.available")}</Text>
-                  </View>
-                )}
-              </View>
-            </TouchableOpacity>
-          </View>
 
-          {/* Continue Button */}
-          <TouchableOpacity
-            style={[
-              styles.continueButton,
-              !selectedBalance && styles.continueButtonDisabled,
-            ]}
-            onPress={handleContinue}
-            disabled={!selectedBalance}
-          >
-            <LinearGradient
-              colors={
-                !selectedBalance ? ["#CCC", "#999"] : ["#E25A17", "#F28934"]
-              }
-              style={styles.continueGradient}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-            >
-              <Text style={styles.continueText}>{t("sendMoney.continue")}</Text>
-              <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
-            </LinearGradient>
-          </TouchableOpacity>
-
-          <View style={styles.bottomPadding} />
-        </ScrollView>
-
-        {/* Alert Modal */}
-        <Modal
-          visible={showAlertModal}
-          transparent={true}
-          animationType="fade"
-          onRequestClose={() => setShowAlertModal(false)}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <LinearGradient
-                colors={["#E25A17", "#F28934"]}
-                style={styles.modalGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <View style={styles.iconContainer}>
-                  <Ionicons name="alert-circle" size={80} color="#FFFFFF" />
+                <View style={styles.secureCodeBadge}>
+                  <Ionicons name="shield-checkmark" size={16} color="#4CAF50" />
+                  <Text style={styles.secureCodeText}>{t("sendMoney.secureTransferCode")}</Text>
                 </View>
-                <Text style={styles.modalTitle}>{t("sendMoney.selectionRequired")}</Text>
-                <Text style={styles.modalMessage}>
-                  {t(alertMessageKey)}
-                </Text>
-                <TouchableOpacity
-                  style={styles.modalButton}
-                  onPress={() => setShowAlertModal(false)}
+              </View>
+
+              <TouchableOpacity style={styles.shareQRButton}>
+                <LinearGradient
+                  colors={["#E25A17", "#F28934"]}
+                  style={styles.shareQRGradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
                 >
-                  <Text style={styles.modalButtonText}>{t("common.ok")}</Text>
-                </TouchableOpacity>
-              </LinearGradient>
-            </View>
-          </View>
-        </Modal>
+                  <Ionicons name="share-social" size={20} color="#FFFFFF" />
+                  <Text style={styles.shareQRButtonText}>{t("sendMoney.shareQr")}</Text>
+                </LinearGradient>
+              </TouchableOpacity>
 
-        {/* QR Code Modal */}
-        <Modal
-          visible={showQRModal}
-          transparent={true}
-          animationType="slide"
-          onRequestClose={() => setShowQRModal(false)}
-        >
-          <View style={styles.qrModalOverlay}>
-            <View style={styles.qrModalContent}>
-              <View style={styles.qrModalHeader}>
-                <Text style={styles.qrModalTitle}>{t("sendMoney.myQr")}</Text>
-                <TouchableOpacity onPress={() => setShowQRModal(false)}>
-                  <Ionicons name="close" size={28} color="#3d3737ff" />
-                </TouchableOpacity>
-              </View>
-              
-              <View style={styles.qrModalBody}>
-                <View style={styles.qrUserInfoCard}>
-                  <Text style={styles.qrUserName}>{userName}</Text>
-                  <Text style={styles.qrUserAccount}>{userAccountNumber || "N/A"}</Text>
-                  
-                  <View style={styles.qrCodeWrapper}>
-                    {userAccountNumber ? (
-                      <QRCode
-                        value={userAccountNumber}
-                        size={200}
-                        color="#E25A17"
-                        backgroundColor="#FFFFFF"
-                        logo={require("../../../assets/images/TranferLogo.png")}
-                        logoSize={40}
-                        logoBackgroundColor="transparent"
-                        logoMargin={2}
-                        logoBorderRadius={8}
-                      />
-                    ) : (
-                      <View style={styles.qrPlaceholder}>
-                        <Ionicons name="qr-code-outline" size={80} color="#CCC" />
-                        <Text style={styles.qrPlaceholderText}>No account number available</Text>
-                      </View>
-                    )}
-                  </View>
-                  
-                  <View style={styles.secureCodeBadge}>
-                    <Ionicons name="shield-checkmark" size={16} color="#4CAF50" />
-                    <Text style={styles.secureCodeText}>Secure Transfer Code</Text>
-                  </View>
-                </View>
-                
-                <TouchableOpacity style={styles.shareQRButton}>
-                  <LinearGradient
-                    colors={["#E25A17", "#F28934"]}
-                    style={styles.shareQRGradient}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                  >
-                    <Ionicons name="share-social" size={20} color="#FFFFFF" />
-                    <Text style={styles.shareQRButtonText}>Share QR Code</Text>
-                  </LinearGradient>
-                </TouchableOpacity>
-                
-                <View style={styles.qrInfoFooter}>
-                  <Ionicons name="information-circle-outline" size={16} color="#8B4A4A" />
-                  <Text style={styles.qrInfoFooterText}>
-                    This QR code contains your account information for receiving transfers
-                  </Text>
-                </View>
+              <View style={styles.qrInfoFooter}>
+                <Ionicons name="information-circle-outline" size={16} color="#8B4A4A" />
+                <Text style={styles.qrInfoFooterText}>
+                  {t("sendMoney.qrFooterInfo")}
+                </Text>
               </View>
             </View>
           </View>
-        </Modal>
+        </View>
+      </Modal>
 
-        {/* Contacts Modal */}
-        <ContactsModal
-          visible={showContactsModal}
-          onClose={() => setShowContactsModal(false)}
-          onSelectContact={(contact) => {
-            setShowContactsModal(false);
-            // Navigate to recipient screen with selected contact
-            (navigation.navigate as any)("TransferRecipient", { 
-              balanceType: selectedBalance ?? "available",
-              scannedAccount: contact.accountNumber,
-              recipientName: contact.name
-            });
-          }}
-        />
+      {/* Contacts Modal */}
+      <ContactsModal
+        visible={showContactsModal}
+        onClose={() => setShowContactsModal(false)}
+        onSelectContact={(contact) => {
+          setShowContactsModal(false);
+          // Navigate to recipient screen with selected contact
+          (navigation.navigate as any)("TransferRecipient", {
+            balanceType: selectedBalance ?? "available",
+            scannedAccount: contact.accountNumber,
+            recipientName: contact.name
+          });
+        }}
+      />
 
-        {/* QR Scanner */}
-        <QRScanner
-          visible={showQRScanner}
-          onClose={() => setShowQRScanner(false)}
-          onScan={(data: string) => {
-            setShowQRScanner(false);
-            // Navigate to recipient screen with scanned account number
-            (navigation.navigate as any)("TransferRecipient", { 
-              balanceType: selectedBalance ?? "available",
-              scannedAccount: data 
-            });
-          }}
-        />
+      {/* QR Scanner */}
+      <QRScanner
+        visible={showQRScanner}
+        onClose={() => setShowQRScanner(false)}
+        onScan={(data: string) => {
+          setShowQRScanner(false);
+          // Navigate to recipient screen with scanned account number
+          (navigation.navigate as any)("TransferRecipient", {
+            balanceType: selectedBalance ?? "available",
+            scannedAccount: data
+          });
+        }}
+      />
     </View>
   );
 }

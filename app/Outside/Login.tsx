@@ -26,6 +26,7 @@ import { forgotPassword, login } from "../../configs/api";
 import type { NavProp } from "../../types/navigation";
 import { useResponsive } from "../../utils/responsive";
 import CustomLoader from "../Loader/CustomLoader";
+import { useLanguage } from "../../context/LanguageContext";
 
 const GRADIENT_START = "#E15816";
 const GRADIENT_END = "#F48F38";
@@ -593,6 +594,7 @@ export default function Login() {
   const [resetModalVisible, setResetModalVisible] = useState(false);
   const [resetModalEmail, setResetModalEmail] = useState("");
   const [forgotModalVisible, setForgotModalVisible] = useState(false);
+  const { t } = useLanguage();
 
   const showModal = (config: Partial<ModalConfig>) => {
     setModalConfig({
@@ -707,7 +709,7 @@ export default function Login() {
   const isWeb = Platform.OS === "web";
 
   if (loading) {
-    return <CustomLoader text="LOGGING IN" />;
+    return <CustomLoader text={t("auth.loggingIn")} />;
   }
 
   return (

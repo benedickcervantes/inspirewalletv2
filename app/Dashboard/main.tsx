@@ -3,32 +3,32 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-    Animated,
-    Image,
-    Linking,
-    Modal,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Animated,
+  Image,
+  Linking,
+  Modal,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import {
-    SafeAreaView,
-    useSafeAreaInsets,
+  SafeAreaView,
+  useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import {
-    getMe,
-    getNotifications,
-    getOrCreateMainWallet,
-    getReferralTree,
-    getTimeDeposits,
-    getTransactions,
+  getMe,
+  getNotifications,
+  getOrCreateMainWallet,
+  getReferralTree,
+  getTimeDeposits,
+  getTransactions,
 } from "../../configs/api";
 import {
-    languageChoiceDoneKey,
-    SUPPORTED_LANGUAGES,
+  languageChoiceDoneKey,
+  SUPPORTED_LANGUAGES,
 } from "../../constants/locales";
 import { useLanguage } from "../../context/LanguageContext";
 import { useSocket } from "../../context/SocketContext";
@@ -610,7 +610,7 @@ export default function Dashboard() {
       labelKey: "dashboard.eWallet",
       route: "EwalletService",
     },
-    { icon: "headset", labelKey: "Support", route: "Message" },
+    { icon: "headset", labelKey: "support.title", route: "Message" },
     { icon: "chart-line", labelKey: "dashboard.stock", route: "Stockholder" },
     { icon: "format-list-bulleted", labelKey: "dashboard.task", route: "Task" },
     { icon: "account", labelKey: "dashboard.agent", route: "AgentRequest" },
@@ -645,19 +645,19 @@ export default function Dashboard() {
   };
 
   if (initialLoad) {
-    return <CustomLoader text="LOADING DASHBOARD..." />;
+    return <CustomLoader text={t("dashboard.loadingDashboard")} />;
   }
 
   if (navigatingToProfile) {
-    return <CustomLoader text="LOADING" />;
+    return <CustomLoader text={t("common.loading")} />;
   }
 
   if (navigatingAction === "AgentRequest") {
-    return <CustomLoader text="LOADING AGENT..." />;
+    return <CustomLoader text={t("dashboard.loadingAgent")} />;
   }
 
   if (navigatingAction === "Message") {
-    return <CustomLoader text="LOADING SUPPORT..." />;
+    return <CustomLoader text={t("dashboard.loadingSupport")} />;
   }
 
   return (
@@ -692,7 +692,7 @@ export default function Dashboard() {
         visible={showFirstTimeLanguageModal}
         transparent
         animationType="fade"
-        onRequestClose={() => {}}
+        onRequestClose={() => { }}
       >
         <View style={styles.languageModalOverlay}>
           <View style={styles.languageModalContent}>
@@ -1053,7 +1053,7 @@ export default function Dashboard() {
                     style={[
                       styles.languageDot,
                       currentLanguageIndex === index &&
-                        styles.languageActiveDot,
+                      styles.languageActiveDot,
                     ]}
                   />
                 ))}

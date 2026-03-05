@@ -441,11 +441,11 @@ export default function AgentServices() {
   };
 
   if (checkingMaintenance) {
-    return <CustomLoader text="CHECKING..." />;
+    return <CustomLoader text={t("common.checking")} />;
   }
 
   if (isUnderMaintenance) {
-    return <CustomLoader text="UNDER MAINTENANCE" />;
+    return <CustomLoader text={t("support.serviceMaintenance")} />;
   }
 
   if (loading) {

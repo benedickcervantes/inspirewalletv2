@@ -28,6 +28,7 @@ import {
   markAllMessagesAsRead,
   sendMessage,
 } from "../../configs/api";
+import { useLanguage } from "../../context/LanguageContext";
 import { subscribeToConnectionStatus } from "../../lib/connectionStatus";
 import { isServiceUnderMaintenance } from "../../lib/maintenance";
 import { subscribeToNewSupportMessage } from "../../lib/messagingEvents";
@@ -52,13 +53,15 @@ interface DisplayMessage {
   status: "SENT" | "READ";
 }
 
-const formatTime = (date: Date) => {
+const formatTime = (date: Date, lang: string) => {
   const now = new Date();
   const isToday = date.toDateString() === now.toDateString();
+  const locale = lang === "ar" ? "ar-SA" : lang === "ko" ? "ko-KR" : lang === "ja" ? "ja-JP" : "en-US";
+
   if (isToday) {
-    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    return date.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
   }
-  return date.toLocaleDateString([], {
+  return date.toLocaleDateString(locale, {
     month: "short",
     day: "numeric",
     hour: "2-digit",
@@ -104,6 +107,7 @@ export default function Message() {
   );
   const [editText, setEditText] = useState("");
   const [ticketSelected, setTicketSelected] = useState(false);
+  const { t, language } = useLanguage();
 
   // Debug ticket selection
   useEffect(() => {
@@ -135,7 +139,7 @@ export default function Message() {
     setAccessToken(token);
 
     if (!token) {
-      setError("Please log in to view messages.");
+      setError(t("support.loginRequired"));
       setLoading(false);
       setRefreshing(false);
       return;
@@ -152,7 +156,7 @@ export default function Message() {
         setMessages(mapApiToDisplay(refetch.messages as ApiMessage[]));
       }
     } else {
-      setError(result.error || "Failed to load messages.");
+      setError(result.error || t("support.failedToLoad"));
     }
     setLoading(false);
     setRefreshing(false);
@@ -169,7 +173,7 @@ export default function Message() {
 
     const accessToken = await AsyncStorage.getItem("access_token");
     if (!accessToken) {
-      setError("Please log in to send messages.");
+      setError(t("support.loginRequired"));
       return;
     }
 
@@ -184,7 +188,7 @@ export default function Message() {
         scrollRef.current?.scrollToEnd({ animated: true });
       }, 150);
     } else {
-      setError(result.error || "Failed to send message.");
+      setError(result.error || t("support.failedToSend"));
     }
   }, [message, sending, fetchMessages]);
 
@@ -206,15 +210,15 @@ export default function Message() {
     setShowMessageActions(false);
 
     Alert.alert(
-      "Delete Message",
-      "Choose delete option:",
+      t("support.deleteMessage"),
+      t("support.deleteConfirm"),
       [
         {
-          text: "Cancel",
+          text: t("common.cancel"),
           style: "cancel",
         },
         {
-          text: "Delete for Me",
+          text: t("support.deleteForMe"),
           onPress: async () => {
             const token = await AsyncStorage.getItem("access_token");
             if (!token) return;
@@ -226,12 +230,12 @@ export default function Message() {
             if (result.success) {
               await fetchMessages();
             } else {
-              Alert.alert("Error", result.error || "Failed to delete message");
+              Alert.alert(t("common.error"), result.error || t("support.failedToDelete"));
             }
           },
         },
         {
-          text: "Delete for Everyone",
+          text: t("support.deleteForEveryone"),
           style: "destructive",
           onPress: async () => {
             const token = await AsyncStorage.getItem("access_token");
@@ -240,7 +244,7 @@ export default function Message() {
             if (result.success) {
               await fetchMessages();
             } else {
-              Alert.alert("Error", result.error || "Failed to delete message");
+              Alert.alert(t("common.error"), result.error || t("support.failedToDelete"));
             }
           },
         },
@@ -261,7 +265,7 @@ export default function Message() {
       setEditText("");
       await fetchMessages();
     } else {
-      Alert.alert("Error", result.error || "Failed to edit message");
+      Alert.alert(t("common.error"), result.error || t("support.failedToEdit"));
     }
   }, [editingMessage, editText, fetchMessages]);
 
@@ -327,7 +331,7 @@ export default function Message() {
             style={{ width: 80, height: 80 }}
             resizeMode="contain"
           />
-          <Text style={styles.loadingText}>Service under maintenance</Text>
+          <Text style={styles.loadingText}>{t("support.serviceMaintenance")}</Text>
         </View>
       </View>
     );
@@ -347,11 +351,11 @@ export default function Message() {
             <MaterialCommunityIcons name="headset" size={22} color="#E15816" />
           </View>
           <View>
-            <Text style={styles.headerTitle}>Support</Text>
+            <Text style={styles.headerTitle}>{t("support.title")}</Text>
             <Text style={styles.headerSubtitle}>
               {isOnline
-                ? "Online • You're connected"
-                : "Offline • Connect for real-time updates"}
+                ? t("support.online")
+                : t("support.offline")}
             </Text>
           </View>
         </View>
@@ -372,7 +376,7 @@ export default function Message() {
               viewMode === "messages" && styles.tabTextActive,
             ]}
           >
-            Messages
+            {t("support.messagesTab")}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -385,7 +389,7 @@ export default function Message() {
               viewMode === "tickets" && styles.tabTextActive,
             ]}
           >
-            Tickets
+            {t("support.ticketsTab")}
           </Text>
         </TouchableOpacity>
       </View>
@@ -397,7 +401,7 @@ export default function Message() {
             style={{ width: 80, height: 80 }}
             resizeMode="contain"
           />
-          <Text style={styles.loadingText}>Loading messages...</Text>
+          <Text style={styles.loadingText}>{t("support.loading")}</Text>
         </View>
       ) : error && messages.length === 0 ? (
         <View style={styles.centerContent}>
@@ -408,7 +412,7 @@ export default function Message() {
           />
           <Text style={styles.errorText}>{error}</Text>
           <TouchableOpacity style={styles.retryButton} onPress={onRefresh}>
-            <Text style={styles.retryButtonText}>Retry</Text>
+            <Text style={styles.retryButtonText}>{t("common.retry")}</Text>
           </TouchableOpacity>
         </View>
       ) : viewMode === "tickets" && accessToken ? (
@@ -458,10 +462,9 @@ export default function Message() {
                   size={64}
                   color="#CCC"
                 />
-                <Text style={styles.emptyTitle}>No messages yet</Text>
+                <Text style={styles.emptyTitle}>{t("support.noMessagesYet")}</Text>
                 <Text style={styles.emptySubtitle}>
-                  Start a conversation with Inspire Wallet Support. Send a
-                  message below or wait for support to contact you.
+                  {t("support.startConversation")}
                 </Text>
               </View>
             ) : (
@@ -502,7 +505,7 @@ export default function Message() {
                             : styles.bubbleTimeReceived,
                         ]}
                       >
-                        {formatTime(msg.timestamp)}
+                        {formatTime(msg.timestamp, language)}
                       </Text>
                       {msg.isSent ? (
                         <View style={styles.readStatus}>
@@ -527,7 +530,7 @@ export default function Message() {
                                 : styles.readStatusSent,
                             ]}
                           >
-                            {msg.status === "READ" ? "Read" : "Sent"}
+                            {msg.status === "READ" ? t("support.read") : t("support.sent")}
                           </Text>
                         </View>
                       ) : msg.status === "SENT" ? (
@@ -552,7 +555,7 @@ export default function Message() {
           >
             <TextInput
               style={styles.input}
-              placeholder="Type a message..."
+              placeholder={t("support.typeMessage")}
               placeholderTextColor="#999"
               value={message}
               onChangeText={setMessage}
@@ -613,7 +616,7 @@ export default function Message() {
           <View style={styles.actionSheet}>
             <TouchableOpacity style={styles.actionButton} onPress={handleEdit}>
               <MaterialCommunityIcons name="pencil" size={22} color="#333" />
-              <Text style={styles.actionButtonText}>Edit Message</Text>
+              <Text style={styles.actionButtonText}>{t("support.editMessage")}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.actionButton}
@@ -623,14 +626,14 @@ export default function Message() {
               <Text
                 style={[styles.actionButtonText, styles.actionButtonTextDanger]}
               >
-                Delete Message
+                {t("support.deleteMessage")}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.actionButton, styles.actionButtonCancel]}
               onPress={() => setShowMessageActions(false)}
             >
-              <Text style={styles.actionButtonCancelText}>Cancel</Text>
+              <Text style={styles.actionButtonCancelText}>{t("common.cancel")}</Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
@@ -658,7 +661,7 @@ export default function Message() {
               onPress={(e) => e.stopPropagation()}
             >
               <View style={styles.editModalHeader}>
-                <Text style={styles.editModalTitle}>Edit Message</Text>
+                <Text style={styles.editModalTitle}>{t("support.editMessage")}</Text>
                 <TouchableOpacity onPress={handleCancelEdit}>
                   <Ionicons name="close" size={24} color="#333" />
                 </TouchableOpacity>
@@ -670,7 +673,7 @@ export default function Message() {
                 multiline
                 maxLength={10000}
                 autoFocus
-                placeholder="Edit your message..."
+                placeholder={t("support.editPlaceholder")}
                 placeholderTextColor="#999"
               />
               <View style={styles.editModalActions}>
@@ -678,7 +681,7 @@ export default function Message() {
                   style={styles.editCancelButton}
                   onPress={handleCancelEdit}
                 >
-                  <Text style={styles.editCancelButtonText}>Cancel</Text>
+                  <Text style={styles.editCancelButtonText}>{t("common.cancel")}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[
@@ -688,7 +691,7 @@ export default function Message() {
                   onPress={handleSaveEdit}
                   disabled={!editText.trim()}
                 >
-                  <Text style={styles.editSaveButtonText}>Save</Text>
+                  <Text style={styles.editSaveButtonText}>{t("support.save")}</Text>
                 </TouchableOpacity>
               </View>
             </TouchableOpacity>

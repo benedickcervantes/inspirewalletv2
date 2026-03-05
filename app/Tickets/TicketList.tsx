@@ -3,14 +3,15 @@ import { listUserTickets, type Ticket } from "@/lib/tickets";
 import { useFocusEffect } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
+import { useLanguage } from "../../context/LanguageContext";
 import TicketDetail from "./TicketDetail";
 
 interface TicketListProps {
@@ -25,6 +26,7 @@ function TicketList({ accessToken, onTicketSelected }: TicketListProps) {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const { t, language } = useLanguage();
 
   // Debug selected ticket changes
   useEffect(() => {
@@ -109,7 +111,8 @@ function TicketList({ accessToken, onTicketSelected }: TicketListProps) {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
+    const locale = language === "ar" ? "ar-SA" : language === "ko" ? "ko-KR" : language === "ja" ? "ja-JP" : "en-US";
+    return date.toLocaleDateString(locale, {
       month: "short",
       day: "numeric",
       year: "numeric",
@@ -142,7 +145,7 @@ function TicketList({ accessToken, onTicketSelected }: TicketListProps) {
       {loading && !tickets.length ? (
         <View style={styles.centerContent}>
           <ActivityIndicator size="large" color="#3b82f6" />
-          <Text style={styles.loadingText}>Loading tickets...</Text>
+          <Text style={styles.loadingText}>{t("tickets.loading")}</Text>
         </View>
       ) : tickets.length > 0 ? (
         <View style={styles.ticketsList}>
@@ -167,7 +170,7 @@ function TicketList({ accessToken, onTicketSelected }: TicketListProps) {
                     { backgroundColor: getStatusColor(ticket.status) },
                   ]}
                 >
-                  <Text style={styles.statusText}>{ticket.status}</Text>
+                  <Text style={styles.statusText}>{t(`tickets.status.${ticket.status}`)}</Text>
                 </View>
               </View>
 
@@ -182,7 +185,7 @@ function TicketList({ accessToken, onTicketSelected }: TicketListProps) {
                     { backgroundColor: getPriorityColor(ticket.priority) },
                   ]}
                 >
-                  <Text style={styles.priorityText}>{ticket.priority}</Text>
+                  <Text style={styles.priorityText}>{t(`tickets.priority.${ticket.priority}`)}</Text>
                 </View>
                 <Text style={styles.dateText}>
                   {formatDate(ticket.createdAt)}
@@ -193,9 +196,9 @@ function TicketList({ accessToken, onTicketSelected }: TicketListProps) {
         </View>
       ) : (
         <View style={styles.centerContent}>
-          <Text style={styles.emptyText}>No tickets yet</Text>
+          <Text style={styles.emptyText}>{t("tickets.noTickets")}</Text>
           <Text style={styles.emptySubText}>
-            Create a support ticket to get started
+            {t("tickets.getStarted")}
           </Text>
         </View>
       )}
@@ -207,11 +210,13 @@ function TicketList({ accessToken, onTicketSelected }: TicketListProps) {
             onPress={() => setPage(page - 1)}
             style={[styles.paginationButton, page === 1 && styles.disabled]}
           >
-            <Text style={styles.paginationText}>Previous</Text>
+            <Text style={styles.paginationText}>{t("tickets.previous")}</Text>
           </TouchableOpacity>
 
           <Text style={styles.pageIndicator}>
-            Page {page} of {totalPages}
+            {t("tickets.pageIndicator")
+              .replace("{page}", page.toString())
+              .replace("{total}", totalPages.toString())}
           </Text>
 
           <TouchableOpacity
@@ -222,7 +227,7 @@ function TicketList({ accessToken, onTicketSelected }: TicketListProps) {
               page === totalPages && styles.disabled,
             ]}
           >
-            <Text style={styles.paginationText}>Next</Text>
+            <Text style={styles.paginationText}>{t("tickets.next")}</Text>
           </TouchableOpacity>
         </View>
       )}

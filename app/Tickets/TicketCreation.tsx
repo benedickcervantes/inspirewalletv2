@@ -13,6 +13,7 @@ import {
   View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useLanguage } from "../../context/LanguageContext";
 
 interface TicketCreationProps {
   open: boolean;
@@ -33,15 +34,16 @@ export default function TicketCreation({
     priority: "MEDIUM",
   });
   const [loading, setLoading] = useState(false);
+  const { t } = useLanguage();
 
   const handleSubmit = async () => {
     if (!formValue.title.trim()) {
-      Alert.alert("Error", "Please enter a ticket title");
+      Alert.alert(t("common.error"), t("tickets.validationTitle"));
       return;
     }
 
     if (!formValue.description.trim()) {
-      Alert.alert("Error", "Please enter a description");
+      Alert.alert(t("common.error"), t("tickets.validationDescription"));
       return;
     }
 
@@ -51,13 +53,13 @@ export default function TicketCreation({
       console.log("[TicketCreation] Token:", accessToken ? `${accessToken.substring(0, 20)}...` : "NO TOKEN");
       const result = await createTicket(accessToken, formValue);
       console.log("[TicketCreation] Success:", result);
-      Alert.alert("Success", `Ticket created! ID: ${result.id}`);
+      Alert.alert(t("common.success"), t("tickets.createdSuccess"));
       setFormValue({ title: "", description: "", priority: "MEDIUM" });
       onSuccess?.(result.id);
       onClose();
     } catch (error: any) {
       console.log("[TicketCreation] Error:", error);
-      Alert.alert("Error", error.message || "Failed to create ticket");
+      Alert.alert(t("common.error"), error.message || t("tickets.createFailed"));
     } finally {
       setLoading(false);
     }
@@ -67,119 +69,119 @@ export default function TicketCreation({
     <Modal visible={open} animationType="slide" transparent={false}>
       <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Create Ticket</Text>
+          <Text style={styles.headerTitle}>{t("tickets.create")}</Text>
         </View>
         <TouchableOpacity onPress={onClose} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="#E15816" />
-          <Text style={styles.backButtonText}>Back</Text>
+          <Text style={styles.backButtonText}>{t("common.back")}</Text>
         </TouchableOpacity>
 
-      <ScrollView style={styles.content}>
-        <View style={styles.formCard}>
-          <View style={styles.formHeader}>
-            <View style={styles.formIconContainer}>
-              <Ionicons name="ticket" size={24} color="#E15816" />
+        <ScrollView style={styles.content}>
+          <View style={styles.formCard}>
+            <View style={styles.formHeader}>
+              <View style={styles.formIconContainer}>
+                <Ionicons name="ticket" size={24} color="#E15816" />
+              </View>
+              <View>
+                <Text style={styles.formTitle}>{t("tickets.createTitle")}</Text>
+                <Text style={styles.formSubtitle}>{t("tickets.createSubtitle")}</Text>
+              </View>
             </View>
-            <View>
-              <Text style={styles.formTitle}>Create Support Ticket</Text>
-              <Text style={styles.formSubtitle}>Describe your issue in detail</Text>
-            </View>
-          </View>
 
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>
-              Title <Text style={styles.required}>*</Text>
-            </Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Brief description of your issue"
-            value={formValue.title}
-            onChangeText={(value) =>
-              setFormValue({ ...formValue, title: value })
-            }
-            editable={!loading}
-            placeholderTextColor="#999"
-          />
-        </View>
-
-        <View style={styles.formGroup}>
-          <Text style={styles.label}>
-            Description <Text style={styles.required}>*</Text>
-          </Text>
-          <TextInput
-            style={[styles.input, styles.textArea]}
-            placeholder="Detailed description of your issue"
-            value={formValue.description}
-            onChangeText={(value) =>
-              setFormValue({ ...formValue, description: value })
-            }
-            multiline
-            numberOfLines={4}
-            editable={!loading}
-            placeholderTextColor="#999"
-          />
-        </View>
-
-        <View style={styles.formGroup}>
-          <Text style={styles.label}>Priority</Text>
-          <View style={styles.priorityButtonsContainer}>
-            {["LOW", "MEDIUM", "HIGH"].map((priority) => (
-              <TouchableOpacity
-                key={priority}
-                style={[
-                  styles.priorityButton,
-                  formValue.priority === priority && styles.priorityButtonActive,
-                ]}
-                onPress={() =>
-                  setFormValue({
-                    ...formValue,
-                    priority: priority as "LOW" | "MEDIUM" | "HIGH",
-                  })
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>
+                {t("tickets.titleLabel")} <Text style={styles.required}>*</Text>
+              </Text>
+              <TextInput
+                style={styles.input}
+                placeholder={t("tickets.titlePlaceholder")}
+                value={formValue.title}
+                onChangeText={(value) =>
+                  setFormValue({ ...formValue, title: value })
                 }
-              >
-                <Text
-                  style={[
-                    styles.priorityButtonText,
-                    formValue.priority === priority && styles.priorityButtonTextActive,
-                  ]}
-                >
-                  {priority}
-                </Text>
-              </TouchableOpacity>
-            ))}
+                editable={!loading}
+                placeholderTextColor="#999"
+              />
+            </View>
+
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>
+                {t("tickets.descriptionLabel")} <Text style={styles.required}>*</Text>
+              </Text>
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                placeholder={t("tickets.descriptionPlaceholder")}
+                value={formValue.description}
+                onChangeText={(value) =>
+                  setFormValue({ ...formValue, description: value })
+                }
+                multiline
+                numberOfLines={4}
+                editable={!loading}
+                placeholderTextColor="#999"
+              />
+            </View>
+
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>{t("tickets.priorityLabel")}</Text>
+              <View style={styles.priorityButtonsContainer}>
+                {["LOW", "MEDIUM", "HIGH"].map((priority) => (
+                  <TouchableOpacity
+                    key={priority}
+                    style={[
+                      styles.priorityButton,
+                      formValue.priority === priority && styles.priorityButtonActive,
+                    ]}
+                    onPress={() =>
+                      setFormValue({
+                        ...formValue,
+                        priority: priority as "LOW" | "MEDIUM" | "HIGH",
+                      })
+                    }
+                  >
+                    <Text
+                      style={[
+                        styles.priorityButtonText,
+                        formValue.priority === priority && styles.priorityButtonTextActive,
+                      ]}
+                    >
+                      {t(`tickets.priority.${priority}`)}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>{t("tickets.categoryLabel")}</Text>
+              <TextInput
+                style={[styles.input, styles.categoryTextArea]}
+                placeholder={t("tickets.categoryPlaceholder")}
+                value={formValue.category || ""}
+                onChangeText={(value) =>
+                  setFormValue({ ...formValue, category: value })
+                }
+                editable={!loading}
+                placeholderTextColor="#999"
+                multiline
+                numberOfLines={3}
+              />
+            </View>
+
+            <TouchableOpacity
+              style={[styles.submitButton, loading && styles.submitButtonDisabled]}
+              onPress={handleSubmit}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <Text style={styles.submitButtonText}>{t("tickets.create")}</Text>
+              )}
+            </TouchableOpacity>
           </View>
-        </View>
-
-        <View style={styles.formGroup}>
-          <Text style={styles.label}>Category (Optional)</Text>
-          <TextInput
-            style={[styles.input, styles.categoryTextArea]}
-            placeholder="e.g., Account, Payment, Technical"
-            value={formValue.category || ""}
-            onChangeText={(value) =>
-              setFormValue({ ...formValue, category: value })
-            }
-            editable={!loading}
-            placeholderTextColor="#999"
-            multiline
-            numberOfLines={3}
-          />
-        </View>
-
-        <TouchableOpacity
-          style={[styles.submitButton, loading && styles.submitButtonDisabled]}
-          onPress={handleSubmit}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator color="#fff" size="small" />
-          ) : (
-            <Text style={styles.submitButtonText}>Create Ticket</Text>
-          )}
-        </TouchableOpacity>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+        </ScrollView>
+      </SafeAreaView>
     </Modal>
   );
 }

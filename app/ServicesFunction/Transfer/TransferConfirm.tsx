@@ -4,24 +4,24 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Dimensions,
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Dimensions,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import QRCode from "react-native-qrcode-svg";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
-    createBeneficiary,
-    getOrCreateMainWallet,
-    submitTransfer,
+  createBeneficiary,
+  getOrCreateMainWallet,
+  submitTransfer,
 } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
 import CustomLoader from "../../Loader/CustomLoader";
@@ -85,7 +85,7 @@ export default function TransferConfirm() {
         try {
           const user = JSON.parse(userJson) as { hasPasscode?: boolean };
           setHasPasscode(!!user?.hasPasscode);
-        } catch (_) {}
+        } catch (_) { }
       }
     })();
   }, []);
@@ -118,7 +118,7 @@ export default function TransferConfirm() {
         const fullName = [user?.firstName, user?.lastName]
           .filter(Boolean)
           .join(" ");
-        setUserName(fullName || "User");
+        setUserName(fullName || t("common.user"));
       }
     } catch (error) {
       console.error("Error loading user account number:", error);
@@ -128,13 +128,13 @@ export default function TransferConfirm() {
   const doTransfer = async (passcodeToSend?: string) => {
     const accessToken = await AsyncStorage.getItem("access_token");
     if (!accessToken) {
-      setErrorMessage("Please log in to continue.");
+      setErrorMessage(t("sendMoney.loginRequired"));
       setShowErrorModal(true);
       return;
     }
     if (!mainWalletId) {
       setErrorMessage(
-        "Recipient wallet could not be resolved. Please try again.",
+        t("sendMoney.errorResolveWallet"),
       );
       setShowErrorModal(true);
       return;
@@ -144,7 +144,7 @@ export default function TransferConfirm() {
       const { success: walletSuccess, wallet } =
         await getOrCreateMainWallet(accessToken);
       if (!walletSuccess || !wallet?.id) {
-        setErrorMessage("Could not load your wallet. Please try again.");
+        setErrorMessage(t("sendMoney.errorLoadWallet"));
         setShowErrorModal(true);
         setIsProcessing(false);
         return;
@@ -152,7 +152,7 @@ export default function TransferConfirm() {
       const fromWalletId =
         balanceType === "available" ? (wallet.id as string) : undefined;
       const beneficiaryBody: Record<string, string> = {
-        nickname: recipientName || "Recipient",
+        nickname: recipientName || t("common.unknown"),
         accountIdentifier: mainWalletId,
         type: "WALLET_ID",
       };
@@ -161,7 +161,7 @@ export default function TransferConfirm() {
       const createRes = await createBeneficiary(accessToken, beneficiaryBody);
       if (!createRes.success || !createRes.data) {
         setErrorMessage(
-          createRes.error || "Failed to set up recipient. Please try again.",
+          createRes.error || t("sendMoney.errorSetupRecipient"),
         );
         setShowErrorModal(true);
         if (passcodeToSend) setPasscode("");
@@ -170,7 +170,7 @@ export default function TransferConfirm() {
       }
       const beneficiaryId = (createRes.data as { id?: string }).id;
       if (!beneficiaryId) {
-        setErrorMessage("Invalid response from server. Please try again.");
+        setErrorMessage(t("sendMoney.errorInvalidResponse"));
         setShowErrorModal(true);
         setIsProcessing(false);
         return;
@@ -188,7 +188,7 @@ export default function TransferConfirm() {
         setPasscode("");
         setShowSuccessModal(true);
       } else {
-        setErrorMessage(result.error || "Transfer failed. Please try again.");
+        setErrorMessage(result.error || t("sendMoney.transferFailed"));
         setShowErrorModal(true);
         if (passcodeToSend) setPasscode("");
       }
@@ -221,7 +221,7 @@ export default function TransferConfirm() {
   };
 
   if (isProcessing) {
-    return <CustomLoader text="PROCESSING..." />;
+    return <CustomLoader text={t("sendMoney.processing")} />;
   }
 
   return (
@@ -377,7 +377,7 @@ export default function TransferConfirm() {
         <View style={styles.summaryCard}>
           <View style={styles.summaryRow}>
             <View style={styles.summaryItem}>
-              <Text style={styles.summaryLabel}>Current Balance</Text>
+              <Text style={styles.summaryLabel}>{t("sendMoney.currentBalance")}</Text>
               <Text style={styles.summaryValue}>
                 PHP{" "}
                 {currentBalance.toLocaleString("en-PH", {
@@ -453,7 +453,7 @@ export default function TransferConfirm() {
           keyboardVerticalOffset={Platform.OS === "ios" ? 40 : 0}
         >
           <View style={styles.passcodeModalContent}>
-            <Text style={styles.passcodeModalTitle}>Enter your passcode</Text>
+            <Text style={styles.passcodeModalTitle}>{t("sendMoney.enterPasscode")}</Text>
             <TextInput
               style={styles.passcodeInput}
               value={passcode}
@@ -479,7 +479,7 @@ export default function TransferConfirm() {
                 }}
                 disabled={isProcessing}
               >
-                <Text style={styles.passcodeModalButtonCancelText}>Cancel</Text>
+                <Text style={styles.passcodeModalButtonCancelText}>{t("common.cancel")}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[
@@ -494,7 +494,7 @@ export default function TransferConfirm() {
                   style={styles.passcodeModalButtonGradient}
                 >
                   <Text style={styles.passcodeModalButtonConfirmText}>
-                    Confirm
+                    {t("sendMoney.confirm")}
                   </Text>
                 </LinearGradient>
               </TouchableOpacity>
@@ -508,7 +508,7 @@ export default function TransferConfirm() {
         visible={showSuccessModal}
         transparent={true}
         animationType="fade"
-        onRequestClose={() => {}}
+        onRequestClose={() => { }}
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -595,13 +595,13 @@ export default function TransferConfirm() {
 
             <View style={styles.qrModalBody}>
               <Text style={styles.qrShareText}>
-                Share this QR code for others to transfer money to you
+                {t("sendMoney.shareQrInstruction")}
               </Text>
 
               <View style={styles.qrUserInfoCard}>
                 <Text style={styles.qrUserName}>{userName}</Text>
                 <Text style={styles.qrUserAccount}>
-                  {userAccountNumber || "N/A"}
+                  {userAccountNumber || t("common.na")}
                 </Text>
 
                 <View style={styles.qrCodeWrapper}>
@@ -621,7 +621,7 @@ export default function TransferConfirm() {
                     <View style={styles.qrPlaceholder}>
                       <Ionicons name="qr-code-outline" size={80} color="#CCC" />
                       <Text style={styles.qrPlaceholderText}>
-                        No account number available
+                        {t("sendMoney.noAccountNumber")}
                       </Text>
                     </View>
                   )}
@@ -630,7 +630,7 @@ export default function TransferConfirm() {
                 <View style={styles.secureCodeBadge}>
                   <Ionicons name="shield-checkmark" size={16} color="#4CAF50" />
                   <Text style={styles.secureCodeText}>
-                    Secure Transfer Code
+                    {t("sendMoney.secureTransferCode")}
                   </Text>
                 </View>
               </View>
@@ -643,7 +643,7 @@ export default function TransferConfirm() {
                   end={{ x: 1, y: 0 }}
                 >
                   <Ionicons name="share-social" size={20} color="#FFFFFF" />
-                  <Text style={styles.shareQRButtonText}>Share QR Code</Text>
+                  <Text style={styles.shareQRButtonText}>{t("sendMoney.shareQr")}</Text>
                 </LinearGradient>
               </TouchableOpacity>
 
@@ -654,8 +654,7 @@ export default function TransferConfirm() {
                   color="#8B4A4A"
                 />
                 <Text style={styles.qrInfoFooterText}>
-                  This QR code contains your account information for receiving
-                  transfers
+                  {t("sendMoney.qrFooterInfo")}
                 </Text>
               </View>
             </View>

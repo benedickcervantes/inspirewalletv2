@@ -86,7 +86,7 @@ export default function ContactsModal({ visible, onClose, onSelectContact }: Con
       if (data.length > 0) {
         const contacts: Contact[] = data.map((contact: any, index: number) => ({
           id: contact.id || `contact-${index}`,
-          name: contact.name || "Unknown",
+          name: contact.name || t("common.unknown"),
           phoneNumbers: contact.phoneNumbers?.map((phone: any) => phone.number || "") || [],
           accountNumber: contact.phoneNumbers?.[0]?.number?.replace(/\D/g, "") || "",
           type: "device" as const,
@@ -167,7 +167,7 @@ export default function ContactsModal({ visible, onClose, onSelectContact }: Con
                 color={activeTab === "saved" ? "#E25A17" : "#999"}
               />
               <Text style={[styles.tabText, activeTab === "saved" && styles.tabTextActive]}>
-                Saved Accounts
+                {t("sendMoney.savedAccounts")}
               </Text>
             </TouchableOpacity>
 
@@ -181,7 +181,7 @@ export default function ContactsModal({ visible, onClose, onSelectContact }: Con
                 color={activeTab === "device" ? "#E25A17" : "#999"}
               />
               <Text style={[styles.tabText, activeTab === "device" && styles.tabTextActive]}>
-                Device Contacts
+                {t("sendMoney.deviceContacts")}
               </Text>
             </TouchableOpacity>
           </View>
@@ -191,7 +191,7 @@ export default function ContactsModal({ visible, onClose, onSelectContact }: Con
             <Ionicons name="search" size={20} color="#999" style={styles.searchIcon} />
             <TextInput
               style={styles.searchInput}
-              placeholder={`Search ${activeTab === "saved" ? "saved accounts" : "contacts"}...`}
+              placeholder={activeTab === "saved" ? t("sendMoney.searchSavedPlaceholder") : t("sendMoney.searchDevicePlaceholder")}
               placeholderTextColor="#999"
               value={searchQuery}
               onChangeText={handleSearch}
@@ -210,12 +210,12 @@ export default function ContactsModal({ visible, onClose, onSelectContact }: Con
                 <View style={styles.emptyState}>
                   <Ionicons name="bookmark-outline" size={64} color="#CCC" />
                   <Text style={styles.emptyStateTitle}>
-                    {searchQuery ? "No accounts found" : "No Saved Accounts"}
+                    {searchQuery ? t("sendMoney.noContactsFound") : t("sendMoney.noSavedAccounts")}
                   </Text>
                   <Text style={styles.emptyStateText}>
                     {searchQuery
-                      ? "Try a different search term"
-                      : "Save frequently used accounts for quick access"}
+                      ? t("sendMoney.tryDifferentSearch")
+                      : t("sendMoney.saveAccountsInstruction")}
                   </Text>
                 </View>
               ) : (
@@ -239,15 +239,15 @@ export default function ContactsModal({ visible, onClose, onSelectContact }: Con
             ) : !hasContactPermission ? (
               <View style={styles.emptyState}>
                 <Ionicons name="lock-closed-outline" size={64} color="#CCC" />
-                <Text style={styles.emptyStateTitle}>Permission Required</Text>
+                <Text style={styles.emptyStateTitle}>{t("sendMoney.permissionRequiredTitle")}</Text>
                 <Text style={styles.emptyStateText}>
-                  Grant contacts permission to access your device contacts
+                  {t("sendMoney.grantContactsPermission")}
                 </Text>
                 <TouchableOpacity
                   style={styles.permissionButton}
                   onPress={loadDeviceContacts}
                 >
-                  <Text style={styles.permissionButtonText}>Grant Permission</Text>
+                  <Text style={styles.permissionButtonText}>{t("sendMoney.grantPermission")}</Text>
                 </TouchableOpacity>
               </View>
             ) : filteredDevice.length === 0 ? (
@@ -275,7 +275,7 @@ export default function ContactsModal({ visible, onClose, onSelectContact }: Con
                   <View style={styles.contactInfo}>
                     <Text style={styles.contactName}>{contact.name}</Text>
                     <Text style={styles.contactAccount}>
-                      {contact.phoneNumbers?.[0] || contact.accountNumber || "No phone"}
+                      {contact.phoneNumbers?.[0] || contact.accountNumber || t("sendMoney.noPhone")}
                     </Text>
                   </View>
                   <Ionicons name="chevron-forward" size={20} color="#999" />

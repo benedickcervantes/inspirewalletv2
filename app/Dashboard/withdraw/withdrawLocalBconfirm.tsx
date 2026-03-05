@@ -4,22 +4,24 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useState } from "react";
 import {
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { getOrCreateMainWallet, submitWithdrawalRequest } from "../../../configs/api";
+import { useLanguage } from "../../../context/LanguageContext";
 
 export default function WithdrawLocalBConfirm() {
   const navigation = useNavigation();
   const route = useRoute();
+  const { t } = useLanguage();
   const params = (route.params || {}) as { method?: string; accountNumber?: string; accountHolderName?: string; bankName?: string; branchName?: string; amount?: string; email?: string };
   const [showAlertModal, setShowAlertModal] = useState(false);
   const [alertConfig, setAlertConfig] = useState<{ title: string; message: string }>({ title: "", message: "" });
@@ -43,7 +45,7 @@ export default function WithdrawLocalBConfirm() {
         try {
           const user = JSON.parse(userJson) as { hasPasscode?: boolean };
           setHasPasscode(!!user?.hasPasscode);
-        } catch (_) {}
+        } catch (_) { }
       }
     })();
   }, []);
@@ -55,14 +57,14 @@ export default function WithdrawLocalBConfirm() {
     try {
       const accessToken = await AsyncStorage.getItem("access_token");
       if (!accessToken) {
-        setAlertConfig({ title: "Error", message: "Please log in to submit a withdrawal request." });
+        setAlertConfig({ title: t("common.error"), message: t("withdraw.errorLogin") });
         setShowAlertModal(true);
         setIsSubmitting(false);
         return;
       }
       const { success: walletSuccess, wallet } = await getOrCreateMainWallet(accessToken);
       if (!walletSuccess || !wallet?.id) {
-        setAlertConfig({ title: "Error", message: "Could not load wallet. Please try again." });
+        setAlertConfig({ title: t("common.error"), message: t("withdraw.errorLoadWallet") });
         setShowAlertModal(true);
         setIsSubmitting(false);
         return;
@@ -84,8 +86,8 @@ export default function WithdrawLocalBConfirm() {
         setShowPasscodeModal(false);
         setPasscode("");
         setAlertConfig({
-          title: "Success",
-          message: "Your withdrawal request has been submitted successfully!",
+          title: t("withdraw.successTitle"),
+          message: t("withdraw.successMessage"),
         });
         setShowAlertModal(true);
         setTimeout(() => {
@@ -94,15 +96,15 @@ export default function WithdrawLocalBConfirm() {
         }, 2000);
       } else {
         setAlertConfig({
-          title: "Error",
-          message: result.error || "Failed to submit withdrawal request. Please try again.",
+          title: t("common.error"),
+          message: result.error || t("withdraw.errorSubmit"),
         });
         setShowAlertModal(true);
         if (passcodeToSend) setPasscode("");
       }
     } catch (error) {
       console.error("Error submitting withdrawal:", error);
-      setAlertConfig({ title: "Error", message: "An unexpected error occurred. Please try again." });
+      setAlertConfig({ title: t("common.error"), message: t("deposit.unexpectedError") || "An unexpected error occurred. Please try again." });
       setShowAlertModal(true);
       if (passcodeToSend) setPasscode("");
     } finally {
@@ -147,7 +149,7 @@ export default function WithdrawLocalBConfirm() {
             <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
           </TouchableOpacity>
 
-          <Text style={styles.headerTitle}>Withdrawal Request</Text>
+          <Text style={styles.headerTitle}>{t("withdraw.title")}</Text>
 
           <TouchableOpacity style={styles.refreshButton}>
             <Ionicons name="refresh" size={24} color="#FFFFFF" />
@@ -179,22 +181,22 @@ export default function WithdrawLocalBConfirm() {
         >
           {/* Title */}
           <View style={styles.titleContainer}>
-            <Text style={styles.title}>Review & Confirm</Text>
-            <Text style={styles.subtitle}>Review your withdrawal details</Text>
+            <Text style={styles.title}>{t("withdraw.reviewConfirm")}</Text>
+            <Text style={styles.subtitle}>{t("withdraw.details")}</Text>
           </View>
 
           {/* Details Card */}
           <View style={styles.detailsCard}>
             <View style={styles.orangeHeader}>
-              <Text style={styles.orangeHeaderText}>Withdrawal Details</Text>
+              <Text style={styles.orangeHeaderText}>{t("withdraw.details")}</Text>
             </View>
 
             {/* Withdrawal Method */}
             <View style={styles.detailRow}>
               <View style={styles.leftBorder} />
               <View style={styles.detailContent}>
-                <Text style={styles.detailLabel}>Withdrawal Method</Text>
-                <Text style={styles.detailValue}>Local Bank</Text>
+                <Text style={styles.detailLabel}>{t("withdraw.withdrawalMethod")}</Text>
+                <Text style={styles.detailValue}>{t("withdraw.bankTransfer")}</Text>
               </View>
             </View>
 
@@ -202,7 +204,7 @@ export default function WithdrawLocalBConfirm() {
             <View style={styles.detailRow}>
               <View style={styles.leftBorder} />
               <View style={styles.detailContent}>
-                <Text style={styles.detailLabel}>Bank Account Number *</Text>
+                <Text style={styles.detailLabel}>{t("withdraw.accNumber")}</Text>
                 <Text style={styles.detailValue}>{accountNumber}</Text>
               </View>
             </View>
@@ -211,7 +213,7 @@ export default function WithdrawLocalBConfirm() {
             <View style={styles.detailRow}>
               <View style={styles.leftBorder} />
               <View style={styles.detailContent}>
-                <Text style={styles.detailLabel}>Account Holder Name *</Text>
+                <Text style={styles.detailLabel}>{t("withdraw.accHolder")}</Text>
                 <Text style={styles.detailValue}>{accountHolderName}</Text>
               </View>
             </View>
@@ -220,7 +222,7 @@ export default function WithdrawLocalBConfirm() {
             <View style={styles.detailRow}>
               <View style={styles.leftBorder} />
               <View style={styles.detailContent}>
-                <Text style={styles.detailLabel}>Bank Name *</Text>
+                <Text style={styles.detailLabel}>{t("withdraw.bankName")}</Text>
                 <Text style={styles.detailValue}>{bankName}</Text>
               </View>
             </View>
@@ -229,7 +231,7 @@ export default function WithdrawLocalBConfirm() {
             <View style={styles.detailRow}>
               <View style={styles.leftBorder} />
               <View style={styles.detailContent}>
-                <Text style={styles.detailLabel}>Branch Name *</Text>
+                <Text style={styles.detailLabel}>{t("withdraw.branchName")}</Text>
                 <Text style={styles.detailValue}>{branchName}</Text>
               </View>
             </View>
@@ -238,7 +240,7 @@ export default function WithdrawLocalBConfirm() {
             <View style={styles.detailRow}>
               <View style={styles.leftBorder} />
               <View style={styles.detailContent}>
-                <Text style={styles.detailLabel}>Email Address *</Text>
+                <Text style={styles.detailLabel}>{t("withdraw.email")}</Text>
                 <Text style={styles.detailValue}>{email}</Text>
               </View>
             </View>
@@ -246,7 +248,7 @@ export default function WithdrawLocalBConfirm() {
 
           {/* Withdrawal Amount Card */}
           <View style={styles.amountCard}>
-            <Text style={styles.amountLabel}>Withdrawal Amount (₱) *</Text>
+            <Text style={styles.amountLabel}>{t("withdraw.amountLabel")}</Text>
             <View style={styles.amountBox}>
               <Text style={styles.amountValue}>{formatAmount(amount)}</Text>
             </View>
@@ -264,7 +266,7 @@ export default function WithdrawLocalBConfirm() {
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
             >
-              <Text style={styles.confirmText}>Confirm</Text>
+              <Text style={styles.confirmText}>{t("withdraw.confirm")}</Text>
               <Ionicons name="checkmark" size={20} color="#FFFFFF" />
             </LinearGradient>
           </TouchableOpacity>
@@ -284,40 +286,40 @@ export default function WithdrawLocalBConfirm() {
             behavior={Platform.OS === "ios" ? "padding" : "height"}
             keyboardVerticalOffset={Platform.OS === "ios" ? 40 : 0}
           >
-          <View style={styles.alertOverlay}>
-            <View style={styles.passcodeModalContent}>
-              <Text style={styles.passcodeModalTitle}>Enter your passcode</Text>
-              <TextInput
-                style={styles.passcodeInput}
-                value={passcode}
-                onChangeText={(t) => setPasscode(t.replace(/\D/g, "").slice(0, 4))}
-                placeholder="••••"
-                placeholderTextColor="#999"
-                secureTextEntry
-                maxLength={4}
-                keyboardType="number-pad"
-                editable={!isSubmitting}
-              />
-              <View style={styles.passcodeModalButtons}>
-                <TouchableOpacity
-                  style={[styles.passcodeModalButton, styles.passcodeModalButtonCancel]}
-                  onPress={() => { setShowPasscodeModal(false); setPasscode(""); }}
-                  disabled={isSubmitting}
-                >
-                  <Text style={styles.passcodeModalButtonCancelText}>Cancel</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.passcodeModalButton, styles.passcodeModalButtonConfirm]}
-                  onPress={handlePasscodeConfirm}
-                  disabled={isSubmitting || passcode.length !== 4}
-                >
-                  <LinearGradient colors={["#E25A17", "#F28934"]} style={styles.passcodeModalButtonGradient}>
-                    <Text style={styles.passcodeModalButtonConfirmText}>Confirm</Text>
-                  </LinearGradient>
-                </TouchableOpacity>
+            <View style={styles.alertOverlay}>
+              <View style={styles.passcodeModalContent}>
+                <Text style={styles.passcodeModalTitle}>{t("withdraw.enterPasscode")}</Text>
+                <TextInput
+                  style={styles.passcodeInput}
+                  value={passcode}
+                  onChangeText={(t) => setPasscode(t.replace(/\D/g, "").slice(0, 4))}
+                  placeholder="••••"
+                  placeholderTextColor="#999"
+                  secureTextEntry
+                  maxLength={4}
+                  keyboardType="number-pad"
+                  editable={!isSubmitting}
+                />
+                <View style={styles.passcodeModalButtons}>
+                  <TouchableOpacity
+                    style={[styles.passcodeModalButton, styles.passcodeModalButtonCancel]}
+                    onPress={() => { setShowPasscodeModal(false); setPasscode(""); }}
+                    disabled={isSubmitting}
+                  >
+                    <Text style={styles.passcodeModalButtonCancelText}>{t("common.cancel")}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.passcodeModalButton, styles.passcodeModalButtonConfirm]}
+                    onPress={handlePasscodeConfirm}
+                    disabled={isSubmitting || passcode.length !== 4}
+                  >
+                    <LinearGradient colors={["#E25A17", "#F28934"]} style={styles.passcodeModalButtonGradient}>
+                      <Text style={styles.passcodeModalButtonConfirmText}>{t("withdraw.confirm")}</Text>
+                    </LinearGradient>
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
-          </View>
           </KeyboardAvoidingView>
         </Modal>
 
@@ -346,7 +348,7 @@ export default function WithdrawLocalBConfirm() {
                   }
                 }}
               >
-                <Text style={styles.alertButtonText}>OK</Text>
+                <Text style={styles.alertButtonText}>{t("common.ok")}</Text>
               </TouchableOpacity>
             </LinearGradient>
           </View>
