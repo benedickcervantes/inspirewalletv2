@@ -1,5 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
+import { registerIndieID } from 'native-notify';
 import { useEffect, useRef, useState } from "react";
 import { getMe } from "../../configs/api";
 import type { RootStackParamList } from "../../types/navigation";
@@ -57,6 +58,16 @@ export default function AuthLoader() {
 
         // Always store user so Dashboard has userData (backend-only, no Firebase)
         await AsyncStorage.setItem("user", JSON.stringify(result.user));
+
+        // Register device for Indie Push Notifications on app load if already logged in
+        const userObj = result.user as any;
+        const userId = userObj?.id || userObj?._id;
+        const appId = process.env.EXPO_PUBLIC_NATIVE_NOTIFY_APP_ID;
+        const appToken = process.env.EXPO_PUBLIC_NATIVE_NOTIFY_APP_TOKEN;
+
+        if (userId && appId && appToken) {
+          registerIndieID(String(userId), Number(appId), appToken);
+        }
 
         const registrationPasscodePending = await AsyncStorage.getItem("registrationPasscodePending");
         const passcodeLoginComplete = await AsyncStorage.getItem("passcodeLoginComplete");

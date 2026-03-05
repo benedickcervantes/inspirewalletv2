@@ -2,7 +2,7 @@
   "expo": {
     "name": "InspireWalletv3",
     "slug": "InspireWalletv3",
-    "version": "1.0.0",
+    "version": "3.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/Startup [DONE].png",
     "scheme": "inspirewalletv3",
@@ -10,6 +10,7 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
+      "bundleIdentifier": "com.inspire.inspirewallet",
       "infoPlist": {
         "NSContactsUsageDescription": "This app needs access to your contacts to help you select recipients for transfers."
       }
@@ -19,6 +20,7 @@
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/Startup [DONE].png"
       },
+      "package": "com.inspire.inspirewallet",
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "permissions": [
@@ -53,6 +55,17 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "owner": "amurobrian18",
+    "extra": {
+      "eas": {
+        "projectId": "81d5c41e-b862-48d6-a14d-21246b09c564"
+      }
+    },
+    "updates": {
+      "url": "https://u.expo.dev/81d5c41e-b862-48d6-a14d-21246b09c564",
+      "enabled": true,
+      "fallbackToCacheTimeout": 0
     }
   }
 }

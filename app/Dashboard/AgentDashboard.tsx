@@ -25,6 +25,7 @@ import {
     getTransactions,
 } from "../../configs/api";
 import { useLanguage } from "../../context/LanguageContext";
+import CustomLoader from "../Loader/CustomLoader";
 
 interface CommissionTransaction {
   id: string;
@@ -40,7 +41,7 @@ export default function AgentDashboard() {
   const { t } = useLanguage();
   const { width } = useWindowDimensions();
   const horizontalPadding = width < 375 ? 16 : 20;
-  const [loading, setLoading] = useState(true);
+  const [initialLoad, setInitialLoad] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [agentCommission, setAgentCommission] = useState(0);
   const [currencySymbol, setCurrencySymbol] = useState("₱");
@@ -179,8 +180,7 @@ export default function AgentDashboard() {
 
   useFocusEffect(
     useCallback(() => {
-      setLoading(true);
-      fetchData().finally(() => setLoading(false));
+      fetchData().finally(() => setInitialLoad(false));
     }, [fetchData])
   );
 
@@ -205,6 +205,10 @@ export default function AgentDashboard() {
       // User cancelled or share failed
     }
   };
+
+  if (initialLoad) {
+    return <CustomLoader text="LOADING AGENT DASHBOARD..." />;
+  }
 
   return (
     <View style={styles.container}>
@@ -241,7 +245,7 @@ export default function AgentDashboard() {
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
-              refreshing={loading || refreshing}
+              refreshing={refreshing}
               onRefresh={onRefresh}
               tintColor="#E25A17"
             />
