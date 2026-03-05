@@ -4,7 +4,7 @@
     "slug": "Inspire-Wallet",
     "version": "3.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/Startup [DONE].png",
+    "icon": "./assets/images/Startup [DONE].jpg",
     "scheme": "inspirewalletv3",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -18,7 +18,7 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/Startup [DONE].png"
+        "foregroundImage": "./assets/images/Startup [DONE].jpg"
       },
       "package": "com.inspire.inspirewallet",
       "edgeToEdgeEnabled": true,
@@ -29,14 +29,14 @@
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/Startup [DONE].png"
+      "favicon": "./assets/images/Startup [DONE]..jpg"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/Startup [DONE].png",
+          "image": "./assets/images/Startup [DONE].jpg",
           "resizeMode": "cover",
           "backgroundColor": "#ffffff",
           "dark": {
