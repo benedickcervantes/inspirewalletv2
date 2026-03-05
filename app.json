@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Inspire Wallet",
-    "slug": "Inspire-Wallet",
+    "slug": "investor-wallet",
     "version": "3.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/Startup [DONE].jpg",
@@ -49,6 +49,17 @@
         "expo-contacts",
         {
           "contactsPermission": "Allow InspireWallet to access your contacts to select transfer recipients."
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          },
+          "ios": {
+            "usesCleartextTraffic": true
+          }
         }
       ]
     ],
