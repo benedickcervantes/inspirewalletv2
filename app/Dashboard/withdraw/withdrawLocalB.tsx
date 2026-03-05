@@ -1,6 +1,7 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { doc, getDoc } from "firebase/firestore";
 import { useCallback, useEffect, useState } from "react";
 import {
@@ -14,6 +15,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { getOrCreateMainWallet } from "../../../configs/api";
 import { auth, firestore } from "../../../configs/firebase";
 import { useLanguage } from "../../../context/LanguageContext";
 
@@ -44,6 +46,7 @@ export default function BankWithdrawal() {
   const [userData, setUserData] = useState<Record<string, unknown> | null>(
     null,
   );
+  const [availableBalance, setAvailableBalance] = useState(0);
 
   const fetchUserData = useCallback(async () => {
     if (!auth || !firestore) return;
@@ -70,6 +73,27 @@ export default function BankWithdrawal() {
     fetchUserData();
   }, [fetchUserData]);
 
+  useEffect(() => {
+    const fetchWalletBalance = async () => {
+      try {
+        const accessToken = await AsyncStorage.getItem("access_token");
+        if (!accessToken) return;
+        const { success, wallet } = await getOrCreateMainWallet(accessToken);
+        if (success && wallet?.balance != null) {
+          const bal = parseFloat(String(wallet.balance));
+          setAvailableBalance(Number.isNaN(bal) ? 0 : bal);
+        }
+      } catch (error) {
+        console.error(
+          "Error fetching available balance for bank withdrawal",
+          error,
+        );
+      }
+    };
+
+    fetchWalletBalance();
+  }, []);
+
   const handleContinue = () => {
     const newErrors: Record<string, string> = {};
 
@@ -88,9 +112,12 @@ export default function BankWithdrawal() {
       if (amountNum <= 0) {
         newErrors.withdrawalAmount = t("withdraw.validation.invalidAmount");
       } else {
-        const availableBalance = (userData?.availBalanceAmount as number) || 0;
-        if (amountNum > availableBalance) {
-          newErrors.withdrawalAmount = t("withdraw.validation.insufficient").replace("{balance}", availableBalance.toLocaleString());
+        const walletBalance =
+          availableBalance || (userData?.availBalanceAmount as number) || 0;
+        if (amountNum > walletBalance) {
+          newErrors.withdrawalAmount = t(
+            "withdraw.validation.insufficient",
+          ).replace("{balance}", walletBalance.toLocaleString());
         }
       }
     }

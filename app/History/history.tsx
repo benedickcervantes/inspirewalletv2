@@ -1452,16 +1452,6 @@ const styles = StyleSheet.create({
   paginationArrowDisabled: {
     opacity: 0.3,
   },
-  paginationResultText: {
-    fontSize: 14,
-    color: "#687076",
-    fontWeight: "500",
-  },
-  paginationButtons: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
   pageButton: {
     width: 32,
     height: 32,
