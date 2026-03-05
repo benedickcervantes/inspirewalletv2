@@ -7,17 +7,16 @@ import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-    ActivityIndicator,
-    Keyboard,
-    Modal,
-    Platform,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Keyboard,
+  Modal,
+  Platform,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -25,6 +24,7 @@ import { getTimeDeposits, submitTravelProtection } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
 import type { RootStackParamList } from "../../../types/navigation";
 import { useResponsive } from "../../../utils/responsive";
+import CustomLoader from "../../Loader/CustomLoader";
 import TravelProtectDetails from "./TravelProtectDetails";
 import TravelProtectFinanInfo from "./TravelProtectFinanInfo";
 import TravelProtectPerDeatails from "./TravelProtectPerDeatails";
@@ -836,72 +836,69 @@ export default function TravelProtection() {
   };
 
   return (
-    <>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-      <SafeAreaView
-        style={styles.container}
-        edges={["top", "left", "right", "bottom"]}
-      >
-        {/* Top: Back arrow only */}
-        <View
-          style={[styles.topSection, { paddingHorizontal: horizontalPadding }]}
-        >
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
+    <View style={styles.container}>
+      {loading ? (
+        <>
+          <StatusBar barStyle="light-content" backgroundColor="#E15816" />
+          <CustomLoader text="SUBMITTING" />
+        </>
+      ) : (
+        <>
+          <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+          <SafeAreaView
+            style={styles.safeArea}
+            edges={["top", "left", "right", "bottom"]}
           >
-            <Ionicons name="arrow-back" size={scale(28)} color="#E25A17" />
-          </TouchableOpacity>
-        </View>
-
-        <KeyboardAwareScrollView
-          ref={scrollViewRef}
-          style={styles.container}
-          contentContainerStyle={[
-            styles.scrollContent,
-            dynamicStyles.scrollContent,
-          ]}
-          enableOnAndroid={true}
-          enableAutomaticScroll={true}
-          extraScrollHeight={Platform.OS === "ios" ? 150 : 120}
-          extraHeight={Platform.OS === "android" ? 150 : 120}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-          keyboardOpeningTime={0}
-          enableResetScrollToCoords={false}
-        >
-          {/* Header card inside scroll */}
-          <View style={styles.headerCard}>
-            <LinearGradient
-              colors={["#E25A17", "#F28934"]}
-              style={styles.headerGradient}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 0, y: 1 }}
+            {/* Top: Back arrow only */}
+            <View
+              style={[styles.topSection, { paddingHorizontal: horizontalPadding }]}
             >
-              <MaterialCommunityIcons
-                name="airplane"
-                size={scale(40)}
-                color="#FFFFFF"
-                style={styles.headerIcon}
-              />
-              <Text style={[styles.heroTitle, dynamicStyles.heroTitle]}>
-                {t("travel.title")}
-              </Text>
-              <Text style={[styles.heroSubtitle, dynamicStyles.heroSubtitle]}>
-                {t("travel.subtitle")}
-              </Text>
-            </LinearGradient>
-          </View>
-
-          {loading ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#E25A17" />
-              <Text style={[styles.loadingText, { fontSize: scale(14) }]}>
-                {t("travel.loading")}
-              </Text>
+              <TouchableOpacity
+                style={styles.backButton}
+                onPress={() => navigation.goBack()}
+              >
+                <Ionicons name="arrow-back" size={scale(28)} color="#E25A17" />
+              </TouchableOpacity>
             </View>
-          ) : (
-            <>
+
+            <KeyboardAwareScrollView
+              ref={scrollViewRef}
+              style={styles.scrollView}
+              contentContainerStyle={[
+                styles.scrollContent,
+                dynamicStyles.scrollContent,
+              ]}
+              enableOnAndroid={true}
+              enableAutomaticScroll={true}
+              extraScrollHeight={Platform.OS === "ios" ? 150 : 120}
+              extraHeight={Platform.OS === "android" ? 150 : 120}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+              keyboardOpeningTime={0}
+              enableResetScrollToCoords={false}
+            >
+              {/* Header card inside scroll */}
+              <View style={styles.headerCard}>
+                <LinearGradient
+                  colors={["#E25A17", "#F28934"]}
+                  style={styles.headerGradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 0, y: 1 }}
+                >
+                  <MaterialCommunityIcons
+                    name="airplane"
+                    size={scale(40)}
+                    color="#FFFFFF"
+                    style={styles.headerIcon}
+                  />
+                  <Text style={[styles.heroTitle, dynamicStyles.heroTitle]}>
+                    {t("travel.title")}
+                  </Text>
+                  <Text style={[styles.heroSubtitle, dynamicStyles.heroSubtitle]}>
+                    {t("travel.subtitle")}
+                  </Text>
+                </LinearGradient>
+              </View>
               <View style={[styles.infoBanner, dynamicStyles.infoBanner]}>
                 <View style={styles.infoBannerIcon}>
                   <MaterialCommunityIcons
@@ -1353,11 +1350,9 @@ export default function TravelProtection() {
                   passportNumber={passportNumber}
                 />
               )}
-            </>
-          )}
 
-          {/* Buttons at bottom of scroll content */}
-          <View style={styles.buttonContainer}>
+              {/* Buttons at bottom of scroll content */}
+              <View style={styles.buttonContainer}>
             <TouchableOpacity
               style={styles.backButtonBottom}
               onPress={handleBack}
@@ -1389,7 +1384,9 @@ export default function TravelProtection() {
         type={alertConfig.type}
         confirmText={alertConfig.confirmText}
       />
-    </>
+        </>
+      )}
+    </View>
   );
 }
 
@@ -1399,6 +1396,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#F5F5F5",
+  },
+  safeArea: {
+    flex: 1,
+  },
+  scrollView: {
+    flex: 1,
   },
   loadingContainer: {
     flex: 1,
