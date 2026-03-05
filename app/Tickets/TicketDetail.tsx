@@ -2,15 +2,15 @@ import type { Ticket } from "@/lib/tickets";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useEffect, useRef, useState } from "react";
 import {
-    ActivityIndicator,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { useSocket } from "../../context/SocketContext";
 import { subscribeToNewTicketMessage } from "../../lib/ticketingEvents";
@@ -19,7 +19,6 @@ interface TicketDetailProps {
   ticket: Ticket;
   accessToken: string;
   onBack: () => void;
-  onUpdate: () => void;
 }
 
 interface SenderInfo {
@@ -38,21 +37,10 @@ interface TicketMessage {
   sender?: SenderInfo;
 }
 
-interface TicketDetailState {
-  messages: TicketMessage[];
-  message: string;
-  loading: boolean;
-  sending: boolean;
-  error: string | null;
-  wsConnected: boolean;
-  hasAdminReply: boolean;
-}
-
 function TicketDetail({
   ticket,
   accessToken,
   onBack,
-  onUpdate,
 }: TicketDetailProps) {
   const scrollRef = useRef<ScrollView>(null);
   const scrollPositionRef = useRef({ offset: 0, contentHeight: 0, layoutHeight: 0 });
@@ -65,8 +53,7 @@ function TicketDetail({
   const [error, setError] = useState<string | null>(null);
   const [wsConnected, setWsConnected] = useState(false);
 
-  const { isConnected: isSocketConnected, getSocket } = useSocket();
-  const socket = getSocket();
+  const { isConnected: isSocketConnected } = useSocket();
 
   // Sync WS connection state with global socket
   useEffect(() => {
@@ -83,18 +70,10 @@ function TicketDetail({
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
 
-  // Helper function to get sender display name
-  const getSenderName = (msg: TicketMessage): string => {
-    if (msg.sender?.firstName && msg.sender?.lastName) {
-      return `${msg.sender.firstName} ${msg.sender.lastName}`;
-    }
-    return msg.isCustomer ? "You" : "Admin";
-  };
-
   // Fetch messages from backend
-  const fetchMessages = async () => {
+  const fetchMessages = async (showLoader = true) => {
     try {
-      setLoading(true);
+      if (showLoader) setLoading(true);
       setError(null);
 
       if (!accessToken) {
@@ -164,16 +143,18 @@ function TicketDetail({
       setMessages(fetchedMessages);
       console.log(`[TicketDetail] Loaded ${fetchedMessages.length} messages`);
     } catch (err) {
-      if (err instanceof Error && err.name === "AbortError") {
-        setError("Request timed out. Please try again.");
-      } else {
-        const errorMessage =
-          err instanceof Error ? err.message : "Failed to load messages";
-        setError(errorMessage);
+      if (showLoader) {
+        if (err instanceof Error && err.name === "AbortError") {
+          setError("Request timed out. Please try again.");
+        } else {
+          const errorMessage =
+            err instanceof Error ? err.message : "Failed to load messages";
+          setError(errorMessage);
+        }
       }
       console.error("[TicketDetail] Fetch messages error:", err);
     } finally {
-      setLoading(false);
+      if (showLoader) setLoading(false);
     }
   };
 
@@ -182,57 +163,24 @@ function TicketDetail({
     fetchMessages();
   }, [ticket.id, accessToken]);
 
-  // Setup subscription to global ticket events and handle ROOM joining
+  // Setup subscription to global ticket events
   useEffect(() => {
-    console.log(`[TicketDetail] Setting up subscription/room for ticket ${ticket.id}`);
+    console.log(`[TicketDetail] Setting up subscription for ticket ${ticket.id}`);
     
-    const socket = getSocket();
-    console.log(`[TicketDetail] Socket connected: ${isSocketConnected}, Socket exists: ${!!socket}`);
-
-    // Subscribe to ticket message events first
     const unsubscribe = subscribeToNewTicketMessage((newMessage: any) => {
-      console.log("[TicketDetail] Event received in subscription:", newMessage?.id, "for ticket:", newMessage?.ticketId);
-      console.log("[TicketDetail] Current ticket ID:", ticket.id);
-      console.log("[TicketDetail] Message matches ticket:", newMessage?.ticketId === ticket.id);
+      console.log("[TicketDetail] Event received:", newMessage?.id);
       
       if (newMessage.ticketId === ticket.id) {
-        setMessages((prev) => {
-          const isDuplicate = prev.some((m) => m.id === newMessage.id);
-          console.log("[TicketDetail] Is duplicate:", isDuplicate);
-          if (isDuplicate) return prev;
-          console.log("[TicketDetail] Adding new message to state");
-          return [...prev, newMessage];
-        });
+        // Just add the new message instead of refetching all
+        setMessages((prev) => [...prev, newMessage]);
       }
     });
 
-    // Join the ticket room if socket is available
-    if (socket && isSocketConnected) {
-      const roomName = `ticket:${ticket.id}`;
-      console.log(`[TicketDetail] Attempting to join room: ${roomName}`);
-      console.log(`[TicketDetail] Socket ID: ${socket.id}`);
-      console.log(`[TicketDetail] Socket connected state: ${socket.connected}`);
-      
-      // Emit join event
-      socket.emit('join', roomName);
-      console.log(`[TicketDetail] Join event emitted for room: ${roomName}`);
-    } else {
-      console.warn(`[TicketDetail] Cannot join room - Socket not ready: connected=${isSocketConnected}, hasSocket=${!!socket}`);
-    }
-
     return () => {
-      console.log(`[TicketDetail] Cleaning up for ticket ${ticket.id}`);
+      console.log(`[TicketDetail] Cleaning up subscription for ticket ${ticket.id}`);
       unsubscribe();
-      
-      // Leave the room on cleanup
-      const currentSocket = getSocket();
-      if (currentSocket && currentSocket.connected) {
-        const roomName = `ticket:${ticket.id}`;
-        currentSocket.emit('leave', roomName);
-        console.log(`[TicketDetail] Left room: ${roomName}`);
-      }
     };
-  }, [ticket.id, getSocket, isSocketConnected]);
+  }, [ticket.id]);
 
   // Refetch on reconnection
   useEffect(() => {
@@ -241,6 +189,16 @@ function TicketDetail({
       fetchMessages();
     }
   }, [wsConnected]);
+
+  // Fallback: Auto-refresh every 10 seconds if WebSocket isn't delivering messages
+  useEffect(() => {
+    const interval = setInterval(() => {
+      console.log("[TicketDetail] Background refresh (fallback)");
+      fetchMessages(false);
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, [ticket.id, accessToken]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -438,7 +396,7 @@ function TicketDetail({
             <Text style={styles.statusText}>{wsConnected ? "Real-time Ready" : "Reconnecting..."}</Text>
           </View>
         </View>
-        <TouchableOpacity onPress={fetchMessages} style={styles.refreshButton}>
+        <TouchableOpacity onPress={() => fetchMessages(true)} style={styles.refreshButton}>
           <Ionicons name="refresh" size={20} color="#FFFFFF" />
         </TouchableOpacity>
         <View style={{ width: 10 }} />
