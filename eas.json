@@ -1,0 +1,189 @@
+{
+    "cli": {
+        "version": ">= 10.2.4",
+        "appVersionSource": "remote"
+    },
+    "build": {
+        "development": {
+            "distribution": "internal",
+            "channel": "development",
+            "ios": {
+                "simulator": false,
+                "buildConfiguration": "Debug",
+                "distribution": "internal",
+                "autoIncrement": "buildNumber"
+            },
+            "android": {
+                "gradleCommand": ":app:assembleDebug",
+                "buildType": "apk"
+            },
+            "env": {
+                "EXPO_PUBLIC_API_KEY": "eb207ddd91dfd36433dfcf7a32528c793f0694589f0a6485d34061a6f74c5ff1",
+                "EXPO_PUBLIC_SERVICE_ID": "service_sum53wl",
+                "EXPO_PUBLIC_TEMPLATE_ID": "template_ajzg4q5",
+                "EXPO_PUBLIC_CRYPTO_DEPOSIT_TEMPLATE_ID": "template_vyjhg1r",
+                "EXPO_PUBLIC_TRANSFER_TEMPLATE_ID": "template_abzen1m",
+                "EXPO_PUBLIC_OTP_TEMPLATE_ID": "template_vyylag2",
+                "EXPO_PUBLIC_FIREBASE_API_KEY": "AIzaSyD2MVTPMsY3XlgzcIjDWqfJTWP1CsdnFvY",
+                "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN": "inspire-wallet.firebaseapp.com",
+                "EXPO_PUBLIC_FIREBASE_PROJECT_ID": "inspire-wallet",
+                "EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET": "inspire-wallet.firebasestorage.app",
+                "EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "1091026046056",
+                "EXPO_PUBLIC_FIREBASE_APP_ID": "1:1091026046056:web:1440a666dad63cc9cb3fdd",
+                "EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID": "G-HSVD3JN0S9",
+                "EXPO_PUBLIC_NATIVENOTIFY_API_KEY": "QAg2EVLUAIEiCtThmFoSv2",
+                "EXPO_PUBLIC_NATIVE_NOTIFY_APP_ID": "33489",
+                "EXPO_PUBLIC_NATIVE_NOTIFY_APP_TOKEN": "usmMgLOOPspxAgj8pD214K",
+                "EXPO_PUBLIC_DEPOSIT_TEMPLATE_ID": "template_bj4tgxf",
+                "EXPO_PUBLIC_CONTRACT_REQUEST_TEMPLATE_ID": "template_40mouib",
+                "EXPO_PUBLIC_CONTRACT_REQUEST_ORIG_TEMPLATE_ID": "template_c8tkek7",
+                "EXPO_PUBLIC_INSPIRE_FOREX_BASE_URL": "https://forex-rate-api-prod.uc.r.appspot.com/api",
+                "EXPO_PUBLIC_INSPIRE_FOREX_API_KEY": "7bf29c5f-016c-44e1-bc18-276fe91bb89b",
+                "EXPO_PUBLIC_INSPIRE_AGENT_BASE_URL": "https://inspireagentcommission.de.r.appspot.com/api/agents/generate-code",
+                "EXPO_PUBLIC_INSPIRE_AGENT_API_KEY": "14aec1e820b81e962773f620558ad4609d24812309d6bdff393e83c369f47719",
+                "EXPO_PUBLIC_GOOGLE_TRANSLATE_API_KEY": "AIzaSyDw0B7QzCOlTYW7ofPfk916KBIccP9ZQzM",
+                "EXPO_PUBLIC_WEB_REGISTER_URL": "https://inspirewalletwebregister.vercel.app",
+                "EXPO_PUBLIC_PAGEANT_INSPIRE_BASE_URL": "https://pageant-inspire.vercel.app/",
+                "EXPO_PUBLIC_ADMIN_API_URL": "https://inspireadmin.vercel.app",
+                "EXPO_PUBLIC_WALLET_BACKEND_URL": "http://13.55.132.148:3000",
+                "ENCRYPTION_KEY": "NHK2OftSyIoDnahEB0d6zUM93PC51rWAbxswRiGL"
+            }
+        },
+        "preview": {
+            "distribution": "internal",
+            "channel": "preview",
+            "android": {
+                "gradleCommand": ":app:assembleRelease",
+                "buildType": "apk"
+            },
+            "env": {
+                "EXPO_PUBLIC_API_KEY": "eb207ddd91dfd36433dfcf7a32528c793f0694589f0a6485d34061a6f74c5ff1",
+                "EXPO_PUBLIC_SERVICE_ID": "service_sum53wl",
+                "EXPO_PUBLIC_TEMPLATE_ID": "template_ajzg4q5",
+                "EXPO_PUBLIC_CRYPTO_DEPOSIT_TEMPLATE_ID": "template_vyjhg1r",
+                "EXPO_PUBLIC_TRANSFER_TEMPLATE_ID": "template_abzen1m",
+                "EXPO_PUBLIC_OTP_TEMPLATE_ID": "template_vyylag2",
+                "EXPO_PUBLIC_FIREBASE_API_KEY": "AIzaSyD2MVTPMsY3XlgzcIjDWqfJTWP1CsdnFvY",
+                "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN": "inspire-wallet.firebaseapp.com",
+                "EXPO_PUBLIC_FIREBASE_PROJECT_ID": "inspire-wallet",
+                "EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET": "inspire-wallet.firebasestorage.app",
+                "EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "1091026046056",
+                "EXPO_PUBLIC_FIREBASE_APP_ID": "1:1091026046056:web:1440a666dad63cc9cb3fdd",
+                "EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID": "G-HSVD3JN0S9",
+                "EXPO_PUBLIC_NATIVENOTIFY_API_KEY": "QAg2EVLUAIEiCtThmFoSv2",
+                "EXPO_PUBLIC_NATIVE_NOTIFY_APP_ID": "33489",
+                "EXPO_PUBLIC_NATIVE_NOTIFY_APP_TOKEN": "usmMgLOOPspxAgj8pD214K",
+                "EXPO_PUBLIC_DEPOSIT_TEMPLATE_ID": "template_bj4tgxf",
+                "EXPO_PUBLIC_CONTRACT_REQUEST_TEMPLATE_ID": "template_40mouib",
+                "EXPO_PUBLIC_CONTRACT_REQUEST_ORIG_TEMPLATE_ID": "template_c8tkek7",
+                "EXPO_PUBLIC_INSPIRE_FOREX_BASE_URL": "https://forex-rate-api-prod.uc.r.appspot.com/api",
+                "EXPO_PUBLIC_INSPIRE_FOREX_API_KEY": "7bf29c5f-016c-44e1-bc18-276fe91bb89b",
+                "EXPO_PUBLIC_INSPIRE_AGENT_BASE_URL": "https://inspireagentcommission.de.r.appspot.com/api/agents/generate-code",
+                "EXPO_PUBLIC_INSPIRE_AGENT_API_KEY": "14aec1e820b81e962773f620558ad4609d24812309d6bdff393e83c369f47719",
+                "EXPO_PUBLIC_GOOGLE_TRANSLATE_API_KEY": "AIzaSyDw0B7QzCOlTYW7ofPfk916KBIccP9ZQzM",
+                "EXPO_PUBLIC_WEB_REGISTER_URL": "https://inspirewalletwebregister.vercel.app",
+                "EXPO_PUBLIC_PAGEANT_INSPIRE_BASE_URL": "https://pageant-inspire.vercel.app/",
+                "EXPO_PUBLIC_ADMIN_API_URL": "https://inspireadmin.vercel.app",
+                "EXPO_PUBLIC_WALLET_BACKEND_URL": "http://13.55.132.148:3000",
+                "ENCRYPTION_KEY": "NHK2OftSyIoDnahEB0d6zUM93PC51rWAbxswRiGL"
+            }
+        },
+        "production": {
+            "channel": "production",
+            "autoIncrement": true,
+            "ios": {
+                "simulator": false,
+                "buildConfiguration": "Release",
+                "distribution": "store"
+            },
+            "android": {
+                "gradleCommand": ":app:bundleRelease",
+                "buildType": "app-bundle"
+            },
+            "env": {
+                "EXPO_PUBLIC_API_KEY": "eb207ddd91dfd36433dfcf7a32528c793f0694589f0a6485d34061a6f74c5ff1",
+                "EXPO_PUBLIC_SERVICE_ID": "service_sum53wl",
+                "EXPO_PUBLIC_TEMPLATE_ID": "template_ajzg4q5",
+                "EXPO_PUBLIC_CRYPTO_DEPOSIT_TEMPLATE_ID": "template_vyjhg1r",
+                "EXPO_PUBLIC_TRANSFER_TEMPLATE_ID": "template_abzen1m",
+                "EXPO_PUBLIC_OTP_TEMPLATE_ID": "template_vyylag2",
+                "EXPO_PUBLIC_FIREBASE_API_KEY": "AIzaSyD2MVTPMsY3XlgzcIjDWqfJTWP1CsdnFvY",
+                "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN": "inspire-wallet.firebaseapp.com",
+                "EXPO_PUBLIC_FIREBASE_PROJECT_ID": "inspire-wallet",
+                "EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET": "inspire-wallet.firebasestorage.app",
+                "EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "1091026046056",
+                "EXPO_PUBLIC_FIREBASE_APP_ID": "1:1091026046056:web:1440a666dad63cc9cb3fdd",
+                "EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID": "G-HSVD3JN0S9",
+                "EXPO_PUBLIC_NATIVENOTIFY_API_KEY": "QAg2EVLUAIEiCtThmFoSv2",
+                "EXPO_PUBLIC_NATIVE_NOTIFY_APP_ID": "33489",
+                "EXPO_PUBLIC_NATIVE_NOTIFY_APP_TOKEN": "usmMgLOOPspxAgj8pD214K",
+                "EXPO_PUBLIC_DEPOSIT_TEMPLATE_ID": "template_bj4tgxf",
+                "EXPO_PUBLIC_CONTRACT_REQUEST_TEMPLATE_ID": "template_40mouib",
+                "EXPO_PUBLIC_CONTRACT_REQUEST_ORIG_TEMPLATE_ID": "template_c8tkek7",
+                "EXPO_PUBLIC_INSPIRE_FOREX_BASE_URL": "https://forex-rate-api-prod.uc.r.appspot.com/api",
+                "EXPO_PUBLIC_INSPIRE_FOREX_API_KEY": "7bf29c5f-016c-44e1-bc18-276fe91bb89b",
+                "EXPO_PUBLIC_INSPIRE_AGENT_BASE_URL": "https://inspireagentcommission.de.r.appspot.com/api/agents/generate-code",
+                "EXPO_PUBLIC_INSPIRE_AGENT_API_KEY": "14aec1e820b81e962773f620558ad4609d24812309d6bdff393e83c369f47719",
+                "EXPO_PUBLIC_GOOGLE_TRANSLATE_API_KEY": "AIzaSyDw0B7QzCOlTYW7ofPfk916KBIccP9ZQzM",
+                "EXPO_PUBLIC_WEB_REGISTER_URL": "https://inspirewalletwebregister.vercel.app",
+                "EXPO_PUBLIC_PAGEANT_INSPIRE_BASE_URL": "https://pageant-inspire.vercel.app/",
+                "EXPO_PUBLIC_ADMIN_API_URL": "https://inspireadmin.vercel.app",
+                "EXPO_PUBLIC_WALLET_BACKEND_URL": "http://13.55.132.148:3000",
+                "ENCRYPTION_KEY": "NHK2OftSyIoDnahEB0d6zUM93PC51rWAbxswRiGL"
+            }
+        },
+        "development-simulator": {
+            "distribution": "internal",
+            "ios": {
+                "simulator": true
+            },
+            "env": {
+                "EXPO_PUBLIC_API_KEY": "eb207ddd91dfd36433dfcf7a32528c793f0694589f0a6485d34061a6f74c5ff1",
+                "EXPO_PUBLIC_SERVICE_ID": "service_sum53wl",
+                "EXPO_PUBLIC_TEMPLATE_ID": "template_ajzg4q5",
+                "EXPO_PUBLIC_CRYPTO_DEPOSIT_TEMPLATE_ID": "template_vyjhg1r",
+                "EXPO_PUBLIC_TRANSFER_TEMPLATE_ID": "template_abzen1m",
+                "EXPO_PUBLIC_OTP_TEMPLATE_ID": "template_vyylag2",
+                "EXPO_PUBLIC_FIREBASE_API_KEY": "AIzaSyD2MVTPMsY3XlgzcIjDWqfJTWP1CsdnFvY",
+                "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN": "inspire-wallet.firebaseapp.com",
+                "EXPO_PUBLIC_FIREBASE_PROJECT_ID": "inspire-wallet",
+                "EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET": "inspire-wallet.firebasestorage.app",
+                "EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "1091026046056",
+                "EXPO_PUBLIC_FIREBASE_APP_ID": "1:1091026046056:web:1440a666dad63cc9cb3fdd",
+                "EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID": "G-HSVD3JN0S9",
+                "EXPO_PUBLIC_NATIVENOTIFY_API_KEY": "QAg2EVLUAIEiCtThmFoSv2",
+                "EXPO_PUBLIC_NATIVE_NOTIFY_APP_ID": "33489",
+                "EXPO_PUBLIC_NATIVE_NOTIFY_APP_TOKEN": "usmMgLOOPspxAgj8pD214K",
+                "EXPO_PUBLIC_DEPOSIT_TEMPLATE_ID": "template_bj4tgxf",
+                "EXPO_PUBLIC_CONTRACT_REQUEST_TEMPLATE_ID": "template_40mouib",
+                "EXPO_PUBLIC_CONTRACT_REQUEST_ORIG_TEMPLATE_ID": "template_c8tkek7",
+                "EXPO_PUBLIC_INSPIRE_FOREX_BASE_URL": "https://forex-rate-api-prod.uc.r.appspot.com/api",
+                "EXPO_PUBLIC_INSPIRE_FOREX_API_KEY": "7bf29c5f-016c-44e1-bc18-276fe91bb89b",
+                "EXPO_PUBLIC_INSPIRE_AGENT_BASE_URL": "https://inspireagentcommission.de.r.appspot.com/api/agents/generate-code",
+                "EXPO_PUBLIC_INSPIRE_AGENT_API_KEY": "14aec1e820b81e962773f620558ad4609d24812309d6bdff393e83c369f47719",
+                "EXPO_PUBLIC_GOOGLE_TRANSLATE_API_KEY": "AIzaSyDw0B7QzCOlTYW7ofPfk916KBIccP9ZQzM",
+                "EXPO_PUBLIC_WEB_REGISTER_URL": "https://inspirewalletwebregister.vercel.app",
+                "EXPO_PUBLIC_PAGEANT_INSPIRE_BASE_URL": "https://pageant-inspire.vercel.app/",
+                "EXPO_PUBLIC_ADMIN_API_URL": "https://inspireadmin.vercel.app",
+                "EXPO_PUBLIC_WALLET_BACKEND_URL": "http://13.55.132.148:3000",
+                "ENCRYPTION_KEY": "NHK2OftSyIoDnahEB0d6zUM93PC51rWAbxswRiGL"
+            }
+        }
+    },
+    "submit": {
+        "ios": {
+            "ios": {
+                "appleId": "perezbrian.sti@gmail.com",
+                "ascAppId": "6642689775",
+                "appleTeamId": "PMKFU3M49L"
+            }
+        },
+        "production": {
+            "ios": {
+                "appleId": "perezbrian.sti@gmail.com",
+                "ascAppId": "6642689775",
+                "appleTeamId": "PMKFU3M49L"
+            }
+        }
+    }
+}

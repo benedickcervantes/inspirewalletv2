@@ -3,31 +3,32 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  Animated,
-  Image,
-  Linking,
-  Modal,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Animated,
+    Image,
+    Linking,
+    Modal,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import {
-  SafeAreaView,
-  useSafeAreaInsets,
+    SafeAreaView,
+    useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import {
-  getMe,
-  getOrCreateMainWallet,
-  getReferralTree,
-  getTimeDeposits,
-  getTransactions,
+    getMe,
+    getNotifications,
+    getOrCreateMainWallet,
+    getReferralTree,
+    getTimeDeposits,
+    getTransactions,
 } from "../../configs/api";
 import {
-  languageChoiceDoneKey,
-  SUPPORTED_LANGUAGES,
+    languageChoiceDoneKey,
+    SUPPORTED_LANGUAGES,
 } from "../../constants/locales";
 import { useLanguage } from "../../context/LanguageContext";
 import { useSocket } from "../../context/SocketContext";
@@ -201,6 +202,7 @@ export default function Dashboard() {
   const carouselWidth = width - horizontalPadding * 2;
   const [navigatingToProfile, setNavigatingToProfile] = useState(false);
   const [navigatingAction, setNavigatingAction] = useState<string | null>(null);
+  const [initialLoad, setInitialLoad] = useState(true);
   const [userData, setUserData] = useState<Record<string, unknown> | null>(
     null,
   );
@@ -391,6 +393,15 @@ export default function Dashboard() {
       // Check maintenance status for all services
       const status = await getMaintenanceStatus();
       setMaintenanceStatus(status);
+
+      // Fetch unread notifications count
+      const notifRes = await getNotifications(accessToken, { limit: 50 });
+      if (notifRes.success && notifRes.data) {
+        const unreadCount = (notifRes.data as { isRead: boolean }[]).filter(n => !n.isRead).length;
+        setUnreadNotifications(unreadCount);
+      }
+
+      setInitialLoad(false);
     };
 
     init();
@@ -463,9 +474,15 @@ export default function Dashboard() {
       }));
       setRecentTransactions(mapped);
     }
+
+    const notifRes = await getNotifications(accessToken, { limit: 50 });
+    if (notifRes.success && notifRes.data) {
+      const unreadCount = (notifRes.data as { isRead: boolean }[]).filter(n => !n.isRead).length;
+      setUnreadNotifications(unreadCount);
+    }
   }, []);
 
-  const { socket, isConnected: isSocketConnected } = useSocket();
+  const { getSocket, isConnected: isSocketConnected } = useSocket();
 
   useEffect(() => {
     const startPolling = () => {
@@ -488,6 +505,7 @@ export default function Dashboard() {
     }
 
     setConnectionStatus(isSocketConnected);
+    const socket = getSocket();
 
     if (socket && isSocketConnected) {
       const handleWalletUpdate = (payload: {
@@ -519,7 +537,7 @@ export default function Dashboard() {
     return () => {
       stopPolling();
     };
-  }, [isSocketConnected, socket, refetchJwtData]);
+  }, [isSocketConnected, getSocket, refetchJwtData]);
 
   useFocusEffect(
     useCallback(() => {
@@ -625,6 +643,10 @@ export default function Dashboard() {
       console.error("Error opening URL:", error);
     }
   };
+
+  if (initialLoad) {
+    return <CustomLoader text="LOADING DASHBOARD..." />;
+  }
 
   if (navigatingToProfile) {
     return <CustomLoader text="LOADING" />;
