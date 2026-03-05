@@ -840,7 +840,7 @@ export default function TravelProtection() {
       {loading ? (
         <>
           <StatusBar barStyle="light-content" backgroundColor="#E15816" />
-          <CustomLoader text="SUBMITTING" />
+          <CustomLoader text={t("banking.submitting")} />
         </>
       ) : (
         <>

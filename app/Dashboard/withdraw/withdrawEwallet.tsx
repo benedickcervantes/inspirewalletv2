@@ -88,35 +88,34 @@ export default function EWalletWithdrawal() {
     const newErrors: Record<string, string> = {};
 
     if (!selectedWallet) {
-      newErrors.selectedWallet = "Please select an e-wallet type";
+      newErrors.selectedWallet = t("withdraw.validation.walletType");
     }
 
     if (!accountNumber.trim())
-      newErrors.accountNumber = "Wallet account number is required";
+      newErrors.accountNumber = t("withdraw.validation.walletAccNumber");
     if (!accountName.trim())
-      newErrors.accountName = "Wallet account name is required";
+      newErrors.accountName = t("withdraw.validation.walletAccName");
 
     const amountStr = withdrawalAmount.trim();
     if (!amountStr) {
-      newErrors.withdrawalAmount = "Withdrawal amount is required";
+      newErrors.withdrawalAmount = t("withdraw.validation.amount");
     } else {
       const amountNum = parseFloat(amountStr);
       if (isNaN(amountNum) || amountNum <= 0) {
-        newErrors.withdrawalAmount =
-          "Please enter a valid amount greater than 0";
+        newErrors.withdrawalAmount = t("withdraw.validation.invalidAmount");
       } else {
         const availableBalance = (userData?.availBalanceAmount as number) || 0;
         if (amountNum > availableBalance) {
-          newErrors.withdrawalAmount = `Insufficient balance. Available: ₱${availableBalance.toLocaleString()}`;
+          newErrors.withdrawalAmount = t("withdraw.validation.insufficient").replace("{balance}", availableBalance.toLocaleString());
         }
       }
     }
 
     const email = emailAddress.trim();
     if (!email) {
-      newErrors.emailAddress = "Email address is required";
+      newErrors.emailAddress = t("withdraw.validation.email");
     } else if (!isValidEmail(email)) {
-      newErrors.emailAddress = "Please enter a valid email address";
+      newErrors.emailAddress = t("withdraw.validation.invalidEmail");
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -153,7 +152,7 @@ export default function EWalletWithdrawal() {
             <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
           </TouchableOpacity>
 
-          <Text style={styles.headerTitle}>Withdrawal Request</Text>
+          <Text style={styles.headerTitle}>{t("withdraw.title")}</Text>
 
           <TouchableOpacity style={styles.refreshButton}>
             <Ionicons name="refresh" size={24} color="#FFFFFF" />
@@ -197,7 +196,7 @@ export default function EWalletWithdrawal() {
 
             {/* Select E-Wallet Type */}
             <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Select E-Wallet Type</Text>
+              <Text style={styles.sectionTitle}>{t("withdraw.selectEwalletType")}</Text>
 
               <View style={styles.walletOptionsContainer}>
                 {walletTypes.map((wallet) => (
@@ -206,7 +205,7 @@ export default function EWalletWithdrawal() {
                     style={[
                       styles.walletOption,
                       selectedWallet === wallet.id &&
-                        styles.walletOptionSelected,
+                      styles.walletOptionSelected,
                     ]}
                     onPress={() => {
                       setSelectedWallet(wallet.id);
@@ -243,14 +242,14 @@ export default function EWalletWithdrawal() {
                   size={20}
                   color="#E25A17"
                 />
-                <Text style={styles.inputLabel}>Wallet Account Number</Text>
+                <Text style={styles.inputLabel}>{t("withdraw.walletAccNumber")}</Text>
               </View>
               <TextInput
                 style={[
                   styles.input,
                   errors.accountNumber && styles.inputError,
                 ]}
-                placeholder="Enter wallet account number"
+                placeholder={t("withdraw.placeholder.walletAccNumber")}
                 placeholderTextColor="#CCC"
                 value={accountNumber}
                 onChangeText={(text) => {
@@ -277,11 +276,11 @@ export default function EWalletWithdrawal() {
                   size={20}
                   color="#E25A17"
                 />
-                <Text style={styles.inputLabel}>Wallet Account Name</Text>
+                <Text style={styles.inputLabel}>{t("withdraw.walletAccName")}</Text>
               </View>
               <TextInput
                 style={[styles.input, errors.accountName && styles.inputError]}
-                placeholder="Enter wallet account holder name"
+                placeholder={t("withdraw.placeholder.walletAccName")}
                 placeholderTextColor="#CCC"
                 value={accountName}
                 onChangeText={(text) => {
@@ -303,7 +302,7 @@ export default function EWalletWithdrawal() {
             <View style={styles.inputContainer}>
               <View style={styles.labelWithIcon}>
                 <MaterialCommunityIcons name="cash" size={20} color="#E25A17" />
-                <Text style={styles.inputLabel}>Withdrawal Amount (₱) *</Text>
+                <Text style={styles.inputLabel}>{t("withdraw.amountLabel")}</Text>
               </View>
               <View
                 style={[
@@ -342,11 +341,11 @@ export default function EWalletWithdrawal() {
                   size={20}
                   color="#E25A17"
                 />
-                <Text style={styles.inputLabel}>Email Address *</Text>
+                <Text style={styles.inputLabel}>{t("withdraw.email")}</Text>
               </View>
               <TextInput
                 style={[styles.input, errors.emailAddress && styles.inputError]}
-                placeholder="Enter email address"
+                placeholder={t("withdraw.placeholder.email")}
                 placeholderTextColor="#CCC"
                 value={emailAddress}
                 onChangeText={(text) => {
@@ -377,7 +376,7 @@ export default function EWalletWithdrawal() {
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
               >
-                <Text style={styles.continueText}>Continue</Text>
+                <Text style={styles.continueText}>{t("withdraw.continue")}</Text>
                 <Ionicons name="play" size={20} color="#FFFFFF" />
               </LinearGradient>
             </TouchableOpacity>

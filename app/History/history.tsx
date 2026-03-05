@@ -5,20 +5,20 @@ import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Modal,
-    Platform,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    useWindowDimensions,
-    View,
+  ActivityIndicator,
+  Modal,
+  Platform,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import {
-    SafeAreaView,
-    useSafeAreaInsets,
+  SafeAreaView,
+  useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import Svg, { Path } from "react-native-svg";
 import { getOrCreateMainWallet, getTransactions } from "../../configs/api";
@@ -86,7 +86,7 @@ const DeleteIcon = ({
 
 export default function HistoryScreen() {
   const navigation = useNavigation();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
 
@@ -142,7 +142,7 @@ export default function HistoryScreen() {
   const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-PH", {
+    return new Intl.NumberFormat(language === "en" ? "en-PH" : language, {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(amount);
@@ -153,7 +153,7 @@ export default function HistoryScreen() {
       tx.timestamp?.toDate?.() ??
       (tx.createdAt ? new Date(tx.createdAt) : null);
     if (!date) return "";
-    return date.toLocaleString("en-US", {
+    return date.toLocaleString(language === "ko" ? "ko-KR" : language === "ja" ? "ja-JP" : language === "ar" ? "ar-SA" : "en-US", {
       month: "short",
       day: "numeric",
       year: "numeric",
@@ -374,7 +374,7 @@ export default function HistoryScreen() {
         console.error("Failed to save deleted IDs:", error);
       }
     };
-    
+
     if (deletedIds.size > 0) {
       saveDeletedIds();
     }
@@ -587,7 +587,7 @@ export default function HistoryScreen() {
     end.setHours(23, 59, 59, 999);
 
     if (start > end) {
-      alert("Start date cannot be after end date");
+      alert(t("history.invalidDateRange"));
       return;
     }
 
@@ -627,7 +627,7 @@ export default function HistoryScreen() {
   };
 
   if (loading && transactions.length === 0) {
-    return <CustomLoader text="LOADING HISTORY..." />;
+    return <CustomLoader text={t("history.loading")} />;
   }
 
   return (
@@ -665,7 +665,7 @@ export default function HistoryScreen() {
               </TouchableOpacity>
               {showFilterDropdown && (
                 <View style={styles.filterDropdownMenu}>
-                  <Text style={styles.filterDropdownTitle}>Filter by Date</Text>
+                  <Text style={styles.filterDropdownTitle}>{t("history.filterByDate")}</Text>
                   <TouchableOpacity
                     style={[
                       styles.filterOption,
@@ -678,10 +678,10 @@ export default function HistoryScreen() {
                         style={[
                           styles.filterOptionText,
                           selectedFilter === "all" &&
-                            styles.filterOptionTextSelected,
+                          styles.filterOptionTextSelected,
                         ]}
                       >
-                        All Time
+                        {t("history.allTime")}
                       </Text>
                       {selectedFilter === "all" && (
                         <Ionicons name="checkmark" size={18} color="#E15816" />
@@ -700,10 +700,10 @@ export default function HistoryScreen() {
                         style={[
                           styles.filterOptionText,
                           selectedFilter === "today" &&
-                            styles.filterOptionTextSelected,
+                          styles.filterOptionTextSelected,
                         ]}
                       >
-                        Today
+                        {t("history.today")}
                       </Text>
                       {selectedFilter === "today" && (
                         <Ionicons name="checkmark" size={18} color="#E15816" />
@@ -722,10 +722,10 @@ export default function HistoryScreen() {
                         style={[
                           styles.filterOptionText,
                           selectedFilter === "week" &&
-                            styles.filterOptionTextSelected,
+                          styles.filterOptionTextSelected,
                         ]}
                       >
-                        This Week
+                        {t("history.thisWeek")}
                       </Text>
                       {selectedFilter === "week" && (
                         <Ionicons name="checkmark" size={18} color="#E15816" />
@@ -744,10 +744,10 @@ export default function HistoryScreen() {
                         style={[
                           styles.filterOptionText,
                           selectedFilter === "month" &&
-                            styles.filterOptionTextSelected,
+                          styles.filterOptionTextSelected,
                         ]}
                       >
-                        This Month
+                        {t("history.thisMonth")}
                       </Text>
                       {selectedFilter === "month" && (
                         <Ionicons name="checkmark" size={18} color="#E15816" />
@@ -758,7 +758,7 @@ export default function HistoryScreen() {
                     style={[
                       styles.filterOption,
                       selectedFilter === "custom" &&
-                        styles.filterOptionSelected,
+                      styles.filterOptionSelected,
                     ]}
                     onPress={() => applyDateFilter("custom")}
                   >
@@ -767,10 +767,10 @@ export default function HistoryScreen() {
                         style={[
                           styles.filterOptionText,
                           selectedFilter === "custom" &&
-                            styles.filterOptionTextSelected,
+                          styles.filterOptionTextSelected,
                         ]}
                       >
-                        Custom Range
+                        {t("history.customRange")}
                       </Text>
                       {selectedFilter === "custom" && (
                         <Ionicons name="checkmark" size={18} color="#E15816" />
@@ -835,8 +835,8 @@ export default function HistoryScreen() {
             >
               <Text style={styles.selectAllButtonText}>
                 {selectedIds.size === displayTransactions.length
-                  ? "Deselect All"
-                  : "Select All"}
+                  ? t("history.deselectAll")
+                  : t("history.selectAll")}
               </Text>
             </TouchableOpacity>
           )}
@@ -887,9 +887,7 @@ export default function HistoryScreen() {
             currentPage >= totalPages && (
               <View style={styles.endOfListContainer}>
                 <Ionicons name="checkmark-circle" size={20} color="#10B981" />
-                <Text style={styles.endOfListText}>
-                  All transactions loaded
-                </Text>
+                <Text style={styles.endOfListText}>{t("history.allLoaded")}</Text>
               </View>
             )}
         </ScrollView>
@@ -899,10 +897,16 @@ export default function HistoryScreen() {
           <View style={styles.paginationContainer}>
             <View style={styles.paginationRow}>
               <Text style={styles.paginationResultText}>
-                Result {displayTransactions.length}/
-                {transactions.length > 0
-                  ? transactions.length
-                  : displayTransactions.length}
+                {t("history.resultText")
+                  .replace("{count}", String(displayTransactions.length))
+                  .replace(
+                    "{total}",
+                    String(
+                      transactions.length > 0
+                        ? transactions.length
+                        : displayTransactions.length,
+                    ),
+                  )}
               </Text>
 
               <View style={styles.paginationButtons}>
@@ -953,7 +957,7 @@ export default function HistoryScreen() {
                   style={[
                     styles.paginationArrow,
                     (!hasMore || currentPage >= totalPages) &&
-                      styles.paginationArrowDisabled,
+                    styles.paginationArrowDisabled,
                   ]}
                   onPress={handleNextPage}
                   disabled={
@@ -1007,14 +1011,14 @@ export default function HistoryScreen() {
                       color="#E15816"
                     />
                   </View>
-                  <Text style={styles.filterModalTitle}>Select Date Range</Text>
+                  <Text style={styles.filterModalTitle}>{t("history.selectDateRange")}</Text>
                   <Text style={styles.filterModalSubtitle}>
-                    Choose start and end dates for filtering
+                    {t("history.chooseDatesSubtitle")}
                   </Text>
                 </View>
                 <View style={styles.customDateSection}>
                   <View style={styles.dateInputContainer}>
-                    <Text style={styles.dateLabel}>Start Date</Text>
+                    <Text style={styles.dateLabel}>{t("history.startDate")}</Text>
                     <TouchableOpacity
                       style={styles.dateInputButton}
                       onPress={() => setShowStartDatePicker(true)}
@@ -1031,13 +1035,13 @@ export default function HistoryScreen() {
                           !customStartDate && styles.dateInputPlaceholder,
                         ]}
                       >
-                        {customStartDate || "Select start date"}
+                        {customStartDate || t("history.selectStartDate")}
                       </Text>
                       <Ionicons name="chevron-down" size={20} color="#687076" />
                     </TouchableOpacity>
                   </View>
                   <View style={styles.dateInputContainer}>
-                    <Text style={styles.dateLabel}>End Date</Text>
+                    <Text style={styles.dateLabel}>{t("history.endDate")}</Text>
                     <TouchableOpacity
                       style={styles.dateInputButton}
                       onPress={() => setShowEndDatePicker(true)}
@@ -1054,7 +1058,7 @@ export default function HistoryScreen() {
                           !customEndDate && styles.dateInputPlaceholder,
                         ]}
                       >
-                        {customEndDate || "Select end date"}
+                        {customEndDate || t("history.selectEndDate")}
                       </Text>
                       <Ionicons name="chevron-down" size={20} color="#687076" />
                     </TouchableOpacity>
@@ -1064,9 +1068,7 @@ export default function HistoryScreen() {
                     onPress={applyCustomDateRange}
                     activeOpacity={0.8}
                   >
-                    <Text style={styles.applyCustomButtonText}>
-                      Apply Filter
-                    </Text>
+                    {t("history.applyFilter")}
                   </TouchableOpacity>
                 </View>
               </View>
@@ -1115,11 +1117,12 @@ export default function HistoryScreen() {
               >
                 <View style={[styles.filterModal, { padding: modalPadding }]}>
                   <Text style={styles.filterModalTitle}>
-                    Delete {selectedIds.size} Transaction
-                    {selectedIds.size > 1 ? "s" : ""}?
+                    {t("history.deleteTransactionsTitle")
+                      .replace("{count}", String(selectedIds.size))
+                      .replace("{s}", selectedIds.size > 1 ? "s" : "")}
                   </Text>
                   <Text style={styles.deleteModalSubtitle}>
-                    Choose what to do with the selected transactions
+                    {t("history.deleteModalSubtitle")}
                   </Text>
                   <View style={styles.deleteOptionsContainer}>
                     <TouchableOpacity
@@ -1128,7 +1131,7 @@ export default function HistoryScreen() {
                       activeOpacity={0.7}
                     >
                       <Text style={styles.deleteOptionButtonText}>
-                        Delete Selected
+                        {t("history.deleteSelected")}
                       </Text>
                     </TouchableOpacity>
                     <TouchableOpacity
@@ -1137,7 +1140,7 @@ export default function HistoryScreen() {
                       activeOpacity={0.7}
                     >
                       <Text style={styles.keepOptionButtonText}>
-                        Keep Only Selected
+                        {t("history.keepOnlySelected")}
                       </Text>
                     </TouchableOpacity>
                     <TouchableOpacity
@@ -1145,7 +1148,7 @@ export default function HistoryScreen() {
                       onPress={() => setShowDeleteOptions(false)}
                       activeOpacity={0.7}
                     >
-                      <Text style={styles.cancelOptionButtonText}>Cancel</Text>
+                      <Text style={styles.cancelOptionButtonText}>{t("common.cancel")}</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -1157,7 +1160,7 @@ export default function HistoryScreen() {
         {isSelectMode && selectedIds.size > 0 && (
           <View style={styles.deleteActionBar}>
             <Text style={styles.deleteActionBarText}>
-              {selectedIds.size} selected
+              {t("history.selectedCount").replace("{count}", String(selectedIds.size))}
             </Text>
             <View style={styles.actionButtonsContainer}>
               <TouchableOpacity
@@ -1167,14 +1170,14 @@ export default function HistoryScreen() {
                 }}
                 activeOpacity={0.7}
               >
-                <Text style={styles.remainActionButtonText}>Cancel</Text>
+                <Text style={styles.remainActionButtonText}>{t("common.cancel")}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.deleteActionButton}
                 onPress={() => handleBulkDelete()}
                 activeOpacity={0.7}
               >
-                <Text style={styles.deleteActionButtonText}>Delete</Text>
+                <Text style={styles.deleteActionButtonText}>{t("common.delete")}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -1197,42 +1200,42 @@ export default function HistoryScreen() {
                     color="#E15816"
                   />
                 </View>
-                <Text style={styles.detailModalTitle}>Transaction Details</Text>
+                <Text style={styles.detailModalTitle}>{t("history.transactionDetails")}</Text>
                 <TouchableOpacity onPress={() => setShowDetailModal(false)}>
                   <Ionicons name="close" size={24} color="#333" />
                 </TouchableOpacity>
               </View>
               <ScrollView style={styles.detailModalContent} showsVerticalScrollIndicator={false}>
                 <View style={styles.detailAmountContainer}>
-                  <Text style={styles.detailAmountLabel}>AMOUNT</Text>
+                  <Text style={styles.detailAmountLabel}>{t("history.amount")}</Text>
                   <Text style={styles.detailAmountValue}>
                     {CURRENCY_SYMBOL} {formatCurrency(selectedTransaction?.amount ?? 0)}
                   </Text>
                 </View>
 
                 <View style={styles.detailInfoRow}>
-                  <Text style={styles.detailInfoLabel}>Type</Text>
+                  <Text style={styles.detailInfoLabel}>{t("history.type")}</Text>
                   <Text style={styles.detailInfoValue}>
                     {selectedTransaction ? getTransactionTypeLabel(selectedTransaction.type) : "-"}
                   </Text>
                 </View>
 
                 <View style={styles.detailInfoRow}>
-                  <Text style={styles.detailInfoLabel}>Description</Text>
+                  <Text style={styles.detailInfoLabel}>{t("history.description")}</Text>
                   <Text style={styles.detailInfoValue}>
                     {selectedTransaction ? getTransactionDisplayName(selectedTransaction) : "-"}
                   </Text>
                 </View>
 
                 <View style={styles.detailInfoRow}>
-                  <Text style={styles.detailInfoLabel}>Date & Time</Text>
+                  <Text style={styles.detailInfoLabel}>{t("history.dateTime")}</Text>
                   <Text style={styles.detailInfoValue}>
                     {selectedTransaction ? formatDateTime(selectedTransaction) : "-"}
                   </Text>
                 </View>
 
                 <View style={styles.detailInfoRow}>
-                  <Text style={styles.detailInfoLabel}>Transaction ID</Text>
+                  <Text style={styles.detailInfoLabel}>{t("history.id")}</Text>
                   <Text style={[styles.detailInfoValue, styles.detailInfoValueMono]}>
                     {selectedTransaction?.id ?? "-"}
                   </Text>
@@ -1243,7 +1246,7 @@ export default function HistoryScreen() {
                   onPress={() => setShowDetailModal(false)}
                   activeOpacity={0.8}
                 >
-                  <Text style={styles.detailModalCloseButtonText}>Close</Text>
+                  <Text style={styles.detailModalCloseButtonText}>{t("common.close")}</Text>
                 </TouchableOpacity>
               </ScrollView>
             </View>
@@ -1449,24 +1452,36 @@ const styles = StyleSheet.create({
   paginationArrowDisabled: {
     opacity: 0.3,
   },
+  paginationResultText: {
+    fontSize: 14,
+    color: "#687076",
+    fontWeight: "500",
+  },
+  paginationButtons: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
   pageButton: {
-    minWidth: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "transparent",
   },
   pageButtonActive: {
-    backgroundColor: "#E15816",
+    backgroundColor: "#FFF5F0",
+    borderWidth: 1,
+    borderColor: "#E15816",
   },
   pageButtonText: {
     fontSize: 14,
-    fontWeight: "600",
     color: "#687076",
+    fontWeight: "500",
   },
   pageButtonTextActive: {
-    color: "#FFFFFF",
+    color: "#E15816",
     fontWeight: "700",
   },
   pageNumberContainer: {

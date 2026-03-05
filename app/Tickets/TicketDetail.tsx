@@ -12,6 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useLanguage } from "../../context/LanguageContext";
 import { useSocket } from "../../context/SocketContext";
 import { subscribeToNewTicketMessage } from "../../lib/ticketingEvents";
 
@@ -52,6 +53,7 @@ function TicketDetail({
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [wsConnected, setWsConnected] = useState(false);
+  const { t, language } = useLanguage();
 
   const { isConnected: isSocketConnected } = useSocket();
 
@@ -67,7 +69,16 @@ function TicketDetail({
   // Helper function to format timestamp
   const formatTime = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    const locale = language === "ar" ? "ar-SA" : language === "ko" ? "ko-KR" : language === "ja" ? "ja-JP" : "en-US";
+    return date.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
+  };
+
+  // Helper function to get sender display name
+  const getSenderName = (msg: TicketMessage): string => {
+    if (msg.sender?.firstName && msg.sender?.lastName) {
+      return `${msg.sender.firstName} ${msg.sender.lastName}`;
+    }
+    return msg.isCustomer ? t("tickets.you") : t("tickets.admin");
   };
 
   // Fetch messages from backend
@@ -77,7 +88,7 @@ function TicketDetail({
       setError(null);
 
       if (!accessToken) {
-        setError("Authentication required. Please log in.");
+        setError(t("support.loginRequired"));
         onBack();
         return;
       }
@@ -104,17 +115,17 @@ function TicketDetail({
 
       if (!response.ok) {
         if (response.status === 401) {
-          setError("Session expired. Please log in again.");
+          setError(t("common.sessionExpired"));
           onBack();
           return;
         }
         if (response.status === 404) {
-          setError("Ticket not found.");
+          setError(t("tickets.notFound"));
           onBack();
           return;
         }
         if (response.status === 500) {
-          throw new Error("Server error. Please try again later.");
+          throw new Error(t("common.serverError"));
         }
         throw new Error(`HTTP ${response.status}`);
       }
@@ -143,14 +154,12 @@ function TicketDetail({
       setMessages(fetchedMessages);
       console.log(`[TicketDetail] Loaded ${fetchedMessages.length} messages`);
     } catch (err) {
-      if (showLoader) {
-        if (err instanceof Error && err.name === "AbortError") {
-          setError("Request timed out. Please try again.");
-        } else {
-          const errorMessage =
-            err instanceof Error ? err.message : "Failed to load messages";
-          setError(errorMessage);
-        }
+      if (err instanceof Error && err.name === "AbortError") {
+        setError(t("common.timeout"));
+      } else {
+        const errorMessage =
+          err instanceof Error ? err.message : t("support.failedToLoad");
+        setError(errorMessage);
       }
       console.error("[TicketDetail] Fetch messages error:", err);
     } finally {
@@ -165,20 +174,48 @@ function TicketDetail({
 
   // Setup subscription to global ticket events
   useEffect(() => {
-    console.log(`[TicketDetail] Setting up subscription for ticket ${ticket.id}`);
-    
+    console.log(`[TicketDetail] Setting up subscription/room for ticket ${ticket.id}`);
+
+    const socket = getSocket();
+    console.log(`[TicketDetail] Socket connected: ${isSocketConnected}, Socket exists: ${!!socket}`);
+
+    // Subscribe to ticket message events first
     const unsubscribe = subscribeToNewTicketMessage((newMessage: any) => {
-      console.log("[TicketDetail] Event received:", newMessage?.id);
-      
+      console.log("[TicketDetail] Event received in subscription:", newMessage?.id, "for ticket:", newMessage?.ticketId);
+      console.log("[TicketDetail] Current ticket ID:", ticket.id);
+      console.log("[TicketDetail] Message matches ticket:", newMessage?.ticketId === ticket.id);
+
       if (newMessage.ticketId === ticket.id) {
         // Just add the new message instead of refetching all
         setMessages((prev) => [...prev, newMessage]);
       }
     });
 
+    // Join the ticket room if socket is available
+    if (socket && isSocketConnected) {
+      const roomName = `ticket:${ticket.id}`;
+      console.log(`[TicketDetail] Attempting to join room: ${roomName}`);
+      console.log(`[TicketDetail] Socket ID: ${socket.id}`);
+      console.log(`[TicketDetail] Socket connected state: ${socket.connected}`);
+
+      // Emit join event
+      socket.emit('join', roomName);
+      console.log(`[TicketDetail] Join event emitted for room: ${roomName}`);
+    } else {
+      console.warn(`[TicketDetail] Cannot join room - Socket not ready: connected=${isSocketConnected}, hasSocket=${!!socket}`);
+    }
+
     return () => {
       console.log(`[TicketDetail] Cleaning up subscription for ticket ${ticket.id}`);
       unsubscribe();
+
+      // Leave the room on cleanup
+      const currentSocket = getSocket();
+      if (currentSocket && currentSocket.connected) {
+        const roomName = `ticket:${ticket.id}`;
+        currentSocket.emit('leave', roomName);
+        console.log(`[TicketDetail] Left room: ${roomName}`);
+      }
     };
   }, [ticket.id]);
 
@@ -258,7 +295,7 @@ function TicketDetail({
     }
 
     if (trimmed.length > 10000) {
-      setError("Message is too long (max 10000 characters)");
+      setError(t("support.messageTooLong"));
       return;
     }
 
@@ -314,20 +351,20 @@ function TicketDetail({
         );
 
         if (response.status === 401) {
-          setError("Session expired. Please log in again.");
+          setError(t("common.sessionExpired"));
           onBack();
           return;
         }
         if (response.status === 404) {
-          setError("Ticket not found.");
+          setError(t("tickets.notFound"));
           onBack();
           return;
         }
         if (response.status === 400) {
-          throw new Error("Invalid message content");
+          throw new Error(t("support.invalidContent"));
         }
         if (response.status === 500) {
-          throw new Error("Server error. Please try again later.");
+          throw new Error(t("common.serverError"));
         }
         throw new Error(`HTTP ${response.status}`);
       }
@@ -344,14 +381,14 @@ function TicketDetail({
       console.log("[TicketDetail] Message sent successfully");
     } catch (err) {
       if (err instanceof Error && err.name === "AbortError") {
-        setError("Request timed out. Please try again.");
+        setError(t("common.timeout"));
         // Remove optimistic message on timeout
         setMessages((prev) =>
           prev.filter((m) => m.id !== `temp-${Date.now()}`)
         );
       } else {
         const errorMessage =
-          err instanceof Error ? err.message : "Failed to send message";
+          err instanceof Error ? err.message : t("support.failedToSend");
         setError(errorMessage);
       }
       console.error("[TicketDetail] Send message error:", err);
@@ -367,11 +404,11 @@ function TicketDetail({
 
   // Helper function to handle API errors consistently
   const handleApiError = (error: any, context: string) => {
-    let errorMessage = "An error occurred";
+    let errorMessage = t("common.error");
 
     if (error instanceof Error) {
       if (error.name === "AbortError") {
-        errorMessage = "Request timed out. Please try again.";
+        errorMessage = t("common.timeout");
       } else {
         errorMessage = error.message;
       }
@@ -390,10 +427,10 @@ function TicketDetail({
           <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
         </TouchableOpacity>
         <View style={{ flex: 1, marginLeft: 10 }}>
-          <Text style={styles.headerTitle} numberOfLines={1}>Ticket #{ticket.id.slice(0, 8)}</Text>
+          <Text style={styles.headerTitle} numberOfLines={1}>{t("tickets.ticketNo")}{ticket.id.slice(0, 8)}</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <View style={[styles.statusDot, { backgroundColor: wsConnected ? '#4CAF50' : '#f44336' }]} />
-            <Text style={styles.statusText}>{wsConnected ? "Real-time Ready" : "Reconnecting..."}</Text>
+            <Text style={styles.statusText}>{wsConnected ? t("support.realTimeReady") : t("support.reconnecting")}</Text>
           </View>
         </View>
         <TouchableOpacity onPress={() => fetchMessages(true)} style={styles.refreshButton}>
@@ -410,14 +447,14 @@ function TicketDetail({
         {loading ? (
           <View style={styles.centerContent}>
             <ActivityIndicator size="large" color="#E15816" />
-            <Text style={styles.loadingText}>Loading messages...</Text>
+            <Text style={styles.loadingText}>{t("support.loading")}</Text>
           </View>
         ) : error ? (
           <View style={styles.centerContent}>
             <MaterialCommunityIcons name="alert-circle-outline" size={48} color="#E15816" />
             <Text style={styles.errorText}>{error}</Text>
             <TouchableOpacity style={styles.retryButton} onPress={handleRetry}>
-              <Text style={styles.retryButtonText}>Retry</Text>
+              <Text style={styles.retryButtonText}>{t("common.retry")}</Text>
             </TouchableOpacity>
           </View>
         ) : (
@@ -432,7 +469,7 @@ function TicketDetail({
               {messages.length === 0 ? (
                 <View style={styles.emptyState}>
                   <MaterialCommunityIcons name="message-outline" size={48} color="#CCC" />
-                  <Text style={styles.emptyText}>No messages yet</Text>
+                  <Text style={styles.emptyText}>{t("support.noMessagesYet")}</Text>
                 </View>
               ) : (
                 messages.map((msg) => (
@@ -462,7 +499,7 @@ function TicketDetail({
                           ]}
                           numberOfLines={0}
                         >
-                          {msg.content || "(Empty message)"}
+                          {msg.content || t("tickets.emptyMessage")}
                         </Text>
                         <Text
                           style={[
@@ -482,14 +519,14 @@ function TicketDetail({
             {!canUserType && (
               <View style={styles.waitingMessage}>
                 <MaterialCommunityIcons name="clock-outline" size={20} color="#E15816" />
-                <Text style={styles.waitingText}>Waiting for admin response...</Text>
+                <Text style={styles.waitingText}>{t("tickets.waitingForAdmin")}</Text>
               </View>
             )}
 
             <View style={styles.inputBar}>
               <TextInput
                 style={[styles.input, !canUserType && styles.inputDisabled]}
-                placeholder={canUserType ? "Type a reply..." : "Waiting for admin..."}
+                placeholder={canUserType ? t("tickets.replyPlaceholder") : t("tickets.waitingForAdminPlaceholder") || t("tickets.waitingForAdmin")}
                 placeholderTextColor="#999"
                 value={message}
                 onChangeText={setMessage}

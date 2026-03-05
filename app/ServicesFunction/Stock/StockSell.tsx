@@ -135,7 +135,7 @@ export default function StockSell() {
   };
 
   if (isLoading) {
-    return <CustomLoader text="PROCESSING..." />;
+    return <CustomLoader text={t("stock.processing")} />;
   }
 
   return (

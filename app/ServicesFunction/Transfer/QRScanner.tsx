@@ -3,13 +3,14 @@ import { CameraView, useCameraPermissions } from "expo-camera";
 import { LinearGradient } from "expo-linear-gradient";
 import { useState } from "react";
 import {
-    Dimensions,
-    Modal,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  Dimensions,
+  Modal,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from "react-native";
+import { useLanguage } from "../../../context/LanguageContext";
 
 const { width, height } = Dimensions.get("window");
 
@@ -33,6 +34,8 @@ export default function QRScanner({ visible, onClose, onScan }: QRScannerProps) 
     }, 500);
   };
 
+  const { t } = useLanguage();
+
   if (!permission) {
     return null;
   }
@@ -48,9 +51,9 @@ export default function QRScanner({ visible, onClose, onScan }: QRScannerProps) 
         <View style={styles.permissionContainer}>
           <View style={styles.permissionContent}>
             <Ionicons name="camera-outline" size={80} color="#E25A17" />
-            <Text style={styles.permissionTitle}>Camera Permission Required</Text>
+            <Text style={styles.permissionTitle}>{t("sendMoney.cameraPermissionRequired")}</Text>
             <Text style={styles.permissionMessage}>
-              We need your permission to use the camera to scan QR codes
+              {t("sendMoney.cameraPermissionMessage")}
             </Text>
             <TouchableOpacity style={styles.permissionButton} onPress={requestPermission}>
               <LinearGradient
@@ -59,11 +62,11 @@ export default function QRScanner({ visible, onClose, onScan }: QRScannerProps) 
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
               >
-                <Text style={styles.permissionButtonText}>Grant Permission</Text>
+                <Text style={styles.permissionButtonText}>{t("sendMoney.grantPermission")}</Text>
               </LinearGradient>
             </TouchableOpacity>
             <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
-              <Text style={styles.cancelButtonText}>Cancel</Text>
+              <Text style={styles.cancelButtonText}>{t("common.cancel")}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -95,7 +98,7 @@ export default function QRScanner({ visible, onClose, onScan }: QRScannerProps) 
             <TouchableOpacity style={styles.closeButton} onPress={onClose}>
               <Ionicons name="close" size={32} color="#FFFFFF" />
             </TouchableOpacity>
-            <Text style={styles.headerTitle}>Scan QR Code</Text>
+            <Text style={styles.headerTitle}>{t("sendMoney.scanQr")}</Text>
             <View style={styles.placeholder} />
           </LinearGradient>
 
@@ -116,9 +119,9 @@ export default function QRScanner({ visible, onClose, onScan }: QRScannerProps) 
           >
             <View style={styles.instructionContainer}>
               <Ionicons name="scan" size={40} color="#FFFFFF" />
-              <Text style={styles.instructionTitle}>Position QR Code</Text>
+              <Text style={styles.instructionTitle}>{t("sendMoney.positionQrCode")}</Text>
               <Text style={styles.instructionText}>
-                Align the QR code within the frame to scan
+                {t("sendMoney.alignQrFrame")}
               </Text>
             </View>
           </LinearGradient>

@@ -6,6 +6,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useResponsive } from '../../utils/responsive';
 import CustomLoader from '../Loader/CustomLoader';
+import { useLanguage } from '../../context/LanguageContext';
 
 const GRADIENT_START = '#E15816';
 const GRADIENT_END = '#F48F38';
@@ -18,6 +19,7 @@ export default function Welcome() {
   const insets = useSafeAreaInsets();
   const { horizontalPadding } = useResponsive();
   const [showStartup, setShowStartup] = useState(true);
+  const { t } = useLanguage();
 
   useEffect(() => {
     const t = setTimeout(() => setShowStartup(false), 4000);
@@ -25,7 +27,7 @@ export default function Welcome() {
   }, []);
 
   if (showStartup) {
-    return <CustomLoader text="LOADING" />;
+    return <CustomLoader text={t('common.loading')} />;
   }
 
   return (

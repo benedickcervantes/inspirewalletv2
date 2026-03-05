@@ -17,6 +17,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { setPasscode as setPasscodeApi } from '../../configs/api';
+import { useLanguage } from '../../context/LanguageContext';
 import type { NavProp } from '../../types/navigation';
 
 const GRADIENT_START = '#E15816';
@@ -86,6 +87,7 @@ const msgStyles = StyleSheet.create({
 });
 
 export default function CreatePasscode() {
+  const { t } = useLanguage();
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
@@ -105,7 +107,7 @@ export default function CreatePasscode() {
     message: string;
     confirmText: string;
     onConfirm: (() => void) | null;
-  }>({ title: '', message: '', confirmText: 'OK', onConfirm: null });
+  }>({ title: '', message: '', confirmText: t('common.ok'), onConfirm: null });
 
   const shakeAnim = useRef(new Animated.Value(0)).current;
 
@@ -119,7 +121,7 @@ export default function CreatePasscode() {
     setModalConfig({
       title: '',
       message: '',
-      confirmText: 'OK',
+      confirmText: t('common.ok'),
       onConfirm: null,
       ...config,
     });
@@ -165,7 +167,7 @@ export default function CreatePasscode() {
         setStep('confirm');
       } else {
         if (next !== pin) {
-          setError('PINs do not match. Please try again.');
+          setError(t('passcode.errorMismatch'));
           setConfirmPin('');
           triggerShake();
           return;
@@ -179,8 +181,8 @@ export default function CreatePasscode() {
     const accessToken = await AsyncStorage.getItem('access_token');
     if (!accessToken) {
       showModal({
-        title: 'Session Expired',
-        message: 'Please log in again.',
+        title: t('common.sessionExpired'),
+        message: t('common.pleaseLoginAgain'),
         onConfirm: () => (navigation as unknown as NavProp).replace('Login'),
       });
       return;
@@ -192,8 +194,8 @@ export default function CreatePasscode() {
 
     if (!result.success) {
       showModal({
-        title: 'Error',
-        message: result.error || 'Failed to set passcode. Please try again.',
+        title: t('common.error'),
+        message: result.error || t('passcode.errorChangeFailed'),
         onConfirm: () => {
           setStep('create');
           setPin('');
@@ -215,8 +217,8 @@ export default function CreatePasscode() {
 
   const handleHelp = () => {
     showModal({
-      title: 'Create PIN',
-      message: 'Create a 4-digit PIN for quick and secure access to your account. You will need this PIN when logging in or performing sensitive operations.',
+      title: t('passcode.createTitle'),
+      message: t('passcode.helpMessage'),
     });
   };
 
@@ -258,46 +260,46 @@ export default function CreatePasscode() {
           </Animated.View>
 
           <Text style={styles.instructionText}>
-            {step === 'create' ? 'Create a 4-digit PIN' : 'Confirm your 4-digit PIN'}
+            {step === 'create' ? t('passcode.createInstruction') : t('passcode.confirmInstruction')}
           </Text>
 
           <View style={[styles.padContainer, { width: padWidth, maxWidth: maxPadWidth }]}>
-          {[['1', '2', '3'], ['4', '5', '6'], ['7', '8', '9']].map((row, ri) => (
-            <View key={ri} style={styles.padRow}>
-              {row.map((key) => (
-                <TouchableOpacity
-                  key={key}
-                  style={[styles.padButton, { width: btnSize, height: btnSize, borderRadius: btnSize / 2 }]}
-                  onPress={() => handlePress(key)}
-                  disabled={loading}
-                >
-                  <Text style={styles.padButtonText}>{key}</Text>
-                </TouchableOpacity>
-              ))}
+            {[['1', '2', '3'], ['4', '5', '6'], ['7', '8', '9']].map((row, ri) => (
+              <View key={ri} style={styles.padRow}>
+                {row.map((key) => (
+                  <TouchableOpacity
+                    key={key}
+                    style={[styles.padButton, { width: btnSize, height: btnSize, borderRadius: btnSize / 2 }]}
+                    onPress={() => handlePress(key)}
+                    disabled={loading}
+                  >
+                    <Text style={styles.padButtonText}>{key}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            ))}
+            <View style={styles.padRowLast}>
+              <TouchableOpacity
+                style={[styles.padButton, { width: btnSize, height: btnSize, borderRadius: btnSize / 2 }]}
+                onPress={() => handlePress('0')}
+                disabled={loading}
+              >
+                <Text style={styles.padButtonText}>0</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.padButton, styles.padButtonDel, { width: delBtnSize, height: delBtnSize, borderRadius: delBtnSize / 2 }]}
+                onPress={() => handlePress('Del')}
+                disabled={loading}
+              >
+                <Ionicons name="backspace-outline" size={28} color={WHITE} />
+              </TouchableOpacity>
             </View>
-          ))}
-          <View style={styles.padRowLast}>
-            <TouchableOpacity
-              style={[styles.padButton, { width: btnSize, height: btnSize, borderRadius: btnSize / 2 }]}
-              onPress={() => handlePress('0')}
-              disabled={loading}
-            >
-              <Text style={styles.padButtonText}>0</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.padButton, styles.padButtonDel, { width: delBtnSize, height: delBtnSize, borderRadius: delBtnSize / 2 }]}
-              onPress={() => handlePress('Del')}
-              disabled={loading}
-            >
-              <Ionicons name="backspace-outline" size={28} color={WHITE} />
-            </TouchableOpacity>
           </View>
-        </View>
         </View>
 
         {loading && (
           <View style={styles.loadingOverlay}>
-            <Text style={styles.loadingText}>Setting up your PIN...</Text>
+            <Text style={styles.loadingText}>{t('passcode.settingUp')}</Text>
           </View>
         )}
       </LinearGradient>

@@ -259,7 +259,7 @@ export default function Placeholder() {
   const status = statusRaw === "Active" ? t("profile.active") : statusRaw;
 
   if (loading) {
-    return <CustomLoader text="LOADING" />;
+    return <CustomLoader text={t("common.loading")} />;
   }
 
   return (

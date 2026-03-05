@@ -17,6 +17,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { updatePasscode } from '../../configs/api';
+import { useLanguage } from '../../context/LanguageContext';
 import type { NavProp } from '../../types/navigation';
 
 const GRADIENT_START = '#E15816';
@@ -115,6 +116,7 @@ const msgStyles = StyleSheet.create({
 type Step = 'current' | 'new' | 'confirm';
 
 export default function ChangePasscode() {
+  const { t } = useLanguage();
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
@@ -136,7 +138,7 @@ export default function ChangePasscode() {
     confirmText: string;
     onConfirm: (() => void) | null;
     success?: boolean;
-  }>({ title: '', message: '', confirmText: 'OK', onConfirm: null });
+  }>({ title: '', message: '', confirmText: t('common.ok'), onConfirm: null });
 
   const shakeAnim = useRef(new Animated.Value(0)).current;
 
@@ -173,7 +175,7 @@ export default function ChangePasscode() {
     setModalConfig({
       title: '',
       message: '',
-      confirmText: 'OK',
+      confirmText: t('common.ok'),
       onConfirm: null,
       success: false,
       ...config,
@@ -212,7 +214,7 @@ export default function ChangePasscode() {
         setConfirmPasscode('');
       } else {
         if (next !== newPasscode) {
-          setError('Passcodes do not match. Try again.');
+          setError(t('passcode.errorMismatch'));
           setConfirmPasscode('');
           triggerShake();
           return;
@@ -226,8 +228,8 @@ export default function ChangePasscode() {
     const accessToken = await AsyncStorage.getItem('access_token');
     if (!accessToken) {
       showModal({
-        title: 'Session Expired',
-        message: 'Please log in again.',
+        title: t('common.sessionExpired'),
+        message: t('common.pleaseLoginAgain'),
         onConfirm: () => (navigation as unknown as NavProp).replace('Login'),
       });
       return;
@@ -239,8 +241,8 @@ export default function ChangePasscode() {
 
     if (!result.success) {
       showModal({
-        title: 'Could not change passcode',
-        message: result.error || 'Current passcode may be wrong. Please try again.',
+        title: t('passcode.errorChangeFailed'),
+        message: result.error || t('passcode.errorWrongCurrent'),
         onConfirm: () => {
           setStep('current');
           setCurrentPasscode('');
@@ -252,8 +254,8 @@ export default function ChangePasscode() {
     }
 
     showModal({
-      title: 'Passcode updated',
-      message: 'Your passcode has been changed successfully.',
+      title: t('passcode.updatedTitle'),
+      message: t('passcode.updatedMessage'),
       onConfirm: () => (navigation as unknown as NavProp).goBack(),
       success: true,
     });
@@ -262,10 +264,10 @@ export default function ChangePasscode() {
   const stepIndex = step === 'current' ? 1 : step === 'new' ? 2 : 3;
   const instruction =
     step === 'current'
-      ? 'Enter your current passcode'
+      ? t('passcode.instructionCurrent')
       : step === 'new'
-        ? 'Choose a new 4-digit passcode'
-        : 'Re-enter your new passcode';
+        ? t('passcode.instructionNew')
+        : t('passcode.instructionConfirm');
 
   return (
     <>
@@ -282,12 +284,14 @@ export default function ChangePasscode() {
           >
             <Ionicons name="arrow-back" size={26} color={WHITE} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Change passcode</Text>
+          <Text style={styles.headerTitle}>{t('passcode.headerTitle')}</Text>
           <View style={styles.backBtn} />
         </View>
 
         <View style={styles.stepIndicatorWrap}>
-          <Text style={styles.stepLabel}>Step {stepIndex} of 3</Text>
+          <Text style={styles.stepLabel}>
+            {t('passcode.stepIndicator').replace('{step}', String(stepIndex))}
+          </Text>
           <View style={styles.stepDots}>
             {[1, 2, 3].map((i) => (
               <View
@@ -364,7 +368,7 @@ export default function ChangePasscode() {
         {loading && (
           <View style={styles.loadingOverlay}>
             <ActivityIndicator size="large" color={WHITE} />
-            <Text style={styles.loadingText}>Updating passcode...</Text>
+            <Text style={styles.loadingText}>{t('passcode.updating')}</Text>
           </View>
         )}
       </LinearGradient>

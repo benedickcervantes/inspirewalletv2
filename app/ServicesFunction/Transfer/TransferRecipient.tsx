@@ -51,7 +51,7 @@ export const fetchBalanceByType = async (balanceType: string) => {
 };
 
 // Reusable function to load user contacts (loads from device contacts)
-export const loadUserContacts = async (): Promise<Contact[]> => {
+export const loadUserContacts = async (t: (key: string) => string): Promise<Contact[]> => {
   try {
     const { status } = await Contacts.requestPermissionsAsync();
     if (status !== "granted") {
@@ -66,7 +66,7 @@ export const loadUserContacts = async (): Promise<Contact[]> => {
     if (data.length > 0) {
       return data.map((contact: any, index: number) => ({
         id: contact.id || `contact-${index}`,
-        name: contact.name || "Unknown",
+        name: contact.name || t("common.unknown"),
         phoneNumbers:
           contact.phoneNumbers?.map((phone: any) => phone.number || "") || [],
         accountNumber:
@@ -161,7 +161,7 @@ export default function TransferRecipient() {
 
   const loadContacts = async () => {
     try {
-      const contactsList = await loadUserContacts();
+      const contactsList = await loadUserContacts(t);
       setContacts(contactsList as Contact[]);
       setFilteredContacts(contactsList as Contact[]);
     } catch (error) {
@@ -182,7 +182,7 @@ export default function TransferRecipient() {
         const fullName = [user?.firstName, user?.lastName]
           .filter(Boolean)
           .join(" ");
-        setUserName(fullName || "User");
+        setUserName(fullName || t("common.user"));
       }
     } catch (error) {
       console.error("Error loading user account number:", error);
@@ -219,7 +219,7 @@ export default function TransferRecipient() {
     try {
       const accessToken = await AsyncStorage.getItem("access_token");
       if (!accessToken) {
-        setAlertMessage("Please log in to continue.");
+        setAlertMessage(t("sendMoney.loginRequired"));
         setShowAlertModal(true);
         setIsLoading(false);
         return;
@@ -229,7 +229,7 @@ export default function TransferRecipient() {
         accountNumber,
       );
       if (!recipientResult.success || !recipientResult.data) {
-        setAlertMessage(recipientResult.error || "Recipient account not found");
+        setAlertMessage(recipientResult.error || t("sendMoney.errorRecipientNotFound"));
         setShowAlertModal(true);
         setIsLoading(false);
         return;
@@ -241,7 +241,7 @@ export default function TransferRecipient() {
         accountNumber?: string;
       };
       const recipientName =
-        [data.firstName, data.lastName].filter(Boolean).join(" ") || "Unknown";
+        [data.firstName, data.lastName].filter(Boolean).join(" ") || t("common.unknown");
       navigation.navigate("TransferConfirm", {
         balanceType: balanceType ?? "available",
         accountNumber,
@@ -277,7 +277,7 @@ export default function TransferRecipient() {
   };
 
   if (isLoading) {
-    return <CustomLoader text="VERIFYING..." />;
+    return <CustomLoader text={t("sendMoney.verifying")} />;
   }
 
   return (
@@ -418,7 +418,7 @@ export default function TransferRecipient() {
             <View style={styles.inputSection}>
               <View style={styles.labelRow}>
                 <Ionicons name="cash-outline" size={20} color="#E25A17" />
-                <Text style={styles.inputLabel}>Amount</Text>
+                <Text style={styles.inputLabel}>{t("sendMoney.amount")}</Text>
               </View>
               <TextInput
                 style={styles.input}
@@ -566,13 +566,13 @@ export default function TransferRecipient() {
 
             <View style={styles.qrModalBody}>
               <Text style={styles.qrShareText}>
-                Share this QR code for others to transfer money to you
+                {t("sendMoney.shareQrInstruction")}
               </Text>
 
               <View style={styles.qrUserInfoCard}>
                 <Text style={styles.qrUserName}>{userName}</Text>
                 <Text style={styles.qrUserAccount}>
-                  {userAccountNumber || "N/A"}
+                  {userAccountNumber || t("common.na")}
                 </Text>
 
                 <View style={styles.qrCodeWrapper}>
@@ -592,7 +592,7 @@ export default function TransferRecipient() {
                     <View style={styles.qrPlaceholder}>
                       <Ionicons name="qr-code-outline" size={80} color="#CCC" />
                       <Text style={styles.qrPlaceholderText}>
-                        No account number available
+                        {t("sendMoney.noAccountNumber")}
                       </Text>
                     </View>
                   )}
@@ -601,7 +601,7 @@ export default function TransferRecipient() {
                 <View style={styles.secureCodeBadge}>
                   <Ionicons name="shield-checkmark" size={16} color="#4CAF50" />
                   <Text style={styles.secureCodeText}>
-                    Secure Transfer Code
+                    {t("sendMoney.secureTransferCode")}
                   </Text>
                 </View>
               </View>
@@ -614,7 +614,7 @@ export default function TransferRecipient() {
                   end={{ x: 1, y: 0 }}
                 >
                   <Ionicons name="share-social" size={20} color="#FFFFFF" />
-                  <Text style={styles.shareQRButtonText}>Share QR Code</Text>
+                  <Text style={styles.shareQRButtonText}>{t("sendMoney.shareQr")}</Text>
                 </LinearGradient>
               </TouchableOpacity>
 
@@ -625,8 +625,7 @@ export default function TransferRecipient() {
                   color="#8B4A4A"
                 />
                 <Text style={styles.qrInfoFooterText}>
-                  This QR code contains your account information for receiving
-                  transfers
+                  {t("sendMoney.qrFooterInfo")}
                 </Text>
               </View>
             </View>

@@ -222,7 +222,7 @@ export default function StockService() {
   };
 
   if (loading) {
-    return <CustomLoader text="LOADING STOCK..." />;
+    return <CustomLoader text={t("stock.loading")} />;
   }
 
   return (

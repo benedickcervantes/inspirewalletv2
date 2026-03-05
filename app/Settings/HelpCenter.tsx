@@ -2,51 +2,47 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
-    Linking,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Linking,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
+import { useLanguage } from '../../context/LanguageContext';
 import type { NavProp } from '../../types/navigation';
-
-const FAQS = [
-  {
-    question: 'How do I reset my password?',
-    answer:
-      'On the Login screen, tap "Forgot Password?" and enter your registered email address. You will receive a secure reset link in your inbox valid for 30 minutes.',
-  },
-  {
-    question: 'How do I verify my email?',
-    answer:
-      'After registration, a 6-digit OTP is sent to your email. Enter it on the verification screen, or click the verification link in the email.',
-  },
-  {
-    question: 'How do I set up a passcode?',
-    answer:
-      'After logging in, go to Settings → Change Passcode. You can set a 4-digit passcode for faster and more secure app access.',
-  },
-  {
-    question: 'How do I transfer money?',
-    answer:
-      'From the Dashboard, tap "Transfer". Enter the recipient\'s account number, amount, and confirm the transaction.',
-  },
-  {
-    question: 'What should I do if I cannot log in?',
-    answer:
-      'Ensure your email and password are correct. Use "Forgot Password?" to reset your password. If the issue persists, contact support below.',
-  },
-  {
-    question: 'How do I update my profile?',
-    answer:
-      'Go to Settings → Personal Information to update your name, phone, date of birth, and country.',
-  },
-];
 
 const HelpCenter = () => {
   const navigation = useNavigation();
+  const { t } = useLanguage();
+
+  const FAQS = [
+    {
+      question: t('help.faq1Question'),
+      answer: t('help.faq1Answer'),
+    },
+    {
+      question: t('help.faq2Question'),
+      answer: t('help.faq2Answer'),
+    },
+    {
+      question: t('help.faq3Question'),
+      answer: t('help.faq3Answer'),
+    },
+    {
+      question: t('help.faq4Question'),
+      answer: t('help.faq4Answer'),
+    },
+    {
+      question: t('help.faq5Question'),
+      answer: t('help.faq5Answer'),
+    },
+    {
+      question: t('help.faq6Question'),
+      answer: t('help.faq6Answer'),
+    },
+  ];
 
   const handleEmailSupport = () => {
     Linking.openURL('mailto:support@inspirewallet.com?subject=Help%20Request');
@@ -68,7 +64,7 @@ const HelpCenter = () => {
           >
             <Ionicons name="arrow-back" size={28} color="#FFFFFF" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Help Center</Text>
+          <Text style={styles.headerTitle}>{t('help.title')}</Text>
           <View style={styles.headerSpacer} />
         </View>
       </LinearGradient>
@@ -80,15 +76,14 @@ const HelpCenter = () => {
             <View style={styles.iconWrapper}>
               <MaterialCommunityIcons name="headset" size={24} color="#F38B35" />
             </View>
-            <Text style={styles.cardTitle}>Contact Support</Text>
+            <Text style={styles.cardTitle}>{t('help.contactSupport')}</Text>
           </View>
           <Text style={styles.cardText}>
-            Our support team is available Monday – Friday, 9 AM – 6 PM (PHT).
-            We typically respond within 24 hours.
+            {t('help.contactSupportDesc')}
           </Text>
           <TouchableOpacity style={styles.contactButton} onPress={handleEmailSupport} activeOpacity={0.8}>
             <Ionicons name="mail-outline" size={18} color="#FFFFFF" style={{ marginRight: 8 }} />
-            <Text style={styles.contactButtonText}>Email Us</Text>
+            <Text style={styles.contactButtonText}>{t('help.emailUs')}</Text>
           </TouchableOpacity>
         </View>
 
@@ -98,7 +93,7 @@ const HelpCenter = () => {
             <View style={styles.iconWrapper}>
               <MaterialCommunityIcons name="frequently-asked-questions" size={24} color="#F38B35" />
             </View>
-            <Text style={styles.cardTitle}>Frequently Asked Questions</Text>
+            <Text style={styles.cardTitle}>{t('help.faqTitle')}</Text>
           </View>
           {FAQS.map((faq, index) => (
             <View key={index} style={[styles.faqItem, index < FAQS.length - 1 && styles.faqDivider]}>
@@ -117,7 +112,7 @@ const HelpCenter = () => {
             <View style={styles.iconWrapper}>
               <MaterialCommunityIcons name="link-variant" size={24} color="#F38B35" />
             </View>
-            <Text style={styles.cardTitle}>Quick Links</Text>
+            <Text style={styles.cardTitle}>{t('help.quickLinks')}</Text>
           </View>
           <TouchableOpacity
             style={styles.linkRow}
@@ -125,7 +120,7 @@ const HelpCenter = () => {
             activeOpacity={0.7}
           >
             <Ionicons name="shield-checkmark-outline" size={20} color="#F38B35" />
-            <Text style={styles.linkText}>Privacy Policy</Text>
+            <Text style={styles.linkText}>{t('settings.privacyPolicy')}</Text>
             <Ionicons name="chevron-forward" size={18} color="#BBBBBB" style={{ marginLeft: 'auto' }} />
           </TouchableOpacity>
           <View style={styles.linkDivider} />
@@ -135,7 +130,7 @@ const HelpCenter = () => {
             activeOpacity={0.7}
           >
             <Ionicons name="document-text-outline" size={20} color="#F38B35" />
-            <Text style={styles.linkText}>Terms & Conditions</Text>
+            <Text style={styles.linkText}>{t('settings.termsAndCondition')}</Text>
             <Ionicons name="chevron-forward" size={18} color="#BBBBBB" style={{ marginLeft: 'auto' }} />
           </TouchableOpacity>
         </View>

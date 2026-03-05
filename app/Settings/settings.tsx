@@ -291,7 +291,7 @@ const Settings = () => {
   };
 
   if (!userData) {
-    return <CustomLoader text="LOADING" />;
+    return <CustomLoader text={t("common.loading")} />;
   }
 
   return (

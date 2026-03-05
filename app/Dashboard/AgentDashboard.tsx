@@ -207,7 +207,7 @@ export default function AgentDashboard() {
   };
 
   if (initialLoad) {
-    return <CustomLoader text="LOADING AGENT DASHBOARD..." />;
+    return <CustomLoader text={t("agent.loadingDashboard")} />;
   }
 
   return (

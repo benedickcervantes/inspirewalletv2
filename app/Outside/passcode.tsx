@@ -22,6 +22,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { login, verifyPasscode } from '../../configs/api';
 import type { NavProp } from '../../types/navigation';
 import CustomLoader from '../Loader/CustomLoader';
+import { useLanguage } from '../../context/LanguageContext';
 
 const GRADIENT_START = '#E15816';
 const GRADIENT_END = '#F48F38';
@@ -129,6 +130,7 @@ export default function Passcode() {
   const [resetLoading, setResetLoading] = useState(false);
   const [loadingPasscode, setLoadingPasscode] = useState(true);
   const [needsAuth, setNeedsAuth] = useState(false);
+  const { t } = useLanguage();
   const [verifyingPasscode, setVerifyingPasscode] = useState(false);
 
   const shakeAnim = useRef(new Animated.Value(0)).current;
@@ -271,7 +273,7 @@ export default function Passcode() {
   return (
     <>
       {loadingPasscode || verifyingPasscode ? (
-        <CustomLoader text="LOGGING IN" />
+        <CustomLoader text={t('auth.loggingIn')} />
       ) : (
         <LinearGradient
           colors={[GRADIENT_START, GRADIENT_END]}
