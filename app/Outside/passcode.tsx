@@ -280,6 +280,15 @@ export default function Passcode() {
           locations={[0, 1]}
           style={[styles.gradient, { paddingTop: insets.top, paddingBottom: insets.bottom, paddingHorizontal: horizontalPadding }]}
         >
+        {!needsAuth ? (
+          <TouchableOpacity
+            style={[styles.backButton, { top: insets.top + 12 }]}
+            onPress={() => (navigation as unknown as NavProp).replace('Login')}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="arrow-back" size={26} color={WHITE} />
+          </TouchableOpacity>
+        ) : null}
         <ScrollView
           style={styles.scroll}
           contentContainerStyle={styles.scrollContent}
@@ -483,6 +492,15 @@ const styles = StyleSheet.create({
   gradient: {
     flex: 1,
     paddingHorizontal: 20,
+    alignItems: 'center',
+  },
+  backButton: {
+    position: 'absolute',
+    left: 20,
+    zIndex: 10,
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
     alignItems: 'center',
   },
   scroll: { flex: 1, width: '100%' },

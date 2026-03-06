@@ -292,6 +292,10 @@ export default function Register() {
     setIsQRScannerVisible(true);
   };
 
+  const handleUploadImage = (_fieldType: "line" | "viber" | "whatsapp") => {
+    // Design only: upload image option not connected
+  };
+
   return (
     <>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
@@ -596,17 +600,32 @@ export default function Register() {
                           value={lineContact}
                           onChangeText={setLineContact}
                         />
-                        <TouchableOpacity
-                          style={styles.scannerButton}
-                          onPress={() => openScanner("line")}
-                        >
-                          <Ionicons
-                            name="qr-code-outline"
-                            size={20}
-                            color="#E25A17"
-                          />
-                        </TouchableOpacity>
+                        <View style={styles.scanUploadButtonRow}>
+                          <TouchableOpacity
+                            style={styles.scannerButton}
+                            onPress={() => openScanner("line")}
+                          >
+                            <Ionicons
+                              name="qr-code-outline"
+                              size={20}
+                              color="#E25A17"
+                            />
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={styles.scannerButton}
+                            onPress={() => handleUploadImage("line")}
+                          >
+                            <Ionicons
+                              name="image-outline"
+                              size={20}
+                              color="#E25A17"
+                            />
+                          </TouchableOpacity>
+                        </View>
                       </View>
+                      <Text style={styles.helperText}>
+                        Scan QR or upload an image with a QR code
+                      </Text>
                     </View>
                     <View style={styles.inputGroup}>
                       <Text style={styles.inputLabel}>Viber</Text>
@@ -626,17 +645,32 @@ export default function Register() {
                           value={viberContact}
                           onChangeText={setViberContact}
                         />
-                        <TouchableOpacity
-                          style={styles.scannerButton}
-                          onPress={() => openScanner("viber")}
-                        >
-                          <Ionicons
-                            name="qr-code-outline"
-                            size={20}
-                            color="#E25A17"
-                          />
-                        </TouchableOpacity>
+                        <View style={styles.scanUploadButtonRow}>
+                          <TouchableOpacity
+                            style={styles.scannerButton}
+                            onPress={() => openScanner("viber")}
+                          >
+                            <Ionicons
+                              name="qr-code-outline"
+                              size={20}
+                              color="#E25A17"
+                            />
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={styles.scannerButton}
+                            onPress={() => handleUploadImage("viber")}
+                          >
+                            <Ionicons
+                              name="image-outline"
+                              size={20}
+                              color="#E25A17"
+                            />
+                          </TouchableOpacity>
+                        </View>
                       </View>
+                      <Text style={styles.helperText}>
+                        Scan QR or upload an image with a QR code
+                      </Text>
                     </View>
                     <View style={styles.inputGroup}>
                       <Text style={styles.inputLabel}>WhatsApp</Text>
@@ -656,17 +690,32 @@ export default function Register() {
                           value={whatsappContact}
                           onChangeText={setWhatsappContact}
                         />
-                        <TouchableOpacity
-                          style={styles.scannerButton}
-                          onPress={() => openScanner("whatsapp")}
-                        >
-                          <Ionicons
-                            name="qr-code-outline"
-                            size={20}
-                            color="#E25A17"
-                          />
-                        </TouchableOpacity>
+                        <View style={styles.scanUploadButtonRow}>
+                          <TouchableOpacity
+                            style={styles.scannerButton}
+                            onPress={() => openScanner("whatsapp")}
+                          >
+                            <Ionicons
+                              name="qr-code-outline"
+                              size={20}
+                              color="#E25A17"
+                            />
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={styles.scannerButton}
+                            onPress={() => handleUploadImage("whatsapp")}
+                          >
+                            <Ionicons
+                              name="image-outline"
+                              size={20}
+                              color="#E25A17"
+                            />
+                          </TouchableOpacity>
+                        </View>
                       </View>
+                      <Text style={styles.helperText}>
+                        Scan QR or upload an image with a QR code
+                      </Text>
                     </View>
                   </View>
                 </View>
@@ -1234,6 +1283,10 @@ const styles = StyleSheet.create({
   scannerButton: {
     paddingHorizontal: 16,
     paddingVertical: 12,
+  },
+  scanUploadButtonRow: {
+    flexDirection: "row",
+    alignItems: "center",
   },
   qrButton: {
     width: 48,
