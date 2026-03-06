@@ -105,8 +105,7 @@ function computeTimeDepositTotal(deposits: TimeDeposit[]): number {
     .filter(
       (d) =>
         d.status === "ACTIVE" ||
-        d.status === "MATURED" ||
-        d.status === "PENDING",
+        d.status === "MATURED",
     )
     .reduce((sum, d) => sum + (parseFloat(String(d?.amount ?? 0)) || 0), 0);
 }
