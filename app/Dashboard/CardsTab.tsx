@@ -16,7 +16,13 @@ import {
   useWindowDimensions,
   View
 } from "react-native";
-import { buyCard, getCardCatalog, getMyCardCollection, setActiveCard as setActiveCardApi } from "../../configs/api";
+import {
+  buyCard,
+  cancelAutoRenewal,
+  getCardCatalog,
+  getMyCardCollection,
+  setActiveCard as setActiveCardApi,
+} from "../../configs/api";
 import { useLanguage } from "../../context/LanguageContext";
 import { getCardTheme } from "../theme/cardThemes";
 
@@ -97,6 +103,15 @@ export default function CardsTab({
   const goldCatalog = cardCatalog.find((c: any) => c.design === 'GOLD_ELITE');
   const isGoldOwned = goldCatalog?.isOwned ?? false;
   const isGoldActive = goldCatalog?.isActive ?? false;
+  const goldExpiryDate = goldCatalog?.expiryDate ? new Date(goldCatalog.expiryDate) : null;
+  
+  // Check if Gold Elite is within 3 days of expiry
+  const isGoldRenewalAvailable = (() => {
+    if (!isGoldActive || !goldExpiryDate) return false;
+    const now = new Date();
+    const daysUntilExpiry = (goldExpiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
+    return daysUntilExpiry <= 3 && daysUntilExpiry > 0;
+  })();
 
   // Derive Design Collection state from catalog data
   const orangeCatalog = cardCatalog.find((c: any) => c.design === 'ORANGE_ELITE');
@@ -455,7 +470,7 @@ export default function CardsTab({
               {isDiamondActive ? (
                 <View style={[styles.upgradeButton, styles.claimedButton]}>
                   <Text style={[styles.upgradeButtonText, styles.claimedButtonText]}>
-                    ✓ {t("ct.alreadyClaimed")}
+                    ✓ {t("Already Claimed")}
                   </Text>
                 </View>
               ) : (
@@ -497,27 +512,12 @@ export default function CardsTab({
               <Text style={styles.cardItemSubtitle}>{t("ct.sub10KMonthly")}</Text>
 
               <TouchableOpacity
-                style={[
-                  styles.getStartedButton,
-                  isGoldOwned && styles.activeUpgradeButton
-                ]}
+                style={styles.getStartedButton}
                 onPress={() => setIsPurchaseModalVisible(true)}
               >
-                {isGoldOwned ? (
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                    <MaterialCommunityIcons name="autorenew" size={16} color={styles.activeUpgradeButtonText.color || "#FFFFFF"} />
-                    <Text style={[
-                      styles.getStartedButtonText,
-                      styles.activeUpgradeButtonText
-                    ]}>
-                      {t("ct.renewPlan")}
-                    </Text>
-                  </View>
-                ) : (
-                  <Text style={styles.getStartedButtonText}>
-                    {t("ct.getStarted")}
-                  </Text>
-                )}
+                <Text style={styles.getStartedButtonText}>
+                  {t("ct.getStarted")}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -978,6 +978,24 @@ export default function CardsTab({
                 <Text style={styles.vipBalanceAmount}>₱ {formatCurrency(availableBalance || 0)}</Text>
               </View>
 
+              {isGoldActive && !isGoldRenewalAvailable && (
+                <View style={styles.vipWarningBox}>
+                  <Ionicons name="warning" size={18} color="#F44336" />
+                  <Text style={styles.vipWarningText}>
+                    {t("You already have an active Gold Elite plan. Use the renewal option when your plan is expiring soon.")}
+                  </Text>
+                </View>
+              )}
+
+              {isGoldRenewalAvailable && (
+                <View style={styles.vipWarningBox}>
+                  <Ionicons name="alert-circle" size={18} color="#FF9800" />
+                  <Text style={styles.vipWarningText}>
+                    {t("ct.renewalAvailable") || "Your plan is expiring soon. Renew now to maintain your benefits."}
+                  </Text>
+                </View>
+              )}
+
               <View style={styles.vipSubscriptionBox}>
                 <View style={styles.vipSubscriptionHeaderRow}>
                   <Text style={styles.vipSubscriptionTitle}>{t("ct.subscriptionType")}</Text>
@@ -1004,29 +1022,72 @@ export default function CardsTab({
               <View style={styles.vipActionButtons}>
                 <TouchableOpacity
                   style={styles.vipCancelButton}
-                  onPress={() => setIsPurchaseModalVisible(false)}
+                  onPress={async () => {
+                    if (isGoldActive) {
+                      try {
+                        setIsLoading(true);
+                        const token = await AsyncStorage.getItem("access_token");
+                        if (!token) return;
+                        const res = await cancelAutoRenewal(token, "GOLD_ELITE");
+                        if (res.success) {
+                          Alert.alert(
+                            t("ct.success") || "Success",
+                            t("ct.autoRenewalCancelled") || "Auto-renewal has been cancelled. Your subscription will expire on the scheduled date.",
+                            [{ text: "OK", onPress: () => setIsPurchaseModalVisible(false) }]
+                          );
+                          await fetchCardsData();
+                        } else {
+                          Alert.alert("Error", res.error || "Failed to cancel auto-renewal");
+                        }
+                      } catch (err) {
+                        console.error(err);
+                        Alert.alert("Error", "Failed to cancel auto-renewal");
+                      } finally {
+                        setIsLoading(false);
+                      }
+                    } else {
+                      setIsPurchaseModalVisible(false);
+                    }
+                  }}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.vipCancelButtonText}>{t("ct.cancel")}</Text>
+                  <Text style={styles.vipCancelButtonText}>
+                    {isGoldActive ? (t("ct.cancelRenewal") || "Cancel Renewal") : t("ct.cancel")}
+                  </Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
                   style={[
                     styles.vipBuyButton,
-                    availableBalance < 10000 && styles.vipBuyButtonDisabled
+                    (availableBalance < 10000 || (isGoldActive && !isGoldRenewalAvailable)) && styles.vipBuyButtonDisabled
                   ]}
-                  disabled={availableBalance < 10000}
+                  disabled={availableBalance < 10000 || (isGoldActive && !isGoldRenewalAvailable)}
                   activeOpacity={0.7}
                   onPress={async () => {
+                    if (isGoldActive && !isGoldRenewalAvailable) {
+                      Alert.alert(
+                        t("Already Have Plan"),
+                        t("You already have an active Gold Elite plan. Please use the renewal option when your plan is expiring soon."),
+                        [{ text: "OK" }]
+                      );
+                      return;
+                    }
                     try {
                       await handleBuyCard("GOLD_ELITE", 10000);
                     } catch (err) {
                       console.error(err);
-                      Alert.alert("Error", "Failed to subscribe to Gold Elite.");
+                      Alert.alert("Error", isGoldRenewalAvailable ? "Failed to renew Gold Elite." : "Failed to subscribe to Gold Elite.");
                     }
                   }}
                 >
-                  <Text style={styles.vipBuyButtonText}>{t("ct.buyCard")}</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    {isGoldActive && (
+                      <MaterialCommunityIcons name="autorenew" size={16} color="#FFFFFF" />
+                    )}
+                    <Text style={styles.vipBuyButtonText}>
+                      {isGoldActive ? (t("Renew Now")) : t("ct.buyCard")}
+                    </Text>
+                  </View>
                 </TouchableOpacity>
               </View>
             </ScrollView>
@@ -2470,6 +2531,23 @@ const styles = StyleSheet.create({
     borderColor: '#FFCDD2',
   },
   diamondWarningText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#F44336',
+    flex: 1,
+  },
+  vipWarningBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFEBEE',
+    padding: 14,
+    borderRadius: 12,
+    marginBottom: 20,
+    gap: 10,
+    borderWidth: 1,
+    borderColor: '#FFCDD2',
+  },
+  vipWarningText: {
     fontSize: 13,
     fontWeight: '600',
     color: '#F44336',

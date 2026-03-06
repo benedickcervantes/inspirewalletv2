@@ -1,18 +1,16 @@
-import React, { useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  useWindowDimensions,
-  ImageBackground,
-  Modal,
-  RefreshControl,
-  ActivityIndicator,
-} from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
+import { useState } from "react";
+import {
+    ImageBackground,
+    Modal,
+    RefreshControl,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
+} from "react-native";
 import { useLanguage } from "../../context/LanguageContext";
 
 interface PayoutScheduleItem {
@@ -275,6 +273,24 @@ export default function SavingsTab({
             </TouchableOpacity>
           ))}
         </View>
+
+        {/* Gold Elite Renewal Card - Show only on Active tab */}
+        {contractTab === "Active" && (
+          <GoldEliteRenewalCard
+            accessToken={userData?.accessToken as string}
+            expiryDate={
+              deposits.find((d) => d.design === "GOLD_ELITE" && d.status === "ACTIVE")
+                ?.maturityDate ||
+              deposits.find((d) => d.design === "GOLD_ELITE" && d.status === "ACTIVE")
+                ?.projectedMaturityDate ||
+              ""
+            }
+            onRenewalSuccess={() => onRefresh?.()}
+            onRenewalError={(error) => {
+              if (__DEV__) console.error("[SavingsTab] Renewal error:", error);
+            }}
+          />
+        )}
 
         <View style={styles.contractList}>
           {filteredDeposits.length === 0 ? (
