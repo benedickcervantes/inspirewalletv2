@@ -4,15 +4,19 @@ import * as DocumentPicker from "expo-document-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { useState } from "react";
 import {
-    Alert,
-    Modal,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { useLanguage } from "../../context/LanguageContext";
 
 const THEME_COLOR = "#E15816";
@@ -20,24 +24,55 @@ const THEME_COLOR = "#E15816";
 export default function KYCcompany() {
   const navigation = useNavigation();
   const { t } = useLanguage();
+  const insets = useSafeAreaInsets();
 
-  const [commercialRegister, setCommercialRegister] = useState<string | null>(null);
+  const [companyName, setCompanyName] = useState("");
+  const [isEditing, setIsEditing] = useState(false);
+  const [commercialRegister, setCommercialRegister] = useState<string | null>(
+    null,
+  );
+  const [commercialRegisterName, setCommercialRegisterName] = useState<
+    string | null
+  >(null);
   const [bankStatement, setBankStatement] = useState<string | null>(null);
+  const [bankStatementName, setBankStatementName] = useState<string | null>(
+    null,
+  );
   const [proofOfBilling, setProofOfBilling] = useState<string | null>(null);
+  const [proofOfBillingName, setProofOfBillingName] = useState<string | null>(
+    null,
+  );
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const pickDocument = async (
     setUri: (uri: string | null) => void,
-    label: string
+    setName: (name: string | null) => void,
+    label: string,
   ) => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
-        type: "application/pdf",
+        type: "*/*",
         copyToCacheDirectory: true,
       });
 
       if (!result.canceled && result.assets && result.assets[0]) {
-        setUri(result.assets[0].uri);
+        const asset = result.assets[0];
+        const mimeType = asset.mimeType ?? "";
+        const fileName = asset.name ?? asset.uri.split("/").pop() ?? "";
+        const isPdf =
+          mimeType === "application/pdf" ||
+          fileName.toLowerCase().endsWith(".pdf");
+
+        if (!isPdf) {
+          Alert.alert(
+            "Invalid File",
+            `Only PDF files are accepted for ${label}. Please select a .pdf file.`,
+          );
+          return;
+        }
+
+        setUri(asset.uri);
+        setName(fileName);
       }
     } catch (error) {
       console.error("Error picking document:", error);
@@ -46,6 +81,10 @@ export default function KYCcompany() {
   };
 
   const handleSave = () => {
+    if (!companyName.trim()) {
+      Alert.alert("Validation", "Please enter your company name.");
+      return;
+    }
     if (!commercialRegister || !bankStatement || !proofOfBilling) {
       Alert.alert("Validation", "Please upload all required documents.");
       return;
@@ -63,111 +102,161 @@ export default function KYCcompany() {
     navigation.goBack();
   };
 
+  const isFormComplete =
+    companyName.trim().length > 0 &&
+    !!commercialRegister &&
+    !!bankStatement &&
+    !!proofOfBilling;
+
+  const docs = [
+    {
+      label: "Commercial Register",
+      uri: commercialRegister,
+      name: commercialRegisterName,
+      setUri: setCommercialRegister,
+      setName: setCommercialRegisterName,
+    },
+    {
+      label: "Bank Statement",
+      uri: bankStatement,
+      name: bankStatementName,
+      setUri: setBankStatement,
+      setName: setBankStatementName,
+    },
+    {
+      label: "Proof of Billing",
+      uri: proofOfBilling,
+      name: proofOfBillingName,
+      setUri: setProofOfBilling,
+      setName: setProofOfBillingName,
+    },
+  ];
+
   return (
     <Modal visible={true} animationType="slide" presentationStyle="pageSheet">
-      <SafeAreaView style={styles.container}>
-        {/* Header with Gradient */}
-        <LinearGradient
-          colors={["#E15816", "#F48F38"]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={styles.header}
-        >
-          <Text style={styles.headerTitle}>Business Requirements</Text>
+      <SafeAreaView
+        style={styles.container}
+        edges={["bottom", "left", "right"]}
+      >
+        {/* Plain header */}
+        <View style={styles.pageHeader}>
+          <View style={styles.pageTitleBlock}>
+            <Text style={styles.pageTitle}>Company Verification</Text>
+            <Text style={styles.pageSubtitle}>
+              Please upload the following legal documents to verify your
+              business account.
+            </Text>
+          </View>
           <TouchableOpacity
             style={styles.closeButton}
             onPress={handleCancel}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <Ionicons name="close" size={28} color="#FFFFFF" />
+            <Ionicons name="close" size={28} color="#333333" />
           </TouchableOpacity>
-        </LinearGradient>
+        </View>
 
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.subtitle}>
-            Please upload the following legal documents to verify your business account.
-          </Text>
-
-          {/* Commercial Register */}
-          <View style={styles.uploadSection}>
-            <Text style={styles.label}>
-              Commercial Register <Text style={styles.required}>*</Text>
-            </Text>
-            <TouchableOpacity
-              style={styles.uploadBox}
-              onPress={() => pickDocument(setCommercialRegister, "Commercial Register")}
-              activeOpacity={0.7}
-            >
-              <Ionicons
-                name="cloud-upload-outline"
-                size={40}
-                color={THEME_COLOR}
-              />
-              <Text style={styles.uploadText}>Click to upload</Text>
-              <Text style={styles.uploadHint}>Select PDF file</Text>
-              {commercialRegister && (
-                <View style={styles.uploadedBadge}>
-                  <Ionicons name="checkmark-circle" size={20} color="#10B981" />
-                  <Text style={styles.uploadedText}>Uploaded</Text>
-                </View>
-              )}
-            </TouchableOpacity>
+          {/* Card 1 — Company Name */}
+          <View style={styles.contentCard}>
+            <View style={styles.cardHeaderRow}>
+              <View style={styles.cardIconBadge}>
+                <Ionicons
+                  name="business-outline"
+                  size={22}
+                  color={THEME_COLOR}
+                />
+              </View>
+              <Text style={styles.cardTitle}>
+                Company Name <Text style={styles.required}>*</Text>
+              </Text>
+            </View>
+            <TextInput
+              style={styles.textInput}
+              placeholder="Sample Company"
+              placeholderTextColor="#BDBDBD"
+              value={companyName}
+              onChangeText={setCompanyName}
+            />
           </View>
 
-          {/* Bank Statement */}
-          <View style={styles.uploadSection}>
-            <Text style={styles.label}>
-              Bank Statement <Text style={styles.required}>*</Text>
-            </Text>
-            <TouchableOpacity
-              style={styles.uploadBox}
-              onPress={() => pickDocument(setBankStatement, "Bank Statement")}
-              activeOpacity={0.7}
-            >
-              <Ionicons
-                name="cloud-upload-outline"
-                size={40}
-                color={THEME_COLOR}
-              />
-              <Text style={styles.uploadText}>Click to upload</Text>
-              <Text style={styles.uploadHint}>Select PDF file</Text>
-              {bankStatement && (
-                <View style={styles.uploadedBadge}>
-                  <Ionicons name="checkmark-circle" size={20} color="#10B981" />
-                  <Text style={styles.uploadedText}>Uploaded</Text>
-                </View>
-              )}
-            </TouchableOpacity>
-          </View>
+          {/* Card 2 — Business Requirements */}
+          <View style={[styles.contentCard, styles.contentCardSpacing]}>
+            <View style={styles.cardHeaderRow}>
+              <View style={styles.cardIconBadge}>
+                <Ionicons
+                  name="document-text-outline"
+                  size={22}
+                  color={THEME_COLOR}
+                />
+              </View>
+              <Text style={[styles.cardTitle, { flex: 1 }]}>
+                Business Requirements
+              </Text>
+              <TouchableOpacity
+                style={styles.editButton}
+                onPress={() => setIsEditing((prev) => !prev)}
+                activeOpacity={0.7}
+              >
+                <Ionicons
+                  name={isEditing ? "checkmark-outline" : "create-outline"}
+                  size={16}
+                  color={THEME_COLOR}
+                />
+                <Text style={styles.editButtonText}>
+                  {isEditing ? "Done" : "Edit"}
+                </Text>
+              </TouchableOpacity>
+            </View>
 
-          {/* Proof of Billing */}
-          <View style={styles.uploadSection}>
-            <Text style={styles.label}>
-              Proof of Billing <Text style={styles.required}>*</Text>
-            </Text>
-            <TouchableOpacity
-              style={styles.uploadBox}
-              onPress={() => pickDocument(setProofOfBilling, "Proof of Billing")}
-              activeOpacity={0.7}
-            >
-              <Ionicons
-                name="cloud-upload-outline"
-                size={40}
-                color={THEME_COLOR}
-              />
-              <Text style={styles.uploadText}>Click to upload</Text>
-              <Text style={styles.uploadHint}>Select PDF file</Text>
-              {proofOfBilling && (
-                <View style={styles.uploadedBadge}>
-                  <Ionicons name="checkmark-circle" size={20} color="#10B981" />
-                  <Text style={styles.uploadedText}>Uploaded</Text>
-                </View>
-              )}
-            </TouchableOpacity>
+            {/* Document rows */}
+            {docs.map((doc, index) => (
+              <View key={doc.label}>
+                {index > 0 && <View style={styles.docRowDivider} />}
+                <TouchableOpacity
+                  style={styles.docRow}
+                  onPress={() =>
+                    pickDocument(doc.setUri, doc.setName, doc.label)
+                  }
+                  activeOpacity={0.7}
+                >
+                  <View
+                    style={[
+                      styles.docIconCircle,
+                      doc.uri && styles.docIconCircleUploaded,
+                    ]}
+                  >
+                    <Ionicons
+                      name={doc.uri ? "document" : "document-outline"}
+                      size={20}
+                      color={doc.uri ? "#10B981" : "#9E9E9E"}
+                    />
+                  </View>
+                  <View style={styles.docRowInfo}>
+                    <Text style={styles.docRowText}>
+                      {doc.label} <Text style={styles.required}>*</Text>
+                    </Text>
+                    <Text style={styles.docRowSubtitle} numberOfLines={1}>
+                      {doc.name ?? "Select PDF file"}
+                    </Text>
+                  </View>
+                  {doc.uri && (
+                    <View style={styles.uploadedRowBadge}>
+                      <Ionicons
+                        name="checkmark-circle"
+                        size={14}
+                        color="#10B981"
+                      />
+                      <Text style={styles.uploadedRowBadgeText}>Uploaded</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              </View>
+            ))}
           </View>
         </ScrollView>
 
@@ -181,12 +270,18 @@ export default function KYCcompany() {
             <Text style={styles.cancelButtonText}>Cancel</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.saveButtonWrapper}
+            style={[
+              styles.saveButtonWrapper,
+              !isFormComplete && styles.saveButtonDisabled,
+            ]}
             onPress={handleSave}
-            activeOpacity={0.9}
+            activeOpacity={isFormComplete ? 0.9 : 1}
+            disabled={!isFormComplete}
           >
             <LinearGradient
-              colors={["#E15816", "#F48F38"]}
+              colors={
+                isFormComplete ? ["#E15816", "#F48F38"] : ["#BDBDBD", "#BDBDBD"]
+              }
               style={styles.saveButton}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
@@ -244,94 +339,167 @@ export default function KYCcompany() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#F5F5F5",
   },
-  header: {
+  // ── Page header (transparent, reaches screen top) ─────────────────────────
+  pageHeader: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     justifyContent: "space-between",
     paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingTop: 20,
+    paddingBottom: 16,
+    backgroundColor: "transparent",
   },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#FFFFFF",
+  pageTitleBlock: {
     flex: 1,
+  },
+  pageTitle: {
+    fontSize: 22,
+    fontWeight: "700",
+    color: "#111111",
+    marginBottom: 2,
+  },
+  pageSubtitle: {
+    fontSize: 13,
+    color: "#9E9E9E",
   },
   closeButton: {
     width: 40,
     height: 40,
     justifyContent: "center",
     alignItems: "center",
+    marginTop: 2,
   },
+  // ─────────────────────────────────────────────────────────────────────────
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    padding: 20,
+    padding: 16,
     paddingBottom: 40,
   },
-  subtitle: {
-    fontSize: 14,
-    color: "#9E9E9E",
-    lineHeight: 20,
-    marginBottom: 24,
+  // ── White card ────────────────────────────────────────────────────────────
+  contentCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    padding: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
   },
-  uploadSection: {
-    marginBottom: 24,
+  contentCardSpacing: {
+    marginTop: 16,
   },
-  label: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: "#333333",
-    marginBottom: 12,
+  // ── Card header row (icon badge + title + optional action) ────────────────
+  cardHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginBottom: 16,
+  },
+  cardIconBadge: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "rgba(225, 88, 22, 0.12)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#111111",
   },
   required: {
     color: THEME_COLOR,
   },
-  uploadBox: {
-    borderWidth: 2,
-    borderColor: "#F0F0F0",
+  // ── Company name input ────────────────────────────────────────────────────
+  textInput: {
+    borderWidth: 1.5,
+    borderColor: "#E0E0E0",
     borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 15,
+    color: "#111111",
     backgroundColor: "#FAFAFA",
-    paddingVertical: 40,
-    paddingHorizontal: 20,
-    alignItems: "center",
-    justifyContent: "center",
-    minHeight: 160,
   },
-  uploadText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: THEME_COLOR,
-    marginTop: 12,
-  },
-  uploadHint: {
-    fontSize: 13,
-    color: "#9E9E9E",
-    marginTop: 4,
-  },
-  uploadedBadge: {
+  // ── Edit button ───────────────────────────────────────────────────────────
+  editButton: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    marginTop: 12,
+    gap: 4,
     paddingHorizontal: 12,
     paddingVertical: 6,
+    borderRadius: 20,
+    backgroundColor: "rgba(225, 88, 22, 0.1)",
+  },
+  editButtonText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: THEME_COLOR,
+  },
+  // ── Document rows ─────────────────────────────────────────────────────────
+  docRowDivider: {
+    height: 1,
+    backgroundColor: "#F0F0F0",
+    marginHorizontal: 4,
+  },
+  docRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 14,
+    gap: 12,
+  },
+  docIconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#F5F5F5",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  docIconCircleUploaded: {
+    backgroundColor: "rgba(16, 185, 129, 0.1)",
+  },
+  docRowInfo: {
+    flex: 1,
+  },
+  docRowText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#111111",
+    marginBottom: 3,
+  },
+  docRowSubtitle: {
+    fontSize: 12,
+    color: "#9E9E9E",
+  },
+  uploadedRowBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
     backgroundColor: "rgba(16, 185, 129, 0.1)",
     borderRadius: 20,
   },
-  uploadedText: {
-    fontSize: 13,
+  uploadedRowBadgeText: {
+    fontSize: 12,
     fontWeight: "600",
     color: "#10B981",
   },
+  // ─────────────────────────────────────────────────────────────────────────
   footer: {
     flexDirection: "row",
+    alignItems: "center",
     gap: 12,
     paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingTop: 16,
+    paddingBottom: 24,
     borderTopWidth: 1,
     borderTopColor: "#F0F0F0",
     backgroundColor: "#FFFFFF",
@@ -356,6 +524,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: "hidden",
   },
+  saveButtonDisabled: {
+    opacity: 0.6,
+  },
   saveButton: {
     paddingVertical: 16,
     alignItems: "center",
@@ -366,6 +537,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#FFFFFF",
   },
+  // ── Success modal ─────────────────────────────────────────────────────────
   successModalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.5)",

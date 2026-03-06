@@ -5,30 +5,30 @@ import { LinearGradient } from "expo-linear-gradient";
 import { doc, getDoc } from "firebase/firestore";
 import { useCallback, useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    useWindowDimensions,
-    View,
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import {
-    SafeAreaView,
-    useSafeAreaInsets,
+  SafeAreaView,
+  useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { getMe, updateProfile } from "../../configs/api";
 import { auth, firestore } from "../../configs/firebase";
 import {
-    DEFAULT_LANGUAGE,
-    normalizeLanguage,
-    SUPPORTED_LANGUAGES,
+  DEFAULT_LANGUAGE,
+  normalizeLanguage,
+  SUPPORTED_LANGUAGES,
 } from "../../constants/locales";
 import { useLanguage } from "../../context/LanguageContext";
 import CustomLoader from "../Loader/CustomLoader";
@@ -194,9 +194,10 @@ export default function Placeholder() {
     (navigation as any).navigate("KYCcompany");
   };
 
-  const fullName = userData?.firstName && userData?.lastName
-    ? `${userData.firstName} ${userData.lastName}`
-    : userData?.displayName || userData?.name || t("common.user");
+  const fullName =
+    userData?.firstName && userData?.lastName
+      ? `${userData.firstName} ${userData.lastName}`
+      : userData?.displayName || userData?.name || t("common.user");
   const email = userData?.email || "user@example.com";
   const isAgent = userData?.isAgent || userData?.role === "agent" || false;
   const isPremium =
@@ -207,6 +208,8 @@ export default function Placeholder() {
     userData?.companyName ||
     t("Tap to add company name") ||
     "Tap to add company name";
+  const companyKycStatus: string | undefined =
+    userData?.companyKycStatus ?? userData?.company_kyc_status ?? undefined;
   const contactNumber =
     userData?.phone ??
     userData?.phoneNumber ??
@@ -241,20 +244,21 @@ export default function Placeholder() {
           "user",
           JSON.stringify({ ...user, language: selectedLabel }),
         );
-      } catch (_) { }
+      } catch (_) {}
     }
     setLanguageModalVisible(false);
   };
 
-  const memberSince = userData?.createdAt || userData?.joinedAt
-    ? new Date(
-      userData.createdAt?.seconds
-        ? userData.createdAt.seconds * 1000
-        : userData.joinedAt?.seconds
-          ? userData.joinedAt.seconds * 1000
-          : userData.createdAt || userData.joinedAt
-    ).toLocaleDateString()
-    : "—";
+  const memberSince =
+    userData?.createdAt || userData?.joinedAt
+      ? new Date(
+          userData.createdAt?.seconds
+            ? userData.createdAt.seconds * 1000
+            : userData.joinedAt?.seconds
+              ? userData.joinedAt.seconds * 1000
+              : userData.createdAt || userData.joinedAt,
+        ).toLocaleDateString()
+      : "—";
   const statusRaw = userData?.status || "Active";
   const status = statusRaw === "Active" ? t("profile.active") : statusRaw;
 
@@ -349,8 +353,14 @@ export default function Placeholder() {
               </View>
             ) : (
               <View style={styles.investorBadge}>
-                <MaterialCommunityIcons name="shield-account" size={16} color="#FFFFFF" />
-                <Text style={styles.badgeText}>{t("profile.investor").toUpperCase()}</Text>
+                <MaterialCommunityIcons
+                  name="shield-account"
+                  size={16}
+                  color="#FFFFFF"
+                />
+                <Text style={styles.badgeText}>
+                  {t("profile.investor").toUpperCase()}
+                </Text>
               </View>
             )}
             {isPremium && (
@@ -400,6 +410,21 @@ export default function Placeholder() {
             editable
             onEdit={openCompanyModal}
             isPlaceholder={!userData?.companyName}
+            badge={
+              companyKycStatus === "verified"
+                ? "Verified"
+                : companyKycStatus === "pending"
+                  ? "Pending"
+                  : undefined
+            }
+            badgeColor={
+              companyKycStatus === "verified"
+                ? "#10B981"
+                : companyKycStatus === "pending"
+                  ? "#F59E0B"
+                  : undefined
+            }
+            verified={companyKycStatus === "verified"}
           />
           <DetailItem
             icon="call-outline"
