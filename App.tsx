@@ -59,6 +59,7 @@ import SendMoney from './app/ServicesFunction/Transfer/TransferService';
 import TravelProtection from './app/ServicesFunction/Travel Proctected/TravelProtectServices';
 import Aboutus from './app/Settings/Aboutus';
 import ChangePasscode from './app/Settings/ChangePasscode';
+import CurrencyCalculator from './app/Settings/CurrencyCalculator';
 import DeleteAccount from './app/Settings/DeleteAccount';
 import HelpCenter from './app/Settings/HelpCenter';
 import PrivacyPolicy from './app/Settings/PrivacyPolicy';
@@ -113,6 +114,7 @@ export default function App() {
               <Stack.Screen name="Settings" component={Settings} />
               <Stack.Screen name="ChangePasscode" component={ChangePasscode} />
               <Stack.Screen name="Aboutus" component={Aboutus} />
+              <Stack.Screen name="CurrencyCalculator" component={CurrencyCalculator} />
               <Stack.Screen name="DeleteAccount" component={DeleteAccount} />
               <Stack.Screen name="HelpCenter" component={HelpCenter} />
               <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicy} />

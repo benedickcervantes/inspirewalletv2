@@ -33,6 +33,7 @@ export type RootStackParamList = {
   HelpCenter: undefined;
   PrivacyPolicy: undefined;
   TermsConditions: undefined;
+  CurrencyCalculator: undefined;
   Transfer: undefined;
   TransferRecipient: { balanceType: string };
   TransferConfirm: {
@@ -87,6 +88,6 @@ export type RootStackParamList = {
 
 declare global {
   namespace ReactNavigation {
-    interface RootParamList extends RootStackParamList {}
+    interface RootParamList extends RootStackParamList { }
   }
 }
