@@ -34,6 +34,8 @@ interface CardsTabProps {
   initialDesign?: string | null;
   /** Notify parent when active card design changes. */
   onActiveDesignChange?: (design: string | null) => void;
+  /** Callback to refresh wallet balance and other data after purchase. */
+  onRefresh?: () => Promise<void>;
 }
 
 const getActiveCardStorageKey = (accountNumber?: string) =>
@@ -48,6 +50,7 @@ export default function CardsTab({
   flipCard,
   initialDesign,
   onActiveDesignChange,
+  onRefresh,
 }: CardsTabProps) {
   const navigation = useNavigation();
   const { t } = useLanguage();
@@ -180,6 +183,10 @@ export default function CardsTab({
         setIsPurchaseModalVisible(false);
         setIsVipModalVisible(false);
         await fetchCardsData();
+        // Refresh wallet balance from parent
+        if (onRefresh) {
+          await onRefresh();
+        }
       } else {
         alert(res.error || "Failed to purchase card");
       }
@@ -644,7 +651,7 @@ export default function CardsTab({
             {t("ct.yourCollection")}
           </Text>
           <Text style={styles.collectionCount}>
-            {myCollection.length}/{cardCatalog.length || 5}
+            {myCollection.length + 1}/5
           </Text>
         </View>
 
