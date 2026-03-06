@@ -1754,3 +1754,75 @@ export async function setActiveCard(accessToken, cardCollectionItemId) {
   }
 }
 
+
+/**
+ * Renew an expiring Gold Elite subscription.
+ * Only allowed when subscription expires within 3 days.
+ * POST /card-collection/renew
+ * @param {string} accessToken - Backend JWT
+ * @param {string} design - Card design to renew (e.g., "GOLD_ELITE")
+ * @returns {Promise<{ success: boolean, data?: object, error?: string }>}
+ */
+export async function renewCard(accessToken, design) {
+  const url = buildUrl("/card-collection/renew");
+  if (!url) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
+  if (!design) return { success: false, error: "Design is required" };
+  try {
+    if (__DEV__) console.log("[CardCollection API] renewCard POST", url, { design });
+    const res = await apiFetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ design }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (__DEV__) console.log("[CardCollection API] renewCard response", res.status, data);
+    if (!res.ok) {
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    return { success: true, data: data.data ?? data };
+  } catch (e) {
+    if (__DEV__) console.error("[CardCollection API] renewCard error", e);
+    return { success: false, error: e.message || "Network error" };
+  }
+}
+
+/**
+ * POST /card-collection/cancel-renewal — requires JWT
+ * Cancels auto-renewal for Gold Elite subscription.
+ * @param {string} accessToken - Backend JWT
+ * @param {string} design - Card design (should be "GOLD_ELITE")
+ * @returns {{ success: boolean, data?: object, error?: string }}
+ */
+export async function cancelAutoRenewal(accessToken, design) {
+  const url = buildUrl("/card-collection/cancel-renewal");
+  if (!url) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
+  try {
+    const res = await apiFetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ design }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    return { success: true, data: data.data ?? data };
+  } catch (e) {
+    if (__DEV__) console.error("[CardCollection API] cancelAutoRenewal error", e);
+    return { success: false, error: e.message || "Network error" };
+  }
+}

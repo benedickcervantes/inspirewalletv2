@@ -304,6 +304,16 @@ export function setActiveCard(
   cardCollectionItemId: string,
 ): Promise<{ success: boolean; data?: CardCollectionResponse; error?: string }>;
 
+export function renewCard(
+  accessToken: string,
+  design: string,
+): Promise<{ success: boolean; data?: unknown; error?: string }>;
+
+export function cancelAutoRenewal(
+  accessToken: string,
+  design: string,
+): Promise<{ success: boolean; data?: unknown; error?: string }>;
+
 export interface ApiWalletFull {
   id: string;
   balance?: string;
