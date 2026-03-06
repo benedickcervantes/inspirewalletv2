@@ -5,15 +5,15 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useRef, useState } from 'react';
 import {
-  Animated,
-  BackHandler,
-  Modal,
-  Pressable,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
+    Animated,
+    BackHandler,
+    Modal,
+    Pressable,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    useWindowDimensions,
+    View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { setPasscode as setPasscodeApi } from '../../configs/api';
@@ -272,6 +272,7 @@ export default function CreatePasscode() {
                     style={[styles.padButton, { width: btnSize, height: btnSize, borderRadius: btnSize / 2 }]}
                     onPress={() => handlePress(key)}
                     disabled={loading}
+                    activeOpacity={0.8}
                   >
                     <Text style={styles.padButtonText}>{key}</Text>
                   </TouchableOpacity>
@@ -279,10 +280,12 @@ export default function CreatePasscode() {
               </View>
             ))}
             <View style={styles.padRowLast}>
+              <View style={{ width: btnSize }} />
               <TouchableOpacity
                 style={[styles.padButton, { width: btnSize, height: btnSize, borderRadius: btnSize / 2 }]}
                 onPress={() => handlePress('0')}
                 disabled={loading}
+                activeOpacity={0.8}
               >
                 <Text style={styles.padButtonText}>0</Text>
               </TouchableOpacity>
@@ -290,6 +293,7 @@ export default function CreatePasscode() {
                 style={[styles.padButton, styles.padButtonDel, { width: delBtnSize, height: delBtnSize, borderRadius: delBtnSize / 2 }]}
                 onPress={() => handlePress('Del')}
                 disabled={loading}
+                activeOpacity={0.8}
               >
                 <Ionicons name="backspace-outline" size={28} color={WHITE} />
               </TouchableOpacity>
@@ -391,30 +395,22 @@ const styles = StyleSheet.create({
   },
   padRowLast: {
     flexDirection: 'row',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 0,
-    position: 'relative',
   },
   padButton: {
-    backgroundColor: 'rgba(255,255,255,0.5)',
+    backgroundColor: 'rgba(255,255,255,0.28)',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 6,
-    elevation: 3,
   },
   padButtonDel: {
     backgroundColor: 'transparent',
     borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.6)',
-    position: 'absolute',
-    right: 0,
+    borderColor: 'rgba(255,255,255,0.65)',
   },
   padButtonText: {
-    fontSize: 30,
+    fontSize: 28,
     fontWeight: '600',
     color: WHITE,
   },
