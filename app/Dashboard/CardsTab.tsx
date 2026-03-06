@@ -1,6 +1,7 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
+import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useRef, useState } from "react";
 import {
   Alert,
@@ -61,6 +62,7 @@ export default function CardsTab({
   const [isVipModalVisible, setIsVipModalVisible] = useState(false);
   const [isPurchaseModalVisible, setIsPurchaseModalVisible] = useState(false);
   const [isDesignModalVisible, setIsDesignModalVisible] = useState(false);
+  const [isSuccessModalVisible, setIsSuccessModalVisible] = useState(false);
   const [selectedDesignCard, setSelectedDesignCard] = useState<{
     id?: string;
     title: string;
@@ -178,10 +180,10 @@ export default function CardsTab({
 
       const res = await buyCard(token, designSlug);
       if (res.success) {
-        Alert.alert(t("ct.purchaseSuccessTitle") || "Success!", t("ct.purchaseSuccess") || "Card Purchased successfully!");
         setIsDesignModalVisible(false);
         setIsPurchaseModalVisible(false);
         setIsVipModalVisible(false);
+        setIsSuccessModalVisible(true);
         await fetchCardsData();
         // Refresh wallet balance from parent
         if (onRefresh) {
@@ -1146,6 +1148,39 @@ export default function CardsTab({
                 </TouchableOpacity>
               </View>
             </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Success Modal */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={isSuccessModalVisible}
+        onRequestClose={() => setIsSuccessModalVisible(false)}
+      >
+        <View style={styles.successModalOverlay}>
+          <View style={styles.successModalContent}>
+            <LinearGradient
+              colors={["#E15816", "#F48F38"]}
+              style={styles.successModalGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            >
+              <View style={styles.successIconContainer}>
+                <Ionicons name="checkmark-circle" size={48} color="#FFFFFF" />
+              </View>
+              <Text style={styles.successTitle}>Card successfully activated</Text>
+              <Text style={styles.successMessage}>
+                Your card has been successfully issued and is now available in your collection.
+              </Text>
+              <TouchableOpacity
+                style={styles.successButton}
+                onPress={() => setIsSuccessModalVisible(false)}
+              >
+                <Text style={styles.successButtonText}>OK</Text>
+              </TouchableOpacity>
+            </LinearGradient>
           </View>
         </View>
       </Modal>
@@ -2469,5 +2504,56 @@ const styles = StyleSheet.create({
     borderRadius: 2,
     position: 'absolute',
     left: 0,
+  },
+  // Success Modal styles
+  successModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  successModalContent: {
+    width: '85%',
+    maxWidth: 400,
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  successModalGradient: {
+    padding: 32,
+    alignItems: 'center',
+  },
+  successIconContainer: {
+    marginBottom: 16,
+  },
+  successTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  successMessage: {
+    fontSize: 13,
+    color: '#FFFFFF',
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 24,
+    opacity: 0.95,
+  },
+  successButton: {
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 12,
+    paddingHorizontal: 32,
+    borderRadius: 8,
+  },
+  successButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#E15816',
   },
 });
