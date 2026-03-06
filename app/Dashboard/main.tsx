@@ -3,32 +3,32 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  Animated,
-  Image,
-  Linking,
-  Modal,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Animated,
+    Image,
+    Linking,
+    Modal,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import {
-  SafeAreaView,
-  useSafeAreaInsets,
+    SafeAreaView,
+    useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import {
-  getMe,
-  getNotifications,
-  getOrCreateMainWallet,
-  getReferralTree,
-  getTimeDeposits,
-  getTransactions,
+    getMe,
+    getNotifications,
+    getOrCreateMainWallet,
+    getReferralTree,
+    getTimeDeposits,
+    getTransactions,
 } from "../../configs/api";
 import {
-  languageChoiceDoneKey,
-  SUPPORTED_LANGUAGES,
+    languageChoiceDoneKey,
+    SUPPORTED_LANGUAGES,
 } from "../../constants/locales";
 import { useLanguage } from "../../context/LanguageContext";
 import { useSocket } from "../../context/SocketContext";
@@ -824,6 +824,7 @@ export default function Dashboard() {
               flipCard={flipCard}
               initialDesign={activeCardDesign}
               onActiveDesignChange={setActiveCardDesign}
+              onRefresh={refetchJwtData}
             />
           )}
           {activeTab === "Investment" && (

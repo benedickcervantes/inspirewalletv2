@@ -18,6 +18,10 @@ interface CardTheme {
   withdrawButtonBg: string;
   /** Text color for withdraw button. */
   withdrawButtonText: string;
+  /** Color for the separator line between balance and action buttons. */
+  separatorColor: string;
+  /** Color for the eye icon (balance visibility toggle). */
+  eyeIconColor: string;
 }
 
 const CARD_THEMES: Record<CardDesignKey, CardTheme> = {
@@ -28,6 +32,8 @@ const CARD_THEMES: Record<CardDesignKey, CardTheme> = {
     actionButtonText: "#FFFFFF",
     withdrawButtonBg: "#FFFFFF",
     withdrawButtonText: "#FC821D",
+    separatorColor: "#FFFFFF",
+    eyeIconColor: "#FFFFFF",
   },
   DIAMOND_ELITE: {
     primaryText: "#FFFFFF",
@@ -36,6 +42,8 @@ const CARD_THEMES: Record<CardDesignKey, CardTheme> = {
     actionButtonText: "#FFFFFF",
     withdrawButtonBg: "#ffffffde",
     withdrawButtonText: "#000000",
+    separatorColor: "#FFFFFF",
+    eyeIconColor: "#FFFFFF",
   },
   GOLD_ELITE: {
     primaryText: "#4D3E20",
@@ -44,6 +52,8 @@ const CARD_THEMES: Record<CardDesignKey, CardTheme> = {
     actionButtonText: "#FFFFFF",
     withdrawButtonBg: "#594419e1",
     withdrawButtonText: "#FFFFFF",
+    separatorColor: "#594419",
+    eyeIconColor: "#4D3E20",
   },
   ORANGE_ELITE: {
     primaryText: "#FFFFFF",
@@ -52,6 +62,8 @@ const CARD_THEMES: Record<CardDesignKey, CardTheme> = {
     actionButtonText: "#FFFFFF",
     withdrawButtonBg: "#ffffffde",
     withdrawButtonText: "#6E6E6E",
+    separatorColor: "#FFFFFF",
+    eyeIconColor: "#FFFFFF",
   },
   ROYAL_CURVE: {
     primaryText: "#FFFFFF",
@@ -60,6 +72,8 @@ const CARD_THEMES: Record<CardDesignKey, CardTheme> = {
     actionButtonText: "#FFFFFF",
     withdrawButtonBg: "#ffffffde",
     withdrawButtonText: "#D5AF58",
+    separatorColor: "#FFFFFF",
+    eyeIconColor: "#FFFFFF",
     },
 };
 
