@@ -197,7 +197,10 @@ export default function Dashboard() {
   const navigation = useNavigation();
   const { t, setLanguage } = useLanguage();
   const insets = useSafeAreaInsets();
-  const { width, horizontalPadding } = useResponsive();
+  const { width, horizontalPadding, isSmallScreen } = useResponsive();
+  const qaSpacing = width < 360 ? 0.75 : isSmallScreen ? 0.85 : 1;
+  const qaLabelSize = width < 360 ? 8 : isSmallScreen ? 9 : 11;
+  const qaIconSize = width < 360 ? 18 : isSmallScreen ? 20 : 24;
   const carouselWidth = width - horizontalPadding * 2;
   const [navigatingToProfile, setNavigatingToProfile] = useState(false);
   const [navigatingAction, setNavigatingAction] = useState<string | null>(null);
@@ -778,18 +781,32 @@ export default function Dashboard() {
         </View>
 
         <ScrollView showsVerticalScrollIndicator={false}>
-          <View style={styles.tabs}>
+          <View style={[
+            styles.tabs,
+            { paddingHorizontal: horizontalPadding, paddingVertical: isSmallScreen ? 10 : 12, gap: isSmallScreen ? 10 : 16 },
+          ]}>
             {(["Wallet", "Investment", "Cards"] as const).map((tab) => (
               <TouchableOpacity
                 key={tab}
-                style={[styles.tab, activeTab === tab && styles.activeTab]}
+                style={[
+                  styles.tab,
+                  activeTab === tab && styles.activeTab,
+                  {
+                    paddingHorizontal: width < 360 ? 16 : width < 400 ? 22 : 28,
+                    paddingVertical: isSmallScreen ? 10 : 12,
+                    minWidth: width < 360 ? 80 : width < 400 ? 90 : 100,
+                    minHeight: isSmallScreen ? 38 : 44,
+                  },
+                ]}
                 onPress={() => setActiveTab(tab)}
               >
                 <Text
                   style={[
                     styles.tabText,
                     activeTab === tab && styles.activeTabText,
+                    { fontSize: width < 360 ? 12 : width < 400 ? 13 : 14 },
                   ]}
+                  numberOfLines={1}
                 >
                   {t(
                     tab === "Wallet"
@@ -840,64 +857,67 @@ export default function Dashboard() {
           )}
 
           {activeTab !== "Cards" && activeTab !== "Investment" && (
-            <View style={styles.quickActionsContainer}>
+            <View style={[
+              styles.quickActionsContainer,
+              { paddingHorizontal: horizontalPadding, paddingVertical: Math.round(16 * qaSpacing), gap: Math.round(10 * qaSpacing) },
+            ]}>
               <TouchableOpacity
-                style={styles.quickActionButton}
+                style={[styles.quickActionButton, { paddingVertical: Math.round(14 * qaSpacing), paddingHorizontal: Math.round(6 * qaSpacing), minWidth: 0 }]}
                 onPress={() => navigation.navigate("Transfer")}
               >
-                <View style={styles.quickActionIcon}>
+                <View style={[styles.quickActionIcon, { width: Math.round(48 * qaSpacing), height: Math.round(48 * qaSpacing), marginBottom: Math.round(6 * qaSpacing) }]}>
                   <MaterialCommunityIcons
                     name="swap-horizontal"
-                    size={24}
+                    size={qaIconSize}
                     color="#E15816"
                   />
                 </View>
-                <Text style={styles.quickActionLabel}>
+                <Text style={[styles.quickActionLabel, { fontSize: qaLabelSize }]} numberOfLines={2}>
                   {t("dashboard.transfer")}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={styles.quickActionButton}
+                style={[styles.quickActionButton, { paddingVertical: Math.round(14 * qaSpacing), paddingHorizontal: Math.round(6 * qaSpacing), minWidth: 0 }]}
                 onPress={() => navigation.navigate("Bdo")}
               >
-                <View style={styles.quickActionIcon}>
+                <View style={[styles.quickActionIcon, { width: Math.round(48 * qaSpacing), height: Math.round(48 * qaSpacing), marginBottom: Math.round(6 * qaSpacing) }]}>
                   <MaterialCommunityIcons
                     name="bank"
-                    size={24}
+                    size={qaIconSize}
                     color="#E15816"
                   />
                 </View>
-                <Text style={styles.quickActionLabel}>
+                <Text style={[styles.quickActionLabel, { fontSize: qaLabelSize }]} numberOfLines={2}>
                   {t("dashboard.bankingService")}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={styles.quickActionButton}
+                style={[styles.quickActionButton, { paddingVertical: Math.round(14 * qaSpacing), paddingHorizontal: Math.round(6 * qaSpacing), minWidth: 0 }]}
                 onPress={() => navigation.navigate("Travel")}
               >
-                <View style={styles.quickActionIcon}>
+                <View style={[styles.quickActionIcon, { width: Math.round(48 * qaSpacing), height: Math.round(48 * qaSpacing), marginBottom: Math.round(6 * qaSpacing) }]}>
                   <MaterialCommunityIcons
                     name="airplane"
-                    size={24}
+                    size={qaIconSize}
                     color="#E15816"
                   />
                 </View>
-                <Text style={styles.quickActionLabel}>
+                <Text style={[styles.quickActionLabel, { fontSize: qaLabelSize }]} numberOfLines={2}>
                   {t("dashboard.travelProtection")}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={styles.quickActionButton}
+                style={[styles.quickActionButton, { paddingVertical: Math.round(14 * qaSpacing), paddingHorizontal: Math.round(6 * qaSpacing), minWidth: 0 }]}
                 onPress={() => navigation.navigate("History")}
               >
-                <View style={styles.quickActionIcon}>
+                <View style={[styles.quickActionIcon, { width: Math.round(48 * qaSpacing), height: Math.round(48 * qaSpacing), marginBottom: Math.round(6 * qaSpacing) }]}>
                   <MaterialCommunityIcons
                     name="history"
-                    size={24}
+                    size={qaIconSize}
                     color="#E15816"
                   />
                 </View>
-                <Text style={styles.quickActionLabel}>
+                <Text style={[styles.quickActionLabel, { fontSize: qaLabelSize }]} numberOfLines={2}>
                   {t("dashboard.history")}
                 </Text>
               </TouchableOpacity>

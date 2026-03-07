@@ -9,9 +9,12 @@ import {
     StyleSheet,
     Text,
     TouchableOpacity,
+    useWindowDimensions,
     View
 } from "react-native";
 import { useLanguage } from "../../context/LanguageContext";
+import { useResponsive } from "../../utils/responsive";
+import GoldEliteRenewalCard from "./GoldEliteRenewalCard";
 
 interface PayoutScheduleItem {
   payoutIndex?: number;
@@ -126,6 +129,10 @@ export default function SavingsTab({
   userReferrer,
 }: SavingsTabProps) {
   const { t } = useLanguage();
+  const { width } = useWindowDimensions();
+  const { horizontalPadding } = useResponsive();
+  const isSmallScreen = width < 360;
+  const fontScale = isSmallScreen ? 0.88 : width < 400 ? 0.94 : 1;
   const [contractTab, setContractTab] = useState<"Active" | "Completed" | "Pending">("Active");
   const [selectedContract, setSelectedContract] = useState<TimeDeposit | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -180,37 +187,37 @@ export default function SavingsTab({
         />
       }
     >
-      <View style={styles.cardContainer}>
+      <View style={[styles.cardContainer, { paddingHorizontal: horizontalPadding }]}>
         <ImageBackground
           source={require("../../assets/cards/default/card2.0.png")}
-          style={styles.depositCard}
+          style={[styles.depositCard, { padding: isSmallScreen ? 14 : 20, minHeight: isSmallScreen ? 140 : 160 }]}
           imageStyle={styles.depositCardImage}
           resizeMode="cover"
         >
           <View style={styles.cardHeader}>
             <Ionicons
               name="trending-up"
-              size={60}
+              size={isSmallScreen ? 48 : 60}
               color="rgba(255, 255, 255, 0.3)"
               style={styles.cardIcon}
             />
           </View>
           <View style={styles.depositInfo}>
-            <Text style={styles.depositLabel}>{t("investment.timeDeposit")}</Text>
-            <Text style={styles.depositAmount}>₱ {formatCurrency(timeDeposit)}</Text>
+            <Text style={[styles.depositLabel, { fontSize: Math.round(14 * fontScale) }]}>{t("investment.timeDeposit")}</Text>
+            <Text style={[styles.depositAmount, { fontSize: Math.round(32 * fontScale) }]}>₱ {formatCurrency(timeDeposit)}</Text>
           </View>
         </ImageBackground>
       </View>
 
-      <View style={styles.amountWalletContainer}>
+      <View style={[styles.amountWalletContainer, { paddingHorizontal: horizontalPadding }]}>
         <View style={styles.amountWalletCard}>
           <View style={styles.amountWalletContent}>
             <View style={styles.amountWalletLeft}>
               <View style={styles.amountWalletHeader}>
-                <Text style={styles.amountWalletLabel}>{t("investment.amountWalletLabel")}</Text>
+                <Text style={[styles.amountWalletLabel, { fontSize: Math.round(16 * fontScale) }]}>{t("investment.amountWalletLabel")}</Text>
                 <Ionicons name="flame-outline" size={18} color="#E15816" />
               </View>
-              <Text style={styles.amountWalletAmount}>
+              <Text style={[styles.amountWalletAmount, { fontSize: Math.round(20 * fontScale) }]}>
                 ₱ {formatCurrency(dividend)}
               </Text>
               <Text style={styles.amountWalletHint}>
@@ -224,7 +231,7 @@ export default function SavingsTab({
         </View>
       </View>
 
-      <View style={styles.graphContainer}>
+      <View style={[styles.graphContainer, { paddingHorizontal: horizontalPadding }]}>
         <LinearGradient
           colors={["#E25A17", "#F28934"]}
           style={styles.graphCard}
@@ -232,7 +239,7 @@ export default function SavingsTab({
           end={{ x: 1, y: 1 }}
         >
           <View style={styles.graphHeader}>
-            <Text style={styles.graphTitle}>{t("investment.depositGrowth")} ({new Date().getFullYear()})</Text>
+            <Text style={[styles.graphTitle, { fontSize: Math.round(16 * fontScale) }]}>{t("investment.depositGrowth")} ({new Date().getFullYear()})</Text>
             <Ionicons name="bar-chart-outline" size={20} color="#FFFFFF" />
           </View>
           <View style={styles.chartContainer}>
@@ -253,9 +260,9 @@ export default function SavingsTab({
         </LinearGradient>
       </View>
 
-      <View style={styles.contractsSection}>
-        <Text style={styles.contractsSectionTitle}>{t("investment.contracts")}</Text>
-        <View style={styles.contractTabs}>
+      <View style={[styles.contractsSection, { paddingHorizontal: horizontalPadding }]}>
+        <Text style={[styles.contractsSectionTitle, { fontSize: Math.round(16 * fontScale) }]}>{t("investment.contracts")}</Text>
+        <View style={[styles.contractTabs, { gap: isSmallScreen ? 6 : 8 }]}>
           {(["Active", "Completed", "Pending"] as const).map((tab) => (
             <TouchableOpacity
               key={tab}
@@ -266,7 +273,9 @@ export default function SavingsTab({
                 style={[
                   styles.contractTabText,
                   contractTab === tab && styles.contractTabTextActive,
+                  { fontSize: Math.round(13 * fontScale) },
                 ]}
+                numberOfLines={1}
               >
                 {t(tab === "Active" ? "investment.active" : tab === "Completed" ? "investment.completed" : "investment.pending")}
               </Text>

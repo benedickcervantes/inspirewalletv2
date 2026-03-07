@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { useEffect, useState } from "react";
-import { Animated, ImageBackground, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Animated, ImageBackground, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { SvgXml } from "react-native-svg";
 import { useLanguage } from "../../context/LanguageContext";
 import { useResponsive } from "../../utils/responsive";
@@ -77,7 +77,22 @@ export default function WalletTab({
 }: WalletTabProps) {
   const navigation = useNavigation();
   const { t } = useLanguage();
+  const { width } = useWindowDimensions();
   const { horizontalPadding } = useResponsive();
+  const isSmallScreen = width < 360;
+  const isMediumScreen = width >= 360 && width < 400;
+  const cardWidth = width - horizontalPadding * 2;
+  const cardHeight = cardWidth / 1.586;
+  const containerHeight = cardHeight + 10;
+  const fontScale = isSmallScreen ? 0.82 : isMediumScreen ? 0.9 : 1;
+  const spacingScale = isSmallScreen ? 0.7 : isMediumScreen ? 0.85 : 1;
+  // Scale text by cardWidth - text lives inside the card, so this keeps proportions correct
+  const minCardW = 280;
+  const maxCardW = 410;
+  const cardScale = Math.min(1, Math.max(0, (cardWidth - minCardW) / (maxCardW - minCardW)));
+  const labelFontSize = Math.round(10 + cardScale * 6);
+  const currencyFontSize = Math.round(11 + cardScale * 7);
+  const amountFontSize = Math.round(18 + cardScale * 22);
   const [isBalanceVisible, setIsBalanceVisible] = useState(true);
   const [activeDesign, setActiveDesign] = useState<string | null>(null);
 
@@ -125,59 +140,74 @@ export default function WalletTab({
   };
 
   return (
-    <View style={[styles.balanceCardContainer, { marginHorizontal: horizontalPadding }]}>
+    <View style={[styles.balanceCardContainer, { marginHorizontal: horizontalPadding, height: containerHeight }]}>
       <Animated.View style={[styles.cardFace, frontAnimatedStyle]}>
         <ImageBackground
           source={getDesignFrontImage(activeDesign || undefined)}
-          style={styles.balanceCard}
+          style={[styles.balanceCard, { width: cardWidth, height: cardHeight, padding: isSmallScreen ? 14 : 20 }]}
           imageStyle={styles.balanceCardImage}
           resizeMode="cover"
         >
-          <View style={styles.balanceCardInner}>
+          <View style={[
+            styles.balanceCardInner,
+            { justifyContent: "flex-end", paddingBottom: Math.round(10 * spacingScale), paddingTop: Math.round(20 * spacingScale) }
+          ]}>
             <TouchableOpacity
               onPress={flipCard}
               activeOpacity={1}
               disabled={true}
-              style={styles.cardFlipArea}
+              style={[styles.cardFlipArea, { flex: 0 }]}
             >
-              <View style={styles.balanceHeader}>
-                <Text style={[styles.balanceLabel, { color: theme.secondaryText }]}>
+              <View style={[styles.balanceHeader, { marginBottom: Math.round(4 * spacingScale) }]}>
+                <Text
+                  style={[styles.balanceLabel, { color: theme.secondaryText, fontSize: labelFontSize }]}
+                  numberOfLines={1}
+                >
                   {t("dashboard.availableBalance")}
                 </Text>
                 <TouchableOpacity onPress={toggleBalanceVisibility} activeOpacity={0.7}>
-                  <SvgXml 
-                    xml={isBalanceVisible ? getOpenEyeSvg(theme.eyeIconColor) : getCloseEyeSvg(theme.eyeIconColor)} 
-                    width={20} 
-                    height={20} 
+                  <SvgXml
+                    xml={isBalanceVisible ? getOpenEyeSvg(theme.eyeIconColor) : getCloseEyeSvg(theme.eyeIconColor)}
+                    width={isSmallScreen ? 18 : 20}
+                    height={isSmallScreen ? 18 : 20}
                   />
                 </TouchableOpacity>
               </View>
-              <View style={styles.balanceAmountContainer}>
-                <Text style={[styles.currency, { color: theme.secondaryText }]}>
+              <View style={[styles.balanceAmountContainer, { marginBottom: Math.round(-4 * spacingScale) }]}>
+                <Text style={[styles.currency, { color: theme.secondaryText, fontSize: currencyFontSize, marginRight: Math.round(8 * spacingScale) }]}>
                   PHP
                 </Text>
-                <Text style={[styles.balanceAmount, { color: theme.primaryText }]}>
+                <Text
+                  style={[styles.balanceAmount, { color: theme.primaryText, fontSize: amountFontSize }]}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.5}
+                >
                   {isBalanceVisible ? formatCurrency(availableBalance) : maskBalance(availableBalance)}
                 </Text>
               </View>
-              <View style={[styles.cardSeparator, { backgroundColor: theme.separatorColor }]} />
+              <View style={[
+                styles.cardSeparator,
+                { backgroundColor: theme.separatorColor, marginVertical: Math.round(6 * spacingScale) }
+              ]} />
             </TouchableOpacity>
 
-            <View style={styles.cardActionsRow} pointerEvents="box-none">
+            <View style={[styles.cardActionsRow, { gap: Math.round(10 * spacingScale), marginTop: Math.round(10 * spacingScale) }]} pointerEvents="box-none">
               <TouchableOpacity
                 style={[
                   styles.cardButtonDeposit,
-                  { backgroundColor: theme.actionButtonBg },
+                  { backgroundColor: theme.actionButtonBg, paddingVertical: Math.round(14 * spacingScale), gap: Math.round(7 * spacingScale) },
                 ]}
                 onPress={() => navigation.navigate("Deposit")}
                 activeOpacity={0.7}
               >
-                <SvgXml xml={depositSvg} width={15} height={15} />
+                <SvgXml xml={depositSvg} width={isSmallScreen ? 14 : 16} height={isSmallScreen ? 14 : 16} />
                 <Text
                   style={[
                     styles.cardButtonDepositText,
-                    { color: theme.actionButtonText },
+                    { color: theme.actionButtonText, fontSize: Math.round(13 * fontScale) },
                   ]}
+                  numberOfLines={1}
                 >
                   {t("dashboard.deposit")}
                 </Text>
@@ -185,7 +215,7 @@ export default function WalletTab({
               <TouchableOpacity
                 style={[
                   styles.cardButtonWithdraw,
-                  { backgroundColor: theme.withdrawButtonBg },
+                  { backgroundColor: theme.withdrawButtonBg, paddingVertical: Math.round(14 * spacingScale), gap: Math.round(7 * spacingScale) },
                 ]}
                 onPress={() => navigation.navigate("Withdraw")}
                 activeOpacity={0.7}
@@ -194,10 +224,13 @@ export default function WalletTab({
                   xml={`<svg width="20" height="20" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
 <path d="M1.00006 8.0711L8.07113 1.00004M8.07113 1.00004L7.8691 6.85892M8.07113 1.00004L2.21224 1.20207" stroke="${theme.withdrawButtonText}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>`}
-                  width={15} 
-                  height={15} 
+                  width={isSmallScreen ? 14 : 16}
+                  height={isSmallScreen ? 14 : 16}
                 />
-                <Text style={[styles.cardButtonWithdrawText, { color: theme.withdrawButtonText }]}>
+                <Text
+                  style={[styles.cardButtonWithdrawText, { color: theme.withdrawButtonText, fontSize: Math.round(14 * fontScale) }]}
+                  numberOfLines={1}
+                >
                   {t("dashboard.withdraw")}
                 </Text>
               </TouchableOpacity>
@@ -215,9 +248,9 @@ export default function WalletTab({
           activeOpacity={1}
           style={styles.cardBackTouchable}
         >
-          <ImageBackground
+            <ImageBackground
             source={getDesignBackImage(activeDesign || undefined)}
-            style={styles.balanceCard}
+            style={[styles.balanceCard, { width: cardWidth, height: cardHeight }]}
             imageStyle={styles.balanceCardImage}
             resizeMode="cover"
           />
@@ -230,7 +263,6 @@ export default function WalletTab({
 const styles = StyleSheet.create({
   balanceCardContainer: {
     marginBottom: 10,
-    height: 240,
   },
   cardFace: {
     position: "absolute",
@@ -265,7 +297,6 @@ const styles = StyleSheet.create({
   balanceCardInner: {
     flex: 1,
     justifyContent: "space-between",
-    paddingTop: 50,
   },
   cardFlipArea: {
     flex: 1,
@@ -285,16 +316,17 @@ const styles = StyleSheet.create({
   balanceAmountContainer: {
     flexDirection: "row",
     alignItems: "baseline",
-    marginBottom: -9,
+    flexWrap: "nowrap",
   },
   currency: {
-    fontSize: 18,
+    fontSize: 16,
     color: "#FFFFFF",
     fontWeight: "400",
     marginRight: 8,
   },
   balanceAmount: {
-    fontSize: 36,
+    flex: 1,
+    fontSize: 28,
     fontWeight: "700",
     color: "#FFFFFF",
     letterSpacing: 0.5,
@@ -302,21 +334,18 @@ const styles = StyleSheet.create({
   cardSeparator: {
     height: 1.5,
     backgroundColor: "#FFFFFF",
-    marginVertical: 14,
     opacity: 0.9,
   },
   cardActionsRow: {
     flexDirection: "row",
-    gap: 14,
   },
   cardButtonDeposit: {
     flex: 1,
+    minWidth: 0,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
     backgroundColor: "rgba(255, 255, 255, 0.3)",
-    paddingVertical: 12,
     borderRadius: 15,
   },
   cardButtonDepositText: {
@@ -326,12 +355,10 @@ const styles = StyleSheet.create({
   },
   cardButtonWithdraw: {
     flex: 1,
+    minWidth: 0,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
-    // Background and text colors are now theme-based
-    paddingVertical: 14,
     borderRadius: 15,
   },
   cardButtonWithdrawText: {
