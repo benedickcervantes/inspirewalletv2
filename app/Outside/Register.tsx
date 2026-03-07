@@ -21,8 +21,16 @@ import {
     View,
 } from "react-native";
 import { register as registerApi } from "../../configs/api";
+import {
+    DEFAULT_LANGUAGE,
+    normalizeLanguage,
+    SUPPORTED_LANGUAGES,
+} from "../../constants/locales";
+import { useLanguage } from "../../context/LanguageContext";
 import type { NavProp } from "../../types/navigation";
 import { useResponsive } from "../../utils/responsive";
+
+const USER_PREFERRED_LANGUAGE_KEY = "user_preferred_language";
 
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 const filterCompanyInput = (text: string) =>
@@ -103,7 +111,10 @@ export default function Register() {
   const navigation = useNavigation();
   const { width } = useWindowDimensions();
   const { horizontalPadding, moderateScale } = useResponsive();
+  const { t, language: contextLanguage, setLanguage } = useLanguage();
+  const language = normalizeLanguage(contextLanguage ?? DEFAULT_LANGUAGE);
   const [currentStep, setCurrentStep] = useState(1);
+  const [languageModalVisible, setLanguageModalVisible] = useState(false);
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -140,13 +151,13 @@ export default function Register() {
 
     if (currentStep === 1) {
       if (!firstName.trim()) {
-        newErrors.firstName = "Please enter your first name";
+        newErrors.firstName = t("register.errorFirstName");
       }
       if (!lastName.trim()) {
-        newErrors.lastName = "Please enter your last name";
+        newErrors.lastName = t("register.errorLastName");
       }
       if (hasCompany && !companyName.trim()) {
-        newErrors.companyName = "Please enter your company name";
+        newErrors.companyName = t("register.errorCompanyName");
       }
 
       if (Object.keys(newErrors).length > 0) {
@@ -157,7 +168,7 @@ export default function Register() {
       setCurrentStep(2);
     } else if (currentStep === 2) {
       if (isAgent === null) {
-        newErrors.isAgent = "Please select if you are an agent or investor";
+        newErrors.isAgent = t("register.errorAgentSelection");
       }
 
       if (Object.keys(newErrors).length > 0) {
@@ -169,18 +180,17 @@ export default function Register() {
     } else if (currentStep === 3) {
       const email = emailAddress.trim();
       if (!email) {
-        newErrors.emailAddress = "Please enter your email address";
+        newErrors.emailAddress = t("register.errorEmail");
       } else if (!isValidEmail(email)) {
-        newErrors.emailAddress =
-          "Please enter a valid email address (e.g. name@example.com)";
+        newErrors.emailAddress = t("register.errorValidEmail");
       }
       if (!password.trim()) {
-        newErrors.password = "Please enter a password";
+        newErrors.password = t("register.errorPassword");
       } else if (password.length < 8) {
-        newErrors.password = "Password must be at least 8 characters";
+        newErrors.password = t("register.errorPasswordLength");
       }
       if (password !== confirmPassword) {
-        newErrors.confirmPassword = "Passwords do not match";
+        newErrors.confirmPassword = t("register.errorPasswordMismatch");
       }
 
       if (Object.keys(newErrors).length > 0) {
@@ -221,7 +231,7 @@ export default function Register() {
 
       if (!result.success) {
         setRegisterError(
-          result.error || "Registration failed. Please try again.",
+          result.error || t("register.errorRegistrationFailed"),
         );
         return;
       }
@@ -231,7 +241,7 @@ export default function Register() {
       await AsyncStorage.setItem("registrationPasscodePending", "true");
       (navigation as unknown as NavProp).replace("CreatePasscode");
     } catch {
-      setRegisterError("An unexpected error occurred. Please try again.");
+      setRegisterError(t("register.errorUnexpected"));
     } finally {
       setRegisterLoading(false);
     }
@@ -243,6 +253,12 @@ export default function Register() {
     } else {
       (navigation as unknown as NavProp).replace("Welcome");
     }
+  };
+
+  const handleSelectLanguage = async (selectedLabel: string) => {
+    setLanguage(selectedLabel);
+    await AsyncStorage.setItem(USER_PREFERRED_LANGUAGE_KEY, selectedLabel);
+    setLanguageModalVisible(false);
   };
 
   const handleBarCodeScanned = ({ data }: { type: string; data: string }) => {
@@ -284,7 +300,7 @@ export default function Register() {
     if (!permission?.granted) {
       const response = await requestPermission();
       if (!response.granted) {
-        alert("Camera permission is required to scan QR codes.");
+        alert(t("register.cameraPermissionRequired"));
         return;
       }
     }
@@ -319,8 +335,13 @@ export default function Register() {
             >
               <Ionicons name="arrow-back" size={24} color="#E25A17" />
             </TouchableOpacity>
-            <Text style={styles.headerTitle}>Account Registration</Text>
-            <View style={styles.placeholder} />
+            <Text style={styles.headerTitle}>{t("register.title")}</Text>
+            <TouchableOpacity
+              style={styles.languageButton}
+              onPress={() => setLanguageModalVisible(true)}
+            >
+              <Ionicons name="language-outline" size={24} color="#E25A17" />
+            </TouchableOpacity>
           </View>
 
           <View style={styles.progressContainer}>
@@ -394,7 +415,7 @@ export default function Register() {
           >
             {currentStep === 1 && (
               <>
-                <Text style={styles.welcomeText}>Welcome Investor!</Text>
+                <Text style={styles.welcomeText}>{t("register.welcomeInvestor")}</Text>
                 <View style={styles.infoBanner}>
                   <MaterialCommunityIcons
                     name="office-building"
@@ -403,27 +424,27 @@ export default function Register() {
                   />
                   <View style={styles.infoBannerTextContainer}>
                     <Text style={styles.infoBannerText}>
-                      Start your investment journey with{" "}
-                      <Text style={styles.infoBannerBold}>Inspire Wallet.</Text>
+                      {t("register.startInvestment")}{" "}
+                      <Text style={styles.infoBannerBold}>{t("register.inspireWallet")}</Text>
                     </Text>
                     <Text style={styles.infoBannerText}>
-                      Complete your profile to unlock all features.
+                      {t("register.completeProfile")}
                     </Text>
                   </View>
                 </View>
                 <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>Personal Information</Text>
+                  <Text style={styles.sectionTitle}>{t("register.personalInfo")}</Text>
                   <View style={styles.sectionUnderline} />
                   <View style={styles.inputGroup}>
                     <Text style={styles.inputLabel}>
-                      First Name <Text style={styles.required}>*</Text>
+                      {t("register.firstName")} <Text style={styles.required}>*</Text>
                     </Text>
                     <TextInput
                       style={[
                         styles.input,
                         errors.firstName && styles.inputError,
                       ]}
-                      placeholder="e.g. John"
+                      placeholder={t("register.placeholderFirstName")}
                       placeholderTextColor="#999"
                       autoCapitalize="words"
                       value={firstName}
@@ -443,14 +464,14 @@ export default function Register() {
                   </View>
                   <View style={styles.inputGroup}>
                     <Text style={styles.inputLabel}>
-                      Last Name <Text style={styles.required}>*</Text>
+                      {t("register.lastName")} <Text style={styles.required}>*</Text>
                     </Text>
                     <TextInput
                       style={[
                         styles.input,
                         errors.lastName && styles.inputError,
                       ]}
-                      placeholder="e.g. Doe"
+                      placeholder={t("register.placeholderLastName")}
                       placeholderTextColor="#999"
                       autoCapitalize="words"
                       value={lastName}
@@ -469,7 +490,7 @@ export default function Register() {
                     )}
                   </View>
                   <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>Phone Number</Text>
+                    <Text style={styles.inputLabel}>{t("register.phoneNumber")}</Text>
                     <View style={styles.phoneInputContainer}>
                       <TouchableOpacity
                         style={styles.countrySelector}
@@ -529,19 +550,19 @@ export default function Register() {
                         <Ionicons name="checkmark" size={16} color="#E25A17" />
                       )}
                     </View>
-                    <Text style={styles.checkboxLabel}>I have a company</Text>
+                    <Text style={styles.checkboxLabel}>{t("register.iHaveCompany")}</Text>
                   </TouchableOpacity>
                   {hasCompany && (
                     <View style={styles.inputGroup}>
                       <Text style={styles.inputLabel}>
-                        Company Name <Text style={styles.required}>*</Text>
+                        {t("register.companyName")} <Text style={styles.required}>*</Text>
                       </Text>
                       <TextInput
                         style={[
                           styles.input,
                           errors.companyName && styles.inputError,
                         ]}
-                        placeholder="Enter your company name"
+                        placeholder={t("register.placeholderCompanyName")}
                         placeholderTextColor="#999"
                         autoCapitalize="words"
                         value={companyName}
@@ -572,7 +593,7 @@ export default function Register() {
               <>
                 <View style={styles.section}>
                   <Text style={styles.sectionTitle}>
-                    Contact Information (Optional)
+                    {t("register.contactInfo")}
                   </Text>
                   <View style={styles.sectionUnderline} />
                   <View
@@ -583,7 +604,7 @@ export default function Register() {
                     }
                   >
                     <View style={styles.inputGroup}>
-                      <Text style={styles.inputLabel}>LINE Account Link</Text>
+                      <Text style={styles.inputLabel}>{t("register.lineAccountLink")}</Text>
                       <View style={styles.scannerInputContainer}>
                         <MaterialCommunityIcons
                           name="chat"
@@ -593,7 +614,7 @@ export default function Register() {
                         />
                         <TextInput
                           style={styles.scannerInput}
-                          placeholder="Enter your LINE Account Link"
+                          placeholder={t("register.placeholderLine")}
                           placeholderTextColor="#999"
                           keyboardType="default"
                           autoComplete="off"
@@ -624,11 +645,11 @@ export default function Register() {
                         </View>
                       </View>
                       <Text style={styles.helperText}>
-                        Scan QR or upload an image with a QR code
+                        {t("register.scanQRHint")}
                       </Text>
                     </View>
                     <View style={styles.inputGroup}>
-                      <Text style={styles.inputLabel}>Viber</Text>
+                      <Text style={styles.inputLabel}>{t("register.viber")}</Text>
                       <View style={styles.scannerInputContainer}>
                         <MaterialCommunityIcons
                           name="phone"
@@ -638,7 +659,7 @@ export default function Register() {
                         />
                         <TextInput
                           style={styles.scannerInput}
-                          placeholder="Enter your Viber contact"
+                          placeholder={t("register.placeholderViber")}
                           placeholderTextColor="#999"
                           keyboardType="default"
                           autoComplete="off"
@@ -669,11 +690,11 @@ export default function Register() {
                         </View>
                       </View>
                       <Text style={styles.helperText}>
-                        Scan QR or upload an image with a QR code
+                        {t("register.scanQRHint")}
                       </Text>
                     </View>
                     <View style={styles.inputGroup}>
-                      <Text style={styles.inputLabel}>WhatsApp</Text>
+                      <Text style={styles.inputLabel}>{t("register.whatsapp")}</Text>
                       <View style={styles.scannerInputContainer}>
                         <MaterialCommunityIcons
                           name="whatsapp"
@@ -683,7 +704,7 @@ export default function Register() {
                         />
                         <TextInput
                           style={styles.scannerInput}
-                          placeholder="Enter your WhatsApp contact"
+                          placeholder={t("register.placeholderWhatsapp")}
                           placeholderTextColor="#999"
                           keyboardType="default"
                           autoComplete="off"
@@ -714,16 +735,16 @@ export default function Register() {
                         </View>
                       </View>
                       <Text style={styles.helperText}>
-                        Scan QR or upload an image with a QR code
+                        {t("register.scanQRHint")}
                       </Text>
                     </View>
                   </View>
                 </View>
                 <View style={[styles.section, { marginTop: 20 }]}>
-                  <Text style={styles.sectionTitle}>Account Type</Text>
+                  <Text style={styles.sectionTitle}>{t("register.accountType")}</Text>
                   <View style={styles.sectionUnderline} />
                   <Text style={styles.inputLabel}>
-                    Are you an agent or investor?{" "}
+                    {t("register.agentOrInvestor")}{" "}
                     <Text style={styles.required}>*</Text>
                   </Text>
                   <TouchableOpacity
@@ -738,7 +759,7 @@ export default function Register() {
                     >
                       {isAgent === true && <View style={styles.radioDot} />}
                     </View>
-                    <Text style={styles.radioLabel}>I&apos;m an agent</Text>
+                    <Text style={styles.radioLabel}>{t("register.imAgent")}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={styles.radioContainer}
@@ -752,7 +773,7 @@ export default function Register() {
                     >
                       {isAgent === false && <View style={styles.radioDot} />}
                     </View>
-                    <Text style={styles.radioLabel}>I&apos;m an investor</Text>
+                    <Text style={styles.radioLabel}>{t("register.imInvestor")}</Text>
                   </TouchableOpacity>
                   {errors.isAgent && (
                     <Text style={styles.errorText}>{errors.isAgent}</Text>
@@ -765,22 +786,21 @@ export default function Register() {
                           size={24}
                           color="#E25A17"
                         />
-                        <Text style={styles.agentQRTitle}>Referral Code</Text>
+                        <Text style={styles.agentQRTitle}>{t("register.referralCode")}</Text>
                       </View>
                       <Text style={styles.agentNumberSubtext}>
-                        You will receive your unique referral code after
-                        registration. Share it so others can register under you.
+                        {t("register.referralCodeSubtext")}
                       </Text>
                     </View>
                   )}
                   <View style={[styles.inputGroup, { marginTop: 20 }]}>
                     <Text style={styles.inputLabel}>
-                      Referrer&apos;s code (Optional)
+                      {t("register.referrersCode")}
                     </Text>
                     <View style={styles.scannerInputContainer}>
                       <TextInput
                         style={styles.scannerInput}
-                        placeholder="Enter referrer's code"
+                        placeholder={t("register.placeholderReferralCode")}
                         placeholderTextColor="#999"
                         value={referralCode}
                         onChangeText={(text) =>
@@ -801,11 +821,10 @@ export default function Register() {
                       </TouchableOpacity>
                     </View>
                     <Text style={styles.helperText}>
-                      Enter your referrer&apos;s code if you were invited by
-                      someone.
+                      {t("register.referralCodeHint")}
                     </Text>
                     <Text style={[styles.helperText, { marginTop: 4 }]}>
-                      Maximum 5 characters
+                      {t("register.maxChars")}
                     </Text>
                   </View>
                 </View>
@@ -815,18 +834,18 @@ export default function Register() {
             {currentStep === 3 && (
               <>
                 <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>Account Credentials</Text>
+                  <Text style={styles.sectionTitle}>{t("register.accountCredentials")}</Text>
                   <View style={styles.sectionUnderline} />
                   <View style={styles.inputGroup}>
                     <Text style={styles.inputLabel}>
-                      Email Address <Text style={styles.required}>*</Text>
+                      {t("register.emailAddress")} <Text style={styles.required}>*</Text>
                     </Text>
                     <TextInput
                       style={[
                         styles.input,
                         errors.emailAddress && styles.inputError,
                       ]}
-                      placeholder="your.email@example.com"
+                      placeholder={t("register.placeholderEmail")}
                       placeholderTextColor="#999"
                       keyboardType="email-address"
                       autoCapitalize="none"
@@ -849,7 +868,7 @@ export default function Register() {
                   </View>
                   <View style={styles.inputGroup}>
                     <Text style={styles.inputLabel}>
-                      Password <Text style={styles.required}>*</Text>
+                      {t("register.password")} <Text style={styles.required}>*</Text>
                     </Text>
                     <View
                       style={[
@@ -859,7 +878,7 @@ export default function Register() {
                     >
                       <TextInput
                         style={styles.passwordInput}
-                        placeholder="Create a secure password"
+                        placeholder={t("register.placeholderPassword")}
                         placeholderTextColor="#999"
                         secureTextEntry={!showPassword}
                         value={password}
@@ -887,7 +906,7 @@ export default function Register() {
                   </View>
                   <View style={styles.inputGroup}>
                     <Text style={styles.inputLabel}>
-                      Confirm Password <Text style={styles.required}>*</Text>
+                      {t("register.confirmPassword")} <Text style={styles.required}>*</Text>
                     </Text>
                     <View
                       style={[
@@ -897,7 +916,7 @@ export default function Register() {
                     >
                       <TextInput
                         style={styles.passwordInput}
-                        placeholder="Re-enter your password"
+                        placeholder={t("register.placeholderConfirmPassword")}
                         placeholderTextColor="#999"
                         secureTextEntry={!showConfirmPassword}
                         value={confirmPassword}
@@ -961,13 +980,13 @@ export default function Register() {
                   <ActivityIndicator color="#FFFFFF" size="small" />
                 ) : (
                   <Text style={styles.nextButtonText}>
-                    {currentStep === 3 ? "Register" : "Next Step"}
+                    {currentStep === 3 ? t("register.registerButton") : t("register.nextStep")}
                   </Text>
                 )}
               </LinearGradient>
             </TouchableOpacity>
             <Text style={styles.termsText}>
-              By continuing, you agree to our Terms of Service
+              {t("register.termsText")}
             </Text>
           </View>
         </KeyboardAvoidingView>
@@ -981,7 +1000,7 @@ export default function Register() {
           <View style={styles.modalOverlay}>
             <View style={styles.modalContainer}>
               <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Select Country</Text>
+                <Text style={styles.modalTitle}>{t("register.selectCountry")}</Text>
                 <TouchableOpacity
                   onPress={() => setIsCountryModalVisible(false)}
                 >
@@ -1023,16 +1042,16 @@ export default function Register() {
               <View style={styles.qrPermissionContainer}>
                 <Ionicons name="camera-outline" size={64} color="#666" />
                 <Text style={styles.qrPermissionText}>
-                  Camera Access Required
+                  {t("register.cameraAccessRequired")}
                 </Text>
                 <Text style={styles.qrPermissionSubText}>
-                  Please grant camera permission to scan referral QR codes.
+                  {t("register.cameraPermissionHint")}
                 </Text>
                 <TouchableOpacity
                   style={styles.qrCloseButton}
                   onPress={() => setIsQRScannerVisible(false)}
                 >
-                  <Text style={styles.qrCloseButtonText}>Go Back</Text>
+                  <Text style={styles.qrCloseButtonText}>{t("register.goBack")}</Text>
                 </TouchableOpacity>
               </View>
             ) : (
@@ -1047,11 +1066,10 @@ export default function Register() {
                 <View style={styles.qrOverlay}>
                   <View style={styles.qrTopOverlay}>
                     <Text style={styles.qrInstructionText}>
-                      {activeQRField === "referral" &&
-                        "Scan Referrer's QR Code"}
-                      {activeQRField === "line" && "Scan LINE QR Code"}
-                      {activeQRField === "viber" && "Scan Viber QR Code"}
-                      {activeQRField === "whatsapp" && "Scan WhatsApp QR Code"}
+                      {activeQRField === "referral" && t("register.scanReferralQR")}
+                      {activeQRField === "line" && t("register.scanLineQR")}
+                      {activeQRField === "viber" && t("register.scanViberQR")}
+                      {activeQRField === "whatsapp" && t("register.scanWhatsappQR")}
                     </Text>
                   </View>
                   <View style={styles.qrCenterRow}>
@@ -1072,13 +1090,89 @@ export default function Register() {
                         setActiveQRField(null);
                       }}
                     >
-                      <Text style={styles.qrCancelButtonText}>Cancel</Text>
+                      <Text style={styles.qrCancelButtonText}>{t("register.cancel")}</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
               </CameraView>
             )}
           </View>
+        </Modal>
+
+        {/* Language Modal */}
+        <Modal
+          visible={languageModalVisible}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setLanguageModalVisible(false)}
+        >
+          <TouchableOpacity
+            style={styles.languageModalOverlay}
+            activeOpacity={1}
+            onPress={() => setLanguageModalVisible(false)}
+          >
+            <View
+              style={styles.languageModalContent}
+              onStartShouldSetResponder={() => true}
+            >
+              <View style={styles.languageMapHeader}>
+                <View style={styles.languageMapGlobe}>
+                  <Ionicons name="globe-outline" size={40} color="#E25A17" />
+                </View>
+                <View style={styles.languageMapFlags}>
+                  {SUPPORTED_LANGUAGES.map(({ label, flag }) => (
+                    <View
+                      key={label}
+                      style={[
+                        styles.languageMapFlagChip,
+                        language === label && styles.languageMapFlagChipSelected,
+                      ]}
+                    >
+                      <Text style={styles.languageMapFlagEmoji}>{flag}</Text>
+                    </View>
+                  ))}
+                </View>
+                <Text style={styles.languageModalTitle}>
+                  {t("profile.selectLanguage")}
+                </Text>
+                <Text style={styles.languageModalSubtitle}>
+                  {t("profile.defaultIsEnglish")}
+                </Text>
+              </View>
+              {SUPPORTED_LANGUAGES.map(({ label, flag }) => (
+                <TouchableOpacity
+                  key={label}
+                  style={[
+                    styles.languageOption,
+                    language === label && styles.languageOptionSelected,
+                  ]}
+                  onPress={() => handleSelectLanguage(label)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.languageOptionFlag}>{flag}</Text>
+                  <Text
+                    style={[
+                      styles.languageOptionText,
+                      language === label && styles.languageOptionTextSelected,
+                    ]}
+                  >
+                    {label}
+                  </Text>
+                  {language === label && (
+                    <Ionicons name="checkmark-circle" size={22} color="#E25A17" />
+                  )}
+                </TouchableOpacity>
+              ))}
+              <TouchableOpacity
+                style={styles.languageModalCancel}
+                onPress={() => setLanguageModalVisible(false)}
+              >
+                <Text style={styles.languageModalCancelText}>
+                  {t("common.cancel")}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
         </Modal>
       </SafeAreaView>
     </>
@@ -1103,7 +1197,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   headerTitle: { fontSize: 18, fontWeight: "600", color: "#E25A17" },
-  placeholder: { width: 40 },
+  languageButton: {
+    width: 40,
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   progressContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -1696,5 +1795,110 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 4,
     marginLeft: 4,
+  },
+  // Language Modal
+  languageModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  languageModalContent: {
+    width: "100%",
+    maxWidth: 360,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    padding: 24,
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.25,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 8,
+      },
+    }),
+  },
+  languageMapHeader: {
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  languageMapGlobe: {
+    marginBottom: 12,
+  },
+  languageMapFlags: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 10,
+    marginBottom: 12,
+  },
+  languageMapFlagChip: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#F5F5F5",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  languageMapFlagChipSelected: {
+    backgroundColor: "#FFF0E8",
+    borderWidth: 2,
+    borderColor: "#E25A17",
+  },
+  languageMapFlagEmoji: {
+    fontSize: 24,
+  },
+  languageModalTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#333",
+    marginBottom: 4,
+    textAlign: "center",
+  },
+  languageModalSubtitle: {
+    fontSize: 13,
+    color: "#666",
+    textAlign: "center",
+  },
+  languageOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    marginBottom: 8,
+    backgroundColor: "#F8F8F8",
+    borderWidth: 1,
+    borderColor: "transparent",
+  },
+  languageOptionSelected: {
+    backgroundColor: "#FFF0E8",
+    borderWidth: 2,
+    borderColor: "#E25A17",
+  },
+  languageOptionFlag: {
+    fontSize: 22,
+    marginRight: 12,
+  },
+  languageOptionText: {
+    fontSize: 16,
+    color: "#333",
+    flex: 1,
+  },
+  languageOptionTextSelected: {
+    fontWeight: "600",
+    color: "#E25A17",
+  },
+  languageModalCancel: {
+    marginTop: 12,
+    paddingVertical: 12,
+    alignItems: "center",
+  },
+  languageModalCancelText: {
+    fontSize: 16,
+    color: "#666",
   },
 });
