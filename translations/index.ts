@@ -805,6 +805,10 @@ const en: TranslationMap = {
   "ct.buyCard": "Buy Card",
   "ct.buy": "Buy",
   "ct.cancel": "Cancel",
+  "ct.cancelRenewal": "Cancel Renewal",
+  "ct.success": "Success",
+  "ct.autoRenewalCancelled":
+    "Auto-renewal has been cancelled. Your subscription will expire on the scheduled date.",
   "ct.eligibleTitle": "You're eligible!",
   "ct.eligibleDesc": "You have a qualifying time deposit of ₱10,000,000+. Tap the button below to claim your Diamond Elite card.",
   "ct.needWarningText": "You need ₱10,000,000+ in a single time deposit contract.",
@@ -2028,6 +2032,10 @@ const ko: TranslationMap = {
   "ct.buyCard": "카드 구매",
   "ct.buy": "구매",
   "ct.cancel": "취소",
+  "ct.cancelRenewal": "갱신 취소",
+  "ct.success": "성공",
+  "ct.autoRenewalCancelled":
+    "자동 갱신이 취소되었습니다. 구독은 예정된 날짜에 만료됩니다.",
   "ct.eligibleTitle": "자격이 있습니다!",
   "ct.eligibleDesc": "₱10,000,000 이상의 정기 예금이 있습니다. 아래 버튼을 눌러 다이아몬드 엘리트 카드를 수령하세요.",
   "ct.needWarningText": "단일 정기 예금 계약에 ₱10,000,000 이상이 필요합니다.",
@@ -3202,6 +3210,10 @@ const ja: TranslationMap = {
   "ct.buyCard": "カードを購入",
   "ct.buy": "購入",
   "ct.cancel": "キャンセル",
+  "ct.cancelRenewal": "更新をキャンセル",
+  "ct.success": "成功",
+  "ct.autoRenewalCancelled":
+    "自動更新がキャンセルされました。サブスクリプションは予定日付で期限切れになります。",
   "ct.eligibleTitle": "対象となっています！",
   "ct.eligibleDesc": "₱10,000,000以上の定期預金があります。下のボタンをタップしてダイヤモンドエリートカードを請求してください。",
   "ct.needWarningText": "単一の定期預金契約で₱10,000,000以上が必要です。",
@@ -4383,6 +4395,10 @@ const ar: TranslationMap = {
   "ct.buyCard": "شراء البطاقة",
   "ct.buy": "شراء",
   "ct.cancel": "إلغاء",
+  "ct.cancelRenewal": "إلغاء التجديد",
+  "ct.success": "نجاح",
+  "ct.autoRenewalCancelled":
+    "تم إلغاء التجديد التلقائي. ستنتهي اشتراكك في التاريخ المحدد.",
   "ct.eligibleTitle": "أنت مؤهل!",
   "ct.eligibleDesc": "لديك وديعة ثابتة بقيمة ₱10,000,000 أو أكثر. انقر الزر أدناه للمطالبة ببطاقة دايموند إيليت.",
   "ct.needWarningText": "تحتاج إلى ₱10,000,000 أو أكثر في عقد وديعة ثابتة واحد.",

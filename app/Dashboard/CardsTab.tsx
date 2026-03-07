@@ -23,6 +23,7 @@ import {
   getMyCardCollection,
   setActiveCard as setActiveCardApi,
 } from "../../configs/api";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLanguage } from "../../context/LanguageContext";
 import { getCardTheme } from "../theme/cardThemes";
 
@@ -60,6 +61,7 @@ export default function CardsTab({
   onRefresh,
 }: CardsTabProps) {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const { t } = useLanguage();
   const { width, height } = useWindowDimensions();
   // Responsive breakpoints for all mobile sizes
@@ -73,11 +75,17 @@ export default function CardsTab({
   // Responsive font scale
   const fontScale = isSmallScreen ? 0.9 : isMediumScreen ? 0.95 : 1;
   const modalCardPreviewWidth = Math.min(width * 0.75, 300);
+  const modalPadding = isSmallScreen ? 12 : isMediumScreen ? 16 : 20;
+  const modalContentMaxWidth = width - modalPadding * 2;
+  const modalTopOffset = Math.max(insets.top, 12) + 56;
+  const modalBottomPadding = Math.max(insets.bottom, modalPadding);
+  const modalContentMaxHeight = height - modalTopOffset - modalBottomPadding - 20;
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isVipModalVisible, setIsVipModalVisible] = useState(false);
   const [isPurchaseModalVisible, setIsPurchaseModalVisible] = useState(false);
   const [isDesignModalVisible, setIsDesignModalVisible] = useState(false);
   const [isSuccessModalVisible, setIsSuccessModalVisible] = useState(false);
+  const [successModalType, setSuccessModalType] = useState<"purchase" | "cancelRenewal">("purchase");
   const [selectedDesignCard, setSelectedDesignCard] = useState<{
     id?: string;
     title: string;
@@ -207,6 +215,7 @@ export default function CardsTab({
         setIsDesignModalVisible(false);
         setIsPurchaseModalVisible(false);
         setIsVipModalVisible(false);
+        setSuccessModalType("purchase");
         setIsSuccessModalVisible(true);
         await fetchCardsData();
         // Refresh wallet balance from parent
@@ -918,16 +927,16 @@ export default function CardsTab({
         onRequestClose={() => setIsPurchaseModalVisible(false)}
         onDismiss={() => { vipFlipAnim.setValue(0); setIsVipCardFlipped(false); }}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.vipModalContent}>
-            <View style={styles.vipModalHeader}>
+        <View style={[styles.modalOverlay, { backgroundColor: 'transparent', paddingHorizontal: modalPadding, paddingTop: modalTopOffset, paddingBottom: modalBottomPadding, width, height }]}>
+          <View style={[styles.vipModalContent, { width: modalContentMaxWidth, maxWidth: modalContentMaxWidth, maxHeight: modalContentMaxHeight }]}>
+            <View style={[styles.vipModalHeader, { paddingHorizontal: modalPadding, paddingVertical: isSmallScreen ? 14 : 18 }]}>
               <View style={styles.vipHeaderLeft}>
                 <View style={styles.vipIconContainer}>
                   <Ionicons name="card" size={24} color="#FFFFFF" />
                 </View>
                 <View>
-                  <Text style={styles.vipModalTitle}>{t("ct.cardPurchaseTitle")}</Text>
-                  <Text style={styles.vipModalSubtitle}>{t("ct.reviewYourSelection")}</Text>
+                  <Text style={[styles.vipModalTitle, { fontSize: isSmallScreen ? 16 : 18 }]}>{t("ct.cardPurchaseTitle")}</Text>
+                  <Text style={[styles.vipModalSubtitle, { fontSize: isSmallScreen ? 11 : 12 }]}>{t("ct.reviewYourSelection")}</Text>
                 </View>
               </View>
               <TouchableOpacity
@@ -941,7 +950,7 @@ export default function CardsTab({
 
             <ScrollView
               style={styles.vipModalScrollView}
-              contentContainerStyle={styles.vipModalBody}
+              contentContainerStyle={[styles.vipModalBody, { paddingHorizontal: modalPadding }]}
               showsVerticalScrollIndicator={false}
             >
               <Text style={styles.vipCardPreviewLabel}>{t("ct.cardPreviewLabel")}</Text>
@@ -970,7 +979,7 @@ export default function CardsTab({
               </View>
 
               <View style={styles.vipTitleContainer}>
-                <Text style={styles.vipCardName}>{t("ct.goldName")}</Text>
+                <Text style={[styles.vipCardName, { fontSize: isSmallScreen ? 16 : 18 }]}>{t("ct.goldName")}</Text>
                 <View style={styles.vipPremiumBadge}>
                   <MaterialCommunityIcons name="crown" size={14} color="#D4B106" />
                   <Text style={styles.vipPremiumText}>{t("ct.vip")}</Text>
@@ -1027,8 +1036,9 @@ export default function CardsTab({
                   <Text style={styles.vipSubscriptionDetailText}>{t("ct.accessExpires")}</Text>
                 </View>
               </View>
+            </ScrollView>
 
-              <View style={styles.vipActionButtons}>
+            <View style={[styles.vipActionButtons, { paddingHorizontal: modalPadding }]}>
                 <TouchableOpacity
                   style={styles.vipCancelButton}
                   onPress={async () => {
@@ -1039,11 +1049,9 @@ export default function CardsTab({
                         if (!token) return;
                         const res = await cancelAutoRenewal(token, "GOLD_ELITE");
                         if (res.success) {
-                          Alert.alert(
-                            t("ct.success") || "Success",
-                            t("ct.autoRenewalCancelled") || "Auto-renewal has been cancelled. Your subscription will expire on the scheduled date.",
-                            [{ text: "OK", onPress: () => setIsPurchaseModalVisible(false) }]
-                          );
+                          setIsPurchaseModalVisible(false);
+                          setSuccessModalType("cancelRenewal");
+                          setIsSuccessModalVisible(true);
                           await fetchCardsData();
                         } else {
                           Alert.alert("Error", res.error || "Failed to cancel auto-renewal");
@@ -1099,7 +1107,6 @@ export default function CardsTab({
                   </View>
                 </TouchableOpacity>
               </View>
-            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -1240,15 +1247,23 @@ export default function CardsTab({
               <View style={styles.successIconContainer}>
                 <Ionicons name="checkmark-circle" size={48} color="#FFFFFF" />
               </View>
-              <Text style={styles.successTitle}>Card successfully activated</Text>
+              <Text style={styles.successTitle}>
+                {successModalType === "cancelRenewal"
+                  ? (t("ct.success") || "Success")
+                  : (t("ct.purchaseSuccessTitle") || "Card successfully activated")}
+              </Text>
               <Text style={styles.successMessage}>
-                Your card has been successfully issued and is now available in your collection.
+                {successModalType === "cancelRenewal"
+                  ? (t("ct.autoRenewalCancelled") ||
+                    "Auto-renewal has been cancelled. Your subscription will expire on the scheduled date.")
+                  : (t("ct.purchaseSuccess") ||
+                    "Your card has been successfully issued and is now available in your collection.")}
               </Text>
               <TouchableOpacity
                 style={styles.successButton}
                 onPress={() => setIsSuccessModalVisible(false)}
               >
-                <Text style={styles.successButtonText}>OK</Text>
+                <Text style={styles.successButtonText}>{t("common.ok") || "OK"}</Text>
               </TouchableOpacity>
             </LinearGradient>
           </View>
@@ -2211,11 +2226,6 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 16,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
   },
   vipModalFlipContainer: {
     width: 220,
@@ -2337,7 +2347,11 @@ const styles = StyleSheet.create({
   vipActionButtons: {
     flexDirection: 'row',
     gap: 12,
-    marginTop: 0,
+    paddingVertical: 16,
+    paddingBottom: 20,
+    backgroundColor: '#FFFFFF',
+    borderTopWidth: 1,
+    borderTopColor: '#F0F0F0',
   },
   vipCancelButton: {
     flex: 1,
