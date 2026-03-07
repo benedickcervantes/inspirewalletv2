@@ -61,9 +61,18 @@ export default function CardsTab({
 }: CardsTabProps) {
   const navigation = useNavigation();
   const { t } = useLanguage();
-  const { width } = useWindowDimensions();
-  const horizontalPadding = width < 375 ? 16 : 20;
+  const { width, height } = useWindowDimensions();
+  // Responsive breakpoints for all mobile sizes
+  const isSmallScreen = width < 360;
+  const isMediumScreen = width >= 360 && width < 400;
+  const horizontalPadding = isSmallScreen ? 12 : isMediumScreen ? 16 : 20;
   const cardItemWidth = (width - horizontalPadding * 2 - 12) / 2;
+  const mainCardWidth = width - horizontalPadding * 2;
+  const mainCardHeight = mainCardWidth / 1.586; // Credit card aspect ratio
+  const mainCardContainerHeight = mainCardHeight + 20;
+  // Responsive font scale
+  const fontScale = isSmallScreen ? 0.9 : isMediumScreen ? 0.95 : 1;
+  const modalCardPreviewWidth = Math.min(width * 0.75, 300);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isVipModalVisible, setIsVipModalVisible] = useState(false);
   const [isPurchaseModalVisible, setIsPurchaseModalVisible] = useState(false);
@@ -373,39 +382,39 @@ export default function CardsTab({
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      <View style={styles.section}>
+      <View style={[styles.section, { paddingHorizontal: horizontalPadding }]}>
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>{t("ct.yourInspireCard")}</Text>
-          <Text style={styles.sectionSubtitle}>{t("ct.defaultCard")}</Text>
+          <Text style={[styles.sectionTitle, { fontSize: 18 * fontScale }]}>{t("ct.yourInspireCard")}</Text>
+          <Text style={[styles.sectionSubtitle, { fontSize: 12 * fontScale }]}>{t("ct.defaultCard")}</Text>
         </View>
       </View>
 
-      <View style={styles.mainCardContainer}>
+      <View style={[styles.mainCardContainer, { paddingHorizontal: horizontalPadding, height: mainCardContainerHeight }]}>
         <Animated.View style={[styles.cardFace, frontAnimatedStyle]}>
           <TouchableOpacity activeOpacity={0.8} onPress={flipCard}>
             <ImageBackground
               source={getCardFrontImage()}
-              style={styles.mainCard}
+              style={[styles.mainCard, { width: mainCardWidth, height: mainCardHeight }]}
               imageStyle={styles.mainCardImage}
               resizeMode="cover">
-              <View style={styles.mainCardContent}>
+              <View style={[styles.mainCardContent, { padding: isSmallScreen ? 16 : 24 }]}>
                 <View style={styles.cardDetailsBottom}>
-                  <Text style={[styles.cardNumber, { color: theme.primaryText }]}>
+                  <Text style={[styles.cardNumber, { color: theme.primaryText, fontSize: Math.round(16 * fontScale) }]}>
                     {userData?.accountNumber || t("ct.placeholderAccount")}
                   </Text>
-                  <Text style={[styles.cardName, { color: theme.primaryText }]}>
+                  <Text style={[styles.cardName, { color: theme.primaryText, fontSize: Math.round(16 * fontScale) }]}>
                     {[userData?.firstName, userData?.lastName]
                       .filter(Boolean)
                       .join(" ")
                       .toUpperCase() || t("ct.placeholderName")}
                   </Text>
                   <Text
-                    style={[styles.cardBalanceLabel, { color: theme.secondaryText }]}
+                    style={[styles.cardBalanceLabel, { color: theme.secondaryText, fontSize: Math.round(11 * fontScale) }]}
                   >
                     {t("ct.availableBalance")}
                   </Text>
                   <Text
-                    style={[styles.cardBalanceAmount, { color: theme.primaryText }]}
+                    style={[styles.cardBalanceAmount, { color: theme.primaryText, fontSize: Math.round(18 * fontScale) }]}
                   >
                     ₱ {formatCurrency(availableBalance)}
                   </Text>
@@ -421,7 +430,7 @@ export default function CardsTab({
           <TouchableOpacity activeOpacity={0.8} onPress={flipCard}>
             <ImageBackground
               source={getCardBackImage()}
-              style={styles.mainCard}
+              style={[styles.mainCard, { width: mainCardWidth, height: mainCardHeight }]}
               imageStyle={styles.mainCardImage}
               resizeMode="cover"
             />
@@ -429,10 +438,10 @@ export default function CardsTab({
         </Animated.View>
       </View>
 
-      <View style={styles.collectionSection}>
+      <View style={[styles.collectionSection, { paddingHorizontal: horizontalPadding }]}>
         <View style={styles.collectionHeader}>
           <View style={styles.collectionTitleRow}>
-            <MaterialCommunityIcons name="crown" size={20} color="#FFD700" />
+            <MaterialCommunityIcons name="crown" size={isSmallScreen ? 18 : 20} color="#FFD700" />
             <Text style={styles.collectionTitle}>
               {t("ct.vipCollection")}
             </Text>
@@ -524,10 +533,10 @@ export default function CardsTab({
         </View>
       </View>
 
-      <View style={styles.collectionSection}>
+      <View style={[styles.collectionSection, { paddingHorizontal: horizontalPadding }]}>
         <View style={styles.collectionHeader}>
           <View style={styles.collectionTitleRow}>
-            <MaterialCommunityIcons name="palette" size={20} color="#E15816" />
+            <MaterialCommunityIcons name="palette" size={isSmallScreen ? 18 : 20} color="#E15816" />
             <Text style={styles.collectionTitle}>
               {t("ct.designCollection")}
             </Text>
@@ -647,9 +656,9 @@ export default function CardsTab({
         </View>
       </View>
 
-      <View style={styles.collectionSection}>
+      <View style={[styles.collectionSection, { paddingHorizontal: horizontalPadding }]}>
         <View style={styles.collectionHeader}>
-          <Text style={styles.yourCollectionTitle}>
+          <Text style={[styles.yourCollectionTitle, { fontSize: 14 * fontScale }]}>
             {t("ct.yourCollection")}
           </Text>
           <Text style={styles.collectionCount}>
@@ -789,8 +798,8 @@ export default function CardsTab({
         visible={isVipModalVisible}
         onRequestClose={() => setIsVipModalVisible(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.diamondModalContent}>
+        <View style={[styles.modalOverlay, { padding: isSmallScreen ? 12 : 20 }]}>
+          <View style={[styles.diamondModalContent, { maxWidth: width - (isSmallScreen ? 24 : 40) }]}>
             <View style={styles.diamondModalHeader}>
               <View style={styles.diamondHeaderLeft}>
                 <View style={styles.diamondIconContainer}>
@@ -820,7 +829,7 @@ export default function CardsTab({
               <View style={styles.diamondCardPreviewContainer}>
                 <ImageBackground
                   source={require("../../assets/cards/vip_collection/vp2/front.png")}
-                  style={styles.diamondCardPreview}
+                  style={[styles.diamondCardPreview, { width: modalCardPreviewWidth, aspectRatio: 1.586 }]}
                   imageStyle={styles.diamondCardPreviewImage}
                   resizeMode="contain"
                 />
@@ -939,7 +948,7 @@ export default function CardsTab({
 
               <View style={styles.vipCardPreviewContainer}>
                 <TouchableOpacity activeOpacity={0.9} onPress={flipVipCard}>
-                  <View style={styles.vipModalFlipContainer}>
+                  <View style={[styles.vipModalFlipContainer, { width: modalCardPreviewWidth, aspectRatio: 1.586 }]}>
                     <Animated.View style={[styles.modalCardFace, { transform: [{ rotateY: vipFrontInterpolate }] }]}>
                       <ImageBackground
                         source={require("../../assets/cards/vip_collection/vp1/front.png")}
@@ -970,7 +979,7 @@ export default function CardsTab({
 
               <View style={styles.vipPriceSection}>
                 <Text style={styles.vipTotalPriceLabel}>{t("ct.totalPrice")}</Text>
-                <Text style={styles.vipTotalPrice}>₱ 10,000.00</Text>
+                <Text style={[styles.vipTotalPrice, { fontSize: isSmallScreen ? 28 : 36 }]}>₱ 10,000.00</Text>
               </View>
 
               <View style={styles.vipBalanceRow}>
@@ -1102,8 +1111,8 @@ export default function CardsTab({
         onRequestClose={() => setIsDesignModalVisible(false)}
         onDismiss={() => { designFlipAnim.setValue(0); setIsDesignCardFlipped(false); }}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.designModalContent}>
+        <View style={[styles.modalOverlay, { padding: isSmallScreen ? 12 : 20 }]}>
+          <View style={[styles.designModalContent, { maxWidth: width - (isSmallScreen ? 24 : 40) }]}>
             <View style={styles.designModalHeader}>
               <View style={styles.designHeaderLeft}>
                 <View style={styles.designIconContainer}>
@@ -1128,7 +1137,7 @@ export default function CardsTab({
 
               <View style={styles.designCardPreviewContainer}>
                 <TouchableOpacity activeOpacity={0.9} onPress={flipDesignCard}>
-                  <View style={styles.designModalFlipContainer}>
+                  <View style={[styles.designModalFlipContainer, { width: modalCardPreviewWidth, aspectRatio: 1.586 }]}>
                     <Animated.View style={[styles.modalCardFace, { transform: [{ rotateY: designFrontInterpolate }] }]}>
                       <ImageBackground
                         source={selectedDesignCard.image}
@@ -1163,7 +1172,7 @@ export default function CardsTab({
 
               <View style={styles.designPriceSection}>
                 <Text style={styles.designTotalPriceLabel}>{t("ct.totalPrice")}</Text>
-                <Text style={styles.designTotalPrice}>₱ {formatCurrency(selectedDesignCard.price || 0)}</Text>
+                <Text style={[styles.designTotalPrice, { fontSize: isSmallScreen ? 32 : 40 }]}>₱ {formatCurrency(selectedDesignCard.price || 0)}</Text>
               </View>
 
               <View style={styles.designBalanceRow}>
@@ -1221,7 +1230,7 @@ export default function CardsTab({
         onRequestClose={() => setIsSuccessModalVisible(false)}
       >
         <View style={styles.successModalOverlay}>
-          <View style={styles.successModalContent}>
+          <View style={[styles.successModalContent, { width: Math.min(width * 0.9, 400) }]}>
             <LinearGradient
               colors={["#E15816", "#F48F38"]}
               style={styles.successModalGradient}
@@ -1276,9 +1285,7 @@ const styles = StyleSheet.create({
     color: "#999",
   },
   mainCardContainer: {
-    paddingHorizontal: 20,
     marginBottom: 28,
-    height: 240,
     alignItems: "center",
   },
   cardFace: {
@@ -1292,8 +1299,6 @@ const styles = StyleSheet.create({
     top: 0,
   },
   mainCard: {
-    width: "100%",
-    height: 230,
     borderRadius: 20,
     overflow: "hidden",
     shadowColor: "#000",
@@ -1387,7 +1392,6 @@ const styles = StyleSheet.create({
 
   cardPreviewImage: {
     flex: 1,
-    padding: 12,
     justifyContent: "flex-start",
   },
   cardPreviewImageStyle: {
