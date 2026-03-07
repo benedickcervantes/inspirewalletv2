@@ -4,6 +4,7 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useState } from "react";
 import {
+  ActivityIndicator,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -266,19 +267,25 @@ export default function WithdrawLocalBConfirm() {
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
             >
-              <Text style={styles.confirmText}>{t("withdraw.confirm")}</Text>
-              <Ionicons name="checkmark" size={20} color="#FFFFFF" />
+              {isSubmitting && !showPasscodeModal ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <>
+                  <Text style={styles.confirmText}>{t("withdraw.confirm")}</Text>
+                  <Ionicons name="checkmark" size={20} color="#FFFFFF" />
+                </>
+              )}
             </LinearGradient>
           </TouchableOpacity>
 
           <View style={styles.bottomPadding} />
         </ScrollView>
 
-        {/* Passcode modal (when user has passcode set) */}
+        {/* Passcode modal - outer glow (palit sa dark overlay), loading + Confirm */}
         <Modal
           visible={showPasscodeModal}
           transparent
-          animationType="fade"
+          animationType="slide"
           onRequestClose={() => !isSubmitting && setShowPasscodeModal(false)}
         >
           <KeyboardAvoidingView
@@ -286,19 +293,25 @@ export default function WithdrawLocalBConfirm() {
             behavior={Platform.OS === "ios" ? "padding" : "height"}
             keyboardVerticalOffset={Platform.OS === "ios" ? 40 : 0}
           >
-            <View style={styles.alertOverlay}>
+            <View style={styles.passcodeOverlay}>
               <View style={styles.passcodeModalContent}>
                 <Text style={styles.passcodeModalTitle}>{t("withdraw.enterPasscode")}</Text>
                 <TextInput
                   style={styles.passcodeInput}
                   value={passcode}
-                  onChangeText={(t) => setPasscode(t.replace(/\D/g, "").slice(0, 4))}
+                  onChangeText={(val) => setPasscode(val.replace(/\D/g, "").slice(0, 4))}
                   placeholder="••••"
                   placeholderTextColor="#999"
                   secureTextEntry
                   maxLength={4}
                   keyboardType="number-pad"
                   editable={!isSubmitting}
+                  autoFocus
+                  selectTextOnFocus={false}
+                  autoComplete="off"
+                  caretHidden={false}
+                  selectionColor="#E25A17"
+                  underlineColorAndroid="transparent"
                 />
                 <View style={styles.passcodeModalButtons}>
                   <TouchableOpacity
@@ -314,7 +327,11 @@ export default function WithdrawLocalBConfirm() {
                     disabled={isSubmitting || passcode.length !== 4}
                   >
                     <LinearGradient colors={["#E25A17", "#F28934"]} style={styles.passcodeModalButtonGradient}>
-                      <Text style={styles.passcodeModalButtonConfirmText}>{t("withdraw.confirm")}</Text>
+                      {isSubmitting ? (
+                        <ActivityIndicator size="small" color="#FFFFFF" />
+                      ) : (
+                        <Text style={styles.passcodeModalButtonConfirmText}>{t("withdraw.confirm")}</Text>
+                      )}
                     </LinearGradient>
                   </TouchableOpacity>
                 </View>
@@ -323,11 +340,11 @@ export default function WithdrawLocalBConfirm() {
           </KeyboardAvoidingView>
         </Modal>
 
-        {/* Custom Alert Modal */}
+        {/* Custom Alert Modal (success/error) */}
         <Modal
           visible={showAlertModal}
-          transparent={true}
-          animationType="fade"
+          transparent
+          animationType="slide"
           onRequestClose={() => setShowAlertModal(false)}
         >
           <View style={styles.alertOverlay}>
@@ -590,12 +607,18 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#E15816",
   },
+  /* Standard passcode modal: may background, outer glow (palit sa dark overlay) */
   passcodeModalContent: {
     backgroundColor: "#FFFFFF",
     borderRadius: 16,
     padding: 24,
     width: "85%",
     maxWidth: 340,
+    shadowColor: "#E25A17",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: 24,
+    elevation: 12,
   },
   passcodeModalTitle: {
     fontSize: 18,
@@ -605,8 +628,9 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   passcodeInput: {
+    backgroundColor: "transparent",
     borderWidth: 1,
-    borderColor: "#E0E0E0",
+    borderColor: "#E25A17",
     borderRadius: 8,
     paddingHorizontal: 16,
     paddingVertical: 12,
@@ -614,6 +638,11 @@ const styles = StyleSheet.create({
     textAlign: "center",
     letterSpacing: 8,
     marginBottom: 20,
+    shadowColor: "transparent",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    elevation: 0,
   },
   passcodeModalButtons: {
     flexDirection: "row",
@@ -635,10 +664,19 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#666",
   },
-  passcodeModalButtonConfirm: {},
+  passcodeModalButtonConfirm: {
+    minWidth: 120,
+    minHeight: 52,
+  },
   passcodeModalButtonGradient: {
+    flexDirection: "row",
+    minWidth: 120,
+    minHeight: 52,
     paddingVertical: 12,
+    paddingHorizontal: 20,
     alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
   },
   passcodeModalButtonConfirmText: {
     fontSize: 16,
