@@ -393,6 +393,8 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   continueGradient: {
+    flex: 1,
+    alignSelf: "stretch",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
