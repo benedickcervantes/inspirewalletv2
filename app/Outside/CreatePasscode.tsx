@@ -8,6 +8,7 @@ import {
     Animated,
     BackHandler,
     Modal,
+    Platform,
     Pressable,
     StyleSheet,
     Text,
@@ -17,8 +18,15 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { setPasscode as setPasscodeApi } from '../../configs/api';
+import {
+  DEFAULT_LANGUAGE,
+  normalizeLanguage,
+  SUPPORTED_LANGUAGES,
+} from '../../constants/locales';
 import { useLanguage } from '../../context/LanguageContext';
 import type { NavProp } from '../../types/navigation';
+
+const USER_PREFERRED_LANGUAGE_KEY = 'user_preferred_language';
 
 const GRADIENT_START = '#E15816';
 const GRADIENT_END = '#F48F38';
@@ -87,7 +95,9 @@ const msgStyles = StyleSheet.create({
 });
 
 export default function CreatePasscode() {
-  const { t } = useLanguage();
+  const { t, language: contextLanguage, setLanguage } = useLanguage();
+  const language = normalizeLanguage(contextLanguage ?? DEFAULT_LANGUAGE);
+  const [languageModalVisible, setLanguageModalVisible] = useState(false);
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
@@ -222,6 +232,12 @@ export default function CreatePasscode() {
     });
   };
 
+  const handleSelectLanguage = async (selectedLabel: string) => {
+    setLanguage(selectedLabel);
+    await AsyncStorage.setItem(USER_PREFERRED_LANGUAGE_KEY, selectedLabel);
+    setLanguageModalVisible(false);
+  };
+
   return (
     <>
       <LinearGradient
@@ -229,6 +245,12 @@ export default function CreatePasscode() {
         locations={[0, 1]}
         style={[styles.gradient, { paddingTop: insets.top, paddingBottom: insets.bottom }]}
       >
+        <TouchableOpacity
+          style={[styles.languageButton, { top: insets.top + 12 }]}
+          onPress={() => setLanguageModalVisible(true)}
+        >
+          <Ionicons name="language-outline" size={28} color={WHITE} />
+        </TouchableOpacity>
         <TouchableOpacity
           style={[styles.helpButtonTopRight, { top: insets.top + 12 }]}
           onPress={handleHelp}
@@ -316,6 +338,46 @@ export default function CreatePasscode() {
         confirmText={modalConfig.confirmText}
         onConfirm={modalConfig.onConfirm}
       />
+
+      <Modal
+        visible={languageModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setLanguageModalVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.languageModalOverlay}
+          activeOpacity={1}
+          onPress={() => setLanguageModalVisible(false)}
+        >
+          <View style={styles.languageModalContent} onStartShouldSetResponder={() => true}>
+            <View style={styles.languageMapHeader}>
+              <View style={styles.languageMapGlobe}>
+                <Ionicons name="globe-outline" size={40} color={GRADIENT_START} />
+              </View>
+              <Text style={styles.languageModalTitle}>{t('profile.selectLanguage')}</Text>
+              <Text style={styles.languageModalSubtitle}>{t('profile.defaultIsEnglish')}</Text>
+            </View>
+            {SUPPORTED_LANGUAGES.map(({ label, flag }) => (
+              <TouchableOpacity
+                key={label}
+                style={[styles.languageOption, language === label && styles.languageOptionSelected]}
+                onPress={() => handleSelectLanguage(label)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.languageOptionFlag}>{flag}</Text>
+                <Text style={[styles.languageOptionText, language === label && styles.languageOptionTextSelected]}>
+                  {label}
+                </Text>
+                {language === label && <Ionicons name="checkmark-circle" size={22} color={GRADIENT_START} />}
+              </TouchableOpacity>
+            ))}
+            <TouchableOpacity style={styles.languageModalCancel} onPress={() => setLanguageModalVisible(false)}>
+              <Text style={styles.languageModalCancelText}>{t('common.cancel')}</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </>
   );
 }
@@ -324,6 +386,17 @@ const styles = StyleSheet.create({
   gradient: {
     flex: 1,
     paddingHorizontal: 24,
+    alignItems: 'center',
+  },
+  languageButton: {
+    position: 'absolute',
+    left: 24,
+    zIndex: 10,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
     alignItems: 'center',
   },
   helpButtonTopRight: {
@@ -423,4 +496,43 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.9)',
     fontSize: 14,
   },
+  languageModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  languageModalContent: {
+    width: '100%',
+    maxWidth: 360,
+    backgroundColor: WHITE,
+    borderRadius: 20,
+    padding: 24,
+    ...Platform.select({
+      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.25, shadowRadius: 12 },
+      android: { elevation: 8 },
+    }),
+  },
+  languageMapHeader: { alignItems: 'center', marginBottom: 20 },
+  languageMapGlobe: { marginBottom: 12 },
+  languageModalTitle: { fontSize: 18, fontWeight: '700', color: '#333', marginBottom: 4, textAlign: 'center' },
+  languageModalSubtitle: { fontSize: 13, color: '#666', textAlign: 'center' },
+  languageOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    marginBottom: 8,
+    backgroundColor: '#F8F8F8',
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  languageOptionSelected: { backgroundColor: '#FFF0E8', borderWidth: 2, borderColor: GRADIENT_START },
+  languageOptionFlag: { fontSize: 22, marginRight: 12 },
+  languageOptionText: { fontSize: 16, color: '#333', flex: 1 },
+  languageOptionTextSelected: { fontWeight: '600', color: GRADIENT_START },
+  languageModalCancel: { marginTop: 12, paddingVertical: 12, alignItems: 'center' },
+  languageModalCancelText: { fontSize: 16, color: '#666' },
 });

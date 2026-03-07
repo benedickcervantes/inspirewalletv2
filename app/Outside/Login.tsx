@@ -23,6 +23,11 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { forgotPassword, login } from "../../configs/api";
+import {
+  DEFAULT_LANGUAGE,
+  normalizeLanguage,
+  SUPPORTED_LANGUAGES,
+} from "../../constants/locales";
 import type { NavProp } from "../../types/navigation";
 import { useResponsive } from "../../utils/responsive";
 import CustomLoader from "../Loader/CustomLoader";
@@ -594,7 +599,9 @@ export default function Login() {
   const [resetModalVisible, setResetModalVisible] = useState(false);
   const [resetModalEmail, setResetModalEmail] = useState("");
   const [forgotModalVisible, setForgotModalVisible] = useState(false);
-  const { t } = useLanguage();
+  const [languageModalVisible, setLanguageModalVisible] = useState(false);
+  const { t, language: contextLanguage, setLanguage } = useLanguage();
+  const language = normalizeLanguage(contextLanguage ?? DEFAULT_LANGUAGE);
 
   const showModal = (config: Partial<ModalConfig>) => {
     setModalConfig({
@@ -614,6 +621,12 @@ export default function Login() {
 
   // Stores user/nav info to execute after the reset modal closes
   const pendingNavRef = useRef<{ hasPasscode: boolean } | null>(null);
+
+  const handleSelectLanguage = async (selectedLabel: string) => {
+    setLanguage(selectedLabel);
+    await AsyncStorage.setItem("user_preferred_language", selectedLabel);
+    setLanguageModalVisible(false);
+  };
 
   const doNavigate = (hasPasscode: boolean) => {
     if (hasPasscode) {
@@ -730,7 +743,10 @@ export default function Login() {
           ]}
         >
           <View
-            style={[styles.header, { paddingHorizontal: horizontalPadding }]}
+            style={[
+              styles.header,
+              { paddingHorizontal: horizontalPadding },
+            ]}
           >
             {fromSignOut ? (
               <View
@@ -761,6 +777,19 @@ export default function Login() {
                 <Ionicons name="arrow-back" size={26} color={WHITE} />
               </TouchableOpacity>
             )}
+            <TouchableOpacity
+              style={[
+                styles.languageButton,
+                {
+                  width: scale(44),
+                  height: scale(44),
+                  borderRadius: scale(22),
+                },
+              ]}
+              onPress={() => setLanguageModalVisible(true)}
+            >
+              <Ionicons name="language-outline" size={26} color={WHITE} />
+            </TouchableOpacity>
           </View>
 
           <ScrollView
@@ -932,6 +961,70 @@ export default function Login() {
         initialEmail={email.trim()}
         onClose={() => setForgotModalVisible(false)}
       />
+
+      <Modal
+        visible={languageModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setLanguageModalVisible(false)}
+      >
+        <TouchableOpacity
+          style={loginLanguageStyles.overlay}
+          activeOpacity={1}
+          onPress={() => setLanguageModalVisible(false)}
+        >
+          <View
+            style={loginLanguageStyles.content}
+            onStartShouldSetResponder={() => true}
+          >
+            <View style={loginLanguageStyles.header}>
+              <Ionicons name="globe-outline" size={40} color={GRADIENT_START} />
+              <Text style={loginLanguageStyles.title}>
+                {t("profile.selectLanguage")}
+              </Text>
+              <Text style={loginLanguageStyles.subtitle}>
+                {t("profile.defaultIsEnglish")}
+              </Text>
+            </View>
+            {SUPPORTED_LANGUAGES.map(({ label, flag }) => (
+              <TouchableOpacity
+                key={label}
+                style={[
+                  loginLanguageStyles.option,
+                  language === label && loginLanguageStyles.optionSelected,
+                ]}
+                onPress={() => handleSelectLanguage(label)}
+                activeOpacity={0.7}
+              >
+                <Text style={loginLanguageStyles.flag}>{flag}</Text>
+                <Text
+                  style={[
+                    loginLanguageStyles.optionText,
+                    language === label && loginLanguageStyles.optionTextSelected,
+                  ]}
+                >
+                  {label}
+                </Text>
+                {language === label && (
+                  <Ionicons
+                    name="checkmark-circle"
+                    size={22}
+                    color={GRADIENT_START}
+                  />
+                )}
+              </TouchableOpacity>
+            ))}
+            <TouchableOpacity
+              style={loginLanguageStyles.cancelBtn}
+              onPress={() => setLanguageModalVisible(false)}
+            >
+              <Text style={loginLanguageStyles.cancelText}>
+                {t("common.cancel")}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </>
   );
 }
@@ -944,6 +1037,9 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
@@ -951,6 +1047,11 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
+    backgroundColor: "rgba(255,255,255,0.22)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  languageButton: {
     backgroundColor: "rgba(255,255,255,0.22)",
     justifyContent: "center",
     alignItems: "center",
@@ -1066,4 +1167,50 @@ const styles = StyleSheet.create({
     textAlign: "center",
     paddingVertical: 16,
   },
+});
+
+const loginLanguageStyles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  content: {
+    width: "100%",
+    maxWidth: 360,
+    backgroundColor: WHITE,
+    borderRadius: 20,
+    padding: 24,
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.25,
+        shadowRadius: 12,
+      },
+      android: { elevation: 8 },
+    }),
+  },
+  header: { alignItems: "center", marginBottom: 20 },
+  title: { fontSize: 18, fontWeight: "700", color: "#333", marginTop: 12, marginBottom: 4, textAlign: "center" },
+  subtitle: { fontSize: 13, color: "#666", textAlign: "center" },
+  option: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    marginBottom: 8,
+    backgroundColor: "#F8F8F8",
+    borderWidth: 1,
+    borderColor: "transparent",
+  },
+  optionSelected: { backgroundColor: "#FFF0E8", borderWidth: 2, borderColor: GRADIENT_START },
+  flag: { fontSize: 22, marginRight: 12 },
+  optionText: { fontSize: 16, color: "#333", flex: 1 },
+  optionTextSelected: { fontWeight: "600", color: GRADIENT_START },
+  cancelBtn: { marginTop: 12, paddingVertical: 12, alignItems: "center" },
+  cancelText: { fontSize: 16, color: "#666" },
 });
