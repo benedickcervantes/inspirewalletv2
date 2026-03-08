@@ -105,7 +105,14 @@ export default function App() {
                 component={Passcode}
                 options={{ gestureEnabled: false }}
               />
-              <Stack.Screen name="Main" component={Dashboard} />
+              <Stack.Screen
+                name="Main"
+                component={Dashboard}
+                options={{
+                  animation: 'simple_push',
+                  animationDuration: 350,
+                }}
+              />
               <Stack.Screen name="Personal" component={Placeholder} />
               <Stack.Screen name="KYCVerification" component={KYCVerification} />
               <Stack.Screen name="KYCcompany" component={KYCcompany} />

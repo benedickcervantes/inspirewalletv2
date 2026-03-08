@@ -202,9 +202,7 @@ export default function Dashboard() {
   const qaLabelSize = width < 360 ? 8 : isSmallScreen ? 9 : 11;
   const qaIconSize = width < 360 ? 18 : isSmallScreen ? 20 : 24;
   const carouselWidth = width - horizontalPadding * 2;
-  const [navigatingToProfile, setNavigatingToProfile] = useState(false);
   const [navigatingAction, setNavigatingAction] = useState<string | null>(null);
-  const [initialLoad, setInitialLoad] = useState(true);
   const [userData, setUserData] = useState<Record<string, unknown> | null>(
     null,
   );
@@ -323,7 +321,23 @@ export default function Dashboard() {
         setAvailableBalance(Number.isNaN(bal) ? 0 : bal);
       }
 
-      const tdRes = await getTimeDeposits(accessToken);
+      const walletId = w?.id;
+      const [
+        tdRes,
+        treeRes,
+        txRes,
+        status,
+        notifRes,
+        hasChosen,
+      ] = await Promise.all([
+        getTimeDeposits(accessToken),
+        getReferralTree(accessToken),
+        getTransactions(accessToken, { walletId, limit: 20 }),
+        getMaintenanceStatus(),
+        getNotifications(accessToken, { limit: 50 }),
+        AsyncStorage.getItem(languageChoiceDoneKey((user as { accountNumber?: string })?.accountNumber)),
+      ]);
+
       if (tdRes.success && Array.isArray(tdRes.deposits)) {
         const list = tdRes.deposits as TimeDeposit[];
         setDeposits(list);
@@ -332,7 +346,6 @@ export default function Dashboard() {
         console.warn("[Dashboard] getTimeDeposits failed:", tdRes.error);
       }
 
-      const treeRes = await getReferralTree(accessToken);
       if (treeRes.success && treeRes.tree) {
         const tree = treeRes.tree as {
           ancestors?: {
@@ -363,10 +376,6 @@ export default function Dashboard() {
         setUserReferrer(null);
       }
 
-      const txRes = await getTransactions(accessToken, {
-        walletId: w?.id,
-        limit: 20,
-      });
       if (txRes.success && txRes.transactions) {
         const mapped: Transaction[] = (
           txRes.transactions as RawApiTransaction[]
@@ -384,26 +393,16 @@ export default function Dashboard() {
         setRecentTransactions(mapped);
       }
 
-      // First-time login: show language picker if this user hasn't chosen yet
-      const accountNumber = (user as { accountNumber?: string })?.accountNumber;
-      const choiceKey = languageChoiceDoneKey(accountNumber);
-      const hasChosen = await AsyncStorage.getItem(choiceKey);
       if (hasChosen !== "true") {
         setShowFirstTimeLanguageModal(true);
       }
 
-      // Check maintenance status for all services
-      const status = await getMaintenanceStatus();
       setMaintenanceStatus(status);
 
-      // Fetch unread notifications count
-      const notifRes = await getNotifications(accessToken, { limit: 50 });
       if (notifRes.success && notifRes.data) {
         const unreadCount = (notifRes.data as { isRead: boolean }[]).filter(n => !n.isRead).length;
         setUnreadNotifications(unreadCount);
       }
-
-      setInitialLoad(false);
     };
 
     init();
@@ -646,14 +645,6 @@ export default function Dashboard() {
     }
   };
 
-  if (initialLoad) {
-    return <CustomLoader text={t("dashboard.loadingDashboard")} />;
-  }
-
-  if (navigatingToProfile) {
-    return <CustomLoader text={t("common.loading")} />;
-  }
-
   if (navigatingAction === "AgentRequest") {
     return <CustomLoader text={t("dashboard.loadingAgent")} />;
   }
@@ -730,13 +721,7 @@ export default function Dashboard() {
         <View style={[styles.header, { paddingTop: Math.max(insets.top, 12) }]}>
           <View style={styles.headerLeft}>
             <TouchableOpacity
-              onPress={() => {
-                setNavigatingToProfile(true);
-                setTimeout(() => {
-                  setNavigatingToProfile(false);
-                  navigation.navigate("Personal");
-                }, 800);
-              }}
+              onPress={() => navigation.navigate("Personal")}
               activeOpacity={0.7}
               style={styles.avatar}
             >
