@@ -2,7 +2,7 @@
   "expo": {
     "name": "Inspire Wallet",
     "slug": "investor-wallet",
-    "version": "3.0.0",
+    "version": "3.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/Startup [DONE].jpg",
     "scheme": "inspirewalletv3",
@@ -12,7 +12,8 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.inspire.inspirewallet",
       "infoPlist": {
-        "NSContactsUsageDescription": "This app needs access to your contacts to help you select recipients for transfers."
+        "NSContactsUsageDescription": "This app needs access to your contacts to help you select recipients for transfers.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -24,7 +25,9 @@
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "permissions": [
-        "READ_CONTACTS"
+        "READ_CONTACTS",
+        "android.permission.READ_CONTACTS",
+        "android.permission.WRITE_CONTACTS"
       ]
     },
     "web": {
