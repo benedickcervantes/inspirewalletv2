@@ -7,6 +7,7 @@ import { useState } from "react";
 import {
     ActivityIndicator,
     Dimensions,
+    KeyboardAvoidingView,
     Modal,
     Platform,
     ScrollView,
@@ -499,7 +500,12 @@ export default function Register() {
             </View>
           </View>
 
-          <KeyboardAwareScrollView
+            <KeyboardAvoidingView
+            style={styles.keyboardAvoidWrap}
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            keyboardVerticalOffset={0}
+          >
+            <KeyboardAwareScrollView
             style={styles.scrollView}
             contentContainerStyle={[
               styles.scrollContent,
@@ -1235,6 +1241,7 @@ export default function Register() {
                 ) : null}
               </>
             )}
+          </KeyboardAwareScrollView>
             <View
               style={[
                 styles.footer,
@@ -1280,7 +1287,7 @@ export default function Register() {
                 {t("register.termsText")}
               </Text>
             </View>
-          </KeyboardAwareScrollView>
+          </KeyboardAvoidingView>
         </View>
 
         <Modal
@@ -1503,6 +1510,7 @@ export default function Register() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F5F5F5" },
   keyboardView: { flex: 1 },
+  keyboardAvoidWrap: { flex: 1 },
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -1743,8 +1751,16 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderTopWidth: 1,
     borderTopColor: "#E0E0E0",
+    alignItems: "center",
   },
-  nextButton: { borderRadius: 12, overflow: "hidden", marginBottom: 12 },
+  nextButton: {
+    borderRadius: 12,
+    overflow: "hidden",
+    marginBottom: 12,
+    alignSelf: "center",
+    maxWidth: 320,
+    width: "85%",
+  },
   nextButtonDisabled: { opacity: 0.7 },
   nextButtonGradient: { paddingVertical: 16, alignItems: "center" },
   nextButtonText: { fontSize: 16, fontWeight: "600", color: "#FFFFFF" },
