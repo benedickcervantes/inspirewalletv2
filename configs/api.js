@@ -242,6 +242,62 @@ export async function getTimeDepositInterestRates(accessToken, contractType) {
 }
 
 /**
+ * Calculate exchange rate (real-time currency conversion).
+ * POST /exchange-rate/calculate — no auth required.
+ * Per docs/exchange-calculator-api.md: User deposits foreign currency to acquire PHP.
+ * @param {Object} params
+ * @param {string} params.currency - 3-letter currency code (e.g. "JPY", "USD", "SAR", "KRW")
+ * @param {number} params.amount - The amount the user typed
+ * @param {string} [params.action="BUY_PHP"] - "BUY_PHP" (deposit) or "SELL_PHP" (withdraw)
+ * @param {string} [params.amountType="SOURCE_FOREIGN"] - "SOURCE_FOREIGN" (user typed in foreign currency) or "TARGET_PHP"
+ * @returns {Promise<{ success: boolean, targetAmount?: number, sourceAmount?: number, error?: string }>}
+ */
+export async function calculateExchange({
+  currency,
+  amount,
+  action = "BUY_PHP",
+  amountType = "SOURCE_FOREIGN",
+}) {
+  const base = getBaseUrl();
+  if (!base) {
+    if (__DEV__) console.warn("[ExchangeRate API] Backend URL not configured. Set EXPO_PUBLIC_WALLET_BACKEND_URL.");
+    return { success: false, error: "Backend URL not configured." };
+  }
+  if (!currency || amount == null || amount < 0)
+    return { success: false, error: "Invalid params" };
+  const url = `${base}/exchange-rate/calculate`;
+  try {
+    if (__DEV__) console.log("[ExchangeRate API] POST", url, { currency, amount, action, amountType });
+    const res = await apiFetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action,
+        currency,
+        amount: Number(amount),
+        amountType,
+      }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (__DEV__) console.log("[ExchangeRate API] Response", res.status, data);
+    if (!res.ok) {
+      const msg =
+        data.message || data.error || `Exchange rate not available for ${currency}`;
+      return { success: false, error: msg };
+    }
+    return {
+      success: true,
+      targetAmount: data.targetAmount,
+      sourceAmount: data.sourceAmount,
+      rateUsed: data.rateUsed,
+    };
+  } catch (e) {
+    if (__DEV__) console.error("[ExchangeRate API] Error", e);
+    return { success: false, error: e.message || "Network error" };
+  }
+}
+
+/**
  * Submit a top-up request via the backend.
  * POST /deposit-requests/top-up
  * @param {string} accessToken - Backend JWT
