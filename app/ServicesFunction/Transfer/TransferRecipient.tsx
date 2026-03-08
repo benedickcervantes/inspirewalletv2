@@ -43,7 +43,15 @@ export const fetchBalanceByType = async (balanceType: string) => {
   const accessToken = await AsyncStorage.getItem("access_token");
   if (!accessToken) return 0;
   const { success, wallet } = await getOrCreateMainWallet(accessToken);
-  if (success && wallet?.balance != null && balanceType === "available") {
+  if (!success || !wallet) return 0;
+  if (balanceType === "agent") {
+    const agentBal =
+      (wallet as { agentCommission?: number | string })?.agentCommission != null
+        ? parseFloat(String((wallet as { agentCommission?: number | string }).agentCommission))
+        : NaN;
+    return Number.isNaN(agentBal) ? 0 : agentBal;
+  }
+  if (wallet?.balance != null) {
     const bal = parseFloat(String(wallet.balance));
     return Number.isNaN(bal) ? 0 : bal;
   }
