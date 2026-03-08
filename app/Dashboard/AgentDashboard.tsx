@@ -36,11 +36,18 @@ interface CommissionTransaction {
   metadata?: Record<string, unknown>;
 }
 
+const IPHONE_SE_WIDTH = 320;
+const SMALL_PHONE_WIDTH = 375;
+
 export default function AgentDashboard() {
   const navigation = useNavigation();
   const { t } = useLanguage();
   const { width } = useWindowDimensions();
-  const horizontalPadding = width < 375 ? 16 : 20;
+  const isXSScreen = width <= IPHONE_SE_WIDTH;
+  const isSmallScreen = width < SMALL_PHONE_WIDTH;
+  const horizontalPadding = isXSScreen ? 12 : isSmallScreen ? 16 : 20;
+  const qrSize = isXSScreen ? 110 : isSmallScreen ? 130 : 160;
+  const stackReferralShare = isXSScreen;
   const [initialLoad, setInitialLoad] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [agentCommission, setAgentCommission] = useState(0);
@@ -215,7 +222,7 @@ export default function AgentDashboard() {
       <SafeAreaView style={styles.safeArea}>
         <LinearGradient
           colors={["#E25A17", "#F28934"]}
-          style={styles.header}
+          style={[styles.header, isXSScreen && styles.headerCompact]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
         >
@@ -223,9 +230,11 @@ export default function AgentDashboard() {
             style={styles.backButton}
             onPress={() => navigation.goBack()}
           >
-            <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+            <Ionicons name="arrow-back" size={isXSScreen ? 22 : 24} color="#FFFFFF" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>{t("agent.title")}</Text>
+          <Text style={[styles.headerTitle, isXSScreen && styles.headerTitleCompact]} numberOfLines={1} ellipsizeMode="tail">
+            {t("agent.title")}
+          </Text>
           <TouchableOpacity
             style={styles.refreshButton}
             onPress={onRefresh}
@@ -234,14 +243,14 @@ export default function AgentDashboard() {
             {refreshing ? (
               <ActivityIndicator size="small" color="#FFFFFF" />
             ) : (
-              <Ionicons name="refresh" size={24} color="#FFFFFF" />
+              <Ionicons name="refresh" size={isXSScreen ? 22 : 24} color="#FFFFFF" />
             )}
           </TouchableOpacity>
         </LinearGradient>
 
         <ScrollView
           style={styles.scrollView}
-          contentContainerStyle={[styles.scrollContent, { paddingHorizontal: horizontalPadding, paddingTop: 16 }]}
+          contentContainerStyle={[styles.scrollContent, { paddingHorizontal: horizontalPadding, paddingTop: isXSScreen ? 12 : 16 }]}
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
@@ -252,7 +261,7 @@ export default function AgentDashboard() {
           }
         >
           {error && (
-            <View style={styles.errorBanner}>
+            <View style={[styles.errorBanner, isXSScreen && styles.errorBannerCompact]}>
               <Ionicons name="warning-outline" size={20} color="#B45309" />
               <Text style={styles.errorText}>{error}</Text>
             </View>
@@ -273,58 +282,58 @@ export default function AgentDashboard() {
           </View>
 
           {/* Referral Code & Share */}
-          <View style={styles.referralCard}>
-            <Text style={styles.sectionTitle}>{t("agent.yourReferralCode")}</Text>
+          <View style={[styles.referralCard, isXSScreen && styles.cardCompact]}>
+            <Text style={[styles.sectionTitle, isXSScreen && styles.sectionTitleCompact]}>{t("agent.yourReferralCode")}</Text>
             
             {referralUrl && (
-              <View style={styles.qrCodeContainer}>
+              <View style={[styles.qrCodeContainer, isXSScreen && styles.qrCodeContainerCompact]}>
                 <QRCode
                   value={referralUrl}
-                  size={160}
+                  size={qrSize}
                   color="#1F2937"
                   backgroundColor="#FFFFFF"
                 />
               </View>
             )}
 
-            <View style={styles.referralCodeRow}>
-              <View style={styles.referralCodeBox}>
-                <Text style={styles.referralCodeText}>
+            <View style={[styles.referralCodeRow, stackReferralShare && styles.referralCodeColumn]}>
+              <View style={[styles.referralCodeBox, stackReferralShare && styles.referralCodeBoxFull]}>
+                <Text style={[styles.referralCodeText, isXSScreen && styles.referralCodeTextCompact]} numberOfLines={1} ellipsizeMode="middle">
                   {referralCode || "—"}
                 </Text>
               </View>
               <TouchableOpacity
-                style={styles.shareButton}
+                style={[styles.shareButton, stackReferralShare && styles.shareButtonFull]}
                 onPress={handleShareReferralCode}
                 disabled={!referralCode}
               >
-                <Ionicons name="share-outline" size={22} color="#FFFFFF" />
-                <Text style={styles.shareButtonText}>{t("agent.share")}</Text>
+                <Ionicons name="share-outline" size={isXSScreen ? 20 : 22} color="#FFFFFF" />
+                <Text style={[styles.shareButtonText, isXSScreen && styles.textCompact]}>{t("agent.share")}</Text>
               </TouchableOpacity>
             </View>
           </View>
 
           {/* Referral Stats */}
-          <View style={styles.statsRow}>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>{directReferralCount}</Text>
-              <Text style={styles.statLabel}>{t("agent.directReferrals")}</Text>
+          <View style={[styles.statsRow, isXSScreen && styles.statsRowCompact]}>
+            <View style={[styles.statCard, isXSScreen && styles.statCardCompact]}>
+              <Text style={[styles.statValue, isXSScreen && styles.statValueCompact]}>{directReferralCount}</Text>
+              <Text style={[styles.statLabel, isXSScreen && styles.textCompact]}>{t("agent.directReferrals")}</Text>
             </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>{totalDescendantCount}</Text>
-              <Text style={styles.statLabel}>{t("agent.totalNetwork")}</Text>
+            <View style={[styles.statCard, isXSScreen && styles.statCardCompact]}>
+              <Text style={[styles.statValue, isXSScreen && styles.statValueCompact]}>{totalDescendantCount}</Text>
+              <Text style={[styles.statLabel, isXSScreen && styles.textCompact]}>{t("agent.totalNetwork")}</Text>
             </View>
           </View>
 
           {/* My Referrals */}
           {(directReferrals.length > 0 || directReferralCount > 0) && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>{t("agent.myReferrals")}</Text>
+            <View style={[styles.section, isXSScreen && styles.cardCompact]}>
+              <Text style={[styles.sectionTitle, isXSScreen && styles.sectionTitleCompact]}>{t("agent.myReferrals")}</Text>
               {directReferrals.length > 0 ? (
                 directReferrals.map((ref) => (
-                  <View key={ref.userId} style={styles.referralItem}>
+                  <View key={ref.userId} style={[styles.referralItem, isXSScreen && styles.referralItemCompact]}>
                     <View style={styles.referralItemLeft}>
-                      <Text style={styles.referralItemName}>
+                      <Text style={[styles.referralItemName, isXSScreen && styles.textCompact]} numberOfLines={1}>
                         {[ref.firstName, ref.lastName].filter(Boolean).join(" ") || t("agent.referralFallback")}
                       </Text>
                       {ref.referralCode && (
@@ -343,18 +352,18 @@ export default function AgentDashboard() {
           )}
 
           {/* Referred Clients with Time Deposits */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>
+          <View style={[styles.section, isXSScreen && styles.cardCompact]}>
+            <Text style={[styles.sectionTitle, isXSScreen && styles.sectionTitleCompact]}>
               {t("agent.referredClientsTitle")}
             </Text>
-            <Text style={styles.sectionSubtitle}>
+            <Text style={[styles.sectionSubtitle, isXSScreen && styles.textCompact]}>
               {t("agent.referredClientsSubtitle")}
             </Text>
             {referredClientsWithDeposits.length > 0 ? (
               referredClientsWithDeposits.map((item) => (
-                <View key={item.id} style={styles.commissionItem}>
-                  <View style={styles.commissionItemLeft}>
-                    <Text style={styles.commissionItemDesc}>{item.description}</Text>
+                <View key={item.id} style={[styles.commissionItem, isXSScreen && styles.commissionItemCompact]}>
+                  <View style={[styles.commissionItemLeft, isXSScreen && styles.commissionItemLeftCompact]}>
+                    <Text style={[styles.commissionItemDesc, isXSScreen && styles.textCompact]} numberOfLines={2}>{item.description}</Text>
                     <Text style={styles.commissionItemDate}>
                       {item.createdAt
                         ? new Date(item.createdAt).toLocaleDateString(undefined, {
@@ -365,13 +374,13 @@ export default function AgentDashboard() {
                         : ""}
                     </Text>
                   </View>
-                  <Text style={styles.commissionItemAmount}>
+                  <Text style={[styles.commissionItemAmount, isXSScreen && styles.textCompact]}>
                     +{item.currencySymbol} {formatCurrency(item.amount)}
                   </Text>
                 </View>
               ))
             ) : (
-              <View style={styles.emptyState}>
+              <View style={[styles.emptyState, isXSScreen && styles.emptyStateCompact]}>
                 <Ionicons name="time-outline" size={48} color="#CCC" />
                 <Text style={styles.emptyStateText}>
                   {t("agent.emptyReferredClients")}
@@ -399,8 +408,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
   },
+  headerCompact: {
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
   backButton: { padding: 12, minWidth: 44, minHeight: 44, justifyContent: "center" },
-  headerTitle: { fontSize: 18, fontWeight: "700", color: "#FFFFFF" },
+  headerTitle: { fontSize: 18, fontWeight: "700", color: "#FFFFFF", flex: 1, textAlign: "center" },
+  headerTitleCompact: { fontSize: 16 },
   refreshButton: { padding: 12, minWidth: 44, minHeight: 44, justifyContent: "center" },
   scrollView: { flex: 1 },
   scrollContent: { paddingBottom: 32 },
@@ -414,6 +428,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   errorText: { flex: 1, color: "#B45309", fontSize: 14 },
+  errorBannerCompact: { padding: 10, marginBottom: 12 },
   commissionCard: {
     backgroundColor: "#FFFFFF",
     borderRadius: 12,
@@ -433,7 +448,10 @@ const styles = StyleSheet.create({
   },
   commissionLabel: { fontSize: 14, color: "#666", fontWeight: "500" },
   commissionAmount: { fontSize: 28, fontWeight: "700", color: "#1F2937" },
+  commissionAmountCompact: { fontSize: 22 },
   commissionHint: { fontSize: 12, color: "#9CA3AF", marginTop: 6 },
+  cardCompact: { padding: 14, marginBottom: 12 },
+  textCompact: { fontSize: 12 },
   referralCard: {
     backgroundColor: "#FFFFFF",
     borderRadius: 12,
@@ -447,6 +465,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: { fontSize: 16, fontWeight: "600", color: "#1F2937", marginBottom: 12 },
   qrCodeContainer: { alignItems: "center", marginVertical: 16 },
+  qrCodeContainerCompact: { marginVertical: 12 },
   referralCodeRow: { flexDirection: "row", alignItems: "center", gap: 12 },
   referralCodeBox: {
     flex: 1,
@@ -470,6 +489,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 8,
   },
+  shareButtonFull: { width: "100%", justifyContent: "center" },
+  referralCodeTextCompact: { fontSize: 15, letterSpacing: 1 },
   shareButtonText: { color: "#FFFFFF", fontWeight: "600", fontSize: 14 },
   statsRow: { flexDirection: "row", gap: 12, marginBottom: 16 },
   statCard: {
@@ -484,7 +505,9 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
   },
+  statCardCompact: { padding: 12 },
   statValue: { fontSize: 24, fontWeight: "700", color: "#E25A17" },
+  statValueCompact: { fontSize: 20 },
   statLabel: { fontSize: 12, color: "#6B7280", marginTop: 4 },
   section: {
     backgroundColor: "#FFFFFF",
@@ -503,10 +526,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingVertical: 12,
+    paddingHorizontal: 0,
     borderBottomWidth: 1,
     borderBottomColor: "#F3F4F6",
   },
-  referralItemLeft: { flex: 1 },
+  referralItemLeft: { flex: 1, minWidth: 0 },
+  referralItemCompact: { paddingVertical: 10 },
   referralItemName: { fontSize: 15, fontWeight: "500", color: "#1F2937" },
   referralItemCode: { fontSize: 12, color: "#9CA3AF", marginTop: 2 },
   emptyHint: { fontSize: 14, color: "#9CA3AF", paddingVertical: 12 },
@@ -518,7 +543,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#F3F4F6",
   },
-  commissionItemLeft: { flex: 1 },
+  commissionItemLeft: { flex: 1, minWidth: 0 },
+  commissionItemCompact: { paddingVertical: 10 },
+  commissionItemLeftCompact: { marginRight: 8 },
   commissionItemDesc: { fontSize: 15, color: "#1F2937" },
   commissionItemDate: { fontSize: 12, color: "#9CA3AF", marginTop: 2 },
   commissionItemAmount: { fontSize: 15, fontWeight: "600", color: "#059669" },
@@ -527,6 +554,7 @@ const styles = StyleSheet.create({
     paddingVertical: 32,
     paddingHorizontal: 16,
   },
+  emptyStateCompact: { paddingVertical: 24, paddingHorizontal: 12 },
   emptyStateText: {
     fontSize: 16,
     fontWeight: "500",
