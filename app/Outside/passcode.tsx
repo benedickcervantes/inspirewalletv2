@@ -27,6 +27,7 @@ import {
   SUPPORTED_LANGUAGES,
 } from '../../constants/locales';
 import type { NavProp } from '../../types/navigation';
+import { useResponsive } from '../../utils/responsive';
 import CustomLoader from '../Loader/CustomLoader';
 import { useLanguage } from '../../context/LanguageContext';
 
@@ -108,20 +109,27 @@ export default function Passcode() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
+  const { horizontalPadding, isShortScreen, isSmallScreen } = useResponsive();
   const isSmallPhone = width < 380;
-  const horizontalPadding = Math.max(16, Math.min(24, Math.round(width * 0.055)));
-  const btnSize = width >= 768 ? 80 : Math.min(72, Math.max(52, width * 0.22));
-  const delBtnSize = width >= 768 ? 80 : Math.min(72, Math.max(52, width * 0.22));
+  const compact = isShortScreen || height < 650;
+  const tiny = height < 600;
+  const btnSize = width >= 768 ? 80 : tiny ? 40 : compact ? Math.min(56, Math.max(46, width * 0.18)) : Math.min(72, Math.max(52, width * 0.22));
+  const delBtnSize = width >= 768 ? 80 : tiny ? 40 : compact ? Math.min(56, Math.max(46, width * 0.18)) : Math.min(72, Math.max(52, width * 0.22));
   const padWidth = width >= 768 ? '65%' : width < 340 ? '92%' : '88%';
   const maxPadWidth = width >= 768 ? 420 : Math.min(360, width - horizontalPadding * 2);
-  const logoWidth = Math.min(200, Math.max(160, width * 0.52));
+  const logoWidth = tiny ? 88 : compact ? Math.min(140, Math.max(100, width * 0.38)) : Math.min(200, Math.max(160, width * 0.52));
   const logoHeight = Math.round(logoWidth * (72 / 200));
-  const dotSize = isSmallPhone ? 20 : 22;
-  const dotGap = isSmallPhone ? 20 : 24;
-  const enterTextSize = isSmallPhone ? 16 : 18;
-  const padButtonTextSize = isSmallPhone ? 26 : 30;
-  const logoTopMargin = Math.min(40, Math.round(height * 0.04));
-  const backspaceIconSize = isSmallPhone ? 24 : 28;
+  const dotSize = tiny ? 14 : compact ? 18 : isSmallPhone ? 20 : 22;
+  const dotGap = tiny ? 10 : compact ? 14 : isSmallPhone ? 20 : 24;
+  const enterTextSize = tiny ? 13 : compact ? 15 : isSmallPhone ? 16 : 18;
+  const padButtonTextSize = tiny ? 18 : compact ? 22 : isSmallPhone ? 26 : 30;
+  const logoTopMargin = tiny ? 4 : compact ? Math.min(12, Math.round(height * 0.02)) : Math.min(40, Math.round(height * 0.04));
+  const backspaceIconSize = tiny ? 16 : compact ? 20 : isSmallPhone ? 24 : 28;
+  const logoWrapMarginBottom = tiny ? 6 : compact ? 12 : 32;
+  const dotsWrapMarginBottom = tiny ? 6 : compact ? 10 : 20;
+  const enterTextMarginBottom = tiny ? 8 : compact ? 16 : 40;
+  const padRowMarginBottom = tiny ? 4 : compact ? 10 : 20;
+  const bottomRowMarginTop = tiny ? 4 : compact ? 8 : 16;
 
   const [passcode, setPasscode] = useState('');
   const [error, setError] = useState('');
@@ -144,7 +152,7 @@ export default function Passcode() {
   const shakeAnim = useRef(new Animated.Value(0)).current;
 
   const showModal = (config: Partial<ModalConfig>) => {
-    setModalConfig({ title: '', message: '', type: 'info', confirmText: 'OK', onConfirm: null, ...config });
+    setModalConfig({ title: '', message: '', type: 'info', confirmText: t('common.ok'), onConfirm: null, ...config });
     setModalVisible(true);
   };
   const hideModal = () => setModalVisible(false);
@@ -217,7 +225,7 @@ export default function Passcode() {
         (navigation as unknown as NavProp).replace('Main');
       } else {
         setVerifyingPasscode(false);
-        setError('Incorrect. Please try again');
+        setError(t('passcode.incorrect'));
         setPasscode('');
         triggerShake();
       }
@@ -227,7 +235,7 @@ export default function Passcode() {
   const handleResetPasscode = async () => {
     if (resetStep === 'auth') {
       if (!resetEmail.trim() || !resetPassword.trim()) {
-        showModal({ title: 'Missing Information', message: 'Please enter both email and password.', type: 'warning' });
+        showModal({ title: t('auth.missingInfo'), message: t('passcode.enterBothEmailPassword'), type: 'warning' });
         return;
       }
       setResetLoading(true);
@@ -238,21 +246,21 @@ export default function Passcode() {
         await AsyncStorage.setItem('user', JSON.stringify(result.user || {}));
         setResetStep('newPasscode');
       } else {
-        showModal({ title: 'Authentication Failed', message: result.error || 'Invalid email or password.', type: 'error' });
+        showModal({ title: t('passcode.authFailed'), message: result.error || t('auth.invalidCredentials'), type: 'error' });
       }
       return;
     }
     if (resetStep === 'newPasscode') {
       if (!newPasscode.trim() || !confirmNewPasscode.trim()) {
-        showModal({ title: 'Missing Information', message: 'Enter and confirm your new 4-digit passcode.', type: 'warning' });
+        showModal({ title: t('auth.missingInfo'), message: t('passcode.enterConfirmPasscode'), type: 'warning' });
         return;
       }
       if (newPasscode !== confirmNewPasscode) {
-        showModal({ title: 'Passcode Mismatch', message: 'The passcodes do not match.', type: 'error' });
+        showModal({ title: t('passcode.mismatchTitle'), message: t('passcode.passcodesDoNotMatch'), type: 'error' });
         return;
       }
       if (newPasscode.length !== 4 || !/^\d{4}$/.test(newPasscode)) {
-        showModal({ title: 'Invalid Passcode', message: 'Passcode must be exactly 4 digits.', type: 'warning' });
+        showModal({ title: t('passcode.invalidTitle'), message: t('passcode.invalidPasscodeLength'), type: 'warning' });
         return;
       }
       setResetModalVisible(false);
@@ -262,8 +270,8 @@ export default function Passcode() {
       setConfirmNewPasscode('');
       setResetStep('auth');
       showModal({
-        title: 'Reset Passcode',
-        message: 'To change your passcode, go to Settings in the app after logging in.',
+        title: t('passcode.resetTitle'),
+        message: t('passcode.resetInfoMessage'),
         type: 'info',
       });
     }
@@ -304,19 +312,24 @@ export default function Passcode() {
           </TouchableOpacity>
         ) : null}
         <TouchableOpacity
-          style={[styles.languageButton, { top: insets.top + 12 }]}
+          style={[styles.languageButton, { top: insets.top + 12, right: horizontalPadding }]}
           onPress={() => setLanguageModalVisible(true)}
+          accessibilityLabel={t('profile.selectLanguage')}
+          accessibilityRole="button"
         >
-          <Ionicons name="language-outline" size={26} color={WHITE} />
+          <Ionicons name="language-outline" size={isSmallScreen ? 24 : 26} color={WHITE} />
         </TouchableOpacity>
         <ScrollView
           style={styles.scroll}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[
+            styles.scrollContent,
+            (compact || tiny) && { paddingVertical: tiny ? 4 : 12, paddingBottom: tiny ? 12 : 24, flexGrow: 1, justifyContent: 'center' },
+          ]}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.centerContent}>
-          <View style={[styles.logoWrap, { marginTop: logoTopMargin }]}>
+          <View style={[styles.logoWrap, { marginTop: logoTopMargin, marginBottom: logoWrapMarginBottom }]}>
             <Image
               source={require('../../assets/images/InpireLogo.png')}
               style={[styles.logo, { width: logoWidth, height: logoHeight }]}
@@ -325,31 +338,37 @@ export default function Passcode() {
           </View>
 
           {needsAuth ? (
-            <View style={styles.needsAuthWrap}>
-              <Text style={styles.needsAuthTitle}>Passcode Login</Text>
-              <Text style={styles.needsAuthMessage}>
-                To use passcode, you need to sign in with your email and password first. Don't have an account?
+            <View style={[
+              styles.needsAuthWrap,
+              isSmallScreen && { paddingHorizontal: 16 },
+              (compact || tiny) && { marginTop: tiny ? -16 : -20 },
+            ]}>
+              <Text style={[styles.needsAuthTitle, isSmallScreen && { fontSize: 20 }, compact && { fontSize: 18, marginBottom: 12 }, tiny && { fontSize: 16, marginBottom: 8 }]}>
+                {t('passcode.loginTitle')}
               </Text>
-              <View style={styles.needsAuthButtons}>
+              <Text style={[styles.needsAuthMessage, isSmallScreen && { fontSize: 15 }, compact && { marginBottom: 20, lineHeight: 22 }, tiny && { fontSize: 14, marginBottom: 12, lineHeight: 20 }]}>
+                {t('passcode.loginMessage')}
+              </Text>
+              <View style={[styles.needsAuthButtons, isSmallScreen && { maxWidth: 260 }, compact && { gap: 10 }, tiny && { gap: 8 }]}>
                 <TouchableOpacity
-                  style={[styles.needsAuthBtn, styles.needsAuthBtnSecondary]}
+                  style={[styles.needsAuthBtn, styles.needsAuthBtnSecondary, isSmallScreen && { minHeight: 48 }, tiny && { minHeight: 40, paddingVertical: 10 }]}
                   onPress={() => (navigation as unknown as NavProp).replace('Register')}
                 >
-                  <Text style={styles.needsAuthBtnText}>Register</Text>
+                  <Text style={[styles.needsAuthBtnText, isSmallScreen && { fontSize: 16 }, tiny && { fontSize: 14 }]}>{t('auth.register')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[styles.needsAuthBtn, styles.needsAuthBtnPrimary]}
+                  style={[styles.needsAuthBtn, styles.needsAuthBtnPrimary, isSmallScreen && { minHeight: 48 }, tiny && { minHeight: 40, paddingVertical: 10 }]}
                   onPress={() => (navigation as unknown as NavProp).replace('Login')}
                 >
-                  <Text style={styles.needsAuthBtnText}>Login</Text>
+                  <Text style={[styles.needsAuthBtnText, isSmallScreen && { fontSize: 16 }, tiny && { fontSize: 14 }]}>{t('auth.login')}</Text>
                 </TouchableOpacity>
               </View>
             </View>
           ) : (
             <>
-              {error ? <Text style={styles.errorText}>{error}</Text> : null}
+              {error ? <Text style={[styles.errorText, compact && { marginBottom: 14, paddingVertical: 8 }, tiny && { marginBottom: 6, paddingVertical: 4, fontSize: 13 }]}>{error}</Text> : null}
 
-              <Animated.View style={[styles.dotsWrap, { gap: dotGap, transform: [{ translateX: shakeAnim }] }]}>
+              <Animated.View style={[styles.dotsWrap, { gap: dotGap, marginBottom: dotsWrapMarginBottom, transform: [{ translateX: shakeAnim }] }]}>
                 {[0, 1, 2, 3].map((i) => (
                   <View
                     key={i}
@@ -362,11 +381,11 @@ export default function Passcode() {
                 ))}
               </Animated.View>
 
-              <Text style={[styles.enterText, { fontSize: enterTextSize }]}>Enter your passcode</Text>
+              <Text style={[styles.enterText, { fontSize: enterTextSize, marginBottom: enterTextMarginBottom }]}>{t('passcode.enterPasscode')}</Text>
 
               <View style={[styles.padContainer, { width: padWidth, maxWidth: maxPadWidth }]}>
                 {[['1', '2', '3'], ['4', '5', '6'], ['7', '8', '9']].map((row, ri) => (
-                  <View key={ri} style={styles.padRow}>
+                  <View key={ri} style={[styles.padRow, { marginBottom: padRowMarginBottom }]}>
                     {row.map((key) => (
                       <TouchableOpacity
                         key={key}
@@ -378,7 +397,7 @@ export default function Passcode() {
                     ))}
                   </View>
                 ))}
-                <View style={styles.padRowLast}>
+                <View style={[styles.padRowLast, { marginBottom: tiny ? 4 : compact ? 8 : 20 }]}>
                   <View style={{ width: btnSize }} />
                   <TouchableOpacity
                     style={[styles.padButton, { width: btnSize, height: btnSize, borderRadius: btnSize / 2 }]}
@@ -395,12 +414,12 @@ export default function Passcode() {
                 </View>
               </View>
 
-              <View style={[styles.bottomRow, { maxWidth: Math.min(280, width - horizontalPadding * 2) }]}>
-                <TouchableOpacity style={[styles.bottomButton, styles.bottomButtonPrimary]} onPress={() => (navigation as unknown as NavProp).replace('Login')}>
-                  <Text style={styles.bottomButtonTextPrimary}>Use Email</Text>
+              <View style={[styles.bottomRow, { maxWidth: Math.min(280, width - horizontalPadding * 2), marginTop: bottomRowMarginTop }]}>
+                <TouchableOpacity style={[styles.bottomButton, styles.bottomButtonPrimary, isSmallScreen && { minHeight: 48 }, tiny && { minHeight: 40, paddingVertical: 8 }]} onPress={() => (navigation as unknown as NavProp).replace('Login')}>
+                  <Text style={[styles.bottomButtonTextPrimary, isSmallScreen && { fontSize: 16 }]}>{t('passcode.useEmail')}</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.forgotLinkWrap} onPress={() => setResetModalVisible(true)}>
-                  <Text style={styles.forgotLink}>Forgot Passcode?</Text>
+                <TouchableOpacity style={[styles.forgotLinkWrap, tiny && { marginTop: 4 }]} onPress={() => setResetModalVisible(true)}>
+                  <Text style={[styles.forgotLink, isSmallScreen && { fontSize: 15 }, tiny && { fontSize: 13 }]}>{t('passcode.forgotPasscode')}</Text>
                 </TouchableOpacity>
               </View>
             </>
@@ -427,73 +446,116 @@ export default function Passcode() {
         onRequestClose={() => setLanguageModalVisible(false)}
       >
         <TouchableOpacity
-          style={passcodeLanguageStyles.overlay}
+          style={[
+            passcodeLanguageStyles.overlay,
+            { paddingHorizontal: Math.max(16, horizontalPadding) },
+          ]}
           activeOpacity={1}
           onPress={() => setLanguageModalVisible(false)}
         >
-          <View style={passcodeLanguageStyles.content} onStartShouldSetResponder={() => true}>
+          <View
+            style={[
+              passcodeLanguageStyles.content,
+              {
+                maxWidth: Math.min(360, width - 32),
+                maxHeight: isShortScreen ? height * 0.85 : undefined,
+                padding: isSmallScreen ? 18 : 24,
+              },
+            ]}
+            onStartShouldSetResponder={() => true}
+          >
             <View style={passcodeLanguageStyles.header}>
-              <Ionicons name="globe-outline" size={40} color={GRADIENT_START} />
-              <Text style={passcodeLanguageStyles.title}>{t('profile.selectLanguage')}</Text>
-              <Text style={passcodeLanguageStyles.subtitle}>{t('profile.defaultIsEnglish')}</Text>
+              <Ionicons name="globe-outline" size={isSmallScreen ? 32 : 40} color={GRADIENT_START} />
+              <Text style={[passcodeLanguageStyles.title, isSmallScreen && { fontSize: 16 }]}>
+                {t('profile.selectLanguage')}
+              </Text>
+              <Text style={[passcodeLanguageStyles.subtitle, isSmallScreen && { fontSize: 12 }]}>
+                {t('profile.defaultIsEnglish')}
+              </Text>
             </View>
-            {SUPPORTED_LANGUAGES.map(({ label, flag }) => (
-              <TouchableOpacity
-                key={label}
-                style={[
-                  passcodeLanguageStyles.option,
-                  language === label && passcodeLanguageStyles.optionSelected,
-                ]}
-                onPress={() => handleSelectLanguage(label)}
-                activeOpacity={0.7}
-              >
-                <Text style={passcodeLanguageStyles.flag}>{flag}</Text>
-                <Text
+            <ScrollView
+              style={isShortScreen ? { maxHeight: 200 } : undefined}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+            >
+              {SUPPORTED_LANGUAGES.map(({ label, flag }) => (
+                <TouchableOpacity
+                  key={label}
                   style={[
-                    passcodeLanguageStyles.optionText,
-                    language === label && passcodeLanguageStyles.optionTextSelected,
+                    passcodeLanguageStyles.option,
+                    isSmallScreen && { paddingVertical: 12, paddingHorizontal: 14 },
+                    language === label && passcodeLanguageStyles.optionSelected,
                   ]}
+                  onPress={() => handleSelectLanguage(label)}
+                  activeOpacity={0.7}
                 >
-                  {label}
-                </Text>
-                {language === label && (
-                  <Ionicons name="checkmark-circle" size={22} color={GRADIENT_START} />
-                )}
-              </TouchableOpacity>
-            ))}
+                  <Text style={[passcodeLanguageStyles.flag, isSmallScreen && { fontSize: 20 }]}>{flag}</Text>
+                  <Text
+                    style={[
+                      passcodeLanguageStyles.optionText,
+                      isSmallScreen && { fontSize: 15 },
+                      language === label && passcodeLanguageStyles.optionTextSelected,
+                    ]}
+                  >
+                    {label}
+                  </Text>
+                  {language === label && (
+                    <Ionicons name="checkmark-circle" size={isSmallScreen ? 20 : 22} color={GRADIENT_START} />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
             <TouchableOpacity
-              style={passcodeLanguageStyles.cancelBtn}
+              style={[passcodeLanguageStyles.cancelBtn, isSmallScreen && { marginTop: 8 }]}
               onPress={() => setLanguageModalVisible(false)}
             >
-              <Text style={passcodeLanguageStyles.cancelText}>{t('common.cancel')}</Text>
+              <Text style={[passcodeLanguageStyles.cancelText, isSmallScreen && { fontSize: 15 }]}>
+                {t('common.cancel')}
+              </Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
       </Modal>
 
-      <Modal transparent animationType="slide" visible={resetModalVisible} onRequestClose={closeResetModal}>
-        <View style={resetStyles.overlay}>
-          <Pressable style={[StyleSheet.absoluteFill, resetStyles.backdrop]} onPress={closeResetModal} />
-          <ScrollView
-            style={resetStyles.modalScroll}
-            contentContainerStyle={resetStyles.scrollContent}
-            keyboardShouldPersistTaps="handled"
-            bounces={false}
+      <Modal transparent animationType="fade" visible={resetModalVisible} onRequestClose={closeResetModal}>
+        <TouchableOpacity
+          style={[
+            resetStyles.overlay,
+            { paddingHorizontal: Math.max(16, horizontalPadding) },
+          ]}
+          activeOpacity={1}
+          onPress={closeResetModal}
+        >
+          <View
+            onStartShouldSetResponder={() => true}
+            style={[
+              resetStyles.box,
+              {
+                maxWidth: Math.min(400, width - 32),
+                maxHeight: isShortScreen ? height * 0.9 : undefined,
+                padding: isSmallScreen ? 18 : 24,
+              },
+            ]}
           >
-            <View style={resetStyles.box}>
-              <Text style={resetStyles.title}>
-                {resetStep === 'auth' ? 'Reset Passcode' : 'Set New Passcode'}
+            <ScrollView
+              style={isShortScreen ? { maxHeight: height * 0.7 } : undefined}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              bounces={false}
+            >
+              <Text style={[resetStyles.title, isSmallScreen && { fontSize: 20 }, isShortScreen && { fontSize: 20, marginBottom: 10 }]}>
+                {resetStep === 'auth' ? t('passcode.resetTitle') : t('passcode.setNewTitle')}
               </Text>
-              <Text style={resetStyles.message}>
+              <Text style={[resetStyles.message, isSmallScreen && { fontSize: 15 }, isShortScreen && { marginBottom: 16 }]}>
                 {resetStep === 'auth'
-                  ? 'Enter your email and password to verify your identity.'
-                  : 'Enter your new 4-digit passcode and confirm it.'}
+                  ? t('passcode.resetMessage')
+                  : t('passcode.setNewMessage')}
               </Text>
               {resetStep === 'auth' ? (
                 <>
                   <TextInput
-                    style={resetStyles.input}
-                    placeholder="Email Address"
+                    style={[resetStyles.input, isSmallScreen && { paddingVertical: 10, fontSize: 15 }]}
+                    placeholder={t('auth.emailPlaceholder')}
                     placeholderTextColor="#666"
                     value={resetEmail}
                     onChangeText={setResetEmail}
@@ -502,8 +564,8 @@ export default function Passcode() {
                     autoComplete="email"
                   />
                   <TextInput
-                    style={resetStyles.input}
-                    placeholder="Password"
+                    style={[resetStyles.input, isSmallScreen && { paddingVertical: 10, fontSize: 15 }]}
+                    placeholder={t('auth.passwordPlaceholder')}
                     placeholderTextColor="#666"
                     secureTextEntry
                     value={resetPassword}
@@ -514,8 +576,8 @@ export default function Passcode() {
               ) : (
                 <>
                   <TextInput
-                    style={resetStyles.input}
-                    placeholder="New Passcode (4 digits)"
+                    style={[resetStyles.input, isSmallScreen && { paddingVertical: 10, fontSize: 15 }]}
+                    placeholder={t('passcode.newPasscodePlaceholder')}
                     placeholderTextColor="#666"
                     keyboardType="numeric"
                     maxLength={4}
@@ -523,8 +585,8 @@ export default function Passcode() {
                     onChangeText={setNewPasscode}
                   />
                   <TextInput
-                    style={resetStyles.input}
-                    placeholder="Confirm Passcode"
+                    style={[resetStyles.input, isSmallScreen && { paddingVertical: 10, fontSize: 15 }]}
+                    placeholder={t('passcode.confirmPasscodePlaceholder')}
                     placeholderTextColor="#666"
                     keyboardType="numeric"
                     maxLength={4}
@@ -533,27 +595,30 @@ export default function Passcode() {
                   />
                 </>
               )}
-              <View style={resetStyles.buttons}>
-                <TouchableOpacity style={[resetStyles.btn, resetStyles.cancelBtn]} onPress={closeResetModal}>
-                  <Text style={resetStyles.cancelBtnText}>Cancel</Text>
+              <View style={[resetStyles.buttons, isSmallScreen && { gap: 10 }]}>
+                <TouchableOpacity
+                  style={[resetStyles.btn, resetStyles.cancelBtn, isSmallScreen && { minHeight: 44 }]}
+                  onPress={closeResetModal}
+                >
+                  <Text style={[resetStyles.cancelBtnText, isSmallScreen && { fontSize: 15 }]}>{t('common.cancel')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[resetStyles.btn, resetStyles.confirmBtn]}
+                  style={[resetStyles.btn, resetStyles.confirmBtn, isSmallScreen && { minHeight: 44 }]}
                   onPress={handleResetPasscode}
                   disabled={resetLoading}
                 >
                   {resetLoading ? (
                     <ActivityIndicator size="small" color={WHITE} />
                   ) : (
-                    <Text style={resetStyles.confirmBtnText}>
-                      {resetStep === 'auth' ? 'Verify' : 'Update Passcode'}
+                    <Text style={[resetStyles.confirmBtnText, isSmallScreen && { fontSize: 15 }]}>
+                      {resetStep === 'auth' ? t('passcode.verify') : t('passcode.updatePasscode')}
                     </Text>
                   )}
                 </TouchableOpacity>
               </View>
-            </View>
           </ScrollView>
-        </View>
+          </View>
+        </TouchableOpacity>
       </Modal>
     </>
   );
@@ -567,7 +632,6 @@ const styles = StyleSheet.create({
   },
   languageButton: {
     position: 'absolute',
-    right: 20,
     zIndex: 10,
     width: 44,
     height: 44,
@@ -597,7 +661,6 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   logoWrap: {
-    marginBottom: 32,
     alignItems: 'center',
   },
   logo: {
@@ -670,8 +733,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 24,
-    marginBottom: 20,
     paddingVertical: 8,
   },
   dot: {
@@ -688,7 +749,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '500',
     color: WHITE,
-    marginBottom: 40,
     letterSpacing: 0.5,
   },
   padContainer: {
@@ -762,18 +822,22 @@ const resetStyles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    padding: 20,
+    backgroundColor: 'transparent',
+    paddingVertical: 20,
   },
-  backdrop: { zIndex: 0 },
-  modalScroll: { flex: 1, width: '100%', zIndex: 1 },
-  scrollContent: { flexGrow: 1, justifyContent: 'center', paddingVertical: 24 },
   box: {
     backgroundColor: WHITE,
     borderRadius: 20,
-    padding: 24,
     width: '100%',
-    maxWidth: 400,
+    ...Platform.select({
+      ios: {
+        shadowColor: GRADIENT_START,
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.5,
+        shadowRadius: 24,
+      },
+      android: { elevation: 16 },
+    }),
   },
   title: { fontSize: 24, fontWeight: 'bold', color: '#333', marginBottom: 12, textAlign: 'center' },
   message: { fontSize: 16, color: '#666', marginBottom: 20, textAlign: 'center', lineHeight: 22 },
@@ -799,20 +863,23 @@ const resetStyles = StyleSheet.create({
 const passcodeLanguageStyles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'transparent',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    paddingVertical: 20,
   },
   content: {
     width: '100%',
-    maxWidth: 360,
     backgroundColor: WHITE,
     borderRadius: 20,
-    padding: 24,
     ...Platform.select({
-      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.25, shadowRadius: 12 },
-      android: { elevation: 8 },
+      ios: {
+        shadowColor: GRADIENT_START,
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.5,
+        shadowRadius: 24,
+      },
+      android: { elevation: 16 },
     }),
   },
   header: { alignItems: 'center', marginBottom: 20 },

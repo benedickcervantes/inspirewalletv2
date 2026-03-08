@@ -8,6 +8,7 @@ import {
   Modal,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -34,7 +35,7 @@ const USER_PREFERRED_LANGUAGE_KEY = 'user_preferred_language';
 export default function Welcome() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
-  const { horizontalPadding } = useResponsive();
+  const { horizontalPadding, scale, width, height, isShortScreen, isSmallScreen } = useResponsive();
   const [showStartup, setShowStartup] = useState(true);
   const [languageModalVisible, setLanguageModalVisible] = useState(false);
   const { t, language: contextLanguage, setLanguage } = useLanguage();
@@ -63,41 +64,62 @@ export default function Welcome() {
       style={[styles.welcomeContainer, { paddingTop: insets.top, paddingBottom: insets.bottom, paddingHorizontal: horizontalPadding }]}
     >
       <TouchableOpacity
-        style={[styles.languageButton, { top: insets.top + 12, right: horizontalPadding }]}
+        style={[
+          styles.languageButton,
+          {
+            top: insets.top + 12,
+            right: horizontalPadding,
+            width: scale(48),
+            height: scale(48),
+            borderRadius: scale(24),
+          },
+        ]}
         onPress={() => setLanguageModalVisible(true)}
+        accessibilityLabel={t('profile.selectLanguage')}
+        accessibilityRole="button"
       >
-        <Ionicons name="language-outline" size={28} color={WHITE} />
+        <Ionicons name="language-outline" size={isSmallScreen ? 24 : 28} color={WHITE} />
       </TouchableOpacity>
-      <View style={styles.welcomeContent}>
+      <View style={[styles.welcomeContent, isShortScreen && { marginTop: -40 }]}>
         <Image
           source={require('../../assets/images/IAFG.png')}
-          style={styles.logo}
+          style={[
+            styles.logo,
+            isSmallScreen && { height: 340, maxHeight: 380, marginBottom: -50 },
+            isShortScreen && { height: 280, maxHeight: 320, marginBottom: -40 },
+          ]}
           contentFit="contain"
         />
-        <View style={styles.actions}>
+        <View style={[styles.actions, isSmallScreen && { maxWidth: 280 }]}>
           <Pressable
             style={({ pressed }: { pressed: boolean }) => [
               styles.button,
               styles.buttonRegister,
+              (isSmallScreen || isShortScreen) && { minHeight: 48, paddingVertical: 14 },
               pressed && styles.buttonPressed,
             ]}
             onPress={() => navigation.navigate('Register')}
           >
-            <Text style={styles.buttonText}>Register</Text>
+            <Text style={[styles.buttonText, (isSmallScreen || isShortScreen) && { fontSize: 16 }]}>
+              {t('auth.register')}
+            </Text>
           </Pressable>
           <Pressable
             style={({ pressed }: { pressed: boolean }) => [
               styles.button,
               styles.buttonLogin,
+              (isSmallScreen || isShortScreen) && { minHeight: 48, paddingVertical: 14 },
               pressed && styles.buttonPressed,
             ]}
             onPress={() => navigation.navigate('Login')}
           >
-            <Text style={styles.buttonText}>Login</Text>
+            <Text style={[styles.buttonText, (isSmallScreen || isShortScreen) && { fontSize: 16 }]}>
+              {t('auth.login')}
+            </Text>
           </Pressable>
         </View>
       </View>
-      <Text style={styles.footer}>CREATED BY INSPIRE</Text>
+      <Text style={[styles.footer, isShortScreen && { paddingBottom: 16 }]}>{t('auth.createdByInspire')}</Text>
     </LinearGradient>
 
     <Modal
@@ -107,45 +129,72 @@ export default function Welcome() {
       onRequestClose={() => setLanguageModalVisible(false)}
     >
       <TouchableOpacity
-        style={welcomeLanguageStyles.overlay}
+        style={[
+          welcomeLanguageStyles.overlay,
+          { paddingHorizontal: Math.max(16, horizontalPadding) },
+        ]}
         activeOpacity={1}
         onPress={() => setLanguageModalVisible(false)}
       >
-        <View style={welcomeLanguageStyles.content} onStartShouldSetResponder={() => true}>
+        <View
+          style={[
+            welcomeLanguageStyles.content,
+            {
+              maxWidth: Math.min(360, width - 32),
+              maxHeight: isShortScreen ? height * 0.85 : undefined,
+              padding: isSmallScreen ? 18 : 24,
+            },
+          ]}
+          onStartShouldSetResponder={() => true}
+        >
           <View style={welcomeLanguageStyles.header}>
-            <Ionicons name="globe-outline" size={40} color={GRADIENT_START} />
-            <Text style={welcomeLanguageStyles.title}>{t('profile.selectLanguage')}</Text>
-            <Text style={welcomeLanguageStyles.subtitle}>{t('profile.defaultIsEnglish')}</Text>
+            <Ionicons name="globe-outline" size={isSmallScreen ? 32 : 40} color={GRADIENT_START} />
+            <Text style={[welcomeLanguageStyles.title, isSmallScreen && { fontSize: 16 }]}>
+              {t('profile.selectLanguage')}
+            </Text>
+            <Text style={[welcomeLanguageStyles.subtitle, isSmallScreen && { fontSize: 12 }]}>
+              {t('profile.defaultIsEnglish')}
+            </Text>
           </View>
-          {SUPPORTED_LANGUAGES.map(({ label, flag }) => (
-            <TouchableOpacity
-              key={label}
-              style={[
-                welcomeLanguageStyles.option,
-                language === label && welcomeLanguageStyles.optionSelected,
-              ]}
-              onPress={() => handleSelectLanguage(label)}
-              activeOpacity={0.7}
-            >
-              <Text style={welcomeLanguageStyles.flag}>{flag}</Text>
-              <Text
+          <ScrollView
+            style={isShortScreen ? { maxHeight: 200 } : undefined}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
+            {SUPPORTED_LANGUAGES.map(({ label, flag }) => (
+              <TouchableOpacity
+                key={label}
                 style={[
-                  welcomeLanguageStyles.optionText,
-                  language === label && welcomeLanguageStyles.optionTextSelected,
+                  welcomeLanguageStyles.option,
+                  isSmallScreen && { paddingVertical: 12, paddingHorizontal: 14 },
+                  language === label && welcomeLanguageStyles.optionSelected,
                 ]}
+                onPress={() => handleSelectLanguage(label)}
+                activeOpacity={0.7}
               >
-                {label}
-              </Text>
-              {language === label && (
-                <Ionicons name="checkmark-circle" size={22} color={GRADIENT_START} />
-              )}
-            </TouchableOpacity>
-          ))}
+                <Text style={[welcomeLanguageStyles.flag, isSmallScreen && { fontSize: 20 }]}>{flag}</Text>
+                <Text
+                  style={[
+                    welcomeLanguageStyles.optionText,
+                    isSmallScreen && { fontSize: 15 },
+                    language === label && welcomeLanguageStyles.optionTextSelected,
+                  ]}
+                >
+                  {label}
+                </Text>
+                {language === label && (
+                  <Ionicons name="checkmark-circle" size={isSmallScreen ? 20 : 22} color={GRADIENT_START} />
+                )}
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
           <TouchableOpacity
-            style={welcomeLanguageStyles.cancelBtn}
+            style={[welcomeLanguageStyles.cancelBtn, isSmallScreen && { marginTop: 8 }]}
             onPress={() => setLanguageModalVisible(false)}
           >
-            <Text style={welcomeLanguageStyles.cancelText}>{t('common.cancel')}</Text>
+            <Text style={[welcomeLanguageStyles.cancelText, isSmallScreen && { fontSize: 15 }]}>
+              {t('common.cancel')}
+            </Text>
           </TouchableOpacity>
         </View>
       </TouchableOpacity>
@@ -162,15 +211,6 @@ const styles = StyleSheet.create({
   languageButton: {
     position: 'absolute',
     zIndex: 10,
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: 48,
-    height: 48,
-    borderRadius: 24,
     backgroundColor: 'rgba(255,255,255,0.2)',
     justifyContent: 'center',
     alignItems: 'center',
@@ -237,20 +277,23 @@ const styles = StyleSheet.create({
 const welcomeLanguageStyles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'transparent',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    paddingVertical: 20,
   },
   content: {
     width: '100%',
-    maxWidth: 360,
     backgroundColor: WHITE,
     borderRadius: 20,
-    padding: 24,
     ...Platform.select({
-      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.25, shadowRadius: 12 },
-      android: { elevation: 8 },
+      ios: {
+        shadowColor: GRADIENT_START,
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.5,
+        shadowRadius: 24,
+      },
+      android: { elevation: 16 },
     }),
   },
   header: { alignItems: 'center', marginBottom: 20 },

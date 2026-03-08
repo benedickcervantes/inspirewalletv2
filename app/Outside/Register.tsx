@@ -109,8 +109,8 @@ const formatWithMask = (text: string, mask: string) => {
 
 export default function Register() {
   const navigation = useNavigation();
-  const { width } = useWindowDimensions();
-  const { horizontalPadding, moderateScale } = useResponsive();
+  const { width, height } = useWindowDimensions();
+  const { horizontalPadding, moderateScale, isShortScreen, isSmallScreen } = useResponsive();
   const { t, language: contextLanguage, setLanguage } = useLanguage();
   const language = normalizeLanguage(contextLanguage ?? DEFAULT_LANGUAGE);
   const [currentStep, setCurrentStep] = useState(1);
@@ -339,6 +339,8 @@ export default function Register() {
             <TouchableOpacity
               style={styles.languageButton}
               onPress={() => setLanguageModalVisible(true)}
+              accessibilityLabel={t("profile.selectLanguage")}
+              accessibilityRole="button"
             >
               <Ionicons name="language-outline" size={24} color="#E25A17" />
             </TouchableOpacity>
@@ -1107,17 +1109,27 @@ export default function Register() {
           onRequestClose={() => setLanguageModalVisible(false)}
         >
           <TouchableOpacity
-            style={styles.languageModalOverlay}
+            style={[
+              styles.languageModalOverlay,
+              { paddingHorizontal: Math.max(16, horizontalPadding) },
+            ]}
             activeOpacity={1}
             onPress={() => setLanguageModalVisible(false)}
           >
             <View
-              style={styles.languageModalContent}
+              style={[
+                styles.languageModalContent,
+                {
+                  maxWidth: Math.min(360, width - 32),
+                  maxHeight: isShortScreen ? height * 0.85 : undefined,
+                  padding: isSmallScreen ? 18 : 24,
+                },
+              ]}
               onStartShouldSetResponder={() => true}
             >
               <View style={styles.languageMapHeader}>
                 <View style={styles.languageMapGlobe}>
-                  <Ionicons name="globe-outline" size={40} color="#E25A17" />
+                  <Ionicons name="globe-outline" size={isSmallScreen ? 32 : 40} color="#E25A17" />
                 </View>
                 <View style={styles.languageMapFlags}>
                   {SUPPORTED_LANGUAGES.map(({ label, flag }) => (
@@ -1132,42 +1144,50 @@ export default function Register() {
                     </View>
                   ))}
                 </View>
-                <Text style={styles.languageModalTitle}>
+                <Text style={[styles.languageModalTitle, isSmallScreen && { fontSize: 16 }]}>
                   {t("profile.selectLanguage")}
                 </Text>
-                <Text style={styles.languageModalSubtitle}>
+                <Text style={[styles.languageModalSubtitle, isSmallScreen && { fontSize: 12 }]}>
                   {t("profile.defaultIsEnglish")}
                 </Text>
               </View>
-              {SUPPORTED_LANGUAGES.map(({ label, flag }) => (
-                <TouchableOpacity
-                  key={label}
-                  style={[
-                    styles.languageOption,
-                    language === label && styles.languageOptionSelected,
-                  ]}
-                  onPress={() => handleSelectLanguage(label)}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.languageOptionFlag}>{flag}</Text>
-                  <Text
+              <ScrollView
+                style={isShortScreen ? { maxHeight: 200 } : undefined}
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+              >
+                {SUPPORTED_LANGUAGES.map(({ label, flag }) => (
+                  <TouchableOpacity
+                    key={label}
                     style={[
-                      styles.languageOptionText,
-                      language === label && styles.languageOptionTextSelected,
+                      styles.languageOption,
+                      isSmallScreen && { paddingVertical: 12, paddingHorizontal: 14 },
+                      language === label && styles.languageOptionSelected,
                     ]}
+                    onPress={() => handleSelectLanguage(label)}
+                    activeOpacity={0.7}
                   >
-                    {label}
-                  </Text>
-                  {language === label && (
-                    <Ionicons name="checkmark-circle" size={22} color="#E25A17" />
-                  )}
-                </TouchableOpacity>
-              ))}
+                    <Text style={[styles.languageOptionFlag, isSmallScreen && { fontSize: 20 }]}>{flag}</Text>
+                    <Text
+                      style={[
+                        styles.languageOptionText,
+                        isSmallScreen && { fontSize: 15 },
+                        language === label && styles.languageOptionTextSelected,
+                      ]}
+                    >
+                      {label}
+                    </Text>
+                    {language === label && (
+                      <Ionicons name="checkmark-circle" size={isSmallScreen ? 20 : 22} color="#E25A17" />
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
               <TouchableOpacity
-                style={styles.languageModalCancel}
+                style={[styles.languageModalCancel, isSmallScreen && { marginTop: 8 }]}
                 onPress={() => setLanguageModalVisible(false)}
               >
-                <Text style={styles.languageModalCancelText}>
+                <Text style={[styles.languageModalCancelText, isSmallScreen && { fontSize: 15 }]}>
                   {t("common.cancel")}
                 </Text>
               </TouchableOpacity>
@@ -1799,27 +1819,23 @@ const styles = StyleSheet.create({
   // Language Modal
   languageModalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: "transparent",
     justifyContent: "center",
     alignItems: "center",
-    padding: 20,
+    paddingVertical: 20,
   },
   languageModalContent: {
     width: "100%",
-    maxWidth: 360,
     backgroundColor: "#FFFFFF",
     borderRadius: 20,
-    padding: 24,
     ...Platform.select({
       ios: {
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.25,
-        shadowRadius: 12,
+        shadowColor: "#E25A17",
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.5,
+        shadowRadius: 24,
       },
-      android: {
-        elevation: 8,
-      },
+      android: { elevation: 16 },
     }),
   },
   languageMapHeader: {

@@ -10,7 +10,6 @@ import {
     Animated,
     BackHandler,
     Keyboard,
-    KeyboardAvoidingView,
     Modal,
     Platform,
     Pressable,
@@ -19,8 +18,10 @@ import {
     Text,
     TextInput,
     TouchableOpacity,
+    useWindowDimensions,
     View,
 } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { forgotPassword, login } from "../../configs/api";
 import {
@@ -54,6 +55,7 @@ function PasswordResetRequiredModal({
   onSentOk,
   email,
 }: PasswordResetRequiredModalProps) {
+  const { t } = useLanguage();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.9)).current;
   const [phase, setPhase] = useState<"prompt" | "sending" | "sent" | "error">(
@@ -117,17 +119,17 @@ function PasswordResetRequiredModal({
   const content = {
     prompt: {
       icon: "!",
-      title: "Password Update Required",
-      message: `Your account (${email}) requires a password update for security purposes.\n\nTap "Send Reset Email" to receive a secure link in your inbox to set a new password.`,
-      primaryText: "Send Reset Email",
+      title: t("auth.passwordUpdateRequired"),
+      message: t("auth.passwordUpdateMessage").replace("{email}", email),
+      primaryText: t("auth.sendResetEmail"),
       primaryAction: handleSend,
       secondaryText: null,
       secondaryAction: null,
     },
     sending: {
       icon: "…",
-      title: "Sending Email",
-      message: `Sending password reset link to ${email}…`,
+      title: t("auth.sendingEmail"),
+      message: t("auth.sendingEmailMessage").replace("{email}", email),
       primaryText: null,
       primaryAction: null,
       secondaryText: null,
@@ -135,18 +137,18 @@ function PasswordResetRequiredModal({
     },
     sent: {
       icon: "✓",
-      title: "Email Sent!",
-      message: `If an account exists for ${email}, a password reset link has been sent.\n\nCheck your inbox (and spam folder), follow the link to set your new password, then log in again.`,
-      primaryText: "Back to Login",
+      title: t("auth.emailSentTitle"),
+      message: t("auth.emailSentMessage").replace("{email}", email),
+      primaryText: t("auth.backToLogin"),
       primaryAction: onSentOk,
       secondaryText: null,
       secondaryAction: null,
     },
     error: {
       icon: "!",
-      title: "Could Not Send Email",
+      title: t("auth.couldNotSendEmail"),
       message: errorMsg,
-      primaryText: "Try Again",
+      primaryText: t("auth.tryAgain"),
       primaryAction: () => setPhase("prompt"),
       secondaryText: null,
       secondaryAction: null,
@@ -230,6 +232,8 @@ function ForgotPasswordInputModal({
   initialEmail,
   onClose,
 }: ForgotPasswordInputModalProps) {
+  const { t, language } = useLanguage();
+  const isRTL = language === "Arabic";
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.9)).current;
   const [inputEmail, setInputEmail] = useState(initialEmail);
@@ -259,7 +263,7 @@ function ForgotPasswordInputModal({
   const handleSend = async () => {
     const trimmed = inputEmail.trim();
     if (!trimmed) {
-      setErrorMsg('Please enter your email address.');
+      setErrorMsg(t("auth.pleaseEnterEmail"));
       setPhase('error');
       return;
     }
@@ -273,7 +277,7 @@ function ForgotPasswordInputModal({
         setPhase('error');
       }
     } catch {
-      setErrorMsg('Network error. Please try again.');
+      setErrorMsg(t("auth.networkError"));
       setPhase('error');
     }
   };
@@ -288,13 +292,13 @@ function ForgotPasswordInputModal({
               <View style={[modalStyles.iconWrap, { backgroundColor: 'rgba(34,197,94,0.18)' }]}>
                 <Text style={[modalStyles.iconText, { color: '#22c55e' }]}>✓</Text>
               </View>
-              <Text style={modalStyles.title}>Email Sent!</Text>
+              <Text style={modalStyles.title}>{t("auth.emailSentTitle")}</Text>
               <Text style={modalStyles.message}>
-                {`If an account exists for ${inputEmail.trim()}, a password reset link has been sent.\n\nCheck your inbox (and spam folder), follow the link to set your new password, then log in again.`}
+                {t("auth.emailSentMessage").replace("{email}", inputEmail.trim())}
               </Text>
               <View style={modalStyles.buttonsRow}>
                 <TouchableOpacity style={modalStyles.button} onPress={onClose} activeOpacity={0.8}>
-                  <Text style={modalStyles.buttonText}>Back to Login</Text>
+                  <Text style={modalStyles.buttonText}>{t("auth.backToLogin")}</Text>
                 </TouchableOpacity>
               </View>
             </>
@@ -303,8 +307,8 @@ function ForgotPasswordInputModal({
               <View style={modalStyles.iconWrap}>
                 <Text style={modalStyles.iconText}>…</Text>
               </View>
-              <Text style={modalStyles.title}>Sending Email</Text>
-              <Text style={modalStyles.message}>Sending password reset link…</Text>
+              <Text style={modalStyles.title}>{t("auth.sendingEmail")}</Text>
+              <Text style={modalStyles.message}>{t("auth.sendingEmailMessage").replace("{email}", inputEmail.trim())}</Text>
               <ActivityIndicator color={GRADIENT_START} size="large" style={{ marginTop: 4 }} />
             </>
           ) : (
@@ -312,19 +316,19 @@ function ForgotPasswordInputModal({
               <View style={modalStyles.iconWrap}>
                 <Text style={modalStyles.iconText}>🔑</Text>
               </View>
-              <Text style={modalStyles.title}>Forgot Password?</Text>
+              <Text style={modalStyles.title}>{t("auth.forgotPasswordTitle")}</Text>
               <Text style={[modalStyles.message, { marginBottom: 12 }]}>
-                Enter your registered email address and we'll send you a secure reset link.
+                {t("auth.forgotPasswordMessage")}
               </Text>
               {phase === 'error' && (
                 <Text style={forgotInputStyles.errorText}>{errorMsg}</Text>
               )}
               <TextInput
                 style={forgotInputStyles.emailInput}
-                placeholder="Email Address"
+                placeholder={t("auth.emailPlaceholder")}
                 placeholderTextColor="#AAAAAA"
                 value={inputEmail}
-                onChangeText={(t) => { setInputEmail(t); if (phase === 'error') setPhase('input'); }}
+                onChangeText={(val) => { setInputEmail(val); if (phase === 'error') setPhase('input'); }}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
@@ -337,14 +341,14 @@ function ForgotPasswordInputModal({
                   onPress={onClose}
                   activeOpacity={0.8}
                 >
-                  <Text style={modalStyles.buttonSecondaryText}>Cancel</Text>
+                  <Text style={modalStyles.buttonSecondaryText}>{t("common.cancel")}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={modalStyles.button}
                   onPress={handleSend}
                   activeOpacity={0.8}
                 >
-                  <Text style={modalStyles.buttonText}>Send Link</Text>
+                  <Text style={modalStyles.buttonText}>{t("auth.sendLink")}</Text>
                 </TouchableOpacity>
               </View>
             </>
@@ -367,6 +371,7 @@ const forgotInputStyles = StyleSheet.create({
     color: '#333',
     marginBottom: 16,
     backgroundColor: '#FAFAFA',
+    textAlign: 'left',
   },
   errorText: {
     fontSize: 13,
@@ -571,8 +576,9 @@ export default function Login() {
   const navigation = useNavigation();
   const route = useRoute();
   const insets = useSafeAreaInsets();
-  const { scale, verticalScale, moderateScale, horizontalPadding } =
+  const { scale, verticalScale, horizontalPadding, isShortScreen, isSmallScreen, width, height } =
     useResponsive();
+  const { height: windowHeight } = useWindowDimensions();
   const fromSignOut = (route.params as { fromSignOut?: boolean } | undefined)
     ?.fromSignOut;
 
@@ -644,16 +650,16 @@ export default function Login() {
     const trimmedEmail = email.trim();
     if (!trimmedEmail) {
       showModal({
-        title: "Missing Information",
-        message: "Please enter your email address.",
+        title: t("auth.missingInfo"),
+        message: t("auth.enterEmail"),
         type: "warning",
       });
       return;
     }
     if (!password) {
       showModal({
-        title: "Missing Information",
-        message: "Please enter your password.",
+        title: t("auth.missingInfo"),
+        message: t("auth.enterPassword"),
         type: "warning",
       });
       return;
@@ -669,9 +675,8 @@ export default function Login() {
       if (!result.success) {
         setLoading(false);
         showModal({
-          title: "Login Failed",
-          message:
-            result.error || "Invalid email or password. Please try again.",
+          title: t("auth.loginFailed"),
+          message: result.error || t("auth.invalidCredentials"),
           type: "error",
         });
         return;
@@ -712,8 +717,8 @@ export default function Login() {
     } catch (_) {
       setLoading(false);
       showModal({
-        title: "Login Error",
-        message: "An unexpected error occurred. Please try again.",
+        title: t("auth.loginError"),
+        message: t("auth.unexpectedError"),
         type: "error",
       });
     }
@@ -725,21 +730,29 @@ export default function Login() {
     return <CustomLoader text={t("auth.loggingIn")} />;
   }
 
+  // Responsive logo/form sizes for smaller screens
+  const logoWidth = isSmallScreen ? scale(220) : scale(260);
+  const logoHeight = isSmallScreen ? scale(118) : scale(140);
+  const logoMarginBottom = isShortScreen ? verticalScale(20) : verticalScale(32);
+  const formPaddingBottom = isShortScreen ? verticalScale(60) : verticalScale(100);
+
   return (
     <>
-      <KeyboardAvoidingView
-        style={styles.flex1}
-        behavior={
-          isWeb ? undefined : Platform.OS === "ios" ? "padding" : "height"
-        }
-        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
-      >
+      <View style={styles.flex1}>
+        {/* Fixed gradient background - does not move when keyboard opens */}
         <LinearGradient
           colors={[GRADIENT_START, GRADIENT_END]}
           locations={[0, 1]}
+          style={StyleSheet.absoluteFill}
+          pointerEvents="none"
+        />
+        <View
           style={[
-            styles.gradient,
-            { paddingTop: insets.top, paddingBottom: insets.bottom },
+            styles.contentWrapper,
+            {
+              paddingTop: insets.top,
+              paddingBottom: insets.bottom,
+            },
           ]}
         >
           <View
@@ -787,40 +800,48 @@ export default function Login() {
                 },
               ]}
               onPress={() => setLanguageModalVisible(true)}
+              accessibilityLabel={t("profile.selectLanguage")}
+              accessibilityRole="button"
             >
               <Ionicons name="language-outline" size={26} color={WHITE} />
             </TouchableOpacity>
           </View>
 
-          <ScrollView
+          <KeyboardAwareScrollView
             style={styles.scroll}
             contentContainerStyle={[
               styles.scrollContent,
               {
                 paddingHorizontal: horizontalPadding,
-                paddingBottom: verticalScale(100),
+                paddingBottom: formPaddingBottom,
+                minHeight: isWeb ? undefined : Math.max(400, windowHeight - insets.top - insets.bottom - 160),
               },
             ]}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
-            bounces={false}
+            enableOnAndroid={true}
+            enableAutomaticScroll={true}
+            extraScrollHeight={Platform.OS === "ios" ? 80 : 60}
+            extraHeight={Platform.OS === "android" ? 100 : 80}
+            keyboardOpeningTime={0}
+            viewIsInsideTabBar={false}
           >
             <View
-              style={[styles.logoWrap, { marginBottom: verticalScale(32) }]}
+              style={[styles.logoWrap, { marginBottom: logoMarginBottom }]}
             >
               <Image
                 source={require("../../assets/images/InpireLogo.png")}
-                style={[styles.logo, { width: scale(260), height: scale(140) }]}
+                style={[styles.logo, { width: logoWidth, height: logoHeight }]}
                 contentFit="contain"
                 accessible={true}
                 accessibilityLabel="Inspire company logo"
               />
             </View>
 
-            <View style={styles.form}>
+            <View style={[styles.form, isShortScreen && { gap: 0 }]}>
               <TextInput
-                style={styles.input}
-                placeholder="Email Address"
+                style={[styles.input, isShortScreen && { minHeight: 48, paddingVertical: 12 }]}
+                placeholder={t("auth.emailPlaceholder")}
                 placeholderTextColor="rgba(255,255,255,0.85)"
                 value={email}
                 onChangeText={setEmail}
@@ -831,10 +852,10 @@ export default function Login() {
                 autoComplete="email"
               />
 
-              <View style={styles.passwordRow}>
+              <View style={[styles.passwordRow, isShortScreen && { minHeight: 48 }]}>
                 <TextInput
-                  style={styles.passwordInput}
-                  placeholder="Enter password"
+                  style={[styles.passwordInput, isShortScreen && { paddingVertical: 12 }]}
+                  placeholder={t("auth.passwordPlaceholder")}
                   placeholderTextColor="rgba(255,255,255,0.85)"
                   value={password}
                   onChangeText={setPassword}
@@ -857,7 +878,7 @@ export default function Login() {
               </View>
 
               <TouchableOpacity
-                style={styles.passcodeLinkWrap}
+                style={[styles.passcodeLinkWrap, isShortScreen && { marginBottom: 16 }]}
                 onPress={async () => {
                   const token = await AsyncStorage.getItem("access_token");
                   const userJson = await AsyncStorage.getItem("user");
@@ -868,33 +889,32 @@ export default function Login() {
                     (navigation as unknown as NavProp).replace("Passcode");
                   } else if (!token) {
                     showModal({
-                      title: "Passcode Login",
-                      message:
-                        "To use passcode, you need to sign in with your email and password first. Don't have an account? Please register to create one.",
+                      title: t("auth.passcodeLoginTitle"),
+                      message: t("auth.passcodeLoginMessage"),
                       type: "info",
-                      confirmText: "OK",
-                      secondaryText: "Register",
+                      confirmText: t("common.ok"),
+                      secondaryText: t("auth.register"),
                       onSecondary: () =>
                         (navigation as unknown as NavProp).replace("Register"),
                     });
                   } else {
                     showModal({
-                      title: "No Passcode Set",
-                      message:
-                        "You haven't set up a passcode yet. Sign in with your email and password, then you can set up passcode in Settings after logging in.",
+                      title: t("auth.noPasscodeSetTitle"),
+                      message: t("auth.noPasscodeSetMessage"),
                       type: "info",
                     });
                   }
                 }}
               >
                 <Text style={styles.passcodeLinkText}>
-                  Use Passcode Instead
+                  {t("auth.usePasscodeInstead")}
                 </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={[
                   styles.loginButton,
+                  isShortScreen && { minHeight: 48 },
                   loading && styles.loginButtonDisabled,
                 ]}
                 onPress={SignIn}
@@ -904,7 +924,7 @@ export default function Login() {
                 {loading ? (
                   <ActivityIndicator color={WHITE} size="small" />
                 ) : (
-                  <Text style={styles.loginButtonText}>Login</Text>
+                  <Text style={styles.loginButtonText}>{t("auth.login")}</Text>
                 )}
               </TouchableOpacity>
 
@@ -912,22 +932,22 @@ export default function Login() {
                 style={styles.forgotWrap}
                 onPress={() => setForgotModalVisible(true)}
               >
-                <Text style={styles.forgotText}>Forgot Password?</Text>
+                <Text style={styles.forgotText}>{t("auth.forgotPassword")}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={styles.registerWrap}
                 onPress={() => navigation.navigate("Register")}
               >
-                <Text style={styles.registerText}>Don't have an account? </Text>
-                <Text style={styles.registerLink}>Register</Text>
+                <Text style={styles.registerText}>{t("auth.noAccount")}</Text>
+                <Text style={styles.registerLink}>{t("auth.register")}</Text>
               </TouchableOpacity>
             </View>
-          </ScrollView>
+          </KeyboardAwareScrollView>
 
-          <Text style={styles.footer}>CREATED BY INSPIRE</Text>
-        </LinearGradient>
-      </KeyboardAvoidingView>
+          <Text style={styles.footer}>{t("auth.createdByInspire")}</Text>
+        </View>
+      </View>
 
       <MessageModal
         visible={modalVisible}
@@ -969,56 +989,74 @@ export default function Login() {
         onRequestClose={() => setLanguageModalVisible(false)}
       >
         <TouchableOpacity
-          style={loginLanguageStyles.overlay}
+          style={[
+            loginLanguageStyles.overlay,
+            { paddingHorizontal: Math.max(16, horizontalPadding) },
+          ]}
           activeOpacity={1}
           onPress={() => setLanguageModalVisible(false)}
         >
           <View
-            style={loginLanguageStyles.content}
+            style={[
+              loginLanguageStyles.content,
+              {
+                maxWidth: Math.min(360, width - 32),
+                maxHeight: isShortScreen ? height * 0.85 : undefined,
+                padding: isSmallScreen ? 18 : 24,
+              },
+            ]}
             onStartShouldSetResponder={() => true}
           >
             <View style={loginLanguageStyles.header}>
-              <Ionicons name="globe-outline" size={40} color={GRADIENT_START} />
-              <Text style={loginLanguageStyles.title}>
+              <Ionicons name="globe-outline" size={isSmallScreen ? 32 : 40} color={GRADIENT_START} />
+              <Text style={[loginLanguageStyles.title, isSmallScreen && { fontSize: 16 }]}>
                 {t("profile.selectLanguage")}
               </Text>
-              <Text style={loginLanguageStyles.subtitle}>
+              <Text style={[loginLanguageStyles.subtitle, isSmallScreen && { fontSize: 12 }]}>
                 {t("profile.defaultIsEnglish")}
               </Text>
             </View>
-            {SUPPORTED_LANGUAGES.map(({ label, flag }) => (
-              <TouchableOpacity
-                key={label}
-                style={[
-                  loginLanguageStyles.option,
-                  language === label && loginLanguageStyles.optionSelected,
-                ]}
-                onPress={() => handleSelectLanguage(label)}
-                activeOpacity={0.7}
-              >
-                <Text style={loginLanguageStyles.flag}>{flag}</Text>
-                <Text
+            <ScrollView
+              style={isShortScreen ? { maxHeight: 200 } : undefined}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+            >
+              {SUPPORTED_LANGUAGES.map(({ label, flag }) => (
+                <TouchableOpacity
+                  key={label}
                   style={[
-                    loginLanguageStyles.optionText,
-                    language === label && loginLanguageStyles.optionTextSelected,
+                    loginLanguageStyles.option,
+                    isSmallScreen && { paddingVertical: 12, paddingHorizontal: 14 },
+                    language === label && loginLanguageStyles.optionSelected,
                   ]}
+                  onPress={() => handleSelectLanguage(label)}
+                  activeOpacity={0.7}
                 >
-                  {label}
-                </Text>
-                {language === label && (
-                  <Ionicons
-                    name="checkmark-circle"
-                    size={22}
-                    color={GRADIENT_START}
-                  />
-                )}
-              </TouchableOpacity>
-            ))}
+                  <Text style={[loginLanguageStyles.flag, isSmallScreen && { fontSize: 20 }]}>{flag}</Text>
+                  <Text
+                    style={[
+                      loginLanguageStyles.optionText,
+                      isSmallScreen && { fontSize: 15 },
+                      language === label && loginLanguageStyles.optionTextSelected,
+                    ]}
+                  >
+                    {label}
+                  </Text>
+                  {language === label && (
+                    <Ionicons
+                      name="checkmark-circle"
+                      size={isSmallScreen ? 20 : 22}
+                      color={GRADIENT_START}
+                    />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
             <TouchableOpacity
-              style={loginLanguageStyles.cancelBtn}
+              style={[loginLanguageStyles.cancelBtn, isSmallScreen && { marginTop: 8 }]}
               onPress={() => setLanguageModalVisible(false)}
             >
-              <Text style={loginLanguageStyles.cancelText}>
+              <Text style={[loginLanguageStyles.cancelText, isSmallScreen && { fontSize: 15 }]}>
                 {t("common.cancel")}
               </Text>
             </TouchableOpacity>
@@ -1030,11 +1068,9 @@ export default function Login() {
 }
 
 const styles = StyleSheet.create({
-  flex1: { flex: 1 },
-  gradient: {
+  flex1: { flex: 1, backgroundColor: GRADIENT_END },
+  contentWrapper: {
     flex: 1,
-    width: "100%",
-    height: "100%",
   },
   header: {
     flexDirection: "row",
@@ -1061,7 +1097,6 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: "center",
     alignItems: "center",
-    minHeight: "100%",
   },
   logoWrap: {
     alignSelf: "center",
@@ -1081,6 +1116,7 @@ const styles = StyleSheet.create({
     color: WHITE,
     marginBottom: 14,
     minHeight: 54,
+    textAlign: "left",
   },
   passwordRow: {
     flexDirection: "row",
@@ -1096,6 +1132,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     fontSize: 16,
     color: WHITE,
+    textAlign: "left",
   },
   eyeButton: {
     padding: 14,
@@ -1106,12 +1143,15 @@ const styles = StyleSheet.create({
   },
   passcodeLinkWrap: {
     alignItems: "center",
+    justifyContent: "center",
     marginBottom: 24,
+    width: "100%",
   },
   passcodeLinkText: {
     color: WHITE,
     fontSize: 16,
     fontWeight: "400",
+    textAlign: "center",
   },
   loginButton: {
     backgroundColor: GRADIENT_START,
@@ -1132,32 +1172,41 @@ const styles = StyleSheet.create({
     color: WHITE,
     fontSize: 18,
     fontWeight: "600",
+    textAlign: "center",
   },
   forgotWrap: {
     alignItems: "center",
+    justifyContent: "center",
     marginTop: 20,
+    width: "100%",
   },
   forgotText: {
     color: WHITE,
     fontSize: 14,
     fontWeight: "400",
+    textAlign: "center",
   },
   registerWrap: {
     flexDirection: "row",
+    flexWrap: "wrap",
     alignItems: "center",
     justifyContent: "center",
     marginTop: 24,
+    width: "100%",
+    paddingHorizontal: 8,
   },
   registerText: {
     color: WHITE,
     fontSize: 15,
     fontWeight: "400",
+    textAlign: "center",
   },
   registerLink: {
     color: WHITE,
     fontSize: 15,
     fontWeight: "600",
     textDecorationLine: "underline",
+    textAlign: "center",
   },
   footer: {
     fontSize: 11,
@@ -1172,25 +1221,24 @@ const styles = StyleSheet.create({
 const loginLanguageStyles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: "transparent",
     justifyContent: "center",
     alignItems: "center",
-    padding: 20,
+    paddingVertical: 20,
   },
   content: {
     width: "100%",
-    maxWidth: 360,
     backgroundColor: WHITE,
     borderRadius: 20,
     padding: 24,
     ...Platform.select({
       ios: {
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.25,
-        shadowRadius: 12,
+        shadowColor: GRADIENT_START,
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.5,
+        shadowRadius: 24,
       },
-      android: { elevation: 8 },
+      android: { elevation: 16 },
     }),
   },
   header: { alignItems: "center", marginBottom: 20 },
