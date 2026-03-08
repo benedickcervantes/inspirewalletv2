@@ -47,7 +47,7 @@ const en: TranslationMap = {
     "You haven't set up a passcode yet. Sign in with your email and password, then you can set up passcode in Settings after logging in.",
   "auth.passwordUpdateRequired": "Password Update Required",
   "auth.passwordUpdateMessage":
-    "Your account ({email}) requires a password update for security purposes.\n\nTap \"Send Reset Email\" to receive a secure link in your inbox to set a new password.",
+    'Your account ({email}) requires a password update for security purposes.\n\nTap "Send Reset Email" to receive a secure link in your inbox to set a new password.',
   "auth.sendResetEmail": "Send Reset Email",
   "auth.sendingEmail": "Sending Email",
   "auth.sendingEmailMessage": "Sending password reset link to {email}…",
@@ -206,7 +206,8 @@ const en: TranslationMap = {
   "withdraw.selectType": "Select Withdrawal Type",
   "withdraw.selectMethod": "Select Withdrawal Method",
   "withdraw.chooseHowToWithdraw": "Choose your withdrawal method",
-  "withdraw.selectTypeToContinue": "Please select a withdrawal type to continue",
+  "withdraw.selectTypeToContinue":
+    "Please select a withdrawal type to continue",
   "withdraw.walletInformation": "Wallet Information",
   "withdraw.bankTransfer": "Local Bank",
   "withdraw.bankTransferSubtitle": "Withdraw to local bank account",
@@ -231,7 +232,8 @@ const en: TranslationMap = {
   "withdraw.ewalletType": "E-Wallet Type",
   "withdraw.enterPasscode": "Enter your passcode",
   "withdraw.successTitle": "Success",
-  "withdraw.successMessage": "Your withdrawal request has been submitted successfully!",
+  "withdraw.successMessage":
+    "Your withdrawal request has been submitted successfully!",
   "withdraw.confirm": "Confirm",
   "withdraw.continue": "Continue",
   "withdraw.back": "Back",
@@ -244,15 +246,18 @@ const en: TranslationMap = {
   "withdraw.placeholder.walletAccName": "e.g. Juan Dela Cruz",
   "withdraw.errorLogin": "Please log in to submit a withdrawal request.",
   "withdraw.errorLoadWallet": "Could not load wallet. Please try again.",
-  "withdraw.errorSubmit": "Failed to submit withdrawal request. Please try again.",
+  "withdraw.errorSubmit":
+    "Failed to submit withdrawal request. Please try again.",
   "withdraw.validation.method": "Please select a withdrawal method",
   "withdraw.validation.accNumber": "Account number is required",
   "withdraw.validation.accName": "Account holder name is required",
   "withdraw.validation.bankName": "Bank name is required",
   "withdraw.validation.branchName": "Branch name is required",
   "withdraw.validation.amount": "Withdrawal amount is required",
-  "withdraw.validation.invalidAmount": "Please enter a valid amount greater than 0",
-  "withdraw.validation.insufficient": "Insufficient balance. Available: ₱{balance}",
+  "withdraw.validation.invalidAmount":
+    "Please enter a valid amount greater than 0",
+  "withdraw.validation.insufficient":
+    "Insufficient balance. Available: ₱{balance}",
   "withdraw.validation.email": "Email address is required",
   "withdraw.validation.invalidEmail": "Please enter a valid email address",
   "withdraw.validation.walletType": "Please select an e-wallet type",
@@ -268,7 +273,6 @@ const en: TranslationMap = {
   "tx.refund": "Refund",
   "tx.timeDeposit": "Time Deposit",
   "tx.transaction": "Transaction",
-
 
   // Investment / Savings tab & Deposit flows
   "investment.timeDeposit": "Time Deposit",
@@ -405,7 +409,8 @@ const en: TranslationMap = {
   "passcode.instructionConfirm": "Re-enter your new passcode",
   "passcode.errorMismatch": "Passcodes do not match. Try again.",
   "passcode.errorChangeFailed": "Could not change passcode",
-  "passcode.errorWrongCurrent": "Current passcode may be wrong. Please try again.",
+  "passcode.errorWrongCurrent":
+    "Current passcode may be wrong. Please try again.",
   "passcode.updatedTitle": "Passcode updated",
   "passcode.updatedMessage": "Your passcode has been changed successfully.",
   "passcode.updating": "Updating passcode...",
@@ -413,17 +418,20 @@ const en: TranslationMap = {
   "passcode.createInstruction": "Create a 4-digit PIN",
   "passcode.confirmInstruction": "Confirm your 4-digit PIN",
   "passcode.startOver": "Start over",
-  "passcode.helpMessage": "Create a 4-digit PIN for quick and secure access to your account. You will need this PIN when logging in or performing sensitive operations.",
+  "passcode.helpMessage":
+    "Create a 4-digit PIN for quick and secure access to your account. You will need this PIN when logging in or performing sensitive operations.",
   "passcode.settingUp": "Setting up your PIN...",
   "passcode.loginTitle": "Passcode Login",
-  "passcode.loginMessage": "To use passcode, you need to sign in with your email and password first. Don't have an account?",
+  "passcode.loginMessage":
+    "To use passcode, you need to sign in with your email and password first. Don't have an account?",
   "passcode.incorrect": "Incorrect. Please try again",
   "passcode.enterPasscode": "Enter your passcode",
   "passcode.useEmail": "Use Email",
   "passcode.forgotPasscode": "Forgot Passcode?",
   "passcode.resetTitle": "Reset Passcode",
   "passcode.setNewTitle": "Set New Passcode",
-  "passcode.resetMessage": "Enter your email and password to verify your identity.",
+  "passcode.resetMessage":
+    "Enter your email and password to verify your identity.",
   "passcode.setNewMessage": "Enter your new 4-digit passcode and confirm it.",
   "passcode.newPasscodePlaceholder": "New Passcode (4 digits)",
   "passcode.confirmPasscodePlaceholder": "Confirm Passcode",
@@ -431,12 +439,14 @@ const en: TranslationMap = {
   "passcode.updatePasscode": "Update Passcode",
   "passcode.enterBothEmailPassword": "Please enter both email and password.",
   "passcode.authFailed": "Authentication Failed",
-  "passcode.enterConfirmPasscode": "Enter and confirm your new 4-digit passcode.",
+  "passcode.enterConfirmPasscode":
+    "Enter and confirm your new 4-digit passcode.",
   "passcode.mismatchTitle": "Passcode Mismatch",
   "passcode.passcodesDoNotMatch": "The passcodes do not match.",
   "passcode.invalidTitle": "Invalid Passcode",
   "passcode.invalidPasscodeLength": "Passcode must be exactly 4 digits.",
-  "passcode.resetInfoMessage": "To change your passcode, go to Settings in the app after logging in.",
+  "passcode.resetInfoMessage":
+    "To change your passcode, go to Settings in the app after logging in.",
   "settings.deleteAccount": "Delete Account",
   "settings.customerRelationship": "Customer Relationship",
   "settings.aboutUs": "About us",
@@ -562,22 +572,29 @@ const en: TranslationMap = {
   "help.validationConcern": "Please describe your concern.",
   "help.validationError": "Validation Error",
   "help.contactSupport": "Contact Support",
-  "help.contactSupportDesc": "Our support team is available Monday – Friday, 9 AM – 6 PM (PHT). We typically respond within 24 hours.",
+  "help.contactSupportDesc":
+    "Our support team is available Monday – Friday, 9 AM – 6 PM (PHT). We typically respond within 24 hours.",
   "help.emailUs": "Email Us",
   "help.faqTitle": "Frequently Asked Questions",
   "help.quickLinks": "Quick Links",
   "help.faq1Question": "How do I reset my password?",
-  "help.faq1Answer": "On the Login screen, tap \"Forgot Password?\" and enter your registered email address. You will receive a secure reset link in your inbox valid for 30 minutes.",
+  "help.faq1Answer":
+    'On the Login screen, tap "Forgot Password?" and enter your registered email address. You will receive a secure reset link in your inbox valid for 30 minutes.',
   "help.faq2Question": "How do I verify my email?",
-  "help.faq2Answer": "After registration, a 6-digit OTP is sent to your email. Enter it on the verification screen, or click the verification link in the email.",
+  "help.faq2Answer":
+    "After registration, a 6-digit OTP is sent to your email. Enter it on the verification screen, or click the verification link in the email.",
   "help.faq3Question": "How do I set up a passcode?",
-  "help.faq3Answer": "After logging in, go to Settings → Change Passcode. You can set a 4-digit passcode for faster and more secure app access.",
+  "help.faq3Answer":
+    "After logging in, go to Settings → Change Passcode. You can set a 4-digit passcode for faster and more secure app access.",
   "help.faq4Question": "How do I transfer money?",
-  "help.faq4Answer": "From the Dashboard, tap \"Transfer\". Enter the recipient's account number, amount, and confirm the transaction.",
+  "help.faq4Answer":
+    'From the Dashboard, tap "Transfer". Enter the recipient\'s account number, amount, and confirm the transaction.',
   "help.faq5Question": "What should I do if I cannot log in?",
-  "help.faq5Answer": "Ensure your email and password are correct. Use \"Forgot Password?\" to reset your password. If the issue persists, contact support below.",
+  "help.faq5Answer":
+    'Ensure your email and password are correct. Use "Forgot Password?" to reset your password. If the issue persists, contact support below.',
   "help.faq6Question": "How do I update my profile?",
-  "help.faq6Answer": "Go to Settings → Personal Information to update your name, phone, date of birth, and country.",
+  "help.faq6Answer":
+    "Go to Settings → Personal Information to update your name, phone, date of birth, and country.",
 
   // Delete Account
   "delete.title": "Delete Account",
@@ -610,7 +627,8 @@ const en: TranslationMap = {
   "support.messagesTab": "Messages",
   "support.ticketsTab": "Tickets",
   "support.noMessagesYet": "No messages yet",
-  "support.startConversation": "Start a conversation with Inspire Wallet Support. Send a message below or wait for support to contact you.",
+  "support.startConversation":
+    "Start a conversation with Inspire Wallet Support. Send a message below or wait for support to contact you.",
   "support.typeMessage": "Type a message...",
   "support.editMessage": "Edit Message",
   "support.deleteMessage": "Delete Message",
@@ -658,7 +676,8 @@ const en: TranslationMap = {
   "tickets.validationTitle": "Please enter a ticket title",
   "tickets.validationTitleMin": "Title must be at least 5 characters",
   "tickets.validationDescription": "Please enter a description",
-  "tickets.validationDescriptionMin": "Description must be at least 10 characters",
+  "tickets.validationDescriptionMin":
+    "Description must be at least 10 characters",
   "tickets.createdSuccess": "Ticket created!",
   "tickets.createFailed": "Failed to create ticket",
   "tickets.notFound": "Ticket not found.",
@@ -686,7 +705,8 @@ const en: TranslationMap = {
   "history.selectEndDate": "Select end date",
   "history.applyFilter": "Apply Filter",
   "history.deleteTransactionsTitle": "Delete {count} Transaction{s}?",
-  "history.deleteModalSubtitle": "Choose what to do with the selected transactions",
+  "history.deleteModalSubtitle":
+    "Choose what to do with the selected transactions",
   "history.deleteSelected": "Delete Selected",
   "history.keepOnlySelected": "Keep Only Selected",
   "history.selectedCount": "{count} selected",
@@ -879,8 +899,10 @@ const en: TranslationMap = {
   "ct.autoRenewalCancelled":
     "Auto-renewal has been cancelled. Your subscription will expire on the scheduled date.",
   "ct.eligibleTitle": "You're eligible!",
-  "ct.eligibleDesc": "You have a qualifying time deposit of ₱10,000,000+. Tap the button below to claim your Diamond Elite card.",
-  "ct.needWarningText": "You need ₱10,000,000+ in a single time deposit contract.",
+  "ct.eligibleDesc":
+    "You have a qualifying time deposit of ₱10,000,000+. Tap the button below to claim your Diamond Elite card.",
+  "ct.needWarningText":
+    "You need ₱10,000,000+ in a single time deposit contract.",
   "ct.howToGetCard": "How to get this card",
   "ct.diamond.name": "Diamond Elite",
   "ct.goldName": "Gold Elite",
@@ -1215,7 +1237,8 @@ const en: TranslationMap = {
   "sendMoney.transferFailed": "Transfer failed. Please try again.",
   "sendMoney.userNotAuthenticated": "User not authenticated",
   "sendMoney.agentWalletInsufficient": "Agent wallet has insufficient balance",
-  "sendMoney.qrFooterInfo": "This QR code contains your account information for receiving transfers",
+  "sendMoney.qrFooterInfo":
+    "This QR code contains your account information for receiving transfers",
   "sendMoney.shareQr": "Share QR Code",
   "sendMoney.secureTransferCode": "Secure Transfer Code",
   "sendMoney.savedAccounts": "Saved Accounts",
@@ -1223,27 +1246,34 @@ const en: TranslationMap = {
   "sendMoney.searchSavedPlaceholder": "Search saved accounts...",
   "sendMoney.searchDevicePlaceholder": "Search contacts...",
   "sendMoney.noSavedAccounts": "No Saved Accounts",
-  "sendMoney.saveAccountsInstruction": "Save frequently used accounts for quick access",
+  "sendMoney.saveAccountsInstruction":
+    "Save frequently used accounts for quick access",
   "sendMoney.permissionRequiredTitle": "Permission Required",
-  "sendMoney.grantContactsPermission": "Grant contacts permission to access your device contacts",
+  "sendMoney.grantContactsPermission":
+    "Grant contacts permission to access your device contacts",
   "sendMoney.grantPermission": "Grant Permission",
   "sendMoney.noContacts": "No Contacts",
   "sendMoney.noContactsDevice": "No contacts available on your device",
   "sendMoney.noPhone": "No phone",
   "sendMoney.tryDifferentSearch": "Try a different search term",
   "sendMoney.cameraPermissionRequired": "Camera Permission Required",
-  "sendMoney.cameraPermissionMessage": "We need your permission to use the camera to scan QR codes",
+  "sendMoney.cameraPermissionMessage":
+    "We need your permission to use the camera to scan QR codes",
   "sendMoney.positionQrCode": "Position QR Code",
   "sendMoney.alignQrFrame": "Align the QR code within the frame to scan",
   "sendMoney.noAccountNumber": "No account number available",
-  "sendMoney.shareQrInstruction": "Share this QR code for others to transfer money to you",
+  "sendMoney.shareQrInstruction":
+    "Share this QR code for others to transfer money to you",
   "sendMoney.verifying": "VERIFYING...",
   "sendMoney.processing": "PROCESSING...",
   "sendMoney.errorRecipientNotFound": "Recipient account not found",
-  "sendMoney.errorResolveWallet": "Recipient wallet could not be resolved. Please try again.",
+  "sendMoney.errorResolveWallet":
+    "Recipient wallet could not be resolved. Please try again.",
   "sendMoney.errorLoadWallet": "Could not load your wallet. Please try again.",
-  "sendMoney.errorSetupRecipient": "Failed to set up recipient. Please try again.",
-  "sendMoney.errorInvalidResponse": "Invalid response from server. Please try again.",
+  "sendMoney.errorSetupRecipient":
+    "Failed to set up recipient. Please try again.",
+  "sendMoney.errorInvalidResponse":
+    "Invalid response from server. Please try again.",
   "sendMoney.enterPasscode": "Enter your passcode",
 
   // Stock Service
@@ -1398,7 +1428,8 @@ const en: TranslationMap = {
   "register.placeholderCompanyName": "Enter your company name",
   "register.errorCompanyName": "Please enter your company name",
   "register.contactInfo": "Contact Information (Optional)",
-  "register.contactInfoComingSoon": "This feature is coming soon. LINE, Viber, and WhatsApp contact links will be available in a future update.",
+  "register.contactInfoComingSoon":
+    "This feature is coming soon. LINE, Viber, and WhatsApp contact links will be available in a future update.",
   "register.lineAccountLink": "LINE Account Link",
   "register.placeholderLine": "Enter your LINE Account Link",
   "register.scanQRHint": "Scan QR or upload an image with a QR code",
@@ -1410,7 +1441,8 @@ const en: TranslationMap = {
   "register.agentOrInvestor": "Are you an agent or investor?",
   "register.imAgent": "I'm an agent",
   "register.imInvestor": "I'm an investor",
-  "register.errorAgentSelection": "Please select if you are an agent or investor",
+  "register.errorAgentSelection":
+    "Please select if you are an agent or investor",
   "register.referralCode": "Referral Code",
   "register.referralCodeSubtext":
     "You will receive your unique referral code after registration. Share it so others can register under you.",
@@ -1449,6 +1481,10 @@ const en: TranslationMap = {
   "register.cancel": "Cancel",
   "register.errorRegistrationFailed": "Registration failed. Please try again.",
   "register.errorUnexpected": "An unexpected error occurred. Please try again.",
+  "register.noQRFound":
+    "No QR code found in the image. Please pick a clearer QR code image.",
+  "register.uploadImage": "Upload Image",
+  "register.processing": "Processing...",
 };
 
 const ko: TranslationMap = {
@@ -1465,9 +1501,11 @@ const ko: TranslationMap = {
   "auth.enterEmail": "이메일 주소를 입력해 주세요.",
   "auth.enterPassword": "비밀번호를 입력해 주세요.",
   "auth.loginFailed": "로그인 실패",
-  "auth.invalidCredentials": "이메일 또는 비밀번호가 올바르지 않습니다. 다시 시도해 주세요.",
+  "auth.invalidCredentials":
+    "이메일 또는 비밀번호가 올바르지 않습니다. 다시 시도해 주세요.",
   "auth.loginError": "로그인 오류",
-  "auth.unexpectedError": "예기치 않은 오류가 발생했습니다. 다시 시도해 주세요.",
+  "auth.unexpectedError":
+    "예기치 않은 오류가 발생했습니다. 다시 시도해 주세요.",
   "auth.passcodeLoginTitle": "패스코드 로그인",
   "auth.passcodeLoginMessage":
     "패스코드를 사용하려면 먼저 이메일과 비밀번호로 로그인해야 합니다. 계정이 없으신가요? 회원가입을 해주세요.",
@@ -1476,7 +1514,7 @@ const ko: TranslationMap = {
     "아직 패스코드를 설정하지 않으셨습니다. 이메일과 비밀번호로 로그인한 후 설정에서 패스코드를 설정할 수 있습니다.",
   "auth.passwordUpdateRequired": "비밀번호 업데이트 필요",
   "auth.passwordUpdateMessage":
-    "보안을 위해 계정({email})의 비밀번호 업데이트가 필요합니다.\n\n새 비밀번호를 설정할 수 있는 보안 링크를 받으려면 \"이메일 보내기\"를 탭하세요.",
+    '보안을 위해 계정({email})의 비밀번호 업데이트가 필요합니다.\n\n새 비밀번호를 설정할 수 있는 보안 링크를 받으려면 "이메일 보내기"를 탭하세요.',
   "auth.sendResetEmail": "이메일 보내기",
   "auth.sendingEmail": "이메일 전송 중",
   "auth.sendingEmailMessage": "{email}(으)로 비밀번호 재설정 링크 전송 중…",
@@ -1491,7 +1529,8 @@ const ko: TranslationMap = {
     "등록된 이메일 주소를 입력하시면 보안 재설정 링크를 보내드립니다.",
   "auth.sendLink": "링크 보내기",
   "auth.pleaseEnterEmail": "이메일 주소를 입력해 주세요.",
-  "auth.failedToSendReset": "재설정 이메일 전송에 실패했습니다. 다시 시도해 주세요.",
+  "auth.failedToSendReset":
+    "재설정 이메일 전송에 실패했습니다. 다시 시도해 주세요.",
   "auth.networkError": "네트워크 오류. 다시 시도해 주세요.",
   "common.cancel": "취소",
   "common.user": "사용자",
@@ -1663,7 +1702,8 @@ const ko: TranslationMap = {
   "withdraw.validation.branchName": "지점 이름이 필요합니다",
   "withdraw.validation.amount": "출금 금액이 필요합니다",
   "withdraw.validation.invalidAmount": "0보다 큰 유효한 금액을 입력하세요",
-  "withdraw.validation.insufficient": "잔액이 부족합니다. 가능 금액: ₱{balance}",
+  "withdraw.validation.insufficient":
+    "잔액이 부족합니다. 가능 금액: ₱{balance}",
   "withdraw.validation.email": "이메일 주소가 필요합니다",
   "withdraw.validation.invalidEmail": "유효한 이메일 주소를 입력하세요",
   "withdraw.validation.walletType": "전자 지갑 유형을 선택하세요",
@@ -1793,7 +1833,8 @@ const ko: TranslationMap = {
   "passcode.instructionConfirm": "새로운 패스코드를 다시 입력하세요",
   "passcode.errorMismatch": "패스코드가 일치하지 않습니다. 다시 시도하세요.",
   "passcode.errorChangeFailed": "패스코드를 변경할 수 없습니다",
-  "passcode.errorWrongCurrent": "현재 패스코드가 틀렸을 수 있습니다. 다시 시도하세요.",
+  "passcode.errorWrongCurrent":
+    "현재 패스코드가 틀렸을 수 있습니다. 다시 시도하세요.",
   "passcode.updatedTitle": "패스코드 업데이트됨",
   "passcode.updatedMessage": "패스코드가 성공적으로 변경되었습니다.",
   "passcode.updating": "패스코드 업데이트 중...",
@@ -1801,10 +1842,12 @@ const ko: TranslationMap = {
   "passcode.createInstruction": "4자리 PIN 생성",
   "passcode.confirmInstruction": "4자리 PIN 확인",
   "passcode.startOver": "처음부터",
-  "passcode.helpMessage": "계정에 빠르고 안전하게 액세스하려면 4자리 PIN을 생성하세요. 로그인하거나 민감한 작업을 수행할 때 이 PIN이 필요합니다.",
+  "passcode.helpMessage":
+    "계정에 빠르고 안전하게 액세스하려면 4자리 PIN을 생성하세요. 로그인하거나 민감한 작업을 수행할 때 이 PIN이 필요합니다.",
   "passcode.settingUp": "PIN 설정 중...",
   "passcode.loginTitle": "패스코드 로그인",
-  "passcode.loginMessage": "패스코드를 사용하려면 먼저 이메일과 비밀번호로 로그인해야 합니다. 계정이 없으신가요?",
+  "passcode.loginMessage":
+    "패스코드를 사용하려면 먼저 이메일과 비밀번호로 로그인해야 합니다. 계정이 없으신가요?",
   "passcode.incorrect": "잘못되었습니다. 다시 시도해 주세요",
   "passcode.enterPasscode": "패스코드를 입력하세요",
   "passcode.useEmail": "이메일 사용",
@@ -1824,7 +1867,8 @@ const ko: TranslationMap = {
   "passcode.passcodesDoNotMatch": "패스코드가 일치하지 않습니다.",
   "passcode.invalidTitle": "잘못된 패스코드",
   "passcode.invalidPasscodeLength": "패스코드는 정확히 4자리여야 합니다.",
-  "passcode.resetInfoMessage": "패스코드를 변경하려면 로그인 후 앱의 설정으로 이동하세요.",
+  "passcode.resetInfoMessage":
+    "패스코드를 변경하려면 로그인 후 앱의 설정으로 이동하세요.",
   "settings.deleteAccount": "계정 삭제",
   "settings.customerRelationship": "고객 관계",
   "settings.aboutUs": "회사 소개",
@@ -1932,22 +1976,29 @@ const ko: TranslationMap = {
   "help.validationConcern": "문의 내용을 입력해 주세요.",
   "help.validationError": "입력 오류",
   "help.contactSupport": "고객 지원",
-  "help.contactSupportDesc": "지원팀은 월요일~금요일 오전 9시~오후 6시(PHT)에 운영됩니다. 보통 24시간 내에 답변드립니다.",
+  "help.contactSupportDesc":
+    "지원팀은 월요일~금요일 오전 9시~오후 6시(PHT)에 운영됩니다. 보통 24시간 내에 답변드립니다.",
   "help.emailUs": "이메일 보내기",
   "help.faqTitle": "자주 묻는 질문",
   "help.quickLinks": "빠른 링크",
   "help.faq1Question": "비밀번호를 재설정하려면 어떻게 하나요?",
-  "help.faq1Answer": "로그인 화면에서 \"비밀번호 찾기\"를 탭하고 등록된 이메일을 입력하세요. 30분 유효한 재설정 링크가 이메일로 발송됩니다.",
+  "help.faq1Answer":
+    '로그인 화면에서 "비밀번호 찾기"를 탭하고 등록된 이메일을 입력하세요. 30분 유효한 재설정 링크가 이메일로 발송됩니다.',
   "help.faq2Question": "이메일 인증은 어떻게 하나요?",
-  "help.faq2Answer": "회원가입 후 6자리 OTP가 이메일로 발송됩니다. 인증 화면에 입력하거나, 이메일의 인증 링크를 클릭하세요.",
+  "help.faq2Answer":
+    "회원가입 후 6자리 OTP가 이메일로 발송됩니다. 인증 화면에 입력하거나, 이메일의 인증 링크를 클릭하세요.",
   "help.faq3Question": "패스코드를 설정하려면 어떻게 하나요?",
-  "help.faq3Answer": "로그인 후 설정 → 패스코드 변경으로 이동하세요. 4자리 패스코드를 설정하면 더 빠르고 안전하게 앱에 접근할 수 있습니다.",
+  "help.faq3Answer":
+    "로그인 후 설정 → 패스코드 변경으로 이동하세요. 4자리 패스코드를 설정하면 더 빠르고 안전하게 앱에 접근할 수 있습니다.",
   "help.faq4Question": "송금은 어떻게 하나요?",
-  "help.faq4Answer": "대시보드에서 \"송금\"을 탭하세요. 수신자 계좌번호와 금액을 입력하고 거래를 확인하세요.",
+  "help.faq4Answer":
+    '대시보드에서 "송금"을 탭하세요. 수신자 계좌번호와 금액을 입력하고 거래를 확인하세요.',
   "help.faq5Question": "로그인이 안 될 때 어떻게 하나요?",
-  "help.faq5Answer": "이메일과 비밀번호가 올바른지 확인하세요. \"비밀번호 찾기\"를 통해 재설정하세요. 문제가 계속되면 아래 지원팀에 문의하세요.",
+  "help.faq5Answer":
+    '이메일과 비밀번호가 올바른지 확인하세요. "비밀번호 찾기"를 통해 재설정하세요. 문제가 계속되면 아래 지원팀에 문의하세요.',
   "help.faq6Question": "프로필을 업데이트하려면 어떻게 하나요?",
-  "help.faq6Answer": "설정 → 개인 정보로 이동하여 이름, 전화번호, 생년월일, 국가를 업데이트하세요.",
+  "help.faq6Answer":
+    "설정 → 개인 정보로 이동하여 이름, 전화번호, 생년월일, 국가를 업데이트하세요.",
   "common.ok": "확인",
   "delete.title": "계정 삭제",
   "delete.confirmTitle": "정말 계정을 삭제하시겠습니까?",
@@ -1979,7 +2030,8 @@ const ko: TranslationMap = {
   "support.messagesTab": "메시지",
   "support.ticketsTab": "티켓",
   "support.noMessagesYet": "메시지가 없습니다",
-  "support.startConversation": "Inspire Wallet 지원팀과 대화를 시작하세요. 아래에 메시지를 보내거나 지원팀의 연락을 기다려 주세요.",
+  "support.startConversation":
+    "Inspire Wallet 지원팀과 대화를 시작하세요. 아래에 메시지를 보내거나 지원팀의 연락을 기다려 주세요.",
   "support.typeMessage": "메시지를 입력하세요...",
   "support.editMessage": "메시지 수정",
   "support.deleteMessage": "메시지 삭제",
@@ -2246,7 +2298,8 @@ const ko: TranslationMap = {
   "ct.autoRenewalCancelled":
     "자동 갱신이 취소되었습니다. 구독은 예정된 날짜에 만료됩니다.",
   "ct.eligibleTitle": "자격이 있습니다!",
-  "ct.eligibleDesc": "₱10,000,000 이상의 정기 예금이 있습니다. 아래 버튼을 눌러 다이아몬드 엘리트 카드를 수령하세요.",
+  "ct.eligibleDesc":
+    "₱10,000,000 이상의 정기 예금이 있습니다. 아래 버튼을 눌러 다이아몬드 엘리트 카드를 수령하세요.",
   "ct.needWarningText": "단일 정기 예금 계약에 ₱10,000,000 이상이 필요합니다.",
   "ct.howToGetCard": "이 카드를 받는 방법",
   "ct.diamond.name": "다이아몬드 엘리트",
@@ -2569,7 +2622,8 @@ const ko: TranslationMap = {
   "sendMoney.transferFailed": "송금에 실패했습니다. 다시 시도해 주세요.",
   "sendMoney.userNotAuthenticated": "사용자 인증되지 않음",
   "sendMoney.agentWalletInsufficient": "에이전트 지갑 잔액이 부족합니다",
-  "sendMoney.qrFooterInfo": "이 QR 코드는 송금을 받기 위한 계좌 정보를 포함하고 있습니다",
+  "sendMoney.qrFooterInfo":
+    "이 QR 코드는 송금을 받기 위한 계좌 정보를 포함하고 있습니다",
   "sendMoney.shareQr": "QR 코드 공유",
   "sendMoney.secureTransferCode": "보안 송금 코드",
   "sendMoney.savedAccounts": "저장된 계좌",
@@ -2577,27 +2631,34 @@ const ko: TranslationMap = {
   "sendMoney.searchSavedPlaceholder": "저장된 계좌 검색...",
   "sendMoney.searchDevicePlaceholder": "연락처 검색...",
   "sendMoney.noSavedAccounts": "저장된 계좌 없음",
-  "sendMoney.saveAccountsInstruction": "빠른 액세스를 위해 자주 사용하는 계좌를 저장하세요",
+  "sendMoney.saveAccountsInstruction":
+    "빠른 액세스를 위해 자주 사용하는 계좌를 저장하세요",
   "sendMoney.permissionRequiredTitle": "권한 필요",
-  "sendMoney.grantContactsPermission": "기기 연락처에 액세스하려면 연락처 권한을 허용해 주세요",
+  "sendMoney.grantContactsPermission":
+    "기기 연락처에 액세스하려면 연락처 권한을 허용해 주세요",
   "sendMoney.grantPermission": "권한 허용",
   "sendMoney.noContacts": "연락처 없음",
   "sendMoney.noContactsDevice": "기기에 사용 가능한 연락처가 없습니다",
   "sendMoney.noPhone": "전화번호 없음",
   "sendMoney.tryDifferentSearch": "다른 검색어를 시도해 보세요",
   "sendMoney.cameraPermissionRequired": "카메라 권한 필요",
-  "sendMoney.cameraPermissionMessage": "QR 코드를 스캔하려면 카메라 사용 권한이 필요합니다",
+  "sendMoney.cameraPermissionMessage":
+    "QR 코드를 스캔하려면 카메라 사용 권한이 필요합니다",
   "sendMoney.positionQrCode": "QR 코드 위치 맞추기",
   "sendMoney.alignQrFrame": "스캔할 프레임 안에 QR 코드를 맞춰주세요",
   "sendMoney.noAccountNumber": "사용 가능한 계좌 번호 없음",
-  "sendMoney.shareQrInstruction": "다른 사람이 송금할 수 있도록 이 QR 코드를 공유하세요",
+  "sendMoney.shareQrInstruction":
+    "다른 사람이 송금할 수 있도록 이 QR 코드를 공유하세요",
   "sendMoney.verifying": "확인 중...",
   "sendMoney.processing": "처리 중...",
   "sendMoney.errorRecipientNotFound": "수령인 계정을 찾을 수 없습니다",
-  "sendMoney.errorResolveWallet": "수령인 지갑을 확인할 수 없습니다. 다시 시도해 주세요.",
+  "sendMoney.errorResolveWallet":
+    "수령인 지갑을 확인할 수 없습니다. 다시 시도해 주세요.",
   "sendMoney.errorLoadWallet": "지갑을 불러올 수 없습니다. 다시 시도해 주세요.",
-  "sendMoney.errorSetupRecipient": "수령인 설정을 실패했습니다. 다시 시도해 주세요.",
-  "sendMoney.errorInvalidResponse": "서버의 응답이 올바르지 않습니다. 다시 시도해 주세요.",
+  "sendMoney.errorSetupRecipient":
+    "수령인 설정을 실패했습니다. 다시 시도해 주세요.",
+  "sendMoney.errorInvalidResponse":
+    "서버의 응답이 올바르지 않습니다. 다시 시도해 주세요.",
   "sendMoney.enterPasscode": "비밀번호를 입력하세요",
   "stock.title": "주주 대시보드",
   "stock.stockRate": "주식 시세",
@@ -2730,13 +2791,15 @@ const ko: TranslationMap = {
   "register.errorFirstName": "이름을 입력해 주세요",
   "register.errorLastName": "성을 입력해 주세요",
   "register.phoneNumber": "전화번호",
-  "register.errorPhoneInvalid": "선택한 국가의 올바른 {digits}자리 전화번호를 입력해 주세요.",
+  "register.errorPhoneInvalid":
+    "선택한 국가의 올바른 {digits}자리 전화번호를 입력해 주세요.",
   "register.iHaveCompany": "회사가 있습니다",
   "register.companyName": "회사명",
   "register.placeholderCompanyName": "회사명 입력",
   "register.errorCompanyName": "회사명을 입력해 주세요",
   "register.contactInfo": "연락처 정보 (선택)",
-  "register.contactInfoComingSoon": "이 기능은 곧 제공됩니다. LINE, Viber, WhatsApp 연락처 링크는 추후 업데이트에서 이용할 수 있습니다.",
+  "register.contactInfoComingSoon":
+    "이 기능은 곧 제공됩니다. LINE, Viber, WhatsApp 연락처 링크는 추후 업데이트에서 이용할 수 있습니다.",
   "register.lineAccountLink": "라인 계정 링크",
   "register.placeholderLine": "라인 계정 링크 입력",
   "register.scanQRHint": "QR 코드 스캔 또는 이미지 업로드",
@@ -2760,7 +2823,8 @@ const ko: TranslationMap = {
   "register.emailAddress": "이메일 주소",
   "register.placeholderEmail": "예: example@email.com",
   "register.errorEmail": "이메일 주소를 입력해 주세요",
-  "register.errorValidEmail": "유효한 이메일 주소를 입력해 주세요 (예: name@example.com)",
+  "register.errorValidEmail":
+    "유효한 이메일 주소를 입력해 주세요 (예: name@example.com)",
   "register.password": "비밀번호",
   "register.placeholderPassword": "안전한 비밀번호 생성",
   "register.errorPassword": "비밀번호를 입력해 주세요",
@@ -2772,17 +2836,25 @@ const ko: TranslationMap = {
   "register.nextStep": "다음",
   "register.termsText": "계속 진행하면 서비스 약관에 동의하는 것입니다",
   "register.selectCountry": "국가 선택",
-  "register.cameraPermissionRequired": "QR 코드 스캔을 위해 카메라 권한이 필요합니다.",
-  "register.goBack": "돌아가기",
-  "register.cameraAccessRequired": "카메라 액세스 필요",
-  "register.cameraPermissionHint": "추천 QR 코드 스캔을 위해 카메라 권한을 허용해 주세요.",
+  "register.cameraPermissionRequired":
+    "QR 코드를 스캔하려면 카메라 권한이 필요합니다.",
+  "register.goBack": "뒤로 가기",
+  "register.cameraAccessRequired": "카메라 접근 권한 필요",
+  "register.cameraPermissionHint":
+    "추천 QR 코드를 스캔하려면 카메라 권한을 허용해 주세요.",
   "register.scanReferralQR": "추천인 QR 코드 스캔",
-  "register.scanLineQR": "라인 QR 코드 스캔",
-  "register.scanViberQR": "바이버 QR 코드 스캔",
-  "register.scanWhatsappQR": "왓츠앱 QR 코드 스캔",
+  "register.scanLineQR": "LINE QR 코드 스캔",
+  "register.scanViberQR": "Viber QR 코드 스캔",
+  "register.scanWhatsappQR": "WhatsApp QR 코드 스캔",
   "register.cancel": "취소",
-  "register.errorRegistrationFailed": "등록에 실패했습니다. 다시 시도해 주세요.",
-  "register.errorUnexpected": "예기치 않은 오류가 발생했습니다. 다시 시도해 주세요.",
+  "register.errorRegistrationFailed":
+    "등록에 실패했습니다. 다시 시도해 주세요.",
+  "register.errorUnexpected":
+    "예기치 않은 오류가 발생했습니다. 다시 시도해 주세요.",
+  "register.noQRFound":
+    "이미지에서 QR 코드를 찾을 수 없습니다. 더 선명한 QR 코드 이미지를 선택해주세요.",
+  "register.uploadImage": "이미지 업로드",
+  "register.processing": "처리 중...",
 };
 
 const ja: TranslationMap = {
@@ -2799,9 +2871,11 @@ const ja: TranslationMap = {
   "auth.enterEmail": "メールアドレスを入力してください。",
   "auth.enterPassword": "パスワードを入力してください。",
   "auth.loginFailed": "ログイン失敗",
-  "auth.invalidCredentials": "メールアドレスまたはパスワードが正しくありません。もう一度お試しください。",
+  "auth.invalidCredentials":
+    "メールアドレスまたはパスワードが正しくありません。もう一度お試しください。",
   "auth.loginError": "ログインエラー",
-  "auth.unexpectedError": "予期しないエラーが発生しました。もう一度お試しください。",
+  "auth.unexpectedError":
+    "予期しないエラーが発生しました。もう一度お試しください。",
   "auth.passcodeLoginTitle": "パスコードログイン",
   "auth.passcodeLoginMessage":
     "パスコードを使用するには、まずメールとパスワードでログインしてください。アカウントをお持ちでない場合は、新規登録してください。",
@@ -2825,7 +2899,8 @@ const ja: TranslationMap = {
     "登録されたメールアドレスを入力すると、セキュアなリセットリンクをお送りします。",
   "auth.sendLink": "リンクを送信",
   "auth.pleaseEnterEmail": "メールアドレスを入力してください。",
-  "auth.failedToSendReset": "リセットメールの送信に失敗しました。もう一度お試しください。",
+  "auth.failedToSendReset":
+    "リセットメールの送信に失敗しました。もう一度お試しください。",
   "auth.networkError": "ネットワークエラー。もう一度お試しください。",
   "common.cancel": "キャンセル",
   "common.user": "ユーザー",
@@ -2984,16 +3059,20 @@ const ja: TranslationMap = {
   "withdraw.continue": "次へ",
   "withdraw.back": "戻る",
   "withdraw.errorLogin": "出金リクエストを送信するにはログインしてください。",
-  "withdraw.errorLoadWallet": "ウォレットを読み込めませんでした。もう一度お試しください。",
-  "withdraw.errorSubmit": "出金リクエストの送信に失敗しました。もう一度お試しください。",
+  "withdraw.errorLoadWallet":
+    "ウォレットを読み込めませんでした。もう一度お試しください。",
+  "withdraw.errorSubmit":
+    "出金リクエストの送信に失敗しました。もう一度お試しください。",
   "withdraw.validation.method": "出金方法を選択してください",
   "withdraw.validation.accNumber": "口座番号は必須です",
   "withdraw.validation.accName": "口座名義は必須です",
   "withdraw.validation.bankName": "銀行名は必須です",
   "withdraw.validation.branchName": "支店名は必須です",
   "withdraw.validation.amount": "出金金額は必須です",
-  "withdraw.validation.invalidAmount": "0より大きい有効な金額を入力してください",
-  "withdraw.validation.insufficient": "残高が不足しています。利用可能: ₱{balance}",
+  "withdraw.validation.invalidAmount":
+    "0より大きい有効な金額を入力してください",
+  "withdraw.validation.insufficient":
+    "残高が不足しています。利用可能: ₱{balance}",
   "withdraw.validation.email": "メールアドレスは必須です",
   "withdraw.validation.invalidEmail": "有効なメールアドレスを入力してください",
   "withdraw.validation.walletType": "電子マネータイプを選択してください",
@@ -3252,7 +3331,8 @@ const ja: TranslationMap = {
   "support.messagesTab": "メッセージ",
   "support.ticketsTab": "チケット",
   "support.noMessagesYet": "メッセージはありません",
-  "support.startConversation": "Inspire Walletサポートとの会話を開始します。以下にメッセージを送信するか、サポートからの連絡をお待ちください。",
+  "support.startConversation":
+    "Inspire Walletサポートとの会話を開始します。以下にメッセージを送信するか、サポートからの連絡をお待ちください。",
   "support.typeMessage": "メッセージを入力...",
   "support.editMessage": "メッセージを編集",
   "support.deleteMessage": "メッセージを削除",
@@ -3275,9 +3355,12 @@ const ja: TranslationMap = {
   "common.retry": "再試行",
   "common.success": "成功",
   "common.back": "戻る",
-  "common.sessionExpired": "セッションの期限が切れました。もう一度ログインしてください。",
-  "common.serverError": "サーバーエラーが発生しました。後で再試行してください。",
-  "common.timeout": "リクエストがタイムアウトしました。もう一度お試しください。",
+  "common.sessionExpired":
+    "セッションの期限が切れました。もう一度ログインしてください。",
+  "common.serverError":
+    "サーバーエラーが発生しました。後で再試行してください。",
+  "common.timeout":
+    "リクエストがタイムアウトしました。もう一度お試しください。",
 
   "support.realTimeReady": "ライブ",
   "support.sent": "送信済み",
@@ -3336,14 +3419,16 @@ const ja: TranslationMap = {
   "history.last30days": "過去30日間",
   "history.customRange": "カスタム範囲",
   "history.selectDateRange": "日付範囲を選択",
-  "history.chooseDatesSubtitle": "フィルタリングする開始日と終了日を選択してください",
+  "history.chooseDatesSubtitle":
+    "フィルタリングする開始日と終了日を選択してください",
   "history.startDate": "開始日",
   "history.endDate": "終了日",
   "history.selectStartDate": "開始日を選択",
   "history.selectEndDate": "終了日を選択",
   "history.applyFilter": "フィルターを適用",
   "history.deleteTransactionsTitle": "{count} 件の取引を削除しますか？",
-  "history.deleteModalSubtitle": "選択した取引に対するアクションを選択してください",
+  "history.deleteModalSubtitle":
+    "選択した取引に対するアクションを選択してください",
   "history.deleteSelected": "選択項目を削除",
   "history.keepOnlySelected": "選択項目のみ残す",
   "history.selectedCount": "{count} 件選択中",
@@ -3367,9 +3452,11 @@ const ja: TranslationMap = {
   "passcode.instructionCurrent": "現在のパスコードを入力してください",
   "passcode.instructionNew": "新しい4桁のパスコードを選択してください",
   "passcode.instructionConfirm": "新しいパスコードを再入力してください",
-  "passcode.errorMismatch": "パスコードが一致しません。もう一度お試しください。",
+  "passcode.errorMismatch":
+    "パスコードが一致しません。もう一度お試しください。",
   "passcode.errorChangeFailed": "パスコードを変更できませんでした",
-  "passcode.errorWrongCurrent": "現在のパスコードが間違っている可能性があります。もう一度お試しください。",
+  "passcode.errorWrongCurrent":
+    "現在のパスコードが間違っている可能性があります。もう一度お試しください。",
   "passcode.updatedTitle": "パスコードを更新しました",
   "passcode.updatedMessage": "パスコードが正常に変更されました。",
   "passcode.updating": "パスコードを更新中...",
@@ -3377,30 +3464,36 @@ const ja: TranslationMap = {
   "passcode.createInstruction": "4桁のPINを作成",
   "passcode.confirmInstruction": "4桁のPINを確認",
   "passcode.startOver": "最初から",
-  "passcode.helpMessage": "アカウントに素早く安全にアクセスするために、4桁のPINを作成してください。ログインや機密性の高い操作を行う際にこのPINが必要になります。",
+  "passcode.helpMessage":
+    "アカウントに素早く安全にアクセスするために、4桁のPINを作成してください。ログインや機密性の高い操作を行う際にこのPINが必要になります。",
   "passcode.settingUp": "PINを設定中...",
   "passcode.loginTitle": "パスコードログイン",
-  "passcode.loginMessage": "パスコードを使用するには、まずメールとパスワードでログインしてください。アカウントをお持ちでないですか？",
+  "passcode.loginMessage":
+    "パスコードを使用するには、まずメールとパスワードでログインしてください。アカウントをお持ちでないですか？",
   "passcode.incorrect": "正しくありません。もう一度お試しください",
   "passcode.enterPasscode": "パスコードを入力してください",
   "passcode.useEmail": "メールを使用",
   "passcode.forgotPasscode": "パスコードをお忘れですか？",
   "passcode.resetTitle": "パスコードをリセット",
   "passcode.setNewTitle": "新しいパスコードを設定",
-  "passcode.resetMessage": "本人確認のため、メールアドレスとパスワードを入力してください。",
+  "passcode.resetMessage":
+    "本人確認のため、メールアドレスとパスワードを入力してください。",
   "passcode.setNewMessage": "新しい4桁のパスコードを入力して確認してください。",
   "passcode.newPasscodePlaceholder": "新しいパスコード（4桁）",
   "passcode.confirmPasscodePlaceholder": "パスコード確認",
   "passcode.verify": "確認",
   "passcode.updatePasscode": "パスコードを更新",
-  "passcode.enterBothEmailPassword": "メールとパスワードを両方入力してください。",
+  "passcode.enterBothEmailPassword":
+    "メールとパスワードを両方入力してください。",
   "passcode.authFailed": "認証に失敗しました",
-  "passcode.enterConfirmPasscode": "新しい4桁のパスコードを入力して確認してください。",
+  "passcode.enterConfirmPasscode":
+    "新しい4桁のパスコードを入力して確認してください。",
   "passcode.mismatchTitle": "パスコード不一致",
   "passcode.passcodesDoNotMatch": "パスコードが一致しません。",
   "passcode.invalidTitle": "無効なパスコード",
   "passcode.invalidPasscodeLength": "パスコードは4桁である必要があります。",
-  "passcode.resetInfoMessage": "パスコードを変更するには、ログイン後アプリの設定に移動してください。",
+  "passcode.resetInfoMessage":
+    "パスコードを変更するには、ログイン後アプリの設定に移動してください。",
   "history.loadMore": "もっと見る",
 
   "tickets.status.OPEN": "未解決",
@@ -3559,7 +3652,8 @@ const ja: TranslationMap = {
   "ct.autoRenewalCancelled":
     "自動更新がキャンセルされました。サブスクリプションは予定日付で期限切れになります。",
   "ct.eligibleTitle": "対象となっています！",
-  "ct.eligibleDesc": "₱10,000,000以上の定期預金があります。下のボタンをタップしてダイヤモンドエリートカードを請求してください。",
+  "ct.eligibleDesc":
+    "₱10,000,000以上の定期預金があります。下のボタンをタップしてダイヤモンドエリートカードを請求してください。",
   "ct.needWarningText": "単一の定期預金契約で₱10,000,000以上が必要です。",
   "ct.howToGetCard": "このカードを入手する方法",
   "ct.diamond.name": "ダイヤモンドエリート",
@@ -3572,7 +3666,8 @@ const ja: TranslationMap = {
   "stock.stockSell": "株式売却",
   "stock.stockSellRequest": "株式売却申請",
   "stock.stockSellRejected": "株式売却（却下）",
-  "settings.emailNotFound": "メールが見つかりません。再度サインインしてください。",
+  "settings.emailNotFound":
+    "メールが見つかりません。再度サインインしてください。",
   "settings.enter6DigitCode": "メールに記載された6桁のコードを入力してください",
   "settings.verificationFailed": "認証失敗",
   "settings.unexpectedError": "予期しないエラーが発生しました",
@@ -3885,7 +3980,8 @@ const ja: TranslationMap = {
   "sendMoney.userNotAuthenticated": "認証されていません",
   "sendMoney.agentWalletInsufficient":
     "エージェントウォレットの残高が不足しています",
-  "sendMoney.qrFooterInfo": "このQRコードには、送金を受け取るための口座情報が含まれています",
+  "sendMoney.qrFooterInfo":
+    "このQRコードには、送金を受け取るための口座情報が含まれています",
   "sendMoney.shareQr": "QRコードを共有",
   "sendMoney.secureTransferCode": "安全な送金コード",
   "sendMoney.savedAccounts": "保存済み口座",
@@ -3895,25 +3991,33 @@ const ja: TranslationMap = {
   "sendMoney.noSavedAccounts": "保存済み口座なし",
   "sendMoney.saveAccountsInstruction": "よく使う口座を保存して素早くアクセス",
   "sendMoney.permissionRequiredTitle": "権限が必要です",
-  "sendMoney.grantContactsPermission": "端末の連絡先にアクセスするには、連絡先の権限を許可してください",
+  "sendMoney.grantContactsPermission":
+    "端末の連絡先にアクセスするには、連絡先の権限を許可してください",
   "sendMoney.grantPermission": "権限を許可",
   "sendMoney.noContacts": "連絡先なし",
   "sendMoney.noContactsDevice": "端末に利用可能な連絡先がありません",
   "sendMoney.noPhone": "電話番号なし",
   "sendMoney.tryDifferentSearch": "別の検索ワードを試してください",
   "sendMoney.cameraPermissionRequired": "カメラの権限が必要です",
-  "sendMoney.cameraPermissionMessage": "QRコードをスキャンするには、カメラの使用権限が必要です",
+  "sendMoney.cameraPermissionMessage":
+    "QRコードをスキャンするには、カメラの使用権限が必要です",
   "sendMoney.positionQrCode": "QRコードを配置",
-  "sendMoney.alignQrFrame": "スキャンするためにQRコードをフレームに合わせてください",
+  "sendMoney.alignQrFrame":
+    "スキャンするためにQRコードをフレームに合わせてください",
   "sendMoney.noAccountNumber": "利用可能な口座番号がありません",
-  "sendMoney.shareQrInstruction": "他の人が送金できるように、このQRコードを共有してください",
+  "sendMoney.shareQrInstruction":
+    "他の人が送金できるように、このQRコードを共有してください",
   "sendMoney.verifying": "確認中...",
   "sendMoney.processing": "処理中...",
   "sendMoney.errorRecipientNotFound": "受取人のアカウントが見つかりません",
-  "sendMoney.errorResolveWallet": "受取人のウォレットを解決できませんでした。もう一度お試しください。",
-  "sendMoney.errorLoadWallet": "ウォレットを読み込めませんでした. もう一度お試しください。",
-  "sendMoney.errorSetupRecipient": "受取人の設定に失敗しました。もう一度お試しください。",
-  "sendMoney.errorInvalidResponse": "サーバーからの応答が無効です。もう一度お試しください。",
+  "sendMoney.errorResolveWallet":
+    "受取人のウォレットを解決できませんでした。もう一度お試しください。",
+  "sendMoney.errorLoadWallet":
+    "ウォレットを読み込めませんでした. もう一度お試しください。",
+  "sendMoney.errorSetupRecipient":
+    "受取人の設定に失敗しました。もう一度お試しください。",
+  "sendMoney.errorInvalidResponse":
+    "サーバーからの応答が無効です。もう一度お試しください。",
   "sendMoney.enterPasscode": "パスコードを入力してください",
   "stock.title": "株主ダッシュボード",
   "stock.stockRate": "株価",
@@ -4043,7 +4147,8 @@ const ja: TranslationMap = {
   "register.welcomeInvestor": "投資家の皆様、ようこそ！",
   "register.startInvestment": "Inspireウォレットで投資の旅を始めましょう。",
   "register.inspireWallet": "Inspire Wallet.",
-  "register.completeProfile": "プロフィールを完成させて全機能をご利用ください。",
+  "register.completeProfile":
+    "プロフィールを完成させて全機能をご利用ください。",
   "register.personalInfo": "個人情報",
   "register.firstName": "名",
   "register.lastName": "姓",
@@ -4052,13 +4157,15 @@ const ja: TranslationMap = {
   "register.errorFirstName": "名を入力してください",
   "register.errorLastName": "姓を入力してください",
   "register.phoneNumber": "電話番号",
-  "register.errorPhoneInvalid": "選択した国の{digits}桁の電話番号を正しく入力してください。",
+  "register.errorPhoneInvalid":
+    "選択した国の{digits}桁の電話番号を正しく入力してください。",
   "register.iHaveCompany": "会社があります",
   "register.companyName": "会社名",
   "register.placeholderCompanyName": "会社名を入力",
   "register.errorCompanyName": "会社名を入力してください",
   "register.contactInfo": "連絡先（任意）",
-  "register.contactInfoComingSoon": "この機能は近日公開予定です。LINE、Viber、WhatsAppの連絡先リンクは今後のアップデートでご利用いただけます。",
+  "register.contactInfoComingSoon":
+    "この機能は近日公開予定です。LINE、Viber、WhatsAppの連絡先リンクは今後のアップデートでご利用いただけます。",
   "register.lineAccountLink": "LINEアカウントリンク",
   "register.placeholderLine": "LINEアカウントリンクを入力",
   "register.scanQRHint": "QRコードをスキャンするか、画像をアップロード",
@@ -4076,13 +4183,15 @@ const ja: TranslationMap = {
     "登録後、固有の紹介コードを受け取れます。他の方があなたの下で登録できるよう共有してください。",
   "register.referrersCode": "紹介者コード（任意）",
   "register.placeholderReferralCode": "紹介者コードを入力",
-  "register.referralCodeHint": "招待された場合は紹介者コードを入力してください。",
+  "register.referralCodeHint":
+    "招待された場合は紹介者コードを入力してください。",
   "register.maxChars": "最大5文字",
   "register.accountCredentials": "アカウント認証情報",
   "register.emailAddress": "メールアドレス",
   "register.placeholderEmail": "例：example@email.com",
   "register.errorEmail": "メールアドレスを入力してください",
-  "register.errorValidEmail": "有効なメールアドレスを入力してください（例：name@example.com）",
+  "register.errorValidEmail":
+    "有効なメールアドレスを入力してください（例：name@example.com）",
   "register.password": "パスワード",
   "register.placeholderPassword": "安全なパスワードを作成",
   "register.errorPassword": "パスワードを入力してください",
@@ -4094,17 +4203,25 @@ const ja: TranslationMap = {
   "register.nextStep": "次へ",
   "register.termsText": "続けるとサービス利用規約に同意したことになります",
   "register.selectCountry": "国を選択",
-  "register.cameraPermissionRequired": "QRコードをスキャンするにはカメラの許可が必要です。",
+  "register.cameraPermissionRequired":
+    "QRコードをスキャンするにはカメラの許可が必要です。",
   "register.goBack": "戻る",
   "register.cameraAccessRequired": "カメラアクセスが必要です",
-  "register.cameraPermissionHint": "紹介QRコードをスキャンするにはカメラの許可を付与してください。",
+  "register.cameraPermissionHint":
+    "紹介QRコードをスキャンするにはカメラの許可を付与してください。",
   "register.scanReferralQR": "紹介者QRコードをスキャン",
   "register.scanLineQR": "LINE QRコードをスキャン",
   "register.scanViberQR": "Viber QRコードをスキャン",
   "register.scanWhatsappQR": "WhatsApp QRコードをスキャン",
   "register.cancel": "キャンセル",
-  "register.errorRegistrationFailed": "登録に失敗しました。もう一度お試しください。",
-  "register.errorUnexpected": "予期しないエラーが発生しました。もう一度お試しください。",
+  "register.errorRegistrationFailed":
+    "登録に失敗しました。もう一度お試しください。",
+  "register.errorUnexpected":
+    "予期せぬエラーが発生しました。もう一度お試しください。",
+  "register.noQRFound":
+    "画像内にQRコードが見つかりません。もっと鮮明なQRコード画像を選択してください。",
+  "register.uploadImage": "画像をアップロード",
+  "register.processing": "処理中...",
 };
 
 const ar: TranslationMap = {
@@ -4121,7 +4238,8 @@ const ar: TranslationMap = {
   "auth.enterEmail": "يرجى إدخال بريدك الإلكتروني.",
   "auth.enterPassword": "يرجى إدخال كلمة المرور.",
   "auth.loginFailed": "فشل تسجيل الدخول",
-  "auth.invalidCredentials": "البريد الإلكتروني أو كلمة المرور غير صحيحة. يرجى المحاولة مرة أخرى.",
+  "auth.invalidCredentials":
+    "البريد الإلكتروني أو كلمة المرور غير صحيحة. يرجى المحاولة مرة أخرى.",
   "auth.loginError": "خطأ في تسجيل الدخول",
   "auth.unexpectedError": "حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.",
   "auth.passcodeLoginTitle": "تسجيل الدخول برمز المرور",
@@ -4132,10 +4250,11 @@ const ar: TranslationMap = {
     "لم تقم بتعيين رمز المرور بعد. سجل الدخول بالبريد الإلكتروني وكلمة المرور، ثم يمكنك تعيين رمز المرور في الإعدادات.",
   "auth.passwordUpdateRequired": "مطلوب تحديث كلمة المرور",
   "auth.passwordUpdateMessage":
-    "يتطلب حسابك ({email}) تحديث كلمة المرور لأسباب أمنية.\n\nاضغط على \"إرسال بريد إعادة التعيين\" لتلقي رابط آمن في بريدك الوارد.",
+    'يتطلب حسابك ({email}) تحديث كلمة المرور لأسباب أمنية.\n\nاضغط على "إرسال بريد إعادة التعيين" لتلقي رابط آمن في بريدك الوارد.',
   "auth.sendResetEmail": "إرسال بريد إعادة التعيين",
   "auth.sendingEmail": "جاري إرسال البريد",
-  "auth.sendingEmailMessage": "جاري إرسال رابط إعادة تعيين كلمة المرور إلى {email}…",
+  "auth.sendingEmailMessage":
+    "جاري إرسال رابط إعادة تعيين كلمة المرور إلى {email}…",
   "auth.emailSentTitle": "تم إرسال البريد!",
   "auth.emailSentMessage":
     "إذا كان هناك حساب لـ {email}، تم إرسال رابط إعادة تعيين كلمة المرور.\n\nتحقق من بريدك الوارد (ومجلد البريد العشوائي)، واتبع الرابط لتعيين كلمة مرور جديدة ثم سجل الدخول مرة أخرى.",
@@ -4147,7 +4266,8 @@ const ar: TranslationMap = {
     "أدخل بريدك الإلكتروني المسجل وسنرسل لك رابط إعادة التعيين الآمن.",
   "auth.sendLink": "إرسال الرابط",
   "auth.pleaseEnterEmail": "يرجى إدخال بريدك الإلكتروني.",
-  "auth.failedToSendReset": "فشل إرسال بريد إعادة التعيين. يرجى المحاولة مرة أخرى.",
+  "auth.failedToSendReset":
+    "فشل إرسال بريد إعادة التعيين. يرجى المحاولة مرة أخرى.",
   "auth.networkError": "خطأ في الشبكة. يرجى المحاولة مرة أخرى.",
   "common.cancel": "إلغاء",
   "common.user": "المستخدم",
@@ -4580,7 +4700,8 @@ const ar: TranslationMap = {
   "support.messagesTab": "الرسائل",
   "support.ticketsTab": "التذاكر",
   "support.noMessagesYet": "لا توجد رسائل بعد",
-  "support.startConversation": "ابدأ محادثة مع دعم Inspire Wallet. أرسل رسالة أدناه أو انتظر تواصل الدعم معك.",
+  "support.startConversation":
+    "ابدأ محادثة مع دعم Inspire Wallet. أرسل رسالة أدناه أو انتظر تواصل الدعم معك.",
   "support.typeMessage": "اكتب رسالة...",
   "support.editMessage": "تعديل الرسالة",
   "support.deleteMessage": "حذف الرسالة",
@@ -4681,7 +4802,8 @@ const ar: TranslationMap = {
   "passcode.instructionConfirm": "أعد إدخال رمز المرور الجديد",
   "passcode.errorMismatch": "رموز المرور غير متطابقة. حاول مرة أخرى.",
   "passcode.errorChangeFailed": "تعذر تغيير رمز المرور",
-  "passcode.errorWrongCurrent": "قد يكون رمز المرور الحالي خاطئاً. يرجى المحاولة مرة أخرى.",
+  "passcode.errorWrongCurrent":
+    "قد يكون رمز المرور الحالي خاطئاً. يرجى المحاولة مرة أخرى.",
   "passcode.updatedTitle": "تم تحديث رمز المرور",
   "passcode.updatedMessage": "تم تغيير رمز المرور الخاص بك بنجاح.",
   "passcode.updating": "جاري تحديث رمز المرور...",
@@ -4689,30 +4811,36 @@ const ar: TranslationMap = {
   "passcode.createInstruction": "إنشاء رمز PIN مكون من 4 أرقام",
   "passcode.confirmInstruction": "تأكيد رمز PIN المكون من 4 أرقام",
   "passcode.startOver": "البدء من جديد",
-  "passcode.helpMessage": "قم بإنشاء رمز PIN مكون من 4 أرقام للوصول السريع والآمن إلى حسابك. ستحتاج إلى هذا الرمز عند تسجيل الدخول أو إجراء عمليات حساسة.",
+  "passcode.helpMessage":
+    "قم بإنشاء رمز PIN مكون من 4 أرقام للوصول السريع والآمن إلى حسابك. ستحتاج إلى هذا الرمز عند تسجيل الدخول أو إجراء عمليات حساسة.",
   "passcode.settingUp": "جاري إعداد الرمز الخاص بك...",
   "passcode.loginTitle": "تسجيل الدخول برمز المرور",
-  "passcode.loginMessage": "لاستخدام رمز المرور، يجب تسجيل الدخول بالبريد الإلكتروني وكلمة المرور أولاً. ليس لديك حساب؟",
+  "passcode.loginMessage":
+    "لاستخدام رمز المرور، يجب تسجيل الدخول بالبريد الإلكتروني وكلمة المرور أولاً. ليس لديك حساب؟",
   "passcode.incorrect": "غير صحيح. يرجى المحاولة مرة أخرى",
   "passcode.enterPasscode": "أدخل رمز المرور",
   "passcode.useEmail": "استخدام البريد الإلكتروني",
   "passcode.forgotPasscode": "نسيت رمز المرور؟",
   "passcode.resetTitle": "إعادة تعيين رمز المرور",
   "passcode.setNewTitle": "تعيين رمز مرور جديد",
-  "passcode.resetMessage": "أدخل بريدك الإلكتروني وكلمة المرور للتحقق من هويتك.",
+  "passcode.resetMessage":
+    "أدخل بريدك الإلكتروني وكلمة المرور للتحقق من هويتك.",
   "passcode.setNewMessage": "أدخل رمز المرور الجديد المكون من 4 أرقام وتأكيده.",
   "passcode.newPasscodePlaceholder": "رمز مرور جديد (4 أرقام)",
   "passcode.confirmPasscodePlaceholder": "تأكيد رمز المرور",
   "passcode.verify": "تحقق",
   "passcode.updatePasscode": "تحديث رمز المرور",
-  "passcode.enterBothEmailPassword": "يرجى إدخال البريد الإلكتروني وكلمة المرور.",
+  "passcode.enterBothEmailPassword":
+    "يرجى إدخال البريد الإلكتروني وكلمة المرور.",
   "passcode.authFailed": "فشل المصادقة",
-  "passcode.enterConfirmPasscode": "أدخل رمز المرور الجديد المكون من 4 أرقام وتأكيده.",
+  "passcode.enterConfirmPasscode":
+    "أدخل رمز المرور الجديد المكون من 4 أرقام وتأكيده.",
   "passcode.mismatchTitle": "عدم تطابق رمز المرور",
   "passcode.passcodesDoNotMatch": "رموز المرور غير متطابقة.",
   "passcode.invalidTitle": "رمز مرور غير صالح",
   "passcode.invalidPasscodeLength": "يجب أن يكون رمز المرور 4 أرقام بالضبط.",
-  "passcode.resetInfoMessage": "لتغيير رمز المرور، انتقل إلى الإعدادات في التطبيق بعد تسجيل الدخول.",
+  "passcode.resetInfoMessage":
+    "لتغيير رمز المرور، انتقل إلى الإعدادات في التطبيق بعد تسجيل الدخول.",
   "tickets.you": "أنت",
   "tickets.admin": "المسؤول",
   "tickets.emptyMessage": "(رسالة فارغة)",
@@ -4878,8 +5006,10 @@ const ar: TranslationMap = {
   "ct.autoRenewalCancelled":
     "تم إلغاء التجديد التلقائي. ستنتهي اشتراكك في التاريخ المحدد.",
   "ct.eligibleTitle": "أنت مؤهل!",
-  "ct.eligibleDesc": "لديك وديعة ثابتة بقيمة ₱10,000,000 أو أكثر. انقر الزر أدناه للمطالبة ببطاقة دايموند إيليت.",
-  "ct.needWarningText": "تحتاج إلى ₱10,000,000 أو أكثر في عقد وديعة ثابتة واحد.",
+  "ct.eligibleDesc":
+    "لديك وديعة ثابتة بقيمة ₱10,000,000 أو أكثر. انقر الزر أدناه للمطالبة ببطاقة دايموند إيليت.",
+  "ct.needWarningText":
+    "تحتاج إلى ₱10,000,000 أو أكثر في عقد وديعة ثابتة واحد.",
   "ct.howToGetCard": "كيفية الحصول على هذه البطاقة",
   "ct.diamond.name": "دايموند إيليت",
   "ct.goldName": "جولد إيليت",
@@ -4891,8 +5021,10 @@ const ar: TranslationMap = {
   "stock.stockSell": "بيع الأسهم",
   "stock.stockSellRequest": "طلب بيع الأسهم",
   "stock.stockSellRejected": "بيع الأسهم (مرفوض)",
-  "settings.emailNotFound": "البريد الإلكتروني غير موجود. يرجى تسجيل الدخول مرة أخرى.",
-  "settings.enter6DigitCode": "أدخل الرمز المكوّن من 6 أرقام من بريدك الإلكتروني",
+  "settings.emailNotFound":
+    "البريد الإلكتروني غير موجود. يرجى تسجيل الدخول مرة أخرى.",
+  "settings.enter6DigitCode":
+    "أدخل الرمز المكوّن من 6 أرقام من بريدك الإلكتروني",
   "settings.verificationFailed": "فشل التحقق",
   "settings.unexpectedError": "حدث خطأ غير متوقع",
   "settings.failedToResend": "فشل إعادة إرسال بريد التحقق",
@@ -5198,7 +5330,8 @@ const ar: TranslationMap = {
   "sendMoney.transferFailed": "فشل التحويل. يرجى المحاولة مرة أخرى.",
   "sendMoney.userNotAuthenticated": "المستخدم غير مصادق",
   "sendMoney.agentWalletInsufficient": "رصيد محفظة الوكيل غير كافٍ",
-  "sendMoney.qrFooterInfo": "يحتوي رمز QR هذا على معلومات حسابك لاستلام التحويلات",
+  "sendMoney.qrFooterInfo":
+    "يحتوي رمز QR هذا على معلومات حسابك لاستلام التحويلات",
   "sendMoney.shareQr": "مشاركة رمز QR",
   "sendMoney.secureTransferCode": "رمز تحويل آمن",
   "sendMoney.savedAccounts": "الحسابات المحفوظة",
@@ -5206,27 +5339,33 @@ const ar: TranslationMap = {
   "sendMoney.searchSavedPlaceholder": "البحث في الحسابات المحفوظة...",
   "sendMoney.searchDevicePlaceholder": "البحث في جهات الاتصال...",
   "sendMoney.noSavedAccounts": "لا توجد حسابات محفوظة",
-  "sendMoney.saveAccountsInstruction": "احفظ الحسابات المستخدمة بكثرة للوصول السريع",
+  "sendMoney.saveAccountsInstruction":
+    "احفظ الحسابات المستخدمة بكثرة للوصول السريع",
   "sendMoney.permissionRequiredTitle": "الإذن مطلوب",
-  "sendMoney.grantContactsPermission": "يرجى السماح بالوصول إلى جهات الاتصال الخاصة بجهازك",
+  "sendMoney.grantContactsPermission":
+    "يرجى السماح بالوصول إلى جهات الاتصال الخاصة بجهازك",
   "sendMoney.grantPermission": "منح الإذن",
   "sendMoney.noContacts": "لا توجد جهات اتصال",
   "sendMoney.noContactsDevice": "لا توجد جهات اتصال متاحة على جهازك",
   "sendMoney.noPhone": "لا يوجد هاتف",
   "sendMoney.tryDifferentSearch": "جرب مصطلح بحث مختلف",
   "sendMoney.cameraPermissionRequired": "إذن الكاميرا مطلوب",
-  "sendMoney.cameraPermissionMessage": "نحتاج إلى إذنك لاستخدام الكاميرا لمسح رموز QR",
+  "sendMoney.cameraPermissionMessage":
+    "نحتاج إلى إذنك لاستخدام الكاميرا لمسح رموز QR",
   "sendMoney.positionQrCode": "ضع رمز QR",
   "sendMoney.alignQrFrame": "قم بمحاذاة رمز QR داخل الإطار للمسح",
   "sendMoney.noAccountNumber": "رقم الحساب غير متوفر",
-  "sendMoney.shareQrInstruction": "شارك رمز QR هذا ليتمكن الآخرون من تحويل الأموال إليك",
+  "sendMoney.shareQrInstruction":
+    "شارك رمز QR هذا ليتمكن الآخرون من تحويل الأموال إليك",
   "sendMoney.verifying": "جاري التحقق...",
   "sendMoney.processing": "جاري المعالجة...",
   "sendMoney.errorRecipientNotFound": "لم يتم العثور على حساب المستلم",
-  "sendMoney.errorResolveWallet": "تعذر حل محفظة المستلم. يرجى المحاولة مرة أخرى.",
+  "sendMoney.errorResolveWallet":
+    "تعذر حل محفظة المستلم. يرجى المحاولة مرة أخرى.",
   "sendMoney.errorLoadWallet": "تعذر تحميل محفظتك. يرجى المحاولة مرة أخرى.",
   "sendMoney.errorSetupRecipient": "فشل إعداد المستلم. يرجى المحاولة مرة أخرى.",
-  "sendMoney.errorInvalidResponse": "استجابة غير صالحة من الخادم. يرجى المحاولة مرة أخرى.",
+  "sendMoney.errorInvalidResponse":
+    "استجابة غير صالحة من الخادم. يرجى المحاولة مرة أخرى.",
   "sendMoney.enterPasscode": "أدخل رمز المرور الخاص بك",
   "stock.title": "لوحة المساهم",
   "stock.stockRate": "سعر السهم",
@@ -5355,13 +5494,15 @@ const ar: TranslationMap = {
   "register.errorFirstName": "يرجى إدخال اسمك الأول",
   "register.errorLastName": "يرجى إدخال اسم العائلة",
   "register.phoneNumber": "رقم الهاتف",
-  "register.errorPhoneInvalid": "يرجى إدخال رقم هاتف صحيح ({digits} أرقام) للدولة المحددة.",
+  "register.errorPhoneInvalid":
+    "يرجى إدخال رقم هاتف صحيح ({digits} أرقام) للدولة المحددة.",
   "register.iHaveCompany": "لدي شركة",
   "register.companyName": "اسم الشركة",
   "register.placeholderCompanyName": "أدخل اسم شركتك",
   "register.errorCompanyName": "يرجى إدخال اسم الشركة",
   "register.contactInfo": "معلومات الاتصال (اختياري)",
-  "register.contactInfoComingSoon": "هذه الميزة قادمة قريباً. روابط LINE و Viber و WhatsApp ستكون متاحة في تحديث قادم.",
+  "register.contactInfoComingSoon":
+    "هذه الميزة قادمة قريباً. روابط LINE و Viber و WhatsApp ستكون متاحة في تحديث قادم.",
   "register.lineAccountLink": "رابط حساب LINE",
   "register.placeholderLine": "أدخل رابط حساب LINE",
   "register.scanQRHint": "امسح رمز QR أو ارفع صورة",
@@ -5385,11 +5526,13 @@ const ar: TranslationMap = {
   "register.emailAddress": "البريد الإلكتروني",
   "register.placeholderEmail": "مثال: example@email.com",
   "register.errorEmail": "يرجى إدخال البريد الإلكتروني",
-  "register.errorValidEmail": "يرجى إدخال بريد إلكتروني صحيح (مثال: name@example.com)",
+  "register.errorValidEmail":
+    "يرجى إدخال بريد إلكتروني صحيح (مثال: name@example.com)",
   "register.password": "كلمة المرور",
   "register.placeholderPassword": "أنشئ كلمة مرور آمنة",
   "register.errorPassword": "يرجى إدخال كلمة المرور",
-  "register.errorPasswordLength": "يجب أن تتكون كلمة المرور من 8 أحرف على الأقل",
+  "register.errorPasswordLength":
+    "يجب أن تتكون كلمة المرور من 8 أحرف على الأقل",
   "register.confirmPassword": "تأكيد كلمة المرور",
   "register.placeholderConfirmPassword": "أعد إدخال كلمة المرور",
   "register.errorPasswordMismatch": "كلمات المرور غير متطابقة",
@@ -5397,10 +5540,12 @@ const ar: TranslationMap = {
   "register.nextStep": "التالي",
   "register.termsText": "بالمتابعة، فإنك توافق على شروط الخدمة",
   "register.selectCountry": "اختر الدولة",
-  "register.cameraPermissionRequired": "يجب السماح بالوصول إلى الكاميرا لمسح رموز QR.",
+  "register.cameraPermissionRequired":
+    "يجب السماح بالوصول إلى الكاميرا لمسح رموز QR.",
   "register.goBack": "رجوع",
   "register.cameraAccessRequired": "الوصول إلى الكاميرا مطلوب",
-  "register.cameraPermissionHint": "يرجى السماح بالوصول إلى الكاميرا لمسح رموز QR.",
+  "register.cameraPermissionHint":
+    "يرجى السماح بالوصول إلى الكاميرا لمسح رموز QR.",
   "register.scanReferralQR": "مسح رمز QR للمُحيل",
   "register.scanLineQR": "مسح رمز LINE QR",
   "register.scanViberQR": "مسح رمز Viber QR",
@@ -5408,6 +5553,10 @@ const ar: TranslationMap = {
   "register.cancel": "إلغاء",
   "register.errorRegistrationFailed": "فشل التسجيل. يرجى المحاولة مرة أخرى.",
   "register.errorUnexpected": "حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.",
+  "register.noQRFound":
+    "لم يتم العثور على رمز QR الاستجابة السريعة في الصورة. يرجى اختيار صورة أوضح لرمز QR الاستجابة السريعة.",
+  "register.uploadImage": "تحميل صورة",
+  "register.processing": "جاري المعالجة...",
 };
 
 export const translations: Record<string, TranslationMap> = { en, ko, ja, ar };

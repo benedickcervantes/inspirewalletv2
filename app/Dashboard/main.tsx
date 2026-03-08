@@ -1,34 +1,38 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
+import {
+  useFocusEffect,
+  useNavigation,
+  useRoute,
+} from "@react-navigation/native";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-    Animated,
-    Image,
-    Linking,
-    Modal,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Animated,
+  Image,
+  Linking,
+  Modal,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import {
-    SafeAreaView,
-    useSafeAreaInsets,
+  SafeAreaView,
+  useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import {
-    getMe,
-    getNotifications,
-    getOrCreateMainWallet,
-    getReferralTree,
-    getTimeDeposits,
-    getTransactions,
+  getMe,
+  getNotifications,
+  getOrCreateMainWallet,
+  getReferralTree,
+  getTimeDeposits,
+  getTransactions,
 } from "../../configs/api";
 import {
-    languageChoiceDoneKey,
-    SUPPORTED_LANGUAGES,
+  languageChoiceDoneKey,
+  SUPPORTED_LANGUAGES,
 } from "../../constants/locales";
 import { useLanguage } from "../../context/LanguageContext";
 import { useSocket } from "../../context/SocketContext";
@@ -102,11 +106,7 @@ interface TimeDeposit {
 
 function computeTimeDepositTotal(deposits: TimeDeposit[]): number {
   return deposits
-    .filter(
-      (d) =>
-        d.status === "ACTIVE" ||
-        d.status === "MATURED",
-    )
+    .filter((d) => d.status === "ACTIVE" || d.status === "MATURED")
     .reduce((sum, d) => sum + (parseFloat(String(d?.amount ?? 0)) || 0), 0);
 }
 
@@ -208,6 +208,7 @@ export default function Dashboard() {
     null,
   );
   const [availableBalance, setAvailableBalance] = useState(0);
+  const [isBalanceLoading, setIsBalanceLoading] = useState(true);
   const [timeDeposit, setTimeDeposit] = useState(0);
   const [deposits, setDeposits] = useState<TimeDeposit[]>([]);
   const [activeTab, setActiveTab] = useState("Wallet");
@@ -237,7 +238,9 @@ export default function Dashboard() {
   const [activeCardDesign, setActiveCardDesign] = useState<string | null>(null);
 
   const getActiveCardStorageKey = (accountNumber?: string) =>
-    accountNumber ? `active_card_design_${accountNumber}` : "active_card_design";
+    accountNumber
+      ? `active_card_design_${accountNumber}`
+      : "active_card_design";
 
   const languageSlides = [
     {
@@ -262,7 +265,9 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
-    const params = route.params as { initialTab?: "Wallet" | "Investment" | "Cards" } | undefined;
+    const params = route.params as
+      | { initialTab?: "Wallet" | "Investment" | "Cards" }
+      | undefined;
     if (params?.initialTab) {
       setActiveTab(params.initialTab);
     }
@@ -301,7 +306,8 @@ export default function Dashboard() {
 
         // Load cached active card design once we know the account number
         try {
-          const accountNumber = (user as { accountNumber?: string })?.accountNumber;
+          const accountNumber = (user as { accountNumber?: string })
+            ?.accountNumber;
           if (accountNumber) {
             const key = getActiveCardStorageKey(accountNumber);
             const cachedDesign = await AsyncStorage.getItem(key);
@@ -311,7 +317,10 @@ export default function Dashboard() {
           }
         } catch (e) {
           if (__DEV__) {
-            console.error("[Dashboard] Failed to load cached active card design", e);
+            console.error(
+              "[Dashboard] Failed to load cached active card design",
+              e,
+            );
           }
         }
       }
@@ -328,23 +337,22 @@ export default function Dashboard() {
         const bal = parseFloat(String(w.balance));
         setAvailableBalance(Number.isNaN(bal) ? 0 : bal);
       }
+      setIsBalanceLoading(false);
 
       const walletId = w?.id;
-      const [
-        tdRes,
-        treeRes,
-        txRes,
-        status,
-        notifRes,
-        hasChosen,
-      ] = await Promise.all([
-        getTimeDeposits(accessToken),
-        getReferralTree(accessToken),
-        getTransactions(accessToken, { walletId, limit: 20 }),
-        getMaintenanceStatus(),
-        getNotifications(accessToken, { limit: 50 }),
-        AsyncStorage.getItem(languageChoiceDoneKey((user as { accountNumber?: string })?.accountNumber)),
-      ]);
+      const [tdRes, treeRes, txRes, status, notifRes, hasChosen] =
+        await Promise.all([
+          getTimeDeposits(accessToken),
+          getReferralTree(accessToken),
+          getTransactions(accessToken, { walletId, limit: 20 }),
+          getMaintenanceStatus(),
+          getNotifications(accessToken, { limit: 50 }),
+          AsyncStorage.getItem(
+            languageChoiceDoneKey(
+              (user as { accountNumber?: string })?.accountNumber,
+            ),
+          ),
+        ]);
 
       if (tdRes.success && Array.isArray(tdRes.deposits)) {
         const list = tdRes.deposits as TimeDeposit[];
@@ -408,7 +416,9 @@ export default function Dashboard() {
       setMaintenanceStatus(status);
 
       if (notifRes.success && notifRes.data) {
-        const unreadCount = (notifRes.data as { isRead: boolean }[]).filter(n => !n.isRead).length;
+        const unreadCount = (notifRes.data as { isRead: boolean }[]).filter(
+          (n) => !n.isRead,
+        ).length;
         setUnreadNotifications(unreadCount);
       }
     };
@@ -486,7 +496,9 @@ export default function Dashboard() {
 
     const notifRes = await getNotifications(accessToken, { limit: 50 });
     if (notifRes.success && notifRes.data) {
-      const unreadCount = (notifRes.data as { isRead: boolean }[]).filter(n => !n.isRead).length;
+      const unreadCount = (notifRes.data as { isRead: boolean }[]).filter(
+        (n) => !n.isRead,
+      ).length;
       setUnreadNotifications(unreadCount);
     }
   }, []);
@@ -693,7 +705,7 @@ export default function Dashboard() {
         visible={showFirstTimeLanguageModal}
         transparent
         animationType="fade"
-        onRequestClose={() => { }}
+        onRequestClose={() => {}}
       >
         <View style={styles.languageModalOverlay}>
           <View style={styles.languageModalContent}>
@@ -774,10 +786,16 @@ export default function Dashboard() {
         </View>
 
         <ScrollView showsVerticalScrollIndicator={false}>
-          <View style={[
-            styles.tabs,
-            { paddingHorizontal: horizontalPadding, paddingVertical: isSmallScreen ? 10 : 12, gap: isSmallScreen ? 10 : 16 },
-          ]}>
+          <View
+            style={[
+              styles.tabs,
+              {
+                paddingHorizontal: horizontalPadding,
+                paddingVertical: isSmallScreen ? 10 : 12,
+                gap: isSmallScreen ? 10 : 16,
+              },
+            ]}
+          >
             {(["Wallet", "Investment", "Cards"] as const).map((tab) => (
               <TouchableOpacity
                 key={tab}
@@ -817,6 +835,7 @@ export default function Dashboard() {
             <WalletTab
               userData={userData}
               availableBalance={availableBalance}
+              isBalanceLoading={isBalanceLoading}
               formatCurrency={formatCurrency}
               flipAnimation={flipAnimation}
               isCardFlipped={isCardFlipped}
@@ -827,6 +846,7 @@ export default function Dashboard() {
             <CardsTab
               userData={userData}
               availableBalance={availableBalance}
+              isBalanceLoading={isBalanceLoading}
               formatCurrency={formatCurrency}
               flipAnimation={flipAnimation}
               isCardFlipped={isCardFlipped}
@@ -850,67 +870,149 @@ export default function Dashboard() {
           )}
 
           {activeTab !== "Cards" && activeTab !== "Investment" && (
-            <View style={[
-              styles.quickActionsContainer,
-              { paddingHorizontal: horizontalPadding, paddingVertical: Math.round(16 * qaSpacing), gap: Math.round(10 * qaSpacing) },
-            ]}>
+            <View
+              style={[
+                styles.quickActionsContainer,
+                {
+                  paddingHorizontal: horizontalPadding,
+                  paddingVertical: Math.round(16 * qaSpacing),
+                  gap: Math.round(10 * qaSpacing),
+                },
+              ]}
+            >
               <TouchableOpacity
-                style={[styles.quickActionButton, { paddingVertical: Math.round(14 * qaSpacing), paddingHorizontal: Math.round(6 * qaSpacing), minWidth: 0 }]}
+                style={[
+                  styles.quickActionButton,
+                  {
+                    paddingVertical: Math.round(14 * qaSpacing),
+                    paddingHorizontal: Math.round(6 * qaSpacing),
+                    minWidth: 0,
+                  },
+                ]}
                 onPress={() => navigation.navigate("Transfer")}
               >
-                <View style={[styles.quickActionIcon, { width: Math.round(48 * qaSpacing), height: Math.round(48 * qaSpacing), marginBottom: Math.round(6 * qaSpacing) }]}>
+                <View
+                  style={[
+                    styles.quickActionIcon,
+                    {
+                      width: Math.round(48 * qaSpacing),
+                      height: Math.round(48 * qaSpacing),
+                      marginBottom: Math.round(6 * qaSpacing),
+                    },
+                  ]}
+                >
                   <MaterialCommunityIcons
                     name="swap-horizontal"
                     size={qaIconSize}
                     color="#E15816"
                   />
                 </View>
-                <Text style={[styles.quickActionLabel, { fontSize: qaLabelSize }]} numberOfLines={2}>
+                <Text
+                  style={[styles.quickActionLabel, { fontSize: qaLabelSize }]}
+                  numberOfLines={2}
+                >
                   {t("dashboard.transfer")}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.quickActionButton, { paddingVertical: Math.round(14 * qaSpacing), paddingHorizontal: Math.round(6 * qaSpacing), minWidth: 0 }]}
+                style={[
+                  styles.quickActionButton,
+                  {
+                    paddingVertical: Math.round(14 * qaSpacing),
+                    paddingHorizontal: Math.round(6 * qaSpacing),
+                    minWidth: 0,
+                  },
+                ]}
                 onPress={() => navigation.navigate("Bdo")}
               >
-                <View style={[styles.quickActionIcon, { width: Math.round(48 * qaSpacing), height: Math.round(48 * qaSpacing), marginBottom: Math.round(6 * qaSpacing) }]}>
+                <View
+                  style={[
+                    styles.quickActionIcon,
+                    {
+                      width: Math.round(48 * qaSpacing),
+                      height: Math.round(48 * qaSpacing),
+                      marginBottom: Math.round(6 * qaSpacing),
+                    },
+                  ]}
+                >
                   <MaterialCommunityIcons
                     name="bank"
                     size={qaIconSize}
                     color="#E15816"
                   />
                 </View>
-                <Text style={[styles.quickActionLabel, { fontSize: qaLabelSize }]} numberOfLines={2}>
+                <Text
+                  style={[styles.quickActionLabel, { fontSize: qaLabelSize }]}
+                  numberOfLines={2}
+                >
                   {t("dashboard.bankingService")}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.quickActionButton, { paddingVertical: Math.round(14 * qaSpacing), paddingHorizontal: Math.round(6 * qaSpacing), minWidth: 0 }]}
+                style={[
+                  styles.quickActionButton,
+                  {
+                    paddingVertical: Math.round(14 * qaSpacing),
+                    paddingHorizontal: Math.round(6 * qaSpacing),
+                    minWidth: 0,
+                  },
+                ]}
                 onPress={() => navigation.navigate("Travel")}
               >
-                <View style={[styles.quickActionIcon, { width: Math.round(48 * qaSpacing), height: Math.round(48 * qaSpacing), marginBottom: Math.round(6 * qaSpacing) }]}>
+                <View
+                  style={[
+                    styles.quickActionIcon,
+                    {
+                      width: Math.round(48 * qaSpacing),
+                      height: Math.round(48 * qaSpacing),
+                      marginBottom: Math.round(6 * qaSpacing),
+                    },
+                  ]}
+                >
                   <MaterialCommunityIcons
                     name="airplane"
                     size={qaIconSize}
                     color="#E15816"
                   />
                 </View>
-                <Text style={[styles.quickActionLabel, { fontSize: qaLabelSize }]} numberOfLines={2}>
+                <Text
+                  style={[styles.quickActionLabel, { fontSize: qaLabelSize }]}
+                  numberOfLines={2}
+                >
                   {t("dashboard.travelProtection")}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.quickActionButton, { paddingVertical: Math.round(14 * qaSpacing), paddingHorizontal: Math.round(6 * qaSpacing), minWidth: 0 }]}
+                style={[
+                  styles.quickActionButton,
+                  {
+                    paddingVertical: Math.round(14 * qaSpacing),
+                    paddingHorizontal: Math.round(6 * qaSpacing),
+                    minWidth: 0,
+                  },
+                ]}
                 onPress={() => navigation.navigate("History")}
               >
-                <View style={[styles.quickActionIcon, { width: Math.round(48 * qaSpacing), height: Math.round(48 * qaSpacing), marginBottom: Math.round(6 * qaSpacing) }]}>
+                <View
+                  style={[
+                    styles.quickActionIcon,
+                    {
+                      width: Math.round(48 * qaSpacing),
+                      height: Math.round(48 * qaSpacing),
+                      marginBottom: Math.round(6 * qaSpacing),
+                    },
+                  ]}
+                >
                   <MaterialCommunityIcons
                     name="history"
                     size={qaIconSize}
                     color="#E15816"
                   />
                 </View>
-                <Text style={[styles.quickActionLabel, { fontSize: qaLabelSize }]} numberOfLines={2}>
+                <Text
+                  style={[styles.quickActionLabel, { fontSize: qaLabelSize }]}
+                  numberOfLines={2}
+                >
                   {t("dashboard.history")}
                 </Text>
               </TouchableOpacity>
@@ -1066,7 +1168,7 @@ export default function Dashboard() {
                     style={[
                       styles.languageDot,
                       currentLanguageIndex === index &&
-                      styles.languageActiveDot,
+                        styles.languageActiveDot,
                     ]}
                   />
                 ))}

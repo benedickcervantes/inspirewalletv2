@@ -3,17 +3,24 @@ import { CameraView, useCameraPermissions } from "expo-camera";
 import { LinearGradient } from "expo-linear-gradient";
 import { useState } from "react";
 import {
+  ActivityIndicator,
   Modal,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 import { useLanguage } from "../../../context/LanguageContext";
+import { pickAndDecodeQR } from "../../../utils/qrUtils";
 
 const getWindow = () => {
   try {
-    return require("react-native").Dimensions?.get?.("window") ?? { width: 375, height: 667 };
+    return (
+      require("react-native").Dimensions?.get?.("window") ?? {
+        width: 375,
+        height: 667,
+      }
+    );
   } catch {
     return { width: 375, height: 667 };
   }
@@ -26,9 +33,14 @@ interface QRScannerProps {
   onScan: (accountNumber: string) => void;
 }
 
-export default function QRScanner({ visible, onClose, onScan }: QRScannerProps) {
+export default function QRScanner({
+  visible,
+  onClose,
+  onScan,
+}: QRScannerProps) {
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const handleBarCodeScanned = ({ data }: { data: string }) => {
     if (scanned) return;
@@ -57,18 +69,25 @@ export default function QRScanner({ visible, onClose, onScan }: QRScannerProps) 
         <View style={styles.permissionContainer}>
           <View style={styles.permissionContent}>
             <Ionicons name="camera-outline" size={80} color="#E25A17" />
-            <Text style={styles.permissionTitle}>{t("sendMoney.cameraPermissionRequired")}</Text>
+            <Text style={styles.permissionTitle}>
+              {t("sendMoney.cameraPermissionRequired")}
+            </Text>
             <Text style={styles.permissionMessage}>
               {t("sendMoney.cameraPermissionMessage")}
             </Text>
-            <TouchableOpacity style={styles.permissionButton} onPress={requestPermission}>
+            <TouchableOpacity
+              style={styles.permissionButton}
+              onPress={requestPermission}
+            >
               <LinearGradient
                 colors={["#E25A17", "#F28934"]}
                 style={styles.permissionGradient}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
               >
-                <Text style={styles.permissionButtonText}>{t("sendMoney.grantPermission")}</Text>
+                <Text style={styles.permissionButtonText}>
+                  {t("sendMoney.grantPermission")}
+                </Text>
               </LinearGradient>
             </TouchableOpacity>
             <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
@@ -125,10 +144,75 @@ export default function QRScanner({ visible, onClose, onScan }: QRScannerProps) 
           >
             <View style={styles.instructionContainer}>
               <Ionicons name="scan" size={40} color="#FFFFFF" />
-              <Text style={styles.instructionTitle}>{t("sendMoney.positionQrCode")}</Text>
+              <Text style={styles.instructionTitle}>
+                {t("sendMoney.positionQrCode")}
+              </Text>
               <Text style={styles.instructionText}>
                 {t("sendMoney.alignQrFrame")}
               </Text>
+            </View>
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "center",
+                marginTop: 24,
+              }}
+            >
+              <TouchableOpacity
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  backgroundColor: "rgba(255, 255, 255, 0.2)",
+                  paddingHorizontal: 20,
+                  paddingVertical: 12,
+                  borderRadius: 24,
+                }}
+                disabled={isProcessing}
+                onPress={async () => {
+                  try {
+                    setIsProcessing(true);
+                    const data = await pickAndDecodeQR();
+                    if (data) {
+                      onScan(data);
+                      onClose();
+                    } else {
+                      alert(
+                        t("register.noQRFound") ||
+                          "No QR code found in the image. Please pick a clearer QR code image.",
+                      );
+                    }
+                  } catch (e) {
+                    alert(
+                      t("register.errorUnexpected") ||
+                        "An unexpected error occurred.",
+                    );
+                  } finally {
+                    setIsProcessing(false);
+                  }
+                }}
+              >
+                {isProcessing ? (
+                  <ActivityIndicator
+                    size="small"
+                    color="#FFFFFF"
+                    style={{ marginRight: 10 }}
+                  />
+                ) : (
+                  <Ionicons
+                    name="image-outline"
+                    size={20}
+                    color="#FFFFFF"
+                    style={{ marginRight: 10 }}
+                  />
+                )}
+                <Text
+                  style={{ color: "#FFFFFF", fontWeight: "600", fontSize: 16 }}
+                >
+                  {isProcessing
+                    ? t("register.processing") || "Processing..."
+                    : t("register.uploadImage") || "Upload Image"}
+                </Text>
+              </TouchableOpacity>
             </View>
           </LinearGradient>
         </CameraView>

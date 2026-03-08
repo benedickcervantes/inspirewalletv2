@@ -52,7 +52,11 @@ export const fetchBalanceByType = async (balanceType: string) => {
   if (balanceType === "agent") {
     const agentBal =
       (wallet as { agentCommission?: number | string })?.agentCommission != null
-        ? parseFloat(String((wallet as { agentCommission?: number | string }).agentCommission))
+        ? parseFloat(
+            String(
+              (wallet as { agentCommission?: number | string }).agentCommission,
+            ),
+          )
         : NaN;
     return Number.isNaN(agentBal) ? 0 : agentBal;
   }
@@ -64,7 +68,9 @@ export const fetchBalanceByType = async (balanceType: string) => {
 };
 
 // Reusable function to load user contacts (loads from device contacts)
-export const loadUserContacts = async (t: (key: string) => string): Promise<Contact[]> => {
+export const loadUserContacts = async (
+  t: (key: string) => string,
+): Promise<Contact[]> => {
   try {
     const { status } = await Contacts.requestPermissionsAsync();
     if (status !== "granted") {
@@ -242,7 +248,9 @@ export default function TransferRecipient() {
         accountNumber,
       );
       if (!recipientResult.success || !recipientResult.data) {
-        setAlertMessage(recipientResult.error || t("sendMoney.errorRecipientNotFound"));
+        setAlertMessage(
+          recipientResult.error || t("sendMoney.errorRecipientNotFound"),
+        );
         setShowAlertModal(true);
         setIsLoading(false);
         return;
@@ -254,7 +262,8 @@ export default function TransferRecipient() {
         accountNumber?: string;
       };
       const recipientName =
-        [data.firstName, data.lastName].filter(Boolean).join(" ") || t("common.unknown");
+        [data.firstName, data.lastName].filter(Boolean).join(" ") ||
+        t("common.unknown");
       navigation.navigate("TransferConfirm", {
         balanceType: balanceType ?? "available",
         accountNumber,
@@ -627,7 +636,9 @@ export default function TransferRecipient() {
                   end={{ x: 1, y: 0 }}
                 >
                   <Ionicons name="share-social" size={20} color="#FFFFFF" />
-                  <Text style={styles.shareQRButtonText}>{t("sendMoney.shareQr")}</Text>
+                  <Text style={styles.shareQRButtonText}>
+                    {t("sendMoney.shareQr")}
+                  </Text>
                 </LinearGradient>
               </TouchableOpacity>
 

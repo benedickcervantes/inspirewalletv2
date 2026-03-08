@@ -5,29 +5,32 @@ import { CameraView, useCameraPermissions } from "expo-camera";
 import { LinearGradient } from "expo-linear-gradient";
 import { useState } from "react";
 import {
-    ActivityIndicator,
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    useWindowDimensions,
-    View,
+  ActivityIndicator,
+  Modal,
+  Platform,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { register as registerApi } from "../../configs/api";
 import {
-    DEFAULT_LANGUAGE,
-    normalizeLanguage,
-    SUPPORTED_LANGUAGES,
+  DEFAULT_LANGUAGE,
+  normalizeLanguage,
+  SUPPORTED_LANGUAGES,
 } from "../../constants/locales";
 import { useLanguage } from "../../context/LanguageContext";
 import type { NavProp } from "../../types/navigation";
+import { pickAndDecodeQR } from "../../utils/qrUtils";
 import { useResponsive } from "../../utils/responsive";
 
 const getScreenWidth = () => {
@@ -58,7 +61,10 @@ const filterPhoneInput = (text: string) => text.replace(/[^0-9]/g, "");
 
 // Referral code: English letters and numbers only, max 5 chars
 const filterReferralInput = (text: string) =>
-  text.replace(/[^A-Za-z0-9]/g, "").toUpperCase().slice(0, 5);
+  text
+    .replace(/[^A-Za-z0-9]/g, "")
+    .toUpperCase()
+    .slice(0, 5);
 
 // Password: English letters, numbers, and common safe symbols (blocks non-Latin scripts)
 const filterPasswordInput = (text: string) =>
@@ -131,10 +137,18 @@ export default function Register() {
   const navigation = useNavigation();
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const { horizontalPadding, moderateScale, isShortScreen, isSmallScreen, isTinyScreen, isLargeScreen } = useResponsive();
+  const {
+    horizontalPadding,
+    moderateScale,
+    isShortScreen,
+    isSmallScreen,
+    isTinyScreen,
+    isLargeScreen,
+  } = useResponsive();
   const isCompact = isShortScreen || isTinyScreen;
   const footerBottomPadding = insets.bottom || 16;
-  const scrollPaddingBottom = (isCompact || isSmallScreen ? 20 : 24) + footerBottomPadding;
+  const scrollPaddingBottom =
+    (isCompact || isSmallScreen ? 20 : 24) + footerBottomPadding;
   const { t, language: contextLanguage, setLanguage } = useLanguage();
   const language = normalizeLanguage(contextLanguage ?? DEFAULT_LANGUAGE);
   const [currentStep, setCurrentStep] = useState(1);
@@ -150,6 +164,7 @@ export default function Register() {
   const [lineContact, setLineContact] = useState("");
   const [viberContact, setViberContact] = useState("");
   const [whatsappContact, setWhatsappContact] = useState("");
+  const [isProcessingQR, setIsProcessingQR] = useState(false);
   const [isAgent, setIsAgent] = useState<boolean | null>(null);
   const [referralCode, setReferralCode] = useState("");
   const [registerLoading, setRegisterLoading] = useState(false);
@@ -170,6 +185,7 @@ export default function Register() {
   const [permission, requestPermission] = useCameraPermissions();
 
   const handleNextStep = () => {
+    if (isProcessingQR) return;
     setRegisterError("");
     const newErrors: Record<string, string> = {};
 
@@ -181,8 +197,14 @@ export default function Register() {
         newErrors.lastName = t("register.errorLastName");
       }
       const phoneDigits = phoneNumber.replace(/\D/g, "");
-      const country = COUNTRY_OPTIONS.find((c) => c.code === selectedCountryCode);
-      if (phoneDigits.length > 0 && country && phoneDigits.length !== country.maxLength) {
+      const country = COUNTRY_OPTIONS.find(
+        (c) => c.code === selectedCountryCode,
+      );
+      if (
+        phoneDigits.length > 0 &&
+        country &&
+        phoneDigits.length !== country.maxLength
+      ) {
         newErrors.phoneNumber = t("register.errorPhoneInvalid").replace(
           "{digits}",
           String(country.maxLength),
@@ -262,9 +284,7 @@ export default function Register() {
       const result = await registerApi(body);
 
       if (!result.success) {
-        setRegisterError(
-          result.error || t("register.errorRegistrationFailed"),
-        );
+        setRegisterError(result.error || t("register.errorRegistrationFailed"));
         return;
       }
 
@@ -340,8 +360,47 @@ export default function Register() {
     setIsQRScannerVisible(true);
   };
 
-  const handleUploadImage = (_fieldType: "line" | "viber" | "whatsapp") => {
-    // Design only: upload image option not connected
+  const handleUploadImage = async (
+    fieldType: "referral" | "line" | "viber" | "whatsapp",
+  ) => {
+    try {
+      setIsProcessingQR(true);
+      const data = await pickAndDecodeQR();
+
+      if (data) {
+        if (fieldType === "referral") {
+          try {
+            if (data.includes("ref=")) {
+              const urlParams = new URL(data);
+              const ref = urlParams.searchParams.get("ref");
+              if (ref) {
+                setReferralCode(ref.toUpperCase());
+                return;
+              }
+            }
+          } catch {
+            // Not a valid URL, ignore URL parsing error
+          }
+          setReferralCode(data.toUpperCase().slice(0, 5));
+        } else if (fieldType === "line") {
+          setLineContact(data);
+        } else if (fieldType === "viber") {
+          setViberContact(data);
+        } else if (fieldType === "whatsapp") {
+          setWhatsappContact(data);
+        }
+      } else {
+        alert(
+          t("register.noQRFound") ||
+            "No QR code found in the image. Please pick a clearer QR code image.",
+        );
+      }
+    } catch (error) {
+      console.log("Error scanning from image:", error);
+      alert(t("register.errorUnexpected"));
+    } finally {
+      setIsProcessingQR(false);
+    }
   };
 
   return (
@@ -354,15 +413,26 @@ export default function Register() {
               styles.header,
               {
                 paddingHorizontal: horizontalPadding,
-                paddingVertical: isLargeScreen ? 12 : (isCompact || isSmallScreen) ? 10 : 14,
+                paddingVertical: isLargeScreen
+                  ? 12
+                  : isCompact || isSmallScreen
+                    ? 10
+                    : 14,
               },
             ]}
           >
             <TouchableOpacity
-              style={[styles.backButton, isTinyScreen && { width: 36, height: 36 }]}
+              style={[
+                styles.backButton,
+                isTinyScreen && { width: 36, height: 36 },
+              ]}
               onPress={handleBackStep}
             >
-              <Ionicons name="arrow-back" size={isTinyScreen ? 20 : 24} color="#E25A17" />
+              <Ionicons
+                name="arrow-back"
+                size={isTinyScreen ? 20 : 24}
+                color="#E25A17"
+              />
             </TouchableOpacity>
             <Text
               style={[
@@ -409,7 +479,8 @@ export default function Register() {
             style={[
               styles.progressContainer,
               {
-                paddingVertical: (isCompact || isSmallScreen) ? 14 : isLargeScreen ? 16 : 24,
+                paddingVertical:
+                  isCompact || isSmallScreen ? 14 : isLargeScreen ? 16 : 24,
                 paddingHorizontal: isTinyScreen ? 16 : isSmallScreen ? 24 : 40,
               },
             ]}
@@ -420,11 +491,12 @@ export default function Register() {
                   styles.stepCircle,
                   styles.stepActive,
                   isTinyScreen && { width: 36, height: 36, borderRadius: 18 },
-                  isSmallScreen && !isTinyScreen && {
-                    width: 42,
-                    height: 42,
-                    borderRadius: 21,
-                  },
+                  isSmallScreen &&
+                    !isTinyScreen && {
+                      width: 42,
+                      height: 42,
+                      borderRadius: 21,
+                    },
                 ]}
               >
                 {currentStep > 1 ? (
@@ -456,11 +528,12 @@ export default function Register() {
                   styles.stepCircle,
                   currentStep >= 2 && styles.stepActive,
                   isTinyScreen && { width: 36, height: 36, borderRadius: 18 },
-                  isSmallScreen && !isTinyScreen && {
-                    width: 42,
-                    height: 42,
-                    borderRadius: 21,
-                  },
+                  isSmallScreen &&
+                    !isTinyScreen && {
+                      width: 42,
+                      height: 42,
+                      borderRadius: 21,
+                    },
                 ]}
               >
                 {currentStep > 2 ? (
@@ -492,11 +565,12 @@ export default function Register() {
                   styles.stepCircle,
                   currentStep >= 3 && styles.stepActive,
                   isTinyScreen && { width: 36, height: 36, borderRadius: 18 },
-                  isSmallScreen && !isTinyScreen && {
-                    width: 42,
-                    height: 42,
-                    borderRadius: 21,
-                  },
+                  isSmallScreen &&
+                    !isTinyScreen && {
+                      width: 42,
+                      height: 42,
+                      borderRadius: 21,
+                    },
                 ]}
               >
                 <Ionicons
@@ -508,311 +582,101 @@ export default function Register() {
             </View>
           </View>
 
-            <KeyboardAvoidingView
-            style={styles.keyboardAvoidWrap}
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
-            keyboardVerticalOffset={0}
-          >
+          <View style={styles.keyboardAvoidWrap}>
             <KeyboardAwareScrollView
-            style={styles.scrollView}
-            contentContainerStyle={[
-              styles.scrollContent,
-              {
-                paddingTop: (isCompact || isSmallScreen) ? 12 : 20,
-                paddingHorizontal: horizontalPadding,
-                paddingBottom: scrollPaddingBottom,
-              },
-            ]}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-            enableOnAndroid
-            enableAutomaticScroll
-            extraScrollHeight={Platform.OS === "ios" ? 60 : 40}
-            extraHeight={Platform.OS === "android" ? 80 : 60}
-          >
-            {currentStep === 1 && (
-              <>
-                <Text
-                  style={[
-                    styles.welcomeText,
-                    isTinyScreen && { fontSize: 18, marginBottom: 10 },
-                    isSmallScreen && !isTinyScreen && { fontSize: 20, marginBottom: 12 },
-                    isLargeScreen && { fontSize: 22 },
-                  ]}
-                >
-                  {t("register.welcomeInvestor")}
-                </Text>
-                <View
-                  style={[
-                    styles.infoBanner,
-                    isTinyScreen && { padding: 10, marginBottom: 12 },
-                    (isCompact || isSmallScreen) && { marginBottom: 12, padding: 12 },
-                  ]}
-                >
-                  <MaterialCommunityIcons
-                    name="office-building"
-                    size={isTinyScreen ? 20 : isSmallScreen ? 22 : 24}
-                    color="#E25A17"
-                  />
-                  <View style={styles.infoBannerTextContainer}>
-                    <Text
-                      style={[
-                        styles.infoBannerText,
-                        isTinyScreen && { fontSize: 11, lineHeight: 17 },
-                        isSmallScreen && !isTinyScreen && { fontSize: 12, lineHeight: 18 },
-                      ]}
-                    >
-                      {t("register.startInvestment")}{" "}
-                      <Text style={styles.infoBannerBold}>{t("register.inspireWallet")}</Text>
-                    </Text>
-                    <Text
-                      style={[
-                        styles.infoBannerText,
-                        isTinyScreen && { fontSize: 11, lineHeight: 17 },
-                        isSmallScreen && !isTinyScreen && { fontSize: 12, lineHeight: 18 },
-                      ]}
-                    >
-                      {t("register.completeProfile")}
-                    </Text>
-                  </View>
-                </View>
-                <View
-                  style={[
-                    styles.section,
-                    isTinyScreen && { padding: 12, borderRadius: 12 },
-                    (isCompact || isSmallScreen) && { padding: 14 },
-                  ]}
-                >
+              style={styles.scrollView}
+              contentContainerStyle={[
+                styles.scrollContent,
+                {
+                  paddingTop: isCompact || isSmallScreen ? 12 : 20,
+                  paddingHorizontal: horizontalPadding,
+                  paddingBottom: scrollPaddingBottom,
+                },
+              ]}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              enableOnAndroid
+              enableAutomaticScroll
+              extraScrollHeight={Platform.OS === "ios" ? 60 : 40}
+              extraHeight={Platform.OS === "android" ? 80 : 60}
+            >
+              {currentStep === 1 && (
+                <>
                   <Text
                     style={[
-                      styles.sectionTitle,
-                      isTinyScreen && { fontSize: 13, marginBottom: 4 },
-                      isCompact && !isTinyScreen && { marginBottom: 6 },
+                      styles.welcomeText,
+                      isTinyScreen && { fontSize: 18, marginBottom: 10 },
+                      isSmallScreen &&
+                        !isTinyScreen && { fontSize: 20, marginBottom: 12 },
+                      isLargeScreen && { fontSize: 22 },
                     ]}
                   >
-                    {t("register.personalInfo")}
+                    {t("register.welcomeInvestor")}
                   </Text>
                   <View
                     style={[
-                      styles.sectionUnderline,
-                      isTinyScreen && { marginBottom: 10 },
-                      isCompact && !isTinyScreen && { marginBottom: 14 },
-                    ]}
-                  />
-                  <View
-                    style={[
-                      styles.inputGroup,
-                      (isTinyScreen || isSmallScreen) && { marginBottom: 14 },
+                      styles.infoBanner,
+                      isTinyScreen && { padding: 10, marginBottom: 12 },
+                      (isCompact || isSmallScreen) && {
+                        marginBottom: 12,
+                        padding: 12,
+                      },
                     ]}
                   >
-                    <Text
-                      style={[
-                        styles.inputLabel,
-                        (isTinyScreen || isSmallScreen) && { fontSize: 12, marginBottom: 6 },
-                      ]}
-                    >
-                      {t("register.firstName")} <Text style={styles.required}>*</Text>
-                    </Text>
-                    <TextInput
-                      style={[
-                        styles.input,
-                        errors.firstName && styles.inputError,
-                        (isTinyScreen || isSmallScreen) && {
-                          minHeight: 44,
-                          paddingVertical: 10,
-                          fontSize: 14,
-                        },
-                      ]}
-                      placeholder={t("register.placeholderFirstName")}
-                      placeholderTextColor="#999"
-                      autoCapitalize="words"
-                      autoCorrect={false}
-                      autoComplete="off"
-                      value={firstName}
-                      onChangeText={(text) => {
-                        setFirstName(capitalizeWords(filterNameInput(text)));
-                        if (errors.firstName) {
-                          setErrors((prev) => {
-                            const { firstName, ...rest } = prev;
-                            return rest;
-                          });
-                        }
-                      }}
+                    <MaterialCommunityIcons
+                      name="office-building"
+                      size={isTinyScreen ? 20 : isSmallScreen ? 22 : 24}
+                      color="#E25A17"
                     />
-                    {errors.firstName && (
-                      <Text style={styles.errorText}>{errors.firstName}</Text>
-                    )}
-                  </View>
-                  <View
-                    style={[
-                      styles.inputGroup,
-                      (isTinyScreen || isSmallScreen) && { marginBottom: 14 },
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.inputLabel,
-                        (isTinyScreen || isSmallScreen) && { fontSize: 12, marginBottom: 6 },
-                      ]}
-                    >
-                      {t("register.lastName")} <Text style={styles.required}>*</Text>
-                    </Text>
-                    <TextInput
-                      style={[
-                        styles.input,
-                        errors.lastName && styles.inputError,
-                        (isTinyScreen || isSmallScreen) && {
-                          minHeight: 44,
-                          paddingVertical: 10,
-                          fontSize: 14,
-                        },
-                      ]}
-                      placeholder={t("register.placeholderLastName")}
-                      placeholderTextColor="#999"
-                      autoCapitalize="words"
-                      autoCorrect={false}
-                      autoComplete="off"
-                      value={lastName}
-                      onChangeText={(text) => {
-                        setLastName(capitalizeWords(filterNameInput(text)));
-                        if (errors.lastName) {
-                          setErrors((prev) => {
-                            const { lastName, ...rest } = prev;
-                            return rest;
-                          });
-                        }
-                      }}
-                    />
-                    {errors.lastName && (
-                      <Text style={styles.errorText}>{errors.lastName}</Text>
-                    )}
-                  </View>
-                  <View
-                    style={[
-                      styles.inputGroup,
-                      (isTinyScreen || isSmallScreen) && { marginBottom: 14 },
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.inputLabel,
-                        (isTinyScreen || isSmallScreen) && { fontSize: 12, marginBottom: 6 },
-                      ]}
-                    >
-                      {t("register.phoneNumber")}
-                    </Text>
-                    <View style={styles.phoneInputContainer}>
-                      <TouchableOpacity
+                    <View style={styles.infoBannerTextContainer}>
+                      <Text
                         style={[
-                          styles.countrySelector,
-                          (isTinyScreen || isSmallScreen) && {
-                            paddingHorizontal: 10,
-                            paddingVertical: 10,
-                          },
+                          styles.infoBannerText,
+                          isTinyScreen && { fontSize: 11, lineHeight: 17 },
+                          isSmallScreen &&
+                            !isTinyScreen && { fontSize: 12, lineHeight: 18 },
                         ]}
-                        onPress={() => setIsCountryModalVisible(true)}
                       >
-                        <Text
-                          style={[
-                            styles.countryFlag,
-                            (isTinyScreen || isSmallScreen) && { fontSize: 18 },
-                          ]}
-                        >
-                          {
-                            COUNTRY_OPTIONS.find(
-                              (c) => c.code === selectedCountryCode,
-                            )?.flag
-                          }
+                        {t("register.startInvestment")}{" "}
+                        <Text style={styles.infoBannerBold}>
+                          {t("register.inspireWallet")}
                         </Text>
-                        <Text
-                          style={[
-                            styles.countryCode,
-                            (isTinyScreen || isSmallScreen) && { fontSize: 13 },
-                          ]}
-                        >
-                          {selectedCountryCode}
-                        </Text>
-                        <Ionicons
-                          name="chevron-down"
-                          size={isTinyScreen ? 14 : 16}
-                          color="#666"
-                        />
-                      </TouchableOpacity>
-                      <TextInput
+                      </Text>
+                      <Text
                         style={[
-                          styles.phoneInput,
-                          errors.phoneNumber && styles.inputError,
-                          (isTinyScreen || isSmallScreen) && {
-                            minHeight: 44,
-                            paddingVertical: 10,
-                            fontSize: 14,
-                          },
+                          styles.infoBannerText,
+                          isTinyScreen && { fontSize: 11, lineHeight: 17 },
+                          isSmallScreen &&
+                            !isTinyScreen && { fontSize: 12, lineHeight: 18 },
                         ]}
-                        placeholder={
-                          COUNTRY_OPTIONS.find(
-                            (c) => c.code === selectedCountryCode,
-                          )?.mask.replace(/#/g, "0") || "000 000 0000"
-                        }
-                        placeholderTextColor="#999"
-                        keyboardType="numeric"
-                        value={phoneNumber}
-                        onChangeText={(text) => {
-                          const digits = filterPhoneInput(text);
-                          const country = COUNTRY_OPTIONS.find(
-                            (c) => c.code === selectedCountryCode,
-                          );
-                          if (country) {
-                            setPhoneNumber(
-                              formatWithMask(digits, country.mask, country.maxLength),
-                            );
-                          } else {
-                            setPhoneNumber(digits.slice(0, 15));
-                          }
-                          if (errors.phoneNumber) {
-                            setErrors((prev) => {
-                              const { phoneNumber: _, ...rest } = prev;
-                              return rest;
-                            });
-                          }
-                        }}
-                        maxLength={
-                          COUNTRY_OPTIONS.find(
-                            (c) => c.code === selectedCountryCode,
-                          )?.mask.length ?? 15
-                        }
-                      />
+                      >
+                        {t("register.completeProfile")}
+                      </Text>
                     </View>
-                    {errors.phoneNumber && (
-                      <Text style={styles.errorText}>{errors.phoneNumber}</Text>
-                    )}
                   </View>
-                  <TouchableOpacity
+                  <View
                     style={[
-                      styles.checkboxContainer,
-                      (isTinyScreen || isSmallScreen) && { marginBottom: 14 },
+                      styles.section,
+                      isTinyScreen && { padding: 12, borderRadius: 12 },
+                      (isCompact || isSmallScreen) && { padding: 14 },
                     ]}
-                    onPress={() => setHasCompany(!hasCompany)}
                   >
+                    <Text
+                      style={[
+                        styles.sectionTitle,
+                        isTinyScreen && { fontSize: 13, marginBottom: 4 },
+                        isCompact && !isTinyScreen && { marginBottom: 6 },
+                      ]}
+                    >
+                      {t("register.personalInfo")}
+                    </Text>
                     <View
                       style={[
-                        styles.checkbox,
-                        hasCompany && styles.checkboxChecked,
+                        styles.sectionUnderline,
+                        isTinyScreen && { marginBottom: 10 },
+                        isCompact && !isTinyScreen && { marginBottom: 14 },
                       ]}
-                    >
-                      {hasCompany && (
-                        <Ionicons name="checkmark" size={16} color="#E25A17" />
-                      )}
-                    </View>
-                    <Text
-                      style={[
-                        styles.checkboxLabel,
-                        (isTinyScreen || isSmallScreen) && { fontSize: 13 },
-                      ]}
-                    >
-                      {t("register.iHaveCompany")}
-                    </Text>
-                  </TouchableOpacity>
-                  {hasCompany && (
+                    />
                     <View
                       style={[
                         styles.inputGroup,
@@ -828,353 +692,357 @@ export default function Register() {
                           },
                         ]}
                       >
-                        {t("register.companyName")} <Text style={styles.required}>*</Text>
+                        {t("register.firstName")}{" "}
+                        <Text style={styles.required}>*</Text>
                       </Text>
                       <TextInput
                         style={[
                           styles.input,
-                          errors.companyName && styles.inputError,
+                          errors.firstName && styles.inputError,
                           (isTinyScreen || isSmallScreen) && {
                             minHeight: 44,
                             paddingVertical: 10,
                             fontSize: 14,
                           },
                         ]}
-                        placeholder={t("register.placeholderCompanyName")}
+                        placeholder={t("register.placeholderFirstName")}
                         placeholderTextColor="#999"
                         autoCapitalize="words"
                         autoCorrect={false}
                         autoComplete="off"
-                        value={companyName}
+                        value={firstName}
                         onChangeText={(text) => {
-                          setCompanyName(
-                            capitalizeWords(filterCompanyInput(text)),
-                          );
-                          if (errors.companyName) {
+                          setFirstName(capitalizeWords(filterNameInput(text)));
+                          if (errors.firstName) {
                             setErrors((prev) => {
-                              const { companyName, ...rest } = prev;
+                              const { firstName, ...rest } = prev;
                               return rest;
                             });
                           }
                         }}
                       />
-                      {errors.companyName && (
+                      {errors.firstName && (
+                        <Text style={styles.errorText}>{errors.firstName}</Text>
+                      )}
+                    </View>
+                    <View
+                      style={[
+                        styles.inputGroup,
+                        (isTinyScreen || isSmallScreen) && { marginBottom: 14 },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.inputLabel,
+                          (isTinyScreen || isSmallScreen) && {
+                            fontSize: 12,
+                            marginBottom: 6,
+                          },
+                        ]}
+                      >
+                        {t("register.lastName")}{" "}
+                        <Text style={styles.required}>*</Text>
+                      </Text>
+                      <TextInput
+                        style={[
+                          styles.input,
+                          errors.lastName && styles.inputError,
+                          (isTinyScreen || isSmallScreen) && {
+                            minHeight: 44,
+                            paddingVertical: 10,
+                            fontSize: 14,
+                          },
+                        ]}
+                        placeholder={t("register.placeholderLastName")}
+                        placeholderTextColor="#999"
+                        autoCapitalize="words"
+                        autoCorrect={false}
+                        autoComplete="off"
+                        value={lastName}
+                        onChangeText={(text) => {
+                          setLastName(capitalizeWords(filterNameInput(text)));
+                          if (errors.lastName) {
+                            setErrors((prev) => {
+                              const { lastName, ...rest } = prev;
+                              return rest;
+                            });
+                          }
+                        }}
+                      />
+                      {errors.lastName && (
+                        <Text style={styles.errorText}>{errors.lastName}</Text>
+                      )}
+                    </View>
+                    <View
+                      style={[
+                        styles.inputGroup,
+                        (isTinyScreen || isSmallScreen) && { marginBottom: 14 },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.inputLabel,
+                          (isTinyScreen || isSmallScreen) && {
+                            fontSize: 12,
+                            marginBottom: 6,
+                          },
+                        ]}
+                      >
+                        {t("register.phoneNumber")}
+                      </Text>
+                      <View style={styles.phoneInputContainer}>
+                        <TouchableOpacity
+                          style={[
+                            styles.countrySelector,
+                            (isTinyScreen || isSmallScreen) && {
+                              paddingHorizontal: 10,
+                              paddingVertical: 10,
+                            },
+                          ]}
+                          onPress={() => setIsCountryModalVisible(true)}
+                        >
+                          <Text
+                            style={[
+                              styles.countryFlag,
+                              (isTinyScreen || isSmallScreen) && {
+                                fontSize: 18,
+                              },
+                            ]}
+                          >
+                            {
+                              COUNTRY_OPTIONS.find(
+                                (c) => c.code === selectedCountryCode,
+                              )?.flag
+                            }
+                          </Text>
+                          <Text
+                            style={[
+                              styles.countryCode,
+                              (isTinyScreen || isSmallScreen) && {
+                                fontSize: 13,
+                              },
+                            ]}
+                          >
+                            {selectedCountryCode}
+                          </Text>
+                          <Ionicons
+                            name="chevron-down"
+                            size={isTinyScreen ? 14 : 16}
+                            color="#666"
+                          />
+                        </TouchableOpacity>
+                        <TextInput
+                          style={[
+                            styles.phoneInput,
+                            errors.phoneNumber && styles.inputError,
+                            (isTinyScreen || isSmallScreen) && {
+                              minHeight: 44,
+                              paddingVertical: 10,
+                              fontSize: 14,
+                            },
+                          ]}
+                          placeholder={
+                            COUNTRY_OPTIONS.find(
+                              (c) => c.code === selectedCountryCode,
+                            )?.mask.replace(/#/g, "0") || "000 000 0000"
+                          }
+                          placeholderTextColor="#999"
+                          keyboardType="numeric"
+                          value={phoneNumber}
+                          onChangeText={(text) => {
+                            const digits = filterPhoneInput(text);
+                            const country = COUNTRY_OPTIONS.find(
+                              (c) => c.code === selectedCountryCode,
+                            );
+                            if (country) {
+                              setPhoneNumber(
+                                formatWithMask(
+                                  digits,
+                                  country.mask,
+                                  country.maxLength,
+                                ),
+                              );
+                            } else {
+                              setPhoneNumber(digits.slice(0, 15));
+                            }
+                            if (errors.phoneNumber) {
+                              setErrors((prev) => {
+                                const { phoneNumber: _, ...rest } = prev;
+                                return rest;
+                              });
+                            }
+                          }}
+                          maxLength={
+                            COUNTRY_OPTIONS.find(
+                              (c) => c.code === selectedCountryCode,
+                            )?.mask.length ?? 15
+                          }
+                        />
+                      </View>
+                      {errors.phoneNumber && (
                         <Text style={styles.errorText}>
-                          {errors.companyName}
+                          {errors.phoneNumber}
                         </Text>
                       )}
                     </View>
-                  )}
-                </View>
-              </>
-            )}
-
-            {currentStep === 2 && (
-              <>
-                <View
-                  style={[
-                    styles.section,
-                    isTinyScreen && { padding: 12, borderRadius: 12 },
-                    (isCompact || isSmallScreen) && { padding: 14 },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.sectionTitle,
-                      isTinyScreen && { fontSize: 13, marginBottom: 4 },
-                      isSmallScreen && !isTinyScreen && { marginBottom: 6 },
-                    ]}
-                  >
-                    {t("register.contactInfo")}
-                  </Text>
-                  <View style={styles.sectionUnderline} />
-                  <View
-                    style={[
-                      styles.comingSoonBanner,
-                      (isTinyScreen || isSmallScreen) && { padding: 16 },
-                    ]}
-                  >
-                    <Ionicons
-                      name="time-outline"
-                      size={28}
-                      color="#E25A17"
-                      style={{ marginBottom: 8 }}
-                    />
-                    <Text
+                    <TouchableOpacity
                       style={[
-                        styles.comingSoonBannerText,
-                        (isTinyScreen || isSmallScreen) && {
-                          fontSize: 13,
-                          lineHeight: 19,
-                        },
+                        styles.checkboxContainer,
+                        (isTinyScreen || isSmallScreen) && { marginBottom: 14 },
                       ]}
+                      onPress={() => setHasCompany(!hasCompany)}
                     >
-                      {t("register.contactInfoComingSoon")}
-                    </Text>
-                  </View>
-                </View>
-                <View
-                  style={[
-                    styles.section,
-                    {
-                      marginTop: (isCompact || isSmallScreen) ? 14 : 20,
-                      padding: isTinyScreen ? 12 : (isCompact || isSmallScreen) ? 14 : 20,
-                      borderRadius: (isTinyScreen || isSmallScreen) ? 12 : 16,
-                    },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.sectionTitle,
-                      isTinyScreen && { fontSize: 13, marginBottom: 4 },
-                      isSmallScreen && !isTinyScreen && { marginBottom: 6 },
-                    ]}
-                  >
-                    {t("register.accountType")}
-                  </Text>
-                  <View style={styles.sectionUnderline} />
-                  <Text
-                    style={[
-                      styles.inputLabel,
-                      (isTinyScreen || isSmallScreen) && { fontSize: 12, marginBottom: 6 },
-                    ]}
-                  >
-                    {t("register.agentOrInvestor")}{" "}
-                    <Text style={styles.required}>*</Text>
-                  </Text>
-                  <TouchableOpacity
-                    style={[
-                      styles.radioContainer,
-                      (isTinyScreen || isSmallScreen) && { marginBottom: 12 },
-                    ]}
-                    onPress={() => setIsAgent(true)}
-                  >
-                    <View
-                      style={[
-                        styles.radio,
-                        isAgent === true && styles.radioChecked,
-                      ]}
-                    >
-                      {isAgent === true && <View style={styles.radioDot} />}
-                    </View>
-                    <Text style={styles.radioLabel}>{t("register.imAgent")}</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.radioContainer}
-                    onPress={() => setIsAgent(false)}
-                  >
-                    <View
-                      style={[
-                        styles.radio,
-                        isAgent === false && styles.radioChecked,
-                      ]}
-                    >
-                      {isAgent === false && <View style={styles.radioDot} />}
-                    </View>
-                    <Text
-                      style={[
-                        styles.radioLabel,
-                        (isTinyScreen || isSmallScreen) && { fontSize: 13 },
-                      ]}
-                    >
-                      {t("register.imInvestor")}
-                    </Text>
-                  </TouchableOpacity>
-                  {errors.isAgent && (
-                    <Text style={styles.errorText}>{errors.isAgent}</Text>
-                  )}
-                  {isAgent !== null && (
-                    <View style={styles.agentQRSection}>
-                      <View style={styles.agentQRHeader}>
-                        <MaterialCommunityIcons
-                          name="shield-star"
-                          size={24}
-                          color="#E25A17"
-                        />
-                        <Text style={styles.agentQRTitle}>{t("register.referralCode")}</Text>
+                      <View
+                        style={[
+                          styles.checkbox,
+                          hasCompany && styles.checkboxChecked,
+                        ]}
+                      >
+                        {hasCompany && (
+                          <Ionicons
+                            name="checkmark"
+                            size={16}
+                            color="#E25A17"
+                          />
+                        )}
                       </View>
-                      <Text style={styles.agentNumberSubtext}>
-                        {t("register.referralCodeSubtext")}
-                      </Text>
-                    </View>
-                  )}
-                  <View style={[styles.inputGroup, { marginTop: 20 }]}>
-                    <Text style={styles.inputLabel}>
-                      {t("register.referrersCode")}
-                    </Text>
-                    <View style={styles.scannerInputContainer}>
-                      <TextInput
-                        style={styles.scannerInput}
-                        placeholder={t("register.placeholderReferralCode")}
-                        placeholderTextColor="#999"
-                        autoCorrect={false}
-                        autoComplete="off"
-                        value={referralCode}
-                        onChangeText={(text) =>
-                          setReferralCode(filterReferralInput(text))
-                        }
-                        autoCapitalize="characters"
-                        maxLength={5}
-                      />
-                      <TouchableOpacity
-                        style={styles.scannerButton}
-                        onPress={() => openScanner("referral")}
+                      <Text
+                        style={[
+                          styles.checkboxLabel,
+                          (isTinyScreen || isSmallScreen) && { fontSize: 13 },
+                        ]}
                       >
-                        <Ionicons
-                          name="qr-code-outline"
-                          size={20}
-                          color="#E25A17"
+                        {t("register.iHaveCompany")}
+                      </Text>
+                    </TouchableOpacity>
+                    {hasCompany && (
+                      <View
+                        style={[
+                          styles.inputGroup,
+                          (isTinyScreen || isSmallScreen) && {
+                            marginBottom: 14,
+                          },
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.inputLabel,
+                            (isTinyScreen || isSmallScreen) && {
+                              fontSize: 12,
+                              marginBottom: 6,
+                            },
+                          ]}
+                        >
+                          {t("register.companyName")}{" "}
+                          <Text style={styles.required}>*</Text>
+                        </Text>
+                        <TextInput
+                          style={[
+                            styles.input,
+                            errors.companyName && styles.inputError,
+                            (isTinyScreen || isSmallScreen) && {
+                              minHeight: 44,
+                              paddingVertical: 10,
+                              fontSize: 14,
+                            },
+                          ]}
+                          placeholder={t("register.placeholderCompanyName")}
+                          placeholderTextColor="#999"
+                          autoCapitalize="words"
+                          autoCorrect={false}
+                          autoComplete="off"
+                          value={companyName}
+                          onChangeText={(text) => {
+                            setCompanyName(
+                              capitalizeWords(filterCompanyInput(text)),
+                            );
+                            if (errors.companyName) {
+                              setErrors((prev) => {
+                                const { companyName, ...rest } = prev;
+                                return rest;
+                              });
+                            }
+                          }}
                         />
-                      </TouchableOpacity>
-                    </View>
-                    <Text style={styles.helperText}>
-                      {t("register.referralCodeHint")}
-                    </Text>
-                    <Text style={[styles.helperText, { marginTop: 4 }]}>
-                      {t("register.maxChars")}
-                    </Text>
+                        {errors.companyName && (
+                          <Text style={styles.errorText}>
+                            {errors.companyName}
+                          </Text>
+                        )}
+                      </View>
+                    )}
                   </View>
-                </View>
-              </>
-            )}
+                </>
+              )}
 
-            {currentStep === 3 && (
-              <>
-                <View
-                  style={[
-                    styles.section,
-                    isTinyScreen && { padding: 12, borderRadius: 12 },
-                    (isCompact || isSmallScreen) && { padding: 14 },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.sectionTitle,
-                      isTinyScreen && { fontSize: 13, marginBottom: 4 },
-                      isSmallScreen && !isTinyScreen && { marginBottom: 6 },
-                    ]}
-                  >
-                    {t("register.accountCredentials")}
-                  </Text>
-                  <View style={styles.sectionUnderline} />
+              {currentStep === 2 && (
+                <>
                   <View
                     style={[
-                      styles.inputGroup,
-                      (isTinyScreen || isSmallScreen) && { marginBottom: 14 },
+                      styles.section,
+                      isTinyScreen && { padding: 12, borderRadius: 12 },
+                      (isCompact || isSmallScreen) && { padding: 14 },
                     ]}
                   >
                     <Text
                       style={[
-                        styles.inputLabel,
-                        (isTinyScreen || isSmallScreen) && {
-                          fontSize: 12,
-                          marginBottom: 6,
-                        },
+                        styles.sectionTitle,
+                        isTinyScreen && { fontSize: 13, marginBottom: 4 },
+                        isSmallScreen && !isTinyScreen && { marginBottom: 6 },
                       ]}
                     >
-                      {t("register.emailAddress")} <Text style={styles.required}>*</Text>
+                      {t("register.contactInfo")}
                     </Text>
-                    <TextInput
-                      style={[
-                        styles.input,
-                        errors.emailAddress && styles.inputError,
-                        (isTinyScreen || isSmallScreen) && {
-                          minHeight: 44,
-                          paddingVertical: 10,
-                          fontSize: 14,
-                        },
-                      ]}
-                      placeholder={t("register.placeholderEmail")}
-                      placeholderTextColor="#999"
-                      keyboardType="email-address"
-                      autoCapitalize="none"
-                      autoCorrect={false}
-                      autoComplete="off"
-                      value={emailAddress}
-                      onChangeText={(text) => {
-                        setEmailAddress(filterEmailInput(text));
-                        if (errors.emailAddress) {
-                          setErrors((prev) => {
-                            const { emailAddress, ...rest } = prev;
-                            return rest;
-                          });
-                        }
-                      }}
-                    />
-                    {errors.emailAddress && (
-                      <Text style={styles.errorText}>
-                        {errors.emailAddress}
-                      </Text>
-                    )}
-                  </View>
-                  <View
-                    style={[
-                      styles.inputGroup,
-                      (isTinyScreen || isSmallScreen) && { marginBottom: 14 },
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.inputLabel,
-                        (isTinyScreen || isSmallScreen) && {
-                          fontSize: 12,
-                          marginBottom: 6,
-                        },
-                      ]}
-                    >
-                      {t("register.password")} <Text style={styles.required}>*</Text>
-                    </Text>
+                    <View style={styles.sectionUnderline} />
                     <View
                       style={[
-                        styles.passwordContainer,
-                        errors.password && styles.inputError,
-                        (isTinyScreen || isSmallScreen) && {
-                          minHeight: 44,
-                        },
+                        styles.comingSoonBanner,
+                        (isTinyScreen || isSmallScreen) && { padding: 16 },
                       ]}
                     >
-                      <TextInput
+                      <Ionicons
+                        name="time-outline"
+                        size={28}
+                        color="#E25A17"
+                        style={{ marginBottom: 8 }}
+                      />
+                      <Text
                         style={[
-                          styles.passwordInput,
+                          styles.comingSoonBannerText,
                           (isTinyScreen || isSmallScreen) && {
-                            fontSize: 14,
-                            paddingVertical: 10,
+                            fontSize: 13,
+                            lineHeight: 19,
                           },
                         ]}
-                        placeholder={t("register.placeholderPassword")}
-                        placeholderTextColor="#999"
-                        autoCorrect={false}
-                        autoComplete="new-password"
-                        secureTextEntry={!showPassword}
-                        value={password}
-                        onChangeText={(text) => {
-                          setPassword(filterPasswordInput(text));
-                          if (errors.password) {
-                            setErrors((prev) => {
-                              const { password, ...rest } = prev;
-                              return rest;
-                            });
-                          }
-                        }}
-                      />
-                      <TouchableOpacity
-                        style={styles.eyeButton}
-                        onPress={() => setShowPassword(!showPassword)}
                       >
-                        <Ionicons
-                          name={showPassword ? "eye-off" : "eye"}
-                          size={20}
-                          color="#666"
-                        />
-                      </TouchableOpacity>
+                        {t("register.contactInfoComingSoon")}
+                      </Text>
                     </View>
                   </View>
                   <View
                     style={[
-                      styles.inputGroup,
-                      (isTinyScreen || isSmallScreen) && { marginBottom: 14 },
+                      styles.section,
+                      {
+                        marginTop: isCompact || isSmallScreen ? 14 : 20,
+                        padding: isTinyScreen
+                          ? 12
+                          : isCompact || isSmallScreen
+                            ? 14
+                            : 20,
+                        borderRadius: isTinyScreen || isSmallScreen ? 12 : 16,
+                      },
                     ]}
                   >
+                    <Text
+                      style={[
+                        styles.sectionTitle,
+                        isTinyScreen && { fontSize: 13, marginBottom: 4 },
+                        isSmallScreen && !isTinyScreen && { marginBottom: 6 },
+                      ]}
+                    >
+                      {t("register.accountType")}
+                    </Text>
+                    <View style={styles.sectionUnderline} />
                     <Text
                       style={[
                         styles.inputLabel,
@@ -1184,91 +1052,378 @@ export default function Register() {
                         },
                       ]}
                     >
-                      {t("register.confirmPassword")} <Text style={styles.required}>*</Text>
+                      {t("register.agentOrInvestor")}{" "}
+                      <Text style={styles.required}>*</Text>
                     </Text>
-                    <View
+                    <TouchableOpacity
                       style={[
-                        styles.passwordContainer,
-                        errors.confirmPassword && styles.inputError,
-                        (isTinyScreen || isSmallScreen) && {
-                          minHeight: 44,
-                        },
+                        styles.radioContainer,
+                        (isTinyScreen || isSmallScreen) && { marginBottom: 12 },
+                      ]}
+                      onPress={() => setIsAgent(true)}
+                    >
+                      <View
+                        style={[
+                          styles.radio,
+                          isAgent === true && styles.radioChecked,
+                        ]}
+                      >
+                        {isAgent === true && <View style={styles.radioDot} />}
+                      </View>
+                      <Text style={styles.radioLabel}>
+                        {t("register.imAgent")}
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.radioContainer}
+                      onPress={() => setIsAgent(false)}
+                    >
+                      <View
+                        style={[
+                          styles.radio,
+                          isAgent === false && styles.radioChecked,
+                        ]}
+                      >
+                        {isAgent === false && <View style={styles.radioDot} />}
+                      </View>
+                      <Text
+                        style={[
+                          styles.radioLabel,
+                          (isTinyScreen || isSmallScreen) && { fontSize: 13 },
+                        ]}
+                      >
+                        {t("register.imInvestor")}
+                      </Text>
+                    </TouchableOpacity>
+                    {errors.isAgent && (
+                      <Text style={styles.errorText}>{errors.isAgent}</Text>
+                    )}
+                    {isAgent !== null && (
+                      <View style={styles.agentQRSection}>
+                        <View style={styles.agentQRHeader}>
+                          <MaterialCommunityIcons
+                            name="shield-star"
+                            size={24}
+                            color="#E25A17"
+                          />
+                          <Text style={styles.agentQRTitle}>
+                            {t("register.referralCode")}
+                          </Text>
+                        </View>
+                        <Text style={styles.agentNumberSubtext}>
+                          {t("register.referralCodeSubtext")}
+                        </Text>
+                      </View>
+                    )}
+                    <View style={[styles.inputGroup, { marginTop: 20 }]}>
+                      <Text style={styles.inputLabel}>
+                        {t("register.referrersCode")}
+                      </Text>
+                      <View style={styles.scannerInputContainer}>
+                        <TextInput
+                          style={styles.scannerInput}
+                          placeholder={t("register.placeholderReferralCode")}
+                          placeholderTextColor="#999"
+                          autoCorrect={false}
+                          autoComplete="off"
+                          value={referralCode}
+                          onChangeText={(text) =>
+                            setReferralCode(filterReferralInput(text))
+                          }
+                          autoCapitalize="characters"
+                          maxLength={5}
+                        />
+                        {isProcessingQR ? (
+                          <View
+                            style={[
+                              styles.scannerButton,
+                              { paddingHorizontal: 16 },
+                            ]}
+                          >
+                            <ActivityIndicator size="small" color="#E25A17" />
+                          </View>
+                        ) : (
+                          <>
+                            <TouchableOpacity
+                              style={styles.scannerButton}
+                              onPress={() => handleUploadImage("referral")}
+                            >
+                              <Ionicons
+                                name="image-outline"
+                                size={20}
+                                color="#E25A17"
+                              />
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              style={styles.scannerButton}
+                              onPress={() => openScanner("referral")}
+                            >
+                              <Ionicons
+                                name="qr-code-outline"
+                                size={20}
+                                color="#E25A17"
+                              />
+                            </TouchableOpacity>
+                          </>
+                        )}
+                      </View>
+                      <Text style={styles.helperText}>
+                        {t("register.referralCodeHint")}
+                      </Text>
+                      <Text style={[styles.helperText, { marginTop: 4 }]}>
+                        {t("register.maxChars")}
+                      </Text>
+                    </View>
+                  </View>
+                </>
+              )}
+
+              {currentStep === 3 && (
+                <>
+                  <View
+                    style={[
+                      styles.section,
+                      isTinyScreen && { padding: 12, borderRadius: 12 },
+                      (isCompact || isSmallScreen) && { padding: 14 },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.sectionTitle,
+                        isTinyScreen && { fontSize: 13, marginBottom: 4 },
+                        isSmallScreen && !isTinyScreen && { marginBottom: 6 },
                       ]}
                     >
-                      <TextInput
+                      {t("register.accountCredentials")}
+                    </Text>
+                    <View style={styles.sectionUnderline} />
+                    <View
+                      style={[
+                        styles.inputGroup,
+                        (isTinyScreen || isSmallScreen) && { marginBottom: 14 },
+                      ]}
+                    >
+                      <Text
                         style={[
-                          styles.passwordInput,
+                          styles.inputLabel,
                           (isTinyScreen || isSmallScreen) && {
-                            fontSize: 14,
-                            paddingVertical: 10,
+                            fontSize: 12,
+                            marginBottom: 6,
                           },
                         ]}
-                        placeholder={t("register.placeholderConfirmPassword")}
+                      >
+                        {t("register.emailAddress")}{" "}
+                        <Text style={styles.required}>*</Text>
+                      </Text>
+                      <TextInput
+                        style={[
+                          styles.input,
+                          errors.emailAddress && styles.inputError,
+                          (isTinyScreen || isSmallScreen) && {
+                            minHeight: 44,
+                            paddingVertical: 10,
+                            fontSize: 14,
+                          },
+                        ]}
+                        placeholder={t("register.placeholderEmail")}
                         placeholderTextColor="#999"
+                        keyboardType="email-address"
+                        autoCapitalize="none"
                         autoCorrect={false}
                         autoComplete="off"
-                        secureTextEntry={!showConfirmPassword}
-                        value={confirmPassword}
+                        value={emailAddress}
                         onChangeText={(text) => {
-                          setConfirmPassword(filterPasswordInput(text));
-                          if (errors.confirmPassword) {
+                          setEmailAddress(filterEmailInput(text));
+                          if (errors.emailAddress) {
                             setErrors((prev) => {
-                              const { confirmPassword, ...rest } = prev;
+                              const { emailAddress, ...rest } = prev;
                               return rest;
                             });
                           }
                         }}
                       />
-                      <TouchableOpacity
-                        style={styles.eyeButton}
-                        onPress={() =>
-                          setShowConfirmPassword(!showConfirmPassword)
-                        }
-                      >
-                        <Ionicons
-                          name={showConfirmPassword ? "eye-off" : "eye"}
-                          size={20}
-                          color="#666"
-                        />
-                      </TouchableOpacity>
+                      {errors.emailAddress && (
+                        <Text style={styles.errorText}>
+                          {errors.emailAddress}
+                        </Text>
+                      )}
                     </View>
-                    {errors.confirmPassword && (
-                      <Text style={styles.errorText}>
-                        {errors.confirmPassword}
+                    <View
+                      style={[
+                        styles.inputGroup,
+                        (isTinyScreen || isSmallScreen) && { marginBottom: 14 },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.inputLabel,
+                          (isTinyScreen || isSmallScreen) && {
+                            fontSize: 12,
+                            marginBottom: 6,
+                          },
+                        ]}
+                      >
+                        {t("register.password")}{" "}
+                        <Text style={styles.required}>*</Text>
                       </Text>
-                    )}
-                    {errors.password && (
-                      <Text style={styles.errorText}>{errors.password}</Text>
-                    )}
+                      <View
+                        style={[
+                          styles.passwordContainer,
+                          errors.password && styles.inputError,
+                          (isTinyScreen || isSmallScreen) && {
+                            minHeight: 44,
+                          },
+                        ]}
+                      >
+                        <TextInput
+                          style={[
+                            styles.passwordInput,
+                            (isTinyScreen || isSmallScreen) && {
+                              fontSize: 14,
+                              paddingVertical: 10,
+                            },
+                          ]}
+                          placeholder={t("register.placeholderPassword")}
+                          placeholderTextColor="#999"
+                          autoCorrect={false}
+                          autoComplete="new-password"
+                          secureTextEntry={!showPassword}
+                          value={password}
+                          onChangeText={(text) => {
+                            setPassword(filterPasswordInput(text));
+                            if (errors.password) {
+                              setErrors((prev) => {
+                                const { password, ...rest } = prev;
+                                return rest;
+                              });
+                            }
+                          }}
+                        />
+                        <TouchableOpacity
+                          style={styles.eyeButton}
+                          onPress={() => setShowPassword(!showPassword)}
+                        >
+                          <Ionicons
+                            name={showPassword ? "eye-off" : "eye"}
+                            size={20}
+                            color="#666"
+                          />
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                    <View
+                      style={[
+                        styles.inputGroup,
+                        (isTinyScreen || isSmallScreen) && { marginBottom: 14 },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.inputLabel,
+                          (isTinyScreen || isSmallScreen) && {
+                            fontSize: 12,
+                            marginBottom: 6,
+                          },
+                        ]}
+                      >
+                        {t("register.confirmPassword")}{" "}
+                        <Text style={styles.required}>*</Text>
+                      </Text>
+                      <View
+                        style={[
+                          styles.passwordContainer,
+                          errors.confirmPassword && styles.inputError,
+                          (isTinyScreen || isSmallScreen) && {
+                            minHeight: 44,
+                          },
+                        ]}
+                      >
+                        <TextInput
+                          style={[
+                            styles.passwordInput,
+                            (isTinyScreen || isSmallScreen) && {
+                              fontSize: 14,
+                              paddingVertical: 10,
+                            },
+                          ]}
+                          placeholder={t("register.placeholderConfirmPassword")}
+                          placeholderTextColor="#999"
+                          autoCorrect={false}
+                          autoComplete="off"
+                          secureTextEntry={!showConfirmPassword}
+                          value={confirmPassword}
+                          onChangeText={(text) => {
+                            setConfirmPassword(filterPasswordInput(text));
+                            if (errors.confirmPassword) {
+                              setErrors((prev) => {
+                                const { confirmPassword, ...rest } = prev;
+                                return rest;
+                              });
+                            }
+                          }}
+                        />
+                        <TouchableOpacity
+                          style={styles.eyeButton}
+                          onPress={() =>
+                            setShowConfirmPassword(!showConfirmPassword)
+                          }
+                        >
+                          <Ionicons
+                            name={showConfirmPassword ? "eye-off" : "eye"}
+                            size={20}
+                            color="#666"
+                          />
+                        </TouchableOpacity>
+                      </View>
+                      {errors.confirmPassword && (
+                        <Text style={styles.errorText}>
+                          {errors.confirmPassword}
+                        </Text>
+                      )}
+                      {errors.password && (
+                        <Text style={styles.errorText}>{errors.password}</Text>
+                      )}
+                    </View>
                   </View>
-                </View>
-                {registerError ? (
-                  <View style={styles.errorBanner}>
-                    <Text style={styles.errorBannerText}>{registerError}</Text>
-                  </View>
-                ) : null}
-              </>
-            )}
-          </KeyboardAwareScrollView>
+                  {registerError ? (
+                    <View style={styles.errorBanner}>
+                      <Text style={styles.errorBannerText}>
+                        {registerError}
+                      </Text>
+                    </View>
+                  ) : null}
+                </>
+              )}
+            </KeyboardAwareScrollView>
             <View
               style={[
                 styles.footer,
                 {
                   marginHorizontal: -horizontalPadding,
                   paddingHorizontal: horizontalPadding,
-                  paddingVertical: isLargeScreen ? 12 : (isCompact || isSmallScreen) ? 10 : 14,
-                  paddingBottom: (isLargeScreen ? 12 : (isCompact || isSmallScreen) ? 10 : 14) + footerBottomPadding,
+                  paddingVertical: isLargeScreen
+                    ? 12
+                    : isCompact || isSmallScreen
+                      ? 10
+                      : 14,
+                  paddingBottom:
+                    (isLargeScreen
+                      ? 12
+                      : isCompact || isSmallScreen
+                        ? 10
+                        : 14) + footerBottomPadding,
                 },
               ]}
             >
               <TouchableOpacity
                 style={[
                   styles.nextButton,
-                  registerLoading && styles.nextButtonDisabled,
+                  (registerLoading || isProcessingQR) &&
+                    styles.nextButtonDisabled,
                 ]}
                 onPress={handleNextStep}
                 activeOpacity={0.8}
-                disabled={registerLoading}
+                disabled={registerLoading || isProcessingQR}
               >
                 <LinearGradient
                   colors={["#E25A17", "#F28934"]}
@@ -1286,16 +1441,16 @@ export default function Register() {
                         isTinyScreen && { fontSize: 14 },
                       ]}
                     >
-                      {currentStep === 3 ? t("register.registerButton") : t("register.nextStep")}
+                      {currentStep === 3
+                        ? t("register.registerButton")
+                        : t("register.nextStep")}
                     </Text>
                   )}
                 </LinearGradient>
               </TouchableOpacity>
-              <Text style={styles.termsText}>
-                {t("register.termsText")}
-              </Text>
+              <Text style={styles.termsText}>{t("register.termsText")}</Text>
             </View>
-          </KeyboardAvoidingView>
+          </View>
         </View>
 
         <Modal
@@ -1307,7 +1462,9 @@ export default function Register() {
           <View style={styles.modalOverlay}>
             <View style={styles.modalContainer}>
               <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>{t("register.selectCountry")}</Text>
+                <Text style={styles.modalTitle}>
+                  {t("register.selectCountry")}
+                </Text>
                 <TouchableOpacity
                   onPress={() => setIsCountryModalVisible(false)}
                 >
@@ -1362,7 +1519,9 @@ export default function Register() {
                   style={styles.qrCloseButton}
                   onPress={() => setIsQRScannerVisible(false)}
                 >
-                  <Text style={styles.qrCloseButtonText}>{t("register.goBack")}</Text>
+                  <Text style={styles.qrCloseButtonText}>
+                    {t("register.goBack")}
+                  </Text>
                 </TouchableOpacity>
               </View>
             ) : (
@@ -1377,10 +1536,12 @@ export default function Register() {
                 <View style={styles.qrOverlay}>
                   <View style={styles.qrTopOverlay}>
                     <Text style={styles.qrInstructionText}>
-                      {activeQRField === "referral" && t("register.scanReferralQR")}
+                      {activeQRField === "referral" &&
+                        t("register.scanReferralQR")}
                       {activeQRField === "line" && t("register.scanLineQR")}
                       {activeQRField === "viber" && t("register.scanViberQR")}
-                      {activeQRField === "whatsapp" && t("register.scanWhatsappQR")}
+                      {activeQRField === "whatsapp" &&
+                        t("register.scanWhatsappQR")}
                     </Text>
                   </View>
                   <View style={styles.qrCenterRow}>
@@ -1393,7 +1554,31 @@ export default function Register() {
                     </View>
                     <View style={styles.qrSideOverlay} />
                   </View>
-                  <View style={styles.qrBottomOverlay}>
+                  <View
+                    style={[
+                      styles.qrBottomOverlay,
+                      { flexDirection: "row", gap: 16 },
+                    ]}
+                  >
+                    <TouchableOpacity
+                      style={styles.qrCancelButton}
+                      onPress={() => {
+                        setIsQRScannerVisible(false);
+                        if (activeQRField) {
+                          handleUploadImage(activeQRField);
+                        }
+                        setActiveQRField(null);
+                      }}
+                    >
+                      <Text style={styles.qrCancelButtonText}>
+                        <Ionicons
+                          name="image-outline"
+                          size={16}
+                          color="#E25A17"
+                        />{" "}
+                        {t("register.uploadImage") || "Upload"}
+                      </Text>
+                    </TouchableOpacity>
                     <TouchableOpacity
                       style={styles.qrCancelButton}
                       onPress={() => {
@@ -1401,7 +1586,9 @@ export default function Register() {
                         setActiveQRField(null);
                       }}
                     >
-                      <Text style={styles.qrCancelButtonText}>{t("register.cancel")}</Text>
+                      <Text style={styles.qrCancelButtonText}>
+                        {t("register.cancel")}
+                      </Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -1437,11 +1624,25 @@ export default function Register() {
               onStartShouldSetResponder={() => true}
             >
               <View style={styles.languageModalHeader}>
-                <Ionicons name="globe-outline" size={isSmallScreen ? 32 : 40} color="#E25A17" />
-                <Text style={[styles.languageModalTitle, isSmallScreen && { fontSize: 16 }]}>
+                <Ionicons
+                  name="globe-outline"
+                  size={isSmallScreen ? 32 : 40}
+                  color="#E25A17"
+                />
+                <Text
+                  style={[
+                    styles.languageModalTitle,
+                    isSmallScreen && { fontSize: 16 },
+                  ]}
+                >
                   {t("profile.selectLanguage")}
                 </Text>
-                <Text style={[styles.languageModalSubtitle, isSmallScreen && { fontSize: 12 }]}>
+                <Text
+                  style={[
+                    styles.languageModalSubtitle,
+                    isSmallScreen && { fontSize: 12 },
+                  ]}
+                >
                   {t("profile.defaultIsEnglish")}
                 </Text>
               </View>

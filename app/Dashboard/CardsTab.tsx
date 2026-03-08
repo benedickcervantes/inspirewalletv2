@@ -4,6 +4,7 @@ import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Animated,
   Image,
@@ -14,8 +15,9 @@ import {
   Text,
   TouchableOpacity,
   useWindowDimensions,
-  View
+  View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   buyCard,
   cancelAutoRenewal,
@@ -23,7 +25,6 @@ import {
   getMyCardCollection,
   setActiveCard as setActiveCardApi,
 } from "../../configs/api";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLanguage } from "../../context/LanguageContext";
 import { getCardTheme } from "../theme/cardThemes";
 
@@ -34,6 +35,7 @@ interface CardsTabProps {
     accountNumber?: string;
   } | null;
   availableBalance: number;
+  isBalanceLoading: boolean;
   formatCurrency: (amount: number) => string;
   flipAnimation: Animated.Value;
   isCardFlipped: boolean;
@@ -52,6 +54,7 @@ const getActiveCardStorageKey = (accountNumber?: string) =>
 export default function CardsTab({
   userData,
   availableBalance,
+  isBalanceLoading,
   formatCurrency,
   flipAnimation,
   isCardFlipped,
@@ -79,13 +82,16 @@ export default function CardsTab({
   const modalContentMaxWidth = width - modalPadding * 2;
   const modalTopOffset = Math.max(insets.top, 12) + 56;
   const modalBottomPadding = Math.max(insets.bottom, modalPadding);
-  const modalContentMaxHeight = height - modalTopOffset - modalBottomPadding - 20;
+  const modalContentMaxHeight =
+    height - modalTopOffset - modalBottomPadding - 20;
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isVipModalVisible, setIsVipModalVisible] = useState(false);
   const [isPurchaseModalVisible, setIsPurchaseModalVisible] = useState(false);
   const [isDesignModalVisible, setIsDesignModalVisible] = useState(false);
   const [isSuccessModalVisible, setIsSuccessModalVisible] = useState(false);
-  const [successModalType, setSuccessModalType] = useState<"purchase" | "cancelRenewal">("purchase");
+  const [successModalType, setSuccessModalType] = useState<
+    "purchase" | "cancelRenewal"
+  >("purchase");
   const [selectedDesignCard, setSelectedDesignCard] = useState<{
     id?: string;
     title: string;
@@ -94,7 +100,7 @@ export default function CardsTab({
     backImage: any;
   }>({
     id: undefined,
-    title: '',
+    title: "",
     price: 0,
     image: undefined,
     backImage: undefined,
@@ -102,37 +108,45 @@ export default function CardsTab({
 
   const [cardCatalog, setCardCatalog] = useState<any[]>([]);
   const [myCollection, setMyCollection] = useState<any[]>([]);
-  const [activeCard, setActiveCard] = useState<{ design?: string; id?: string } | null>(
-    initialDesign ? { design: initialDesign } : null,
-  );
+  const [activeCard, setActiveCard] = useState<{
+    design?: string;
+    id?: string;
+  } | null>(initialDesign ? { design: initialDesign } : null);
   const [isLoading, setIsLoading] = useState(true);
 
   // Animated value for the indicator line
   const scrollIndicatorAnim = useRef(new Animated.Value(0)).current;
 
   // Derive Diamond Elite eligibility from catalog data
-  const diamondCatalog = cardCatalog.find((c: any) => c.design === 'DIAMOND_ELITE');
+  const diamondCatalog = cardCatalog.find(
+    (c: any) => c.design === "DIAMOND_ELITE",
+  );
   const isDiamondEligible = diamondCatalog?.isEligible ?? false;
   const isDiamondOwned = diamondCatalog?.isOwned ?? false;
   const isDiamondActive = diamondCatalog?.isActive ?? false;
 
   // Derive Gold Elite state from catalog data
-  const goldCatalog = cardCatalog.find((c: any) => c.design === 'GOLD_ELITE');
+  const goldCatalog = cardCatalog.find((c: any) => c.design === "GOLD_ELITE");
   const isGoldOwned = goldCatalog?.isOwned ?? false;
   const isGoldActive = goldCatalog?.isActive ?? false;
-  const goldExpiryDate = goldCatalog?.expiryDate ? new Date(goldCatalog.expiryDate) : null;
-  
+  const goldExpiryDate = goldCatalog?.expiryDate
+    ? new Date(goldCatalog.expiryDate)
+    : null;
+
   // Check if Gold Elite is within 3 days of expiry
   const isGoldRenewalAvailable = (() => {
     if (!isGoldActive || !goldExpiryDate) return false;
     const now = new Date();
-    const daysUntilExpiry = (goldExpiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
+    const daysUntilExpiry =
+      (goldExpiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
     return daysUntilExpiry <= 3 && daysUntilExpiry > 0;
   })();
 
   // Derive Design Collection state from catalog data
-  const orangeCatalog = cardCatalog.find((c: any) => c.design === 'ORANGE_ELITE');
-  const royalCatalog = cardCatalog.find((c: any) => c.design === 'ROYAL_CURVE');
+  const orangeCatalog = cardCatalog.find(
+    (c: any) => c.design === "ORANGE_ELITE",
+  );
+  const royalCatalog = cardCatalog.find((c: any) => c.design === "ROYAL_CURVE");
   const isOrangeOwned = orangeCatalog?.isOwned ?? false;
   const isRoyalOwned = royalCatalog?.isOwned ?? false;
 
@@ -153,13 +167,16 @@ export default function CardsTab({
 
       if (collectionRes.success && collectionRes.data) {
         const nextCollection = collectionRes.data.collection || [];
-        const nextActive: { design?: string; id?: string } | null = collectionRes.data.activeCard || null;
+        const nextActive: { design?: string; id?: string } | null =
+          collectionRes.data.activeCard || null;
         setMyCollection(nextCollection);
         setActiveCard(nextActive);
 
         // Notify parent about the resolved active design
         if (onActiveDesignChange) {
-          onActiveDesignChange((nextActive?.design as string | undefined) ?? null);
+          onActiveDesignChange(
+            (nextActive?.design as string | undefined) ?? null,
+          );
         }
 
         // Persist active design so we can show correct skin immediately on next app load.
@@ -263,20 +280,20 @@ export default function CardsTab({
 
   const vipFrontInterpolate = vipFlipAnim.interpolate({
     inputRange: [0, 180],
-    outputRange: ['0deg', '180deg'],
+    outputRange: ["0deg", "180deg"],
   });
   const vipBackInterpolate = vipFlipAnim.interpolate({
     inputRange: [0, 180],
-    outputRange: ['180deg', '360deg'],
+    outputRange: ["180deg", "360deg"],
   });
 
   const designFrontInterpolate = designFlipAnim.interpolate({
     inputRange: [0, 180],
-    outputRange: ['0deg', '180deg'],
+    outputRange: ["0deg", "180deg"],
   });
   const designBackInterpolate = designFlipAnim.interpolate({
     inputRange: [0, 180],
-    outputRange: ['180deg', '360deg'],
+    outputRange: ["180deg", "360deg"],
   });
 
   const frontInterpolate = flipAnimation.interpolate({
@@ -330,11 +347,15 @@ export default function CardsTab({
   const getCardFrontImage = () => getDesignFrontImage(activeCard?.design);
   const getCardBackImage = () => getDesignBackImage(activeCard?.design);
 
-  const handleSelectActiveCard = async (cardCollectionItemId: string | null) => {
+  const handleSelectActiveCard = async (
+    cardCollectionItemId: string | null,
+  ) => {
     if (!cardCollectionItemId) return;
 
     // Optimistic update: switch active card immediately in UI
-    const localItem = myCollection.find((i: any) => i.id === cardCollectionItemId);
+    const localItem = myCollection.find(
+      (i: any) => i.id === cardCollectionItemId,
+    );
     if (localItem) {
       setActiveCard(localItem);
       if (onActiveDesignChange) {
@@ -349,7 +370,8 @@ export default function CardsTab({
       const res = await setActiveCardApi(token, cardCollectionItemId);
       if (res.success && res.data) {
         const nextCollection = res.data.collection || [];
-        const nextActive: { design?: string; id?: string } | null = res.data.activeCard || null;
+        const nextActive: { design?: string; id?: string } | null =
+          res.data.activeCard || null;
         setMyCollection(nextCollection);
         setActiveCard(nextActive);
 
@@ -381,7 +403,7 @@ export default function CardsTab({
     // persisted to backend, but gives immediate UX for this session.
     setActiveCard(null);
     const storageKey = getActiveCardStorageKey(userData?.accountNumber);
-    AsyncStorage.removeItem(storageKey).catch(() => { });
+    AsyncStorage.removeItem(storageKey).catch(() => {});
     if (onActiveDesignChange) {
       onActiveDesignChange(null);
     }
@@ -393,39 +415,95 @@ export default function CardsTab({
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <View style={[styles.section, { paddingHorizontal: horizontalPadding }]}>
         <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { fontSize: 18 * fontScale }]}>{t("ct.yourInspireCard")}</Text>
-          <Text style={[styles.sectionSubtitle, { fontSize: 12 * fontScale }]}>{t("ct.defaultCard")}</Text>
+          <Text style={[styles.sectionTitle, { fontSize: 18 * fontScale }]}>
+            {t("ct.yourInspireCard")}
+          </Text>
+          <Text style={[styles.sectionSubtitle, { fontSize: 12 * fontScale }]}>
+            {t("ct.defaultCard")}
+          </Text>
         </View>
       </View>
 
-      <View style={[styles.mainCardContainer, { paddingHorizontal: horizontalPadding, height: mainCardContainerHeight }]}>
+      <View
+        style={[
+          styles.mainCardContainer,
+          {
+            paddingHorizontal: horizontalPadding,
+            height: mainCardContainerHeight,
+          },
+        ]}
+      >
         <Animated.View style={[styles.cardFace, frontAnimatedStyle]}>
           <TouchableOpacity activeOpacity={0.8} onPress={flipCard}>
             <ImageBackground
               source={getCardFrontImage()}
-              style={[styles.mainCard, { width: mainCardWidth, height: mainCardHeight }]}
+              style={[
+                styles.mainCard,
+                { width: mainCardWidth, height: mainCardHeight },
+              ]}
               imageStyle={styles.mainCardImage}
-              resizeMode="cover">
-              <View style={[styles.mainCardContent, { padding: isSmallScreen ? 16 : 24 }]}>
+              resizeMode="cover"
+            >
+              <View
+                style={[
+                  styles.mainCardContent,
+                  { padding: isSmallScreen ? 16 : 24 },
+                ]}
+              >
                 <View style={styles.cardDetailsBottom}>
-                  <Text style={[styles.cardNumber, { color: theme.primaryText, fontSize: Math.round(16 * fontScale) }]}>
+                  <Text
+                    style={[
+                      styles.cardNumber,
+                      {
+                        color: theme.primaryText,
+                        fontSize: Math.round(16 * fontScale),
+                      },
+                    ]}
+                  >
                     {userData?.accountNumber || t("ct.placeholderAccount")}
                   </Text>
-                  <Text style={[styles.cardName, { color: theme.primaryText, fontSize: Math.round(16 * fontScale) }]}>
+                  <Text
+                    style={[
+                      styles.cardName,
+                      {
+                        color: theme.primaryText,
+                        fontSize: Math.round(16 * fontScale),
+                      },
+                    ]}
+                  >
                     {[userData?.firstName, userData?.lastName]
                       .filter(Boolean)
                       .join(" ")
                       .toUpperCase() || t("ct.placeholderName")}
                   </Text>
                   <Text
-                    style={[styles.cardBalanceLabel, { color: theme.secondaryText, fontSize: Math.round(11 * fontScale) }]}
+                    style={[
+                      styles.cardBalanceLabel,
+                      {
+                        color: theme.secondaryText,
+                        fontSize: Math.round(11 * fontScale),
+                      },
+                    ]}
                   >
                     {t("ct.availableBalance")}
                   </Text>
                   <Text
-                    style={[styles.cardBalanceAmount, { color: theme.primaryText, fontSize: Math.round(18 * fontScale) }]}
+                    style={[
+                      styles.cardBalanceAmount,
+                      {
+                        color: theme.primaryText,
+                        fontSize: Math.round(18 * fontScale),
+                      },
+                    ]}
                   >
-                    ₱ {formatCurrency(availableBalance)}
+                    {isBalanceLoading ? (
+                      <ActivityIndicator
+                        size="small"
+                        color={theme.primaryText}
+                      />
+                    ) : (
+                      `₱ ${formatCurrency(availableBalance)}`
+                    )}
                   </Text>
                 </View>
               </View>
@@ -435,11 +513,15 @@ export default function CardsTab({
 
         <Animated.View
           style={[styles.cardFace, styles.cardBack, backAnimatedStyle]}
-          pointerEvents={isCardFlipped ? "auto" : "none"}>
+          pointerEvents={isCardFlipped ? "auto" : "none"}
+        >
           <TouchableOpacity activeOpacity={0.8} onPress={flipCard}>
             <ImageBackground
               source={getCardBackImage()}
-              style={[styles.mainCard, { width: mainCardWidth, height: mainCardHeight }]}
+              style={[
+                styles.mainCard,
+                { width: mainCardWidth, height: mainCardHeight },
+              ]}
               imageStyle={styles.mainCardImage}
               resizeMode="cover"
             />
@@ -447,13 +529,20 @@ export default function CardsTab({
         </Animated.View>
       </View>
 
-      <View style={[styles.collectionSection, { paddingHorizontal: horizontalPadding }]}>
+      <View
+        style={[
+          styles.collectionSection,
+          { paddingHorizontal: horizontalPadding },
+        ]}
+      >
         <View style={styles.collectionHeader}>
           <View style={styles.collectionTitleRow}>
-            <MaterialCommunityIcons name="crown" size={isSmallScreen ? 18 : 20} color="#FFD700" />
-            <Text style={styles.collectionTitle}>
-              {t("ct.vipCollection")}
-            </Text>
+            <MaterialCommunityIcons
+              name="crown"
+              size={isSmallScreen ? 18 : 20}
+              color="#FFD700"
+            />
+            <Text style={styles.collectionTitle}>{t("ct.vipCollection")}</Text>
           </View>
           <Text style={styles.collectionSubtitle}>
             {t("ct.vipPhysicalRequired")}
@@ -467,7 +556,8 @@ export default function CardsTab({
                 source={require("../../assets/cards/vip_collection/vp2/front.png")}
                 style={styles.cardPreviewImage}
                 imageStyle={styles.cardPreviewImageStyle}
-                resizeMode="cover">
+                resizeMode="cover"
+              >
                 <View style={styles.vipBadge}>
                   <Text style={styles.vipBadgeText}>{t("ct.vip")}</Text>
                 </View>
@@ -480,14 +570,14 @@ export default function CardsTab({
             </View>
 
             <View style={styles.cardInfo}>
-              <Text style={styles.cardItemTitle}>
-                {t("ct.diamondElite")}
-              </Text>
+              <Text style={styles.cardItemTitle}>{t("ct.diamondElite")}</Text>
               <Text style={styles.cardItemSubtitle}>{t("ct.deposit10M")}</Text>
 
               {isDiamondActive ? (
                 <View style={[styles.upgradeButton, styles.claimedButton]}>
-                  <Text style={[styles.upgradeButtonText, styles.claimedButtonText]}>
+                  <Text
+                    style={[styles.upgradeButtonText, styles.claimedButtonText]}
+                  >
                     ✓ {t("Already Claimed")}
                   </Text>
                 </View>
@@ -495,14 +585,19 @@ export default function CardsTab({
                 <TouchableOpacity
                   style={[
                     styles.upgradeButton,
-                    isDiamondEligible && styles.activeUpgradeButton
+                    isDiamondEligible && styles.activeUpgradeButton,
                   ]}
-                  onPress={() => setIsVipModalVisible(true)}>
-                  <Text style={[
-                    styles.upgradeButtonText,
-                    isDiamondEligible && styles.activeUpgradeButtonText
-                  ]}>
-                    {isDiamondEligible ? (t("ct.claimCard") || "Claim Card") : t("ct.upgradeRequired")}
+                  onPress={() => setIsVipModalVisible(true)}
+                >
+                  <Text
+                    style={[
+                      styles.upgradeButtonText,
+                      isDiamondEligible && styles.activeUpgradeButtonText,
+                    ]}
+                  >
+                    {isDiamondEligible
+                      ? t("ct.claimCard") || "Claim Card"
+                      : t("ct.upgradeRequired")}
                   </Text>
                 </TouchableOpacity>
               )}
@@ -514,7 +609,8 @@ export default function CardsTab({
                 source={require("../../assets/cards/vip_collection/vp1/front.png")}
                 style={styles.cardPreviewImage}
                 imageStyle={styles.cardPreviewImageStyle}
-                resizeMode="cover">
+                resizeMode="cover"
+              >
                 <View style={styles.vipBadge}>
                   <Text style={styles.vipBadgeText}>{t("ct.vip")}</Text>
                 </View>
@@ -527,7 +623,9 @@ export default function CardsTab({
             </View>
             <View style={styles.cardInfo}>
               <Text style={styles.cardItemTitle}>{t("ct.goldElite")}</Text>
-              <Text style={styles.cardItemSubtitle}>{t("ct.sub10KMonthly")}</Text>
+              <Text style={styles.cardItemSubtitle}>
+                {t("ct.sub10KMonthly")}
+              </Text>
 
               <TouchableOpacity
                 style={styles.getStartedButton}
@@ -542,10 +640,19 @@ export default function CardsTab({
         </View>
       </View>
 
-      <View style={[styles.collectionSection, { paddingHorizontal: horizontalPadding }]}>
+      <View
+        style={[
+          styles.collectionSection,
+          { paddingHorizontal: horizontalPadding },
+        ]}
+      >
         <View style={styles.collectionHeader}>
           <View style={styles.collectionTitleRow}>
-            <MaterialCommunityIcons name="palette" size={isSmallScreen ? 18 : 20} color="#E15816" />
+            <MaterialCommunityIcons
+              name="palette"
+              size={isSmallScreen ? 18 : 20}
+              color="#E15816"
+            />
             <Text style={styles.collectionTitle}>
               {t("ct.designCollection")}
             </Text>
@@ -562,9 +669,12 @@ export default function CardsTab({
                 source={require("../../assets/cards/design_collection/dc1/front.png")}
                 style={styles.cardPreviewImage}
                 imageStyle={styles.cardPreviewImageStyle}
-                resizeMode="cover">
+                resizeMode="cover"
+              >
                 <View style={styles.premiumGradient}>
-                  <Text style={styles.premiumLabel}>{t("ct.premiumBadge")}</Text>
+                  <Text style={styles.premiumLabel}>
+                    {t("ct.premiumBadge")}
+                  </Text>
                 </View>
                 <View style={styles.priceBadge}>
                   <Text style={styles.priceText}>₱ {formatCurrency(250)}</Text>
@@ -588,22 +698,27 @@ export default function CardsTab({
                 <TouchableOpacity
                   style={[
                     styles.upgradeButton,
-                    availableBalance >= 250 && styles.activeUpgradeButton
+                    availableBalance >= 250 && styles.activeUpgradeButton,
                   ]}
                   onPress={() => {
                     setSelectedDesignCard({
-                      id: 'ORANGE_ELITE',
+                      id: "ORANGE_ELITE",
                       title: t("ct.orangeElite") || "Orange Elite",
                       price: 250,
                       image: require("../../assets/cards/design_collection/dc1/front.png"),
-                      backImage: require("../../assets/cards/design_collection/dc1/back.png")
+                      backImage: require("../../assets/cards/design_collection/dc1/back.png"),
                     });
                     setIsDesignModalVisible(true);
-                  }}>
-                  <Text style={[
-                    styles.upgradeButtonText,
-                    availableBalance >= 250 && styles.activeUpgradeButtonText
-                  ]}>{t("ct.tapToBuy")}</Text>
+                  }}
+                >
+                  <Text
+                    style={[
+                      styles.upgradeButtonText,
+                      availableBalance >= 250 && styles.activeUpgradeButtonText,
+                    ]}
+                  >
+                    {t("ct.tapToBuy")}
+                  </Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -614,9 +729,12 @@ export default function CardsTab({
                 source={require("../../assets/cards/design_collection/dc2/front.png")}
                 style={styles.cardPreviewImage}
                 imageStyle={styles.cardPreviewImageStyle}
-                resizeMode="cover">
+                resizeMode="cover"
+              >
                 <View style={styles.premiumGradientGold}>
-                  <Text style={styles.premiumLabel}>{t("ct.premiumBadge")}</Text>
+                  <Text style={styles.premiumLabel}>
+                    {t("ct.premiumBadge")}
+                  </Text>
                 </View>
                 <View style={styles.priceBadge}>
                   <Text style={styles.priceText}>₱ {formatCurrency(5000)}</Text>
@@ -642,22 +760,28 @@ export default function CardsTab({
                 <TouchableOpacity
                   style={[
                     styles.upgradeButton,
-                    availableBalance >= 5000 && styles.activeUpgradeButton
+                    availableBalance >= 5000 && styles.activeUpgradeButton,
                   ]}
                   onPress={() => {
                     setSelectedDesignCard({
-                      id: 'ROYAL_CURVE',
+                      id: "ROYAL_CURVE",
                       title: t("ct.royalCurve") || "Royal Curve",
                       price: 5000,
                       image: require("../../assets/cards/design_collection/dc2/front.png"),
-                      backImage: require("../../assets/cards/design_collection/dc2/back.png")
+                      backImage: require("../../assets/cards/design_collection/dc2/back.png"),
                     });
                     setIsDesignModalVisible(true);
-                  }}>
-                  <Text style={[
-                    styles.upgradeButtonText,
-                    availableBalance >= 5000 && styles.activeUpgradeButtonText
-                  ]}>{t("ct.tapToBuy")}</Text>
+                  }}
+                >
+                  <Text
+                    style={[
+                      styles.upgradeButtonText,
+                      availableBalance >= 5000 &&
+                        styles.activeUpgradeButtonText,
+                    ]}
+                  >
+                    {t("ct.tapToBuy")}
+                  </Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -665,9 +789,16 @@ export default function CardsTab({
         </View>
       </View>
 
-      <View style={[styles.collectionSection, { paddingHorizontal: horizontalPadding }]}>
+      <View
+        style={[
+          styles.collectionSection,
+          { paddingHorizontal: horizontalPadding },
+        ]}
+      >
         <View style={styles.collectionHeader}>
-          <Text style={[styles.yourCollectionTitle, { fontSize: 14 * fontScale }]}>
+          <Text
+            style={[styles.yourCollectionTitle, { fontSize: 14 * fontScale }]}
+          >
             {t("ct.yourCollection")}
           </Text>
           <Text style={styles.collectionCount}>
@@ -683,7 +814,7 @@ export default function CardsTab({
           decelerationRate="fast"
           onScroll={Animated.event(
             [{ nativeEvent: { contentOffset: { x: scrollIndicatorAnim } } }],
-            { useNativeDriver: false }
+            { useNativeDriver: false },
           )}
           scrollEventThrottle={16}
           onMomentumScrollEnd={(e) => {
@@ -692,7 +823,8 @@ export default function CardsTab({
             );
             setCurrentIndex(index);
           }}
-          contentContainerStyle={{ paddingRight: 12 }}>
+          contentContainerStyle={{ paddingRight: 12 }}
+        >
           {/* Default card slot (always present) */}
           <TouchableOpacity
             activeOpacity={0.8}
@@ -706,7 +838,8 @@ export default function CardsTab({
               source={getDesignFrontImage("DEFAULT")}
               style={styles.yourCollectionCard}
               imageStyle={styles.yourCollectionCardImage}
-              resizeMode="cover">
+              resizeMode="cover"
+            >
               {!activeCard && (
                 <View style={styles.activeCardBadge}>
                   <MaterialCommunityIcons
@@ -737,7 +870,8 @@ export default function CardsTab({
                 source={getDesignFrontImage(item.design)}
                 style={styles.yourCollectionCard}
                 imageStyle={styles.yourCollectionCardImage}
-                resizeMode="cover">
+                resizeMode="cover"
+              >
                 {activeCard?.id === item.id && (
                   <View style={styles.activeCardBadge}>
                     <MaterialCommunityIcons
@@ -766,7 +900,8 @@ export default function CardsTab({
               style={[
                 styles.yourCollectionItem,
                 { width: cardItemWidth, marginRight: 12 },
-              ]}>
+              ]}
+            >
               <View style={styles.emptySlot}>
                 <Ionicons name="add-circle-outline" size={32} color="#CCC" />
                 <Text style={styles.emptySlotText}>{t("ct.emptySlot")}</Text>
@@ -786,9 +921,18 @@ export default function CardsTab({
                   transform: [
                     {
                       translateX: scrollIndicatorAnim.interpolate({
-                        inputRange: [0, (cardItemWidth + 12) * (myCollection.length + Math.max(0, (cardCatalog.length || 5) - (1 + myCollection.length)))],
+                        inputRange: [
+                          0,
+                          (cardItemWidth + 12) *
+                            (myCollection.length +
+                              Math.max(
+                                0,
+                                (cardCatalog.length || 5) -
+                                  (1 + myCollection.length),
+                              )),
+                        ],
                         outputRange: [0, width - horizontalPadding * 2],
-                        extrapolate: 'clamp',
+                        extrapolate: "clamp",
                       }),
                     },
                   ],
@@ -807,16 +951,27 @@ export default function CardsTab({
         visible={isVipModalVisible}
         onRequestClose={() => setIsVipModalVisible(false)}
       >
-        <View style={[styles.modalOverlay, { padding: isSmallScreen ? 12 : 20 }]}>
-          <View style={[styles.diamondModalContent, { maxWidth: width - (isSmallScreen ? 24 : 40) }]}>
+        <View
+          style={[styles.modalOverlay, { padding: isSmallScreen ? 12 : 20 }]}
+        >
+          <View
+            style={[
+              styles.diamondModalContent,
+              { maxWidth: width - (isSmallScreen ? 24 : 40) },
+            ]}
+          >
             <View style={styles.diamondModalHeader}>
               <View style={styles.diamondHeaderLeft}>
                 <View style={styles.diamondIconContainer}>
                   <Ionicons name="card" size={24} color="#FFFFFF" />
                 </View>
                 <View>
-                  <Text style={styles.diamondModalTitle}>{t("ct.cardPurchaseTitle")}</Text>
-                  <Text style={styles.diamondModalSubtitle}>{t("ct.reviewYourSelection")}</Text>
+                  <Text style={styles.diamondModalTitle}>
+                    {t("ct.cardPurchaseTitle")}
+                  </Text>
+                  <Text style={styles.diamondModalSubtitle}>
+                    {t("ct.reviewYourSelection")}
+                  </Text>
                 </View>
               </View>
               <TouchableOpacity
@@ -833,26 +988,39 @@ export default function CardsTab({
               contentContainerStyle={styles.diamondModalBody}
               showsVerticalScrollIndicator={false}
             >
-              <Text style={styles.diamondCardPreviewLabel}>{t("ct.cardPreviewLabel")}</Text>
+              <Text style={styles.diamondCardPreviewLabel}>
+                {t("ct.cardPreviewLabel")}
+              </Text>
 
               <View style={styles.diamondCardPreviewContainer}>
                 <ImageBackground
                   source={require("../../assets/cards/vip_collection/vp2/front.png")}
-                  style={[styles.diamondCardPreview, { width: modalCardPreviewWidth, aspectRatio: 1.586 }]}
+                  style={[
+                    styles.diamondCardPreview,
+                    { width: modalCardPreviewWidth, aspectRatio: 1.586 },
+                  ]}
                   imageStyle={styles.diamondCardPreviewImage}
                   resizeMode="contain"
                 />
               </View>
 
               <View style={styles.diamondTitleContainer}>
-                <Text style={styles.diamondCardName}>{t("ct.diamondElite")}</Text>
+                <Text style={styles.diamondCardName}>
+                  {t("ct.diamondElite")}
+                </Text>
                 <View style={styles.diamondBadgesRow}>
                   <View style={styles.diamondVipBadge}>
-                    <MaterialCommunityIcons name="crown" size={12} color="#D4B106" />
+                    <MaterialCommunityIcons
+                      name="crown"
+                      size={12}
+                      color="#D4B106"
+                    />
                     <Text style={styles.diamondVipText}>{t("ct.vip")}</Text>
                   </View>
                   <View style={styles.diamondExclusiveBadge}>
-                    <Text style={styles.diamondExclusiveText}>{t("ct.exclusiveClaimable")}</Text>
+                    <Text style={styles.diamondExclusiveText}>
+                      {t("ct.exclusiveClaimable")}
+                    </Text>
                   </View>
                 </View>
               </View>
@@ -860,7 +1028,9 @@ export default function CardsTab({
               <View style={styles.diamondInfoBox}>
                 <View style={styles.diamondInfoHeader}>
                   <Ionicons name="checkmark-circle" size={20} color="#4CAF50" />
-                  <Text style={styles.diamondInfoTitle}>{t("ct.howToGetCard")}</Text>
+                  <Text style={styles.diamondInfoTitle}>
+                    {t("ct.howToGetCard")}
+                  </Text>
                 </View>
                 <Text style={styles.diamondInfoText}>
                   {t("ct.claimDescription")}
@@ -870,11 +1040,19 @@ export default function CardsTab({
               <View style={styles.diamondInfoBox}>
                 <View style={styles.diamondInfoHeader}>
                   <Ionicons name="checkmark-circle" size={20} color="#4CAF50" />
-                  <Text style={styles.diamondInfoTitle}>{t("ct.requirementsTitle")}</Text>
+                  <Text style={styles.diamondInfoTitle}>
+                    {t("ct.requirementsTitle")}
+                  </Text>
                 </View>
-                <Text style={styles.diamondListItem}>{t("ct.reqDepositAmount")}</Text>
-                <Text style={styles.diamondListItem}>{t("ct.reqClickClaim")}</Text>
-                <Text style={styles.diamondListItem}>{t("ct.reqNoPurchase")}</Text>
+                <Text style={styles.diamondListItem}>
+                  {t("ct.reqDepositAmount")}
+                </Text>
+                <Text style={styles.diamondListItem}>
+                  {t("ct.reqClickClaim")}
+                </Text>
+                <Text style={styles.diamondListItem}>
+                  {t("ct.reqNoPurchase")}
+                </Text>
               </View>
 
               {!isDiamondEligible && !isDiamondOwned && (
@@ -887,10 +1065,23 @@ export default function CardsTab({
               )}
 
               {isDiamondEligible && !isDiamondActive && (
-                <View style={[styles.diamondInfoBox, { backgroundColor: '#E8F5E9', borderColor: '#4CAF50' }]}>
+                <View
+                  style={[
+                    styles.diamondInfoBox,
+                    { backgroundColor: "#E8F5E9", borderColor: "#4CAF50" },
+                  ]}
+                >
                   <View style={styles.diamondInfoHeader}>
-                    <Ionicons name="checkmark-circle" size={20} color="#4CAF50" />
-                    <Text style={[styles.diamondInfoTitle, { color: '#2E7D32' }]}>{t("ct.eligibleTitle")}</Text>
+                    <Ionicons
+                      name="checkmark-circle"
+                      size={20}
+                      color="#4CAF50"
+                    />
+                    <Text
+                      style={[styles.diamondInfoTitle, { color: "#2E7D32" }]}
+                    >
+                      {t("ct.eligibleTitle")}
+                    </Text>
                   </View>
                   <Text style={styles.diamondInfoText}>
                     {t("ct.eligibleDesc")}
@@ -901,10 +1092,12 @@ export default function CardsTab({
               {isDiamondEligible && !isDiamondActive ? (
                 <TouchableOpacity
                   style={styles.diamondGotItButton}
-                  onPress={() => handleBuyCard('DIAMOND_ELITE', 0)}
+                  onPress={() => handleBuyCard("DIAMOND_ELITE", 0)}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.diamondGotItButtonText}>{t("ct.claimCard")}</Text>
+                  <Text style={styles.diamondGotItButtonText}>
+                    {t("ct.claimCard")}
+                  </Text>
                 </TouchableOpacity>
               ) : (
                 <TouchableOpacity
@@ -912,7 +1105,9 @@ export default function CardsTab({
                   onPress={() => setIsVipModalVisible(false)}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.diamondGotItButtonText}>{isDiamondActive ? t("ct.alreadyClaimed") : t("ct.gotIt")}</Text>
+                  <Text style={styles.diamondGotItButtonText}>
+                    {isDiamondActive ? t("ct.alreadyClaimed") : t("ct.gotIt")}
+                  </Text>
                 </TouchableOpacity>
               )}
             </ScrollView>
@@ -925,18 +1120,64 @@ export default function CardsTab({
         transparent={true}
         visible={isPurchaseModalVisible}
         onRequestClose={() => setIsPurchaseModalVisible(false)}
-        onDismiss={() => { vipFlipAnim.setValue(0); setIsVipCardFlipped(false); }}
+        onDismiss={() => {
+          vipFlipAnim.setValue(0);
+          setIsVipCardFlipped(false);
+        }}
       >
-        <View style={[styles.modalOverlay, { backgroundColor: 'transparent', paddingHorizontal: modalPadding, paddingTop: modalTopOffset, paddingBottom: modalBottomPadding, width, height }]}>
-          <View style={[styles.vipModalContent, { width: modalContentMaxWidth, maxWidth: modalContentMaxWidth, maxHeight: modalContentMaxHeight }]}>
-            <View style={[styles.vipModalHeader, { paddingHorizontal: modalPadding, paddingVertical: isSmallScreen ? 14 : 18 }]}>
+        <View
+          style={[
+            styles.modalOverlay,
+            {
+              backgroundColor: "transparent",
+              paddingHorizontal: modalPadding,
+              paddingTop: modalTopOffset,
+              paddingBottom: modalBottomPadding,
+              width,
+              height,
+            },
+          ]}
+        >
+          <View
+            style={[
+              styles.vipModalContent,
+              {
+                width: modalContentMaxWidth,
+                maxWidth: modalContentMaxWidth,
+                maxHeight: modalContentMaxHeight,
+              },
+            ]}
+          >
+            <View
+              style={[
+                styles.vipModalHeader,
+                {
+                  paddingHorizontal: modalPadding,
+                  paddingVertical: isSmallScreen ? 14 : 18,
+                },
+              ]}
+            >
               <View style={styles.vipHeaderLeft}>
                 <View style={styles.vipIconContainer}>
                   <Ionicons name="card" size={24} color="#FFFFFF" />
                 </View>
                 <View>
-                  <Text style={[styles.vipModalTitle, { fontSize: isSmallScreen ? 16 : 18 }]}>{t("ct.cardPurchaseTitle")}</Text>
-                  <Text style={[styles.vipModalSubtitle, { fontSize: isSmallScreen ? 11 : 12 }]}>{t("ct.reviewYourSelection")}</Text>
+                  <Text
+                    style={[
+                      styles.vipModalTitle,
+                      { fontSize: isSmallScreen ? 16 : 18 },
+                    ]}
+                  >
+                    {t("ct.cardPurchaseTitle")}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.vipModalSubtitle,
+                      { fontSize: isSmallScreen ? 11 : 12 },
+                    ]}
+                  >
+                    {t("ct.reviewYourSelection")}
+                  </Text>
                 </View>
               </View>
               <TouchableOpacity
@@ -950,15 +1191,30 @@ export default function CardsTab({
 
             <ScrollView
               style={styles.vipModalScrollView}
-              contentContainerStyle={[styles.vipModalBody, { paddingHorizontal: modalPadding }]}
+              contentContainerStyle={[
+                styles.vipModalBody,
+                { paddingHorizontal: modalPadding },
+              ]}
               showsVerticalScrollIndicator={false}
             >
-              <Text style={styles.vipCardPreviewLabel}>{t("ct.cardPreviewLabel")}</Text>
+              <Text style={styles.vipCardPreviewLabel}>
+                {t("ct.cardPreviewLabel")}
+              </Text>
 
               <View style={styles.vipCardPreviewContainer}>
                 <TouchableOpacity activeOpacity={0.9} onPress={flipVipCard}>
-                  <View style={[styles.vipModalFlipContainer, { width: modalCardPreviewWidth, aspectRatio: 1.586 }]}>
-                    <Animated.View style={[styles.modalCardFace, { transform: [{ rotateY: vipFrontInterpolate }] }]}>
+                  <View
+                    style={[
+                      styles.vipModalFlipContainer,
+                      { width: modalCardPreviewWidth, aspectRatio: 1.586 },
+                    ]}
+                  >
+                    <Animated.View
+                      style={[
+                        styles.modalCardFace,
+                        { transform: [{ rotateY: vipFrontInterpolate }] },
+                      ]}
+                    >
                       <ImageBackground
                         source={require("../../assets/cards/vip_collection/vp1/front.png")}
                         style={styles.vipCardPreview}
@@ -966,7 +1222,13 @@ export default function CardsTab({
                         resizeMode="contain"
                       />
                     </Animated.View>
-                    <Animated.View style={[styles.modalCardFace, styles.modalCardBack, { transform: [{ rotateY: vipBackInterpolate }] }]}>
+                    <Animated.View
+                      style={[
+                        styles.modalCardFace,
+                        styles.modalCardBack,
+                        { transform: [{ rotateY: vipBackInterpolate }] },
+                      ]}
+                    >
                       <ImageBackground
                         source={require("../../assets/cards/vip_collection/vp1/back.png")}
                         style={styles.vipCardPreview}
@@ -979,28 +1241,58 @@ export default function CardsTab({
               </View>
 
               <View style={styles.vipTitleContainer}>
-                <Text style={[styles.vipCardName, { fontSize: isSmallScreen ? 16 : 18 }]}>{t("ct.goldName")}</Text>
+                <Text
+                  style={[
+                    styles.vipCardName,
+                    { fontSize: isSmallScreen ? 16 : 18 },
+                  ]}
+                >
+                  {t("ct.goldName")}
+                </Text>
                 <View style={styles.vipPremiumBadge}>
-                  <MaterialCommunityIcons name="crown" size={14} color="#D4B106" />
+                  <MaterialCommunityIcons
+                    name="crown"
+                    size={14}
+                    color="#D4B106"
+                  />
                   <Text style={styles.vipPremiumText}>{t("ct.vip")}</Text>
                 </View>
               </View>
 
               <View style={styles.vipPriceSection}>
-                <Text style={styles.vipTotalPriceLabel}>{t("ct.totalPrice")}</Text>
-                <Text style={[styles.vipTotalPrice, { fontSize: isSmallScreen ? 28 : 36 }]}>₱ 10,000.00</Text>
+                <Text style={styles.vipTotalPriceLabel}>
+                  {t("ct.totalPrice")}
+                </Text>
+                <Text
+                  style={[
+                    styles.vipTotalPrice,
+                    { fontSize: isSmallScreen ? 28 : 36 },
+                  ]}
+                >
+                  ₱ 10,000.00
+                </Text>
               </View>
 
               <View style={styles.vipBalanceRow}>
-                <Text style={styles.vipBalanceLabel}>{t("ct.yourBalance")}</Text>
-                <Text style={styles.vipBalanceAmount}>₱ {formatCurrency(availableBalance || 0)}</Text>
+                <Text style={styles.vipBalanceLabel}>
+                  {t("ct.yourBalance")}
+                </Text>
+                <Text style={styles.vipBalanceAmount}>
+                  {isBalanceLoading ? (
+                    <ActivityIndicator size="small" />
+                  ) : (
+                    `₱ ${formatCurrency(availableBalance || 0)}`
+                  )}
+                </Text>
               </View>
 
               {isGoldActive && !isGoldRenewalAvailable && (
                 <View style={styles.vipWarningBox}>
                   <Ionicons name="warning" size={18} color="#F44336" />
                   <Text style={styles.vipWarningText}>
-                    {t("You already have an active Gold Elite plan. Use the renewal option when your plan is expiring soon.")}
+                    {t(
+                      "You already have an active Gold Elite plan. Use the renewal option when your plan is expiring soon.",
+                    )}
                   </Text>
                 </View>
               )}
@@ -1009,104 +1301,149 @@ export default function CardsTab({
                 <View style={styles.vipWarningBox}>
                   <Ionicons name="alert-circle" size={18} color="#FF9800" />
                   <Text style={styles.vipWarningText}>
-                    {t("ct.renewalAvailable") || "Your plan is expiring soon. Renew now to maintain your benefits."}
+                    {t("ct.renewalAvailable") ||
+                      "Your plan is expiring soon. Renew now to maintain your benefits."}
                   </Text>
                 </View>
               )}
 
               <View style={styles.vipSubscriptionBox}>
                 <View style={styles.vipSubscriptionHeaderRow}>
-                  <Text style={styles.vipSubscriptionTitle}>{t("ct.subscriptionType")}</Text>
+                  <Text style={styles.vipSubscriptionTitle}>
+                    {t("ct.subscriptionType")}
+                  </Text>
                   <View style={styles.vipMonthlyBadge}>
-                    <Ionicons name="calendar-outline" size={12} color="#D4B106" />
+                    <Ionicons
+                      name="calendar-outline"
+                      size={12}
+                      color="#D4B106"
+                    />
                     <Text style={styles.vipMonthlyText}>{t("ct.monthly")}</Text>
                   </View>
                 </View>
 
                 <View style={styles.vipSubscriptionDetailRow}>
                   <Ionicons name="time-outline" size={16} color="#666" />
-                  <Text style={styles.vipSubscriptionDetailText}>{t("ct.duration30Days")}</Text>
+                  <Text style={styles.vipSubscriptionDetailText}>
+                    {t("ct.duration30Days")}
+                  </Text>
                 </View>
                 <View style={styles.vipSubscriptionDetailRow}>
                   <Ionicons name="refresh-outline" size={16} color="#666" />
-                  <Text style={styles.vipSubscriptionDetailText}>{t("ct.autoRenewalManual")}</Text>
+                  <Text style={styles.vipSubscriptionDetailText}>
+                    {t("ct.autoRenewalManual")}
+                  </Text>
                 </View>
                 <View style={styles.vipSubscriptionDetailRow}>
-                  <Ionicons name="information-circle-outline" size={16} color="#666" />
-                  <Text style={styles.vipSubscriptionDetailText}>{t("ct.accessExpires")}</Text>
+                  <Ionicons
+                    name="information-circle-outline"
+                    size={16}
+                    color="#666"
+                  />
+                  <Text style={styles.vipSubscriptionDetailText}>
+                    {t("ct.accessExpires")}
+                  </Text>
                 </View>
               </View>
             </ScrollView>
 
-            <View style={[styles.vipActionButtons, { paddingHorizontal: modalPadding }]}>
-                <TouchableOpacity
-                  style={styles.vipCancelButton}
-                  onPress={async () => {
-                    if (isGoldActive) {
-                      try {
-                        setIsLoading(true);
-                        const token = await AsyncStorage.getItem("access_token");
-                        if (!token) return;
-                        const res = await cancelAutoRenewal(token, "GOLD_ELITE");
-                        if (res.success) {
-                          setIsPurchaseModalVisible(false);
-                          setSuccessModalType("cancelRenewal");
-                          setIsSuccessModalVisible(true);
-                          await fetchCardsData();
-                        } else {
-                          Alert.alert("Error", res.error || "Failed to cancel auto-renewal");
-                        }
-                      } catch (err) {
-                        console.error(err);
-                        Alert.alert("Error", "Failed to cancel auto-renewal");
-                      } finally {
-                        setIsLoading(false);
-                      }
-                    } else {
-                      setIsPurchaseModalVisible(false);
-                    }
-                  }}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.vipCancelButtonText}>
-                    {isGoldActive ? (t("ct.cancelRenewal") || "Cancel Renewal") : t("ct.cancel")}
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[
-                    styles.vipBuyButton,
-                    (availableBalance < 10000 || (isGoldActive && !isGoldRenewalAvailable)) && styles.vipBuyButtonDisabled
-                  ]}
-                  disabled={availableBalance < 10000 || (isGoldActive && !isGoldRenewalAvailable)}
-                  activeOpacity={0.7}
-                  onPress={async () => {
-                    if (isGoldActive && !isGoldRenewalAvailable) {
-                      Alert.alert(
-                        t("Already Have Plan"),
-                        t("You already have an active Gold Elite plan. Please use the renewal option when your plan is expiring soon."),
-                        [{ text: "OK" }]
-                      );
-                      return;
-                    }
+            <View
+              style={[
+                styles.vipActionButtons,
+                { paddingHorizontal: modalPadding },
+              ]}
+            >
+              <TouchableOpacity
+                style={styles.vipCancelButton}
+                onPress={async () => {
+                  if (isGoldActive) {
                     try {
-                      await handleBuyCard("GOLD_ELITE", 10000);
+                      setIsLoading(true);
+                      const token = await AsyncStorage.getItem("access_token");
+                      if (!token) return;
+                      const res = await cancelAutoRenewal(token, "GOLD_ELITE");
+                      if (res.success) {
+                        setIsPurchaseModalVisible(false);
+                        setSuccessModalType("cancelRenewal");
+                        setIsSuccessModalVisible(true);
+                        await fetchCardsData();
+                      } else {
+                        Alert.alert(
+                          "Error",
+                          res.error || "Failed to cancel auto-renewal",
+                        );
+                      }
                     } catch (err) {
                       console.error(err);
-                      Alert.alert("Error", isGoldRenewalAvailable ? "Failed to renew Gold Elite." : "Failed to subscribe to Gold Elite.");
+                      Alert.alert("Error", "Failed to cancel auto-renewal");
+                    } finally {
+                      setIsLoading(false);
                     }
-                  }}
+                  } else {
+                    setIsPurchaseModalVisible(false);
+                  }
+                }}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.vipCancelButtonText}>
+                  {isGoldActive
+                    ? t("ct.cancelRenewal") || "Cancel Renewal"
+                    : t("ct.cancel")}
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.vipBuyButton,
+                  (availableBalance < 10000 ||
+                    (isGoldActive && !isGoldRenewalAvailable)) &&
+                    styles.vipBuyButtonDisabled,
+                ]}
+                disabled={
+                  availableBalance < 10000 ||
+                  (isGoldActive && !isGoldRenewalAvailable)
+                }
+                activeOpacity={0.7}
+                onPress={async () => {
+                  if (isGoldActive && !isGoldRenewalAvailable) {
+                    Alert.alert(
+                      t("Already Have Plan"),
+                      t(
+                        "You already have an active Gold Elite plan. Please use the renewal option when your plan is expiring soon.",
+                      ),
+                      [{ text: "OK" }],
+                    );
+                    return;
+                  }
+                  try {
+                    await handleBuyCard("GOLD_ELITE", 10000);
+                  } catch (err) {
+                    console.error(err);
+                    Alert.alert(
+                      "Error",
+                      isGoldRenewalAvailable
+                        ? "Failed to renew Gold Elite."
+                        : "Failed to subscribe to Gold Elite.",
+                    );
+                  }
+                }}
+              >
+                <View
+                  style={{ flexDirection: "row", alignItems: "center", gap: 6 }}
                 >
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                    {isGoldActive && (
-                      <MaterialCommunityIcons name="autorenew" size={16} color="#FFFFFF" />
-                    )}
-                    <Text style={styles.vipBuyButtonText}>
-                      {isGoldActive ? (t("Renew Now")) : t("ct.buyCard")}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-              </View>
+                  {isGoldActive && (
+                    <MaterialCommunityIcons
+                      name="autorenew"
+                      size={16}
+                      color="#FFFFFF"
+                    />
+                  )}
+                  <Text style={styles.vipBuyButtonText}>
+                    {isGoldActive ? t("Renew Now") : t("ct.buyCard")}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
@@ -1116,18 +1453,32 @@ export default function CardsTab({
         transparent={true}
         visible={isDesignModalVisible}
         onRequestClose={() => setIsDesignModalVisible(false)}
-        onDismiss={() => { designFlipAnim.setValue(0); setIsDesignCardFlipped(false); }}
+        onDismiss={() => {
+          designFlipAnim.setValue(0);
+          setIsDesignCardFlipped(false);
+        }}
       >
-        <View style={[styles.modalOverlay, { padding: isSmallScreen ? 12 : 20 }]}>
-          <View style={[styles.designModalContent, { maxWidth: width - (isSmallScreen ? 24 : 40) }]}>
+        <View
+          style={[styles.modalOverlay, { padding: isSmallScreen ? 12 : 20 }]}
+        >
+          <View
+            style={[
+              styles.designModalContent,
+              { maxWidth: width - (isSmallScreen ? 24 : 40) },
+            ]}
+          >
             <View style={styles.designModalHeader}>
               <View style={styles.designHeaderLeft}>
                 <View style={styles.designIconContainer}>
                   <Ionicons name="card" size={24} color="#FFFFFF" />
                 </View>
                 <View>
-                  <Text style={styles.designModalTitle}>{t("ct.cardPurchaseTitle")}</Text>
-                  <Text style={styles.designModalSubtitle}>{t("ct.reviewYourSelection")}</Text>
+                  <Text style={styles.designModalTitle}>
+                    {t("ct.cardPurchaseTitle")}
+                  </Text>
+                  <Text style={styles.designModalSubtitle}>
+                    {t("ct.reviewYourSelection")}
+                  </Text>
                 </View>
               </View>
               <TouchableOpacity
@@ -1140,12 +1491,24 @@ export default function CardsTab({
             </View>
 
             <View style={styles.designModalBody}>
-              <Text style={styles.designCardPreviewLabel}>{t("ct.cardPreviewLabel")}</Text>
+              <Text style={styles.designCardPreviewLabel}>
+                {t("ct.cardPreviewLabel")}
+              </Text>
 
               <View style={styles.designCardPreviewContainer}>
                 <TouchableOpacity activeOpacity={0.9} onPress={flipDesignCard}>
-                  <View style={[styles.designModalFlipContainer, { width: modalCardPreviewWidth, aspectRatio: 1.586 }]}>
-                    <Animated.View style={[styles.modalCardFace, { transform: [{ rotateY: designFrontInterpolate }] }]}>
+                  <View
+                    style={[
+                      styles.designModalFlipContainer,
+                      { width: modalCardPreviewWidth, aspectRatio: 1.586 },
+                    ]}
+                  >
+                    <Animated.View
+                      style={[
+                        styles.modalCardFace,
+                        { transform: [{ rotateY: designFrontInterpolate }] },
+                      ]}
+                    >
                       <ImageBackground
                         source={selectedDesignCard.image}
                         style={styles.designCardPreview}
@@ -1153,7 +1516,13 @@ export default function CardsTab({
                         resizeMode="contain"
                       />
                     </Animated.View>
-                    <Animated.View style={[styles.modalCardFace, styles.modalCardBack, { transform: [{ rotateY: designBackInterpolate }] }]}>
+                    <Animated.View
+                      style={[
+                        styles.modalCardFace,
+                        styles.modalCardBack,
+                        { transform: [{ rotateY: designBackInterpolate }] },
+                      ]}
+                    >
                       <ImageBackground
                         source={selectedDesignCard.backImage}
                         style={styles.designCardPreview}
@@ -1166,7 +1535,9 @@ export default function CardsTab({
               </View>
 
               <View style={styles.designTitleContainer}>
-                <Text style={styles.designCardName}>{selectedDesignCard.title}</Text>
+                <Text style={styles.designCardName}>
+                  {selectedDesignCard.title}
+                </Text>
                 <View style={styles.designPremiumBadge}>
                   <Image
                     source={require("../../assets/images/diadesu.png.png")}
@@ -1178,20 +1549,40 @@ export default function CardsTab({
               </View>
 
               <View style={styles.designPriceSection}>
-                <Text style={styles.designTotalPriceLabel}>{t("ct.totalPrice")}</Text>
-                <Text style={[styles.designTotalPrice, { fontSize: isSmallScreen ? 32 : 40 }]}>₱ {formatCurrency(selectedDesignCard.price || 0)}</Text>
+                <Text style={styles.designTotalPriceLabel}>
+                  {t("ct.totalPrice")}
+                </Text>
+                <Text
+                  style={[
+                    styles.designTotalPrice,
+                    { fontSize: isSmallScreen ? 32 : 40 },
+                  ]}
+                >
+                  ₱ {formatCurrency(selectedDesignCard.price || 0)}
+                </Text>
               </View>
 
               <View style={styles.designBalanceRow}>
-                <Text style={styles.designBalanceLabel}>{t("ct.yourBalance")}</Text>
-                <Text style={styles.designBalanceAmount}>₱ {formatCurrency(availableBalance || 0)}</Text>
+                <Text style={styles.designBalanceLabel}>
+                  {t("ct.yourBalance")}
+                </Text>
+                <Text style={styles.designBalanceAmount}>
+                  {isBalanceLoading ? (
+                    <ActivityIndicator size="small" />
+                  ) : (
+                    `₱ ${formatCurrency(availableBalance || 0)}`
+                  )}
+                </Text>
               </View>
 
               {availableBalance < selectedDesignCard.price && (
                 <View style={styles.designWarningBox}>
                   <Ionicons name="warning" size={18} color="#F44336" />
                   <Text style={styles.designWarningText}>
-                    {t("ct.needMoreAmount").replace("{amount}", `₱${formatCurrency(selectedDesignCard.price - availableBalance)}`)}
+                    {t("ct.needMoreAmount").replace(
+                      "{amount}",
+                      `₱${formatCurrency(selectedDesignCard.price - availableBalance)}`,
+                    )}
                   </Text>
                 </View>
               )}
@@ -1202,19 +1593,25 @@ export default function CardsTab({
                   onPress={() => setIsDesignModalVisible(false)}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.designCancelButtonText}>{t("ct.cancel")}</Text>
+                  <Text style={styles.designCancelButtonText}>
+                    {t("ct.cancel")}
+                  </Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
                   style={[
                     styles.designBuyButton,
-                    availableBalance < selectedDesignCard.price && styles.designBuyButtonDisabled
+                    availableBalance < selectedDesignCard.price &&
+                      styles.designBuyButtonDisabled,
                   ]}
                   disabled={availableBalance < selectedDesignCard.price}
                   activeOpacity={0.7}
                   onPress={async () => {
                     try {
-                      await handleBuyCard(selectedDesignCard.id as string, selectedDesignCard.price);
+                      await handleBuyCard(
+                        selectedDesignCard.id as string,
+                        selectedDesignCard.price,
+                      );
                     } catch (err) {
                       console.error(err);
                       Alert.alert("Error", "Failed to buy design card.");
@@ -1237,7 +1634,12 @@ export default function CardsTab({
         onRequestClose={() => setIsSuccessModalVisible(false)}
       >
         <View style={styles.successModalOverlay}>
-          <View style={[styles.successModalContent, { width: Math.min(width * 0.9, 400) }]}>
+          <View
+            style={[
+              styles.successModalContent,
+              { width: Math.min(width * 0.9, 400) },
+            ]}
+          >
             <LinearGradient
               colors={["#E15816", "#F48F38"]}
               style={styles.successModalGradient}
@@ -1249,21 +1651,24 @@ export default function CardsTab({
               </View>
               <Text style={styles.successTitle}>
                 {successModalType === "cancelRenewal"
-                  ? (t("ct.success") || "Success")
-                  : (t("ct.purchaseSuccessTitle") || "Card successfully activated")}
+                  ? t("ct.success") || "Success"
+                  : t("ct.purchaseSuccessTitle") ||
+                    "Card successfully activated"}
               </Text>
               <Text style={styles.successMessage}>
                 {successModalType === "cancelRenewal"
-                  ? (t("ct.autoRenewalCancelled") ||
-                    "Auto-renewal has been cancelled. Your subscription will expire on the scheduled date.")
-                  : (t("ct.purchaseSuccess") ||
-                    "Your card has been successfully issued and is now available in your collection.")}
+                  ? t("ct.autoRenewalCancelled") ||
+                    "Auto-renewal has been cancelled. Your subscription will expire on the scheduled date."
+                  : t("ct.purchaseSuccess") ||
+                    "Your card has been successfully issued and is now available in your collection."}
               </Text>
               <TouchableOpacity
                 style={styles.successButton}
                 onPress={() => setIsSuccessModalVisible(false)}
               >
-                <Text style={styles.successButtonText}>{t("common.ok") || "OK"}</Text>
+                <Text style={styles.successButtonText}>
+                  {t("common.ok") || "OK"}
+                </Text>
               </TouchableOpacity>
             </LinearGradient>
           </View>
@@ -1688,7 +2093,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   purchaseModalBody: {
-    maxHeight: '100%',
+    maxHeight: "100%",
   },
   purchaseModalScrollContent: {
     padding: 20,
@@ -1696,28 +2101,28 @@ const styles = StyleSheet.create({
   },
   cardPreviewLabel: {
     fontSize: 13,
-    fontWeight: '700',
-    color: '#888',
-    textAlign: 'center',
+    fontWeight: "700",
+    color: "#888",
+    textAlign: "center",
     marginBottom: 12,
     letterSpacing: 1,
   },
   purchaseCardPreviewContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 16,
     padding: 16,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 12,
     elevation: 4,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#F0F0F0',
-    alignItems: 'center',
+    borderColor: "#F0F0F0",
+    alignItems: "center",
   },
   purchaseCardPreview: {
-    width: '100%',
+    width: "100%",
     aspectRatio: 1.6,
     borderRadius: 12,
   },
@@ -1725,77 +2130,77 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   purchaseTitleRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
     gap: 8,
     marginBottom: 16,
   },
   purchaseCardTitle: {
     fontSize: 22,
-    fontWeight: '700',
-    color: '#Fe7e43',
+    fontWeight: "700",
+    color: "#Fe7e43",
   },
   purchaseVipBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     borderWidth: 1,
-    borderColor: '#FDE047',
+    borderColor: "#FDE047",
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 16,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     gap: 4,
   },
   purchaseVipBadgeText: {
     fontSize: 12,
-    fontWeight: '700',
-    color: '#D4B106',
+    fontWeight: "700",
+    color: "#D4B106",
   },
   priceContainer: {
-    backgroundColor: '#FAFAFA',
+    backgroundColor: "#FAFAFA",
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#F0F0F0',
+    borderColor: "#F0F0F0",
     padding: 16,
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 24,
   },
   priceLabel: {
     fontSize: 13,
-    fontWeight: '700',
-    color: '#666',
+    fontWeight: "700",
+    color: "#666",
     marginBottom: 8,
     letterSpacing: 1,
   },
   priceAmount: {
     fontSize: 28,
-    fontWeight: '800',
-    color: '#B8860B',
+    fontWeight: "800",
+    color: "#B8860B",
   },
   balanceRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 12,
   },
   balanceLabel: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#333',
+    fontWeight: "700",
+    color: "#333",
   },
   balanceAmount: {
     fontSize: 18,
-    fontWeight: '700',
-    color: '#4CAF50',
+    fontWeight: "700",
+    color: "#4CAF50",
   },
   textRed: {
-    color: '#F44336',
+    color: "#F44336",
   },
   amountNeededBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFF0F0',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFF0F0",
     padding: 12,
     borderRadius: 8,
     marginBottom: 16,
@@ -1803,34 +2208,34 @@ const styles = StyleSheet.create({
   },
   amountNeededText: {
     fontSize: 14,
-    fontWeight: '700',
-    color: '#F44336',
+    fontWeight: "700",
+    color: "#F44336",
   },
   subscriptionBox: {
-    backgroundColor: '#FFFAEB',
+    backgroundColor: "#FFFAEB",
     borderWidth: 1,
-    borderColor: '#FFF1B8',
+    borderColor: "#FFF1B8",
     borderRadius: 12,
     padding: 16,
     marginBottom: 24,
   },
   subscriptionHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 12,
   },
   subscriptionBoxTitle: {
     fontSize: 14,
-    fontWeight: '700',
-    color: '#666',
+    fontWeight: "700",
+    color: "#666",
   },
   monthlyBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFBE6',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFFBE6",
     borderWidth: 1,
-    borderColor: '#FFE58F',
+    borderColor: "#FFE58F",
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
@@ -1838,146 +2243,146 @@ const styles = StyleSheet.create({
   },
   monthlyBadgeText: {
     fontSize: 10,
-    fontWeight: '700',
-    color: '#D4B106',
+    fontWeight: "700",
+    color: "#D4B106",
   },
   subscriptionDetailRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 8,
     marginBottom: 10,
   },
   subscriptionDetailText: {
     fontSize: 14,
-    color: '#666',
+    color: "#666",
   },
   purchaseActionContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 12,
   },
   cancelButton: {
     flex: 1,
     paddingVertical: 14,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: "#E0E0E0",
     borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   cancelButtonText: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#666',
+    fontWeight: "700",
+    color: "#666",
   },
   confirmPurchaseButton: {
     flex: 1.5,
-    flexDirection: 'row',
+    flexDirection: "row",
     paddingVertical: 14,
-    backgroundColor: '#Fe7e43',
+    backgroundColor: "#Fe7e43",
     borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     gap: 8,
   },
   disabledPurchaseButton: {
-    backgroundColor: '#CCCCCC',
+    backgroundColor: "#CCCCCC",
   },
   confirmPurchaseText: {
     fontSize: 15,
-    fontWeight: '700',
-    color: '#FFFFFF',
+    fontWeight: "700",
+    color: "#FFFFFF",
   },
   disabledPurchaseText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
   },
   designCardTitle: {
     fontSize: 22,
-    fontWeight: '700',
-    color: '#Fe7e43',
+    fontWeight: "700",
+    color: "#Fe7e43",
   },
   designPriceAmount: {
     fontSize: 28,
-    fontWeight: '800',
-    color: '#Fe7e43',
+    fontWeight: "800",
+    color: "#Fe7e43",
   },
   activeUpgradeButton: {
-    backgroundColor: '#DE5212',
+    backgroundColor: "#DE5212",
   },
   activeUpgradeButtonText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
   },
   claimedButton: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: "#4CAF50",
   },
   claimedButtonText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
   },
   purchaseCardOverlay: {
     flex: 1,
     padding: 16,
     paddingLeft: 22,
     paddingBottom: 22,
-    justifyContent: 'flex-end',
+    justifyContent: "flex-end",
   },
   purchaseCardNumber: {
     fontSize: 14,
-    fontWeight: '700',
-    color: '#FFFFFF',
+    fontWeight: "700",
+    color: "#FFFFFF",
     letterSpacing: 0,
     marginBottom: 0,
   },
   purchaseCardName: {
     fontSize: 12,
-    fontWeight: '700',
-    color: '#FFFFFF',
+    fontWeight: "700",
+    color: "#FFFFFF",
     marginBottom: 0,
   },
   purchaseCardBalanceLabel: {
     fontSize: 10,
-    fontWeight: '700',
-    color: '#FFFFFF',
+    fontWeight: "700",
+    color: "#FFFFFF",
     marginBottom: 0,
   },
   purchaseCardBalanceAmount: {
     fontSize: 14,
-    fontWeight: '700',
-    color: '#FFFFFF',
+    fontWeight: "700",
+    color: "#FFFFFF",
   },
   modalFlipContainer: {
-    width: '100%',
+    width: "100%",
     aspectRatio: 1.6,
   },
   modalCardFace: {
-    width: '100%',
-    height: '100%',
-    backfaceVisibility: 'hidden',
+    width: "100%",
+    height: "100%",
+    backfaceVisibility: "hidden",
   },
   modalCardBack: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
   },
   // New Design Modal Styles
   designModalContent: {
-    width: '100%',
+    width: "100%",
     maxWidth: 400,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 24,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   designModalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     padding: 20,
     paddingBottom: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: "#F0F0F0",
   },
   designHeaderLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 12,
     flex: 1,
   },
@@ -1985,25 +2390,25 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 12,
-    backgroundColor: '#DE5212',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#DE5212",
+    justifyContent: "center",
+    alignItems: "center",
   },
   designModalTitle: {
     fontSize: 18,
-    fontWeight: '700',
-    color: '#333',
+    fontWeight: "700",
+    color: "#333",
   },
   designModalSubtitle: {
     fontSize: 12,
-    color: '#999',
+    color: "#999",
     marginTop: 2,
   },
   designCloseButton: {
     width: 32,
     height: 32,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   designModalBody: {
     padding: 24,
@@ -2011,19 +2416,19 @@ const styles = StyleSheet.create({
   },
   designCardPreviewLabel: {
     fontSize: 12,
-    fontWeight: '700',
-    color: '#888',
-    textAlign: 'center',
+    fontWeight: "700",
+    color: "#888",
+    textAlign: "center",
     marginBottom: 20,
     letterSpacing: 1.5,
   },
   designCardPreviewContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 20,
     padding: 24,
     marginBottom: 24,
-    alignItems: 'center',
-    shadowColor: '#000',
+    alignItems: "center",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 8,
@@ -2034,27 +2439,27 @@ const styles = StyleSheet.create({
     aspectRatio: 1.586,
   },
   designCardPreview: {
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
     borderRadius: 12,
   },
   designCardPreviewImage: {
     borderRadius: 12,
   },
   designTitleContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 20,
   },
   designCardName: {
     fontSize: 22,
-    fontWeight: '700',
-    color: '#333',
+    fontWeight: "700",
+    color: "#333",
     marginBottom: 6,
   },
   designPremiumBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#666',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#666",
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
@@ -2063,121 +2468,121 @@ const styles = StyleSheet.create({
   designDiamondIcon: {
     width: 14,
     height: 14,
-    tintColor: '#FFFFFF',
+    tintColor: "#FFFFFF",
   },
   designPremiumText: {
     fontSize: 11,
-    fontWeight: '700',
-    color: '#FFFFFF',
+    fontWeight: "700",
+    color: "#FFFFFF",
   },
   designPriceSection: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 24,
   },
   designTotalPriceLabel: {
     fontSize: 12,
-    fontWeight: '600',
-    color: '#888',
+    fontWeight: "600",
+    color: "#888",
     marginBottom: 8,
     letterSpacing: 1.2,
   },
   designTotalPrice: {
     fontSize: 48,
-    fontWeight: '700',
-    color: '#DE5212',
+    fontWeight: "700",
+    color: "#DE5212",
   },
   designBalanceRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 16,
     paddingHorizontal: 0,
   },
   designBalanceLabel: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
+    fontWeight: "600",
+    color: "#333",
   },
   designBalanceAmount: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#333',
+    fontWeight: "700",
+    color: "#333",
   },
   designWarningBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFEBEE',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFEBEE",
     padding: 14,
     borderRadius: 12,
     marginBottom: 24,
     gap: 10,
     borderWidth: 1,
-    borderColor: '#FFCDD2',
+    borderColor: "#FFCDD2",
   },
   designWarningText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#F44336',
+    fontWeight: "600",
+    color: "#F44336",
     flex: 1,
   },
   designActionButtons: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 12,
     marginTop: 4,
   },
   designCancelButton: {
     flex: 1,
     paddingVertical: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderWidth: 2,
-    borderColor: '#DDDDDD',
+    borderColor: "#DDDDDD",
     borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   designCancelButtonText: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#666',
+    fontWeight: "700",
+    color: "#666",
   },
   designBuyButton: {
     flex: 1,
     paddingVertical: 16,
-    backgroundColor: '#DE5212',
+    backgroundColor: "#DE5212",
     borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   designBuyButtonDisabled: {
-    backgroundColor: '#CCCCCC',
+    backgroundColor: "#CCCCCC",
   },
   designBuyButtonText: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#FFFFFF',
+    fontWeight: "700",
+    color: "#FFFFFF",
   },
   // VIP Modal Styles
   vipModalContent: {
-    width: '100%',
+    width: "100%",
     maxWidth: 400,
-    maxHeight: '85%',
-    backgroundColor: '#FFFFFF',
+    maxHeight: "85%",
+    backgroundColor: "#FFFFFF",
     borderRadius: 24,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   vipModalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     padding: 20,
     paddingBottom: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: "#F0F0F0",
   },
   vipHeaderLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 12,
     flex: 1,
   },
@@ -2185,28 +2590,28 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 12,
-    backgroundColor: '#DE5212',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#DE5212",
+    justifyContent: "center",
+    alignItems: "center",
   },
   vipModalTitle: {
     fontSize: 18,
-    fontWeight: '700',
-    color: '#333',
+    fontWeight: "700",
+    color: "#333",
   },
   vipModalSubtitle: {
     fontSize: 12,
-    color: '#999',
+    color: "#999",
     marginTop: 2,
   },
   vipCloseButton: {
     width: 32,
     height: 32,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   vipModalScrollView: {
-    maxHeight: '100%',
+    maxHeight: "100%",
   },
   vipModalBody: {
     padding: 20,
@@ -2214,47 +2619,47 @@ const styles = StyleSheet.create({
   },
   vipCardPreviewLabel: {
     fontSize: 11,
-    fontWeight: '700',
-    color: '#888',
-    textAlign: 'center',
+    fontWeight: "700",
+    color: "#888",
+    textAlign: "center",
     marginBottom: 12,
     letterSpacing: 1.5,
   },
   vipCardPreviewContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 16,
     padding: 12,
     marginBottom: 16,
-    alignItems: 'center',
+    alignItems: "center",
   },
   vipModalFlipContainer: {
     width: 220,
     aspectRatio: 1.586,
   },
   vipCardPreview: {
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
     borderRadius: 12,
   },
   vipCardPreviewImage: {
     borderRadius: 12,
   },
   vipTitleContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 12,
   },
   vipCardName: {
     fontSize: 18,
-    fontWeight: '700',
-    color: '#333',
+    fontWeight: "700",
+    color: "#333",
     marginBottom: 6,
   },
   vipPremiumBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFF9E6',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFF9E6",
     borderWidth: 1,
-    borderColor: '#FFE58F',
+    borderColor: "#FFE58F",
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
@@ -2262,67 +2667,67 @@ const styles = StyleSheet.create({
   },
   vipPremiumText: {
     fontSize: 11,
-    fontWeight: '700',
-    color: '#D4B106',
+    fontWeight: "700",
+    color: "#D4B106",
   },
   vipPriceSection: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 16,
   },
   vipTotalPriceLabel: {
     fontSize: 11,
-    fontWeight: '600',
-    color: '#888',
+    fontWeight: "600",
+    color: "#888",
     marginBottom: 4,
     letterSpacing: 1.2,
   },
   vipTotalPrice: {
     fontSize: 36,
-    fontWeight: '700',
-    color: '#DE5212',
+    fontWeight: "700",
+    color: "#DE5212",
   },
   vipBalanceRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 12,
     paddingHorizontal: 0,
   },
   vipBalanceLabel: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
+    fontWeight: "600",
+    color: "#333",
   },
   vipBalanceAmount: {
     fontSize: 14,
-    fontWeight: '700',
-    color: '#333',
+    fontWeight: "700",
+    color: "#333",
   },
   vipSubscriptionBox: {
-    backgroundColor: '#FFF9E6',
+    backgroundColor: "#FFF9E6",
     borderWidth: 1,
-    borderColor: '#FFE58F',
+    borderColor: "#FFE58F",
     borderRadius: 12,
     padding: 12,
     marginBottom: 16,
   },
   vipSubscriptionHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 10,
   },
   vipSubscriptionTitle: {
     fontSize: 13,
-    fontWeight: '700',
-    color: '#333',
+    fontWeight: "700",
+    color: "#333",
   },
   vipMonthlyBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: '#FFE58F',
+    borderColor: "#FFE58F",
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
@@ -2330,82 +2735,82 @@ const styles = StyleSheet.create({
   },
   vipMonthlyText: {
     fontSize: 11,
-    fontWeight: '700',
-    color: '#D4B106',
+    fontWeight: "700",
+    color: "#D4B106",
   },
   vipSubscriptionDetailRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 8,
     marginBottom: 6,
   },
   vipSubscriptionDetailText: {
     fontSize: 12,
-    color: '#666',
+    color: "#666",
     flex: 1,
   },
   vipActionButtons: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 12,
     paddingVertical: 16,
     paddingBottom: 20,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderTopWidth: 1,
-    borderTopColor: '#F0F0F0',
+    borderTopColor: "#F0F0F0",
   },
   vipCancelButton: {
     flex: 1,
     paddingVertical: 14,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderWidth: 2,
-    borderColor: '#DDDDDD',
+    borderColor: "#DDDDDD",
     borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   vipCancelButtonText: {
     fontSize: 15,
-    fontWeight: '700',
-    color: '#666',
+    fontWeight: "700",
+    color: "#666",
   },
   vipBuyButton: {
     flex: 1,
     paddingVertical: 14,
-    backgroundColor: '#DE5212',
+    backgroundColor: "#DE5212",
     borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   vipBuyButtonDisabled: {
-    backgroundColor: '#CCCCCC',
+    backgroundColor: "#CCCCCC",
   },
   vipBuyButtonText: {
     fontSize: 15,
-    fontWeight: '700',
-    color: '#FFFFFF',
+    fontWeight: "700",
+    color: "#FFFFFF",
   },
   // Diamond Elite Modal Styles
   diamondModalContent: {
-    width: '100%',
+    width: "100%",
     maxWidth: 400,
-    maxHeight: '85%',
-    backgroundColor: '#FFFFFF',
+    maxHeight: "85%",
+    backgroundColor: "#FFFFFF",
     borderRadius: 24,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   diamondModalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     padding: 20,
     paddingBottom: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: "#F0F0F0",
   },
   diamondHeaderLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 12,
     flex: 1,
   },
@@ -2413,28 +2818,28 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 12,
-    backgroundColor: '#DE5212',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#DE5212",
+    justifyContent: "center",
+    alignItems: "center",
   },
   diamondModalTitle: {
     fontSize: 18,
-    fontWeight: '700',
-    color: '#333',
+    fontWeight: "700",
+    color: "#333",
   },
   diamondModalSubtitle: {
     fontSize: 12,
-    color: '#999',
+    color: "#999",
     marginTop: 2,
   },
   diamondCloseButton: {
     width: 32,
     height: 32,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   diamondModalScrollView: {
-    maxHeight: '100%',
+    maxHeight: "100%",
   },
   diamondModalBody: {
     padding: 20,
@@ -2442,19 +2847,19 @@ const styles = StyleSheet.create({
   },
   diamondCardPreviewLabel: {
     fontSize: 11,
-    fontWeight: '700',
-    color: '#888',
-    textAlign: 'center',
+    fontWeight: "700",
+    color: "#888",
+    textAlign: "center",
     marginBottom: 12,
     letterSpacing: 1.5,
   },
   diamondCardPreviewContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 16,
     padding: 16,
     marginBottom: 20,
-    alignItems: 'center',
-    shadowColor: '#000',
+    alignItems: "center",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 8,
@@ -2469,26 +2874,26 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   diamondTitleContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 20,
   },
   diamondCardName: {
     fontSize: 20,
-    fontWeight: '700',
-    color: '#333',
+    fontWeight: "700",
+    color: "#333",
     marginBottom: 8,
   },
   diamondBadgesRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 8,
-    alignItems: 'center',
+    alignItems: "center",
   },
   diamondVipBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFF9E6',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFF9E6",
     borderWidth: 1,
-    borderColor: '#FFE58F',
+    borderColor: "#FFE58F",
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
@@ -2496,124 +2901,124 @@ const styles = StyleSheet.create({
   },
   diamondVipText: {
     fontSize: 11,
-    fontWeight: '700',
-    color: '#D4B106',
+    fontWeight: "700",
+    color: "#D4B106",
   },
   diamondExclusiveBadge: {
-    backgroundColor: '#8B6914',
+    backgroundColor: "#8B6914",
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
   },
   diamondExclusiveText: {
     fontSize: 10,
-    fontWeight: '700',
-    color: '#FFFFFF',
+    fontWeight: "700",
+    color: "#FFFFFF",
   },
   diamondInfoBox: {
-    backgroundColor: '#FFF5F0',
+    backgroundColor: "#FFF5F0",
     borderRadius: 12,
     padding: 14,
     marginBottom: 12,
   },
   diamondInfoHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 8,
     marginBottom: 8,
   },
   diamondInfoTitle: {
     fontSize: 14,
-    fontWeight: '700',
-    color: '#333',
+    fontWeight: "700",
+    color: "#333",
   },
   diamondInfoText: {
     fontSize: 13,
-    color: '#666',
+    color: "#666",
     lineHeight: 20,
   },
   diamondListItem: {
     fontSize: 13,
-    color: '#666',
+    color: "#666",
     marginBottom: 4,
   },
   diamondWarningBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFEBEE',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFEBEE",
     padding: 14,
     borderRadius: 12,
     marginBottom: 20,
     gap: 10,
     borderWidth: 1,
-    borderColor: '#FFCDD2',
+    borderColor: "#FFCDD2",
   },
   diamondWarningText: {
     fontSize: 13,
-    fontWeight: '600',
-    color: '#F44336',
+    fontWeight: "600",
+    color: "#F44336",
     flex: 1,
   },
   vipWarningBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFEBEE',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFEBEE",
     padding: 14,
     borderRadius: 12,
     marginBottom: 20,
     gap: 10,
     borderWidth: 1,
-    borderColor: '#FFCDD2',
+    borderColor: "#FFCDD2",
   },
   vipWarningText: {
     fontSize: 13,
-    fontWeight: '600',
-    color: '#F44336',
+    fontWeight: "600",
+    color: "#F44336",
     flex: 1,
   },
   diamondGotItButton: {
-    backgroundColor: '#DE5212',
+    backgroundColor: "#DE5212",
     paddingVertical: 16,
     borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   diamondGotItButtonText: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#FFFFFF',
+    fontWeight: "700",
+    color: "#FFFFFF",
   },
   // Indicator line styles
   indicatorContainer: {
     marginTop: 16,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   indicatorTrack: {
     height: 3,
-    backgroundColor: '#E0E0E0',
+    backgroundColor: "#E0E0E0",
     borderRadius: 2,
-    position: 'relative',
+    position: "relative",
   },
   indicatorLine: {
-    height: '100%',
-    backgroundColor: '#666666',
+    height: "100%",
+    backgroundColor: "#666666",
     borderRadius: 2,
-    position: 'absolute',
+    position: "absolute",
     left: 0,
   },
   // Success Modal styles
   successModalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   successModalContent: {
-    width: '85%',
+    width: "85%",
     maxWidth: 400,
     borderRadius: 16,
-    overflow: 'hidden',
-    shadowColor: '#000',
+    overflow: "hidden",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -2621,35 +3026,35 @@ const styles = StyleSheet.create({
   },
   successModalGradient: {
     padding: 32,
-    alignItems: 'center',
+    alignItems: "center",
   },
   successIconContainer: {
     marginBottom: 16,
   },
   successTitle: {
     fontSize: 20,
-    fontWeight: '700',
-    color: '#FFFFFF',
+    fontWeight: "700",
+    color: "#FFFFFF",
     marginBottom: 12,
-    textAlign: 'center',
+    textAlign: "center",
   },
   successMessage: {
     fontSize: 13,
-    color: '#FFFFFF',
-    textAlign: 'center',
+    color: "#FFFFFF",
+    textAlign: "center",
     lineHeight: 20,
     marginBottom: 24,
     opacity: 0.95,
   },
   successButton: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     paddingVertical: 12,
     paddingHorizontal: 32,
     borderRadius: 8,
   },
   successButtonText: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#E15816',
+    fontWeight: "600",
+    color: "#E15816",
   },
 });
