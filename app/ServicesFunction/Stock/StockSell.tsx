@@ -24,6 +24,7 @@ const STOCK_RATE_PHP = 2_000_000;
 type Step = "form" | "confirm";
 
 export default function StockSell() {
+  const { t } = useLanguage();
   const navigation = useNavigation();
   const route = useRoute();
   const { t } = useLanguage();
@@ -46,7 +47,7 @@ export default function StockSell() {
   const [showAlertModal, setShowAlertModal] = useState(false);
   const [alertConfig, setAlertConfig] = useState({ title: "", message: "" });
 
-  const stocksNum = parseInt(stocksToSell, 10) || 0;
+  const stocksNum = parseFloat(stocksToSell) || 0;
   const sellAmount = stocksNum * STOCK_RATE_PHP;
 
   const handleContinue = () => {
@@ -103,7 +104,7 @@ export default function StockSell() {
 
       const result = await submitStockSellRequest(accessToken, {
         walletId: phpWallet.id,
-        stocksToSell: stocksNum,
+        stocksToSell: Math.round(stocksNum * 10000) / 10000, // round to 4 decimal places
       });
 
       if (result.success) {
@@ -220,7 +221,7 @@ export default function StockSell() {
                       style={[styles.input, { fontSize: Math.round(14 * fontScale), paddingVertical: isSmallScreen ? 10 : 12 }]}
                       placeholder="Enter number of stocks"
                       placeholderTextColor="#999"
-                      keyboardType="number-pad"
+                      keyboardType="decimal-pad"
                       value={stocksToSell}
                       onChangeText={setStocksToSell}
                     />
@@ -252,10 +253,8 @@ export default function StockSell() {
 
               <View style={[styles.detailCard, { padding: contentPadding, marginBottom: isSmallScreen ? 12 : 16, borderRadius: isSmallScreen ? 12 : 16 }]}>
                 <View style={styles.leftBorder} />
-                <Text style={[styles.detailLabel, { fontSize: Math.round(13 * fontScale) }]}>Stocks to Sell</Text>
-                <Text style={[styles.detailValue, { fontSize: Math.round(15 * fontScale) }]} numberOfLines={1} ellipsizeMode="tail">
-                  {stocksNum} {stocksNum !== 1 ? t("stock.stocks") : t("stock.stock")}
-                </Text>
+                <Text style={styles.detailLabel}>Stocks to Sell</Text>
+                <Text style={styles.detailValue}>{stocksNum % 1 === 0 ? stocksNum : stocksNum.toFixed(4)} Stock(s)</Text>
               </View>
 
               <LinearGradient
