@@ -25,6 +25,7 @@ import {
 } from "react-native-safe-area-context";
 import { getMe, updateProfile } from "../../configs/api";
 import { auth, firestore } from "../../configs/firebase";
+import { useResponsive } from "../../utils/responsive";
 import {
   DEFAULT_LANGUAGE,
   normalizeLanguage,
@@ -39,7 +40,9 @@ const USER_PREFERRED_LANGUAGE_KEY = "user_preferred_language";
 export default function Placeholder() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
+  const { horizontalPadding, isShortScreen, isSmallScreen, isTinyScreen } =
+    useResponsive();
   const { t, language: contextLanguage, setLanguage } = useLanguage();
   const isSmallDevice = width < 375;
   const scale = Math.min(width / 375, 1.25);
@@ -688,7 +691,7 @@ export default function Placeholder() {
         </KeyboardAvoidingView>
       </Modal>
 
-      {/* Language Modal */}
+      {/* Language Modal - matches Register language options (transparent overlay + outer glow) */}
       <Modal
         visible={languageModalVisible}
         transparent
@@ -696,67 +699,108 @@ export default function Placeholder() {
         onRequestClose={() => setLanguageModalVisible(false)}
       >
         <TouchableOpacity
-          style={styles.languageModalOverlay}
+          style={[
+            styles.languageModalOverlay,
+            { paddingHorizontal: Math.max(16, horizontalPadding) },
+          ]}
           activeOpacity={1}
           onPress={() => setLanguageModalVisible(false)}
         >
           <View
-            style={styles.languageModalContent}
+            style={[
+              styles.languageModalContent,
+              {
+                maxWidth: Math.min(360, width - 32),
+                maxHeight: isShortScreen ? height * 0.85 : undefined,
+                padding: isSmallScreen || isTinyScreen ? 18 : 24,
+              },
+            ]}
             onStartShouldSetResponder={() => true}
           >
-            <View style={styles.languageMapHeader}>
+            <View style={styles.languageModalHeader}>
               <View style={styles.languageMapGlobe}>
-                <Ionicons name="globe-outline" size={40} color="#E15816" />
+                <Ionicons
+                  name="globe-outline"
+                  size={isSmallScreen || isTinyScreen ? 32 : 40}
+                  color="#E15816"
+                />
               </View>
-              <View style={styles.languageMapFlags}>
-                {SUPPORTED_LANGUAGES.map(({ label, flag }) => (
-                  <View
-                    key={label}
-                    style={[
-                      styles.languageMapFlagChip,
-                      language === label && styles.languageMapFlagChipSelected,
-                    ]}
-                  >
-                    <Text style={styles.languageMapFlagEmoji}>{flag}</Text>
-                  </View>
-                ))}
-              </View>
-              <Text style={styles.languageModalTitle}>
+              <Text
+                style={[
+                  styles.languageModalTitle,
+                  (isSmallScreen || isTinyScreen) && { fontSize: 16 },
+                ]}
+              >
                 {t("profile.selectLanguage")}
               </Text>
-              <Text style={styles.languageModalSubtitle}>
+              <Text
+                style={[
+                  styles.languageModalSubtitle,
+                  (isSmallScreen || isTinyScreen) && { fontSize: 12 },
+                ]}
+              >
                 {t("profile.defaultIsEnglish")}
               </Text>
             </View>
-            {SUPPORTED_LANGUAGES.map(({ label, flag }) => (
-              <TouchableOpacity
-                key={label}
-                style={[
-                  styles.languageOption,
-                  language === label && styles.languageOptionSelected,
-                ]}
-                onPress={() => handleSelectLanguage(label)}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.languageOptionFlag}>{flag}</Text>
-                <Text
+            <ScrollView
+              style={isShortScreen ? { maxHeight: 200 } : undefined}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+            >
+              {SUPPORTED_LANGUAGES.map(({ label, flag }) => (
+                <TouchableOpacity
+                  key={label}
                   style={[
-                    styles.languageOptionText,
-                    language === label && styles.languageOptionTextSelected,
+                    styles.languageOption,
+                    (isSmallScreen || isTinyScreen) && {
+                      paddingVertical: 12,
+                      paddingHorizontal: 14,
+                    },
+                    language === label && styles.languageOptionSelected,
                   ]}
+                  onPress={() => handleSelectLanguage(label)}
+                  activeOpacity={0.7}
                 >
-                  {label}
-                </Text>
-                {language === label && (
-                  <Ionicons name="checkmark-circle" size={22} color="#E15816" />
-                )}
-              </TouchableOpacity>
-            ))}
+                  <Text
+                    style={[
+                      styles.languageOptionFlag,
+                      (isSmallScreen || isTinyScreen) && { fontSize: 20 },
+                    ]}
+                  >
+                    {flag}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.languageOptionText,
+                      (isSmallScreen || isTinyScreen) && { fontSize: 15 },
+                      language === label && styles.languageOptionTextSelected,
+                    ]}
+                  >
+                    {label}
+                  </Text>
+                  {language === label && (
+                    <Ionicons
+                      name="checkmark-circle"
+                      size={isSmallScreen || isTinyScreen ? 20 : 22}
+                      color="#E15816"
+                    />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
             <TouchableOpacity
-              style={styles.languageModalCancel}
+              style={[
+                styles.languageModalCancel,
+                (isSmallScreen || isTinyScreen) && { marginTop: 8 },
+              ]}
               onPress={() => setLanguageModalVisible(false)}
             >
-              <Text style={styles.languageModalCancelText}>
+              <Text
+                style={[
+                  styles.languageModalCancelText,
+                  (isSmallScreen || isTinyScreen) && { fontSize: 15 },
+                ]}
+              >
                 {t("common.cancel")}
               </Text>
             </TouchableOpacity>
@@ -1067,24 +1111,28 @@ const styles = StyleSheet.create({
   },
   languageModalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: "transparent",
     justifyContent: "center",
     alignItems: "center",
-    padding: 24,
+    paddingVertical: 20,
   },
   languageModalContent: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 16,
-    padding: 20,
     width: "100%",
-    maxWidth: 320,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    ...Platform.select({
+      ios: {
+        shadowColor: "#E15816",
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.5,
+        shadowRadius: 24,
+      },
+      android: { elevation: 16 },
+    }),
   },
-  languageMapHeader: {
+  languageModalHeader: {
     alignItems: "center",
     marginBottom: 20,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#F0F0F0",
   },
   languageMapGlobe: {
     width: 72,
@@ -1094,28 +1142,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 12,
-  },
-  languageMapFlags: {
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: 10,
-    marginBottom: 12,
-  },
-  languageMapFlagChip: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "#F5F5F5",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  languageMapFlagChipSelected: {
-    backgroundColor: "#FFF0E8",
-    borderWidth: 2,
-    borderColor: "#E15816",
-  },
-  languageMapFlagEmoji: {
-    fontSize: 24,
   },
   languageModalTitle: {
     fontSize: 18,
