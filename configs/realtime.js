@@ -48,10 +48,22 @@ export function createRealtimeConnection(accessToken, handlers = {}) {
       handlers.onNewSupportMessage?.(payload);
     });
 
+    socket.on('SUPPORT_MESSAGES_READ', (payload) => {
+      console.log('[realtime.js] SUPPORT_MESSAGES_READ received');
+      handlers.onSupportMessagesRead?.(payload);
+    });
+
     socket.on('TICKET_MESSAGE', (payload) => {
       console.log('[realtime.js] TICKET_MESSAGE received:', payload?.id, 'for ticket:', payload?.ticketId);
-      console.log('[realtime.js] Full payload:', JSON.stringify(payload));
       handlers.onTicketMessage?.(payload);
+    });
+
+    socket.on('TICKET_MESSAGES_READ', (payload) => {
+      handlers.onTicketMessagesRead?.(payload);
+    });
+
+    socket.on('TICKET_CREATED', (payload) => {
+      handlers.onTicketCreated?.(payload);
     });
 
     socket.on('connect', () => {

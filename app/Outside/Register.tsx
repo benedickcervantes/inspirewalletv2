@@ -6,7 +6,6 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useState } from "react";
 import {
     ActivityIndicator,
-    Dimensions,
     KeyboardAvoidingView,
     Modal,
     Platform,
@@ -30,6 +29,15 @@ import {
 import { useLanguage } from "../../context/LanguageContext";
 import type { NavProp } from "../../types/navigation";
 import { useResponsive } from "../../utils/responsive";
+
+const getScreenWidth = () => {
+  try {
+    const D = require("react-native").Dimensions;
+    return D?.get?.("window")?.width ?? 375;
+  } catch {
+    return 375;
+  }
+};
 
 const USER_PREFERRED_LANGUAGE_KEY = "user_preferred_language";
 
@@ -1905,12 +1913,12 @@ const styles = StyleSheet.create({
   },
   qrCenterRow: {
     flexDirection: "row",
-    height: Dimensions.get("window").width * 0.7,
+    height: getScreenWidth() * 0.7,
   },
   qrSideOverlay: { flex: 1, backgroundColor: "rgba(0, 0, 0, 0.7)" },
   qrFrameContainer: {
-    width: Dimensions.get("window").width * 0.7,
-    height: Dimensions.get("window").width * 0.7,
+    width: getScreenWidth() * 0.7,
+    height: getScreenWidth() * 0.7,
     position: "relative" as const,
     justifyContent: "center",
     alignItems: "center",

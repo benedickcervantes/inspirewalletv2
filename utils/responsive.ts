@@ -1,4 +1,4 @@
-import { Dimensions, useWindowDimensions } from 'react-native';
+import { useWindowDimensions } from 'react-native';
 import { useMemo } from 'react';
 
 /**
@@ -12,7 +12,16 @@ import { useMemo } from 'react';
 const BASE_WIDTH = 375;
 const BASE_HEIGHT = 812;
 
-const getWindow = () => Dimensions.get('window');
+const getWindow = () => {
+  try {
+    const RN = require('react-native');
+    const D = RN.Dimensions;
+    if (D && typeof D.get === 'function') return D.get('window');
+  } catch {
+    // fallback if Dimensions unavailable
+  }
+  return { width: BASE_WIDTH, height: BASE_HEIGHT };
+};
 
 /**
  * Scale a horizontal size by screen width. Use for widths, horizontal padding, font sizes (with care).

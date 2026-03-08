@@ -4,17 +4,16 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Dimensions,
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import QRCode from "react-native-qrcode-svg";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -28,7 +27,13 @@ import CustomLoader from "../../Loader/CustomLoader";
 import ContactsModal from "./ContactsModal";
 import QRScanner from "./QRScanner";
 
-const { width } = Dimensions.get("window");
+const width = (() => {
+  try {
+    return require("react-native").Dimensions?.get?.("window")?.width ?? 375;
+  } catch {
+    return 375;
+  }
+})();
 
 // Reusable function to get user initials
 export const getUserInitials = (name: string) => {

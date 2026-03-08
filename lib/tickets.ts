@@ -137,7 +137,16 @@ export async function createTicket(
   if (!response.ok) {
     const errorText = await response.text();
     console.log("[Tickets API] Error response:", errorText);
-    throw new Error(`Failed to create ticket: ${response.status} ${response.statusText} - ${errorText}`);
+    let userMessage = "Failed to create ticket";
+    try {
+      const parsed = JSON.parse(errorText) as { message?: string | string[] };
+      if (parsed?.message) {
+        userMessage = Array.isArray(parsed.message) ? parsed.message.join(". ") : String(parsed.message);
+      }
+    } catch {
+      // fallback to raw text if not JSON
+    }
+    throw new Error(userMessage);
   }
 
   return response.json();

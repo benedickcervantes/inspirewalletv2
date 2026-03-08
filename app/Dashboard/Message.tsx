@@ -3,10 +3,12 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Image,
   Keyboard,
   KeyboardAvoidingView,
+  Linking,
   Modal,
   Platform,
   RefreshControl,
@@ -25,7 +27,6 @@ import {
   deleteMessage,
   editMessage,
   getMessages,
-  markAllMessagesAsRead,
   sendMessage,
 } from "../../configs/api";
 import { useLanguage } from "../../context/LanguageContext";
@@ -149,12 +150,6 @@ export default function Message() {
     if (result.success && result.messages) {
       setMessages(mapApiToDisplay(result.messages as ApiMessage[]));
       setError(null);
-      // Mark all as read when viewing, then refetch to show updated status
-      await markAllMessagesAsRead(token);
-      const refetch = await getMessages(token, { page: 1, limit: 100 });
-      if (refetch.success && refetch.messages) {
-        setMessages(mapApiToDisplay(refetch.messages as ApiMessage[]));
-      }
     } else {
       setError(result.error || t("support.failedToLoad"));
     }
@@ -359,7 +354,11 @@ export default function Message() {
             </Text>
           </View>
         </View>
-        <TouchableOpacity style={styles.headerRight}>
+        <TouchableOpacity
+          style={styles.headerRight}
+          onPress={() => Linking.openURL("tel:+63253221002")}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+        >
           <Ionicons name="call-outline" size={22} color="#FFFFFF" />
         </TouchableOpacity>
       </View>
@@ -396,11 +395,7 @@ export default function Message() {
 
       {loading && messages.length === 0 ? (
         <View style={styles.centerContent}>
-          <Image
-            source={require("../../assets/icons/loader.gif")}
-            style={{ width: 80, height: 80 }}
-            resizeMode="contain"
-          />
+          <ActivityIndicator size="large" color="#E15816" />
           <Text style={styles.loadingText}>{t("support.loading")}</Text>
         </View>
       ) : error && messages.length === 0 ? (
@@ -421,12 +416,13 @@ export default function Message() {
             <TicketList
               accessToken={accessToken}
               onTicketSelected={setTicketSelected}
+              refreshTrigger={ticketListRefreshKey}
             />
           </View>
           {/* Circular Create Button - Below Tickets */}
           {!ticketSelected && (
             <TouchableOpacity
-              style={styles.circularCreateButton}
+              style={[styles.circularCreateButton, { bottom: 20 + insets.bottom }]}
               onPress={() => setShowTicketCreation(true)}
             >
               <MaterialCommunityIcons name="plus" size={28} color="#FFFFFF" />
@@ -436,8 +432,8 @@ export default function Message() {
       ) : (
         <KeyboardAvoidingView
           style={styles.keyboardView}
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          keyboardVerticalOffset={Platform.OS === "ios" ? 20 : 0}
+          behavior={undefined}
+          keyboardVerticalOffset={0}
         >
           <ScrollView
             ref={scrollRef}
@@ -518,20 +514,10 @@ export default function Message() {
                             size={14}
                             color={
                               msg.status === "READ"
-                                ? "#4FC3F7"
-                                : "rgba(255,255,255,0.8)"
+                                ? "#4CAF50"
+                                : "#9CA3AF"
                             }
                           />
-                          <Text
-                            style={[
-                              styles.readStatusText,
-                              msg.status === "READ"
-                                ? styles.readStatusRead
-                                : styles.readStatusSent,
-                            ]}
-                          >
-                            {msg.status === "READ" ? t("support.read") : t("support.sent")}
-                          </Text>
                         </View>
                       ) : msg.status === "SENT" ? (
                         <View style={styles.unreadDot} />
@@ -596,7 +582,10 @@ export default function Message() {
         <TicketCreation
           open={showTicketCreation}
           onClose={() => setShowTicketCreation(false)}
-          onSuccess={() => setViewMode("tickets")}
+          onSuccess={() => {
+            setViewMode("tickets");
+            setTicketListRefreshKey((k) => k + 1);
+          }}
           accessToken={accessToken}
         />
       )}

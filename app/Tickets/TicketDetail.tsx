@@ -2,19 +2,22 @@ import type { Ticket } from "@/lib/tickets";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useEffect, useRef, useState } from "react";
 import {
-    ActivityIndicator,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
 } from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLanguage } from "../../context/LanguageContext";
 import { useSocket } from "../../context/SocketContext";
-import { subscribeToNewTicketMessage } from "../../lib/ticketingEvents";
+import { subscribeToNewTicketMessage, subscribeToTicketMessagesRead } from "../../lib/ticketingEvents";
 
 interface TicketDetailProps {
   ticket: Ticket;
@@ -35,6 +38,8 @@ interface TicketMessage {
   content: string;
   isCustomer: boolean;
   createdAt: string;
+  readByUserAt?: string | null;
+  readByAdminAt?: string | null;
   sender?: SenderInfo;
 }
 
@@ -53,7 +58,10 @@ function TicketDetail({
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [wsConnected, setWsConnected] = useState(false);
+  const { width } = useWindowDimensions();
+  const isSmallScreen = width < 380;
   const { t, language } = useLanguage();
+  const insets = useSafeAreaInsets();
 
   const { isConnected: isSocketConnected, getSocket } = useSocket();
 
@@ -62,9 +70,9 @@ function TicketDetail({
     setWsConnected(isSocketConnected);
   }, [isSocketConnected]);
 
-  // Derived state
-  const hasAdminReply = messages.some((m) => !m.isCustomer);
-  const canUserType = hasAdminReply;
+  // Derived state: user can always reply to their own ticket (common support UX)
+  const hasAdminReply = messages.some((m) => m.isCustomer === false);
+  const canUserType = true;
 
   // Helper function to format timestamp
   const formatTime = (dateString: string) => {
@@ -131,19 +139,18 @@ function TicketDetail({
       }
 
       const data = await response.json();
-      let fetchedMessages = data.messages || [];
+      let fetchedMessages = (data.messages || []).map((msg: any) => ({
+        ...msg,
+        content: msg.content ?? msg.message ?? "",
+        isCustomer: msg.isCustomer === true,
+        readByUserAt: msg.readByUserAt ?? null,
+        readByAdminAt: msg.readByAdminAt ?? null,
+      }));
 
       // Validate message structure
-      fetchedMessages = fetchedMessages.filter((msg: any) => {
-        return (
-          msg.id &&
-          msg.ticketId &&
-          msg.senderId &&
-          msg.content &&
-          typeof msg.isCustomer === "boolean" &&
-          msg.createdAt
-        );
-      });
+      fetchedMessages = fetchedMessages.filter((msg: any) =>
+        msg.id && msg.ticketId && msg.senderId && (msg.content || "").length >= 0 && msg.createdAt
+      );
 
       // Sort messages chronologically (oldest first)
       fetchedMessages.sort(
@@ -181,14 +188,20 @@ function TicketDetail({
 
     // Subscribe to ticket message events first
     const unsubscribe = subscribeToNewTicketMessage((newMessage: any) => {
-      console.log("[TicketDetail] Event received in subscription:", newMessage?.id, "for ticket:", newMessage?.ticketId);
-      console.log("[TicketDetail] Current ticket ID:", ticket.id);
-      console.log("[TicketDetail] Message matches ticket:", newMessage?.ticketId === ticket.id);
+      if (newMessage.ticketId !== ticket.id) return;
+      setMessages((prev) => {
+        const existing = prev.findIndex((m) => m.id === newMessage.id);
+        if (existing >= 0) {
+          const next = [...prev];
+          next[existing] = { ...next[existing], ...newMessage };
+          return next;
+        }
+        return [...prev, newMessage];
+      });
+    });
 
-      if (newMessage.ticketId === ticket.id) {
-        // Just add the new message instead of refetching all
-        setMessages((prev) => [...prev, newMessage]);
-      }
+    const unsubscribeRead = subscribeToTicketMessagesRead((ticketId) => {
+      if (ticketId === ticket.id) fetchMessages(false);
     });
 
     // Join the ticket room if socket is available
@@ -206,10 +219,8 @@ function TicketDetail({
     }
 
     return () => {
-      console.log(`[TicketDetail] Cleaning up subscription for ticket ${ticket.id}`);
       unsubscribe();
-
-      // Leave the room on cleanup
+      unsubscribeRead();
       const currentSocket = getSocket();
       if (currentSocket && currentSocket.connected) {
         const roomName = `ticket:${ticket.id}`;
@@ -217,7 +228,17 @@ function TicketDetail({
         console.log(`[TicketDetail] Left room: ${roomName}`);
       }
     };
-  }, [ticket.id]);
+  }, [ticket.id, isSocketConnected]);
+
+  // Fix footer staying lifted after keyboard dismiss
+  useEffect(() => {
+    const sub = Keyboard.addListener("keyboardDidHide", () => {
+      requestAnimationFrame(() => {
+        scrollRef.current?.scrollToEnd({ animated: false });
+      });
+    });
+    return () => sub.remove();
+  }, []);
 
   // Refetch on reconnection
   useEffect(() => {
@@ -421,7 +442,7 @@ function TicketDetail({
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
       <View style={styles.header}>
         <TouchableOpacity onPress={onBack} style={styles.backButtonContainer}>
           <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
@@ -441,8 +462,8 @@ function TicketDetail({
 
       <KeyboardAvoidingView
         style={styles.keyboardView}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 20 : 0}
+        behavior={undefined}
+        keyboardVerticalOffset={0}
       >
         {loading ? (
           <View style={styles.centerContent}>
@@ -461,15 +482,19 @@ function TicketDetail({
           <>
             <ScrollView
               ref={scrollRef}
-              style={styles.messagesScroll}
+              style={[styles.messagesScroll, isSmallScreen && styles.messagesScrollSmall]}
+              contentContainerStyle={[
+                styles.messagesContent,
+                isSmallScreen && styles.messagesContentSmall,
+              ]}
               showsVerticalScrollIndicator={false}
               onScroll={handleScroll}
               scrollEventThrottle={16}
             >
               {messages.length === 0 ? (
-                <View style={styles.emptyState}>
-                  <MaterialCommunityIcons name="message-outline" size={48} color="#CCC" />
-                  <Text style={styles.emptyText}>{t("support.noMessagesYet")}</Text>
+                <View style={[styles.emptyState, isSmallScreen && styles.emptyStateSmall]}>
+                  <MaterialCommunityIcons name="message-outline" size={isSmallScreen ? 40 : 48} color="#CCC" />
+                  <Text style={[styles.emptyText, isSmallScreen && styles.emptyTextSmall]}>{t("support.noMessagesYet")}</Text>
                 </View>
               ) : (
                 messages.map((msg) => (
@@ -477,38 +502,57 @@ function TicketDetail({
                     key={msg.id}
                     style={[
                       styles.bubbleRow,
+                      isSmallScreen && styles.bubbleRowSmall,
                       msg.isCustomer ? styles.bubbleRowSent : styles.bubbleRowReceived,
                     ]}
                   >
-                    <View style={{ flex: 1 }}>
+                    <View style={{ flex: 1, minWidth: 0 }}>
                       {!msg.isCustomer && msg.sender && (
-                        <Text style={styles.senderName}>
+                        <Text style={[styles.senderName, isSmallScreen && styles.senderNameSmall]}>
                           {`${msg.sender.firstName} ${msg.sender.lastName}`}
                         </Text>
                       )}
                       <View
                         style={[
                           styles.bubble,
+                          isSmallScreen && styles.bubbleSmall,
                           msg.isCustomer ? styles.bubbleSent : styles.bubbleReceived,
                         ]}
                       >
                         <Text
                           style={[
                             styles.bubbleText,
+                            isSmallScreen && styles.bubbleTextSmall,
                             msg.isCustomer ? styles.bubbleTextSent : styles.bubbleTextReceived,
                           ]}
                           numberOfLines={0}
                         >
                           {msg.content || t("tickets.emptyMessage")}
                         </Text>
-                        <Text
+                        <View
                           style={[
-                            styles.bubbleTime,
-                            msg.isCustomer ? styles.bubbleTimeSent : styles.bubbleTimeReceived,
+                            styles.bubbleTimeRow,
+                            msg.isCustomer ? styles.bubbleTimeRowSent : styles.bubbleTimeRowReceived,
                           ]}
                         >
-                          {formatTime(msg.createdAt)}
-                        </Text>
+                          <Text
+                            style={[
+                              styles.bubbleTime,
+                              isSmallScreen && styles.bubbleTimeSmall,
+                              msg.isCustomer ? styles.bubbleTimeSent : styles.bubbleTimeReceived,
+                            ]}
+                          >
+                            {formatTime(msg.createdAt)}
+                          </Text>
+                          {msg.isCustomer && (
+                            <Ionicons
+                              name={msg.readByAdminAt ? "checkmark-done" : "checkmark"}
+                              size={isSmallScreen ? 16 : 18}
+                              color={msg.readByAdminAt ? "#4CAF50" : "#9CA3AF"}
+                              style={styles.readReceipt}
+                            />
+                          )}
+                        </View>
                       </View>
                     </View>
                   </View>
@@ -517,15 +561,19 @@ function TicketDetail({
             </ScrollView>
 
             {!canUserType && (
-              <View style={styles.waitingMessage}>
-                <MaterialCommunityIcons name="clock-outline" size={20} color="#E15816" />
+              <View style={[styles.waitingMessage, isSmallScreen && styles.waitingMessageSmall]}>
+                <MaterialCommunityIcons name="clock-outline" size={isSmallScreen ? 18 : 20} color="#E15816" />
                 <Text style={styles.waitingText}>{t("tickets.waitingForAdmin")}</Text>
               </View>
             )}
 
-            <View style={styles.inputBar}>
+            <View style={[
+              styles.inputBar,
+              isSmallScreen && styles.inputBarSmall,
+              { paddingBottom: Math.max(isSmallScreen ? 8 : 10, insets.bottom) },
+            ]}>
               <TextInput
-                style={[styles.input, !canUserType && styles.inputDisabled]}
+                style={[styles.input, isSmallScreen && styles.inputSmall, !canUserType && styles.inputDisabled]}
                 placeholder={canUserType ? t("tickets.replyPlaceholder") : t("tickets.waitingForAdminPlaceholder") || t("tickets.waitingForAdmin")}
                 placeholderTextColor="#999"
                 value={message}
@@ -537,18 +585,20 @@ function TicketDetail({
               <TouchableOpacity
                 style={[
                   styles.sendButton,
+                  isSmallScreen && styles.sendButtonSmall,
                   (!message.trim() || !canUserType || sending) && styles.sendButtonDisabled,
                 ]}
                 onPress={handleSend}
                 activeOpacity={0.7}
                 disabled={!message.trim() || !canUserType || sending}
+                hitSlop={{ top: 16, bottom: 16, left: 16, right: 16 }}
               >
                 {sending ? (
                   <ActivityIndicator size="small" color="#999" />
                 ) : (
                   <MaterialCommunityIcons
                     name="send"
-                    size={22}
+                    size={isSmallScreen ? 20 : 22}
                     color={message.trim() && canUserType ? "#FFFFFF" : "#999"}
                   />
                 )}
@@ -557,7 +607,7 @@ function TicketDetail({
           </>
         )}
       </KeyboardAvoidingView>
-    </View >
+    </SafeAreaView>
   );
 }
 
@@ -573,15 +623,26 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     backgroundColor: "#E15816",
   },
+  headerSmall: {
+    paddingHorizontal: 8,
+    paddingVertical: 10,
+  },
   backButtonContainer: {
     padding: 8,
     marginRight: 8,
+  },
+  backButtonSmall: {
+    padding: 6,
+    marginRight: 4,
   },
   headerTitle: {
     fontSize: 17,
     fontWeight: "700",
     color: "#FFFFFF",
     flex: 1,
+  },
+  headerTitleSmall: {
+    fontSize: 14,
   },
   keyboardView: {
     flex: 1,
@@ -621,20 +682,40 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 16,
   },
+  messagesScrollSmall: {
+    paddingHorizontal: 8,
+    paddingVertical: 12,
+  },
+  messagesContent: {
+    paddingBottom: 24,
+  },
+  messagesContentSmall: {
+    paddingBottom: 20,
+  },
   emptyState: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     paddingVertical: 40,
   },
+  emptyStateSmall: {
+    paddingVertical: 24,
+  },
   emptyText: {
     fontSize: 16,
     color: "#999",
     marginTop: 12,
   },
+  emptyTextSmall: {
+    fontSize: 14,
+    marginTop: 8,
+  },
   bubbleRow: {
     flexDirection: "row",
     marginBottom: 12,
+  },
+  bubbleRowSmall: {
+    marginBottom: 10,
   },
   bubbleRowSent: {
     justifyContent: "flex-end",
@@ -649,12 +730,22 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     marginLeft: 12,
   },
+  senderNameSmall: {
+    fontSize: 11,
+    marginLeft: 8,
+  },
   bubble: {
     maxWidth: "80%",
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 18,
     alignSelf: "flex-start",
+  },
+  bubbleSmall: {
+    maxWidth: "88%",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 14,
   },
   bubbleSent: {
     backgroundColor: "#E15816",
@@ -676,21 +767,42 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 22,
   },
+  bubbleTextSmall: {
+    fontSize: 14,
+    lineHeight: 20,
+  },
   bubbleTextSent: {
     color: "#FFFFFF",
   },
   bubbleTextReceived: {
     color: "#333",
   },
+  bubbleTimeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 4,
+    gap: 4,
+  },
+  bubbleTimeRowSent: {
+    justifyContent: "flex-end",
+  },
+  bubbleTimeRowReceived: {
+    justifyContent: "flex-start",
+  },
   bubbleTime: {
     fontSize: 11,
-    marginTop: 4,
+  },
+  bubbleTimeSmall: {
+    fontSize: 10,
   },
   bubbleTimeSent: {
     color: "rgba(255,255,255,0.8)",
   },
   bubbleTimeReceived: {
     color: "#999",
+  },
+  readReceipt: {
+    marginLeft: 6,
   },
   waitingMessage: {
     flexDirection: "row",
@@ -703,20 +815,35 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: "#E0E0E0",
   },
+  waitingMessageSmall: {
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    gap: 6,
+  },
   waitingText: {
     fontSize: 14,
     color: "#E15816",
     fontWeight: "600",
   },
+  waitingTextSmall: {
+    fontSize: 13,
+  },
   inputBar: {
     flexDirection: "row",
     alignItems: "flex-end",
     paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingTop: 14,
+    paddingBottom: 10,
     backgroundColor: "#FFFFFF",
     borderTopWidth: 1,
     borderTopColor: "#E0E0E0",
     gap: 10,
+  },
+  inputBarSmall: {
+    paddingHorizontal: 8,
+    paddingTop: 12,
+    paddingBottom: 8,
+    gap: 8,
   },
   input: {
     flex: 1,
@@ -729,17 +856,30 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#333",
   },
+  inputSmall: {
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    paddingTop: 10,
+    maxHeight: 88,
+    fontSize: 15,
+    borderRadius: 20,
+  },
   inputDisabled: {
     backgroundColor: "#E8E8E8",
     color: "#999",
   },
   sendButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     backgroundColor: "#E15816",
     justifyContent: "center",
     alignItems: "center",
+  },
+  sendButtonSmall: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
   },
   sendButtonDisabled: {
     backgroundColor: "#E8E8E8",
@@ -750,15 +890,28 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     marginRight: 6,
   },
+  statusDotSmall: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginRight: 4,
+  },
   statusText: {
     color: "#FFFFFF",
     fontSize: 10,
     opacity: 0.8,
   },
+  statusTextSmall: {
+    fontSize: 9,
+  },
   refreshButton: {
     padding: 8,
     borderRadius: 20,
     backgroundColor: 'rgba(255,255,255,0.1)',
+  },
+  refreshButtonSmall: {
+    padding: 6,
+    borderRadius: 16,
   },
 });
 

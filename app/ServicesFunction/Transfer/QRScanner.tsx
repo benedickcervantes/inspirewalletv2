@@ -3,7 +3,6 @@ import { CameraView, useCameraPermissions } from "expo-camera";
 import { LinearGradient } from "expo-linear-gradient";
 import { useState } from "react";
 import {
-  Dimensions,
   Modal,
   StyleSheet,
   Text,
@@ -12,7 +11,14 @@ import {
 } from "react-native";
 import { useLanguage } from "../../../context/LanguageContext";
 
-const { width, height } = Dimensions.get("window");
+const getWindow = () => {
+  try {
+    return require("react-native").Dimensions?.get?.("window") ?? { width: 375, height: 667 };
+  } catch {
+    return { width: 375, height: 667 };
+  }
+};
+const { width, height } = getWindow();
 
 interface QRScannerProps {
   visible: boolean;

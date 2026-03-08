@@ -1,15 +1,16 @@
-import { subscribeToNewTicketMessage } from "@/lib/ticketingEvents";
+import { subscribeToNewTicketMessage, subscribeToTicketCreated } from "@/lib/ticketingEvents";
 import { listUserTickets, type Ticket } from "@/lib/tickets";
 import { useFocusEffect } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Modal,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { useLanguage } from "../../context/LanguageContext";
 import TicketDetail from "./TicketDetail";
@@ -37,24 +38,30 @@ function TicketList({ accessToken, onTicketSelected }: TicketListProps) {
     loadTickets();
   }, [page]);
 
+  useEffect(() => {
+    if (refreshTrigger != null && refreshTrigger > 0) loadTickets();
+  }, [refreshTrigger]);
+
   useFocusEffect(
     React.useCallback(() => {
       loadTickets();
     }, [])
   );
 
-  // Setup WebSocket listener for real-time ticket updates
+  // Setup WebSocket listeners for real-time ticket updates
   useEffect(() => {
     if (!accessToken) return;
 
-    // Subscribe to ticket message events
     const unsubscribe = subscribeToNewTicketMessage(() => {
-      console.log("[TicketList] Received ticket message notification, refetching tickets");
+      loadTickets();
+    });
+    const unsubscribeCreated = subscribeToTicketCreated(() => {
       loadTickets();
     });
 
     return () => {
       unsubscribe();
+      unsubscribeCreated();
     };
   }, [accessToken]);
 
@@ -119,22 +126,8 @@ function TicketList({ accessToken, onTicketSelected }: TicketListProps) {
     });
   };
 
-  if (selectedTicket) {
-    console.log("[TicketList] Rendering TicketDetail for:", selectedTicket.id);
-    return (
-      <TicketDetail
-        ticket={selectedTicket}
-        accessToken={accessToken}
-        onBack={() => {
-          console.log("[TicketList] Back button pressed");
-          setSelectedTicket(null);
-          onTicketSelected?.(false);
-        }}
-      />
-    );
-  }
-
   return (
+    <>
     <ScrollView
       style={styles.container}
       refreshControl={
@@ -143,7 +136,7 @@ function TicketList({ accessToken, onTicketSelected }: TicketListProps) {
     >
       {loading && !tickets.length ? (
         <View style={styles.centerContent}>
-          <ActivityIndicator size="large" color="#3b82f6" />
+          <ActivityIndicator size="large" color="#E15816" />
           <Text style={styles.loadingText}>{t("tickets.loading")}</Text>
         </View>
       ) : tickets.length > 0 ? (
@@ -231,6 +224,29 @@ function TicketList({ accessToken, onTicketSelected }: TicketListProps) {
         </View>
       )}
     </ScrollView>
+
+    <Modal
+      visible={!!selectedTicket}
+      animationType="slide"
+      statusBarTranslucent
+      onRequestClose={() => {
+        setSelectedTicket(null);
+        onTicketSelected?.(false);
+      }}
+    >
+      {selectedTicket && (
+        <TicketDetail
+          ticket={selectedTicket}
+          accessToken={accessToken}
+          onBack={() => {
+            setSelectedTicket(null);
+            onTicketSelected?.(false);
+            loadTickets();
+          }}
+        />
+      )}
+    </Modal>
+    </>
   );
 }
 
