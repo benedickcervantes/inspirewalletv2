@@ -108,6 +108,7 @@ export default function Message() {
   );
   const [editText, setEditText] = useState("");
   const [ticketSelected, setTicketSelected] = useState(false);
+  const [ticketListRefreshKey, setTicketListRefreshKey] = useState(0);
   const { t, language } = useLanguage();
 
   // Debug ticket selection
