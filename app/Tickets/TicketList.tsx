@@ -18,9 +18,10 @@ import TicketDetail from "./TicketDetail";
 interface TicketListProps {
   accessToken: string;
   onTicketSelected?: (selected: boolean) => void;
+  refreshTrigger?: number;
 }
 
-function TicketList({ accessToken, onTicketSelected }: TicketListProps) {
+function TicketList({ accessToken, onTicketSelected, refreshTrigger }: TicketListProps) {
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
