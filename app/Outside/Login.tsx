@@ -667,7 +667,7 @@ export default function Login() {
 
     setLoading(true);
     const loaderStart = Date.now();
-    const MIN_LOADER_MS = 2000;
+    const MIN_LOADER_MS = 500; // Brief feedback only; Dashboard will show its own loader
 
     try {
       const result = await login(trimmedEmail, password);
