@@ -15,6 +15,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   markNotificationAsRead as apiMarkNotificationAsRead,
+  markAllNotificationsAsRead as apiMarkAllNotificationsAsRead,
   getNotifications,
 } from '../../configs/api';
 import { auth } from '../../configs/firebase';
@@ -37,6 +38,7 @@ const Notification = () => {
   const [backendNotifications, setBackendNotifications] = useState<NotificationItemBackend[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [readAllLoading, setReadAllLoading] = useState(false);
   const [user, setUser] = useState<{ uid: string } | null>(null);
   const [useBackend, setUseBackend] = useState(false);
 
@@ -106,6 +108,33 @@ const Notification = () => {
       fetchBackendNotifications();
     } else {
       setTimeout(() => setRefreshing(false), 1000);
+    }
+  };
+
+  const unreadCount = useBackend
+    ? backendNotifications.filter((n) => !n.isRead).length
+    : notifications.filter((n) => !n.read).length;
+
+  const handleReadAll = async () => {
+    if (unreadCount === 0 || readAllLoading) return;
+    setReadAllLoading(true);
+    try {
+      if (useBackend) {
+        const accessToken = await AsyncStorage.getItem('access_token');
+        if (accessToken) {
+          const result = await apiMarkAllNotificationsAsRead(accessToken);
+          if (result.success) {
+            setBackendNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+          }
+        }
+      } else if (user) {
+        await notificationService.markAllAsRead(user.uid);
+        // Firebase subscription will update state automatically
+      }
+    } catch (error) {
+      console.error('Error marking all notifications as read:', error);
+    } finally {
+      setReadAllLoading(false);
     }
   };
 
@@ -340,6 +369,22 @@ const Notification = () => {
         </TouchableOpacity>
       </LinearGradient>
 
+      {unreadCount > 0 && (
+        <View style={styles.readAllBar}>
+          <TouchableOpacity
+            onPress={handleReadAll}
+            disabled={readAllLoading}
+            style={styles.readAllButton}
+          >
+            {readAllLoading ? (
+              <ActivityIndicator size="small" color="#E25A17" />
+            ) : (
+              <Text style={styles.readAllText}>{t('notification.readAll')}</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+      )}
+
       {loading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#E25A17" />
@@ -419,6 +464,27 @@ const styles = StyleSheet.create({
     height: 40,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  readAllBar: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#EEE',
+  },
+  readAllButton: {
+    minWidth: 80,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+  },
+  readAllText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#E25A17',
   },
   loadingContainer: {
     flex: 1,

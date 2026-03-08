@@ -29,9 +29,12 @@ export const fetchUserBalances = async () => {
   if (accessToken) {
     const { success, wallet } = await getOrCreateMainWallet(accessToken);
     const bal = success && wallet?.balance != null ? parseFloat(String(wallet.balance)) : 0;
+    const agent = success && (wallet as { agentCommission?: number | string })?.agentCommission != null
+      ? parseFloat(String((wallet as { agentCommission?: number | string }).agentCommission))
+      : 0;
     return {
       availableBalance: Number.isNaN(bal) ? 0 : bal,
-      agentWallet: 0,
+      agentWallet: Number.isNaN(agent) ? 0 : agent,
       userData: null,
     };
   }

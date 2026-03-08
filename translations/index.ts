@@ -797,6 +797,7 @@ const en: TranslationMap = {
   "notification.supportMessage": "Support Message",
   "notification.yourMessage": "Your Message",
   "notification.newBadge": "NEW",
+  "notification.readAll": "Read All",
 
   // Cards tab
   "ct.yourInspireCard": "Your Inspire Card",
@@ -2168,6 +2169,7 @@ const ko: TranslationMap = {
   "notification.supportMessage": "고객 지원 메시지",
   "notification.yourMessage": "내 메시지",
   "notification.newBadge": "새 알림",
+  "notification.readAll": "모두 읽음",
   "ct.yourInspireCard": "Inspire 카드",
   "ct.defaultCard": "기본 카드",
   "ct.viewDetails": "상세 보기",
@@ -3478,6 +3480,7 @@ const ja: TranslationMap = {
   "notification.supportMessage": "サポートからのメッセージ",
   "notification.yourMessage": "あなたのメッセージ",
   "notification.newBadge": "新着",
+  "notification.readAll": "すべて既読",
   "ct.yourInspireCard": "Inspireカード",
   "ct.defaultCard": "デフォルトカード",
   "ct.viewDetails": "詳細を見る",
@@ -4794,6 +4797,7 @@ const ar: TranslationMap = {
   "notification.supportMessage": "رسالة الدعم",
   "notification.yourMessage": "رسالتك",
   "notification.newBadge": "جديد",
+  "notification.readAll": "تحديد الكل كمقروء",
   "ct.yourInspireCard": "بطاقة Inspire الخاصة بك",
   "ct.defaultCard": "البطاقة الافتراضية",
   "ct.viewDetails": "عرض التفاصيل",

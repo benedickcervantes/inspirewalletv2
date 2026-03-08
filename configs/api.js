@@ -1300,6 +1300,33 @@ export async function getNotifications(accessToken, opts = {}) {
 }
 
 /**
+ * PATCH /notifications/read-all — requires JWT
+ * Mark all notifications as read.
+ * @param {string} accessToken
+ */
+export async function markAllNotificationsAsRead(accessToken) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
+  try {
+    const url = `${base}/notifications/read-all`;
+    const res = await apiFetch(url, {
+      method: "PATCH",
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || 'Failed';
+      return { success: false, error: msg };
+    }
+    return { success: true };
+  } catch (e) {
+    if (__DEV__) console.error("[Notifications API] Error", e);
+    return { success: false, error: e.message || "Network error" };
+  }
+}
+
+/**
  * PATCH /notifications/:id/read — requires JWT
  * Mark notification as read.
  * @param {string} accessToken
