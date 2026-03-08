@@ -19,8 +19,6 @@ export default function TimeDeposit() {
   const { t } = useLanguage();
   const [currentStep, setCurrentStep] = useState(1);
   const [depositMethod, setDepositMethod] = useState("Request Amount");
-  const [selectedCurrency, setSelectedCurrency] = useState("PHP");
-  const [showCurrencyModal, setShowCurrencyModal] = useState(false);
   const [contractPeriod, setContractPeriod] = useState("");
   const [userData, setUserData] = useState<Record<string, unknown> | null>(
     null,
@@ -31,13 +29,6 @@ export default function TimeDeposit() {
     title: string;
     message: string;
   }>({ title: "", message: "" });
-
-  const currencies = [
-    { code: "PHP", name: "Philippine Peso", flag: "🇵🇭", symbol: "₱" },
-    { code: "JPY", name: "Japanese Yen", flag: "🇯🇵", symbol: "¥" },
-    { code: "SAR", name: "Saudi Riyal", flag: "🇸🇦", symbol: "﷼" },
-    { code: "KRW", name: "Korean Won", flag: "🇰🇷", symbol: "₩" },
-  ];
 
   useEffect(() => {
     fetchUserData();
@@ -82,12 +73,8 @@ export default function TimeDeposit() {
     navigation.navigate("TimeDepositAmount", {
       depositMethod,
       contractPeriod,
-      currency: selectedCurrency,
+      currency: "PHP",
     });
-  };
-
-  const getSelectedCurrency = () => {
-    return currencies.find((c) => c.code === selectedCurrency) || currencies[0];
   };
 
   return (
@@ -201,36 +188,6 @@ export default function TimeDeposit() {
               </TouchableOpacity>
             </View>
 
-            {/* Select Currency */}
-            <View style={styles.formSection}>
-              <View style={styles.sectionHeader}>
-                <View style={styles.iconBox}>
-                  <MaterialCommunityIcons
-                    name="currency-usd"
-                    size={20}
-                    color="#E25A17"
-                  />
-                </View>
-                <Text style={styles.sectionTitle}>
-                  {t("deposit.selectCurrency")}
-                </Text>
-              </View>
-
-              <TouchableOpacity
-                style={styles.currencySelector}
-                onPress={() => setShowCurrencyModal(true)}>
-                <View style={styles.flagContainer}>
-                  <Text style={styles.flagEmoji}>
-                    {getSelectedCurrency().flag}
-                  </Text>
-                </View>
-                <Text style={styles.currencyText}>
-                  {getSelectedCurrency().code}
-                </Text>
-                <Ionicons name="chevron-down" size={20} color="#999" />
-              </TouchableOpacity>
-            </View>
-
             {/* Contract Period */}
             <View style={styles.formSection}>
               <View style={styles.sectionHeader}>
@@ -277,54 +234,6 @@ export default function TimeDeposit() {
 
           <View style={styles.bottomPadding} />
         </ScrollView>
-
-        {/* Currency Selector Modal */}
-        <Modal
-          visible={showCurrencyModal}
-          transparent={true}
-          animationType="slide"
-          onRequestClose={() => setShowCurrencyModal(false)}>
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContainer}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>
-                  {t("deposit.selectCurrency")}
-                </Text>
-                <TouchableOpacity onPress={() => setShowCurrencyModal(false)}>
-                  <Ionicons name="close" size={24} color="#333" />
-                </TouchableOpacity>
-              </View>
-              <ScrollView style={styles.modalContent}>
-                {currencies.map((currency) => (
-                  <TouchableOpacity
-                    key={currency.code}
-                    style={[
-                      styles.currencyOption,
-                      selectedCurrency === currency.code &&
-                        styles.currencyOptionSelected,
-                    ]}
-                    onPress={() => {
-                      setSelectedCurrency(currency.code);
-                      setShowCurrencyModal(false);
-                    }}>
-                    <Text style={styles.currencyFlag}>{currency.flag}</Text>
-                    <View style={styles.currencyInfo}>
-                      <Text style={styles.currencyCode}>{currency.code}</Text>
-                      <Text style={styles.currencyName}>{currency.name}</Text>
-                    </View>
-                    {selectedCurrency === currency.code && (
-                      <Ionicons
-                        name="checkmark-circle"
-                        size={24}
-                        color="#E25A17"
-                      />
-                    )}
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </View>
-          </View>
-        </Modal>
 
         {/* Custom Alert Modal */}
         <Modal
@@ -509,26 +418,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#333",
   },
-  currencySelector: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#F9F9F9",
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-  },
-  flagContainer: {
-    marginRight: 8,
-  },
-  flagEmoji: {
-    fontSize: 20,
-  },
-  currencyText: {
-    flex: 1,
-    fontSize: 14,
-    color: "#333",
-    fontWeight: "500",
-  },
   contractOption: {
     backgroundColor: "#F9F9F9",
     paddingVertical: 14,
@@ -569,63 +458,6 @@ const styles = StyleSheet.create({
   },
   bottomPadding: {
     height: 20,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    justifyContent: "flex-end",
-  },
-  modalContainer: {
-    backgroundColor: "#FFFFFF",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    maxHeight: "70%",
-  },
-  modalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: "#F0F0F0",
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#333",
-  },
-  modalContent: {
-    padding: 16,
-  },
-  currencyOption: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 8,
-    backgroundColor: "#F9F9F9",
-  },
-  currencyOptionSelected: {
-    backgroundColor: "#FFF5F0",
-    borderWidth: 1,
-    borderColor: "#E25A17",
-  },
-  currencyFlag: {
-    fontSize: 32,
-    marginRight: 16,
-  },
-  currencyInfo: {
-    flex: 1,
-  },
-  currencyCode: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#333",
-    marginBottom: 2,
-  },
-  currencyName: {
-    fontSize: 13,
-    color: "#666",
   },
   alertOverlay: {
     flex: 1,
