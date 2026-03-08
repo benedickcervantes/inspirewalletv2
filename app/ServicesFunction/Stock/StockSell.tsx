@@ -4,14 +4,14 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useState } from "react";
 import {
-  Modal,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
+    Modal,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    useWindowDimensions,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { getWallets, submitStockSellRequest } from "../../../configs/api";
@@ -27,7 +27,6 @@ export default function StockSell() {
   const { t } = useLanguage();
   const navigation = useNavigation();
   const route = useRoute();
-  const { t } = useLanguage();
   const { width } = useWindowDimensions();
   const isSmallScreen = width < 360;
   const isMediumScreen = width >= 360 && width < 400;

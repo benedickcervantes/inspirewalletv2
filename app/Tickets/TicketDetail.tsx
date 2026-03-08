@@ -2,15 +2,15 @@ import type { Ticket } from "@/lib/tickets";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { useLanguage } from "../../context/LanguageContext";
 import { useSocket } from "../../context/SocketContext";
@@ -55,7 +55,7 @@ function TicketDetail({
   const [wsConnected, setWsConnected] = useState(false);
   const { t, language } = useLanguage();
 
-  const { isConnected: isSocketConnected } = useSocket();
+  const { isConnected: isSocketConnected, getSocket } = useSocket();
 
   // Sync WS connection state with global socket
   useEffect(() => {
