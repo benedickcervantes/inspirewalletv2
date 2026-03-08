@@ -52,12 +52,16 @@ export function useResponsive() {
       scale: (size: number) => scale(size, width),
       verticalScale: (size: number) => verticalScale(size, height),
       moderateScale: (size: number, factor?: number) => moderateScale(size, factor, width),
-      /** True when width < 375 (small phones). */
-      isSmallScreen: width < 375,
-      /** True when height is short (e.g. landscape or small device). */
-      isShortScreen: height < 600,
-      /** Horizontal padding that adapts to width (e.g. 16 on small, 20–24 on larger). */
-      horizontalPadding: width < 360 ? 14 : width < 400 ? 18 : 24,
+      /** True when width < 330 (very small phones, e.g. 320px). */
+      isTinyScreen: width < 330,
+      /** True when width <= 390 (small phones incl. iPhone SE 2nd gen 375px). */
+      isSmallScreen: width <= 390,
+      /** True when height is short (e.g. iPhone SE 568, 667, landscape). */
+      isShortScreen: height < 700,
+      /** True when width >= 600 (tablets, large phones). */
+      isLargeScreen: width >= 600,
+      /** Horizontal padding that adapts to width (12 on tiny, 14 on small, 18–24 on larger). */
+      horizontalPadding: width < 330 ? 12 : width < 360 ? 14 : width < 400 ? 18 : 24,
     }),
     [width, height]
   );

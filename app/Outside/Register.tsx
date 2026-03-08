@@ -7,10 +7,8 @@ import { useState } from "react";
 import {
     ActivityIndicator,
     Dimensions,
-    KeyboardAvoidingView,
     Modal,
     Platform,
-    SafeAreaView,
     ScrollView,
     StatusBar,
     StyleSheet,
@@ -20,6 +18,8 @@ import {
     useWindowDimensions,
     View,
 } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { register as registerApi } from "../../configs/api";
 import {
     DEFAULT_LANGUAGE,
@@ -46,6 +46,14 @@ const filterNameInput = (text: string) => text.replace(/[^A-Za-zÑñ ]/g, "");
 
 // Allow digits only for phone number
 const filterPhoneInput = (text: string) => text.replace(/[^0-9]/g, "");
+
+// Referral code: English letters and numbers only, max 5 chars
+const filterReferralInput = (text: string) =>
+  text.replace(/[^A-Za-z0-9]/g, "").toUpperCase().slice(0, 5);
+
+// Password: English letters, numbers, and common safe symbols (blocks non-Latin scripts)
+const filterPasswordInput = (text: string) =>
+  text.replace(/[^A-Za-z0-9!@#$%^&*()\-_=+[\]{}|;:'",.<>?/~`\\]/g, "");
 
 const capitalizeWords = (text: string) =>
   text.replace(/\b\w/g, (char) => char.toUpperCase());
@@ -93,8 +101,11 @@ const COUNTRY_OPTIONS = [
   },
 ];
 
-const formatWithMask = (text: string, mask: string) => {
-  const digits = text.replace(/\D/g, "");
+const formatWithMask = (text: string, mask: string, maxDigits?: number) => {
+  let digits = text.replace(/\D/g, "");
+  if (maxDigits != null) {
+    digits = digits.slice(0, maxDigits);
+  }
   let formatted = "";
   let digitIndex = 0;
   for (let i = 0; i < mask.length && digitIndex < digits.length; i++) {
@@ -110,7 +121,11 @@ const formatWithMask = (text: string, mask: string) => {
 export default function Register() {
   const navigation = useNavigation();
   const { width, height } = useWindowDimensions();
-  const { horizontalPadding, moderateScale, isShortScreen, isSmallScreen } = useResponsive();
+  const insets = useSafeAreaInsets();
+  const { horizontalPadding, moderateScale, isShortScreen, isSmallScreen, isTinyScreen, isLargeScreen } = useResponsive();
+  const isCompact = isShortScreen || isTinyScreen;
+  const footerBottomPadding = insets.bottom || 16;
+  const scrollPaddingBottom = (isCompact || isSmallScreen ? 20 : 24) + footerBottomPadding;
   const { t, language: contextLanguage, setLanguage } = useLanguage();
   const language = normalizeLanguage(contextLanguage ?? DEFAULT_LANGUAGE);
   const [currentStep, setCurrentStep] = useState(1);
@@ -155,6 +170,14 @@ export default function Register() {
       }
       if (!lastName.trim()) {
         newErrors.lastName = t("register.errorLastName");
+      }
+      const phoneDigits = phoneNumber.replace(/\D/g, "");
+      const country = COUNTRY_OPTIONS.find((c) => c.code === selectedCountryCode);
+      if (phoneDigits.length > 0 && country && phoneDigits.length !== country.maxLength) {
+        newErrors.phoneNumber = t("register.errorPhoneInvalid").replace(
+          "{digits}",
+          String(country.maxLength),
+        );
       }
       if (hasCompany && !companyName.trim()) {
         newErrors.companyName = t("register.errorCompanyName");
@@ -316,49 +339,105 @@ export default function Register() {
     <>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       <SafeAreaView style={styles.container}>
-        <KeyboardAvoidingView
-          behavior={
-            Platform.OS === "web"
-              ? undefined
-              : Platform.OS === "ios"
-                ? "padding"
-                : "height"
-          }
-          style={styles.keyboardView}
-        >
+        <View style={styles.keyboardView}>
           <View
-            style={[styles.header, { paddingHorizontal: horizontalPadding }]}
+            style={[
+              styles.header,
+              {
+                paddingHorizontal: horizontalPadding,
+                paddingVertical: isLargeScreen ? 12 : (isCompact || isSmallScreen) ? 10 : 14,
+              },
+            ]}
           >
             <TouchableOpacity
-              style={styles.backButton}
+              style={[styles.backButton, isTinyScreen && { width: 36, height: 36 }]}
               onPress={handleBackStep}
             >
-              <Ionicons name="arrow-back" size={24} color="#E25A17" />
+              <Ionicons name="arrow-back" size={isTinyScreen ? 20 : 24} color="#E25A17" />
             </TouchableOpacity>
-            <Text style={styles.headerTitle}>{t("register.title")}</Text>
-            <TouchableOpacity
-              style={styles.languageButton}
-              onPress={() => setLanguageModalVisible(true)}
-              accessibilityLabel={t("profile.selectLanguage")}
-              accessibilityRole="button"
+            <Text
+              style={[
+                styles.headerTitle,
+                isTinyScreen && { fontSize: 14 },
+                isSmallScreen && !isTinyScreen && { fontSize: 16 },
+                isLargeScreen && { fontSize: 16 },
+              ]}
+              numberOfLines={1}
             >
-              <Ionicons name="language-outline" size={24} color="#E25A17" />
-            </TouchableOpacity>
+              {t("register.title")}
+            </Text>
+            {currentStep === 1 ? (
+              <TouchableOpacity
+                style={[
+                  styles.languageButton,
+                  {
+                    width: isTinyScreen ? 40 : isSmallScreen ? 44 : 48,
+                    height: isTinyScreen ? 40 : isSmallScreen ? 44 : 48,
+                    borderRadius: isTinyScreen ? 20 : isSmallScreen ? 22 : 24,
+                  },
+                ]}
+                onPress={() => setLanguageModalVisible(true)}
+                accessibilityLabel={t("profile.selectLanguage")}
+                accessibilityRole="button"
+              >
+                <Ionicons
+                  name="language-outline"
+                  size={isTinyScreen ? 22 : isSmallScreen ? 26 : 28}
+                  color="#E25A17"
+                />
+              </TouchableOpacity>
+            ) : (
+              <View
+                style={{
+                  width: isTinyScreen ? 40 : isSmallScreen ? 44 : 48,
+                  height: isTinyScreen ? 40 : isSmallScreen ? 44 : 48,
+                }}
+              />
+            )}
           </View>
 
-          <View style={styles.progressContainer}>
+          <View
+            style={[
+              styles.progressContainer,
+              {
+                paddingVertical: (isCompact || isSmallScreen) ? 14 : isLargeScreen ? 16 : 24,
+                paddingHorizontal: isTinyScreen ? 16 : isSmallScreen ? 24 : 40,
+              },
+            ]}
+          >
             <View style={styles.stepItem}>
-              <View style={[styles.stepCircle, styles.stepActive]}>
+              <View
+                style={[
+                  styles.stepCircle,
+                  styles.stepActive,
+                  isTinyScreen && { width: 36, height: 36, borderRadius: 18 },
+                  isSmallScreen && !isTinyScreen && {
+                    width: 42,
+                    height: 42,
+                    borderRadius: 21,
+                  },
+                ]}
+              >
                 {currentStep > 1 ? (
-                  <Ionicons name="checkmark" size={24} color="#FFFFFF" />
+                  <Ionicons
+                    name="checkmark"
+                    size={isTinyScreen ? 18 : isSmallScreen ? 20 : 24}
+                    color="#FFFFFF"
+                  />
                 ) : (
-                  <Ionicons name="person" size={20} color="#FFFFFF" />
+                  <Ionicons
+                    name="person"
+                    size={isTinyScreen ? 16 : isSmallScreen ? 18 : 20}
+                    color="#FFFFFF"
+                  />
                 )}
               </View>
               <View
                 style={[
                   styles.stepLine,
                   currentStep > 1 && styles.stepLineActive,
+                  isTinyScreen && { width: 36 },
+                  isSmallScreen && !isTinyScreen && { width: 48 },
                 ]}
               />
             </View>
@@ -367,14 +446,24 @@ export default function Register() {
                 style={[
                   styles.stepCircle,
                   currentStep >= 2 && styles.stepActive,
+                  isTinyScreen && { width: 36, height: 36, borderRadius: 18 },
+                  isSmallScreen && !isTinyScreen && {
+                    width: 42,
+                    height: 42,
+                    borderRadius: 21,
+                  },
                 ]}
               >
                 {currentStep > 2 ? (
-                  <Ionicons name="checkmark" size={24} color="#FFFFFF" />
+                  <Ionicons
+                    name="checkmark"
+                    size={isTinyScreen ? 18 : isSmallScreen ? 20 : 24}
+                    color="#FFFFFF"
+                  />
                 ) : (
                   <Ionicons
                     name="call"
-                    size={20}
+                    size={isTinyScreen ? 16 : isSmallScreen ? 18 : 20}
                     color={currentStep >= 2 ? "#FFFFFF" : "#E25A17"}
                   />
                 )}
@@ -383,6 +472,8 @@ export default function Register() {
                 style={[
                   styles.stepLine,
                   currentStep > 2 && styles.stepLineActive,
+                  isTinyScreen && { width: 36 },
+                  isSmallScreen && !isTinyScreen && { width: 48 },
                 ]}
               />
             </View>
@@ -391,64 +482,138 @@ export default function Register() {
                 style={[
                   styles.stepCircle,
                   currentStep >= 3 && styles.stepActive,
+                  isTinyScreen && { width: 36, height: 36, borderRadius: 18 },
+                  isSmallScreen && !isTinyScreen && {
+                    width: 42,
+                    height: 42,
+                    borderRadius: 21,
+                  },
                 ]}
               >
                 <Ionicons
                   name="lock-closed"
-                  size={20}
+                  size={isTinyScreen ? 16 : isSmallScreen ? 18 : 20}
                   color={currentStep >= 3 ? "#FFFFFF" : "#E25A17"}
                 />
               </View>
             </View>
           </View>
 
-          <ScrollView
+          <KeyboardAwareScrollView
             style={styles.scrollView}
-            showsVerticalScrollIndicator={false}
             contentContainerStyle={[
               styles.scrollContent,
               {
-                paddingTop: 20,
+                paddingTop: (isCompact || isSmallScreen) ? 12 : 20,
                 paddingHorizontal: horizontalPadding,
-                paddingBottom: 100,
+                paddingBottom: scrollPaddingBottom,
               },
             ]}
+            showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
+            enableOnAndroid
+            enableAutomaticScroll
+            extraScrollHeight={Platform.OS === "ios" ? 60 : 40}
+            extraHeight={Platform.OS === "android" ? 80 : 60}
           >
             {currentStep === 1 && (
               <>
-                <Text style={styles.welcomeText}>{t("register.welcomeInvestor")}</Text>
-                <View style={styles.infoBanner}>
+                <Text
+                  style={[
+                    styles.welcomeText,
+                    isTinyScreen && { fontSize: 18, marginBottom: 10 },
+                    isSmallScreen && !isTinyScreen && { fontSize: 20, marginBottom: 12 },
+                    isLargeScreen && { fontSize: 22 },
+                  ]}
+                >
+                  {t("register.welcomeInvestor")}
+                </Text>
+                <View
+                  style={[
+                    styles.infoBanner,
+                    isTinyScreen && { padding: 10, marginBottom: 12 },
+                    (isCompact || isSmallScreen) && { marginBottom: 12, padding: 12 },
+                  ]}
+                >
                   <MaterialCommunityIcons
                     name="office-building"
-                    size={24}
+                    size={isTinyScreen ? 20 : isSmallScreen ? 22 : 24}
                     color="#E25A17"
                   />
                   <View style={styles.infoBannerTextContainer}>
-                    <Text style={styles.infoBannerText}>
+                    <Text
+                      style={[
+                        styles.infoBannerText,
+                        isTinyScreen && { fontSize: 11, lineHeight: 17 },
+                        isSmallScreen && !isTinyScreen && { fontSize: 12, lineHeight: 18 },
+                      ]}
+                    >
                       {t("register.startInvestment")}{" "}
                       <Text style={styles.infoBannerBold}>{t("register.inspireWallet")}</Text>
                     </Text>
-                    <Text style={styles.infoBannerText}>
+                    <Text
+                      style={[
+                        styles.infoBannerText,
+                        isTinyScreen && { fontSize: 11, lineHeight: 17 },
+                        isSmallScreen && !isTinyScreen && { fontSize: 12, lineHeight: 18 },
+                      ]}
+                    >
                       {t("register.completeProfile")}
                     </Text>
                   </View>
                 </View>
-                <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>{t("register.personalInfo")}</Text>
-                  <View style={styles.sectionUnderline} />
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>
+                <View
+                  style={[
+                    styles.section,
+                    isTinyScreen && { padding: 12, borderRadius: 12 },
+                    (isCompact || isSmallScreen) && { padding: 14 },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.sectionTitle,
+                      isTinyScreen && { fontSize: 13, marginBottom: 4 },
+                      isCompact && !isTinyScreen && { marginBottom: 6 },
+                    ]}
+                  >
+                    {t("register.personalInfo")}
+                  </Text>
+                  <View
+                    style={[
+                      styles.sectionUnderline,
+                      isTinyScreen && { marginBottom: 10 },
+                      isCompact && !isTinyScreen && { marginBottom: 14 },
+                    ]}
+                  />
+                  <View
+                    style={[
+                      styles.inputGroup,
+                      (isTinyScreen || isSmallScreen) && { marginBottom: 14 },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.inputLabel,
+                        (isTinyScreen || isSmallScreen) && { fontSize: 12, marginBottom: 6 },
+                      ]}
+                    >
                       {t("register.firstName")} <Text style={styles.required}>*</Text>
                     </Text>
                     <TextInput
                       style={[
                         styles.input,
                         errors.firstName && styles.inputError,
+                        (isTinyScreen || isSmallScreen) && {
+                          minHeight: 44,
+                          paddingVertical: 10,
+                          fontSize: 14,
+                        },
                       ]}
                       placeholder={t("register.placeholderFirstName")}
                       placeholderTextColor="#999"
                       autoCapitalize="words"
+                      autoCorrect={false}
+                      autoComplete="off"
                       value={firstName}
                       onChangeText={(text) => {
                         setFirstName(capitalizeWords(filterNameInput(text)));
@@ -464,18 +629,35 @@ export default function Register() {
                       <Text style={styles.errorText}>{errors.firstName}</Text>
                     )}
                   </View>
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>
+                  <View
+                    style={[
+                      styles.inputGroup,
+                      (isTinyScreen || isSmallScreen) && { marginBottom: 14 },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.inputLabel,
+                        (isTinyScreen || isSmallScreen) && { fontSize: 12, marginBottom: 6 },
+                      ]}
+                    >
                       {t("register.lastName")} <Text style={styles.required}>*</Text>
                     </Text>
                     <TextInput
                       style={[
                         styles.input,
                         errors.lastName && styles.inputError,
+                        (isTinyScreen || isSmallScreen) && {
+                          minHeight: 44,
+                          paddingVertical: 10,
+                          fontSize: 14,
+                        },
                       ]}
                       placeholder={t("register.placeholderLastName")}
                       placeholderTextColor="#999"
                       autoCapitalize="words"
+                      autoCorrect={false}
+                      autoComplete="off"
                       value={lastName}
                       onChangeText={(text) => {
                         setLastName(capitalizeWords(filterNameInput(text)));
@@ -491,27 +673,67 @@ export default function Register() {
                       <Text style={styles.errorText}>{errors.lastName}</Text>
                     )}
                   </View>
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>{t("register.phoneNumber")}</Text>
+                  <View
+                    style={[
+                      styles.inputGroup,
+                      (isTinyScreen || isSmallScreen) && { marginBottom: 14 },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.inputLabel,
+                        (isTinyScreen || isSmallScreen) && { fontSize: 12, marginBottom: 6 },
+                      ]}
+                    >
+                      {t("register.phoneNumber")}
+                    </Text>
                     <View style={styles.phoneInputContainer}>
                       <TouchableOpacity
-                        style={styles.countrySelector}
+                        style={[
+                          styles.countrySelector,
+                          (isTinyScreen || isSmallScreen) && {
+                            paddingHorizontal: 10,
+                            paddingVertical: 10,
+                          },
+                        ]}
                         onPress={() => setIsCountryModalVisible(true)}
                       >
-                        <Text style={styles.countryFlag}>
+                        <Text
+                          style={[
+                            styles.countryFlag,
+                            (isTinyScreen || isSmallScreen) && { fontSize: 18 },
+                          ]}
+                        >
                           {
                             COUNTRY_OPTIONS.find(
                               (c) => c.code === selectedCountryCode,
                             )?.flag
                           }
                         </Text>
-                        <Text style={styles.countryCode}>
+                        <Text
+                          style={[
+                            styles.countryCode,
+                            (isTinyScreen || isSmallScreen) && { fontSize: 13 },
+                          ]}
+                        >
                           {selectedCountryCode}
                         </Text>
-                        <Ionicons name="chevron-down" size={16} color="#666" />
+                        <Ionicons
+                          name="chevron-down"
+                          size={isTinyScreen ? 14 : 16}
+                          color="#666"
+                        />
                       </TouchableOpacity>
                       <TextInput
-                        style={styles.phoneInput}
+                        style={[
+                          styles.phoneInput,
+                          errors.phoneNumber && styles.inputError,
+                          (isTinyScreen || isSmallScreen) && {
+                            minHeight: 44,
+                            paddingVertical: 10,
+                            fontSize: 14,
+                          },
+                        ]}
                         placeholder={
                           COUNTRY_OPTIONS.find(
                             (c) => c.code === selectedCountryCode,
@@ -521,25 +743,40 @@ export default function Register() {
                         keyboardType="numeric"
                         value={phoneNumber}
                         onChangeText={(text) => {
+                          const digits = filterPhoneInput(text);
                           const country = COUNTRY_OPTIONS.find(
                             (c) => c.code === selectedCountryCode,
                           );
                           if (country) {
-                            setPhoneNumber(formatWithMask(text, country.mask));
+                            setPhoneNumber(
+                              formatWithMask(digits, country.mask, country.maxLength),
+                            );
                           } else {
-                            setPhoneNumber(filterPhoneInput(text));
+                            setPhoneNumber(digits.slice(0, 15));
+                          }
+                          if (errors.phoneNumber) {
+                            setErrors((prev) => {
+                              const { phoneNumber: _, ...rest } = prev;
+                              return rest;
+                            });
                           }
                         }}
                         maxLength={
                           COUNTRY_OPTIONS.find(
                             (c) => c.code === selectedCountryCode,
-                          )?.mask.length
+                          )?.mask.length ?? 15
                         }
                       />
                     </View>
+                    {errors.phoneNumber && (
+                      <Text style={styles.errorText}>{errors.phoneNumber}</Text>
+                    )}
                   </View>
                   <TouchableOpacity
-                    style={styles.checkboxContainer}
+                    style={[
+                      styles.checkboxContainer,
+                      (isTinyScreen || isSmallScreen) && { marginBottom: 14 },
+                    ]}
                     onPress={() => setHasCompany(!hasCompany)}
                   >
                     <View
@@ -552,21 +789,48 @@ export default function Register() {
                         <Ionicons name="checkmark" size={16} color="#E25A17" />
                       )}
                     </View>
-                    <Text style={styles.checkboxLabel}>{t("register.iHaveCompany")}</Text>
+                    <Text
+                      style={[
+                        styles.checkboxLabel,
+                        (isTinyScreen || isSmallScreen) && { fontSize: 13 },
+                      ]}
+                    >
+                      {t("register.iHaveCompany")}
+                    </Text>
                   </TouchableOpacity>
                   {hasCompany && (
-                    <View style={styles.inputGroup}>
-                      <Text style={styles.inputLabel}>
+                    <View
+                      style={[
+                        styles.inputGroup,
+                        (isTinyScreen || isSmallScreen) && { marginBottom: 14 },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.inputLabel,
+                          (isTinyScreen || isSmallScreen) && {
+                            fontSize: 12,
+                            marginBottom: 6,
+                          },
+                        ]}
+                      >
                         {t("register.companyName")} <Text style={styles.required}>*</Text>
                       </Text>
                       <TextInput
                         style={[
                           styles.input,
                           errors.companyName && styles.inputError,
+                          (isTinyScreen || isSmallScreen) && {
+                            minHeight: 44,
+                            paddingVertical: 10,
+                            fontSize: 14,
+                          },
                         ]}
                         placeholder={t("register.placeholderCompanyName")}
                         placeholderTextColor="#999"
                         autoCapitalize="words"
+                        autoCorrect={false}
+                        autoComplete="off"
                         value={companyName}
                         onChangeText={(text) => {
                           setCompanyName(
@@ -593,164 +857,82 @@ export default function Register() {
 
             {currentStep === 2 && (
               <>
-                <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>
+                <View
+                  style={[
+                    styles.section,
+                    isTinyScreen && { padding: 12, borderRadius: 12 },
+                    (isCompact || isSmallScreen) && { padding: 14 },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.sectionTitle,
+                      isTinyScreen && { fontSize: 13, marginBottom: 4 },
+                      isSmallScreen && !isTinyScreen && { marginBottom: 6 },
+                    ]}
+                  >
                     {t("register.contactInfo")}
                   </Text>
                   <View style={styles.sectionUnderline} />
                   <View
-                    style={
-                      width < 768
-                        ? styles.contactFieldsContainerMobile
-                        : styles.contactFieldsContainerDesktop
-                    }
+                    style={[
+                      styles.comingSoonBanner,
+                      (isTinyScreen || isSmallScreen) && { padding: 16 },
+                    ]}
                   >
-                    <View style={styles.inputGroup}>
-                      <Text style={styles.inputLabel}>{t("register.lineAccountLink")}</Text>
-                      <View style={styles.scannerInputContainer}>
-                        <MaterialCommunityIcons
-                          name="chat"
-                          size={20}
-                          color="#00B900"
-                          style={{ marginLeft: 12 }}
-                        />
-                        <TextInput
-                          style={styles.scannerInput}
-                          placeholder={t("register.placeholderLine")}
-                          placeholderTextColor="#999"
-                          keyboardType="default"
-                          autoComplete="off"
-                          value={lineContact}
-                          onChangeText={setLineContact}
-                        />
-                        <View style={styles.scanUploadButtonRow}>
-                          <TouchableOpacity
-                            style={styles.scannerButton}
-                            onPress={() => openScanner("line")}
-                          >
-                            <Ionicons
-                              name="qr-code-outline"
-                              size={20}
-                              color="#E25A17"
-                            />
-                          </TouchableOpacity>
-                          <TouchableOpacity
-                            style={styles.scannerButton}
-                            onPress={() => handleUploadImage("line")}
-                          >
-                            <Ionicons
-                              name="image-outline"
-                              size={20}
-                              color="#E25A17"
-                            />
-                          </TouchableOpacity>
-                        </View>
-                      </View>
-                      <Text style={styles.helperText}>
-                        {t("register.scanQRHint")}
-                      </Text>
-                    </View>
-                    <View style={styles.inputGroup}>
-                      <Text style={styles.inputLabel}>{t("register.viber")}</Text>
-                      <View style={styles.scannerInputContainer}>
-                        <MaterialCommunityIcons
-                          name="phone"
-                          size={20}
-                          color="#7360F2"
-                          style={{ marginLeft: 12 }}
-                        />
-                        <TextInput
-                          style={styles.scannerInput}
-                          placeholder={t("register.placeholderViber")}
-                          placeholderTextColor="#999"
-                          keyboardType="default"
-                          autoComplete="off"
-                          value={viberContact}
-                          onChangeText={setViberContact}
-                        />
-                        <View style={styles.scanUploadButtonRow}>
-                          <TouchableOpacity
-                            style={styles.scannerButton}
-                            onPress={() => openScanner("viber")}
-                          >
-                            <Ionicons
-                              name="qr-code-outline"
-                              size={20}
-                              color="#E25A17"
-                            />
-                          </TouchableOpacity>
-                          <TouchableOpacity
-                            style={styles.scannerButton}
-                            onPress={() => handleUploadImage("viber")}
-                          >
-                            <Ionicons
-                              name="image-outline"
-                              size={20}
-                              color="#E25A17"
-                            />
-                          </TouchableOpacity>
-                        </View>
-                      </View>
-                      <Text style={styles.helperText}>
-                        {t("register.scanQRHint")}
-                      </Text>
-                    </View>
-                    <View style={styles.inputGroup}>
-                      <Text style={styles.inputLabel}>{t("register.whatsapp")}</Text>
-                      <View style={styles.scannerInputContainer}>
-                        <MaterialCommunityIcons
-                          name="whatsapp"
-                          size={20}
-                          color="#25D366"
-                          style={{ marginLeft: 12 }}
-                        />
-                        <TextInput
-                          style={styles.scannerInput}
-                          placeholder={t("register.placeholderWhatsapp")}
-                          placeholderTextColor="#999"
-                          keyboardType="default"
-                          autoComplete="off"
-                          value={whatsappContact}
-                          onChangeText={setWhatsappContact}
-                        />
-                        <View style={styles.scanUploadButtonRow}>
-                          <TouchableOpacity
-                            style={styles.scannerButton}
-                            onPress={() => openScanner("whatsapp")}
-                          >
-                            <Ionicons
-                              name="qr-code-outline"
-                              size={20}
-                              color="#E25A17"
-                            />
-                          </TouchableOpacity>
-                          <TouchableOpacity
-                            style={styles.scannerButton}
-                            onPress={() => handleUploadImage("whatsapp")}
-                          >
-                            <Ionicons
-                              name="image-outline"
-                              size={20}
-                              color="#E25A17"
-                            />
-                          </TouchableOpacity>
-                        </View>
-                      </View>
-                      <Text style={styles.helperText}>
-                        {t("register.scanQRHint")}
-                      </Text>
-                    </View>
+                    <Ionicons
+                      name="time-outline"
+                      size={28}
+                      color="#E25A17"
+                      style={{ marginBottom: 8 }}
+                    />
+                    <Text
+                      style={[
+                        styles.comingSoonBannerText,
+                        (isTinyScreen || isSmallScreen) && {
+                          fontSize: 13,
+                          lineHeight: 19,
+                        },
+                      ]}
+                    >
+                      {t("register.contactInfoComingSoon")}
+                    </Text>
                   </View>
                 </View>
-                <View style={[styles.section, { marginTop: 20 }]}>
-                  <Text style={styles.sectionTitle}>{t("register.accountType")}</Text>
+                <View
+                  style={[
+                    styles.section,
+                    {
+                      marginTop: (isCompact || isSmallScreen) ? 14 : 20,
+                      padding: isTinyScreen ? 12 : (isCompact || isSmallScreen) ? 14 : 20,
+                      borderRadius: (isTinyScreen || isSmallScreen) ? 12 : 16,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.sectionTitle,
+                      isTinyScreen && { fontSize: 13, marginBottom: 4 },
+                      isSmallScreen && !isTinyScreen && { marginBottom: 6 },
+                    ]}
+                  >
+                    {t("register.accountType")}
+                  </Text>
                   <View style={styles.sectionUnderline} />
-                  <Text style={styles.inputLabel}>
+                  <Text
+                    style={[
+                      styles.inputLabel,
+                      (isTinyScreen || isSmallScreen) && { fontSize: 12, marginBottom: 6 },
+                    ]}
+                  >
                     {t("register.agentOrInvestor")}{" "}
                     <Text style={styles.required}>*</Text>
                   </Text>
                   <TouchableOpacity
-                    style={styles.radioContainer}
+                    style={[
+                      styles.radioContainer,
+                      (isTinyScreen || isSmallScreen) && { marginBottom: 12 },
+                    ]}
                     onPress={() => setIsAgent(true)}
                   >
                     <View
@@ -775,7 +957,14 @@ export default function Register() {
                     >
                       {isAgent === false && <View style={styles.radioDot} />}
                     </View>
-                    <Text style={styles.radioLabel}>{t("register.imInvestor")}</Text>
+                    <Text
+                      style={[
+                        styles.radioLabel,
+                        (isTinyScreen || isSmallScreen) && { fontSize: 13 },
+                      ]}
+                    >
+                      {t("register.imInvestor")}
+                    </Text>
                   </TouchableOpacity>
                   {errors.isAgent && (
                     <Text style={styles.errorText}>{errors.isAgent}</Text>
@@ -804,9 +993,11 @@ export default function Register() {
                         style={styles.scannerInput}
                         placeholder={t("register.placeholderReferralCode")}
                         placeholderTextColor="#999"
+                        autoCorrect={false}
+                        autoComplete="off"
                         value={referralCode}
                         onChangeText={(text) =>
-                          setReferralCode(text.toUpperCase())
+                          setReferralCode(filterReferralInput(text))
                         }
                         autoCapitalize="characters"
                         maxLength={5}
@@ -835,22 +1026,56 @@ export default function Register() {
 
             {currentStep === 3 && (
               <>
-                <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>{t("register.accountCredentials")}</Text>
+                <View
+                  style={[
+                    styles.section,
+                    isTinyScreen && { padding: 12, borderRadius: 12 },
+                    (isCompact || isSmallScreen) && { padding: 14 },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.sectionTitle,
+                      isTinyScreen && { fontSize: 13, marginBottom: 4 },
+                      isSmallScreen && !isTinyScreen && { marginBottom: 6 },
+                    ]}
+                  >
+                    {t("register.accountCredentials")}
+                  </Text>
                   <View style={styles.sectionUnderline} />
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>
+                  <View
+                    style={[
+                      styles.inputGroup,
+                      (isTinyScreen || isSmallScreen) && { marginBottom: 14 },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.inputLabel,
+                        (isTinyScreen || isSmallScreen) && {
+                          fontSize: 12,
+                          marginBottom: 6,
+                        },
+                      ]}
+                    >
                       {t("register.emailAddress")} <Text style={styles.required}>*</Text>
                     </Text>
                     <TextInput
                       style={[
                         styles.input,
                         errors.emailAddress && styles.inputError,
+                        (isTinyScreen || isSmallScreen) && {
+                          minHeight: 44,
+                          paddingVertical: 10,
+                          fontSize: 14,
+                        },
                       ]}
                       placeholder={t("register.placeholderEmail")}
                       placeholderTextColor="#999"
                       keyboardType="email-address"
                       autoCapitalize="none"
+                      autoCorrect={false}
+                      autoComplete="off"
                       value={emailAddress}
                       onChangeText={(text) => {
                         setEmailAddress(filterEmailInput(text));
@@ -868,24 +1093,48 @@ export default function Register() {
                       </Text>
                     )}
                   </View>
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>
+                  <View
+                    style={[
+                      styles.inputGroup,
+                      (isTinyScreen || isSmallScreen) && { marginBottom: 14 },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.inputLabel,
+                        (isTinyScreen || isSmallScreen) && {
+                          fontSize: 12,
+                          marginBottom: 6,
+                        },
+                      ]}
+                    >
                       {t("register.password")} <Text style={styles.required}>*</Text>
                     </Text>
                     <View
                       style={[
                         styles.passwordContainer,
                         errors.password && styles.inputError,
+                        (isTinyScreen || isSmallScreen) && {
+                          minHeight: 44,
+                        },
                       ]}
                     >
                       <TextInput
-                        style={styles.passwordInput}
+                        style={[
+                          styles.passwordInput,
+                          (isTinyScreen || isSmallScreen) && {
+                            fontSize: 14,
+                            paddingVertical: 10,
+                          },
+                        ]}
                         placeholder={t("register.placeholderPassword")}
                         placeholderTextColor="#999"
+                        autoCorrect={false}
+                        autoComplete="new-password"
                         secureTextEntry={!showPassword}
                         value={password}
                         onChangeText={(text) => {
-                          setPassword(text);
+                          setPassword(filterPasswordInput(text));
                           if (errors.password) {
                             setErrors((prev) => {
                               const { password, ...rest } = prev;
@@ -906,24 +1155,48 @@ export default function Register() {
                       </TouchableOpacity>
                     </View>
                   </View>
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>
+                  <View
+                    style={[
+                      styles.inputGroup,
+                      (isTinyScreen || isSmallScreen) && { marginBottom: 14 },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.inputLabel,
+                        (isTinyScreen || isSmallScreen) && {
+                          fontSize: 12,
+                          marginBottom: 6,
+                        },
+                      ]}
+                    >
                       {t("register.confirmPassword")} <Text style={styles.required}>*</Text>
                     </Text>
                     <View
                       style={[
                         styles.passwordContainer,
                         errors.confirmPassword && styles.inputError,
+                        (isTinyScreen || isSmallScreen) && {
+                          minHeight: 44,
+                        },
                       ]}
                     >
                       <TextInput
-                        style={styles.passwordInput}
+                        style={[
+                          styles.passwordInput,
+                          (isTinyScreen || isSmallScreen) && {
+                            fontSize: 14,
+                            paddingVertical: 10,
+                          },
+                        ]}
                         placeholder={t("register.placeholderConfirmPassword")}
                         placeholderTextColor="#999"
+                        autoCorrect={false}
+                        autoComplete="off"
                         secureTextEntry={!showConfirmPassword}
                         value={confirmPassword}
                         onChangeText={(text) => {
-                          setConfirmPassword(text);
+                          setConfirmPassword(filterPasswordInput(text));
                           if (errors.confirmPassword) {
                             setErrors((prev) => {
                               const { confirmPassword, ...rest } = prev;
@@ -962,36 +1235,53 @@ export default function Register() {
                 ) : null}
               </>
             )}
-          </ScrollView>
-
-          <View style={styles.footer}>
-            <TouchableOpacity
+            <View
               style={[
-                styles.nextButton,
-                registerLoading && styles.nextButtonDisabled,
+                styles.footer,
+                {
+                  marginHorizontal: -horizontalPadding,
+                  paddingHorizontal: horizontalPadding,
+                  paddingVertical: isLargeScreen ? 12 : (isCompact || isSmallScreen) ? 10 : 14,
+                  paddingBottom: (isLargeScreen ? 12 : (isCompact || isSmallScreen) ? 10 : 14) + footerBottomPadding,
+                },
               ]}
-              onPress={handleNextStep}
-              activeOpacity={0.8}
-              disabled={registerLoading}
             >
-              <LinearGradient
-                colors={["#E25A17", "#F28934"]}
-                style={styles.nextButtonGradient}
+              <TouchableOpacity
+                style={[
+                  styles.nextButton,
+                  registerLoading && styles.nextButtonDisabled,
+                ]}
+                onPress={handleNextStep}
+                activeOpacity={0.8}
+                disabled={registerLoading}
               >
-                {registerLoading ? (
-                  <ActivityIndicator color="#FFFFFF" size="small" />
-                ) : (
-                  <Text style={styles.nextButtonText}>
-                    {currentStep === 3 ? t("register.registerButton") : t("register.nextStep")}
-                  </Text>
-                )}
-              </LinearGradient>
-            </TouchableOpacity>
-            <Text style={styles.termsText}>
-              {t("register.termsText")}
-            </Text>
-          </View>
-        </KeyboardAvoidingView>
+                <LinearGradient
+                  colors={["#E25A17", "#F28934"]}
+                  style={[
+                    styles.nextButtonGradient,
+                    (isCompact || isSmallScreen) && { paddingVertical: 10 },
+                  ]}
+                >
+                  {registerLoading ? (
+                    <ActivityIndicator color="#FFFFFF" size="small" />
+                  ) : (
+                    <Text
+                      style={[
+                        styles.nextButtonText,
+                        isTinyScreen && { fontSize: 14 },
+                      ]}
+                    >
+                      {currentStep === 3 ? t("register.registerButton") : t("register.nextStep")}
+                    </Text>
+                  )}
+                </LinearGradient>
+              </TouchableOpacity>
+              <Text style={styles.termsText}>
+                {t("register.termsText")}
+              </Text>
+            </View>
+          </KeyboardAwareScrollView>
+        </View>
 
         <Modal
           visible={isCountryModalVisible}
@@ -1016,7 +1306,11 @@ export default function Register() {
                     style={styles.countryOption}
                     onPress={() => {
                       setSelectedCountryCode(country.code);
-                      setPhoneNumber(""); // Reset phone number when country changes
+                      setPhoneNumber("");
+                      setErrors((prev) => {
+                        const { phoneNumber: _, ...rest } = prev;
+                        return rest;
+                      });
                       setIsCountryModalVisible(false);
                     }}
                   >
@@ -1101,7 +1395,7 @@ export default function Register() {
           </View>
         </Modal>
 
-        {/* Language Modal */}
+        {/* Language Modal - matches Welcome language options design */}
         <Modal
           visible={languageModalVisible}
           transparent
@@ -1127,23 +1421,8 @@ export default function Register() {
               ]}
               onStartShouldSetResponder={() => true}
             >
-              <View style={styles.languageMapHeader}>
-                <View style={styles.languageMapGlobe}>
-                  <Ionicons name="globe-outline" size={isSmallScreen ? 32 : 40} color="#E25A17" />
-                </View>
-                <View style={styles.languageMapFlags}>
-                  {SUPPORTED_LANGUAGES.map(({ label, flag }) => (
-                    <View
-                      key={label}
-                      style={[
-                        styles.languageMapFlagChip,
-                        language === label && styles.languageMapFlagChipSelected,
-                      ]}
-                    >
-                      <Text style={styles.languageMapFlagEmoji}>{flag}</Text>
-                    </View>
-                  ))}
-                </View>
+              <View style={styles.languageModalHeader}>
+                <Ionicons name="globe-outline" size={isSmallScreen ? 32 : 40} color="#E25A17" />
                 <Text style={[styles.languageModalTitle, isSmallScreen && { fontSize: 16 }]}>
                   {t("profile.selectLanguage")}
                 </Text>
@@ -1161,33 +1440,55 @@ export default function Register() {
                     key={label}
                     style={[
                       styles.languageOption,
-                      isSmallScreen && { paddingVertical: 12, paddingHorizontal: 14 },
+                      (isSmallScreen || isTinyScreen) && {
+                        paddingVertical: 12,
+                        paddingHorizontal: 14,
+                      },
                       language === label && styles.languageOptionSelected,
                     ]}
                     onPress={() => handleSelectLanguage(label)}
                     activeOpacity={0.7}
                   >
-                    <Text style={[styles.languageOptionFlag, isSmallScreen && { fontSize: 20 }]}>{flag}</Text>
+                    <Text
+                      style={[
+                        styles.languageOptionFlag,
+                        (isSmallScreen || isTinyScreen) && { fontSize: 20 },
+                      ]}
+                    >
+                      {flag}
+                    </Text>
                     <Text
                       style={[
                         styles.languageOptionText,
-                        isSmallScreen && { fontSize: 15 },
+                        (isSmallScreen || isTinyScreen) && { fontSize: 15 },
                         language === label && styles.languageOptionTextSelected,
                       ]}
                     >
                       {label}
                     </Text>
                     {language === label && (
-                      <Ionicons name="checkmark-circle" size={isSmallScreen ? 20 : 22} color="#E25A17" />
+                      <Ionicons
+                        name="checkmark-circle"
+                        size={isSmallScreen || isTinyScreen ? 20 : 22}
+                        color="#E25A17"
+                      />
                     )}
                   </TouchableOpacity>
                 ))}
               </ScrollView>
               <TouchableOpacity
-                style={[styles.languageModalCancel, isSmallScreen && { marginTop: 8 }]}
+                style={[
+                  styles.languageModalCancel,
+                  (isSmallScreen || isTinyScreen) && { marginTop: 8 },
+                ]}
                 onPress={() => setLanguageModalVisible(false)}
               >
-                <Text style={[styles.languageModalCancelText, isSmallScreen && { fontSize: 15 }]}>
+                <Text
+                  style={[
+                    styles.languageModalCancelText,
+                    (isSmallScreen || isTinyScreen) && { fontSize: 15 },
+                  ]}
+                >
                   {t("common.cancel")}
                 </Text>
               </TouchableOpacity>
@@ -1218,10 +1519,11 @@ const styles = StyleSheet.create({
   },
   headerTitle: { fontSize: 18, fontWeight: "600", color: "#E25A17" },
   languageButton: {
-    width: 40,
-    height: 40,
+    backgroundColor: "#FFF5F0",
     justifyContent: "center",
     alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(226, 90, 23, 0.2)",
   },
   progressContainer: {
     flexDirection: "row",
@@ -1435,13 +1737,10 @@ const styles = StyleSheet.create({
   },
   eyeButton: { padding: 12 },
   footer: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
+    marginTop: 12,
     backgroundColor: "#FFFFFF",
     paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingVertical: 14,
     borderTopWidth: 1,
     borderTopColor: "#E0E0E0",
   },
@@ -1838,39 +2137,15 @@ const styles = StyleSheet.create({
       android: { elevation: 16 },
     }),
   },
-  languageMapHeader: {
+  languageModalHeader: {
     alignItems: "center",
     marginBottom: 20,
-  },
-  languageMapGlobe: {
-    marginBottom: 12,
-  },
-  languageMapFlags: {
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: 10,
-    marginBottom: 12,
-  },
-  languageMapFlagChip: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "#F5F5F5",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  languageMapFlagChipSelected: {
-    backgroundColor: "#FFF0E8",
-    borderWidth: 2,
-    borderColor: "#E25A17",
-  },
-  languageMapFlagEmoji: {
-    fontSize: 24,
   },
   languageModalTitle: {
     fontSize: 18,
     fontWeight: "700",
     color: "#333",
+    marginTop: 12,
     marginBottom: 4,
     textAlign: "center",
   },
@@ -1916,5 +2191,20 @@ const styles = StyleSheet.create({
   languageModalCancelText: {
     fontSize: 16,
     color: "#666",
+  },
+  comingSoonBanner: {
+    backgroundColor: "#FFF5F0",
+    borderRadius: 12,
+    padding: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    borderLeftWidth: 4,
+    borderLeftColor: "#E25A17",
+  },
+  comingSoonBannerText: {
+    fontSize: 14,
+    color: "#666",
+    textAlign: "center",
+    lineHeight: 20,
   },
 });
