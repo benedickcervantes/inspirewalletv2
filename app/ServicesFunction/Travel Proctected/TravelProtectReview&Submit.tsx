@@ -10,7 +10,6 @@ export interface TravelProtectReviewSubmitProps {
   landlineNumber: string;
   homeAddress: string;
   destinationAddress: string;
-  airline: string;
   passportNumber: string;
 }
 
@@ -20,7 +19,6 @@ export default function TravelProtectReviewSubmit({
   landlineNumber,
   homeAddress,
   destinationAddress,
-  airline,
   passportNumber,
 }: TravelProtectReviewSubmitProps) {
   const { t } = useLanguage();
@@ -90,10 +88,6 @@ export default function TravelProtectReviewSubmit({
           <Text style={styles.reviewValue}>
             {destinationAddress || t("travel.na")}
           </Text>
-        </View>
-        <View style={styles.reviewItem}>
-          <Text style={styles.reviewLabel}>{t("travel.labelAirline")}</Text>
-          <Text style={styles.reviewValue}>{airline || t("travel.na")}</Text>
         </View>
         <View style={styles.reviewItem}>
           <Text style={styles.reviewLabel}>{t("travel.labelPassport")}</Text>

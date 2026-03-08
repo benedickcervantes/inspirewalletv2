@@ -3,13 +3,13 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
+import { registerIndieID } from 'native-notify';
 import { useEffect, useRef, useState } from "react";
 import {
     ActivityIndicator,
     Animated,
     BackHandler,
     Keyboard,
-    KeyboardAvoidingView,
     Modal,
     Platform,
     Pressable,
@@ -18,13 +18,21 @@ import {
     Text,
     TextInput,
     TouchableOpacity,
+    useWindowDimensions,
     View,
 } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { forgotPassword, login } from "../../configs/api";
+import {
+  DEFAULT_LANGUAGE,
+  normalizeLanguage,
+  SUPPORTED_LANGUAGES,
+} from "../../constants/locales";
 import type { NavProp } from "../../types/navigation";
 import { useResponsive } from "../../utils/responsive";
 import CustomLoader from "../Loader/CustomLoader";
+import { useLanguage } from "../../context/LanguageContext";
 
 const GRADIENT_START = "#E15816";
 const GRADIENT_END = "#F48F38";
@@ -37,16 +45,17 @@ const WHITE = "#FFFFFF";
 interface PasswordResetRequiredModalProps {
   visible: boolean;
   onClose: () => void;
-  onNavigateAfterClose: () => void;
+  onSentOk: () => void;
   email: string;
 }
 
 function PasswordResetRequiredModal({
   visible,
   onClose,
-  onNavigateAfterClose,
+  onSentOk,
   email,
 }: PasswordResetRequiredModalProps) {
+  const { t } = useLanguage();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.9)).current;
   const [phase, setPhase] = useState<"prompt" | "sending" | "sent" | "error">(
@@ -110,20 +119,17 @@ function PasswordResetRequiredModal({
   const content = {
     prompt: {
       icon: "!",
-      title: "Password Update Required",
-      message: `Your account (${email}) requires a password update for security purposes.\n\nTap "Send Reset Email" to receive a secure link in your inbox to set a new password.`,
-      primaryText: "Send Reset Email",
+      title: t("auth.passwordUpdateRequired"),
+      message: t("auth.passwordUpdateMessage").replace("{email}", email),
+      primaryText: t("auth.sendResetEmail"),
       primaryAction: handleSend,
-      secondaryText: "Skip for Now",
-      secondaryAction: () => {
-        onClose();
-        onNavigateAfterClose();
-      },
+      secondaryText: null,
+      secondaryAction: null,
     },
     sending: {
       icon: "…",
-      title: "Sending Email",
-      message: `Sending password reset link to ${email}…`,
+      title: t("auth.sendingEmail"),
+      message: t("auth.sendingEmailMessage").replace("{email}", email),
       primaryText: null,
       primaryAction: null,
       secondaryText: null,
@@ -131,27 +137,21 @@ function PasswordResetRequiredModal({
     },
     sent: {
       icon: "✓",
-      title: "Email Sent!",
-      message: `A password reset link has been sent to ${email}.\n\nCheck your inbox (and spam folder) and follow the link to set your new password.`,
-      primaryText: "OK",
-      primaryAction: () => {
-        onClose();
-        onNavigateAfterClose();
-      },
+      title: t("auth.emailSentTitle"),
+      message: t("auth.emailSentMessage").replace("{email}", email),
+      primaryText: t("auth.backToLogin"),
+      primaryAction: onSentOk,
       secondaryText: null,
       secondaryAction: null,
     },
     error: {
       icon: "!",
-      title: "Could Not Send Email",
+      title: t("auth.couldNotSendEmail"),
       message: errorMsg,
-      primaryText: "Try Again",
+      primaryText: t("auth.tryAgain"),
       primaryAction: () => setPhase("prompt"),
-      secondaryText: "Skip for Now",
-      secondaryAction: () => {
-        onClose();
-        onNavigateAfterClose();
-      },
+      secondaryText: null,
+      secondaryAction: null,
     },
   }[phase];
 
@@ -215,6 +215,171 @@ function PasswordResetRequiredModal({
     </Modal>
   );
 }
+
+// ---------------------------------------------------------------------------
+// ForgotPasswordInputModal
+// Shown when user taps "Forgot Password?" — lets them enter email and send
+// the reset link without needing to first type in the Login email field.
+// ---------------------------------------------------------------------------
+interface ForgotPasswordInputModalProps {
+  visible: boolean;
+  initialEmail: string;
+  onClose: () => void;
+}
+
+function ForgotPasswordInputModal({
+  visible,
+  initialEmail,
+  onClose,
+}: ForgotPasswordInputModalProps) {
+  const { t, language } = useLanguage();
+  const isRTL = language === "Arabic";
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0.9)).current;
+  const [inputEmail, setInputEmail] = useState(initialEmail);
+  const [phase, setPhase] = useState<'input' | 'sending' | 'sent' | 'error'>('input');
+  const [errorMsg, setErrorMsg] = useState('');
+
+  // Sync initialEmail when modal opens
+  useEffect(() => {
+    if (visible) {
+      setInputEmail(initialEmail);
+      setPhase('input');
+      setErrorMsg('');
+      Animated.parallel([
+        Animated.timing(fadeAnim, { toValue: 1, duration: 200, useNativeDriver: true }),
+        Animated.spring(scaleAnim, { toValue: 1, tension: 100, friction: 8, useNativeDriver: true }),
+      ]).start();
+    } else {
+      Animated.parallel([
+        Animated.timing(fadeAnim, { toValue: 0, duration: 150, useNativeDriver: true }),
+        Animated.timing(scaleAnim, { toValue: 0.9, duration: 150, useNativeDriver: true }),
+      ]).start();
+    }
+  }, [visible]);
+
+  if (!visible) return null;
+
+  const handleSend = async () => {
+    const trimmed = inputEmail.trim();
+    if (!trimmed) {
+      setErrorMsg(t("auth.pleaseEnterEmail"));
+      setPhase('error');
+      return;
+    }
+    setPhase('sending');
+    try {
+      const result = await forgotPassword(trimmed);
+      if (result.success) {
+        setPhase('sent');
+      } else {
+        setErrorMsg(result.error || 'Failed to send reset email. Please try again.');
+        setPhase('error');
+      }
+    } catch {
+      setErrorMsg(t("auth.networkError"));
+      setPhase('error');
+    }
+  };
+
+  return (
+    <Modal transparent animationType="none" visible={visible}>
+      <Animated.View style={[modalStyles.overlay, { opacity: fadeAnim }]}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={phase === 'sent' ? onClose : undefined} />
+        <Animated.View style={[modalStyles.box, { transform: [{ scale: scaleAnim }] }]}>
+          {phase === 'sent' ? (
+            <>
+              <View style={[modalStyles.iconWrap, { backgroundColor: 'rgba(34,197,94,0.18)' }]}>
+                <Text style={[modalStyles.iconText, { color: '#22c55e' }]}>✓</Text>
+              </View>
+              <Text style={modalStyles.title}>{t("auth.emailSentTitle")}</Text>
+              <Text style={modalStyles.message}>
+                {t("auth.emailSentMessage").replace("{email}", inputEmail.trim())}
+              </Text>
+              <View style={modalStyles.buttonsRow}>
+                <TouchableOpacity style={modalStyles.button} onPress={onClose} activeOpacity={0.8}>
+                  <Text style={modalStyles.buttonText}>{t("auth.backToLogin")}</Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          ) : phase === 'sending' ? (
+            <>
+              <View style={modalStyles.iconWrap}>
+                <Text style={modalStyles.iconText}>…</Text>
+              </View>
+              <Text style={modalStyles.title}>{t("auth.sendingEmail")}</Text>
+              <Text style={modalStyles.message}>{t("auth.sendingEmailMessage").replace("{email}", inputEmail.trim())}</Text>
+              <ActivityIndicator color={GRADIENT_START} size="large" style={{ marginTop: 4 }} />
+            </>
+          ) : (
+            <>
+              <View style={modalStyles.iconWrap}>
+                <Text style={modalStyles.iconText}>🔑</Text>
+              </View>
+              <Text style={modalStyles.title}>{t("auth.forgotPasswordTitle")}</Text>
+              <Text style={[modalStyles.message, { marginBottom: 12 }]}>
+                {t("auth.forgotPasswordMessage")}
+              </Text>
+              {phase === 'error' && (
+                <Text style={forgotInputStyles.errorText}>{errorMsg}</Text>
+              )}
+              <TextInput
+                style={forgotInputStyles.emailInput}
+                placeholder={t("auth.emailPlaceholder")}
+                placeholderTextColor="#AAAAAA"
+                value={inputEmail}
+                onChangeText={(val) => { setInputEmail(val); if (phase === 'error') setPhase('input'); }}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                autoComplete="email"
+                editable
+              />
+              <View style={[modalStyles.buttonsRow, { marginTop: 4 }]}>
+                <TouchableOpacity
+                  style={[modalStyles.button, modalStyles.buttonSecondary]}
+                  onPress={onClose}
+                  activeOpacity={0.8}
+                >
+                  <Text style={modalStyles.buttonSecondaryText}>{t("common.cancel")}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={modalStyles.button}
+                  onPress={handleSend}
+                  activeOpacity={0.8}
+                >
+                  <Text style={modalStyles.buttonText}>{t("auth.sendLink")}</Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          )}
+        </Animated.View>
+      </Animated.View>
+    </Modal>
+  );
+}
+
+const forgotInputStyles = StyleSheet.create({
+  emailInput: {
+    width: '100%',
+    borderWidth: 1.5,
+    borderColor: '#E0E0E0',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 13,
+    fontSize: 15,
+    color: '#333',
+    marginBottom: 16,
+    backgroundColor: '#FAFAFA',
+    textAlign: 'left',
+  },
+  errorText: {
+    fontSize: 13,
+    color: '#E53E3E',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+});
 
 interface MessageModalProps {
   visible: boolean;
@@ -411,8 +576,9 @@ export default function Login() {
   const navigation = useNavigation();
   const route = useRoute();
   const insets = useSafeAreaInsets();
-  const { scale, verticalScale, moderateScale, horizontalPadding } =
+  const { scale, verticalScale, horizontalPadding, isShortScreen, isSmallScreen, width, height } =
     useResponsive();
+  const { height: windowHeight } = useWindowDimensions();
   const fromSignOut = (route.params as { fromSignOut?: boolean } | undefined)
     ?.fromSignOut;
 
@@ -438,6 +604,10 @@ export default function Login() {
   });
   const [resetModalVisible, setResetModalVisible] = useState(false);
   const [resetModalEmail, setResetModalEmail] = useState("");
+  const [forgotModalVisible, setForgotModalVisible] = useState(false);
+  const [languageModalVisible, setLanguageModalVisible] = useState(false);
+  const { t, language: contextLanguage, setLanguage } = useLanguage();
+  const language = normalizeLanguage(contextLanguage ?? DEFAULT_LANGUAGE);
 
   const showModal = (config: Partial<ModalConfig>) => {
     setModalConfig({
@@ -458,6 +628,12 @@ export default function Login() {
   // Stores user/nav info to execute after the reset modal closes
   const pendingNavRef = useRef<{ hasPasscode: boolean } | null>(null);
 
+  const handleSelectLanguage = async (selectedLabel: string) => {
+    setLanguage(selectedLabel);
+    await AsyncStorage.setItem("user_preferred_language", selectedLabel);
+    setLanguageModalVisible(false);
+  };
+
   const doNavigate = (hasPasscode: boolean) => {
     if (hasPasscode) {
       (navigation as unknown as NavProp).replace("Passcode");
@@ -474,16 +650,16 @@ export default function Login() {
     const trimmedEmail = email.trim();
     if (!trimmedEmail) {
       showModal({
-        title: "Missing Information",
-        message: "Please enter your email address.",
+        title: t("auth.missingInfo"),
+        message: t("auth.enterEmail"),
         type: "warning",
       });
       return;
     }
     if (!password) {
       showModal({
-        title: "Missing Information",
-        message: "Please enter your password.",
+        title: t("auth.missingInfo"),
+        message: t("auth.enterPassword"),
         type: "warning",
       });
       return;
@@ -491,7 +667,7 @@ export default function Login() {
 
     setLoading(true);
     const loaderStart = Date.now();
-    const MIN_LOADER_MS = 2000;
+    const MIN_LOADER_MS = 500; // Brief feedback only; Dashboard will show its own loader
 
     try {
       const result = await login(trimmedEmail, password);
@@ -499,9 +675,8 @@ export default function Login() {
       if (!result.success) {
         setLoading(false);
         showModal({
-          title: "Login Failed",
-          message:
-            result.error || "Invalid email or password. Please try again.",
+          title: t("auth.loginFailed"),
+          message: result.error || t("auth.invalidCredentials"),
           type: "error",
         });
         return;
@@ -510,6 +685,16 @@ export default function Login() {
       await AsyncStorage.setItem("access_token", result.access_token || "");
       await AsyncStorage.setItem("user", JSON.stringify(result.user || {}));
       await AsyncStorage.removeItem("passcodeLoginComplete");
+
+      // Register device for Indie Push Notifications
+      const userObj = result.user as any;
+      const userId = userObj?.id || userObj?._id;
+      const appId = process.env.EXPO_PUBLIC_NATIVE_NOTIFY_APP_ID;
+      const appToken = process.env.EXPO_PUBLIC_NATIVE_NOTIFY_APP_TOKEN;
+
+      if (userId && appId && appToken) {
+        registerIndieID(String(userId), Number(appId), appToken);
+      }
 
       const elapsed = Date.now() - loaderStart;
       const remaining = Math.max(0, MIN_LOADER_MS - elapsed);
@@ -532,8 +717,8 @@ export default function Login() {
     } catch (_) {
       setLoading(false);
       showModal({
-        title: "Login Error",
-        message: "An unexpected error occurred. Please try again.",
+        title: t("auth.loginError"),
+        message: t("auth.unexpectedError"),
         type: "error",
       });
     }
@@ -542,28 +727,39 @@ export default function Login() {
   const isWeb = Platform.OS === "web";
 
   if (loading) {
-    return <CustomLoader text="LOGGING IN" />;
+    return <CustomLoader text={t("auth.loggingIn")} />;
   }
+
+  // Responsive logo/form sizes for smaller screens
+  const logoWidth = isSmallScreen ? scale(220) : scale(260);
+  const logoHeight = isSmallScreen ? scale(118) : scale(140);
+  const logoMarginBottom = isShortScreen ? verticalScale(20) : verticalScale(32);
+  const formPaddingBottom = isShortScreen ? verticalScale(60) : verticalScale(100);
 
   return (
     <>
-      <KeyboardAvoidingView
-        style={styles.flex1}
-        behavior={
-          isWeb ? undefined : Platform.OS === "ios" ? "padding" : "height"
-        }
-        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
-      >
+      <View style={styles.flex1}>
+        {/* Fixed gradient background - does not move when keyboard opens */}
         <LinearGradient
           colors={[GRADIENT_START, GRADIENT_END]}
           locations={[0, 1]}
+          style={StyleSheet.absoluteFill}
+          pointerEvents="none"
+        />
+        <View
           style={[
-            styles.gradient,
-            { paddingTop: insets.top, paddingBottom: insets.bottom },
+            styles.contentWrapper,
+            {
+              paddingTop: insets.top,
+              paddingBottom: insets.bottom,
+            },
           ]}
         >
           <View
-            style={[styles.header, { paddingHorizontal: horizontalPadding }]}
+            style={[
+              styles.header,
+              { paddingHorizontal: horizontalPadding },
+            ]}
           >
             {fromSignOut ? (
               <View
@@ -594,37 +790,58 @@ export default function Login() {
                 <Ionicons name="arrow-back" size={26} color={WHITE} />
               </TouchableOpacity>
             )}
+            <TouchableOpacity
+              style={[
+                styles.languageButton,
+                {
+                  width: scale(44),
+                  height: scale(44),
+                  borderRadius: scale(22),
+                },
+              ]}
+              onPress={() => setLanguageModalVisible(true)}
+              accessibilityLabel={t("profile.selectLanguage")}
+              accessibilityRole="button"
+            >
+              <Ionicons name="language-outline" size={26} color={WHITE} />
+            </TouchableOpacity>
           </View>
 
-          <ScrollView
+          <KeyboardAwareScrollView
             style={styles.scroll}
             contentContainerStyle={[
               styles.scrollContent,
               {
                 paddingHorizontal: horizontalPadding,
-                paddingBottom: verticalScale(100),
+                paddingBottom: formPaddingBottom,
+                minHeight: isWeb ? undefined : Math.max(400, windowHeight - insets.top - insets.bottom - 160),
               },
             ]}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
-            bounces={false}
+            enableOnAndroid={true}
+            enableAutomaticScroll={true}
+            extraScrollHeight={Platform.OS === "ios" ? 80 : 60}
+            extraHeight={Platform.OS === "android" ? 100 : 80}
+            keyboardOpeningTime={0}
+            viewIsInsideTabBar={false}
           >
             <View
-              style={[styles.logoWrap, { marginBottom: verticalScale(32) }]}
+              style={[styles.logoWrap, { marginBottom: logoMarginBottom }]}
             >
               <Image
                 source={require("../../assets/images/InpireLogo.png")}
-                style={[styles.logo, { width: scale(260), height: scale(140) }]}
+                style={[styles.logo, { width: logoWidth, height: logoHeight }]}
                 contentFit="contain"
                 accessible={true}
                 accessibilityLabel="Inspire company logo"
               />
             </View>
 
-            <View style={styles.form}>
+            <View style={[styles.form, isShortScreen && { gap: 0 }]}>
               <TextInput
-                style={styles.input}
-                placeholder="Email Address"
+                style={[styles.input, isShortScreen && { minHeight: 48, paddingVertical: 12 }]}
+                placeholder={t("auth.emailPlaceholder")}
                 placeholderTextColor="rgba(255,255,255,0.85)"
                 value={email}
                 onChangeText={setEmail}
@@ -635,10 +852,10 @@ export default function Login() {
                 autoComplete="email"
               />
 
-              <View style={styles.passwordRow}>
+              <View style={[styles.passwordRow, isShortScreen && { minHeight: 48 }]}>
                 <TextInput
-                  style={styles.passwordInput}
-                  placeholder="Enter password"
+                  style={[styles.passwordInput, isShortScreen && { paddingVertical: 12 }]}
+                  placeholder={t("auth.passwordPlaceholder")}
                   placeholderTextColor="rgba(255,255,255,0.85)"
                   value={password}
                   onChangeText={setPassword}
@@ -661,7 +878,7 @@ export default function Login() {
               </View>
 
               <TouchableOpacity
-                style={styles.passcodeLinkWrap}
+                style={[styles.passcodeLinkWrap, isShortScreen && { marginBottom: 16 }]}
                 onPress={async () => {
                   const token = await AsyncStorage.getItem("access_token");
                   const userJson = await AsyncStorage.getItem("user");
@@ -672,33 +889,32 @@ export default function Login() {
                     (navigation as unknown as NavProp).replace("Passcode");
                   } else if (!token) {
                     showModal({
-                      title: "Passcode Login",
-                      message:
-                        "To use passcode, you need to sign in with your email and password first. Don't have an account? Please register to create one.",
+                      title: t("auth.passcodeLoginTitle"),
+                      message: t("auth.passcodeLoginMessage"),
                       type: "info",
-                      confirmText: "OK",
-                      secondaryText: "Register",
+                      confirmText: t("common.ok"),
+                      secondaryText: t("auth.register"),
                       onSecondary: () =>
                         (navigation as unknown as NavProp).replace("Register"),
                     });
                   } else {
                     showModal({
-                      title: "No Passcode Set",
-                      message:
-                        "You haven't set up a passcode yet. Sign in with your email and password, then you can set up passcode in Settings after logging in.",
+                      title: t("auth.noPasscodeSetTitle"),
+                      message: t("auth.noPasscodeSetMessage"),
                       type: "info",
                     });
                   }
                 }}
               >
                 <Text style={styles.passcodeLinkText}>
-                  Use Passcode Instead
+                  {t("auth.usePasscodeInstead")}
                 </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={[
                   styles.loginButton,
+                  isShortScreen && { minHeight: 48 },
                   loading && styles.loginButtonDisabled,
                 ]}
                 onPress={SignIn}
@@ -708,43 +924,30 @@ export default function Login() {
                 {loading ? (
                   <ActivityIndicator color={WHITE} size="small" />
                 ) : (
-                  <Text style={styles.loginButtonText}>Login</Text>
+                  <Text style={styles.loginButtonText}>{t("auth.login")}</Text>
                 )}
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={styles.forgotWrap}
-                onPress={async () => {
-                  const trimmedEmail = email.trim();
-                  if (!trimmedEmail) {
-                    showModal({
-                      title: "Enter Your Email",
-                      message:
-                        'Please enter your email address in the field above, then tap "Forgot Password" again.',
-                      type: "info",
-                    });
-                    return;
-                  }
-                  setResetModalEmail(trimmedEmail);
-                  setResetModalVisible(true);
-                }}
+                onPress={() => setForgotModalVisible(true)}
               >
-                <Text style={styles.forgotText}>Forgot Password?</Text>
+                <Text style={styles.forgotText}>{t("auth.forgotPassword")}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={styles.registerWrap}
                 onPress={() => navigation.navigate("Register")}
               >
-                <Text style={styles.registerText}>Don't have an account? </Text>
-                <Text style={styles.registerLink}>Register</Text>
+                <Text style={styles.registerText}>{t("auth.noAccount")}</Text>
+                <Text style={styles.registerLink}>{t("auth.register")}</Text>
               </TouchableOpacity>
             </View>
-          </ScrollView>
+          </KeyboardAwareScrollView>
 
-          <Text style={styles.footer}>CREATED BY INSPIRE</Text>
-        </LinearGradient>
-      </KeyboardAvoidingView>
+          <Text style={styles.footer}>{t("auth.createdByInspire")}</Text>
+        </View>
+      </View>
 
       <MessageModal
         visible={modalVisible}
@@ -760,26 +963,119 @@ export default function Login() {
 
       <PasswordResetRequiredModal
         visible={resetModalVisible}
-        onClose={() => setResetModalVisible(false)}
-        onNavigateAfterClose={() => {
-          const pending = pendingNavRef.current;
+        onClose={() => {
+          setResetModalVisible(false);
           pendingNavRef.current = null;
-          if (pending) doNavigate(pending.hasPasscode);
+        }}
+        onSentOk={() => {
+          setResetModalVisible(false);
+          pendingNavRef.current = null;
+          // Clear password so the user must type their new password on next attempt
+          setPassword('');
         }}
         email={resetModalEmail}
       />
+
+      <ForgotPasswordInputModal
+        visible={forgotModalVisible}
+        initialEmail={email.trim()}
+        onClose={() => setForgotModalVisible(false)}
+      />
+
+      <Modal
+        visible={languageModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setLanguageModalVisible(false)}
+      >
+        <TouchableOpacity
+          style={[
+            loginLanguageStyles.overlay,
+            { paddingHorizontal: Math.max(16, horizontalPadding) },
+          ]}
+          activeOpacity={1}
+          onPress={() => setLanguageModalVisible(false)}
+        >
+          <View
+            style={[
+              loginLanguageStyles.content,
+              {
+                maxWidth: Math.min(360, width - 32),
+                maxHeight: isShortScreen ? height * 0.85 : undefined,
+                padding: isSmallScreen ? 18 : 24,
+              },
+            ]}
+            onStartShouldSetResponder={() => true}
+          >
+            <View style={loginLanguageStyles.header}>
+              <Ionicons name="globe-outline" size={isSmallScreen ? 32 : 40} color={GRADIENT_START} />
+              <Text style={[loginLanguageStyles.title, isSmallScreen && { fontSize: 16 }]}>
+                {t("profile.selectLanguage")}
+              </Text>
+              <Text style={[loginLanguageStyles.subtitle, isSmallScreen && { fontSize: 12 }]}>
+                {t("profile.defaultIsEnglish")}
+              </Text>
+            </View>
+            <ScrollView
+              style={isShortScreen ? { maxHeight: 200 } : undefined}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+            >
+              {SUPPORTED_LANGUAGES.map(({ label, flag }) => (
+                <TouchableOpacity
+                  key={label}
+                  style={[
+                    loginLanguageStyles.option,
+                    isSmallScreen && { paddingVertical: 12, paddingHorizontal: 14 },
+                    language === label && loginLanguageStyles.optionSelected,
+                  ]}
+                  onPress={() => handleSelectLanguage(label)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[loginLanguageStyles.flag, isSmallScreen && { fontSize: 20 }]}>{flag}</Text>
+                  <Text
+                    style={[
+                      loginLanguageStyles.optionText,
+                      isSmallScreen && { fontSize: 15 },
+                      language === label && loginLanguageStyles.optionTextSelected,
+                    ]}
+                  >
+                    {label}
+                  </Text>
+                  {language === label && (
+                    <Ionicons
+                      name="checkmark-circle"
+                      size={isSmallScreen ? 20 : 22}
+                      color={GRADIENT_START}
+                    />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+            <TouchableOpacity
+              style={[loginLanguageStyles.cancelBtn, isSmallScreen && { marginTop: 8 }]}
+              onPress={() => setLanguageModalVisible(false)}
+            >
+              <Text style={[loginLanguageStyles.cancelText, isSmallScreen && { fontSize: 15 }]}>
+                {t("common.cancel")}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </>
   );
 }
 
 const styles = StyleSheet.create({
-  flex1: { flex: 1 },
-  gradient: {
+  flex1: { flex: 1, backgroundColor: GRADIENT_END },
+  contentWrapper: {
     flex: 1,
-    width: "100%",
-    height: "100%",
   },
   header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
@@ -791,12 +1087,16 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  languageButton: {
+    backgroundColor: "rgba(255,255,255,0.22)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
   scroll: { flex: 1 },
   scrollContent: {
     flexGrow: 1,
     justifyContent: "center",
     alignItems: "center",
-    minHeight: "100%",
   },
   logoWrap: {
     alignSelf: "center",
@@ -816,6 +1116,7 @@ const styles = StyleSheet.create({
     color: WHITE,
     marginBottom: 14,
     minHeight: 54,
+    textAlign: "left",
   },
   passwordRow: {
     flexDirection: "row",
@@ -831,6 +1132,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     fontSize: 16,
     color: WHITE,
+    textAlign: "left",
   },
   eyeButton: {
     padding: 14,
@@ -841,12 +1143,15 @@ const styles = StyleSheet.create({
   },
   passcodeLinkWrap: {
     alignItems: "center",
+    justifyContent: "center",
     marginBottom: 24,
+    width: "100%",
   },
   passcodeLinkText: {
     color: WHITE,
     fontSize: 16,
     fontWeight: "400",
+    textAlign: "center",
   },
   loginButton: {
     backgroundColor: GRADIENT_START,
@@ -867,32 +1172,41 @@ const styles = StyleSheet.create({
     color: WHITE,
     fontSize: 18,
     fontWeight: "600",
+    textAlign: "center",
   },
   forgotWrap: {
     alignItems: "center",
+    justifyContent: "center",
     marginTop: 20,
+    width: "100%",
   },
   forgotText: {
     color: WHITE,
     fontSize: 14,
     fontWeight: "400",
+    textAlign: "center",
   },
   registerWrap: {
     flexDirection: "row",
+    flexWrap: "wrap",
     alignItems: "center",
     justifyContent: "center",
     marginTop: 24,
+    width: "100%",
+    paddingHorizontal: 8,
   },
   registerText: {
     color: WHITE,
     fontSize: 15,
     fontWeight: "400",
+    textAlign: "center",
   },
   registerLink: {
     color: WHITE,
     fontSize: 15,
     fontWeight: "600",
     textDecorationLine: "underline",
+    textAlign: "center",
   },
   footer: {
     fontSize: 11,
@@ -902,4 +1216,49 @@ const styles = StyleSheet.create({
     textAlign: "center",
     paddingVertical: 16,
   },
+});
+
+const loginLanguageStyles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: "transparent",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 20,
+  },
+  content: {
+    width: "100%",
+    backgroundColor: WHITE,
+    borderRadius: 20,
+    padding: 24,
+    ...Platform.select({
+      ios: {
+        shadowColor: GRADIENT_START,
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.5,
+        shadowRadius: 24,
+      },
+      android: { elevation: 16 },
+    }),
+  },
+  header: { alignItems: "center", marginBottom: 20 },
+  title: { fontSize: 18, fontWeight: "700", color: "#333", marginTop: 12, marginBottom: 4, textAlign: "center" },
+  subtitle: { fontSize: 13, color: "#666", textAlign: "center" },
+  option: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    marginBottom: 8,
+    backgroundColor: "#F8F8F8",
+    borderWidth: 1,
+    borderColor: "transparent",
+  },
+  optionSelected: { backgroundColor: "#FFF0E8", borderWidth: 2, borderColor: GRADIENT_START },
+  flag: { fontSize: 22, marginRight: 12 },
+  optionText: { fontSize: 16, color: "#333", flex: 1 },
+  optionTextSelected: { fontWeight: "600", color: GRADIENT_START },
+  cancelBtn: { marginTop: 12, paddingVertical: 12, alignItems: "center" },
+  cancelText: { fontSize: 16, color: "#666" },
 });

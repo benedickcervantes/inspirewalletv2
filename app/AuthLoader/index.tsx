@@ -1,9 +1,11 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
+import { registerIndieID } from 'native-notify';
 import { useEffect, useRef, useState } from "react";
 import { getMe } from "../../configs/api";
 import type { RootStackParamList } from "../../types/navigation";
 import CustomLoader from "../Loader/CustomLoader";
+import { useLanguage } from "../../context/LanguageContext";
 
 const MIN_SPLASH_MS = 3000;
 
@@ -11,6 +13,7 @@ type ScreenName = keyof RootStackParamList;
 
 export default function AuthLoader() {
   const navigation = useNavigation();
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(true);
   const hasInitializedRef = useRef(false);
   const navigationHandledRef = useRef(false);
@@ -58,6 +61,16 @@ export default function AuthLoader() {
         // Always store user so Dashboard has userData (backend-only, no Firebase)
         await AsyncStorage.setItem("user", JSON.stringify(result.user));
 
+        // Register device for Indie Push Notifications on app load if already logged in
+        const userObj = result.user as any;
+        const userId = userObj?.id || userObj?._id;
+        const appId = process.env.EXPO_PUBLIC_NATIVE_NOTIFY_APP_ID;
+        const appToken = process.env.EXPO_PUBLIC_NATIVE_NOTIFY_APP_TOKEN;
+
+        if (userId && appId && appToken) {
+          registerIndieID(String(userId), Number(appId), appToken);
+        }
+
         const registrationPasscodePending = await AsyncStorage.getItem("registrationPasscodePending");
         const passcodeLoginComplete = await AsyncStorage.getItem("passcodeLoginComplete");
         const user = result.user as { hasPasscode?: boolean };
@@ -98,5 +111,5 @@ export default function AuthLoader() {
 
   if (!loading) return null;
 
-  return <CustomLoader text="LOADING" />;
+  return <CustomLoader text={t("common.loading")} />;
 }

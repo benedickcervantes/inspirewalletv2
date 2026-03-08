@@ -7,33 +7,38 @@ import {
   ActivityIndicator,
   FlatList,
   RefreshControl,
-  SafeAreaView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
-import { getMessages } from '../../configs/api';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  markNotificationAsRead as apiMarkNotificationAsRead,
+  markAllNotificationsAsRead as apiMarkAllNotificationsAsRead,
+  getNotifications,
+} from '../../configs/api';
 import { auth } from '../../configs/firebase';
 import { useLanguage } from '../../context/LanguageContext';
 import notificationService, { type NotificationItem } from './notificationService';
 
-interface Message {
+interface NotificationItemBackend {
   id: string;
-  content: string;
+  title: string;
+  message: string;
+  isRead: boolean;
   createdAt: string;
-  status: 'SENT' | 'READ';
-  senderName?: string;
-  direction?: 'ADMIN_TO_USER' | 'USER_TO_ADMIN';
 }
 
 const Notification = () => {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const { t } = useLanguage();
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [backendNotifications, setBackendNotifications] = useState<NotificationItemBackend[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [readAllLoading, setReadAllLoading] = useState(false);
   const [user, setUser] = useState<{ uid: string } | null>(null);
   const [useBackend, setUseBackend] = useState(false);
 
@@ -42,7 +47,7 @@ const Notification = () => {
       const accessToken = await AsyncStorage.getItem("access_token");
       if (accessToken) {
         setUseBackend(true);
-        fetchBackendMessages();
+        fetchBackendNotifications();
       } else if (auth) {
         const unsubscribeAuth = auth.onAuthStateChanged((currentUser) => {
           setUser(currentUser);
@@ -60,18 +65,18 @@ const Notification = () => {
     checkAuth();
   }, []);
 
-  const fetchBackendMessages = async () => {
+  const fetchBackendNotifications = async () => {
     try {
       setLoading(true);
       const accessToken = await AsyncStorage.getItem("access_token");
       if (!accessToken) return;
 
-      const result = await getMessages(accessToken, { page: 1, limit: 50 });
-      if (result.success && result.messages) {
-        setMessages(result.messages as Message[]);
+      const result = await getNotifications(accessToken, { limit: 50 });
+      if (result.success && result.data) {
+        setBackendNotifications(result.data as NotificationItemBackend[]);
       }
     } catch (error) {
-      console.error('Error fetching messages:', error);
+      console.error('Error fetching notifications:', error);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -100,18 +105,56 @@ const Notification = () => {
   const handleRefresh = () => {
     setRefreshing(true);
     if (useBackend) {
-      fetchBackendMessages();
+      fetchBackendNotifications();
     } else {
       setTimeout(() => setRefreshing(false), 1000);
     }
   };
 
-  const handleNotificationPress = async (notification: NotificationItem | Message) => {
+  const unreadCount = useBackend
+    ? backendNotifications.filter((n) => !n.isRead).length
+    : notifications.filter((n) => !n.read).length;
+
+  const handleReadAll = async () => {
+    if (unreadCount === 0 || readAllLoading) return;
+    setReadAllLoading(true);
+    try {
+      if (useBackend) {
+        const accessToken = await AsyncStorage.getItem('access_token');
+        if (accessToken) {
+          const result = await apiMarkAllNotificationsAsRead(accessToken);
+          if (result.success) {
+            setBackendNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+          }
+        }
+      } else if (user) {
+        await notificationService.markAllAsRead(user.uid);
+        // Firebase subscription will update state automatically
+      }
+    } catch (error) {
+      console.error('Error marking all notifications as read:', error);
+    } finally {
+      setReadAllLoading(false);
+    }
+  };
+
+  const handleNotificationPress = async (notification: NotificationItem | NotificationItemBackend) => {
     if (useBackend) {
-      // Backend messages - navigate to message detail or mark as read
+      const notif = notification as NotificationItemBackend;
+      if (!notif.isRead) {
+        try {
+          const accessToken = await AsyncStorage.getItem("access_token");
+          if (accessToken) {
+            await apiMarkNotificationAsRead(accessToken, notif.id);
+            setBackendNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, isRead: true } : n));
+          }
+        } catch (error) {
+          console.error('Error marking backend notification as read:', error);
+        }
+      }
       return;
     }
-    
+
     const notif = notification as NotificationItem;
     if (!notif.read && user) {
       try {
@@ -139,7 +182,7 @@ const Notification = () => {
 
   const formatTimestamp = (timestamp: NotificationItem['timestamp']) => {
     if (!timestamp) return '';
-    
+
     const date = (timestamp as { toDate?: () => Date }).toDate ? (timestamp as { toDate: () => Date }).toDate() : new Date(timestamp as Date);
     const options: Intl.DateTimeFormatOptions = {
       year: 'numeric',
@@ -148,25 +191,25 @@ const Notification = () => {
       hour: '2-digit',
       minute: '2-digit',
     };
-    
+
     return date.toLocaleString('en-US', options);
   };
 
-  const renderBackendMessage = ({ item }: { item: Message }) => (
+  const renderBackendNotification = ({ item }: { item: NotificationItemBackend }) => (
     <TouchableOpacity
       style={[
         styles.notificationCard,
-        item.status === 'SENT' && styles.unreadCard,
+        !item.isRead && styles.unreadCard,
       ]}
       onPress={() => handleNotificationPress(item)}
     >
       <View style={styles.cardContent}>
         <View style={[
           styles.iconContainer,
-          item.status === 'SENT' && styles.unreadIconContainer,
+          !item.isRead && styles.unreadIconContainer,
         ]}>
           <Ionicons
-            name={item.direction === 'ADMIN_TO_USER' ? 'mail' : 'send'}
+            name="notifications"
             size={24}
             color="#E25A17"
           />
@@ -175,9 +218,9 @@ const Notification = () => {
         <View style={styles.textContainer}>
           <View style={styles.titleRow}>
             <Text style={styles.notificationTitle}>
-              {item.senderName || (item.direction === 'ADMIN_TO_USER' ? t('notification.supportMessage') : t('notification.yourMessage'))}
+              {item.title}
             </Text>
-            {item.status === 'SENT' && (
+            {!item.isRead && (
               <View style={styles.newBadge}>
                 <Text style={styles.newBadgeText}>{t('notification.newBadge')}</Text>
               </View>
@@ -187,7 +230,7 @@ const Notification = () => {
           <View style={styles.divider} />
 
           <Text style={styles.notificationMessage} numberOfLines={3}>
-            {item.content}
+            {item.message}
           </Text>
 
           <Text style={styles.timestamp}>
@@ -201,7 +244,7 @@ const Notification = () => {
           </Text>
         </View>
 
-        {item.status === 'READ' && (
+        {item.isRead && (
           <Ionicons
             name="chevron-forward"
             size={20}
@@ -279,7 +322,7 @@ const Notification = () => {
 
   if (!user && !useBackend) {
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={[styles.container, { paddingTop: insets.top }]}>
         <LinearGradient
           colors={['#E25A17', '#F28934']}
           style={styles.header}
@@ -298,12 +341,12 @@ const Notification = () => {
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyText}>{t('notification.loginToView')}</Text>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <LinearGradient
         colors={['#E25A17', '#F28934']}
         style={styles.header}
@@ -326,18 +369,34 @@ const Notification = () => {
         </TouchableOpacity>
       </LinearGradient>
 
+      {unreadCount > 0 && (
+        <View style={styles.readAllBar}>
+          <TouchableOpacity
+            onPress={handleReadAll}
+            disabled={readAllLoading}
+            style={styles.readAllButton}
+          >
+            {readAllLoading ? (
+              <ActivityIndicator size="small" color="#E25A17" />
+            ) : (
+              <Text style={styles.readAllText}>{t('notification.readAll')}</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+      )}
+
       {loading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#E25A17" />
         </View>
       ) : useBackend ? (
-        <FlatList<Message>
-          data={messages}
-          renderItem={renderBackendMessage}
+        <FlatList<NotificationItemBackend>
+          data={backendNotifications}
+          renderItem={renderBackendNotification}
           keyExtractor={(item) => item.id}
           contentContainerStyle={[
             styles.listContent,
-            messages.length === 0 && styles.emptyListContent,
+            backendNotifications.length === 0 && styles.emptyListContent,
           ]}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={renderEmptyState}
@@ -371,7 +430,7 @@ const Notification = () => {
           }
         />
       )}
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -405,6 +464,27 @@ const styles = StyleSheet.create({
     height: 40,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  readAllBar: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#EEE',
+  },
+  readAllButton: {
+    minWidth: 80,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+  },
+  readAllText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#E25A17',
   },
   loadingContainer: {
     flex: 1,

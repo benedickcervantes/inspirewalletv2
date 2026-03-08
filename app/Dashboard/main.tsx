@@ -1,6 +1,10 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import {
+  useFocusEffect,
+  useNavigation,
+  useRoute,
+} from "@react-navigation/native";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Animated,
@@ -20,25 +24,23 @@ import {
 } from "react-native-safe-area-context";
 import {
   getMe,
+  getNotifications,
   getOrCreateMainWallet,
   getReferralTree,
   getTimeDeposits,
   getTransactions,
 } from "../../configs/api";
 import {
-  createRealtimeConnection,
-  startHeartbeat,
-} from "../../configs/realtime";
-import {
   languageChoiceDoneKey,
   SUPPORTED_LANGUAGES,
 } from "../../constants/locales";
 import { useLanguage } from "../../context/LanguageContext";
+import { useSocket } from "../../context/SocketContext";
 import { setConnectionStatus } from "../../lib/connectionStatus";
 import { getMaintenanceStatus } from "../../lib/maintenance";
-import { notifyNewSupportMessage } from "../../lib/messagingEvents";
 import type { NavProp } from "../../types/navigation";
 import { useResponsive } from "../../utils/responsive";
+import CustomLoader from "../Loader/CustomLoader";
 import CardsTab from "./CardsTab";
 import SavingsTab from "./SavingsTab";
 import WalletTab from "./WalletTab";
@@ -104,12 +106,7 @@ interface TimeDeposit {
 
 function computeTimeDepositTotal(deposits: TimeDeposit[]): number {
   return deposits
-    .filter(
-      (d) =>
-        d.status === "ACTIVE" ||
-        d.status === "MATURED" ||
-        d.status === "PENDING",
-    )
+    .filter((d) => d.status === "ACTIVE" || d.status === "MATURED")
     .reduce((sum, d) => sum + (parseFloat(String(d?.amount ?? 0)) || 0), 0);
 }
 
@@ -198,14 +195,20 @@ function getTransactionTypeLabel(
 
 export default function Dashboard() {
   const navigation = useNavigation();
+  const route = useRoute();
   const { t, setLanguage } = useLanguage();
   const insets = useSafeAreaInsets();
-  const { width, horizontalPadding } = useResponsive();
+  const { width, horizontalPadding, isSmallScreen } = useResponsive();
+  const qaSpacing = width < 360 ? 0.75 : isSmallScreen ? 0.85 : 1;
+  const qaLabelSize = width < 360 ? 8 : isSmallScreen ? 9 : 11;
+  const qaIconSize = width < 360 ? 18 : isSmallScreen ? 20 : 24;
   const carouselWidth = width - horizontalPadding * 2;
+  const [navigatingAction, setNavigatingAction] = useState<string | null>(null);
   const [userData, setUserData] = useState<Record<string, unknown> | null>(
     null,
   );
   const [availableBalance, setAvailableBalance] = useState(0);
+  const [isBalanceLoading, setIsBalanceLoading] = useState(true);
   const [timeDeposit, setTimeDeposit] = useState(0);
   const [deposits, setDeposits] = useState<TimeDeposit[]>([]);
   const [activeTab, setActiveTab] = useState("Wallet");
@@ -217,8 +220,6 @@ export default function Dashboard() {
   const languageScrollRef = useRef<ScrollView | null>(null);
   const mainWalletIdRef = useRef<string | null>(null);
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const socketRef = useRef<{ disconnect: () => void } | null>(null);
-  const heartbeatCleanupRef = useRef<(() => void) | null>(null);
   const [currentLanguageIndex, setCurrentLanguageIndex] = useState(0);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [userReferrer, setUserReferrer] = useState<{
@@ -234,6 +235,12 @@ export default function Dashboard() {
   const [selectedMaintenanceService, setSelectedMaintenanceService] = useState<
     string | null
   >(null);
+  const [activeCardDesign, setActiveCardDesign] = useState<string | null>(null);
+
+  const getActiveCardStorageKey = (accountNumber?: string) =>
+    accountNumber
+      ? `active_card_design_${accountNumber}`
+      : "active_card_design";
 
   const languageSlides = [
     {
@@ -256,6 +263,15 @@ export default function Dashboard() {
     if (hour < 18) return t("dashboard.goodAfternoon");
     return t("dashboard.goodEvening");
   };
+
+  useEffect(() => {
+    const params = route.params as
+      | { initialTab?: "Wallet" | "Investment" | "Cards" }
+      | undefined;
+    if (params?.initialTab) {
+      setActiveTab(params.initialTab);
+    }
+  }, [route.params]);
 
   useEffect(() => {
     const init = async () => {
@@ -287,6 +303,26 @@ export default function Dashboard() {
           email: user.email,
           accountNumber: user.accountNumber,
         });
+
+        // Load cached active card design once we know the account number
+        try {
+          const accountNumber = (user as { accountNumber?: string })
+            ?.accountNumber;
+          if (accountNumber) {
+            const key = getActiveCardStorageKey(accountNumber);
+            const cachedDesign = await AsyncStorage.getItem(key);
+            if (cachedDesign) {
+              setActiveCardDesign(cachedDesign);
+            }
+          }
+        } catch (e) {
+          if (__DEV__) {
+            console.error(
+              "[Dashboard] Failed to load cached active card design",
+              e,
+            );
+          }
+        }
       }
 
       setAvailableBalance(0);
@@ -301,8 +337,23 @@ export default function Dashboard() {
         const bal = parseFloat(String(w.balance));
         setAvailableBalance(Number.isNaN(bal) ? 0 : bal);
       }
+      setIsBalanceLoading(false);
 
-      const tdRes = await getTimeDeposits(accessToken);
+      const walletId = w?.id;
+      const [tdRes, treeRes, txRes, status, notifRes, hasChosen] =
+        await Promise.all([
+          getTimeDeposits(accessToken),
+          getReferralTree(accessToken),
+          getTransactions(accessToken, { walletId, limit: 20 }),
+          getMaintenanceStatus(),
+          getNotifications(accessToken, { limit: 50 }),
+          AsyncStorage.getItem(
+            languageChoiceDoneKey(
+              (user as { accountNumber?: string })?.accountNumber,
+            ),
+          ),
+        ]);
+
       if (tdRes.success && Array.isArray(tdRes.deposits)) {
         const list = tdRes.deposits as TimeDeposit[];
         setDeposits(list);
@@ -311,14 +362,13 @@ export default function Dashboard() {
         console.warn("[Dashboard] getTimeDeposits failed:", tdRes.error);
       }
 
-      const treeRes = await getReferralTree(accessToken);
       if (treeRes.success && treeRes.tree) {
         const tree = treeRes.tree as {
-          ancestors?: Array<{
+          ancestors?: {
             referralCode?: string;
             firstName?: string;
             lastName?: string;
-          }>;
+          }[];
         };
         const first = tree.ancestors?.[0];
         if (
@@ -342,10 +392,6 @@ export default function Dashboard() {
         setUserReferrer(null);
       }
 
-      const txRes = await getTransactions(accessToken, {
-        walletId: w?.id,
-        limit: 20,
-      });
       if (txRes.success && txRes.transactions) {
         const mapped: Transaction[] = (
           txRes.transactions as RawApiTransaction[]
@@ -363,17 +409,18 @@ export default function Dashboard() {
         setRecentTransactions(mapped);
       }
 
-      // First-time login: show language picker if this user hasn't chosen yet
-      const accountNumber = (user as { accountNumber?: string })?.accountNumber;
-      const choiceKey = languageChoiceDoneKey(accountNumber);
-      const hasChosen = await AsyncStorage.getItem(choiceKey);
       if (hasChosen !== "true") {
         setShowFirstTimeLanguageModal(true);
       }
 
-      // Check maintenance status for all services
-      const status = await getMaintenanceStatus();
       setMaintenanceStatus(status);
+
+      if (notifRes.success && notifRes.data) {
+        const unreadCount = (notifRes.data as { isRead: boolean }[]).filter(
+          (n) => !n.isRead,
+        ).length;
+        setUnreadNotifications(unreadCount);
+      }
     };
 
     init();
@@ -400,11 +447,11 @@ export default function Dashboard() {
     const treeRes = await getReferralTree(accessToken);
     if (treeRes.success && treeRes.tree) {
       const tree = treeRes.tree as {
-        ancestors?: Array<{
+        ancestors?: {
           referralCode?: string;
           firstName?: string;
           lastName?: string;
-        }>;
+        }[];
       };
       const first = tree.ancestors?.[0];
       if (
@@ -446,11 +493,19 @@ export default function Dashboard() {
       }));
       setRecentTransactions(mapped);
     }
+
+    const notifRes = await getNotifications(accessToken, { limit: 50 });
+    if (notifRes.success && notifRes.data) {
+      const unreadCount = (notifRes.data as { isRead: boolean }[]).filter(
+        (n) => !n.isRead,
+      ).length;
+      setUnreadNotifications(unreadCount);
+    }
   }, []);
 
-  useEffect(() => {
-    let cancelled = false;
+  const { getSocket, isConnected: isSocketConnected } = useSocket();
 
+  useEffect(() => {
     const startPolling = () => {
       if (pollIntervalRef.current) return;
       refetchJwtData();
@@ -464,65 +519,46 @@ export default function Dashboard() {
       }
     };
 
-    AsyncStorage.getItem("access_token").then((token) => {
-      if (cancelled || !token) return;
-
+    if (!isSocketConnected) {
       startPolling();
+    } else {
+      stopPolling();
+    }
 
-      const socket = createRealtimeConnection(token, {
-        onWalletUpdate: (payload: {
-          walletId?: string;
-          balance?: number | string;
-        }) => {
-          if (
-            payload?.walletId === mainWalletIdRef.current &&
-            payload?.balance != null
-          ) {
-            const bal = parseFloat(String(payload.balance));
-            setAvailableBalance(Number.isNaN(bal) ? 0 : bal);
-          }
-        },
-        onTransactionCreated: () => {
-          refetchJwtData();
-        },
-        onNewSupportMessage: () => {
-          notifyNewSupportMessage();
-        },
-        onConnect: () => {
-          setConnectionStatus(true);
-          stopPolling();
-          if (socket) {
-            heartbeatCleanupRef.current = startHeartbeat(socket) as () => void;
-          }
-        },
-        onDisconnect: () => {
-          setConnectionStatus(false);
-          heartbeatCleanupRef.current?.();
-          heartbeatCleanupRef.current = null;
-          startPolling();
-        },
-        onError: () => {
-          startPolling();
-        },
-      });
+    setConnectionStatus(isSocketConnected);
+    const socket = getSocket();
 
-      if (socket) {
-        socketRef.current = socket as { disconnect: () => void };
-      }
-    });
+    if (socket && isSocketConnected) {
+      const handleWalletUpdate = (payload: {
+        walletId?: string;
+        balance?: number | string;
+      }) => {
+        if (
+          payload?.walletId === mainWalletIdRef.current &&
+          payload?.balance != null
+        ) {
+          const bal = parseFloat(String(payload.balance));
+          setAvailableBalance(Number.isNaN(bal) ? 0 : bal);
+        }
+      };
+
+      const handleTransactionCreated = () => {
+        refetchJwtData();
+      };
+
+      socket.on("WALLET_UPDATE", handleWalletUpdate);
+      socket.on("TRANSACTION_CREATED", handleTransactionCreated);
+
+      return () => {
+        socket.off("WALLET_UPDATE", handleWalletUpdate);
+        socket.off("TRANSACTION_CREATED", handleTransactionCreated);
+      };
+    }
 
     return () => {
-      cancelled = true;
-      setConnectionStatus(false);
       stopPolling();
-      heartbeatCleanupRef.current?.();
-      heartbeatCleanupRef.current = null;
-      if (socketRef.current) {
-        socketRef.current.disconnect();
-        socketRef.current = null;
-      }
     };
-  }, [refetchJwtData]);
+  }, [isSocketConnected, getSocket, refetchJwtData]);
 
   useFocusEffect(
     useCallback(() => {
@@ -595,7 +631,7 @@ export default function Dashboard() {
       labelKey: "dashboard.eWallet",
       route: "EwalletService",
     },
-    { icon: "message-text", labelKey: "dashboard.message", route: "Message" },
+    { icon: "headset", labelKey: "support.title", route: "Message" },
     { icon: "chart-line", labelKey: "dashboard.stock", route: "Stockholder" },
     { icon: "format-list-bulleted", labelKey: "dashboard.task", route: "Task" },
     { icon: "account", labelKey: "dashboard.agent", route: "AgentRequest" },
@@ -628,6 +664,14 @@ export default function Dashboard() {
       console.error("Error opening URL:", error);
     }
   };
+
+  if (navigatingAction === "AgentRequest") {
+    return <CustomLoader text={t("dashboard.loadingAgent")} />;
+  }
+
+  if (navigatingAction === "Message") {
+    return <CustomLoader text={t("dashboard.loadingSupport")} />;
+  }
 
   return (
     <>
@@ -742,18 +786,38 @@ export default function Dashboard() {
         </View>
 
         <ScrollView showsVerticalScrollIndicator={false}>
-          <View style={styles.tabs}>
+          <View
+            style={[
+              styles.tabs,
+              {
+                paddingHorizontal: horizontalPadding,
+                paddingVertical: isSmallScreen ? 10 : 12,
+                gap: isSmallScreen ? 10 : 16,
+              },
+            ]}
+          >
             {(["Wallet", "Investment", "Cards"] as const).map((tab) => (
               <TouchableOpacity
                 key={tab}
-                style={[styles.tab, activeTab === tab && styles.activeTab]}
+                style={[
+                  styles.tab,
+                  activeTab === tab && styles.activeTab,
+                  {
+                    paddingHorizontal: width < 360 ? 16 : width < 400 ? 22 : 28,
+                    paddingVertical: isSmallScreen ? 10 : 12,
+                    minWidth: width < 360 ? 80 : width < 400 ? 90 : 100,
+                    minHeight: isSmallScreen ? 38 : 44,
+                  },
+                ]}
                 onPress={() => setActiveTab(tab)}
               >
                 <Text
                   style={[
                     styles.tabText,
                     activeTab === tab && styles.activeTabText,
+                    { fontSize: width < 360 ? 12 : width < 400 ? 13 : 14 },
                   ]}
+                  numberOfLines={1}
                 >
                   {t(
                     tab === "Wallet"
@@ -771,6 +835,7 @@ export default function Dashboard() {
             <WalletTab
               userData={userData}
               availableBalance={availableBalance}
+              isBalanceLoading={isBalanceLoading}
               formatCurrency={formatCurrency}
               flipAnimation={flipAnimation}
               isCardFlipped={isCardFlipped}
@@ -781,10 +846,14 @@ export default function Dashboard() {
             <CardsTab
               userData={userData}
               availableBalance={availableBalance}
+              isBalanceLoading={isBalanceLoading}
               formatCurrency={formatCurrency}
               flipAnimation={flipAnimation}
               isCardFlipped={isCardFlipped}
               flipCard={flipCard}
+              initialDesign={activeCardDesign}
+              onActiveDesignChange={setActiveCardDesign}
+              onRefresh={refetchJwtData}
             />
           )}
           {activeTab === "Investment" && (
@@ -801,64 +870,149 @@ export default function Dashboard() {
           )}
 
           {activeTab !== "Cards" && activeTab !== "Investment" && (
-            <View style={styles.quickActionsContainer}>
+            <View
+              style={[
+                styles.quickActionsContainer,
+                {
+                  paddingHorizontal: horizontalPadding,
+                  paddingVertical: Math.round(16 * qaSpacing),
+                  gap: Math.round(10 * qaSpacing),
+                },
+              ]}
+            >
               <TouchableOpacity
-                style={styles.quickActionButton}
+                style={[
+                  styles.quickActionButton,
+                  {
+                    paddingVertical: Math.round(14 * qaSpacing),
+                    paddingHorizontal: Math.round(6 * qaSpacing),
+                    minWidth: 0,
+                  },
+                ]}
                 onPress={() => navigation.navigate("Transfer")}
               >
-                <View style={styles.quickActionIcon}>
+                <View
+                  style={[
+                    styles.quickActionIcon,
+                    {
+                      width: Math.round(48 * qaSpacing),
+                      height: Math.round(48 * qaSpacing),
+                      marginBottom: Math.round(6 * qaSpacing),
+                    },
+                  ]}
+                >
                   <MaterialCommunityIcons
                     name="swap-horizontal"
-                    size={24}
+                    size={qaIconSize}
                     color="#E15816"
                   />
                 </View>
-                <Text style={styles.quickActionLabel}>
+                <Text
+                  style={[styles.quickActionLabel, { fontSize: qaLabelSize }]}
+                  numberOfLines={2}
+                >
                   {t("dashboard.transfer")}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={styles.quickActionButton}
+                style={[
+                  styles.quickActionButton,
+                  {
+                    paddingVertical: Math.round(14 * qaSpacing),
+                    paddingHorizontal: Math.round(6 * qaSpacing),
+                    minWidth: 0,
+                  },
+                ]}
                 onPress={() => navigation.navigate("Bdo")}
               >
-                <View style={styles.quickActionIcon}>
+                <View
+                  style={[
+                    styles.quickActionIcon,
+                    {
+                      width: Math.round(48 * qaSpacing),
+                      height: Math.round(48 * qaSpacing),
+                      marginBottom: Math.round(6 * qaSpacing),
+                    },
+                  ]}
+                >
                   <MaterialCommunityIcons
                     name="bank"
-                    size={24}
+                    size={qaIconSize}
                     color="#E15816"
                   />
                 </View>
-                <Text style={styles.quickActionLabel}>
+                <Text
+                  style={[styles.quickActionLabel, { fontSize: qaLabelSize }]}
+                  numberOfLines={2}
+                >
                   {t("dashboard.bankingService")}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={styles.quickActionButton}
+                style={[
+                  styles.quickActionButton,
+                  {
+                    paddingVertical: Math.round(14 * qaSpacing),
+                    paddingHorizontal: Math.round(6 * qaSpacing),
+                    minWidth: 0,
+                  },
+                ]}
                 onPress={() => navigation.navigate("Travel")}
               >
-                <View style={styles.quickActionIcon}>
+                <View
+                  style={[
+                    styles.quickActionIcon,
+                    {
+                      width: Math.round(48 * qaSpacing),
+                      height: Math.round(48 * qaSpacing),
+                      marginBottom: Math.round(6 * qaSpacing),
+                    },
+                  ]}
+                >
                   <MaterialCommunityIcons
                     name="airplane"
-                    size={24}
+                    size={qaIconSize}
                     color="#E15816"
                   />
                 </View>
-                <Text style={styles.quickActionLabel}>
+                <Text
+                  style={[styles.quickActionLabel, { fontSize: qaLabelSize }]}
+                  numberOfLines={2}
+                >
                   {t("dashboard.travelProtection")}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={styles.quickActionButton}
+                style={[
+                  styles.quickActionButton,
+                  {
+                    paddingVertical: Math.round(14 * qaSpacing),
+                    paddingHorizontal: Math.round(6 * qaSpacing),
+                    minWidth: 0,
+                  },
+                ]}
                 onPress={() => navigation.navigate("History")}
               >
-                <View style={styles.quickActionIcon}>
+                <View
+                  style={[
+                    styles.quickActionIcon,
+                    {
+                      width: Math.round(48 * qaSpacing),
+                      height: Math.round(48 * qaSpacing),
+                      marginBottom: Math.round(6 * qaSpacing),
+                    },
+                  ]}
+                >
                   <MaterialCommunityIcons
                     name="history"
-                    size={24}
+                    size={qaIconSize}
                     color="#E15816"
                   />
                 </View>
-                <Text style={styles.quickActionLabel}>
+                <Text
+                  style={[styles.quickActionLabel, { fontSize: qaLabelSize }]}
+                  numberOfLines={2}
+                >
                   {t("dashboard.history")}
                 </Text>
               </TouchableOpacity>
@@ -898,9 +1052,24 @@ export default function Dashboard() {
                         if (isUnderMaintenance) {
                           setSelectedMaintenanceService(item.labelKey);
                         } else {
-                          (
-                            navigation as { navigate: (name: string) => void }
-                          ).navigate(item.route);
+                          if (
+                            item.route === "AgentRequest" ||
+                            item.route === "Message"
+                          ) {
+                            setNavigatingAction(item.route);
+                            setTimeout(() => {
+                              setNavigatingAction(null);
+                              (
+                                navigation as {
+                                  navigate: (name: string) => void;
+                                }
+                              ).navigate(item.route);
+                            }, 800);
+                          } else {
+                            (
+                              navigation as { navigate: (name: string) => void }
+                            ).navigate(item.route);
+                          }
                         }
                       }}
                       activeOpacity={0.7}
@@ -1016,7 +1185,7 @@ export default function Dashboard() {
                 </Text>
               </View>
               {recentTransactions.length > 0 ? (
-                recentTransactions.map((transaction) => (
+                recentTransactions.slice(0, 3).map((transaction) => (
                   <View key={transaction.id} style={styles.transactionItem}>
                     <View style={styles.transactionIcon}>
                       <MaterialCommunityIcons
@@ -1256,19 +1425,25 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: "50%",
     left: "50%",
-    width: 70,
-    height: 20,
-    backgroundColor: "#E15816",
+    width: 60,
+    height: 14,
+    backgroundColor: "#FFB84D",
     justifyContent: "center",
     alignItems: "center",
-    borderRadius: 2,
-    transform: [{ translateX: -35 }, { translateY: -10 }, { rotate: "-45deg" }],
+    borderRadius: 1,
+    transform: [{ translateX: -30 }, { translateY: -7 }, { rotate: "-45deg" }],
     zIndex: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.15,
+    shadowRadius: 2,
+    elevation: 2,
   },
   comingSoonText: {
-    fontSize: 8,
+    fontSize: 6.5,
     fontWeight: "700",
     color: "#FFFFFF",
+    letterSpacing: 0.2,
   },
   languageCarouselContainer: { marginVertical: 16 },
   languageCarouselWrapper: { position: "relative", marginBottom: 12 },

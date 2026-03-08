@@ -5,19 +5,28 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useRef, useState } from 'react';
 import {
-  Animated,
-  BackHandler,
-  Modal,
-  Pressable,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
+    Animated,
+    BackHandler,
+    Modal,
+    Platform,
+    Pressable,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    useWindowDimensions,
+    View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { setPasscode as setPasscodeApi } from '../../configs/api';
+import {
+  DEFAULT_LANGUAGE,
+  normalizeLanguage,
+  SUPPORTED_LANGUAGES,
+} from '../../constants/locales';
+import { useLanguage } from '../../context/LanguageContext';
 import type { NavProp } from '../../types/navigation';
+
+const USER_PREFERRED_LANGUAGE_KEY = 'user_preferred_language';
 
 const GRADIENT_START = '#E15816';
 const GRADIENT_END = '#F48F38';
@@ -86,6 +95,9 @@ const msgStyles = StyleSheet.create({
 });
 
 export default function CreatePasscode() {
+  const { t, language: contextLanguage, setLanguage } = useLanguage();
+  const language = normalizeLanguage(contextLanguage ?? DEFAULT_LANGUAGE);
+  const [languageModalVisible, setLanguageModalVisible] = useState(false);
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
@@ -105,7 +117,7 @@ export default function CreatePasscode() {
     message: string;
     confirmText: string;
     onConfirm: (() => void) | null;
-  }>({ title: '', message: '', confirmText: 'OK', onConfirm: null });
+  }>({ title: '', message: '', confirmText: t('common.ok'), onConfirm: null });
 
   const shakeAnim = useRef(new Animated.Value(0)).current;
 
@@ -119,7 +131,7 @@ export default function CreatePasscode() {
     setModalConfig({
       title: '',
       message: '',
-      confirmText: 'OK',
+      confirmText: t('common.ok'),
       onConfirm: null,
       ...config,
     });
@@ -165,7 +177,7 @@ export default function CreatePasscode() {
         setStep('confirm');
       } else {
         if (next !== pin) {
-          setError('PINs do not match. Please try again.');
+          setError(t('passcode.errorMismatch'));
           setConfirmPin('');
           triggerShake();
           return;
@@ -179,8 +191,8 @@ export default function CreatePasscode() {
     const accessToken = await AsyncStorage.getItem('access_token');
     if (!accessToken) {
       showModal({
-        title: 'Session Expired',
-        message: 'Please log in again.',
+        title: t('common.sessionExpired'),
+        message: t('common.pleaseLoginAgain'),
         onConfirm: () => (navigation as unknown as NavProp).replace('Login'),
       });
       return;
@@ -192,8 +204,8 @@ export default function CreatePasscode() {
 
     if (!result.success) {
       showModal({
-        title: 'Error',
-        message: result.error || 'Failed to set passcode. Please try again.',
+        title: t('common.error'),
+        message: result.error || t('passcode.errorChangeFailed'),
         onConfirm: () => {
           setStep('create');
           setPin('');
@@ -215,9 +227,15 @@ export default function CreatePasscode() {
 
   const handleHelp = () => {
     showModal({
-      title: 'Create PIN',
-      message: 'Create a 4-digit PIN for quick and secure access to your account. You will need this PIN when logging in or performing sensitive operations.',
+      title: t('passcode.createTitle'),
+      message: t('passcode.helpMessage'),
     });
+  };
+
+  const handleSelectLanguage = async (selectedLabel: string) => {
+    setLanguage(selectedLabel);
+    await AsyncStorage.setItem(USER_PREFERRED_LANGUAGE_KEY, selectedLabel);
+    setLanguageModalVisible(false);
   };
 
   return (
@@ -227,6 +245,12 @@ export default function CreatePasscode() {
         locations={[0, 1]}
         style={[styles.gradient, { paddingTop: insets.top, paddingBottom: insets.bottom }]}
       >
+        <TouchableOpacity
+          style={[styles.languageButton, { top: insets.top + 12 }]}
+          onPress={() => setLanguageModalVisible(true)}
+        >
+          <Ionicons name="language-outline" size={28} color={WHITE} />
+        </TouchableOpacity>
         <TouchableOpacity
           style={[styles.helpButtonTopRight, { top: insets.top + 12 }]}
           onPress={handleHelp}
@@ -258,46 +282,67 @@ export default function CreatePasscode() {
           </Animated.View>
 
           <Text style={styles.instructionText}>
-            {step === 'create' ? 'Create a 4-digit PIN' : 'Confirm your 4-digit PIN'}
+            {step === 'create' ? t('passcode.createInstruction') : t('passcode.confirmInstruction')}
           </Text>
 
+          {step === 'confirm' ? (
+            <TouchableOpacity
+              style={styles.startOverLink}
+              onPress={() => {
+                setStep('create');
+                setPin('');
+                setConfirmPin('');
+                setError('');
+              }}
+              disabled={loading}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="arrow-back" size={18} color={WHITE} />
+              <Text style={styles.startOverText}>{t('passcode.startOver')}</Text>
+            </TouchableOpacity>
+          ) : null}
+
           <View style={[styles.padContainer, { width: padWidth, maxWidth: maxPadWidth }]}>
-          {[['1', '2', '3'], ['4', '5', '6'], ['7', '8', '9']].map((row, ri) => (
-            <View key={ri} style={styles.padRow}>
-              {row.map((key) => (
-                <TouchableOpacity
-                  key={key}
-                  style={[styles.padButton, { width: btnSize, height: btnSize, borderRadius: btnSize / 2 }]}
-                  onPress={() => handlePress(key)}
-                  disabled={loading}
-                >
-                  <Text style={styles.padButtonText}>{key}</Text>
-                </TouchableOpacity>
-              ))}
+            {[['1', '2', '3'], ['4', '5', '6'], ['7', '8', '9']].map((row, ri) => (
+              <View key={ri} style={styles.padRow}>
+                {row.map((key) => (
+                  <TouchableOpacity
+                    key={key}
+                    style={[styles.padButton, { width: btnSize, height: btnSize, borderRadius: btnSize / 2 }]}
+                    onPress={() => handlePress(key)}
+                    disabled={loading}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.padButtonText}>{key}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            ))}
+            <View style={styles.padRowLast}>
+              <View style={{ width: btnSize }} />
+              <TouchableOpacity
+                style={[styles.padButton, { width: btnSize, height: btnSize, borderRadius: btnSize / 2 }]}
+                onPress={() => handlePress('0')}
+                disabled={loading}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.padButtonText}>0</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.padButton, styles.padButtonDel, { width: delBtnSize, height: delBtnSize, borderRadius: delBtnSize / 2 }]}
+                onPress={() => handlePress('Del')}
+                disabled={loading}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="backspace-outline" size={28} color={WHITE} />
+              </TouchableOpacity>
             </View>
-          ))}
-          <View style={styles.padRowLast}>
-            <TouchableOpacity
-              style={[styles.padButton, { width: btnSize, height: btnSize, borderRadius: btnSize / 2 }]}
-              onPress={() => handlePress('0')}
-              disabled={loading}
-            >
-              <Text style={styles.padButtonText}>0</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.padButton, styles.padButtonDel, { width: delBtnSize, height: delBtnSize, borderRadius: delBtnSize / 2 }]}
-              onPress={() => handlePress('Del')}
-              disabled={loading}
-            >
-              <Ionicons name="backspace-outline" size={28} color={WHITE} />
-            </TouchableOpacity>
           </View>
-        </View>
         </View>
 
         {loading && (
           <View style={styles.loadingOverlay}>
-            <Text style={styles.loadingText}>Setting up your PIN...</Text>
+            <Text style={styles.loadingText}>{t('passcode.settingUp')}</Text>
           </View>
         )}
       </LinearGradient>
@@ -310,6 +355,46 @@ export default function CreatePasscode() {
         confirmText={modalConfig.confirmText}
         onConfirm={modalConfig.onConfirm}
       />
+
+      <Modal
+        visible={languageModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setLanguageModalVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.languageModalOverlay}
+          activeOpacity={1}
+          onPress={() => setLanguageModalVisible(false)}
+        >
+          <View style={styles.languageModalContent} onStartShouldSetResponder={() => true}>
+            <View style={styles.languageMapHeader}>
+              <View style={styles.languageMapGlobe}>
+                <Ionicons name="globe-outline" size={40} color={GRADIENT_START} />
+              </View>
+              <Text style={styles.languageModalTitle}>{t('profile.selectLanguage')}</Text>
+              <Text style={styles.languageModalSubtitle}>{t('profile.defaultIsEnglish')}</Text>
+            </View>
+            {SUPPORTED_LANGUAGES.map(({ label, flag }) => (
+              <TouchableOpacity
+                key={label}
+                style={[styles.languageOption, language === label && styles.languageOptionSelected]}
+                onPress={() => handleSelectLanguage(label)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.languageOptionFlag}>{flag}</Text>
+                <Text style={[styles.languageOptionText, language === label && styles.languageOptionTextSelected]}>
+                  {label}
+                </Text>
+                {language === label && <Ionicons name="checkmark-circle" size={22} color={GRADIENT_START} />}
+              </TouchableOpacity>
+            ))}
+            <TouchableOpacity style={styles.languageModalCancel} onPress={() => setLanguageModalVisible(false)}>
+              <Text style={styles.languageModalCancelText}>{t('common.cancel')}</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </>
   );
 }
@@ -318,6 +403,17 @@ const styles = StyleSheet.create({
   gradient: {
     flex: 1,
     paddingHorizontal: 24,
+    alignItems: 'center',
+  },
+  languageButton: {
+    position: 'absolute',
+    left: 24,
+    zIndex: 10,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
     alignItems: 'center',
   },
   helpButtonTopRight: {
@@ -378,6 +474,19 @@ const styles = StyleSheet.create({
     marginTop: 4,
     textAlign: 'center',
   },
+  startOverLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginBottom: 20,
+  },
+  startOverText: {
+    fontSize: 16,
+    color: WHITE,
+    fontWeight: '600',
+    textDecorationLine: 'underline',
+  },
   padContainer: {
     marginTop: 8,
     marginBottom: 24,
@@ -389,30 +498,22 @@ const styles = StyleSheet.create({
   },
   padRowLast: {
     flexDirection: 'row',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 0,
-    position: 'relative',
   },
   padButton: {
-    backgroundColor: 'rgba(255,255,255,0.5)',
+    backgroundColor: 'rgba(255,255,255,0.28)',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 6,
-    elevation: 3,
   },
   padButtonDel: {
     backgroundColor: 'transparent',
     borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.6)',
-    position: 'absolute',
-    right: 0,
+    borderColor: 'rgba(255,255,255,0.65)',
   },
   padButtonText: {
-    fontSize: 30,
+    fontSize: 28,
     fontWeight: '600',
     color: WHITE,
   },
@@ -425,4 +526,43 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.9)',
     fontSize: 14,
   },
+  languageModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  languageModalContent: {
+    width: '100%',
+    maxWidth: 360,
+    backgroundColor: WHITE,
+    borderRadius: 20,
+    padding: 24,
+    ...Platform.select({
+      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.25, shadowRadius: 12 },
+      android: { elevation: 8 },
+    }),
+  },
+  languageMapHeader: { alignItems: 'center', marginBottom: 20 },
+  languageMapGlobe: { marginBottom: 12 },
+  languageModalTitle: { fontSize: 18, fontWeight: '700', color: '#333', marginBottom: 4, textAlign: 'center' },
+  languageModalSubtitle: { fontSize: 13, color: '#666', textAlign: 'center' },
+  languageOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    marginBottom: 8,
+    backgroundColor: '#F8F8F8',
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  languageOptionSelected: { backgroundColor: '#FFF0E8', borderWidth: 2, borderColor: GRADIENT_START },
+  languageOptionFlag: { fontSize: 22, marginRight: 12 },
+  languageOptionText: { fontSize: 16, color: '#333', flex: 1 },
+  languageOptionTextSelected: { fontWeight: '600', color: GRADIENT_START },
+  languageModalCancel: { marginTop: 12, paddingVertical: 12, alignItems: 'center' },
+  languageModalCancelText: { fontSize: 16, color: '#666' },
 });

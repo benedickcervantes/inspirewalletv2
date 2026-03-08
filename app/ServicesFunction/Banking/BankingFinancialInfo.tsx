@@ -8,7 +8,6 @@ import {
   KeyboardAvoidingView,
   Modal,
   Platform,
-  SafeAreaView,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -17,6 +16,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useLanguage } from "../../../context/LanguageContext";
 import type { RootStackParamList } from "../../../types/navigation";
 
@@ -24,7 +24,16 @@ const THEME_COLOR = "#E15816";
 const ORANGE_GRADIENT = ["#E25A17", "#F28934"] as const;
 const GREEN_COMPLETE = "#10B981";
 
-const SOURCE_OF_FUND_OPTIONS = ["Employment", "Business", "Investment", "Inheritance", "Pension", "Other"];
+const filterIncomeInput = (text: string) => text.replace(/[^0-9.]/g, "");
+
+const SOURCE_OF_FUND_OPTIONS = [
+  "Employment",
+  "Business",
+  "Investment",
+  "Inheritance",
+  "Pension",
+  "Other",
+];
 const SOURCE_OF_FUND_KEY: Record<string, string> = {
   Employment: "banking.sourceEmployment",
   Business: "banking.sourceBusiness",
@@ -33,25 +42,32 @@ const SOURCE_OF_FUND_KEY: Record<string, string> = {
   Pension: "banking.sourcePension",
   Other: "banking.sourceOther",
 };
-const CURRENCY_OPTIONS = ["PHP", "USD", "EUR"];
+const CURRENCY_OPTIONS = ["PHP", "USD", "EUR", "KRW"];
 const CURRENCY_KEY: Record<string, string> = {
   PHP: "banking.currencyPHP",
   USD: "banking.currencyUSD",
   EUR: "banking.currencyEUR",
+  KRW: "banking.currencyKRW",
 };
 
 export default function BankingFinancialInfo() {
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, "BankingFinancialInfo">>();
-  const route = useRoute<RouteProp<RootStackParamList, "BankingFinancialInfo">>();
+  const navigation =
+    useNavigation<
+      NativeStackNavigationProp<RootStackParamList, "BankingFinancialInfo">
+    >();
+  const route =
+    useRoute<RouteProp<RootStackParamList, "BankingFinancialInfo">>();
   const { t } = useLanguage();
   const selectedBank = route.params?.selectedBank ?? "UnionBank";
   const applicationData = route.params?.applicationData ?? {};
 
   const [sourceOfFund, setSourceOfFund] = useState("");
   const [grossMonthlyIncome, setGrossMonthlyIncome] = useState("");
-  const [grossMonthlyIncomeCurrency, setGrossMonthlyIncomeCurrency] = useState("");
+  const [grossMonthlyIncomeCurrency, setGrossMonthlyIncomeCurrency] =
+    useState("");
   const [showSourceOfFundModal, setShowSourceOfFundModal] = useState(false);
   const [showCurrencyModal, setShowCurrencyModal] = useState(false);
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   const currentStep = 5;
 
@@ -60,9 +76,19 @@ export default function BankingFinancialInfo() {
   };
 
   const handleNext = () => {
-    if (!sourceOfFund.trim()) return;
-    if (!grossMonthlyIncomeCurrency) return;
-    if (!grossMonthlyIncome.trim()) return;
+    const newErrors: { [key: string]: string } = {};
+    if (!sourceOfFund.trim())
+      newErrors.sourceOfFund = t("banking.errorSourceOfFund");
+    if (!grossMonthlyIncome.trim())
+      newErrors.grossMonthlyIncome = t("banking.errorMonthlyIncome");
+    if (!grossMonthlyIncomeCurrency)
+      newErrors.grossMonthlyIncomeCurrency = t("banking.selectCurrency");
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
     navigation.navigate("BankingRequiredInfo", {
       selectedBank,
       applicationData: {
@@ -85,10 +111,7 @@ export default function BankingFinancialInfo() {
         >
           {/* Top: Back arrow + Header card */}
           <View style={styles.topSection}>
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={handleBack}
-            >
+            <TouchableOpacity style={styles.backButton} onPress={handleBack}>
               <Ionicons name="arrow-back" size={28} color={THEME_COLOR} />
             </TouchableOpacity>
 
@@ -105,8 +128,12 @@ export default function BankingFinancialInfo() {
                   color="#FFFFFF"
                   style={styles.headerIcon}
                 />
-                <Text style={styles.headerTitle}>{t("banking.headerTitle")}</Text>
-                <Text style={styles.headerSubtitle}>{t("banking.headerSubtitle")}</Text>
+                <Text style={styles.headerTitle}>
+                  {t("banking.headerTitle")}
+                </Text>
+                <Text style={styles.headerSubtitle}>
+                  {t("banking.headerSubtitle")}
+                </Text>
               </LinearGradient>
             </View>
           </View>
@@ -164,18 +191,32 @@ export default function BankingFinancialInfo() {
                   color={THEME_COLOR}
                 />
               </View>
-              <Text style={styles.contentTitle}>{t("banking.financialInfo")}</Text>
+              <Text style={styles.contentTitle}>
+                {t("banking.financialInfo")}
+              </Text>
               <Text style={styles.contentDescription}>
                 {t("banking.financialInfoDesc")}
               </Text>
 
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>
-                  {t("banking.sourceOfFund")}<Text style={styles.required}>*</Text>
+                  {t("banking.sourceOfFund")}
+                  <Text style={styles.required}>*</Text>
                 </Text>
                 <TouchableOpacity
-                  style={styles.dropdown}
-                  onPress={() => setShowSourceOfFundModal(true)}
+                  style={[
+                    styles.dropdown,
+                    errors.sourceOfFund && styles.inputError,
+                  ]}
+                  onPress={() => {
+                    setShowSourceOfFundModal(true);
+                    if (errors.sourceOfFund) {
+                      setErrors((prev) => {
+                        const { sourceOfFund, ...rest } = prev;
+                        return rest;
+                      });
+                    }
+                  }}
                 >
                   <Text
                     style={[
@@ -183,40 +224,82 @@ export default function BankingFinancialInfo() {
                       !sourceOfFund && styles.dropdownPlaceholder,
                     ]}
                   >
-                    {sourceOfFund ? t(SOURCE_OF_FUND_KEY[sourceOfFund]) : t("banking.selectSourceOfFund")}
+                    {sourceOfFund
+                      ? t(SOURCE_OF_FUND_KEY[sourceOfFund])
+                      : t("banking.selectSourceOfFund")}
                   </Text>
                   <Ionicons name="chevron-down" size={20} color="#999" />
                 </TouchableOpacity>
+                {errors.sourceOfFund && (
+                  <Text style={styles.errorText}>{errors.sourceOfFund}</Text>
+                )}
               </View>
 
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>
-                  {t("banking.grossMonthlyIncome")}<Text style={styles.required}>*</Text>
+                  {t("banking.grossMonthlyIncome")}
+                  <Text style={styles.required}>*</Text>
                 </Text>
                 <View style={styles.incomeRow}>
                   <TouchableOpacity
-                    style={[styles.dropdown, styles.currencyDropdown]}
-                    onPress={() => setShowCurrencyModal(true)}
+                    style={[
+                      styles.dropdown,
+                      styles.currencyDropdown,
+                      errors.grossMonthlyIncomeCurrency && styles.inputError,
+                    ]}
+                    onPress={() => {
+                      setShowCurrencyModal(true);
+                      if (errors.grossMonthlyIncomeCurrency)
+                        setErrors((prev) => ({
+                          ...prev,
+                          grossMonthlyIncomeCurrency: "",
+                        }));
+                    }}
                   >
                     <Text
                       style={[
                         styles.dropdownText,
-                        !grossMonthlyIncomeCurrency && styles.dropdownPlaceholder,
+                        !grossMonthlyIncomeCurrency &&
+                          styles.dropdownPlaceholder,
                       ]}
                     >
-                      {grossMonthlyIncomeCurrency ? t(CURRENCY_KEY[grossMonthlyIncomeCurrency]) : t("banking.selectCurrency")}
+                      {grossMonthlyIncomeCurrency
+                        ? t(CURRENCY_KEY[grossMonthlyIncomeCurrency])
+                        : t("banking.selectCurrency")}
                     </Text>
                     <Ionicons name="chevron-down" size={20} color="#999" />
                   </TouchableOpacity>
-                  <TextInput
-                    style={[styles.input, styles.amountInput]}
-                    placeholder="0"
-                    placeholderTextColor="#9E9E9E"
-                    value={grossMonthlyIncome}
-                    onChangeText={setGrossMonthlyIncome}
-                    keyboardType="numeric"
-                  />
+                  <View style={styles.amountInputContainer}>
+                    <TextInput
+                      style={[
+                        styles.input,
+                        errors.grossMonthlyIncome && styles.inputError,
+                      ]}
+                      placeholder="0"
+                      placeholderTextColor="#9E9E9E"
+                      value={grossMonthlyIncome}
+                      onChangeText={(text) => {
+                        setGrossMonthlyIncome(filterIncomeInput(text));
+                        if (errors.grossMonthlyIncome) {
+                          setErrors((prev) => {
+                            const { grossMonthlyIncome, ...rest } = prev;
+                            return rest;
+                          });
+                        }
+                      }}
+                      keyboardType="numeric"
+                    />
+                  </View>
                 </View>
+                {errors.grossMonthlyIncomeCurrency ? (
+                  <Text style={styles.errorText}>
+                    {errors.grossMonthlyIncomeCurrency}
+                  </Text>
+                ) : errors.grossMonthlyIncome ? (
+                  <Text style={styles.errorText}>
+                    {errors.grossMonthlyIncome}
+                  </Text>
+                ) : null}
               </View>
             </View>
 
@@ -225,9 +308,7 @@ export default function BankingFinancialInfo() {
               <View style={styles.infoIconCircle}>
                 <Text style={styles.infoIconText}>i</Text>
               </View>
-              <Text style={styles.infoText}>
-                {t("banking.infoNote")}
-              </Text>
+              <Text style={styles.infoText}>{t("banking.infoNote")}</Text>
             </View>
 
             <View style={styles.bottomSpacing} />
@@ -272,7 +353,9 @@ export default function BankingFinancialInfo() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{t("banking.modalSelectSourceOfFund")}</Text>
+              <Text style={styles.modalTitle}>
+                {t("banking.modalSelectSourceOfFund")}
+              </Text>
               <TouchableOpacity onPress={() => setShowSourceOfFundModal(false)}>
                 <Ionicons name="close" size={24} color="#333" />
               </TouchableOpacity>
@@ -290,9 +373,15 @@ export default function BankingFinancialInfo() {
                     setShowSourceOfFundModal(false);
                   }}
                 >
-                  <Text style={styles.optionText}>{t(SOURCE_OF_FUND_KEY[opt])}</Text>
+                  <Text style={styles.optionText}>
+                    {t(SOURCE_OF_FUND_KEY[opt])}
+                  </Text>
                   {sourceOfFund === opt && (
-                    <Ionicons name="checkmark-circle" size={22} color={THEME_COLOR} />
+                    <Ionicons
+                      name="checkmark-circle"
+                      size={22}
+                      color={THEME_COLOR}
+                    />
                   )}
                 </TouchableOpacity>
               ))}
@@ -302,6 +391,7 @@ export default function BankingFinancialInfo() {
       </Modal>
 
       {/* Currency Modal */}
+
       <Modal
         visible={showCurrencyModal}
         transparent
@@ -311,7 +401,9 @@ export default function BankingFinancialInfo() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{t("banking.modalSelectCurrency")}</Text>
+              <Text style={styles.modalTitle}>
+                {t("banking.modalSelectCurrency")}
+              </Text>
               <TouchableOpacity onPress={() => setShowCurrencyModal(false)}>
                 <Ionicons name="close" size={24} color="#333" />
               </TouchableOpacity>
@@ -322,7 +414,8 @@ export default function BankingFinancialInfo() {
                   key={opt}
                   style={[
                     styles.optionRow,
-                    grossMonthlyIncomeCurrency === opt && styles.optionRowSelected,
+                    grossMonthlyIncomeCurrency === opt &&
+                      styles.optionRowSelected,
                   ]}
                   onPress={() => {
                     setGrossMonthlyIncomeCurrency(opt);
@@ -331,7 +424,11 @@ export default function BankingFinancialInfo() {
                 >
                   <Text style={styles.optionText}>{t(CURRENCY_KEY[opt])}</Text>
                   {grossMonthlyIncomeCurrency === opt && (
-                    <Ionicons name="checkmark-circle" size={22} color={THEME_COLOR} />
+                    <Ionicons
+                      name="checkmark-circle"
+                      size={22}
+                      color={THEME_COLOR}
+                    />
                   )}
                 </TouchableOpacity>
               ))}
@@ -500,7 +597,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     fontSize: 16,
     color: "#000000",
+    flexShrink: 1,
+    maxWidth: "100%",
   },
+
   dropdown: {
     flexDirection: "row",
     alignItems: "center",
@@ -521,6 +621,16 @@ const styles = StyleSheet.create({
     color: "#9E9E9E",
     fontWeight: "400",
   },
+  inputError: {
+    borderColor: "#FF3B30",
+  },
+  errorText: {
+    color: "#FF3B30",
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 4,
+    fontWeight: "500",
+  },
   incomeRow: {
     flexDirection: "row",
     gap: 12,
@@ -529,9 +639,14 @@ const styles = StyleSheet.create({
     flex: 0,
     minWidth: 100,
   },
-  amountInput: {
+  amountInputContainer: {
     flex: 1,
   },
+  amountInput: {
+    flex: 1,
+    flexShrink: 1,
+  },
+
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.5)",

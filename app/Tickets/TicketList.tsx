@@ -1,8 +1,10 @@
+import { subscribeToNewTicketMessage, subscribeToTicketCreated } from "@/lib/ticketingEvents";
 import { listUserTickets, type Ticket } from "@/lib/tickets";
 import { useFocusEffect } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Modal,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -10,28 +12,59 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useLanguage } from "../../context/LanguageContext";
+import TicketDetail from "./TicketDetail";
 
 interface TicketListProps {
   accessToken: string;
+  onTicketSelected?: (selected: boolean) => void;
+  refreshTrigger?: number;
 }
 
-function TicketList({ accessToken }: TicketListProps) {
+function TicketList({ accessToken, onTicketSelected, refreshTrigger }: TicketListProps) {
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const { t, language } = useLanguage();
+
+  // Debug selected ticket changes
+  useEffect(() => {
+    console.log("[TicketList] selectedTicket changed:", selectedTicket ? selectedTicket.id : "null");
+  }, [selectedTicket]);
 
   useEffect(() => {
     loadTickets();
   }, [page]);
+
+  useEffect(() => {
+    if (refreshTrigger != null && refreshTrigger > 0) loadTickets();
+  }, [refreshTrigger]);
 
   useFocusEffect(
     React.useCallback(() => {
       loadTickets();
     }, [])
   );
+
+  // Setup WebSocket listeners for real-time ticket updates
+  useEffect(() => {
+    if (!accessToken) return;
+
+    const unsubscribe = subscribeToNewTicketMessage(() => {
+      loadTickets();
+    });
+    const unsubscribeCreated = subscribeToTicketCreated(() => {
+      loadTickets();
+    });
+
+    return () => {
+      unsubscribe();
+      unsubscribeCreated();
+    };
+  }, [accessToken]);
 
   const loadTickets = async () => {
     if (page === 1) setLoading(true);
@@ -86,32 +119,16 @@ function TicketList({ accessToken }: TicketListProps) {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
+    const locale = language === "ar" ? "ar-SA" : language === "ko" ? "ko-KR" : language === "ja" ? "ja-JP" : "en-US";
+    return date.toLocaleDateString(locale, {
       month: "short",
       day: "numeric",
       year: "numeric",
     });
   };
 
-  if (selectedTicket) {
-    return (
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => setSelectedTicket(null)}>
-            <Text style={styles.backButton}>← Back</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Ticket Details</Text>
-          <View style={{ width: 50 }} />
-        </View>
-        <ScrollView style={styles.detailContent}>
-          <Text style={styles.detailTitle}>{selectedTicket.title}</Text>
-          <Text style={styles.detailDescription}>{selectedTicket.description}</Text>
-        </ScrollView>
-      </View>
-    );
-  }
-
   return (
+    <>
     <ScrollView
       style={styles.container}
       refreshControl={
@@ -120,8 +137,8 @@ function TicketList({ accessToken }: TicketListProps) {
     >
       {loading && !tickets.length ? (
         <View style={styles.centerContent}>
-          <ActivityIndicator size="large" color="#3b82f6" />
-          <Text style={styles.loadingText}>Loading tickets...</Text>
+          <ActivityIndicator size="large" color="#E15816" />
+          <Text style={styles.loadingText}>{t("tickets.loading")}</Text>
         </View>
       ) : tickets.length > 0 ? (
         <View style={styles.ticketsList}>
@@ -129,7 +146,12 @@ function TicketList({ accessToken }: TicketListProps) {
             <TouchableOpacity
               key={ticket.id}
               style={styles.ticketCard}
-              onPress={() => setSelectedTicket(ticket)}
+              onPress={() => {
+                console.log("[TicketList] Ticket clicked:", ticket.id, ticket.title);
+                setSelectedTicket(ticket);
+                onTicketSelected?.(true);
+                console.log("[TicketList] Selected ticket set");
+              }}
             >
               <View style={styles.ticketHeader}>
                 <Text style={styles.ticketTitle} numberOfLines={2}>
@@ -141,7 +163,7 @@ function TicketList({ accessToken }: TicketListProps) {
                     { backgroundColor: getStatusColor(ticket.status) },
                   ]}
                 >
-                  <Text style={styles.statusText}>{ticket.status}</Text>
+                  <Text style={styles.statusText}>{t(`tickets.status.${ticket.status}`)}</Text>
                 </View>
               </View>
 
@@ -156,7 +178,7 @@ function TicketList({ accessToken }: TicketListProps) {
                     { backgroundColor: getPriorityColor(ticket.priority) },
                   ]}
                 >
-                  <Text style={styles.priorityText}>{ticket.priority}</Text>
+                  <Text style={styles.priorityText}>{t(`tickets.priority.${ticket.priority}`)}</Text>
                 </View>
                 <Text style={styles.dateText}>
                   {formatDate(ticket.createdAt)}
@@ -167,9 +189,9 @@ function TicketList({ accessToken }: TicketListProps) {
         </View>
       ) : (
         <View style={styles.centerContent}>
-          <Text style={styles.emptyText}>No tickets yet</Text>
+          <Text style={styles.emptyText}>{t("tickets.noTickets")}</Text>
           <Text style={styles.emptySubText}>
-            Create a support ticket to get started
+            {t("tickets.getStarted")}
           </Text>
         </View>
       )}
@@ -181,11 +203,13 @@ function TicketList({ accessToken }: TicketListProps) {
             onPress={() => setPage(page - 1)}
             style={[styles.paginationButton, page === 1 && styles.disabled]}
           >
-            <Text style={styles.paginationText}>Previous</Text>
+            <Text style={styles.paginationText}>{t("tickets.previous")}</Text>
           </TouchableOpacity>
 
           <Text style={styles.pageIndicator}>
-            Page {page} of {totalPages}
+            {t("tickets.pageIndicator")
+              .replace("{page}", page.toString())
+              .replace("{total}", totalPages.toString())}
           </Text>
 
           <TouchableOpacity
@@ -196,11 +220,34 @@ function TicketList({ accessToken }: TicketListProps) {
               page === totalPages && styles.disabled,
             ]}
           >
-            <Text style={styles.paginationText}>Next</Text>
+            <Text style={styles.paginationText}>{t("tickets.next")}</Text>
           </TouchableOpacity>
         </View>
       )}
     </ScrollView>
+
+    <Modal
+      visible={!!selectedTicket}
+      animationType="slide"
+      statusBarTranslucent
+      onRequestClose={() => {
+        setSelectedTicket(null);
+        onTicketSelected?.(false);
+      }}
+    >
+      {selectedTicket && (
+        <TicketDetail
+          ticket={selectedTicket}
+          accessToken={accessToken}
+          onBack={() => {
+            setSelectedTicket(null);
+            onTicketSelected?.(false);
+            loadTickets();
+          }}
+        />
+      )}
+    </Modal>
+    </>
   );
 }
 
@@ -322,40 +369,5 @@ const styles = StyleSheet.create({
   },
   disabled: {
     opacity: 0.5,
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: "#fff",
-    borderBottomWidth: 1,
-    borderBottomColor: "#e5e5e5",
-  },
-  backButton: {
-    fontSize: 16,
-    color: "#3b82f6",
-    fontWeight: "600",
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#333",
-  },
-  detailContent: {
-    flex: 1,
-    padding: 16,
-  },
-  detailTitle: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#333",
-    marginBottom: 12,
-  },
-  detailDescription: {
-    fontSize: 14,
-    color: "#666",
-    lineHeight: 20,
   },
 });

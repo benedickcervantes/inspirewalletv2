@@ -71,7 +71,7 @@ export function getTimeDepositInterestRates(
   contractType?: string,
 ): Promise<{
   success: boolean;
-  tiers?: Array<{ contractType: string; amount: string; interestRate: string }>;
+  tiers?: { contractType: string; amount: string; interestRate: string }[];
   error?: string;
 }>;
 export function getTransactions(
@@ -110,7 +110,7 @@ export function getMe(accessToken: string): Promise<{
 }>;
 export function updateProfile(
   accessToken: string,
-  body: Record<string, string>,
+  body: Record<string, string | undefined | null>,
 ): Promise<{ success: boolean; user?: object; error?: string }>;
 export function setPasscode(
   accessToken: string,
@@ -144,14 +144,14 @@ export function getMessages(
   opts?: { page?: number; limit?: number },
 ): Promise<{
   success: boolean;
-  messages?: Array<{
+  messages?: {
     id: string;
     content: string;
     createdAt: string;
     status: string;
     senderName?: string;
     direction?: "ADMIN_TO_USER" | "USER_TO_ADMIN";
-  }>;
+  }[];
   pagination?: {
     total?: number;
     page?: number;
@@ -163,6 +163,30 @@ export function getMessages(
 export function markMessageAsRead(
   accessToken: string,
   messageId: string,
+): Promise<{ success: boolean; error?: string }>;
+
+// Notifications API
+export function getNotifications(
+  accessToken: string,
+  opts?: { limit?: number }
+): Promise<{
+  success: boolean;
+  data?: {
+    id: string;
+    title: string;
+    message: string;
+    isRead: boolean;
+    createdAt: string;
+  }[];
+  error?: string;
+}>;
+
+export function markNotificationAsRead(
+  accessToken: string,
+  notificationId: string,
+): Promise<{ success: boolean; error?: string }>;
+export function markAllNotificationsAsRead(
+  accessToken: string,
 ): Promise<{ success: boolean; error?: string }>;
 export function markAllMessagesAsRead(
   accessToken: string,
@@ -212,6 +236,10 @@ export function getReferralCode(
   accessToken: string,
 ): Promise<{ success: boolean; referralCode?: string; error?: string }>;
 
+export function generateReferralCode(
+  accessToken: string,
+): Promise<{ success: boolean; referralCode?: string; error?: string }>;
+
 export function getReferralQrPayload(accessToken: string): Promise<{
   success: boolean;
   payload?: {
@@ -228,12 +256,12 @@ export function getReferralTree(accessToken: string): Promise<{
     referralCode?: string;
     directReferralCount?: number;
     totalDescendantCount?: number;
-    directReferrals?: Array<{
+    directReferrals?: {
       userId: string;
       referralCode?: string;
       firstName?: string;
       lastName?: string;
-    }>;
+    }[];
   };
   error?: string;
 }>;
@@ -242,3 +270,71 @@ export function submitTravelProtection(
   accessToken: string,
   body: Record<string, unknown>,
 ): Promise<{ success: boolean; data?: unknown; error?: string }>;
+
+// Card Collection API
+export interface CardCatalogItem {
+  design: string;
+  category?: string;
+  price?: number | null;
+  isOwned?: boolean;
+  isActive?: boolean;
+  isEligible?: boolean;
+  [key: string]: unknown;
+}
+
+export interface CardCollectionResponse {
+  cardDisplayData?: Record<string, unknown>;
+  collection?: unknown[];
+  activeCard?: unknown | null;
+  [key: string]: unknown;
+}
+
+export function getCardCatalog(
+  accessToken: string,
+): Promise<{ success: boolean; catalog?: CardCatalogItem[]; error?: string }>;
+
+export function getMyCardCollection(
+  accessToken: string,
+): Promise<{ success: boolean; data?: CardCollectionResponse; error?: string }>;
+
+export function buyCard(
+  accessToken: string,
+  design: string,
+): Promise<{ success: boolean; data?: unknown; error?: string }>;
+
+export function setActiveCard(
+  accessToken: string,
+  cardCollectionItemId: string,
+): Promise<{ success: boolean; data?: CardCollectionResponse; error?: string }>;
+
+export function renewCard(
+  accessToken: string,
+  design: string,
+): Promise<{ success: boolean; data?: unknown; error?: string }>;
+
+export function cancelAutoRenewal(
+  accessToken: string,
+  design: string,
+): Promise<{ success: boolean; data?: unknown; error?: string }>;
+
+export interface ApiWalletFull {
+  id: string;
+  balance?: string;
+  currency?: { code?: string };
+  currencyCode?: string;
+  [key: string]: unknown;
+}
+
+export function getWallets(
+  accessToken: string
+): Promise<{ success: boolean; wallets?: ApiWalletFull[]; error?: string }>;
+
+export function submitStockSellRequest(
+  accessToken: string,
+  body: { walletId: string; stocksToSell: number }
+): Promise<{ success: boolean; data?: unknown; error?: string }>;
+
+export function getStockSellRequests(
+  accessToken: string
+): Promise<{ success: boolean; data?: unknown[]; error?: string }>;
+

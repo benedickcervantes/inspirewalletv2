@@ -1,75 +1,50 @@
-import React, { useState, useEffect } from "react";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
+import { LinearGradient } from "expo-linear-gradient";
+import React, { useState } from "react";
 import {
+  Image,
+  ScrollView,
   StyleSheet,
   Text,
-  View,
   TouchableOpacity,
-  ScrollView,
-  Modal,
-  Image,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useNavigation } from "@react-navigation/native";
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
-import { auth, firestore } from "../../../configs/firebase";
-import { doc, getDoc } from "firebase/firestore";
+import { useLanguage } from "../../../context/LanguageContext";
 
 export default function WithdrawRequest() {
   const navigation = useNavigation();
+  const { t } = useLanguage();
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
-  const [showAlertModal, setShowAlertModal] = useState(false);
-  const [alertConfig, setAlertConfig] = useState<{ title: string; message: string }>({ title: "", message: "" });
-  const [userData, setUserData] = useState<Record<string, unknown> | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const withdrawalMethods = [
     {
       id: "local-bank",
-      title: "Local Bank",
-      subtitle: "Withdraw to your local bank account",
+      titleKey: "withdraw.bankTransfer",
+      subtitleKey: "withdraw.bankTransferSubtitle",
       icon: "business" as const,
       useImage: true,
     },
     {
       id: "e-wallet",
-      title: "E-Wallet",
-      subtitle: "Withdraw to Gcash or Maya",
+      titleKey: "withdraw.ewallet",
+      subtitleKey: "withdraw.ewalletSubtitle",
       icon: "wallet" as const,
       useImage: false,
     },
   ];
 
-  useEffect(() => {
-    fetchUserData();
-  }, []);
-
-  const fetchUserData = async () => {
-    if (!auth || !firestore) return;
-    try {
-      const user = auth.currentUser;
-      if (user) {
-        const userDocRef = doc(firestore, "users", user.uid);
-        const userDocSnap = await getDoc(userDocRef);
-
-        if (userDocSnap.exists()) {
-          const data = userDocSnap.data() as Record<string, unknown>;
-          setUserData(data);
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching user data:", error);
-    }
-  };
-
   const handleContinue = () => {
     if (!selectedMethod) {
-      setAlertConfig({
-        title: "Selection Required",
-        message: "Please select a withdrawal method to continue"
+      setErrors({
+        selectedMethod: t("withdraw.validation.method"),
       });
-      setShowAlertModal(true);
       return;
     }
+
+    setErrors({});
 
     // Navigate to next step based on selected method
     if (selectedMethod === "local-bank") {
@@ -96,7 +71,7 @@ export default function WithdrawRequest() {
             <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
           </TouchableOpacity>
 
-          <Text style={styles.headerTitle}>Withdrawal Request</Text>
+          <Text style={styles.headerTitle}>{t("withdraw.title")}</Text>
 
           <TouchableOpacity style={styles.refreshButton}>
             <Ionicons name="refresh" size={24} color="#FFFFFF" />
@@ -108,7 +83,9 @@ export default function WithdrawRequest() {
           <View style={styles.progressBar}>
             <View style={styles.progressFilled} />
           </View>
-          <Text style={styles.progressText}>Step 2 of 5</Text>
+          <Text style={styles.progressText}>
+            {t("withdraw.stepIndicator").replace("{step}", "2")}
+          </Text>
         </View>
 
         <ScrollView
@@ -119,13 +96,17 @@ export default function WithdrawRequest() {
         >
           {/* Icon Circle */}
           <View style={styles.iconCircle}>
-            <MaterialCommunityIcons name="credit-card-outline" size={48} color="#FFFFFF" />
+            <MaterialCommunityIcons
+              name="credit-card-outline"
+              size={48}
+              color="#FFFFFF"
+            />
           </View>
 
           {/* Title */}
           <View style={styles.titleContainer}>
-            <Text style={styles.title}>Select Withdrawal Method</Text>
-            <Text style={styles.subtitle}>Choose how you want to withdraw</Text>
+            <Text style={styles.title}>{t("withdraw.selectMethod")}</Text>
+            <Text style={styles.subtitle}>{t("withdraw.chooseHowToWithdraw")}</Text>
           </View>
 
           {/* Withdrawal Method Options */}
@@ -135,9 +116,14 @@ export default function WithdrawRequest() {
                 key={method.id}
                 style={[
                   styles.methodOption,
-                  selectedMethod === method.id && styles.methodOptionSelected
+                  selectedMethod === method.id && styles.methodOptionSelected,
                 ]}
-                onPress={() => setSelectedMethod(method.id)}
+                onPress={() => {
+                  setSelectedMethod(method.id);
+                  if (errors.selectedMethod) {
+                    setErrors({});
+                  }
+                }}
                 activeOpacity={0.7}
               >
                 <View style={styles.methodIconBox}>
@@ -149,15 +135,19 @@ export default function WithdrawRequest() {
                     />
                   ) : (
                     <MaterialCommunityIcons
-                      name={method.icon as React.ComponentProps<typeof MaterialCommunityIcons>['name']}
+                      name={
+                        method.icon as React.ComponentProps<
+                          typeof MaterialCommunityIcons
+                        >["name"]
+                      }
                       size={28}
                       color="#E25A17"
                     />
                   )}
                 </View>
                 <View style={styles.methodInfo}>
-                  <Text style={styles.methodTitle}>{method.title}</Text>
-                  <Text style={styles.methodSubtitle}>{method.subtitle}</Text>
+                  <Text style={styles.methodTitle}>{t(method.titleKey)}</Text>
+                  <Text style={styles.methodSubtitle}>{t(method.subtitleKey)}</Text>
                 </View>
                 <View style={styles.radioButton}>
                   {selectedMethod === method.id && (
@@ -166,6 +156,9 @@ export default function WithdrawRequest() {
                 </View>
               </TouchableOpacity>
             ))}
+            {errors.selectedMethod && (
+              <Text style={styles.errorText}>{errors.selectedMethod}</Text>
+            )}
           </View>
 
           {/* Action Buttons */}
@@ -175,7 +168,7 @@ export default function WithdrawRequest() {
               onPress={() => navigation.goBack()}
             >
               <Ionicons name="arrow-back" size={20} color="#E25A17" />
-              <Text style={styles.backButtonText}>Back</Text>
+              <Text style={styles.backButtonText}>{t("withdraw.back")}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -188,7 +181,7 @@ export default function WithdrawRequest() {
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
               >
-                <Text style={styles.continueText}>Continue</Text>
+                <Text style={styles.continueText}>{t("withdraw.continue")}</Text>
                 <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
               </LinearGradient>
             </TouchableOpacity>
@@ -196,32 +189,6 @@ export default function WithdrawRequest() {
 
           <View style={styles.bottomPadding} />
         </ScrollView>
-
-        {/* Custom Alert Modal */}
-        <Modal
-          visible={showAlertModal}
-          transparent={true}
-          animationType="fade"
-          onRequestClose={() => setShowAlertModal(false)}
-        >
-          <View style={styles.alertOverlay}>
-            <LinearGradient
-              colors={["#E15816", "#F48F38"]}
-              style={styles.alertContainer}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 0, y: 1 }}
-            >
-              <Text style={styles.alertTitle}>{alertConfig.title}</Text>
-              <Text style={styles.alertMessage}>{alertConfig.message}</Text>
-              <TouchableOpacity
-                style={styles.alertButton}
-                onPress={() => setShowAlertModal(false)}
-              >
-                <Text style={styles.alertButtonText}>OK</Text>
-              </TouchableOpacity>
-            </LinearGradient>
-          </View>
-        </Modal>
       </SafeAreaView>
     </View>
   );
@@ -340,6 +307,12 @@ const styles = StyleSheet.create({
     borderColor: "#E25A17",
     backgroundColor: "#FFF5F0",
   },
+  errorText: {
+    color: "#FF3B30",
+    fontSize: 14,
+    textAlign: "center",
+    marginTop: 8,
+  },
   methodIconBox: {
     width: 56,
     height: 56,
@@ -420,6 +393,8 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   continueGradient: {
+    flex: 1,
+    alignSelf: "stretch",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",

@@ -6,11 +6,8 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useState } from "react";
 import {
   ActivityIndicator,
-  Dimensions,
-  KeyboardAvoidingView,
   Modal,
   Platform,
-  SafeAreaView,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -20,9 +17,32 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { register as registerApi } from "../../configs/api";
+import {
+  DEFAULT_LANGUAGE,
+  normalizeLanguage,
+  SUPPORTED_LANGUAGES,
+} from "../../constants/locales";
+import { useLanguage } from "../../context/LanguageContext";
 import type { NavProp } from "../../types/navigation";
+import { pickAndDecodeQR } from "../../utils/qrUtils";
 import { useResponsive } from "../../utils/responsive";
+
+const getScreenWidth = () => {
+  try {
+    const D = require("react-native").Dimensions;
+    return D?.get?.("window")?.width ?? 375;
+  } catch {
+    return 375;
+  }
+};
+
+const USER_PREFERRED_LANGUAGE_KEY = "user_preferred_language";
 
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 const filterCompanyInput = (text: string) =>
@@ -38,6 +58,17 @@ const filterNameInput = (text: string) => text.replace(/[^A-Za-zÑñ ]/g, "");
 
 // Allow digits only for phone number
 const filterPhoneInput = (text: string) => text.replace(/[^0-9]/g, "");
+
+// Referral code: English letters and numbers only, max 5 chars
+const filterReferralInput = (text: string) =>
+  text
+    .replace(/[^A-Za-z0-9]/g, "")
+    .toUpperCase()
+    .slice(0, 5);
+
+// Password: English letters, numbers, and common safe symbols (blocks non-Latin scripts)
+const filterPasswordInput = (text: string) =>
+  text.replace(/[^A-Za-z0-9!@#$%^&*()\-_=+[\]{}|;:'",.<>?/~`\\]/g, "");
 
 const capitalizeWords = (text: string) =>
   text.replace(/\b\w/g, (char) => char.toUpperCase());
@@ -85,8 +116,11 @@ const COUNTRY_OPTIONS = [
   },
 ];
 
-const formatWithMask = (text: string, mask: string) => {
-  const digits = text.replace(/\D/g, "");
+const formatWithMask = (text: string, mask: string, maxDigits?: number) => {
+  let digits = text.replace(/\D/g, "");
+  if (maxDigits != null) {
+    digits = digits.slice(0, maxDigits);
+  }
   let formatted = "";
   let digitIndex = 0;
   for (let i = 0; i < mask.length && digitIndex < digits.length; i++) {
@@ -101,9 +135,24 @@ const formatWithMask = (text: string, mask: string) => {
 
 export default function Register() {
   const navigation = useNavigation();
-  const { width } = useWindowDimensions();
-  const { horizontalPadding } = useResponsive();
+  const { width, height } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const {
+    horizontalPadding,
+    moderateScale,
+    isShortScreen,
+    isSmallScreen,
+    isTinyScreen,
+    isLargeScreen,
+  } = useResponsive();
+  const isCompact = isShortScreen || isTinyScreen;
+  const footerBottomPadding = insets.bottom || 16;
+  const scrollPaddingBottom =
+    (isCompact || isSmallScreen ? 20 : 24) + footerBottomPadding;
+  const { t, language: contextLanguage, setLanguage } = useLanguage();
+  const language = normalizeLanguage(contextLanguage ?? DEFAULT_LANGUAGE);
   const [currentStep, setCurrentStep] = useState(1);
+  const [languageModalVisible, setLanguageModalVisible] = useState(false);
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -115,6 +164,7 @@ export default function Register() {
   const [lineContact, setLineContact] = useState("");
   const [viberContact, setViberContact] = useState("");
   const [whatsappContact, setWhatsappContact] = useState("");
+  const [isProcessingQR, setIsProcessingQR] = useState(false);
   const [isAgent, setIsAgent] = useState<boolean | null>(null);
   const [referralCode, setReferralCode] = useState("");
   const [registerLoading, setRegisterLoading] = useState(false);
@@ -135,18 +185,33 @@ export default function Register() {
   const [permission, requestPermission] = useCameraPermissions();
 
   const handleNextStep = () => {
+    if (isProcessingQR) return;
     setRegisterError("");
     const newErrors: Record<string, string> = {};
 
     if (currentStep === 1) {
       if (!firstName.trim()) {
-        newErrors.firstName = "Please enter your first name";
+        newErrors.firstName = t("register.errorFirstName");
       }
       if (!lastName.trim()) {
-        newErrors.lastName = "Please enter your last name";
+        newErrors.lastName = t("register.errorLastName");
+      }
+      const phoneDigits = phoneNumber.replace(/\D/g, "");
+      const country = COUNTRY_OPTIONS.find(
+        (c) => c.code === selectedCountryCode,
+      );
+      if (
+        phoneDigits.length > 0 &&
+        country &&
+        phoneDigits.length !== country.maxLength
+      ) {
+        newErrors.phoneNumber = t("register.errorPhoneInvalid").replace(
+          "{digits}",
+          String(country.maxLength),
+        );
       }
       if (hasCompany && !companyName.trim()) {
-        newErrors.companyName = "Please enter your company name";
+        newErrors.companyName = t("register.errorCompanyName");
       }
 
       if (Object.keys(newErrors).length > 0) {
@@ -157,7 +222,7 @@ export default function Register() {
       setCurrentStep(2);
     } else if (currentStep === 2) {
       if (isAgent === null) {
-        newErrors.isAgent = "Please select if you are an agent or investor";
+        newErrors.isAgent = t("register.errorAgentSelection");
       }
 
       if (Object.keys(newErrors).length > 0) {
@@ -169,18 +234,17 @@ export default function Register() {
     } else if (currentStep === 3) {
       const email = emailAddress.trim();
       if (!email) {
-        newErrors.emailAddress = "Please enter your email address";
+        newErrors.emailAddress = t("register.errorEmail");
       } else if (!isValidEmail(email)) {
-        newErrors.emailAddress =
-          "Please enter a valid email address (e.g. name@example.com)";
+        newErrors.emailAddress = t("register.errorValidEmail");
       }
       if (!password.trim()) {
-        newErrors.password = "Please enter a password";
+        newErrors.password = t("register.errorPassword");
       } else if (password.length < 8) {
-        newErrors.password = "Password must be at least 8 characters";
+        newErrors.password = t("register.errorPasswordLength");
       }
       if (password !== confirmPassword) {
-        newErrors.confirmPassword = "Passwords do not match";
+        newErrors.confirmPassword = t("register.errorPasswordMismatch");
       }
 
       if (Object.keys(newErrors).length > 0) {
@@ -220,9 +284,7 @@ export default function Register() {
       const result = await registerApi(body);
 
       if (!result.success) {
-        setRegisterError(
-          result.error || "Registration failed. Please try again.",
-        );
+        setRegisterError(result.error || t("register.errorRegistrationFailed"));
         return;
       }
 
@@ -230,8 +292,8 @@ export default function Register() {
       await AsyncStorage.setItem("user", JSON.stringify(result.user || {}));
       await AsyncStorage.setItem("registrationPasscodePending", "true");
       (navigation as unknown as NavProp).replace("CreatePasscode");
-    } catch (_err) {
-      setRegisterError("An unexpected error occurred. Please try again.");
+    } catch {
+      setRegisterError(t("register.errorUnexpected"));
     } finally {
       setRegisterLoading(false);
     }
@@ -243,6 +305,12 @@ export default function Register() {
     } else {
       (navigation as unknown as NavProp).replace("Welcome");
     }
+  };
+
+  const handleSelectLanguage = async (selectedLabel: string) => {
+    setLanguage(selectedLabel);
+    await AsyncStorage.setItem(USER_PREFERRED_LANGUAGE_KEY, selectedLabel);
+    setLanguageModalVisible(false);
   };
 
   const handleBarCodeScanned = ({ data }: { type: string; data: string }) => {
@@ -262,7 +330,7 @@ export default function Register() {
             return;
           }
         }
-      } catch (_urlErr) {
+      } catch {
         // Not a valid URL, ignore URL parsing error
       }
       // fallback to setting exactly what was scanned
@@ -284,7 +352,7 @@ export default function Register() {
     if (!permission?.granted) {
       const response = await requestPermission();
       if (!response.granted) {
-        alert("Camera permission is required to scan QR codes.");
+        alert(t("register.cameraPermissionRequired"));
         return;
       }
     }
@@ -292,46 +360,165 @@ export default function Register() {
     setIsQRScannerVisible(true);
   };
 
+  const handleUploadImage = async (
+    fieldType: "referral" | "line" | "viber" | "whatsapp",
+  ) => {
+    try {
+      setIsProcessingQR(true);
+      const data = await pickAndDecodeQR();
+
+      if (data) {
+        if (fieldType === "referral") {
+          try {
+            if (data.includes("ref=")) {
+              const urlParams = new URL(data);
+              const ref = urlParams.searchParams.get("ref");
+              if (ref) {
+                setReferralCode(ref.toUpperCase());
+                return;
+              }
+            }
+          } catch {
+            // Not a valid URL, ignore URL parsing error
+          }
+          setReferralCode(data.toUpperCase().slice(0, 5));
+        } else if (fieldType === "line") {
+          setLineContact(data);
+        } else if (fieldType === "viber") {
+          setViberContact(data);
+        } else if (fieldType === "whatsapp") {
+          setWhatsappContact(data);
+        }
+      } else {
+        alert(
+          t("register.noQRFound") ||
+            "No QR code found in the image. Please pick a clearer QR code image.",
+        );
+      }
+    } catch (error) {
+      console.log("Error scanning from image:", error);
+      alert(t("register.errorUnexpected"));
+    } finally {
+      setIsProcessingQR(false);
+    }
+  };
+
   return (
     <>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       <SafeAreaView style={styles.container}>
-        <KeyboardAvoidingView
-          behavior={
-            Platform.OS === "web"
-              ? undefined
-              : Platform.OS === "ios"
-                ? "padding"
-                : "height"
-          }
-          style={styles.keyboardView}
-        >
+        <View style={styles.keyboardView}>
           <View
-            style={[styles.header, { paddingHorizontal: horizontalPadding }]}
+            style={[
+              styles.header,
+              {
+                paddingHorizontal: horizontalPadding,
+                paddingVertical: isLargeScreen
+                  ? 12
+                  : isCompact || isSmallScreen
+                    ? 10
+                    : 14,
+              },
+            ]}
           >
             <TouchableOpacity
-              style={styles.backButton}
+              style={[
+                styles.backButton,
+                isTinyScreen && { width: 36, height: 36 },
+              ]}
               onPress={handleBackStep}
             >
-              <Ionicons name="arrow-back" size={24} color="#E25A17" />
+              <Ionicons
+                name="arrow-back"
+                size={isTinyScreen ? 20 : 24}
+                color="#E25A17"
+              />
             </TouchableOpacity>
-            <Text style={styles.headerTitle}>Account Registration</Text>
-            <View style={styles.placeholder} />
+            <Text
+              style={[
+                styles.headerTitle,
+                isTinyScreen && { fontSize: 14 },
+                isSmallScreen && !isTinyScreen && { fontSize: 16 },
+                isLargeScreen && { fontSize: 16 },
+              ]}
+              numberOfLines={1}
+            >
+              {t("register.title")}
+            </Text>
+            {currentStep === 1 ? (
+              <TouchableOpacity
+                style={[
+                  styles.languageButton,
+                  {
+                    width: isTinyScreen ? 40 : isSmallScreen ? 44 : 48,
+                    height: isTinyScreen ? 40 : isSmallScreen ? 44 : 48,
+                    borderRadius: isTinyScreen ? 20 : isSmallScreen ? 22 : 24,
+                  },
+                ]}
+                onPress={() => setLanguageModalVisible(true)}
+                accessibilityLabel={t("profile.selectLanguage")}
+                accessibilityRole="button"
+              >
+                <Ionicons
+                  name="language-outline"
+                  size={isTinyScreen ? 22 : isSmallScreen ? 26 : 28}
+                  color="#E25A17"
+                />
+              </TouchableOpacity>
+            ) : (
+              <View
+                style={{
+                  width: isTinyScreen ? 40 : isSmallScreen ? 44 : 48,
+                  height: isTinyScreen ? 40 : isSmallScreen ? 44 : 48,
+                }}
+              />
+            )}
           </View>
 
-          <View style={styles.progressContainer}>
+          <View
+            style={[
+              styles.progressContainer,
+              {
+                paddingVertical:
+                  isCompact || isSmallScreen ? 14 : isLargeScreen ? 16 : 24,
+                paddingHorizontal: isTinyScreen ? 16 : isSmallScreen ? 24 : 40,
+              },
+            ]}
+          >
             <View style={styles.stepItem}>
-              <View style={[styles.stepCircle, styles.stepActive]}>
+              <View
+                style={[
+                  styles.stepCircle,
+                  styles.stepActive,
+                  isTinyScreen && { width: 36, height: 36, borderRadius: 18 },
+                  isSmallScreen &&
+                    !isTinyScreen && {
+                      width: 42,
+                      height: 42,
+                      borderRadius: 21,
+                    },
+                ]}
+              >
                 {currentStep > 1 ? (
-                  <Ionicons name="checkmark" size={24} color="#FFFFFF" />
+                  <Ionicons
+                    name="checkmark"
+                    size={isTinyScreen ? 18 : isSmallScreen ? 20 : 24}
+                    color="#FFFFFF"
+                  />
                 ) : (
-                  <Ionicons name="person" size={20} color="#FFFFFF" />
+                  <Ionicons
+                    name="person"
+                    size={isTinyScreen ? 16 : isSmallScreen ? 18 : 20}
+                    color="#FFFFFF"
+                  />
                 )}
               </View>
               <View
                 style={[
                   styles.stepLine,
                   currentStep > 1 && styles.stepLineActive,
+                  isTinyScreen && { width: 36 },
+                  isSmallScreen && !isTinyScreen && { width: 48 },
                 ]}
               />
             </View>
@@ -340,14 +527,25 @@ export default function Register() {
                 style={[
                   styles.stepCircle,
                   currentStep >= 2 && styles.stepActive,
+                  isTinyScreen && { width: 36, height: 36, borderRadius: 18 },
+                  isSmallScreen &&
+                    !isTinyScreen && {
+                      width: 42,
+                      height: 42,
+                      borderRadius: 21,
+                    },
                 ]}
               >
                 {currentStep > 2 ? (
-                  <Ionicons name="checkmark" size={24} color="#FFFFFF" />
+                  <Ionicons
+                    name="checkmark"
+                    size={isTinyScreen ? 18 : isSmallScreen ? 20 : 24}
+                    color="#FFFFFF"
+                  />
                 ) : (
                   <Ionicons
                     name="call"
-                    size={20}
+                    size={isTinyScreen ? 16 : isSmallScreen ? 18 : 20}
                     color={currentStep >= 2 ? "#FFFFFF" : "#E25A17"}
                   />
                 )}
@@ -356,6 +554,8 @@ export default function Register() {
                 style={[
                   styles.stepLine,
                   currentStep > 2 && styles.stepLineActive,
+                  isTinyScreen && { width: 36 },
+                  isSmallScreen && !isTinyScreen && { width: 48 },
                 ]}
               />
             </View>
@@ -364,564 +564,894 @@ export default function Register() {
                 style={[
                   styles.stepCircle,
                   currentStep >= 3 && styles.stepActive,
+                  isTinyScreen && { width: 36, height: 36, borderRadius: 18 },
+                  isSmallScreen &&
+                    !isTinyScreen && {
+                      width: 42,
+                      height: 42,
+                      borderRadius: 21,
+                    },
                 ]}
               >
                 <Ionicons
                   name="lock-closed"
-                  size={20}
+                  size={isTinyScreen ? 16 : isSmallScreen ? 18 : 20}
                   color={currentStep >= 3 ? "#FFFFFF" : "#E25A17"}
                 />
               </View>
             </View>
           </View>
 
-          <ScrollView
-            style={styles.scrollView}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={[
-              styles.scrollContent,
-              {
-                paddingTop: 20,
-                paddingHorizontal: horizontalPadding,
-                paddingBottom: 100,
-              },
-            ]}
-            keyboardShouldPersistTaps="handled"
-          >
-            {currentStep === 1 && (
-              <>
-                <Text style={styles.welcomeText}>Welcome Investor!</Text>
-                <View style={styles.infoBanner}>
-                  <MaterialCommunityIcons
-                    name="office-building"
-                    size={24}
-                    color="#E25A17"
-                  />
-                  <View style={styles.infoBannerTextContainer}>
-                    <Text style={styles.infoBannerText}>
-                      Start your investment journey with{" "}
-                      <Text style={styles.infoBannerBold}>Inspire Wallet.</Text>
-                    </Text>
-                    <Text style={styles.infoBannerText}>
-                      Complete your profile to unlock all features.
-                    </Text>
-                  </View>
-                </View>
-                <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>Personal Information</Text>
-                  <View style={styles.sectionUnderline} />
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>
-                      First Name <Text style={styles.required}>*</Text>
-                    </Text>
-                    <TextInput
-                      style={[
-                        styles.input,
-                        errors.firstName && styles.inputError,
-                      ]}
-                      placeholder="e.g. John"
-                      placeholderTextColor="#999"
-                      autoCapitalize="words"
-                      value={firstName}
-                      onChangeText={(text) => {
-                        setFirstName(capitalizeWords(filterNameInput(text)));
-                        if (errors.firstName) {
-                          setErrors((prev) => {
-                            const { firstName, ...rest } = prev;
-                            return rest;
-                          });
-                        }
-                      }}
+          <View style={styles.keyboardAvoidWrap}>
+            <KeyboardAwareScrollView
+              style={styles.scrollView}
+              contentContainerStyle={[
+                styles.scrollContent,
+                {
+                  paddingTop: isCompact || isSmallScreen ? 12 : 20,
+                  paddingHorizontal: horizontalPadding,
+                  paddingBottom: scrollPaddingBottom,
+                },
+              ]}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              enableOnAndroid
+              enableAutomaticScroll
+              extraScrollHeight={Platform.OS === "ios" ? 60 : 40}
+              extraHeight={Platform.OS === "android" ? 80 : 60}
+            >
+              {currentStep === 1 && (
+                <>
+                  <Text
+                    style={[
+                      styles.welcomeText,
+                      isTinyScreen && { fontSize: 18, marginBottom: 10 },
+                      isSmallScreen &&
+                        !isTinyScreen && { fontSize: 20, marginBottom: 12 },
+                      isLargeScreen && { fontSize: 22 },
+                    ]}
+                  >
+                    {t("register.welcomeInvestor")}
+                  </Text>
+                  <View
+                    style={[
+                      styles.infoBanner,
+                      isTinyScreen && { padding: 10, marginBottom: 12 },
+                      (isCompact || isSmallScreen) && {
+                        marginBottom: 12,
+                        padding: 12,
+                      },
+                    ]}
+                  >
+                    <MaterialCommunityIcons
+                      name="office-building"
+                      size={isTinyScreen ? 20 : isSmallScreen ? 22 : 24}
+                      color="#E25A17"
                     />
-                    {errors.firstName && (
-                      <Text style={styles.errorText}>{errors.firstName}</Text>
-                    )}
-                  </View>
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>
-                      Last Name <Text style={styles.required}>*</Text>
-                    </Text>
-                    <TextInput
-                      style={[
-                        styles.input,
-                        errors.lastName && styles.inputError,
-                      ]}
-                      placeholder="e.g. Doe"
-                      placeholderTextColor="#999"
-                      autoCapitalize="words"
-                      value={lastName}
-                      onChangeText={(text) => {
-                        setLastName(capitalizeWords(filterNameInput(text)));
-                        if (errors.lastName) {
-                          setErrors((prev) => {
-                            const { lastName, ...rest } = prev;
-                            return rest;
-                          });
-                        }
-                      }}
-                    />
-                    {errors.lastName && (
-                      <Text style={styles.errorText}>{errors.lastName}</Text>
-                    )}
-                  </View>
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>Phone Number</Text>
-                    <View style={styles.phoneInputContainer}>
-                      <TouchableOpacity
-                        style={styles.countrySelector}
-                        onPress={() => setIsCountryModalVisible(true)}
+                    <View style={styles.infoBannerTextContainer}>
+                      <Text
+                        style={[
+                          styles.infoBannerText,
+                          isTinyScreen && { fontSize: 11, lineHeight: 17 },
+                          isSmallScreen &&
+                            !isTinyScreen && { fontSize: 12, lineHeight: 18 },
+                        ]}
                       >
-                        <Text style={styles.countryFlag}>
-                          {
-                            COUNTRY_OPTIONS.find(
-                              (c) => c.code === selectedCountryCode,
-                            )?.flag
-                          }
+                        {t("register.startInvestment")}{" "}
+                        <Text style={styles.infoBannerBold}>
+                          {t("register.inspireWallet")}
                         </Text>
-                        <Text style={styles.countryCode}>
-                          {selectedCountryCode}
-                        </Text>
-                        <Ionicons name="chevron-down" size={16} color="#666" />
-                      </TouchableOpacity>
-                      <TextInput
-                        style={styles.phoneInput}
-                        placeholder={
-                          COUNTRY_OPTIONS.find(
-                            (c) => c.code === selectedCountryCode,
-                          )?.mask.replace(/#/g, "0") || "000 000 0000"
-                        }
-                        placeholderTextColor="#999"
-                        keyboardType="numeric"
-                        value={phoneNumber}
-                        onChangeText={(text) => {
-                          const country = COUNTRY_OPTIONS.find(
-                            (c) => c.code === selectedCountryCode,
-                          );
-                          if (country) {
-                            setPhoneNumber(formatWithMask(text, country.mask));
-                          } else {
-                            setPhoneNumber(filterPhoneInput(text));
-                          }
-                        }}
-                        maxLength={
-                          COUNTRY_OPTIONS.find(
-                            (c) => c.code === selectedCountryCode,
-                          )?.mask.length
-                        }
-                      />
+                      </Text>
+                      <Text
+                        style={[
+                          styles.infoBannerText,
+                          isTinyScreen && { fontSize: 11, lineHeight: 17 },
+                          isSmallScreen &&
+                            !isTinyScreen && { fontSize: 12, lineHeight: 18 },
+                        ]}
+                      >
+                        {t("register.completeProfile")}
+                      </Text>
                     </View>
                   </View>
-                  <TouchableOpacity
-                    style={styles.checkboxContainer}
-                    onPress={() => setHasCompany(!hasCompany)}
+                  <View
+                    style={[
+                      styles.section,
+                      isTinyScreen && { padding: 12, borderRadius: 12 },
+                      (isCompact || isSmallScreen) && { padding: 14 },
+                    ]}
                   >
-                    <View
+                    <Text
                       style={[
-                        styles.checkbox,
-                        hasCompany && styles.checkboxChecked,
+                        styles.sectionTitle,
+                        isTinyScreen && { fontSize: 13, marginBottom: 4 },
+                        isCompact && !isTinyScreen && { marginBottom: 6 },
                       ]}
                     >
-                      {hasCompany && (
-                        <Ionicons name="checkmark" size={16} color="#E25A17" />
-                      )}
-                    </View>
-                    <Text style={styles.checkboxLabel}>I have a company</Text>
-                  </TouchableOpacity>
-                  {hasCompany && (
-                    <View style={styles.inputGroup}>
-                      <Text style={styles.inputLabel}>
-                        Company Name <Text style={styles.required}>*</Text>
+                      {t("register.personalInfo")}
+                    </Text>
+                    <View
+                      style={[
+                        styles.sectionUnderline,
+                        isTinyScreen && { marginBottom: 10 },
+                        isCompact && !isTinyScreen && { marginBottom: 14 },
+                      ]}
+                    />
+                    <View
+                      style={[
+                        styles.inputGroup,
+                        (isTinyScreen || isSmallScreen) && { marginBottom: 14 },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.inputLabel,
+                          (isTinyScreen || isSmallScreen) && {
+                            fontSize: 12,
+                            marginBottom: 6,
+                          },
+                        ]}
+                      >
+                        {t("register.firstName")}{" "}
+                        <Text style={styles.required}>*</Text>
                       </Text>
                       <TextInput
                         style={[
                           styles.input,
-                          errors.companyName && styles.inputError,
+                          errors.firstName && styles.inputError,
+                          (isTinyScreen || isSmallScreen) && {
+                            minHeight: 44,
+                            paddingVertical: 10,
+                            fontSize: 14,
+                          },
                         ]}
-                        placeholder="Enter your company name"
+                        placeholder={t("register.placeholderFirstName")}
                         placeholderTextColor="#999"
                         autoCapitalize="words"
-                        value={companyName}
+                        autoCorrect={false}
+                        autoComplete="off"
+                        value={firstName}
                         onChangeText={(text) => {
-                          setCompanyName(
-                            capitalizeWords(filterCompanyInput(text)),
-                          );
-                          if (errors.companyName) {
+                          setFirstName(capitalizeWords(filterNameInput(text)));
+                          if (errors.firstName) {
                             setErrors((prev) => {
-                              const { companyName, ...rest } = prev;
+                              const { firstName, ...rest } = prev;
                               return rest;
                             });
                           }
                         }}
                       />
-                      {errors.companyName && (
+                      {errors.firstName && (
+                        <Text style={styles.errorText}>{errors.firstName}</Text>
+                      )}
+                    </View>
+                    <View
+                      style={[
+                        styles.inputGroup,
+                        (isTinyScreen || isSmallScreen) && { marginBottom: 14 },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.inputLabel,
+                          (isTinyScreen || isSmallScreen) && {
+                            fontSize: 12,
+                            marginBottom: 6,
+                          },
+                        ]}
+                      >
+                        {t("register.lastName")}{" "}
+                        <Text style={styles.required}>*</Text>
+                      </Text>
+                      <TextInput
+                        style={[
+                          styles.input,
+                          errors.lastName && styles.inputError,
+                          (isTinyScreen || isSmallScreen) && {
+                            minHeight: 44,
+                            paddingVertical: 10,
+                            fontSize: 14,
+                          },
+                        ]}
+                        placeholder={t("register.placeholderLastName")}
+                        placeholderTextColor="#999"
+                        autoCapitalize="words"
+                        autoCorrect={false}
+                        autoComplete="off"
+                        value={lastName}
+                        onChangeText={(text) => {
+                          setLastName(capitalizeWords(filterNameInput(text)));
+                          if (errors.lastName) {
+                            setErrors((prev) => {
+                              const { lastName, ...rest } = prev;
+                              return rest;
+                            });
+                          }
+                        }}
+                      />
+                      {errors.lastName && (
+                        <Text style={styles.errorText}>{errors.lastName}</Text>
+                      )}
+                    </View>
+                    <View
+                      style={[
+                        styles.inputGroup,
+                        (isTinyScreen || isSmallScreen) && { marginBottom: 14 },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.inputLabel,
+                          (isTinyScreen || isSmallScreen) && {
+                            fontSize: 12,
+                            marginBottom: 6,
+                          },
+                        ]}
+                      >
+                        {t("register.phoneNumber")}
+                      </Text>
+                      <View style={styles.phoneInputContainer}>
+                        <TouchableOpacity
+                          style={[
+                            styles.countrySelector,
+                            (isTinyScreen || isSmallScreen) && {
+                              paddingHorizontal: 10,
+                              paddingVertical: 10,
+                            },
+                          ]}
+                          onPress={() => setIsCountryModalVisible(true)}
+                        >
+                          <Text
+                            style={[
+                              styles.countryFlag,
+                              (isTinyScreen || isSmallScreen) && {
+                                fontSize: 18,
+                              },
+                            ]}
+                          >
+                            {
+                              COUNTRY_OPTIONS.find(
+                                (c) => c.code === selectedCountryCode,
+                              )?.flag
+                            }
+                          </Text>
+                          <Text
+                            style={[
+                              styles.countryCode,
+                              (isTinyScreen || isSmallScreen) && {
+                                fontSize: 13,
+                              },
+                            ]}
+                          >
+                            {selectedCountryCode}
+                          </Text>
+                          <Ionicons
+                            name="chevron-down"
+                            size={isTinyScreen ? 14 : 16}
+                            color="#666"
+                          />
+                        </TouchableOpacity>
+                        <TextInput
+                          style={[
+                            styles.phoneInput,
+                            errors.phoneNumber && styles.inputError,
+                            (isTinyScreen || isSmallScreen) && {
+                              minHeight: 44,
+                              paddingVertical: 10,
+                              fontSize: 14,
+                            },
+                          ]}
+                          placeholder={
+                            COUNTRY_OPTIONS.find(
+                              (c) => c.code === selectedCountryCode,
+                            )?.mask.replace(/#/g, "0") || "000 000 0000"
+                          }
+                          placeholderTextColor="#999"
+                          keyboardType="numeric"
+                          value={phoneNumber}
+                          onChangeText={(text) => {
+                            const digits = filterPhoneInput(text);
+                            const country = COUNTRY_OPTIONS.find(
+                              (c) => c.code === selectedCountryCode,
+                            );
+                            if (country) {
+                              setPhoneNumber(
+                                formatWithMask(
+                                  digits,
+                                  country.mask,
+                                  country.maxLength,
+                                ),
+                              );
+                            } else {
+                              setPhoneNumber(digits.slice(0, 15));
+                            }
+                            if (errors.phoneNumber) {
+                              setErrors((prev) => {
+                                const { phoneNumber: _, ...rest } = prev;
+                                return rest;
+                              });
+                            }
+                          }}
+                          maxLength={
+                            COUNTRY_OPTIONS.find(
+                              (c) => c.code === selectedCountryCode,
+                            )?.mask.length ?? 15
+                          }
+                        />
+                      </View>
+                      {errors.phoneNumber && (
                         <Text style={styles.errorText}>
-                          {errors.companyName}
+                          {errors.phoneNumber}
                         </Text>
                       )}
                     </View>
-                  )}
-                </View>
-              </>
-            )}
+                    <TouchableOpacity
+                      style={[
+                        styles.checkboxContainer,
+                        (isTinyScreen || isSmallScreen) && { marginBottom: 14 },
+                      ]}
+                      onPress={() => setHasCompany(!hasCompany)}
+                    >
+                      <View
+                        style={[
+                          styles.checkbox,
+                          hasCompany && styles.checkboxChecked,
+                        ]}
+                      >
+                        {hasCompany && (
+                          <Ionicons
+                            name="checkmark"
+                            size={16}
+                            color="#E25A17"
+                          />
+                        )}
+                      </View>
+                      <Text
+                        style={[
+                          styles.checkboxLabel,
+                          (isTinyScreen || isSmallScreen) && { fontSize: 13 },
+                        ]}
+                      >
+                        {t("register.iHaveCompany")}
+                      </Text>
+                    </TouchableOpacity>
+                    {hasCompany && (
+                      <View
+                        style={[
+                          styles.inputGroup,
+                          (isTinyScreen || isSmallScreen) && {
+                            marginBottom: 14,
+                          },
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.inputLabel,
+                            (isTinyScreen || isSmallScreen) && {
+                              fontSize: 12,
+                              marginBottom: 6,
+                            },
+                          ]}
+                        >
+                          {t("register.companyName")}{" "}
+                          <Text style={styles.required}>*</Text>
+                        </Text>
+                        <TextInput
+                          style={[
+                            styles.input,
+                            errors.companyName && styles.inputError,
+                            (isTinyScreen || isSmallScreen) && {
+                              minHeight: 44,
+                              paddingVertical: 10,
+                              fontSize: 14,
+                            },
+                          ]}
+                          placeholder={t("register.placeholderCompanyName")}
+                          placeholderTextColor="#999"
+                          autoCapitalize="words"
+                          autoCorrect={false}
+                          autoComplete="off"
+                          value={companyName}
+                          onChangeText={(text) => {
+                            setCompanyName(
+                              capitalizeWords(filterCompanyInput(text)),
+                            );
+                            if (errors.companyName) {
+                              setErrors((prev) => {
+                                const { companyName, ...rest } = prev;
+                                return rest;
+                              });
+                            }
+                          }}
+                        />
+                        {errors.companyName && (
+                          <Text style={styles.errorText}>
+                            {errors.companyName}
+                          </Text>
+                        )}
+                      </View>
+                    )}
+                  </View>
+                </>
+              )}
 
-            {currentStep === 2 && (
-              <>
-                <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>
-                    Contact Information (Optional)
-                  </Text>
-                  <View style={styles.sectionUnderline} />
+              {currentStep === 2 && (
+                <>
                   <View
-                    style={
-                      width < 768
-                        ? styles.contactFieldsContainerMobile
-                        : styles.contactFieldsContainerDesktop
-                    }
+                    style={[
+                      styles.section,
+                      isTinyScreen && { padding: 12, borderRadius: 12 },
+                      (isCompact || isSmallScreen) && { padding: 14 },
+                    ]}
                   >
-                    <View style={styles.inputGroup}>
-                      <Text style={styles.inputLabel}>LINE Account Link</Text>
-                      <View style={styles.scannerInputContainer}>
-                        <MaterialCommunityIcons
-                          name="chat"
-                          size={20}
-                          color="#00B900"
-                          style={{ marginLeft: 12 }}
-                        />
-                        <TextInput
-                          style={styles.scannerInput}
-                          placeholder="Enter your LINE Account Link"
-                          placeholderTextColor="#999"
-                          keyboardType="default"
-                          autoComplete="off"
-                          value={lineContact}
-                          onChangeText={setLineContact}
-                        />
-                        <TouchableOpacity
-                          style={styles.scannerButton}
-                          onPress={() => openScanner("line")}
-                        >
-                          <Ionicons
-                            name="qr-code-outline"
-                            size={20}
-                            color="#E25A17"
-                          />
-                        </TouchableOpacity>
-                      </View>
-                    </View>
-                    <View style={styles.inputGroup}>
-                      <Text style={styles.inputLabel}>Viber</Text>
-                      <View style={styles.scannerInputContainer}>
-                        <MaterialCommunityIcons
-                          name="phone"
-                          size={20}
-                          color="#7360F2"
-                          style={{ marginLeft: 12 }}
-                        />
-                        <TextInput
-                          style={styles.scannerInput}
-                          placeholder="Enter your Viber contact"
-                          placeholderTextColor="#999"
-                          keyboardType="default"
-                          autoComplete="off"
-                          value={viberContact}
-                          onChangeText={setViberContact}
-                        />
-                        <TouchableOpacity
-                          style={styles.scannerButton}
-                          onPress={() => openScanner("viber")}
-                        >
-                          <Ionicons
-                            name="qr-code-outline"
-                            size={20}
-                            color="#E25A17"
-                          />
-                        </TouchableOpacity>
-                      </View>
-                    </View>
-                    <View style={styles.inputGroup}>
-                      <Text style={styles.inputLabel}>WhatsApp</Text>
-                      <View style={styles.scannerInputContainer}>
-                        <MaterialCommunityIcons
-                          name="whatsapp"
-                          size={20}
-                          color="#25D366"
-                          style={{ marginLeft: 12 }}
-                        />
-                        <TextInput
-                          style={styles.scannerInput}
-                          placeholder="Enter your WhatsApp contact"
-                          placeholderTextColor="#999"
-                          keyboardType="default"
-                          autoComplete="off"
-                          value={whatsappContact}
-                          onChangeText={setWhatsappContact}
-                        />
-                        <TouchableOpacity
-                          style={styles.scannerButton}
-                          onPress={() => openScanner("whatsapp")}
-                        >
-                          <Ionicons
-                            name="qr-code-outline"
-                            size={20}
-                            color="#E25A17"
-                          />
-                        </TouchableOpacity>
-                      </View>
-                    </View>
-                  </View>
-                </View>
-                <View style={[styles.section, { marginTop: 20 }]}>
-                  <Text style={styles.sectionTitle}>Account Type</Text>
-                  <View style={styles.sectionUnderline} />
-                  <Text style={styles.inputLabel}>
-                    Are you an agent or investor?{" "}
-                    <Text style={styles.required}>*</Text>
-                  </Text>
-                  <TouchableOpacity
-                    style={styles.radioContainer}
-                    onPress={() => setIsAgent(true)}
-                  >
-                    <View
+                    <Text
                       style={[
-                        styles.radio,
-                        isAgent === true && styles.radioChecked,
+                        styles.sectionTitle,
+                        isTinyScreen && { fontSize: 13, marginBottom: 4 },
+                        isSmallScreen && !isTinyScreen && { marginBottom: 6 },
                       ]}
                     >
-                      {isAgent === true && <View style={styles.radioDot} />}
-                    </View>
-                    <Text style={styles.radioLabel}>I&apos;m an agent</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.radioContainer}
-                    onPress={() => setIsAgent(false)}
-                  >
-                    <View
-                      style={[
-                        styles.radio,
-                        isAgent === false && styles.radioChecked,
-                      ]}
-                    >
-                      {isAgent === false && <View style={styles.radioDot} />}
-                    </View>
-                    <Text style={styles.radioLabel}>I&apos;m an investor</Text>
-                  </TouchableOpacity>
-                  {errors.isAgent && (
-                    <Text style={styles.errorText}>{errors.isAgent}</Text>
-                  )}
-                  {isAgent !== null && (
-                    <View style={styles.agentQRSection}>
-                      <View style={styles.agentQRHeader}>
-                        <MaterialCommunityIcons
-                          name="shield-star"
-                          size={24}
-                          color="#E25A17"
-                        />
-                        <Text style={styles.agentQRTitle}>Referral Code</Text>
-                      </View>
-                      <Text style={styles.agentNumberSubtext}>
-                        You will receive your unique referral code after
-                        registration. Share it so others can register under you.
-                      </Text>
-                    </View>
-                  )}
-                  <View style={[styles.inputGroup, { marginTop: 20 }]}>
-                    <Text style={styles.inputLabel}>
-                      Referrer&apos;s code (Optional)
+                      {t("register.contactInfo")}
                     </Text>
-                    <View style={styles.scannerInputContainer}>
-                      <TextInput
-                        style={styles.scannerInput}
-                        placeholder="Enter referrer's code"
-                        placeholderTextColor="#999"
-                        value={referralCode}
-                        onChangeText={(text) =>
-                          setReferralCode(text.toUpperCase())
-                        }
-                        autoCapitalize="characters"
-                        maxLength={5}
+                    <View style={styles.sectionUnderline} />
+                    <View
+                      style={[
+                        styles.comingSoonBanner,
+                        (isTinyScreen || isSmallScreen) && { padding: 16 },
+                      ]}
+                    >
+                      <Ionicons
+                        name="time-outline"
+                        size={28}
+                        color="#E25A17"
+                        style={{ marginBottom: 8 }}
                       />
-                      <TouchableOpacity
-                        style={styles.scannerButton}
-                        onPress={() => openScanner("referral")}
+                      <Text
+                        style={[
+                          styles.comingSoonBannerText,
+                          (isTinyScreen || isSmallScreen) && {
+                            fontSize: 13,
+                            lineHeight: 19,
+                          },
+                        ]}
                       >
-                        <Ionicons
-                          name="qr-code-outline"
-                          size={20}
-                          color="#E25A17"
-                        />
-                      </TouchableOpacity>
-                    </View>
-                    <Text style={styles.helperText}>
-                      Enter your referrer&apos;s code if you were invited by
-                      someone.
-                    </Text>
-                    <Text style={[styles.helperText, { marginTop: 4 }]}>
-                      Maximum 5 characters
-                    </Text>
-                  </View>
-                </View>
-              </>
-            )}
-
-            {currentStep === 3 && (
-              <>
-                <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>Account Credentials</Text>
-                  <View style={styles.sectionUnderline} />
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>
-                      Email Address <Text style={styles.required}>*</Text>
-                    </Text>
-                    <TextInput
-                      style={[
-                        styles.input,
-                        errors.emailAddress && styles.inputError,
-                      ]}
-                      placeholder="your.email@example.com"
-                      placeholderTextColor="#999"
-                      keyboardType="email-address"
-                      autoCapitalize="none"
-                      value={emailAddress}
-                      onChangeText={(text) => {
-                        setEmailAddress(filterEmailInput(text));
-                        if (errors.emailAddress) {
-                          setErrors((prev) => {
-                            const { emailAddress, ...rest } = prev;
-                            return rest;
-                          });
-                        }
-                      }}
-                    />
-                    {errors.emailAddress && (
-                      <Text style={styles.errorText}>
-                        {errors.emailAddress}
+                        {t("register.contactInfoComingSoon")}
                       </Text>
-                    )}
+                    </View>
                   </View>
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>
-                      Password <Text style={styles.required}>*</Text>
-                    </Text>
-                    <View
+                  <View
+                    style={[
+                      styles.section,
+                      {
+                        marginTop: isCompact || isSmallScreen ? 14 : 20,
+                        padding: isTinyScreen
+                          ? 12
+                          : isCompact || isSmallScreen
+                            ? 14
+                            : 20,
+                        borderRadius: isTinyScreen || isSmallScreen ? 12 : 16,
+                      },
+                    ]}
+                  >
+                    <Text
                       style={[
-                        styles.passwordContainer,
-                        errors.password && styles.inputError,
+                        styles.sectionTitle,
+                        isTinyScreen && { fontSize: 13, marginBottom: 4 },
+                        isSmallScreen && !isTinyScreen && { marginBottom: 6 },
                       ]}
                     >
+                      {t("register.accountType")}
+                    </Text>
+                    <View style={styles.sectionUnderline} />
+                    <Text
+                      style={[
+                        styles.inputLabel,
+                        (isTinyScreen || isSmallScreen) && {
+                          fontSize: 12,
+                          marginBottom: 6,
+                        },
+                      ]}
+                    >
+                      {t("register.agentOrInvestor")}{" "}
+                      <Text style={styles.required}>*</Text>
+                    </Text>
+                    <TouchableOpacity
+                      style={[
+                        styles.radioContainer,
+                        (isTinyScreen || isSmallScreen) && { marginBottom: 12 },
+                      ]}
+                      onPress={() => setIsAgent(true)}
+                    >
+                      <View
+                        style={[
+                          styles.radio,
+                          isAgent === true && styles.radioChecked,
+                        ]}
+                      >
+                        {isAgent === true && <View style={styles.radioDot} />}
+                      </View>
+                      <Text style={styles.radioLabel}>
+                        {t("register.imAgent")}
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.radioContainer}
+                      onPress={() => setIsAgent(false)}
+                    >
+                      <View
+                        style={[
+                          styles.radio,
+                          isAgent === false && styles.radioChecked,
+                        ]}
+                      >
+                        {isAgent === false && <View style={styles.radioDot} />}
+                      </View>
+                      <Text
+                        style={[
+                          styles.radioLabel,
+                          (isTinyScreen || isSmallScreen) && { fontSize: 13 },
+                        ]}
+                      >
+                        {t("register.imInvestor")}
+                      </Text>
+                    </TouchableOpacity>
+                    {errors.isAgent && (
+                      <Text style={styles.errorText}>{errors.isAgent}</Text>
+                    )}
+                    {isAgent !== null && (
+                      <View style={styles.agentQRSection}>
+                        <View style={styles.agentQRHeader}>
+                          <MaterialCommunityIcons
+                            name="shield-star"
+                            size={24}
+                            color="#E25A17"
+                          />
+                          <Text style={styles.agentQRTitle}>
+                            {t("register.referralCode")}
+                          </Text>
+                        </View>
+                        <Text style={styles.agentNumberSubtext}>
+                          {t("register.referralCodeSubtext")}
+                        </Text>
+                      </View>
+                    )}
+                    <View style={[styles.inputGroup, { marginTop: 20 }]}>
+                      <Text style={styles.inputLabel}>
+                        {t("register.referrersCode")}
+                      </Text>
+                      <View style={styles.scannerInputContainer}>
+                        <TextInput
+                          style={styles.scannerInput}
+                          placeholder={t("register.placeholderReferralCode")}
+                          placeholderTextColor="#999"
+                          autoCorrect={false}
+                          autoComplete="off"
+                          value={referralCode}
+                          onChangeText={(text) =>
+                            setReferralCode(filterReferralInput(text))
+                          }
+                          autoCapitalize="characters"
+                          maxLength={5}
+                        />
+                        {isProcessingQR ? (
+                          <View
+                            style={[
+                              styles.scannerButton,
+                              { paddingHorizontal: 16 },
+                            ]}
+                          >
+                            <ActivityIndicator size="small" color="#E25A17" />
+                          </View>
+                        ) : (
+                          <>
+                            <TouchableOpacity
+                              style={styles.scannerButton}
+                              onPress={() => handleUploadImage("referral")}
+                            >
+                              <Ionicons
+                                name="image-outline"
+                                size={20}
+                                color="#E25A17"
+                              />
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              style={styles.scannerButton}
+                              onPress={() => openScanner("referral")}
+                            >
+                              <Ionicons
+                                name="qr-code-outline"
+                                size={20}
+                                color="#E25A17"
+                              />
+                            </TouchableOpacity>
+                          </>
+                        )}
+                      </View>
+                      <Text style={styles.helperText}>
+                        {t("register.referralCodeHint")}
+                      </Text>
+                      <Text style={[styles.helperText, { marginTop: 4 }]}>
+                        {t("register.maxChars")}
+                      </Text>
+                    </View>
+                  </View>
+                </>
+              )}
+
+              {currentStep === 3 && (
+                <>
+                  <View
+                    style={[
+                      styles.section,
+                      isTinyScreen && { padding: 12, borderRadius: 12 },
+                      (isCompact || isSmallScreen) && { padding: 14 },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.sectionTitle,
+                        isTinyScreen && { fontSize: 13, marginBottom: 4 },
+                        isSmallScreen && !isTinyScreen && { marginBottom: 6 },
+                      ]}
+                    >
+                      {t("register.accountCredentials")}
+                    </Text>
+                    <View style={styles.sectionUnderline} />
+                    <View
+                      style={[
+                        styles.inputGroup,
+                        (isTinyScreen || isSmallScreen) && { marginBottom: 14 },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.inputLabel,
+                          (isTinyScreen || isSmallScreen) && {
+                            fontSize: 12,
+                            marginBottom: 6,
+                          },
+                        ]}
+                      >
+                        {t("register.emailAddress")}{" "}
+                        <Text style={styles.required}>*</Text>
+                      </Text>
                       <TextInput
-                        style={styles.passwordInput}
-                        placeholder="Create a secure password"
+                        style={[
+                          styles.input,
+                          errors.emailAddress && styles.inputError,
+                          (isTinyScreen || isSmallScreen) && {
+                            minHeight: 44,
+                            paddingVertical: 10,
+                            fontSize: 14,
+                          },
+                        ]}
+                        placeholder={t("register.placeholderEmail")}
                         placeholderTextColor="#999"
-                        secureTextEntry={!showPassword}
-                        value={password}
+                        keyboardType="email-address"
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                        autoComplete="off"
+                        value={emailAddress}
                         onChangeText={(text) => {
-                          setPassword(text);
-                          if (errors.password) {
+                          setEmailAddress(filterEmailInput(text));
+                          if (errors.emailAddress) {
                             setErrors((prev) => {
-                              const { password, ...rest } = prev;
+                              const { emailAddress, ...rest } = prev;
                               return rest;
                             });
                           }
                         }}
                       />
-                      <TouchableOpacity
-                        style={styles.eyeButton}
-                        onPress={() => setShowPassword(!showPassword)}
-                      >
-                        <Ionicons
-                          name={showPassword ? "eye-off" : "eye"}
-                          size={20}
-                          color="#666"
-                        />
-                      </TouchableOpacity>
+                      {errors.emailAddress && (
+                        <Text style={styles.errorText}>
+                          {errors.emailAddress}
+                        </Text>
+                      )}
                     </View>
-                  </View>
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>
-                      Confirm Password <Text style={styles.required}>*</Text>
-                    </Text>
                     <View
                       style={[
-                        styles.passwordContainer,
-                        errors.confirmPassword && styles.inputError,
+                        styles.inputGroup,
+                        (isTinyScreen || isSmallScreen) && { marginBottom: 14 },
                       ]}
                     >
-                      <TextInput
-                        style={styles.passwordInput}
-                        placeholder="Re-enter your password"
-                        placeholderTextColor="#999"
-                        secureTextEntry={!showConfirmPassword}
-                        value={confirmPassword}
-                        onChangeText={(text) => {
-                          setConfirmPassword(text);
-                          if (errors.confirmPassword) {
-                            setErrors((prev) => {
-                              const { confirmPassword, ...rest } = prev;
-                              return rest;
-                            });
-                          }
-                        }}
-                      />
-                      <TouchableOpacity
-                        style={styles.eyeButton}
-                        onPress={() =>
-                          setShowConfirmPassword(!showConfirmPassword)
-                        }
+                      <Text
+                        style={[
+                          styles.inputLabel,
+                          (isTinyScreen || isSmallScreen) && {
+                            fontSize: 12,
+                            marginBottom: 6,
+                          },
+                        ]}
                       >
-                        <Ionicons
-                          name={showConfirmPassword ? "eye-off" : "eye"}
-                          size={20}
-                          color="#666"
-                        />
-                      </TouchableOpacity>
-                    </View>
-                    {errors.confirmPassword && (
-                      <Text style={styles.errorText}>
-                        {errors.confirmPassword}
+                        {t("register.password")}{" "}
+                        <Text style={styles.required}>*</Text>
                       </Text>
-                    )}
-                    {errors.password && (
-                      <Text style={styles.errorText}>{errors.password}</Text>
-                    )}
+                      <View
+                        style={[
+                          styles.passwordContainer,
+                          errors.password && styles.inputError,
+                          (isTinyScreen || isSmallScreen) && {
+                            minHeight: 44,
+                          },
+                        ]}
+                      >
+                        <TextInput
+                          style={[
+                            styles.passwordInput,
+                            (isTinyScreen || isSmallScreen) && {
+                              fontSize: 14,
+                              paddingVertical: 10,
+                            },
+                          ]}
+                          placeholder={t("register.placeholderPassword")}
+                          placeholderTextColor="#999"
+                          autoCorrect={false}
+                          autoComplete="new-password"
+                          secureTextEntry={!showPassword}
+                          value={password}
+                          onChangeText={(text) => {
+                            setPassword(filterPasswordInput(text));
+                            if (errors.password) {
+                              setErrors((prev) => {
+                                const { password, ...rest } = prev;
+                                return rest;
+                              });
+                            }
+                          }}
+                        />
+                        <TouchableOpacity
+                          style={styles.eyeButton}
+                          onPress={() => setShowPassword(!showPassword)}
+                        >
+                          <Ionicons
+                            name={showPassword ? "eye-off" : "eye"}
+                            size={20}
+                            color="#666"
+                          />
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                    <View
+                      style={[
+                        styles.inputGroup,
+                        (isTinyScreen || isSmallScreen) && { marginBottom: 14 },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.inputLabel,
+                          (isTinyScreen || isSmallScreen) && {
+                            fontSize: 12,
+                            marginBottom: 6,
+                          },
+                        ]}
+                      >
+                        {t("register.confirmPassword")}{" "}
+                        <Text style={styles.required}>*</Text>
+                      </Text>
+                      <View
+                        style={[
+                          styles.passwordContainer,
+                          errors.confirmPassword && styles.inputError,
+                          (isTinyScreen || isSmallScreen) && {
+                            minHeight: 44,
+                          },
+                        ]}
+                      >
+                        <TextInput
+                          style={[
+                            styles.passwordInput,
+                            (isTinyScreen || isSmallScreen) && {
+                              fontSize: 14,
+                              paddingVertical: 10,
+                            },
+                          ]}
+                          placeholder={t("register.placeholderConfirmPassword")}
+                          placeholderTextColor="#999"
+                          autoCorrect={false}
+                          autoComplete="off"
+                          secureTextEntry={!showConfirmPassword}
+                          value={confirmPassword}
+                          onChangeText={(text) => {
+                            setConfirmPassword(filterPasswordInput(text));
+                            if (errors.confirmPassword) {
+                              setErrors((prev) => {
+                                const { confirmPassword, ...rest } = prev;
+                                return rest;
+                              });
+                            }
+                          }}
+                        />
+                        <TouchableOpacity
+                          style={styles.eyeButton}
+                          onPress={() =>
+                            setShowConfirmPassword(!showConfirmPassword)
+                          }
+                        >
+                          <Ionicons
+                            name={showConfirmPassword ? "eye-off" : "eye"}
+                            size={20}
+                            color="#666"
+                          />
+                        </TouchableOpacity>
+                      </View>
+                      {errors.confirmPassword && (
+                        <Text style={styles.errorText}>
+                          {errors.confirmPassword}
+                        </Text>
+                      )}
+                      {errors.password && (
+                        <Text style={styles.errorText}>{errors.password}</Text>
+                      )}
+                    </View>
                   </View>
-                </View>
-                {registerError ? (
-                  <View style={styles.errorBanner}>
-                    <Text style={styles.errorBannerText}>{registerError}</Text>
-                  </View>
-                ) : null}
-              </>
-            )}
-          </ScrollView>
-
-          <View style={styles.footer}>
-            <TouchableOpacity
+                  {registerError ? (
+                    <View style={styles.errorBanner}>
+                      <Text style={styles.errorBannerText}>
+                        {registerError}
+                      </Text>
+                    </View>
+                  ) : null}
+                </>
+              )}
+            </KeyboardAwareScrollView>
+            <View
               style={[
-                styles.nextButton,
-                registerLoading && styles.nextButtonDisabled,
+                styles.footer,
+                {
+                  marginHorizontal: -horizontalPadding,
+                  paddingHorizontal: horizontalPadding,
+                  paddingVertical: isLargeScreen
+                    ? 12
+                    : isCompact || isSmallScreen
+                      ? 10
+                      : 14,
+                  paddingBottom:
+                    (isLargeScreen
+                      ? 12
+                      : isCompact || isSmallScreen
+                        ? 10
+                        : 14) + footerBottomPadding,
+                },
               ]}
-              onPress={handleNextStep}
-              activeOpacity={0.8}
-              disabled={registerLoading}
             >
-              <LinearGradient
-                colors={["#E25A17", "#F28934"]}
-                style={styles.nextButtonGradient}
+              <TouchableOpacity
+                style={[
+                  styles.nextButton,
+                  (registerLoading || isProcessingQR) &&
+                    styles.nextButtonDisabled,
+                ]}
+                onPress={handleNextStep}
+                activeOpacity={0.8}
+                disabled={registerLoading || isProcessingQR}
               >
-                {registerLoading ? (
-                  <ActivityIndicator color="#FFFFFF" size="small" />
-                ) : (
-                  <Text style={styles.nextButtonText}>
-                    {currentStep === 3 ? "Register" : "Next Step"}
-                  </Text>
-                )}
-              </LinearGradient>
-            </TouchableOpacity>
-            <Text style={styles.termsText}>
-              By continuing, you agree to our Terms of Service
-            </Text>
+                <LinearGradient
+                  colors={["#E25A17", "#F28934"]}
+                  style={[
+                    styles.nextButtonGradient,
+                    (isCompact || isSmallScreen) && { paddingVertical: 10 },
+                  ]}
+                >
+                  {registerLoading ? (
+                    <ActivityIndicator color="#FFFFFF" size="small" />
+                  ) : (
+                    <Text
+                      style={[
+                        styles.nextButtonText,
+                        isTinyScreen && { fontSize: 14 },
+                      ]}
+                    >
+                      {currentStep === 3
+                        ? t("register.registerButton")
+                        : t("register.nextStep")}
+                    </Text>
+                  )}
+                </LinearGradient>
+              </TouchableOpacity>
+              <Text style={styles.termsText}>{t("register.termsText")}</Text>
+            </View>
           </View>
-        </KeyboardAvoidingView>
+        </View>
 
         <Modal
           visible={isCountryModalVisible}
@@ -932,7 +1462,9 @@ export default function Register() {
           <View style={styles.modalOverlay}>
             <View style={styles.modalContainer}>
               <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Select Country</Text>
+                <Text style={styles.modalTitle}>
+                  {t("register.selectCountry")}
+                </Text>
                 <TouchableOpacity
                   onPress={() => setIsCountryModalVisible(false)}
                 >
@@ -946,7 +1478,11 @@ export default function Register() {
                     style={styles.countryOption}
                     onPress={() => {
                       setSelectedCountryCode(country.code);
-                      setPhoneNumber(""); // Reset phone number when country changes
+                      setPhoneNumber("");
+                      setErrors((prev) => {
+                        const { phoneNumber: _, ...rest } = prev;
+                        return rest;
+                      });
                       setIsCountryModalVisible(false);
                     }}
                   >
@@ -974,16 +1510,18 @@ export default function Register() {
               <View style={styles.qrPermissionContainer}>
                 <Ionicons name="camera-outline" size={64} color="#666" />
                 <Text style={styles.qrPermissionText}>
-                  Camera Access Required
+                  {t("register.cameraAccessRequired")}
                 </Text>
                 <Text style={styles.qrPermissionSubText}>
-                  Please grant camera permission to scan referral QR codes.
+                  {t("register.cameraPermissionHint")}
                 </Text>
                 <TouchableOpacity
                   style={styles.qrCloseButton}
                   onPress={() => setIsQRScannerVisible(false)}
                 >
-                  <Text style={styles.qrCloseButtonText}>Go Back</Text>
+                  <Text style={styles.qrCloseButtonText}>
+                    {t("register.goBack")}
+                  </Text>
                 </TouchableOpacity>
               </View>
             ) : (
@@ -999,10 +1537,11 @@ export default function Register() {
                   <View style={styles.qrTopOverlay}>
                     <Text style={styles.qrInstructionText}>
                       {activeQRField === "referral" &&
-                        "Scan Referrer's QR Code"}
-                      {activeQRField === "line" && "Scan LINE QR Code"}
-                      {activeQRField === "viber" && "Scan Viber QR Code"}
-                      {activeQRField === "whatsapp" && "Scan WhatsApp QR Code"}
+                        t("register.scanReferralQR")}
+                      {activeQRField === "line" && t("register.scanLineQR")}
+                      {activeQRField === "viber" && t("register.scanViberQR")}
+                      {activeQRField === "whatsapp" &&
+                        t("register.scanWhatsappQR")}
                     </Text>
                   </View>
                   <View style={styles.qrCenterRow}>
@@ -1015,7 +1554,31 @@ export default function Register() {
                     </View>
                     <View style={styles.qrSideOverlay} />
                   </View>
-                  <View style={styles.qrBottomOverlay}>
+                  <View
+                    style={[
+                      styles.qrBottomOverlay,
+                      { flexDirection: "row", gap: 16 },
+                    ]}
+                  >
+                    <TouchableOpacity
+                      style={styles.qrCancelButton}
+                      onPress={() => {
+                        setIsQRScannerVisible(false);
+                        if (activeQRField) {
+                          handleUploadImage(activeQRField);
+                        }
+                        setActiveQRField(null);
+                      }}
+                    >
+                      <Text style={styles.qrCancelButtonText}>
+                        <Ionicons
+                          name="image-outline"
+                          size={16}
+                          color="#E25A17"
+                        />{" "}
+                        {t("register.uploadImage") || "Upload"}
+                      </Text>
+                    </TouchableOpacity>
                     <TouchableOpacity
                       style={styles.qrCancelButton}
                       onPress={() => {
@@ -1023,13 +1586,130 @@ export default function Register() {
                         setActiveQRField(null);
                       }}
                     >
-                      <Text style={styles.qrCancelButtonText}>Cancel</Text>
+                      <Text style={styles.qrCancelButtonText}>
+                        {t("register.cancel")}
+                      </Text>
                     </TouchableOpacity>
                   </View>
                 </View>
               </CameraView>
             )}
           </View>
+        </Modal>
+
+        {/* Language Modal - matches Welcome language options design */}
+        <Modal
+          visible={languageModalVisible}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setLanguageModalVisible(false)}
+        >
+          <TouchableOpacity
+            style={[
+              styles.languageModalOverlay,
+              { paddingHorizontal: Math.max(16, horizontalPadding) },
+            ]}
+            activeOpacity={1}
+            onPress={() => setLanguageModalVisible(false)}
+          >
+            <View
+              style={[
+                styles.languageModalContent,
+                {
+                  maxWidth: Math.min(360, width - 32),
+                  maxHeight: isShortScreen ? height * 0.85 : undefined,
+                  padding: isSmallScreen ? 18 : 24,
+                },
+              ]}
+              onStartShouldSetResponder={() => true}
+            >
+              <View style={styles.languageModalHeader}>
+                <Ionicons
+                  name="globe-outline"
+                  size={isSmallScreen ? 32 : 40}
+                  color="#E25A17"
+                />
+                <Text
+                  style={[
+                    styles.languageModalTitle,
+                    isSmallScreen && { fontSize: 16 },
+                  ]}
+                >
+                  {t("profile.selectLanguage")}
+                </Text>
+                <Text
+                  style={[
+                    styles.languageModalSubtitle,
+                    isSmallScreen && { fontSize: 12 },
+                  ]}
+                >
+                  {t("profile.defaultIsEnglish")}
+                </Text>
+              </View>
+              <ScrollView
+                style={isShortScreen ? { maxHeight: 200 } : undefined}
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+              >
+                {SUPPORTED_LANGUAGES.map(({ label, flag }) => (
+                  <TouchableOpacity
+                    key={label}
+                    style={[
+                      styles.languageOption,
+                      (isSmallScreen || isTinyScreen) && {
+                        paddingVertical: 12,
+                        paddingHorizontal: 14,
+                      },
+                      language === label && styles.languageOptionSelected,
+                    ]}
+                    onPress={() => handleSelectLanguage(label)}
+                    activeOpacity={0.7}
+                  >
+                    <Text
+                      style={[
+                        styles.languageOptionFlag,
+                        (isSmallScreen || isTinyScreen) && { fontSize: 20 },
+                      ]}
+                    >
+                      {flag}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.languageOptionText,
+                        (isSmallScreen || isTinyScreen) && { fontSize: 15 },
+                        language === label && styles.languageOptionTextSelected,
+                      ]}
+                    >
+                      {label}
+                    </Text>
+                    {language === label && (
+                      <Ionicons
+                        name="checkmark-circle"
+                        size={isSmallScreen || isTinyScreen ? 20 : 22}
+                        color="#E25A17"
+                      />
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+              <TouchableOpacity
+                style={[
+                  styles.languageModalCancel,
+                  (isSmallScreen || isTinyScreen) && { marginTop: 8 },
+                ]}
+                onPress={() => setLanguageModalVisible(false)}
+              >
+                <Text
+                  style={[
+                    styles.languageModalCancelText,
+                    (isSmallScreen || isTinyScreen) && { fontSize: 15 },
+                  ]}
+                >
+                  {t("common.cancel")}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
         </Modal>
       </SafeAreaView>
     </>
@@ -1039,6 +1719,7 @@ export default function Register() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F5F5F5" },
   keyboardView: { flex: 1 },
+  keyboardAvoidWrap: { flex: 1 },
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -1054,7 +1735,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   headerTitle: { fontSize: 18, fontWeight: "600", color: "#E25A17" },
-  placeholder: { width: 40 },
+  languageButton: {
+    backgroundColor: "#FFF5F0",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(226, 90, 23, 0.2)",
+  },
   progressContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -1132,10 +1819,11 @@ const styles = StyleSheet.create({
     borderColor: "#E0E0E0",
     borderRadius: 8,
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 14,
+    paddingVertical: 14,
+    fontSize: 15,
     color: "#333",
     backgroundColor: "#FAFAFA",
+    minHeight: 50,
   },
   phoneInputContainer: { flexDirection: "row", gap: 8 },
   countrySelector: {
@@ -1157,10 +1845,11 @@ const styles = StyleSheet.create({
     borderColor: "#E0E0E0",
     borderRadius: 8,
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 14,
+    paddingVertical: 14,
+    fontSize: 15,
     color: "#333",
     backgroundColor: "#FAFAFA",
+    minHeight: 50,
   },
   checkboxContainer: {
     flexDirection: "row",
@@ -1233,6 +1922,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
+  scanUploadButtonRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
   qrButton: {
     width: 48,
     height: 48,
@@ -1261,17 +1954,22 @@ const styles = StyleSheet.create({
   },
   eyeButton: { padding: 12 },
   footer: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
+    marginTop: 12,
     backgroundColor: "#FFFFFF",
     paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingVertical: 14,
     borderTopWidth: 1,
     borderTopColor: "#E0E0E0",
+    alignItems: "center",
   },
-  nextButton: { borderRadius: 12, overflow: "hidden", marginBottom: 12 },
+  nextButton: {
+    borderRadius: 12,
+    overflow: "hidden",
+    marginBottom: 12,
+    alignSelf: "center",
+    maxWidth: 320,
+    width: "85%",
+  },
   nextButtonDisabled: { opacity: 0.7 },
   nextButtonGradient: { paddingVertical: 16, alignItems: "center" },
   nextButtonText: { fontSize: 16, fontWeight: "600", color: "#FFFFFF" },
@@ -1416,12 +2114,12 @@ const styles = StyleSheet.create({
   },
   qrCenterRow: {
     flexDirection: "row",
-    height: Dimensions.get("window").width * 0.7,
+    height: getScreenWidth() * 0.7,
   },
   qrSideOverlay: { flex: 1, backgroundColor: "rgba(0, 0, 0, 0.7)" },
   qrFrameContainer: {
-    width: Dimensions.get("window").width * 0.7,
-    height: Dimensions.get("window").width * 0.7,
+    width: getScreenWidth() * 0.7,
+    height: getScreenWidth() * 0.7,
     position: "relative" as const,
     justifyContent: "center",
     alignItems: "center",
@@ -1641,5 +2339,97 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 4,
     marginLeft: 4,
+  },
+  // Language Modal
+  languageModalOverlay: {
+    flex: 1,
+    backgroundColor: "transparent",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 20,
+  },
+  languageModalContent: {
+    width: "100%",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    ...Platform.select({
+      ios: {
+        shadowColor: "#E25A17",
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.5,
+        shadowRadius: 24,
+      },
+      android: { elevation: 16 },
+    }),
+  },
+  languageModalHeader: {
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  languageModalTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#333",
+    marginTop: 12,
+    marginBottom: 4,
+    textAlign: "center",
+  },
+  languageModalSubtitle: {
+    fontSize: 13,
+    color: "#666",
+    textAlign: "center",
+  },
+  languageOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    marginBottom: 8,
+    backgroundColor: "#F8F8F8",
+    borderWidth: 1,
+    borderColor: "transparent",
+  },
+  languageOptionSelected: {
+    backgroundColor: "#FFF0E8",
+    borderWidth: 2,
+    borderColor: "#E25A17",
+  },
+  languageOptionFlag: {
+    fontSize: 22,
+    marginRight: 12,
+  },
+  languageOptionText: {
+    fontSize: 16,
+    color: "#333",
+    flex: 1,
+  },
+  languageOptionTextSelected: {
+    fontWeight: "600",
+    color: "#E25A17",
+  },
+  languageModalCancel: {
+    marginTop: 12,
+    paddingVertical: 12,
+    alignItems: "center",
+  },
+  languageModalCancelText: {
+    fontSize: 16,
+    color: "#666",
+  },
+  comingSoonBanner: {
+    backgroundColor: "#FFF5F0",
+    borderRadius: 12,
+    padding: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    borderLeftWidth: 4,
+    borderLeftColor: "#E25A17",
+  },
+  comingSoonBannerText: {
+    fontSize: 14,
+    color: "#666",
+    textAlign: "center",
+    lineHeight: 20,
   },
 });

@@ -1,0 +1,89 @@
+{
+    "cli": {
+        "version": ">= 10.2.4",
+        "appVersionSource": "remote"
+    },
+    "build": {
+        "development": {
+            "distribution": "internal",
+            "channel": "development",
+            "ios": {
+                "simulator": false,
+                "buildConfiguration": "Debug",
+                "distribution": "internal",
+                "autoIncrement": "buildNumber"
+            },
+            "android": {
+                "gradleCommand": ":app:assembleDebug",
+                "buildType": "apk"
+            },
+            "env": {
+                "EXPO_PUBLIC_WALLET_BACKEND_URL": "https://api.inspirewallet.app",
+                "EXPO_PUBLIC_API_KEY": "eb207ddd91dfd36433dfcf7a32528c793f0694589f0a6485d34061a6f74c5ff1",
+                "EXPO_PUBLIC_NATIVE_NOTIFY_APP_ID": "33489",
+                "EXPO_PUBLIC_NATIVE_NOTIFY_APP_TOKEN": "usmMgLOOPspxAgj8pD214K"
+            }
+        },
+        "preview": {
+            "distribution": "internal",
+            "channel": "preview",
+            "android": {
+                "gradleCommand": ":app:assembleRelease",
+                "buildType": "apk"
+            },
+            "env": {
+                "EXPO_PUBLIC_WALLET_BACKEND_URL": "https://api.inspirewallet.app",
+                "EXPO_PUBLIC_API_KEY": "eb207ddd91dfd36433dfcf7a32528c793f0694589f0a6485d34061a6f74c5ff1",
+                "EXPO_PUBLIC_NATIVE_NOTIFY_APP_ID": "33489",
+                "EXPO_PUBLIC_NATIVE_NOTIFY_APP_TOKEN": "usmMgLOOPspxAgj8pD214K"
+            }
+        },
+        "production": {
+            "channel": "production",
+            "autoIncrement": true,
+            "ios": {
+                "simulator": false,
+                "buildConfiguration": "Release",
+                "distribution": "store"
+            },
+            "android": {
+                "gradleCommand": ":app:bundleRelease",
+                "buildType": "app-bundle"
+            },
+            "env": {
+                "EXPO_PUBLIC_WALLET_BACKEND_URL": "https://api.inspirewallet.app",
+                "EXPO_PUBLIC_API_KEY": "eb207ddd91dfd36433dfcf7a32528c793f0694589f0a6485d34061a6f74c5ff1",
+                "EXPO_PUBLIC_NATIVE_NOTIFY_APP_ID": "33489",
+                "EXPO_PUBLIC_NATIVE_NOTIFY_APP_TOKEN": "usmMgLOOPspxAgj8pD214K"
+            }
+        },
+        "development-simulator": {
+            "distribution": "internal",
+            "ios": {
+                "simulator": true
+            },
+            "env": {
+                "EXPO_PUBLIC_WALLET_BACKEND_URL": "https://api.inspirewallet.app",
+                "EXPO_PUBLIC_API_KEY": "eb207ddd91dfd36433dfcf7a32528c793f0694589f0a6485d34061a6f74c5ff1",
+                "EXPO_PUBLIC_NATIVE_NOTIFY_APP_ID": "33489",
+                "EXPO_PUBLIC_NATIVE_NOTIFY_APP_TOKEN": "usmMgLOOPspxAgj8pD214K"
+            }
+        }
+    },
+    "submit": {
+        "ios": {
+            "ios": {
+                "appleId": "perezbrian.sti@gmail.com",
+                "ascAppId": "6642689775",
+                "appleTeamId": "PMKFU3M49L"
+            }
+        },
+        "production": {
+            "ios": {
+                "appleId": "perezbrian.sti@gmail.com",
+                "ascAppId": "6642689775",
+                "appleTeamId": "PMKFU3M49L"
+            }
+        }
+    }
+}

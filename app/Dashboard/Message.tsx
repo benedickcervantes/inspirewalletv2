@@ -5,8 +5,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Image,
   Keyboard,
   KeyboardAvoidingView,
+  Linking,
   Modal,
   Platform,
   RefreshControl,
@@ -15,10 +17,19 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { deleteMessage, editMessage, getMessages, markAllMessagesAsRead, sendMessage } from "../../configs/api";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
+import {
+  deleteMessage,
+  editMessage,
+  getMessages,
+  sendMessage,
+} from "../../configs/api";
+import { useLanguage } from "../../context/LanguageContext";
 import { subscribeToConnectionStatus } from "../../lib/connectionStatus";
 import { isServiceUnderMaintenance } from "../../lib/maintenance";
 import { subscribeToNewSupportMessage } from "../../lib/messagingEvents";
@@ -43,13 +54,15 @@ interface DisplayMessage {
   status: "SENT" | "READ";
 }
 
-const formatTime = (date: Date) => {
+const formatTime = (date: Date, lang: string) => {
   const now = new Date();
   const isToday = date.toDateString() === now.toDateString();
+  const locale = lang === "ar" ? "ar-SA" : lang === "ko" ? "ko-KR" : lang === "ja" ? "ja-JP" : "en-US";
+
   if (isToday) {
-    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    return date.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
   }
-  return date.toLocaleDateString([], {
+  return date.toLocaleDateString(locale, {
     month: "short",
     day: "numeric",
     hour: "2-digit",
@@ -86,10 +99,22 @@ export default function Message() {
   const [showTicketCreation, setShowTicketCreation] = useState(false);
   const [viewMode, setViewMode] = useState<"messages" | "tickets">("messages");
   const [accessToken, setAccessToken] = useState<string | null>(null);
-  const [selectedMessage, setSelectedMessage] = useState<DisplayMessage | null>(null);
+  const [selectedMessage, setSelectedMessage] = useState<DisplayMessage | null>(
+    null,
+  );
   const [showMessageActions, setShowMessageActions] = useState(false);
-  const [editingMessage, setEditingMessage] = useState<DisplayMessage | null>(null);
+  const [editingMessage, setEditingMessage] = useState<DisplayMessage | null>(
+    null,
+  );
   const [editText, setEditText] = useState("");
+  const [ticketSelected, setTicketSelected] = useState(false);
+  const [ticketListRefreshKey, setTicketListRefreshKey] = useState(0);
+  const { t, language } = useLanguage();
+
+  // Debug ticket selection
+  useEffect(() => {
+    console.log("[Message] ticketSelected state changed:", ticketSelected);
+  }, [ticketSelected]);
 
   // Check maintenance status on focus
   useFocusEffect(
@@ -106,17 +131,17 @@ export default function Message() {
         }
       };
       checkMaintenance();
-    }, [])
+    }, []),
   );
 
   const fetchMessages = useCallback(async () => {
     if (isUnderMaintenance) return;
-    
+
     const token = await AsyncStorage.getItem("access_token");
     setAccessToken(token);
-    
+
     if (!token) {
-      setError("Please log in to view messages.");
+      setError(t("support.loginRequired"));
       setLoading(false);
       setRefreshing(false);
       return;
@@ -126,14 +151,8 @@ export default function Message() {
     if (result.success && result.messages) {
       setMessages(mapApiToDisplay(result.messages as ApiMessage[]));
       setError(null);
-      // Mark all as read when viewing, then refetch to show updated status
-      await markAllMessagesAsRead(token);
-      const refetch = await getMessages(token, { page: 1, limit: 100 });
-      if (refetch.success && refetch.messages) {
-        setMessages(mapApiToDisplay(refetch.messages as ApiMessage[]));
-      }
     } else {
-      setError(result.error || "Failed to load messages.");
+      setError(result.error || t("support.failedToLoad"));
     }
     setLoading(false);
     setRefreshing(false);
@@ -150,7 +169,7 @@ export default function Message() {
 
     const accessToken = await AsyncStorage.getItem("access_token");
     if (!accessToken) {
-      setError("Please log in to send messages.");
+      setError(t("support.loginRequired"));
       return;
     }
 
@@ -165,7 +184,7 @@ export default function Message() {
         scrollRef.current?.scrollToEnd({ animated: true });
       }, 150);
     } else {
-      setError(result.error || "Failed to send message.");
+      setError(result.error || t("support.failedToSend"));
     }
   }, [message, sending, fetchMessages]);
 
@@ -185,30 +204,34 @@ export default function Message() {
   const handleDelete = useCallback(() => {
     if (!selectedMessage) return;
     setShowMessageActions(false);
-    
+
     Alert.alert(
-      "Delete Message",
-      "Choose delete option:",
+      t("support.deleteMessage"),
+      t("support.deleteConfirm"),
       [
         {
-          text: "Cancel",
+          text: t("common.cancel"),
           style: "cancel",
         },
         {
-          text: "Delete for Me",
+          text: t("support.deleteForMe"),
           onPress: async () => {
             const token = await AsyncStorage.getItem("access_token");
             if (!token) return;
-            const result = await deleteMessage(token, selectedMessage.id, false);
+            const result = await deleteMessage(
+              token,
+              selectedMessage.id,
+              false,
+            );
             if (result.success) {
               await fetchMessages();
             } else {
-              Alert.alert("Error", result.error || "Failed to delete message");
+              Alert.alert(t("common.error"), result.error || t("support.failedToDelete"));
             }
           },
         },
         {
-          text: "Delete for Everyone",
+          text: t("support.deleteForEveryone"),
           style: "destructive",
           onPress: async () => {
             const token = await AsyncStorage.getItem("access_token");
@@ -217,18 +240,18 @@ export default function Message() {
             if (result.success) {
               await fetchMessages();
             } else {
-              Alert.alert("Error", result.error || "Failed to delete message");
+              Alert.alert(t("common.error"), result.error || t("support.failedToDelete"));
             }
           },
         },
       ],
-      { cancelable: true }
+      { cancelable: true },
     );
   }, [selectedMessage, fetchMessages]);
 
   const handleSaveEdit = useCallback(async () => {
     if (!editingMessage || !editText.trim()) return;
-    
+
     const token = await AsyncStorage.getItem("access_token");
     if (!token) return;
 
@@ -238,7 +261,7 @@ export default function Message() {
       setEditText("");
       await fetchMessages();
     } else {
-      Alert.alert("Error", result.error || "Failed to edit message");
+      Alert.alert(t("common.error"), result.error || t("support.failedToEdit"));
     }
   }, [editingMessage, editText, fetchMessages]);
 
@@ -251,29 +274,33 @@ export default function Message() {
     useCallback(() => {
       setLoading(true);
       fetchMessages();
-    }, [fetchMessages])
+    }, [fetchMessages]),
   );
 
   useEffect(() => {
     const unsubscribe = subscribeToNewSupportMessage(() => {
       fetchMessages();
     });
-    return () => { unsubscribe(); };
+    return () => {
+      unsubscribe();
+    };
   }, [fetchMessages]);
 
   useEffect(() => {
     const unsubscribe = subscribeToConnectionStatus(setIsOnline);
-    return () => { unsubscribe(); };
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   useEffect(() => {
     const showSub = Keyboard.addListener(
       Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
-      () => setKeyboardVisible(true)
+      () => setKeyboardVisible(true),
     );
     const hideSub = Keyboard.addListener(
       Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
-      () => setKeyboardVisible(false)
+      () => setKeyboardVisible(false),
     );
     return () => {
       showSub.remove();
@@ -295,8 +322,12 @@ export default function Message() {
     return (
       <View style={styles.container}>
         <View style={styles.centerContent}>
-          <ActivityIndicator size="large" color="#E15816" />
-          <Text style={styles.loadingText}>Service under maintenance</Text>
+          <Image
+            source={require("../../assets/icons/loader.gif")}
+            style={{ width: 80, height: 80 }}
+            resizeMode="contain"
+          />
+          <Text style={styles.loadingText}>{t("support.serviceMaintenance")}</Text>
         </View>
       </View>
     );
@@ -313,20 +344,22 @@ export default function Message() {
         </TouchableOpacity>
         <View style={styles.headerCenter}>
           <View style={styles.headerAvatar}>
-            <MaterialCommunityIcons
-              name="headset"
-              size={22}
-              color="#E15816"
-            />
+            <MaterialCommunityIcons name="headset" size={22} color="#E15816" />
           </View>
           <View>
-            <Text style={styles.headerTitle}>Support</Text>
+            <Text style={styles.headerTitle}>{t("support.title")}</Text>
             <Text style={styles.headerSubtitle}>
-              {isOnline ? "Online • You're connected" : "Offline • Connect for real-time updates"}
+              {isOnline
+                ? t("support.online")
+                : t("support.offline")}
             </Text>
           </View>
         </View>
-        <TouchableOpacity style={styles.headerRight}>
+        <TouchableOpacity
+          style={styles.headerRight}
+          onPress={() => Linking.openURL("tel:+63253221002")}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+        >
           <Ionicons name="call-outline" size={22} color="#FFFFFF" />
         </TouchableOpacity>
       </View>
@@ -337,133 +370,164 @@ export default function Message() {
           style={[styles.tab, viewMode === "messages" && styles.tabActive]}
           onPress={() => setViewMode("messages")}
         >
-          <Text style={[styles.tabText, viewMode === "messages" && styles.tabTextActive]}>
-            Messages
+          <Text
+            style={[
+              styles.tabText,
+              viewMode === "messages" && styles.tabTextActive,
+            ]}
+          >
+            {t("support.messagesTab")}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.tab, viewMode === "tickets" && styles.tabActive]}
           onPress={() => setViewMode("tickets")}
         >
-          <Text style={[styles.tabText, viewMode === "tickets" && styles.tabTextActive]}>
-            Tickets
+          <Text
+            style={[
+              styles.tabText,
+              viewMode === "tickets" && styles.tabTextActive,
+            ]}
+          >
+            {t("support.ticketsTab")}
           </Text>
         </TouchableOpacity>
-        {viewMode === "tickets" && accessToken && (
-          <TouchableOpacity
-            style={styles.createTicketButton}
-            onPress={() => setShowTicketCreation(true)}
-          >
-            <MaterialCommunityIcons name="plus" size={20} color="#FFFFFF" />
-            <Text style={styles.createTicketButtonText}>Create</Text>
-          </TouchableOpacity>
-        )}
       </View>
 
       {loading && messages.length === 0 ? (
         <View style={styles.centerContent}>
           <ActivityIndicator size="large" color="#E15816" />
-          <Text style={styles.loadingText}>Loading messages...</Text>
+          <Text style={styles.loadingText}>{t("support.loading")}</Text>
         </View>
       ) : error && messages.length === 0 ? (
         <View style={styles.centerContent}>
-          <MaterialCommunityIcons name="alert-circle-outline" size={48} color="#999" />
+          <MaterialCommunityIcons
+            name="alert-circle-outline"
+            size={48}
+            color="#999"
+          />
           <Text style={styles.errorText}>{error}</Text>
           <TouchableOpacity style={styles.retryButton} onPress={onRefresh}>
-            <Text style={styles.retryButtonText}>Retry</Text>
+            <Text style={styles.retryButtonText}>{t("common.retry")}</Text>
           </TouchableOpacity>
         </View>
       ) : viewMode === "tickets" && accessToken ? (
-        <TicketList accessToken={accessToken} />
+        <>
+          <View style={styles.ticketsContainer}>
+            <TicketList
+              accessToken={accessToken}
+              onTicketSelected={setTicketSelected}
+              refreshTrigger={ticketListRefreshKey}
+            />
+          </View>
+          {/* Circular Create Button - Below Tickets */}
+          {!ticketSelected && (
+            <TouchableOpacity
+              style={[styles.circularCreateButton, { bottom: 20 + insets.bottom }]}
+              onPress={() => setShowTicketCreation(true)}
+            >
+              <MaterialCommunityIcons name="plus" size={28} color="#FFFFFF" />
+            </TouchableOpacity>
+          )}
+        </>
       ) : (
         <KeyboardAvoidingView
           style={styles.keyboardView}
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          keyboardVerticalOffset={Platform.OS === "ios" ? 20 : 0}
+          behavior={undefined}
+          keyboardVerticalOffset={0}
         >
           <ScrollView
             ref={scrollRef}
             style={styles.messagesScroll}
             contentContainerStyle={[
-            styles.messagesContent,
-            messages.length === 0 && styles.messagesContentEmpty,
-          ]}
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              tintColor="#E15816"
-            />
-          }
-        >
-          {messages.length === 0 ? (
-            <View style={styles.emptyState}>
-              <MaterialCommunityIcons name="message-outline" size={64} color="#CCC" />
-              <Text style={styles.emptyTitle}>No messages yet</Text>
-              <Text style={styles.emptySubtitle}>
-                Start a conversation with Inspire Wallet Support. Send a message below
-                or wait for support to contact you.
-              </Text>
-            </View>
-          ) : (
-            messages.map((msg) => (
-              <TouchableOpacity
-                key={msg.id}
-                onLongPress={() => handleLongPress(msg)}
-                activeOpacity={0.9}
-                style={[
-                  styles.bubbleRow,
-                  msg.isSent ? styles.bubbleRowSent : styles.bubbleRowReceived,
-                ]}
-              >
-                <View
+              styles.messagesContent,
+              messages.length === 0 && styles.messagesContentEmpty,
+            ]}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                tintColor="#E15816"
+              />
+            }
+          >
+            {messages.length === 0 ? (
+              <View style={styles.emptyState}>
+                <MaterialCommunityIcons
+                  name="message-outline"
+                  size={64}
+                  color="#CCC"
+                />
+                <Text style={styles.emptyTitle}>{t("support.noMessagesYet")}</Text>
+                <Text style={styles.emptySubtitle}>
+                  {t("support.startConversation")}
+                </Text>
+              </View>
+            ) : (
+              messages.map((msg) => (
+                <TouchableOpacity
+                  key={msg.id}
+                  onLongPress={() => handleLongPress(msg)}
+                  activeOpacity={0.9}
                   style={[
-                    styles.bubble,
-                    msg.isSent ? styles.bubbleSent : styles.bubbleReceived,
+                    styles.bubbleRow,
+                    msg.isSent
+                      ? styles.bubbleRowSent
+                      : styles.bubbleRowReceived,
                   ]}
                 >
-                  <Text
+                  <View
                     style={[
-                      styles.bubbleText,
-                      msg.isSent ? styles.bubbleTextSent : styles.bubbleTextReceived,
+                      styles.bubble,
+                      msg.isSent ? styles.bubbleSent : styles.bubbleReceived,
                     ]}
                   >
-                    {msg.text}
-                  </Text>
-                  <View style={styles.bubbleFooter}>
                     <Text
                       style={[
-                        styles.bubbleTime,
-                        msg.isSent ? styles.bubbleTimeSent : styles.bubbleTimeReceived,
+                        styles.bubbleText,
+                        msg.isSent
+                          ? styles.bubbleTextSent
+                          : styles.bubbleTextReceived,
                       ]}
                     >
-                      {formatTime(msg.timestamp)}
+                      {msg.text}
                     </Text>
-                    {msg.isSent ? (
-                      <View style={styles.readStatus}>
-                        <Ionicons
-                          name={msg.status === "READ" ? "checkmark-done" : "checkmark"}
-                          size={14}
-                          color={msg.status === "READ" ? "#4FC3F7" : "rgba(255,255,255,0.8)"}
-                        />
-                        <Text
-                          style={[
-                            styles.readStatusText,
-                            msg.status === "READ" ? styles.readStatusRead : styles.readStatusSent,
-                          ]}
-                        >
-                          {msg.status === "READ" ? "Read" : "Sent"}
-                        </Text>
-                      </View>
-                    ) : msg.status === "SENT" ? (
-                      <View style={styles.unreadDot} />
-                    ) : null}
+                    <View style={styles.bubbleFooter}>
+                      <Text
+                        style={[
+                          styles.bubbleTime,
+                          msg.isSent
+                            ? styles.bubbleTimeSent
+                            : styles.bubbleTimeReceived,
+                        ]}
+                      >
+                        {formatTime(msg.timestamp, language)}
+                      </Text>
+                      {msg.isSent ? (
+                        <View style={styles.readStatus}>
+                          <Ionicons
+                            name={
+                              msg.status === "READ"
+                                ? "checkmark-done"
+                                : "checkmark"
+                            }
+                            size={14}
+                            color={
+                              msg.status === "READ"
+                                ? "#4CAF50"
+                                : "#9CA3AF"
+                            }
+                          />
+                        </View>
+                      ) : msg.status === "SENT" ? (
+                        <View style={styles.unreadDot} />
+                      ) : null}
+                    </View>
                   </View>
-                </View>
-              </TouchableOpacity>
-            ))
-          )}
+                </TouchableOpacity>
+              ))
+            )}
           </ScrollView>
 
           <View
@@ -478,7 +542,7 @@ export default function Message() {
           >
             <TextInput
               style={styles.input}
-              placeholder="Type a message..."
+              placeholder={t("support.typeMessage")}
               placeholderTextColor="#999"
               value={message}
               onChangeText={setMessage}
@@ -497,7 +561,11 @@ export default function Message() {
               disabled={!message.trim() || sending}
             >
               {sending ? (
-                <ActivityIndicator size="small" color="#999" />
+                <Image
+                  source={require("../../assets/icons/loader.gif")}
+                  style={{ width: 24, height: 24 }}
+                  resizeMode="contain"
+                />
               ) : (
                 <MaterialCommunityIcons
                   name="send"
@@ -515,7 +583,10 @@ export default function Message() {
         <TicketCreation
           open={showTicketCreation}
           onClose={() => setShowTicketCreation(false)}
-          onSuccess={() => setViewMode("tickets")}
+          onSuccess={() => {
+            setViewMode("tickets");
+            setTicketListRefreshKey((k) => k + 1);
+          }}
           accessToken={accessToken}
         />
       )}
@@ -533,25 +604,26 @@ export default function Message() {
           onPress={() => setShowMessageActions(false)}
         >
           <View style={styles.actionSheet}>
-            <TouchableOpacity
-              style={styles.actionButton}
-              onPress={handleEdit}
-            >
+            <TouchableOpacity style={styles.actionButton} onPress={handleEdit}>
               <MaterialCommunityIcons name="pencil" size={22} color="#333" />
-              <Text style={styles.actionButtonText}>Edit Message</Text>
+              <Text style={styles.actionButtonText}>{t("support.editMessage")}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.actionButton}
               onPress={handleDelete}
             >
               <MaterialCommunityIcons name="delete" size={22} color="#E15816" />
-              <Text style={[styles.actionButtonText, styles.actionButtonTextDanger]}>Delete Message</Text>
+              <Text
+                style={[styles.actionButtonText, styles.actionButtonTextDanger]}
+              >
+                {t("support.deleteMessage")}
+              </Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.actionButton, styles.actionButtonCancel]}
               onPress={() => setShowMessageActions(false)}
             >
-              <Text style={styles.actionButtonCancelText}>Cancel</Text>
+              <Text style={styles.actionButtonCancelText}>{t("common.cancel")}</Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
@@ -579,7 +651,7 @@ export default function Message() {
               onPress={(e) => e.stopPropagation()}
             >
               <View style={styles.editModalHeader}>
-                <Text style={styles.editModalTitle}>Edit Message</Text>
+                <Text style={styles.editModalTitle}>{t("support.editMessage")}</Text>
                 <TouchableOpacity onPress={handleCancelEdit}>
                   <Ionicons name="close" size={24} color="#333" />
                 </TouchableOpacity>
@@ -591,7 +663,7 @@ export default function Message() {
                 multiline
                 maxLength={10000}
                 autoFocus
-                placeholder="Edit your message..."
+                placeholder={t("support.editPlaceholder")}
                 placeholderTextColor="#999"
               />
               <View style={styles.editModalActions}>
@@ -599,7 +671,7 @@ export default function Message() {
                   style={styles.editCancelButton}
                   onPress={handleCancelEdit}
                 >
-                  <Text style={styles.editCancelButtonText}>Cancel</Text>
+                  <Text style={styles.editCancelButtonText}>{t("common.cancel")}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[
@@ -609,7 +681,7 @@ export default function Message() {
                   onPress={handleSaveEdit}
                   disabled={!editText.trim()}
                 >
-                  <Text style={styles.editSaveButtonText}>Save</Text>
+                  <Text style={styles.editSaveButtonText}>{t("support.save")}</Text>
                 </TouchableOpacity>
               </View>
             </TouchableOpacity>
@@ -654,20 +726,26 @@ const styles = StyleSheet.create({
   tabTextActive: {
     color: "#E15816",
   },
-  createTicketButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    marginRight: 8,
-    backgroundColor: "#E15816",
-    borderRadius: 8,
+  ticketsContainer: {
+    flex: 1,
   },
-  createTicketButtonText: {
-    color: "#FFFFFF",
-    fontSize: 13,
-    fontWeight: "600",
+  circularCreateButton: {
+    position: "absolute",
+    bottom: 20,
+    left: "50%",
+    marginLeft: -30,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: "#E15816",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+    zIndex: 10,
   },
   backButton: {
     padding: 8,

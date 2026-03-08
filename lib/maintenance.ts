@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const API_BASE_URL = (process.env.EXPO_PUBLIC_WALLET_BACKEND_URL || 'http://192.168.1.56:3000/').replace(/\/$/, '');
+const API_KEY = process.env.EXPO_PUBLIC_API_KEY;
 
 export type ServiceId =
   | 'stock'
@@ -15,7 +16,11 @@ export type ServiceId =
  */
 export async function getMaintenanceStatus(): Promise<Record<ServiceId, boolean>> {
   try {
-    const response = await fetch(`${API_BASE_URL}/maintenance/status`);
+    const response = await fetch(`${API_BASE_URL}/maintenance/status`, {
+      headers: {
+        'x-api-key': API_KEY || '',
+      },
+    });
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
     }
@@ -43,7 +48,11 @@ export async function isServiceUnderMaintenance(
   try {
     const url = `${API_BASE_URL}/maintenance/status/${serviceId}`;
     console.log(`[Maintenance] Checking ${serviceId} at ${url}`);
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      headers: {
+        'x-api-key': API_KEY || '',
+      },
+    });
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
     }

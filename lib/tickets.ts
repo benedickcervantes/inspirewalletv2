@@ -96,6 +96,23 @@ export interface CreateTicketDto {
 }
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_WALLET_BACKEND_URL || "http://localhost:3000";
+const API_KEY = process.env.EXPO_PUBLIC_API_KEY;
+
+/**
+ * Helper to build headers with API key
+ */
+function buildHeaders(accessToken: string): HeadersInit {
+  const headers: HeadersInit = {
+    Authorization: `Bearer ${accessToken}`,
+    "Content-Type": "application/json",
+  };
+  
+  if (API_KEY) {
+    headers["x-api-key"] = API_KEY;
+  }
+  
+  return headers;
+}
 
 /**
  * Create a new support ticket
@@ -111,10 +128,7 @@ export async function createTicket(
 
   const response = await fetch(url, {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json",
-    },
+    headers: buildHeaders(accessToken),
     body: JSON.stringify(data),
   });
 
@@ -123,7 +137,16 @@ export async function createTicket(
   if (!response.ok) {
     const errorText = await response.text();
     console.log("[Tickets API] Error response:", errorText);
-    throw new Error(`Failed to create ticket: ${response.status} ${response.statusText} - ${errorText}`);
+    let userMessage = "Failed to create ticket";
+    try {
+      const parsed = JSON.parse(errorText) as { message?: string | string[] };
+      if (parsed?.message) {
+        userMessage = Array.isArray(parsed.message) ? parsed.message.join(". ") : String(parsed.message);
+      }
+    } catch {
+      // fallback to raw text if not JSON
+    }
+    throw new Error(userMessage);
   }
 
   return response.json();
@@ -155,10 +178,7 @@ export async function listUserTickets(
 
   const response = await fetch(url, {
     method: "GET",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json",
-    },
+    headers: buildHeaders(accessToken),
   });
 
   console.log("[Tickets API] Response status:", response.status);
@@ -181,10 +201,7 @@ export async function getTicket(
 ): Promise<TicketResponse> {
   const response = await fetch(`${API_BASE_URL}/tickets/${ticketId}`, {
     method: "GET",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json",
-    },
+    headers: buildHeaders(accessToken),
   });
 
   if (!response.ok) {
@@ -204,10 +221,7 @@ export async function addTicketMessage(
 ): Promise<TicketMessage> {
   const response = await fetch(`${API_BASE_URL}/tickets/${ticketId}/messages`, {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json",
-    },
+    headers: buildHeaders(accessToken),
     body: JSON.stringify({ content }),
   });
 
@@ -240,10 +254,7 @@ export async function getTicketMessages(
     `${API_BASE_URL}/tickets/${ticketId}/messages?${params.toString()}`,
     {
       method: "GET",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-      },
+      headers: buildHeaders(accessToken),
     }
   );
 

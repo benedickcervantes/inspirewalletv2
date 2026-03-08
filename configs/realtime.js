@@ -25,7 +25,7 @@ export function createRealtimeConnection(accessToken, handlers = {}) {
   if (!baseUrl || !accessToken) return null;
 
   try {
-    // eslint-disable-next-line global-require
+     
     const { io } = require('socket.io-client');
 
     const socket = io(baseUrl, {
@@ -35,6 +35,7 @@ export function createRealtimeConnection(accessToken, handlers = {}) {
     });
 
     socket.on('WALLET_UPDATE', (payload) => {
+      console.log('[realtime.js] WALLET_UPDATE received');
       handlers.onWalletUpdate?.(payload);
     });
 
@@ -43,7 +44,26 @@ export function createRealtimeConnection(accessToken, handlers = {}) {
     });
 
     socket.on('NEW_SUPPORT_MESSAGE', (payload) => {
+      console.log('[realtime.js] NEW_SUPPORT_MESSAGE received');
       handlers.onNewSupportMessage?.(payload);
+    });
+
+    socket.on('SUPPORT_MESSAGES_READ', (payload) => {
+      console.log('[realtime.js] SUPPORT_MESSAGES_READ received');
+      handlers.onSupportMessagesRead?.(payload);
+    });
+
+    socket.on('TICKET_MESSAGE', (payload) => {
+      console.log('[realtime.js] TICKET_MESSAGE received:', payload?.id, 'for ticket:', payload?.ticketId);
+      handlers.onTicketMessage?.(payload);
+    });
+
+    socket.on('TICKET_MESSAGES_READ', (payload) => {
+      handlers.onTicketMessagesRead?.(payload);
+    });
+
+    socket.on('TICKET_CREATED', (payload) => {
+      handlers.onTicketCreated?.(payload);
     });
 
     socket.on('connect', () => {
@@ -71,7 +91,7 @@ export function createRealtimeConnection(accessToken, handlers = {}) {
  * @returns {function} cleanup function to clear the interval
  */
 export function startHeartbeat(socket) {
-  if (!socket) return () => {};
+  if (!socket) return () => { };
   const pingInterval = setInterval(() => {
     if (socket.connected) socket.emit('PING');
   }, 30000);

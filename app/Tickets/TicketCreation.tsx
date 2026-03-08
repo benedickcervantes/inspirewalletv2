@@ -1,17 +1,24 @@
 import { createTicket, type CreateTicketDto } from "@/lib/tickets";
-import { Picker } from "@react-native-picker/picker";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    Modal,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  Keyboard,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
 } from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { useLanguage } from "../../context/LanguageContext";
 
 interface TicketCreationProps {
   open: boolean;
@@ -20,134 +27,241 @@ interface TicketCreationProps {
   accessToken: string;
 }
 
+const PRIORITY_CONFIG = {
+  LOW: { color: "#22C55E", bgColor: "rgba(34, 197, 94, 0.12)" },
+  MEDIUM: { color: "#F59E0B", bgColor: "rgba(245, 158, 11, 0.12)" },
+  HIGH: { color: "#EF4444", bgColor: "rgba(239, 68, 68, 0.12)" },
+} as const;
+
 export default function TicketCreation({
   open,
   onClose,
   onSuccess,
   accessToken,
 }: TicketCreationProps) {
+  const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const isSmallScreen = width < 380;
   const [formValue, setFormValue] = useState<CreateTicketDto>({
     title: "",
     description: "",
     priority: "MEDIUM",
   });
   const [loading, setLoading] = useState(false);
+  const { t } = useLanguage();
 
   const handleSubmit = async () => {
-    if (!formValue.title.trim()) {
-      Alert.alert("Error", "Please enter a ticket title");
+    const title = formValue.title.trim();
+    const description = formValue.description.trim();
+
+    if (!title) {
+      Alert.alert(t("common.error"), t("tickets.validationTitle"));
+      return;
+    }
+    if (title.length < 5) {
+      Alert.alert(t("common.error"), t("tickets.validationTitleMin"));
       return;
     }
 
-    if (!formValue.description.trim()) {
-      Alert.alert("Error", "Please enter a description");
+    if (!description) {
+      Alert.alert(t("common.error"), t("tickets.validationDescription"));
+      return;
+    }
+    if (description.length < 10) {
+      Alert.alert(t("common.error"), t("tickets.validationDescriptionMin"));
       return;
     }
 
+    Keyboard.dismiss();
     setLoading(true);
     try {
-      console.log("[TicketCreation] Submitting:", formValue);
-      console.log("[TicketCreation] Token:", accessToken ? `${accessToken.substring(0, 20)}...` : "NO TOKEN");
-      const result = await createTicket(accessToken, formValue);
-      console.log("[TicketCreation] Success:", result);
-      Alert.alert("Success", `Ticket created! ID: ${result.id}`);
+      const result = await createTicket(accessToken, {
+        ...formValue,
+        title,
+        description,
+      });
+      Alert.alert(t("common.success"), t("tickets.createdSuccess"));
       setFormValue({ title: "", description: "", priority: "MEDIUM" });
       onSuccess?.(result.id);
       onClose();
-    } catch (error: any) {
-      console.log("[TicketCreation] Error:", error);
-      Alert.alert("Error", error.message || "Failed to create ticket");
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : t("tickets.createFailed");
+      Alert.alert(t("common.error"), msg);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Modal visible={open} animationType="slide" transparent={false}>
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={onClose}>
-            <Text style={styles.closeButton}>Cancel</Text>
+    <Modal visible={open} animationType="slide" statusBarTranslucent>
+      <SafeAreaView style={styles.container} edges={["top"]}>
+        {/* Header */}
+        <View style={[styles.header, isSmallScreen && styles.headerSmall]}>
+          <TouchableOpacity
+            onPress={onClose}
+            style={styles.headerBack}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          >
+            <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Create Ticket</Text>
-          <View style={{ width: 60 }} />
+          <View style={styles.headerCenter}>
+            <MaterialCommunityIcons
+              name="ticket-outline"
+              size={isSmallScreen ? 18 : 22}
+              color="#FFFFFF"
+            />
+            <Text style={[styles.headerTitle, isSmallScreen && styles.headerTitleSmall]}>
+              {t("tickets.create")}
+            </Text>
+          </View>
+          <View style={styles.headerRight} />
         </View>
 
-        <ScrollView style={styles.content}>
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>Title *</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Brief description of your issue"
-              value={formValue.title}
-              onChangeText={(value) =>
-                setFormValue({ ...formValue, title: value })
-              }
-              editable={!loading}
-            />
-          </View>
-
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>Description *</Text>
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              placeholder="Detailed description of your issue"
-              value={formValue.description}
-              onChangeText={(value) =>
-                setFormValue({ ...formValue, description: value })
-              }
-              multiline
-              numberOfLines={4}
-              editable={!loading}
-            />
-          </View>
-
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>Priority</Text>
-            <View style={styles.pickerContainer}>
-              <Picker
-                selectedValue={formValue.priority}
-                onValueChange={(value: any) =>
-                  setFormValue({
-                    ...formValue,
-                    priority: value as "LOW" | "MEDIUM" | "HIGH",
-                  })
-                }
-                enabled={!loading}
-              >
-                <Picker.Item label="Low" value="LOW" />
-                <Picker.Item label="Medium" value="MEDIUM" />
-                <Picker.Item label="High" value="HIGH" />
-              </Picker>
-            </View>
-          </View>
-
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>Category (Optional)</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="e.g., Account, Payment, Technical"
-              value={formValue.category || ""}
-              onChangeText={(value) =>
-                setFormValue({ ...formValue, category: value })
-              }
-              editable={!loading}
-            />
-          </View>
-
-          <TouchableOpacity
-            style={[styles.submitButton, loading && styles.submitButtonDisabled]}
-            onPress={handleSubmit}
-            disabled={loading}
+        <KeyboardAvoidingView
+          style={styles.keyboardView}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          keyboardVerticalOffset={0}
+        >
+          <ScrollView
+            style={styles.scroll}
+            contentContainerStyle={[
+              styles.scrollContent,
+              isSmallScreen && styles.scrollContentSmall,
+              { paddingBottom: insets.bottom + (isSmallScreen ? 16 : 24) },
+            ]}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
           >
-            {loading ? (
-              <ActivityIndicator color="#fff" size="small" />
-            ) : (
-              <Text style={styles.submitButtonText}>Create Ticket</Text>
-            )}
-          </TouchableOpacity>
-        </ScrollView>
-      </View>
+            <View style={[styles.card, isSmallScreen && styles.cardSmall]}>
+              <Text style={[styles.cardTitle, isSmallScreen && styles.cardTitleSmall]}>
+                {t("tickets.createTitle")}
+              </Text>
+              <Text style={[styles.cardSubtitle, isSmallScreen && styles.cardSubtitleSmall]}>
+                {t("tickets.createSubtitle")}
+              </Text>
+
+              {/* Title */}
+              <View style={[styles.field, isSmallScreen && styles.fieldSmall]}>
+                <Text style={styles.label}>
+                  {t("tickets.titleLabel")} <Text style={styles.required}>*</Text>
+                </Text>
+                <TextInput
+                  style={[styles.input, isSmallScreen && styles.inputSmall]}
+                  placeholder={t("tickets.titlePlaceholder")}
+                  placeholderTextColor="#9CA3AF"
+                  value={formValue.title}
+                  onChangeText={(v) => setFormValue({ ...formValue, title: v })}
+                  editable={!loading}
+                />
+              </View>
+
+              {/* Description */}
+              <View style={[styles.field, isSmallScreen && styles.fieldSmall]}>
+                <Text style={styles.label}>
+                  {t("tickets.descriptionLabel")} <Text style={styles.required}>*</Text>
+                </Text>
+                <TextInput
+                  style={[styles.input, styles.textArea]}
+                  placeholder={t("tickets.descriptionPlaceholder")}
+                  placeholderTextColor="#9CA3AF"
+                  value={formValue.description}
+                  onChangeText={(v) => setFormValue({ ...formValue, description: v })}
+                  multiline
+                  numberOfLines={4}
+                  textAlignVertical="top"
+                  editable={!loading}
+                />
+              </View>
+
+              {/* Priority */}
+              <View style={[styles.field, isSmallScreen && styles.fieldSmall]}>
+                <Text style={[styles.label, isSmallScreen && styles.labelSmall]}>
+                  {t("tickets.priorityLabel")}
+                </Text>
+                <View style={[styles.priorityRow, isSmallScreen && styles.priorityRowSmall]}>
+                  {(["LOW", "MEDIUM", "HIGH"] as const).map((p) => {
+                    const config = PRIORITY_CONFIG[p];
+                    const isActive = formValue.priority === p;
+                    return (
+                      <TouchableOpacity
+                        key={p}
+                        style={[
+                          styles.priorityChip,
+                          { backgroundColor: isActive ? config.bgColor : "#F3F4F6" },
+                          isActive && { borderColor: config.color, borderWidth: 2 },
+                        ]}
+                        onPress={() => setFormValue({ ...formValue, priority: p })}
+                        activeOpacity={0.7}
+                      >
+                        <MaterialCommunityIcons
+                          name="flag"
+                          size={isSmallScreen ? 12 : 14}
+                          color={isActive ? config.color : "#9CA3AF"}
+                        />
+                        <Text
+                          style={[
+                            styles.priorityLabel,
+                            isSmallScreen && styles.priorityLabelSmall,
+                            isActive && { color: config.color, fontWeight: "700" },
+                          ]}
+                        >
+                          {t(`tickets.priority.${p}`)}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </View>
+
+              {/* Category (Optional) */}
+              <View style={[styles.field, isSmallScreen && styles.fieldSmall]}>
+                <Text style={styles.label}>{t("tickets.categoryLabel")}</Text>
+                <TextInput
+                  style={[styles.input, styles.categoryInput, isSmallScreen && styles.inputSmall]}
+                  placeholder={t("tickets.categoryPlaceholder")}
+                  placeholderTextColor="#9CA3AF"
+                  value={formValue.category ?? ""}
+                  onChangeText={(v) => setFormValue({ ...formValue, category: v })}
+                  editable={!loading}
+                />
+              </View>
+
+              <TouchableOpacity
+                style={[
+                  styles.submitBtn,
+                  isSmallScreen && styles.submitBtnSmall,
+                  loading && styles.submitBtnDisabled,
+                ]}
+                onPress={handleSubmit}
+                disabled={loading}
+                activeOpacity={0.85}
+              >
+                <LinearGradient
+                  colors={["#E25A17", "#F28934"]}
+                  style={[styles.submitBtnGradient, isSmallScreen && styles.submitBtnSmallGradient]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                >
+                  {loading ? (
+                    <ActivityIndicator size="small" color="#FFFFFF" />
+                  ) : (
+                    <>
+                      <MaterialCommunityIcons
+                        name="send"
+                        size={isSmallScreen ? 18 : 20}
+                        color="#FFFFFF"
+                      />
+                      <Text style={[styles.submitText, isSmallScreen && styles.submitTextSmall]}>
+                        {t("tickets.create")}
+                      </Text>
+                    </>
+                  )}
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
     </Modal>
   );
 }
@@ -155,76 +269,197 @@ export default function TicketCreation({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#F8FAFC",
   },
   header: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 16,
+    justifyContent: "space-between",
+    paddingHorizontal: 8,
     paddingVertical: 12,
-    backgroundColor: "#fff",
+    backgroundColor: "#E15816",
     borderBottomWidth: 1,
-    borderBottomColor: "#e5e5e5",
+    borderBottomColor: "rgba(0,0,0,0.06)",
   },
-  closeButton: {
-    fontSize: 16,
-    color: "#3b82f6",
-    fontWeight: "600",
+  headerBack: {
+    padding: 8,
+    marginLeft: 4,
+  },
+  headerCenter: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#333",
+    fontSize: 17,
+    fontWeight: "700",
+    color: "#FFFFFF",
   },
-  content: {
+  headerRight: {
+    width: 40,
+    height: 40,
+  },
+  headerSmall: {
+    paddingVertical: 10,
+    paddingHorizontal: 4,
+  },
+  headerTitleSmall: {
+    fontSize: 15,
+  },
+  keyboardView: {
     flex: 1,
-    padding: 16,
   },
-  formGroup: {
+  scroll: {
+    flex: 1,
+  },
+  scrollContent: {
+    padding: 20,
+  },
+  scrollContentSmall: {
+    padding: 12,
+  },
+  card: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 24,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  cardSmall: {
+    padding: 16,
+    borderRadius: 14,
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#111827",
+    marginBottom: 4,
+  },
+  cardTitleSmall: {
+    fontSize: 16,
+  },
+  cardSubtitle: {
+    fontSize: 14,
+    color: "#6B7280",
+    marginBottom: 24,
+    lineHeight: 20,
+  },
+  cardSubtitleSmall: {
+    fontSize: 13,
     marginBottom: 16,
+    lineHeight: 18,
+  },
+  field: {
+    marginBottom: 20,
+  },
+  fieldSmall: {
+    marginBottom: 14,
   },
   label: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#333",
+    color: "#374151",
     marginBottom: 8,
   },
+  labelSmall: {
+    fontSize: 13,
+    marginBottom: 6,
+  },
+  required: {
+    color: "#E15816",
+  },
   input: {
+    backgroundColor: "#F9FAFB",
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 16,
+    color: "#111827",
     borderWidth: 1,
-    borderColor: "#e5e5e5",
-    borderRadius: 8,
+    borderColor: "#E5E7EB",
+  },
+  inputSmall: {
     paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 14,
-    color: "#333",
-    backgroundColor: "#fff",
+    paddingVertical: 12,
+    fontSize: 15,
+    borderRadius: 10,
   },
   textArea: {
-    minHeight: 100,
-    textAlignVertical: "top",
+    minHeight: 120,
+    paddingTop: 14,
   },
-  pickerContainer: {
+  textAreaSmall: {
+    minHeight: 90,
+    paddingTop: 12,
+  },
+  categoryInput: {
+    minHeight: 48,
+  },
+  priorityRow: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  priorityRowSmall: {
+    gap: 6,
+  },
+  priorityChip: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 12,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#e5e5e5",
-    borderRadius: 8,
-    backgroundColor: "#fff",
+    borderColor: "transparent",
+  },
+  priorityChipSmall: {
+    paddingVertical: 10,
+    gap: 4,
+  },
+  priorityLabel: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#6B7280",
+  },
+  priorityLabelSmall: {
+    fontSize: 11,
+  },
+  submitBtn: {
+    borderRadius: 14,
+    marginTop: 28,
+    shadowColor: "#E15816",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4,
     overflow: "hidden",
   },
-  submitButton: {
-    backgroundColor: "#3b82f6",
-    borderRadius: 8,
-    paddingVertical: 12,
+  submitBtnGradient: {
+    flexDirection: "row",
     alignItems: "center",
-    marginTop: 24,
-    marginBottom: 32,
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 16,
   },
-  submitButtonDisabled: {
-    opacity: 0.5,
+  submitBtnSmall: {
+    marginTop: 20,
   },
-  submitButtonText: {
-    color: "#fff",
+  submitBtnSmallGradient: {
+    paddingVertical: 14,
+  },
+  submitBtnDisabled: {
+    opacity: 0.6,
+  },
+  submitText: {
     fontSize: 16,
-    fontWeight: "600",
+    fontWeight: "700",
+    color: "#FFFFFF",
+  },
+  submitTextSmall: {
+    fontSize: 15,
   },
 });

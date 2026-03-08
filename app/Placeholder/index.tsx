@@ -19,11 +19,20 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { getMe, updateProfile } from "../../configs/api";
 import { auth, firestore } from "../../configs/firebase";
-import { DEFAULT_LANGUAGE, normalizeLanguage, SUPPORTED_LANGUAGES } from "../../constants/locales";
+import { useResponsive } from "../../utils/responsive";
+import {
+  DEFAULT_LANGUAGE,
+  normalizeLanguage,
+  SUPPORTED_LANGUAGES,
+} from "../../constants/locales";
 import { useLanguage } from "../../context/LanguageContext";
+import CustomLoader from "../Loader/CustomLoader";
 
 const THEME_COLOR = "#E15816";
 const USER_PREFERRED_LANGUAGE_KEY = "user_preferred_language";
@@ -31,7 +40,9 @@ const USER_PREFERRED_LANGUAGE_KEY = "user_preferred_language";
 export default function Placeholder() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
+  const { horizontalPadding, isShortScreen, isSmallScreen, isTinyScreen } =
+    useResponsive();
   const { t, language: contextLanguage, setLanguage } = useLanguage();
   const isSmallDevice = width < 375;
   const scale = Math.min(width / 375, 1.25);
@@ -57,7 +68,9 @@ export default function Placeholder() {
 
   const fetchUserData = useCallback(async () => {
     try {
-      const preferredLang = await AsyncStorage.getItem(USER_PREFERRED_LANGUAGE_KEY);
+      const preferredLang = await AsyncStorage.getItem(
+        USER_PREFERRED_LANGUAGE_KEY,
+      );
       const accessToken = await AsyncStorage.getItem("access_token");
       if (accessToken) {
         const result = await getMe(accessToken);
@@ -65,7 +78,8 @@ export default function Placeholder() {
           const u = result.user as Record<string, unknown>;
           const merged = {
             ...u,
-            language: (u.language as string) ?? preferredLang ?? DEFAULT_LANGUAGE,
+            language:
+              (u.language as string) ?? preferredLang ?? DEFAULT_LANGUAGE,
           };
           setUserData(merged);
           setLoading(false);
@@ -80,7 +94,9 @@ export default function Placeholder() {
           const data = userDoc.data();
           setUserData({
             ...data,
-            language: normalizeLanguage((data?.language as string) ?? preferredLang),
+            language: normalizeLanguage(
+              (data?.language as string) ?? preferredLang,
+            ),
           });
         }
       }
@@ -181,26 +197,47 @@ export default function Placeholder() {
     (navigation as any).navigate("KYCcompany");
   };
 
-  const fullName = userData?.firstName && userData?.lastName 
-    ? `${userData.firstName} ${userData.lastName}`
-    : userData?.displayName || userData?.name || t("common.user");
+  const fullName =
+    userData?.firstName && userData?.lastName
+      ? `${userData.firstName} ${userData.lastName}`
+      : userData?.displayName || userData?.name || t("common.user");
   const email = userData?.email || "user@example.com";
   const isAgent = userData?.isAgent || userData?.role === "agent" || false;
-  const isPremium = userData?.isPremium || userData?.accountLevel === "premium" || false;
-  const accountNumber = userData?.accountNumber || userData?.id || "000053126300";
-  const companyName = userData?.companyName || t("Tap to add company name") || "Tap to add company name";
-  const contactNumber = userData?.phone ?? userData?.phoneNumber ?? t("Tap to add phone number") ?? "Tap to add phone number";
-  const lineLink = userData?.lineAccountLink ?? userData?.lineLink ?? t("common.notProvided");
+  const isPremium =
+    userData?.isPremium || userData?.accountLevel === "premium" || false;
+  const accountNumber =
+    userData?.accountNumber || userData?.id || "000053126300";
+  const companyName =
+    userData?.companyName ||
+    t("Tap to add company name") ||
+    "Tap to add company name";
+  const companyKycStatus: string | undefined =
+    userData?.companyKycStatus ?? userData?.company_kyc_status ?? undefined;
+  const contactNumber =
+    userData?.phone ??
+    userData?.phoneNumber ??
+    t("Tap to add phone number") ??
+    "Tap to add phone number";
+  const lineLink =
+    userData?.lineAccountLink ?? userData?.lineLink ?? t("common.notProvided");
   const viberLink = userData?.viberLink || t("common.notProvided");
   const whatsappLink = userData?.whatsappLink || t("common.notProvided");
-  const accountLevelLabel = isPremium ? t("profile.premium") : t("profile.basic");
-  const referrerName = userData?.referrerName ?? userData?.agentReferrer ?? userData?.referredBy ?? null;
+  const accountLevelLabel = isPremium
+    ? t("profile.premium")
+    : t("profile.basic");
+  const referrerName =
+    userData?.referrerName ??
+    userData?.agentReferrer ??
+    userData?.referredBy ??
+    null;
   const agentReferrer = referrerName ?? t("common.notProvided");
   const language = normalizeLanguage(userData?.language ?? contextLanguage);
 
   const handleSelectLanguage = async (selectedLabel: string) => {
     setLanguage(selectedLabel);
-    setUserData((prev: any) => (prev ? { ...prev, language: selectedLabel } : null));
+    setUserData((prev: any) =>
+      prev ? { ...prev, language: selectedLabel } : null,
+    );
     await AsyncStorage.setItem(USER_PREFERRED_LANGUAGE_KEY, selectedLabel);
     const userJson = await AsyncStorage.getItem("user");
     if (userJson) {
@@ -208,34 +245,28 @@ export default function Placeholder() {
         const user = JSON.parse(userJson);
         await AsyncStorage.setItem(
           "user",
-          JSON.stringify({ ...user, language: selectedLabel })
+          JSON.stringify({ ...user, language: selectedLabel }),
         );
       } catch (_) {}
     }
     setLanguageModalVisible(false);
   };
 
-  const memberSince = userData?.createdAt
-    ? new Date(
-        userData.createdAt?.seconds
-          ? userData.createdAt.seconds * 1000
-          : typeof userData.createdAt === "string"
-            ? userData.createdAt
-            : userData.createdAt
-      ).toLocaleDateString()
-    : "—";
+  const memberSince =
+    userData?.createdAt || userData?.joinedAt
+      ? new Date(
+          userData.createdAt?.seconds
+            ? userData.createdAt.seconds * 1000
+            : userData.joinedAt?.seconds
+              ? userData.joinedAt.seconds * 1000
+              : userData.createdAt || userData.joinedAt,
+        ).toLocaleDateString()
+      : "—";
   const statusRaw = userData?.status || "Active";
   const status = statusRaw === "Active" ? t("profile.active") : statusRaw;
 
   if (loading) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={THEME_COLOR} />
-          <Text style={styles.loadingText}>Loading profile...</Text>
-        </View>
-      </SafeAreaView>
-    );
+    return <CustomLoader text={t("common.loading")} />;
   }
 
   return (
@@ -262,7 +293,10 @@ export default function Placeholder() {
           end={{ x: 1, y: 1 }}
         >
           <TouchableOpacity
-            style={[styles.backButton, { top: headerPaddingTop, left: headerPaddingHorizontal }]}
+            style={[
+              styles.backButton,
+              { top: headerPaddingTop, left: headerPaddingHorizontal },
+            ]}
             onPress={() => navigation.goBack()}
             activeOpacity={0.7}
           >
@@ -273,41 +307,96 @@ export default function Placeholder() {
 
           {/* Profile Avatar */}
           <View style={styles.avatarContainer}>
-            <View style={[styles.avatar, { width: avatarSize, height: avatarSize, borderRadius: avatarSize / 2 }]}>
-              <Ionicons name="person" size={Math.round(40 * scale)} color="#E15816" />
+            <View
+              style={[
+                styles.avatar,
+                {
+                  width: avatarSize,
+                  height: avatarSize,
+                  borderRadius: avatarSize / 2,
+                },
+              ]}
+            >
+              <Ionicons
+                name="person"
+                size={Math.round(40 * scale)}
+                color="#E15816"
+              />
             </View>
           </View>
 
           {/* User Info */}
-          <Text style={[styles.userName, { fontSize: Math.round(22 * scale) }]} numberOfLines={1} ellipsizeMode="tail">
+          <Text
+            style={[styles.userName, { fontSize: Math.round(22 * scale) }]}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
             {fullName}
           </Text>
-          <Text style={[styles.userEmail, { fontSize: Math.round(14 * scale) }]} numberOfLines={1} ellipsizeMode="tail">
+          <Text
+            style={[styles.userEmail, { fontSize: Math.round(14 * scale) }]}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
             {email}
           </Text>
 
           {/* Badges */}
           <View style={styles.badgesContainer}>
-            {isAgent && (
+            {isAgent ? (
               <View style={styles.agentBadge}>
-                <MaterialCommunityIcons name="shield-account" size={16} color="#FFFFFF" />
-                <Text style={styles.badgeText}>{t("profile.agent").toUpperCase()}</Text>
+                <MaterialCommunityIcons
+                  name="shield-account"
+                  size={16}
+                  color="#FFFFFF"
+                />
+                <Text style={styles.badgeText}>
+                  {t("profile.agent").toUpperCase()}
+                </Text>
+              </View>
+            ) : (
+              <View style={styles.investorBadge}>
+                <MaterialCommunityIcons
+                  name="shield-account"
+                  size={16}
+                  color="#FFFFFF"
+                />
+                <Text style={styles.badgeText}>
+                  {t("profile.investor").toUpperCase()}
+                </Text>
               </View>
             )}
             {isPremium && (
               <View style={styles.premiumBadge}>
                 <Ionicons name="diamond" size={16} color="#333" />
-                <Text style={styles.premiumBadgeText}>{t("profile.premium").toUpperCase()}</Text>
+                <Text style={styles.premiumBadgeText}>
+                  {t("profile.premium").toUpperCase()}
+                </Text>
               </View>
             )}
           </View>
         </LinearGradient>
 
         {/* Account Details Section */}
-        <View style={[styles.section, { marginHorizontal: sectionMarginHorizontal, padding: sectionPadding }]}>
+        <View
+          style={[
+            styles.section,
+            {
+              marginHorizontal: sectionMarginHorizontal,
+              padding: sectionPadding,
+            },
+          ]}
+        >
           <View style={styles.sectionHeader}>
             <Ionicons name="person-circle-outline" size={22} color="#E15816" />
-            <Text style={[styles.sectionTitle, { fontSize: Math.round(16 * scale) }]}>{t("profile.accountDetails")}</Text>
+            <Text
+              style={[
+                styles.sectionTitle,
+                { fontSize: Math.round(16 * scale) },
+              ]}
+            >
+              {t("profile.accountDetails")}
+            </Text>
           </View>
 
           <DetailItem
@@ -324,6 +413,21 @@ export default function Placeholder() {
             editable
             onEdit={openCompanyModal}
             isPlaceholder={!userData?.companyName}
+            badge={
+              companyKycStatus === "verified"
+                ? "Verified"
+                : companyKycStatus === "pending"
+                  ? "Pending"
+                  : undefined
+            }
+            badgeColor={
+              companyKycStatus === "verified"
+                ? "#10B981"
+                : companyKycStatus === "pending"
+                  ? "#F59E0B"
+                  : undefined
+            }
+            verified={companyKycStatus === "verified"}
           />
           <DetailItem
             icon="call-outline"
@@ -372,7 +476,11 @@ export default function Placeholder() {
             badgeColor={isPremium ? "#FFD700" : "#999"}
             verified={isPremium}
             showVerifyButton={!isPremium}
-            onVerifyPress={() => (navigation as { navigate: (name: string) => void }).navigate("KYCVerification")}
+            onVerifyPress={() =>
+              (navigation as { navigate: (name: string) => void }).navigate(
+                "KYCVerification",
+              )
+            }
             verifyButtonLabel={t("profile.verify")}
           />
           <DetailItem
@@ -397,10 +505,29 @@ export default function Placeholder() {
         </View>
 
         {/* Account Status Section */}
-        <View style={[styles.section, { marginHorizontal: sectionMarginHorizontal, padding: sectionPadding }]}>
+        <View
+          style={[
+            styles.section,
+            {
+              marginHorizontal: sectionMarginHorizontal,
+              padding: sectionPadding,
+            },
+          ]}
+        >
           <View style={styles.sectionHeader}>
-            <Ionicons name="information-circle-outline" size={22} color="#E15816" />
-            <Text style={[styles.sectionTitle, { fontSize: Math.round(16 * scale) }]}>{t("profile.accountStatus")}</Text>
+            <Ionicons
+              name="information-circle-outline"
+              size={22}
+              color="#E15816"
+            />
+            <Text
+              style={[
+                styles.sectionTitle,
+                { fontSize: Math.round(16 * scale) },
+              ]}
+            >
+              {t("profile.accountStatus")}
+            </Text>
           </View>
 
           <DetailItem
@@ -434,54 +561,57 @@ export default function Placeholder() {
                 <Ionicons name="close" size={24} color="#333" />
               </TouchableOpacity>
             </View>
-            <ScrollView keyboardShouldPersistTaps="handled" style={styles.modalScroll}>
+            <ScrollView
+              keyboardShouldPersistTaps="handled"
+              style={styles.modalScroll}
+            >
               <View style={styles.modalBody}>
-              <Text style={styles.inputLabel}>First Name *</Text>
-              <TextInput
-                style={styles.input}
-                value={editFirstName}
-                onChangeText={setEditFirstName}
-                placeholder="First name"
-                placeholderTextColor="#999"
-                editable={!saving}
-                autoCapitalize="words"
-              />
-              <Text style={styles.inputLabel}>Last Name *</Text>
-              <TextInput
-                style={styles.input}
-                value={editLastName}
-                onChangeText={setEditLastName}
-                placeholder="Last name"
-                placeholderTextColor="#999"
-                editable={!saving}
-                autoCapitalize="words"
-              />
-              <Text style={styles.inputLabel}>Middle Name (optional)</Text>
-              <TextInput
-                style={styles.input}
-                value={editMiddleName}
-                onChangeText={setEditMiddleName}
-                placeholder="Middle name"
-                placeholderTextColor="#999"
-                editable={!saving}
-                autoCapitalize="words"
-              />
-              {hasPasscode && (
-                <>
-                  <Text style={styles.inputLabel}>Passcode *</Text>
-                  <TextInput
-                    style={styles.input}
-                    value={passcode}
-                    onChangeText={setPasscode}
-                    placeholder="4-digit passcode"
-                    placeholderTextColor="#999"
-                    keyboardType="number-pad"
-                    maxLength={4}
-                    secureTextEntry
-                    editable={!saving}
-                  />
-                </>
-              )}
+                <Text style={styles.inputLabel}>First Name *</Text>
+                <TextInput
+                  style={styles.input}
+                  value={editFirstName}
+                  onChangeText={setEditFirstName}
+                  placeholder="First name"
+                  placeholderTextColor="#999"
+                  editable={!saving}
+                  autoCapitalize="words"
+                />
+                <Text style={styles.inputLabel}>Last Name *</Text>
+                <TextInput
+                  style={styles.input}
+                  value={editLastName}
+                  onChangeText={setEditLastName}
+                  placeholder="Last name"
+                  placeholderTextColor="#999"
+                  editable={!saving}
+                  autoCapitalize="words"
+                />
+                <Text style={styles.inputLabel}>Middle Name (optional)</Text>
+                <TextInput
+                  style={styles.input}
+                  value={editMiddleName}
+                  onChangeText={setEditMiddleName}
+                  placeholder="Middle name"
+                  placeholderTextColor="#999"
+                  editable={!saving}
+                  autoCapitalize="words"
+                />
+                {hasPasscode && (
+                  <>
+                    <Text style={styles.inputLabel}>Passcode *</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={passcode}
+                      onChangeText={setPasscode}
+                      placeholder="4-digit passcode"
+                      placeholderTextColor="#999"
+                      keyboardType="number-pad"
+                      maxLength={4}
+                      secureTextEntry
+                      editable={!saving}
+                    />
+                  </>
+                )}
               </View>
             </ScrollView>
             <TouchableOpacity
@@ -517,7 +647,9 @@ export default function Placeholder() {
             </View>
             <View style={styles.modalBody}>
               <Text style={styles.inputLabel}>Contact Number *</Text>
-              <Text style={styles.inputHint}>Include country code (e.g., +1, +81, +82, +966, +63)</Text>
+              <Text style={styles.inputHint}>
+                Include country code (e.g., +1, +81, +82, +966, +63)
+              </Text>
               <TextInput
                 style={styles.input}
                 value={editPhone}
@@ -559,7 +691,7 @@ export default function Placeholder() {
         </KeyboardAvoidingView>
       </Modal>
 
-      {/* Language Modal */}
+      {/* Language Modal - matches Register language options (transparent overlay + outer glow) */}
       <Modal
         visible={languageModalVisible}
         transparent
@@ -567,62 +699,110 @@ export default function Placeholder() {
         onRequestClose={() => setLanguageModalVisible(false)}
       >
         <TouchableOpacity
-          style={styles.languageModalOverlay}
+          style={[
+            styles.languageModalOverlay,
+            { paddingHorizontal: Math.max(16, horizontalPadding) },
+          ]}
           activeOpacity={1}
           onPress={() => setLanguageModalVisible(false)}
         >
-          <View style={styles.languageModalContent} onStartShouldSetResponder={() => true}>
-            <View style={styles.languageMapHeader}>
+          <View
+            style={[
+              styles.languageModalContent,
+              {
+                maxWidth: Math.min(360, width - 32),
+                maxHeight: isShortScreen ? height * 0.85 : undefined,
+                padding: isSmallScreen || isTinyScreen ? 18 : 24,
+              },
+            ]}
+            onStartShouldSetResponder={() => true}
+          >
+            <View style={styles.languageModalHeader}>
               <View style={styles.languageMapGlobe}>
-                <Ionicons name="globe-outline" size={40} color="#E15816" />
+                <Ionicons
+                  name="globe-outline"
+                  size={isSmallScreen || isTinyScreen ? 32 : 40}
+                  color="#E15816"
+                />
               </View>
-              <View style={styles.languageMapFlags}>
-                {SUPPORTED_LANGUAGES.map(({ label, flag }) => (
-                  <View
-                    key={label}
-                    style={[
-                      styles.languageMapFlagChip,
-                      language === label && styles.languageMapFlagChipSelected,
-                    ]}
-                  >
-                    <Text style={styles.languageMapFlagEmoji}>{flag}</Text>
-                  </View>
-                ))}
-              </View>
-              <Text style={styles.languageModalTitle}>{t("profile.selectLanguage")}</Text>
-              <Text style={styles.languageModalSubtitle}>
+              <Text
+                style={[
+                  styles.languageModalTitle,
+                  (isSmallScreen || isTinyScreen) && { fontSize: 16 },
+                ]}
+              >
+                {t("profile.selectLanguage")}
+              </Text>
+              <Text
+                style={[
+                  styles.languageModalSubtitle,
+                  (isSmallScreen || isTinyScreen) && { fontSize: 12 },
+                ]}
+              >
                 {t("profile.defaultIsEnglish")}
               </Text>
             </View>
-            {SUPPORTED_LANGUAGES.map(({ label, flag }) => (
-              <TouchableOpacity
-                key={label}
-                style={[
-                  styles.languageOption,
-                  language === label && styles.languageOptionSelected,
-                ]}
-                onPress={() => handleSelectLanguage(label)}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.languageOptionFlag}>{flag}</Text>
-                <Text
+            <ScrollView
+              style={isShortScreen ? { maxHeight: 200 } : undefined}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+            >
+              {SUPPORTED_LANGUAGES.map(({ label, flag }) => (
+                <TouchableOpacity
+                  key={label}
                   style={[
-                    styles.languageOptionText,
-                    language === label && styles.languageOptionTextSelected,
+                    styles.languageOption,
+                    (isSmallScreen || isTinyScreen) && {
+                      paddingVertical: 12,
+                      paddingHorizontal: 14,
+                    },
+                    language === label && styles.languageOptionSelected,
                   ]}
+                  onPress={() => handleSelectLanguage(label)}
+                  activeOpacity={0.7}
                 >
-                  {label}
-                </Text>
-                {language === label && (
-                  <Ionicons name="checkmark-circle" size={22} color="#E15816" />
-                )}
-              </TouchableOpacity>
-            ))}
+                  <Text
+                    style={[
+                      styles.languageOptionFlag,
+                      (isSmallScreen || isTinyScreen) && { fontSize: 20 },
+                    ]}
+                  >
+                    {flag}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.languageOptionText,
+                      (isSmallScreen || isTinyScreen) && { fontSize: 15 },
+                      language === label && styles.languageOptionTextSelected,
+                    ]}
+                  >
+                    {label}
+                  </Text>
+                  {language === label && (
+                    <Ionicons
+                      name="checkmark-circle"
+                      size={isSmallScreen || isTinyScreen ? 20 : 22}
+                      color="#E15816"
+                    />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
             <TouchableOpacity
-              style={styles.languageModalCancel}
+              style={[
+                styles.languageModalCancel,
+                (isSmallScreen || isTinyScreen) && { marginTop: 8 },
+              ]}
               onPress={() => setLanguageModalVisible(false)}
             >
-              <Text style={styles.languageModalCancelText}>{t("common.cancel")}</Text>
+              <Text
+                style={[
+                  styles.languageModalCancelText,
+                  (isSmallScreen || isTinyScreen) && { fontSize: 15 },
+                ]}
+              >
+                {t("common.cancel")}
+              </Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
@@ -671,12 +851,23 @@ function DetailItem({
         <Text style={styles.detailLabel}>{label}</Text>
       </View>
       <View style={styles.detailValueContainer}>
-        <Text style={isPlaceholder ? styles.detailValuePlaceholder : styles.detailValue}>{value}</Text>
+        <Text
+          style={
+            isPlaceholder ? styles.detailValuePlaceholder : styles.detailValue
+          }
+        >
+          {value}
+        </Text>
         {badge && (
           <View style={[styles.badge, { backgroundColor: badgeColor }]}>
             <Text style={styles.badgeTextSmall}>{badge}</Text>
             {verified && (
-              <Ionicons name="checkmark-circle" size={14} color="#333" style={{ marginLeft: 4 }} />
+              <Ionicons
+                name="checkmark-circle"
+                size={14}
+                color="#333"
+                style={{ marginLeft: 4 }}
+              />
             )}
           </View>
         )}
@@ -784,6 +975,15 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "rgba(139, 0, 0, 0.9)",
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    gap: 4,
+  },
+  investorBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#2E7D32", // Professional green for Investor
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 16,
@@ -911,24 +1111,28 @@ const styles = StyleSheet.create({
   },
   languageModalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: "transparent",
     justifyContent: "center",
     alignItems: "center",
-    padding: 24,
+    paddingVertical: 20,
   },
   languageModalContent: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 16,
-    padding: 20,
     width: "100%",
-    maxWidth: 320,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    ...Platform.select({
+      ios: {
+        shadowColor: "#E15816",
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.5,
+        shadowRadius: 24,
+      },
+      android: { elevation: 16 },
+    }),
   },
-  languageMapHeader: {
+  languageModalHeader: {
     alignItems: "center",
     marginBottom: 20,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#F0F0F0",
   },
   languageMapGlobe: {
     width: 72,
@@ -938,28 +1142,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 12,
-  },
-  languageMapFlags: {
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: 10,
-    marginBottom: 12,
-  },
-  languageMapFlagChip: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "#F5F5F5",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  languageMapFlagChipSelected: {
-    backgroundColor: "#FFF0E8",
-    borderWidth: 2,
-    borderColor: "#E15816",
-  },
-  languageMapFlagEmoji: {
-    fontSize: 24,
   },
   languageModalTitle: {
     fontSize: 18,

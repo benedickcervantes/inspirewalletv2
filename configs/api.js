@@ -25,6 +25,17 @@ const getApiPrefix = () => {
   return p ? `/${p.replace(/^\/|\/$/g, "")}` : "";
 };
 
+
+// Custom fetch wrapper to inject API key
+const _originalFetch = global.fetch || fetch;
+async function apiFetch(url, options = {}) {
+  const headers = options.headers || {};
+  if (process.env.EXPO_PUBLIC_API_KEY) {
+    headers['x-api-key'] = process.env.EXPO_PUBLIC_API_KEY;
+  }
+  return _originalFetch(url, { ...options, headers });
+}
+
 const buildUrl = (path) => {
   const base = getWalletBackendUrl();
   if (!base) return null;
@@ -32,6 +43,36 @@ const buildUrl = (path) => {
   const cleanPath = path.startsWith("/") ? path : `/${path}`;
   return `${base}${prefix}${cleanPath}`;
 };
+
+/**
+ * Fetch the current user's wallets.
+ * GET /wallets
+ * @param {string} accessToken - Backend JWT
+ */
+export async function getWallets(accessToken) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: 'Backend URL not configured' };
+  if (!accessToken) return { success: false, error: 'Not authenticated' };
+  const url = `${base}/wallets`;
+  try {
+    const res = await apiFetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    return { success: true, wallets: Array.isArray(data) ? data : (data.wallets ?? data.data ?? []) };
+  } catch (e) {
+    if (__DEV__) console.error('[Wallets API] Error', e);
+    return { success: false, error: e.message || 'Network error' };
+  }
+}
 
 /**
  * Submit a time deposit request via the backend.
@@ -52,7 +93,7 @@ export async function submitTimeDepositRequest(accessToken, body) {
   const url = `${base}/time-deposits`;
   try {
     if (__DEV__) console.log("[Deposit API] POST", url, body);
-    const res = await fetch(url, {
+    const res = await apiFetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -111,7 +152,7 @@ export async function getTimeDeposits(accessToken) {
 
   try {
     if (__DEV__) console.log("[TimeDeposits API] GET", url);
-    const res = await fetch(url, {
+    const res = await apiFetch(url, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -178,7 +219,7 @@ export async function getTimeDepositInterestRates(accessToken, contractType) {
     url += `?contractType=${encodeURIComponent(contractType)}`;
   }
   try {
-    const res = await fetch(url, {
+    const res = await apiFetch(url, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -201,6 +242,62 @@ export async function getTimeDepositInterestRates(accessToken, contractType) {
 }
 
 /**
+ * Calculate exchange rate (real-time currency conversion).
+ * POST /exchange-rate/calculate — no auth required.
+ * Per docs/exchange-calculator-api.md: User deposits foreign currency to acquire PHP.
+ * @param {Object} params
+ * @param {string} params.currency - 3-letter currency code (e.g. "JPY", "USD", "SAR", "KRW")
+ * @param {number} params.amount - The amount the user typed
+ * @param {string} [params.action="BUY_PHP"] - "BUY_PHP" (deposit) or "SELL_PHP" (withdraw)
+ * @param {string} [params.amountType="SOURCE_FOREIGN"] - "SOURCE_FOREIGN" (user typed in foreign currency) or "TARGET_PHP"
+ * @returns {Promise<{ success: boolean, targetAmount?: number, sourceAmount?: number, error?: string }>}
+ */
+export async function calculateExchange({
+  currency,
+  amount,
+  action = "BUY_PHP",
+  amountType = "SOURCE_FOREIGN",
+}) {
+  const base = getBaseUrl();
+  if (!base) {
+    if (__DEV__) console.warn("[ExchangeRate API] Backend URL not configured. Set EXPO_PUBLIC_WALLET_BACKEND_URL.");
+    return { success: false, error: "Backend URL not configured." };
+  }
+  if (!currency || amount == null || amount < 0)
+    return { success: false, error: "Invalid params" };
+  const url = `${base}/exchange-rate/calculate`;
+  try {
+    if (__DEV__) console.log("[ExchangeRate API] POST", url, { currency, amount, action, amountType });
+    const res = await apiFetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action,
+        currency,
+        amount: Number(amount),
+        amountType,
+      }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (__DEV__) console.log("[ExchangeRate API] Response", res.status, data);
+    if (!res.ok) {
+      const msg =
+        data.message || data.error || `Exchange rate not available for ${currency}`;
+      return { success: false, error: msg };
+    }
+    return {
+      success: true,
+      targetAmount: data.targetAmount,
+      sourceAmount: data.sourceAmount,
+      rateUsed: data.rateUsed,
+    };
+  } catch (e) {
+    if (__DEV__) console.error("[ExchangeRate API] Error", e);
+    return { success: false, error: e.message || "Network error" };
+  }
+}
+
+/**
  * Submit a top-up request via the backend.
  * POST /deposit-requests/top-up
  * @param {string} accessToken - Backend JWT
@@ -218,7 +315,7 @@ export async function submitTopUpRequest(accessToken, body) {
   if (!accessToken) return { success: false, error: "Not authenticated" };
   try {
     if (__DEV__) console.log("[Deposit API] POST", url, body);
-    const res = await fetch(url, {
+    const res = await apiFetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -262,7 +359,7 @@ export async function submitStockInvestmentRequest(accessToken, body) {
   if (!accessToken) return { success: false, error: "Not authenticated" };
   try {
     if (__DEV__) console.log("[Deposit API] POST", url, body);
-    const res = await fetch(url, {
+    const res = await apiFetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -299,7 +396,7 @@ export async function getTopUpDepositRequests(accessToken) {
   if (!url) return { success: false, error: "Backend URL not configured" };
   if (!accessToken) return { success: false, error: "Not authenticated" };
   try {
-    const res = await fetch(url, {
+    const res = await apiFetch(url, {
       method: "GET",
       headers: { Authorization: `Bearer ${accessToken}` },
     });
@@ -330,7 +427,7 @@ export async function getStockInvestmentDepositRequests(accessToken) {
   if (!url) return { success: false, error: "Backend URL not configured" };
   if (!accessToken) return { success: false, error: "Not authenticated" };
   try {
-    const res = await fetch(url, {
+    const res = await apiFetch(url, {
       method: "GET",
       headers: { Authorization: `Bearer ${accessToken}` },
     });
@@ -371,7 +468,7 @@ export async function submitWithdrawalRequest(accessToken, body) {
   if (!accessToken) return { success: false, error: "Not authenticated" };
   try {
     if (__DEV__) console.log("[Withdrawal API] POST", url, body);
-    const res = await fetch(url, {
+    const res = await apiFetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -423,7 +520,7 @@ export async function submitBankingApplication(accessToken, body) {
         Object.keys(body),
         ")",
       );
-    const res = await fetch(url, {
+    const res = await apiFetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -462,7 +559,7 @@ export async function submitTravelProtection(accessToken, body) {
   if (!accessToken) return { success: false, error: "Not authenticated" };
   try {
     if (__DEV__) console.log("[TravelProtection API] POST", url);
-    const res = await fetch(url, {
+    const res = await apiFetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -495,7 +592,7 @@ export async function getWithdrawalRequests(accessToken) {
   if (!url) return { success: false, error: "Backend URL not configured" };
   if (!accessToken) return { success: false, error: "Not authenticated" };
   try {
-    const res = await fetch(url, {
+    const res = await apiFetch(url, {
       method: "GET",
       headers: { Authorization: `Bearer ${accessToken}` },
     });
@@ -525,7 +622,7 @@ export async function login(email, password) {
   const base = getBaseUrl();
   if (!base) return { success: false, error: "Backend URL not configured" };
   try {
-    const res = await fetch(`${base}/auth/login`, {
+    const res = await apiFetch(`${base}/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email: email.trim(), password }),
@@ -561,7 +658,7 @@ export async function forgotPassword(email) {
   const base = getBaseUrl();
   if (!base) return { success: false, error: "Backend URL not configured" };
   try {
-    const res = await fetch(`${base}/auth/forgot-password`, {
+    const res = await apiFetch(`${base}/auth/forgot-password`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email: email.trim() }),
@@ -591,7 +688,7 @@ export async function register(body) {
   const base = getBaseUrl();
   if (!base) return { success: false, error: "Backend URL not configured" };
   try {
-    const res = await fetch(`${base}/auth/register`, {
+    const res = await apiFetch(`${base}/auth/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
@@ -622,7 +719,7 @@ export async function getMe(accessToken) {
   if (!base) return { success: false, error: "Backend URL not configured" };
   if (!accessToken) return { success: false, error: "No token" };
   try {
-    const res = await fetch(`${base}/auth/me`, {
+    const res = await apiFetch(`${base}/auth/me`, {
       method: "GET",
       headers: { Authorization: `Bearer ${accessToken}` },
     });
@@ -648,7 +745,7 @@ export async function updateProfile(accessToken, body) {
   if (!base) return { success: false, error: "Backend URL not configured" };
   if (!accessToken) return { success: false, error: "No token" };
   try {
-    const res = await fetch(`${base}/auth/profile`, {
+    const res = await apiFetch(`${base}/auth/profile`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -681,7 +778,7 @@ export async function setPasscode(accessToken, passcode) {
   if (!base) return { success: false, error: "Backend URL not configured" };
   if (!accessToken) return { success: false, error: "No token" };
   try {
-    const res = await fetch(`${base}/auth/passcode`, {
+    const res = await apiFetch(`${base}/auth/passcode`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -713,7 +810,7 @@ export async function verifyPasscode(accessToken, passcode) {
   if (!base) return { success: false, error: "Backend URL not configured" };
   if (!accessToken) return { success: false, error: "No token" };
   try {
-    const res = await fetch(`${base}/auth/verify-passcode`, {
+    const res = await apiFetch(`${base}/auth/verify-passcode`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -748,7 +845,7 @@ export async function updatePasscode(
   if (!base) return { success: false, error: "Backend URL not configured" };
   if (!accessToken) return { success: false, error: "No token" };
   try {
-    const res = await fetch(`${base}/auth/passcode`, {
+    const res = await apiFetch(`${base}/auth/passcode`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -780,7 +877,7 @@ export async function verifyEmail(email, otp) {
   const base = getBaseUrl();
   if (!base) return { success: false, error: "Backend URL not configured" };
   try {
-    const res = await fetch(`${base}/auth/verify-email`, {
+    const res = await apiFetch(`${base}/auth/verify-email`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email: email.trim(), otp }),
@@ -805,7 +902,7 @@ export async function resendVerification(email) {
   const base = getBaseUrl();
   if (!base) return { success: false, error: "Backend URL not configured" };
   try {
-    const res = await fetch(`${base}/auth/resend-verification`, {
+    const res = await apiFetch(`${base}/auth/resend-verification`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email: email.trim() }),
@@ -833,7 +930,7 @@ export async function getReferralCode(accessToken) {
   if (!base) return { success: false, error: "Backend URL not configured" };
   if (!accessToken) return { success: false, error: "No token" };
   try {
-    const res = await fetch(`${base}/referrals/code`, {
+    const res = await apiFetch(`${base}/referrals/code`, {
       method: "GET",
       headers: { Authorization: `Bearer ${accessToken}` },
     });
@@ -861,7 +958,7 @@ export async function getReferralQrPayload(accessToken) {
   if (!base) return { success: false, error: "Backend URL not configured" };
   if (!accessToken) return { success: false, error: "No token" };
   try {
-    const res = await fetch(`${base}/referrals/qr-payload`, {
+    const res = await apiFetch(`${base}/referrals/qr-payload`, {
       method: "GET",
       headers: { Authorization: `Bearer ${accessToken}` },
     });
@@ -889,7 +986,7 @@ export async function getReferralTree(accessToken) {
   if (!base) return { success: false, error: "Backend URL not configured" };
   if (!accessToken) return { success: false, error: "No token" };
   try {
-    const res = await fetch(`${base}/referrals/tree`, {
+    const res = await apiFetch(`${base}/referrals/tree`, {
       method: "GET",
       headers: { Authorization: `Bearer ${accessToken}` },
     });
@@ -917,7 +1014,7 @@ export async function generateReferralCode(accessToken) {
   if (!base) return { success: false, error: "Backend URL not configured" };
   if (!accessToken) return { success: false, error: "No token" };
   try {
-    const res = await fetch(`${base}/referrals/generate`, {
+    const res = await apiFetch(`${base}/referrals/generate`, {
       method: "POST",
       headers: { Authorization: `Bearer ${accessToken}` },
     });
@@ -937,31 +1034,6 @@ export async function generateReferralCode(accessToken) {
 // --- Wallets API ---
 
 /**
- * GET /wallets — requires JWT
- * Returns all wallets for the authenticated user.
- * @param {string} accessToken
- * @returns {{ success: boolean, wallets?: Array, error?: string }}
- */
-export async function getWallets(accessToken) {
-  const base = getBaseUrl();
-  if (!base) return { success: false, error: "Backend URL not configured" };
-  if (!accessToken) return { success: false, error: "No token" };
-  try {
-    const res = await fetch(`${base}/wallets`, {
-      method: "GET",
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      return { success: false, error: data.message || "Failed to get wallets" };
-    }
-    return { success: true, wallets: Array.isArray(data) ? data : [] };
-  } catch (e) {
-    return { success: false, error: e.message || "Network error" };
-  }
-}
-
-/**
  * POST /wallets/main — requires JWT
  * Gets or creates the user's main (PHP) wallet. Idempotent.
  * @param {string} accessToken
@@ -972,7 +1044,7 @@ export async function getOrCreateMainWallet(accessToken) {
   if (!base) return { success: false, error: "Backend URL not configured" };
   if (!accessToken) return { success: false, error: "No token" };
   try {
-    const res = await fetch(`${base}/wallets/main`, {
+    const res = await apiFetch(`${base}/wallets/main`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -1011,7 +1083,7 @@ export async function getRecipientByAccountNumber(accessToken, accountNumber) {
     return { success: false, error: "Account number is required" };
   try {
     const url = `${base}/transfers/recipient-by-account-number?accountNumber=${encodeURIComponent(normalized)}`;
-    const res = await fetch(url, {
+    const res = await apiFetch(url, {
       method: "GET",
       headers: { Authorization: `Bearer ${accessToken}` },
     });
@@ -1041,7 +1113,7 @@ export async function getBeneficiaries(accessToken) {
   if (!base) return { success: false, error: "Backend URL not configured" };
   if (!accessToken) return { success: false, error: "No token" };
   try {
-    const res = await fetch(`${base}/beneficiaries`, {
+    const res = await apiFetch(`${base}/beneficiaries`, {
       method: "GET",
       headers: { Authorization: `Bearer ${accessToken}` },
     });
@@ -1072,7 +1144,7 @@ export async function createBeneficiary(accessToken, body) {
   if (!base) return { success: false, error: "Backend URL not configured" };
   if (!accessToken) return { success: false, error: "No token" };
   try {
-    const res = await fetch(`${base}/beneficiaries`, {
+    const res = await apiFetch(`${base}/beneficiaries`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -1104,7 +1176,7 @@ export async function submitTransfer(accessToken, body) {
   if (!base) return { success: false, error: "Backend URL not configured" };
   if (!accessToken) return { success: false, error: "No token" };
   try {
-    const res = await fetch(`${base}/transfers`, {
+    const res = await apiFetch(`${base}/transfers`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -1146,7 +1218,7 @@ export async function getTransactions(accessToken, opts = {}) {
     if (opts.type) params.set("type", opts.type);
     const qs = params.toString();
     const url = `${base}/transactions${qs ? `?${qs}` : ""}`;
-    const res = await fetch(url, {
+    const res = await apiFetch(url, {
       method: "GET",
       headers: { Authorization: `Bearer ${accessToken}` },
     });
@@ -1180,7 +1252,7 @@ export async function sendMessage(accessToken, content) {
   if (!trimmed) return { success: false, error: "Message content is required" };
   try {
     const url = `${base}/messages`;
-    const res = await fetch(url, {
+    const res = await apiFetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -1219,7 +1291,7 @@ export async function getMessages(accessToken, opts = {}) {
     if (opts.limit != null) params.set("limit", String(opts.limit));
     const qs = params.toString();
     const url = `${base}/messages${qs ? `?${qs}` : ""}`;
-    const res = await fetch(url, {
+    const res = await apiFetch(url, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -1245,6 +1317,100 @@ export async function getMessages(accessToken, opts = {}) {
 }
 
 /**
+ * GET /notifications — requires JWT
+ * Fetch the current user's push notification history.
+ * @param {string} accessToken
+ * @param {{ limit?: number }} opts
+ */
+export async function getNotifications(accessToken, opts = {}) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
+  try {
+    const params = new URLSearchParams();
+    if (opts.limit != null) params.set("limit", String(opts.limit));
+    const qs = params.toString();
+    const url = `${base}/notifications${qs ? `?${qs}` : ""}`;
+    const res = await apiFetch(url, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    return {
+      success: true,
+      data: Array.isArray(data) ? data : [],
+    };
+  } catch (e) {
+    if (__DEV__) console.error("[Notifications API] Error", e);
+    return { success: false, error: e.message || "Network error" };
+  }
+}
+
+/**
+ * PATCH /notifications/read-all — requires JWT
+ * Mark all notifications as read.
+ * @param {string} accessToken
+ */
+export async function markAllNotificationsAsRead(accessToken) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
+  try {
+    const url = `${base}/notifications/read-all`;
+    const res = await apiFetch(url, {
+      method: "PATCH",
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || 'Failed';
+      return { success: false, error: msg };
+    }
+    return { success: true };
+  } catch (e) {
+    if (__DEV__) console.error("[Notifications API] Error", e);
+    return { success: false, error: e.message || "Network error" };
+  }
+}
+
+/**
+ * PATCH /notifications/:id/read — requires JWT
+ * Mark notification as read.
+ * @param {string} accessToken
+ * @param {string} notificationId
+ */
+export async function markNotificationAsRead(accessToken, notificationId) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
+  try {
+    const url = `${base}/notifications/${encodeURIComponent(notificationId)}/read`;
+    const res = await apiFetch(url, {
+      method: "PATCH",
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || 'Failed';
+      return { success: false, error: msg };
+    }
+    return { success: true };
+  } catch (e) {
+    if (__DEV__) console.error("[Notifications API] Error", e);
+    return { success: false, error: e.message || "Network error" };
+  }
+}
+
+/**
  * PATCH /messages/:id/read — requires JWT
  * Mark a single message as read.
  * @param {string} accessToken
@@ -1258,7 +1424,7 @@ export async function markMessageAsRead(accessToken, messageId) {
   if (!messageId) return { success: false, error: "Message ID required" };
   try {
     const url = `${base}/messages/${encodeURIComponent(messageId)}/read`;
-    const res = await fetch(url, {
+    const res = await apiFetch(url, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -1291,7 +1457,7 @@ export async function markAllMessagesAsRead(accessToken) {
   if (!accessToken) return { success: false, error: "Not authenticated" };
   try {
     const url = `${base}/messages/read-all`;
-    const res = await fetch(url, {
+    const res = await apiFetch(url, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -1329,7 +1495,7 @@ export async function editMessage(accessToken, messageId, content) {
   if (!trimmed) return { success: false, error: "Message content is required" };
   try {
     const url = `${base}/messages/${encodeURIComponent(messageId)}`;
-    const res = await fetch(url, {
+    const res = await apiFetch(url, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -1370,7 +1536,7 @@ export async function deleteMessage(
   if (!messageId) return { success: false, error: "Message ID required" };
   try {
     const url = `${base}/messages/${encodeURIComponent(messageId)}`;
-    const res = await fetch(url, {
+    const res = await apiFetch(url, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
@@ -1408,7 +1574,7 @@ export async function getUserActivity(adminToken, userId) {
   if (!userId) return { success: false, error: "User ID required" };
   try {
     const url = `${base}/user-activity/${encodeURIComponent(userId)}`;
-    const res = await fetch(url, {
+    const res = await apiFetch(url, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -1452,7 +1618,7 @@ export async function getBulkUserActivity(adminToken, userIds) {
     const idsParam = userIds.filter(Boolean).join(",");
     if (!idsParam) return { success: false, error: "User IDs required" };
     const url = `${base}/user-activity/bulk?userIds=${encodeURIComponent(idsParam)}`;
-    const res = await fetch(url, {
+    const res = await apiFetch(url, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -1469,6 +1635,277 @@ export async function getBulkUserActivity(adminToken, userIds) {
     return { success: true, activities: data };
   } catch (e) {
     if (__DEV__) console.error("[UserActivity API] Error", e);
+    return { success: false, error: e.message || "Network error" };
+  }
+}
+
+/**
+ * Submit a stock sell request.
+ * POST /deposit-requests/stock-sell
+ * @param {string} accessToken - Backend JWT
+ * @param {{ walletId: string, stocksToSell: number }} body
+ */
+export async function submitStockSellRequest(accessToken, body) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: 'Backend URL not configured. Set EXPO_PUBLIC_WALLET_BACKEND_URL in .env.' };
+  if (!accessToken) return { success: false, error: 'Not authenticated' };
+  const url = buildUrl('/deposit-requests/stock-sell');
+  try {
+    if (__DEV__) console.log('[StockSell API] POST', url, body);
+    const res = await apiFetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (__DEV__) console.log('[StockSell API] Response', res.status, data);
+    if (!res.ok) {
+      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    return { success: true, data: data.data ?? data };
+  } catch (e) {
+    if (__DEV__) console.error('[StockSell API] Error', e);
+    return { success: false, error: e.message || 'Network error. Check EXPO_PUBLIC_WALLET_BACKEND_URL.' };
+  }
+}
+
+/**
+ * Fetch the current user's stock sell requests.
+ * GET /deposit-requests/stock-sell
+ * @param {string} accessToken - Backend JWT
+ */
+export async function getStockSellRequests(accessToken) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: 'Backend URL not configured' };
+  if (!accessToken) return { success: false, error: 'Not authenticated' };
+  const url = buildUrl('/deposit-requests/stock-sell');
+  try {
+    const res = await apiFetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    return { success: true, data: Array.isArray(data) ? data : (data.data ?? []) };
+  } catch (e) {
+    if (__DEV__) console.error('[StockSell API] Error', e);
+    return { success: false, error: e.message || 'Network error' };
+  }
+}
+// --- Card Collection API ---
+
+/**
+ * Get card catalog with per-user eligibility/ownership flags.
+ * GET /card-collection/catalog
+ * @param {string} accessToken - Backend JWT
+ */
+export async function getCardCatalog(accessToken) {
+  const url = buildUrl("/card-collection/catalog");
+  if (!url) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
+  try {
+    const res = await apiFetch(url, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    const catalog = Array.isArray(data.catalog)
+      ? data.catalog
+      : Array.isArray(data)
+        ? data
+        : [];
+    return { success: true, catalog };
+  } catch (e) {
+    if (__DEV__) console.error("[CardCollection API] getCardCatalog error", e);
+    return { success: false, error: e.message || "Network error" };
+  }
+}
+
+/**
+ * Get current user's card collection and active card.
+ * GET /card-collection/my-collection
+ * @param {string} accessToken - Backend JWT
+ */
+export async function getMyCardCollection(accessToken) {
+  const url = buildUrl("/card-collection/my-collection");
+  if (!url) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
+  try {
+    const res = await apiFetch(url, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    return { success: true, data };
+  } catch (e) {
+    if (__DEV__) console.error("[CardCollection API] getMyCardCollection error", e);
+    return { success: false, error: e.message || "Network error" };
+  }
+}
+
+/**
+ * Buy or unlock a card design.
+ * POST /card-collection/buy
+ * @param {string} accessToken - Backend JWT
+ * @param {string} design - Card design slug (e.g. DIAMOND_ELITE)
+ */
+export async function buyCard(accessToken, design) {
+  const url = buildUrl("/card-collection/buy");
+  if (!url) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
+  if (!design) return { success: false, error: "Design is required" };
+  try {
+    const res = await apiFetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ design }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    return { success: true, data: data.data ?? data };
+  } catch (e) {
+    if (__DEV__) console.error("[CardCollection API] buyCard error", e);
+    return { success: false, error: e.message || "Network error" };
+  }
+}
+
+/**
+ * Select which owned card should be treated as the active design.
+ * POST /card-collection/set-active
+ * @param {string} accessToken - Backend JWT
+ * @param {string} cardCollectionItemId - ID from my-collection.collection[].id
+ */
+export async function setActiveCard(accessToken, cardCollectionItemId) {
+  const url = buildUrl("/card-collection/set-active");
+  if (!url) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
+  if (!cardCollectionItemId) return { success: false, error: "Card ID is required" };
+  try {
+    const res = await apiFetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ cardCollectionItemId }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    return { success: true, data };
+  } catch (e) {
+    if (__DEV__) console.error("[CardCollection API] setActiveCard error", e);
+    return { success: false, error: e.message || "Network error" };
+  }
+}
+
+
+/**
+ * Renew an expiring Gold Elite subscription.
+ * Only allowed when subscription expires within 3 days.
+ * POST /card-collection/renew
+ * @param {string} accessToken - Backend JWT
+ * @param {string} design - Card design to renew (e.g., "GOLD_ELITE")
+ * @returns {Promise<{ success: boolean, data?: object, error?: string }>}
+ */
+export async function renewCard(accessToken, design) {
+  const url = buildUrl("/card-collection/renew");
+  if (!url) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
+  if (!design) return { success: false, error: "Design is required" };
+  try {
+    if (__DEV__) console.log("[CardCollection API] renewCard POST", url, { design });
+    const res = await apiFetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ design }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (__DEV__) console.log("[CardCollection API] renewCard response", res.status, data);
+    if (!res.ok) {
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    return { success: true, data: data.data ?? data };
+  } catch (e) {
+    if (__DEV__) console.error("[CardCollection API] renewCard error", e);
+    return { success: false, error: e.message || "Network error" };
+  }
+}
+
+/**
+ * POST /card-collection/cancel-renewal — requires JWT
+ * Cancels auto-renewal for Gold Elite subscription.
+ * @param {string} accessToken - Backend JWT
+ * @param {string} design - Card design (should be "GOLD_ELITE")
+ * @returns {{ success: boolean, data?: object, error?: string }}
+ */
+export async function cancelAutoRenewal(accessToken, design) {
+  const url = buildUrl("/card-collection/cancel-renewal");
+  if (!url) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
+  try {
+    const res = await apiFetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ design }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    return { success: true, data: data.data ?? data };
+  } catch (e) {
+    if (__DEV__) console.error("[CardCollection API] cancelAutoRenewal error", e);
     return { success: false, error: e.message || "Network error" };
   }
 }

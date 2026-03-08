@@ -4,6 +4,7 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useState } from "react";
 import {
+  ActivityIndicator,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -16,10 +17,12 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { getOrCreateMainWallet, submitWithdrawalRequest } from "../../../configs/api";
+import { useLanguage } from "../../../context/LanguageContext";
 
 export default function EWalletConfirm() {
   const navigation = useNavigation();
   const route = useRoute();
+  const { t } = useLanguage();
   const params = (route.params || {}) as { method?: string; walletType?: string; accountNumber?: string; accountName?: string; amount?: string; email?: string };
   const [showAlertModal, setShowAlertModal] = useState(false);
   const [alertConfig, setAlertConfig] = useState<{ title: string; message: string }>({ title: "", message: "" });
@@ -42,7 +45,7 @@ export default function EWalletConfirm() {
         try {
           const user = JSON.parse(userJson) as { hasPasscode?: boolean };
           setHasPasscode(!!user?.hasPasscode);
-        } catch (_) {}
+        } catch (_) { }
       }
     })();
   }, []);
@@ -54,14 +57,14 @@ export default function EWalletConfirm() {
     try {
       const accessToken = await AsyncStorage.getItem("access_token");
       if (!accessToken) {
-        setAlertConfig({ title: "Error", message: "Please log in to submit a withdrawal request." });
+        setAlertConfig({ title: t("common.error"), message: t("withdraw.errorLogin") });
         setShowAlertModal(true);
         setIsSubmitting(false);
         return;
       }
       const { success: walletSuccess, wallet } = await getOrCreateMainWallet(accessToken);
       if (!walletSuccess || !wallet?.id) {
-        setAlertConfig({ title: "Error", message: "Could not load wallet. Please try again." });
+        setAlertConfig({ title: t("common.error"), message: t("withdraw.errorLoadWallet") });
         setShowAlertModal(true);
         setIsSubmitting(false);
         return;
@@ -82,21 +85,21 @@ export default function EWalletConfirm() {
         setShowPasscodeModal(false);
         setPasscode("");
         setAlertConfig({
-          title: "Success",
-          message: "Your withdrawal request has been submitted successfully!",
+          title: t("withdraw.successTitle"),
+          message: t("withdraw.successMessage"),
         });
         setShowAlertModal(true);
       } else {
         setAlertConfig({
-          title: "Error",
-          message: result.error || "Failed to submit withdrawal request. Please try again.",
+          title: t("common.error"),
+          message: result.error || t("withdraw.errorSubmit"),
         });
         setShowAlertModal(true);
         if (passcodeToSend) setPasscode("");
       }
     } catch (error) {
       console.error("Error submitting withdrawal:", error);
-      setAlertConfig({ title: "Error", message: "An unexpected error occurred. Please try again." });
+      setAlertConfig({ title: t("common.error"), message: t("deposit.unexpectedError") || "An unexpected error occurred. Please try again." });
       setShowAlertModal(true);
       if (passcodeToSend) setPasscode("");
     } finally {
@@ -141,7 +144,7 @@ export default function EWalletConfirm() {
             <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
           </TouchableOpacity>
 
-          <Text style={styles.headerTitle}>Withdrawal Request</Text>
+          <Text style={styles.headerTitle}>{t("withdraw.title")}</Text>
 
           <TouchableOpacity style={styles.refreshButton}>
             <Ionicons name="refresh" size={24} color="#FFFFFF" />
@@ -173,22 +176,22 @@ export default function EWalletConfirm() {
         >
           {/* Title */}
           <View style={styles.titleContainer}>
-            <Text style={styles.title}>Review & Confirm</Text>
-            <Text style={styles.subtitle}>Review your withdrawal details</Text>
+            <Text style={styles.title}>{t("withdraw.reviewConfirm")}</Text>
+            <Text style={styles.subtitle}>{t("withdraw.details")}</Text>
           </View>
 
           {/* Details Card */}
           <View style={styles.detailsCard}>
             <View style={styles.orangeHeader}>
-              <Text style={styles.orangeHeaderText}>Withdrawal Details</Text>
+              <Text style={styles.orangeHeaderText}>{t("withdraw.details")}</Text>
             </View>
 
             {/* Withdrawal Method */}
             <View style={styles.detailRow}>
               <View style={styles.leftBorder} />
               <View style={styles.detailContent}>
-                <Text style={styles.detailLabel}>Withdrawal Method</Text>
-                <Text style={styles.detailValue}>E-Wallet</Text>
+                <Text style={styles.detailLabel}>{t("withdraw.withdrawalMethod")}</Text>
+                <Text style={styles.detailValue}>{t("withdraw.ewallet")}</Text>
               </View>
             </View>
 
@@ -196,7 +199,7 @@ export default function EWalletConfirm() {
             <View style={styles.detailRow}>
               <View style={styles.leftBorder} />
               <View style={styles.detailContent}>
-                <Text style={styles.detailLabel}>E-Wallet Type</Text>
+                <Text style={styles.detailLabel}>{t("withdraw.ewalletType")}</Text>
                 <Text style={styles.detailValue}>{walletType.charAt(0).toUpperCase() + walletType.slice(1)}</Text>
               </View>
             </View>
@@ -205,7 +208,7 @@ export default function EWalletConfirm() {
             <View style={styles.detailRow}>
               <View style={styles.leftBorder} />
               <View style={styles.detailContent}>
-                <Text style={styles.detailLabel}>Wallet Account Number</Text>
+                <Text style={styles.detailLabel}>{t("withdraw.walletAccNumber")}</Text>
                 <Text style={styles.detailValue}>{accountNumber}</Text>
               </View>
             </View>
@@ -214,7 +217,7 @@ export default function EWalletConfirm() {
             <View style={styles.detailRow}>
               <View style={styles.leftBorder} />
               <View style={styles.detailContent}>
-                <Text style={styles.detailLabel}>Wallet Account Name</Text>
+                <Text style={styles.detailLabel}>{t("withdraw.walletAccName")}</Text>
                 <Text style={styles.detailValue}>{accountName}</Text>
               </View>
             </View>
@@ -223,7 +226,7 @@ export default function EWalletConfirm() {
             <View style={styles.detailRow}>
               <View style={styles.leftBorder} />
               <View style={styles.detailContent}>
-                <Text style={styles.detailLabel}>Email Address *</Text>
+                <Text style={styles.detailLabel}>{t("withdraw.email")}</Text>
                 <Text style={styles.detailValue}>{email}</Text>
               </View>
             </View>
@@ -231,7 +234,7 @@ export default function EWalletConfirm() {
 
           {/* Withdrawal Amount Card */}
           <View style={styles.amountCard}>
-            <Text style={styles.amountLabel}>Withdrawal Amount (₱) *</Text>
+            <Text style={styles.amountLabel}>{t("withdraw.amountLabel")}</Text>
             <View style={styles.amountBox}>
               <Text style={styles.amountValue}>₱ {formatAmount(amount)}</Text>
             </View>
@@ -249,19 +252,25 @@ export default function EWalletConfirm() {
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
             >
-              <Text style={styles.confirmText}>Confirm</Text>
-              <Ionicons name="checkmark" size={20} color="#FFFFFF" />
+              {isSubmitting && !showPasscodeModal ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <>
+                  <Text style={styles.confirmText}>{t("withdraw.confirm")}</Text>
+                  <Ionicons name="checkmark" size={20} color="#FFFFFF" />
+                </>
+              )}
             </LinearGradient>
           </TouchableOpacity>
 
           <View style={styles.bottomPadding} />
         </ScrollView>
 
-        {/* Passcode modal (when user has passcode set) */}
+        {/* Passcode modal - outer glow (palit sa dark overlay), loading + Confirm */}
         <Modal
           visible={showPasscodeModal}
           transparent
-          animationType="fade"
+          animationType="slide"
           onRequestClose={() => !isSubmitting && setShowPasscodeModal(false)}
         >
           <KeyboardAvoidingView
@@ -269,41 +278,50 @@ export default function EWalletConfirm() {
             behavior={Platform.OS === "ios" ? "padding" : "height"}
             keyboardVerticalOffset={Platform.OS === "ios" ? 40 : 0}
           >
-          <View style={styles.passcodeModalOverlay}>
-            <View style={styles.passcodeModalContent}>
-              <Text style={styles.passcodeModalTitle}>Enter your passcode</Text>
-              <TextInput
-                style={styles.passcodeInput}
-                value={passcode}
-                onChangeText={(t) => setPasscode(t.replace(/\D/g, "").slice(0, 4))}
-                placeholder="••••"
-                placeholderTextColor="#999"
-                secureTextEntry
-                maxLength={4}
-                keyboardType="number-pad"
-                editable={!isSubmitting}
-                underlineColorAndroid="transparent"
-              />
-              <View style={styles.passcodeModalButtons}>
-                <TouchableOpacity
-                  style={[styles.passcodeModalButton, styles.passcodeModalButtonCancel]}
-                  onPress={() => { setShowPasscodeModal(false); setPasscode(""); }}
-                  disabled={isSubmitting}
-                >
-                  <Text style={styles.passcodeModalButtonCancelText}>Cancel</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.passcodeModalButton, styles.passcodeModalButtonConfirm]}
-                  onPress={handlePasscodeConfirm}
-                  disabled={isSubmitting || passcode.length !== 4}
-                >
-                  <LinearGradient colors={["#E25A17", "#F28934"]} style={styles.passcodeModalButtonGradient}>
-                    <Text style={styles.passcodeModalButtonConfirmText}>Confirm</Text>
-                  </LinearGradient>
-                </TouchableOpacity>
+            <View style={styles.passcodeOverlay}>
+              <View style={styles.passcodeModalContent}>
+                <Text style={styles.passcodeModalTitle}>{t("withdraw.enterPasscode")}</Text>
+                <TextInput
+                  style={styles.passcodeInput}
+                  value={passcode}
+                  onChangeText={(val) => setPasscode(val.replace(/\D/g, "").slice(0, 4))}
+                  placeholder="••••"
+                  placeholderTextColor="#999"
+                  secureTextEntry
+                  maxLength={4}
+                  keyboardType="number-pad"
+                  editable={!isSubmitting}
+                  autoFocus
+                  selectTextOnFocus={false}
+                  autoComplete="off"
+                  caretHidden={false}
+                  selectionColor="#E25A17"
+                  underlineColorAndroid="transparent"
+                />
+                <View style={styles.passcodeModalButtons}>
+                  <TouchableOpacity
+                    style={[styles.passcodeModalButton, styles.passcodeModalButtonCancel]}
+                    onPress={() => { setShowPasscodeModal(false); setPasscode(""); }}
+                    disabled={isSubmitting}
+                  >
+                    <Text style={styles.passcodeModalButtonCancelText}>{t("common.cancel")}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.passcodeModalButton, styles.passcodeModalButtonConfirm]}
+                    onPress={handlePasscodeConfirm}
+                    disabled={isSubmitting || passcode.length !== 4}
+                  >
+                    <LinearGradient colors={["#E25A17", "#F28934"]} style={styles.passcodeModalButtonGradient}>
+                      {isSubmitting ? (
+                        <ActivityIndicator size="small" color="#FFFFFF" />
+                      ) : (
+                        <Text style={styles.passcodeModalButtonConfirmText}>{t("withdraw.confirm")}</Text>
+                      )}
+                    </LinearGradient>
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
-          </View>
           </KeyboardAvoidingView>
         </Modal>
 
@@ -332,7 +350,7 @@ export default function EWalletConfirm() {
                   }
                 }}
               >
-                <Text style={styles.alertButtonText}>OK</Text>
+                <Text style={styles.alertButtonText}>{t("common.ok")}</Text>
               </TouchableOpacity>
             </LinearGradient>
           </View>
@@ -537,6 +555,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  /* Transparent overlay - walang dark background, outer glow na lang sa modal */
+  passcodeOverlay: {
+    flex: 1,
+    backgroundColor: "transparent",
+    justifyContent: "center",
+    alignItems: "center",
+  },
   alertContainer: {
     borderRadius: 12,
     padding: 24,
@@ -573,16 +598,17 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#E15816",
   },
+  /* Standard passcode modal: may background, outer glow (palit sa dark overlay) */
   passcodeModalContent: {
     backgroundColor: "#FFFFFF",
     borderRadius: 16,
-    padding: 28,
-    width: "88%",
-    maxWidth: 360,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
+    padding: 24,
+    width: "85%",
+    maxWidth: 340,
+    shadowColor: "#E25A17",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: 24,
     elevation: 12,
   },
   passcodeModalTitle: {
@@ -593,7 +619,8 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   passcodeInput: {
-    borderWidth: 2,
+    backgroundColor: "transparent",
+    borderWidth: 1,
     borderColor: "#E25A17",
     borderRadius: 8,
     paddingHorizontal: 16,
@@ -602,7 +629,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     letterSpacing: 8,
     marginBottom: 20,
-    backgroundColor: "#FFFFFF",
     shadowColor: "transparent",
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0,
@@ -629,10 +655,19 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#666",
   },
-  passcodeModalButtonConfirm: {},
+  passcodeModalButtonConfirm: {
+    minWidth: 120,
+    minHeight: 52,
+  },
   passcodeModalButtonGradient: {
+    flexDirection: "row",
+    minWidth: 120,
+    minHeight: 52,
     paddingVertical: 12,
+    paddingHorizontal: 20,
     alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
   },
   passcodeModalButtonConfirmText: {
     fontSize: 16,

@@ -1,40 +1,45 @@
 {
   "expo": {
-    "name": "InspireWalletv3",
-    "slug": "InspireWalletv3",
-    "version": "1.0.0",
+    "name": "Inspire Wallet",
+    "slug": "investor-wallet",
+    "version": "3.0.2",
     "orientation": "portrait",
-    "icon": "./assets/images/Startup [DONE].png",
+    "icon": "./assets/images/Startup [DONE].jpg",
     "scheme": "inspirewalletv3",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
+      "bundleIdentifier": "com.inspire.inspirewallet",
       "infoPlist": {
-        "NSContactsUsageDescription": "This app needs access to your contacts to help you select recipients for transfers."
+        "NSContactsUsageDescription": "This app needs access to your contacts to help you select recipients for transfers.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/Startup [DONE].png"
+        "foregroundImage": "./assets/images/Startup [DONE].jpg"
       },
+      "package": "com.inspire.inspirewallet",
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "permissions": [
-        "READ_CONTACTS"
+        "READ_CONTACTS",
+        "android.permission.READ_CONTACTS",
+        "android.permission.WRITE_CONTACTS"
       ]
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/Startup [DONE].png"
+      "favicon": "./assets/images/Startup [DONE]..jpg"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/Startup [DONE].png",
+          "image": "./assets/images/Startup [DONE].jpg",
           "resizeMode": "cover",
           "backgroundColor": "#ffffff",
           "dark": {
@@ -53,6 +58,17 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "owner": "amurobrian18",
+    "extra": {
+      "eas": {
+        "projectId": "81d5c41e-b862-48d6-a14d-21246b09c564"
+      }
+    },
+    "updates": {
+      "url": "https://u.expo.dev/81d5c41e-b862-48d6-a14d-21246b09c564",
+      "enabled": true,
+      "fallbackToCacheTimeout": 0
     }
   }
 }

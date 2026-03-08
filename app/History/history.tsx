@@ -14,7 +14,7 @@ import {
   Text,
   TouchableOpacity,
   useWindowDimensions,
-  View
+  View,
 } from "react-native";
 import {
   SafeAreaView,
@@ -26,6 +26,7 @@ import type { TransactionDoc } from "../../configs/firebase";
 import { auth, subscribeToTransactions } from "../../configs/firebase";
 import { useLanguage } from "../../context/LanguageContext";
 import type { NavProp } from "../../types/navigation";
+import CustomLoader from "../Loader/CustomLoader";
 
 const TRANSACTION_TYPE_KEYS: Record<string, string> = {
   TOP_UP: "tx.deposit",
@@ -85,7 +86,7 @@ const DeleteIcon = ({
 
 export default function HistoryScreen() {
   const navigation = useNavigation();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
 
@@ -136,9 +137,12 @@ export default function HistoryScreen() {
   const [isSelectMode, setIsSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [showDeleteOptions, setShowDeleteOptions] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-PH", {
+    return new Intl.NumberFormat(language === "en" ? "en-PH" : language, {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(amount);
@@ -149,7 +153,7 @@ export default function HistoryScreen() {
       tx.timestamp?.toDate?.() ??
       (tx.createdAt ? new Date(tx.createdAt) : null);
     if (!date) return "";
-    return date.toLocaleString("en-US", {
+    return date.toLocaleString(language === "ko" ? "ko-KR" : language === "ja" ? "ja-JP" : language === "ar" ? "ar-SA" : "en-US", {
       month: "short",
       day: "numeric",
       year: "numeric",
@@ -183,16 +187,20 @@ export default function HistoryScreen() {
     }
 
     return txList.filter((tx) => {
-      const txDate = tx.timestamp?.toDate?.() ?? 
+      const txDate =
+        tx.timestamp?.toDate?.() ??
         (tx.createdAt ? new Date(tx.createdAt) : null);
-      
+
       if (!txDate) return false;
 
       return txDate >= dateRange.start! && txDate <= dateRange.end!;
     });
   };
 
-  const allTransactions = transactions.length > 0 ? [...defaultTransactions, ...transactions] : defaultTransactions;
+  const allTransactions =
+    transactions.length > 0
+      ? [...defaultTransactions, ...transactions]
+      : defaultTransactions;
   const displayTransactions = filterTransactionsByDate(allTransactions);
 
   const totalSpent = displayTransactions
@@ -272,10 +280,15 @@ export default function HistoryScreen() {
 
           setTransactions(mapped);
           setHasMore(mapped.length >= (loadMore ? currentCount + 20 : 20));
-          
+
           // Calculate total pages (estimate based on current data)
           const estimatedTotal = Math.ceil(mapped.length / itemsPerPage);
-          setTotalPages(Math.max(estimatedTotal, currentPage + (mapped.length >= itemsPerPage ? 1 : 0)));
+          setTotalPages(
+            Math.max(
+              estimatedTotal,
+              currentPage + (mapped.length >= itemsPerPage ? 1 : 0),
+            ),
+          );
         }
       } catch (error) {
         console.error("Failed to fetch transactions:", error);
@@ -295,6 +308,16 @@ export default function HistoryScreen() {
     let unsub: (() => void) | undefined;
 
     const init = async () => {
+      // Load deleted IDs from AsyncStorage
+      try {
+        const savedDeletedIds = await AsyncStorage.getItem("deleted_transaction_ids");
+        if (savedDeletedIds) {
+          setDeletedIds(new Set(JSON.parse(savedDeletedIds)));
+        }
+      } catch (error) {
+        console.error("Failed to load deleted IDs:", error);
+      }
+
       const accessToken = await AsyncStorage.getItem("access_token");
       if (accessToken) {
         await fetchTransactions();
@@ -339,6 +362,24 @@ export default function HistoryScreen() {
     };
   }, []);
 
+  // Save deleted IDs to AsyncStorage whenever they change
+  useEffect(() => {
+    const saveDeletedIds = async () => {
+      try {
+        await AsyncStorage.setItem(
+          "deleted_transaction_ids",
+          JSON.stringify([...deletedIds])
+        );
+      } catch (error) {
+        console.error("Failed to save deleted IDs:", error);
+      }
+    };
+
+    if (deletedIds.size > 0) {
+      saveDeletedIds();
+    }
+  }, [deletedIds]);
+
   const handleBack = () => {
     if (isSelectMode) {
       setIsSelectMode(false);
@@ -357,8 +398,10 @@ export default function HistoryScreen() {
         newSelected.add(tx.id);
       }
       setSelectedIds(newSelected);
+      setShowDeleteOptions(newSelected.size > 0);
     } else {
-      (navigation as unknown as NavProp).navigate("Main");
+      setSelectedTransaction(tx);
+      setShowDetailModal(true);
     }
   };
 
@@ -380,7 +423,7 @@ export default function HistoryScreen() {
 
   const handlePageChange = (page: number) => {
     if (page === currentPage || loadingMore) return;
-    
+
     setCurrentPage(page);
     const offset = (page - 1) * itemsPerPage;
     fetchTransactions(
@@ -406,7 +449,7 @@ export default function HistoryScreen() {
   const getVisiblePages = () => {
     const pages: (number | string)[] = [];
     const maxVisible = 3;
-    
+
     if (totalPages <= maxVisible) {
       for (let i = 1; i <= totalPages; i++) {
         pages.push(i);
@@ -420,7 +463,7 @@ export default function HistoryScreen() {
         pages.push(currentPage - 1, currentPage, currentPage + 1);
       }
     }
-    
+
     return pages;
   };
 
@@ -428,28 +471,21 @@ export default function HistoryScreen() {
     setIsSelectMode(!isSelectMode);
     if (isSelectMode) {
       setSelectedIds(new Set());
-      setShowDeleteOptions(false);
     }
   };
 
   const handleBulkDelete = () => {
     if (selectedIds.size === 0) return;
-    setTransactions((prev) =>
-      prev.filter((tx) => !selectedIds.has(tx.id))
-    );
+    setTransactions((prev) => prev.filter((tx) => !selectedIds.has(tx.id)));
     setSelectedIds(new Set());
     setIsSelectMode(false);
-    setShowDeleteOptions(false);
   };
 
   const handleKeepSelected = () => {
     if (selectedIds.size === 0) return;
-    setTransactions((prev) =>
-      prev.filter((tx) => selectedIds.has(tx.id))
-    );
+    setTransactions((prev) => prev.filter((tx) => selectedIds.has(tx.id)));
     setSelectedIds(new Set());
     setIsSelectMode(false);
-    setShowDeleteOptions(false);
   };
 
   const applyDateFilter = (filterType: string) => {
@@ -551,7 +587,7 @@ export default function HistoryScreen() {
     end.setHours(23, 59, 59, 999);
 
     if (start > end) {
-      alert("Start date cannot be after end date");
+      alert(t("history.invalidDateRange"));
       return;
     }
 
@@ -590,6 +626,10 @@ export default function HistoryScreen() {
     }
   };
 
+  if (loading && transactions.length === 0) {
+    return <CustomLoader text={t("history.loading")} />;
+  }
+
   return (
     <>
       <StatusBar barStyle="light-content" backgroundColor="#E25A17" />
@@ -613,9 +653,7 @@ export default function HistoryScreen() {
           >
             <Ionicons name="arrow-back" size={24} color="#FFF" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>
-            {t("history.allTransactions")}
-          </Text>
+          <Text style={styles.headerTitle}>{t("history.allTransactions")}</Text>
           <View style={styles.headerRight}>
             <View style={styles.filterDropdownContainer}>
               <TouchableOpacity
@@ -627,117 +665,118 @@ export default function HistoryScreen() {
               </TouchableOpacity>
               {showFilterDropdown && (
                 <View style={styles.filterDropdownMenu}>
-                  <Text style={styles.filterDropdownTitle}>Filter by Date</Text>
-                <TouchableOpacity
-                  style={[
-                    styles.filterOption,
-                    selectedFilter === "all" && styles.filterOptionSelected,
-                  ]}
-                  onPress={() => applyDateFilter("all")}
-                >
-                  <View style={styles.filterOptionContent}>
-                    <Text
-                      style={[
-                        styles.filterOptionText,
-                        selectedFilter === "all" &&
+                  <Text style={styles.filterDropdownTitle}>{t("history.filterByDate")}</Text>
+                  <TouchableOpacity
+                    style={[
+                      styles.filterOption,
+                      selectedFilter === "all" && styles.filterOptionSelected,
+                    ]}
+                    onPress={() => applyDateFilter("all")}
+                  >
+                    <View style={styles.filterOptionContent}>
+                      <Text
+                        style={[
+                          styles.filterOptionText,
+                          selectedFilter === "all" &&
                           styles.filterOptionTextSelected,
-                      ]}
-                    >
-                      All Time
-                    </Text>
-                    {selectedFilter === "all" && (
-                      <Ionicons name="checkmark" size={18} color="#E15816" />
-                    )}
-                  </View>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    styles.filterOption,
-                    selectedFilter === "today" && styles.filterOptionSelected,
-                  ]}
-                  onPress={() => applyDateFilter("today")}
-                >
-                  <View style={styles.filterOptionContent}>
-                    <Text
-                      style={[
-                        styles.filterOptionText,
-                        selectedFilter === "today" &&
+                        ]}
+                      >
+                        {t("history.allTime")}
+                      </Text>
+                      {selectedFilter === "all" && (
+                        <Ionicons name="checkmark" size={18} color="#E15816" />
+                      )}
+                    </View>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.filterOption,
+                      selectedFilter === "today" && styles.filterOptionSelected,
+                    ]}
+                    onPress={() => applyDateFilter("today")}
+                  >
+                    <View style={styles.filterOptionContent}>
+                      <Text
+                        style={[
+                          styles.filterOptionText,
+                          selectedFilter === "today" &&
                           styles.filterOptionTextSelected,
-                      ]}
-                    >
-                      Today
-                    </Text>
-                    {selectedFilter === "today" && (
-                      <Ionicons name="checkmark" size={18} color="#E15816" />
-                    )}
-                  </View>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    styles.filterOption,
-                    selectedFilter === "week" && styles.filterOptionSelected,
-                  ]}
-                  onPress={() => applyDateFilter("week")}
-                >
-                  <View style={styles.filterOptionContent}>
-                    <Text
-                      style={[
-                        styles.filterOptionText,
-                        selectedFilter === "week" &&
+                        ]}
+                      >
+                        {t("history.today")}
+                      </Text>
+                      {selectedFilter === "today" && (
+                        <Ionicons name="checkmark" size={18} color="#E15816" />
+                      )}
+                    </View>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.filterOption,
+                      selectedFilter === "week" && styles.filterOptionSelected,
+                    ]}
+                    onPress={() => applyDateFilter("week")}
+                  >
+                    <View style={styles.filterOptionContent}>
+                      <Text
+                        style={[
+                          styles.filterOptionText,
+                          selectedFilter === "week" &&
                           styles.filterOptionTextSelected,
-                      ]}
-                    >
-                      This Week
-                    </Text>
-                    {selectedFilter === "week" && (
-                      <Ionicons name="checkmark" size={18} color="#E15816" />
-                    )}
-                  </View>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    styles.filterOption,
-                    selectedFilter === "month" && styles.filterOptionSelected,
-                  ]}
-                  onPress={() => applyDateFilter("month")}
-                >
-                  <View style={styles.filterOptionContent}>
-                    <Text
-                      style={[
-                        styles.filterOptionText,
-                        selectedFilter === "month" &&
+                        ]}
+                      >
+                        {t("history.thisWeek")}
+                      </Text>
+                      {selectedFilter === "week" && (
+                        <Ionicons name="checkmark" size={18} color="#E15816" />
+                      )}
+                    </View>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.filterOption,
+                      selectedFilter === "month" && styles.filterOptionSelected,
+                    ]}
+                    onPress={() => applyDateFilter("month")}
+                  >
+                    <View style={styles.filterOptionContent}>
+                      <Text
+                        style={[
+                          styles.filterOptionText,
+                          selectedFilter === "month" &&
                           styles.filterOptionTextSelected,
-                      ]}
-                    >
-                      This Month
-                    </Text>
-                    {selectedFilter === "month" && (
-                      <Ionicons name="checkmark" size={18} color="#E15816" />
-                    )}
-                  </View>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    styles.filterOption,
-                    selectedFilter === "custom" && styles.filterOptionSelected,
-                  ]}
-                  onPress={() => applyDateFilter("custom")}
-                >
-                  <View style={styles.filterOptionContent}>
-                    <Text
-                      style={[
-                        styles.filterOptionText,
-                        selectedFilter === "custom" &&
+                        ]}
+                      >
+                        {t("history.thisMonth")}
+                      </Text>
+                      {selectedFilter === "month" && (
+                        <Ionicons name="checkmark" size={18} color="#E15816" />
+                      )}
+                    </View>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.filterOption,
+                      selectedFilter === "custom" &&
+                      styles.filterOptionSelected,
+                    ]}
+                    onPress={() => applyDateFilter("custom")}
+                  >
+                    <View style={styles.filterOptionContent}>
+                      <Text
+                        style={[
+                          styles.filterOptionText,
+                          selectedFilter === "custom" &&
                           styles.filterOptionTextSelected,
-                      ]}
-                    >
-                      Custom Range
-                    </Text>
-                    {selectedFilter === "custom" && (
-                      <Ionicons name="checkmark" size={18} color="#E15816" />
-                    )}
-                  </View>
-                </TouchableOpacity>
+                        ]}
+                      >
+                        {t("history.customRange")}
+                      </Text>
+                      {selectedFilter === "custom" && (
+                        <Ionicons name="checkmark" size={18} color="#E15816" />
+                      )}
+                    </View>
+                  </TouchableOpacity>
                 </View>
               )}
             </View>
@@ -786,7 +825,9 @@ export default function HistoryScreen() {
                 if (selectedIds.size === displayTransactions.length) {
                   setSelectedIds(new Set());
                 } else {
-                  const allIds = new Set(displayTransactions.map((tx) => tx.id));
+                  const allIds = new Set(
+                    displayTransactions.map((tx) => tx.id),
+                  );
                   setSelectedIds(allIds);
                 }
               }}
@@ -794,68 +835,61 @@ export default function HistoryScreen() {
             >
               <Text style={styles.selectAllButtonText}>
                 {selectedIds.size === displayTransactions.length
-                  ? "Deselect All"
-                  : "Select All"}
+                  ? t("history.deselectAll")
+                  : t("history.selectAll")}
               </Text>
             </TouchableOpacity>
           )}
-
-          {loading && transactions.length === 0 ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#E15816" />
-            </View>
-          ) : (
-            <View style={styles.transactionList}>
-              {displayTransactions.map((tx) => (
-                <TouchableOpacity
-                  key={tx.id}
-                  style={[
-                    styles.transactionItem,
-                    selectedIds.has(tx.id) && styles.transactionItemSelected,
-                  ]}
-                  onPress={() => handleTransactionPress(tx)}
-                  activeOpacity={0.7}
-                >
-                  {isSelectMode && (
-                    <View style={styles.checkbox}>
-                      {selectedIds.has(tx.id) && (
-                        <Ionicons name="checkmark" size={16} color="#E15816"/>
-                      )}
-                    </View>
-                  )}
-                  <View style={styles.transactionIcon}>
-                    <Ionicons
-                      name={
-                        getTransactionIcon(tx) as keyof typeof Ionicons.glyphMap
-                      }
-                      size={22}
-                      color="#E15816"
-                    />
+          <View style={styles.transactionList}>
+            {displayTransactions.map((tx) => (
+              <TouchableOpacity
+                key={tx.id}
+                style={[
+                  styles.transactionItem,
+                  selectedIds.has(tx.id) && styles.transactionItemSelected,
+                ]}
+                onPress={() => handleTransactionPress(tx)}
+                activeOpacity={0.7}
+              >
+                {isSelectMode && (
+                  <View style={styles.checkbox}>
+                    {selectedIds.has(tx.id) && (
+                      <Ionicons name="checkmark" size={16} color="#E15816" />
+                    )}
                   </View>
-                  <View style={styles.transactionDetails}>
-                    <Text style={styles.transactionName}>
-                      {getTransactionDisplayName(tx)}
-                    </Text>
-                    <Text style={styles.transactionDate}>
-                      {formatDateTime(tx)}
-                    </Text>
-                  </View>
-                  <Text style={styles.transactionAmount}>
-                    {CURRENCY_SYMBOL} {formatCurrency(tx.amount ?? 0)}
+                )}
+                <View style={styles.transactionIcon}>
+                  <Ionicons
+                    name={
+                      getTransactionIcon(tx) as keyof typeof Ionicons.glyphMap
+                    }
+                    size={22}
+                    color="#E15816"
+                  />
+                </View>
+                <View style={styles.transactionDetails}>
+                  <Text style={styles.transactionName}>
+                    {getTransactionDisplayName(tx)}
                   </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
+                  <Text style={styles.transactionDate}>
+                    {formatDateTime(tx)}
+                  </Text>
+                </View>
+                <Text style={styles.transactionAmount}>
+                  {CURRENCY_SYMBOL} {formatCurrency(tx.amount ?? 0)}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
 
-          {displayTransactions.length > 0 && !hasMore && currentPage >= totalPages && (
-            <View style={styles.endOfListContainer}>
-              <Ionicons name="checkmark-circle" size={20} color="#10B981" />
-              <Text style={styles.endOfListText}>
-                All transactions loaded
-              </Text>
-            </View>
-          )}
+          {displayTransactions.length > 0 &&
+            !hasMore &&
+            currentPage >= totalPages && (
+              <View style={styles.endOfListContainer}>
+                <Ionicons name="checkmark-circle" size={20} color="#10B981" />
+                <Text style={styles.endOfListText}>{t("history.allLoaded")}</Text>
+              </View>
+            )}
         </ScrollView>
 
         {/* Pagination Bar - Fixed at Bottom */}
@@ -863,9 +897,18 @@ export default function HistoryScreen() {
           <View style={styles.paginationContainer}>
             <View style={styles.paginationRow}>
               <Text style={styles.paginationResultText}>
-                Result {displayTransactions.length}/{transactions.length > 0 ? transactions.length : displayTransactions.length}
+                {t("history.resultText")
+                  .replace("{count}", String(displayTransactions.length))
+                  .replace(
+                    "{total}",
+                    String(
+                      transactions.length > 0
+                        ? transactions.length
+                        : displayTransactions.length,
+                    ),
+                  )}
               </Text>
-              
+
               <View style={styles.paginationButtons}>
                 {/* Previous Button */}
                 <TouchableOpacity
@@ -877,10 +920,10 @@ export default function HistoryScreen() {
                   disabled={currentPage === 1 || loadingMore}
                   activeOpacity={0.7}
                 >
-                  <Ionicons 
-                    name="chevron-back" 
-                    size={18} 
-                    color={currentPage === 1 ? "#CCC" : "#687076"} 
+                  <Ionicons
+                    name="chevron-back"
+                    size={18}
+                    color={currentPage === 1 ? "#CCC" : "#687076"}
                   />
                 </TouchableOpacity>
 
@@ -892,7 +935,9 @@ export default function HistoryScreen() {
                       styles.pageButton,
                       page === currentPage && styles.pageButtonActive,
                     ]}
-                    onPress={() => typeof page === 'number' && handlePageChange(page)}
+                    onPress={() =>
+                      typeof page === "number" && handlePageChange(page)
+                    }
                     disabled={loadingMore || page === currentPage}
                     activeOpacity={0.7}
                   >
@@ -911,16 +956,21 @@ export default function HistoryScreen() {
                 <TouchableOpacity
                   style={[
                     styles.paginationArrow,
-                    (!hasMore || currentPage >= totalPages) && styles.paginationArrowDisabled,
+                    (!hasMore || currentPage >= totalPages) &&
+                    styles.paginationArrowDisabled,
                   ]}
                   onPress={handleNextPage}
-                  disabled={!hasMore || currentPage >= totalPages || loadingMore}
+                  disabled={
+                    !hasMore || currentPage >= totalPages || loadingMore
+                  }
                   activeOpacity={0.7}
                 >
-                  <Ionicons 
-                    name="chevron-forward" 
-                    size={18} 
-                    color={(!hasMore || currentPage >= totalPages) ? "#CCC" : "#687076"} 
+                  <Ionicons
+                    name="chevron-forward"
+                    size={18}
+                    color={
+                      !hasMore || currentPage >= totalPages ? "#CCC" : "#687076"
+                    }
                   />
                 </TouchableOpacity>
               </View>
@@ -955,38 +1005,60 @@ export default function HistoryScreen() {
               <View style={styles.filterModal}>
                 <View style={styles.modalHeader}>
                   <View style={styles.modalIconContainer}>
-                    <Ionicons name="calendar-outline" size={28} color="#E15816" />
+                    <Ionicons
+                      name="calendar-outline"
+                      size={28}
+                      color="#E15816"
+                    />
                   </View>
-                  <Text style={styles.filterModalTitle}>Select Date Range</Text>
+                  <Text style={styles.filterModalTitle}>{t("history.selectDateRange")}</Text>
                   <Text style={styles.filterModalSubtitle}>
-                    Choose start and end dates for filtering
+                    {t("history.chooseDatesSubtitle")}
                   </Text>
                 </View>
                 <View style={styles.customDateSection}>
                   <View style={styles.dateInputContainer}>
-                    <Text style={styles.dateLabel}>Start Date</Text>
+                    <Text style={styles.dateLabel}>{t("history.startDate")}</Text>
                     <TouchableOpacity
                       style={styles.dateInputButton}
                       onPress={() => setShowStartDatePicker(true)}
                       activeOpacity={0.7}
                     >
-                      <Ionicons name="calendar-outline" size={20} color="#E15816" />
-                      <Text style={[styles.dateInputText, !customStartDate && styles.dateInputPlaceholder]}>
-                        {customStartDate || "Select start date"}
+                      <Ionicons
+                        name="calendar-outline"
+                        size={20}
+                        color="#E15816"
+                      />
+                      <Text
+                        style={[
+                          styles.dateInputText,
+                          !customStartDate && styles.dateInputPlaceholder,
+                        ]}
+                      >
+                        {customStartDate || t("history.selectStartDate")}
                       </Text>
                       <Ionicons name="chevron-down" size={20} color="#687076" />
                     </TouchableOpacity>
                   </View>
                   <View style={styles.dateInputContainer}>
-                    <Text style={styles.dateLabel}>End Date</Text>
+                    <Text style={styles.dateLabel}>{t("history.endDate")}</Text>
                     <TouchableOpacity
                       style={styles.dateInputButton}
                       onPress={() => setShowEndDatePicker(true)}
                       activeOpacity={0.7}
                     >
-                      <Ionicons name="calendar-outline" size={20} color="#E15816" />
-                      <Text style={[styles.dateInputText, !customEndDate && styles.dateInputPlaceholder]}>
-                        {customEndDate || "Select end date"}
+                      <Ionicons
+                        name="calendar-outline"
+                        size={20}
+                        color="#E15816"
+                      />
+                      <Text
+                        style={[
+                          styles.dateInputText,
+                          !customEndDate && styles.dateInputPlaceholder,
+                        ]}
+                      >
+                        {customEndDate || t("history.selectEndDate")}
                       </Text>
                       <Ionicons name="chevron-down" size={20} color="#687076" />
                     </TouchableOpacity>
@@ -996,9 +1068,7 @@ export default function HistoryScreen() {
                     onPress={applyCustomDateRange}
                     activeOpacity={0.8}
                   >
-                    <Text style={styles.applyCustomButtonText}>
-                      Apply Filter
-                    </Text>
+                    {t("history.applyFilter")}
                   </TouchableOpacity>
                 </View>
               </View>
@@ -1023,7 +1093,9 @@ export default function HistoryScreen() {
             display={Platform.OS === "ios" ? "spinner" : "default"}
             onChange={handleEndDateChange}
             maximumDate={new Date()}
-            minimumDate={customStartDate ? new Date(customStartDate) : undefined}
+            minimumDate={
+              customStartDate ? new Date(customStartDate) : undefined
+            }
           />
         )}
 
@@ -1045,10 +1117,12 @@ export default function HistoryScreen() {
               >
                 <View style={[styles.filterModal, { padding: modalPadding }]}>
                   <Text style={styles.filterModalTitle}>
-                    Delete {selectedIds.size} Transaction{selectedIds.size > 1 ? "s" : ""}?
+                    {t("history.deleteTransactionsTitle")
+                      .replace("{count}", String(selectedIds.size))
+                      .replace("{s}", selectedIds.size > 1 ? "s" : "")}
                   </Text>
                   <Text style={styles.deleteModalSubtitle}>
-                    Choose what to do with the selected transactions
+                    {t("history.deleteModalSubtitle")}
                   </Text>
                   <View style={styles.deleteOptionsContainer}>
                     <TouchableOpacity
@@ -1057,7 +1131,7 @@ export default function HistoryScreen() {
                       activeOpacity={0.7}
                     >
                       <Text style={styles.deleteOptionButtonText}>
-                        Delete Selected
+                        {t("history.deleteSelected")}
                       </Text>
                     </TouchableOpacity>
                     <TouchableOpacity
@@ -1066,7 +1140,7 @@ export default function HistoryScreen() {
                       activeOpacity={0.7}
                     >
                       <Text style={styles.keepOptionButtonText}>
-                        Keep Only Selected
+                        {t("history.keepOnlySelected")}
                       </Text>
                     </TouchableOpacity>
                     <TouchableOpacity
@@ -1074,7 +1148,7 @@ export default function HistoryScreen() {
                       onPress={() => setShowDeleteOptions(false)}
                       activeOpacity={0.7}
                     >
-                      <Text style={styles.cancelOptionButtonText}>Cancel</Text>
+                      <Text style={styles.cancelOptionButtonText}>{t("common.cancel")}</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -1086,7 +1160,7 @@ export default function HistoryScreen() {
         {isSelectMode && selectedIds.size > 0 && (
           <View style={styles.deleteActionBar}>
             <Text style={styles.deleteActionBarText}>
-              {selectedIds.size} selected
+              {t("history.selectedCount").replace("{count}", String(selectedIds.size))}
             </Text>
             <View style={styles.actionButtonsContainer}>
               <TouchableOpacity
@@ -1096,18 +1170,88 @@ export default function HistoryScreen() {
                 }}
                 activeOpacity={0.7}
               >
-                <Text style={styles.remainActionButtonText}>Remain</Text>
+                <Text style={styles.remainActionButtonText}>{t("common.cancel")}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.deleteActionButton}
-                onPress={() => setShowDeleteOptions(true)}
+                onPress={() => handleBulkDelete()}
                 activeOpacity={0.7}
               >
-                <Text style={styles.deleteActionButtonText}>Delete</Text>
+                <Text style={styles.deleteActionButtonText}>{t("common.delete")}</Text>
               </TouchableOpacity>
             </View>
           </View>
         )}
+
+        {/* Transaction Detail Modal */}
+        <Modal
+          visible={showDetailModal}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setShowDetailModal(false)}
+        >
+          <View style={styles.detailModalOverlay}>
+            <View style={styles.detailModalContainer}>
+              <View style={styles.detailModalHeader}>
+                <View style={styles.detailModalIconContainer}>
+                  <Ionicons
+                    name={selectedTransaction ? getTransactionIcon(selectedTransaction) as keyof typeof Ionicons.glyphMap : "swap-horizontal"}
+                    size={24}
+                    color="#E15816"
+                  />
+                </View>
+                <Text style={styles.detailModalTitle}>{t("history.transactionDetails")}</Text>
+                <TouchableOpacity onPress={() => setShowDetailModal(false)}>
+                  <Ionicons name="close" size={24} color="#333" />
+                </TouchableOpacity>
+              </View>
+              <ScrollView style={styles.detailModalContent} showsVerticalScrollIndicator={false}>
+                <View style={styles.detailAmountContainer}>
+                  <Text style={styles.detailAmountLabel}>{t("history.amount")}</Text>
+                  <Text style={styles.detailAmountValue}>
+                    {CURRENCY_SYMBOL} {formatCurrency(selectedTransaction?.amount ?? 0)}
+                  </Text>
+                </View>
+
+                <View style={styles.detailInfoRow}>
+                  <Text style={styles.detailInfoLabel}>{t("history.type")}</Text>
+                  <Text style={styles.detailInfoValue}>
+                    {selectedTransaction ? getTransactionTypeLabel(selectedTransaction.type) : "-"}
+                  </Text>
+                </View>
+
+                <View style={styles.detailInfoRow}>
+                  <Text style={styles.detailInfoLabel}>{t("history.description")}</Text>
+                  <Text style={styles.detailInfoValue}>
+                    {selectedTransaction ? getTransactionDisplayName(selectedTransaction) : "-"}
+                  </Text>
+                </View>
+
+                <View style={styles.detailInfoRow}>
+                  <Text style={styles.detailInfoLabel}>{t("history.dateTime")}</Text>
+                  <Text style={styles.detailInfoValue}>
+                    {selectedTransaction ? formatDateTime(selectedTransaction) : "-"}
+                  </Text>
+                </View>
+
+                <View style={styles.detailInfoRow}>
+                  <Text style={styles.detailInfoLabel}>{t("history.id")}</Text>
+                  <Text style={[styles.detailInfoValue, styles.detailInfoValueMono]}>
+                    {selectedTransaction?.id ?? "-"}
+                  </Text>
+                </View>
+
+                <TouchableOpacity
+                  style={styles.detailModalCloseButton}
+                  onPress={() => setShowDetailModal(false)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.detailModalCloseButtonText}>{t("common.close")}</Text>
+                </TouchableOpacity>
+              </ScrollView>
+            </View>
+          </View>
+        </Modal>
       </SafeAreaView>
     </>
   );
@@ -1277,61 +1421,71 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   paginationContainer: {
-    backgroundColor: "#FFFFFF",
-    paddingVertical: 12,
+    backgroundColor: "transparent",
+    paddingVertical: 16,
     paddingHorizontal: 16,
-    borderTopWidth: 1,
-    borderTopColor: "#E0E0E0",
   },
   paginationRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    gap: 24,
   },
   paginationResultText: {
-    fontSize: 13,
-    fontWeight: "500",
+    fontSize: 14,
+    fontWeight: "600",
     color: "#687076",
   },
   paginationButtons: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: 8,
   },
   paginationArrow: {
-    width: 36,
-    height: 36,
-    borderRadius: 8,
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1.5,
-    borderColor: "#E0E0E0",
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "transparent",
     justifyContent: "center",
     alignItems: "center",
   },
   paginationArrowDisabled: {
-    opacity: 0.4,
+    opacity: 0.3,
   },
   pageButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 8,
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1.5,
-    borderColor: "#E0E0E0",
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "transparent",
   },
   pageButtonActive: {
-    backgroundColor: "#E15816",
+    backgroundColor: "#FFF5F0",
+    borderWidth: 1,
     borderColor: "#E15816",
   },
   pageButtonText: {
     fontSize: 14,
-    fontWeight: "600",
-    color: "#11181C",
+    color: "#687076",
+    fontWeight: "500",
   },
   pageButtonTextActive: {
-    color: "#FFFFFF",
+    color: "#E15816",
+    fontWeight: "700",
+  },
+  pageNumberContainer: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    backgroundColor: "transparent",
+    minWidth: 80,
+    alignItems: "center",
+  },
+  pageNumberText: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#11181C",
+    letterSpacing: 0.5,
   },
   paginationLoading: {
     flexDirection: "row",
@@ -1608,5 +1762,103 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "600",
     color: "#687076",
+  },
+  detailModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "flex-end",
+  },
+  detailModalContainer: {
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: "60%",
+  },
+  detailModalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E0E0E0",
+  },
+  detailModalIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(225, 88, 22, 0.12)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  detailModalTitle: {
+    flex: 1,
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#333",
+    marginLeft: 12,
+  },
+  detailModalContent: {
+    padding: 16,
+  },
+  detailAmountContainer: {
+    backgroundColor: "rgba(225, 88, 22, 0.08)",
+    borderRadius: 10,
+    padding: 16,
+    alignItems: "center",
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "rgba(225, 88, 22, 0.3)",
+  },
+  detailAmountLabel: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#687076",
+    letterSpacing: 0.5,
+    marginBottom: 6,
+  },
+  detailAmountValue: {
+    fontSize: 24,
+    fontWeight: "700",
+    color: "#E15816",
+  },
+  detailInfoRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    marginBottom: 4,
+    backgroundColor: "#F9F9F9",
+  },
+  detailInfoLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#333",
+  },
+  detailInfoValue: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#333",
+    textAlign: "right",
+    flex: 1,
+    marginLeft: 12,
+  },
+  detailInfoValueMono: {
+    fontFamily: Platform.OS === "ios" ? "Courier" : "monospace",
+    fontSize: 12,
+  },
+  detailModalCloseButton: {
+    backgroundColor: "#E15816",
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: "center",
+    marginTop: 16,
+    marginBottom: 24,
+  },
+  detailModalCloseButtonText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#FFFFFF",
   },
 });
