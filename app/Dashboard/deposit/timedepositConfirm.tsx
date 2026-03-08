@@ -93,7 +93,7 @@ export default function TimeDepositConfirm() {
     setShowSuccessModal(false);
     navigation.reset({
       index: 0,
-      routes: [{ name: "Main" }], // Navigate to Main and then to Investments tab
+      routes: [{ name: "Main", params: { initialTab: "Investment" } }],
     });
   };
 

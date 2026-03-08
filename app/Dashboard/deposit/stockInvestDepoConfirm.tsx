@@ -79,7 +79,7 @@ export default function StockInvestmentConfirm() {
         setShowAlertModal(true);
         setTimeout(() => {
           setShowAlertModal(false);
-          navigation.navigate("Main");
+          navigation.navigate("Stockholder");
         }, 2000);
       } else {
         setAlertConfig({
@@ -223,8 +223,8 @@ export default function StockInvestmentConfirm() {
                 style={styles.alertButton}
                 onPress={() => {
                   setShowAlertModal(false);
-                  if (alertConfig.title === "Success") {
-                    navigation.navigate("Main");
+                  if (alertConfig.title === t("deposit.success")) {
+                    navigation.navigate("Stockholder");
                   }
                 }}>
                 <Text style={styles.alertButtonText}>OK</Text>

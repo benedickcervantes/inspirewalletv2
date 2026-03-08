@@ -1,6 +1,6 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
     Animated,
@@ -195,6 +195,7 @@ function getTransactionTypeLabel(
 
 export default function Dashboard() {
   const navigation = useNavigation();
+  const route = useRoute();
   const { t, setLanguage } = useLanguage();
   const insets = useSafeAreaInsets();
   const { width, horizontalPadding, isSmallScreen } = useResponsive();
@@ -259,6 +260,13 @@ export default function Dashboard() {
     if (hour < 18) return t("dashboard.goodAfternoon");
     return t("dashboard.goodEvening");
   };
+
+  useEffect(() => {
+    const params = route.params as { initialTab?: "Wallet" | "Investment" | "Cards" } | undefined;
+    if (params?.initialTab) {
+      setActiveTab(params.initialTab);
+    }
+  }, [route.params]);
 
   useEffect(() => {
     const init = async () => {
