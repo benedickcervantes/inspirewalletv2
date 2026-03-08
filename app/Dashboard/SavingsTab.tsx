@@ -14,7 +14,6 @@ import {
 } from "react-native";
 import { useLanguage } from "../../context/LanguageContext";
 import { useResponsive } from "../../utils/responsive";
-import GoldEliteRenewalCard from "./GoldEliteRenewalCard";
 
 interface PayoutScheduleItem {
   payoutIndex?: number;
@@ -130,9 +129,10 @@ export default function SavingsTab({
 }: SavingsTabProps) {
   const { t } = useLanguage();
   const { width } = useWindowDimensions();
-  const { horizontalPadding } = useResponsive();
+  const { horizontalPadding, isTinyScreen } = useResponsive();
   const isSmallScreen = width < 360;
-  const fontScale = isSmallScreen ? 0.88 : width < 400 ? 0.94 : 1;
+  const fontScale = isTinyScreen ? 0.8 : isSmallScreen ? 0.88 : width < 400 ? 0.94 : 1;
+  const compact = isTinyScreen || isSmallScreen;
   const [contractTab, setContractTab] = useState<"Active" | "Completed" | "Pending">("Active");
   const [selectedContract, setSelectedContract] = useState<TimeDeposit | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -190,43 +190,69 @@ export default function SavingsTab({
       <View style={[styles.cardContainer, { paddingHorizontal: horizontalPadding }]}>
         <ImageBackground
           source={require("../../assets/cards/default/card2.0.png")}
-          style={[styles.depositCard, { padding: isSmallScreen ? 14 : 20, minHeight: isSmallScreen ? 140 : 160 }]}
+          style={[
+            styles.depositCard,
+            {
+              padding: isTinyScreen ? 12 : isSmallScreen ? 14 : 20,
+              minHeight: isTinyScreen ? 120 : isSmallScreen ? 140 : 160,
+            },
+          ]}
           imageStyle={styles.depositCardImage}
           resizeMode="cover"
         >
           <View style={styles.cardHeader}>
             <Ionicons
               name="trending-up"
-              size={isSmallScreen ? 48 : 60}
+              size={isTinyScreen ? 40 : isSmallScreen ? 48 : 60}
               color="rgba(255, 255, 255, 0.3)"
               style={styles.cardIcon}
             />
           </View>
           <View style={styles.depositInfo}>
             <Text style={[styles.depositLabel, { fontSize: Math.round(14 * fontScale) }]}>{t("investment.timeDeposit")}</Text>
-            <Text style={[styles.depositAmount, { fontSize: Math.round(32 * fontScale) }]}>₱ {formatCurrency(timeDeposit)}</Text>
+            <Text
+              style={[styles.depositAmount, { fontSize: Math.round(32 * fontScale) }]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+            >
+              ₱ {formatCurrency(timeDeposit)}
+            </Text>
           </View>
         </ImageBackground>
       </View>
 
       <View style={[styles.amountWalletContainer, { paddingHorizontal: horizontalPadding }]}>
-        <View style={styles.amountWalletCard}>
+        <View style={[styles.amountWalletCard, { padding: compact ? 12 : 16 }]}>
           <View style={styles.amountWalletContent}>
-            <View style={styles.amountWalletLeft}>
+            <View style={[styles.amountWalletLeft, { flex: 1, minWidth: 0 }]}>
               <View style={styles.amountWalletHeader}>
-                <Text style={[styles.amountWalletLabel, { fontSize: Math.round(16 * fontScale) }]}>{t("investment.amountWalletLabel")}</Text>
-                <Ionicons name="flame-outline" size={18} color="#E15816" />
+                <Text
+                  style={[styles.amountWalletLabel, { fontSize: Math.round(16 * fontScale) }]}
+                  numberOfLines={isTinyScreen ? 2 : 1}
+                >
+                  {t("investment.amountWalletLabel")}
+                </Text>
+                {!isTinyScreen && <Ionicons name="flame-outline" size={18} color="#E15816" />}
               </View>
-              <Text style={[styles.amountWalletAmount, { fontSize: Math.round(20 * fontScale) }]}>
+              <Text
+                style={[styles.amountWalletAmount, { fontSize: Math.round(20 * fontScale) }]}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+              >
                 ₱ {formatCurrency(dividend)}
               </Text>
-              <Text style={styles.amountWalletHint}>
+              <Text
+                style={[styles.amountWalletHint, { fontSize: isTinyScreen ? 10 : 11 }]}
+                numberOfLines={2}
+              >
                 {t("investment.amountWalletHint")}
               </Text>
             </View>
-            <View style={styles.amountWalletIcon}>
-              <Ionicons name="trending-up" size={40} color="#E15816" />
-            </View>
+            {!isTinyScreen && (
+              <View style={styles.amountWalletIcon}>
+                <Ionicons name="trending-up" size={compact ? 32 : 40} color="#E15816" />
+              </View>
+            )}
           </View>
         </View>
       </View>
@@ -234,24 +260,33 @@ export default function SavingsTab({
       <View style={[styles.graphContainer, { paddingHorizontal: horizontalPadding }]}>
         <LinearGradient
           colors={["#E25A17", "#F28934"]}
-          style={styles.graphCard}
+          style={[styles.graphCard, { padding: compact ? 12 : 16 }]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
         >
           <View style={styles.graphHeader}>
-            <Text style={[styles.graphTitle, { fontSize: Math.round(16 * fontScale) }]}>{t("investment.depositGrowth")} ({new Date().getFullYear()})</Text>
-            <Ionicons name="bar-chart-outline" size={20} color="#FFFFFF" />
+            <Text
+              style={[styles.graphTitle, { fontSize: Math.round(16 * fontScale) }]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+            >
+              {t("investment.depositGrowth")} ({new Date().getFullYear()})
+            </Text>
+            {!isTinyScreen && <Ionicons name="bar-chart-outline" size={20} color="#FFFFFF" />}
           </View>
-          <View style={styles.chartContainer}>
-            <View style={styles.barsContainer}>
+          <View style={[styles.chartContainer, { height: compact ? 120 : 150 }]}>
+            <View style={[styles.barsContainer, { height: compact ? 100 : 140 }]}>
               {depositGrowthData.map((data, index) => {
-                const barHeight = (data.amount / maxAmount) * 120;
+                const maxBarH = compact ? 80 : 120;
+                const barHeight = (data.amount / maxAmount) * maxBarH;
                 return (
-                  <View key={index} style={styles.barWrapper}>
+                  <View key={index} style={[styles.barWrapper, { minWidth: 0 }]}>
                     <View style={styles.barColumn}>
                       <View style={[styles.bar, { height: Math.max(barHeight, 4) }]} />
                     </View>
-                    <Text style={styles.barLabel}>{data.month}</Text>
+                    <Text style={[styles.barLabel, { fontSize: isTinyScreen ? 8 : 9 }]} numberOfLines={1}>
+                      {data.month}
+                    </Text>
                   </View>
                 );
               })}
@@ -262,18 +297,26 @@ export default function SavingsTab({
 
       <View style={[styles.contractsSection, { paddingHorizontal: horizontalPadding }]}>
         <Text style={[styles.contractsSectionTitle, { fontSize: Math.round(16 * fontScale) }]}>{t("investment.contracts")}</Text>
-        <View style={[styles.contractTabs, { gap: isSmallScreen ? 6 : 8 }]}>
+        <View style={[
+          styles.contractTabs,
+          { gap: isTinyScreen ? 4 : isSmallScreen ? 6 : 8, marginBottom: compact ? 12 : 16 },
+        ]}
+        >
           {(["Active", "Completed", "Pending"] as const).map((tab) => (
             <TouchableOpacity
               key={tab}
-              style={[styles.contractTab, contractTab === tab && styles.contractTabActive]}
+              style={[
+                styles.contractTab,
+                contractTab === tab && styles.contractTabActive,
+                { paddingVertical: compact ? 8 : 10, minWidth: 0, flex: 1 },
+              ]}
               onPress={() => setContractTab(tab)}
             >
               <Text
                 style={[
                   styles.contractTabText,
                   contractTab === tab && styles.contractTabTextActive,
-                  { fontSize: Math.round(13 * fontScale) },
+                  { fontSize: Math.round(isTinyScreen ? 11 : 13 * fontScale) },
                 ]}
                 numberOfLines={1}
               >
@@ -283,32 +326,14 @@ export default function SavingsTab({
           ))}
         </View>
 
-        {/* Gold Elite Renewal Card - Show only on Active tab */}
-        {contractTab === "Active" && (
-          <GoldEliteRenewalCard
-            accessToken={userData?.accessToken as string}
-            expiryDate={
-              deposits.find((d) => d.design === "GOLD_ELITE" && d.status === "ACTIVE")
-                ?.maturityDate ||
-              deposits.find((d) => d.design === "GOLD_ELITE" && d.status === "ACTIVE")
-                ?.projectedMaturityDate ||
-              ""
-            }
-            onRenewalSuccess={() => onRefresh?.()}
-            onRenewalError={(error) => {
-              if (__DEV__) console.error("[SavingsTab] Renewal error:", error);
-            }}
-          />
-        )}
-
-        <View style={styles.contractList}>
+        <View style={[styles.contractList, { gap: compact ? 8 : 12 }]}>
           {filteredDeposits.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Ionicons name="document-text-outline" size={48} color="#CCC" />
-              <Text style={styles.emptyStateText}>
+            <View style={[styles.emptyState, { paddingVertical: compact ? 24 : 40, paddingHorizontal: compact ? 16 : 24 }]}>
+              <Ionicons name="document-text-outline" size={compact ? 40 : 48} color="#CCC" />
+              <Text style={[styles.emptyStateText, { fontSize: compact ? 14 : 16 }]}>
                 {contractTab === "Active" ? t("investment.noActiveContracts") : contractTab === "Completed" ? t("investment.noCompletedContracts") : t("investment.noPendingContracts")}
               </Text>
-              <Text style={styles.emptyStateSubtext}>
+              <Text style={[styles.emptyStateSubtext, { fontSize: compact ? 12 : 13 }]}>
                 {contractTab === "Pending" && t("investment.emptyPending")}
                 {contractTab === "Active" && t("investment.emptyActive")}
                 {contractTab === "Completed" && t("investment.emptyCompleted")}
@@ -318,7 +343,7 @@ export default function SavingsTab({
             filteredDeposits.map((dep) => (
               <TouchableOpacity
                 key={dep.id}
-                style={styles.contractCard}
+                style={[styles.contractCard, { padding: compact ? 12 : 16 }]}
                 onPress={() => {
                   if (__DEV__) {
                     console.log("[SavingsTab] Contract selected:", {
@@ -332,38 +357,52 @@ export default function SavingsTab({
                 }}
                 activeOpacity={0.7}
               >
-                <View style={styles.contractCardTop}>
-                  <View>
-                    <Text style={styles.contractCardAmount}>
+                <View style={[styles.contractCardTop, { marginBottom: compact ? 8 : 12 }]}>
+                  <View style={{ flex: 1, minWidth: 0 }}>
+                    <Text
+                      style={[styles.contractCardAmount, { fontSize: compact ? 16 : 18 }]}
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
+                    >
                       ₱ {formatCurrency(parseAmount(dep.amount))}
                     </Text>
-                    <Text style={styles.contractCardType}>
+                    <Text
+                      style={[styles.contractCardType, { fontSize: compact ? 12 : 13 }]}
+                      numberOfLines={1}
+                    >
                       {getContractTypeLabel(dep.contractType)}
                     </Text>
                   </View>
-                  <View style={styles.contractCardRight}>
+                  <View style={[styles.contractCardRight, { flexShrink: 0 }]}>
                     <View
                       style={[
                         styles.statusBadge,
-                        { backgroundColor: `${getStatusColor(dep.status)}20` },
+                        {
+                          backgroundColor: `${getStatusColor(dep.status)}20`,
+                          paddingHorizontal: compact ? 6 : 8,
+                          paddingVertical: compact ? 3 : 4,
+                        },
                       ]}
                     >
                       <Text
                         style={[
                           styles.statusBadgeText,
-                          { color: getStatusColor(dep.status) },
+                          { color: getStatusColor(dep.status), fontSize: compact ? 10 : 11 },
                         ]}
                       >
                         {dep.status}
                       </Text>
                     </View>
-                    <Text style={styles.contractCardRate}>
+                    <Text style={[styles.contractCardRate, { fontSize: compact ? 12 : 13 }]}>
                       {dep.interestRate}% {t("investment.perAnnum")}
                     </Text>
                   </View>
                 </View>
-                <View style={styles.contractCardBottom}>
-                  <Text style={styles.contractCardDates}>
+                <View style={[styles.contractCardBottom, { paddingTop: compact ? 8 : 12 }]}>
+                  <Text
+                    style={[styles.contractCardDates, { fontSize: compact ? 11 : 12, flex: 1, minWidth: 0 }]}
+                    numberOfLines={1}
+                  >
                     {dep.startDate
                       ? formatDate(dep.startDate)
                       : formatDate(dep.projectedStartDate)}
@@ -372,7 +411,7 @@ export default function SavingsTab({
                       ? formatDate(dep.maturityDate)
                       : formatDate(dep.projectedMaturityDate)}
                   </Text>
-                  <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
+                  <Ionicons name="chevron-forward" size={16} color="#9CA3AF" style={{ marginLeft: 4 }} />
                 </View>
               </TouchableOpacity>
             ))
@@ -389,11 +428,16 @@ export default function SavingsTab({
         onRequestClose={() => setSelectedContract(null)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+          <View style={[styles.modalContent, compact && { maxHeight: "92%" }]}>
             {selectedContract && (
               <>
-                <View style={styles.modalHeader}>
-                  <Text style={styles.modalTitle}>{t("investment.contractDetails")}</Text>
+                <View style={[styles.modalHeader, { padding: compact ? 16 : 20 }]}>
+                  <Text
+                    style={[styles.modalTitle, { fontSize: compact ? 16 : 18 }]}
+                    numberOfLines={1}
+                  >
+                    {t("investment.contractDetails")}
+                  </Text>
                   <TouchableOpacity
                     onPress={() => setSelectedContract(null)}
                     style={styles.modalCloseButton}
@@ -402,7 +446,7 @@ export default function SavingsTab({
                   </TouchableOpacity>
                 </View>
                 <ScrollView
-                  style={styles.modalBody}
+                  style={[styles.modalBody, { padding: compact ? 16 : 20, paddingBottom: compact ? 32 : 40 }]}
                   showsVerticalScrollIndicator={false}
                 >
                   <View

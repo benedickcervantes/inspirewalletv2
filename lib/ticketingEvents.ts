@@ -28,3 +28,44 @@ export function notifyNewTicketMessage(message: any) {
     }
   });
 }
+
+type TicketMessagesReadCallback = (ticketId: string) => void;
+const readListeners = new Set<TicketMessagesReadCallback>();
+
+export function subscribeToTicketMessagesRead(callback: TicketMessagesReadCallback) {
+  if (typeof callback === 'function') {
+    readListeners.add(callback);
+  }
+  return () => readListeners.delete(callback);
+}
+
+type TicketCreatedCallback = () => void;
+const ticketCreatedListeners = new Set<TicketCreatedCallback>();
+
+export function subscribeToTicketCreated(callback: TicketCreatedCallback) {
+  if (typeof callback === 'function') {
+    ticketCreatedListeners.add(callback);
+  }
+  return () => ticketCreatedListeners.delete(callback);
+}
+
+export function notifyTicketCreated() {
+  ticketCreatedListeners.forEach((cb) => {
+    try {
+      cb();
+    } catch (e) {
+      console.warn('[ticketingEvents] TicketCreated listener error:', e);
+    }
+  });
+}
+
+export function notifyTicketMessagesRead(ticketId: string) {
+  if (!ticketId) return;
+  readListeners.forEach((cb) => {
+    try {
+      cb(ticketId);
+    } catch (e) {
+      console.warn('[ticketingEvents] Read listener error:', e);
+    }
+  });
+}

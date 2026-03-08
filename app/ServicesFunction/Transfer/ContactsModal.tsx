@@ -3,7 +3,6 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Contacts from "expo-contacts";
 import { useEffect, useState } from "react";
 import {
-  Dimensions,
   Modal,
   ScrollView,
   StyleSheet,
@@ -14,7 +13,13 @@ import {
 } from "react-native";
 import { useLanguage } from "../../../context/LanguageContext";
 
-const { width } = Dimensions.get("window");
+const width = (() => {
+  try {
+    return require("react-native").Dimensions?.get?.("window")?.width ?? 375;
+  } catch {
+    return 375;
+  }
+})();
 
 interface Contact {
   id: string;

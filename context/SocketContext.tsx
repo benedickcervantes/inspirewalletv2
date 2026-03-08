@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { createRealtimeConnection, startHeartbeat } from '../configs/realtime';
 import { notifyNewSupportMessage } from '../lib/messagingEvents';
-import { notifyNewTicketMessage } from '../lib/ticketingEvents';
+import { notifyNewTicketMessage, notifyTicketMessagesRead, notifyTicketCreated } from '../lib/ticketingEvents';
 
 interface SocketContextType {
     isConnected: boolean;
@@ -56,8 +56,17 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             onNewSupportMessage: () => {
                 notifyNewSupportMessage();
             },
+            onSupportMessagesRead: () => {
+                notifyNewSupportMessage();
+            },
             onTicketMessage: (payload: any) => {
                 notifyNewTicketMessage(payload);
+            },
+            onTicketMessagesRead: (payload: any) => {
+                if (payload?.ticketId) notifyTicketMessagesRead(payload.ticketId);
+            },
+            onTicketCreated: () => {
+                notifyTicketCreated();
             },
             onWalletUpdate: (payload: any) => {
                 // We could also notify here if there was a wallet events lib

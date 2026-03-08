@@ -6,6 +6,7 @@ import {
     StyleSheet,
     Text,
     TouchableOpacity,
+    useWindowDimensions,
     View,
 } from "react-native";
 import * as api from "../../configs/api";
@@ -23,6 +24,8 @@ export default function GoldEliteRenewalCard({
   onRenewalSuccess,
   onRenewalError,
 }: GoldEliteRenewalCardProps) {
+  const { width } = useWindowDimensions();
+  const compact = width < 360;
   const [isRenewing, setIsRenewing] = useState(false);
 
   // Calculate days until expiry
@@ -77,9 +80,9 @@ export default function GoldEliteRenewalCard({
           <View style={styles.inactiveIcon}>
             <Ionicons name="checkmark-circle" size={24} color="#059669" />
           </View>
-          <View style={styles.inactiveText}>
-            <Text style={styles.inactiveLabel}>Gold Elite Active</Text>
-            <Text style={styles.inactiveDate}>
+          <View style={[styles.inactiveText, { flex: 1, minWidth: 0 }]}>
+            <Text style={[styles.inactiveLabel, compact && { fontSize: 13 }]}>Gold Elite Active</Text>
+            <Text style={[styles.inactiveDate, compact && { fontSize: 11 }]}>
               Expires {formatDate(expiryDate)}
             </Text>
             {daysUntilExpiry > 0 && (
@@ -95,28 +98,28 @@ export default function GoldEliteRenewalCard({
 
   // Show renewal card when within 3 days
   return (
-    <View style={styles.renewalCard}>
-      <View style={styles.renewalHeader}>
-        <View style={styles.renewalIcon}>
-          <Ionicons name="alert-circle" size={24} color="#E25A17" />
+    <View style={[styles.renewalCard, compact && { padding: 10, marginBottom: 10 }]}>
+      <View style={[styles.renewalHeader, compact && { gap: 8, marginBottom: 10 }]}>
+        <View style={[styles.renewalIcon, compact && { width: 36, height: 36, borderRadius: 18 }]}>
+          <Ionicons name="alert-circle" size={compact ? 20 : 24} color="#E25A17" />
         </View>
-        <View style={styles.renewalTitle}>
-          <Text style={styles.renewalLabel}>Renewal Available</Text>
-          <Text style={styles.renewalDays}>
+        <View style={[styles.renewalTitle, { flex: 1, minWidth: 0 }]}>
+          <Text style={[styles.renewalLabel, compact && { fontSize: 13 }]}>Renewal Available</Text>
+          <Text style={[styles.renewalDays, compact && { fontSize: 11 }]}>
             {daysUntilExpiry} day{daysUntilExpiry !== 1 ? "s" : ""} left
           </Text>
         </View>
       </View>
 
-      <View style={styles.renewalDetails}>
-        <Text style={styles.renewalDetailText}>
+      <View style={[styles.renewalDetails, compact && { marginBottom: 10 }]}>
+        <Text style={[styles.renewalDetailText, compact && { fontSize: 11, lineHeight: 16 }]}>
           Your Gold Elite subscription expires on {formatDate(expiryDate)}
         </Text>
-        <Text style={styles.renewalPrice}>₱10,000/month</Text>
+        <Text style={[styles.renewalPrice, compact && { fontSize: 12 }]}>₱10,000/month</Text>
       </View>
 
       <TouchableOpacity
-        style={[styles.renewalButton, isRenewing && styles.renewalButtonDisabled]}
+        style={[styles.renewalButton, compact && { paddingVertical: 8, paddingHorizontal: 12 }, isRenewing && styles.renewalButtonDisabled]}
         onPress={handleRenew}
         disabled={isRenewing}
         activeOpacity={0.7}
@@ -129,7 +132,7 @@ export default function GoldEliteRenewalCard({
         ) : (
           <>
             <Ionicons name="refresh" size={18} color="#FFFFFF" />
-            <Text style={styles.renewalButtonText}>Renew Now</Text>
+            <Text style={[styles.renewalButtonText, compact && { fontSize: 13 }]}>Renew Now</Text>
           </>
         )}
       </TouchableOpacity>

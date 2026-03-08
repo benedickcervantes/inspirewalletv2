@@ -5,7 +5,6 @@ import { LinearGradient } from "expo-linear-gradient";
 import { doc, getDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import {
-    Dimensions,
     Modal,
     ScrollView,
     StyleSheet,
@@ -21,7 +20,15 @@ import { useLanguage } from "../../../context/LanguageContext";
 import ContactsModal from "./ContactsModal";
 import QRScanner from "./QRScanner";
 
-const { width } = Dimensions.get("window");
+const getScreenWidth = () => {
+  try {
+    const D = require("react-native").Dimensions;
+    return D?.get?.("window")?.width ?? 375;
+  } catch {
+    return 375;
+  }
+};
+const width = getScreenWidth();
 
 // Reusable function to fetch user balances (JWT or Firebase)
 export const fetchUserBalances = async () => {
