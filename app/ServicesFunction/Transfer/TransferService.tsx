@@ -5,13 +5,13 @@ import { LinearGradient } from "expo-linear-gradient";
 import { doc, getDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import {
-  Dimensions,
-  Modal,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View
+    Dimensions,
+    Modal,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
 } from "react-native";
 import QRCode from "react-native-qrcode-svg";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -29,9 +29,12 @@ export const fetchUserBalances = async () => {
   if (accessToken) {
     const { success, wallet } = await getOrCreateMainWallet(accessToken);
     const bal = success && wallet?.balance != null ? parseFloat(String(wallet.balance)) : 0;
+    const agent = success && (wallet as { agentCommission?: number | string })?.agentCommission != null
+      ? parseFloat(String((wallet as { agentCommission?: number | string }).agentCommission))
+      : 0;
     return {
       availableBalance: Number.isNaN(bal) ? 0 : bal,
-      agentWallet: 0,
+      agentWallet: Number.isNaN(agent) ? 0 : agent,
       userData: null,
     };
   }

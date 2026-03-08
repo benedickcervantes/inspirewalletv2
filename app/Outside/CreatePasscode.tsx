@@ -285,6 +285,23 @@ export default function CreatePasscode() {
             {step === 'create' ? t('passcode.createInstruction') : t('passcode.confirmInstruction')}
           </Text>
 
+          {step === 'confirm' ? (
+            <TouchableOpacity
+              style={styles.startOverLink}
+              onPress={() => {
+                setStep('create');
+                setPin('');
+                setConfirmPin('');
+                setError('');
+              }}
+              disabled={loading}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="arrow-back" size={18} color={WHITE} />
+              <Text style={styles.startOverText}>{t('passcode.startOver')}</Text>
+            </TouchableOpacity>
+          ) : null}
+
           <View style={[styles.padContainer, { width: padWidth, maxWidth: maxPadWidth }]}>
             {[['1', '2', '3'], ['4', '5', '6'], ['7', '8', '9']].map((row, ri) => (
               <View key={ri} style={styles.padRow}>
@@ -456,6 +473,19 @@ const styles = StyleSheet.create({
     marginBottom: 40,
     marginTop: 4,
     textAlign: 'center',
+  },
+  startOverLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginBottom: 20,
+  },
+  startOverText: {
+    fontSize: 16,
+    color: WHITE,
+    fontWeight: '600',
+    textDecorationLine: 'underline',
   },
   padContainer: {
     marginTop: 8,

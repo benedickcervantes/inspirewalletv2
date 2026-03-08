@@ -1,13 +1,13 @@
 import {
-  collection,
-  doc,
-  getDocs,
-  limit,
-  onSnapshot,
-  orderBy,
-  query,
-  updateDoc,
-  where,
+    collection,
+    doc,
+    getDocs,
+    limit,
+    onSnapshot,
+    orderBy,
+    query,
+    updateDoc,
+    where,
 } from "firebase/firestore";
 import { firestore } from "../../configs/firebase";
 

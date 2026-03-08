@@ -237,9 +237,9 @@ export default function AgentServices() {
   );
 
   // Static mock user data
-  const [firstName, setFirstName] = useState("John");
-  const [lastName, setLastName] = useState("Doe");
-  const [fullName, setFullName] = useState("John Doe");
+  const [firstName, setFirstName] = useState("Juan");
+  const [lastName, setLastName] = useState("Dela Cruz");
+  const [fullName, setFullName] = useState("Juan Dela Cruz");
   const [loading, setLoading] = useState(false);
   const [agentNumber, setAgentNumber] = useState("");
   const [hierarchicalAgentCode, setHierarchicalAgentCode] = useState("");

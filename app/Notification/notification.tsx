@@ -4,16 +4,20 @@ import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    FlatList,
-    RefreshControl,
-    SafeAreaView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  FlatList,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { markNotificationAsRead as apiMarkNotificationAsRead, getNotifications } from '../../configs/api';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  markNotificationAsRead as apiMarkNotificationAsRead,
+  markAllNotificationsAsRead as apiMarkAllNotificationsAsRead,
+  getNotifications,
+} from '../../configs/api';
 import { auth } from '../../configs/firebase';
 import { useLanguage } from '../../context/LanguageContext';
 import notificationService, { type NotificationItem } from './notificationService';
@@ -28,11 +32,13 @@ interface NotificationItemBackend {
 
 const Notification = () => {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const { t } = useLanguage();
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [backendNotifications, setBackendNotifications] = useState<NotificationItemBackend[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [readAllLoading, setReadAllLoading] = useState(false);
   const [user, setUser] = useState<{ uid: string } | null>(null);
   const [useBackend, setUseBackend] = useState(false);
 
@@ -105,6 +111,33 @@ const Notification = () => {
     }
   };
 
+  const unreadCount = useBackend
+    ? backendNotifications.filter((n) => !n.isRead).length
+    : notifications.filter((n) => !n.read).length;
+
+  const handleReadAll = async () => {
+    if (unreadCount === 0 || readAllLoading) return;
+    setReadAllLoading(true);
+    try {
+      if (useBackend) {
+        const accessToken = await AsyncStorage.getItem('access_token');
+        if (accessToken) {
+          const result = await apiMarkAllNotificationsAsRead(accessToken);
+          if (result.success) {
+            setBackendNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+          }
+        }
+      } else if (user) {
+        await notificationService.markAllAsRead(user.uid);
+        // Firebase subscription will update state automatically
+      }
+    } catch (error) {
+      console.error('Error marking all notifications as read:', error);
+    } finally {
+      setReadAllLoading(false);
+    }
+  };
+
   const handleNotificationPress = async (notification: NotificationItem | NotificationItemBackend) => {
     if (useBackend) {
       const notif = notification as NotificationItemBackend;
@@ -121,7 +154,7 @@ const Notification = () => {
       }
       return;
     }
-    
+
     const notif = notification as NotificationItem;
     if (!notif.read && user) {
       try {
@@ -149,7 +182,7 @@ const Notification = () => {
 
   const formatTimestamp = (timestamp: NotificationItem['timestamp']) => {
     if (!timestamp) return '';
-    
+
     const date = (timestamp as { toDate?: () => Date }).toDate ? (timestamp as { toDate: () => Date }).toDate() : new Date(timestamp as Date);
     const options: Intl.DateTimeFormatOptions = {
       year: 'numeric',
@@ -158,7 +191,7 @@ const Notification = () => {
       hour: '2-digit',
       minute: '2-digit',
     };
-    
+
     return date.toLocaleString('en-US', options);
   };
 
@@ -289,7 +322,7 @@ const Notification = () => {
 
   if (!user && !useBackend) {
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={[styles.container, { paddingTop: insets.top }]}>
         <LinearGradient
           colors={['#E25A17', '#F28934']}
           style={styles.header}
@@ -308,12 +341,12 @@ const Notification = () => {
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyText}>{t('notification.loginToView')}</Text>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <LinearGradient
         colors={['#E25A17', '#F28934']}
         style={styles.header}
@@ -335,6 +368,22 @@ const Notification = () => {
           <Ionicons name="refresh" size={28} color="#FFFFFF" />
         </TouchableOpacity>
       </LinearGradient>
+
+      {unreadCount > 0 && (
+        <View style={styles.readAllBar}>
+          <TouchableOpacity
+            onPress={handleReadAll}
+            disabled={readAllLoading}
+            style={styles.readAllButton}
+          >
+            {readAllLoading ? (
+              <ActivityIndicator size="small" color="#E25A17" />
+            ) : (
+              <Text style={styles.readAllText}>{t('notification.readAll')}</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+      )}
 
       {loading ? (
         <View style={styles.loadingContainer}>
@@ -381,7 +430,7 @@ const Notification = () => {
           }
         />
       )}
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -415,6 +464,27 @@ const styles = StyleSheet.create({
     height: 40,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  readAllBar: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#EEE',
+  },
+  readAllButton: {
+    minWidth: 80,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+  },
+  readAllText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#E25A17',
   },
   loadingContainer: {
     flex: 1,

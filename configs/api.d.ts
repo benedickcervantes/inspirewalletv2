@@ -185,6 +185,9 @@ export function markNotificationAsRead(
   accessToken: string,
   notificationId: string,
 ): Promise<{ success: boolean; error?: string }>;
+export function markAllNotificationsAsRead(
+  accessToken: string,
+): Promise<{ success: boolean; error?: string }>;
 export function markAllMessagesAsRead(
   accessToken: string,
 ): Promise<{ success: boolean; count?: number; error?: string }>;

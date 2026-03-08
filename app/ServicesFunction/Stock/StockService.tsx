@@ -9,6 +9,7 @@ import {
     StyleSheet,
     Text,
     TouchableOpacity,
+    useWindowDimensions,
     View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -71,6 +72,19 @@ function formatStockCount(value: number): string {
 export default function StockService() {
   const navigation = useNavigation();
   const { t } = useLanguage();
+  const { width } = useWindowDimensions();
+  // Responsive breakpoints (same logic as CardsTab for iPhone SE and small screens)
+  const isSmallScreen = width < 360;
+  const isMediumScreen = width >= 360 && width < 400;
+  const isCompactScreen = width < 400; // for tighter label+stocks spacing
+  const horizontalPadding = isSmallScreen ? 12 : isMediumScreen ? 16 : 20;
+  const fontScale = isSmallScreen ? 0.9 : isMediumScreen ? 0.95 : 1;
+  const cardContentPadding = isSmallScreen ? 14 : isMediumScreen ? 18 : 24;
+  // Same card size as Cards Tab main card
+  const mainCardWidth = width - horizontalPadding * 2;
+  const mainCardHeight = mainCardWidth / 1.586; // Credit card aspect ratio
+  // Scale content: small screens = scale down to prevent overlap, large screens = full size (1.0)
+  const cardContentScale = Math.min(1, mainCardHeight / 220);
   const [requests, setRequests] = useState<StockRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -230,7 +244,7 @@ export default function StockService() {
       {/* Header */}
       <LinearGradient
         colors={["#E25A17", "#F28934"]}
-        style={styles.header}
+        style={[styles.header, { paddingHorizontal: horizontalPadding }]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
       >
@@ -246,7 +260,7 @@ export default function StockService() {
 
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingHorizontal: horizontalPadding }]}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
@@ -257,109 +271,296 @@ export default function StockService() {
         }
       >
         {/* Stock Rate Card */}
-        <View style={styles.stockRateCard}>
+        <View style={[styles.stockRateCard, { marginBottom: isSmallScreen ? 12 : 16 }]}>
           <LinearGradient
             colors={["#B8E0FF", "#F8FBFF"]}
-            style={styles.stockRateGradient}
+            style={[styles.stockRateGradient, { padding: cardContentPadding }]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
           >
-            <View style={styles.stockRateIconCircle}>
+            <View style={[styles.stockRateIconCircle, { width: isSmallScreen ? 32 : 36, height: isSmallScreen ? 32 : 36, borderRadius: isSmallScreen ? 16 : 18, marginRight: isSmallScreen ? 10 : 12 }]}>
               <Text style={styles.stockRateIconText}>!</Text>
             </View>
-            <Text style={styles.stockRateLabel}>{t("stock.stockRate")}</Text>
-            <Text style={styles.stockRateValue}>
+            <Text style={[styles.stockRateLabel, { fontSize: Math.round(15 * fontScale) }]} numberOfLines={1} ellipsizeMode="tail">
+              {t("stock.stockRate")}
+            </Text>
+            <Text
+              style={[styles.stockRateValue, { fontSize: Math.round(16 * fontScale), marginLeft: isSmallScreen ? 0 : 48, marginTop: isSmallScreen ? 6 : 8 }]}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
               {t("stock.stockRateValue")}
             </Text>
           </LinearGradient>
         </View>
 
-        {/* Portfolio Card */}
-        <View style={styles.portfolioCard}>
+        {/* Portfolio Card - same size as Cards Tab main card, content scales with card */}
+        <View style={[styles.portfolioCard, { marginBottom: isSmallScreen ? 16 : 20, width: mainCardWidth, height: mainCardHeight }]}>
           <LinearGradient
             colors={["#F28934", "#E25A17"]}
-            style={styles.portfolioGradient}
+            style={[
+              styles.portfolioGradient,
+              {
+                padding: Math.round((isSmallScreen ? 12 : cardContentPadding) * cardContentScale),
+                width: mainCardWidth,
+                height: mainCardHeight,
+                justifyContent: "space-between",
+              },
+            ]}
             start={{ x: 0, y: 0 }}
             end={{ x: 0, y: 1 }}
           >
-            <View style={styles.portfolioIconWrapper}>
-              <MaterialCommunityIcons
-                name="chart-line"
-                size={28}
-                color="#FFFFFF"
-              />
-            </View>
-            <Text style={styles.portfolioLabel}>
-              {t("stock.yourPortfolio")}
-            </Text>
-            <Text style={styles.portfolioStocks}>
-              {formatStockCount(stockCount)}{" "}
-              {stockCount !== 1 ? t("stock.stocks") : t("stock.stock")}
-            </Text>
-            <View style={styles.portfolioValueRow}>
-              <MaterialCommunityIcons
-                name="wallet-outline"
-                size={22}
-                color="#FFFFFF"
-              />
-              <Text style={styles.portfolioValueLabel}>
-                {t("stock.totalPortfolioValue")}
+            <View style={{ flex: 1, minWidth: 0, justifyContent: "flex-start", minHeight: 0 }}>
+              <View
+                style={[
+                  styles.portfolioIconWrapper,
+                  {
+                    width: Math.round(48 * cardContentScale),
+                    height: Math.round(48 * cardContentScale),
+                    borderRadius: Math.round(24 * cardContentScale),
+                    marginBottom: Math.round((isSmallScreen ? 4 : 8) * cardContentScale),
+                  },
+                ]}
+              >
+                <MaterialCommunityIcons
+                  name="chart-line"
+                  size={Math.round(28 * cardContentScale)}
+                  color="#FFFFFF"
+                />
+              </View>
+              <Text
+                style={[
+                  styles.portfolioLabel,
+                  {
+                    fontSize: Math.round(16 * fontScale * cardContentScale),
+                    marginBottom: isCompactScreen ? 1 : 4,
+                  },
+                ]}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
+                {t("stock.yourPortfolio")}
+              </Text>
+              <Text
+                style={[
+                  styles.portfolioStocks,
+                  {
+                    fontSize: Math.round(28 * fontScale * cardContentScale),
+                    marginTop: isCompactScreen ? -4 : undefined,
+                    marginBottom: Math.round((isSmallScreen ? 4 : 10) * cardContentScale),
+                  },
+                ]}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
+                {formatStockCount(stockCount)}{" "}
+                {stockCount !== 1 ? t("stock.stocks") : t("stock.stock")}
               </Text>
             </View>
-            <Text style={styles.portfolioValue}>
-              ₱{formatCurrency(totalPortfolioValue)}
-            </Text>
+            <View style={{ flexShrink: 0, minWidth: 0, marginTop: Math.round((isSmallScreen ? 6 : 8) * cardContentScale) }}>
+              <View
+                style={[
+                  styles.portfolioValueRow,
+                  {
+                    gap: Math.round(6 * cardContentScale),
+                    marginBottom: Math.round(2 * cardContentScale),
+                  },
+                ]}
+              >
+                <MaterialCommunityIcons
+                  name="wallet-outline"
+                  size={Math.round(22 * cardContentScale)}
+                  color="#FFFFFF"
+                />
+                <Text
+                  style={[
+                    styles.portfolioValueLabel,
+                    { fontSize: Math.round(14 * fontScale * cardContentScale), flex: 1 },
+                  ]}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
+                  {t("stock.totalPortfolioValue")}
+                </Text>
+              </View>
+              <Text
+                style={[
+                  styles.portfolioValue,
+                  { fontSize: Math.round(24 * fontScale * cardContentScale) },
+                ]}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
+                ₱{formatCurrency(totalPortfolioValue)}
+              </Text>
+            </View>
           </LinearGradient>
         </View>
 
-        {/* BUY / SELL Buttons */}
-        <View style={styles.actionButtons}>
+        {/* BUY / SELL Buttons - responsive for small screens */}
+        <View
+          style={[
+            styles.actionButtons,
+            {
+              gap: isSmallScreen ? 6 : isMediumScreen ? 8 : 12,
+              marginBottom: isSmallScreen ? 14 : 20,
+              paddingHorizontal: 0,
+            },
+          ]}
+        >
           <TouchableOpacity
-            style={styles.buyButton}
+            style={[
+              styles.buyButton,
+              {
+                flex: 1,
+                paddingVertical: isSmallScreen ? 10 : 12,
+                paddingHorizontal: isSmallScreen ? 12 : isMediumScreen ? 20 : 32,
+                gap: isSmallScreen ? 6 : 8,
+                minWidth: 0,
+              },
+            ]}
             onPress={handleBuy}
             activeOpacity={0.9}
           >
-            <View style={styles.buyButtonIcon}>
-              <Ionicons name="add" size={20} color="#FFFFFF" />
+            <View
+              style={[
+                styles.buyButtonIcon,
+                {
+                  width: isSmallScreen ? 24 : 28,
+                  height: isSmallScreen ? 24 : 28,
+                  borderRadius: isSmallScreen ? 12 : 14,
+                },
+              ]}
+            >
+              <Ionicons name="add" size={isSmallScreen ? 16 : 20} color="#FFFFFF" />
             </View>
-            <Text style={styles.buyButtonText}>{t("stock.buy")}</Text>
+            <Text
+              style={[styles.buyButtonText, { fontSize: Math.round(15 * fontScale) }]}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
+              {t("stock.buy")}
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={styles.sellButton}
+            style={[
+              styles.sellButton,
+              {
+                flex: 1,
+                paddingVertical: isSmallScreen ? 10 : 12,
+                paddingHorizontal: isSmallScreen ? 12 : isMediumScreen ? 20 : 32,
+                gap: isSmallScreen ? 6 : 8,
+                minWidth: 0,
+              },
+            ]}
             onPress={handleSell}
             activeOpacity={0.9}
           >
-            <View style={styles.sellButtonIcon}>
-              <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
+            <View
+              style={[
+                styles.sellButtonIcon,
+                {
+                  width: isSmallScreen ? 24 : 28,
+                  height: isSmallScreen ? 24 : 28,
+                  borderRadius: isSmallScreen ? 12 : 14,
+                },
+              ]}
+            >
+              <Ionicons name="arrow-forward" size={isSmallScreen ? 16 : 20} color="#FFFFFF" />
             </View>
-            <Text style={styles.sellButtonText}>{t("stock.sell")}</Text>
+            <Text
+              style={[styles.sellButtonText, { fontSize: Math.round(15 * fontScale) }]}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
+              {t("stock.sell")}
+            </Text>
           </TouchableOpacity>
         </View>
 
-        {/* Transaction History Card */}
-        <View style={styles.transactionCard}>
-          <View style={styles.transactionHeader}>
-            <Ionicons name="time-outline" size={22} color={THEME_COLOR} />
-            <Text style={styles.transactionTitle}>
+        {/* Transaction History Card - responsive for small screens */}
+        <View
+          style={[
+            styles.transactionCard,
+            {
+              padding: isSmallScreen ? 14 : isMediumScreen ? 16 : cardContentPadding,
+              borderRadius: isSmallScreen ? 12 : 16,
+            },
+          ]}
+        >
+          <View
+            style={[
+              styles.transactionHeader,
+              {
+                gap: isSmallScreen ? 8 : 10,
+                marginBottom: isSmallScreen ? 12 : 16,
+              },
+            ]}
+          >
+            <Ionicons
+              name="time-outline"
+              size={isSmallScreen ? 18 : isMediumScreen ? 20 : 22}
+              color={THEME_COLOR}
+            />
+            <Text
+              style={[styles.transactionTitle, { fontSize: Math.round(15 * fontScale) }]}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
               {t("stock.transactionHistory")}
             </Text>
           </View>
-          <View style={styles.transactionList}>
+          <View style={[styles.transactionList, { gap: isSmallScreen ? 8 : 12 }]}>
             {transactions.map((tx) => (
-              <View key={tx.id} style={styles.transactionItem}>
+              <View
+                key={tx.id}
+                style={[
+                  styles.transactionItem,
+                  {
+                    padding: isSmallScreen ? 10 : isMediumScreen ? 12 : 16,
+                    borderRadius: isSmallScreen ? 10 : 12,
+                    minHeight: 0,
+                  },
+                ]}
+              >
                 <View style={styles.transactionIcon}>
                   <MaterialCommunityIcons
                     name="swap-horizontal"
-                    size={24}
+                    size={isSmallScreen ? 18 : isMediumScreen ? 20 : 24}
                     color={THEME_COLOR}
                   />
                 </View>
-                <View style={styles.transactionDetails}>
-                  <Text style={styles.transactionName}>{tx.label}</Text>
-                  <Text style={styles.transactionDate}>{tx.date}</Text>
+                <View style={[styles.transactionDetails, { flex: 1, minWidth: 0, marginRight: isSmallScreen ? 6 : 8 }]}>
+                  <Text
+                    style={[styles.transactionName, { fontSize: Math.round(14 * fontScale) }]}
+                    numberOfLines={2}
+                    ellipsizeMode="tail"
+                  >
+                    {tx.label}
+                  </Text>
+                  <Text
+                    style={[styles.transactionDate, { fontSize: Math.round(12 * fontScale) }]}
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                  >
+                    {tx.date}
+                  </Text>
                 </View>
-                <Text style={styles.transactionAmount}>{tx.amount}</Text>
+                <Text
+                  style={[
+                    styles.transactionAmount,
+                    {
+                      fontSize: Math.round(14 * fontScale),
+                      flexShrink: 0,
+                      maxWidth: isSmallScreen ? "35%" : undefined,
+                    },
+                  ]}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
+                  {tx.amount}
+                </Text>
               </View>
             ))}
           </View>
