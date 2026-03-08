@@ -20,7 +20,7 @@ export type RootStackParamList = {
   Register: undefined;
   CreatePasscode: undefined;
   Passcode: undefined;
-  Main: undefined;
+  Main: { initialTab?: "Wallet" | "Investment" | "Cards" } | undefined;
   Personal: undefined;
   KYCVerification: undefined;
   KYCcompany: undefined;
