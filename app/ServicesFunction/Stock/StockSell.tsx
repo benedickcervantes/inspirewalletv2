@@ -14,6 +14,7 @@ import {
     View,
 } from "react-native";
 import { getWallets, submitStockSellRequest } from "../../../configs/api";
+import { useLanguage } from "../../../context/LanguageContext";
 import CustomLoader from "../../Loader/CustomLoader";
 
 const THEME_COLOR = "#E15816";
@@ -22,6 +23,7 @@ const STOCK_RATE_PHP = 2_000_000;
 type Step = "form" | "confirm";
 
 export default function StockSell() {
+  const { t } = useLanguage();
   const navigation = useNavigation();
   const route = useRoute();
   const params = (route.params || {}) as {
@@ -37,7 +39,7 @@ export default function StockSell() {
   const [showAlertModal, setShowAlertModal] = useState(false);
   const [alertConfig, setAlertConfig] = useState({ title: "", message: "" });
 
-  const stocksNum = parseInt(stocksToSell, 10) || 0;
+  const stocksNum = parseFloat(stocksToSell) || 0;
   const sellAmount = stocksNum * STOCK_RATE_PHP;
 
   const handleContinue = () => {
@@ -94,7 +96,7 @@ export default function StockSell() {
 
       const result = await submitStockSellRequest(accessToken, {
         walletId: phpWallet.id,
-        stocksToSell: stocksNum,
+        stocksToSell: Math.round(stocksNum * 10000) / 10000, // round to 4 decimal places
       });
 
       if (result.success) {
@@ -214,9 +216,9 @@ export default function StockSell() {
                   <View style={styles.amountInput}>
                     <TextInput
                       style={styles.input}
-                      placeholder="Enter number of stocks"
+                      placeholder="e.g. 0.05, 0.5, 1.25"
                       placeholderTextColor="#999"
-                      keyboardType="number-pad"
+                      keyboardType="decimal-pad"
                       value={stocksToSell}
                       onChangeText={setStocksToSell}
                     />
@@ -251,7 +253,7 @@ export default function StockSell() {
               <View style={styles.detailCard}>
                 <View style={styles.leftBorder} />
                 <Text style={styles.detailLabel}>Stocks to Sell</Text>
-                <Text style={styles.detailValue}>{stocksNum} Stock(s)</Text>
+                <Text style={styles.detailValue}>{stocksNum % 1 === 0 ? stocksNum : stocksNum.toFixed(4)} Stock(s)</Text>
               </View>
 
               <LinearGradient
