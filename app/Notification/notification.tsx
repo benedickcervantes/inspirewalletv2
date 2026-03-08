@@ -4,16 +4,19 @@ import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    FlatList,
-    RefreshControl,
-    SafeAreaView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  FlatList,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { markNotificationAsRead as apiMarkNotificationAsRead, getNotifications } from '../../configs/api';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  markNotificationAsRead as apiMarkNotificationAsRead,
+  getNotifications,
+} from '../../configs/api';
 import { auth } from '../../configs/firebase';
 import { useLanguage } from '../../context/LanguageContext';
 import notificationService, { type NotificationItem } from './notificationService';
@@ -28,6 +31,7 @@ interface NotificationItemBackend {
 
 const Notification = () => {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const { t } = useLanguage();
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [backendNotifications, setBackendNotifications] = useState<NotificationItemBackend[]>([]);
@@ -121,7 +125,7 @@ const Notification = () => {
       }
       return;
     }
-    
+
     const notif = notification as NotificationItem;
     if (!notif.read && user) {
       try {
@@ -149,7 +153,7 @@ const Notification = () => {
 
   const formatTimestamp = (timestamp: NotificationItem['timestamp']) => {
     if (!timestamp) return '';
-    
+
     const date = (timestamp as { toDate?: () => Date }).toDate ? (timestamp as { toDate: () => Date }).toDate() : new Date(timestamp as Date);
     const options: Intl.DateTimeFormatOptions = {
       year: 'numeric',
@@ -158,7 +162,7 @@ const Notification = () => {
       hour: '2-digit',
       minute: '2-digit',
     };
-    
+
     return date.toLocaleString('en-US', options);
   };
 
@@ -289,7 +293,7 @@ const Notification = () => {
 
   if (!user && !useBackend) {
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={[styles.container, { paddingTop: insets.top }]}>
         <LinearGradient
           colors={['#E25A17', '#F28934']}
           style={styles.header}
@@ -308,12 +312,12 @@ const Notification = () => {
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyText}>{t('notification.loginToView')}</Text>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <LinearGradient
         colors={['#E25A17', '#F28934']}
         style={styles.header}
@@ -381,7 +385,7 @@ const Notification = () => {
           }
         />
       )}
-    </SafeAreaView>
+    </View>
   );
 };
 
