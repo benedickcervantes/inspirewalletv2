@@ -3,13 +3,13 @@ import { listUserTickets, type Ticket } from "@/lib/tickets";
 import { useFocusEffect } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    RefreshControl,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { useLanguage } from "../../context/LanguageContext";
 import TicketDetail from "./TicketDetail";
@@ -130,7 +130,6 @@ function TicketList({ accessToken, onTicketSelected }: TicketListProps) {
           setSelectedTicket(null);
           onTicketSelected?.(false);
         }}
-        onUpdate={loadTickets}
       />
     );
   }
