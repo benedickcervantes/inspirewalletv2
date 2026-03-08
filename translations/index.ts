@@ -378,6 +378,9 @@ const en: TranslationMap = {
   "deposit.pleaseLoginTopup": "Please log in to submit a top-up request.",
   "deposit.topUpSuccess":
     "Your top-up request has been submitted successfully.",
+  "deposit.insufficientBalanceStock":
+    "Insufficient balance. Available: {amount}",
+  "deposit.availableBalanceStock": "Your available balance",
 
   // Settings
   "settings.title": "Settings",

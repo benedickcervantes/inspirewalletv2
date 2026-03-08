@@ -26,6 +26,7 @@ export default function TimeDepositConfirm() {
     depositMethod?: string;
     contractPeriod?: string;
     amount?: string;
+    amountInPhp?: number;
     currency?: string;
   };
 
@@ -36,6 +37,7 @@ export default function TimeDepositConfirm() {
   const depositMethod = params.depositMethod || "Request Amount";
   const contractPeriod = params.contractPeriod || "";
   const amount = params.amount || "0";
+  const amountInPhp = params.amountInPhp ?? (parseFloat(amount) || 0);
   const currency = params.currency || "PHP";
 
   const getMaturityDate = () => {
@@ -56,7 +58,7 @@ export default function TimeDepositConfirm() {
       }
 
       const body: Record<string, string> = {
-        amount: String(parseFloat(amount)),
+        amount: Number(amountInPhp).toFixed(2),
         contractPeriod,
         depositMethod:
           depositMethod === "Available Balance"

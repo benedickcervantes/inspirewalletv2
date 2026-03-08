@@ -1,5 +1,6 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useState } from "react";
 import {
@@ -13,6 +14,7 @@ import {
     View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { getOrCreateMainWallet } from "../../../configs/api";
 import {
     getAvailableCurrencies,
     getStockInvestmentMinAmount,
@@ -31,18 +33,33 @@ export default function StockInvestment() {
   >([]);
   const [isLoadingCurrencies, setIsLoadingCurrencies] = useState(true);
   const [minAmount, setMinAmount] = useState(2000000); // Default fallback
+  const [availableBalance, setAvailableBalance] = useState<number | null>(null);
 
-  // Fetch currencies and minimum amount on mount
+  // Fetch currencies, minimum amount, and wallet balance on mount
   useEffect(() => {
     const loadConfig = async () => {
       try {
         setIsLoadingCurrencies(true);
-        const [availableCurrencies, minStockAmount] = await Promise.all([
-          getAvailableCurrencies(),
-          getStockInvestmentMinAmount(),
-        ]);
+        const accessToken = await AsyncStorage.getItem("access_token");
+        const [availableCurrencies, minStockAmount, walletResult] =
+          await Promise.all([
+            getAvailableCurrencies(),
+            getStockInvestmentMinAmount(),
+            accessToken
+              ? getOrCreateMainWallet(accessToken)
+              : Promise.resolve({ success: false, wallet: null }),
+          ]);
         setCurrencies(availableCurrencies);
         setMinAmount(minStockAmount);
+        if (
+          walletResult.success &&
+          walletResult.wallet?.balance != null
+        ) {
+          const bal = parseFloat(String(walletResult.wallet.balance));
+          setAvailableBalance(Number.isNaN(bal) ? 0 : bal);
+        } else {
+          setAvailableBalance(0);
+        }
       } catch (error) {
         console.error("Failed to load configuration:", error);
         // Fallback to defaults if fetch fails
@@ -65,8 +82,14 @@ export default function StockInvestment() {
       newErrors.amount = "Amount is required";
     } else {
       const amountNum = parseFloat(amountStr);
-      if (amountNum < minAmount) {
-        newErrors.amount = `Minimum stock investment is ${getSelectedCurrency().symbol}${minAmount.toLocaleString()}`;
+      if (amountNum <= 0) {
+        newErrors.amount = "Amount must be greater than 0";
+      } else if (availableBalance !== null && amountNum > availableBalance) {
+        const symbol = getSelectedCurrency().symbol;
+        newErrors.amount = t("deposit.insufficientBalanceStock").replace(
+          "{amount}",
+          `${symbol}${availableBalance.toLocaleString()}`
+        );
       }
     }
 
@@ -84,6 +107,11 @@ export default function StockInvestment() {
       currencySymbol: selectedCurrencyData.symbol,
     });
   };
+
+  // Calculate stocks to receive: amount / price per stock (e.g. 1M / 2M = 0.5 stock)
+  const amountNum = parseFloat(amount.trim()) || 0;
+  const stocksToReceive =
+    amountNum > 0 && minAmount > 0 ? amountNum / minAmount : 0;
 
   const getSelectedCurrency = () => {
     if (currencies.length === 0) {
@@ -198,6 +226,23 @@ export default function StockInvestment() {
                   1 Stock = {getSelectedCurrency().symbol}
                   {isLoadingCurrencies ? "..." : minAmount.toLocaleString()}
                 </Text>
+                {availableBalance !== null && !isLoadingCurrencies && (
+                  <Text style={styles.balanceLabel}>
+                    {t("deposit.availableBalanceStock")}:{" "}
+                    {getSelectedCurrency().symbol}
+                    {availableBalance.toLocaleString()}
+                  </Text>
+                )}
+                {amountNum > 0 && (
+                  <Text style={styles.stocksPreview}>
+                    You will receive:{" "}
+                    {stocksToReceive.toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 4,
+                    })}{" "}
+                    stock{stocksToReceive !== 1 ? "s" : ""}
+                  </Text>
+                )}
               </View>
             </View>
 
@@ -646,5 +691,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700",
     color: "#E25A17",
+  },
+  balanceLabel: {
+    fontSize: 13,
+    color: "#666",
+    marginTop: 6,
+  },
+  stocksPreview: {
+    fontSize: 14,
+    color: "#333",
+    marginTop: 8,
   },
 });

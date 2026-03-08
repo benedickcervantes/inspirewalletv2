@@ -18,9 +18,9 @@ import {
 import QRCode from "react-native-qrcode-svg";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
-  createBeneficiary,
-  getOrCreateMainWallet,
-  submitTransfer,
+    createBeneficiary,
+    getOrCreateMainWallet,
+    submitTransfer,
 } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
 import CustomLoader from "../../Loader/CustomLoader";
@@ -100,7 +100,16 @@ export default function TransferConfirm() {
       const accessToken = await AsyncStorage.getItem("access_token");
       if (!accessToken) return;
       const { success, wallet } = await getOrCreateMainWallet(accessToken);
-      if (success && wallet?.balance != null && balanceType === "available") {
+      if (!success || !wallet) return;
+      if (balanceType === "agent") {
+        const agentBal =
+          (wallet as { agentCommission?: number | string })?.agentCommission != null
+            ? parseFloat(String((wallet as { agentCommission?: number | string }).agentCommission))
+            : NaN;
+        const balanceNum = Number.isNaN(agentBal) ? 0 : agentBal;
+        setCurrentBalance(balanceNum);
+        setNewBalance(Math.max(0, balanceNum - amount));
+      } else if (wallet?.balance != null) {
         const balanceNum = parseFloat(String(wallet.balance)) || 0;
         setCurrentBalance(balanceNum);
         setNewBalance(Math.max(0, balanceNum - amount));
@@ -186,6 +195,7 @@ export default function TransferConfirm() {
         description: description || "",
       };
       if (fromWalletId) transferBody.fromWalletId = fromWalletId;
+      transferBody.balanceType = balanceType || "available";
       if (hasPasscode && passcodeToSend) transferBody.passcode = passcodeToSend;
       const result = await submitTransfer(accessToken, transferBody);
       if (result.success) {

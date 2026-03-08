@@ -1,7 +1,7 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Modal,
   ScrollView,
@@ -12,6 +12,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { calculateExchange } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
 
 export default function TimeDepositAmount() {
@@ -30,7 +31,10 @@ export default function TimeDepositAmount() {
   const [showCurrencyModal, setShowCurrencyModal] = useState(false);
   const [amount, setAmount] = useState("");
   const [phpEquivalent, setPhpEquivalent] = useState(0);
+  const [isConverting, setIsConverting] = useState(false);
+  const [convertError, setConvertError] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const currencies = [
     { code: "PHP", name: "Philippine Peso", flag: "🇵🇭", symbol: "₱" },
@@ -42,9 +46,72 @@ export default function TimeDepositAmount() {
   const depositMethod = params.depositMethod || "Request Amount";
   const contractPeriod = params.contractPeriod || "";
 
-  const calculatePhpEquivalent = (value: string) => {
-    setPhpEquivalent(parseFloat(value) || 0);
-  };
+  const updatePhpEquivalent = useCallback(
+    async (value: string, currency: string) => {
+      const num = parseFloat(value) || 0;
+      if (!value.trim() || num <= 0) {
+        setPhpEquivalent(0);
+        setConvertError(null);
+        setIsConverting(false);
+        return;
+      }
+      if (currency === "PHP") {
+        setPhpEquivalent(num);
+        setConvertError(null);
+        setIsConverting(false);
+        return;
+      }
+      setIsConverting(true);
+      setConvertError(null);
+      const result = await calculateExchange({
+        action: "BUY_PHP",
+        currency,
+        amount: num,
+        amountType: "SOURCE_FOREIGN",
+      });
+      setIsConverting(false);
+      if (result.success && result.targetAmount != null) {
+        setPhpEquivalent(result.targetAmount);
+        setConvertError(null);
+        if (__DEV__) {
+          console.log("[TimeDeposit] Converted", num, currency, "->", result.targetAmount, "PHP");
+        }
+      } else {
+        setPhpEquivalent(0);
+        setConvertError(result.error || "Exchange rate unavailable");
+        if (__DEV__) {
+          console.warn("[TimeDeposit] Exchange API failed:", result.error);
+        }
+      }
+    },
+    [],
+  );
+
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    const value = amount.trim();
+    if (!value) {
+      setPhpEquivalent(0);
+      setConvertError(null);
+      return;
+    }
+    const num = parseFloat(value);
+    if (isNaN(num) || num <= 0) {
+      setPhpEquivalent(0);
+      setConvertError(null);
+      return;
+    }
+    if (selectedCurrency === "PHP") {
+      setPhpEquivalent(num);
+      return;
+    }
+    debounceRef.current = setTimeout(() => {
+      updatePhpEquivalent(value, selectedCurrency);
+    }, 400);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [amount, selectedCurrency, updatePhpEquivalent]);
 
   const handleContinue = () => {
     const newErrors: Record<string, string> = {};
@@ -53,8 +120,9 @@ export default function TimeDepositAmount() {
     if (!amountStr) {
       newErrors.amount = "Amount is required";
     } else {
-      const amountNum = parseFloat(amountStr);
-      if (amountNum < 50000) {
+      const phpValue =
+        selectedCurrency === "PHP" ? parseFloat(amountStr) : phpEquivalent;
+      if (phpValue < 50000) {
         newErrors.amount = "Minimum time deposit amount is ₱50,000.00";
       }
     }
@@ -66,10 +134,14 @@ export default function TimeDepositAmount() {
 
     setErrors({});
 
+    const amountInPhp =
+      selectedCurrency === "PHP" ? parseFloat(amount) : phpEquivalent;
+
     navigation.navigate("TimeDepositConfirm", {
       depositMethod,
       contractPeriod,
       amount,
+      amountInPhp: amountInPhp,
       currency: selectedCurrency,
     });
   };
@@ -193,7 +265,6 @@ export default function TimeDepositAmount() {
                   onChangeText={(text) => {
                     const filtered = text.replace(/[^0-9.]/g, "");
                     setAmount(filtered);
-                    calculatePhpEquivalent(filtered);
                     if (errors.amount) {
                       setErrors((prev) => {
                         const { amount, ...rest } = prev;
@@ -233,12 +304,17 @@ export default function TimeDepositAmount() {
                 />
                 <Text style={styles.equivalentValue}>
                   ₱
-                  {phpEquivalent.toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
+                  {isConverting
+                    ? "..."
+                    : phpEquivalent.toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
                 </Text>
               </View>
+              {convertError ? (
+                <Text style={styles.convertErrorText}>{convertError}</Text>
+              ) : null}
             </LinearGradient>
           </View>
 
@@ -523,6 +599,13 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: "#FFFFFF",
     opacity: 0.9,
+    textAlign: "center",
+  },
+  convertErrorText: {
+    fontSize: 12,
+    color: "#FFFFFF",
+    opacity: 0.9,
+    marginTop: 4,
     textAlign: "center",
   },
   continueButton: {
