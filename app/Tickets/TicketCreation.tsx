@@ -1,3 +1,4 @@
+import { TICKET_CATEGORIES } from "@/constants/ticketCategories";
 import { createTicket, type CreateTicketDto } from "@/lib/tickets";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -39,7 +40,7 @@ export default function TicketCreation({
   onSuccess,
   accessToken,
 }: TicketCreationProps) {
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const isSmallScreen = width < 380;
   const [formValue, setFormValue] = useState<CreateTicketDto>({
@@ -48,6 +49,7 @@ export default function TicketCreation({
     priority: "MEDIUM",
   });
   const [loading, setLoading] = useState(false);
+  const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
   const { t } = useLanguage();
 
   const handleSubmit = async () => {
@@ -72,16 +74,27 @@ export default function TicketCreation({
       return;
     }
 
+    if (!formValue.category) {
+      Alert.alert(t("common.error"), t("tickets.validationCategory"));
+      return;
+    }
+
     Keyboard.dismiss();
     setLoading(true);
     try {
-      const result = await createTicket(accessToken, {
+      const payload: CreateTicketDto = {
         ...formValue,
         title,
         description,
-      });
+      };
+      if (formValue.category?.trim()) {
+        payload.category = formValue.category.trim();
+      } else {
+        delete payload.category;
+      }
+      const result = await createTicket(accessToken, payload);
       Alert.alert(t("common.success"), t("tickets.createdSuccess"));
-      setFormValue({ title: "", description: "", priority: "MEDIUM" });
+      setFormValue({ title: "", description: "", priority: "MEDIUM", category: undefined });
       onSuccess?.(result.id);
       onClose();
     } catch (error: unknown) {
@@ -213,17 +226,117 @@ export default function TicketCreation({
                 </View>
               </View>
 
-              {/* Category (Optional) */}
+              {/* Category (Optional) - Responsive dropdown */}
               <View style={[styles.field, isSmallScreen && styles.fieldSmall]}>
                 <Text style={styles.label}>{t("tickets.categoryLabel")}</Text>
-                <TextInput
-                  style={[styles.input, styles.categoryInput, isSmallScreen && styles.inputSmall]}
-                  placeholder={t("tickets.categoryPlaceholder")}
-                  placeholderTextColor="#9CA3AF"
-                  value={formValue.category ?? ""}
-                  onChangeText={(v) => setFormValue({ ...formValue, category: v })}
-                  editable={!loading}
-                />
+                <TouchableOpacity
+                  style={[
+                    styles.dropdownTrigger,
+                    styles.categoryInput,
+                    isSmallScreen && styles.inputSmall,
+                    categoryDropdownOpen && styles.dropdownTriggerOpen,
+                  ]}
+                  onPress={() => setCategoryDropdownOpen(true)}
+                  activeOpacity={0.7}
+                  disabled={loading}
+                >
+                  <Text
+                    style={[
+                      styles.dropdownTriggerText,
+                      !formValue.category && styles.dropdownPlaceholder,
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {formValue.category
+                      ? TICKET_CATEGORIES.find((c) => c.value === formValue.category)
+                        ? t(
+                            TICKET_CATEGORIES.find((c) => c.value === formValue.category)!
+                              .labelKey,
+                          )
+                        : formValue.category
+                      : t("tickets.categorySelectPlaceholder")}
+                  </Text>
+                  <Ionicons
+                    name={categoryDropdownOpen ? "chevron-up" : "chevron-down"}
+                    size={20}
+                    color="#6B7280"
+                  />
+                </TouchableOpacity>
+
+                <Modal
+                  visible={categoryDropdownOpen}
+                  transparent
+                  animationType="fade"
+                  onRequestClose={() => setCategoryDropdownOpen(false)}
+                >
+                  <TouchableOpacity
+                    style={styles.dropdownBackdrop}
+                    activeOpacity={1}
+                    onPress={() => setCategoryDropdownOpen(false)}
+                  >
+                    <TouchableOpacity
+                      style={[
+                        styles.dropdownSheet,
+                        isSmallScreen && styles.dropdownSheetSmall,
+                        {
+                          maxHeight: Math.min(height * 0.7, 420),
+                          paddingBottom: insets.bottom + (isSmallScreen ? 12 : 20),
+                        },
+                      ]}
+                      activeOpacity={1}
+                      onPress={() => {}}
+                    >
+                      <View style={styles.dropdownSheetHeader}>
+                        <Text style={[styles.dropdownSheetTitle, isSmallScreen && styles.dropdownSheetTitleSmall]}>
+                          {t("tickets.categoryLabel")}
+                        </Text>
+                        <TouchableOpacity
+                          onPress={() => setCategoryDropdownOpen(false)}
+                          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                        >
+                          <Ionicons name="close" size={24} color="#374151" />
+                        </TouchableOpacity>
+                      </View>
+                      <ScrollView
+                        style={styles.dropdownScroll}
+                        showsVerticalScrollIndicator={true}
+                        keyboardShouldPersistTaps="handled"
+                      >
+                        {TICKET_CATEGORIES.map((cat) => {
+                          const isSelected = formValue.category === cat.value;
+                          return (
+                            <TouchableOpacity
+                              key={cat.value}
+                              style={[
+                                styles.dropdownOption,
+                                isSmallScreen && styles.dropdownOptionSmall,
+                                isSelected && styles.dropdownOptionSelected,
+                              ]}
+                              onPress={() => {
+                                setFormValue({ ...formValue, category: cat.value });
+                                setCategoryDropdownOpen(false);
+                              }}
+                              activeOpacity={0.7}
+                            >
+                              <Text
+                                style={[
+                                  styles.dropdownOptionText,
+                                  isSelected && styles.dropdownOptionTextSelected,
+                                ]}
+                                numberOfLines={2}
+                              >
+                                {t(cat.labelKey)}
+                              </Text>
+                              {isSelected && (
+                                <Ionicons name="checkmark-circle" size={22} color="#E15816" />
+                              )}
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </ScrollView>
+                    </TouchableOpacity>
+                  </TouchableOpacity>
+                </Modal>
               </View>
 
               <TouchableOpacity
@@ -397,6 +510,94 @@ const styles = StyleSheet.create({
   },
   categoryInput: {
     minHeight: 48,
+  },
+  dropdownTrigger: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderWidth: 2,
+    borderColor: "#E0E0E0",
+  },
+  dropdownTriggerOpen: {
+    borderColor: "#E15816",
+    borderWidth: 2,
+  },
+  dropdownTriggerText: {
+    fontSize: 16,
+    color: "#111827",
+    flex: 1,
+  },
+  dropdownPlaceholder: {
+    color: "#9CA3AF",
+  },
+  dropdownBackdrop: {
+    flex: 1,
+    backgroundColor: "transparent",
+    justifyContent: "flex-end",
+    paddingBottom: 0,
+  },
+  dropdownSheet: {
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    width: "100%",
+    paddingTop: 16,
+    paddingHorizontal: 16,
+    maxHeight: "85%",
+  },
+  dropdownSheetSmall: {
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    paddingTop: 12,
+  },
+  dropdownSheetHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 12,
+    paddingHorizontal: 4,
+  },
+  dropdownSheetTitle: {
+    fontSize: 17,
+    fontWeight: "700",
+    color: "#111827",
+  },
+  dropdownSheetTitleSmall: {
+    fontSize: 15,
+  },
+  dropdownScroll: {
+    maxHeight: 340,
+  },
+  dropdownOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    marginBottom: 4,
+    backgroundColor: "#F9F9F9",
+  },
+  dropdownOptionSmall: {
+    paddingVertical: 12,
+  },
+  dropdownOptionSelected: {
+    backgroundColor: "rgba(225, 88, 22, 0.08)",
+    borderWidth: 1,
+    borderColor: "rgba(225, 88, 22, 0.3)",
+  },
+  dropdownOptionText: {
+    fontSize: 16,
+    color: "#374151",
+    flex: 1,
+  },
+  dropdownOptionTextSelected: {
+    color: "#E15816",
+    fontWeight: "600",
   },
   priorityRow: {
     flexDirection: "row",
