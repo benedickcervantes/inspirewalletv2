@@ -2,11 +2,14 @@ import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
+import * as FileSystem from "expo-file-system";
+import * as Sharing from "expo-sharing";
 import { doc, getDoc } from "firebase/firestore";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
     Modal,
     ScrollView,
+    Share,
     StyleSheet,
     Text,
     TouchableOpacity,
@@ -114,6 +117,7 @@ export default function SendMoney() {
   const [userName, setUserName] = useState("");
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [showContactsModal, setShowContactsModal] = useState(false);
+  const qrRef = useRef<any | null>(null);
 
   useEffect(() => {
     loadBalances();
@@ -154,6 +158,72 @@ export default function SendMoney() {
 
     // Navigate to next step with selected balance
     navigation.navigate("TransferRecipient", { balanceType: selectedBalance ?? "available" });
+  };
+
+  const handleShareQr = async () => {
+    try {
+      if (!userAccountNumber) {
+        alert(t("sendMoney.noAccountNumber") || "No account number to share.");
+        return;
+      }
+
+      const canShare = await Sharing.isAvailableAsync();
+      if (!canShare) {
+        await Share.share({
+          message:
+            `${t("sendMoney.shareQrFallbackText") || "Here is my wallet account number"}: ` +
+            userAccountNumber,
+        });
+        return;
+      }
+
+      if (!qrRef.current || typeof qrRef.current.toDataURL !== "function") {
+        alert(
+          t("sendMoney.qrNotReady") ||
+            "QR code is not ready yet. Please try again.",
+        );
+        return;
+      }
+
+      qrRef.current.toDataURL(async (data: string) => {
+        try {
+          const baseDir =
+            FileSystem.cacheDirectory || FileSystem.documentDirectory;
+
+          if (!baseDir) {
+            await Share.share({
+              message:
+                `${t("sendMoney.shareQrFallbackText") || "Here is my wallet account number"}: ` +
+                userAccountNumber,
+            });
+            return;
+          }
+
+          const fileUri = `${baseDir}my-qr-${Date.now()}.png`;
+
+          await FileSystem.writeAsStringAsync(fileUri, data, {
+            encoding: FileSystem.EncodingType.Base64,
+          });
+
+          await Sharing.shareAsync(fileUri, {
+            mimeType: "image/png",
+            dialogTitle: t("sendMoney.shareQr") || "Share my QR",
+          });
+        } catch (error) {
+          console.error("Error sharing QR code:", error);
+          alert(
+            t("sendMoney.errorShareQr") ||
+              "Failed to share QR code. Please try again.",
+          );
+        }
+      });
+    } catch (error) {
+      console.error("Error preparing QR share:", error);
+      alert(
+        t("sendMoney.errorShareQr") ||
+          "Failed to share QR code. Please try again.",
+      );
+    }
   };
 
   return (
@@ -419,6 +489,9 @@ export default function SendMoney() {
                       logoBackgroundColor="transparent"
                       logoMargin={2}
                       logoBorderRadius={8}
+                      getRef={(ref) => {
+                        qrRef.current = ref;
+                      }}
                     />
                   ) : (
                     <View style={styles.qrPlaceholder}>
@@ -434,7 +507,10 @@ export default function SendMoney() {
                 </View>
               </View>
 
-              <TouchableOpacity style={styles.shareQRButton}>
+              <TouchableOpacity
+                style={styles.shareQRButton}
+                onPress={handleShareQr}
+              >
                 <LinearGradient
                   colors={["#E25A17", "#F28934"]}
                   style={styles.shareQRGradient}
