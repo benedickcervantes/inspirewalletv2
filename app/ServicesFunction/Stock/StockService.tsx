@@ -19,7 +19,6 @@ import {
 } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
 import { isServiceUnderMaintenance } from "../../../lib/maintenance";
-import CustomLoader from "../../Loader/CustomLoader";
 
 const THEME_COLOR = "#E15816";
 const STOCK_RATE_PHP = 2_000_000;
@@ -234,10 +233,6 @@ export default function StockService() {
       totalPortfolioValue,
     });
   };
-
-  if (loading) {
-    return <CustomLoader text={t("stock.loading")} />;
-  }
 
   return (
     <SafeAreaView style={styles.container}>
