@@ -1,5 +1,6 @@
 import {
     collection,
+    deleteDoc,
     doc,
     getDocs,
     limit,
@@ -126,6 +127,68 @@ class NotificationService {
       await Promise.all(updatePromises);
     } catch (error) {
       console.error("Error marking all notifications as read:", error);
+      throw error;
+    }
+  }
+
+  async deleteNotification(userId: string, notificationId: string): Promise<void> {
+    if (!firestore || !userId || !notificationId) {
+      console.warn("NotificationService: Missing required parameters");
+      return;
+    }
+
+    try {
+      const notificationRef = doc(
+        firestore,
+        "users",
+        userId,
+        "notifications",
+        notificationId
+      );
+      await deleteDoc(notificationRef);
+    } catch (error) {
+      console.error("Error deleting notification:", error);
+      throw error;
+    }
+  }
+
+  async deleteAllNotifications(userId: string): Promise<void> {
+    if (!firestore || !userId) {
+      console.warn("NotificationService: Missing userId");
+      return;
+    }
+
+    try {
+      const notificationsRef = collection(firestore, "users", userId, "notifications");
+      const snapshot = await getDocs(notificationsRef);
+
+      const deletePromises = snapshot.docs.map((d) => deleteDoc(d.ref));
+      await Promise.all(deletePromises);
+    } catch (error) {
+      console.error("Error deleting all notifications:", error);
+      throw error;
+    }
+  }
+
+  async deleteNotifications(userId: string, notificationIds: string[]): Promise<void> {
+    if (!firestore || !userId || !notificationIds?.length) {
+      return;
+    }
+
+    try {
+      const deletePromises = notificationIds.map((notificationId) => {
+        const notificationRef = doc(
+          firestore,
+          "users",
+          userId,
+          "notifications",
+          notificationId
+        );
+        return deleteDoc(notificationRef);
+      });
+      await Promise.all(deletePromises);
+    } catch (error) {
+      console.error("Error deleting notifications:", error);
       throw error;
     }
   }

@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
+  Modal,
   RefreshControl,
   StyleSheet,
   Text,
@@ -17,6 +18,9 @@ import {
   markNotificationAsRead as apiMarkNotificationAsRead,
   markAllNotificationsAsRead as apiMarkAllNotificationsAsRead,
   getNotifications,
+  deleteNotification as apiDeleteNotification,
+  deleteAllNotifications as apiDeleteAllNotifications,
+  deleteNotificationBatch as apiDeleteNotificationBatch,
 } from '../../configs/api';
 import { auth } from '../../configs/firebase';
 import { useLanguage } from '../../context/LanguageContext';
@@ -41,6 +45,15 @@ const Notification = () => {
   const [readAllLoading, setReadAllLoading] = useState(false);
   const [user, setUser] = useState<{ uid: string } | null>(null);
   const [useBackend, setUseBackend] = useState(false);
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteModalConfig, setDeleteModalConfig] = useState<{
+    title: string;
+    message: string;
+    onConfirm: () => void | Promise<void>;
+  }>({ title: '', message: '', onConfirm: () => {} });
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -138,7 +151,125 @@ const Notification = () => {
     }
   };
 
+  const toggleSelectMode = () => {
+    setSelectMode((prev) => !prev);
+    setSelectedIds(new Set());
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleDeleteOne = (id: string, e?: { stopPropagation?: () => void }) => {
+    e?.stopPropagation?.();
+    setDeleteModalConfig({
+      title: t('notification.delete'),
+      message: t('notification.deleteConfirmOne'),
+      onConfirm: async () => {
+        setShowDeleteModal(false);
+        if (deleteLoading) return;
+        setDeleteLoading(true);
+        try {
+          if (useBackend) {
+            const accessToken = await AsyncStorage.getItem('access_token');
+            if (accessToken) {
+              const result = await apiDeleteNotification(accessToken, id);
+              if (result.success) {
+                setBackendNotifications((prev) => prev.filter((n) => n.id !== id));
+              }
+            }
+          } else if (user) {
+            await notificationService.deleteNotification(user.uid, id);
+          }
+        } catch (error) {
+          console.error('Error deleting notification:', error);
+        } finally {
+          setDeleteLoading(false);
+        }
+      },
+    });
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteAll = () => {
+    const total = useBackend ? backendNotifications.length : notifications.length;
+    if (total === 0) return;
+    setDeleteModalConfig({
+      title: t('notification.delete'),
+      message: t('notification.deleteConfirmAll'),
+      onConfirm: async () => {
+        setShowDeleteModal(false);
+        if (deleteLoading) return;
+        setDeleteLoading(true);
+        try {
+          if (useBackend) {
+            const accessToken = await AsyncStorage.getItem('access_token');
+            if (accessToken) {
+              const result = await apiDeleteAllNotifications(accessToken);
+              if (result.success) {
+                setBackendNotifications([]);
+              }
+            }
+          } else if (user) {
+            await notificationService.deleteAllNotifications(user.uid);
+          }
+          setSelectMode(false);
+          setSelectedIds(new Set());
+        } catch (error) {
+          console.error('Error deleting all notifications:', error);
+        } finally {
+          setDeleteLoading(false);
+        }
+      },
+    });
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteSelected = () => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    setDeleteModalConfig({
+      title: t('notification.delete'),
+      message: t('notification.deleteConfirmSelected').replace('{count}', String(ids.length)),
+      onConfirm: async () => {
+        setShowDeleteModal(false);
+        if (deleteLoading) return;
+        setDeleteLoading(true);
+        try {
+          if (useBackend) {
+            const accessToken = await AsyncStorage.getItem('access_token');
+            if (accessToken) {
+              const result = await apiDeleteNotificationBatch(accessToken, ids);
+              if (result.success) {
+                setBackendNotifications((prev) => prev.filter((n) => !ids.includes(n.id)));
+              }
+            }
+          } else if (user) {
+            await notificationService.deleteNotifications(user.uid, ids);
+          }
+          setSelectMode(false);
+          setSelectedIds(new Set());
+        } catch (error) {
+          console.error('Error deleting selected notifications:', error);
+        } finally {
+          setDeleteLoading(false);
+        }
+      },
+    });
+    setShowDeleteModal(true);
+  };
+
   const handleNotificationPress = async (notification: NotificationItem | NotificationItemBackend) => {
+    const id = notification.id;
+    if (selectMode) {
+      toggleSelect(id);
+      return;
+    }
     if (useBackend) {
       const notif = notification as NotificationItemBackend;
       if (!notif.isRead) {
@@ -200,30 +331,54 @@ const Notification = () => {
       style={[
         styles.notificationCard,
         !item.isRead && styles.unreadCard,
+        selectMode && selectedIds.has(item.id) && styles.selectedCard,
       ]}
       onPress={() => handleNotificationPress(item)}
+      activeOpacity={0.7}
     >
       <View style={styles.cardContent}>
-        <View style={[
-          styles.iconContainer,
-          !item.isRead && styles.unreadIconContainer,
-        ]}>
-          <Ionicons
-            name="notifications"
-            size={24}
-            color="#E25A17"
-          />
-        </View>
+        {selectMode ? (
+          <TouchableOpacity
+            style={styles.selectCheckbox}
+            onPress={() => toggleSelect(item.id)}
+          >
+            <Ionicons
+              name={selectedIds.has(item.id) ? 'checkbox' : 'checkbox-outline'}
+              size={28}
+              color={selectedIds.has(item.id) ? '#E25A17' : '#999'}
+            />
+          </TouchableOpacity>
+        ) : (
+          <View style={[
+            styles.iconContainer,
+            !item.isRead && styles.unreadIconContainer,
+          ]}>
+            <Ionicons
+              name="notifications"
+              size={24}
+              color="#E25A17"
+            />
+          </View>
+        )}
 
         <View style={styles.textContainer}>
           <View style={styles.titleRow}>
             <Text style={styles.notificationTitle}>
               {item.title}
             </Text>
-            {!item.isRead && (
+            {!item.isRead && !selectMode && (
               <View style={styles.newBadge}>
                 <Text style={styles.newBadgeText}>{t('notification.newBadge')}</Text>
               </View>
+            )}
+            {!selectMode && (
+              <TouchableOpacity
+                style={styles.deleteButton}
+                onPress={(e) => handleDeleteOne(item.id, e)}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              >
+                <Ionicons name="trash-outline" size={22} color="#999" />
+              </TouchableOpacity>
             )}
           </View>
 
@@ -244,7 +399,7 @@ const Notification = () => {
           </Text>
         </View>
 
-        {item.isRead && (
+        {item.isRead && !selectMode && (
           <Ionicons
             name="chevron-forward"
             size={20}
@@ -261,31 +416,55 @@ const Notification = () => {
       style={[
         styles.notificationCard,
         !item.read && styles.unreadCard,
+        selectMode && selectedIds.has(item.id) && styles.selectedCard,
       ]}
       onPress={() => handleNotificationPress(item)}
+      activeOpacity={0.7}
     >
       <View style={styles.cardContent}>
-        <View style={[
-          styles.iconContainer,
-          !item.read && styles.unreadIconContainer,
-        ]}>
-          <Ionicons
-            name={getNotificationIcon(item.type ?? 'system') as 'information-circle'}
-            size={24}
-            color="#E25A17"
-          />
-        </View>
+        {selectMode ? (
+          <TouchableOpacity
+            style={styles.selectCheckbox}
+            onPress={() => toggleSelect(item.id)}
+          >
+            <Ionicons
+              name={selectedIds.has(item.id) ? 'checkbox' : 'checkbox-outline'}
+              size={28}
+              color={selectedIds.has(item.id) ? '#E25A17' : '#999'}
+            />
+          </TouchableOpacity>
+        ) : (
+          <View style={[
+            styles.iconContainer,
+            !item.read && styles.unreadIconContainer,
+          ]}>
+            <Ionicons
+              name={getNotificationIcon(item.type ?? 'system') as 'information-circle'}
+              size={24}
+              color="#E25A17"
+            />
+          </View>
+        )}
 
         <View style={styles.textContainer}>
           <View style={styles.titleRow}>
             <Text style={styles.notificationTitle}>{item.title}</Text>
-            {item.type === 'referral_approved' && (
+            {item.type === 'referral_approved' && !selectMode && (
               <Ionicons name="checkmark-circle" size={20} color="#4CAF50" />
             )}
-            {!item.read && (
+            {!item.read && !selectMode && (
               <View style={styles.newBadge}>
                 <Text style={styles.newBadgeText}>{t('notification.newBadge')}</Text>
               </View>
+            )}
+            {!selectMode && (
+              <TouchableOpacity
+                style={styles.deleteButton}
+                onPress={(e) => handleDeleteOne(item.id, e)}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              >
+                <Ionicons name="trash-outline" size={22} color="#999" />
+              </TouchableOpacity>
             )}
           </View>
 
@@ -300,7 +479,7 @@ const Notification = () => {
           </Text>
         </View>
 
-        {item.read && (
+        {item.read && !selectMode && (
           <Ionicons
             name="chevron-forward"
             size={20}
@@ -360,16 +539,62 @@ const Notification = () => {
           <Ionicons name="chevron-back" size={28} color="#FFFFFF" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{t('notification.title')}</Text>
-        <TouchableOpacity
-          style={styles.refreshButton}
-          onPress={handleRefresh}
-          disabled={refreshing}
-        >
-          <Ionicons name="refresh" size={28} color="#FFFFFF" />
-        </TouchableOpacity>
+        <View style={styles.headerRight}>
+          {selectMode ? (
+            <TouchableOpacity style={styles.refreshButton} onPress={toggleSelectMode}>
+              <Text style={styles.selectButtonText}>{t('notification.cancel')}</Text>
+            </TouchableOpacity>
+          ) : (
+            <>
+              <TouchableOpacity style={styles.refreshButton} onPress={toggleSelectMode}>
+                <Text style={styles.selectButtonText}>{t('notification.select')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.refreshButton}
+                onPress={handleRefresh}
+                disabled={refreshing}
+              >
+                <Ionicons name="refresh" size={24} color="#FFFFFF" />
+              </TouchableOpacity>
+            </>
+          )}
+        </View>
       </LinearGradient>
 
-      {unreadCount > 0 && (
+      {selectMode && (
+        <View style={styles.deleteActionBar}>
+          <TouchableOpacity
+            onPress={handleDeleteAll}
+            disabled={deleteLoading}
+            style={styles.deleteActionButton}
+          >
+            {deleteLoading ? (
+              <ActivityIndicator size="small" color="#E25A17" />
+            ) : (
+              <Text style={styles.deleteActionText}>{t('notification.deleteAll')}</Text>
+            )}
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={handleDeleteSelected}
+            disabled={deleteLoading || selectedIds.size === 0}
+            style={[
+              styles.deleteActionButton,
+              selectedIds.size === 0 && styles.deleteActionButtonDisabled,
+            ]}
+          >
+            <Text
+              style={[
+                styles.deleteActionText,
+                selectedIds.size === 0 && styles.deleteActionTextDisabled,
+              ]}
+            >
+              {t('notification.deleteSelected')} {selectedIds.size > 0 ? `(${selectedIds.size})` : ''}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {unreadCount > 0 && !selectMode && (
         <View style={styles.readAllBar}>
           <TouchableOpacity
             onPress={handleReadAll}
@@ -430,6 +655,45 @@ const Notification = () => {
           }
         />
       )}
+
+      {/* Delete confirmation modal - same design as other modals */}
+      <Modal
+        visible={showDeleteModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowDeleteModal(false)}
+      >
+        <View style={styles.alertOverlay}>
+          <LinearGradient
+            colors={['#E25A17', '#F28934']}
+            style={styles.alertContainer}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0, y: 1 }}
+          >
+            <Text style={styles.alertTitle}>{deleteModalConfig.title}</Text>
+            <Text style={styles.alertMessage}>{deleteModalConfig.message}</Text>
+            <View style={styles.alertButtonRow}>
+              <TouchableOpacity
+                style={styles.alertCancelButton}
+                onPress={() => setShowDeleteModal(false)}
+              >
+                <Text style={styles.alertCancelButtonText}>{t('notification.cancel')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.alertConfirmButton}
+                onPress={() => deleteModalConfig.onConfirm()}
+                disabled={deleteLoading}
+              >
+                {deleteLoading ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.alertConfirmButtonText}>{t('notification.delete')}</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </LinearGradient>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -460,10 +724,47 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   refreshButton: {
-    width: 40,
+    minWidth: 40,
     height: 40,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 8,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  selectButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  deleteActionBar: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#EEE',
+    gap: 12,
+  },
+  deleteActionButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+  },
+  deleteActionButtonDisabled: {
+    opacity: 0.5,
+  },
+  deleteActionText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#E25A17',
+  },
+  deleteActionTextDisabled: {
+    color: '#999',
   },
   readAllBar: {
     flexDirection: 'row',
@@ -510,6 +811,22 @@ const styles = StyleSheet.create({
   unreadCard: {
     borderLeftWidth: 4,
     borderLeftColor: '#E25A17',
+  },
+  selectedCard: {
+    borderWidth: 2,
+    borderColor: '#E25A17',
+    backgroundColor: '#FFF9F5',
+  },
+  selectCheckbox: {
+    width: 48,
+    height: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  deleteButton: {
+    padding: 4,
+    marginLeft: 4,
   },
   cardContent: {
     flexDirection: 'row',
@@ -590,6 +907,66 @@ const styles = StyleSheet.create({
     color: '#999',
     marginTop: 8,
     textAlign: 'center',
+  },
+  // Delete confirmation modal - matches other modals (timedeposit, TransferRecipient)
+  alertOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  alertContainer: {
+    borderRadius: 12,
+    padding: 24,
+    width: '85%',
+    maxWidth: 400,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  alertTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 12,
+  },
+  alertMessage: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    lineHeight: 24,
+    marginBottom: 24,
+    opacity: 0.95,
+  },
+  alertButtonRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 12,
+  },
+  alertCancelButton: {
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+  alertCancelButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  alertConfirmButton: {
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 10,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    minWidth: 80,
+    alignItems: 'center',
+  },
+  alertConfirmButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#E25A17',
   },
 });
 

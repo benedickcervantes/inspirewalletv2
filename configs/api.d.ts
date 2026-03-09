@@ -188,6 +188,17 @@ export function markNotificationAsRead(
 export function markAllNotificationsAsRead(
   accessToken: string,
 ): Promise<{ success: boolean; error?: string }>;
+export function deleteNotification(
+  accessToken: string,
+  notificationId: string,
+): Promise<{ success: boolean; error?: string }>;
+export function deleteAllNotifications(
+  accessToken: string,
+): Promise<{ success: boolean; error?: string }>;
+export function deleteNotificationBatch(
+  accessToken: string,
+  ids: string[],
+): Promise<{ success: boolean; error?: string }>;
 export function markAllMessagesAsRead(
   accessToken: string,
 ): Promise<{ success: boolean; count?: number; error?: string }>;
