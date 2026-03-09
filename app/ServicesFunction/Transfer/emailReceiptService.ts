@@ -13,7 +13,6 @@
  * recipient_account, amount, description, date, transfer_type
  */
 
-import { send } from "@emailjs/react-native";
 
 const SERVICE_ID = process.env.EXPO_PUBLIC_EMAILJS_SERVICE_ID ?? "";
 const PUBLIC_KEY = process.env.EXPO_PUBLIC_EMAILJS_PUBLIC_KEY ?? "";
@@ -85,7 +84,7 @@ export async function sendTransferReceipt(params: TransferReceiptParams): Promis
   };
 
   try {
-    await send(SERVICE_ID, templateId, templateParams, { publicKey: PUBLIC_KEY });
+    await emailjs.send(SERVICE_ID, templateId, templateParams, { publicKey: PUBLIC_KEY });
   } catch (error) {
     console.error("[EmailReceipt] Failed to send receipt:", error);
   }
