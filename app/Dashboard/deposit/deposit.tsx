@@ -3,6 +3,7 @@ import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useState } from "react";
 import {
+  ActivityIndicator,
   ScrollView,
   StyleSheet,
   Text,
@@ -16,6 +17,7 @@ export default function DepositIndex() {
   const navigation = useNavigation();
   const { t } = useLanguage();
   const [selectedType, setSelectedType] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const depositTypes = [
     {
@@ -42,12 +44,12 @@ export default function DepositIndex() {
   ] as const;
 
   const handleContinue = () => {
-    if (selectedType) {
-      const selected = depositTypes.find((type) => type.id === selectedType);
-      if (selected) {
-        const screenName = selected.route.replace(/^\//, "");
-        (navigation as { navigate: (name: string) => void }).navigate(screenName);
-      }
+    if (!selectedType || loading) return;
+    setLoading(true);
+    const selected = depositTypes.find((type) => type.id === selectedType);
+    if (selected) {
+      const screenName = selected.route.replace(/^\//, "");
+      (navigation as { navigate: (name: string) => void }).navigate(screenName);
     }
   };
 
@@ -127,13 +129,16 @@ export default function DepositIndex() {
 
           {/* Continue Button */}
           <TouchableOpacity
-            style={styles.continueButton}
+            style={[
+              styles.continueButton,
+              (!selectedType || loading) && styles.continueButtonDisabled,
+            ]}
             onPress={handleContinue}
-            disabled={!selectedType}
+            disabled={!selectedType || loading}
           >
             <LinearGradient
               colors={
-                selectedType
+                selectedType && !loading
                   ? ["#E25A17", "#F28934"]
                   : ["#CCCCCC", "#AAAAAA"]
               }
@@ -141,8 +146,14 @@ export default function DepositIndex() {
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
             >
-              <Text style={styles.continueText}>{t("deposit.continue")}</Text>
-              <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
+              {loading ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <>
+                  <Text style={styles.continueText}>{t("deposit.continue")}</Text>
+                  <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
+                </>
+              )}
             </LinearGradient>
           </TouchableOpacity>
 
@@ -308,6 +319,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 6,
+  },
+  continueButtonDisabled: {
+    opacity: 0.6,
   },
   continueGradient: {
     flexDirection: "row",
