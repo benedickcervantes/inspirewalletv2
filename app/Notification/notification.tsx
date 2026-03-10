@@ -8,6 +8,7 @@ import {
   FlatList,
   Modal,
   RefreshControl,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -15,12 +16,14 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  markNotificationAsRead as apiMarkNotificationAsRead,
-  markAllNotificationsAsRead as apiMarkAllNotificationsAsRead,
-  getNotifications,
-  deleteNotification as apiDeleteNotification,
+  acceptReferralRequest as apiAcceptReferralRequest,
+  declineReferralRequest as apiDeclineReferralRequest,
   deleteAllNotifications as apiDeleteAllNotifications,
+  deleteNotification as apiDeleteNotification,
   deleteNotificationBatch as apiDeleteNotificationBatch,
+  markAllNotificationsAsRead as apiMarkAllNotificationsAsRead,
+  markNotificationAsRead as apiMarkNotificationAsRead,
+  getNotifications,
 } from '../../configs/api';
 import { auth } from '../../configs/firebase';
 import { useLanguage } from '../../context/LanguageContext';
@@ -33,6 +36,8 @@ interface NotificationItemBackend {
   message: string;
   isRead: boolean;
   createdAt: string;
+  type?: string;
+  referenceId?: string | null;
 }
 
 const Notification = () => {
@@ -56,6 +61,8 @@ const Notification = () => {
     message: string;
     onConfirm: () => void | Promise<void>;
   }>({ title: '', message: '', onConfirm: () => {} });
+  const [detailModalNotification, setDetailModalNotification] = useState<NotificationItem | NotificationItemBackend | null>(null);
+  const [referralActionLoading, setReferralActionLoading] = useState(false);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -88,7 +95,10 @@ const Notification = () => {
 
       const result = await getNotifications(accessToken, { limit: 50 });
       if (result.success && result.data) {
-        setBackendNotifications(result.data as NotificationItemBackend[]);
+        const list = result.data as NotificationItemBackend[];
+        setBackendNotifications(list);
+        const unread = list.filter((n) => !n.isRead).length;
+        setUnreadCount(unread);
       }
     } catch (error) {
       console.error('Error fetching notifications:', error);
@@ -273,6 +283,10 @@ const Notification = () => {
       toggleSelect(id);
       return;
     }
+
+    // Open detail modal to show all notification info
+    setDetailModalNotification(notification);
+
     if (useBackend) {
       const notif = notification as NotificationItemBackend;
       if (!notif.isRead) {
@@ -301,15 +315,36 @@ const Notification = () => {
     }
   };
 
-  const getNotificationIcon = (type: string): string => {
+  const getNotificationIcon = (type?: string, title?: string): string => {
+    const titleLower = (title ?? '').toLowerCase();
+    const isReferralSignup = titleLower.includes('referral') && titleLower.includes('signup');
+    const isReferralCommission = titleLower.includes('referral') && titleLower.includes('commission');
     switch (type) {
       case 'referral_request':
+      case 'REFERRAL_REQUEST':
         return 'person-add';
       case 'referral_approved':
         return 'checkmark-circle';
       case 'transaction':
+      case 'TRANSFER_RECEIVED':
         return 'cash';
+      case 'DEPOSIT_APPROVED':
+      case 'DEPOSIT_REJECTED':
+      case 'WITHDRAWAL_APPROVED':
+      case 'WITHDRAWAL_REJECTED':
+        return 'wallet';
+      case 'TICKET_UPDATE':
+      case 'NEW_MESSAGE':
+        return 'chatbubble';
+      case 'KYC_APPROVED':
+      case 'KYC_REJECTED':
+        return 'document-text';
+      case 'TIME_DEPOSIT_MATURED':
+        return 'time';
+      case 'SYSTEM_ALERT':
       case 'system':
+        if (isReferralSignup) return 'person-add';
+        if (isReferralCommission) return 'checkmark-circle';
         return 'notifications';
       default:
         return 'information-circle';
@@ -329,6 +364,111 @@ const Notification = () => {
     };
 
     return date.toLocaleString('en-US', options);
+  };
+
+  const formatDetailTimestamp = (notif: NotificationItem | NotificationItemBackend): string => {
+    if ('createdAt' in notif && notif.createdAt) {
+      const val = notif.createdAt as string | number;
+      return new Date(val).toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    }
+    if ('timestamp' in notif && notif.timestamp) {
+      return formatTimestamp(notif.timestamp);
+    }
+    return t('notification.noDate') ?? '—';
+  };
+
+  const getDetailFields = (notif: NotificationItem | NotificationItemBackend): { label: string; value: string }[] => {
+    const isBackend = 'isRead' in notif;
+    const fields: { label: string; value: string }[] = [];
+
+    fields.push({ label: t('notification.detailTitle') ?? 'Title', value: notif.title ?? '—' });
+    fields.push({ label: t('notification.detailMessage') ?? 'Message', value: notif.message ?? '—' });
+    fields.push({ label: t('notification.detailDate') ?? 'Date', value: formatDetailTimestamp(notif) });
+    fields.push({
+      label: t('notification.detailStatus') ?? 'Status',
+      value: isBackend ? ((notif as NotificationItemBackend).isRead ? t('notification.read') ?? 'Read' : t('notification.unread') ?? 'Unread') : ((notif as NotificationItem).read ? t('notification.read') ?? 'Read' : t('notification.unread') ?? 'Unread'),
+    });
+
+    if (!isBackend) {
+      const item = notif as NotificationItem;
+      if (item.type) {
+        fields.push({ label: t('notification.detailType') ?? 'Type', value: item.type });
+      }
+      // Include any other non-standard fields
+      const skip = new Set(['id', 'read', 'type', 'title', 'message', 'timestamp', 'readAt']);
+      Object.entries(item).forEach(([key, val]) => {
+        if (!skip.has(key) && val != null && typeof val !== 'object') {
+          const label = key.replace(/([A-Z])/g, ' $1').replace(/^./, (s) => s.toUpperCase());
+          fields.push({ label, value: String(val) });
+        }
+      });
+    } else {
+      const backendNotif = notif as NotificationItemBackend;
+      if (backendNotif.type) {
+        fields.push({ label: t('notification.detailType') ?? 'Type', value: backendNotif.type });
+      }
+      fields.push({ label: t('notification.detailId') ?? 'ID', value: notif.id });
+    }
+
+    return fields;
+  };
+
+  const isNewReferralNotification = (notif: NotificationItem | NotificationItemBackend | null): boolean => {
+    if (!notif) return false;
+    const isBackend = 'isRead' in notif;
+    if (isBackend) {
+      const b = notif as NotificationItemBackend;
+      return Boolean((b.type === 'REFERRAL_REQUEST' || (b.title?.toLowerCase().includes('referral') && b.title?.toLowerCase().includes('signup'))) && b.referenceId);
+    }
+    const n = notif as NotificationItem;
+    const hasRef = (n as NotificationItem & { referenceId?: string }).referenceId;
+    return Boolean((n.type === 'referral_request' || (n.title?.toLowerCase().includes('referral') && n.title?.toLowerCase().includes('signup'))) && hasRef);
+  };
+
+  const handleAcceptReferral = async () => {
+    if (!detailModalNotification || !useBackend || referralActionLoading) return;
+    const id = detailModalNotification.id;
+    setReferralActionLoading(true);
+    try {
+      const accessToken = await AsyncStorage.getItem('access_token');
+      if (!accessToken) return;
+      const result = await apiAcceptReferralRequest(accessToken, id);
+      if (result.success) {
+        setBackendNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)));
+        setDetailModalNotification(null);
+        setUnreadCount((prev) => Math.max(0, prev - 1));
+      }
+    } catch (e) {
+      if (__DEV__) console.error('[Referral] Accept error', e);
+    } finally {
+      setReferralActionLoading(false);
+    }
+  };
+
+  const handleDeclineReferral = async () => {
+    if (!detailModalNotification || !useBackend || referralActionLoading) return;
+    const id = detailModalNotification.id;
+    setReferralActionLoading(true);
+    try {
+      const accessToken = await AsyncStorage.getItem('access_token');
+      if (!accessToken) return;
+      const result = await apiDeclineReferralRequest(accessToken, id);
+      if (result.success) {
+        setBackendNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)));
+        setDetailModalNotification(null);
+        setUnreadCount((prev) => Math.max(0, prev - 1));
+      }
+    } catch (e) {
+      if (__DEV__) console.error('[Referral] Decline error', e);
+    } finally {
+      setReferralActionLoading(false);
+    }
   };
 
   const renderBackendNotification = ({ item }: { item: NotificationItemBackend }) => (
@@ -359,7 +499,7 @@ const Notification = () => {
             !item.isRead && styles.unreadIconContainer,
           ]}>
             <Ionicons
-              name="notifications"
+              name={getNotificationIcon(item.type, item.title) as 'information-circle'}
               size={24}
               color="#E25A17"
             />
@@ -371,6 +511,9 @@ const Notification = () => {
             <Text style={styles.notificationTitle}>
               {item.title}
             </Text>
+            {item.title?.toLowerCase().includes('referral commission') && !selectMode && (
+              <Ionicons name="checkmark-circle" size={20} color="#4CAF50" />
+            )}
             {!item.isRead && !selectMode && (
               <View style={styles.newBadge}>
                 <Text style={styles.newBadgeText}>{t('notification.newBadge')}</Text>
@@ -444,7 +587,7 @@ const Notification = () => {
             !item.read && styles.unreadIconContainer,
           ]}>
             <Ionicons
-              name={getNotificationIcon(item.type ?? 'system') as 'information-circle'}
+              name={getNotificationIcon(item.type ?? 'system', item.title) as 'information-circle'}
               size={24}
               color="#E25A17"
             />
@@ -454,7 +597,7 @@ const Notification = () => {
         <View style={styles.textContainer}>
           <View style={styles.titleRow}>
             <Text style={styles.notificationTitle}>{item.title}</Text>
-            {item.type === 'referral_approved' && !selectMode && (
+            {(item.type === 'referral_approved' || item.title?.toLowerCase().includes('referral commission')) && !selectMode && (
               <Ionicons name="checkmark-circle" size={20} color="#4CAF50" />
             )}
             {!item.read && !selectMode && (
@@ -698,6 +841,97 @@ const Notification = () => {
             </View>
           </LinearGradient>
         </View>
+      </Modal>
+
+      {/* Notification detail modal - same design as delete/alert modal */}
+      <Modal
+        visible={!!detailModalNotification}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setDetailModalNotification(null)}
+      >
+        <TouchableOpacity
+          style={styles.detailOverlay}
+          activeOpacity={1}
+          onPress={() => setDetailModalNotification(null)}
+        >
+          <TouchableOpacity activeOpacity={1} onPress={(e) => e.stopPropagation()}>
+            <LinearGradient
+              colors={['#E25A17', '#F28934']}
+              style={styles.detailModal}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 0, y: 1 }}
+            >
+              <View style={styles.detailHeader}>
+                <View style={styles.detailHeaderTop}>
+                  <View style={styles.detailIconWrapper}>
+                    <Ionicons
+                      name={(detailModalNotification && 'createdAt' in detailModalNotification)
+                        ? (getNotificationIcon((detailModalNotification as NotificationItemBackend)?.type, detailModalNotification?.title) as 'information-circle')
+                        : (getNotificationIcon((detailModalNotification as NotificationItem)?.type ?? 'system', detailModalNotification?.title) as 'information-circle')}
+                      size={28}
+                      color="#FFFFFF"
+                    />
+                  </View>
+                  <Text style={styles.detailTitle} numberOfLines={2}>
+                    {detailModalNotification?.title ?? '—'}
+                  </Text>
+                  <TouchableOpacity
+                    style={styles.detailCloseButton}
+                    onPress={() => setDetailModalNotification(null)}
+                    hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                  >
+                    <Ionicons name="close-circle" size={28} color="rgba(255,255,255,0.9)" />
+                  </TouchableOpacity>
+                </View>
+              </View>
+              <ScrollView
+                style={styles.detailScroll}
+                contentContainerStyle={styles.detailScrollContent}
+                showsVerticalScrollIndicator={false}
+              >
+                {detailModalNotification && getDetailFields(detailModalNotification).map(({ label, value }, idx) => (
+                  <View key={idx} style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>{label}</Text>
+                    <Text style={styles.detailValue} selectable>{value}</Text>
+                  </View>
+                ))}
+              </ScrollView>
+              {useBackend && detailModalNotification && isNewReferralNotification(detailModalNotification) && (
+                <View style={styles.referralActionsRow}>
+                  <TouchableOpacity
+                    style={[styles.referralButton, styles.referralDeclineButton]}
+                    onPress={handleDeclineReferral}
+                    disabled={referralActionLoading}
+                  >
+                    {referralActionLoading ? (
+                      <ActivityIndicator size="small" color="#FFF" />
+                    ) : (
+                      <Text style={styles.referralButtonText}>{t('notification.declineReferral') ?? 'Decline'}</Text>
+                    )}
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.referralButton, styles.referralAcceptButton]}
+                    onPress={handleAcceptReferral}
+                    disabled={referralActionLoading}
+                  >
+                    {referralActionLoading ? (
+                      <ActivityIndicator size="small" color="#FFF" />
+                    ) : (
+                      <Text style={styles.referralButtonText}>{t('notification.acceptReferral') ?? 'Accept'}</Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              )}
+              <TouchableOpacity
+                style={styles.detailCloseTextButton}
+                onPress={() => setDetailModalNotification(null)}
+              >
+                <Text style={styles.detailCloseText}>{t('notification.close') ?? 'Close'}</Text>
+              </TouchableOpacity>
+            </LinearGradient>
+          </TouchableOpacity>
+        </TouchableOpacity>
       </Modal>
     </View>
   );
@@ -972,6 +1206,127 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#E25A17',
+  },
+  // Detail modal - same orange gradient as alert modal
+  detailOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  detailModal: {
+    borderRadius: 12,
+    width: '100%',
+    maxWidth: 400,
+    maxHeight: '85%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+    overflow: 'hidden',
+  },
+  detailHeader: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.4)',
+  },
+  detailHeaderTop: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+  },
+  detailIconWrapper: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  detailTitle: {
+    flex: 1,
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    lineHeight: 24,
+    paddingRight: 4,
+  },
+  detailCloseButton: {
+    padding: 4,
+    marginTop: -4,
+  },
+  detailScroll: {
+    flexGrow: 1,
+    flexShrink: 1,
+    maxHeight: 340,
+  },
+  detailScrollContent: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 24,
+  },
+  detailRow: {
+    marginBottom: 16,
+  },
+  detailLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: 'rgba(255,255,255,0.75)',
+    marginBottom: 4,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  detailValue: {
+    fontSize: 15,
+    color: '#FFFFFF',
+    lineHeight: 22,
+    opacity: 0.98,
+  },
+  referralActionsRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginHorizontal: 20,
+    marginBottom: 12,
+    marginTop: 0,
+  },
+  referralButton: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 44,
+  },
+  referralAcceptButton: {
+    backgroundColor: 'rgba(76, 175, 80, 0.95)',
+  },
+  referralDeclineButton: {
+    backgroundColor: 'rgba(244, 67, 54, 0.95)',
+  },
+  referralButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  detailCloseTextButton: {
+    marginHorizontal: 20,
+    marginBottom: 20,
+    marginTop: 0,
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  detailCloseText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
 });
 

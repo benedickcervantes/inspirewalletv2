@@ -199,6 +199,14 @@ export function deleteNotificationBatch(
   accessToken: string,
   ids: string[],
 ): Promise<{ success: boolean; error?: string }>;
+export function acceptReferralRequest(
+  accessToken: string,
+  notificationId: string,
+): Promise<{ success: boolean; data?: unknown; error?: string }>;
+export function declineReferralRequest(
+  accessToken: string,
+  notificationId: string,
+): Promise<{ success: boolean; data?: unknown; error?: string }>;
 export function markAllMessagesAsRead(
   accessToken: string,
 ): Promise<{ success: boolean; count?: number; error?: string }>;
