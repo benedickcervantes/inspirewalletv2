@@ -5,6 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Dimensions,
   FlatList,
   Modal,
   RefreshControl,
@@ -12,7 +13,7 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -38,7 +39,12 @@ interface NotificationItemBackend {
   createdAt: string;
   type?: string;
   referenceId?: string | null;
+  referralHandled?: boolean;
 }
+
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const DETAIL_MODAL_WIDTH = Math.min(SCREEN_WIDTH * 0.86, 420);
+const DETAIL_MODAL_MAX_HEIGHT = SCREEN_HEIGHT * 0.78;
 
 const Notification = () => {
   const navigation = useNavigation();
@@ -424,7 +430,13 @@ const Notification = () => {
     const isBackend = 'isRead' in notif;
     if (isBackend) {
       const b = notif as NotificationItemBackend;
-      return Boolean((b.type === 'REFERRAL_REQUEST' || (b.title?.toLowerCase().includes('referral') && b.title?.toLowerCase().includes('signup'))) && b.referenceId);
+      return Boolean(
+        (b.type === 'REFERRAL_REQUEST' ||
+          (b.title?.toLowerCase().includes('referral') &&
+            b.title?.toLowerCase().includes('signup'))) &&
+        b.referenceId &&
+        !b.referralHandled
+      );
     }
     const n = notif as NotificationItem;
     const hasRef = (n as NotificationItem & { referenceId?: string }).referenceId;
@@ -440,7 +452,11 @@ const Notification = () => {
       if (!accessToken) return;
       const result = await apiAcceptReferralRequest(accessToken, id);
       if (result.success) {
-        setBackendNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)));
+        setBackendNotifications((prev) =>
+          prev.map((n) =>
+            n.id === id ? { ...n, isRead: true, referralHandled: true } : n
+          )
+        );
         setDetailModalNotification(null);
         setUnreadCount((prev) => Math.max(0, prev - 1));
       }
@@ -460,7 +476,11 @@ const Notification = () => {
       if (!accessToken) return;
       const result = await apiDeclineReferralRequest(accessToken, id);
       if (result.success) {
-        setBackendNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)));
+        setBackendNotifications((prev) =>
+          prev.map((n) =>
+            n.id === id ? { ...n, isRead: true, referralHandled: true } : n
+          )
+        );
         setDetailModalNotification(null);
         setUnreadCount((prev) => Math.max(0, prev - 1));
       }
@@ -647,9 +667,19 @@ const Notification = () => {
     </View>
   );
 
+  const contentBottomPadding = Math.max(insets.bottom, 16);
+
   if (!user && !useBackend) {
     return (
-      <View style={[styles.container, { paddingTop: insets.top }]}>
+      <View
+        style={[
+          styles.container,
+          {
+            paddingTop: insets.top,
+            paddingBottom: contentBottomPadding,
+          },
+        ]}
+      >
         <LinearGradient
           colors={['#E25A17', '#F28934']}
           style={styles.header}
@@ -673,7 +703,15 @@ const Notification = () => {
   }
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View
+      style={[
+        styles.container,
+        {
+          paddingTop: insets.top,
+          paddingBottom: contentBottomPadding,
+        },
+      ]}
+    >
       <LinearGradient
         colors={['#E25A17', '#F28934']}
         style={styles.header}
@@ -770,6 +808,7 @@ const Notification = () => {
           contentContainerStyle={[
             styles.listContent,
             backendNotifications.length === 0 && styles.emptyListContent,
+            { paddingBottom: contentBottomPadding },
           ]}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={renderEmptyState}
@@ -790,6 +829,7 @@ const Notification = () => {
           contentContainerStyle={[
             styles.listContent,
             notifications.length === 0 && styles.emptyListContent,
+            { paddingBottom: contentBottomPadding },
           ]}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={renderEmptyState}
@@ -858,7 +898,7 @@ const Notification = () => {
           <TouchableOpacity activeOpacity={1} onPress={(e) => e.stopPropagation()}>
             <LinearGradient
               colors={['#E25A17', '#F28934']}
-              style={styles.detailModal}
+              style={[styles.alertContainer, styles.detailModal]}
               start={{ x: 0, y: 0 }}
               end={{ x: 0, y: 1 }}
             >
@@ -1157,8 +1197,9 @@ const styles = StyleSheet.create({
   alertContainer: {
     borderRadius: 12,
     padding: 24,
-    width: '85%',
-    maxWidth: 400,
+    width: DETAIL_MODAL_WIDTH,
+    maxWidth: DETAIL_MODAL_WIDTH,
+    maxHeight: DETAIL_MODAL_MAX_HEIGHT,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
@@ -1213,18 +1254,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.6)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
   },
   detailModal: {
-    borderRadius: 12,
-    width: '100%',
-    maxWidth: 400,
     maxHeight: '85%',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
     overflow: 'hidden',
   },
   detailHeader: {
