@@ -829,6 +829,39 @@ export async function verifyPasscode(accessToken, passcode) {
 }
 
 /**
+ * POST /auth/reset-passcode — requires JWT
+ * Resets passcode without verifying old one. Use when user verified identity via email+password.
+ * @param {string} accessToken
+ * @param {string} passcode — exactly 4 digits
+ * @returns {{ success: boolean, error?: string }}
+ */
+export async function resetPasscode(accessToken, passcode) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "No token" };
+  try {
+    const res = await apiFetch(`${base}/auth/reset-passcode`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ passcode }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || "Failed to reset passcode";
+      return { success: false, error: msg };
+    }
+    return { success: true };
+  } catch (e) {
+    return { success: false, error: e.message || "Network error" };
+  }
+}
+
+/**
  * PATCH /auth/passcode — requires JWT
  * Updates the user's passcode. Requires current passcode for verification.
  * @param {string} accessToken
@@ -1411,6 +1444,151 @@ export async function markNotificationAsRead(accessToken, notificationId) {
 }
 
 /**
+ * DELETE /notifications/:id — requires JWT
+ * Delete a single notification.
+ * @param {string} accessToken
+ * @param {string} notificationId
+ */
+export async function deleteNotification(accessToken, notificationId) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
+  try {
+    const url = `${base}/notifications/${encodeURIComponent(notificationId)}`;
+    const res = await apiFetch(url, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || 'Failed';
+      return { success: false, error: msg };
+    }
+    return { success: true };
+  } catch (e) {
+    if (__DEV__) console.error("[Notifications API] Error", e);
+    return { success: false, error: e.message || "Network error" };
+  }
+}
+
+/**
+ * DELETE /notifications/all — requires JWT
+ * Delete all notifications for the user.
+ * @param {string} accessToken
+ */
+export async function deleteAllNotifications(accessToken) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
+  try {
+    const url = `${base}/notifications/all`;
+    const res = await apiFetch(url, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || 'Failed';
+      return { success: false, error: msg };
+    }
+    return { success: true };
+  } catch (e) {
+    if (__DEV__) console.error("[Notifications API] Error", e);
+    return { success: false, error: e.message || "Network error" };
+  }
+}
+
+/**
+ * POST /notifications/delete-batch — requires JWT
+ * Delete multiple notifications.
+ * @param {string} accessToken
+ * @param {string[]} ids
+ */
+export async function deleteNotificationBatch(accessToken, ids) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
+  try {
+    const url = `${base}/notifications/delete-batch`;
+    const res = await apiFetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ ids: ids || [] }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || 'Failed';
+      return { success: false, error: msg };
+    }
+    return { success: true };
+  } catch (e) {
+    if (__DEV__) console.error("[Notifications API] Error", e);
+    return { success: false, error: e.message || "Network error" };
+  }
+}
+
+/**
+ * POST /notifications/:id/referral/accept — requires JWT
+ * Accept a new referral (keep the user under your referral code).
+ * @param {string} accessToken
+ * @param {string} notificationId
+ */
+export async function acceptReferralRequest(accessToken, notificationId) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
+  if (!notificationId) return { success: false, error: "Notification ID required" };
+  try {
+    const url = `${base}/notifications/${encodeURIComponent(notificationId)}/referral/accept`;
+    const res = await apiFetch(url, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || "Failed";
+      return { success: false, error: msg };
+    }
+    return { success: true, data };
+  } catch (e) {
+    if (__DEV__) console.error("[Referral API] Error", e);
+    return { success: false, error: e.message || "Network error" };
+  }
+}
+
+/**
+ * POST /notifications/:id/referral/decline — requires JWT
+ * Decline a new referral (remove the user from your referral).
+ * @param {string} accessToken
+ * @param {string} notificationId
+ */
+export async function declineReferralRequest(accessToken, notificationId) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
+  if (!notificationId) return { success: false, error: "Notification ID required" };
+  try {
+    const url = `${base}/notifications/${encodeURIComponent(notificationId)}/referral/decline`;
+    const res = await apiFetch(url, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || "Failed";
+      return { success: false, error: msg };
+    }
+    return { success: true, data };
+  } catch (e) {
+    if (__DEV__) console.error("[Referral API] Error", e);
+    return { success: false, error: e.message || "Network error" };
+  }
+}
+
+/**
  * PATCH /messages/:id/read — requires JWT
  * Mark a single message as read.
  * @param {string} accessToken
@@ -1702,7 +1880,84 @@ export async function getStockSellRequests(accessToken) {
     return { success: false, error: e.message || 'Network error' };
   }
 }
+// --- Stock Rate & Marketplace API ---
+
+/**
+ * Fetch the current admin-configured stock rate (PHP per 1 stock unit).
+ * GET /system-settings/stock-rate — no auth required.
+ * @returns {Promise<{ success: boolean, phpPerStock?: number, error?: string }>}
+ */
+export async function getStockRate() {
+  const url = buildUrl('/system-settings/stock-rate');
+  if (!url) return { success: false, phpPerStock: 2_000_000, error: 'Backend URL not configured' };
+  try {
+    const res = await apiFetch(url, { method: 'GET', headers: { 'Content-Type': 'application/json' } });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) return { success: false, phpPerStock: 2_000_000 };
+    return { success: true, phpPerStock: data.phpPerStock ?? 2_000_000 };
+  } catch {
+    return { success: false, phpPerStock: 2_000_000 };
+  }
+}
+
+/**
+ * Fetch all active stock sell listings in the marketplace (excludes own listings).
+ * GET /deposit-requests/stock-sell/marketplace
+ * @param {string} accessToken - Backend JWT
+ * @returns {Promise<{ success: boolean, data?: Array<{id, stocksToSell, phpAmount, createdAt}>, error?: string }>}
+ */
+export async function getStockMarketplaceListings(accessToken) {
+  const url = buildUrl('/deposit-requests/stock-sell/marketplace');
+  if (!url) return { success: false, data: [], error: 'Backend URL not configured' };
+  if (!accessToken) return { success: false, data: [], error: 'Not authenticated' };
+  try {
+    const res = await apiFetch(url, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, data: [], error: msg };
+    }
+    return { success: true, data: Array.isArray(data) ? data : (data.data ?? []) };
+  } catch (e) {
+    if (__DEV__) console.error('[StockMarketplace API] Error', e);
+    return { success: false, data: [], error: e.message || 'Network error' };
+  }
+}
+
+/**
+ * Purchase a stock sell listing from the marketplace (P2P, no admin approval).
+ * POST /deposit-requests/stock-sell/:id/purchase
+ * @param {string} accessToken - Backend JWT
+ * @param {string} sellRequestId - ID of the StockSellRequest to purchase
+ * @returns {Promise<{ success: boolean, data?: object, error?: string }>}
+ */
+export async function purchaseStockListing(accessToken, sellRequestId) {
+  const url = buildUrl(`/deposit-requests/stock-sell/${sellRequestId}/purchase`);
+  if (!url) return { success: false, error: 'Backend URL not configured' };
+  if (!accessToken) return { success: false, error: 'Not authenticated' };
+  try {
+    if (__DEV__) console.log('[StockMarketplace API] POST purchase', url);
+    const res = await apiFetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    return { success: true, data: data.data ?? data };
+  } catch (e) {
+    if (__DEV__) console.error('[StockMarketplace API] Error', e);
+    return { success: false, error: e.message || 'Network error' };
+  }
+}
+
 // --- Card Collection API ---
+
 
 /**
  * Get card catalog with per-user eligibility/ownership flags.

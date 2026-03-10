@@ -322,11 +322,6 @@ export default function Message() {
     return (
       <View style={styles.container}>
         <View style={styles.centerContent}>
-          <Image
-            source={require("../../assets/icons/loader.gif")}
-            style={{ width: 80, height: 80 }}
-            resizeMode="contain"
-          />
           <Text style={styles.loadingText}>{t("support.serviceMaintenance")}</Text>
         </View>
       </View>
@@ -394,12 +389,7 @@ export default function Message() {
         </TouchableOpacity>
       </View>
 
-      {loading && messages.length === 0 ? (
-        <View style={styles.centerContent}>
-          <ActivityIndicator size="large" color="#E15816" />
-          <Text style={styles.loadingText}>{t("support.loading")}</Text>
-        </View>
-      ) : error && messages.length === 0 ? (
+      {error && messages.length === 0 ? (
         <View style={styles.centerContent}>
           <MaterialCommunityIcons
             name="alert-circle-outline"

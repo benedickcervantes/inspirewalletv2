@@ -36,11 +36,12 @@ import {
 } from "../../constants/locales";
 import { useLanguage } from "../../context/LanguageContext";
 import { useSocket } from "../../context/SocketContext";
+import { useUnreadNotifications } from "../../context/UnreadNotificationsContext";
 import { setConnectionStatus } from "../../lib/connectionStatus";
 import { getMaintenanceStatus } from "../../lib/maintenance";
 import type { NavProp } from "../../types/navigation";
 import { useResponsive } from "../../utils/responsive";
-import CustomLoader from "../Loader/CustomLoader";
+import NotificationBadge from "../Notification/NotificationBadge";
 import CardsTab from "./CardsTab";
 import SavingsTab from "./SavingsTab";
 import WalletTab from "./WalletTab";
@@ -203,7 +204,6 @@ export default function Dashboard() {
   const qaLabelSize = width < 360 ? 8 : isSmallScreen ? 9 : 11;
   const qaIconSize = width < 360 ? 18 : isSmallScreen ? 20 : 24;
   const carouselWidth = width - horizontalPadding * 2;
-  const [navigatingAction, setNavigatingAction] = useState<string | null>(null);
   const [userData, setUserData] = useState<Record<string, unknown> | null>(
     null,
   );
@@ -221,7 +221,8 @@ export default function Dashboard() {
   const mainWalletIdRef = useRef<string | null>(null);
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [currentLanguageIndex, setCurrentLanguageIndex] = useState(0);
-  const [unreadNotifications, setUnreadNotifications] = useState(0);
+  const { unreadCount: unreadNotifications, setUnreadCount: setUnreadNotifications } =
+    useUnreadNotifications();
   const [userReferrer, setUserReferrer] = useState<{
     referralCode?: string;
     firstName?: string;
@@ -665,14 +666,6 @@ export default function Dashboard() {
     }
   };
 
-  if (navigatingAction === "AgentRequest") {
-    return <CustomLoader text={t("dashboard.loadingAgent")} />;
-  }
-
-  if (navigatingAction === "Message") {
-    return <CustomLoader text={t("dashboard.loadingSupport")} />;
-  }
-
   return (
     <>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
@@ -768,13 +761,7 @@ export default function Dashboard() {
               onPress={() => navigation.navigate("Notification")}
             >
               <Ionicons name="notifications" size={24} color="#E15816" />
-              {unreadNotifications > 0 && (
-                <View style={styles.notificationBadge}>
-                  <Text style={styles.notificationBadgeText}>
-                    {unreadNotifications > 99 ? "99+" : unreadNotifications}
-                  </Text>
-                </View>
-              )}
+          <NotificationBadge />
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.iconButton}
@@ -1052,24 +1039,9 @@ export default function Dashboard() {
                         if (isUnderMaintenance) {
                           setSelectedMaintenanceService(item.labelKey);
                         } else {
-                          if (
-                            item.route === "AgentRequest" ||
-                            item.route === "Message"
-                          ) {
-                            setNavigatingAction(item.route);
-                            setTimeout(() => {
-                              setNavigatingAction(null);
-                              (
-                                navigation as {
-                                  navigate: (name: string) => void;
-                                }
-                              ).navigate(item.route);
-                            }, 800);
-                          } else {
-                            (
-                              navigation as { navigate: (name: string) => void }
-                            ).navigate(item.route);
-                          }
+                          (
+                            navigation as { navigate: (name: string) => void }
+                          ).navigate(item.route);
                         }
                       }}
                       activeOpacity={0.7}

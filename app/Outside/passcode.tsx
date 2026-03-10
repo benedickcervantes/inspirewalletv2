@@ -20,16 +20,16 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { login, verifyPasscode } from '../../configs/api';
+import { login, resetPasscode, verifyPasscode } from '../../configs/api';
 import {
   DEFAULT_LANGUAGE,
   normalizeLanguage,
   SUPPORTED_LANGUAGES,
 } from '../../constants/locales';
+import { useLanguage } from '../../context/LanguageContext';
 import type { NavProp } from '../../types/navigation';
 import { useResponsive } from '../../utils/responsive';
 import CustomLoader from '../Loader/CustomLoader';
-import { useLanguage } from '../../context/LanguageContext';
 
 const GRADIENT_START = '#E15816';
 const GRADIENT_END = '#F48F38';
@@ -263,17 +263,38 @@ export default function Passcode() {
         showModal({ title: t('passcode.invalidTitle'), message: t('passcode.invalidPasscodeLength'), type: 'warning' });
         return;
       }
+      setResetLoading(true);
+      const accessToken = await AsyncStorage.getItem('access_token');
+      if (!accessToken) {
+        setResetLoading(false);
+        showModal({
+          title: t('common.sessionExpired'),
+          message: t('common.pleaseLoginAgain'),
+          onConfirm: () => {
+            closeResetModal();
+            (navigation as unknown as NavProp).replace('Login');
+          },
+        });
+        return;
+      }
+      const result = await resetPasscode(accessToken, newPasscode);
+      setResetLoading(false);
+      if (!result.success) {
+        showModal({ title: t('passcode.authFailed'), message: result.error || t('passcode.errorChangeFailed'), type: 'error' });
+        return;
+      }
+      const userJson = await AsyncStorage.getItem('user');
+      const user = userJson ? JSON.parse(userJson) : {};
+      user.hasPasscode = true;
+      await AsyncStorage.setItem('user', JSON.stringify(user));
+      await AsyncStorage.setItem('passcodeLoginComplete', 'true');
       setResetModalVisible(false);
       setResetEmail('');
       setResetPassword('');
       setNewPasscode('');
       setConfirmNewPasscode('');
       setResetStep('auth');
-      showModal({
-        title: t('passcode.resetTitle'),
-        message: t('passcode.resetInfoMessage'),
-        type: 'info',
-      });
+      (navigation as unknown as NavProp).replace('Main');
     }
   };
 

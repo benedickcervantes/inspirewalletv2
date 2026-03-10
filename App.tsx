@@ -67,6 +67,7 @@ import Settings from './app/Settings/settings';
 import TermsConditions from './app/Settings/TermsConditions';
 import { LanguageProvider } from './context/LanguageContext';
 import { SocketProvider } from './context/SocketContext';
+import { UnreadNotificationsProvider } from './context/UnreadNotificationsContext';
 import type { RootStackParamList } from './types/navigation';
 
 import registerNNPushToken from 'native-notify';
@@ -85,6 +86,7 @@ export default function App() {
   return (
     <LanguageProvider>
       <SocketProvider>
+        <UnreadNotificationsProvider>
         <OfflineWrapper>
           <NavigationContainer>
             <Stack.Navigator
@@ -172,6 +174,7 @@ export default function App() {
             <StatusBar style="auto" />
           </NavigationContainer>
         </OfflineWrapper>
+        </UnreadNotificationsProvider>
       </SocketProvider>
     </LanguageProvider>
   );
