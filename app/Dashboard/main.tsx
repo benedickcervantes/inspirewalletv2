@@ -36,6 +36,7 @@ import {
 } from "../../constants/locales";
 import { useLanguage } from "../../context/LanguageContext";
 import { useSocket } from "../../context/SocketContext";
+import { useUnreadNotifications } from "../../context/UnreadNotificationsContext";
 import { setConnectionStatus } from "../../lib/connectionStatus";
 import { getMaintenanceStatus } from "../../lib/maintenance";
 import type { NavProp } from "../../types/navigation";
@@ -219,7 +220,8 @@ export default function Dashboard() {
   const mainWalletIdRef = useRef<string | null>(null);
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [currentLanguageIndex, setCurrentLanguageIndex] = useState(0);
-  const [unreadNotifications, setUnreadNotifications] = useState(0);
+  const { unreadCount: unreadNotifications, setUnreadCount: setUnreadNotifications } =
+    useUnreadNotifications();
   const [userReferrer, setUserReferrer] = useState<{
     referralCode?: string;
     firstName?: string;
