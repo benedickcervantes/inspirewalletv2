@@ -328,6 +328,7 @@ const en: TranslationMap = {
   "deposit.contract2Years": "2 Years Contract",
   "deposit.timeDepositMinShort": "Minimum ₱50,000 for time deposit",
   "deposit.investmentAmount": "Investment Amount",
+  "deposit.topUpAvailableBalanceAmount": "Top Up Available Balance Amount",
   "deposit.enterAmount": "Enter investment amount",
   "deposit.amount": "Amount *",
   "deposit.phpEquivalent": "PHP Equivalent",
@@ -385,6 +386,19 @@ const en: TranslationMap = {
   "deposit.insufficientBalanceStock":
     "Insufficient balance. Available: {amount}",
   "deposit.availableBalanceStock": "Your available balance",
+  "deposit.proofOfPaymentTitle": "Proof of Receipt / Payment",
+  "deposit.proofOfPaymentSubtitle":
+    "Upload your proof of receipt or proof of payment before submitting.",
+  "deposit.proofOptionalHint":
+    "(Optional) You may upload your proof of receipt or proof of payment for faster verification.",
+  "deposit.uploadFiles": "Upload Files",
+  "deposit.useCamera": "Use Camera",
+  "deposit.proofUploaded": "Proof uploaded",
+  "deposit.uploadProofRequired": "Please upload proof of payment to continue.",
+  "deposit.cancel": "Cancel",
+  "deposit.remove": "Remove",
+  "deposit.cameraPermissionRequired":
+    "Please allow camera access to take a photo.",
 
   // Settings
   "settings.title": "Settings",
@@ -1803,6 +1817,7 @@ const ko: TranslationMap = {
   "deposit.contract2Years": "2년 계약",
   "deposit.timeDepositMinShort": "정기 예금 최소 ₱50,000",
   "deposit.investmentAmount": "투자 금액",
+  "deposit.topUpAvailableBalanceAmount": "잔액 충전 금액",
   "deposit.enterAmount": "투자 금액 입력",
   "deposit.amount": "금액 *",
   "deposit.phpEquivalent": "PHP 환산",
@@ -1846,6 +1861,8 @@ const ko: TranslationMap = {
   "deposit.topUpSubtitle": "사용 가능한 잔액에 자금을 추가하세요",
   "deposit.pleaseLoginTopup": "충전 요청을 제출하려면 로그인하세요.",
   "deposit.topUpSuccess": "충전 요청이 성공적으로 제출되었습니다.",
+  "deposit.proofOptionalHint":
+    "(선택 사항) 영수증 또는 결제 증빙을 업로드하면 검토가 더 빨라질 수 있습니다.",
   "settings.title": "설정",
   "settings.referral": "추천",
   "settings.myReferralCode": "내 추천 코드",
@@ -3208,6 +3225,7 @@ const ja: TranslationMap = {
   "deposit.contract2Years": "2年契約",
   "deposit.timeDepositMinShort": "定期預金最低 ₱50,000",
   "deposit.investmentAmount": "投資金額",
+  "deposit.topUpAvailableBalanceAmount": "残高チャージ金額",
   "deposit.enterAmount": "投資金額を入力",
   "deposit.amount": "金額 *",
   "deposit.phpEquivalent": "PHP換算",
@@ -3252,6 +3270,8 @@ const ja: TranslationMap = {
   "deposit.topUpSubtitle": "利用可能残高に資金を追加",
   "deposit.pleaseLoginTopup": "チャージを申請するにはログインしてください。",
   "deposit.topUpSuccess": "チャージの申請が完了しました。",
+  "deposit.proofOptionalHint":
+    "（任意）領収書やお支払い証明をアップロードすると確認がスムーズになります。",
   "settings.title": "設定",
   "settings.referral": "紹介",
   "settings.myReferralCode": "紹介コード",
@@ -4613,6 +4633,7 @@ const ar: TranslationMap = {
   "deposit.contract2Years": "عقد سنتان",
   "deposit.timeDepositMinShort": "الحد الأدنى ₱50,000 للوديعة الثابتة",
   "deposit.investmentAmount": "مبلغ الاستثمار",
+  "deposit.topUpAvailableBalanceAmount": "مبلغ شحن الرصيد المتاح",
   "deposit.enterAmount": "أدخل مبلغ الاستثمار",
   "deposit.amount": "المبلغ *",
   "deposit.phpEquivalent": "المعادل بالبيزو",
@@ -4655,6 +4676,8 @@ const ar: TranslationMap = {
   "deposit.topUpSubtitle": "أضف أموالاً إلى رصيدك المتاح",
   "deposit.pleaseLoginTopup": "يرجى تسجيل الدخول لتقديم طلب شحن.",
   "deposit.topUpSuccess": "تم تقديم طلب الشحن بنجاح.",
+  "deposit.proofOptionalHint":
+    "(اختياري) يمكنك تحميل إثبات الإيصال أو الدفع لتسريع عملية المراجعة.",
   "settings.title": "الإعدادات",
   "settings.referral": "الإحالة",
   "settings.myReferralCode": "كود الإحالة",
