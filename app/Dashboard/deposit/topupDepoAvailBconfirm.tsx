@@ -1,9 +1,12 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation, useRoute } from "@react-navigation/native";
+import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { useState } from "react";
 import {
+  Alert,
+  Image,
   Modal,
   ScrollView,
   StyleSheet,
@@ -33,10 +36,61 @@ export default function TopUpConfirm() {
     message: string;
   }>({ title: "", message: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showProofModal, setShowProofModal] = useState(false);
+  const [proofUri, setProofUri] = useState<string | null>(null);
 
   const currency = params.currency || "PHP";
   const amount = params.amount || "0";
   const currencySymbol = params.currencySymbol || "₱";
+
+  const pickFromGallery = async () => {
+    try {
+      const { status } =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert(t("deposit.error"), t("kyc.allowPhotos"));
+        return;
+      }
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        quality: 0.8,
+      });
+      if (!result.canceled && result.assets[0]) {
+        setProofUri(result.assets[0].uri);
+      }
+    } catch (error) {
+      console.error("Error picking image:", error);
+      Alert.alert(t("deposit.error"), t("kyc.failedToPickImage"));
+    }
+  };
+
+  const takePhoto = async () => {
+    try {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert(t("deposit.error"), t("deposit.cameraPermissionRequired"));
+        return;
+      }
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        quality: 0.8,
+      });
+      if (!result.canceled && result.assets[0]) {
+        setProofUri(result.assets[0].uri);
+      }
+    } catch (error) {
+      console.error("Error taking photo:", error);
+      Alert.alert(t("deposit.error"), t("kyc.failedToPickImage"));
+    }
+  };
+
+  const handleProofSubmit = () => {
+    setShowProofModal(false);
+    setProofUri(null);
+    handleConfirm();
+  };
 
   const handleConfirm = async () => {
     if (isSubmitting) return;
@@ -161,7 +215,7 @@ export default function TopUpConfirm() {
             start={{ x: 0, y: 0 }}
             end={{ x: 0, y: 1 }}>
             <Text style={styles.amountCardTitle}>
-              {t("deposit.investmentAmount")}
+              {t("deposit.topUpAvailableBalanceAmount")}
             </Text>
             <Text style={styles.amountValue}>
               {currencySymbol}
@@ -183,7 +237,7 @@ export default function TopUpConfirm() {
 
             <TouchableOpacity
               style={styles.confirmButton}
-              onPress={handleConfirm}
+              onPress={() => setShowProofModal(true)}
               disabled={isSubmitting}>
               <LinearGradient
                 colors={["#E25A17", "#F28934"]}
@@ -204,6 +258,101 @@ export default function TopUpConfirm() {
 
           <View style={styles.bottomPadding} />
         </ScrollView>
+
+        {/* Proof of Payment Modal */}
+        <Modal
+          visible={showProofModal}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setShowProofModal(false)}>
+          <View style={styles.proofModalOverlay}>
+            <View style={styles.proofModalContent}>
+              <View style={styles.proofModalHeader}>
+                <Text style={styles.proofModalTitle}>
+                  {t("deposit.proofOfPaymentTitle")}
+                </Text>
+                <Text style={styles.proofModalSubtitle}>
+                  {t("deposit.proofOfPaymentSubtitle")}
+                </Text>
+                <Text style={styles.proofOptionalText}>
+                  {t("deposit.proofOptionalHint")}
+                </Text>
+              </View>
+
+              <View style={styles.proofUploadButtons}>
+                <TouchableOpacity
+                  style={styles.proofUploadBtn}
+                  onPress={pickFromGallery}>
+                  <Ionicons
+                    name="folder-open-outline"
+                    size={28}
+                    color="#E25A17"
+                  />
+                  <Text style={styles.proofUploadBtnText}>
+                    {t("deposit.uploadFiles")}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.proofUploadBtn}
+                  onPress={takePhoto}>
+                  <Ionicons name="camera-outline" size={28} color="#E25A17" />
+                  <Text style={styles.proofUploadBtnText}>
+                    {t("deposit.useCamera")}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              {proofUri ? (
+                <View style={styles.proofPreviewContainer}>
+                  <Image
+                    source={{ uri: proofUri }}
+                    style={styles.proofPreviewImage}
+                    resizeMode="cover"
+                  />
+                  <View style={styles.proofPreviewInfo}>
+                    <Text style={styles.proofUploadedText}>
+                      {t("deposit.proofUploaded")}
+                    </Text>
+                    <TouchableOpacity
+                      onPress={() => setProofUri(null)}
+                      style={styles.removeProofBtn}>
+                      <Ionicons name="trash-outline" size={18} color="#B71C1C" />
+                      <Text style={styles.removeProofText}>
+                        {t("deposit.remove")}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ) : null}
+
+              <View style={styles.proofModalFooter}>
+                <TouchableOpacity
+                  style={styles.proofCancelBtn}
+                  onPress={() => {
+                    setShowProofModal(false);
+                    setProofUri(null);
+                  }}>
+                  <Text style={styles.proofCancelText}>
+                    {t("deposit.cancel")}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.proofSubmitBtn}
+                  onPress={handleProofSubmit}>
+                  <LinearGradient
+                    colors={["#E25A17", "#F28934"]}
+                    style={styles.proofSubmitGradient}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}>
+                    <Text style={styles.proofSubmitText}>
+                      {t("deposit.confirm")}
+                    </Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
 
         {/* Custom Alert Modal */}
         <Modal
@@ -459,5 +608,139 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: "#E15816",
+  },
+  // Proof Modal styles
+  proofModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  proofModalContent: {
+    width: "90%",
+    maxWidth: 400,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 24,
+    borderLeftWidth: 4,
+    borderLeftColor: "#E25A17",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  proofModalHeader: {
+    marginBottom: 20,
+  },
+  proofModalTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#333",
+    marginBottom: 8,
+  },
+  proofModalSubtitle: {
+    fontSize: 14,
+    color: "#666",
+    lineHeight: 20,
+  },
+  proofOptionalText: {
+    fontSize: 12,
+    color: "#999",
+    marginTop: 4,
+  },
+  proofUploadButtons: {
+    flexDirection: "row",
+    gap: 12,
+    marginBottom: 20,
+  },
+  proofUploadBtn: {
+    flex: 1,
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 16,
+    paddingHorizontal: 12,
+    backgroundColor: "#FFF5F0",
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: "#E25A17",
+  },
+  proofUploadBtnText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#E25A17",
+    marginTop: 8,
+  },
+  proofPreviewContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 12,
+    backgroundColor: "#F5F5F5",
+    borderRadius: 12,
+    marginBottom: 20,
+  },
+  proofPreviewImage: {
+    width: 64,
+    height: 64,
+    borderRadius: 8,
+  },
+  proofPreviewInfo: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  proofUploadedText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#4CAF50",
+    marginBottom: 4,
+  },
+  removeProofBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-start",
+    gap: 4,
+  },
+  removeProofText: {
+    fontSize: 14,
+    color: "#B71C1C",
+    fontWeight: "500",
+  },
+  proofModalFooter: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  proofCancelBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    backgroundColor: "#E0E0E0",
+    alignItems: "center",
+  },
+  proofCancelText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#666",
+  },
+  proofSubmitBtn: {
+    flex: 1,
+    borderRadius: 12,
+    overflow: "hidden",
+  },
+  proofSubmitDisabled: {
+    opacity: 0.7,
+  },
+  proofSubmitGradient: {
+    paddingVertical: 14,
+    alignItems: "center",
+  },
+  proofSubmitText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#FFFFFF",
+  },
+  proofSubmitTextDisabled: {
+    color: "#FFFFFF",
+    opacity: 0.9,
   },
 });
