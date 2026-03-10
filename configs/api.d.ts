@@ -120,6 +120,10 @@ export function verifyPasscode(
   accessToken: string,
   passcode: string,
 ): Promise<{ success: boolean; error?: string }>;
+export function resetPasscode(
+  accessToken: string,
+  passcode: string,
+): Promise<{ success: boolean; error?: string }>;
 export function updatePasscode(
   accessToken: string,
   currentPasscode: string,

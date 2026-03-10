@@ -446,7 +446,7 @@ const en: TranslationMap = {
   "passcode.invalidTitle": "Invalid Passcode",
   "passcode.invalidPasscodeLength": "Passcode must be exactly 4 digits.",
   "passcode.resetInfoMessage":
-    "To change your passcode, go to Settings in the app after logging in.",
+    "Your passcode has been reset successfully.",
   "settings.deleteAccount": "Delete Account",
   "settings.customerRelationship": "Customer Relationship",
   "settings.aboutUs": "About us",
@@ -1903,7 +1903,7 @@ const ko: TranslationMap = {
   "passcode.invalidTitle": "잘못된 패스코드",
   "passcode.invalidPasscodeLength": "패스코드는 정확히 4자리여야 합니다.",
   "passcode.resetInfoMessage":
-    "패스코드를 변경하려면 로그인 후 앱의 설정으로 이동하세요.",
+    "패스코드가 성공적으로 재설정되었습니다.",
   "settings.deleteAccount": "계정 삭제",
   "settings.customerRelationship": "고객 관계",
   "settings.aboutUs": "회사 소개",
@@ -3578,7 +3578,7 @@ const ja: TranslationMap = {
   "passcode.invalidTitle": "無効なパスコード",
   "passcode.invalidPasscodeLength": "パスコードは4桁である必要があります。",
   "passcode.resetInfoMessage":
-    "パスコードを変更するには、ログイン後アプリの設定に移動してください。",
+    "パスコードが正常にリセットされました。",
   "history.loadMore": "もっと見る",
 
   "tickets.status.OPEN": "未解決",
@@ -4946,7 +4946,7 @@ const ar: TranslationMap = {
   "passcode.invalidTitle": "رمز مرور غير صالح",
   "passcode.invalidPasscodeLength": "يجب أن يكون رمز المرور 4 أرقام بالضبط.",
   "passcode.resetInfoMessage":
-    "لتغيير رمز المرور، انتقل إلى الإعدادات في التطبيق بعد تسجيل الدخول.",
+    "تم إعادة تعيين رمز المرور بنجاح.",
   "tickets.you": "أنت",
   "tickets.admin": "المسؤول",
   "tickets.emptyMessage": "(رسالة فارغة)",

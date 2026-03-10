@@ -829,6 +829,39 @@ export async function verifyPasscode(accessToken, passcode) {
 }
 
 /**
+ * POST /auth/reset-passcode — requires JWT
+ * Resets passcode without verifying old one. Use when user verified identity via email+password.
+ * @param {string} accessToken
+ * @param {string} passcode — exactly 4 digits
+ * @returns {{ success: boolean, error?: string }}
+ */
+export async function resetPasscode(accessToken, passcode) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "No token" };
+  try {
+    const res = await apiFetch(`${base}/auth/reset-passcode`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ passcode }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || "Failed to reset passcode";
+      return { success: false, error: msg };
+    }
+    return { success: true };
+  } catch (e) {
+    return { success: false, error: e.message || "Network error" };
+  }
+}
+
+/**
  * PATCH /auth/passcode — requires JWT
  * Updates the user's passcode. Requires current passcode for verification.
  * @param {string} accessToken
