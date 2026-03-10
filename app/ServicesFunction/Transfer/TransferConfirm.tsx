@@ -1,8 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation, useRoute } from "@react-navigation/native";
+import * as FileSystem from "expo-file-system/legacy";
 import { LinearGradient } from "expo-linear-gradient";
-import * as FileSystem from "expo-file-system";
 import * as Sharing from "expo-sharing";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -21,9 +21,9 @@ import {
 import QRCode from "react-native-qrcode-svg";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
-    createBeneficiary,
-    getOrCreateMainWallet,
-    submitTransfer,
+  createBeneficiary,
+  getOrCreateMainWallet,
+  submitTransfer,
 } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
 import CustomLoader from "../../Loader/CustomLoader";
