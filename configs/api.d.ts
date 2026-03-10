@@ -168,7 +168,7 @@ export function markMessageAsRead(
 // Notifications API
 export function getNotifications(
   accessToken: string,
-  opts?: { limit?: number }
+  opts?: { limit?: number },
 ): Promise<{
   success: boolean;
   data?: {
@@ -326,15 +326,43 @@ export interface ApiWalletFull {
 }
 
 export function getWallets(
-  accessToken: string
+  accessToken: string,
 ): Promise<{ success: boolean; wallets?: ApiWalletFull[]; error?: string }>;
+
+export function submitStockInvestmentRequest(
+  accessToken: string,
+  body: { walletId: string; amount: string; stockSymbol?: string },
+): Promise<{ success: boolean; data?: unknown; error?: string }>;
 
 export function submitStockSellRequest(
   accessToken: string,
-  body: { walletId: string; stocksToSell: number }
+  body: { walletId: string; stocksToSell: number },
 ): Promise<{ success: boolean; data?: unknown; error?: string }>;
 
 export function getStockSellRequests(
-  accessToken: string
+  accessToken: string,
 ): Promise<{ success: boolean; data?: unknown[]; error?: string }>;
 
+export function getStockRate(): Promise<{
+  success: boolean;
+  phpPerStock: number;
+  error?: string;
+}>;
+
+export interface StockMarketplaceListing {
+  id: string;
+  stocksToSell: number;
+  phpAmount: number;
+  createdAt: string;
+}
+
+export function getStockMarketplaceListings(accessToken: string): Promise<{
+  success: boolean;
+  data?: StockMarketplaceListing[];
+  error?: string;
+}>;
+
+export function purchaseStockListing(
+  accessToken: string,
+  sellRequestId: string,
+): Promise<{ success: boolean; data?: unknown; error?: string }>;
