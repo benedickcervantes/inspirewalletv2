@@ -1,3 +1,5 @@
+import emailjs from "@emailjs/react-native";
+
 /**
  * EmailJS integration for transfer receipts.
  * Sends email receipts to the user after successful transfers.
