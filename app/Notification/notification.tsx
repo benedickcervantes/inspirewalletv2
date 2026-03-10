@@ -24,6 +24,7 @@ import {
 } from '../../configs/api';
 import { auth } from '../../configs/firebase';
 import { useLanguage } from '../../context/LanguageContext';
+import { useUnreadNotifications } from '../../context/UnreadNotificationsContext';
 import notificationService, { type NotificationItem } from './notificationService';
 
 interface NotificationItemBackend {
@@ -38,6 +39,7 @@ const Notification = () => {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const { t } = useLanguage();
+  const { setUnreadCount } = useUnreadNotifications();
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [backendNotifications, setBackendNotifications] = useState<NotificationItemBackend[]>([]);
   const [loading, setLoading] = useState(true);
@@ -138,11 +140,12 @@ const Notification = () => {
           const result = await apiMarkAllNotificationsAsRead(accessToken);
           if (result.success) {
             setBackendNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+            setUnreadCount(0); // Real-time update: bubble number
           }
         }
       } else if (user) {
         await notificationService.markAllAsRead(user.uid);
-        // Firebase subscription will update state automatically
+        setUnreadCount(0); // Real-time update: bubble number
       }
     } catch (error) {
       console.error('Error marking all notifications as read:', error);
@@ -278,6 +281,7 @@ const Notification = () => {
           if (accessToken) {
             await apiMarkNotificationAsRead(accessToken, notif.id);
             setBackendNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, isRead: true } : n));
+            setUnreadCount(prev => Math.max(0, prev - 1)); // Real-time update: bubble number
           }
         } catch (error) {
           console.error('Error marking backend notification as read:', error);
@@ -290,6 +294,7 @@ const Notification = () => {
     if (!notif.read && user) {
       try {
         await notificationService.markAsRead(user.uid, notif.id);
+        setUnreadCount(prev => Math.max(0, prev - 1)); // Real-time update: bubble number
       } catch (error) {
         console.error('Error marking notification as read:', error);
       }
