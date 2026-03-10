@@ -12,16 +12,13 @@ function getBaseUrl() {
   return url.replace(/\/$/, '');
 }
 
+const EXPO_PUBLIC_API_KEY = process.env.EXPO_PUBLIC_API_KEY;
+
 /**
  * Get available currencies for stock investment
  * @returns {Promise<Array<{code: string, name: string, flag: string, symbol: string}>>}
  */
 export async function getAvailableCurrencies() {
-  // TODO: Replace with API call when backend endpoint is available
-  // const base = getBaseUrl();
-  // const res = await fetch(`${base}/currencies`);
-  // return await res.json();
-  
   return [
     { code: "PHP", name: "Philippine Peso", flag: "🇵🇭", symbol: "₱" },
     { code: "JPY", name: "Japanese Yen", flag: "🇯🇵", symbol: "¥" },
@@ -41,52 +38,46 @@ export async function getCurrencyByCode(code) {
 }
 
 /**
- * Get deposit configuration (minimum amounts, limits, etc.)
- * Fetches from backend API with fallback to defaults
- * @returns {Promise<{stockInvestment: {minAmount: number}, timeDeposit: {minAmount: number}, topUp: {minAmount: number}}>}
+ * Get the admin-configured stock rate from the backend.
+ * Calls GET /system-settings/stock-rate (no auth required).
+ * Falls back to 2,000,000 if the API is unreachable.
+ * @returns {Promise<number>} PHP pesos per 1 stock unit
  */
-export async function getDepositConfig() {
+export async function getStockInvestmentMinAmount() {
   try {
     const base = getBaseUrl();
-    if (!base) {
-      throw new Error("Backend URL not configured");
-    }
+    if (!base) return 2_000_000;
 
-    const response = await fetch(`${base}/api/settings/deposit-limits`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
+    const headers = { 'Content-Type': 'application/json' };
+    if (EXPO_PUBLIC_API_KEY) headers['x-api-key'] = EXPO_PUBLIC_API_KEY;
+
+    const response = await fetch(`${base}/system-settings/stock-rate`, {
+      method: 'GET',
+      headers,
     });
 
-    if (!response.ok) {
-      throw new Error("Failed to fetch deposit config");
-    }
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
     const data = await response.json();
-    return data.data || data;
+    const rate = data?.phpPerStock;
+    if (typeof rate === 'number' && rate > 0) return rate;
+
+    return 2_000_000;
   } catch (error) {
-    console.log("Using default deposit limits:", error.message);
-    // Fallback to defaults if API call fails
-    return {
-      stockInvestment: {
-        minAmount: 2000000,
-      },
-      timeDeposit: {
-        minAmount: 50000,
-      },
-      topUp: {
-        minAmount: 0,
-      },
-    };
+    console.log('[currencies] Using default stock rate (2,000,000):', error.message);
+    return 2_000_000;
   }
 }
 
 /**
- * Get minimum amount for stock investment
- * @returns {Promise<number>}
+ * @deprecated Use getStockInvestmentMinAmount() directly.
+ * Kept for backwards-compatibility with stockInvestDepo.tsx which calls getDepositConfig().
  */
-export async function getStockInvestmentMinAmount() {
-  const config = await getDepositConfig();
-  return config.stockInvestment.minAmount;
+export async function getDepositConfig() {
+  const stockRate = await getStockInvestmentMinAmount();
+  return {
+    stockInvestment: { minAmount: stockRate },
+    timeDeposit: { minAmount: 50000 },
+    topUp: { minAmount: 0 },
+  };
 }

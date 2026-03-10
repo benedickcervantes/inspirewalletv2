@@ -1880,7 +1880,84 @@ export async function getStockSellRequests(accessToken) {
     return { success: false, error: e.message || 'Network error' };
   }
 }
+// --- Stock Rate & Marketplace API ---
+
+/**
+ * Fetch the current admin-configured stock rate (PHP per 1 stock unit).
+ * GET /system-settings/stock-rate — no auth required.
+ * @returns {Promise<{ success: boolean, phpPerStock?: number, error?: string }>}
+ */
+export async function getStockRate() {
+  const url = buildUrl('/system-settings/stock-rate');
+  if (!url) return { success: false, phpPerStock: 2_000_000, error: 'Backend URL not configured' };
+  try {
+    const res = await apiFetch(url, { method: 'GET', headers: { 'Content-Type': 'application/json' } });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) return { success: false, phpPerStock: 2_000_000 };
+    return { success: true, phpPerStock: data.phpPerStock ?? 2_000_000 };
+  } catch {
+    return { success: false, phpPerStock: 2_000_000 };
+  }
+}
+
+/**
+ * Fetch all active stock sell listings in the marketplace (excludes own listings).
+ * GET /deposit-requests/stock-sell/marketplace
+ * @param {string} accessToken - Backend JWT
+ * @returns {Promise<{ success: boolean, data?: Array<{id, stocksToSell, phpAmount, createdAt}>, error?: string }>}
+ */
+export async function getStockMarketplaceListings(accessToken) {
+  const url = buildUrl('/deposit-requests/stock-sell/marketplace');
+  if (!url) return { success: false, data: [], error: 'Backend URL not configured' };
+  if (!accessToken) return { success: false, data: [], error: 'Not authenticated' };
+  try {
+    const res = await apiFetch(url, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, data: [], error: msg };
+    }
+    return { success: true, data: Array.isArray(data) ? data : (data.data ?? []) };
+  } catch (e) {
+    if (__DEV__) console.error('[StockMarketplace API] Error', e);
+    return { success: false, data: [], error: e.message || 'Network error' };
+  }
+}
+
+/**
+ * Purchase a stock sell listing from the marketplace (P2P, no admin approval).
+ * POST /deposit-requests/stock-sell/:id/purchase
+ * @param {string} accessToken - Backend JWT
+ * @param {string} sellRequestId - ID of the StockSellRequest to purchase
+ * @returns {Promise<{ success: boolean, data?: object, error?: string }>}
+ */
+export async function purchaseStockListing(accessToken, sellRequestId) {
+  const url = buildUrl(`/deposit-requests/stock-sell/${sellRequestId}/purchase`);
+  if (!url) return { success: false, error: 'Backend URL not configured' };
+  if (!accessToken) return { success: false, error: 'Not authenticated' };
+  try {
+    if (__DEV__) console.log('[StockMarketplace API] POST purchase', url);
+    const res = await apiFetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    return { success: true, data: data.data ?? data };
+  } catch (e) {
+    if (__DEV__) console.error('[StockMarketplace API] Error', e);
+    return { success: false, error: e.message || 'Network error' };
+  }
+}
+
 // --- Card Collection API ---
+
 
 /**
  * Get card catalog with per-user eligibility/ownership flags.

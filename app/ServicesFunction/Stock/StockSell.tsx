@@ -2,24 +2,26 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
-    Modal,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    useWindowDimensions,
-    View,
+  Modal,
+  PanResponder,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { getWallets, submitStockSellRequest } from "../../../configs/api";
+import { getStockInvestmentMinAmount } from "../../../configs/currencies";
 import { useLanguage } from "../../../context/LanguageContext";
 import CustomLoader from "../../Loader/CustomLoader";
 
 const THEME_COLOR = "#E15816";
-const STOCK_RATE_PHP = 2_000_000;
+const STOCK_RATE_DEFAULT = 2_000_000;
 
 type Step = "form" | "confirm";
 
@@ -43,11 +45,48 @@ export default function StockSell() {
   const [step, setStep] = useState<Step>("form");
   const [stocksToSell, setStocksToSell] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [stockRate, setStockRate] = useState(STOCK_RATE_DEFAULT);
   const [showAlertModal, setShowAlertModal] = useState(false);
   const [alertConfig, setAlertConfig] = useState({ title: "", message: "" });
 
+  useEffect(() => {
+    getStockInvestmentMinAmount().then((rate) => setStockRate(rate));
+  }, []);
+
+  const [sellPct, setSellPct] = useState(0); // 0‒100
+  const sliderWidth = useRef(0);
+
+  // Keep stocksToSell in sync with slider percentage
+  const stocksFromSlider = (pct: number) =>
+    parseFloat(((pct / 100) * stockCount).toFixed(8));
+
+  const handlePctChange = (pct: number) => {
+    const clamped = Math.min(100, Math.max(0, Math.round(pct)));
+    setSellPct(clamped);
+    setStocksToSell(stocksFromSlider(clamped).toString());
+  };
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onPanResponderGrant: (_, gs) => {
+        if (sliderWidth.current > 0) {
+          const pct = (gs.x0 / sliderWidth.current) * 100;
+          handlePctChange(pct);
+        }
+      },
+      onPanResponderMove: (_, gs) => {
+        if (sliderWidth.current > 0) {
+          const pct = (gs.moveX / sliderWidth.current) * 100;
+          handlePctChange(pct);
+        }
+      },
+    }),
+  ).current;
+
   const stocksNum = parseFloat(stocksToSell) || 0;
-  const sellAmount = stocksNum * STOCK_RATE_PHP;
+  const sellAmount = stocksNum * stockRate;
 
   const handleContinue = () => {
     if (stocksNum <= 0) {
@@ -82,27 +121,27 @@ export default function StockSell() {
         return;
       }
 
-      // Fetch the user's PHP wallet to get walletId
+      // Find the user's STOCK wallet (not PHP) — sell request must reference the STOCK wallet
       const walletsRes = await getWallets(accessToken);
       const wallets = walletsRes?.wallets ?? [];
-      const phpWallet = Array.isArray(wallets)
+      const stockWallet = Array.isArray(wallets)
         ? wallets.find(
             (w: { currency?: { code?: string }; currencyCode?: string }) =>
-              (w.currency?.code ?? w.currencyCode) === "PHP",
+              (w.currency?.code ?? w.currencyCode) === "STOCK",
           )
         : null;
 
-      if (!phpWallet?.id) {
+      if (!stockWallet?.id) {
         setAlertConfig({
           title: "Wallet Not Found",
-          message: "Could not find your PHP wallet. Please try again.",
+          message: "Could not find your STOCK wallet. Please try again.",
         });
         setShowAlertModal(true);
         return;
       }
 
       const result = await submitStockSellRequest(accessToken, {
-        walletId: phpWallet.id,
+        walletId: stockWallet.id,
         stocksToSell: Math.round(stocksNum * 10000) / 10000, // round to 4 decimal places
       });
 
@@ -115,7 +154,10 @@ export default function StockSell() {
         setShowAlertModal(true);
         setTimeout(() => {
           setShowAlertModal(false);
-          navigation.navigate("Stockholder" as never);
+          (navigation as any).reset({
+            index: 1,
+            routes: [{ name: "Main" }, { name: "Stockholder" }],
+          });
         }, 2000);
       } else {
         setAlertConfig({
@@ -160,7 +202,14 @@ export default function StockSell() {
           <TouchableOpacity style={styles.backButton} onPress={handleBack}>
             <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
           </TouchableOpacity>
-          <Text style={[styles.headerTitle, { fontSize: Math.round(18 * fontScale) }]} numberOfLines={1} ellipsizeMode="tail">
+          <Text
+            style={[
+              styles.headerTitle,
+              { fontSize: Math.round(18 * fontScale) },
+            ]}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
             {t("stock.stockSellRequest")}
           </Text>
           <TouchableOpacity style={styles.refreshButton}>
@@ -168,19 +217,62 @@ export default function StockSell() {
           </TouchableOpacity>
         </LinearGradient>
 
-        <View style={[styles.progressContainer, { paddingHorizontal: isSmallScreen ? 24 : 40 }]}>
+        <View
+          style={[
+            styles.progressContainer,
+            { paddingHorizontal: isSmallScreen ? 24 : 40 },
+          ]}
+        >
           <View style={styles.stepIndicator}>
-            <View style={[styles.stepCircle, styles.stepActive, { width: isSmallScreen ? 28 : 32, height: isSmallScreen ? 28 : 32, borderRadius: isSmallScreen ? 14 : 16 }]}>
-              <Ionicons name="checkmark" size={isSmallScreen ? 14 : 16} color="#FFFFFF" />
+            <View
+              style={[
+                styles.stepCircle,
+                styles.stepActive,
+                {
+                  width: isSmallScreen ? 28 : 32,
+                  height: isSmallScreen ? 28 : 32,
+                  borderRadius: isSmallScreen ? 14 : 16,
+                },
+              ]}
+            >
+              <Ionicons
+                name="checkmark"
+                size={isSmallScreen ? 14 : 16}
+                color="#FFFFFF"
+              />
             </View>
             <View
-              style={[styles.stepLine, step === "confirm" && styles.stepLineActive]}
+              style={[
+                styles.stepLine,
+                step === "confirm" && styles.stepLineActive,
+              ]}
             />
-            <View style={[styles.stepCircle, step === "confirm" && styles.stepActive, { width: isSmallScreen ? 28 : 32, height: isSmallScreen ? 28 : 32, borderRadius: isSmallScreen ? 14 : 16 }]}>
+            <View
+              style={[
+                styles.stepCircle,
+                step === "confirm" && styles.stepActive,
+                {
+                  width: isSmallScreen ? 28 : 32,
+                  height: isSmallScreen ? 28 : 32,
+                  borderRadius: isSmallScreen ? 14 : 16,
+                },
+              ]}
+            >
               {step === "confirm" ? (
-                <MaterialCommunityIcons name="lock" size={isSmallScreen ? 14 : 16} color="#FFFFFF" />
+                <MaterialCommunityIcons
+                  name="lock"
+                  size={isSmallScreen ? 14 : 16}
+                  color="#FFFFFF"
+                />
               ) : (
-                <Text style={[styles.stepNumber, { fontSize: Math.round(14 * fontScale) }]}>2</Text>
+                <Text
+                  style={[
+                    styles.stepNumber,
+                    { fontSize: Math.round(14 * fontScale) },
+                  ]}
+                >
+                  2
+                </Text>
               )}
             </View>
           </View>
@@ -188,83 +280,290 @@ export default function StockSell() {
 
         <ScrollView
           style={styles.scrollView}
-          contentContainerStyle={[styles.scrollContent, { paddingHorizontal: horizontalPadding }]}
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingHorizontal: horizontalPadding },
+          ]}
           showsVerticalScrollIndicator={false}
         >
           {step === "form" ? (
             <>
-              <View style={[styles.titleContainer, { marginBottom: isSmallScreen ? 18 : 24 }]}>
-                <Text style={[styles.title, { fontSize: Math.round(22 * fontScale) }]} numberOfLines={2} ellipsizeMode="tail">
+              <View
+                style={[
+                  styles.titleContainer,
+                  { marginBottom: isSmallScreen ? 18 : 24 },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.title,
+                    { fontSize: Math.round(22 * fontScale) },
+                  ]}
+                  numberOfLines={2}
+                  ellipsizeMode="tail"
+                >
                   {t("stock.stockSell")}
                 </Text>
-                <Text style={[styles.subtitle, { fontSize: Math.round(14 * fontScale) }]} numberOfLines={2} ellipsizeMode="tail">
-                  You have {stockCount} {stockCount !== 1 ? t("stock.stocks") : t("stock.stock")} available · Enter amount below
+                <Text
+                  style={[
+                    styles.subtitle,
+                    { fontSize: Math.round(14 * fontScale) },
+                  ]}
+                  numberOfLines={2}
+                  ellipsizeMode="tail"
+                >
+                  You have {stockCount}{" "}
+                  {stockCount !== 1 ? t("stock.stocks") : t("stock.stock")}{" "}
+                  available
                 </Text>
               </View>
 
-              <View style={[styles.formCard, { padding: contentPadding, marginBottom: isSmallScreen ? 18 : 24, borderRadius: isSmallScreen ? 12 : 16 }]}>
+              {/* ── Percentage Slider Card ── */}
+              <View
+                style={[
+                  styles.formCard,
+                  {
+                    padding: contentPadding,
+                    marginBottom: isSmallScreen ? 18 : 24,
+                    borderRadius: isSmallScreen ? 12 : 16,
+                  },
+                ]}
+              >
                 <View style={styles.leftBorder} />
-                <View style={styles.formSection}>
-                  <View style={styles.sectionHeader}>
-                    <View style={[styles.iconBox, { width: isSmallScreen ? 28 : 32, height: isSmallScreen ? 28 : 32 }]}>
-                      <MaterialCommunityIcons
-                        name="chart-line"
-                        size={isSmallScreen ? 18 : 20}
-                        color="#E25A17"
-                      />
-                    </View>
-                    <Text style={[styles.sectionTitle, { fontSize: Math.round(15 * fontScale) }]}>Stocks to Sell *</Text>
+
+                {/* Section header */}
+                <View style={styles.sectionHeader}>
+                  <View
+                    style={[
+                      styles.iconBox,
+                      {
+                        width: isSmallScreen ? 28 : 32,
+                        height: isSmallScreen ? 28 : 32,
+                      },
+                    ]}
+                  >
+                    <MaterialCommunityIcons
+                      name="percent"
+                      size={isSmallScreen ? 16 : 18}
+                      color="#E25A17"
+                    />
                   </View>
-                  <View style={[styles.amountInput, { paddingHorizontal: isSmallScreen ? 12 : 16 }]}>
+                  <Text
+                    style={[
+                      styles.sectionTitle,
+                      { fontSize: Math.round(15 * fontScale) },
+                    ]}
+                  >
+                    Percentage to Sell
+                  </Text>
+                </View>
+
+                {/* Big % display */}
+                <View style={styles.pctDisplay}>
+                  <Text style={styles.pctValue}>{sellPct}</Text>
+                  <Text style={styles.pctSymbol}>%</Text>
+                </View>
+
+                {/* Slider track */}
+                <View
+                  style={styles.sliderTrack}
+                  onLayout={(e) => {
+                    sliderWidth.current = e.nativeEvent.layout.width;
+                  }}
+                  {...panResponder.panHandlers}
+                >
+                  <View style={[styles.sliderFill, { width: `${sellPct}%` }]} />
+                  <View style={[styles.sliderThumb, { left: `${sellPct}%` }]} />
+                </View>
+
+                {/* Quick-pick buttons */}
+                <View style={styles.quickPick}>
+                  {[25, 50, 75, 100].map((pct) => (
+                    <TouchableOpacity
+                      key={pct}
+                      style={[
+                        styles.quickBtn,
+                        sellPct === pct && styles.quickBtnActive,
+                      ]}
+                      onPress={() => handlePctChange(pct)}
+                    >
+                      <Text
+                        style={[
+                          styles.quickBtnText,
+                          sellPct === pct && styles.quickBtnTextActive,
+                        ]}
+                      >
+                        {pct === 100 ? "All" : `${pct}%`}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                {/* Live preview */}
+                <View style={styles.previewRow}>
+                  <View style={styles.previewCol}>
+                    <Text style={styles.previewLabel}>Stocks</Text>
+                    <Text style={styles.previewVal}>
+                      {stocksNum.toFixed(8).replace(/\.?0+$/, "") || "0"}
+                    </Text>
+                  </View>
+                  <View style={styles.previewDivider} />
+                  <View style={styles.previewCol}>
+                    <Text style={styles.previewLabel}>You Receive</Text>
+                    <Text style={[styles.previewVal, { color: "#22c55e" }]}>
+                      ₱
+                      {(stocksNum * stockRate).toLocaleString("en-PH", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Manual input for precision */}
+                <View style={styles.manualRow}>
+                  <Text style={styles.manualLabel}>Or enter exact amount:</Text>
+                  <View
+                    style={[
+                      styles.amountInput,
+                      { paddingHorizontal: isSmallScreen ? 12 : 16 },
+                    ]}
+                  >
                     <TextInput
-                      style={[styles.input, { fontSize: Math.round(14 * fontScale), paddingVertical: isSmallScreen ? 10 : 12 }]}
-                      placeholder="Enter number of stocks"
-                      placeholderTextColor="#999"
+                      style={[
+                        styles.input,
+                        {
+                          fontSize: Math.round(14 * fontScale),
+                          paddingVertical: isSmallScreen ? 10 : 12,
+                        },
+                      ]}
+                      placeholder="0.00000000"
+                      placeholderTextColor="#bbb"
                       keyboardType="decimal-pad"
                       value={stocksToSell}
-                      onChangeText={setStocksToSell}
+                      onChangeText={(v) => {
+                        setStocksToSell(v);
+                        const n = parseFloat(v) || 0;
+                        const pct =
+                          stockCount > 0
+                            ? Math.min(100, Math.round((n / stockCount) * 100))
+                            : 0;
+                        setSellPct(pct);
+                      }}
                     />
+                    <Text style={{ color: "#999", fontSize: 12 }}>STK</Text>
                   </View>
                 </View>
               </View>
 
               <TouchableOpacity
-                style={styles.continueButton}
+                style={[
+                  styles.continueButton,
+                  stocksNum <= 0 && { opacity: 0.5 },
+                ]}
                 onPress={handleContinue}
+                disabled={stocksNum <= 0}
               >
                 <LinearGradient
                   colors={["#E25A17", "#F28934"]}
-                  style={[styles.continueGradient, { paddingVertical: isSmallScreen ? 14 : 18 }]}
+                  style={[
+                    styles.continueGradient,
+                    { paddingVertical: isSmallScreen ? 14 : 18 },
+                  ]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                 >
-                  <Text style={[styles.continueText, { fontSize: Math.round(18 * fontScale) }]}>{t("deposit.continue")}</Text>
-                  <Ionicons name="arrow-forward" size={isSmallScreen ? 18 : 20} color="#FFFFFF" />
+                  <Text
+                    style={[
+                      styles.continueText,
+                      { fontSize: Math.round(18 * fontScale) },
+                    ]}
+                  >
+                    {t("deposit.continue")}
+                  </Text>
+                  <Ionicons
+                    name="arrow-forward"
+                    size={isSmallScreen ? 18 : 20}
+                    color="#FFFFFF"
+                  />
                 </LinearGradient>
               </TouchableOpacity>
             </>
           ) : (
             <>
-              <View style={[styles.titleContainer, { marginBottom: isSmallScreen ? 18 : 24 }]}>
-                <Text style={[styles.title, { fontSize: Math.round(22 * fontScale) }]} numberOfLines={2}>{t("deposit.reviewConfirm")}</Text>
-                <Text style={[styles.subtitle, { fontSize: Math.round(14 * fontScale) }]}>{t("deposit.reviewDetails")}</Text>
+              <View
+                style={[
+                  styles.titleContainer,
+                  { marginBottom: isSmallScreen ? 18 : 24 },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.title,
+                    { fontSize: Math.round(22 * fontScale) },
+                  ]}
+                  numberOfLines={2}
+                >
+                  {t("deposit.reviewConfirm")}
+                </Text>
+                <Text
+                  style={[
+                    styles.subtitle,
+                    { fontSize: Math.round(14 * fontScale) },
+                  ]}
+                >
+                  {t("deposit.reviewDetails")}
+                </Text>
               </View>
 
-              <View style={[styles.detailCard, { padding: contentPadding, marginBottom: isSmallScreen ? 12 : 16, borderRadius: isSmallScreen ? 12 : 16 }]}>
+              <View
+                style={[
+                  styles.detailCard,
+                  {
+                    padding: contentPadding,
+                    marginBottom: isSmallScreen ? 12 : 16,
+                    borderRadius: isSmallScreen ? 12 : 16,
+                  },
+                ]}
+              >
                 <View style={styles.leftBorder} />
                 <Text style={styles.detailLabel}>Stocks to Sell</Text>
-                <Text style={styles.detailValue}>{stocksNum % 1 === 0 ? stocksNum : stocksNum.toFixed(4)} Stock(s)</Text>
+                <Text style={styles.detailValue}>
+                  {stocksNum % 1 === 0 ? stocksNum : stocksNum.toFixed(4)}{" "}
+                  Stock(s)
+                </Text>
               </View>
 
               <LinearGradient
                 colors={["#F28934", "#E25A17"]}
-                style={[styles.amountCard, { padding: isSmallScreen ? 18 : 24, marginBottom: isSmallScreen ? 18 : 24 }]}
+                style={[
+                  styles.amountCard,
+                  {
+                    padding: isSmallScreen ? 18 : 24,
+                    marginBottom: isSmallScreen ? 18 : 24,
+                  },
+                ]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 0, y: 1 }}
               >
-                <Text style={[styles.amountCardTitle, { fontSize: Math.round(14 * fontScale) }]}>{t("deposit.investmentAmount")}</Text>
-                <Text style={[styles.amountValue, { fontSize: Math.round(22 * fontScale) }]} numberOfLines={1} ellipsizeMode="tail">
-                  ₱ {sellAmount.toLocaleString("en-PH", {
+                <Text
+                  style={[
+                    styles.amountCardTitle,
+                    { fontSize: Math.round(14 * fontScale) },
+                  ]}
+                >
+                  {t("deposit.investmentAmount")}
+                </Text>
+                <Text
+                  style={[
+                    styles.amountValue,
+                    { fontSize: Math.round(22 * fontScale) },
+                  ]}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
+                  ₱{" "}
+                  {sellAmount.toLocaleString("en-PH", {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
                   })}{" "}
@@ -272,12 +571,28 @@ export default function StockSell() {
                 </Text>
               </LinearGradient>
 
-              <View style={[styles.buttonContainer, { gap: isSmallScreen ? 8 : 12 }]}>
+              <View
+                style={[
+                  styles.buttonContainer,
+                  { gap: isSmallScreen ? 8 : 12 },
+                ]}
+              >
                 <TouchableOpacity
-                  style={[styles.backButtonBottom, { paddingVertical: isSmallScreen ? 14 : 16, minWidth: 0 }]}
+                  style={[
+                    styles.backButtonBottom,
+                    { paddingVertical: isSmallScreen ? 14 : 16, minWidth: 0 },
+                  ]}
                   onPress={handleBack}
                 >
-                  <Text style={[styles.backButtonText, { fontSize: Math.round(18 * fontScale) }]} numberOfLines={1}>{t("deposit.back")}</Text>
+                  <Text
+                    style={[
+                      styles.backButtonText,
+                      { fontSize: Math.round(18 * fontScale) },
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {t("deposit.back")}
+                  </Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -286,12 +601,27 @@ export default function StockSell() {
                 >
                   <LinearGradient
                     colors={["#E25A17", "#F28934"]}
-                    style={[styles.confirmGradient, { paddingVertical: isSmallScreen ? 14 : 18 }]}
+                    style={[
+                      styles.confirmGradient,
+                      { paddingVertical: isSmallScreen ? 14 : 18 },
+                    ]}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 0 }}
                   >
-                    <Text style={[styles.confirmText, { fontSize: Math.round(18 * fontScale) }]} numberOfLines={1}>{t("deposit.confirm")}</Text>
-                    <Ionicons name="arrow-forward" size={isSmallScreen ? 18 : 20} color="#FFFFFF" />
+                    <Text
+                      style={[
+                        styles.confirmText,
+                        { fontSize: Math.round(18 * fontScale) },
+                      ]}
+                      numberOfLines={1}
+                    >
+                      {t("deposit.confirm")}
+                    </Text>
+                    <Ionicons
+                      name="arrow-forward"
+                      size={isSmallScreen ? 18 : 20}
+                      color="#FFFFFF"
+                    />
                   </LinearGradient>
                 </TouchableOpacity>
               </View>
@@ -311,7 +641,13 @@ export default function StockSell() {
           <View style={styles.alertOverlay}>
             <LinearGradient
               colors={["#E15816", "#F48F38"]}
-              style={[styles.alertContainer, { padding: isSmallScreen ? 18 : 24, marginHorizontal: horizontalPadding }]}
+              style={[
+                styles.alertContainer,
+                {
+                  padding: isSmallScreen ? 18 : 24,
+                  marginHorizontal: horizontalPadding,
+                },
+              ]}
               start={{ x: 0, y: 0 }}
               end={{ x: 0, y: 1 }}
             >
@@ -627,5 +963,126 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: THEME_COLOR,
+  },
+  // ─── Slider ─────────────────────────────────────────────
+  pctDisplay: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    justifyContent: "center",
+    marginVertical: 12,
+  },
+  pctValue: {
+    fontSize: 52,
+    fontWeight: "800",
+    color: "#E25A17",
+    lineHeight: 56,
+  },
+  pctSymbol: {
+    fontSize: 24,
+    fontWeight: "700",
+    color: "#E25A17",
+    marginBottom: 8,
+    marginLeft: 2,
+  },
+  sliderTrack: {
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: "#F0E8E4",
+    marginHorizontal: 0,
+    marginBottom: 4,
+    position: "relative",
+    justifyContent: "center",
+  },
+  sliderFill: {
+    position: "absolute",
+    left: 0,
+    top: 0,
+    bottom: 0,
+    borderRadius: 5,
+    backgroundColor: "#E25A17",
+  },
+  sliderThumb: {
+    position: "absolute",
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: "#E25A17",
+    borderWidth: 3,
+    borderColor: "#FFFFFF",
+    marginLeft: -11,
+    top: -6,
+    shadowColor: "#E25A17",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.4,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  // ─── Quick-pick ─────────────────────────────────────────
+  quickPick: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 16,
+    marginBottom: 8,
+    gap: 8,
+  },
+  quickBtn: {
+    flex: 1,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: "#E25A17",
+    alignItems: "center",
+  },
+  quickBtnActive: {
+    backgroundColor: "#E25A17",
+  },
+  quickBtnText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#E25A17",
+  },
+  quickBtnTextActive: {
+    color: "#FFFFFF",
+  },
+  // ─── Preview ────────────────────────────────────────────
+  previewRow: {
+    flexDirection: "row",
+    backgroundColor: "#FFF8F5",
+    borderRadius: 10,
+    marginTop: 16,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "#F5DDD2",
+  },
+  previewCol: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    alignItems: "center",
+  },
+  previewDivider: {
+    width: 1,
+    backgroundColor: "#F5DDD2",
+  },
+  previewLabel: {
+    fontSize: 11,
+    color: "#999",
+    marginBottom: 4,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  previewVal: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#333",
+  },
+  // ─── Manual input ────────────────────────────────────────
+  manualRow: {
+    marginTop: 16,
+  },
+  manualLabel: {
+    fontSize: 12,
+    color: "#999",
+    marginBottom: 6,
   },
 });
