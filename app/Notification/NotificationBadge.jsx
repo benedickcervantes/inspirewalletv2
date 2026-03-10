@@ -1,42 +1,58 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { AppState, StyleSheet, Text, View } from 'react-native';
 import { auth } from '../../configs/firebase';
+import { useUnreadNotifications } from '../../context/UnreadNotificationsContext';
 import notificationService from './notificationService';
 
 /**
- * NotificationBadge component - displays unread notification count
- * Usage: <NotificationBadge />
+ * NotificationBadge component - displays unread notification count.
+ * Uses backend (UnreadNotificationsContext) when access_token exists;
+ * otherwise uses Firebase (notificationService).
+ * Refetches on app focus so every activity is reflected.
  */
 const NotificationBadge = () => {
-  const [unreadCount, setUnreadCount] = useState(0);
+  const { unreadCount: backendUnreadCount, refetchUnreadCount } = useUnreadNotifications();
+  const [firebaseUnreadCount, setFirebaseUnreadCount] = useState(0);
   const [user, setUser] = useState(null);
+  const [useBackend, setUseBackend] = useState(false);
 
   useEffect(() => {
-    const unsubscribeAuth = auth.onAuthStateChanged((currentUser) => {
+    const checkAuth = async (currentUser) => {
       setUser(currentUser);
       if (!currentUser) {
-        setUnreadCount(0);
+        setUseBackend(false);
+        return;
       }
-    });
-
+      const accessToken = await AsyncStorage.getItem('access_token');
+      const backend = !!accessToken;
+      setUseBackend(backend);
+      if (backend) refetchUnreadCount();
+    };
+    const unsubscribeAuth = auth.onAuthStateChanged(checkAuth);
     return () => unsubscribeAuth();
-  }, []);
+  }, [refetchUnreadCount]);
 
   useEffect(() => {
-    if (!user) {
-      setUnreadCount(0);
+    if (!useBackend) return;
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') refetchUnreadCount();
+    });
+    return () => sub.remove();
+  }, [useBackend, refetchUnreadCount]);
+
+  useEffect(() => {
+    if (!user || useBackend) {
+      if (!useBackend) setFirebaseUnreadCount(0);
       return;
     }
-
-    const unsubscribe = notificationService.subscribeToUnreadCount(
-      user.uid,
-      (count) => {
-        setUnreadCount(count);
-      }
-    );
-
+    const unsubscribe = notificationService.subscribeToUnreadCount(user.uid, (count) => {
+      setFirebaseUnreadCount(count);
+    });
     return () => unsubscribe();
-  }, [user]);
+  }, [user, useBackend]);
+
+  const unreadCount = useBackend ? backendUnreadCount : firebaseUnreadCount;
 
   if (unreadCount === 0) {
     return null;
