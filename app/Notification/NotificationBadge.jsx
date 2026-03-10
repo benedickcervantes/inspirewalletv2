@@ -12,31 +12,58 @@ import notificationService from './notificationService';
  * Refetches on app focus so every activity is reflected.
  */
 const NotificationBadge = () => {
-  const { unreadCount: backendUnreadCount, refetchUnreadCount } = useUnreadNotifications();
+  const { unreadCount: backendUnreadCount, refetchUnreadCount } =
+    useUnreadNotifications();
   const [firebaseUnreadCount, setFirebaseUnreadCount] = useState(0);
   const [user, setUser] = useState(null);
   const [useBackend, setUseBackend] = useState(false);
 
+  // Decide backend vs Firebase once based on presence of JWT token.
+  // This ensures backend users always see the real-time badge even
+  // if they are not logged in via Firebase auth.
   useEffect(() => {
-    const checkAuth = async (currentUser) => {
-      setUser(currentUser);
-      if (!currentUser) {
-        setUseBackend(false);
-        return;
+    let isMounted = true;
+
+    const initBackend = async () => {
+      try {
+        const accessToken = await AsyncStorage.getItem("access_token");
+        const hasBackend = !!accessToken;
+        if (!isMounted) return;
+        setUseBackend(hasBackend);
+        if (hasBackend) {
+          // Initial fetch so the badge is up to date immediately.
+          refetchUnreadCount();
+        } else {
+          // No backend auth, rely solely on Firebase path.
+          setUseBackend(false);
+        }
+      } catch {
+        if (isMounted) {
+          setUseBackend(false);
+        }
       }
-      const accessToken = await AsyncStorage.getItem('access_token');
-      const backend = !!accessToken;
-      setUseBackend(backend);
-      if (backend) refetchUnreadCount();
     };
-    const unsubscribeAuth = auth.onAuthStateChanged(checkAuth);
-    return () => unsubscribeAuth();
+
+    initBackend();
+
+    return () => {
+      isMounted = false;
+    };
   }, [refetchUnreadCount]);
+
+  // Separate Firebase auth subscription for the legacy notifications path.
+  useEffect(() => {
+    if (!auth) return () => {};
+    const unsubscribeAuth = auth.onAuthStateChanged((currentUser) => {
+      setUser(currentUser);
+    });
+    return () => unsubscribeAuth();
+  }, []);
 
   useEffect(() => {
     if (!useBackend) return;
-    const sub = AppState.addEventListener('change', (state) => {
-      if (state === 'active') refetchUnreadCount();
+    const sub = AppState.addEventListener("change", (state) => {
+      if (state === "active") refetchUnreadCount();
     });
     return () => sub.remove();
   }, [useBackend, refetchUnreadCount]);
@@ -46,9 +73,12 @@ const NotificationBadge = () => {
       if (!useBackend) setFirebaseUnreadCount(0);
       return;
     }
-    const unsubscribe = notificationService.subscribeToUnreadCount(user.uid, (count) => {
-      setFirebaseUnreadCount(count);
-    });
+    const unsubscribe = notificationService.subscribeToUnreadCount(
+      user.uid,
+      (count) => {
+        setFirebaseUnreadCount(count);
+      },
+    );
     return () => unsubscribe();
   }, [user, useBackend]);
 

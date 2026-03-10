@@ -41,6 +41,7 @@ import { setConnectionStatus } from "../../lib/connectionStatus";
 import { getMaintenanceStatus } from "../../lib/maintenance";
 import type { NavProp } from "../../types/navigation";
 import { useResponsive } from "../../utils/responsive";
+import NotificationBadge from "../Notification/NotificationBadge";
 import CardsTab from "./CardsTab";
 import SavingsTab from "./SavingsTab";
 import WalletTab from "./WalletTab";
@@ -760,13 +761,7 @@ export default function Dashboard() {
               onPress={() => navigation.navigate("Notification")}
             >
               <Ionicons name="notifications" size={24} color="#E15816" />
-              {unreadNotifications > 0 && (
-                <View style={styles.notificationBadge}>
-                  <Text style={styles.notificationBadgeText}>
-                    {unreadNotifications > 99 ? "99+" : unreadNotifications}
-                  </Text>
-                </View>
-              )}
+          <NotificationBadge />
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.iconButton}
