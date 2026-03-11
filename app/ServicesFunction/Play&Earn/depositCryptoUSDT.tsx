@@ -6,38 +6,77 @@ import { LinearGradient } from "expo-linear-gradient";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   Alert,
+  BackHandler,
   Platform,
   SafeAreaView,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from "react-native";
+import { useLanguage } from "../../../context/LanguageContext";
 import QRCode from "react-native-qrcode-svg";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const THEME_COLOR = "#E15816";
+const IPHONE_SE_WIDTH = 320;
+const SMALL_PHONE_WIDTH = 375;
 const ORANGE_GRADIENT: readonly [string, string] = ["#E25A17", "#F28934"];
-const USDT_ACTIVE_COLOR = "#22C55E";
+const PREMIUM_DARK = "#1A1A1A";
+const SOFT_GRAY = "#F9FAFB";
+const ETH_ACTIVE_COLOR = "#627EEA";
 const BTC_ACTIVE_COLOR = "#F7931A";
+const USDT_ACTIVE_COLOR = "#26A17B";
 
 const CRYPTO_OPTIONS: { id: string; label: string; icon: React.ComponentProps<typeof Ionicons>["name"] }[] = [
   { id: "BTC", label: "BTC", icon: "logo-bitcoin" },
-  { id: "ETH", label: "ETHA", icon: "bulb-outline" },
+  { id: "ETH", label: "ETH", icon: "diamond" },
   { id: "USDT", label: "USDT", icon: "cash-outline" },
 ];
 
-const SAMPLE_USDT_WALLET_ADDRESS = "0x742d35Cc6634C0532925a3b844Bc9e7595f8bB7E";
-const SUPPORT_NOTE =
-  "Note: This address is for MetaMask and other Ethereum-compatible wallets";
+const MOCK_DATA = {
+  walletAddress: "0x742d35Cc6634C0532925a3b844Bc9e7595f8bB7E",
+  accountName: "Aries Dev",
+  accountEmail: "Aries_dev@gmail.com",
+  supportNote: "Note: This address is for MetaMask and other Ethereum-compatible wallets"
+};
+
 
 export default function DepositCryptoUSDT() {
   const navigation = useNavigation();
+  const { width } = useWindowDimensions();
+
+  const isXSScreen = width <= IPHONE_SE_WIDTH;
+  const isSmallScreen = width < SMALL_PHONE_WIDTH;
+  const horizontalPadding = isXSScreen ? 12 : isSmallScreen ? 16 : 20;
+  const qrSize = isXSScreen ? 110 : isSmallScreen ? 130 : 160;
+
   const [selectedCrypto, setSelectedCrypto] = useState("USDT");
-  const [accountName, setAccountName] = useState("Aries Dev");
-  const [accountEmail, setAccountEmail] = useState("Aries_dev@gmail.com");
+  const [accountName, setAccountName] = useState(MOCK_DATA.accountName);
+  const [accountEmail, setAccountEmail] = useState(MOCK_DATA.accountEmail);
   const [receiptUri, setReceiptUri] = useState<string | null>(null);
+
+  const { t } = useLanguage();
+
+  useEffect(() => {
+    navigation.setOptions({
+      headerShown: false,
+    });
+  }, [navigation]);
+
+  useEffect(() => {
+    const backAction = () => {
+      navigation.navigate("PlayEarn");
+      return true;
+    };
+    const backHandler = BackHandler.addEventListener("hardwareBackPress", backAction);
+    return () => backHandler.remove();
+  }, [navigation]);
+
+  const handleBack = useCallback(() => navigation.navigate("PlayEarn"), [navigation]);
 
   const loadUser = useCallback(async () => {
     try {
@@ -60,7 +99,7 @@ export default function DepositCryptoUSDT() {
 
   const handleCopyAddress = async () => {
     try {
-      await Clipboard.setStringAsync(SAMPLE_USDT_WALLET_ADDRESS);
+      await Clipboard.setStringAsync(MOCK_DATA.walletAddress);
       Alert.alert("Copied", "Wallet address copied to clipboard");
     } catch {
       Alert.alert("Error", "Could not copy address");
@@ -94,73 +133,74 @@ export default function DepositCryptoUSDT() {
   };
 
   const getCryptoPillActiveStyle = () => {
-    if (selectedCrypto === "USDT") return styles.cryptoPillActiveUsdt;
     if (selectedCrypto === "ETH") return styles.cryptoPillActiveEth;
+    if (selectedCrypto === "USDT") return styles.cryptoPillActiveUsdt;
     return styles.cryptoPillActive;
   };
 
-  return (
+  return (  
     <View style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        {/* Header - Orange Gradient */}
-        <LinearGradient
-          colors={ORANGE_GRADIENT}
-          style={styles.header}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-        >
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.navigate("PlayEarn")}
+      <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
+        <SafeAreaView style={styles.safeArea}>
+          {/* Custom Header Bar (Exact AgentDashboard Style) */}
+          <LinearGradient
+            colors={["#E25A17", "#F28934"]}
+            style={[styles.header, isXSScreen && styles.headerCompact]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
           >
-            <View style={styles.backButtonCircle}>
-              <Ionicons name="arrow-back" size={24} color={THEME_COLOR} />
-            </View>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Deposit via Crypto</Text>
-          <View style={styles.headerSpacer} />
-        </LinearGradient>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => navigation.navigate("PlayEarn")}
+            >
+              <Ionicons name="arrow-back" size={isXSScreen ? 22 : 24} color="#FFFFFF" />
+            </TouchableOpacity>
+            <Text style={[styles.headerTitle, isXSScreen && styles.headerTitleCompact]} numberOfLines={1}>
+              Deposit USDT
+            </Text>
+            <View style={{ width: 44 }} />
+          </LinearGradient>
 
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Account Holder Card */}
-          <View style={styles.card}>
-            <View style={styles.cardIconCircle}>
-              <Ionicons name="person-outline" size={28} color={THEME_COLOR} />
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={[styles.scrollContent, { paddingHorizontal: horizontalPadding }]}
+            showsVerticalScrollIndicator={false}
+          >
+          {/* Premium Account Holder Card */}
+          <View style={styles.profileCard}>
+            <View style={styles.profileAvatar}>
+              <Ionicons name="person" size={24} color={THEME_COLOR} />
             </View>
-            <View style={styles.cardContent}>
-              <Text style={styles.cardTitle}>Account Holder: {accountName}</Text>
-              <Text style={styles.cardSubtitle}>Email: {accountEmail}</Text>
+            <View style={styles.profileInfo}>
+              <Text style={styles.profileName}>{accountName}</Text>
+              <Text style={styles.profileEmail}>{accountEmail}</Text>
+            </View>
+            <View style={styles.profileStatus}>
+              <View style={styles.statusDot} />
+              <Text style={styles.statusText}>Verified</Text>
             </View>
           </View>
 
-          {/* Crypto Selection Pills - Segmented pill design with circular icons */}
+          {/* Crypto Selection Pills */}
           <View style={styles.cryptoPillsContainer}>
-            {CRYPTO_OPTIONS.map((crypto, index) => {
+            {CRYPTO_OPTIONS.map((crypto) => {
               const isActive = selectedCrypto === crypto.id;
               const iconCircleActiveStyle =
                 crypto.id === "BTC" ? styles.cryptoPillIconCircleActiveBtc :
                 crypto.id === "ETH" ? styles.cryptoPillIconCircleActiveEth :
                 styles.cryptoPillIconCircleActiveUsdt;
-              const iconColor = isActive ? "#FFF" : "#555";
-              const textActiveStyle = isActive ? styles.cryptoPillTextActive : undefined;
               return (
                 <TouchableOpacity
                   key={crypto.id}
                   style={[
                     styles.cryptoPill,
-                    index === 0 && styles.cryptoPillFirst,
-                    index === CRYPTO_OPTIONS.length - 1 && styles.cryptoPillLast,
                     isActive && getCryptoPillActiveStyle(),
                   ]}
                   onPress={() => {
                     if (crypto.id === "BTC") {
-                      navigation.navigate("DepositCrypto");
+                      (navigation as any).replace("DepositCrypto");
                     } else if (crypto.id === "ETH") {
-                      navigation.navigate("DepositCryptoEth");
+                      (navigation as any).replace("DepositCryptoEth");
                     } else {
                       setSelectedCrypto(crypto.id);
                     }
@@ -173,13 +213,13 @@ export default function DepositCryptoUSDT() {
                     <Ionicons
                       name={crypto.icon}
                       size={18}
-                      color={iconColor}
+                      color={isActive ? "#FFF" : "#555"}
                     />
                   </View>
                   <Text
                     style={[
                       styles.cryptoPillText,
-                      isActive && textActiveStyle,
+                      isActive && styles.cryptoPillTextActive,
                     ]}
                   >
                     {crypto.label}
@@ -192,10 +232,10 @@ export default function DepositCryptoUSDT() {
           {/* Wallet Address Card - Dark */}
           <View style={styles.walletCard}>
             <View style={styles.walletCardRow}>
-              <View style={styles.qrWrapper}>
+              <View style={[styles.qrWrapper, { padding: isXSScreen ? 8 : 12 }]}>
                 <QRCode
-                  value={SAMPLE_USDT_WALLET_ADDRESS}
-                  size={100}
+                  value={MOCK_DATA.walletAddress}
+                  size={qrSize}
                   color="#000"
                   backgroundColor="#FFF"
                 />
@@ -203,7 +243,7 @@ export default function DepositCryptoUSDT() {
               <View style={styles.walletAddressSection}>
                 <Text style={styles.walletLabel}>Wallet Address</Text>
                 <Text style={styles.walletAddress} numberOfLines={2}>
-                  {SAMPLE_USDT_WALLET_ADDRESS}
+                  {MOCK_DATA.walletAddress}
                 </Text>
                 <View style={styles.copyRow}>
                   <TouchableOpacity
@@ -218,37 +258,35 @@ export default function DepositCryptoUSDT() {
             </View>
             <View style={styles.supportNote}>
               <Ionicons name="information-circle-outline" size={18} color="#999" />
-              <Text style={styles.supportNoteText}>{SUPPORT_NOTE}</Text>
+              <Text style={styles.supportNoteText}>{MOCK_DATA.supportNote}</Text>
             </View>
           </View>
 
-          {/* Upload Receipt Card - with orange border */}
+          {/* Modern Upload Area */}
           <TouchableOpacity
-            style={styles.uploadCard}
+            style={styles.uploadZone}
             onPress={handleUploadReceipt}
-            activeOpacity={0.8}
+            activeOpacity={0.7}
           >
-            <View style={styles.uploadIconCircle}>
+            <View style={styles.uploadIconWrapper}>
               <MaterialCommunityIcons
-                name="cloud-upload-outline"
-                size={36}
+                name="cloud-upload"
+                size={40}
                 color={THEME_COLOR}
               />
             </View>
-            <View style={styles.uploadContent}>
-              <Text style={styles.uploadTitle}>
-                Upload transaction receipt/screenshot
-              </Text>
-              <Text style={styles.uploadSubtitle}>
-                Your deposit will be processed once we verify the transaction receipt
-              </Text>
-              {receiptUri && (
-                <View style={styles.uploadedBadge}>
-                  <Ionicons name="checkmark-circle" size={16} color="#22C55E" />
-                  <Text style={styles.uploadedText}>Receipt uploaded</Text>
-                </View>
-              )}
-            </View>
+            <Text style={styles.uploadTitle}>
+              Click to upload receipt
+            </Text>
+            <Text style={styles.uploadSubtitle}>
+              JPG, PNG or PDF (Max 5MB)
+            </Text>
+            {receiptUri && (
+              <View style={styles.successBadge}>
+                <Ionicons name="checkmark-circle" size={18} color="#22C55E" />
+                <Text style={styles.successText}>Attached successfully</Text>
+              </View>
+            )}
           </TouchableOpacity>
 
           {/* Submit Button */}
@@ -284,46 +322,48 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
-    paddingTop: Platform.OS === "android" ? 24 : 0,
+    paddingTop: Platform.OS === "android" ? (StatusBar.currentHeight ?? 0) : 0,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingTop: 16,
+    paddingBottom: 40,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 16,
-    paddingVertical: 16,
+    paddingVertical: 14,
+  },
+  headerCompact: {
+    paddingHorizontal: 12,
+    paddingVertical: 10,
   },
   backButton: {
-    padding: 4,
-  },
-  backButtonCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "rgba(255,255,255,0.9)",
+    padding: 12,
+    minWidth: 44,
+    minHeight: 44,
     justifyContent: "center",
-    alignItems: "center",
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: "700",
-    color: "#FFF",
-  },
-  headerSpacer: {
-    width: 44,
-  },
-  scrollView: {
+    color: "#FFFFFF",
     flex: 1,
+    textAlign: "center",
   },
-  scrollContent: {
-    padding: 20,
+  headerTitleCompact: {
+    fontSize: 16,
   },
-  card: {
+  profileCard: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#FFF",
-    borderRadius: 16,
-    padding: 20,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    padding: 16,
     marginBottom: 20,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -331,249 +371,272 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
   },
-  cardIconCircle: {
+  cardCompact: {
+    padding: 14,
+    marginBottom: 12,
+  },
+  textCompact: {
+    fontSize: 12,
+  },
+  profileAvatar: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    borderWidth: 2,
-    borderColor: THEME_COLOR,
+    backgroundColor: SOFT_GRAY,
     justifyContent: "center",
     alignItems: "center",
     marginRight: 16,
+    borderWidth: 1.5,
+    borderColor: "#E5E7EB",
   },
-  cardContent: {
+  profileInfo: {
     flex: 1,
   },
-  cardTitle: {
+  profileName: {
     fontSize: 16,
-    fontWeight: "700",
-    color: "#333",
-    marginBottom: 4,
+    fontWeight: "800",
+    color: PREMIUM_DARK,
+    marginBottom: 2,
   },
-  cardSubtitle: {
-    fontSize: 14,
-    color: "#666",
+  profileEmail: {
+    fontSize: 13,
+    color: "#71717A",
+    fontWeight: "500",
+  },
+  profileStatus: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#DCFCE7",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: "#22C55E",
+    marginRight: 6,
+  },
+  statusText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#166534",
   },
   cryptoPillsContainer: {
     flexDirection: "row",
-    marginBottom: 20,
-    backgroundColor: "#E8E8E8",
+    marginBottom: 24,
+    backgroundColor: SOFT_GRAY,
     borderRadius: 20,
-    padding: 5,
-    overflow: "hidden",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    padding: 6,
+    gap: 8,
   },
   cryptoPill: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 10,
     paddingVertical: 12,
-    paddingHorizontal: 14,
     borderRadius: 16,
-    backgroundColor: "transparent",
-  },
-  cryptoPillFirst: {
-    marginRight: 0,
-  },
-  cryptoPillLast: {
-    marginLeft: 0,
   },
   cryptoPillActive: {
-    backgroundColor: BTC_ACTIVE_COLOR,
+    backgroundColor: "#FFF",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
     elevation: 3,
   },
   cryptoPillActiveEth: {
-    backgroundColor: "#5BA3D0",
+    backgroundColor: "#FFF",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
     elevation: 3,
   },
   cryptoPillActiveUsdt: {
-    backgroundColor: USDT_ACTIVE_COLOR,
+    backgroundColor: "#FFF",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
     elevation: 3,
   },
   cryptoPillIconCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: "#D5D5D5",
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "#E5E7EB",
     justifyContent: "center",
     alignItems: "center",
+    marginRight: 8,
   },
   cryptoPillIconCircleActiveBtc: {
-    backgroundColor: "#D67B0A",
+    backgroundColor: BTC_ACTIVE_COLOR,
   },
   cryptoPillIconCircleActiveEth: {
-    backgroundColor: "#3B8BB5",
+    backgroundColor: ETH_ACTIVE_COLOR,
   },
   cryptoPillIconCircleActiveUsdt: {
-    backgroundColor: "#1A1A1A",
+    backgroundColor: USDT_ACTIVE_COLOR,
   },
   cryptoPillText: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: "700",
-    color: "#555",
+    color: "#71717A",
   },
   cryptoPillTextActive: {
-    color: "#FFF",
+    color: PREMIUM_DARK,
   },
   walletCard: {
-    backgroundColor: "#2D2D2D",
-    borderRadius: 16,
+    backgroundColor: "#1A1A1A",
+    borderRadius: 12,
     padding: 20,
     marginBottom: 20,
+    elevation: 4,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 10,
-    elevation: 5,
   },
   walletCardRow: {
     flexDirection: "row",
     alignItems: "flex-start",
-    marginBottom: 16,
+    marginBottom: 20,
   },
   qrWrapper: {
-    padding: 10,
+    padding: 12,
     backgroundColor: "#FFF",
-    borderRadius: 10,
-    marginRight: 16,
+    borderRadius: 16,
+    marginRight: 20,
   },
   walletAddressSection: {
     flex: 1,
   },
   walletLabel: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#FFF",
+    fontSize: 13,
+    fontWeight: "700",
+    color: "rgba(255,255,255,0.6)",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
     marginBottom: 8,
   },
   walletAddress: {
-    fontSize: 12,
+    fontSize: 13,
     color: "#FFF",
     fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
-    marginBottom: 12,
+    fontWeight: "600",
+    lineHeight: 18,
+    marginBottom: 16,
   },
   copyRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: 12,
   },
   copyButton: {
-    backgroundColor: THEME_COLOR,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: "rgba(255,255,255,0.2)",
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    backgroundColor: "rgba(255,255,255,0.05)",
   },
   copyButtonText: {
-    fontSize: 14,
-    fontWeight: "600",
+    fontSize: 13,
+    fontWeight: "700",
     color: "#FFF",
   },
   supportNote: {
     flexDirection: "row",
     alignItems: "flex-start",
-    gap: 8,
+    backgroundColor: "rgba(255,255,255,0.05)",
+    padding: 12,
+    borderRadius: 12,
+    marginTop: 8,
   },
   supportNoteText: {
     flex: 1,
     fontSize: 11,
-    color: "#999",
+    color: "rgba(255,255,255,0.5)",
     lineHeight: 16,
+    marginLeft: 8,
   },
-  uploadCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#FFF",
-    borderRadius: 16,
-    padding: 20,
+  uploadZone: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    padding: 24,
     marginBottom: 24,
-    borderWidth: 2,
-    borderColor: THEME_COLOR,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 3,
+    alignItems: "center",
+    borderWidth: 1.5,
+    borderStyle: "dashed",
+    borderColor: "#E5E7EB",
   },
-  uploadIconCircle: {
-    width: 56,
-    height: 56,
-    borderRadius: 14,
-    backgroundColor: "rgba(225, 88, 22, 0.12)",
+  uploadIconWrapper: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: SOFT_GRAY,
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 16,
-  },
-  uploadContent: {
-    flex: 1,
+    marginBottom: 16,
   },
   uploadTitle: {
     fontSize: 16,
-    fontWeight: "700",
-    color: "#333",
+    fontWeight: "800",
+    color: PREMIUM_DARK,
     marginBottom: 4,
   },
   uploadSubtitle: {
     fontSize: 13,
-    color: "#666",
-    lineHeight: 20,
+    color: "#71717A",
+    fontWeight: "500",
   },
-  uploadedBadge: {
+  successBadge: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    marginTop: 8,
+    marginTop: 16,
+    backgroundColor: "#DCFCE7",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 10,
   },
-  uploadedText: {
+  successText: {
     fontSize: 13,
-    fontWeight: "600",
-    color: "#22C55E",
+    fontWeight: "700",
+    color: "#166534",
+    marginLeft: 6,
   },
   submitButton: {
-    borderRadius: 14,
+    borderRadius: 20,
     overflow: "hidden",
+    elevation: 8,
     shadowColor: THEME_COLOR,
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
+    shadowRadius: 12,
   },
   submitGradient: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 16,
+    paddingVertical: 20,
     gap: 12,
   },
   submitIconCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "rgba(255,255,255,0.3)",
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "rgba(255,255,255,0.2)",
     justifyContent: "center",
     alignItems: "center",
   },
   submitText: {
     fontSize: 18,
-    fontWeight: "700",
+    fontWeight: "800",
     color: "#FFF",
+    letterSpacing: 0.5,
   },
   bottomSpacing: {
     height: 32,
