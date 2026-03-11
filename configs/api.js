@@ -1490,6 +1490,38 @@ export async function getNotifications(accessToken, opts = {}) {
 }
 
 /**
+ * GET /announcements/active — requires JWT
+ * Fetch active announcements for the current user.
+ * @param {string} accessToken
+ */
+export async function getActiveAnnouncements(accessToken) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
+  try {
+    const url = `${base}/announcements/active`;
+    const res = await apiFetch(url, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    return { success: true, data: Array.isArray(data) ? data : [] };
+  } catch (e) {
+    if (__DEV__) console.error("[Announcements API] Error", e);
+    return { success: false, error: e.message || "Network error" };
+  }
+}
+
+/**
  * PATCH /notifications/read-all — requires JWT
  * Mark all notifications as read.
  * @param {string} accessToken

@@ -24,6 +24,7 @@ import {
 } from "react-native-safe-area-context";
 import {
   getMe,
+  getActiveAnnouncements,
   getNotifications,
   getOrCreateMainWallet,
   getReferralTree,
@@ -42,6 +43,10 @@ import { getMaintenanceStatus } from "../../lib/maintenance";
 import type { NavProp } from "../../types/navigation";
 import { useResponsive } from "../../utils/responsive";
 import NotificationBadge from "../Notification/NotificationBadge";
+import {
+  AnnouncementModal,
+  type AnnouncementItem,
+} from "../AnnouncementModal/AnnouncementModal";
 import CardsTab from "./CardsTab";
 import SavingsTab from "./SavingsTab";
 import WalletTab from "./WalletTab";
@@ -212,6 +217,9 @@ export default function Dashboard() {
   const [timeDeposit, setTimeDeposit] = useState(0);
   const [deposits, setDeposits] = useState<TimeDeposit[]>([]);
   const [activeTab, setActiveTab] = useState("Wallet");
+  const [announcements, setAnnouncements] = useState<AnnouncementItem[]>([]);
+  const [announcementIndex, setAnnouncementIndex] = useState(0);
+  const [announcementVisible, setAnnouncementVisible] = useState(false);
   const [recentTransactions, setRecentTransactions] = useState<Transaction[]>(
     [],
   );
@@ -347,7 +355,7 @@ export default function Dashboard() {
       setIsBalanceLoading(false);
 
       const walletId = w?.id;
-      const [tdRes, treeRes, txRes, status, notifRes, hasChosen] =
+      const [tdRes, treeRes, txRes, status, notifRes, hasChosen, annRes] =
         await Promise.all([
           getTimeDeposits(accessToken),
           getReferralTree(accessToken),
@@ -359,6 +367,7 @@ export default function Dashboard() {
               (user as { accountNumber?: string })?.accountNumber,
             ),
           ),
+          getActiveAnnouncements(accessToken),
         ]);
 
       if (tdRes.success && Array.isArray(tdRes.deposits)) {
@@ -428,10 +437,39 @@ export default function Dashboard() {
         ).length;
         setUnreadNotifications(unreadCount);
       }
+
+      if (annRes?.success && Array.isArray(annRes.data) && annRes.data.length) {
+        const list = (annRes.data as AnnouncementItem[]).map((a) => ({
+          id: a.id,
+          title: (a as { title?: string }).title ?? "Announcement",
+          message: (a as { message?: string }).message ?? "",
+          imageUrl: (a as { imageUrl?: string | null }).imageUrl ?? null,
+        }));
+        setAnnouncements(list);
+        setAnnouncementIndex(0);
+        setAnnouncementVisible(true);
+      } else {
+        setAnnouncements([]);
+        setAnnouncementVisible(false);
+      }
     };
 
     init();
   }, [navigation]);
+
+  useEffect(() => {
+    if (!announcementVisible) return;
+    if (!announcements.length) return;
+    const timer = setTimeout(() => {
+      const next = announcementIndex + 1;
+      if (next >= announcements.length) {
+        setAnnouncementVisible(false);
+      } else {
+        setAnnouncementIndex(next);
+      }
+    }, 10000);
+    return () => clearTimeout(timer);
+  }, [announcementVisible, announcementIndex, announcements.length]);
 
   const refetchJwtData = useCallback(async () => {
     const accessToken = await AsyncStorage.getItem("access_token");
@@ -675,6 +713,18 @@ export default function Dashboard() {
   return (
     <>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <AnnouncementModal
+        visible={announcementVisible && announcements.length > 0}
+        announcement={announcements[announcementIndex] ?? null}
+        onClose={() => {
+          const next = announcementIndex + 1;
+          if (next >= announcements.length) {
+            setAnnouncementVisible(false);
+          } else {
+            setAnnouncementIndex(next);
+          }
+        }}
+      />
       <Modal
         visible={selectedMaintenanceService !== null}
         transparent
