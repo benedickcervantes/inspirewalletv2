@@ -116,18 +116,32 @@ export default function Message() {
     console.log("[Message] ticketSelected state changed:", ticketSelected);
   }, [ticketSelected]);
 
-  // Check maintenance status on focus
+  // Check maintenance status on focus (DEVELOPER / ADMIN / SUPER_ADMIN bypass)
   useFocusEffect(
     useCallback(() => {
       const checkMaintenance = async () => {
         try {
-          const isMaintenance = await isServiceUnderMaintenance("message");
+          // Read user role — privileged roles bypass maintenance
+          const userJson = await AsyncStorage.getItem('user');
+          let userRole: string | undefined;
+          if (userJson) {
+            try {
+              const parsed = JSON.parse(userJson) as Record<string, unknown>;
+              userRole = parsed.role as string | undefined;
+            } catch { /* ignore */ }
+          }
+          const BYPASS_ROLES = ['DEVELOPER', 'ADMIN', 'SUPER_ADMIN'];
+          if (userRole && BYPASS_ROLES.includes(userRole)) {
+            setIsUnderMaintenance(false);
+            return;
+          }
+          const isMaintenance = await isServiceUnderMaintenance('message');
           setIsUnderMaintenance(isMaintenance);
           if (isMaintenance) {
             setShowMaintenanceModal(true);
           }
         } catch (error) {
-          console.error("Error checking maintenance:", error);
+          console.error('Error checking maintenance:', error);
         }
       };
       checkMaintenance();
