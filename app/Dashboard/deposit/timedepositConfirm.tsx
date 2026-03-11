@@ -18,6 +18,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import {
   getOrCreateMainWallet,
   submitTimeDepositRequest,
+  uploadTimeDepositReceiptFile,
 } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
 
@@ -94,10 +95,58 @@ export default function TimeDepositConfirm() {
     }
   };
 
-  const handleProofSubmit = () => {
-    setShowProofModal(false);
-    setProofUri(null);
-    handleConfirm();
+  const handleProofSubmit = async () => {
+    if (!proofUri) {
+      Alert.alert(t("deposit.error"), "Please attach a proof of payment receipt.");
+      return;
+    }
+    await handleConfirmWithReceipt();
+  };
+
+  const handleConfirmWithReceipt = async () => {
+    setLoading(true);
+    setErrorMessage(null);
+    try {
+      const accessToken = await AsyncStorage.getItem("access_token");
+      if (!accessToken) {
+        setErrorMessage(t("deposit.pleaseLoginDeposit"));
+        setLoading(false);
+        return;
+      }
+
+      const body: Record<string, string> = {
+        amount: Number(amountInPhp).toFixed(2),
+        contractPeriod,
+        depositMethod: "request_amount",
+      };
+
+      const result = await submitTimeDepositRequest(accessToken, body);
+
+      if (result.success && result.data?.id) {
+        const requestId = result.data.id;
+        
+        // Blocking Receipt Upload
+        if (proofUri) {
+          const uploadRes = await uploadTimeDepositReceiptFile(accessToken, requestId, proofUri);
+          if (!uploadRes.success) {
+            setErrorMessage(`Time Deposit Created, but receipt upload failed: ${uploadRes.error}. Please contact support.`);
+            setLoading(false);
+            return;
+          }
+        }
+
+        setShowProofModal(false);
+        setProofUri(null);
+        setShowSuccessModal(true);
+      } else {
+        setErrorMessage(result.error || t("deposit.submitError"));
+      }
+    } catch (error) {
+      console.error("Error submitting deposit:", error);
+      setErrorMessage(t("deposit.unexpectedError"));
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleConfirmPress = () => {
@@ -352,7 +401,8 @@ export default function TimeDepositConfirm() {
 
               <View style={styles.proofUploadButtons}>
                 <TouchableOpacity
-                  style={styles.proofUploadBtn}
+                  style={[styles.proofUploadBtn, loading && { opacity: 0.5 }]}
+                  disabled={loading}
                   onPress={pickFromGallery}>
                   <Ionicons
                     name="folder-open-outline"
@@ -364,7 +414,8 @@ export default function TimeDepositConfirm() {
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={styles.proofUploadBtn}
+                  style={[styles.proofUploadBtn, loading && { opacity: 0.5 }]}
+                  disabled={loading}
                   onPress={takePhoto}>
                   <Ionicons name="camera-outline" size={28} color="#E25A17" />
                   <Text style={styles.proofUploadBtnText}>
@@ -386,7 +437,8 @@ export default function TimeDepositConfirm() {
                     </Text>
                     <TouchableOpacity
                       onPress={() => setProofUri(null)}
-                      style={styles.removeProofBtn}>
+                      style={[styles.removeProofBtn, loading && { opacity: 0.5 }]}
+                      disabled={loading}>
                       <Ionicons name="trash-outline" size={18} color="#B71C1C" />
                       <Text style={styles.removeProofText}>
                         {t("deposit.remove")}
@@ -398,7 +450,8 @@ export default function TimeDepositConfirm() {
 
               <View style={styles.proofModalFooter}>
                 <TouchableOpacity
-                  style={styles.proofCancelBtn}
+                  style={[styles.proofCancelBtn, loading && { opacity: 0.5 }]}
+                  disabled={loading}
                   onPress={() => {
                     setShowProofModal(false);
                     setProofUri(null);
@@ -408,7 +461,8 @@ export default function TimeDepositConfirm() {
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={styles.proofSubmitBtn}
+                  style={[styles.proofSubmitBtn, (!proofUri || loading) && { opacity: 0.5 }]}
+                  disabled={!proofUri || loading}
                   onPress={handleProofSubmit}>
                   <LinearGradient
                     colors={["#E25A17", "#F28934"]}
@@ -416,7 +470,7 @@ export default function TimeDepositConfirm() {
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 0 }}>
                     <Text style={styles.proofSubmitText}>
-                      {t("deposit.confirm")}
+                      {loading ? t("deposit.processing") : t("deposit.confirm")}
                     </Text>
                   </LinearGradient>
                 </TouchableOpacity>
