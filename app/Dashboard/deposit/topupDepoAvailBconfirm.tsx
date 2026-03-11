@@ -18,6 +18,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import {
   getOrCreateMainWallet,
   submitTopUpRequest,
+  uploadTopUpReceiptFile,
 } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
 
@@ -86,15 +87,21 @@ export default function TopUpConfirm() {
     }
   };
 
-  const handleProofSubmit = () => {
+  const handleProofSubmit = async () => {
+    // Receipt is required
+    if (!proofUri) {
+      Alert.alert(
+        t("deposit.error"),
+        t("deposit.receiptRequired") || "Please attach a proof of payment receipt."
+      );
+      return;
+    }
     setShowProofModal(false);
-    setProofUri(null);
-    handleConfirm();
+    await handleConfirmWithReceipt();
   };
 
-  const handleConfirm = async () => {
+  const handleConfirmWithReceipt = async () => {
     if (isSubmitting) return;
-
     setIsSubmitting(true);
     setAlertConfig({ title: "", message: "" });
 
@@ -122,28 +129,76 @@ export default function TopUpConfirm() {
         return;
       }
 
+      // Step 1: Create the top-up request
       const result = await submitTopUpRequest(accessToken, {
         walletId: wallet.id as string,
         amount: String(parseFloat(amount)),
       });
 
-      if (result.success) {
-        setAlertConfig({
-          title: t("deposit.success"),
-          message: t("deposit.topUpSuccess"),
-        });
-        setShowAlertModal(true);
-        setTimeout(() => {
-          setShowAlertModal(false);
-          navigation.navigate("Main");
-        }, 2000);
-      } else {
+      if (!result.success) {
         setAlertConfig({
           title: t("deposit.error"),
           message: result.error || t("deposit.submitError"),
         });
         setShowAlertModal(true);
+        setIsSubmitting(false);
+        return;
       }
+
+      // Step 2: Upload receipt — BLOCKING, user sees error if it fails
+      const requestId = result.data?.id;
+      if (!requestId) {
+        setAlertConfig({
+          title: t("deposit.error"),
+          message: "Request was created but returned no ID. Please contact support.",
+        });
+        setShowAlertModal(true);
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (proofUri) {
+        // Detect MIME type from URI extension
+        const uriLower = proofUri.toLowerCase();
+        const mimeType = uriLower.endsWith(".png")
+          ? "image/png"
+          : uriLower.endsWith(".gif")
+          ? "image/gif"
+          : "image/jpeg";
+
+        console.log("[TopUpConfirm] Uploading receipt:", { requestId, mimeType, uriLen: proofUri.length });
+
+        const uploadResult = await uploadTopUpReceiptFile(
+          accessToken,
+          requestId,
+          proofUri,
+          mimeType
+        );
+
+        console.log("[TopUpConfirm] Upload result:", uploadResult.success, uploadResult.error ?? "");
+
+        if (!uploadResult.success) {
+          // Show the actual upload error to the user
+          setAlertConfig({
+            title: t("deposit.error"),
+            message: `Receipt upload failed: ${uploadResult.error || "Unknown error. Please try again."}`,
+          });
+          setShowAlertModal(true);
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
+      // Success — navigate home
+      setAlertConfig({
+        title: t("deposit.success"),
+        message: t("deposit.topUpSuccess"),
+      });
+      setShowAlertModal(true);
+      setTimeout(() => {
+        setShowAlertModal(false);
+        navigation.navigate("Main");
+      }, 2000);
     } catch (error) {
       console.error("Error submitting top-up:", error);
       setAlertConfig({
@@ -155,6 +210,7 @@ export default function TopUpConfirm() {
       setIsSubmitting(false);
     }
   };
+
 
   return (
     <View style={styles.container}>
@@ -323,7 +379,11 @@ export default function TopUpConfirm() {
                     </TouchableOpacity>
                   </View>
                 </View>
-              ) : null}
+              ) : (
+                <Text style={{ textAlign: "center", color: "#B71C1C", fontSize: 12, marginTop: 8 }}>
+                  {t("deposit.receiptRequired") || "* A receipt is required to submit your request"}
+                </Text>
+              )}
 
               <View style={styles.proofModalFooter}>
                 <TouchableOpacity
@@ -337,19 +397,21 @@ export default function TopUpConfirm() {
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={styles.proofSubmitBtn}
-                  onPress={handleProofSubmit}>
+                  style={[styles.proofSubmitBtn, !proofUri && { opacity: 0.45 }]}
+                  onPress={handleProofSubmit}
+                  disabled={!proofUri || isSubmitting}>
                   <LinearGradient
                     colors={["#E25A17", "#F28934"]}
                     style={styles.proofSubmitGradient}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 0 }}>
                     <Text style={styles.proofSubmitText}>
-                      {t("deposit.confirm")}
+                      {isSubmitting ? t("deposit.submitting") || "Submitting..." : t("deposit.confirm")}
                     </Text>
                   </LinearGradient>
                 </TouchableOpacity>
               </View>
+
             </View>
           </View>
         </Modal>

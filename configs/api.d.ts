@@ -389,3 +389,27 @@ export function purchaseStockListing(
   accessToken: string,
   sellRequestId: string,
 ): Promise<{ success: boolean; data?: unknown; error?: string }>;
+
+export function submitTopUpRequest(
+  accessToken: string,
+  body: { walletId: string; amount: string; reference?: string },
+): Promise<{ success: boolean; data?: { id?: string; [key: string]: unknown }; error?: string }>;
+
+export function uploadTopUpReceiptFile(
+  accessToken: string,
+  requestId: string,
+  imageUri: string,
+  mimeType?: string,
+): Promise<{ success: boolean; data?: unknown; error?: string }>;
+
+export function submitTimeDepositRequest(
+  accessToken: string,
+  body: Record<string, unknown>,
+): Promise<{ success: boolean; data?: { id?: string; [key: string]: unknown }; error?: string }>;
+
+export function uploadTimeDepositReceiptFile(
+  accessToken: string,
+  requestId: string,
+  imageUri: string,
+  mimeType?: string,
+): Promise<{ success: boolean; data?: unknown; error?: string }>;

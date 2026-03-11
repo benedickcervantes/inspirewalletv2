@@ -342,6 +342,107 @@ export async function submitTopUpRequest(accessToken, body) {
 }
 
 /**
+ * Upload a payment receipt image for an existing top-up request.
+ * POST /deposit-requests/top-up/:id/receipt (multipart/form-data, field: "file")
+ * Called AFTER creating the top-up request to attach the receipt.
+ * @param {string} accessToken - Backend JWT
+ * @param {string} requestId - ID returned from submitTopUpRequest
+ * @param {string} imageUri - Local file URI from ImagePicker (file://...)
+ * @param {string} [mimeType] - MIME type (default: image/jpeg)
+ * @returns {Promise<{ success: boolean, data?: object, error?: string }>}
+ */
+export async function uploadTopUpReceiptFile(accessToken, requestId, imageUri, mimeType = "image/jpeg") {
+  const url = buildUrl(`/deposit-requests/top-up/${requestId}/receipt`);
+  if (!url) return { success: false, error: "Backend URL not configured." };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
+  try {
+    if (__DEV__) console.log("[Receipt Upload] POST", url, "imageUri:", imageUri, "mimeType:", mimeType);
+    const ext = mimeType.split("/")[1] ?? "jpg";
+    const formData = new FormData();
+    formData.append("file", {
+      uri: imageUri,
+      name: `receipt.${ext}`,
+      type: mimeType,
+    });
+    // IMPORTANT: Do NOT set Content-Type manually for FormData in React Native.
+    // The native fetch sets multipart/form-data WITH the boundary automatically.
+    // Setting it manually removes the boundary and breaks multipart parsing on the server.
+    const apiKey = process.env.EXPO_PUBLIC_API_KEY;
+    const headers = {
+      Authorization: `Bearer ${accessToken}`,
+    };
+    if (apiKey) headers["x-api-key"] = apiKey;
+    const res = await _originalFetch(url, {
+      method: "POST",
+      headers,
+      body: formData,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (__DEV__) console.log("[Receipt Upload] Response", res.status, data);
+    if (!res.ok) {
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || `Upload failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    return { success: true, data: data.data ?? data };
+  } catch (e) {
+    if (__DEV__) console.error("[Receipt Upload] Error", e);
+    return { success: false, error: e.message || "Network error uploading receipt." };
+  }
+}
+
+/**
+ * Upload a payment receipt image for an existing time deposit request.
+ * POST /time-deposits/:id/receipt (multipart/form-data, field: "file")
+ * Called AFTER creating the time deposit request to attach the receipt.
+ * @param {string} accessToken - Backend JWT
+ * @param {string} requestId - ID returned from submitTimeDepositRequest
+ * @param {string} imageUri - Local file URI from ImagePicker (file://...)
+ * @param {string} [mimeType] - MIME type (default: image/jpeg)
+ * @returns {Promise<{ success: boolean, data?: object, error?: string }>}
+ */
+export async function uploadTimeDepositReceiptFile(accessToken, requestId, imageUri, mimeType = "image/jpeg") {
+  const url = buildUrl(`/time-deposits/${requestId}/receipt`);
+  if (!url) return { success: false, error: "Backend URL not configured." };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
+  try {
+    if (__DEV__) console.log("[TimeDeposit Receipt Upload] POST", url, "imageUri:", imageUri, "mimeType:", mimeType);
+    const ext = mimeType.split("/")[1] ?? "jpg";
+    const formData = new FormData();
+    formData.append("file", {
+      uri: imageUri,
+      name: `receipt.${ext}`,
+      type: mimeType,
+    });
+    const apiKey = process.env.EXPO_PUBLIC_API_KEY;
+    const headers = {
+      Authorization: `Bearer ${accessToken}`,
+    };
+    if (apiKey) headers["x-api-key"] = apiKey;
+    const res = await _originalFetch(url, {
+      method: "POST",
+      headers,
+      body: formData,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (__DEV__) console.log("[Receipt Upload] Response", res.status, data);
+    if (!res.ok) {
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || `Upload failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    return { success: true, data: data.data ?? data };
+  } catch (e) {
+    if (__DEV__) console.error("[Receipt Upload] Error", e);
+    return { success: false, error: e.message || "Network error uploading receipt." };
+  }
+}
+
+
+
+/**
  * Submit a stock investment request via the backend.
  * POST /deposit-requests/stock-investment
  * @param {string} accessToken - Backend JWT
