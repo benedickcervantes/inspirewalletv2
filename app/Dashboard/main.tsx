@@ -303,6 +303,7 @@ export default function Dashboard() {
           lastName: user.lastName,
           email: user.email,
           accountNumber: user.accountNumber,
+          role: (user as Record<string, unknown>).role ?? 'USER',
         });
 
         // Load cached active card design once we know the account number
@@ -1027,16 +1028,23 @@ export default function Dashboard() {
                   const serviceId =
                     routeToServiceMap[item.route] || item.route.toLowerCase();
                   const isUnderMaintenance = maintenanceStatus[serviceId];
+                  // DEVELOPER, ADMIN and SUPER_ADMIN bypass maintenance blocks
+                  const userRole = userData?.role as string | undefined;
+                  const isDeveloperOrAdmin =
+                    userRole === 'DEVELOPER' ||
+                    userRole === 'ADMIN' ||
+                    userRole === 'SUPER_ADMIN';
+                  const isBlocked = isUnderMaintenance && !isDeveloperOrAdmin;
 
                   return (
                     <TouchableOpacity
                       key={index}
                       style={[
                         styles.menuItem,
-                        isUnderMaintenance && styles.menuItemDisabled,
+                        isBlocked && styles.menuItemDisabled,
                       ]}
                       onPress={() => {
-                        if (isUnderMaintenance) {
+                        if (isBlocked) {
                           setSelectedMaintenanceService(item.labelKey);
                         } else {
                           (
@@ -1049,7 +1057,7 @@ export default function Dashboard() {
                       <View
                         style={[
                           styles.menuIcon,
-                          isUnderMaintenance && styles.menuIconDisabled,
+                          isBlocked && styles.menuIconDisabled,
                         ]}
                       >
                         <MaterialCommunityIcons
@@ -1059,18 +1067,18 @@ export default function Dashboard() {
                             >["name"]
                           }
                           size={24}
-                          color={isUnderMaintenance ? "#CCCCCC" : "#000000"}
+                          color={isBlocked ? "#CCCCCC" : "#000000"}
                         />
                       </View>
                       <Text
                         style={[
                           styles.menuLabel,
-                          isUnderMaintenance && styles.menuLabelDisabled,
+                          isBlocked && styles.menuLabelDisabled,
                         ]}
                       >
                         {t(item.labelKey)}
                       </Text>
-                      {isUnderMaintenance && (
+                      {isBlocked && (
                         <View style={styles.comingSoonBadge}>
                           <Text style={styles.comingSoonText}>Coming Soon</Text>
                         </View>

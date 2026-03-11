@@ -2,9 +2,11 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  AppState,
+  AppStateStatus,
   FlatList,
   Modal,
   RefreshControl,
@@ -107,6 +109,11 @@ export default function StockService() {
     setShowAlert(true);
   };
 
+  // ── Realtime polling ────────────────────────────────────────────────────
+  const POLL_INTERVAL_MS = 15_000; // 15 seconds
+  const appStateRef = useRef<AppStateStatus>(AppState.currentState);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
   const loadData = useCallback(async () => {
     try {
       const accessToken = await AsyncStorage.getItem("access_token");
@@ -167,9 +174,53 @@ export default function StockService() {
     }
   }, []);
 
+  // Initial load
   useEffect(() => {
     setIsLoading(true);
     loadData().finally(() => setIsLoading(false));
+  }, [loadData]);
+
+  // AppState-aware polling: refresh every 15 s while foregrounded
+  useEffect(() => {
+    const startPolling = () => {
+      if (intervalRef.current) return;
+      intervalRef.current = setInterval(() => {
+        loadData();
+      }, POLL_INTERVAL_MS);
+    };
+
+    const stopPolling = () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+
+    // Start immediately
+    startPolling();
+
+    // Pause/resume based on app foreground state
+    const subscription = AppState.addEventListener(
+      "change",
+      (nextState: AppStateStatus) => {
+        if (
+          appStateRef.current.match(/inactive|background/) &&
+          nextState === "active"
+        ) {
+          // App came to foreground — refresh immediately + restart polling
+          loadData();
+          startPolling();
+        } else if (nextState.match(/inactive|background/)) {
+          stopPolling();
+        }
+        appStateRef.current = nextState;
+      },
+    );
+
+    return () => {
+      stopPolling();
+      subscription.remove();
+    };
   }, [loadData]);
 
   const onRefresh = useCallback(async () => {
