@@ -325,7 +325,7 @@ export default function CardsTab({
       case "ROYAL_CURVE":
         return require("../../assets/cards/design_collection/dc2/front.png");
       default:
-        return require("../../assets/images/Eecard 2.0.png");
+        return require("../../assets/images/Eecard_2.0.png");
     }
   };
 
@@ -340,7 +340,7 @@ export default function CardsTab({
       case "ROYAL_CURVE":
         return require("../../assets/cards/design_collection/dc2/back.png");
       default:
-        return require("../../assets/cards/default/card2.0 back.png");
+        return require("../../assets/cards/default/card2.0_back.png");
     }
   };
 

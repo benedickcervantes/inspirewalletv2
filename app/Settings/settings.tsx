@@ -20,10 +20,14 @@ import { getReferralCode, resendVerification, verifyEmail } from '../../configs/
 import { useLanguage } from '../../context/LanguageContext';
 import { useResponsive } from '../../utils/responsive';
 import CustomLoader from '../Loader/CustomLoader';
-
+import * as LocalAuthentication from 'expo-local-authentication';
+import * as SecureStore from 'expo-secure-store';
+import { enableBiometric, disableBiometric } from '../../configs/api';
+import { Platform } from 'react-native';
 interface UserData {
   email?: string;
   emailVerified?: boolean;
+  biometricEnabled?: boolean;
 }
 
 const Settings = () => {
@@ -43,16 +47,28 @@ const Settings = () => {
   const [emailVerifySuccess, setEmailVerifySuccess] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
 
+  // Biometric state
+  const [hasBiometricHardware, setHasBiometricHardware] = useState(false);
+  const [biometricType, setBiometricType] = useState<string>('Biometrics');
+  const [biometricModalVisible, setBiometricModalVisible] = useState(false);
+  const [biometricPassword, setBiometricPassword] = useState('');
+  const [biometricLoading, setBiometricLoading] = useState(false);
+  const [biometricError, setBiometricError] = useState<string | null>(null);
+
   const loadUser = useCallback(async () => {
     const userJson = await AsyncStorage.getItem('user');
     if (userJson) {
       try {
         const user = JSON.parse(userJson) as UserData;
-        setUserData({ email: user.email, emailVerified: user.emailVerified });
+        setUserData({ 
+          email: user.email, 
+          emailVerified: user.emailVerified,
+          biometricEnabled: user.biometricEnabled || false // Handle legacy data
+        });
       } catch (_) { }
     } else {
       // If no user data in AsyncStorage, set empty user object so we don't show loading screen
-      setUserData({ email: undefined, emailVerified: false });
+      setUserData({ email: undefined, emailVerified: false, biometricEnabled: false });
     }
   }, []);
 
@@ -96,6 +112,30 @@ const Settings = () => {
   useEffect(() => {
     loadReferralCode();
   }, [loadReferralCode]);
+
+  useEffect(() => {
+    // Check if device supports biometrics
+    const checkBiometrics = async () => {
+      try {
+        const compatible = await LocalAuthentication.hasHardwareAsync();
+        const enrolled = await LocalAuthentication.isEnrolledAsync();
+        const supportedTypes = await LocalAuthentication.supportedAuthenticationTypesAsync();
+        
+        setHasBiometricHardware(compatible && enrolled);
+
+        if (supportedTypes.includes(LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION)) {
+          setBiometricType('Face ID');
+        } else if (supportedTypes.includes(LocalAuthentication.AuthenticationType.FINGERPRINT)) {
+          setBiometricType(Platform.OS === 'ios' ? 'Touch ID' : 'Biometrics');
+        } else if (supportedTypes.includes(LocalAuthentication.AuthenticationType.IRIS)) {
+          setBiometricType('Iris Scanner');
+        }
+      } catch (e) {
+        console.error("LocalAuthentication Error:", e);
+      }
+    };
+    checkBiometrics();
+  }, []);
 
   /** Sign out: navigate to Passcode page while keeping session active (tokens remain). */
   const handleSignOut = async () => {
@@ -195,6 +235,94 @@ const Settings = () => {
     setEmailOtp('');
     setEmailVerifyError(null);
     setEmailVerifySuccess(false);
+  };
+
+  const handleToggleBiometric = async () => {
+    if (userData?.biometricEnabled) {
+      // Disable biometric
+      const accessToken = await AsyncStorage.getItem('access_token');
+      if (!accessToken) return;
+      
+      try {
+        await SecureStore.deleteItemAsync('biometricToken');
+        const res = await disableBiometric(accessToken);
+        if (res.success) {
+          setUserData(prev => prev ? { ...prev, biometricEnabled: false } : null);
+          const userJson = await AsyncStorage.getItem('user');
+          if (userJson) {
+            const user = JSON.parse(userJson);
+            await AsyncStorage.setItem('user', JSON.stringify({ ...user, biometricEnabled: false }));
+          }
+        }
+      } catch (e) {
+        console.error("Failed to disable biometric", e);
+      }
+    } else {
+      // Check if email is verified
+      if (!userData?.emailVerified) {
+        openEmailVerifyModal();
+        return;
+      }
+      
+      // Open setup modal
+      setBiometricPassword('');
+      setBiometricError(null);
+      setBiometricModalVisible(true);
+    }
+  };
+
+  const handleEnableBiometric = async () => {
+    if (!biometricPassword.trim() || !userData?.email) {
+      setBiometricError(t('settings.enterPassword'));
+      return;
+    }
+
+    setBiometricLoading(true);
+    setBiometricError(null);
+
+    try {
+      // 1. Authenticate with local biometrics first
+      const authResult = await LocalAuthentication.authenticateAsync({
+        promptMessage: `Authenticate to enable ${biometricType}`,
+        fallbackLabel: 'Use Passcode',
+        disableDeviceFallback: false,
+      });
+
+      if (!authResult.success) {
+        setBiometricError('Biometric authentication failed or was cancelled.');
+        setBiometricLoading(false);
+        return;
+      }
+
+      // 2. Call backend to enable
+      const accessToken = await AsyncStorage.getItem('access_token');
+      if (!accessToken) throw new Error("No access token");
+
+      const res = await enableBiometric(accessToken, userData.email, biometricPassword);
+      
+      if (res.success && res.token) {
+        // 3. Store token securely
+        await SecureStore.setItemAsync('biometricToken', res.token);
+        
+        // 4. Update UI state
+        setUserData(prev => prev ? { ...prev, biometricEnabled: true } : null);
+        
+        // 5. Update async storage
+        const userJson = await AsyncStorage.getItem('user');
+        if (userJson) {
+          const user = JSON.parse(userJson);
+          await AsyncStorage.setItem('user', JSON.stringify({ ...user, biometricEnabled: true }));
+        }
+
+        setBiometricModalVisible(false);
+      } else {
+        setBiometricError(res.error || 'Failed to enable biometric authentication on the server.');
+      }
+    } catch (e: any) {
+      setBiometricError(e.message || 'An unexpected error occurred.');
+    } finally {
+      setBiometricLoading(false);
+    }
   };
 
   const securityOptions = [
@@ -389,7 +517,7 @@ const Settings = () => {
                 style={[
                   styles.optionItem,
                   r.optionItem,
-                  index !== securityOptions.length - 1 && styles.optionBorder,
+                  (index !== securityOptions.length - 1 || hasBiometricHardware) && styles.optionBorder,
                 ]}
                 onPress={option.onPress}
               >
@@ -407,6 +535,34 @@ const Settings = () => {
                 <Ionicons name="chevron-forward" size={r.iconSizeSmall} color="#CCC" />
               </TouchableOpacity>
             ))}
+            
+            {hasBiometricHardware && (
+              <TouchableOpacity
+                style={[styles.optionItem, r.optionItem]}
+                onPress={handleToggleBiometric}
+              >
+                <View style={styles.optionLeft}>
+                  <View style={[styles.iconContainer, r.iconContainer]}>
+                    <Ionicons 
+                      name={Platform.OS === 'ios' ? 'scan' : 'finger-print'} 
+                      size={r.iconSize} 
+                      color="#F38B35" 
+                    />
+                  </View>
+                  <View style={[styles.optionText, r.optionText]}>
+                    <Text style={[styles.optionTitle, r.optionTitle]} numberOfLines={1}>
+                      {t('settings.biometricLogin', { type: biometricType })}
+                    </Text>
+                    <Text style={[styles.optionSubtitle, r.optionSubtitle]} numberOfLines={2}>
+                      {t('settings.biometricSubtitle', { type: biometricType })}
+                    </Text>
+                  </View>
+                </View>
+                <View style={[styles.toggleSwitch, userData?.biometricEnabled && styles.toggleSwitchActive]}>
+                  <View style={[styles.toggleThumb, userData?.biometricEnabled && styles.toggleThumbActive]} />
+                </View>
+              </TouchableOpacity>
+            )}
           </View>
 
           <Text style={[styles.sectionTitle, r.sectionTitle]}>{t('settings.customerRelationship')}</Text>
@@ -507,6 +663,61 @@ const Settings = () => {
             </View>
           </View>
         </Modal>
+
+        {/* Biometric Setup Modal */}
+        <Modal
+          visible={biometricModalVisible}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setBiometricModalVisible(false)}
+        >
+          <View style={[styles.modalOverlay, r.modalOverlay]}>
+            <View style={[styles.emailVerifyModalContent, r.modalContent]}>
+              <View style={[styles.modalHeader, r.modalHeader]}>
+                <Text style={[styles.modalTitle, r.modalTitle]} numberOfLines={1}>
+                  {t('settings.enableBiometric', { type: biometricType })}
+                </Text>
+                <TouchableOpacity onPress={() => setBiometricModalVisible(false)} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+                  <Ionicons name="close" size={r.iconSize} color="#333" />
+                </TouchableOpacity>
+              </View>
+
+              <Text style={[styles.modalSubtitle, r.modalSubtitle]} numberOfLines={3}>
+                {t('settings.biometricSetupSubtitle')}
+              </Text>
+
+              <TextInput
+                style={[styles.passwordInput, r.passwordInput]}
+                placeholder={t('settings.passwordPlaceholder')}
+                placeholderTextColor="#999"
+                value={biometricPassword}
+                onChangeText={(val) => {
+                  setBiometricPassword(val);
+                  setBiometricError(null);
+                }}
+                secureTextEntry
+                autoCapitalize="none"
+              />
+
+              {biometricError ? (
+                <Text style={[styles.referralErrorText, r.referralErrorText, { marginBottom: 12 }]}>{biometricError}</Text>
+              ) : null}
+
+              <TouchableOpacity
+                style={[styles.modalButton, r.modalButton, biometricLoading && styles.modalButtonDisabled]}
+                onPress={handleEnableBiometric}
+                disabled={biometricLoading || !biometricPassword}
+              >
+                {biometricLoading ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Text style={[styles.modalButtonText, r.modalButtonText]}>{t('settings.enable')}</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+
       </SafeAreaView>
     </>
   );
@@ -716,6 +927,37 @@ const styles = StyleSheet.create({
     color: '#666',
     marginLeft: 8,
     letterSpacing: 1,
+  },
+  toggleSwitch: {
+    width: 44,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#E0E0E0',
+    justifyContent: 'center',
+    padding: 2,
+  },
+  toggleSwitchActive: {
+    backgroundColor: '#DE5212', // Orange theme
+  },
+  toggleThumb: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#FFFFFF',
+    transform: [{ translateX: 0 }],
+  },
+  toggleThumbActive: {
+    transform: [{ translateX: 20 }],
+  },
+  passwordInput: {
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 16,
+    marginBottom: 16,
+    color: '#333',
   },
 });
 

@@ -4,7 +4,7 @@
     "slug": "investor-wallet",
     "version": "3.0.2",
     "orientation": "portrait",
-    "icon": "./assets/images/Startup [DONE].jpg",
+    "icon": "./assets/images/Startup_DONE.jpg",
     "scheme": "inspirewalletv3",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -13,13 +13,14 @@
       "bundleIdentifier": "com.inspire.inspirewallet",
       "infoPlist": {
         "NSContactsUsageDescription": "This app needs access to your contacts to help you select recipients for transfers.",
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSFaceIDUsageDescription": "This app uses Face ID to provide secure and fast access to your wallet."
       }
     },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/Startup [DONE].jpg"
+        "foregroundImage": "./assets/images/Startup_DONE.jpg"
       },
       "package": "com.inspire.inspirewallet",
       "edgeToEdgeEnabled": true,
@@ -32,14 +33,14 @@
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/Startup [DONE]..jpg"
+      "favicon": "./assets/images/Startup_DONE.jpg"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/Startup [DONE].jpg",
+          "image": "./assets/images/Startup_DONE.jpg",
           "resizeMode": "cover",
           "backgroundColor": "#ffffff",
           "dark": {
@@ -52,6 +53,13 @@
         "expo-contacts",
         {
           "contactsPermission": "Allow InspireWallet to access your contacts to select transfer recipients."
+        }
+      ],
+      "expo-secure-store",
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Allow InspireWallet to use Face ID for secure login."
         }
       ]
     ],

@@ -129,7 +129,7 @@ export default function WithdrawRequest() {
                 <View style={styles.methodIconBox}>
                   {method.useImage ? (
                     <Image
-                      source={require("../../../assets/images/local bank icon.png")}
+                      source={require("../../../assets/images/local_bank_icon.png")}
                       style={styles.bankIcon}
                       resizeMode="contain"
                     />

@@ -7,7 +7,7 @@ import type { RootStackParamList } from "../../types/navigation";
 import CustomLoader from "../Loader/CustomLoader";
 import { useLanguage } from "../../context/LanguageContext";
 
-const MIN_SPLASH_MS = 3000;
+const MIN_SPLASH_MS = 0;
 
 type ScreenName = keyof RootStackParamList;
 
