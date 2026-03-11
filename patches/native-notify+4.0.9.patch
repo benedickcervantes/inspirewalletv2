@@ -1,0 +1,42 @@
+diff --git a/node_modules/native-notify/index.js b/node_modules/native-notify/index.js
+index 687e943..39de050 100644
+--- a/node_modules/native-notify/index.js
++++ b/node_modules/native-notify/index.js
+@@ -89,8 +89,9 @@ export default function registerNNPushToken(appId, appToken) {
+             });
+             
+             return () => {
+-                responseListener.current &&
+-                    Notifications.removeNotificationSubscription(responseListener.current);
++                if (responseListener.current?.remove) {
++                    responseListener.current.remove();
++                }
+             };
+ 
+             // return () => { Notifications.removeNotificationSubscription(responseListener); };
+@@ -276,7 +277,11 @@ export function getPushDataObject() {
+                 setData(response.notification.request.content.data);
+             });
+             
+-            return () => { Notifications.removeNotificationSubscription(responseListener.current); };
++            return () => {
++                if (responseListener.current?.remove) {
++                    responseListener.current.remove();
++                }
++            };
+         }
+     }, []);
+ 
+@@ -295,7 +300,11 @@ export function getPushDataInForeground() {
+                 setData(response.request.content.data);
+             });
+             
+-            return () => { Notifications.removeNotificationSubscription(notificationListener.current); };
++            return () => {
++                if (notificationListener.current?.remove) {
++                    notificationListener.current.remove();
++                }
++            };
+         }
+     }, []);
+ 

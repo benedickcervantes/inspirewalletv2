@@ -895,7 +895,11 @@ const Notification = () => {
           activeOpacity={1}
           onPress={() => setDetailModalNotification(null)}
         >
-          <TouchableOpacity activeOpacity={1} onPress={(e) => e.stopPropagation()}>
+          <TouchableOpacity
+            activeOpacity={1}
+            onPress={(e) => e.stopPropagation()}
+            style={styles.detailModalTouchable}
+          >
             <LinearGradient
               colors={['#E25A17', '#F28934']}
               style={[styles.alertContainer, styles.detailModal]}
@@ -928,7 +932,10 @@ const Notification = () => {
               <ScrollView
                 style={styles.detailScroll}
                 contentContainerStyle={styles.detailScrollContent}
-                showsVerticalScrollIndicator={false}
+                showsVerticalScrollIndicator={true}
+                indicatorStyle="white"
+                nestedScrollEnabled={true}
+                bounces={true}
               >
                 {detailModalNotification && getDetailFields(detailModalNotification).map(({ label, value }, idx) => (
                   <View key={idx} style={styles.detailRow}>
@@ -1255,26 +1262,32 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  detailModalTouchable: {
+    width: DETAIL_MODAL_WIDTH,
+    maxHeight: DETAIL_MODAL_MAX_HEIGHT,
+  },
   detailModal: {
     maxHeight: '85%',
     overflow: 'hidden',
+    padding: 16,
   },
   detailHeader: {
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 16,
+    paddingHorizontal: 0,
+    paddingTop: 0,
+    paddingBottom: 12,
+    marginBottom: 0,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255,255,255,0.4)',
   },
   detailHeaderTop: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 12,
+    gap: 10,
   },
   detailIconWrapper: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: 'rgba(255,255,255,0.3)',
     justifyContent: 'center',
     alignItems: 'center',
@@ -1297,12 +1310,13 @@ const styles = StyleSheet.create({
     maxHeight: 340,
   },
   detailScrollContent: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 24,
+    paddingHorizontal: 0,
+    paddingTop: 12,
+    paddingBottom: 20,
+    flexGrow: 1,
   },
   detailRow: {
-    marginBottom: 16,
+    marginBottom: 10,
   },
   detailLabel: {
     fontSize: 11,
@@ -1346,12 +1360,12 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   detailCloseTextButton: {
-    marginHorizontal: 20,
-    marginBottom: 20,
-    marginTop: 0,
+    marginHorizontal: 0,
+    marginBottom: 0,
+    marginTop: 4,
     backgroundColor: 'rgba(255,255,255,0.3)',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
     borderRadius: 8,
     alignItems: 'center',
   },
