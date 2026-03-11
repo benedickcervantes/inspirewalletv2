@@ -1,8 +1,8 @@
 import { useNavigation } from "@react-navigation/native";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 const THEME_COLOR = "#E15816";
-const STAMP_COLOR = "#C23A2B";
 
 interface MaintenanceModalProps {
   visible: boolean;
@@ -32,11 +32,15 @@ export function MaintenanceModal({ visible, onClose }: MaintenanceModalProps) {
     >
       <View style={styles.modalOverlay}>
         <View style={styles.modalContent}>
-          {/* Stamp-style badge */}
-          <View style={styles.stampContainer}>
-            <View style={styles.stampBorder} />
-            <Text style={styles.stampText}>UNDER</Text>
-            <Text style={styles.stampText}>MAINTENANCE</Text>
+          <View style={styles.header}>
+            <View style={styles.iconCircle}>
+              <MaterialCommunityIcons
+                name="tools"
+                size={22}
+                color="#FFFFFF"
+              />
+            </View>
+            <Text style={styles.title}>Under maintenance</Text>
           </View>
           <Text style={styles.modalMessage}>
             This service is currently under maintenance. We're working hard to
@@ -76,31 +80,29 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 8,
   },
-  stampContainer: {
-    width: 140,
-    height: 100,
+  header: {
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  iconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: THEME_COLOR,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 24,
-    transform: [{ rotate: "-12deg" }],
+    marginBottom: 10,
+    shadowColor: THEME_COLOR,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 4,
   },
-  stampBorder: {
-    position: "absolute",
-    width: "100%",
-    height: "100%",
-    borderWidth: 3,
-    borderColor: STAMP_COLOR,
-    borderRadius: 4,
-    borderStyle: "dashed",
-    opacity: 0.9,
-  },
-  stampText: {
+  title: {
     fontSize: 16,
     fontWeight: "800",
-    color: STAMP_COLOR,
-    letterSpacing: 2,
-    textTransform: "uppercase",
-    opacity: 0.85,
+    color: "#333",
+    textAlign: "center",
   },
   modalMessage: {
     fontSize: 14,
