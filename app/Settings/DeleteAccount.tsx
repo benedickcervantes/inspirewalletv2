@@ -14,8 +14,10 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLanguage } from '../../context/LanguageContext';
 import type { NavProp } from '../../types/navigation';
+import { submitAccountDeletionRequest } from '../../configs/api';
 
 const REASON_KEYS = ['delete.reasonNoLonger', 'delete.reasonBetter', 'delete.reasonPrivacy', 'delete.reasonExpensive', 'delete.reasonTechnical', 'delete.reasonOther'] as const;
 
@@ -46,11 +48,28 @@ const DeleteAccount = () => {
     }
 
     setSubmitting(true);
-    // TODO: Replace with actual API call when backend endpoint is available
-    await new Promise((r) => setTimeout(r, 800));
-    setSubmitting(false);
-    setStep('done');
-    setShowSuccessModal(true);
+    try {
+      const accessToken = await AsyncStorage.getItem('access_token');
+      if (!accessToken) {
+        Alert.alert(t('delete.required'), t('delete.notAuthenticated') || 'Not authenticated');
+        return;
+      }
+
+      const res = await submitAccountDeletionRequest(accessToken, {
+        reason: reasonKey,
+        notes: additionalDetails?.trim() || undefined,
+      });
+
+      if (!res?.success) {
+        Alert.alert(t('common.error') || 'Error', res?.error || 'Failed to submit request');
+        return;
+      }
+
+      setStep('done');
+      setShowSuccessModal(true);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleSuccessModalClose = () => {
