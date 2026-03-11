@@ -236,7 +236,12 @@ export default function Dashboard() {
   const [selectedMaintenanceService, setSelectedMaintenanceService] = useState<
     string | null
   >(null);
+  const [showBankingServiceLockedModal, setShowBankingServiceLockedModal] =
+    useState(false);
   const [activeCardDesign, setActiveCardDesign] = useState<string | null>(null);
+
+  const BANKING_SERVICE_MIN_BALANCE = 200_000;
+  const isBankingServiceLocked = timeDeposit < BANKING_SERVICE_MIN_BALANCE;
 
   const getActiveCardStorageKey = (accountNumber?: string) =>
     accountNumber
@@ -678,10 +683,11 @@ export default function Dashboard() {
       >
         <View style={styles.maintenanceModalOverlay}>
           <View style={styles.maintenanceModalContent}>
-            <View style={styles.maintenanceModalIconContainer}>
-              <Text style={styles.maintenanceModalIcon}>🔧</Text>
+            <View style={styles.maintenanceStampContainer}>
+              <View style={styles.maintenanceStampBorder} />
+              <Text style={styles.maintenanceStampText}>UNDER</Text>
+              <Text style={styles.maintenanceStampText}>MAINTENANCE</Text>
             </View>
-            <Text style={styles.maintenanceModalTitle}>Coming Soon</Text>
             <Text style={styles.maintenanceModalMessage}>
               This service is currently under maintenance. We're working hard to
               bring you an improved experience. Please check back soon!
@@ -689,6 +695,36 @@ export default function Dashboard() {
             <TouchableOpacity
               style={styles.maintenanceModalButton}
               onPress={() => setSelectedMaintenanceService(null)}
+            >
+              <Text style={styles.maintenanceModalButtonText}>Got it</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+      <Modal
+        visible={showBankingServiceLockedModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowBankingServiceLockedModal(false)}
+      >
+        <View style={styles.maintenanceModalOverlay}>
+          <View style={styles.bankingLockModalContent}>
+            <View style={styles.bankingLockStampContainer}>
+              <View style={styles.bankingLockStampBorder} />
+              <Text style={styles.bankingLockStampText}>LOCKED</Text>
+            </View>
+            <View style={styles.bankingLockRequirementBox}>
+              <Text style={styles.bankingLockRequirementLabel}>
+                {t("dashboard.bankingServiceLockedRequirement")}
+              </Text>
+              <Text style={styles.bankingLockRequirementValue}>₱200,000</Text>
+            </View>
+            <Text style={styles.bankingLockMessage}>
+              {t("dashboard.bankingServiceLockedMessage")}
+            </Text>
+            <TouchableOpacity
+              style={styles.maintenanceModalButton}
+              onPress={() => setShowBankingServiceLockedModal(false)}
             >
               <Text style={styles.maintenanceModalButtonText}>Got it</Text>
             </TouchableOpacity>
@@ -905,17 +941,28 @@ export default function Dashboard() {
               <TouchableOpacity
                 style={[
                   styles.quickActionButton,
+                  isBankingServiceLocked && styles.quickActionButtonLocked,
                   {
                     paddingVertical: Math.round(14 * qaSpacing),
                     paddingHorizontal: Math.round(6 * qaSpacing),
                     minWidth: 0,
                   },
                 ]}
-                onPress={() => navigation.navigate("Bdo")}
+                onPress={() => {
+                  if (isBankingServiceLocked) {
+                    setShowBankingServiceLockedModal(true);
+                  } else {
+                    (
+                      navigation as { navigate: (name: string) => void }
+                    ).navigate("Bdo");
+                  }
+                }}
+                activeOpacity={0.7}
               >
                 <View
                   style={[
                     styles.quickActionIcon,
+                    isBankingServiceLocked && styles.quickActionIconLocked,
                     {
                       width: Math.round(48 * qaSpacing),
                       height: Math.round(48 * qaSpacing),
@@ -926,11 +973,24 @@ export default function Dashboard() {
                   <MaterialCommunityIcons
                     name="bank"
                     size={qaIconSize}
-                    color="#E15816"
+                    color={isBankingServiceLocked ? "#CCCCCC" : "#E15816"}
                   />
+                  {isBankingServiceLocked && (
+                    <View style={styles.quickActionLockBadge}>
+                      <MaterialCommunityIcons
+                        name="lock"
+                        size={13}
+                        color="#FFFFFF"
+                      />
+                    </View>
+                  )}
                 </View>
                 <Text
-                  style={[styles.quickActionLabel, { fontSize: qaLabelSize }]}
+                  style={[
+                    styles.quickActionLabel,
+                    { fontSize: qaLabelSize },
+                    isBankingServiceLocked && styles.quickActionLabelLocked,
+                  ]}
                   numberOfLines={2}
                 >
                   {t("dashboard.bankingService")}
@@ -1080,7 +1140,8 @@ export default function Dashboard() {
                       </Text>
                       {isBlocked && (
                         <View style={styles.comingSoonBadge}>
-                          <Text style={styles.comingSoonText}>Coming Soon</Text>
+                          <View style={styles.comingSoonBadgeBorder} />
+                          <Text style={styles.comingSoonText}>UNDER MAINT.</Text>
                         </View>
                       )}
                     </TouchableOpacity>
@@ -1323,6 +1384,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   quickActionIcon: {
+    position: "relative",
     width: 56,
     height: 56,
     borderRadius: 16,
@@ -1337,6 +1399,99 @@ const styles = StyleSheet.create({
     color: "#333",
     textAlign: "center",
     lineHeight: 14,
+  },
+  quickActionButtonLocked: {
+    backgroundColor: "#FAFAFA",
+    borderWidth: 2,
+    borderColor: "#E5E5E5",
+    borderStyle: "dashed",
+  },
+  quickActionIconLocked: {
+    backgroundColor: "#F0F0F0",
+  },
+  quickActionLabelLocked: {
+    color: "#999",
+  },
+  quickActionLockBadge: {
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    width: 26,
+    height: 26,
+    marginTop: -13,
+    marginLeft: -13,
+    borderRadius: 13,
+    backgroundColor: "#E15816",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#E15816",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 4,
+    borderWidth: 2,
+    borderColor: "#FFFFFF",
+  },
+  bankingLockModalContent: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    padding: 28,
+    width: "100%",
+    maxWidth: 320,
+    alignItems: "center",
+  },
+  bankingLockStampContainer: {
+    width: 120,
+    height: 48,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 20,
+    transform: [{ rotate: "-8deg" }],
+  },
+  bankingLockStampBorder: {
+    position: "absolute",
+    width: "100%",
+    height: "100%",
+    borderWidth: 2,
+    borderColor: "#C23A2B",
+    borderRadius: 4,
+    borderStyle: "dashed",
+    opacity: 0.9,
+  },
+  bankingLockStampText: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#C23A2B",
+    letterSpacing: 2,
+    opacity: 0.9,
+  },
+  bankingLockRequirementBox: {
+    backgroundColor: "#FFF8F5",
+    borderWidth: 1,
+    borderColor: "#FFE4D6",
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    marginBottom: 16,
+    alignItems: "center",
+    width: "100%",
+  },
+  bankingLockRequirementLabel: {
+    fontSize: 12,
+    color: "#666",
+    marginBottom: 4,
+  },
+  bankingLockRequirementValue: {
+    fontSize: 22,
+    fontWeight: "800",
+    color: "#E15816",
+  },
+  bankingLockMessage: {
+    fontSize: 14,
+    color: "#666",
+    textAlign: "center",
+    marginBottom: 24,
+    lineHeight: 20,
   },
   menuContainer: {
     marginHorizontal: 20,
@@ -1405,25 +1560,30 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: "50%",
     left: "50%",
-    width: 60,
-    height: 14,
-    backgroundColor: "#FFB84D",
+    width: 56,
+    height: 18,
     justifyContent: "center",
     alignItems: "center",
-    borderRadius: 1,
-    transform: [{ translateX: -30 }, { translateY: -7 }, { rotate: "-45deg" }],
+    transform: [{ translateX: -28 }, { translateY: -9 }, { rotate: "-35deg" }],
     zIndex: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.15,
-    shadowRadius: 2,
-    elevation: 2,
+  },
+  comingSoonBadgeBorder: {
+    position: "absolute",
+    width: "100%",
+    height: "100%",
+    borderWidth: 2,
+    borderColor: "#C23A2B",
+    borderRadius: 3,
+    borderStyle: "dashed",
+    opacity: 0.9,
   },
   comingSoonText: {
-    fontSize: 6.5,
-    fontWeight: "700",
-    color: "#FFFFFF",
-    letterSpacing: 0.2,
+    fontSize: 6,
+    fontWeight: "800",
+    color: "#C23A2B",
+    letterSpacing: 0.5,
+    textAlign: "center",
+    opacity: 0.9,
   },
   languageCarouselContainer: { marginVertical: 16 },
   languageCarouselWrapper: { position: "relative", marginBottom: 12 },
@@ -1502,29 +1662,35 @@ const styles = StyleSheet.create({
   maintenanceModalContent: {
     backgroundColor: "#FFFFFF",
     borderRadius: 16,
-    padding: 24,
+    padding: 28,
     width: "100%",
     maxWidth: 320,
     alignItems: "center",
   },
-  maintenanceModalIconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: "#FFF3E0",
+  maintenanceStampContainer: {
+    width: 140,
+    height: 100,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 16,
+    marginBottom: 24,
+    transform: [{ rotate: "-12deg" }],
   },
-  maintenanceModalIcon: {
-    fontSize: 40,
+  maintenanceStampBorder: {
+    position: "absolute",
+    width: "100%",
+    height: "100%",
+    borderWidth: 3,
+    borderColor: "#C23A2B",
+    borderRadius: 4,
+    borderStyle: "dashed",
+    opacity: 0.9,
   },
-  maintenanceModalTitle: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#333",
-    marginBottom: 12,
-    textAlign: "center",
+  maintenanceStampText: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: "#C23A2B",
+    letterSpacing: 2,
+    opacity: 0.85,
   },
   maintenanceModalMessage: {
     fontSize: 14,

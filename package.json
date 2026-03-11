@@ -3,6 +3,7 @@
   "main": "./index.tsx",
   "version": "1.0.0",
   "scripts": {
+    "postinstall": "patch-package",
     "start": "expo start",
     "build": "expo export",
     "build:web": "expo export --platform web",

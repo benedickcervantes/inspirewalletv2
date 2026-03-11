@@ -196,6 +196,10 @@ const en: TranslationMap = {
   "dashboard.loadingDashboard": "LOADING DASHBOARD...",
   "dashboard.loadingAgent": "LOADING AGENT...",
   "dashboard.loadingSupport": "LOADING SUPPORT...",
+  "dashboard.bankingServiceLockedTitle": "Banking Service Locked",
+  "dashboard.bankingServiceLockedRequirement": "Required Time Deposit",
+  "dashboard.bankingServiceLockedMessage":
+    "Your Time Deposit balance under Investment must be at least ₱200,000 to unlock Banking Service. Your current balance is below this requirement. Please grow your Investment to ₱200,000 to unlock this feature.",
 
   // Withdraw
   "withdraw.fromAvailableBalance": "Withdraw from available balance",
@@ -2103,6 +2107,11 @@ const ko: TranslationMap = {
   "dashboard.loadingAgent": "에이전트 로딩 중...",
   "dashboard.loadingSupport": "고객 지원 로딩 중...",
   "dashboard.loadingDashboard": "대시보드 로딩 중...",
+  "dashboard.bankingServiceLockedTitle": "뱅킹 서비스 잠김",
+  "dashboard.bankingServiceLockedRequirement": "필요 정기예금",
+  "dashboard.bankingServiceLockedMessage":
+    "뱅킹 서비스를 이용하려면 투자 탭의 정기예금 잔액이 최소 ₱200,000 이상이어야 합니다. 현재 잔액이 요건에 미달합니다. 투자를 ₱200,000까지 늘리시면 잠금이 해제됩니다.",
+
   "common.retry": "재시도",
   "common.success": "성공",
   "common.back": "뒤로",
@@ -3442,6 +3451,11 @@ const ja: TranslationMap = {
   "dashboard.loadingAgent": "エージェント読み込み中...",
   "dashboard.loadingSupport": "サポート読み込み中...",
   "dashboard.loadingDashboard": "ダッシュボードを読み込み中...",
+  "dashboard.bankingServiceLockedTitle": "銀行情報がロックされています",
+  "dashboard.bankingServiceLockedRequirement": "必要な定期預金",
+  "dashboard.bankingServiceLockedMessage":
+    "銀行情報を利用するには、投資タブの定期預金残高が最低₱200,000以上必要です。現在の残高が要件を満たしていません。投資を₱200,000まで増やすとロックが解除されます。",
+
   "common.retry": "再試行",
   "common.success": "成功",
   "common.back": "戻る",
@@ -4847,6 +4861,11 @@ const ar: TranslationMap = {
   "dashboard.loadingAgent": "جاري تحميل الوكيل...",
   "dashboard.loadingSupport": "جاري تحميل الدعم...",
   "dashboard.loadingDashboard": "جاري تحميل لوحة التحكم...",
+  "dashboard.bankingServiceLockedTitle": "خدمة البنك مقفلة",
+  "dashboard.bankingServiceLockedRequirement": "الوديعة المطلوبة",
+  "dashboard.bankingServiceLockedMessage":
+    "يجب أن يكون رصيد الودائع لأجل في تبويب الاستثمار 200,000₱ على الأقل لفتح خدمة البنك. رصيدك الحالي أقل من المتطلب. يرجى زيادة استثمارك إلى 200,000₱ لفتح هذه الميزة.",
+
   "common.retry": "إعادة المحاولة",
   "common.success": "نجاح",
   "common.back": "رجوع",
