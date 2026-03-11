@@ -1001,6 +1001,107 @@ export async function updatePasscode(
 }
 
 /**
+ * POST /auth/biometric/enable — requires JWT
+ * Enables biometric login. Requires user to verify identity with email & password.
+ * @param {string} accessToken
+ * @param {string} email
+ * @param {string} password
+ * @returns {{ success: boolean, token?: string, error?: string }}
+ */
+export async function enableBiometric(accessToken, email, password) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "No token" };
+  try {
+    const res = await apiFetch(`${base}/auth/biometric/enable`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ email: email.trim(), password }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || "Failed to enable biometric";
+      return { success: false, error: msg };
+    }
+    return { success: true, token: data.token }; // Token string to be saved to SecureStore
+  } catch (e) {
+    return { success: false, error: e.message || "Network error" };
+  }
+}
+
+/**
+ * POST /auth/biometric/disable — requires JWT
+ * Disables biometric login for the current user.
+ * @param {string} accessToken
+ * @returns {{ success: boolean, message?: string, error?: string }}
+ */
+export async function disableBiometric(accessToken) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "No token" };
+  try {
+    const res = await apiFetch(`${base}/auth/biometric/disable`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || "Failed to disable biometric";
+      return { success: false, error: msg };
+    }
+    return { success: true, message: data.message };
+  } catch (e) {
+    return { success: false, error: e.message || "Network error" };
+  }
+}
+
+/**
+ * POST /auth/biometric/verify — NO JWT REQUIRED
+ * Used during login. Transmits the secure biometric token to get an access_token.
+ * @param {string} token — The token from SecureStore
+ * @returns {{ success: boolean, access_token?: string, user?: object, requiresPasswordReset?: boolean, error?: string }}
+ */
+export async function verifyBiometric(token) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  try {
+    const res = await apiFetch(`${base}/auth/biometric/verify`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || `Request failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    return {
+      success: true,
+      access_token: data.access_token,
+      user: data.user,
+      requiresPasswordReset: data.requiresPasswordReset === true,
+    };
+  } catch (e) {
+    return {
+      success: false,
+      error: e.message || "Network error. Is the backend running?",
+    };
+  }
+}
+
+/**
  * POST /auth/verify-email
  * Verifies email with 6-digit OTP.
  * @param {string} email

@@ -20,7 +20,9 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { login, resetPasscode, verifyPasscode } from '../../configs/api';
+import * as LocalAuthentication from 'expo-local-authentication';
+import * as SecureStore from 'expo-secure-store';
+import { login, resetPasscode, verifyPasscode, verifyBiometric } from '../../configs/api';
 import {
   DEFAULT_LANGUAGE,
   normalizeLanguage,
@@ -148,6 +150,10 @@ export default function Passcode() {
   const { t, language: contextLanguage, setLanguage } = useLanguage();
   const language = normalizeLanguage(contextLanguage ?? DEFAULT_LANGUAGE);
   const [verifyingPasscode, setVerifyingPasscode] = useState(false);
+  
+  // Biometric state
+  const [hasBiometricToken, setHasBiometricToken] = useState(false);
+  const [biometricType, setBiometricType] = useState<string>('Biometrics');
 
   const shakeAnim = useRef(new Animated.Value(0)).current;
 
@@ -171,6 +177,26 @@ export default function Passcode() {
       if (!cancelled) {
         if (!accessToken) {
           setNeedsAuth(true);
+        } else {
+          // Check for biometric token and support
+          try {
+            const token = await SecureStore.getItemAsync('biometricToken');
+            if (token) {
+              const compatible = await LocalAuthentication.hasHardwareAsync();
+              const enrolled = await LocalAuthentication.isEnrolledAsync();
+              if (compatible && enrolled) {
+                setHasBiometricToken(true);
+                const supportedTypes = await LocalAuthentication.supportedAuthenticationTypesAsync();
+                if (supportedTypes.includes(LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION)) {
+                  setBiometricType('Face ID');
+                } else if (supportedTypes.includes(LocalAuthentication.AuthenticationType.FINGERPRINT)) {
+                  setBiometricType(Platform.OS === 'ios' ? 'Touch ID' : 'fingerprint');
+                }
+              }
+            }
+          } catch (e) {
+            console.error("Biometric init error:", e);
+          }
         }
         // If access token exists, show passcode entry screen (don't redirect to Main)
         setLoadingPasscode(false);
@@ -180,6 +206,49 @@ export default function Passcode() {
     loadPasscode();
     return () => { cancelled = true; };
   }, [navigation]);
+
+  // Handle Biometric Login Flow
+  const handleBiometricAuth = async () => {
+    try {
+      setVerifyingPasscode(true);
+      setError('');
+
+      const token = await SecureStore.getItemAsync('biometricToken');
+      if (!token) {
+        throw new Error("No biometric token found");
+      }
+
+      const authResult = await LocalAuthentication.authenticateAsync({
+        promptMessage: `Log in with ${biometricType}`,
+        fallbackLabel: 'Use Passcode',
+        disableDeviceFallback: false,
+      });
+
+      if (authResult.success) {
+        const result = await verifyBiometric(token);
+        
+        if (result.success && result.access_token) {
+          await AsyncStorage.setItem('access_token', result.access_token);
+          if (result.user) {
+            await AsyncStorage.setItem('user', JSON.stringify(result.user));
+          }
+          await AsyncStorage.setItem('passcodeLoginComplete', 'true');
+          (navigation as unknown as NavProp).replace('Main');
+        } else {
+          setError(result.error || 'Biometric login failed on server. Please use passcode.');
+          setVerifyingPasscode(false);
+          triggerShake();
+        }
+      } else {
+        // User cancelled or failed local auth
+        setVerifyingPasscode(false);
+      }
+    } catch (e: any) {
+      console.error("Biometric auth error:", e);
+      setError('Biometric authentication error. Please use passcode.');
+      setVerifyingPasscode(false);
+    }
+  };
 
   const triggerShake = () => {
     Animated.sequence([
@@ -419,7 +488,20 @@ export default function Passcode() {
                   </View>
                 ))}
                 <View style={[styles.padRowLast, { marginBottom: tiny ? 4 : compact ? 8 : 20 }]}>
-                  <View style={{ width: btnSize }} />
+                  {hasBiometricToken ? (
+                    <TouchableOpacity
+                      style={[styles.padButton, styles.padButtonBiometric, { width: btnSize, height: btnSize, borderRadius: btnSize / 2 }]}
+                      onPress={handleBiometricAuth}
+                    >
+                      <Ionicons 
+                        name={Platform.OS === 'ios' ? 'scan' : 'finger-print'} 
+                        size={backspaceIconSize + 4} 
+                        color={WHITE} 
+                      />
+                    </TouchableOpacity>
+                  ) : (
+                    <View style={{ width: btnSize }} />
+                  )}
                   <TouchableOpacity
                     style={[styles.padButton, { width: btnSize, height: btnSize, borderRadius: btnSize / 2 }]}
                     onPress={() => handlePress('0')}
@@ -791,6 +873,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.25)',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  padButtonBiometric: {
+    backgroundColor: 'transparent',
+    borderWidth: 0,
   },
   padButtonDel: {
     backgroundColor: 'transparent',
