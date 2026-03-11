@@ -31,6 +31,9 @@ import CustomLoader from "../../Loader/CustomLoader";
 const THEME_COLOR = "#E15816";
 
 type Tab = "portfolio" | "orders" | "marketplace";
+type OrderHistoryFilter = "buy" | "sell";
+
+const ORDERS_PER_PAGE = 5;
 
 interface MarketplaceListing {
   id: string;
@@ -91,6 +94,9 @@ export default function StockService() {
   // My Orders state
   const [buyRequests, setBuyRequests] = useState<StockRequest[]>([]);
   const [sellListings, setSellListings] = useState<StockRequest[]>([]);
+  const [orderHistoryFilter, setOrderHistoryFilter] =
+    useState<OrderHistoryFilter>("buy");
+  const [ordersPage, setOrdersPage] = useState(1);
 
   // Marketplace state
   const [marketplaceListings, setMarketplaceListings] = useState<
@@ -426,85 +432,209 @@ export default function StockService() {
           </ScrollView>
         )}
 
-        {activeTab === "orders" && (
-          <ScrollView
-            style={styles.scrollView}
-            contentContainerStyle={styles.scrollContent}
-            refreshControl={
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={onRefresh}
-                tintColor={THEME_COLOR}
-              />
-            }
-          >
-            <Text style={styles.sectionHeader}>Buy Requests</Text>
-            {buyRequests.length === 0 ? (
-              <View style={styles.emptyState}>
-                <MaterialCommunityIcons
-                  name="chart-timeline-variant"
-                  size={36}
-                  color="#ccc"
-                />
-                <Text style={styles.emptyText}>No buy requests yet</Text>
-              </View>
-            ) : (
-              buyRequests.map((r) => (
-                <View key={r.id} style={styles.orderCard}>
-                  <View style={styles.leftBorderOrange} />
-                  <View style={styles.orderCardContent}>
-                    <View style={styles.orderRow}>
-                      <Text style={styles.orderLabel}>Amount</Text>
-                      <Text style={styles.orderValue}>
-                        ₱{formatCurrency(parseFloat(r.amount ?? "0"))}
-                      </Text>
-                    </View>
-                    <View style={styles.orderRow}>
-                      <Text style={styles.orderLabel}>
-                        {new Date(r.createdAt).toLocaleDateString()}
-                      </Text>
-                      <StatusBadge status={r.status} />
-                    </View>
-                  </View>
-                </View>
-              ))
-            )}
+        {activeTab === "orders" && (() => {
+          const orders =
+            orderHistoryFilter === "buy" ? buyRequests : sellListings;
+          const totalPages = Math.max(
+            1,
+            Math.ceil(orders.length / ORDERS_PER_PAGE),
+          );
+          const currentPage = Math.min(ordersPage, totalPages);
+          const startIdx = (currentPage - 1) * ORDERS_PER_PAGE;
+          const paginatedOrders = orders.slice(
+            startIdx,
+            startIdx + ORDERS_PER_PAGE,
+          );
 
-            <Text style={[styles.sectionHeader, { marginTop: 20 }]}>
-              Sell Listings
-            </Text>
-            {sellListings.length === 0 ? (
-              <View style={styles.emptyState}>
-                <MaterialCommunityIcons
-                  name="tag-outline"
-                  size={36}
-                  color="#ccc"
+          return (
+            <ScrollView
+              style={styles.scrollView}
+              contentContainerStyle={styles.scrollContent}
+              refreshControl={
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={onRefresh}
+                  tintColor={THEME_COLOR}
                 />
-                <Text style={styles.emptyText}>No sell listings yet</Text>
+              }
+            >
+              {/* Buy / Sell History Toggle */}
+              <View style={styles.orderHistoryToggle}>
+                <TouchableOpacity
+                  style={[
+                    styles.orderHistoryBtn,
+                    orderHistoryFilter === "buy" && styles.orderHistoryBtnActive,
+                  ]}
+                  onPress={() => {
+                    setOrderHistoryFilter("buy");
+                    setOrdersPage(1);
+                  }}
+                >
+                  <Ionicons
+                    name="trending-up"
+                    size={18}
+                    color={
+                      orderHistoryFilter === "buy" ? "#fff" : THEME_COLOR
+                    }
+                  />
+                  <Text
+                    style={[
+                      styles.orderHistoryBtnText,
+                      orderHistoryFilter === "buy" &&
+                        styles.orderHistoryBtnTextActive,
+                    ]}
+                  >
+                    Buy History
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.orderHistoryBtn,
+                    orderHistoryFilter === "sell" &&
+                      styles.orderHistoryBtnActive,
+                  ]}
+                  onPress={() => {
+                    setOrderHistoryFilter("sell");
+                    setOrdersPage(1);
+                  }}
+                >
+                  <Ionicons
+                    name="trending-down"
+                    size={18}
+                    color={
+                      orderHistoryFilter === "sell" ? "#fff" : THEME_COLOR
+                    }
+                  />
+                  <Text
+                    style={[
+                      styles.orderHistoryBtnText,
+                      orderHistoryFilter === "sell" &&
+                        styles.orderHistoryBtnTextActive,
+                    ]}
+                  >
+                    Sell History
+                  </Text>
+                </TouchableOpacity>
               </View>
-            ) : (
-              sellListings.map((r) => (
-                <View key={r.id} style={styles.orderCard}>
-                  <View style={styles.leftBorderOrange} />
-                  <View style={styles.orderCardContent}>
-                    <View style={styles.orderRow}>
-                      <Text style={styles.orderLabel}>Stocks to Sell</Text>
-                      <Text style={styles.orderValue}>
-                        {formatStocks(r.stocksToSell ?? 0)}
-                      </Text>
-                    </View>
-                    <View style={styles.orderRow}>
-                      <Text style={styles.orderLabel}>
-                        {new Date(r.createdAt).toLocaleDateString()}
-                      </Text>
-                      <StatusBadge status={r.status} />
-                    </View>
-                  </View>
+
+              {/* Order list */}
+              {paginatedOrders.length === 0 ? (
+                <View style={styles.emptyState}>
+                  <MaterialCommunityIcons
+                    name={
+                      orderHistoryFilter === "buy"
+                        ? "chart-timeline-variant"
+                        : "tag-outline"
+                    }
+                    size={36}
+                    color="#ccc"
+                  />
+                  <Text style={styles.emptyText}>
+                    {orderHistoryFilter === "buy"
+                      ? "No buy requests yet"
+                      : "No sell listings yet"}
+                  </Text>
                 </View>
-              ))
-            )}
-          </ScrollView>
-        )}
+              ) : (
+                <>
+                  {paginatedOrders.map((r) => (
+                    <View key={r.id} style={styles.orderCard}>
+                      <View style={styles.leftBorderOrange} />
+                      <View style={styles.orderCardContent}>
+                        <View style={styles.orderRow}>
+                          <Text style={styles.orderLabel}>
+                            {orderHistoryFilter === "buy"
+                              ? "Amount"
+                              : "Stocks to Sell"}
+                          </Text>
+                          <Text style={styles.orderValue}>
+                            {orderHistoryFilter === "buy"
+                              ? `₱${formatCurrency(
+                                  parseFloat(r.amount ?? "0"),
+                                )}`
+                              : formatStocks(r.stocksToSell ?? 0)}
+                          </Text>
+                        </View>
+                        <View style={styles.orderRow}>
+                          <Text style={styles.orderLabel}>
+                            {new Date(r.createdAt).toLocaleDateString()}
+                          </Text>
+                          <StatusBadge status={r.status} />
+                        </View>
+                      </View>
+                    </View>
+                  ))}
+
+                  {/* Pagination */}
+                  {totalPages > 1 && (
+                    <View style={styles.pagination}>
+                      <TouchableOpacity
+                        style={[
+                          styles.paginationBtn,
+                          currentPage <= 1 && styles.paginationBtnDisabled,
+                        ]}
+                        onPress={() =>
+                          setOrdersPage((p) => Math.max(1, p - 1))
+                        }
+                        disabled={currentPage <= 1}
+                      >
+                        <Ionicons
+                          name="chevron-back"
+                          size={18}
+                          color={
+                            currentPage <= 1 ? "#ccc" : THEME_COLOR
+                          }
+                        />
+                        <Text
+                          style={[
+                            styles.paginationBtnText,
+                            currentPage <= 1 &&
+                              styles.paginationBtnTextDisabled,
+                          ]}
+                        >
+                          Prev
+                        </Text>
+                      </TouchableOpacity>
+                      <Text style={styles.paginationInfo}>
+                        Page {currentPage} of {totalPages}
+                      </Text>
+                      <TouchableOpacity
+                        style={[
+                          styles.paginationBtn,
+                          currentPage >= totalPages &&
+                            styles.paginationBtnDisabled,
+                        ]}
+                        onPress={() =>
+                          setOrdersPage((p) =>
+                            Math.min(totalPages, p + 1),
+                          )
+                        }
+                        disabled={currentPage >= totalPages}
+                      >
+                        <Text
+                          style={[
+                            styles.paginationBtnText,
+                            currentPage >= totalPages &&
+                              styles.paginationBtnTextDisabled,
+                          ]}
+                        >
+                          Next
+                        </Text>
+                        <Ionicons
+                          name="chevron-forward"
+                          size={18}
+                          color={
+                            currentPage >= totalPages ? "#ccc" : THEME_COLOR
+                          }
+                        />
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                </>
+              )}
+            </ScrollView>
+          );
+        })()}
 
         {activeTab === "marketplace" && (
           <FlatList
@@ -791,6 +921,71 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#333",
     marginBottom: 10,
+  },
+
+  // Order history toggle (Buy / Sell)
+  orderHistoryToggle: {
+    flexDirection: "row",
+    gap: 10,
+    marginBottom: 16,
+  },
+  orderHistoryBtn: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 12,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: THEME_COLOR,
+    backgroundColor: "#fff",
+  },
+  orderHistoryBtnActive: {
+    backgroundColor: THEME_COLOR,
+  },
+  orderHistoryBtnText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: THEME_COLOR,
+  },
+  orderHistoryBtnTextActive: {
+    color: "#fff",
+  },
+
+  // Pagination
+  pagination: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: "#F0F0F0",
+  },
+  paginationBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 8,
+  },
+  paginationBtnDisabled: {
+    opacity: 0.5,
+  },
+  paginationBtnText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: THEME_COLOR,
+  },
+  paginationBtnTextDisabled: {
+    color: "#ccc",
+  },
+  paginationInfo: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#666",
   },
 
   // Order card
