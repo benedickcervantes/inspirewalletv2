@@ -75,6 +75,66 @@ export async function getWallets(accessToken) {
 }
 
 /**
+ * Submit an account deletion request.
+ * POST /account-deletion-requests — requires JWT
+ * @param {string} accessToken - Backend JWT
+ * @param {{ reason: string, notes?: string }} body
+ */
+export async function submitAccountDeletionRequest(accessToken, body) {
+  const url = buildUrl("/account-deletion-requests");
+  if (!url) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
+  try {
+    const res = await apiFetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    return { success: true, data: data.data ?? data };
+  } catch (e) {
+    if (__DEV__) console.error("[AccountDeletion API] Error", e);
+    return { success: false, error: e.message || "Network error" };
+  }
+}
+
+/**
+ * Get the authenticated user's account deletion requests.
+ * GET /account-deletion-requests/me — requires JWT
+ * @param {string} accessToken - Backend JWT
+ */
+export async function getMyAccountDeletionRequests(accessToken) {
+  const url = buildUrl("/account-deletion-requests/me");
+  if (!url) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
+  try {
+    const res = await apiFetch(url, {
+      method: "GET",
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    return { success: true, data: Array.isArray(data) ? data : (data.data ?? []) };
+  } catch (e) {
+    return { success: false, error: e.message || "Network error" };
+  }
+}
+
+/**
  * Submit a time deposit request via the backend.
  * POST /time-deposits (no /api prefix)
  * @param {string} accessToken - Backend JWT from AsyncStorage

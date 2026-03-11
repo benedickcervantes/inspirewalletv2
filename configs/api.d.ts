@@ -352,6 +352,15 @@ export function getWallets(
   accessToken: string,
 ): Promise<{ success: boolean; wallets?: ApiWalletFull[]; error?: string }>;
 
+export function submitAccountDeletionRequest(
+  accessToken: string,
+  body: { reason: string; notes?: string },
+): Promise<{ success: boolean; data?: unknown; error?: string }>;
+
+export function getMyAccountDeletionRequests(
+  accessToken: string,
+): Promise<{ success: boolean; data?: unknown[]; error?: string }>;
+
 export function submitStockInvestmentRequest(
   accessToken: string,
   body: { walletId: string; amount: string; stockSymbol?: string },

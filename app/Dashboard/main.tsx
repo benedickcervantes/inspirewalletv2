@@ -683,10 +683,20 @@ export default function Dashboard() {
       >
         <View style={styles.maintenanceModalOverlay}>
           <View style={styles.maintenanceModalContent}>
-            <View style={styles.maintenanceStampContainer}>
-              <View style={styles.maintenanceStampBorder} />
-              <Text style={styles.maintenanceStampText}>UNDER</Text>
-              <Text style={styles.maintenanceStampText}>MAINTENANCE</Text>
+            <View style={styles.maintenanceHeader}>
+              <View style={styles.maintenanceIconCircle}>
+                <MaterialCommunityIcons
+                  name="tools"
+                  size={22}
+                  color="#FFFFFF"
+                />
+              </View>
+              <Text style={styles.maintenanceTitle}>Under maintenance</Text>
+              {selectedMaintenanceService && (
+                <Text style={styles.maintenanceSubtitle}>
+                  {t(selectedMaintenanceService)}
+                </Text>
+              )}
             </View>
             <Text style={styles.maintenanceModalMessage}>
               This service is currently under maintenance. We're working hard to
@@ -709,9 +719,17 @@ export default function Dashboard() {
       >
         <View style={styles.maintenanceModalOverlay}>
           <View style={styles.bankingLockModalContent}>
-            <View style={styles.bankingLockStampContainer}>
-              <View style={styles.bankingLockStampBorder} />
-              <Text style={styles.bankingLockStampText}>LOCKED</Text>
+            <View style={styles.bankingLockHeader}>
+              <View style={styles.bankingLockIconCircle}>
+                <MaterialCommunityIcons
+                  name="lock"
+                  size={22}
+                  color="#FFFFFF"
+                />
+              </View>
+              <Text style={styles.bankingLockTitle}>
+                {t("dashboard.bankingService")} Locked
+              </Text>
             </View>
             <View style={styles.bankingLockRequirementBox}>
               <Text style={styles.bankingLockRequirementLabel}>
@@ -1129,6 +1147,15 @@ export default function Dashboard() {
                           size={24}
                           color={isBlocked ? "#CCCCCC" : "#000000"}
                         />
+                        {isBlocked && (
+                          <View style={styles.quickActionLockBadge}>
+                            <MaterialCommunityIcons
+                              name="lock"
+                              size={13}
+                              color="#FFFFFF"
+                            />
+                          </View>
+                        )}
                       </View>
                       <Text
                         style={[
@@ -1138,12 +1165,6 @@ export default function Dashboard() {
                       >
                         {t(item.labelKey)}
                       </Text>
-                      {isBlocked && (
-                        <View style={styles.comingSoonBadge}>
-                          <View style={styles.comingSoonBadgeBorder} />
-                          <Text style={styles.comingSoonText}>UNDER MAINT.</Text>
-                        </View>
-                      )}
                     </TouchableOpacity>
                   );
                 })}
@@ -1440,30 +1461,29 @@ const styles = StyleSheet.create({
     maxWidth: 320,
     alignItems: "center",
   },
-  bankingLockStampContainer: {
-    width: 120,
-    height: 48,
+  bankingLockHeader: {
+    alignItems: "center",
+    marginBottom: 18,
+  },
+  bankingLockIconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#E15816",
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 20,
-    transform: [{ rotate: "-8deg" }],
+    marginBottom: 10,
+    shadowColor: "#E15816",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 4,
   },
-  bankingLockStampBorder: {
-    position: "absolute",
-    width: "100%",
-    height: "100%",
-    borderWidth: 2,
-    borderColor: "#C23A2B",
-    borderRadius: 4,
-    borderStyle: "dashed",
-    opacity: 0.9,
-  },
-  bankingLockStampText: {
-    fontSize: 18,
+  bankingLockTitle: {
+    fontSize: 16,
     fontWeight: "800",
-    color: "#C23A2B",
-    letterSpacing: 2,
-    opacity: 0.9,
+    color: "#333",
+    textAlign: "center",
   },
   bankingLockRequirementBox: {
     backgroundColor: "#FFF8F5",
@@ -1547,43 +1567,15 @@ const styles = StyleSheet.create({
     textAlign: "center",
     lineHeight: 12,
   },
-  menuItemDisabled: {
-    opacity: 0.6,
-  },
+  menuItemDisabled: {},
   menuIconDisabled: {
-    backgroundColor: "#F0F0F0",
+    backgroundColor: "#FAFAFA",
+    borderWidth: 2,
+    borderColor: "#E5E5E5",
+    borderStyle: "dashed",
   },
   menuLabelDisabled: {
     color: "#999",
-  },
-  comingSoonBadge: {
-    position: "absolute",
-    top: "50%",
-    left: "50%",
-    width: 56,
-    height: 18,
-    justifyContent: "center",
-    alignItems: "center",
-    transform: [{ translateX: -28 }, { translateY: -9 }, { rotate: "-35deg" }],
-    zIndex: 10,
-  },
-  comingSoonBadgeBorder: {
-    position: "absolute",
-    width: "100%",
-    height: "100%",
-    borderWidth: 2,
-    borderColor: "#C23A2B",
-    borderRadius: 3,
-    borderStyle: "dashed",
-    opacity: 0.9,
-  },
-  comingSoonText: {
-    fontSize: 6,
-    fontWeight: "800",
-    color: "#C23A2B",
-    letterSpacing: 0.5,
-    textAlign: "center",
-    opacity: 0.9,
   },
   languageCarouselContainer: { marginVertical: 16 },
   languageCarouselWrapper: { position: "relative", marginBottom: 12 },
@@ -1667,30 +1659,36 @@ const styles = StyleSheet.create({
     maxWidth: 320,
     alignItems: "center",
   },
-  maintenanceStampContainer: {
-    width: 140,
-    height: 100,
+  maintenanceHeader: {
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  maintenanceIconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#E15816",
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 24,
-    transform: [{ rotate: "-12deg" }],
+    marginBottom: 10,
+    shadowColor: "#E15816",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 4,
   },
-  maintenanceStampBorder: {
-    position: "absolute",
-    width: "100%",
-    height: "100%",
-    borderWidth: 3,
-    borderColor: "#C23A2B",
-    borderRadius: 4,
-    borderStyle: "dashed",
-    opacity: 0.9,
-  },
-  maintenanceStampText: {
+  maintenanceTitle: {
     fontSize: 16,
     fontWeight: "800",
-    color: "#C23A2B",
-    letterSpacing: 2,
-    opacity: 0.85,
+    color: "#333",
+    textAlign: "center",
+  },
+  maintenanceSubtitle: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#999",
+    marginTop: 6,
+    textAlign: "center",
   },
   maintenanceModalMessage: {
     fontSize: 14,
