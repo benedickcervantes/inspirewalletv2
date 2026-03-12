@@ -731,18 +731,9 @@ const Notification = () => {
               <Text style={styles.selectButtonText}>{t('notification.cancel')}</Text>
             </TouchableOpacity>
           ) : (
-            <>
-              <TouchableOpacity style={styles.refreshButton} onPress={toggleSelectMode}>
-                <Text style={styles.selectButtonText}>{t('notification.select')}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.refreshButton}
-                onPress={handleRefresh}
-                disabled={refreshing}
-              >
-                <Ionicons name="refresh" size={24} color="#FFFFFF" />
-              </TouchableOpacity>
-            </>
+            <TouchableOpacity style={styles.refreshButton} onPress={toggleSelectMode}>
+              <Text style={styles.selectButtonText}>{t('notification.select')}</Text>
+            </TouchableOpacity>
           )}
         </View>
       </LinearGradient>
