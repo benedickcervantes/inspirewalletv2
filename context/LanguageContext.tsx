@@ -8,7 +8,7 @@ const USER_PREFERRED_LANGUAGE_KEY = "user_preferred_language";
 interface LanguageContextValue {
   language: string;
   setLanguage: (label: string) => void;
-  t: (key: string) => string;
+  t: (key: string, variables?: Record<string, string>) => string;
 }
 
 const LanguageContext = createContext<LanguageContextValue | null>(null);
@@ -32,10 +32,18 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const t = useCallback(
-    (key: string): string => {
+    (key: string, variables?: Record<string, string>): string => {
       if (!ready) return key;
       const code = getLanguageCode(language);
-      return getTranslation(code, key);
+      let translated = getTranslation(code, key);
+      
+      if (variables) {
+        Object.entries(variables).forEach(([varKey, varValue]) => {
+          translated = translated.replace(new RegExp(`{${varKey}}`, "g"), varValue);
+        });
+      }
+      
+      return translated;
     },
     [language, ready]
   );

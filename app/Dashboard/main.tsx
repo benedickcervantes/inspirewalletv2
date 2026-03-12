@@ -24,6 +24,7 @@ import {
 } from "react-native-safe-area-context";
 import {
   getMe,
+  getActiveAnnouncements,
   getNotifications,
   getOrCreateMainWallet,
   getReferralTree,
@@ -36,11 +37,16 @@ import {
 } from "../../constants/locales";
 import { useLanguage } from "../../context/LanguageContext";
 import { useSocket } from "../../context/SocketContext";
+import { useUnreadNotifications } from "../../context/UnreadNotificationsContext";
 import { setConnectionStatus } from "../../lib/connectionStatus";
 import { getMaintenanceStatus } from "../../lib/maintenance";
 import type { NavProp } from "../../types/navigation";
 import { useResponsive } from "../../utils/responsive";
-import CustomLoader from "../Loader/CustomLoader";
+import NotificationBadge from "../Notification/NotificationBadge";
+import {
+  AnnouncementModal,
+  type AnnouncementItem,
+} from "../AnnouncementModal/AnnouncementModal";
 import CardsTab from "./CardsTab";
 import SavingsTab from "./SavingsTab";
 import WalletTab from "./WalletTab";
@@ -203,7 +209,6 @@ export default function Dashboard() {
   const qaLabelSize = width < 360 ? 8 : isSmallScreen ? 9 : 11;
   const qaIconSize = width < 360 ? 18 : isSmallScreen ? 20 : 24;
   const carouselWidth = width - horizontalPadding * 2;
-  const [navigatingAction, setNavigatingAction] = useState<string | null>(null);
   const [userData, setUserData] = useState<Record<string, unknown> | null>(
     null,
   );
@@ -212,6 +217,9 @@ export default function Dashboard() {
   const [timeDeposit, setTimeDeposit] = useState(0);
   const [deposits, setDeposits] = useState<TimeDeposit[]>([]);
   const [activeTab, setActiveTab] = useState("Wallet");
+  const [announcements, setAnnouncements] = useState<AnnouncementItem[]>([]);
+  const [announcementIndex, setAnnouncementIndex] = useState(0);
+  const [announcementVisible, setAnnouncementVisible] = useState(false);
   const [recentTransactions, setRecentTransactions] = useState<Transaction[]>(
     [],
   );
@@ -221,7 +229,8 @@ export default function Dashboard() {
   const mainWalletIdRef = useRef<string | null>(null);
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [currentLanguageIndex, setCurrentLanguageIndex] = useState(0);
-  const [unreadNotifications, setUnreadNotifications] = useState(0);
+  const { unreadCount: unreadNotifications, setUnreadCount: setUnreadNotifications } =
+    useUnreadNotifications();
   const [userReferrer, setUserReferrer] = useState<{
     referralCode?: string;
     firstName?: string;
@@ -235,7 +244,12 @@ export default function Dashboard() {
   const [selectedMaintenanceService, setSelectedMaintenanceService] = useState<
     string | null
   >(null);
+  const [showBankingServiceLockedModal, setShowBankingServiceLockedModal] =
+    useState(false);
   const [activeCardDesign, setActiveCardDesign] = useState<string | null>(null);
+
+  const BANKING_SERVICE_MIN_BALANCE = 200_000;
+  const isBankingServiceLocked = timeDeposit < BANKING_SERVICE_MIN_BALANCE;
 
   const getActiveCardStorageKey = (accountNumber?: string) =>
     accountNumber
@@ -302,6 +316,7 @@ export default function Dashboard() {
           lastName: user.lastName,
           email: user.email,
           accountNumber: user.accountNumber,
+          role: (user as Record<string, unknown>).role ?? 'USER',
         });
 
         // Load cached active card design once we know the account number
@@ -340,7 +355,7 @@ export default function Dashboard() {
       setIsBalanceLoading(false);
 
       const walletId = w?.id;
-      const [tdRes, treeRes, txRes, status, notifRes, hasChosen] =
+      const [tdRes, treeRes, txRes, status, notifRes, hasChosen, annRes] =
         await Promise.all([
           getTimeDeposits(accessToken),
           getReferralTree(accessToken),
@@ -352,6 +367,7 @@ export default function Dashboard() {
               (user as { accountNumber?: string })?.accountNumber,
             ),
           ),
+          getActiveAnnouncements(accessToken),
         ]);
 
       if (tdRes.success && Array.isArray(tdRes.deposits)) {
@@ -421,10 +437,39 @@ export default function Dashboard() {
         ).length;
         setUnreadNotifications(unreadCount);
       }
+
+      if (annRes?.success && Array.isArray(annRes.data) && annRes.data.length) {
+        const list = (annRes.data as AnnouncementItem[]).map((a) => ({
+          id: a.id,
+          title: (a as { title?: string }).title ?? "Announcement",
+          message: (a as { message?: string }).message ?? "",
+          imageUrl: (a as { imageUrl?: string | null }).imageUrl ?? null,
+        }));
+        setAnnouncements(list);
+        setAnnouncementIndex(0);
+        setAnnouncementVisible(true);
+      } else {
+        setAnnouncements([]);
+        setAnnouncementVisible(false);
+      }
     };
 
     init();
   }, [navigation]);
+
+  useEffect(() => {
+    if (!announcementVisible) return;
+    if (!announcements.length) return;
+    const timer = setTimeout(() => {
+      const next = announcementIndex + 1;
+      if (next >= announcements.length) {
+        setAnnouncementVisible(false);
+      } else {
+        setAnnouncementIndex(next);
+      }
+    }, 10000);
+    return () => clearTimeout(timer);
+  }, [announcementVisible, announcementIndex, announcements.length]);
 
   const refetchJwtData = useCallback(async () => {
     const accessToken = await AsyncStorage.getItem("access_token");
@@ -665,17 +710,21 @@ export default function Dashboard() {
     }
   };
 
-  if (navigatingAction === "AgentRequest") {
-    return <CustomLoader text={t("dashboard.loadingAgent")} />;
-  }
-
-  if (navigatingAction === "Message") {
-    return <CustomLoader text={t("dashboard.loadingSupport")} />;
-  }
-
   return (
     <>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <AnnouncementModal
+        visible={announcementVisible && announcements.length > 0}
+        announcement={announcements[announcementIndex] ?? null}
+        onClose={() => {
+          const next = announcementIndex + 1;
+          if (next >= announcements.length) {
+            setAnnouncementVisible(false);
+          } else {
+            setAnnouncementIndex(next);
+          }
+        }}
+      />
       <Modal
         visible={selectedMaintenanceService !== null}
         transparent
@@ -684,10 +733,21 @@ export default function Dashboard() {
       >
         <View style={styles.maintenanceModalOverlay}>
           <View style={styles.maintenanceModalContent}>
-            <View style={styles.maintenanceModalIconContainer}>
-              <Text style={styles.maintenanceModalIcon}>🔧</Text>
+            <View style={styles.maintenanceHeader}>
+              <View style={styles.maintenanceIconCircle}>
+                <MaterialCommunityIcons
+                  name="tools"
+                  size={22}
+                  color="#FFFFFF"
+                />
+              </View>
+              <Text style={styles.maintenanceTitle}>Under maintenance</Text>
+              {selectedMaintenanceService && (
+                <Text style={styles.maintenanceSubtitle}>
+                  {t(selectedMaintenanceService)}
+                </Text>
+              )}
             </View>
-            <Text style={styles.maintenanceModalTitle}>Coming Soon</Text>
             <Text style={styles.maintenanceModalMessage}>
               This service is currently under maintenance. We're working hard to
               bring you an improved experience. Please check back soon!
@@ -695,6 +755,44 @@ export default function Dashboard() {
             <TouchableOpacity
               style={styles.maintenanceModalButton}
               onPress={() => setSelectedMaintenanceService(null)}
+            >
+              <Text style={styles.maintenanceModalButtonText}>Got it</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+      <Modal
+        visible={showBankingServiceLockedModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowBankingServiceLockedModal(false)}
+      >
+        <View style={styles.maintenanceModalOverlay}>
+          <View style={styles.bankingLockModalContent}>
+            <View style={styles.bankingLockHeader}>
+              <View style={styles.bankingLockIconCircle}>
+                <MaterialCommunityIcons
+                  name="lock"
+                  size={22}
+                  color="#FFFFFF"
+                />
+              </View>
+              <Text style={styles.bankingLockTitle}>
+                {t("dashboard.bankingService")} Locked
+              </Text>
+            </View>
+            <View style={styles.bankingLockRequirementBox}>
+              <Text style={styles.bankingLockRequirementLabel}>
+                {t("dashboard.bankingServiceLockedRequirement")}
+              </Text>
+              <Text style={styles.bankingLockRequirementValue}>₱200,000</Text>
+            </View>
+            <Text style={styles.bankingLockMessage}>
+              {t("dashboard.bankingServiceLockedMessage")}
+            </Text>
+            <TouchableOpacity
+              style={styles.maintenanceModalButton}
+              onPress={() => setShowBankingServiceLockedModal(false)}
             >
               <Text style={styles.maintenanceModalButtonText}>Got it</Text>
             </TouchableOpacity>
@@ -768,13 +866,7 @@ export default function Dashboard() {
               onPress={() => navigation.navigate("Notification")}
             >
               <Ionicons name="notifications" size={24} color="#E15816" />
-              {unreadNotifications > 0 && (
-                <View style={styles.notificationBadge}>
-                  <Text style={styles.notificationBadgeText}>
-                    {unreadNotifications > 99 ? "99+" : unreadNotifications}
-                  </Text>
-                </View>
-              )}
+          <NotificationBadge />
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.iconButton}
@@ -917,17 +1009,28 @@ export default function Dashboard() {
               <TouchableOpacity
                 style={[
                   styles.quickActionButton,
+                  isBankingServiceLocked && styles.quickActionButtonLocked,
                   {
                     paddingVertical: Math.round(14 * qaSpacing),
                     paddingHorizontal: Math.round(6 * qaSpacing),
                     minWidth: 0,
                   },
                 ]}
-                onPress={() => navigation.navigate("Bdo")}
+                onPress={() => {
+                  if (isBankingServiceLocked) {
+                    setShowBankingServiceLockedModal(true);
+                  } else {
+                    (
+                      navigation as { navigate: (name: string) => void }
+                    ).navigate("Bdo");
+                  }
+                }}
+                activeOpacity={0.7}
               >
                 <View
                   style={[
                     styles.quickActionIcon,
+                    isBankingServiceLocked && styles.quickActionIconLocked,
                     {
                       width: Math.round(48 * qaSpacing),
                       height: Math.round(48 * qaSpacing),
@@ -938,11 +1041,24 @@ export default function Dashboard() {
                   <MaterialCommunityIcons
                     name="bank"
                     size={qaIconSize}
-                    color="#E15816"
+                    color={isBankingServiceLocked ? "#CCCCCC" : "#E15816"}
                   />
+                  {isBankingServiceLocked && (
+                    <View style={styles.quickActionLockBadge}>
+                      <MaterialCommunityIcons
+                        name="lock"
+                        size={13}
+                        color="#FFFFFF"
+                      />
+                    </View>
+                  )}
                 </View>
                 <Text
-                  style={[styles.quickActionLabel, { fontSize: qaLabelSize }]}
+                  style={[
+                    styles.quickActionLabel,
+                    { fontSize: qaLabelSize },
+                    isBankingServiceLocked && styles.quickActionLabelLocked,
+                  ]}
                   numberOfLines={2}
                 >
                   {t("dashboard.bankingService")}
@@ -1040,36 +1156,28 @@ export default function Dashboard() {
                   const serviceId =
                     routeToServiceMap[item.route] || item.route.toLowerCase();
                   const isUnderMaintenance = maintenanceStatus[serviceId];
+                  // DEVELOPER, ADMIN and SUPER_ADMIN bypass maintenance blocks
+                  const userRole = userData?.role as string | undefined;
+                  const isDeveloperOrAdmin =
+                    userRole === 'DEVELOPER' ||
+                    userRole === 'ADMIN' ||
+                    userRole === 'SUPER_ADMIN';
+                  const isBlocked = isUnderMaintenance && !isDeveloperOrAdmin;
 
                   return (
                     <TouchableOpacity
                       key={index}
                       style={[
                         styles.menuItem,
-                        isUnderMaintenance && styles.menuItemDisabled,
+                        isBlocked && styles.menuItemDisabled,
                       ]}
                       onPress={() => {
-                        if (isUnderMaintenance) {
+                        if (isBlocked) {
                           setSelectedMaintenanceService(item.labelKey);
                         } else {
-                          if (
-                            item.route === "AgentRequest" ||
-                            item.route === "Message"
-                          ) {
-                            setNavigatingAction(item.route);
-                            setTimeout(() => {
-                              setNavigatingAction(null);
-                              (
-                                navigation as {
-                                  navigate: (name: string) => void;
-                                }
-                              ).navigate(item.route);
-                            }, 800);
-                          } else {
-                            (
-                              navigation as { navigate: (name: string) => void }
-                            ).navigate(item.route);
-                          }
+                          (
+                            navigation as { navigate: (name: string) => void }
+                          ).navigate(item.route);
                         }
                       }}
                       activeOpacity={0.7}
@@ -1077,7 +1185,7 @@ export default function Dashboard() {
                       <View
                         style={[
                           styles.menuIcon,
-                          isUnderMaintenance && styles.menuIconDisabled,
+                          isBlocked && styles.menuIconDisabled,
                         ]}
                       >
                         <MaterialCommunityIcons
@@ -1087,22 +1195,26 @@ export default function Dashboard() {
                             >["name"]
                           }
                           size={24}
-                          color={isUnderMaintenance ? "#CCCCCC" : "#000000"}
+                          color={isBlocked ? "#CCCCCC" : "#000000"}
                         />
+                        {isBlocked && (
+                          <View style={styles.quickActionLockBadge}>
+                            <MaterialCommunityIcons
+                              name="lock"
+                              size={13}
+                              color="#FFFFFF"
+                            />
+                          </View>
+                        )}
                       </View>
                       <Text
                         style={[
                           styles.menuLabel,
-                          isUnderMaintenance && styles.menuLabelDisabled,
+                          isBlocked && styles.menuLabelDisabled,
                         ]}
                       >
                         {t(item.labelKey)}
                       </Text>
-                      {isUnderMaintenance && (
-                        <View style={styles.comingSoonBadge}>
-                          <Text style={styles.comingSoonText}>Coming Soon</Text>
-                        </View>
-                      )}
                     </TouchableOpacity>
                   );
                 })}
@@ -1343,6 +1455,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   quickActionIcon: {
+    position: "relative",
     width: 56,
     height: 56,
     borderRadius: 16,
@@ -1357,6 +1470,98 @@ const styles = StyleSheet.create({
     color: "#333",
     textAlign: "center",
     lineHeight: 14,
+  },
+  quickActionButtonLocked: {
+    backgroundColor: "#FAFAFA",
+    borderWidth: 2,
+    borderColor: "#E5E5E5",
+    borderStyle: "dashed",
+  },
+  quickActionIconLocked: {
+    backgroundColor: "#F0F0F0",
+  },
+  quickActionLabelLocked: {
+    color: "#999",
+  },
+  quickActionLockBadge: {
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    width: 26,
+    height: 26,
+    marginTop: -13,
+    marginLeft: -13,
+    borderRadius: 13,
+    backgroundColor: "#E15816",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#E15816",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 4,
+    borderWidth: 2,
+    borderColor: "#FFFFFF",
+  },
+  bankingLockModalContent: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    padding: 28,
+    width: "100%",
+    maxWidth: 320,
+    alignItems: "center",
+  },
+  bankingLockHeader: {
+    alignItems: "center",
+    marginBottom: 18,
+  },
+  bankingLockIconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#E15816",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 10,
+    shadowColor: "#E15816",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  bankingLockTitle: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: "#333",
+    textAlign: "center",
+  },
+  bankingLockRequirementBox: {
+    backgroundColor: "#FFF8F5",
+    borderWidth: 1,
+    borderColor: "#FFE4D6",
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    marginBottom: 16,
+    alignItems: "center",
+    width: "100%",
+  },
+  bankingLockRequirementLabel: {
+    fontSize: 12,
+    color: "#666",
+    marginBottom: 4,
+  },
+  bankingLockRequirementValue: {
+    fontSize: 22,
+    fontWeight: "800",
+    color: "#E15816",
+  },
+  bankingLockMessage: {
+    fontSize: 14,
+    color: "#666",
+    textAlign: "center",
+    marginBottom: 24,
+    lineHeight: 20,
   },
   menuContainer: {
     marginHorizontal: 20,
@@ -1412,38 +1617,15 @@ const styles = StyleSheet.create({
     textAlign: "center",
     lineHeight: 12,
   },
-  menuItemDisabled: {
-    opacity: 0.6,
-  },
+  menuItemDisabled: {},
   menuIconDisabled: {
-    backgroundColor: "#F0F0F0",
+    backgroundColor: "#FAFAFA",
+    borderWidth: 2,
+    borderColor: "#E5E5E5",
+    borderStyle: "dashed",
   },
   menuLabelDisabled: {
     color: "#999",
-  },
-  comingSoonBadge: {
-    position: "absolute",
-    top: "50%",
-    left: "50%",
-    width: 60,
-    height: 14,
-    backgroundColor: "#FFB84D",
-    justifyContent: "center",
-    alignItems: "center",
-    borderRadius: 1,
-    transform: [{ translateX: -30 }, { translateY: -7 }, { rotate: "-45deg" }],
-    zIndex: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.15,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  comingSoonText: {
-    fontSize: 6.5,
-    fontWeight: "700",
-    color: "#FFFFFF",
-    letterSpacing: 0.2,
   },
   languageCarouselContainer: { marginVertical: 16 },
   languageCarouselWrapper: { position: "relative", marginBottom: 12 },
@@ -1522,28 +1704,40 @@ const styles = StyleSheet.create({
   maintenanceModalContent: {
     backgroundColor: "#FFFFFF",
     borderRadius: 16,
-    padding: 24,
+    padding: 28,
     width: "100%",
     maxWidth: 320,
     alignItems: "center",
   },
-  maintenanceModalIconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: "#FFF3E0",
-    justifyContent: "center",
+  maintenanceHeader: {
     alignItems: "center",
     marginBottom: 16,
   },
-  maintenanceModalIcon: {
-    fontSize: 40,
+  maintenanceIconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#E15816",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 10,
+    shadowColor: "#E15816",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 4,
   },
-  maintenanceModalTitle: {
-    fontSize: 20,
-    fontWeight: "700",
+  maintenanceTitle: {
+    fontSize: 16,
+    fontWeight: "800",
     color: "#333",
-    marginBottom: 12,
+    textAlign: "center",
+  },
+  maintenanceSubtitle: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#999",
+    marginTop: 6,
     textAlign: "center",
   },
   maintenanceModalMessage: {

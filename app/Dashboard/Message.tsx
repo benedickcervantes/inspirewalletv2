@@ -116,18 +116,32 @@ export default function Message() {
     console.log("[Message] ticketSelected state changed:", ticketSelected);
   }, [ticketSelected]);
 
-  // Check maintenance status on focus
+  // Check maintenance status on focus (DEVELOPER / ADMIN / SUPER_ADMIN bypass)
   useFocusEffect(
     useCallback(() => {
       const checkMaintenance = async () => {
         try {
-          const isMaintenance = await isServiceUnderMaintenance("message");
+          // Read user role — privileged roles bypass maintenance
+          const userJson = await AsyncStorage.getItem('user');
+          let userRole: string | undefined;
+          if (userJson) {
+            try {
+              const parsed = JSON.parse(userJson) as Record<string, unknown>;
+              userRole = parsed.role as string | undefined;
+            } catch { /* ignore */ }
+          }
+          const BYPASS_ROLES = ['DEVELOPER', 'ADMIN', 'SUPER_ADMIN'];
+          if (userRole && BYPASS_ROLES.includes(userRole)) {
+            setIsUnderMaintenance(false);
+            return;
+          }
+          const isMaintenance = await isServiceUnderMaintenance('message');
           setIsUnderMaintenance(isMaintenance);
           if (isMaintenance) {
             setShowMaintenanceModal(true);
           }
         } catch (error) {
-          console.error("Error checking maintenance:", error);
+          console.error('Error checking maintenance:', error);
         }
       };
       checkMaintenance();
@@ -322,11 +336,6 @@ export default function Message() {
     return (
       <View style={styles.container}>
         <View style={styles.centerContent}>
-          <Image
-            source={require("../../assets/icons/loader.gif")}
-            style={{ width: 80, height: 80 }}
-            resizeMode="contain"
-          />
           <Text style={styles.loadingText}>{t("support.serviceMaintenance")}</Text>
         </View>
       </View>
@@ -394,12 +403,7 @@ export default function Message() {
         </TouchableOpacity>
       </View>
 
-      {loading && messages.length === 0 ? (
-        <View style={styles.centerContent}>
-          <ActivityIndicator size="large" color="#E15816" />
-          <Text style={styles.loadingText}>{t("support.loading")}</Text>
-        </View>
-      ) : error && messages.length === 0 ? (
+      {error && messages.length === 0 ? (
         <View style={styles.centerContent}>
           <MaterialCommunityIcons
             name="alert-circle-outline"

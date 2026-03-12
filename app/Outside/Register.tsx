@@ -32,6 +32,7 @@ import { useLanguage } from "../../context/LanguageContext";
 import type { NavProp } from "../../types/navigation";
 import { pickAndDecodeQR } from "../../utils/qrUtils";
 import { useResponsive } from "../../utils/responsive";
+import * as SecureStore from 'expo-secure-store';
 
 const getScreenWidth = () => {
   try {
@@ -286,6 +287,15 @@ export default function Register() {
       if (!result.success) {
         setRegisterError(result.error || t("register.errorRegistrationFailed"));
         return;
+      }
+
+      // Clear any old biometric token from the previous user
+      try {
+        await SecureStore.deleteItemAsync('biometricToken');
+        await AsyncStorage.removeItem('biometricEmail');
+        await AsyncStorage.setItem('lastLoggedEmail', emailAddress.trim().toLowerCase());
+      } catch (e) {
+        console.warn("Failed to clear old biometricToken on register", e);
       }
 
       await AsyncStorage.setItem("access_token", result.access_token || "");

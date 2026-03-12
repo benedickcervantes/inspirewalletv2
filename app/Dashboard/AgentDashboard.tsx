@@ -25,7 +25,6 @@ import {
     getTransactions,
 } from "../../configs/api";
 import { useLanguage } from "../../context/LanguageContext";
-import CustomLoader from "../Loader/CustomLoader";
 
 interface CommissionTransaction {
   id: string;
@@ -212,10 +211,6 @@ export default function AgentDashboard() {
       // User cancelled or share failed
     }
   };
-
-  if (initialLoad) {
-    return <CustomLoader text={t("agent.loadingDashboard")} />;
-  }
 
   return (
     <View style={styles.container}>

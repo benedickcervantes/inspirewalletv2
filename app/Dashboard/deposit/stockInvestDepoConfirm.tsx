@@ -79,7 +79,10 @@ export default function StockInvestmentConfirm() {
         setShowAlertModal(true);
         setTimeout(() => {
           setShowAlertModal(false);
-          navigation.navigate("Stockholder");
+          (navigation as any).reset({
+            index: 1,
+            routes: [{ name: "Main" }, { name: "Stockholder" }],
+          });
         }, 2000);
       } else {
         setAlertConfig({
@@ -108,10 +111,12 @@ export default function StockInvestmentConfirm() {
           colors={["#E25A17", "#F28934"]}
           style={styles.header}
           start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}>
+          end={{ x: 1, y: 0 }}
+        >
           <TouchableOpacity
             style={styles.backButton}
-            onPress={() => navigation.goBack()}>
+            onPress={() => navigation.goBack()}
+          >
             <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
           </TouchableOpacity>
 
@@ -138,7 +143,8 @@ export default function StockInvestmentConfirm() {
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}>
+          showsVerticalScrollIndicator={false}
+        >
           {/* Title */}
           <View style={styles.titleContainer}>
             <Text style={styles.title}>{t("deposit.reviewConfirm")}</Text>
@@ -159,7 +165,8 @@ export default function StockInvestmentConfirm() {
             colors={["#F28934", "#E25A17"]}
             style={styles.amountCard}
             start={{ x: 0, y: 0 }}
-            end={{ x: 0, y: 1 }}>
+            end={{ x: 0, y: 1 }}
+          >
             <Text style={styles.amountCardTitle}>
               {t("deposit.investmentAmount")}
             </Text>
@@ -177,19 +184,22 @@ export default function StockInvestmentConfirm() {
           <View style={styles.buttonContainer}>
             <TouchableOpacity
               style={styles.backButtonBottom}
-              onPress={() => navigation.goBack()}>
+              onPress={() => navigation.goBack()}
+            >
               <Text style={styles.backButtonText}>{t("deposit.back")}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.confirmButton}
               onPress={handleConfirm}
-              disabled={isSubmitting}>
+              disabled={isSubmitting}
+            >
               <LinearGradient
                 colors={["#E25A17", "#F28934"]}
                 style={styles.confirmGradient}
                 start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}>
+                end={{ x: 1, y: 0 }}
+              >
                 <Text style={styles.confirmText}>
                   {isSubmitting
                     ? t("deposit.processing")
@@ -210,13 +220,15 @@ export default function StockInvestmentConfirm() {
           visible={showAlertModal}
           transparent={true}
           animationType="fade"
-          onRequestClose={() => setShowAlertModal(false)}>
+          onRequestClose={() => setShowAlertModal(false)}
+        >
           <View style={styles.alertOverlay}>
             <LinearGradient
               colors={["#E15816", "#F48F38"]}
               style={styles.alertContainer}
               start={{ x: 0, y: 0 }}
-              end={{ x: 0, y: 1 }}>
+              end={{ x: 0, y: 1 }}
+            >
               <Text style={styles.alertTitle}>{alertConfig.title}</Text>
               <Text style={styles.alertMessage}>{alertConfig.message}</Text>
               <TouchableOpacity
@@ -224,9 +236,13 @@ export default function StockInvestmentConfirm() {
                 onPress={() => {
                   setShowAlertModal(false);
                   if (alertConfig.title === t("deposit.success")) {
-                    navigation.navigate("Stockholder");
+                    (navigation as any).reset({
+                      index: 1,
+                      routes: [{ name: "Main" }, { name: "Stockholder" }],
+                    });
                   }
-                }}>
+                }}
+              >
                 <Text style={styles.alertButtonText}>OK</Text>
               </TouchableOpacity>
             </LinearGradient>

@@ -5,6 +5,7 @@ import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { registerIndieID } from 'native-notify';
 import { useEffect, useRef, useState } from "react";
+import * as SecureStore from 'expo-secure-store';
 import {
     ActivityIndicator,
     Animated,
@@ -680,6 +681,21 @@ export default function Login() {
           type: "error",
         });
         return;
+      }
+
+      // ** FIX for Biometric cross-login **
+      try {
+        const oldEmail = await AsyncStorage.getItem('lastLoggedEmail');
+        const currentEmail = trimmedEmail.toLowerCase();
+        
+        // If the user logging in has a different email, or no past email is known, clear the old biometric token
+        if (!oldEmail || oldEmail.toLowerCase() !== currentEmail) {
+            await SecureStore.deleteItemAsync('biometricToken');
+            await AsyncStorage.removeItem('biometricEmail');
+        }
+        await AsyncStorage.setItem('lastLoggedEmail', currentEmail);
+      } catch (e) {
+        console.warn("Failed to check biometricToken mismatch", e);
       }
 
       await AsyncStorage.setItem("access_token", result.access_token || "");

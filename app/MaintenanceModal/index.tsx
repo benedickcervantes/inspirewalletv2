@@ -1,4 +1,5 @@
 import { useNavigation } from "@react-navigation/native";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 const THEME_COLOR = "#E15816";
@@ -13,14 +14,12 @@ export function MaintenanceModal({ visible, onClose }: MaintenanceModalProps) {
 
   const handleGoBack = () => {
     onClose();
-    // Simply try to go back, if it fails the warning is just development-only
     try {
       if (navigation.canGoBack?.()) {
         navigation.goBack();
       }
     } catch (error) {
-      // Silently fail if navigation doesn't work
-      console.log('Navigation back not available');
+      console.log("Navigation back not available");
     }
   };
 
@@ -33,12 +32,19 @@ export function MaintenanceModal({ visible, onClose }: MaintenanceModalProps) {
     >
       <View style={styles.modalOverlay}>
         <View style={styles.modalContent}>
-          <View style={styles.modalIconContainer}>
-            <Text style={styles.modalIcon}>🔧</Text>
+          <View style={styles.header}>
+            <View style={styles.iconCircle}>
+              <MaterialCommunityIcons
+                name="tools"
+                size={22}
+                color="#FFFFFF"
+              />
+            </View>
+            <Text style={styles.title}>Under maintenance</Text>
           </View>
-          <Text style={styles.modalTitle}>Coming Soon</Text>
           <Text style={styles.modalMessage}>
-            This service is currently under maintenance. We're working hard to bring you an improved experience. Please check back soon!
+            This service is currently under maintenance. We're working hard to
+            bring you an improved experience. Please check back soon!
           </Text>
           <TouchableOpacity
             style={styles.modalButton}
@@ -64,7 +70,7 @@ const styles = StyleSheet.create({
   modalContent: {
     backgroundColor: "#FFFFFF",
     borderRadius: 20,
-    padding: 24,
+    padding: 28,
     alignItems: "center",
     width: "80%",
     maxWidth: 320,
@@ -74,23 +80,28 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 8,
   },
-  modalIconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: "#FFF3E0",
-    justifyContent: "center",
+  header: {
     alignItems: "center",
     marginBottom: 16,
   },
-  modalIcon: {
-    fontSize: 40,
+  iconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: THEME_COLOR,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 10,
+    shadowColor: THEME_COLOR,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 4,
   },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: "700",
+  title: {
+    fontSize: 16,
+    fontWeight: "800",
     color: "#333",
-    marginBottom: 12,
     textAlign: "center",
   },
   modalMessage: {

@@ -75,6 +75,66 @@ export async function getWallets(accessToken) {
 }
 
 /**
+ * Submit an account deletion request.
+ * POST /account-deletion-requests — requires JWT
+ * @param {string} accessToken - Backend JWT
+ * @param {{ reason: string, notes?: string }} body
+ */
+export async function submitAccountDeletionRequest(accessToken, body) {
+  const url = buildUrl("/account-deletion-requests");
+  if (!url) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
+  try {
+    const res = await apiFetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    return { success: true, data: data.data ?? data };
+  } catch (e) {
+    if (__DEV__) console.error("[AccountDeletion API] Error", e);
+    return { success: false, error: e.message || "Network error" };
+  }
+}
+
+/**
+ * Get the authenticated user's account deletion requests.
+ * GET /account-deletion-requests/me — requires JWT
+ * @param {string} accessToken - Backend JWT
+ */
+export async function getMyAccountDeletionRequests(accessToken) {
+  const url = buildUrl("/account-deletion-requests/me");
+  if (!url) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
+  try {
+    const res = await apiFetch(url, {
+      method: "GET",
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    return { success: true, data: Array.isArray(data) ? data : (data.data ?? []) };
+  } catch (e) {
+    return { success: false, error: e.message || "Network error" };
+  }
+}
+
+/**
  * Submit a time deposit request via the backend.
  * POST /time-deposits (no /api prefix)
  * @param {string} accessToken - Backend JWT from AsyncStorage
@@ -340,6 +400,107 @@ export async function submitTopUpRequest(accessToken, body) {
     };
   }
 }
+
+/**
+ * Upload a payment receipt image for an existing top-up request.
+ * POST /deposit-requests/top-up/:id/receipt (multipart/form-data, field: "file")
+ * Called AFTER creating the top-up request to attach the receipt.
+ * @param {string} accessToken - Backend JWT
+ * @param {string} requestId - ID returned from submitTopUpRequest
+ * @param {string} imageUri - Local file URI from ImagePicker (file://...)
+ * @param {string} [mimeType] - MIME type (default: image/jpeg)
+ * @returns {Promise<{ success: boolean, data?: object, error?: string }>}
+ */
+export async function uploadTopUpReceiptFile(accessToken, requestId, imageUri, mimeType = "image/jpeg") {
+  const url = buildUrl(`/deposit-requests/top-up/${requestId}/receipt`);
+  if (!url) return { success: false, error: "Backend URL not configured." };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
+  try {
+    if (__DEV__) console.log("[Receipt Upload] POST", url, "imageUri:", imageUri, "mimeType:", mimeType);
+    const ext = mimeType.split("/")[1] ?? "jpg";
+    const formData = new FormData();
+    formData.append("file", {
+      uri: imageUri,
+      name: `receipt.${ext}`,
+      type: mimeType,
+    });
+    // IMPORTANT: Do NOT set Content-Type manually for FormData in React Native.
+    // The native fetch sets multipart/form-data WITH the boundary automatically.
+    // Setting it manually removes the boundary and breaks multipart parsing on the server.
+    const apiKey = process.env.EXPO_PUBLIC_API_KEY;
+    const headers = {
+      Authorization: `Bearer ${accessToken}`,
+    };
+    if (apiKey) headers["x-api-key"] = apiKey;
+    const res = await _originalFetch(url, {
+      method: "POST",
+      headers,
+      body: formData,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (__DEV__) console.log("[Receipt Upload] Response", res.status, data);
+    if (!res.ok) {
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || `Upload failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    return { success: true, data: data.data ?? data };
+  } catch (e) {
+    if (__DEV__) console.error("[Receipt Upload] Error", e);
+    return { success: false, error: e.message || "Network error uploading receipt." };
+  }
+}
+
+/**
+ * Upload a payment receipt image for an existing time deposit request.
+ * POST /time-deposits/:id/receipt (multipart/form-data, field: "file")
+ * Called AFTER creating the time deposit request to attach the receipt.
+ * @param {string} accessToken - Backend JWT
+ * @param {string} requestId - ID returned from submitTimeDepositRequest
+ * @param {string} imageUri - Local file URI from ImagePicker (file://...)
+ * @param {string} [mimeType] - MIME type (default: image/jpeg)
+ * @returns {Promise<{ success: boolean, data?: object, error?: string }>}
+ */
+export async function uploadTimeDepositReceiptFile(accessToken, requestId, imageUri, mimeType = "image/jpeg") {
+  const url = buildUrl(`/time-deposits/${requestId}/receipt`);
+  if (!url) return { success: false, error: "Backend URL not configured." };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
+  try {
+    if (__DEV__) console.log("[TimeDeposit Receipt Upload] POST", url, "imageUri:", imageUri, "mimeType:", mimeType);
+    const ext = mimeType.split("/")[1] ?? "jpg";
+    const formData = new FormData();
+    formData.append("file", {
+      uri: imageUri,
+      name: `receipt.${ext}`,
+      type: mimeType,
+    });
+    const apiKey = process.env.EXPO_PUBLIC_API_KEY;
+    const headers = {
+      Authorization: `Bearer ${accessToken}`,
+    };
+    if (apiKey) headers["x-api-key"] = apiKey;
+    const res = await _originalFetch(url, {
+      method: "POST",
+      headers,
+      body: formData,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (__DEV__) console.log("[Receipt Upload] Response", res.status, data);
+    if (!res.ok) {
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || `Upload failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    return { success: true, data: data.data ?? data };
+  } catch (e) {
+    if (__DEV__) console.error("[Receipt Upload] Error", e);
+    return { success: false, error: e.message || "Network error uploading receipt." };
+  }
+}
+
+
 
 /**
  * Submit a stock investment request via the backend.
@@ -829,6 +990,39 @@ export async function verifyPasscode(accessToken, passcode) {
 }
 
 /**
+ * POST /auth/reset-passcode — requires JWT
+ * Resets passcode without verifying old one. Use when user verified identity via email+password.
+ * @param {string} accessToken
+ * @param {string} passcode — exactly 4 digits
+ * @returns {{ success: boolean, error?: string }}
+ */
+export async function resetPasscode(accessToken, passcode) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "No token" };
+  try {
+    const res = await apiFetch(`${base}/auth/reset-passcode`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ passcode }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || "Failed to reset passcode";
+      return { success: false, error: msg };
+    }
+    return { success: true };
+  } catch (e) {
+    return { success: false, error: e.message || "Network error" };
+  }
+}
+
+/**
  * PATCH /auth/passcode — requires JWT
  * Updates the user's passcode. Requires current passcode for verification.
  * @param {string} accessToken
@@ -863,6 +1057,107 @@ export async function updatePasscode(
     return { success: true };
   } catch (e) {
     return { success: false, error: e.message || "Network error" };
+  }
+}
+
+/**
+ * POST /auth/biometric/enable — requires JWT
+ * Enables biometric login. Requires user to verify identity with email & password.
+ * @param {string} accessToken
+ * @param {string} email
+ * @param {string} password
+ * @returns {{ success: boolean, token?: string, error?: string }}
+ */
+export async function enableBiometric(accessToken, email, password) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "No token" };
+  try {
+    const res = await apiFetch(`${base}/auth/biometric/enable`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ email: email.trim(), password }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || "Failed to enable biometric";
+      return { success: false, error: msg };
+    }
+    return { success: true, token: data.token }; // Token string to be saved to SecureStore
+  } catch (e) {
+    return { success: false, error: e.message || "Network error" };
+  }
+}
+
+/**
+ * POST /auth/biometric/disable — requires JWT
+ * Disables biometric login for the current user.
+ * @param {string} accessToken
+ * @returns {{ success: boolean, message?: string, error?: string }}
+ */
+export async function disableBiometric(accessToken) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "No token" };
+  try {
+    const res = await apiFetch(`${base}/auth/biometric/disable`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || "Failed to disable biometric";
+      return { success: false, error: msg };
+    }
+    return { success: true, message: data.message };
+  } catch (e) {
+    return { success: false, error: e.message || "Network error" };
+  }
+}
+
+/**
+ * POST /auth/biometric/verify — NO JWT REQUIRED
+ * Used during login. Transmits the secure biometric token to get an access_token.
+ * @param {string} token — The token from SecureStore
+ * @returns {{ success: boolean, access_token?: string, user?: object, requiresPasswordReset?: boolean, error?: string }}
+ */
+export async function verifyBiometric(token) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  try {
+    const res = await apiFetch(`${base}/auth/biometric/verify`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || `Request failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    return {
+      success: true,
+      access_token: data.access_token,
+      user: data.user,
+      requiresPasswordReset: data.requiresPasswordReset === true,
+    };
+  } catch (e) {
+    return {
+      success: false,
+      error: e.message || "Network error. Is the backend running?",
+    };
   }
 }
 
@@ -1356,6 +1651,38 @@ export async function getNotifications(accessToken, opts = {}) {
 }
 
 /**
+ * GET /announcements/active — requires JWT
+ * Fetch active announcements for the current user.
+ * @param {string} accessToken
+ */
+export async function getActiveAnnouncements(accessToken) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
+  try {
+    const url = `${base}/announcements/active`;
+    const res = await apiFetch(url, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    return { success: true, data: Array.isArray(data) ? data : [] };
+  } catch (e) {
+    if (__DEV__) console.error("[Announcements API] Error", e);
+    return { success: false, error: e.message || "Network error" };
+  }
+}
+
+/**
  * PATCH /notifications/read-all — requires JWT
  * Mark all notifications as read.
  * @param {string} accessToken
@@ -1406,6 +1733,151 @@ export async function markNotificationAsRead(accessToken, notificationId) {
     return { success: true };
   } catch (e) {
     if (__DEV__) console.error("[Notifications API] Error", e);
+    return { success: false, error: e.message || "Network error" };
+  }
+}
+
+/**
+ * DELETE /notifications/:id — requires JWT
+ * Delete a single notification.
+ * @param {string} accessToken
+ * @param {string} notificationId
+ */
+export async function deleteNotification(accessToken, notificationId) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
+  try {
+    const url = `${base}/notifications/${encodeURIComponent(notificationId)}`;
+    const res = await apiFetch(url, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || 'Failed';
+      return { success: false, error: msg };
+    }
+    return { success: true };
+  } catch (e) {
+    if (__DEV__) console.error("[Notifications API] Error", e);
+    return { success: false, error: e.message || "Network error" };
+  }
+}
+
+/**
+ * DELETE /notifications/all — requires JWT
+ * Delete all notifications for the user.
+ * @param {string} accessToken
+ */
+export async function deleteAllNotifications(accessToken) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
+  try {
+    const url = `${base}/notifications/all`;
+    const res = await apiFetch(url, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || 'Failed';
+      return { success: false, error: msg };
+    }
+    return { success: true };
+  } catch (e) {
+    if (__DEV__) console.error("[Notifications API] Error", e);
+    return { success: false, error: e.message || "Network error" };
+  }
+}
+
+/**
+ * POST /notifications/delete-batch — requires JWT
+ * Delete multiple notifications.
+ * @param {string} accessToken
+ * @param {string[]} ids
+ */
+export async function deleteNotificationBatch(accessToken, ids) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
+  try {
+    const url = `${base}/notifications/delete-batch`;
+    const res = await apiFetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ ids: ids || [] }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || 'Failed';
+      return { success: false, error: msg };
+    }
+    return { success: true };
+  } catch (e) {
+    if (__DEV__) console.error("[Notifications API] Error", e);
+    return { success: false, error: e.message || "Network error" };
+  }
+}
+
+/**
+ * POST /notifications/:id/referral/accept — requires JWT
+ * Accept a new referral (keep the user under your referral code).
+ * @param {string} accessToken
+ * @param {string} notificationId
+ */
+export async function acceptReferralRequest(accessToken, notificationId) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
+  if (!notificationId) return { success: false, error: "Notification ID required" };
+  try {
+    const url = `${base}/notifications/${encodeURIComponent(notificationId)}/referral/accept`;
+    const res = await apiFetch(url, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || "Failed";
+      return { success: false, error: msg };
+    }
+    return { success: true, data };
+  } catch (e) {
+    if (__DEV__) console.error("[Referral API] Error", e);
+    return { success: false, error: e.message || "Network error" };
+  }
+}
+
+/**
+ * POST /notifications/:id/referral/decline — requires JWT
+ * Decline a new referral (remove the user from your referral).
+ * @param {string} accessToken
+ * @param {string} notificationId
+ */
+export async function declineReferralRequest(accessToken, notificationId) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
+  if (!notificationId) return { success: false, error: "Notification ID required" };
+  try {
+    const url = `${base}/notifications/${encodeURIComponent(notificationId)}/referral/decline`;
+    const res = await apiFetch(url, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || "Failed";
+      return { success: false, error: msg };
+    }
+    return { success: true, data };
+  } catch (e) {
+    if (__DEV__) console.error("[Referral API] Error", e);
     return { success: false, error: e.message || "Network error" };
   }
 }
@@ -1702,7 +2174,84 @@ export async function getStockSellRequests(accessToken) {
     return { success: false, error: e.message || 'Network error' };
   }
 }
+// --- Stock Rate & Marketplace API ---
+
+/**
+ * Fetch the current admin-configured stock rate (PHP per 1 stock unit).
+ * GET /system-settings/stock-rate — no auth required.
+ * @returns {Promise<{ success: boolean, phpPerStock?: number, error?: string }>}
+ */
+export async function getStockRate() {
+  const url = buildUrl('/system-settings/stock-rate');
+  if (!url) return { success: false, phpPerStock: 2_000_000, error: 'Backend URL not configured' };
+  try {
+    const res = await apiFetch(url, { method: 'GET', headers: { 'Content-Type': 'application/json' } });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) return { success: false, phpPerStock: 2_000_000 };
+    return { success: true, phpPerStock: data.phpPerStock ?? 2_000_000 };
+  } catch {
+    return { success: false, phpPerStock: 2_000_000 };
+  }
+}
+
+/**
+ * Fetch all active stock sell listings in the marketplace (excludes own listings).
+ * GET /deposit-requests/stock-sell/marketplace
+ * @param {string} accessToken - Backend JWT
+ * @returns {Promise<{ success: boolean, data?: Array<{id, stocksToSell, phpAmount, createdAt}>, error?: string }>}
+ */
+export async function getStockMarketplaceListings(accessToken) {
+  const url = buildUrl('/deposit-requests/stock-sell/marketplace');
+  if (!url) return { success: false, data: [], error: 'Backend URL not configured' };
+  if (!accessToken) return { success: false, data: [], error: 'Not authenticated' };
+  try {
+    const res = await apiFetch(url, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, data: [], error: msg };
+    }
+    return { success: true, data: Array.isArray(data) ? data : (data.data ?? []) };
+  } catch (e) {
+    if (__DEV__) console.error('[StockMarketplace API] Error', e);
+    return { success: false, data: [], error: e.message || 'Network error' };
+  }
+}
+
+/**
+ * Purchase a stock sell listing from the marketplace (P2P, no admin approval).
+ * POST /deposit-requests/stock-sell/:id/purchase
+ * @param {string} accessToken - Backend JWT
+ * @param {string} sellRequestId - ID of the StockSellRequest to purchase
+ * @returns {Promise<{ success: boolean, data?: object, error?: string }>}
+ */
+export async function purchaseStockListing(accessToken, sellRequestId) {
+  const url = buildUrl(`/deposit-requests/stock-sell/${sellRequestId}/purchase`);
+  if (!url) return { success: false, error: 'Backend URL not configured' };
+  if (!accessToken) return { success: false, error: 'Not authenticated' };
+  try {
+    if (__DEV__) console.log('[StockMarketplace API] POST purchase', url);
+    const res = await apiFetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    return { success: true, data: data.data ?? data };
+  } catch (e) {
+    if (__DEV__) console.error('[StockMarketplace API] Error', e);
+    return { success: false, error: e.message || 'Network error' };
+  }
+}
+
 // --- Card Collection API ---
+
 
 /**
  * Get card catalog with per-user eligibility/ownership flags.

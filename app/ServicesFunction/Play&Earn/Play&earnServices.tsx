@@ -1,28 +1,35 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Platform,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  BackHandler,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  useWindowDimensions,
+  View
 } from "react-native";
 import { useLanguage } from "../../../context/LanguageContext";
 import { isServiceUnderMaintenance } from "../../../lib/maintenance";
 
 const THEME_COLOR = "#E15816";
-const ORANGE_GRADIENT: readonly [string, string] = ["#E25A17", "#F28934"];
-const GREEN_BUTTON = "#22C55E";
+const ORANGE_GRADIENT: readonly [string, string] = ["#E15816", "#FF7E47"];
+const PREMIUM_DARK = "#1A1A1A";
+const SOFT_GRAY = "#F9FAFB";
+const GREEN_SUCCESS = "#22C55E";
+
+const IPHONE_SE_WIDTH = 320;
+const SMALL_PHONE_WIDTH = 375;
 
 const CRYPTO_ASSETS: { id: string; label: string; icon: React.ComponentProps<typeof Ionicons>["name"] }[] = [
   { id: "BTC", label: "BTC", icon: "logo-bitcoin" },
-  { id: "ETH", label: "ETH", icon: "diamond-outline" },
+  { id: "ETH", label: "ETH", icon: "diamond" },
   { id: "USDT", label: "USDT", icon: "cash-outline" },
 ];
 
@@ -37,18 +44,74 @@ function formatCurrency(value: number | string): string {
   return num.toLocaleString("en-PH", { minimumFractionDigits: 2 });
 }
 
+const MOCK_DATA = {
+  price: "3,845,755.81",
+  priceChange: "+2.4%",
+  balance: 205115,
+  cryptoBalances: {
+    BTC: "0.00000",
+    ETH: "0.00000",
+    USDT: "0.00000",
+  },
+  forexBalances: {
+    USD: "0.00",
+    JPY: "0.00",
+  }
+};
+
+
+const BalanceCard = React.memo(({ balance, label }: { balance: number; label: string }) => (
+  <LinearGradient
+    colors={ORANGE_GRADIENT}
+    start={{ x: 0, y: 0 }}
+    end={{ x: 1, y: 1 }}
+    style={styles.balanceCard}
+  >
+    <View style={styles.balanceHeader}>
+      <Text style={styles.balanceLabel}>{label}</Text>
+      <MaterialCommunityIcons name="wallet-outline" size={24} color="#FFF" opacity={0.7} />
+    </View>
+    <Text style={styles.balanceValue}>
+      ₱ {formatCurrency(balance)}
+    </Text>
+    <View style={styles.balanceDecorativeCircle} />
+  </LinearGradient>
+));
+
 export default function PlayEarnServices() {
   const navigation = useNavigation();
   const { t } = useLanguage();
+  const { width } = useWindowDimensions();
+
+  const isXSScreen = width <= IPHONE_SE_WIDTH;
+  const isSmallScreen = width < SMALL_PHONE_WIDTH;
+  const horizontalPadding = isXSScreen ? 12 : isSmallScreen ? 16 : 20;
+
   const [activeTab, setActiveTab] = useState<TabType>("trading");
   const [selectedCrypto, setSelectedCrypto] = useState("BTC");
   const [selectedTimeRange, setSelectedTimeRange] = useState<TimeRange>("24h");
   const [isBuy, setIsBuy] = useState(true);
   const [spendingAmount, setSpendingAmount] = useState("0.00");
-  const [availableBalance] = useState(205115);
+  const [availableBalance] = useState(MOCK_DATA.balance);
   const [isUnderMaintenance, setIsUnderMaintenance] = useState(false);
   const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
   const [checkingMaintenance, setCheckingMaintenance] = useState(true);
+
+  // Price States
+  const [cryptoPrices, setCryptoPrices] = useState<Record<string, string>>({
+    BTC: MOCK_DATA.price,
+    ETH: "150,000.00",
+    USDT: "56.00"
+  });
+  const [priceChange, setPriceChange] = useState(MOCK_DATA.priceChange);
+  const [isLoadingPrice, setIsLoadingPrice] = useState(false);
+  const isFetchingRef = React.useRef(false);
+
+  useEffect(() => {
+    navigation.setOptions({
+      headerShown: false,
+    });
+  }, [navigation]);
 
   // Check maintenance status on focus
   useFocusEffect(
@@ -71,73 +134,107 @@ export default function PlayEarnServices() {
     }, [])
   );
 
-  const handlePercentagePress = (pct: number): void => {
+  // Fetch Prices on Focus
+  useFocusEffect(
+    useCallback(() => {
+      const fetchPrices = async () => {
+        if (isFetchingRef.current) return;
+        isFetchingRef.current = true;
+
+        try {
+          const baseUrl = (process.env.EXPO_PUBLIC_WALLET_BACKEND_URL || "").replace(/\/$/, "");
+          const apiKey = process.env.EXPO_PUBLIC_API_KEY;
+          if (!baseUrl) return;
+
+          const url = `${baseUrl}/prices/all`;
+          const response = await fetch(url, {
+            headers: { "x-api-key": apiKey || "" },
+          });
+
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+          const data = await response.json();
+          console.log("[Crypto] Received from backend:", JSON.stringify(data));
+
+          setCryptoPrices(prev => {
+            const newPrices = { ...prev };
+            if (data.BTC?.php) newPrices.BTC = formatCurrency(data.BTC.php);
+            if (data.ETH?.php) newPrices.ETH = formatCurrency(data.ETH.php);
+            if (data.USDT?.php) newPrices.USDT = formatCurrency(data.USDT.php);
+            return newPrices;
+          });
+
+          if (data[selectedCrypto]?.change24h) {
+            setPriceChange(data[selectedCrypto].change24h);
+          } else if (data[selectedCrypto.toUpperCase()]?.change24h) {
+            setPriceChange(data[selectedCrypto.toUpperCase()].change24h);
+          }
+        } catch (error) {
+          console.error("[Crypto] Fetch Error:", error);
+        } finally {
+          isFetchingRef.current = false;
+        }
+      };
+
+      fetchPrices();
+      const interval = setInterval(fetchPrices, 60000);
+      return () => clearInterval(interval);
+    }, [selectedCrypto])
+  );
+
+  useEffect(() => {
+    const backAction = () => {
+      navigation.navigate("Main");
+      return true;
+    };
+    const backHandler = BackHandler.addEventListener("hardwareBackPress", backAction);
+    return () => backHandler.remove();
+  }, [navigation]);
+
+  const handleBack = useCallback(() => navigation.navigate("Main"), [navigation]);
+  const handlePercentagePress = useCallback((pct: number): void => {
     const amount = (availableBalance * pct) / 100;
     setSpendingAmount(amount.toFixed(2));
-  };
-
-  if (checkingMaintenance) {
-    return (
-      <View style={styles.container}>
-        <SafeAreaView style={styles.safeArea}>
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={THEME_COLOR} />
-          </View>
-        </SafeAreaView>
-      </View>
-    );
-  }
-
-  if (isUnderMaintenance) {
-    return (
-      <View style={styles.container}>
-        <SafeAreaView style={styles.safeArea}>
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={THEME_COLOR} />
-            <Text style={styles.loadingText}>Service under maintenance</Text>
-          </View>
-        </SafeAreaView>
-      </View>
-    );
-  }
+  }, [availableBalance]);
 
   return (
     <View style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
       <SafeAreaView style={styles.safeArea}>
-        {/* Header - Orange Gradient (matches Deposit screens) */}
+        {/* Custom Header Bar (Exact AgentDashboard Style) */}
         <LinearGradient
-          colors={ORANGE_GRADIENT}
-          style={styles.header}
+          colors={["#E25A17", "#F28934"]}
+          style={[styles.header, isXSScreen && styles.headerCompact]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
         >
           <TouchableOpacity
             style={styles.backButton}
-            onPress={() => navigation.navigate("Main")}
+            onPress={handleBack}
           >
-            <View style={styles.backButtonCircle}>
-              <Ionicons name="arrow-back" size={24} color={THEME_COLOR} />
-            </View>
+            <Ionicons name="arrow-back" size={isXSScreen ? 22 : 24} color="#FFFFFF" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>{t("playEarn.title")}</Text>
-          <TouchableOpacity style={styles.helpButton}>
-            <View style={styles.helpIconCircle}>
-              <Text style={styles.helpIconText}>?</Text>
-            </View>
-          </TouchableOpacity>
+          <Text style={[styles.headerTitle, isXSScreen && styles.headerTitleCompact]} numberOfLines={1}>
+            {t("playEarn.title")}
+          </Text>
+          <View style={{ width: 44 }} />
         </LinearGradient>
 
         <ScrollView
           style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, { paddingHorizontal: horizontalPadding }]}
+          keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
+          scrollEventThrottle={16}
         >
+          {/* The previous headerCard is removed to match AgentDashboard's flat list style if desired, 
+                but keeping the rest of the functional content below */}
           {/* Tabs */}
           <View style={styles.tabRow}>
             <TouchableOpacity
               style={[styles.tab, activeTab === "trading" && styles.tabActive]}
               onPress={() => setActiveTab("trading")}
-              activeOpacity={0.9}
+              activeOpacity={0.7}
             >
               <Text
                 style={[
@@ -155,7 +252,7 @@ export default function PlayEarnServices() {
                 activeTab === "deposit" && styles.tabActive,
               ]}
               onPress={() => navigation.navigate("DepositCrypto")}
-              activeOpacity={0.9}
+              activeOpacity={0.7}
             >
               <Text
                 style={[
@@ -168,35 +265,31 @@ export default function PlayEarnServices() {
             </TouchableOpacity>
           </View>
 
-          {/* Available Balance Card */}
-          <View style={styles.balanceCard}>
-            <Text style={styles.balanceLabel}>{t("playEarn.availableBalance")}</Text>
-            <Text style={styles.balanceValue}>
-              P {formatCurrency(availableBalance)}
-            </Text>
+          <View style={[styles.balanceCard, isXSScreen && styles.cardCompact]}>
+            <BalanceCard balance={availableBalance} label={t("playEarn.availableBalance")} />
           </View>
 
           {/* Asset Cards Row - CRYPTO & FOREX */}
           <View style={styles.assetCardsRow}>
-            <View style={styles.assetCard}>
+            <View style={[styles.assetCard, isXSScreen && styles.cardCompact]}>
               <View style={styles.assetCardHeader}>
                 <Text style={styles.assetCardTitle}>{t("playEarn.crypto")}</Text>
                 <Ionicons name="logo-bitcoin" size={18} color={THEME_COLOR} />
               </View>
               <View style={styles.assetItem}>
                 <Text style={styles.assetLabel}>BTC</Text>
-                <Text style={styles.assetValue}>0.00000</Text>
+                <Text style={styles.assetValue}>{MOCK_DATA.cryptoBalances.BTC}</Text>
               </View>
               <View style={styles.assetItem}>
                 <Text style={styles.assetLabel}>ETH</Text>
-                <Text style={styles.assetValue}>0.00000</Text>
+                <Text style={styles.assetValue}>{MOCK_DATA.cryptoBalances.ETH}</Text>
               </View>
               <View style={styles.assetItem}>
                 <Text style={styles.assetLabel}>USDT</Text>
-                <Text style={styles.assetValue}>0.00000</Text>
+                <Text style={styles.assetValue}>{MOCK_DATA.cryptoBalances.USDT}</Text>
               </View>
             </View>
-            <View style={styles.assetCard}>
+            <View style={[styles.assetCard, isXSScreen && styles.cardCompact]}>
               <View style={styles.assetCardHeader}>
                 <Text style={styles.assetCardTitle}>{t("playEarn.forex")}</Text>
                 <MaterialCommunityIcons
@@ -207,17 +300,17 @@ export default function PlayEarnServices() {
               </View>
               <View style={styles.assetItem}>
                 <Text style={styles.assetLabel}>USD</Text>
-                <Text style={styles.assetValue}>0.00</Text>
+                <Text style={styles.assetValue}>{MOCK_DATA.forexBalances.USD}</Text>
               </View>
               <View style={styles.assetItem}>
                 <Text style={styles.assetLabel}>JPY</Text>
-                <Text style={styles.assetValue}>0.00</Text>
+                <Text style={styles.assetValue}>{MOCK_DATA.forexBalances.JPY}</Text>
               </View>
             </View>
           </View>
 
           {/* CRYPTO Section Label */}
-          <Text style={styles.sectionLabel}>{t("playEarn.crypto")}</Text>
+          <Text style={[styles.sectionLabel, isXSScreen && styles.sectionTitleCompact]}>{t("playEarn.crypto")}</Text>
 
           {/* Crypto Selection Buttons */}
           <View style={styles.cryptoButtons}>
@@ -242,9 +335,10 @@ export default function PlayEarnServices() {
                     name={asset.icon}
                     size={24}
                     color={
-                      asset.id === "USDT"
-                        ? THEME_COLOR
-                        : "#FFF"
+                      asset.id === "BTC" ? "#F7931A" :
+                        asset.id === "ETH" ? "#627EEA" :
+                          asset.id === "USDT" ? "#26A17B" :
+                            "#FFF"
                     }
                   />
                 </View>
@@ -257,8 +351,8 @@ export default function PlayEarnServices() {
           <Text style={styles.currentPriceLabel}>{t("playEarn.currentPrice")}</Text>
           <View style={styles.priceRow}>
             <View>
-              <Text style={styles.currentPrice}>P 3,845,755.81</Text>
-              <Text style={styles.priceChange}>+2.4% (24h)</Text>
+              <Text style={styles.currentPrice}>P {cryptoPrices[selectedCrypto as keyof typeof cryptoPrices] || "0.00"}</Text>
+              <Text style={styles.priceChange}>{priceChange} (24h)</Text>
             </View>
             <View style={styles.timeRangeButtons}>
               {TIME_RANGES.map((range) => (
@@ -283,25 +377,23 @@ export default function PlayEarnServices() {
             </View>
           </View>
 
-          {/* Buy / Sell Toggle */}
-          <View style={styles.buySellToggle}>
+          {/* Buy / Sell Tab Segment */}
+          <View style={styles.segmentedControl}>
             <TouchableOpacity
-              style={[styles.toggleOption, isBuy && styles.toggleOptionActive]}
+              style={[styles.segment, isBuy && styles.segmentActive]}
               onPress={() => setIsBuy(true)}
+              activeOpacity={0.8}
             >
-              <Text
-                style={[styles.toggleText, isBuy && styles.toggleTextActive]}
-              >
+              <Text style={[styles.segmentText, isBuy && styles.segmentTextActive]}>
                 {t("playEarn.buy")}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.toggleOption, !isBuy && styles.toggleOptionActive]}
+              style={[styles.segment, !isBuy && styles.segmentActive]}
               onPress={() => setIsBuy(false)}
+              activeOpacity={0.8}
             >
-              <Text
-                style={[styles.toggleText, !isBuy && styles.toggleTextActive]}
-              >
+              <Text style={[styles.segmentText, !isBuy && styles.segmentTextActive]}>
                 {t("playEarn.sell")}
               </Text>
             </TouchableOpacity>
@@ -336,8 +428,8 @@ export default function PlayEarnServices() {
           {/* Confirm Purchase Button */}
           <TouchableOpacity
             style={styles.confirmButton}
-            activeOpacity={0.9}
-            onPress={() => {}}
+            activeOpacity={0.8}
+            onPress={() => { }}
           >
             <Text style={styles.confirmButtonText}>
               {isBuy ? t("playEarn.confirmPurchase") : t("playEarn.confirmSell")}
@@ -358,53 +450,41 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
-    paddingTop: Platform.OS === "android" ? 24 : 0,
+    paddingTop: Platform.OS === "android" ? (StatusBar.currentHeight ?? 0) : 0,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingTop: 16,
+    paddingBottom: 40,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 16,
-    paddingVertical: 16,
+    paddingVertical: 14,
+  },
+  headerCompact: {
+    paddingHorizontal: 12,
+    paddingVertical: 10,
   },
   backButton: {
-    padding: 4,
-  },
-  backButtonCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "rgba(255,255,255,0.9)",
+    padding: 12,
+    minWidth: 44,
+    minHeight: 44,
     justifyContent: "center",
-    alignItems: "center",
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: "700",
-    color: "#FFF",
-  },
-  helpButton: {
-    padding: 4,
-  },
-  helpIconCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "rgba(255,255,255,0.9)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  helpIconText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: THEME_COLOR,
-  },
-  scrollView: {
+    color: "#FFFFFF",
     flex: 1,
+    textAlign: "center",
   },
-  scrollContent: {
-    paddingHorizontal: 20,
-    paddingTop: 8,
+  headerTitleCompact: {
+    fontSize: 16,
   },
   tabRow: {
     flexDirection: "row",
@@ -441,21 +521,36 @@ const styles = StyleSheet.create({
     color: THEME_COLOR,
   },
   balanceCard: {
-    backgroundColor: THEME_COLOR,
-    borderRadius: 16,
+    borderRadius: 12,
     padding: 20,
     marginBottom: 16,
+    overflow: "hidden",
+  },
+  balanceHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  balanceDecorativeCircle: {
+    position: "absolute",
+    right: -20,
+    bottom: -20,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: "rgba(255,255,255,0.1)",
   },
   balanceLabel: {
     fontSize: 14,
-    color: "#FFF",
-    fontWeight: "500",
-    marginBottom: 4,
+    color: "rgba(255,255,255,0.9)",
+    fontWeight: "600",
   },
   balanceValue: {
-    fontSize: 28,
-    fontWeight: "700",
+    fontSize: 32,
+    fontWeight: "800",
     color: "#FFF",
+    letterSpacing: -0.5,
   },
   assetCardsRow: {
     flexDirection: "row",
@@ -464,216 +559,267 @@ const styles = StyleSheet.create({
   },
   assetCard: {
     flex: 1,
-    backgroundColor: "#FFF",
+    backgroundColor: "#FFFFFF",
     borderRadius: 12,
     padding: 16,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
-    shadowRadius: 6,
+    shadowRadius: 8,
     elevation: 3,
   },
   assetCardHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 12,
+    marginBottom: 16,
   },
   assetCardTitle: {
     fontSize: 14,
     fontWeight: "700",
-    color: "#333",
+    color: "#1F2937",
   },
   assetItem: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 8,
+    marginBottom: 10,
   },
   assetLabel: {
-    fontSize: 14,
-    color: "#666",
+    fontSize: 13,
+    color: "#71717A",
     fontWeight: "500",
   },
   assetValue: {
-    fontSize: 14,
-    color: "#333",
-    fontWeight: "600",
+    fontSize: 13,
+    color: PREMIUM_DARK,
+    fontWeight: "700",
   },
   sectionLabel: {
-    fontSize: 12,
-    color: THEME_COLOR,
-    fontWeight: "600",
+    fontSize: 13,
+    color: "#6B7280",
+    fontWeight: "700",
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
     marginBottom: 12,
-    opacity: 0.9,
+  },
+  sectionTitleCompact: {
+    fontSize: 12,
   },
   cryptoButtons: {
     flexDirection: "row",
-    gap: 12,
-    marginBottom: 20,
+    gap: 16,
+    marginBottom: 24,
   },
   cryptoButton: {
     alignItems: "center",
+    opacity: 0.6,
   },
   cryptoButtonSelected: {
     opacity: 1,
   },
   cryptoIconCircle: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 6,
+    marginBottom: 8,
+    backgroundColor: SOFT_GRAY,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
   },
   cryptoIconBtc: {
-    backgroundColor: THEME_COLOR,
+    backgroundColor: "#FFF",
+    borderColor: "#F7931A",
+    borderWidth: 2,
   },
   cryptoIconEth: {
-    backgroundColor: "#333",
+    backgroundColor: "#FFF",
+    borderColor: "#627EEA",
+    borderWidth: 2,
   },
   cryptoIconUsdt: {
     backgroundColor: "#FFF",
-    borderWidth: 1,
-    borderColor: "#E0E0E0",
+    borderColor: "#26A17B",
+    borderWidth: 2,
   },
   cryptoButtonLabel: {
     fontSize: 12,
-    color: "#333",
-    fontWeight: "500",
+    color: PREMIUM_DARK,
+    fontWeight: "700",
   },
   currentPriceLabel: {
-    fontSize: 12,
-    color: "#333",
+    fontSize: 13,
+    color: "#71717A",
     fontWeight: "600",
-    marginBottom: 8,
+    marginBottom: 4,
   },
   priceRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: 20,
+    alignItems: "center",
+    marginBottom: 24,
   },
   currentPrice: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: "#000",
+    fontSize: 28,
+    fontWeight: "800",
+    color: "#1F2937",
+    letterSpacing: -0.5,
   },
   priceChange: {
     fontSize: 14,
-    color: "#22C55E",
-    fontWeight: "600",
-    marginTop: 4,
+    color: GREEN_SUCCESS,
+    fontWeight: "700",
+    marginTop: 2,
   },
   timeRangeButtons: {
     flexDirection: "row",
-    gap: 8,
+    backgroundColor: SOFT_GRAY,
+    padding: 4,
+    borderRadius: 20,
+    gap: 4,
   },
   timeRangeBtn: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 20,
+    borderRadius: 16,
   },
   timeRangeBtnActive: {
-    backgroundColor: THEME_COLOR,
-  },
-  timeRangeText: {
-    fontSize: 13,
-    color: "#999",
-    fontWeight: "500",
-  },
-  timeRangeTextActive: {
-    color: "#FFF",
-  },
-  buySellToggle: {
-    flexDirection: "row",
-    backgroundColor: "#E8E8E8",
-    borderRadius: 10,
-    padding: 4,
-    marginBottom: 20,
-  },
-  toggleOption: {
-    flex: 1,
-    paddingVertical: 10,
-    alignItems: "center",
-    borderRadius: 8,
-  },
-  toggleOptionActive: {
     backgroundColor: "#FFF",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
   },
-  toggleText: {
-    fontSize: 15,
-    color: "#666",
-    fontWeight: "600",
+  timeRangeText: {
+    fontSize: 12,
+    color: "#71717A",
+    fontWeight: "700",
   },
-  toggleTextActive: {
-    color: "#000",
+  timeRangeTextActive: {
+    color: "#E25A17",
+  },
+  textCompact: {
+    fontSize: 12,
+  },
+  cardCompact: {
+    padding: 14,
+    marginBottom: 12,
+  },
+  segmentedControl: {
+    flexDirection: "row",
+    backgroundColor: SOFT_GRAY,
+    borderRadius: 16,
+    padding: 6,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+  },
+  segment: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: "center",
+    borderRadius: 12,
+  },
+  segmentActive: {
+    backgroundColor: "#FFF",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  segmentText: {
+    fontSize: 15,
+    color: "#71717A",
+    fontWeight: "700",
+  },
+  segmentTextActive: {
+    color: PREMIUM_DARK,
   },
   inputLabel: {
-    fontSize: 12,
-    color: "#333",
-    fontWeight: "600",
+    fontSize: 13,
+    color: "#71717A",
+    fontWeight: "700",
     marginBottom: 8,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
   },
   amountInputRow: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#FFF",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#E0E0E0",
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    marginBottom: 12,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: "#E5E7EB",
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    marginBottom: 16,
   },
   amountInput: {
     flex: 1,
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#000",
+    fontSize: 24,
+    fontWeight: "800",
+    color: PREMIUM_DARK,
     padding: 0,
   },
   currencyLabel: {
     fontSize: 16,
-    color: "#666",
-    fontWeight: "500",
-    marginLeft: 8,
+    color: "#71717A",
+    fontWeight: "700",
+    marginLeft: 12,
   },
   percentRow: {
     flexDirection: "row",
-    gap: 8,
-    marginBottom: 24,
+    gap: 10,
+    marginBottom: 32,
   },
   percentButton: {
     flex: 1,
-    paddingVertical: 10,
-    backgroundColor: "#E8E8E8",
-    borderRadius: 10,
+    paddingVertical: 12,
+    backgroundColor: SOFT_GRAY,
+    borderRadius: 14,
     alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
   },
   percentText: {
     fontSize: 14,
-    fontWeight: "600",
-    color: "#333",
+    fontWeight: "700",
+    color: PREMIUM_DARK,
   },
   confirmButton: {
-    backgroundColor: GREEN_BUTTON,
-    borderRadius: 14,
-    paddingVertical: 16,
+    backgroundColor: GREEN_SUCCESS,
+    borderRadius: 20,
+    paddingVertical: 18,
     alignItems: "center",
     justifyContent: "center",
+    shadowColor: GREEN_SUCCESS,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    elevation: 4,
   },
   confirmButtonText: {
     fontSize: 18,
-    fontWeight: "700",
+    fontWeight: "800",
     color: "#FFF",
+    letterSpacing: 0.5,
   },
   bottomSpacing: {
     height: 32,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: "#666",
+    fontWeight: "500",
   },
 });
