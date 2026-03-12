@@ -231,6 +231,9 @@ export default function Passcode() {
           await AsyncStorage.setItem('access_token', result.access_token);
           if (result.user) {
             await AsyncStorage.setItem('user', JSON.stringify(result.user));
+            if ((result.user as any).email) {
+              await AsyncStorage.setItem('lastLoggedEmail', (result.user as any).email.toLowerCase());
+            }
           }
           await AsyncStorage.setItem('passcodeLoginComplete', 'true');
           (navigation as unknown as NavProp).replace('Main');

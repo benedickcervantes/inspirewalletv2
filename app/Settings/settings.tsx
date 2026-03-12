@@ -303,6 +303,7 @@ const Settings = () => {
       if (res.success && res.token) {
         // 3. Store token securely
         await SecureStore.setItemAsync('biometricToken', res.token);
+        await AsyncStorage.setItem('biometricEmail', userData.email.toLowerCase());
         
         // 4. Update UI state
         setUserData(prev => prev ? { ...prev, biometricEnabled: true } : null);
