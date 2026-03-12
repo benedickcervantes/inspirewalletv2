@@ -1,3 +1,5 @@
+import { Platform } from "react-native";
+
 /**
  * Wallet backend API helpers.
  * Uses EXPO_PUBLIC_WALLET_BACKEND_URL (InpireWalletv3_Backend).
@@ -43,6 +45,46 @@ const buildUrl = (path) => {
   const cleanPath = path.startsWith("/") ? path : `/${path}`;
   return `${base}${prefix}${cleanPath}`;
 };
+
+const inferMimeTypeFromUri = (imageUri, fallback = "image/jpeg") => {
+  const uriLower = String(imageUri ?? "").toLowerCase();
+  if (uriLower.endsWith(".png")) return "image/png";
+  if (uriLower.endsWith(".gif")) return "image/gif";
+  if (uriLower.endsWith(".webp")) return "image/webp";
+  return fallback;
+};
+
+async function appendReceiptFile(formData, imageUri, mimeType = "image/jpeg") {
+  if (!imageUri) {
+    throw new Error("No image selected for receipt upload.");
+  }
+
+  const fallbackMimeType = inferMimeTypeFromUri(imageUri, mimeType);
+
+  if (Platform.OS === "web") {
+    const fileResponse = await _originalFetch(imageUri);
+    if (!fileResponse.ok) {
+      throw new Error(`Failed to read selected receipt (${fileResponse.status})`);
+    }
+
+    const blob = await fileResponse.blob();
+    const resolvedMimeType = blob.type || fallbackMimeType;
+    const ext = resolvedMimeType.split("/")[1] ?? "jpg";
+    const webFile =
+      blob.type === resolvedMimeType ? blob : new Blob([blob], { type: resolvedMimeType });
+
+    formData.append("file", webFile, `receipt.${ext}`);
+    return resolvedMimeType;
+  }
+
+  const ext = fallbackMimeType.split("/")[1] ?? "jpg";
+  formData.append("file", {
+    uri: imageUri,
+    name: `receipt.${ext}`,
+    type: fallbackMimeType,
+  });
+  return fallbackMimeType;
+}
 
 /**
  * Fetch the current user's wallets.
@@ -417,13 +459,8 @@ export async function uploadTopUpReceiptFile(accessToken, requestId, imageUri, m
   if (!accessToken) return { success: false, error: "Not authenticated" };
   try {
     if (__DEV__) console.log("[Receipt Upload] POST", url, "imageUri:", imageUri, "mimeType:", mimeType);
-    const ext = mimeType.split("/")[1] ?? "jpg";
     const formData = new FormData();
-    formData.append("file", {
-      uri: imageUri,
-      name: `receipt.${ext}`,
-      type: mimeType,
-    });
+    const resolvedMimeType = await appendReceiptFile(formData, imageUri, mimeType);
     // IMPORTANT: Do NOT set Content-Type manually for FormData in React Native.
     // The native fetch sets multipart/form-data WITH the boundary automatically.
     // Setting it manually removes the boundary and breaks multipart parsing on the server.
@@ -432,6 +469,7 @@ export async function uploadTopUpReceiptFile(accessToken, requestId, imageUri, m
       Authorization: `Bearer ${accessToken}`,
     };
     if (apiKey) headers["x-api-key"] = apiKey;
+    if (__DEV__) console.log("[Receipt Upload] Prepared multipart file with mimeType:", resolvedMimeType);
     const res = await _originalFetch(url, {
       method: "POST",
       headers,
@@ -468,18 +506,14 @@ export async function uploadTimeDepositReceiptFile(accessToken, requestId, image
   if (!accessToken) return { success: false, error: "Not authenticated" };
   try {
     if (__DEV__) console.log("[TimeDeposit Receipt Upload] POST", url, "imageUri:", imageUri, "mimeType:", mimeType);
-    const ext = mimeType.split("/")[1] ?? "jpg";
     const formData = new FormData();
-    formData.append("file", {
-      uri: imageUri,
-      name: `receipt.${ext}`,
-      type: mimeType,
-    });
+    const resolvedMimeType = await appendReceiptFile(formData, imageUri, mimeType);
     const apiKey = process.env.EXPO_PUBLIC_API_KEY;
     const headers = {
       Authorization: `Bearer ${accessToken}`,
     };
     if (apiKey) headers["x-api-key"] = apiKey;
+    if (__DEV__) console.log("[TimeDeposit Receipt Upload] Prepared multipart file with mimeType:", resolvedMimeType);
     const res = await _originalFetch(url, {
       method: "POST",
       headers,
