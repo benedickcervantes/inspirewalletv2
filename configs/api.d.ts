@@ -74,6 +74,18 @@ export function getTimeDepositInterestRates(
   tiers?: { contractType: string; amount: string; interestRate: string }[];
   error?: string;
 }>;
+
+export function calculateExchange(params: {
+  currency: string;
+  amount: number;
+  action?: "BUY_PHP" | "SELL_PHP";
+  amountType?: "SOURCE_FOREIGN" | "TARGET_PHP";
+}): Promise<{
+  success: boolean;
+  targetAmount?: number;
+  sourceAmount?: number;
+  error?: string;
+}>;
 export function getTransactions(
   accessToken: string,
   opts?: { walletId?: string; limit?: number; cursor?: string; type?: string },
@@ -189,6 +201,10 @@ export function markNotificationAsRead(
   accessToken: string,
   notificationId: string,
 ): Promise<{ success: boolean; error?: string }>;
+
+export function getActiveAnnouncements(
+  accessToken: string,
+): Promise<{ success: boolean; data?: unknown[]; error?: string }>;
 export function markAllNotificationsAsRead(
   accessToken: string,
 ): Promise<{ success: boolean; error?: string }>;
