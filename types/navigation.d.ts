@@ -63,7 +63,6 @@ export type RootStackParamList = {
   Stockholder: undefined;
   StockBuy: undefined;
   StockSell: { stockCount: number; totalPortfolioValue: number };
-  Task: undefined;
   AgentRequest: undefined;
   PlayEarn: undefined;
   DepositCrypto: undefined;

@@ -678,7 +678,6 @@ export default function Dashboard() {
     },
     { icon: "headset", labelKey: "support.title", route: "Message" },
     { icon: "chart-line", labelKey: "dashboard.stock", route: "Stockholder" },
-    { icon: "format-list-bulleted", labelKey: "dashboard.task", route: "Task" },
     { icon: "account", labelKey: "dashboard.agent", route: "AgentRequest" },
     {
       icon: "chart-areaspline",
@@ -1149,7 +1148,6 @@ export default function Dashboard() {
                     EwalletService: "ewallet",
                     Message: "message",
                     Stockholder: "stock",
-                    Task: "task",
                     AgentRequest: "agent",
                     PlayEarn: "trading",
                   };
