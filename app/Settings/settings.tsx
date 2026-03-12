@@ -416,6 +416,13 @@ const Settings = () => {
     iconSizeSmall: scaled(20),
     iconSizeLarge: scaled(48),
     backIconSize: scaled(28),
+    passwordInput: {
+      paddingHorizontal: scaled(16),
+      paddingVertical: scaled(14),
+      fontSize: scaled(16),
+      marginBottom: scaled(16),
+      borderRadius: scaled(8),
+    },
   };
 
   if (!userData) {
@@ -683,7 +690,7 @@ const Settings = () => {
               </View>
 
               <Text style={[styles.modalSubtitle, r.modalSubtitle]} numberOfLines={3}>
-                {t('settings.biometricSetupSubtitle')}
+                {t('settings.biometricSetupSubtitle', { type: biometricType })}
               </Text>
 
               <TextInput

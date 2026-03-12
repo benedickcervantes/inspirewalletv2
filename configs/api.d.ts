@@ -422,3 +422,17 @@ export function uploadTimeDepositReceiptFile(
   imageUri: string,
   mimeType?: string,
 ): Promise<{ success: boolean; data?: unknown; error?: string }>;
+
+export function enableBiometric(
+  accessToken: string,
+  email: string,
+  password?: string,
+): Promise<{ success: boolean; token?: string; error?: string }>;
+
+export function disableBiometric(
+  accessToken: string,
+): Promise<{ success: boolean; error?: string }>;
+
+export function verifyBiometric(
+  token: string,
+): Promise<{ success: boolean; access_token?: string; user?: object; error?: string }>;
