@@ -90,7 +90,7 @@ class NotificationService {
 
     try {
       const notificationRef = doc(
-        firestore,
+        firestore!,
         "users",
         userId,
         "notifications",
@@ -139,7 +139,7 @@ class NotificationService {
 
     try {
       const notificationRef = doc(
-        firestore,
+        firestore!,
         "users",
         userId,
         "notifications",
@@ -178,7 +178,7 @@ class NotificationService {
     try {
       const deletePromises = notificationIds.map((notificationId) => {
         const notificationRef = doc(
-          firestore,
+          firestore!,
           "users",
           userId,
           "notifications",

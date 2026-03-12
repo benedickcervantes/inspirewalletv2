@@ -23,8 +23,8 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import {
-  getMe,
   getActiveAnnouncements,
+  getMe,
   getNotifications,
   getOrCreateMainWallet,
   getReferralTree,
@@ -42,11 +42,11 @@ import { setConnectionStatus } from "../../lib/connectionStatus";
 import { getMaintenanceStatus } from "../../lib/maintenance";
 import type { NavProp } from "../../types/navigation";
 import { useResponsive } from "../../utils/responsive";
-import NotificationBadge from "../Notification/NotificationBadge";
 import {
   AnnouncementModal,
   type AnnouncementItem,
 } from "../AnnouncementModal/AnnouncementModal";
+import NotificationBadge from "../Notification/NotificationBadge";
 import CardsTab from "./CardsTab";
 import SavingsTab from "./SavingsTab";
 import WalletTab from "./WalletTab";

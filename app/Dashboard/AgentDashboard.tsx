@@ -459,9 +459,11 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   sectionTitle: { fontSize: 16, fontWeight: "600", color: "#1F2937", marginBottom: 12 },
+  sectionTitleCompact: { fontSize: 14, marginBottom: 10 },
   qrCodeContainer: { alignItems: "center", marginVertical: 16 },
   qrCodeContainerCompact: { marginVertical: 12 },
   referralCodeRow: { flexDirection: "row", alignItems: "center", gap: 12 },
+  referralCodeColumn: { flexDirection: "column", alignItems: "stretch" },
   referralCodeBox: {
     flex: 1,
     backgroundColor: "#F3F4F6",
@@ -469,6 +471,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 8,
   },
+  referralCodeBoxFull: { width: "100%" },
   referralCodeText: {
     fontSize: 18,
     fontWeight: "700",
@@ -488,6 +491,7 @@ const styles = StyleSheet.create({
   referralCodeTextCompact: { fontSize: 15, letterSpacing: 1 },
   shareButtonText: { color: "#FFFFFF", fontWeight: "600", fontSize: 14 },
   statsRow: { flexDirection: "row", gap: 12, marginBottom: 16 },
+  statsRowCompact: { flexDirection: "column" },
   statCard: {
     flex: 1,
     backgroundColor: "#FFFFFF",

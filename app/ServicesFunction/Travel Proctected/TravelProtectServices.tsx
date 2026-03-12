@@ -1447,9 +1447,6 @@ const styles = StyleSheet.create({
   headerIcon: {
     marginBottom: 12,
   },
-  scrollView: {
-    flex: 1,
-  },
   scrollContent: {
     paddingHorizontal: 20,
     paddingBottom: 20,
