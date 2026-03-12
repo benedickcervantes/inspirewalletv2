@@ -127,7 +127,20 @@ export default function TimeDepositConfirm() {
         
         // Blocking Receipt Upload
         if (proofUri) {
-          const uploadRes = await uploadTimeDepositReceiptFile(accessToken, requestId, proofUri);
+          const uriLower = proofUri.toLowerCase();
+          const mimeType = uriLower.endsWith(".png")
+            ? "image/png"
+            : uriLower.endsWith(".gif")
+              ? "image/gif"
+              : uriLower.endsWith(".webp")
+                ? "image/webp"
+                : "image/jpeg";
+          const uploadRes = await uploadTimeDepositReceiptFile(
+            accessToken,
+            requestId,
+            proofUri,
+            mimeType,
+          );
           if (!uploadRes.success) {
             setErrorMessage(`Time Deposit Created, but receipt upload failed: ${uploadRes.error}. Please contact support.`);
             setLoading(false);
