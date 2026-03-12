@@ -1,4 +1,5 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import * as Clipboard from "expo-clipboard";
 import * as ImagePicker from "expo-image-picker";
@@ -17,9 +18,8 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import { useLanguage } from "../../../context/LanguageContext";
 import QRCode from "react-native-qrcode-svg";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useLanguage } from "../../../context/LanguageContext";
 
 const THEME_COLOR = "#E15816";
 const IPHONE_SE_WIDTH = 320;
@@ -138,34 +138,34 @@ export default function DepositCryptoEth() {
     return styles.cryptoPillActive;
   };
 
-  return (  
+  return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
-        <SafeAreaView style={styles.safeArea}>
-          {/* Custom Header Bar (Exact AgentDashboard Style) */}
-          <LinearGradient
-            colors={["#E25A17", "#F28934"]}
-            style={[styles.header, isXSScreen && styles.headerCompact]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
+      <SafeAreaView style={styles.safeArea}>
+        {/* Custom Header Bar (Exact AgentDashboard Style) */}
+        <LinearGradient
+          colors={["#E25A17", "#F28934"]}
+          style={[styles.header, isXSScreen && styles.headerCompact]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+        >
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.navigate("PlayEarn")}
           >
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={() => navigation.navigate("PlayEarn")}
-            >
-              <Ionicons name="arrow-back" size={isXSScreen ? 22 : 24} color="#FFFFFF" />
-            </TouchableOpacity>
-            <Text style={[styles.headerTitle, isXSScreen && styles.headerTitleCompact]} numberOfLines={1}>
-              Deposit ETH
-            </Text>
-            <View style={{ width: 44 }} />
-          </LinearGradient>
+            <Ionicons name="arrow-back" size={isXSScreen ? 22 : 24} color="#FFFFFF" />
+          </TouchableOpacity>
+          <Text style={[styles.headerTitle, isXSScreen && styles.headerTitleCompact]} numberOfLines={1}>
+            Deposit ETH
+          </Text>
+          <View style={{ width: 44 }} />
+        </LinearGradient>
 
-          <ScrollView
-            style={styles.scrollView}
-            contentContainerStyle={[styles.scrollContent, { paddingHorizontal: horizontalPadding }]}
-            showsVerticalScrollIndicator={false}
-          >
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={[styles.scrollContent, { paddingHorizontal: horizontalPadding }]}
+          showsVerticalScrollIndicator={false}
+        >
           {/* Premium Account Holder Card */}
           <View style={styles.profileCard}>
             <View style={styles.profileAvatar}>
@@ -187,8 +187,8 @@ export default function DepositCryptoEth() {
               const isActive = selectedCrypto === crypto.id;
               const iconCircleActiveStyle =
                 crypto.id === "BTC" ? styles.cryptoPillIconCircleActiveBtc :
-                crypto.id === "ETH" ? styles.cryptoPillIconCircleActiveEth :
-                styles.cryptoPillIconCircleActiveUsdt;
+                  crypto.id === "ETH" ? styles.cryptoPillIconCircleActiveEth :
+                    styles.cryptoPillIconCircleActiveUsdt;
               return (
                 <TouchableOpacity
                   key={crypto.id}
