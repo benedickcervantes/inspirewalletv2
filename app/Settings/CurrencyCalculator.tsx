@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
+    ActivityIndicator,
     KeyboardAvoidingView,
     Platform,
     SafeAreaView,
@@ -15,6 +16,7 @@ import {
     View,
     ViewStyle,
 } from 'react-native';
+import { calculateExchangePair } from '../../configs/api';
 import { useLanguage } from '../../context/LanguageContext';
 import type { NavProp } from '../../types/navigation';
 import { useResponsive } from '../../utils/responsive';
@@ -23,21 +25,20 @@ interface Currency {
     code: string;
     nameKey: string;
     symbol: string;
-    buyRate: number; // 1 FC = X PHP (Buy)
-    sellRate: number; // 1 FC = X PHP (Sell)
 }
 
 const CURRENCIES: Currency[] = [
-    { code: 'PHP', nameKey: 'deposit.currencyPhilippinePeso', symbol: '₱', buyRate: 1, sellRate: 1 },
-    { code: 'USD', nameKey: 'deposit.currencyUSDollar', symbol: '$', buyRate: 57.5669, sellRate: 60.5191 },
-    { code: 'JPY', nameKey: 'deposit.currencyJapaneseYen', symbol: '¥', buyRate: 0.3624, sellRate: 0.3810 },
-    { code: 'CNY', nameKey: 'deposit.currencyChineseYuan', symbol: '¥', buyRate: 8.3386, sellRate: 8.7662 },
-    { code: 'EUR', nameKey: 'deposit.currencyEuro', symbol: '€', buyRate: 66.6890, sellRate: 70.1049 },
-    { code: 'HKD', nameKey: 'deposit.currencyHongKongDollar', symbol: 'HK$', buyRate: 7.3573, sellRate: 7.7345 },
-    { code: 'AUD', nameKey: 'deposit.currencyAustralianDollar', symbol: 'A$', buyRate: 40.4089, sellRate: 42.4811 },
-    { code: 'CAD', nameKey: 'deposit.currencyCanadianDollar', symbol: 'C$', buyRate: 42.0878, sellRate: 44.2462 },
-    { code: 'GBP', nameKey: 'deposit.currencyBritishPound', symbol: '£', buyRate: 76.8173, sellRate: 80.7567 },
-    { code: 'CHF', nameKey: 'deposit.currencySwissFranc', symbol: 'Fr', buyRate: 73.7051, sellRate: 77.4849 },
+    { code: 'PHP', nameKey: 'deposit.currencyPhilippinePeso', symbol: '₱' },
+    { code: 'USD', nameKey: 'deposit.currencyUSDollar', symbol: '$' },
+    { code: 'JPY', nameKey: 'deposit.currencyJapaneseYen', symbol: '¥' },
+    { code: 'CNY', nameKey: 'deposit.currencyChineseYuan', symbol: '¥' },
+    { code: 'EUR', nameKey: 'deposit.currencyEuro', symbol: '€' },
+    { code: 'HKD', nameKey: 'deposit.currencyHongKongDollar', symbol: 'HK$' },
+    { code: 'AUD', nameKey: 'deposit.currencyAustralianDollar', symbol: 'A$' },
+    { code: 'GBP', nameKey: 'deposit.currencyBritishPound', symbol: '£' },
+    { code: 'CHF', nameKey: 'deposit.currencySwissFranc', symbol: 'Fr' },
+    { code: 'KRW', nameKey: 'deposit.currencyKoreanWon', symbol: '₩' },
+    { code: 'SAR', nameKey: 'deposit.currencySaudiRiyal', symbol: '﷼' },
 ];
 
 const CurrencyCalculator = () => {
@@ -49,22 +50,64 @@ const CurrencyCalculator = () => {
     const [amount, setAmount] = useState('1');
     const [fromCurrency, setFromCurrency] = useState(CURRENCIES[1]); // USD default
     const [toCurrency, setToCurrency] = useState(CURRENCIES[0]); // PHP default
-    const [isBuyRate, setIsBuyRate] = useState(true);
+    const [convertedAmount, setConvertedAmount] = useState<number | null>(null);
+    const [isConverting, setIsConverting] = useState(false);
+    const [convertError, setConvertError] = useState<string | null>(null);
+    const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    const convertedAmount = useMemo(() => {
+    const fetchConversion = useCallback(async (from: string, to: string, amountVal: number) => {
+        if (amountVal <= 0 || !from || !to || from === to) {
+            setConvertedAmount(from === to ? amountVal : 0);
+            setConvertError(null);
+            return;
+        }
+        setIsConverting(true);
+        setConvertError(null);
+        const result = await calculateExchangePair({
+            fromCurrency: from,
+            toCurrency: to,
+            amount: amountVal,
+        });
+        setIsConverting(false);
+        if (result.success && result.convertedAmount != null) {
+            setConvertedAmount(result.convertedAmount);
+            setConvertError(null);
+        } else {
+            setConvertedAmount(null);
+            setConvertError(result.error || 'Exchange rate unavailable');
+        }
+    }, []);
+
+    useEffect(() => {
+        if (debounceRef.current) clearTimeout(debounceRef.current);
         const numAmount = parseFloat(amount) || 0;
-        const fromRate = isBuyRate ? fromCurrency.buyRate : fromCurrency.sellRate;
-        const toRate = isBuyRate ? toCurrency.buyRate : toCurrency.sellRate;
-
-        // Logic: (Amount in FromCurrency) * (Rate From -> PHP) / (Rate To -> PHP)
-        const result = (numAmount * fromRate) / toRate;
-        return result.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 });
-    }, [amount, fromCurrency, toCurrency, isBuyRate]);
+        if (!amount.trim() || numAmount <= 0) {
+            setConvertedAmount(null);
+            setConvertError(null);
+            return;
+        }
+        if (fromCurrency.code === toCurrency.code) {
+            setConvertedAmount(numAmount);
+            setConvertError(null);
+            return;
+        }
+        debounceRef.current = setTimeout(() => {
+            fetchConversion(fromCurrency.code, toCurrency.code, numAmount);
+        }, 400);
+        return () => {
+            if (debounceRef.current) clearTimeout(debounceRef.current);
+        };
+    }, [amount, fromCurrency, toCurrency, fetchConversion]);
 
     const handleSwap = () => {
         setFromCurrency(toCurrency);
         setToCurrency(fromCurrency);
     };
+
+    const displayAmount =
+        convertedAmount != null
+            ? convertedAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })
+            : '—';
 
     const r = {
         header: {
@@ -106,35 +149,6 @@ const CurrencyCalculator = () => {
             justifyContent: 'center',
             marginVertical: scaled(10),
         } as ViewStyle,
-        toggleContainer: {
-            flexDirection: 'row',
-            backgroundColor: '#E0E0E0',
-            borderRadius: scaled(12),
-            padding: scaled(4),
-            marginBottom: scaled(20),
-        } as ViewStyle,
-        toggleButton: {
-            flex: 1,
-            paddingVertical: scaled(10),
-            alignItems: 'center',
-            borderRadius: scaled(10),
-        } as ViewStyle,
-        activeToggle: {
-            backgroundColor: '#FFFFFF',
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.1,
-            shadowRadius: 4,
-            elevation: 2,
-        } as ViewStyle,
-        toggleText: {
-            fontSize: scaled(14),
-            fontWeight: '600',
-            color: '#666',
-        } as TextStyle,
-        activeToggleText: {
-            color: '#F38B35',
-        } as TextStyle,
         resultContainer: {
             backgroundColor: '#F38B35',
             borderRadius: scaled(16),
@@ -150,6 +164,7 @@ const CurrencyCalculator = () => {
         resultLabel: { color: 'rgba(255,255,255,0.8)', fontSize: scaled(14), marginBottom: scaled(8) } as TextStyle,
         resultValue: { color: '#FFFFFF', fontSize: scaled(32), fontWeight: '800' } as TextStyle,
         resultCurrency: { color: '#FFFFFF', fontSize: scaled(18), fontWeight: '600', marginTop: scaled(4) } as TextStyle,
+        errorText: { color: '#B71C1C', fontSize: scaled(13), marginTop: scaled(8), textAlign: 'center' } as TextStyle,
     };
 
     const [fromModalVisible, setFromModalVisible] = useState(false);
@@ -177,28 +192,15 @@ const CurrencyCalculator = () => {
                 style={{ flex: 1 }}
             >
                 <ScrollView style={r.container} showsVerticalScrollIndicator={false}>
-                    <Text style={[styles.label, r.label]}>{t('settings.rateType')}</Text>
-                    <View style={r.toggleContainer}>
-                        <TouchableOpacity
-                            style={[r.toggleButton, isBuyRate && r.activeToggle]}
-                            onPress={() => setIsBuyRate(true)}
-                        >
-                            <Text style={[r.toggleText, isBuyRate && r.activeToggleText]}>{t('settings.buyRate')}</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                            style={[r.toggleButton, !isBuyRate && r.activeToggle]}
-                            onPress={() => setIsBuyRate(false)}
-                        >
-                            <Text style={[r.toggleText, !isBuyRate && r.activeToggleText]}>{t('settings.sellRate')}</Text>
-                        </TouchableOpacity>
-                    </View>
-
                     <Text style={[styles.label, r.label]}>Amount</Text>
                     <View style={r.inputContainer}>
                         <TextInput
                             style={r.input}
                             value={amount}
-                            onChangeText={setAmount}
+                            onChangeText={(text) => {
+                                const filtered = text.replace(/[^0-9.]/g, '');
+                                setAmount(filtered);
+                            }}
                             keyboardType="numeric"
                             placeholder="0.00"
                         />
@@ -208,14 +210,26 @@ const CurrencyCalculator = () => {
                         </TouchableOpacity>
                     </View>
 
-                    <TouchableOpacity style={r.swapButton} onPress={handleSwap}>
-                        <Ionicons name="swap-vertical" size={24} color="#F38B35" />
-                    </TouchableOpacity>
+                    <View style={{ alignItems: 'center' }}>
+                        <TouchableOpacity style={r.swapButton} onPress={handleSwap}>
+                            <Ionicons name="swap-vertical" size={24} color="#F38B35" />
+                        </TouchableOpacity>
+                    </View>
 
-                    <Text style={[styles.label, r.label]}>To</Text>
+                    <Text style={[styles.label, r.label]}>Converted to</Text>
                     <View style={r.inputContainer}>
-                        <View style={{ flex: 1 }}>
-                            <Text style={[r.input, { opacity: 0.5 }]}>Converted Amount</Text>
+                        <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
+                            {isConverting ? (
+                                <ActivityIndicator size="small" color="#F38B35" style={{ marginRight: 8 }} />
+                            ) : null}
+                            <Text
+                                style={[
+                                    r.input,
+                                    { opacity: convertedAmount != null ? 1 : 0.5 },
+                                ]}
+                            >
+                                {toCurrency.symbol} {displayAmount}
+                            </Text>
                         </View>
                         <TouchableOpacity style={r.currencySelector} onPress={() => setToModalVisible(true)}>
                             <Text style={r.currencyCode}>{toCurrency.code}</Text>
@@ -224,21 +238,24 @@ const CurrencyCalculator = () => {
                     </View>
 
                     <View style={r.resultContainer}>
-                        <Text style={r.resultLabel}>Total Result ({isBuyRate ? t('settings.buyRate') : t('settings.sellRate')})</Text>
-                        <Text style={r.resultValue}>{toCurrency.symbol} {convertedAmount}</Text>
+                        <Text style={r.resultLabel}>Total Result</Text>
+                        <Text style={r.resultValue}>
+                            {toCurrency.symbol}{' '}
+                            {isConverting ? '...' : displayAmount}
+                        </Text>
                         <Text style={r.resultCurrency}>{t(toCurrency.nameKey)}</Text>
+                        {convertError ? <Text style={r.errorText}>{convertError}</Text> : null}
                     </View>
 
                     <View style={{ height: 40 }} />
                     <Text style={styles.disclaimer}>
-                        * Rates are hardcoded as of the provided table and are for reference only.
+                        * Live exchange rates from the bank. Rates may vary.
                     </Text>
 
-                    {/* Simple Currency Selectors could be added here as Modals if needed, but for now just showing implementation */}
                     {fromModalVisible && (
                         <View style={styles.modalOverlay}>
                             <View style={styles.modalContent}>
-                                <Text style={styles.modalTitle}>Select Currency</Text>
+                                <Text style={styles.modalTitle}>Select From Currency</Text>
                                 <ScrollView>
                                     {CURRENCIES.map((curr) => (
                                         <TouchableOpacity
@@ -249,7 +266,9 @@ const CurrencyCalculator = () => {
                                                 setFromModalVisible(false);
                                             }}
                                         >
-                                            <Text style={styles.currencyItemText}>{curr.code} - {t(curr.nameKey)}</Text>
+                                            <Text style={styles.currencyItemText}>
+                                                {curr.code} - {t(curr.nameKey)}
+                                            </Text>
                                         </TouchableOpacity>
                                     ))}
                                 </ScrollView>
@@ -263,7 +282,7 @@ const CurrencyCalculator = () => {
                     {toModalVisible && (
                         <View style={styles.modalOverlay}>
                             <View style={styles.modalContent}>
-                                <Text style={styles.modalTitle}>Select Currency</Text>
+                                <Text style={styles.modalTitle}>Select To Currency</Text>
                                 <ScrollView>
                                     {CURRENCIES.map((curr) => (
                                         <TouchableOpacity
@@ -274,7 +293,9 @@ const CurrencyCalculator = () => {
                                                 setToModalVisible(false);
                                             }}
                                         >
-                                            <Text style={styles.currencyItemText}>{curr.code} - {t(curr.nameKey)}</Text>
+                                            <Text style={styles.currencyItemText}>
+                                                {curr.code} - {t(curr.nameKey)}
+                                            </Text>
                                         </TouchableOpacity>
                                     ))}
                                 </ScrollView>
@@ -359,7 +380,7 @@ const styles = StyleSheet.create({
     closeButtonText: {
         color: '#FFFFFF',
         fontWeight: '700',
-    }
+    },
 });
 
 export default CurrencyCalculator;
