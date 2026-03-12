@@ -400,6 +400,88 @@ export async function calculateExchange({
 }
 
 /**
+ * Convert between any two currencies using live backend rates.
+ * Uses PHP as intermediary for non-PHP pairs (e.g. USD→EUR = USD→PHP→EUR).
+ * @param {Object} params
+ * @param {string} params.fromCurrency - 3-letter source currency (e.g. "USD", "PHP")
+ * @param {string} params.toCurrency - 3-letter target currency (e.g. "EUR", "JPY")
+ * @param {number} params.amount - Amount in fromCurrency
+ * @returns {Promise<{ success: boolean, convertedAmount?: number, rateUsed?: number, error?: string }>}
+ */
+export async function calculateExchangePair({
+  fromCurrency,
+  toCurrency,
+  amount,
+}) {
+  const base = getBaseUrl();
+  if (!base) {
+    return { success: false, error: "Backend URL not configured." };
+  }
+  if (!fromCurrency || !toCurrency || amount == null || amount < 0) {
+    return { success: false, error: "Invalid params" };
+  }
+  const from = String(fromCurrency).toUpperCase();
+  const to = String(toCurrency).toUpperCase();
+  if (from === to) {
+    return { success: true, convertedAmount: amount, rateUsed: 1 };
+  }
+
+  try {
+    if (from === "PHP") {
+      const res = await calculateExchange({
+        action: "SELL_PHP",
+        currency: to,
+        amount: Number(amount),
+        amountType: "TARGET_PHP",
+      });
+      if (!res.success) return res;
+      return {
+        success: true,
+        convertedAmount: res.targetAmount,
+        rateUsed: res.rateUsed,
+      };
+    }
+    if (to === "PHP") {
+      const res = await calculateExchange({
+        action: "BUY_PHP",
+        currency: from,
+        amount: Number(amount),
+        amountType: "SOURCE_FOREIGN",
+      });
+      if (!res.success) return res;
+      return {
+        success: true,
+        convertedAmount: res.targetAmount,
+        rateUsed: res.rateUsed,
+      };
+    }
+    const step1 = await calculateExchange({
+      action: "BUY_PHP",
+      currency: from,
+      amount: Number(amount),
+      amountType: "SOURCE_FOREIGN",
+    });
+    if (!step1.success) return step1;
+    const phpAmount = step1.targetAmount;
+    const step2 = await calculateExchange({
+      action: "SELL_PHP",
+      currency: to,
+      amount: phpAmount,
+      amountType: "TARGET_PHP",
+    });
+    if (!step2.success) return step2;
+    return {
+      success: true,
+      convertedAmount: step2.targetAmount,
+      rateUsed: step2.rateUsed,
+    };
+  } catch (e) {
+    if (__DEV__) console.error("[ExchangePair API] Error", e);
+    return { success: false, error: e.message || "Network error" };
+  }
+}
+
+/**
  * Submit a top-up request via the backend.
  * POST /deposit-requests/top-up
  * @param {string} accessToken - Backend JWT

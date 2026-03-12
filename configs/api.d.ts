@@ -86,6 +86,18 @@ export function calculateExchange(params: {
   sourceAmount?: number;
   error?: string;
 }>;
+
+export function calculateExchangePair(params: {
+  fromCurrency: string;
+  toCurrency: string;
+  amount: number;
+}): Promise<{
+  success: boolean;
+  convertedAmount?: number;
+  rateUsed?: number;
+  error?: string;
+}>;
+
 export function getTransactions(
   accessToken: string,
   opts?: { walletId?: string; limit?: number; cursor?: string; type?: string },

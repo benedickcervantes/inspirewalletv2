@@ -484,11 +484,6 @@ export default function Placeholder() {
             verifyButtonLabel={t("profile.verify")}
           />
           <DetailItem
-            icon="finger-print-outline"
-            label={t("profile.accountNumber")}
-            value={accountNumber}
-          />
-          <DetailItem
             icon="people-outline"
             label={t("profile.agentReferrer")}
             value={agentReferrer}
