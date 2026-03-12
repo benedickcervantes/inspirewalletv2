@@ -86,6 +86,85 @@ async function appendReceiptFile(formData, imageUri, mimeType = "image/jpeg") {
   return fallbackMimeType;
 }
 
+async function appendImageFile(
+  formData,
+  imageUri,
+  filenameBase,
+  mimeType = "image/jpeg",
+) {
+  if (!imageUri) {
+    throw new Error("No image selected.");
+  }
+  const fallbackMimeType = inferMimeTypeFromUri(imageUri, mimeType);
+
+  if (Platform.OS === "web") {
+    const fileResponse = await _originalFetch(imageUri);
+    if (!fileResponse.ok) {
+      throw new Error(`Failed to read selected file (${fileResponse.status})`);
+    }
+
+    const blob = await fileResponse.blob();
+    const resolvedMimeType = blob.type || fallbackMimeType;
+    const ext = resolvedMimeType.split("/")[1] ?? "jpg";
+    const webFile =
+      blob.type === resolvedMimeType
+        ? blob
+        : new Blob([blob], { type: resolvedMimeType });
+
+    formData.append("file", webFile, `${filenameBase}.${ext}`);
+    return resolvedMimeType;
+  }
+
+  const ext = fallbackMimeType.split("/")[1] ?? "jpg";
+  formData.append("file", {
+    uri: imageUri,
+    name: `${filenameBase}.${ext}`,
+    type: fallbackMimeType,
+  });
+  return fallbackMimeType;
+}
+
+/**
+ * POST /auth/qr/decode (multipart/form-data, field: "file")
+ * @param {string} imageUri - Local file URI from ImagePicker (file://...)
+ * @param {"line"|"viber"|"whatsapp"|undefined} provider
+ * @param {string} mimeType
+ * @returns {{ success: boolean, text?: string, normalizedLink?: string, error?: string }}
+ */
+export async function decodeQrImage(imageUri, provider, mimeType = "image/jpeg") {
+  const url = buildUrl("/auth/qr/decode");
+  if (!url) return { success: false, error: "Backend URL not configured" };
+  try {
+    const formData = new FormData();
+    await appendImageFile(formData, imageUri, "qrcode", mimeType);
+    if (provider) {
+      formData.append("provider", provider);
+    }
+
+    const res = await apiFetch(url, {
+      method: "POST",
+      // IMPORTANT: Do NOT set Content-Type manually for FormData in React Native.
+      body: formData,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    return {
+      success: true,
+      text: typeof data.text === "string" ? data.text : undefined,
+      normalizedLink:
+        typeof data.normalizedLink === "string" ? data.normalizedLink : undefined,
+    };
+  } catch (e) {
+    if (__DEV__) console.error("[QR Decode API] Error", e);
+    return { success: false, error: e.message || "Network error decoding QR." };
+  }
+}
+
 /**
  * Fetch the current user's wallets.
  * GET /wallets

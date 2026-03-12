@@ -3,6 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { LinearGradient } from "expo-linear-gradient";
+import * as ImagePicker from "expo-image-picker";
 import { useState } from "react";
 import {
   ActivityIndicator,
@@ -22,7 +23,7 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { register as registerApi } from "../../configs/api";
+import { decodeQrImage, register as registerApi } from "../../configs/api";
 import {
   DEFAULT_LANGUAGE,
   normalizeLanguage,
@@ -30,7 +31,6 @@ import {
 } from "../../constants/locales";
 import { useLanguage } from "../../context/LanguageContext";
 import type { NavProp } from "../../types/navigation";
-import { pickAndDecodeQR } from "../../utils/qrUtils";
 import { useResponsive } from "../../utils/responsive";
 import * as SecureStore from 'expo-secure-store';
 
@@ -178,6 +178,84 @@ export default function Register() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  const normalizeMessagingLink = (
+    raw: string,
+    provider: "line" | "viber" | "whatsapp" | null,
+  ): string => {
+    const v = raw.trim();
+    if (!v) return "";
+    if (/^https?:\/\//i.test(v)) {
+      return v;
+    }
+    if (/^www\./i.test(v)) {
+      return `https://${v}`;
+    }
+
+    const lowered = v.toLowerCase();
+
+    if (provider === "line") {
+      if (lowered.startsWith("line.me/") || lowered.startsWith("liff.line.me/")) {
+        return `https://${v}`;
+      }
+      if (lowered.startsWith("line://")) {
+        return v;
+      }
+    }
+
+    if (provider === "whatsapp") {
+      if (
+        lowered.startsWith("wa.me/") ||
+        lowered.startsWith("chat.whatsapp.com/")
+      ) {
+        return `https://${v}`;
+      }
+      if (lowered.startsWith("whatsapp://")) {
+        return v;
+      }
+    }
+
+    if (provider === "viber") {
+      if (
+        lowered.startsWith("viber.me/") ||
+        lowered.startsWith("vb.me/") ||
+        lowered.startsWith("invite.viber.com/") ||
+        lowered.startsWith("chats.viber.com/")
+      ) {
+        return `https://${v}`;
+      }
+      if (lowered.startsWith("viber://")) {
+        return v;
+      }
+    }
+
+    // Fallback: if it looks like a bare domain/path, make it https
+    if (/^[a-z0-9.-]+\.[a-z]{2,}\/?/i.test(v)) {
+      return `https://${v}`;
+    }
+
+    return v;
+  };
+
+  const isProbablyLink = (value: string): boolean => {
+    const v = value.trim();
+    if (!v) return true; // optional
+    if (v.length > 500) return false;
+    if (/^https?:\/\//i.test(v)) return true;
+    if (/^www\./i.test(v)) return true;
+    // Allow common messaging domains and app schemes after normalization
+    if (
+      /^(line\.me\/|liff\.line\.me\/|wa\.me\/|chat\.whatsapp\.com\/|viber\.me\/|vb\.me\/|invite\.viber\.com\/|chats\.viber\.com\/)/i.test(
+        v,
+      )
+    ) {
+      return true;
+    }
+    if (/^(viber:\/\/|whatsapp:\/\/|line:\/\/)/i.test(v)) {
+      return true;
+    }
+    return false;
+  };
+
   const [isCountryModalVisible, setIsCountryModalVisible] = useState(false);
   const [isQRScannerVisible, setIsQRScannerVisible] = useState(false);
   const [activeQRField, setActiveQRField] = useState<
@@ -222,6 +300,15 @@ export default function Register() {
       setErrors({});
       setCurrentStep(2);
     } else if (currentStep === 2) {
+      if (lineContact.trim() && !isProbablyLink(lineContact)) {
+        newErrors.lineContact = "Please enter a valid link.";
+      }
+      if (viberContact.trim() && !isProbablyLink(viberContact)) {
+        newErrors.viberContact = "Please enter a valid link.";
+      }
+      if (whatsappContact.trim() && !isProbablyLink(whatsappContact)) {
+        newErrors.whatsappContact = "Please enter a valid link.";
+      }
       if (isAgent === null) {
         newErrors.isAgent = t("register.errorAgentSelection");
       }
@@ -346,11 +433,11 @@ export default function Register() {
       // fallback to setting exactly what was scanned
       setReferralCode(data.toUpperCase());
     } else if (activeQRField === "line") {
-      setLineContact(data);
+      setLineContact(normalizeMessagingLink(data, "line"));
     } else if (activeQRField === "viber") {
-      setViberContact(data);
+      setViberContact(normalizeMessagingLink(data, "viber"));
     } else if (activeQRField === "whatsapp") {
-      setWhatsappContact(data);
+      setWhatsappContact(normalizeMessagingLink(data, "whatsapp"));
     }
 
     setActiveQRField(null);
@@ -375,35 +462,62 @@ export default function Register() {
   ) => {
     try {
       setIsProcessingQR(true);
-      const data = await pickAndDecodeQR();
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images"],
+        allowsEditing: false,
+        quality: 1,
+      });
 
-      if (data) {
-        if (fieldType === "referral") {
-          try {
-            if (data.includes("ref=")) {
-              const urlParams = new URL(data);
-              const ref = urlParams.searchParams.get("ref");
-              if (ref) {
-                setReferralCode(ref.toUpperCase());
-                return;
-              }
-            }
-          } catch {
-            // Not a valid URL, ignore URL parsing error
-          }
-          setReferralCode(data.toUpperCase().slice(0, 5));
-        } else if (fieldType === "line") {
-          setLineContact(data);
-        } else if (fieldType === "viber") {
-          setViberContact(data);
-        } else if (fieldType === "whatsapp") {
-          setWhatsappContact(data);
-        }
-      } else {
+      if (result.canceled || !result.assets || result.assets.length === 0) {
+        return;
+      }
+
+      const asset = result.assets[0];
+      const provider =
+        fieldType === "line" || fieldType === "viber" || fieldType === "whatsapp"
+          ? fieldType
+          : undefined;
+
+      const decoded = await decodeQrImage(asset.uri, provider, asset.mimeType);
+      if (!decoded.success) {
+        alert(decoded.error || t("register.errorUnexpected"));
+        return;
+      }
+
+      const raw = (decoded.normalizedLink || decoded.text || "").trim();
+      if (!raw) {
         alert(
           t("register.noQRFound") ||
             "No QR code found in the image. Please pick a clearer QR code image.",
         );
+        return;
+      }
+
+      const normalized =
+        fieldType === "line" || fieldType === "viber" || fieldType === "whatsapp"
+          ? normalizeMessagingLink(raw, fieldType)
+          : raw;
+
+      if (fieldType === "referral") {
+        try {
+          if (normalized.includes("ref=")) {
+            const urlParams = new URL(normalized);
+            const ref = urlParams.searchParams.get("ref");
+            if (ref) {
+              setReferralCode(ref.toUpperCase());
+              return;
+            }
+          }
+        } catch {
+          // ignore url parsing error
+        }
+        setReferralCode(normalized.toUpperCase().slice(0, 5));
+      } else if (fieldType === "line") {
+        setLineContact(normalized);
+      } else if (fieldType === "viber") {
+        setViberContact(normalized);
+      } else if (fieldType === "whatsapp") {
+        setWhatsappContact(normalized);
       }
     } catch (error) {
       console.log("Error scanning from image:", error);
@@ -1004,29 +1118,233 @@ export default function Register() {
                       {t("register.contactInfo")}
                     </Text>
                     <View style={styles.sectionUnderline} />
-                    <View
-                      style={[
-                        styles.comingSoonBanner,
-                        (isTinyScreen || isSmallScreen) && { padding: 16 },
-                      ]}
-                    >
-                      <Ionicons
-                        name="time-outline"
-                        size={28}
-                        color="#E25A17"
-                        style={{ marginBottom: 8 }}
-                      />
+                    <View style={styles.inputGroup}>
                       <Text
                         style={[
-                          styles.comingSoonBannerText,
+                          styles.inputLabel,
                           (isTinyScreen || isSmallScreen) && {
-                            fontSize: 13,
-                            lineHeight: 19,
+                            fontSize: 12,
+                            marginBottom: 6,
                           },
                         ]}
                       >
-                        {t("register.contactInfoComingSoon")}
+                        {t("register.lineAccountLink")}
                       </Text>
+                      <View style={styles.scannerInputContainer}>
+                        <TextInput
+                          style={[
+                            styles.scannerInput,
+                            errors.lineContact && styles.inputError,
+                          ]}
+                          placeholder={t("register.placeholderLine")}
+                          placeholderTextColor="#999"
+                          autoCorrect={false}
+                          autoComplete="off"
+                          value={lineContact}
+                          onChangeText={(text) => {
+                            setLineContact(text);
+                            if (errors.lineContact) {
+                              setErrors((prev) => {
+                                const { lineContact, ...rest } = prev;
+                                return rest;
+                              });
+                            }
+                          }}
+                          autoCapitalize="none"
+                          keyboardType="url"
+                          maxLength={500}
+                        />
+                        {isProcessingQR ? (
+                          <View
+                            style={[
+                              styles.scannerButton,
+                              { paddingHorizontal: 16 },
+                            ]}
+                          >
+                            <ActivityIndicator size="small" color="#E25A17" />
+                          </View>
+                        ) : (
+                          <>
+                            <TouchableOpacity
+                              style={styles.scannerButton}
+                              onPress={() => handleUploadImage("line")}
+                            >
+                              <Ionicons
+                                name="image-outline"
+                                size={20}
+                                color="#E25A17"
+                              />
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              style={styles.scannerButton}
+                              onPress={() => openScanner("line")}
+                            >
+                              <Ionicons
+                                name="qr-code-outline"
+                                size={20}
+                                color="#E25A17"
+                              />
+                            </TouchableOpacity>
+                          </>
+                        )}
+                      </View>
+                      {errors.lineContact && (
+                        <Text style={styles.errorText}>{errors.lineContact}</Text>
+                      )}
+                    </View>
+
+                    <View style={styles.inputGroup}>
+                      <Text
+                        style={[
+                          styles.inputLabel,
+                          (isTinyScreen || isSmallScreen) && {
+                            fontSize: 12,
+                            marginBottom: 6,
+                          },
+                        ]}
+                      >
+                        {t("register.viber")}
+                      </Text>
+                      <View style={styles.scannerInputContainer}>
+                        <TextInput
+                          style={[
+                            styles.scannerInput,
+                            errors.viberContact && styles.inputError,
+                          ]}
+                          placeholder={t("register.placeholderViber")}
+                          placeholderTextColor="#999"
+                          autoCorrect={false}
+                          autoComplete="off"
+                          value={viberContact}
+                          onChangeText={(text) => {
+                            setViberContact(text);
+                            if (errors.viberContact) {
+                              setErrors((prev) => {
+                                const { viberContact, ...rest } = prev;
+                                return rest;
+                              });
+                            }
+                          }}
+                          autoCapitalize="none"
+                          keyboardType="url"
+                          maxLength={500}
+                        />
+                        {isProcessingQR ? (
+                          <View
+                            style={[
+                              styles.scannerButton,
+                              { paddingHorizontal: 16 },
+                            ]}
+                          >
+                            <ActivityIndicator size="small" color="#E25A17" />
+                          </View>
+                        ) : (
+                          <>
+                            <TouchableOpacity
+                              style={styles.scannerButton}
+                              onPress={() => handleUploadImage("viber")}
+                            >
+                              <Ionicons
+                                name="image-outline"
+                                size={20}
+                                color="#E25A17"
+                              />
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              style={styles.scannerButton}
+                              onPress={() => openScanner("viber")}
+                            >
+                              <Ionicons
+                                name="qr-code-outline"
+                                size={20}
+                                color="#E25A17"
+                              />
+                            </TouchableOpacity>
+                          </>
+                        )}
+                      </View>
+                      {errors.viberContact && (
+                        <Text style={styles.errorText}>
+                          {errors.viberContact}
+                        </Text>
+                      )}
+                    </View>
+
+                    <View style={[styles.inputGroup, { marginBottom: 0 }]}>
+                      <Text
+                        style={[
+                          styles.inputLabel,
+                          (isTinyScreen || isSmallScreen) && {
+                            fontSize: 12,
+                            marginBottom: 6,
+                          },
+                        ]}
+                      >
+                        {t("register.whatsapp")}
+                      </Text>
+                      <View style={styles.scannerInputContainer}>
+                        <TextInput
+                          style={[
+                            styles.scannerInput,
+                            errors.whatsappContact && styles.inputError,
+                          ]}
+                          placeholder={t("register.placeholderWhatsapp")}
+                          placeholderTextColor="#999"
+                          autoCorrect={false}
+                          autoComplete="off"
+                          value={whatsappContact}
+                          onChangeText={(text) => {
+                            setWhatsappContact(text);
+                            if (errors.whatsappContact) {
+                              setErrors((prev) => {
+                                const { whatsappContact, ...rest } = prev;
+                                return rest;
+                              });
+                            }
+                          }}
+                          autoCapitalize="none"
+                          keyboardType="url"
+                          maxLength={500}
+                        />
+                        {isProcessingQR ? (
+                          <View
+                            style={[
+                              styles.scannerButton,
+                              { paddingHorizontal: 16 },
+                            ]}
+                          >
+                            <ActivityIndicator size="small" color="#E25A17" />
+                          </View>
+                        ) : (
+                          <>
+                            <TouchableOpacity
+                              style={styles.scannerButton}
+                              onPress={() => handleUploadImage("whatsapp")}
+                            >
+                              <Ionicons
+                                name="image-outline"
+                                size={20}
+                                color="#E25A17"
+                              />
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              style={styles.scannerButton}
+                              onPress={() => openScanner("whatsapp")}
+                            >
+                              <Ionicons
+                                name="qr-code-outline"
+                                size={20}
+                                color="#E25A17"
+                              />
+                            </TouchableOpacity>
+                          </>
+                        )}
+                      </View>
+                      {errors.whatsappContact && (
+                        <Text style={styles.errorText}>
+                          {errors.whatsappContact}
+                        </Text>
+                      )}
                     </View>
                   </View>
                   <View
