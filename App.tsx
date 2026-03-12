@@ -52,7 +52,6 @@ import PlayEarnServices from './app/ServicesFunction/Play&Earn/Play&earnServices
 import StockBuy from './app/ServicesFunction/Stock/StockBuy';
 import StockSell from './app/ServicesFunction/Stock/StockSell';
 import StockService from './app/ServicesFunction/Stock/StockService';
-import TaskServices from './app/ServicesFunction/Task/TaskServices';
 import TransferConfirm from './app/ServicesFunction/Transfer/TransferConfirm';
 import TransferRecipient from './app/ServicesFunction/Transfer/TransferRecipient';
 import SendMoney from './app/ServicesFunction/Transfer/TransferService';
@@ -149,7 +148,6 @@ export default function App() {
               <Stack.Screen name="Stockholder" component={StockService} />
               <Stack.Screen name="StockBuy" component={StockBuy} />
               <Stack.Screen name="StockSell" component={StockSell} />
-              <Stack.Screen name="Task" component={TaskServices} />
               <Stack.Screen name="AgentRequest" component={AgentDashboard} />
               <Stack.Screen
                 name="PlayEarn"
