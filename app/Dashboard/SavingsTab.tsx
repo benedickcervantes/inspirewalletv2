@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
     ImageBackground,
     Modal,
@@ -68,6 +68,8 @@ interface SavingsTabProps {
   userReferrer?: { referralCode?: string; firstName?: string; lastName?: string } | null;
 }
 
+const ITEMS_PER_PAGE = 4;
+
 const CONTRACT_TYPE_KEYS: Record<string, string> = {
   sixMonths: "investment.sixMonths",
   oneYear: "investment.oneYear",
@@ -133,9 +135,28 @@ export default function SavingsTab({
   const isSmallScreen = width < 360;
   const fontScale = isTinyScreen ? 0.8 : isSmallScreen ? 0.88 : width < 400 ? 0.94 : 1;
   const compact = isTinyScreen || isSmallScreen;
-  const [contractTab, setContractTab] = useState<"Active" | "Completed" | "Pending">("Active");
+  const [contractTab, setContractTab] = useState<"Active" | "Completed" | "Cancelled" | "Pending">("Active");
+  const [contractPage, setContractPage] = useState(1);
   const [selectedContract, setSelectedContract] = useState<TimeDeposit | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const scrollViewRef = useRef<ScrollView>(null);
+  const contractsSectionYRef = useRef(0);
+  const isInitialPageMount = useRef(true);
+
+  useEffect(() => {
+    setContractPage(1);
+  }, [contractTab]);
+
+  useEffect(() => {
+    if (isInitialPageMount.current) {
+      isInitialPageMount.current = false;
+      return;
+    }
+    scrollViewRef.current?.scrollTo({
+      y: contractsSectionYRef.current,
+      animated: true,
+    });
+  }, [contractPage]);
 
   const getContractTypeLabel = (contractType: string) => {
     const key = CONTRACT_TYPE_KEYS[contractType];
@@ -144,9 +165,15 @@ export default function SavingsTab({
 
   const filteredDeposits = deposits.filter((d) => {
     if (contractTab === "Active") return d.status === "ACTIVE";
-    if (contractTab === "Completed") return d.status === "MATURED" || d.status === "CANCELLED";
+    if (contractTab === "Completed") return d.status === "MATURED";
+    if (contractTab === "Cancelled") return d.status === "CANCELLED";
     return d.status === "PENDING";
   });
+
+  const totalPages = Math.max(1, Math.ceil(filteredDeposits.length / ITEMS_PER_PAGE));
+  const displayPage = Math.min(contractPage, totalPages);
+  const startIdx = (displayPage - 1) * ITEMS_PER_PAGE;
+  const paginatedDeposits = filteredDeposits.slice(startIdx, startIdx + ITEMS_PER_PAGE);
 
   const maxAmount = Math.max(
     1,
@@ -177,6 +204,7 @@ export default function SavingsTab({
 
   return (
     <ScrollView
+      ref={scrollViewRef}
       style={styles.container}
       showsVerticalScrollIndicator={false}
       refreshControl={
@@ -295,14 +323,19 @@ export default function SavingsTab({
         </LinearGradient>
       </View>
 
-      <View style={[styles.contractsSection, { paddingHorizontal: horizontalPadding }]}>
+      <View
+        style={[styles.contractsSection, { paddingHorizontal: horizontalPadding }]}
+        onLayout={(e) => {
+          contractsSectionYRef.current = e.nativeEvent.layout.y;
+        }}
+      >
         <Text style={[styles.contractsSectionTitle, { fontSize: Math.round(16 * fontScale) }]}>{t("investment.contracts")}</Text>
         <View style={[
           styles.contractTabs,
           { gap: isTinyScreen ? 4 : isSmallScreen ? 6 : 8, marginBottom: compact ? 12 : 16 },
         ]}
         >
-          {(["Active", "Completed", "Pending"] as const).map((tab) => (
+          {(["Active", "Completed", "Cancelled", "Pending"] as const).map((tab) => (
             <TouchableOpacity
               key={tab}
               style={[
@@ -320,7 +353,7 @@ export default function SavingsTab({
                 ]}
                 numberOfLines={1}
               >
-                {t(tab === "Active" ? "investment.active" : tab === "Completed" ? "investment.completed" : "investment.pending")}
+                {t(tab === "Active" ? "investment.active" : tab === "Completed" ? "investment.completed" : tab === "Cancelled" ? "investment.cancelled" : "investment.pending")}
               </Text>
             </TouchableOpacity>
           ))}
@@ -331,16 +364,18 @@ export default function SavingsTab({
             <View style={[styles.emptyState, { paddingVertical: compact ? 24 : 40, paddingHorizontal: compact ? 16 : 24 }]}>
               <Ionicons name="document-text-outline" size={compact ? 40 : 48} color="#CCC" />
               <Text style={[styles.emptyStateText, { fontSize: compact ? 14 : 16 }]}>
-                {contractTab === "Active" ? t("investment.noActiveContracts") : contractTab === "Completed" ? t("investment.noCompletedContracts") : t("investment.noPendingContracts")}
+                {contractTab === "Active" ? t("investment.noActiveContracts") : contractTab === "Completed" ? t("investment.noCompletedContracts") : contractTab === "Cancelled" ? t("investment.noCancelledContracts") : t("investment.noPendingContracts")}
               </Text>
               <Text style={[styles.emptyStateSubtext, { fontSize: compact ? 12 : 13 }]}>
                 {contractTab === "Pending" && t("investment.emptyPending")}
                 {contractTab === "Active" && t("investment.emptyActive")}
                 {contractTab === "Completed" && t("investment.emptyCompleted")}
+                {contractTab === "Cancelled" && t("investment.emptyCancelled")}
               </Text>
             </View>
           ) : (
-            filteredDeposits.map((dep) => (
+            <>
+              {paginatedDeposits.map((dep) => (
               <TouchableOpacity
                 key={dep.id}
                 style={[styles.contractCard, { padding: compact ? 12 : 16 }]}
@@ -414,7 +449,43 @@ export default function SavingsTab({
                   <Ionicons name="chevron-forward" size={16} color="#9CA3AF" style={{ marginLeft: 4 }} />
                 </View>
               </TouchableOpacity>
-            ))
+              ))}
+              {totalPages > 1 && (
+                <View style={[styles.paginationRow, { marginTop: compact ? 12 : 16, gap: compact ? 8 : 12 }]}>
+                  <TouchableOpacity
+                    style={[
+                      styles.paginationButton,
+                      displayPage <= 1 && styles.paginationButtonDisabled,
+                      { paddingVertical: compact ? 8 : 10, paddingHorizontal: compact ? 12 : 16 },
+                    ]}
+                    onPress={() => setContractPage((p) => Math.max(1, p - 1))}
+                    disabled={displayPage <= 1}
+                  >
+                    <Ionicons name="chevron-back" size={18} color={displayPage <= 1 ? "#9CA3AF" : "#E25A17"} />
+                    <Text style={[styles.paginationButtonText, { color: displayPage <= 1 ? "#9CA3AF" : "#E25A17", fontSize: compact ? 13 : 14 }]}>
+                      {t("tickets.previous")}
+                    </Text>
+                  </TouchableOpacity>
+                  <Text style={[styles.paginationIndicator, { fontSize: compact ? 12 : 13 }]}>
+                    {t("tickets.pageIndicator", { page: String(displayPage), total: String(totalPages) })}
+                  </Text>
+                  <TouchableOpacity
+                    style={[
+                      styles.paginationButton,
+                      displayPage >= totalPages && styles.paginationButtonDisabled,
+                      { paddingVertical: compact ? 8 : 10, paddingHorizontal: compact ? 12 : 16 },
+                    ]}
+                    onPress={() => setContractPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={displayPage >= totalPages}
+                  >
+                    <Text style={[styles.paginationButtonText, { color: displayPage >= totalPages ? "#9CA3AF" : "#E25A17", fontSize: compact ? 13 : 14 }]}>
+                      {t("tickets.next")}
+                    </Text>
+                    <Ionicons name="chevron-forward" size={18} color={displayPage >= totalPages ? "#9CA3AF" : "#E25A17"} />
+                  </TouchableOpacity>
+                </View>
+              )}
+            </>
           )}
         </View>
       </View>
@@ -781,6 +852,30 @@ const styles = StyleSheet.create({
     color: "#9CA3AF",
     marginTop: 6,
     textAlign: "center",
+  },
+  paginationRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    flexWrap: "wrap",
+  },
+  paginationButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#E25A17",
+  },
+  paginationButtonDisabled: {
+    borderColor: "#E5E7EB",
+  },
+  paginationButtonText: {
+    fontWeight: "600",
+  },
+  paginationIndicator: {
+    color: "#6B7280",
+    fontWeight: "500",
   },
   modalOverlay: {
     flex: 1,
