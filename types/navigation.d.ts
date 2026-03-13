@@ -6,6 +6,13 @@ export interface BankingApplicationData {
   financialInfo?: { sourceOfFund: string; grossMonthlyIncome: string; grossMonthlyIncomeCurrency: string };
 }
 
+/** Accumulated e-wallet application data passed through the multi-step flow */
+export interface EwalletApplicationData {
+  contactInfo?: { email: string; phone: string; landline?: string };
+  personalInfo?: { gender: string; dateOfBirth: string; civilStatus: string; citizenship: string };
+  addressInfo?: { completeAddress: string };
+}
+
 export type NavProp = {
   navigate: (name: string, params?: object) => void;
   replace: (name: string, params?: object) => void;
@@ -57,9 +64,9 @@ export type RootStackParamList = {
   Maya: undefined;
   EwalletService: undefined;
   EwalletContactInfo: { selectedProvider: string };
-  EwalletPersonalInfo: { selectedProvider: string };
-  EwalletAddressInfo: { selectedProvider: string };
-  EwalletFinancialInfo: { selectedProvider: string };
+  EwalletPersonalInfo: { selectedProvider: string; applicationData: EwalletApplicationData };
+  EwalletAddressInfo: { selectedProvider: string; applicationData: EwalletApplicationData };
+  EwalletFinancialInfo: { selectedProvider: string; applicationData: EwalletApplicationData };
   Stockholder: undefined;
   StockBuy: undefined;
   StockSell: { stockCount: number; totalPortfolioValue: number };

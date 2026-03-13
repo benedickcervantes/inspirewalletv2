@@ -16,7 +16,7 @@ import {
   View,
 } from "react-native";
 import { useLanguage } from "../../../context/LanguageContext";
-import type { RootStackParamList } from "../../../types/navigation";
+import type { RootStackParamList, EwalletApplicationData } from "../../../types/navigation";
 
 const THEME_COLOR = "#E15816";
 const ORANGE_GRADIENT = ["#E25A17", "#F28934"] as const;
@@ -49,6 +49,7 @@ export default function EwalletPersonalInfo() {
   const [dateOfBirth, setDateOfBirth] = useState<Date | null>(null);
   const [civilStatus, setCivilStatus] = useState("");
   const [citizenship, setCitizenship] = useState("");
+  const [errors, setErrors] = useState<{ gender?: string; dob?: string; civilStatus?: string; citizenship?: string }>({});
 
   const [showGenderModal, setShowGenderModal] = useState(false);
   const [showDateModal, setShowDateModal] = useState(false);
@@ -67,6 +68,7 @@ export default function EwalletPersonalInfo() {
   const handleDateConfirm = () => {
     const d = new Date(tempDate.year, tempDate.month, tempDate.day);
     setDateOfBirth(d);
+    if (errors.dob) setErrors({ ...errors, dob: undefined });
     setShowDateModal(false);
   };
 
@@ -75,11 +77,31 @@ export default function EwalletPersonalInfo() {
   };
 
   const handleNext = () => {
-    if (!gender.trim()) return;
-    if (!dateOfBirth) return;
-    if (!civilStatus.trim()) return;
-    if (!citizenship.trim()) return;
-    navigation.navigate("EwalletAddressInfo", { selectedProvider });
+    const newErrors: typeof errors = {};
+    if (!gender) newErrors.gender = "Gender is required";
+    if (!dateOfBirth) newErrors.dob = "Date of birth is required";
+    if (!civilStatus) newErrors.civilStatus = "Civil status is required";
+    if (!citizenship) newErrors.citizenship = "Citizenship is required";
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    const applicationData: EwalletApplicationData = {
+      ...(route.params?.applicationData || {}),
+      personalInfo: {
+        gender: gender.trim(),
+        dateOfBirth: dateOfBirth.toISOString(),
+        civilStatus: civilStatus.trim(),
+        citizenship: citizenship.trim(),
+      },
+    };
+
+    navigation.navigate("EwalletAddressInfo", { 
+      selectedProvider,
+      applicationData
+    });
   };
 
   return (
@@ -172,7 +194,7 @@ export default function EwalletPersonalInfo() {
                 {t("banking.gender")}<Text style={styles.required}>*</Text>
               </Text>
               <TouchableOpacity
-                style={styles.dropdown}
+                style={[styles.dropdown, errors.gender && styles.inputError]}
                 onPress={() => setShowGenderModal(true)}
               >
                 <Text
@@ -185,6 +207,7 @@ export default function EwalletPersonalInfo() {
                 </Text>
                 <Ionicons name="chevron-down" size={20} color="#999" />
               </TouchableOpacity>
+              {errors.gender && <Text style={styles.errorText}>{errors.gender}</Text>}
             </View>
 
             <View style={styles.inputGroup}>
@@ -192,7 +215,7 @@ export default function EwalletPersonalInfo() {
                 {t("banking.dateOfBirth")}<Text style={styles.required}>*</Text>
               </Text>
               <TouchableOpacity
-                style={styles.dropdown}
+                style={[styles.dropdown, errors.dob && styles.inputError]}
                 onPress={() => {
                   if (dateOfBirth) {
                     setTempDate({
@@ -214,6 +237,7 @@ export default function EwalletPersonalInfo() {
                 </Text>
                 <Ionicons name="calendar-outline" size={20} color="#999" />
               </TouchableOpacity>
+              {errors.dob && <Text style={styles.errorText}>{errors.dob}</Text>}
             </View>
 
             <View style={styles.inputGroup}>
@@ -221,7 +245,7 @@ export default function EwalletPersonalInfo() {
                 {t("banking.civilStatus")}<Text style={styles.required}>*</Text>
               </Text>
               <TouchableOpacity
-                style={styles.dropdown}
+                style={[styles.dropdown, errors.civilStatus && styles.inputError]}
                 onPress={() => setShowCivilStatusModal(true)}
               >
                 <Text
@@ -234,6 +258,7 @@ export default function EwalletPersonalInfo() {
                 </Text>
                 <Ionicons name="chevron-down" size={20} color="#999" />
               </TouchableOpacity>
+              {errors.civilStatus && <Text style={styles.errorText}>{errors.civilStatus}</Text>}
             </View>
 
             <View style={styles.inputGroup}>
@@ -241,7 +266,7 @@ export default function EwalletPersonalInfo() {
                 {t("banking.citizenship")}<Text style={styles.required}>*</Text>
               </Text>
               <TouchableOpacity
-                style={styles.dropdown}
+                style={[styles.dropdown, errors.citizenship && styles.inputError]}
                 onPress={() => setShowCitizenshipModal(true)}
               >
                 <Text
@@ -254,6 +279,7 @@ export default function EwalletPersonalInfo() {
                 </Text>
                 <Ionicons name="chevron-down" size={20} color="#999" />
               </TouchableOpacity>
+              {errors.citizenship && <Text style={styles.errorText}>{errors.citizenship}</Text>}
             </View>
           </View>
 
@@ -323,6 +349,7 @@ export default function EwalletPersonalInfo() {
                   ]}
                   onPress={() => {
                     setGender(opt);
+                    if (errors.gender) setErrors({ ...errors, gender: undefined });
                     setShowGenderModal(false);
                   }}
                 >
@@ -461,6 +488,7 @@ export default function EwalletPersonalInfo() {
                   ]}
                   onPress={() => {
                     setCivilStatus(opt);
+                    if (errors.civilStatus) setErrors({ ...errors, civilStatus: undefined });
                     setShowCivilStatusModal(false);
                   }}
                 >
@@ -504,6 +532,7 @@ export default function EwalletPersonalInfo() {
                   ]}
                   onPress={() => {
                     setCitizenship(opt);
+                    if (errors.citizenship) setErrors({ ...errors, citizenship: undefined });
                     setShowCitizenshipModal(false);
                   }}
                 >
@@ -695,6 +724,15 @@ const styles = StyleSheet.create({
   dropdownPlaceholder: {
     color: "#9E9E9E",
     fontWeight: "400",
+  },
+  inputError: {
+    borderColor: "#EF4444",
+  },
+  errorText: {
+    color: "#EF4444",
+    fontSize: 12,
+    marginTop: 4,
+    fontWeight: "500",
   },
   infoBox: {
     flexDirection: "row",

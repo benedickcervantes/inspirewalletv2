@@ -475,3 +475,16 @@ export function decodeQrImage(
   normalizedLink?: string;
   error?: string;
 }>;
+
+export function submitEwalletApplication(
+  accessToken: string,
+  body: {
+    provider: string;
+    sourceOfFund: string;
+    grossMonthlyIncome: string;
+    grossMonthlyIncomeCurrency: string;
+    personalInfo?: object;
+    contactInfo?: object;
+    addressInfo?: object;
+  },
+): Promise<{ success: boolean; data?: unknown; error?: string }>;

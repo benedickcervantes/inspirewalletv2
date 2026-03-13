@@ -36,6 +36,7 @@ export default function EwalletContactInfo() {
   const [email, setEmail] = useState("");
   const [mobileNumber, setMobileNumber] = useState("");
   const [landlineNumber, setLandlineNumber] = useState("");
+  const [errors, setErrors] = useState<{ email?: string; mobile?: string }>({});
 
   const currentStep = 2;
 
@@ -43,10 +44,46 @@ export default function EwalletContactInfo() {
     navigation.goBack();
   };
 
+  const validateEmail = (emailStr: string) => {
+    return /\S+@\S+\.\S+/.test(emailStr);
+  };
+
+  const validateMobile = (mobile: string) => {
+    const cleaned = mobile.replace(/\D/g, "");
+    return cleaned.length >= 10 && cleaned.length <= 11;
+  };
+
   const handleNext = () => {
-    if (!email.trim()) return;
-    if (!mobileNumber.trim()) return;
-    navigation.navigate("EwalletPersonalInfo", { selectedProvider });
+    const newErrors: { email?: string; mobile?: string } = {};
+
+    if (!email.trim()) {
+      newErrors.email = "Email address is required";
+    } else if (!validateEmail(email.trim())) {
+      newErrors.email = "Please enter a valid email address";
+    }
+
+    if (!mobileNumber.trim()) {
+      newErrors.mobile = "Mobile number is required";
+    } else if (!validateMobile(mobileNumber.trim())) {
+      newErrors.mobile = "Enter a valid 10-11 digit mobile number";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    setErrors({});
+    navigation.navigate("EwalletPersonalInfo", { 
+      selectedProvider,
+      applicationData: {
+        contactInfo: {
+          email: email.trim(),
+          phone: mobileNumber.trim(),
+          landline: landlineNumber.trim(),
+        }
+      }
+    });
   };
 
   return (
@@ -146,15 +183,19 @@ export default function EwalletContactInfo() {
                   {t("banking.emailAddress")}<Text style={styles.required}>*</Text>
                 </Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, errors.email && styles.inputError]}
                   placeholder={t("banking.placeholderEmail")}
                   placeholderTextColor="#9E9E9E"
                   value={email}
-                  onChangeText={setEmail}
+                  onChangeText={(text) => {
+                    setEmail(text);
+                    if (errors.email) setErrors({ ...errors, email: undefined });
+                  }}
                   keyboardType="email-address"
                   autoCapitalize="none"
                   autoCorrect={false}
                 />
+                {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
               </View>
 
               <View style={styles.inputGroup}>
@@ -162,13 +203,17 @@ export default function EwalletContactInfo() {
                   {t("banking.mobileNumber")}<Text style={styles.required}>*</Text>
                 </Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, errors.mobile && styles.inputError]}
                   placeholder={t("banking.placeholderMobile")}
                   placeholderTextColor="#9E9E9E"
                   value={mobileNumber}
-                  onChangeText={setMobileNumber}
+                  onChangeText={(text) => {
+                    setMobileNumber(text);
+                    if (errors.mobile) setErrors({ ...errors, mobile: undefined });
+                  }}
                   keyboardType="phone-pad"
                 />
+                {errors.mobile && <Text style={styles.errorText}>{errors.mobile}</Text>}
               </View>
 
               <View style={styles.inputGroup}>
@@ -392,6 +437,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     fontSize: 16,
     color: "#000000",
+  },
+  inputError: {
+    borderColor: "#EF4444",
+  },
+  errorText: {
+    color: "#EF4444",
+    fontSize: 12,
+    marginTop: 4,
+    fontWeight: "500",
   },
   infoBox: {
     flexDirection: "row",

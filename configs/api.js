@@ -2653,3 +2653,35 @@ export async function cancelAutoRenewal(accessToken, design) {
     return { success: false, error: e.message || "Network error" };
   }
 }
+/**
+ * Submit an e-wallet application via the backend.
+ * POST /ewallet-applications
+ * @param {string} accessToken - Backend JWT
+ * @param {Object} body - { provider, sourceOfFund, grossMonthlyIncome, grossMonthlyIncomeCurrency, personalInfo?, contactInfo?, addressInfo? }
+ */
+export async function submitEwalletApplication(accessToken, body) {
+  const url = buildUrl("/ewallet-applications");
+  if (!url) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
+  try {
+    const res = await apiFetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || `Submission failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    return { success: true, data: data.data ?? data };
+  } catch (e) {
+    if (__DEV__) console.error("[Ewallet API] Error", e);
+    return { success: false, error: e.message || "Network error" };
+  }
+}
