@@ -1,4 +1,5 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
@@ -14,10 +15,10 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { submitAccountDeletionRequest } from '../../configs/api';
 import { useLanguage } from '../../context/LanguageContext';
 import type { NavProp } from '../../types/navigation';
-import { submitAccountDeletionRequest } from '../../configs/api';
+import AccountDeletionModal from '../AccountDeletion/AccountDeletionModal';
 
 const REASON_KEYS = ['delete.reasonNoLonger', 'delete.reasonBetter', 'delete.reasonPrivacy', 'delete.reasonExpensive', 'delete.reasonTechnical', 'delete.reasonOther'] as const;
 
@@ -231,6 +232,7 @@ const DeleteAccount = () => {
           </LinearGradient>
         </View>
       </Modal>
+      <AccountDeletionModal />
     </SafeAreaView>
   );
 };

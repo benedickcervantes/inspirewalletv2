@@ -11,6 +11,8 @@ export interface RealtimeHandlers {
   onTicketMessage?: (payload?: any) => void;
   onTicketMessagesRead?: (payload?: { ticketId?: string }) => void;
   onTicketCreated?: () => void;
+  onAccountDeletionApproved?: () => void;
+  onAccountDeletionRejected?: (payload?: { adminNotes?: string | null }) => void;
   onConnect?: () => void;
   onDisconnect?: (reason?: string) => void;
   onError?: (err?: unknown) => void;

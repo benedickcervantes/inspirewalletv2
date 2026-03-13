@@ -3,6 +3,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-gesture-handler';
 import 'react-native-reanimated';
+import { navigationRef } from './lib/navigationRef';
 
 import AuthLoader from './app/AuthLoader';
 import AgentDashboard from './app/Dashboard/AgentDashboard';
@@ -87,7 +88,7 @@ export default function App() {
       <SocketProvider>
         <UnreadNotificationsProvider>
         <OfflineWrapper>
-          <NavigationContainer>
+          <NavigationContainer ref={navigationRef}>
             <Stack.Navigator
               initialRouteName="AuthLoader"
               screenOptions={{ headerShown: false }}

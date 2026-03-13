@@ -66,6 +66,14 @@ export function createRealtimeConnection(accessToken, handlers = {}) {
       handlers.onTicketCreated?.(payload);
     });
 
+    socket.on('ACCOUNT_DELETION_APPROVED', () => {
+      handlers.onAccountDeletionApproved?.();
+    });
+
+    socket.on('ACCOUNT_DELETION_REJECTED', (payload) => {
+      handlers.onAccountDeletionRejected?.(payload);
+    });
+
     socket.on('connect', () => {
       handlers.onConnect?.();
     });

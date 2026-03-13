@@ -2,11 +2,14 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as LocalAuthentication from 'expo-local-authentication';
+import * as SecureStore from 'expo-secure-store';
 import { unregisterIndieDevice } from 'native-notify';
 import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Modal,
+  Platform,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -16,14 +19,11 @@ import {
   View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { getReferralCode, resendVerification, verifyEmail } from '../../configs/api';
+import { disableBiometric, enableBiometric, getReferralCode, resendVerification, verifyEmail } from '../../configs/api';
 import { useLanguage } from '../../context/LanguageContext';
 import { useResponsive } from '../../utils/responsive';
+import AccountDeletionModal from '../AccountDeletion/AccountDeletionModal';
 import CustomLoader from '../Loader/CustomLoader';
-import * as LocalAuthentication from 'expo-local-authentication';
-import * as SecureStore from 'expo-secure-store';
-import { enableBiometric, disableBiometric } from '../../configs/api';
-import { Platform } from 'react-native';
 interface UserData {
   email?: string;
   emailVerified?: boolean;
@@ -854,6 +854,7 @@ const Settings = () => {
           </TouchableOpacity>
         </Modal>
 
+        <AccountDeletionModal />
       </SafeAreaView>
     </>
   );

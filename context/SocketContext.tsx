@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { createRealtimeConnection, startHeartbeat } from '../configs/realtime';
+import { notifyAccountDeletionApproved, notifyAccountDeletionRejected } from '../lib/accountDeletionEvents';
 import { notifyNewSupportMessage } from '../lib/messagingEvents';
 import { notifyNewTicketMessage, notifyTicketMessagesRead, notifyTicketCreated } from '../lib/ticketingEvents';
 
@@ -67,6 +68,12 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             },
             onTicketCreated: () => {
                 notifyTicketCreated();
+            },
+            onAccountDeletionApproved: () => {
+                notifyAccountDeletionApproved();
+            },
+            onAccountDeletionRejected: (payload: { adminNotes?: string | null }) => {
+                notifyAccountDeletionRejected(payload?.adminNotes);
             },
             onWalletUpdate: (payload: any) => {
                 // We could also notify here if there was a wallet events lib

@@ -788,6 +788,11 @@ const en: TranslationMap = {
     "Your account deletion request has been submitted. Our admin team will process your request within 2-3 business days. You will be notified via email once your account has been deleted. Thank you for being part of Inspire Wallet.",
   "delete.requiredReason": "Please select a reason for deleting your account.",
   "delete.required": "Required",
+  "delete.approvedTitle": "Account Deleted",
+  "delete.approvedMessage": "Your account has been deleted. Please click OK to log out.",
+  "delete.rejectedTitle": "Request Rejected",
+  "delete.rejectedMessage": "Your account deletion request was rejected by our admin team.",
+  "delete.adminComment": "Admin comment",
 
   // Privacy Policy
   "privacy.title": "Privacy Policy",
@@ -2253,6 +2258,11 @@ const ko: TranslationMap = {
     "계정 삭제 요청이 접수되었습니다. 2-3 영업일 내에 처리되며, 삭제 완료 시 이메일로 안내드립니다.",
   "delete.requiredReason": "탈퇴 사유를 선택해 주세요.",
   "delete.required": "필수",
+  "delete.approvedTitle": "계정 삭제됨",
+  "delete.approvedMessage": "계정이 삭제되었습니다. 로그아웃하려면 확인을 클릭하세요.",
+  "delete.rejectedTitle": "요청 거부됨",
+  "delete.rejectedMessage": "관리자에 의해 계정 삭제 요청이 거부되었습니다.",
+  "delete.adminComment": "관리자 코멘트",
   "privacy.title": "개인정보 처리방침",
   "privacy.h1": "당신의 개인정보를 소중히 합니다",
   "privacy.b1":
@@ -3655,6 +3665,11 @@ const ja: TranslationMap = {
     "アカウント削除リクエストを受け付けました。2-3営業日以内に処理し、完了次第メールでお知らせします。",
   "delete.requiredReason": "退会理由を選択してください。",
   "delete.required": "必須",
+  "delete.approvedTitle": "アカウント削除完了",
+  "delete.approvedMessage": "アカウントは削除されました。ログアウトするにはOKをクリックしてください。",
+  "delete.rejectedTitle": "リクエスト拒否",
+  "delete.rejectedMessage": "アカウント削除リクエストは管理者により拒否されました。",
+  "delete.adminComment": "管理者コメント",
   "privacy.title": "プライバシーポリシー",
   "privacy.h1": "プライバシーを大切にしています",
   "privacy.b1":
@@ -5060,6 +5075,11 @@ const ar: TranslationMap = {
     "تم استلام طلب حذف الحساب. سنعالجه خلال 2-3 أيام عمل وسنخبرك بالبريد عند الحذف.",
   "delete.requiredReason": "يرجى اختيار سبب حذف الحساب.",
   "delete.required": "مطلوب",
+  "delete.approvedTitle": "تم حذف الحساب",
+  "delete.approvedMessage": "تم حذف حسابك. يرجى النقر على موافق لتسجيل الخروج.",
+  "delete.rejectedTitle": "تم رفض الطلب",
+  "delete.rejectedMessage": "تم رفض طلب حذف الحساب من قبل الإدارة.",
+  "delete.adminComment": "تعليق المسؤول",
   "privacy.title": "سياسة الخصوصية",
   "privacy.h1": "نحن نقدر خصوصيتك",
   "privacy.b1":
