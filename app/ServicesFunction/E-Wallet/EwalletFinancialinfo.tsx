@@ -398,25 +398,35 @@ export default function EwalletFinancialInfo() {
       {/* Success Modal */}
       <Modal
         visible={showSuccessModal}
-        transparent
+        transparent={true}
         animationType="fade"
-        onRequestClose={() => setShowSuccessModal(false)}
+        onRequestClose={() => {
+          setShowSuccessModal(false);
+          navigation.reset({
+            index: 0,
+            routes: [{ name: "Main" as never }],
+          });
+        }}
       >
         <View style={styles.successModalOverlay}>
-          <View style={styles.successModalContainer}>
+          <View style={styles.successModalContent}>
             <LinearGradient
-              colors={["#F38B35", "#DE5212"]}
+              colors={["#E15816", "#F48F38"]}
               style={styles.successModalGradient}
               start={{ x: 0, y: 0 }}
-              end={{ x: 0, y: 1 }}
+              end={{ x: 1, y: 1 }}
             >
-              <Ionicons name="checkmark-circle" size={60} color="#FFFFFF" />
-              <Text style={styles.successModalTitle}>Success</Text>
-              <Text style={styles.successModalMessage}>
+              <View style={styles.successIconContainer}>
+                <Ionicons name="checkmark-circle" size={64} color="#FFFFFF" />
+              </View>
+              <Text style={styles.successTitle}>
+                {t("common.success") || "Success"}
+              </Text>
+              <Text style={styles.successMessage}>
                 {"Your application has been submitted successfully."}
               </Text>
               <TouchableOpacity
-                style={styles.successModalButton}
+                style={styles.successButton}
                 onPress={() => {
                   setShowSuccessModal(false);
                   navigation.reset({
@@ -425,7 +435,7 @@ export default function EwalletFinancialInfo() {
                   });
                 }}
               >
-                <Text style={styles.successModalButtonText}>OK</Text>
+                <Text style={styles.successButtonText}>OK</Text>
               </TouchableOpacity>
             </LinearGradient>
           </View>
@@ -764,41 +774,47 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  successModalContainer: {
-    width: "80%",
-    maxWidth: 320,
-    borderRadius: 20,
+  successModalContent: {
+    width: "85%",
+    maxWidth: 400,
+    borderRadius: 16,
     overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   successModalGradient: {
     padding: 32,
     alignItems: "center",
   },
-  successModalTitle: {
+  successIconContainer: {
+    marginBottom: 16,
+  },
+  successTitle: {
     fontSize: 24,
     fontWeight: "700",
     color: "#FFFFFF",
-    marginTop: 16,
-    marginBottom: 8,
+    marginBottom: 12,
   },
-  successModalMessage: {
-    fontSize: 16,
+  successMessage: {
+    fontSize: 15,
     color: "#FFFFFF",
     textAlign: "center",
-    marginBottom: 24,
     lineHeight: 22,
+    marginBottom: 24,
+    opacity: 0.95,
   },
-  successModalButton: {
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
+  successButton: {
+    backgroundColor: "#FFFFFF",
     paddingVertical: 12,
     paddingHorizontal: 32,
-    borderRadius: 25,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.3)",
+    borderRadius: 8,
   },
-  successModalButtonText: {
+  successButtonText: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#FFFFFF",
+    color: "#E15816",
   },
 });
