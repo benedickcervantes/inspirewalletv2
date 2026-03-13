@@ -328,7 +328,6 @@ export default function Placeholder() {
       const decoded = await decodeQrImage(
         asset.uri,
         provider,
-        // @ts-expect-error: mimeType may be undefined on some platforms
         asset.mimeType,
       );
       if (!decoded.success) {

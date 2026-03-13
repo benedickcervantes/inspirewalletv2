@@ -10,6 +10,7 @@ export interface RealtimeHandlers {
   onSupportMessagesRead?: (payload?: unknown) => void;
   onTicketMessage?: (payload?: any) => void;
   onTicketMessagesRead?: (payload?: { ticketId?: string }) => void;
+  onTicketCreated?: () => void;
   onConnect?: () => void;
   onDisconnect?: (reason?: string) => void;
   onError?: (err?: unknown) => void;

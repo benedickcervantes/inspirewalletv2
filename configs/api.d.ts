@@ -464,3 +464,14 @@ export function disableBiometric(
 export function verifyBiometric(
   token: string,
 ): Promise<{ success: boolean; access_token?: string; user?: object; error?: string }>;
+
+export function decodeQrImage(
+  imageUri: string,
+  provider?: string,
+  mimeType?: string,
+): Promise<{
+  success: boolean;
+  text?: string;
+  normalizedLink?: string;
+  error?: string;
+}>;

@@ -70,9 +70,9 @@ function TicketDetail({
     setWsConnected(isSocketConnected);
   }, [isSocketConnected]);
 
-  // Derived state: user can always reply to their own ticket (common support UX)
+  // Derived state: User must wait for an admin to reply before they can follow up
   const hasAdminReply = messages.some((m) => m.isCustomer === false);
-  const canUserType = true;
+  const canUserType = hasAdminReply;
 
   // Helper function to format timestamp
   const formatTime = (dateString: string) => {
