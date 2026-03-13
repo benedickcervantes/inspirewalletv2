@@ -80,8 +80,8 @@ export default function StockInvestmentConfirm() {
         setTimeout(() => {
           setShowAlertModal(false);
           (navigation as any).reset({
-            index: 1,
-            routes: [{ name: "Main" }, { name: "Stockholder" }],
+            index: 0,
+            routes: [{ name: "Main" }],
           });
         }, 2000);
       } else {
@@ -237,8 +237,8 @@ export default function StockInvestmentConfirm() {
                   setShowAlertModal(false);
                   if (alertConfig.title === t("deposit.success")) {
                     (navigation as any).reset({
-                      index: 1,
-                      routes: [{ name: "Main" }, { name: "Stockholder" }],
+                      index: 0,
+                      routes: [{ name: "Main" }],
                     });
                   }
                 }}
