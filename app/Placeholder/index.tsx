@@ -3,6 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { doc, getDoc } from "firebase/firestore";
+import * as ImagePicker from "expo-image-picker";
 import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -23,7 +24,7 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { getMe, updateProfile } from "../../configs/api";
+import { decodeQrImage, getMe, updateProfile } from "../../configs/api";
 import { auth, firestore } from "../../configs/firebase";
 import { useResponsive } from "../../utils/responsive";
 import {
@@ -58,13 +59,20 @@ export default function Placeholder() {
   const [loading, setLoading] = useState(true);
   const [showNameModal, setShowNameModal] = useState(false);
   const [showPhoneModal, setShowPhoneModal] = useState(false);
+  const [showContactLinksModal, setShowContactLinksModal] = useState(false);
   const [languageModalVisible, setLanguageModalVisible] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editFirstName, setEditFirstName] = useState("");
   const [editLastName, setEditLastName] = useState("");
   const [editMiddleName, setEditMiddleName] = useState("");
   const [editPhone, setEditPhone] = useState("");
+  const [editLineLink, setEditLineLink] = useState("");
+  const [editViberLink, setEditViberLink] = useState("");
+  const [editWhatsappLink, setEditWhatsappLink] = useState("");
+  const [isProcessingContactQR, setIsProcessingContactQR] = useState(false);
   const [passcode, setPasscode] = useState("");
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const fetchUserData = useCallback(async () => {
     try {
@@ -113,6 +121,63 @@ export default function Placeholder() {
 
   const hasPasscode = !!userData?.hasPasscode;
 
+  const normalizeMessagingLink = (
+    raw: string,
+    provider: "line" | "viber" | "whatsapp" | null,
+  ): string => {
+    const v = raw.trim();
+    if (!v) return "";
+    if (/^https?:\/\//i.test(v)) {
+      return v;
+    }
+    if (/^www\./i.test(v)) {
+      return `https://${v}`;
+    }
+
+    const lowered = v.toLowerCase();
+
+    if (provider === "line") {
+      if (lowered.startsWith("line.me/") || lowered.startsWith("liff.line.me/")) {
+        return `https://${v}`;
+      }
+      if (lowered.startsWith("line://")) {
+        return v;
+      }
+    }
+
+    if (provider === "whatsapp") {
+      if (
+        lowered.startsWith("wa.me/") ||
+        lowered.startsWith("chat.whatsapp.com/")
+      ) {
+        return `https://${v}`;
+      }
+      if (lowered.startsWith("whatsapp://")) {
+        return v;
+      }
+    }
+
+    if (provider === "viber") {
+      if (
+        lowered.startsWith("viber.me/") ||
+        lowered.startsWith("vb.me/") ||
+        lowered.startsWith("invite.viber.com/") ||
+        lowered.startsWith("chats.viber.com/")
+      ) {
+        return `https://${v}`;
+      }
+      if (lowered.startsWith("viber://")) {
+        return v;
+      }
+    }
+
+    if (/^[a-z0-9.-]+\.[a-z]{2,}\/?/i.test(v)) {
+      return `https://${v}`;
+    }
+
+    return v;
+  };
+
   const handleSaveName = async () => {
     const firstName = editFirstName.trim();
     const lastName = editLastName.trim();
@@ -142,6 +207,8 @@ export default function Placeholder() {
       setUserData(result.user);
       setShowNameModal(false);
       setPasscode("");
+      setSuccessMessage("Your name has been updated successfully.");
+      setShowSuccessModal(true);
     } else {
       Alert.alert("Error", result.error || "Failed to update profile.");
     }
@@ -174,8 +241,126 @@ export default function Placeholder() {
       setUserData(result.user);
       setShowPhoneModal(false);
       setPasscode("");
+      setSuccessMessage("Your contact number has been updated successfully.");
+      setShowSuccessModal(true);
     } else {
       Alert.alert("Error", result.error || "Failed to update profile.");
+    }
+  };
+
+  const handleSaveContactLinks = async () => {
+    const accessToken = await AsyncStorage.getItem("access_token");
+    if (!accessToken) {
+      Alert.alert("Error", "Not authenticated.");
+      return;
+    }
+    const body: Record<string, string> = {};
+    const line = editLineLink.trim();
+    const viber = editViberLink.trim();
+    const whatsapp = editWhatsappLink.trim();
+    if (line) body.lineAccountLink = normalizeMessagingLink(line, "line");
+    if (viber) body.viberLink = normalizeMessagingLink(viber, "viber");
+    if (whatsapp) body.whatsappLink = normalizeMessagingLink(whatsapp, "whatsapp");
+
+    if (!body.lineAccountLink && !body.viberLink && !body.whatsappLink) {
+      Alert.alert("Validation", "Please enter at least one contact link.");
+      return;
+    }
+
+    if (hasPasscode) {
+      if (!passcode || !/^\d{4}$/.test(passcode)) {
+        Alert.alert("Passcode Required", "Enter your 4-digit passcode.");
+        return;
+      }
+      body.passcode = passcode;
+    }
+
+    setSaving(true);
+    const result = await updateProfile(accessToken, body);
+    setSaving(false);
+    if (result.success && result.user) {
+      setUserData(result.user);
+      setShowContactLinksModal(false);
+      setPasscode("");
+      setSuccessMessage("Your contact links have been updated successfully.");
+      setShowSuccessModal(true);
+    } else {
+      Alert.alert("Error", result.error || "Failed to update profile.");
+    }
+  };
+
+  const openContactLinksModal = () => {
+    setEditLineLink(
+      userData?.lineAccountLink && userData.lineAccountLink !== t("common.notProvided")
+        ? userData.lineAccountLink
+        : "",
+    );
+    setEditViberLink(
+      userData?.viberLink && userData.viberLink !== t("common.notProvided")
+        ? userData.viberLink
+        : "",
+    );
+    setEditWhatsappLink(
+      userData?.whatsappLink && userData.whatsappLink !== t("common.notProvided")
+        ? userData.whatsappLink
+        : "",
+    );
+    setPasscode("");
+    setShowContactLinksModal(true);
+  };
+
+  const handleUploadContactQr = async (
+    provider: "line" | "viber" | "whatsapp",
+  ) => {
+    try {
+      setIsProcessingContactQR(true);
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images"],
+        allowsEditing: false,
+        quality: 1,
+      });
+
+      if (result.canceled || !result.assets || result.assets.length === 0) {
+        return;
+      }
+
+      const asset = result.assets[0];
+      const decoded = await decodeQrImage(
+        asset.uri,
+        provider,
+        // @ts-expect-error: mimeType may be undefined on some platforms
+        asset.mimeType,
+      );
+      if (!decoded.success) {
+        Alert.alert(
+          "QR Decode Failed",
+          decoded.error || "Unable to read QR code from image.",
+        );
+        return;
+      }
+
+      const raw = (decoded.normalizedLink || decoded.text || "").trim();
+      if (!raw) {
+        Alert.alert(
+          "No QR Found",
+          "No QR code found in the selected image. Please try a clearer QR.",
+        );
+        return;
+      }
+
+      const normalized = normalizeMessagingLink(raw, provider);
+      if (provider === "line") {
+        setEditLineLink(normalized);
+      } else if (provider === "viber") {
+        setEditViberLink(normalized);
+      } else if (provider === "whatsapp") {
+        setEditWhatsappLink(normalized);
+      }
+    } catch (error) {
+      console.log("Error decoding contact QR:", error);
+      Alert.alert("Error", "Something went wrong while reading the QR code.");
+    } finally {
+      setIsProcessingContactQR(false);
     }
   };
 
@@ -442,18 +627,21 @@ export default function Placeholder() {
             label={t("profile.lineLink")}
             value={lineLink}
             editable
+            onEdit={openContactLinksModal}
           />
           <DetailItem
             icon="chatbubble-outline"
             label={t("profile.viberLink")}
             value={viberLink}
             editable
+            onEdit={openContactLinksModal}
           />
           <DetailItem
             icon="logo-whatsapp"
             label={t("profile.whatsappLink")}
             value={whatsappLink}
             editable
+            onEdit={openContactLinksModal}
           />
           <DetailItem
             icon="card-outline"
@@ -686,6 +874,142 @@ export default function Placeholder() {
         </KeyboardAvoidingView>
       </Modal>
 
+      {/* Contact Links Edit Modal */}
+      <Modal
+        visible={showContactLinksModal}
+        transparent
+        animationType="fade"
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          style={styles.modalOverlay}
+        >
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Edit Contact Links</Text>
+              <TouchableOpacity
+                onPress={() => !saving && setShowContactLinksModal(false)}
+                disabled={saving}
+              >
+                <Ionicons name="close" size={24} color="#333" />
+              </TouchableOpacity>
+            </View>
+            <ScrollView
+              keyboardShouldPersistTaps="handled"
+              style={styles.modalScroll}
+              bounces={false}
+            >
+              <View style={styles.modalBody}>
+                <Text style={styles.inputLabel}>LINE Link</Text>
+                <TextInput
+                  style={styles.input}
+                  value={editLineLink}
+                  onChangeText={setEditLineLink}
+                  placeholder="https://line.me/..."
+                  placeholderTextColor="#999"
+                  keyboardType="url"
+                  autoCapitalize="none"
+                  editable={!saving && !isProcessingContactQR}
+                />
+                <TouchableOpacity
+                  style={styles.qrUploadButton}
+                  onPress={() => handleUploadContactQr("line")}
+                  disabled={saving || isProcessingContactQR}
+                >
+                  <Text style={styles.qrUploadButtonText}>
+                    {isProcessingContactQR ? "Reading QR..." : "Upload LINE QR image"}
+                  </Text>
+                </TouchableOpacity>
+
+                <Text style={[styles.inputLabel, { marginTop: 12 }]}>
+                  Viber Link
+                </Text>
+                <TextInput
+                  style={styles.input}
+                  value={editViberLink}
+                  onChangeText={setEditViberLink}
+                  placeholder="https://invite.viber.com/..."
+                  placeholderTextColor="#999"
+                  keyboardType="url"
+                  autoCapitalize="none"
+                  editable={!saving && !isProcessingContactQR}
+                />
+                <TouchableOpacity
+                  style={styles.qrUploadButton}
+                  onPress={() => handleUploadContactQr("viber")}
+                  disabled={saving || isProcessingContactQR}
+                >
+                  <Text style={styles.qrUploadButtonText}>
+                    {isProcessingContactQR ? "Reading QR..." : "Upload Viber QR image"}
+                  </Text>
+                </TouchableOpacity>
+
+                <Text style={[styles.inputLabel, { marginTop: 12 }]}>
+                  WhatsApp Link
+                </Text>
+                <TextInput
+                  style={styles.input}
+                  value={editWhatsappLink}
+                  onChangeText={setEditWhatsappLink}
+                  placeholder="https://wa.me/..."
+                  placeholderTextColor="#999"
+                  keyboardType="url"
+                  autoCapitalize="none"
+                  editable={!saving && !isProcessingContactQR}
+                />
+                <TouchableOpacity
+                  style={styles.qrUploadButton}
+                  onPress={() => handleUploadContactQr("whatsapp")}
+                  disabled={saving || isProcessingContactQR}
+                >
+                  <Text style={styles.qrUploadButtonText}>
+                    {isProcessingContactQR ? "Reading QR..." : "Upload WhatsApp QR image"}
+                  </Text>
+                </TouchableOpacity>
+
+                <Text style={[styles.inputHint, { marginTop: 10 }]}>
+                  You can paste links directly or upload a QR image from LINE,
+                  Viber, or WhatsApp to auto-fill.
+                </Text>
+
+                {hasPasscode && (
+                  <>
+                    <Text style={[styles.inputLabel, { marginTop: 16 }]}>
+                      Passcode *
+                    </Text>
+                    <TextInput
+                      style={styles.input}
+                      value={passcode}
+                      onChangeText={setPasscode}
+                      placeholder="4-digit passcode"
+                      placeholderTextColor="#999"
+                      keyboardType="number-pad"
+                      maxLength={4}
+                      secureTextEntry
+                      editable={!saving && !isProcessingContactQR}
+                    />
+                  </>
+                )}
+              </View>
+            </ScrollView>
+            <TouchableOpacity
+              style={[
+                styles.saveButton,
+                (saving || isProcessingContactQR) && styles.saveButtonDisabled,
+              ]}
+              onPress={handleSaveContactLinks}
+              disabled={saving || isProcessingContactQR}
+            >
+              {saving ? (
+                <ActivityIndicator color="#FFF" />
+              ) : (
+                <Text style={styles.saveButtonText}>Save</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
       {/* Language Modal - matches Register language options (transparent overlay + outer glow) */}
       <Modal
         visible={languageModalVisible}
@@ -801,6 +1125,30 @@ export default function Placeholder() {
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
+      </Modal>
+
+      {/* Success Modal */}
+      <Modal visible={showSuccessModal} transparent animationType="fade">
+        <View style={styles.successOverlay}>
+          <View style={styles.successContent}>
+            <Ionicons
+              name="checkmark-circle"
+              size={40}
+              color="#10B981"
+              style={{ marginBottom: 8 }}
+            />
+            <Text style={styles.successTitle}>Success</Text>
+            <Text style={styles.successMessage}>
+              {successMessage ?? "Your profile has been updated."}
+            </Text>
+            <TouchableOpacity
+              style={styles.successButton}
+              onPress={() => setShowSuccessModal(false)}
+            >
+              <Text style={styles.successButtonText}>OK</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </Modal>
     </SafeAreaView>
   );
@@ -1210,6 +1558,51 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#666",
   },
+  successOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 24,
+  },
+  successContent: {
+    width: "100%",
+    maxWidth: 340,
+    borderRadius: 20,
+    paddingVertical: 20,
+    paddingHorizontal: 18,
+    backgroundColor: "#FFFFFF",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  successTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#111827",
+    marginBottom: 4,
+  },
+  successMessage: {
+    fontSize: 14,
+    color: "#4B5563",
+    textAlign: "center",
+    marginBottom: 16,
+  },
+  successButton: {
+    marginTop: 4,
+    paddingVertical: 10,
+    paddingHorizontal: 24,
+    borderRadius: 999,
+    backgroundColor: THEME_COLOR,
+  },
+  successButtonText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#FFFFFF",
+  },
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.5)",
@@ -1240,6 +1633,20 @@ const styles = StyleSheet.create({
   },
   modalBody: {
     padding: 20,
+  },
+  qrUploadButton: {
+    marginTop: 6,
+    alignSelf: "flex-start",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    backgroundColor: "#F9FAFB",
+  },
+  qrUploadButtonText: {
+    fontSize: 12,
+    color: "#4B5563",
   },
   inputLabel: {
     fontSize: 14,

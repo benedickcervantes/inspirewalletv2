@@ -4,6 +4,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   BackHandler,
+  Modal,
   Platform,
   SafeAreaView,
   ScrollView,
@@ -33,11 +34,71 @@ const CRYPTO_ASSETS: { id: string; label: string; icon: React.ComponentProps<typ
   { id: "USDT", label: "USDT", icon: "cash-outline" },
 ];
 
-const TIME_RANGES = ["24h", "7d", "30d"] as const;
+const TIME_RANGES = ["1h", "24h", "7d"] as const;
 const PERCENTAGES = [25, 50, 75, 100];
 
 type TabType = "trading" | "deposit";
 type TimeRange = (typeof TIME_RANGES)[number];
+
+const CryptoCard = React.memo(({
+  id,
+  label,
+  fullName,
+  price,
+  change,
+  icon,
+  selectedTimeRange,
+  selected = false
+}: {
+  id: string;
+  label: string;
+  fullName: string;
+  price: string;
+  change: string;
+  icon: any;
+  selectedTimeRange: string;
+  selected?: boolean;
+}) => {
+  const isPositive = change.startsWith("+");
+  const badgeColor = isPositive ? "#22C55E" : "#EF4444";
+  const badgeBg = isPositive ? "rgba(34, 197, 94, 0.1)" : "rgba(239, 68, 68, 0.1)";
+
+  return (
+    <View style={[styles.newAssetCard, selected && styles.newAssetCardSelected]}>
+      <View style={styles.newAssetHeader}>
+        <View style={styles.newAssetMainInfo}>
+          <View style={styles.newAssetIconContainer}>
+            <Ionicons
+              name={icon}
+              size={18}
+              color={
+                id === "BTC" ? "#F7931A" :
+                  id === "ETH" ? "#627EEA" :
+                    id === "USD" ? "#22C55E" :
+                      id === "JPY" ? "#EF4444" :
+                        "#26A17B"
+              }
+            />
+          </View>
+          <Text style={styles.newAssetSymbol}>{label}</Text>
+        </View>
+      </View>
+
+      <Text style={styles.newAssetName}>{fullName}</Text>
+      <Text style={styles.newAssetPrice}>₱ {price}</Text>
+
+      <View style={[styles.changeBadge, { backgroundColor: badgeBg }]}>
+        <Ionicons
+          name={isPositive ? "caret-up" : "caret-down"}
+          size={12}
+          color={badgeColor}
+          style={{ marginRight: 4 }}
+        />
+        <Text style={[styles.changeText, { color: badgeColor }]}>{change.replace(/[+-]/, "")}</Text>
+      </View>
+    </View>
+  );
+});
 
 function formatCurrency(value: number | string): string {
   const num = typeof value === "string" ? parseFloat(value) || 0 : value;
@@ -78,6 +139,11 @@ const BalanceCard = React.memo(({ balance, label }: { balance: number; label: st
   </LinearGradient>
 ));
 
+const FOREX_ASSETS = [
+  { id: "USD", label: "USD", fullName: "US Dollar", icon: "logo-usd" },
+  { id: "JPY", label: "JPY", fullName: "JPY", icon: "logo-yen" },
+];
+
 export default function PlayEarnServices() {
   const navigation = useNavigation();
   const { t } = useLanguage();
@@ -88,14 +154,35 @@ export default function PlayEarnServices() {
   const horizontalPadding = isXSScreen ? 12 : isSmallScreen ? 16 : 20;
 
   const [activeTab, setActiveTab] = useState<TabType>("trading");
-  const [selectedCrypto, setSelectedCrypto] = useState("BTC");
+  const [selectedAsset, setSelectedAsset] = useState<{ id: string; fullName: string; type: 'crypto' | 'forex' } | null>({ id: "BTC", fullName: "Bitcoin", type: 'crypto' });
   const [selectedTimeRange, setSelectedTimeRange] = useState<TimeRange>("24h");
-  const [isBuy, setIsBuy] = useState(true);
-  const [spendingAmount, setSpendingAmount] = useState("0.00");
-  const [availableBalance] = useState(MOCK_DATA.balance);
+  const [selectedForexTimeRange, setSelectedForexTimeRange] = useState<TimeRange>("24h");
+  const [availableBalance, setAvailableBalance] = useState(MOCK_DATA.balance);
+
+  // Trade Modal State
+  const [tradeModalVisible, setTradeModalVisible] = useState(false);
+  const [tradeMode, setTradeMode] = useState<'BUY' | 'SELL'>('BUY');
+  const [tradeAmount, setTradeAmount] = useState('');
+  const [cryptoBalances, setCryptoBalances] = useState<{
+    BTC: string;
+    ETH: string;
+    USDT: string;
+  }>({
+    BTC: "0.00000",
+    ETH: "0.00000",
+    USDT: "0.00000",
+  });
+  const [cryptoPricesRaw, setCryptoPricesRaw] = useState<Record<string, number>>({
+    BTC: 0,
+    ETH: 0,
+    USDT: 0,
+  });
+  const [forexPrices, setForexPrices] = useState<Record<string, string>>({});
+  const [forexChanges, setForexChanges] = useState<Record<string, any>>({});
   const [isUnderMaintenance, setIsUnderMaintenance] = useState(false);
   const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
   const [checkingMaintenance, setCheckingMaintenance] = useState(true);
+  const [isLoadingBalance, setIsLoadingBalance] = useState(false);
 
   // Price States
   const [cryptoPrices, setCryptoPrices] = useState<Record<string, string>>({
@@ -103,7 +190,11 @@ export default function PlayEarnServices() {
     ETH: "150,000.00",
     USDT: "56.00"
   });
-  const [priceChange, setPriceChange] = useState(MOCK_DATA.priceChange);
+  const [priceChanges, setPriceChanges] = useState<Record<string, Record<string, string>>>({
+    BTC: { "1h": "+0.00%", "24h": "+0.00%", "7d": "+0.00%" },
+    ETH: { "1h": "+0.00%", "24h": "+0.00%", "7d": "+0.00%" },
+    USDT: { "1h": "+0.00%", "24h": "+0.00%", "7d": "+0.00%" }
+  });
   const [isLoadingPrice, setIsLoadingPrice] = useState(false);
   const isFetchingRef = React.useRef(false);
 
@@ -134,6 +225,32 @@ export default function PlayEarnServices() {
     }, [])
   );
 
+  // Fetch Balances on Focus
+  useFocusEffect(
+    useCallback(() => {
+      const fetchUserBalances = () => {
+        setIsLoadingBalance(true);
+        try {
+          // Using MOCK_DATA balance
+          setAvailableBalance(MOCK_DATA.balance);
+
+          // Update Crypto Balances from MOCK_DATA
+          setCryptoBalances({
+            BTC: MOCK_DATA.cryptoBalances.BTC,
+            ETH: MOCK_DATA.cryptoBalances.ETH,
+            USDT: MOCK_DATA.cryptoBalances.USDT,
+          });
+        } catch (error) {
+          console.error("[Balance] Error updating mock balance:", error);
+        } finally {
+          setIsLoadingBalance(false);
+        }
+      };
+
+      fetchUserBalances();
+    }, [])
+  );
+
   // Fetch Prices on Focus
   useFocusEffect(
     useCallback(() => {
@@ -146,40 +263,72 @@ export default function PlayEarnServices() {
           const apiKey = process.env.EXPO_PUBLIC_API_KEY;
           if (!baseUrl) return;
 
-          const url = `${baseUrl}/prices/all`;
-          const response = await fetch(url, {
-            headers: { "x-api-key": apiKey || "" },
-          });
+          // Parallel fetch for Crypto and Forex
+          const [resCrypto, resForex] = await Promise.all([
+            fetch(`${baseUrl}/prices/all`, { headers: { "x-api-key": apiKey || "" } }),
+            fetch(`${baseUrl}/exchange-rate/all`, { headers: { "x-api-key": apiKey || "" } })
+          ]);
 
-          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          if (resCrypto.ok) {
+            const data = await resCrypto.json();
+            setCryptoPricesRaw(prev => ({
+              ...prev,
+              ...(data.BTC?.php && { BTC: data.BTC.php }),
+              ...(data.ETH?.php && { ETH: data.ETH.php }),
+              ...(data.USDT?.php && { USDT: data.USDT.php }),
+            }));
 
-          const data = await response.json();
-          console.log("[Crypto] Received from backend:", JSON.stringify(data));
+            setCryptoPrices(prev => ({
+              ...prev,
+              ...(data.BTC?.php && { BTC: formatCurrency(data.BTC.php) }),
+              ...(data.ETH?.php && { ETH: formatCurrency(data.ETH.php) }),
+              ...(data.USDT?.php && { USDT: formatCurrency(data.USDT.php) }),
+            }));
 
-          setCryptoPrices(prev => {
-            const newPrices = { ...prev };
-            if (data.BTC?.php) newPrices.BTC = formatCurrency(data.BTC.php);
-            if (data.ETH?.php) newPrices.ETH = formatCurrency(data.ETH.php);
-            if (data.USDT?.php) newPrices.USDT = formatCurrency(data.USDT.php);
-            return newPrices;
-          });
+            setPriceChanges(prev => {
+              const newChanges = { ...prev };
+              Object.keys(data).forEach(key => {
+                const crypto = key.toUpperCase();
+                if (newChanges[crypto]) {
+                  newChanges[crypto] = {
+                    "1h": data[key].change1h || "+0.00%",
+                    "24h": data[key].change24h || "+0.00%",
+                    "7d": data[key].change7d || "+0.00%"
+                  };
+                }
+              });
+              return newChanges;
+            });
+          }
 
-          if (data[selectedCrypto]?.change24h) {
-            setPriceChange(data[selectedCrypto].change24h);
-          } else if (data[selectedCrypto.toUpperCase()]?.change24h) {
-            setPriceChange(data[selectedCrypto.toUpperCase()].change24h);
+          if (resForex.ok) {
+            const data = await resForex.json();
+            const prices: Record<string, string> = {};
+            const changes: Record<string, any> = {};
+
+            Object.entries(data).forEach(([key, val]: [string, any]) => {
+              const phpValue = (1 / val.rate);
+              prices[key] = phpValue.toFixed(2);
+              changes[key] = {
+                "1h": val.change1h || "+0.00%",
+                "24h": val.change24h || "+0.00%",
+                "7d": val.change7d || "+0.00%",
+              };
+            });
+            setForexPrices(prices);
+            setForexChanges(changes);
           }
         } catch (error) {
-          console.error("[Crypto] Fetch Error:", error);
+          console.error("[Data] Fetch Error:", error);
         } finally {
           isFetchingRef.current = false;
         }
       };
 
       fetchPrices();
-      const interval = setInterval(fetchPrices, 60000);
+      const interval = setInterval(fetchPrices, 5000);
       return () => clearInterval(interval);
-    }, [selectedCrypto])
+    }, [selectedAsset, selectedTimeRange, selectedForexTimeRange])
   );
 
   useEffect(() => {
@@ -192,10 +341,6 @@ export default function PlayEarnServices() {
   }, [navigation]);
 
   const handleBack = useCallback(() => navigation.navigate("Main"), [navigation]);
-  const handlePercentagePress = useCallback((pct: number): void => {
-    const amount = (availableBalance * pct) / 100;
-    setSpendingAmount(amount.toFixed(2));
-  }, [availableBalance]);
 
   return (
     <View style={styles.container}>
@@ -203,7 +348,7 @@ export default function PlayEarnServices() {
       <SafeAreaView style={styles.safeArea}>
         {/* Custom Header Bar (Exact AgentDashboard Style) */}
         <LinearGradient
-          colors={["#E25A17", "#F28934"]}
+          colors={ORANGE_GRADIENT}
           style={[styles.header, isXSScreen && styles.headerCompact]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
@@ -278,15 +423,30 @@ export default function PlayEarnServices() {
               </View>
               <View style={styles.assetItem}>
                 <Text style={styles.assetLabel}>BTC</Text>
-                <Text style={styles.assetValue}>{MOCK_DATA.cryptoBalances.BTC}</Text>
+                <View style={{ alignItems: "flex-end" }}>
+                  <Text style={styles.assetValue}>{cryptoBalances.BTC}</Text>
+                  <Text style={styles.assetSubValue}>
+                    ₱ {formatCurrency(parseFloat(cryptoBalances.BTC) * cryptoPricesRaw.BTC)}
+                  </Text>
+                </View>
               </View>
               <View style={styles.assetItem}>
                 <Text style={styles.assetLabel}>ETH</Text>
-                <Text style={styles.assetValue}>{MOCK_DATA.cryptoBalances.ETH}</Text>
+                <View style={{ alignItems: "flex-end" }}>
+                  <Text style={styles.assetValue}>{cryptoBalances.ETH}</Text>
+                  <Text style={styles.assetSubValue}>
+                    ₱ {formatCurrency(parseFloat(cryptoBalances.ETH) * cryptoPricesRaw.ETH)}
+                  </Text>
+                </View>
               </View>
               <View style={styles.assetItem}>
                 <Text style={styles.assetLabel}>USDT</Text>
-                <Text style={styles.assetValue}>{MOCK_DATA.cryptoBalances.USDT}</Text>
+                <View style={{ alignItems: "flex-end" }}>
+                  <Text style={styles.assetValue}>{cryptoBalances.USDT}</Text>
+                  <Text style={styles.assetSubValue}>
+                    ₱ {formatCurrency(parseFloat(cryptoBalances.USDT) * cryptoPricesRaw.USDT)}
+                  </Text>
+                </View>
               </View>
             </View>
             <View style={[styles.assetCard, isXSScreen && styles.cardCompact]}>
@@ -309,65 +469,45 @@ export default function PlayEarnServices() {
             </View>
           </View>
 
-          {/* CRYPTO Section Label */}
-          <Text style={[styles.sectionLabel, isXSScreen && styles.sectionTitleCompact]}>{t("playEarn.crypto")}</Text>
-
-          {/* Crypto Selection Buttons */}
-          <View style={styles.cryptoButtons}>
-            {CRYPTO_ASSETS.map((asset) => (
-              <TouchableOpacity
-                key={asset.id}
-                style={[
-                  styles.cryptoButton,
-                  selectedCrypto === asset.id && styles.cryptoButtonSelected,
-                ]}
-                onPress={() => setSelectedCrypto(asset.id)}
-              >
-                <View
-                  style={[
-                    styles.cryptoIconCircle,
-                    asset.id === "BTC" && styles.cryptoIconBtc,
-                    asset.id === "ETH" && styles.cryptoIconEth,
-                    asset.id === "USDT" && styles.cryptoIconUsdt,
-                  ]}
+          {/* ALL CRYPTO Section */}
+          <View style={styles.allCryptoHeader}>
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+              <Text style={styles.allCryptoTitle}>ALL CRYPTO</Text>
+              <View style={styles.headerActionRow}>
+                <TouchableOpacity
+                  style={[styles.headerActionButton, { backgroundColor: GREEN_SUCCESS }]}
+                  onPress={() => {
+                    setTradeMode('BUY');
+                    setTradeModalVisible(true);
+                  }}
                 >
-                  <Ionicons
-                    name={asset.icon}
-                    size={24}
-                    color={
-                      asset.id === "BTC" ? "#F7931A" :
-                        asset.id === "ETH" ? "#627EEA" :
-                          asset.id === "USDT" ? "#26A17B" :
-                            "#FFF"
-                    }
-                  />
-                </View>
-                <Text style={styles.cryptoButtonLabel}>{asset.label}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          {/* Current Price */}
-          <Text style={styles.currentPriceLabel}>{t("playEarn.currentPrice")}</Text>
-          <View style={styles.priceRow}>
-            <View>
-              <Text style={styles.currentPrice}>P {cryptoPrices[selectedCrypto as keyof typeof cryptoPrices] || "0.00"}</Text>
-              <Text style={styles.priceChange}>{priceChange} (24h)</Text>
+                  <Text style={styles.headerActionButtonText}>BUY</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.headerActionButton, { backgroundColor: "#EF4444" }]}
+                  onPress={() => {
+                    setTradeMode('SELL');
+                    setTradeModalVisible(true);
+                  }}
+                >
+                  <Text style={styles.headerActionButtonText}>SELL</Text>
+                </TouchableOpacity>
+              </View>
             </View>
-            <View style={styles.timeRangeButtons}>
+            <View style={styles.timeRangeFilters}>
               {TIME_RANGES.map((range) => (
                 <TouchableOpacity
                   key={range}
                   style={[
-                    styles.timeRangeBtn,
-                    selectedTimeRange === range && styles.timeRangeBtnActive,
+                    styles.rangeFilterBtn,
+                    selectedTimeRange === range && styles.rangeFilterBtnActive,
                   ]}
                   onPress={() => setSelectedTimeRange(range)}
                 >
                   <Text
                     style={[
-                      styles.timeRangeText,
-                      selectedTimeRange === range && styles.timeRangeTextActive,
+                      styles.rangeFilterText,
+                      selectedTimeRange === range && styles.rangeFilterTextActive,
                     ]}
                   >
                     {range}
@@ -377,68 +517,161 @@ export default function PlayEarnServices() {
             </View>
           </View>
 
-          {/* Buy / Sell Tab Segment */}
-          <View style={styles.segmentedControl}>
-            <TouchableOpacity
-              style={[styles.segment, isBuy && styles.segmentActive]}
-              onPress={() => setIsBuy(true)}
-              activeOpacity={0.8}
-            >
-              <Text style={[styles.segmentText, isBuy && styles.segmentTextActive]}>
-                {t("playEarn.buy")}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.segment, !isBuy && styles.segmentActive]}
-              onPress={() => setIsBuy(false)}
-              activeOpacity={0.8}
-            >
-              <Text style={[styles.segmentText, !isBuy && styles.segmentTextActive]}>
-                {t("playEarn.sell")}
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Spending Amount */}
-          <Text style={styles.inputLabel}>{t("playEarn.spendingAmount")}</Text>
-          <View style={styles.amountInputRow}>
-            <TextInput
-              style={styles.amountInput}
-              value={spendingAmount}
-              onChangeText={setSpendingAmount}
-              keyboardType="decimal-pad"
-              placeholder="0.00"
-            />
-            <Text style={styles.currencyLabel}>PHP</Text>
-          </View>
-
-          {/* Percentage Buttons */}
-          <View style={styles.percentRow}>
-            {PERCENTAGES.map((pct) => (
+          {/* Crypto Grid */}
+          <View style={styles.cryptoGrid}>
+            {CRYPTO_ASSETS.map((asset) => (
               <TouchableOpacity
-                key={pct}
-                style={styles.percentButton}
-                onPress={() => handlePercentagePress(pct)}
+                key={asset.id}
+                onPress={() => setSelectedAsset({ id: asset.id, fullName: asset.id === "BTC" ? "Bitcoin" : asset.id === "ETH" ? "Ethereum" : "Tether", type: 'crypto' })}
+                activeOpacity={0.7}
+                style={{ width: "48%" }}
               >
-                <Text style={styles.percentText}>{pct}%</Text>
+                <CryptoCard
+                  id={asset.id}
+                  label={asset.label}
+                  fullName={asset.id === "BTC" ? "Bitcoin" : asset.id === "ETH" ? "Ethereum" : "Tether"}
+                  price={cryptoPrices[asset.id] || "0.00"}
+                  change={priceChanges[asset.id]?.[selectedTimeRange] || "+0.00%"}
+                  icon={asset.icon}
+                  selectedTimeRange={selectedTimeRange}
+                  selected={selectedAsset?.id === asset.id}
+                />
               </TouchableOpacity>
             ))}
           </View>
 
-          {/* Confirm Purchase Button */}
-          <TouchableOpacity
-            style={styles.confirmButton}
-            activeOpacity={0.8}
-            onPress={() => { }}
-          >
-            <Text style={styles.confirmButtonText}>
-              {isBuy ? t("playEarn.confirmPurchase") : t("playEarn.confirmSell")}
+          {/* ALL FOREX Section */}
+          <View style={[styles.allCryptoHeader, { marginTop: 24 }]}>
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+              <Text style={styles.allCryptoTitle}>ALL FOREX</Text>
+              <View style={styles.headerActionRow}>
+                <TouchableOpacity
+                  style={[styles.headerActionButton, { backgroundColor: GREEN_SUCCESS }]}
+                  onPress={() => {
+                    setTradeMode('BUY');
+                    setTradeModalVisible(true);
+                  }}
+                >
+                  <Text style={styles.headerActionButtonText}>BUY</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.headerActionButton, { backgroundColor: "#EF4444" }]}
+                  onPress={() => {
+                    setTradeMode('SELL');
+                    setTradeModalVisible(true);
+                  }}
+                >
+                  <Text style={styles.headerActionButtonText}>SELL</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+            <View style={styles.timeRangeFilters}>
+              {TIME_RANGES.map((range) => (
+                <TouchableOpacity
+                  key={range}
+                  style={[
+                    styles.rangeFilterBtn,
+                    selectedForexTimeRange === range && styles.rangeFilterBtnActive,
+                  ]}
+                  onPress={() => setSelectedForexTimeRange(range)}
+                >
+                  <Text
+                    style={[
+                      styles.rangeFilterText,
+                      selectedForexTimeRange === range && styles.rangeFilterTextActive,
+                    ]}
+                  >
+                    {range}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          {/* Forex Grid */}
+          <View style={styles.cryptoGrid}>
+            {FOREX_ASSETS.map((asset) => (
+              <TouchableOpacity
+                key={asset.id}
+                onPress={() => setSelectedAsset({ id: asset.id, fullName: asset.fullName, type: 'forex' })}
+                activeOpacity={0.7}
+                style={{ width: "48%" }}
+              >
+                <CryptoCard
+                  id={asset.id}
+                  label={asset.label}
+                  fullName={asset.fullName}
+                  price={forexPrices[asset.id] || "0.00"}
+                  change={forexChanges[asset.id]?.[selectedForexTimeRange] || "+0.00%"}
+                  icon={asset.icon}
+                  selectedTimeRange={selectedForexTimeRange}
+                  selected={selectedAsset?.id === asset.id}
+                />
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {/* Price Chart / Stats for Selected Asset */}
+          <View style={styles.selectionFocus}>
+            <Text style={styles.selectedCryptoTitle}>
+              Selected: <Text style={{ color: THEME_COLOR }}>{selectedAsset?.fullName || selectedAsset?.id}</Text>
             </Text>
-          </TouchableOpacity>
+          </View>
 
           <View style={styles.bottomSpacing} />
         </ScrollView>
       </SafeAreaView>
+
+      {/* Trade Modal */}
+      <Modal
+        visible={tradeModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setTradeModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>
+                {tradeMode} {selectedAsset?.fullName || selectedAsset?.id}
+              </Text>
+              <TouchableOpacity onPress={() => setTradeModalVisible(false)}>
+                <Ionicons name="close" size={24} color="#666" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.modalBody}>
+              <Text style={styles.modalLabel}>Enter Amount (PHP)</Text>
+              <View style={styles.modalInputRow}>
+                <TextInput
+                  style={styles.modalInput}
+                  value={tradeAmount}
+                  onChangeText={setTradeAmount}
+                  keyboardType="decimal-pad"
+                  placeholder="0.00"
+                  autoFocus
+                />
+                <Text style={styles.modalCurrencyLabel}>PHP</Text>
+              </View>
+
+              <TouchableOpacity
+                style={[
+                  styles.modalConfirmButton,
+                  { backgroundColor: tradeMode === 'BUY' ? GREEN_SUCCESS : "#EF4444" }
+                ]}
+                onPress={() => {
+                  setTradeModalVisible(false);
+                  setTradeAmount('');
+                }}
+              >
+                <Text style={styles.modalConfirmButtonText}>
+                  CONFIRM {tradeMode}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -595,6 +828,12 @@ const styles = StyleSheet.create({
     color: PREMIUM_DARK,
     fontWeight: "700",
   },
+  assetSubValue: {
+    fontSize: 10,
+    color: "#71717A",
+    fontWeight: "600",
+    marginTop: 2,
+  },
   sectionLabel: {
     fontSize: 13,
     color: "#6B7280",
@@ -708,105 +947,116 @@ const styles = StyleSheet.create({
     padding: 14,
     marginBottom: 12,
   },
-  segmentedControl: {
-    flexDirection: "row",
-    backgroundColor: SOFT_GRAY,
-    borderRadius: 16,
-    padding: 6,
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-  },
-  segment: {
-    flex: 1,
-    paddingVertical: 12,
-    alignItems: "center",
-    borderRadius: 12,
-  },
-  segmentActive: {
-    backgroundColor: "#FFF",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  segmentText: {
-    fontSize: 15,
-    color: "#71717A",
-    fontWeight: "700",
-  },
-  segmentTextActive: {
-    color: PREMIUM_DARK,
-  },
-  inputLabel: {
-    fontSize: 13,
-    color: "#71717A",
-    fontWeight: "700",
-    marginBottom: 8,
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
-  amountInputRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#FFF",
-    borderRadius: 20,
-    borderWidth: 1.5,
-    borderColor: "#E5E7EB",
+  tradeActionSection: {
     paddingHorizontal: 20,
-    paddingVertical: 16,
-    marginBottom: 16,
+    marginTop: 8,
+    marginBottom: 24,
   },
-  amountInput: {
-    flex: 1,
-    fontSize: 24,
-    fontWeight: "800",
-    color: PREMIUM_DARK,
-    padding: 0,
-  },
-  currencyLabel: {
-    fontSize: 16,
-    color: "#71717A",
-    fontWeight: "700",
-    marginLeft: 12,
-  },
-  percentRow: {
-    flexDirection: "row",
-    gap: 10,
-    marginBottom: 32,
-  },
-  percentButton: {
-    flex: 1,
-    paddingVertical: 12,
-    backgroundColor: SOFT_GRAY,
-    borderRadius: 14,
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-  },
-  percentText: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: PREMIUM_DARK,
-  },
-  confirmButton: {
-    backgroundColor: GREEN_SUCCESS,
+  mainTradeButton: {
     borderRadius: 20,
     paddingVertical: 18,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: GREEN_SUCCESS,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
     shadowRadius: 10,
-    elevation: 4,
+    elevation: 6,
   },
-  confirmButtonText: {
+  mainTradeButtonText: {
     fontSize: 18,
     fontWeight: "800",
     color: "#FFF",
-    letterSpacing: 0.5,
+    textTransform: "uppercase",
+    letterSpacing: 1,
+  },
+  headerActionRow: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  headerActionButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    justifyContent: "center",
+    alignItems: "center",
+    minWidth: 60,
+  },
+  headerActionButtonText: {
+    color: "#FFF",
+    fontSize: 10,
+    fontWeight: "800",
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  modalContainer: {
+    backgroundColor: "#FFF",
+    borderRadius: 24,
+    width: "100%",
+    maxWidth: 400,
+    overflow: "hidden",
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F3F4F6",
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: PREMIUM_DARK,
+  },
+  modalBody: {
+    padding: 24,
+  },
+  modalLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#6B7280",
+    marginBottom: 12,
+  },
+  modalInputRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F9FAFB",
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+  },
+  modalInput: {
+    flex: 1,
+    fontSize: 24,
+    fontWeight: "700",
+    color: PREMIUM_DARK,
+  },
+  modalCurrencyLabel: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#9CA3AF",
+    marginLeft: 8,
+  },
+  modalConfirmButton: {
+    borderRadius: 16,
+    paddingVertical: 16,
+    alignItems: "center",
+  },
+  modalConfirmButtonText: {
+    color: "#FFF",
+    fontSize: 16,
+    fontWeight: "800",
+    letterSpacing: 1,
   },
   bottomSpacing: {
     height: 32,
@@ -821,5 +1071,125 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#666",
     fontWeight: "500",
+  },
+  // New Styles for Redesign
+  allCryptoHeader: {
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 4,
+  },
+  allCryptoTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: PREMIUM_DARK,
+    letterSpacing: 0.5,
+    marginBottom: 8,
+  },
+  timeRangeFilters: {
+    flexDirection: "row",
+    gap: 8,
+    marginBottom: 16,
+  },
+  rangeFilterBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    backgroundColor: "#FFF",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+  },
+  rangeFilterBtnActive: {
+    backgroundColor: THEME_COLOR,
+    borderColor: THEME_COLOR,
+  },
+  rangeFilterText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#888",
+  },
+  rangeFilterTextActive: {
+    color: "#FFFFFF",
+  },
+  cryptoGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    gap: 8,
+  },
+  newAssetCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 16,
+    width: "100%",
+    marginBottom: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 3,
+    borderWidth: 2,
+    borderColor: "transparent",
+  },
+  newAssetCardSelected: {
+    borderColor: THEME_COLOR,
+    backgroundColor: "#FFF9F5",
+  },
+  newAssetHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  newAssetMainInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  newAssetIconContainer: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: "#F3F4F6",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 6,
+  },
+  newAssetSymbol: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#888",
+  },
+  newAssetName: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: PREMIUM_DARK,
+    marginBottom: 4,
+  },
+  newAssetPrice: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: PREMIUM_DARK,
+    marginBottom: 12,
+  },
+  changeBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-start",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  changeText: {
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  selectionFocus: {
+    paddingHorizontal: 16,
+    marginVertical: 12,
+  },
+  selectedCryptoTitle: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#6B7280",
   },
 });

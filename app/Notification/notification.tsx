@@ -419,7 +419,7 @@ const Notification = () => {
       if (backendNotif.type) {
         fields.push({ label: t('notification.detailType') ?? 'Type', value: backendNotif.type });
       }
-      fields.push({ label: t('notification.detailId') ?? 'ID', value: notif.id });
+      // Intentionally hide technical IDs from the detail view
     }
 
     return fields;
@@ -844,7 +844,7 @@ const Notification = () => {
         />
       )}
 
-      {/* Delete confirmation modal - same design as other modals */}
+      {/* Delete confirmation modal - updated to modern white card style */}
       <Modal
         visible={showDeleteModal}
         transparent
@@ -852,12 +852,7 @@ const Notification = () => {
         onRequestClose={() => setShowDeleteModal(false)}
       >
         <View style={styles.alertOverlay}>
-          <LinearGradient
-            colors={['#E25A17', '#F28934']}
-            style={styles.alertContainer}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 0, y: 1 }}
-          >
+          <View style={styles.alertContainer}>
             <Text style={styles.alertTitle}>{deleteModalConfig.title}</Text>
             <Text style={styles.alertMessage}>{deleteModalConfig.message}</Text>
             <View style={styles.alertButtonRow}>
@@ -879,11 +874,11 @@ const Notification = () => {
                 )}
               </TouchableOpacity>
             </View>
-          </LinearGradient>
+          </View>
         </View>
       </Modal>
 
-      {/* Notification detail modal - same design as delete/alert modal */}
+      {/* Notification detail modal - modern white card with full details */}
       <Modal
         visible={!!detailModalNotification}
         transparent
@@ -900,13 +895,13 @@ const Notification = () => {
             onPress={(e) => e.stopPropagation()}
             style={styles.detailModalTouchable}
           >
-            <LinearGradient
-              colors={['#E25A17', '#F28934']}
-              style={[styles.alertContainer, styles.detailModal]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 0, y: 1 }}
-            >
-              <View style={styles.detailHeader}>
+            <View style={styles.detailModal}>
+              <LinearGradient
+                colors={['#E15816', '#F28934']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.detailHeader}
+              >
                 <View style={styles.detailHeaderTop}>
                   <View style={styles.detailIconWrapper}>
                     <Ionicons
@@ -928,7 +923,7 @@ const Notification = () => {
                     <Ionicons name="close-circle" size={28} color="rgba(255,255,255,0.9)" />
                   </TouchableOpacity>
                 </View>
-              </View>
+              </LinearGradient>
               <ScrollView
                 style={styles.detailScroll}
                 contentContainerStyle={styles.detailScrollContent}
@@ -976,7 +971,7 @@ const Notification = () => {
               >
                 <Text style={styles.detailCloseText}>{t('notification.close') ?? 'Close'}</Text>
               </TouchableOpacity>
-            </LinearGradient>
+            </View>
           </TouchableOpacity>
         </TouchableOpacity>
       </Modal>
@@ -1194,7 +1189,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
     textAlign: 'center',
   },
-  // Delete confirmation modal - matches other modals (timedeposit, TransferRecipient)
+  // Delete confirmation modal - modern white card
   alertOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.6)',
@@ -1202,29 +1197,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   alertContainer: {
-    borderRadius: 12,
-    padding: 24,
     width: DETAIL_MODAL_WIDTH,
     maxWidth: DETAIL_MODAL_WIDTH,
-    maxHeight: DETAIL_MODAL_MAX_HEIGHT,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    paddingVertical: 20,
+    paddingHorizontal: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+    shadowOpacity: 0.18,
+    shadowRadius: 10,
+    elevation: 6,
   },
   alertTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    marginBottom: 12,
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#111111',
+    marginBottom: 10,
+    textAlign: 'center',
   },
   alertMessage: {
-    fontSize: 16,
-    color: '#FFFFFF',
-    lineHeight: 24,
-    marginBottom: 24,
-    opacity: 0.95,
+    fontSize: 14,
+    color: '#444444',
+    lineHeight: 20,
+    marginBottom: 20,
+    textAlign: 'center',
   },
   alertButtonRow: {
     flexDirection: 'row',
@@ -1232,30 +1229,32 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   alertCancelButton: {
-    backgroundColor: 'rgba(255,255,255,0.3)',
+    backgroundColor: '#F5F5F5',
     paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
+    paddingHorizontal: 18,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#DDDDDD',
   },
   alertCancelButtonText: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: '#555555',
   },
   alertConfirmButton: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#E15816',
     paddingVertical: 10,
     paddingHorizontal: 24,
-    borderRadius: 8,
-    minWidth: 80,
+    borderRadius: 10,
+    minWidth: 96,
     alignItems: 'center',
   },
   alertConfirmButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#E25A17',
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
-  // Detail modal - same orange gradient as alert modal
+  // Detail modal - white card with full notification details
   detailOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.6)',
@@ -1263,21 +1262,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   detailModalTouchable: {
-    width: DETAIL_MODAL_WIDTH,
-    maxHeight: DETAIL_MODAL_MAX_HEIGHT,
+    width: '90%',
+    maxWidth: DETAIL_MODAL_WIDTH,
   },
   detailModal: {
-    maxHeight: '85%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    paddingVertical: 18,
+    paddingHorizontal: 18,
+    maxHeight: DETAIL_MODAL_MAX_HEIGHT,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.18,
+    shadowRadius: 10,
+    elevation: 6,
     overflow: 'hidden',
-    padding: 16,
   },
   detailHeader: {
-    paddingHorizontal: 0,
-    paddingTop: 0,
-    paddingBottom: 12,
-    marginBottom: 0,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.4)',
+    paddingHorizontal: 18,
+    paddingTop: 14,
+    paddingBottom: 14,
+    marginHorizontal: -18,
+    marginTop: -18,
+    marginBottom: 8,
+    borderTopLeftRadius: 18,
+    borderTopRightRadius: 18,
   },
   detailHeaderTop: {
     flexDirection: 'row',
@@ -1288,7 +1297,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.3)',
+    backgroundColor: 'rgba(255,255,255,0.18)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -1307,7 +1316,7 @@ const styles = StyleSheet.create({
   detailScroll: {
     flexGrow: 1,
     flexShrink: 1,
-    maxHeight: 340,
+    maxHeight: DETAIL_MODAL_MAX_HEIGHT - 140,
   },
   detailScrollContent: {
     paddingHorizontal: 0,
@@ -1321,14 +1330,14 @@ const styles = StyleSheet.create({
   detailLabel: {
     fontSize: 11,
     fontWeight: '700',
-    color: 'rgba(255,255,255,0.75)',
+    color: '#E15816',
     marginBottom: 4,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   detailValue: {
     fontSize: 15,
-    color: '#FFFFFF',
+    color: '#111111',
     lineHeight: 22,
     opacity: 0.98,
   },
@@ -1363,7 +1372,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 0,
     marginBottom: 0,
     marginTop: 4,
-    backgroundColor: 'rgba(255,255,255,0.3)',
+    backgroundColor: '#F4F4F4',
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 8,
@@ -1372,7 +1381,7 @@ const styles = StyleSheet.create({
   detailCloseText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: '#333333',
   },
 });
 
