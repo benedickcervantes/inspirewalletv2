@@ -1,10 +1,12 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { RouteProp } from "@react-navigation/native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useState } from "react";
 import {
+  Alert,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -17,6 +19,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { submitEwalletApplication } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
 import type { RootStackParamList } from "../../../types/navigation";
 
@@ -53,8 +56,12 @@ export default function EwalletFinancialInfo() {
   const [sourceOfFund, setSourceOfFund] = useState("");
   const [grossMonthlyIncome, setGrossMonthlyIncome] = useState("");
   const [grossMonthlyIncomeCurrency, setGrossMonthlyIncomeCurrency] = useState("");
+  const [errors, setErrors] = useState<{ source?: string; income?: string; currency?: string }>({});
   const [showSourceOfFundModal, setShowSourceOfFundModal] = useState(false);
   const [showCurrencyModal, setShowCurrencyModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+  const [loading, setLoading] = useState(false);
 
   const currentStep = 5;
 
@@ -62,15 +69,55 @@ export default function EwalletFinancialInfo() {
     navigation.goBack();
   };
 
-  const handleSubmit = () => {
-    if (!sourceOfFund.trim()) return;
-    if (!grossMonthlyIncomeCurrency) return;
-    if (!grossMonthlyIncome.trim()) return;
-    // TODO: Submit application to backend
-    (navigation as { reset: (state: { index: number; routes: { name: string }[] }) => void }).reset({
-      index: 0,
-      routes: [{ name: "Main" }],
-    });
+  const handleSubmit = async () => {
+    const newErrors: typeof errors = {};
+    if (!sourceOfFund.trim()) newErrors.source = "Source of fund is required";
+    if (!grossMonthlyIncome.trim()) {
+      newErrors.income = "Income amount is required";
+    } else if (isNaN(Number(grossMonthlyIncome)) || Number(grossMonthlyIncome) <= 0) {
+      newErrors.income = "Enter a valid income amount";
+    }
+    if (!grossMonthlyIncomeCurrency) newErrors.currency = "Currency is required";
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    setErrors({});
+
+    setLoading(true);
+    try {
+      const token = await AsyncStorage.getItem("access_token");
+      if (!token) {
+        Alert.alert(t("common.error"), "Authentication token not found. Please login again.");
+        setLoading(false);
+        return;
+      }
+
+      const payload = {
+        provider: selectedProvider,
+        sourceOfFund: sourceOfFund,
+        grossMonthlyIncome: grossMonthlyIncome,
+        grossMonthlyIncomeCurrency: grossMonthlyIncomeCurrency,
+        personalInfo: route.params?.applicationData?.personalInfo,
+        contactInfo: route.params?.applicationData?.contactInfo,
+        addressInfo: route.params?.applicationData?.addressInfo,
+      };
+
+      const result = await submitEwalletApplication(token, payload);
+
+      if (result.success) {
+        setShowSuccessModal(true);
+      } else {
+        Alert.alert(t("common.error"), result.error || "Failed to submit application.");
+      }
+    } catch (error: any) {
+      console.error("[EwalletFinancialinfo] Submit error:", error);
+      Alert.alert(t("common.error"), error.message || "An unexpected error occurred.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -174,7 +221,7 @@ export default function EwalletFinancialInfo() {
                   {t("banking.sourceOfFund")}<Text style={styles.required}>*</Text>
                 </Text>
                 <TouchableOpacity
-                  style={styles.dropdown}
+                  style={[styles.dropdown, errors.source && styles.inputError]}
                   onPress={() => setShowSourceOfFundModal(true)}
                 >
                   <Text
@@ -187,6 +234,7 @@ export default function EwalletFinancialInfo() {
                   </Text>
                   <Ionicons name="chevron-down" size={20} color="#999" />
                 </TouchableOpacity>
+                {errors.source && <Text style={styles.errorText}>{errors.source}</Text>}
               </View>
 
               <View style={styles.inputGroup}>
@@ -195,7 +243,7 @@ export default function EwalletFinancialInfo() {
                 </Text>
                 <View style={styles.incomeRow}>
                   <TouchableOpacity
-                    style={[styles.dropdown, styles.currencyDropdown]}
+                    style={[styles.dropdown, styles.currencyDropdown, errors.currency && styles.inputError]}
                     onPress={() => setShowCurrencyModal(true)}
                   >
                     <Text
@@ -209,14 +257,19 @@ export default function EwalletFinancialInfo() {
                     <Ionicons name="chevron-down" size={20} color="#999" />
                   </TouchableOpacity>
                   <TextInput
-                    style={[styles.input, styles.amountInput]}
+                    style={[styles.input, styles.amountInput, errors.income && styles.inputError]}
                     placeholder="0"
                     placeholderTextColor="#9E9E9E"
                     value={grossMonthlyIncome}
-                    onChangeText={setGrossMonthlyIncome}
+                    onChangeText={(text) => {
+                      setGrossMonthlyIncome(text);
+                      if (errors.income) setErrors({ ...errors, income: undefined });
+                    }}
                     keyboardType="numeric"
                   />
                 </View>
+                {errors.currency && <Text style={styles.errorText}>{errors.currency}</Text>}
+                {errors.income && <Text style={styles.errorText}>{errors.income}</Text>}
               </View>
             </View>
 
@@ -287,6 +340,7 @@ export default function EwalletFinancialInfo() {
                   ]}
                   onPress={() => {
                     setSourceOfFund(opt);
+                    if (errors.source) setErrors({ ...errors, source: undefined });
                     setShowSourceOfFundModal(false);
                   }}
                 >
@@ -326,6 +380,7 @@ export default function EwalletFinancialInfo() {
                   ]}
                   onPress={() => {
                     setGrossMonthlyIncomeCurrency(opt);
+                    if (errors.currency) setErrors({ ...errors, currency: undefined });
                     setShowCurrencyModal(false);
                   }}
                 >
@@ -336,6 +391,43 @@ export default function EwalletFinancialInfo() {
                 </TouchableOpacity>
               ))}
             </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Success Modal */}
+      <Modal
+        visible={showSuccessModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowSuccessModal(false)}
+      >
+        <View style={styles.successModalOverlay}>
+          <View style={styles.successModalContainer}>
+            <LinearGradient
+              colors={["#F38B35", "#DE5212"]}
+              style={styles.successModalGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 0, y: 1 }}
+            >
+              <Ionicons name="checkmark-circle" size={60} color="#FFFFFF" />
+              <Text style={styles.successModalTitle}>Success</Text>
+              <Text style={styles.successModalMessage}>
+                {"Your application has been submitted successfully."}
+              </Text>
+              <TouchableOpacity
+                style={styles.successModalButton}
+                onPress={() => {
+                  setShowSuccessModal(false);
+                  navigation.reset({
+                    index: 0,
+                    routes: [{ name: "Main" as never }],
+                  });
+                }}
+              >
+                <Text style={styles.successModalButtonText}>OK</Text>
+              </TouchableOpacity>
+            </LinearGradient>
           </View>
         </View>
       </Modal>
@@ -507,6 +599,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#000000",
   },
+  inputError: {
+    borderColor: "#EF4444",
+  },
+  errorText: {
+    color: "#EF4444",
+    fontSize: 12,
+    marginTop: 4,
+    fontWeight: "500",
+  },
   dropdown: {
     flexDirection: "row",
     alignItems: "center",
@@ -655,6 +756,49 @@ const styles = StyleSheet.create({
   submitButtonText: {
     fontSize: 18,
     fontWeight: "700",
+    color: "#FFFFFF",
+  },
+  successModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  successModalContainer: {
+    width: "80%",
+    maxWidth: 320,
+    borderRadius: 20,
+    overflow: "hidden",
+  },
+  successModalGradient: {
+    padding: 32,
+    alignItems: "center",
+  },
+  successModalTitle: {
+    fontSize: 24,
+    fontWeight: "700",
+    color: "#FFFFFF",
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  successModalMessage: {
+    fontSize: 16,
+    color: "#FFFFFF",
+    textAlign: "center",
+    marginBottom: 24,
+    lineHeight: 22,
+  },
+  successModalButton: {
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    paddingVertical: 12,
+    paddingHorizontal: 32,
+    borderRadius: 25,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.3)",
+  },
+  successModalButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
     color: "#FFFFFF",
   },
 });

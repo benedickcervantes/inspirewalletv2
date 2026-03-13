@@ -17,7 +17,7 @@ import {
   View,
 } from "react-native";
 import { useLanguage } from "../../../context/LanguageContext";
-import type { RootStackParamList } from "../../../types/navigation";
+import type { RootStackParamList, EwalletApplicationData } from "../../../types/navigation";
 
 const THEME_COLOR = "#E15816";
 const ORANGE_GRADIENT = ["#E25A17", "#F28934"] as const;
@@ -34,6 +34,7 @@ export default function EwalletAddressInfo() {
   const selectedProvider = route.params?.selectedProvider ?? "";
 
   const [completeAddress, setCompleteAddress] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
   const currentStep = 4;
 
@@ -42,8 +43,23 @@ export default function EwalletAddressInfo() {
   };
 
   const handleNext = () => {
-    if (!completeAddress.trim()) return;
-    navigation.navigate("EwalletFinancialInfo", { selectedProvider });
+    if (!completeAddress.trim()) {
+      setError("Complete address is required");
+      return;
+    }
+
+    setError(null);
+    const applicationData: EwalletApplicationData = {
+      ...(route.params?.applicationData || {}),
+      addressInfo: {
+        completeAddress: completeAddress.trim(),
+      },
+    };
+
+    navigation.navigate("EwalletFinancialInfo", { 
+      selectedProvider,
+      applicationData
+    });
   };
 
   return (
@@ -143,15 +159,19 @@ export default function EwalletAddressInfo() {
                   {t("banking.completeAddress")}<Text style={styles.required}>*</Text>
                 </Text>
                 <TextInput
-                  style={styles.addressInput}
+                  style={[styles.addressInput, error && styles.inputError]}
                   placeholder={t("banking.placeholderAddress")}
                   placeholderTextColor="#9E9E9E"
                   value={completeAddress}
-                  onChangeText={setCompleteAddress}
+                  onChangeText={(text) => {
+                    setCompleteAddress(text);
+                    if (error) setError(null);
+                  }}
                   multiline
                   numberOfLines={4}
                   textAlignVertical="top"
                 />
+                {error && <Text style={styles.errorText}>{error}</Text>}
               </View>
             </View>
 
@@ -364,6 +384,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#000000",
     minHeight: 100,
+  },
+  inputError: {
+    borderColor: "#EF4444",
+  },
+  errorText: {
+    color: "#EF4444",
+    fontSize: 12,
+    marginTop: 4,
+    fontWeight: "500",
   },
   infoBox: {
     flexDirection: "row",
