@@ -353,10 +353,13 @@ const Settings = () => {
     },
   ];
 
-  const customerRelationshipOptions = [
+  const supportOptions = [
     { id: 1, icon: 'information-circle-outline' as const, titleKey: 'settings.aboutUs', onPress: () => (navigation as { navigate: (name: string) => void }).navigate('Aboutus') },
     { id: 2, icon: 'shield-outline' as const, titleKey: 'settings.privacyPolicy', onPress: () => (navigation as { navigate: (name: string) => void }).navigate('PrivacyPolicy') },
-    { id: 3, icon: 'document-text-outline' as const, titleKey: 'settings.termsAndCondition', onPress: () => (navigation as { navigate: (name: string) => void }).navigate('TermsConditions') },
+    { id: 3, icon: 'document-text-outline' as const, titleKey: 'settings.termsAndCondition', onPress: () => (navigation as { navigate: (name: string) => void }).navigate('TermsConditions') }
+  ];
+
+  const preferencesOptions = [
     { id: 4, icon: 'calculator-outline' as const, titleKey: 'settings.currencyCalculator', subtitleKey: 'settings.currencyCalculatorSubtitle', onPress: () => (navigation as { navigate: (name: string) => void }).navigate('CurrencyCalculator') },
     { id: 5, icon: 'language-outline' as const, titleKey: 'profile.language', subtitleKey: '', onPress: () => setLanguageModalVisible(true) },
   ];
@@ -369,11 +372,24 @@ const Settings = () => {
       subtitle: o.subtitleKey ? t(o.subtitleKey) : '',
     };
   });
-  const customerRelationshipOptionsWithLabels = customerRelationshipOptions.map((o) => ({
+  
+  const supportOptionsWithLabels = supportOptions.map((o) => ({
     ...o,
     title: t(o.titleKey ?? ''),
-    subtitle: o.id === 5 ? language : t(o.subtitleKey ?? ''), // Show selected language explicitly
   }));
+
+  const preferencesOptionsWithLabels = preferencesOptions.map((o) => {
+    let titleStr = t(o.titleKey ?? '');
+    // Capitalize the first letter of the Language option and lowercase the rest
+    if (o.id === 5 && titleStr) {
+      titleStr = titleStr.charAt(0).toUpperCase() + titleStr.slice(1).toLowerCase();
+    }
+    return {
+      ...o,
+      title: titleStr,
+      subtitle: o.id === 5 ? language : t(o.subtitleKey ?? ''), // Show selected language explicitly
+    };
+  });
 
   const r = {
     header: {
@@ -585,15 +601,15 @@ const Settings = () => {
             )}
           </View>
 
-          <Text style={[styles.sectionTitle, r.sectionTitle]}>{t('settings.customerRelationship')}</Text>
+          <Text style={[styles.sectionTitle, r.sectionTitle]}>{t('settings.preferences')}</Text>
           <View style={[styles.sectionCard, r.sectionCard]}>
-            {customerRelationshipOptionsWithLabels.map((option, index) => (
+            {preferencesOptionsWithLabels.map((option, index) => (
               <TouchableOpacity
                 key={option.id}
                 style={[
                   styles.optionItem,
                   r.optionItem,
-                  index !== customerRelationshipOptions.length - 1 && styles.optionBorder,
+                  index !== preferencesOptions.length - 1 && styles.optionBorder,
                 ]}
                 onPress={option.onPress}
               >
@@ -606,6 +622,32 @@ const Settings = () => {
                     {option.subtitle ? (
                       <Text style={[styles.optionSubtitle, r.optionSubtitle]} numberOfLines={1}>{option.subtitle}</Text>
                     ) : null}
+                  </View>
+                </View>
+                <Ionicons name="chevron-forward" size={r.iconSizeSmall} color="#CCC" />
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <Text style={[styles.sectionTitle, r.sectionTitle]}>{t('settings.supportAndLegal')}</Text>
+
+          <View style={[styles.sectionCard, r.sectionCard]}>
+            {supportOptionsWithLabels.map((option, index) => (
+              <TouchableOpacity
+                key={option.id}
+                style={[
+                  styles.optionItem,
+                  r.optionItem,
+                  index !== supportOptions.length - 1 && styles.optionBorder,
+                ]}
+                onPress={option.onPress}
+              >
+                <View style={styles.optionLeft}>
+                  <View style={[styles.iconContainer, r.iconContainer]}>
+                    <Ionicons name={option.icon} size={r.iconSize} color="#F38B35" />
+                  </View>
+                  <View style={[styles.optionText, r.optionText]}>
+                    <Text style={[styles.optionTitle, r.optionTitle]} numberOfLines={1}>{option.title}</Text>
                   </View>
                 </View>
                 <Ionicons name="chevron-forward" size={r.iconSizeSmall} color="#CCC" />
@@ -1002,17 +1044,15 @@ const styles = StyleSheet.create({
   },
   languageModalContentOuter: {
     width: "100%",
-    maxWidth: 400,
-    backgroundColor: "#1A1A1C",
-    borderRadius: 24,
+    maxWidth: 360,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
     padding: 24,
-    shadowColor: "#F38B35",
-    shadowOffset: { width: 0, height: 0 },
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.15,
-    shadowRadius: 30,
-    elevation: 10,
-    borderWidth: 1,
-    borderColor: "rgba(243, 139, 53, 0.2)",
+    shadowRadius: 16,
+    elevation: 8,
   },
   languageModalHeader: {
     alignItems: "center",
@@ -1032,7 +1072,7 @@ const styles = StyleSheet.create({
   languageModalTitle: {
     fontSize: 22,
     fontFamily: "SpaceGrotesk-Bold",
-    color: "#FFFFFF",
+    color: "#333333",
     textAlign: "center",
   },
   languageOption: {
@@ -1042,13 +1082,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 16,
     marginBottom: 12,
-    backgroundColor: "rgba(255,255,255,0.03)",
+    backgroundColor: "#F8F8F8",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.05)",
+    borderColor: "#F0F0F0",
   },
   languageOptionSelected: {
-    backgroundColor: "rgba(222, 82, 18, 0.1)",
-    borderColor: "rgba(222, 82, 18, 0.3)",
+    backgroundColor: "#FFF0E8",
+    borderColor: "#E15816",
   },
   languageOptionFlag: {
     fontSize: 24,
@@ -1058,21 +1098,21 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     fontFamily: "SF-Pro-Rounded-Medium",
-    color: "#FFFFFF",
+    color: "#333333",
   },
   languageOptionTextSelected: {
     fontFamily: "SF-Pro-Rounded-Bold",
-    color: "#F38B35",
+    color: "#E15816",
   },
   languageModalCancel: {
     marginTop: 12,
     paddingVertical: 14,
     alignItems: "center",
     borderRadius: 16,
-    backgroundColor: "rgba(255,255,255,0.05)",
+    backgroundColor: "#F5F5F5",
   },
   languageModalCancelText: {
-    color: "#FFFFFF",
+    color: "#666666",
     fontSize: 16,
     fontFamily: "SF-Pro-Rounded-Semibold",
   },

@@ -84,7 +84,7 @@ const en: TranslationMap = {
   "profile.referred": "Referred",
   "profile.verify": "Verify",
   "profile.masterAgent": "Master Agent",
-  "profile.language": "LANGUAGE",
+  "profile.language": "Language",
   "profile.status": "Status",
   "profile.active": "Active",
   "profile.memberSince": "MEMBER SINCE",
@@ -406,6 +406,8 @@ const en: TranslationMap = {
 
   // Settings
   "settings.title": "Settings",
+  "settings.preferences": "Preferences",
+  "settings.supportAndLegal": "Support & Legal",
   "settings.referral": "Referral",
   "settings.myReferralCode": "My Referral Code",
   "settings.loading": "Loading...",
@@ -1875,6 +1877,8 @@ const ko: TranslationMap = {
   "deposit.proofOptionalHint":
     "(선택 사항) 영수증 또는 결제 증빙을 업로드하면 검토가 더 빨라질 수 있습니다.",
   "settings.title": "설정",
+  "settings.preferences": "환경설정",
+  "settings.supportAndLegal": "지원 및 법률",
   "settings.referral": "추천",
   "settings.myReferralCode": "내 추천 코드",
   "settings.loading": "로딩 중...",
@@ -3293,6 +3297,8 @@ const ja: TranslationMap = {
   "deposit.proofOptionalHint":
     "（任意）領収書やお支払い証明をアップロードすると確認がスムーズになります。",
   "settings.title": "設定",
+  "settings.preferences": "環境設定",
+  "settings.supportAndLegal": "サポートと法的情報",
   "settings.referral": "紹介",
   "settings.myReferralCode": "紹介コード",
   "settings.loading": "読み込み中...",
@@ -4708,6 +4714,8 @@ const ar: TranslationMap = {
   "deposit.proofOptionalHint":
     "(اختياري) يمكنك تحميل إثبات الإيصال أو الدفع لتسريع عملية المراجعة.",
   "settings.title": "الإعدادات",
+  "settings.preferences": "التفضيلات",
+  "settings.supportAndLegal": "الدعم والمعلومات القانونية",
   "settings.referral": "الإحالة",
   "settings.myReferralCode": "كود الإحالة",
   "settings.loading": "جاري التحميل...",
