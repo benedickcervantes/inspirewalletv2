@@ -6,6 +6,7 @@ import { getMe } from "../../configs/api";
 import type { RootStackParamList } from "../../types/navigation";
 import CustomLoader from "../Loader/CustomLoader";
 import { useLanguage } from "../../context/LanguageContext";
+import * as SplashScreen from 'expo-splash-screen';
 
 const MIN_SPLASH_MS = 0;
 
@@ -26,6 +27,7 @@ export default function AuthLoader() {
       if (navigationHandledRef.current) return;
       navigationHandledRef.current = true;
       setLoading(false);
+      SplashScreen.hideAsync().catch(() => {});
       navigation.reset({
         index: 0,
         routes: [{ name: screenName }],
