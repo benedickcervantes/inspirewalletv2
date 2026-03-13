@@ -284,14 +284,9 @@ export default function StockService() {
         >
           <TouchableOpacity
             style={styles.backButton}
-            onPress={() =>
-              (navigation as any).reset({
-                index: 0,
-                routes: [{ name: "Main" }],
-              })
-            }
+            onPress={() => navigation.goBack()}
           >
-            <Ionicons name="home" size={22} color="#FFFFFF" />
+            <Ionicons name="arrow-back" size={22} color="#FFFFFF" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Inspire Stockholder</Text>
           <TouchableOpacity style={styles.refreshButton} onPress={onRefresh}>
