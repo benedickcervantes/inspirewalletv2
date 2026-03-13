@@ -97,7 +97,7 @@ export default function TimeDepositConfirm() {
 
   const handleProofSubmit = async () => {
     if (!proofUri) {
-      Alert.alert(t("deposit.error"), "Please attach a proof of payment receipt.");
+      Alert.alert(t("deposit.error"), t("deposit.uploadProofRequired"));
       return;
     }
     await handleConfirmWithReceipt();
@@ -401,18 +401,22 @@ export default function TimeDepositConfirm() {
           <View style={styles.proofModalOverlay}>
             <View style={styles.proofModalContent}>
               <View style={styles.proofModalHeader}>
-                <Text style={styles.proofModalTitle}>
-                  {t("deposit.proofOfPaymentTitle")}
-                </Text>
+                <View style={styles.proofModalTitleRow}>
+                  <Text style={styles.proofModalTitle}>
+                    {t("deposit.proofOfPaymentTitle")}
+                  </Text>
+                  <View style={styles.proofRequiredBadge}>
+                    <Text style={styles.proofRequiredBadgeText}>
+                      {t("deposit.proofRequiredBadge")}
+                    </Text>
+                  </View>
+                </View>
                 <Text style={styles.proofModalSubtitle}>
                   {t("deposit.proofOfPaymentSubtitle")}
                 </Text>
-                <Text style={styles.proofOptionalText}>
-                  {t("deposit.proofOptionalHint")}
-                </Text>
               </View>
 
-              <View style={styles.proofUploadButtons}>
+              <View style={styles.proofUploadArea}>
                 <TouchableOpacity
                   style={[styles.proofUploadBtn, loading && { opacity: 0.5 }]}
                   disabled={loading}
@@ -860,23 +864,36 @@ const styles = StyleSheet.create({
   proofModalHeader: {
     marginBottom: 20,
   },
+  proofModalTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 8,
+  },
   proofModalTitle: {
     fontSize: 20,
     fontWeight: "700",
     color: "#333",
-    marginBottom: 8,
+    flex: 1,
+  },
+  proofRequiredBadge: {
+    backgroundColor: "#E25A17",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  proofRequiredBadgeText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#FFFFFF",
+    textTransform: "uppercase",
   },
   proofModalSubtitle: {
     fontSize: 14,
     color: "#666",
     lineHeight: 20,
   },
-  proofOptionalText: {
-    fontSize: 12,
-    color: "#999",
-    marginTop: 4,
-  },
-  proofUploadButtons: {
+  proofUploadArea: {
     flexDirection: "row",
     gap: 12,
     marginBottom: 20,

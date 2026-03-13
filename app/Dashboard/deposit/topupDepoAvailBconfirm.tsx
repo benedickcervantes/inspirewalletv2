@@ -88,12 +88,8 @@ export default function TopUpConfirm() {
   };
 
   const handleProofSubmit = async () => {
-    // Receipt is required
     if (!proofUri) {
-      Alert.alert(
-        t("deposit.error"),
-        t("deposit.receiptRequired") || "Please attach a proof of payment receipt."
-      );
+      Alert.alert(t("deposit.error"), t("deposit.uploadProofRequired"));
       return;
     }
     setShowProofModal(false);
@@ -324,18 +320,22 @@ export default function TopUpConfirm() {
           <View style={styles.proofModalOverlay}>
             <View style={styles.proofModalContent}>
               <View style={styles.proofModalHeader}>
-                <Text style={styles.proofModalTitle}>
-                  {t("deposit.proofOfPaymentTitle")}
-                </Text>
+                <View style={styles.proofModalTitleRow}>
+                  <Text style={styles.proofModalTitle}>
+                    {t("deposit.proofOfPaymentTitle")}
+                  </Text>
+                  <View style={styles.proofRequiredBadge}>
+                    <Text style={styles.proofRequiredBadgeText}>
+                      {t("deposit.proofRequiredBadge")}
+                    </Text>
+                  </View>
+                </View>
                 <Text style={styles.proofModalSubtitle}>
                   {t("deposit.proofOfPaymentSubtitle")}
                 </Text>
-                <Text style={styles.proofOptionalText}>
-                  {t("deposit.proofOptionalHint")}
-                </Text>
               </View>
 
-              <View style={styles.proofUploadButtons}>
+              <View style={styles.proofUploadArea}>
                 <TouchableOpacity
                   style={styles.proofUploadBtn}
                   onPress={pickFromGallery}>
@@ -371,7 +371,8 @@ export default function TopUpConfirm() {
                     </Text>
                     <TouchableOpacity
                       onPress={() => setProofUri(null)}
-                      style={styles.removeProofBtn}>
+                      style={[styles.removeProofBtn, isSubmitting && { opacity: 0.5 }]}
+                      disabled={isSubmitting}>
                       <Ionicons name="trash-outline" size={18} color="#B71C1C" />
                       <Text style={styles.removeProofText}>
                         {t("deposit.remove")}
@@ -379,11 +380,7 @@ export default function TopUpConfirm() {
                     </TouchableOpacity>
                   </View>
                 </View>
-              ) : (
-                <Text style={{ textAlign: "center", color: "#B71C1C", fontSize: 12, marginTop: 8 }}>
-                  {t("deposit.receiptRequired") || "* A receipt is required to submit your request"}
-                </Text>
-              )}
+              ) : null}
 
               <View style={styles.proofModalFooter}>
                 <TouchableOpacity
@@ -695,23 +692,36 @@ const styles = StyleSheet.create({
   proofModalHeader: {
     marginBottom: 20,
   },
+  proofModalTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 8,
+  },
   proofModalTitle: {
     fontSize: 20,
     fontWeight: "700",
     color: "#333",
-    marginBottom: 8,
+    flex: 1,
+  },
+  proofRequiredBadge: {
+    backgroundColor: "#E25A17",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  proofRequiredBadgeText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#FFFFFF",
+    textTransform: "uppercase",
   },
   proofModalSubtitle: {
     fontSize: 14,
     color: "#666",
     lineHeight: 20,
   },
-  proofOptionalText: {
-    fontSize: 12,
-    color: "#999",
-    marginTop: 4,
-  },
-  proofUploadButtons: {
+  proofUploadArea: {
     flexDirection: "row",
     gap: 12,
     marginBottom: 20,
