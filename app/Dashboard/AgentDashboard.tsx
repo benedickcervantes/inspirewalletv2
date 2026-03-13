@@ -55,8 +55,11 @@ export default function AgentDashboard() {
   const [referralUrl, setReferralUrl] = useState<string | null>(null);
   const [directReferralCount, setDirectReferralCount] = useState(0);
   const [totalDescendantCount, setTotalDescendantCount] = useState(0);
+  const [uplines, setUplines] = useState<
+    { userId: string; referralCode?: string | null; name: string; firstName: string; lastName: string; isAgent: boolean; depth: number }[]
+  >([]);
   const [directReferrals, setDirectReferrals] = useState<
-    { userId: string; referralCode?: string; firstName?: string; lastName?: string }[]
+    { userId: string; referralCode?: string; name?: string; firstName?: string; lastName?: string; isAgent?: boolean }[]
   >([]);
   const [referredClientsWithDeposits, setReferredClientsWithDeposits] = useState<
     CommissionTransaction[]
@@ -138,11 +141,21 @@ export default function AgentDashboard() {
         const tree = treeRes.tree as Record<string, unknown>;
         setDirectReferralCount(Number(tree.directReferralCount ?? 0));
         setTotalDescendantCount(Number(tree.totalDescendantCount ?? 0));
+        
+        console.log("==> REFERRAL TREE RES", JSON.stringify(tree, null, 2));
+
         const refs = tree.directReferrals as
-          | { userId: string; referralCode?: string; firstName?: string; lastName?: string }[]
+          | { userId: string; referralCode?: string; name?: string; firstName?: string; lastName?: string; isAgent?: boolean }[]
           | undefined;
         if (Array.isArray(refs)) setDirectReferrals(refs);
         else setDirectReferrals([]);
+
+        const ancs = tree.ancestors as
+          | { userId: string; referralCode?: string | null; name: string; firstName: string; lastName: string; isAgent: boolean; depth: number }[]
+          | undefined;
+        // Sort ancestors by depth to show closest referrer first (depth 0 = direct referrer)
+        if (Array.isArray(ancs)) setUplines([...ancs].sort((a, b) => a.depth - b.depth));
+        else setUplines([]);
       }
 
       // Referred clients who successfully added time deposit = AGENT_COMMISSION transactions
@@ -255,12 +268,21 @@ export default function AgentDashboard() {
             />
           }
         >
-          {error && (
-            <View style={[styles.errorBanner, isXSScreen && styles.errorBannerCompact]}>
-              <Ionicons name="warning-outline" size={20} color="#B45309" />
-              <Text style={styles.errorText}>{error}</Text>
+          {initialLoad ? (
+            <View style={{ flex: 1, justifyContent: "center", alignItems: "center", paddingTop: 80 }}>
+              <ActivityIndicator size="large" color="#E25A17" />
+              <Text style={{ marginTop: 16, fontSize: 15, color: "#6B7280" }}>
+                {t("agent.loading") || "Loading data..."}
+              </Text>
             </View>
-          )}
+          ) : (
+            <>
+              {error && (
+                <View style={[styles.errorBanner, isXSScreen && styles.errorBannerCompact]}>
+                  <Ionicons name="warning-outline" size={20} color="#B45309" />
+                  <Text style={styles.errorText}>{error}</Text>
+                </View>
+              )}
 
           {/* Agent Commission Card */}
           <View style={styles.commissionCard}>
@@ -320,7 +342,46 @@ export default function AgentDashboard() {
             </View>
           </View>
 
-          {/* My Referrals */}
+          {/* My Upline */}
+          {uplines.length > 0 && (
+            <View style={[styles.section, isXSScreen && styles.cardCompact]}>
+              <Text style={[styles.sectionTitle, isXSScreen && styles.sectionTitleCompact]}>{t("agent.myUplines")}</Text>
+              {uplines.map((ref, index) => {
+                let roleLabel = t("agent.referrer");
+                if (index === 0) roleLabel = t("agent.referrer");
+                else if (index === 1) roleLabel = t("agent.agent");
+                else roleLabel = t("agent.masterAgent");
+
+                return (
+                <View key={ref.userId} style={[styles.referralItem, isXSScreen && styles.referralItemCompact]}>
+                  <View style={styles.referralItemLeft}>
+                    <View style={styles.nameRow}>
+                      <Text style={[styles.referralItemName, isXSScreen && styles.textCompact]} numberOfLines={1}>
+                        {ref.name || [ref.firstName, ref.lastName].filter(Boolean).join(" ") || t("agent.referralFallback")}
+                      </Text>
+                      {ref.isAgent && (
+                        <View style={styles.agentTag}>
+                          <Text style={styles.agentTagText}>{t("agent.agentTag")}</Text>
+                        </View>
+                      )}
+                    </View>
+                    <View style={styles.codeRoleRow}>
+                      <Text style={styles.referralItemCode}>{roleLabel}</Text>
+                      {ref.referralCode && (
+                        <>
+                          <Text style={styles.dotSeparator}>•</Text>
+                          <Text style={styles.referralItemCode}>{ref.referralCode}</Text>
+                        </>
+                      )}
+                    </View>
+                  </View>
+                  <Ionicons name="arrow-up-circle-outline" size={24} color="#E25A17" />
+                </View>
+              )})}
+            </View>
+          )}
+
+          {/* My Downlines */}
           {(directReferrals.length > 0 || directReferralCount > 0) && (
             <View style={[styles.section, isXSScreen && styles.cardCompact]}>
               <Text style={[styles.sectionTitle, isXSScreen && styles.sectionTitleCompact]}>{t("agent.myReferrals")}</Text>
@@ -328,14 +389,21 @@ export default function AgentDashboard() {
                 directReferrals.map((ref) => (
                   <View key={ref.userId} style={[styles.referralItem, isXSScreen && styles.referralItemCompact]}>
                     <View style={styles.referralItemLeft}>
-                      <Text style={[styles.referralItemName, isXSScreen && styles.textCompact]} numberOfLines={1}>
-                        {[ref.firstName, ref.lastName].filter(Boolean).join(" ") || t("agent.referralFallback")}
-                      </Text>
+                      <View style={styles.nameRow}>
+                        <Text style={[styles.referralItemName, isXSScreen && styles.textCompact]} numberOfLines={1}>
+                          {ref.name || [ref.firstName, ref.lastName].filter(Boolean).join(" ") || t("agent.referralFallback")}
+                        </Text>
+                        {ref.isAgent && (
+                          <View style={styles.agentTag}>
+                            <Text style={styles.agentTagText}>{t("agent.agentTag")}</Text>
+                          </View>
+                        )}
+                      </View>
                       {ref.referralCode && (
                         <Text style={styles.referralItemCode}>{ref.referralCode}</Text>
                       )}
                     </View>
-                    <Ionicons name="person-outline" size={20} color="#888" />
+                    <Ionicons name="arrow-down-circle-outline" size={24} color="#059669" />
                   </View>
                 ))
               ) : (
@@ -386,6 +454,8 @@ export default function AgentDashboard() {
               </View>
             )}
           </View>
+          </>
+        )}
         </ScrollView>
       </SafeAreaView>
     </View>
@@ -529,10 +599,25 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#F3F4F6",
   },
-  referralItemLeft: { flex: 1, minWidth: 0 },
+  referralItemLeft: { flex: 1, minWidth: 0, justifyContent: 'center' },
   referralItemCompact: { paddingVertical: 10 },
+  nameRow: { flexDirection: 'row', alignItems: 'center' },
   referralItemName: { fontSize: 15, fontWeight: "500", color: "#1F2937" },
-  referralItemCode: { fontSize: 12, color: "#9CA3AF", marginTop: 2 },
+  agentTag: {
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    marginLeft: 8,
+  },
+  agentTagText: {
+    fontSize: 10,
+    color: '#D97706',
+    fontWeight: '600',
+  },
+  codeRoleRow: { flexDirection: 'row', alignItems: 'center', marginTop: 2 },
+  dotSeparator: { fontSize: 12, color: "#9CA3AF", marginHorizontal: 4 },
+  referralItemCode: { fontSize: 12, color: "#9CA3AF" },
   emptyHint: { fontSize: 14, color: "#9CA3AF", paddingVertical: 12 },
   commissionItem: {
     flexDirection: "row",
