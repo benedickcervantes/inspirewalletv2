@@ -55,6 +55,16 @@ const Settings = () => {
   const [biometricLoading, setBiometricLoading] = useState(false);
   const [biometricError, setBiometricError] = useState<string | null>(null);
 
+  // Language state
+  const { language, setLanguage } = useLanguage();
+  const [languageModalVisible, setLanguageModalVisible] = useState(false);
+  const SUPPORTED_LANGUAGES = [
+    { label: "English", flag: "🇺🇸" },
+    { label: "Arabic", flag: "🇸🇦" },
+    { label: "Japanese", flag: "🇯🇵" },
+    { label: "Korean", flag: "🇰🇷" },
+  ];
+
   const loadUser = useCallback(async () => {
     const userJson = await AsyncStorage.getItem('user');
     if (userJson) {
@@ -348,6 +358,7 @@ const Settings = () => {
     { id: 2, icon: 'shield-outline' as const, titleKey: 'settings.privacyPolicy', onPress: () => (navigation as { navigate: (name: string) => void }).navigate('PrivacyPolicy') },
     { id: 3, icon: 'document-text-outline' as const, titleKey: 'settings.termsAndCondition', onPress: () => (navigation as { navigate: (name: string) => void }).navigate('TermsConditions') },
     { id: 4, icon: 'calculator-outline' as const, titleKey: 'settings.currencyCalculator', subtitleKey: 'settings.currencyCalculatorSubtitle', onPress: () => (navigation as { navigate: (name: string) => void }).navigate('CurrencyCalculator') },
+    { id: 5, icon: 'language-outline' as const, titleKey: 'profile.language', subtitleKey: '', onPress: () => setLanguageModalVisible(true) },
   ];
 
   const securityOptionsWithLabels = securityOptions.map((o) => {
@@ -361,6 +372,7 @@ const Settings = () => {
   const customerRelationshipOptionsWithLabels = customerRelationshipOptions.map((o) => ({
     ...o,
     title: t(o.titleKey ?? ''),
+    subtitle: o.id === 5 ? language : t(o.subtitleKey ?? ''), // Show selected language explicitly
   }));
 
   const r = {
@@ -589,7 +601,12 @@ const Settings = () => {
                   <View style={[styles.iconContainer, r.iconContainer]}>
                     <Ionicons name={option.icon} size={r.iconSize} color="#F38B35" />
                   </View>
-                  <Text style={[styles.optionTitle, r.optionTitle]} numberOfLines={1}>{option.title}</Text>
+                  <View style={[styles.optionText, r.optionText]}>
+                    <Text style={[styles.optionTitle, r.optionTitle]} numberOfLines={1}>{option.title}</Text>
+                    {option.subtitle ? (
+                      <Text style={[styles.optionSubtitle, r.optionSubtitle]} numberOfLines={1}>{option.subtitle}</Text>
+                    ) : null}
+                  </View>
                 </View>
                 <Ionicons name="chevron-forward" size={r.iconSizeSmall} color="#CCC" />
               </TouchableOpacity>
@@ -724,6 +741,75 @@ const Settings = () => {
               </TouchableOpacity>
             </View>
           </View>
+        </Modal>
+
+        {/* Language Modal */}
+        <Modal
+          visible={languageModalVisible}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setLanguageModalVisible(false)}
+        >
+          <TouchableOpacity
+            style={styles.languageModalOverlay}
+            activeOpacity={1}
+            onPress={() => setLanguageModalVisible(false)}
+          >
+            <View
+              style={styles.languageModalContentOuter}
+              onStartShouldSetResponder={() => true}
+            >
+              <View style={styles.languageModalHeader}>
+                <View style={styles.languageMapGlobe}>
+                  <Ionicons name="globe-outline" size={40} color="#DE5212" />
+                </View>
+                <Text style={styles.languageModalTitle}>
+                  {t("profile.selectLanguage")}
+                </Text>
+              </View>
+              <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+                {SUPPORTED_LANGUAGES.map(({ label, flag }) => (
+                  <TouchableOpacity
+                    key={label}
+                    style={[
+                      styles.languageOption,
+                      language === label && styles.languageOptionSelected,
+                    ]}
+                    onPress={() => {
+                      setLanguage(label);
+                      setLanguageModalVisible(false);
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.languageOptionFlag}>{flag}</Text>
+                    <Text
+                      style={[
+                        styles.languageOptionText,
+                        language === label && styles.languageOptionTextSelected,
+                      ]}
+                    >
+                      {label}
+                    </Text>
+                    {language === label && (
+                      <Ionicons
+                        name="checkmark-circle"
+                        size={22}
+                        color="#DE5212"
+                      />
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+              <TouchableOpacity
+                style={styles.languageModalCancel}
+                onPress={() => setLanguageModalVisible(false)}
+              >
+                <Text style={styles.languageModalCancelText}>
+                  {t("common.cancel")}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
         </Modal>
 
       </SafeAreaView>
@@ -900,6 +986,95 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+  recentTransactionText: {
+    color: '#8e8e93',
+    fontSize: 14,
+    fontFamily: 'SF-Pro-Rounded-Medium',
+  },
+  // Language Modal Styles
+  languageModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  languageModalContentOuter: {
+    width: "100%",
+    maxWidth: 400,
+    backgroundColor: "#1A1A1C",
+    borderRadius: 24,
+    padding: 24,
+    shadowColor: "#F38B35",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.15,
+    shadowRadius: 30,
+    elevation: 10,
+    borderWidth: 1,
+    borderColor: "rgba(243, 139, 53, 0.2)",
+  },
+  languageModalHeader: {
+    alignItems: "center",
+    marginBottom: 24,
+  },
+  languageMapGlobe: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: "rgba(222, 82, 18, 0.1)",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "rgba(222, 82, 18, 0.3)",
+  },
+  languageModalTitle: {
+    fontSize: 22,
+    fontFamily: "SpaceGrotesk-Bold",
+    color: "#FFFFFF",
+    textAlign: "center",
+  },
+  languageOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 16,
+    marginBottom: 12,
+    backgroundColor: "rgba(255,255,255,0.03)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.05)",
+  },
+  languageOptionSelected: {
+    backgroundColor: "rgba(222, 82, 18, 0.1)",
+    borderColor: "rgba(222, 82, 18, 0.3)",
+  },
+  languageOptionFlag: {
+    fontSize: 24,
+    marginRight: 16,
+  },
+  languageOptionText: {
+    flex: 1,
+    fontSize: 16,
+    fontFamily: "SF-Pro-Rounded-Medium",
+    color: "#FFFFFF",
+  },
+  languageOptionTextSelected: {
+    fontFamily: "SF-Pro-Rounded-Bold",
+    color: "#F38B35",
+  },
+  languageModalCancel: {
+    marginTop: 12,
+    paddingVertical: 14,
+    alignItems: "center",
+    borderRadius: 16,
+    backgroundColor: "rgba(255,255,255,0.05)",
+  },
+  languageModalCancelText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontFamily: "SF-Pro-Rounded-Semibold",
   },
   resendButton: {
     paddingVertical: 12,

@@ -2,6 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { DEFAULT_LANGUAGE, getLanguageCode, normalizeLanguage } from "../constants/locales";
 import { getTranslation } from "../translations";
+import { updateProfile } from "../configs/api";
 
 const USER_PREFERRED_LANGUAGE_KEY = "user_preferred_language";
 
@@ -29,6 +30,21 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     const normalized = normalizeLanguage(label);
     setLanguageState(normalized);
     AsyncStorage.setItem(USER_PREFERRED_LANGUAGE_KEY, normalized);
+    
+    // Sync with backend if user is logged in
+    AsyncStorage.getItem("access_token").then((token) => {
+      if (token) {
+        // Find matching backend enum value using the predefined labels
+        let backendLang = "ENGLISH";
+        if (normalized === "Arabic") backendLang = "ARABIC";
+        else if (normalized === "Japanese") backendLang = "JAPANESE";
+        else if (normalized === "Korean") backendLang = "KOREAN";
+        
+        updateProfile(token, { language: backendLang }).catch(err => {
+          console.warn("Failed to sync language to backend:", err);
+        });
+      }
+    });
   }, []);
 
   const t = useCallback(
