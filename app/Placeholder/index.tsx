@@ -1026,7 +1026,7 @@ export default function Placeholder() {
         >
           <View
             style={[
-              styles.languageModalContent,
+              styles.languageModalContentOuter,
               {
                 maxWidth: Math.min(360, width - 32),
                 maxHeight: isShortScreen ? height * 0.85 : undefined,
@@ -1051,46 +1051,22 @@ export default function Placeholder() {
               >
                 {t("profile.selectLanguage")}
               </Text>
-              <Text
-                style={[
-                  styles.languageModalSubtitle,
-                  (isSmallScreen || isTinyScreen) && { fontSize: 12 },
-                ]}
-              >
-                {t("profile.defaultIsEnglish")}
-              </Text>
             </View>
-            <ScrollView
-              style={isShortScreen ? { maxHeight: 200 } : undefined}
-              showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
-            >
+            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
               {SUPPORTED_LANGUAGES.map(({ label, flag }) => (
                 <TouchableOpacity
                   key={label}
                   style={[
                     styles.languageOption,
-                    (isSmallScreen || isTinyScreen) && {
-                      paddingVertical: 12,
-                      paddingHorizontal: 14,
-                    },
                     language === label && styles.languageOptionSelected,
                   ]}
                   onPress={() => handleSelectLanguage(label)}
                   activeOpacity={0.7}
                 >
-                  <Text
-                    style={[
-                      styles.languageOptionFlag,
-                      (isSmallScreen || isTinyScreen) && { fontSize: 20 },
-                    ]}
-                  >
-                    {flag}
-                  </Text>
+                  <Text style={styles.languageOptionFlag}>{flag}</Text>
                   <Text
                     style={[
                       styles.languageOptionText,
-                      (isSmallScreen || isTinyScreen) && { fontSize: 15 },
                       language === label && styles.languageOptionTextSelected,
                     ]}
                   >
@@ -1099,26 +1075,18 @@ export default function Placeholder() {
                   {language === label && (
                     <Ionicons
                       name="checkmark-circle"
-                      size={isSmallScreen || isTinyScreen ? 20 : 22}
-                      color="#E15816"
+                      size={22}
+                      color="#DE5212"
                     />
                   )}
                 </TouchableOpacity>
               ))}
             </ScrollView>
             <TouchableOpacity
-              style={[
-                styles.languageModalCancel,
-                (isSmallScreen || isTinyScreen) && { marginTop: 8 },
-              ]}
+              style={styles.languageModalCancel}
               onPress={() => setLanguageModalVisible(false)}
             >
-              <Text
-                style={[
-                  styles.languageModalCancelText,
-                  (isSmallScreen || isTinyScreen) && { fontSize: 15 },
-                ]}
-              >
+              <Text style={styles.languageModalCancelText}>
                 {t("common.cancel")}
               </Text>
             </TouchableOpacity>
@@ -1453,100 +1421,88 @@ const styles = StyleSheet.create({
   },
   languageModalOverlay: {
     flex: 1,
-    backgroundColor: "transparent",
+    backgroundColor: "rgba(0,0,0,0.6)",
     justifyContent: "center",
     alignItems: "center",
-    paddingVertical: 20,
+    padding: 20,
   },
-  languageModalContent: {
+  languageModalContentOuter: {
     width: "100%",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 20,
-    ...Platform.select({
-      ios: {
-        shadowColor: "#E15816",
-        shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 0.5,
-        shadowRadius: 24,
-      },
-      android: { elevation: 16 },
-    }),
+    maxWidth: 400,
+    backgroundColor: "#1A1A1C",
+    borderRadius: 24,
+    padding: 24,
+    shadowColor: "#F38B35",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.15,
+    shadowRadius: 30,
+    elevation: 10,
+    borderWidth: 1,
+    borderColor: "rgba(243, 139, 53, 0.2)",
   },
   languageModalHeader: {
     alignItems: "center",
-    marginBottom: 20,
+    marginBottom: 24,
   },
   languageMapGlobe: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: "#FFF0E8",
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: "rgba(222, 82, 18, 0.1)",
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "rgba(222, 82, 18, 0.3)",
   },
   languageModalTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#333",
-    marginBottom: 4,
-    textAlign: "center",
-  },
-  languageModalSubtitle: {
-    fontSize: 13,
-    color: "#666",
+    fontSize: 22,
+    fontFamily: "SpaceGrotesk-Bold",
+    color: "#FFFFFF",
     textAlign: "center",
   },
   languageOption: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
     paddingVertical: 16,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    marginBottom: 8,
-    backgroundColor: "#F8F8F8",
+    paddingHorizontal: 20,
+    borderRadius: 16,
+    marginBottom: 12,
+    backgroundColor: "rgba(255,255,255,0.03)",
     borderWidth: 1,
-    borderColor: "transparent",
+    borderColor: "rgba(255,255,255,0.05)",
   },
   languageOptionSelected: {
-    backgroundColor: "#FFF0E8",
-    borderWidth: 2,
-    borderColor: "#E15816",
-    ...Platform.select({
-      ios: {
-        shadowColor: "#E15816",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.15,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 2,
-      },
-    }),
+    backgroundColor: "rgba(222, 82, 18, 0.1)",
+    borderColor: "rgba(222, 82, 18, 0.3)",
   },
   languageOptionFlag: {
-    fontSize: 22,
-    marginRight: 12,
+    fontSize: 24,
+    marginRight: 16,
   },
   languageOptionText: {
-    fontSize: 16,
-    color: "#333",
     flex: 1,
+    fontSize: 16,
+    fontFamily: "SF-Pro-Rounded-Medium",
+    color: "#FFFFFF",
   },
   languageOptionTextSelected: {
-    fontWeight: "600",
-    color: "#E15816",
+    fontFamily: "SF-Pro-Rounded-Bold",
+    color: "#F38B35",
   },
   languageModalCancel: {
     marginTop: 12,
-    paddingVertical: 12,
+    paddingVertical: 14,
     alignItems: "center",
+    borderRadius: 16,
+    backgroundColor: "rgba(255,255,255,0.05)",
   },
   languageModalCancelText: {
+    color: "#FFFFFF",
     fontSize: 16,
-    color: "#666",
+    fontFamily: "SF-Pro-Rounded-Semibold",
   },
+
   loadingContainer: {
     flex: 1,
     justifyContent: "center",

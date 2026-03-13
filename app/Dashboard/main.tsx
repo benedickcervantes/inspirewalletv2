@@ -805,26 +805,25 @@ export default function Dashboard() {
         onRequestClose={() => {}}
       >
         <View style={styles.languageModalOverlay}>
-          <View style={styles.languageModalContent}>
-            <Text style={styles.languageModalTitle}>
-              {t("profile.selectLanguage")}
-            </Text>
-            <Text style={styles.languageModalSubtitle}>
-              {t("profile.defaultIsEnglish")}
-            </Text>
-            <ScrollView
-              style={styles.languageModalList}
-              showsVerticalScrollIndicator={false}
-            >
-              {SUPPORTED_LANGUAGES.map((lang) => (
+          <View style={styles.languageModalContentOuter}>
+            <View style={styles.languageModalHeader}>
+              <View style={styles.languageMapGlobe}>
+                <Ionicons name="globe-outline" size={40} color="#DE5212" />
+              </View>
+              <Text style={styles.languageModalTitle}>
+                {t("profile.selectLanguage")}
+              </Text>
+            </View>
+            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+              {SUPPORTED_LANGUAGES.map(({ label, flag }) => (
                 <TouchableOpacity
-                  key={lang.code}
-                  style={styles.languageModalOption}
-                  onPress={() => handleFirstTimeLanguageSelect(lang.label)}
+                  key={label}
+                  style={styles.languageOption}
+                  onPress={() => handleFirstTimeLanguageSelect(label)}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.languageModalFlag}>{lang.flag}</Text>
-                  <Text style={styles.languageModalLabel}>{lang.label}</Text>
+                  <Text style={styles.languageOptionFlag}>{flag}</Text>
+                  <Text style={styles.languageOptionText}>{label}</Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>
@@ -1687,10 +1686,10 @@ const styles = StyleSheet.create({
   // First-time language modal
   languageModalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: "rgba(0,0,0,0.6)",
     justifyContent: "center",
     alignItems: "center",
-    padding: 24,
+    padding: 20,
   },
   maintenanceModalOverlay: {
     flex: 1,
@@ -1758,37 +1757,68 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     textAlign: "center",
   },
-  languageModalContent: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 16,
-    padding: 24,
+  languageModalContentOuter: {
     width: "100%",
-    maxWidth: 340,
-    maxHeight: "80%",
+    maxWidth: 400,
+    backgroundColor: "#1A1A1C",
+    borderRadius: 24,
+    padding: 24,
+    shadowColor: "#F38B35",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.15,
+    shadowRadius: 30,
+    elevation: 10,
+    borderWidth: 1,
+    borderColor: "rgba(243, 139, 53, 0.2)",
+  },
+  languageModalHeader: {
+    alignItems: "center",
+    marginBottom: 24,
+  },
+  languageMapGlobe: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: "rgba(222, 82, 18, 0.1)",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "rgba(222, 82, 18, 0.3)",
   },
   languageModalTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#1a1a1a",
-    marginBottom: 8,
+    fontSize: 22,
+    fontFamily: "SpaceGrotesk-Bold",
+    color: "#FFFFFF",
     textAlign: "center",
   },
-  languageModalSubtitle: {
-    fontSize: 14,
-    color: "#666",
-    marginBottom: 20,
-    textAlign: "center",
-  },
-  languageModalList: { maxHeight: 280 },
-  languageModalOption: {
+  languageOption: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    backgroundColor: "#FFF5F0",
-    marginBottom: 8,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 16,
+    marginBottom: 12,
+    backgroundColor: "rgba(255,255,255,0.03)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.05)",
   },
-  languageModalFlag: { fontSize: 24, marginRight: 12 },
-  languageModalLabel: { fontSize: 16, fontWeight: "600", color: "#333" },
+  languageOptionSelected: {
+    backgroundColor: "rgba(222, 82, 18, 0.1)",
+    borderColor: "rgba(222, 82, 18, 0.3)",
+  },
+  languageOptionFlag: {
+    fontSize: 24,
+    marginRight: 16,
+  },
+  languageOptionText: {
+    flex: 1,
+    fontSize: 16,
+    fontFamily: "SF-Pro-Rounded-Medium",
+    color: "#FFFFFF",
+  },
+  languageOptionTextSelected: {
+    fontFamily: "SF-Pro-Rounded-Bold",
+    color: "#F38B35",
+  },
 });
