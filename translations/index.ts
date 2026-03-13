@@ -392,9 +392,9 @@ const en: TranslationMap = {
   "deposit.availableBalanceStock": "Your available balance",
   "deposit.proofOfPaymentTitle": "Proof of Receipt / Payment",
   "deposit.proofOfPaymentSubtitle":
-    "Upload your proof of receipt or proof of payment before submitting.",
-  "deposit.proofOptionalHint":
-    "(Optional) You may upload your proof of receipt or proof of payment for faster verification.",
+    "Upload your proof of receipt or proof of payment to proceed. This is required to submit your request.",
+  "deposit.proofRequiredBadge": "Required",
+  "deposit.receiptRequired": "Please attach proof of payment to submit your request.",
   "deposit.uploadFiles": "Upload Files",
   "deposit.useCamera": "Use Camera",
   "deposit.proofUploaded": "Proof uploaded",
@@ -1885,8 +1885,8 @@ const ko: TranslationMap = {
   "deposit.topUpSubtitle": "사용 가능한 잔액에 자금을 추가하세요",
   "deposit.pleaseLoginTopup": "충전 요청을 제출하려면 로그인하세요.",
   "deposit.topUpSuccess": "충전 요청이 성공적으로 제출되었습니다.",
-  "deposit.proofOptionalHint":
-    "(선택 사항) 영수증 또는 결제 증빙을 업로드하면 검토가 더 빨라질 수 있습니다.",
+  "deposit.proofRequiredBadge": "필수",
+  "deposit.receiptRequired": "요청을 제출하려면 결제 증빙을 첨부해 주세요.",
   "settings.title": "설정",
   "settings.preferences": "환경설정",
   "settings.supportAndLegal": "지원 및 법률",
@@ -3310,8 +3310,8 @@ const ja: TranslationMap = {
   "deposit.topUpSubtitle": "利用可能残高に資金を追加",
   "deposit.pleaseLoginTopup": "チャージを申請するにはログインしてください。",
   "deposit.topUpSuccess": "チャージの申請が完了しました。",
-  "deposit.proofOptionalHint":
-    "（任意）領収書やお支払い証明をアップロードすると確認がスムーズになります。",
+  "deposit.proofRequiredBadge": "必須",
+  "deposit.receiptRequired": "申請を提出するにはお支払い証明を添付してください。",
   "settings.title": "設定",
   "settings.preferences": "環境設定",
   "settings.supportAndLegal": "サポートと法的情報",
@@ -4732,8 +4732,8 @@ const ar: TranslationMap = {
   "deposit.topUpSubtitle": "أضف أموالاً إلى رصيدك المتاح",
   "deposit.pleaseLoginTopup": "يرجى تسجيل الدخول لتقديم طلب شحن.",
   "deposit.topUpSuccess": "تم تقديم طلب الشحن بنجاح.",
-  "deposit.proofOptionalHint":
-    "(اختياري) يمكنك تحميل إثبات الإيصال أو الدفع لتسريع عملية المراجعة.",
+  "deposit.proofRequiredBadge": "مطلوب",
+  "deposit.receiptRequired": "يرجى إرفاق إثبات الدفع لتقديم طلبك.",
   "settings.title": "الإعدادات",
   "settings.preferences": "التفضيلات",
   "settings.supportAndLegal": "الدعم والمعلومات القانونية",

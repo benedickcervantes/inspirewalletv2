@@ -585,6 +585,8 @@ export default function Dashboard() {
         ) {
           const bal = parseFloat(String(payload.balance));
           setAvailableBalance(Number.isNaN(bal) ? 0 : bal);
+          // Also refresh time deposits & related locks in real-time
+          refetchJwtData();
         }
       };
 
@@ -1154,13 +1156,17 @@ export default function Dashboard() {
                   const serviceId =
                     routeToServiceMap[item.route] || item.route.toLowerCase();
                   const isUnderMaintenance = maintenanceStatus[serviceId];
+                  const isEwalletLockedByDeposit =
+                    item.route === "EwalletService" && isBankingServiceLocked;
                   // DEVELOPER, ADMIN and SUPER_ADMIN bypass maintenance blocks
                   const userRole = userData?.role as string | undefined;
                   const isDeveloperOrAdmin =
                     userRole === 'DEVELOPER' ||
                     userRole === 'ADMIN' ||
                     userRole === 'SUPER_ADMIN';
-                  const isBlocked = isUnderMaintenance && !isDeveloperOrAdmin;
+                  const isBlocked =
+                    (isUnderMaintenance && !isDeveloperOrAdmin) ||
+                    isEwalletLockedByDeposit;
 
                   return (
                     <TouchableOpacity
@@ -1171,6 +1177,10 @@ export default function Dashboard() {
                       ]}
                       onPress={() => {
                         if (isBlocked) {
+                          if (isEwalletLockedByDeposit) {
+                            setShowBankingServiceLockedModal(true);
+                            return;
+                          }
                           setSelectedMaintenanceService(item.labelKey);
                         } else {
                           (
