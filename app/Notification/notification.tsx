@@ -309,11 +309,19 @@ const Notification = () => {
       if (
         notif.title === 'Time Deposit Requested' || 
         notif.title === 'Top Up Requested' || 
-        notif.title === 'Stock Investment Requested'
+        notif.title === 'Stock Investment Requested' ||
+        notif.title === 'Transfer Received' ||
+        notif.title === 'Transfer Sent' ||
+        notif.title === 'Withdrawal Requested' ||
+        notif.title === 'Withdrawal Approved'
       ) {
+         let displayType = notif.title.replace(' Requested', '');
+         if (notif.title.includes('Transfer')) displayType = 'Transfer';
+         if (notif.title.includes('Withdrawal')) displayType = 'Withdrawal';
+         
          navigation.navigate("depositReceipt", {
            transactionId: notif.referenceId || "N/A",
-           type: notif.title.replace(' Requested', ''),
+           type: displayType,
            successMessage: notif.message,
          });
          return;

@@ -109,8 +109,20 @@ export default function DepositReceipt() {
             <View style={styles.divider} />
 
             <View style={styles.row}>
-              <Text style={styles.label}>{t("deposit.depositMethod")}</Text>
-              <Text style={styles.value}>{depositMethod}</Text>
+              <Text style={styles.label}>
+                {type === "Transfer" 
+                  ? t("sendMoney.from") 
+                  : type === "Withdrawal" 
+                    ? t("withdraw.withdrawalMethod") 
+                    : t("deposit.depositMethod")}
+              </Text>
+              <Text style={styles.value}>
+                {depositMethod || (
+                  type === "Transfer" ? t("sendMoney.availableBalance") : 
+                  type === "Withdrawal" ? t("withdraw.bankTransfer") : 
+                  t("common.na")
+                )}
+              </Text>
             </View>
             
             <View style={styles.divider} />

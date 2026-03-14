@@ -72,7 +72,6 @@ export default function TransferConfirm() {
   const [currentBalance, setCurrentBalance] = useState(0);
   const [newBalance, setNewBalance] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [showPasscodeModal, setShowPasscodeModal] = useState(false);
@@ -205,7 +204,25 @@ export default function TransferConfirm() {
       if (result.success) {
         setShowPasscodeModal(false);
         setPasscode("");
-        setShowSuccessModal(true);
+        
+        const txId = (result.data as any)?.id || t("investment.pending");
+        (navigation as any).navigate("depositReceipt", {
+          transactionId: txId,
+          amount: amount.toString(),
+          currency: "PHP",
+          depositMethod: balanceType === "agent" ? t("sendMoney.agentWallet") : t("sendMoney.availableBalance"),
+          type: "Transfer",
+          successMessage: t("sendMoney.transferSuccessMessage")
+                  .replace(
+                    "{amount}",
+                    amount.toLocaleString("en-PH", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    }),
+                  )
+                  .replace("{name}", recipientName),
+          date: new Date().toLocaleString()
+        });
       } else {
         setErrorMessage(result.error || t("sendMoney.transferFailed"));
         setShowErrorModal(true);
@@ -232,11 +249,6 @@ export default function TransferConfirm() {
   const handlePasscodeConfirm = () => {
     if (passcode.length !== 4) return;
     doTransfer(passcode);
-  };
-
-  const handleSuccessOk = () => {
-    setShowSuccessModal(false);
-    navigation.navigate("Main");
   };
 
   const handleShareQr = async () => {
@@ -584,49 +596,6 @@ export default function TransferConfirm() {
             </View>
           </View>
         </KeyboardAvoidingView>
-      </Modal>
-
-      {/* Success Modal */}
-      <Modal
-        visible={showSuccessModal}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => { }}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <LinearGradient
-              colors={["#E25A17", "#F28934"]}
-              style={styles.modalGradient}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-            >
-              <View style={styles.checkIconContainer}>
-                <Ionicons name="checkmark-circle" size={80} color="#FFFFFF" />
-              </View>
-              <Text style={styles.modalTitle}>
-                {t("sendMoney.transferComplete")}
-              </Text>
-              <Text style={styles.modalMessage}>
-                {t("sendMoney.transferSuccessMessage")
-                  .replace(
-                    "{amount}",
-                    amount.toLocaleString("en-PH", {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    }),
-                  )
-                  .replace("{name}", recipientName)}
-              </Text>
-              <TouchableOpacity
-                style={styles.modalButton}
-                onPress={handleSuccessOk}
-              >
-                <Text style={styles.modalButtonText}>{t("common.ok")}</Text>
-              </TouchableOpacity>
-            </LinearGradient>
-          </View>
-        </View>
       </Modal>
 
       {/* Error Modal */}
