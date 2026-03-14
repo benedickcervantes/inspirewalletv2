@@ -92,7 +92,7 @@ export default function EwalletPersonalInfo() {
       ...(route.params?.applicationData || {}),
       personalInfo: {
         gender: gender.trim(),
-        dateOfBirth: dateOfBirth.toISOString(),
+        dateOfBirth: dateOfBirth!.toISOString(),
         civilStatus: civilStatus.trim(),
         citizenship: citizenship.trim(),
       },
