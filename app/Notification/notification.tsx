@@ -290,9 +290,7 @@ const Notification = () => {
       return;
     }
 
-    // Open detail modal to show all notification info
-    setDetailModalNotification(notification);
-
+    // Check if this is a deposit receipt notification
     if (useBackend) {
       const notif = notification as NotificationItemBackend;
       if (!notif.isRead) {
@@ -301,16 +299,35 @@ const Notification = () => {
           if (accessToken) {
             await apiMarkNotificationAsRead(accessToken, notif.id);
             setBackendNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, isRead: true } : n));
-            setUnreadCount(prev => Math.max(0, prev - 1)); // Real-time update: bubble number
+            setUnreadCount(prev => Math.max(0, prev - 1));
           }
         } catch (error) {
           console.error('Error marking backend notification as read:', error);
         }
       }
+
+      if (
+        notif.title === 'Time Deposit Requested' || 
+        notif.title === 'Top Up Requested' || 
+        notif.title === 'Stock Investment Requested'
+      ) {
+         navigation.navigate("depositReceipt", {
+           transactionId: notif.referenceId || "N/A",
+           type: notif.title.replace(' Requested', ''),
+           successMessage: notif.message,
+         });
+         return;
+      }
+
+      setDetailModalNotification(notification);
       return;
     }
 
     const notif = notification as NotificationItem;
+    
+    // Open detail modal to show all notification info
+    setDetailModalNotification(notification);
+    
     if (!notif.read && user) {
       try {
         await notificationService.markAsRead(user.uid, notif.id);

@@ -8,6 +8,7 @@ import { navigationRef } from './lib/navigationRef';
 import AuthLoader from './app/AuthLoader';
 import AgentDashboard from './app/Dashboard/AgentDashboard';
 import DepositScreen from './app/Dashboard/deposit/deposit';
+import DepositReceipt from './app/Dashboard/deposit/depositReceipt';
 import StockInvestment from './app/Dashboard/deposit/stockInvestDepo';
 import StockInvestmentConfirm from './app/Dashboard/deposit/stockInvestDepoConfirm';
 import TimeDeposit from './app/Dashboard/deposit/timedeposit';
@@ -179,6 +180,7 @@ export default function App() {
               <Stack.Screen name="TimeDepositConfirm" component={TimeDepositConfirm} />
               <Stack.Screen name="topup" component={TopUpBalance} />
               <Stack.Screen name="TopupConfirm" component={TopupConfirm} />
+              <Stack.Screen name="depositReceipt" component={DepositReceipt} />
               <Stack.Screen name="Withdraw" component={WithdrawScreen} />
               <Stack.Screen name="WithdrawMethod" component={WithdrawMethodScreen} />
               <Stack.Screen name="WithdrawBank" component={BankWithdrawal} />
