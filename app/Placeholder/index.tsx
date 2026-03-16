@@ -389,6 +389,9 @@ export default function Placeholder() {
   const isAgent = userData?.isAgent || userData?.role === "agent" || false;
   const isPremium =
     userData?.isPremium || userData?.accountLevel === "premium" || false;
+  const isKycVerified =
+    String(userData?.kycAccountStatus || "").toUpperCase() === "VERIFIED" ||
+    String(userData?.kycStatus || "").toLowerCase() === "approved";
   const accountNumber =
     userData?.accountNumber || userData?.id || "000053126300";
   const companyName =
@@ -406,9 +409,7 @@ export default function Placeholder() {
     userData?.lineAccountLink ?? userData?.lineLink ?? t("common.notProvided");
   const viberLink = userData?.viberLink || t("common.notProvided");
   const whatsappLink = userData?.whatsappLink || t("common.notProvided");
-  const accountLevelLabel = isPremium
-    ? t("profile.premium")
-    : t("profile.basic");
+  const accountLevelLabel = isKycVerified ? "VERIFIED" : "NOT VERIFIED";
   const referrerName =
     userData?.referrerName ??
     userData?.agentReferrer ??
@@ -657,12 +658,12 @@ export default function Placeholder() {
           />
           <DetailItem
             icon="trophy-outline"
-            label={t("profile.accountLevel")}
+            label="KYC STATUS"
             value={accountLevelLabel}
             badge={accountLevelLabel}
-            badgeColor={isPremium ? "#FFD700" : "#999"}
-            verified={isPremium}
-            showVerifyButton={!isPremium}
+            badgeColor={isKycVerified ? "#10B981" : "#999"}
+            verified={isKycVerified}
+            showVerifyButton={!isKycVerified}
             onVerifyPress={() =>
               (navigation as { navigate: (name: string) => void }).navigate(
                 "KYCVerification",

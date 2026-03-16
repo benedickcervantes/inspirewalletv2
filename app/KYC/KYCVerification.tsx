@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import * as FileSystem from "expo-file-system/legacy";
 import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useEffect, useState } from "react";
@@ -21,7 +22,7 @@ import {
     View,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { getMe } from "../../configs/api";
+import { getMe, submitPersonalKyc } from "../../configs/api";
 import { useLanguage } from "../../context/LanguageContext";
 import type { RootStackParamList } from "../../types/navigation";
 
@@ -54,6 +55,13 @@ const DAYS = Array.from({ length: 31 }, (_, i) => (i + 1).toString());
 const YEARS = Array.from({ length: 71 }, (_, i) => (2010 - i).toString());
 
 const REFERENCE_WIDTH = 375;
+
+const inferMimeFromUri = (uri: string): string => {
+  const clean = uri.split("?")[0].toLowerCase();
+  if (clean.endsWith(".png")) return "image/png";
+  if (clean.endsWith(".webp")) return "image/webp";
+  return "image/jpeg";
+};
 
 export default function KYCVerification() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, "KYCVerification">>();
@@ -102,6 +110,7 @@ export default function KYCVerification() {
   const [viewingImageUri, setViewingImageUri] = useState<string | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showConfirmRequiredModal, setShowConfirmRequiredModal] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const fetchUserData = useCallback(async () => {
     try {
@@ -170,9 +179,15 @@ export default function KYCVerification() {
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         quality: 0.8,
+        base64: true,
       });
       if (!result.canceled && result.assets[0]) {
-        setUri(result.assets[0].uri);
+        const asset = result.assets[0];
+        const mimeType = asset.mimeType || inferMimeFromUri(asset.uri);
+        const payload = asset.base64
+          ? `data:${mimeType};base64,${asset.base64}`
+          : asset.uri;
+        setUri(payload);
       }
     } catch (error) {
       console.error("Error picking image:", error);
@@ -203,13 +218,82 @@ export default function KYCVerification() {
     }
   };
 
-  const handleConfirmSubmit = () => {
+  const handleConfirmSubmit = async () => {
     if (!confirmAccuracy) {
       setShowConfirmRequiredModal(true);
       return;
     }
-    // Future: submit KYC to backend
-    setShowSuccessModal(true);
+
+    try {
+      setSubmitting(true);
+      const accessToken = await AsyncStorage.getItem("access_token");
+      if (!accessToken) {
+        Alert.alert(t("kyc.error"), t("kyc.notAuthenticated"));
+        return;
+      }
+
+      const toDocumentPayload = async (uri: string | null): Promise<string | null> => {
+        if (!uri) return null;
+        if (uri.startsWith("http://") || uri.startsWith("https://") || uri.startsWith("data:")) {
+          return uri;
+        }
+        try {
+          const base64 = await FileSystem.readAsStringAsync(uri, {
+            encoding: FileSystem.EncodingType.Base64,
+          });
+          return `data:${inferMimeFromUri(uri)};base64,${base64}`;
+        } catch (e) {
+          // Fallback to raw URI if conversion fails; backend/admin may still consume in some environments.
+          return uri;
+        }
+      };
+
+      const [idFrontPayload, idBackPayload, selfiePayload] = await Promise.all([
+        toDocumentPayload(idFrontUri),
+        toDocumentPayload(idBackUri),
+        toDocumentPayload(selfieUri),
+      ]);
+
+      const body: any = {
+        userName: {
+          firstName,
+          lastName,
+        },
+        personalInfo: {
+          firstName,
+          lastName,
+          gender,
+          nationality,
+          sourceOfIncome,
+          monthlyIncome,
+          dateOfBirth: birthday ? birthday.toISOString() : null,
+        },
+        addressInfo: {
+          country,
+          fullAddress,
+          postalCode,
+        },
+        documents: {
+          idFrontPhoto: idFrontPayload,
+          idBackPhoto: idBackPayload,
+          selfiePhoto: selfiePayload,
+        },
+        status: "pending",
+      };
+
+      const result = await submitPersonalKyc(accessToken, body);
+      if (!result.success) {
+        Alert.alert(t("kyc.error"), result.error || t("kyc.submissionFailed"));
+        return;
+      }
+
+      setShowSuccessModal(true);
+    } catch (error) {
+      console.error("[KYC] submit error", error);
+      Alert.alert(t("kyc.error"), t("kyc.submissionFailed"));
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleSuccessModalClose = () => {
@@ -831,8 +915,9 @@ export default function KYCVerification() {
             {currentStep === 4 ? (
               <TouchableOpacity
                 style={styles.nextButton}
-                onPress={handleConfirmSubmit}
+                onPress={submitting ? undefined : handleConfirmSubmit}
                 activeOpacity={0.9}
+                disabled={submitting}
               >
                 <LinearGradient
                   colors={ORANGE_GRADIENT}

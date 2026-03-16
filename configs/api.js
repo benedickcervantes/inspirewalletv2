@@ -2685,3 +2685,37 @@ export async function submitEwalletApplication(accessToken, body) {
     return { success: false, error: e.message || "Network error" };
   }
 }
+
+/**
+ * Submit a personal KYC request via the backend.
+ * POST /kyc-requests
+ * @param {string} accessToken - Backend JWT
+ * @param {Object} body - { userName?, personalInfo?, addressInfo?, documents?, status? }
+ */
+export async function submitPersonalKyc(accessToken, body) {
+  const url = buildUrl("/kyc-requests");
+  if (!url) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
+  try {
+    if (__DEV__) console.log("[KYC API] POST", url, "(keys:", Object.keys(body || {}), ")");
+    const res = await apiFetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(body || {}),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    return { success: true, data: data.data ?? data };
+  } catch (e) {
+    if (__DEV__) console.error("[KYC API] Error", e);
+    return { success: false, error: e.message || "Network error" };
+  }
+}
