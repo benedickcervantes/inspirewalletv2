@@ -52,6 +52,7 @@ interface DisplayMessage {
   isSent: boolean;
   timestamp: Date;
   status: "SENT" | "READ";
+  isEdited?: boolean;
 }
 
 const formatTime = (date: Date, lang: string) => {
@@ -78,6 +79,9 @@ function mapApiToDisplay(api: ApiMessage[]): DisplayMessage[] {
     isSent: m.direction === "USER_TO_ADMIN",
     timestamp: new Date(m.createdAt),
     status: m.status ?? "SENT",
+    // Backend does not yet persist an "edited" flag, but we can infer
+    // from a common convention if needed later.
+    isEdited: /\(edited\)$/.test(m.content),
   }));
   return mapped.reverse();
 }
@@ -271,9 +275,16 @@ export default function Message() {
 
     const result = await editMessage(token, editingMessage.id, editText.trim());
     if (result.success) {
+      // Optimistically update local state so user immediately sees the change
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === editingMessage.id
+            ? { ...m, text: editText.trim(), isEdited: true }
+            : m,
+        ),
+      );
       setEditingMessage(null);
       setEditText("");
-      await fetchMessages();
     } else {
       Alert.alert(t("common.error"), result.error || t("support.failedToEdit"));
     }
@@ -487,16 +498,41 @@ export default function Message() {
                       msg.isSent ? styles.bubbleSent : styles.bubbleReceived,
                     ]}
                   >
-                    <Text
-                      style={[
-                        styles.bubbleText,
-                        msg.isSent
-                          ? styles.bubbleTextSent
-                          : styles.bubbleTextReceived,
-                      ]}
-                    >
-                      {msg.text}
-                    </Text>
+                    {(() => {
+                      const isDeletedForEveryone =
+                        msg.text === "This message was deleted for everyone.";
+                      const isDeletedForMe =
+                        msg.text === "You deleted this message.";
+                      const isDeleted = isDeletedForEveryone || isDeletedForMe;
+                      const displayText = isDeletedForEveryone
+                        ? t("support.messageDeletedForEveryone") ||
+                          "This message was deleted."
+                        : isDeletedForMe
+                          ? t("support.messageDeletedForMe") ||
+                            "You deleted this message."
+                          : msg.text;
+
+                      return (
+                        <>
+                          <Text
+                            style={[
+                              styles.bubbleText,
+                              msg.isSent
+                                ? styles.bubbleTextSent
+                                : styles.bubbleTextReceived,
+                              isDeleted && styles.deletedText,
+                            ]}
+                          >
+                            {displayText}
+                          </Text>
+                          {!isDeleted && msg.isEdited && (
+                            <Text style={styles.editedLabel}>
+                              {t("support.edited") || "Edited"}
+                            </Text>
+                          )}
+                        </>
+                      );
+                    })()}
                     <View style={styles.bubbleFooter}>
                       <Text
                         style={[
@@ -915,6 +951,16 @@ const styles = StyleSheet.create({
   },
   bubbleTimeReceived: {
     color: "#999",
+  },
+  deletedText: {
+    fontStyle: "italic",
+    color: "#888",
+  },
+  editedLabel: {
+    marginTop: 2,
+    fontSize: 11,
+    fontStyle: "italic",
+    color: "#9CA3AF",
   },
   keyboardView: { flex: 1 },
   inputBar: {
