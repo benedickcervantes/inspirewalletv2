@@ -1,17 +1,19 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useState } from "react";
 import {
-    Modal,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { getOrCreateMainWallet, submitTopUpRequest } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
 
 export default function TopUpBalance() {
@@ -21,6 +23,8 @@ export default function TopUpBalance() {
   const [showCurrencyModal, setShowCurrencyModal] = useState(false);
   const [amount, setAmount] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const currencies = [
     { code: "PHP", name: "Philippine Peso", flag: "🇵🇭", symbol: "₱" },
@@ -29,7 +33,8 @@ export default function TopUpBalance() {
     { code: "KRW", name: "Korean Won", flag: "🇰🇷", symbol: "₩" },
   ];
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
+    setSubmitError(null);
     const newErrors: Record<string, string> = {};
     const amountStr = amount.trim();
 
@@ -48,14 +53,47 @@ export default function TopUpBalance() {
     }
 
     setErrors({});
+    
+    try {
+      setIsSubmitting(true);
+      const accessToken = await AsyncStorage.getItem("access_token");
+      if (!accessToken) {
+        setSubmitError(t("deposit.pleaseLoginTopup"));
+        return;
+      }
 
-    // Navigate to confirm page with parameters
-    const selectedCurrencyData = getSelectedCurrency();
-    navigation.navigate("TopupConfirm", {
-      currency: selectedCurrency,
-      amount: amount,
-      currencySymbol: selectedCurrencyData.symbol,
-    });
+      const { success: walletSuccess, wallet } = await getOrCreateMainWallet(accessToken);
+      if (!walletSuccess || !wallet?.id) {
+        setSubmitError(t("deposit.walletLoadError"));
+        return;
+      }
+
+      const body = {
+        walletId: wallet.id as string,
+        amount: String(parseFloat(amount)),
+      };
+
+      const result = await submitTopUpRequest(accessToken, body);
+
+      if (!result.success || !result.data?.id) {
+        setSubmitError(result.error || t("deposit.submitError"));
+        return;
+      }
+
+      const selectedCurrencyData = getSelectedCurrency();
+      navigation.navigate("TopupConfirm", {
+        currency: selectedCurrency,
+        amount: amount,
+        currencySymbol: selectedCurrencyData.symbol,
+        requestId: result.data.id,
+      });
+
+    } catch (error: any) {
+      console.error("submit topup err", error);
+      setSubmitError(t("deposit.unexpectedError"));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const getSelectedCurrency = () => {
@@ -186,10 +224,18 @@ export default function TopUpBalance() {
             </View>
           </View>
 
+          {submitError ? (
+            <View style={styles.errorBanner}>
+              <Ionicons name="alert-circle" size={20} color="#B71C1C" />
+              <Text style={styles.errorTextBanner}>{submitError}</Text>
+            </View>
+          ) : null}
+
           {/* Continue Button */}
           <TouchableOpacity
             style={styles.continueButton}
             onPress={handleContinue}
+            disabled={isSubmitting}
           >
             <LinearGradient
               colors={["#E25A17", "#F28934"]}
@@ -197,8 +243,12 @@ export default function TopUpBalance() {
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
             >
-              <Text style={styles.continueText}>{t("deposit.continue")}</Text>
-              <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
+              <Text style={styles.continueText}>
+                {isSubmitting ? t("deposit.processing") : t("deposit.continue")}
+              </Text>
+              {!isSubmitting && (
+                <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
+              )}
             </LinearGradient>
           </TouchableOpacity>
 
@@ -417,6 +467,24 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: "#FF3B30",
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 0,
+  },
+  errorBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "#FFEBEE",
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+    borderLeftWidth: 4,
+    borderLeftColor: "#B71C1C",
+  },
+  errorTextBanner: {
+    flex: 1,
+    color: "#B71C1C",
     fontSize: 12,
     marginTop: 4,
     marginLeft: 0,

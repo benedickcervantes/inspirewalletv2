@@ -3,7 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Alert,
   Image,
@@ -15,11 +15,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import {
-  getOrCreateMainWallet,
-  submitTopUpRequest,
-  uploadTopUpReceiptFile,
-} from "../../../configs/api";
+import { uploadTopUpReceiptFile } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
 
 export default function TopUpConfirm() {
@@ -30,6 +26,7 @@ export default function TopUpConfirm() {
     currency?: string;
     amount?: string;
     currencySymbol?: string;
+    requestId?: string;
   };
   const [showAlertModal, setShowAlertModal] = useState(false);
   const [alertConfig, setAlertConfig] = useState<{
@@ -37,12 +34,18 @@ export default function TopUpConfirm() {
     message: string;
   }>({ title: "", message: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showProofModal, setShowProofModal] = useState(false);
   const [proofUri, setProofUri] = useState<string | null>(null);
+  const [generatedRequestId, setGeneratedRequestId] = useState<string | null>(params.requestId || null);
+  const [showEmailSentModal, setShowEmailSentModal] = useState(false);
 
   const currency = params.currency || "PHP";
   const amount = params.amount || "0";
   const currencySymbol = params.currencySymbol || "₱";
+
+  useEffect(() => {
+    // Show email sent modal when confirm screen loads
+    setShowEmailSentModal(true);
+  }, []);
 
   const pickFromGallery = async () => {
     try {
@@ -87,13 +90,16 @@ export default function TopUpConfirm() {
     }
   };
 
-  const handleProofSubmit = async () => {
-    if (!proofUri) {
-      Alert.alert(t("deposit.error"), t("deposit.uploadProofRequired"));
-      return;
-    }
-    setShowProofModal(false);
-    await handleConfirmWithReceipt();
+  const handleUploadPress = () => {
+    Alert.alert(
+      t("deposit.proofOfPayment"),
+      t("deposit.uploadProofOfPayment"),
+      [
+        { text: t("deposit.useCamera"), onPress: takePhoto },
+        { text: t("deposit.uploadFiles"), onPress: pickFromGallery },
+        { text: t("deposit.cancel"), style: "cancel" },
+      ]
+    );
   };
 
   const handleConfirmWithReceipt = async () => {
@@ -113,40 +119,12 @@ export default function TopUpConfirm() {
         return;
       }
 
-      const { success: walletSuccess, wallet } =
-        await getOrCreateMainWallet(accessToken);
-      if (!walletSuccess || !wallet?.id) {
+      const newRequestId = generatedRequestId;
+
+      if (!newRequestId) {
         setAlertConfig({
           title: t("deposit.error"),
-          message: t("deposit.walletLoadError"),
-        });
-        setShowAlertModal(true);
-        setIsSubmitting(false);
-        return;
-      }
-
-      // Step 1: Create the top-up request
-      const result = await submitTopUpRequest(accessToken, {
-        walletId: wallet.id as string,
-        amount: String(parseFloat(amount)),
-      });
-
-      if (!result.success) {
-        setAlertConfig({
-          title: t("deposit.error"),
-          message: result.error || t("deposit.submitError"),
-        });
-        setShowAlertModal(true);
-        setIsSubmitting(false);
-        return;
-      }
-
-      // Step 2: Upload receipt — BLOCKING, user sees error if it fails
-      const requestId = result.data?.id;
-      if (!requestId) {
-        setAlertConfig({
-          title: t("deposit.error"),
-          message: "Request was created but returned no ID. Please contact support.",
+          message: t("deposit.missingRequestId"),
         });
         setShowAlertModal(true);
         setIsSubmitting(false);
@@ -154,7 +132,6 @@ export default function TopUpConfirm() {
       }
 
       if (proofUri) {
-        // Detect MIME type from URI extension
         const uriLower = proofUri.toLowerCase();
         const mimeType = uriLower.endsWith(".png")
           ? "image/png"
@@ -162,22 +139,17 @@ export default function TopUpConfirm() {
           ? "image/gif"
           : "image/jpeg";
 
-        console.log("[TopUpConfirm] Uploading receipt:", { requestId, mimeType, uriLen: proofUri.length });
-
         const uploadResult = await uploadTopUpReceiptFile(
           accessToken,
-          requestId,
+          newRequestId,
           proofUri,
           mimeType
         );
 
-        console.log("[TopUpConfirm] Upload result:", uploadResult.success, uploadResult.error ?? "");
-
         if (!uploadResult.success) {
-          // Show the actual upload error to the user
           setAlertConfig({
             title: t("deposit.error"),
-            message: `Receipt upload failed: ${uploadResult.error || "Unknown error. Please try again."}`,
+            message: `${t("deposit.receiptUploadFailed")}${uploadResult.error || t("deposit.unexpectedError")}`,
           });
           setShowAlertModal(true);
           setIsSubmitting(false);
@@ -185,16 +157,17 @@ export default function TopUpConfirm() {
         }
       }
 
-      // Success — navigate home
-      setAlertConfig({
-        title: t("deposit.success"),
-        message: t("deposit.topUpSuccess"),
+      setProofUri(null);
+      setGeneratedRequestId(newRequestId);
+      
+      navigation.navigate("depositReceipt", {
+        transactionId: newRequestId || t("investment.pending"),
+        amount,
+        currency,
+        depositMethod: t("deposit.topUpBalance"),
+        type: "Top Up",
+        successMessage: t("deposit.topUpSuccess"),
       });
-      setShowAlertModal(true);
-      setTimeout(() => {
-        setShowAlertModal(false);
-        navigation.navigate("Main");
-      }, 2000);
     } catch (error) {
       console.error("Error submitting top-up:", error);
       setAlertConfig({
@@ -253,13 +226,6 @@ export default function TopUpConfirm() {
             <Text style={styles.subtitle}>{t("deposit.reviewDetails")}</Text>
           </View>
 
-          {/* Deposit Type Card */}
-          <View style={styles.detailCard}>
-            <View style={styles.leftBorder} />
-            <Text style={styles.detailLabel}>Deposit Type</Text>
-            <Text style={styles.detailValue}>{t("deposit.topUpBalance")}</Text>
-          </View>
-
           {/* Investment Amount Card */}
           <LinearGradient
             colors={["#F28934", "#E25A17"]}
@@ -279,6 +245,76 @@ export default function TopUpConfirm() {
             </Text>
           </LinearGradient>
 
+          {/* Deposit Type Card */}
+          <View style={styles.detailCard}>
+            <View style={styles.leftBorder} />
+            <Text style={styles.detailLabel}>{t("deposit.depositType")}</Text>
+            <Text style={styles.detailValue}>{t("deposit.topUpBalance")}</Text>
+
+            <View style={{ marginTop: 12 }}>
+              <Text style={styles.detailLabel}>
+                {t("deposit.proofOfPayment")} {t("deposit.optional")}
+              </Text>
+              <TouchableOpacity
+                style={{
+                  marginTop: 12,
+                  borderWidth: 1,
+                  borderColor: "#E0E0E0",
+                  borderStyle: "dashed",
+                  borderRadius: 12,
+                  backgroundColor: "#FAFAFA",
+                  padding: proofUri ? 0 : 20,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  height: proofUri ? undefined : 150,
+                  overflow: "hidden",
+                }}
+                onPress={handleUploadPress}
+              >
+                {proofUri ? (
+                  <View style={{ width: "100%", height: 180 }}>
+                    <Image
+                      source={{ uri: proofUri }}
+                      style={{ width: "100%", height: "100%", borderRadius: 12 }}
+                      resizeMode="cover"
+                    />
+                    <View style={{
+                      position: "absolute",
+                      top: 8,
+                      right: 8,
+                      backgroundColor: "rgba(0,0,0,0.6)",
+                      paddingHorizontal: 12,
+                      paddingVertical: 6,
+                      borderRadius: 20,
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 4
+                    }}>
+                      <Ionicons name="camera" size={16} color="#FFFFFF" />
+                      <Text style={{ color: "#FFF", fontSize: 12, fontWeight: "600" }}>
+                        {t("kyc.changeImage")}
+                      </Text>
+                    </View>
+                  </View>
+                ) : (
+                  <View style={{ alignItems: "center", justifyContent: "center" }}>
+                    <MaterialCommunityIcons
+                      name="cloud-upload"
+                      size={40}
+                      color="#E25A17"
+                    />
+                    <Text style={{ fontSize: 16, color: "#333", fontWeight: "600", marginTop: 8 }}>
+                      {t("deposit.uploadProofOfPayment")}
+                    </Text>
+                    <Text style={{ fontSize: 12, color: "#999", marginTop: 4 }}>
+                      {t("deposit.acceptedFormatsMax")}
+                    </Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+
           {/* Action Buttons */}
           <View style={styles.buttonContainer}>
             <TouchableOpacity
@@ -289,7 +325,7 @@ export default function TopUpConfirm() {
 
             <TouchableOpacity
               style={styles.confirmButton}
-              onPress={() => setShowProofModal(true)}
+              onPress={handleConfirmWithReceipt}
               disabled={isSubmitting}>
               <LinearGradient
                 colors={["#E25A17", "#F28934"]}
@@ -311,107 +347,6 @@ export default function TopUpConfirm() {
           <View style={styles.bottomPadding} />
         </ScrollView>
 
-        {/* Proof of Payment Modal */}
-        <Modal
-          visible={showProofModal}
-          transparent={true}
-          animationType="fade"
-          onRequestClose={() => setShowProofModal(false)}>
-          <View style={styles.proofModalOverlay}>
-            <View style={styles.proofModalContent}>
-              <View style={styles.proofModalHeader}>
-                <View style={styles.proofModalTitleRow}>
-                  <Text style={styles.proofModalTitle}>
-                    {t("deposit.proofOfPaymentTitle")}
-                  </Text>
-                  <View style={styles.proofRequiredBadge}>
-                    <Text style={styles.proofRequiredBadgeText}>
-                      {t("deposit.proofRequiredBadge")}
-                    </Text>
-                  </View>
-                </View>
-                <Text style={styles.proofModalSubtitle}>
-                  {t("deposit.proofOfPaymentSubtitle")}
-                </Text>
-              </View>
-
-              <View style={styles.proofUploadArea}>
-                <TouchableOpacity
-                  style={styles.proofUploadBtn}
-                  onPress={pickFromGallery}>
-                  <Ionicons
-                    name="folder-open-outline"
-                    size={28}
-                    color="#E25A17"
-                  />
-                  <Text style={styles.proofUploadBtnText}>
-                    {t("deposit.uploadFiles")}
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.proofUploadBtn}
-                  onPress={takePhoto}>
-                  <Ionicons name="camera-outline" size={28} color="#E25A17" />
-                  <Text style={styles.proofUploadBtnText}>
-                    {t("deposit.useCamera")}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-
-              {proofUri ? (
-                <View style={styles.proofPreviewContainer}>
-                  <Image
-                    source={{ uri: proofUri }}
-                    style={styles.proofPreviewImage}
-                    resizeMode="cover"
-                  />
-                  <View style={styles.proofPreviewInfo}>
-                    <Text style={styles.proofUploadedText}>
-                      {t("deposit.proofUploaded")}
-                    </Text>
-                    <TouchableOpacity
-                      onPress={() => setProofUri(null)}
-                      style={[styles.removeProofBtn, isSubmitting && { opacity: 0.5 }]}
-                      disabled={isSubmitting}>
-                      <Ionicons name="trash-outline" size={18} color="#B71C1C" />
-                      <Text style={styles.removeProofText}>
-                        {t("deposit.remove")}
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              ) : null}
-
-              <View style={styles.proofModalFooter}>
-                <TouchableOpacity
-                  style={styles.proofCancelBtn}
-                  onPress={() => {
-                    setShowProofModal(false);
-                    setProofUri(null);
-                  }}>
-                  <Text style={styles.proofCancelText}>
-                    {t("deposit.cancel")}
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.proofSubmitBtn, !proofUri && { opacity: 0.45 }]}
-                  onPress={handleProofSubmit}
-                  disabled={!proofUri || isSubmitting}>
-                  <LinearGradient
-                    colors={["#E25A17", "#F28934"]}
-                    style={styles.proofSubmitGradient}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}>
-                    <Text style={styles.proofSubmitText}>
-                      {isSubmitting ? t("deposit.submitting") || "Submitting..." : t("deposit.confirm")}
-                    </Text>
-                  </LinearGradient>
-                </TouchableOpacity>
-              </View>
-
-            </View>
-          </View>
-        </Modal>
 
         {/* Custom Alert Modal */}
         <Modal
@@ -440,6 +375,31 @@ export default function TopUpConfirm() {
             </LinearGradient>
           </View>
         </Modal>
+
+        {/* Bank Details Sent Modal */}
+        <Modal
+          visible={showEmailSentModal}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setShowEmailSentModal(false)}>
+          <View style={styles.alertOverlay}>
+            <LinearGradient
+              colors={["#E15816", "#F48F38"]}
+              style={styles.alertContainer}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 0, y: 1 }}>
+              <Text style={styles.alertTitle}>{t("deposit.bankDetailsSentTitle")}</Text>
+              <Text style={styles.alertMessage}>{t("deposit.bankDetailsSentMessage")}</Text>
+              <TouchableOpacity
+                style={styles.alertButton}
+                onPress={() => setShowEmailSentModal(false)}>
+                <Text style={styles.alertButtonText}>{t("deposit.ok")}</Text>
+              </TouchableOpacity>
+            </LinearGradient>
+          </View>
+        </Modal>
+
+
       </SafeAreaView>
     </View>
   );
@@ -778,6 +738,20 @@ const styles = StyleSheet.create({
     color: "#B71C1C",
     fontWeight: "500",
   },
+  proofRequiredBadgeOptional: {
+    backgroundColor: "#F5F5F5",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+  },
+  proofRequiredBadgeTextOptional: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#999",
+    textTransform: "uppercase",
+  },
   proofModalFooter: {
     flexDirection: "row",
     gap: 12,
@@ -815,4 +789,5 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     opacity: 0.9,
   },
+
 });

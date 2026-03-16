@@ -743,7 +743,7 @@ export default function Dashboard() {
                   color="#FFFFFF"
                 />
               </View>
-              <Text style={styles.maintenanceTitle}>Under maintenance</Text>
+              <Text style={styles.maintenanceTitle}>{t("dashboard.underMaintenance")}</Text>
               {selectedMaintenanceService && (
                 <Text style={styles.maintenanceSubtitle}>
                   {t(selectedMaintenanceService)}
@@ -751,14 +751,13 @@ export default function Dashboard() {
               )}
             </View>
             <Text style={styles.maintenanceModalMessage}>
-              This service is currently under maintenance. We're working hard to
-              bring you an improved experience. Please check back soon!
+              {t("dashboard.maintenanceMessage")}
             </Text>
             <TouchableOpacity
               style={styles.maintenanceModalButton}
               onPress={() => setSelectedMaintenanceService(null)}
             >
-              <Text style={styles.maintenanceModalButtonText}>Got it</Text>
+              <Text style={styles.maintenanceModalButtonText}>{t("dashboard.gotIt")}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -780,7 +779,7 @@ export default function Dashboard() {
                 />
               </View>
               <Text style={styles.bankingLockTitle}>
-                {t("dashboard.bankingService")} Locked
+                {t("dashboard.bankingServiceLockedTitle")}
               </Text>
             </View>
             <View style={styles.bankingLockRequirementBox}>
@@ -796,7 +795,7 @@ export default function Dashboard() {
               style={styles.maintenanceModalButton}
               onPress={() => setShowBankingServiceLockedModal(false)}
             >
-              <Text style={styles.maintenanceModalButtonText}>Got it</Text>
+              <Text style={styles.maintenanceModalButtonText}>{t("dashboard.gotIt")}</Text>
             </TouchableOpacity>
           </View>
         </View>

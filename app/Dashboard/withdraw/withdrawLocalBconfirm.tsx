@@ -86,15 +86,17 @@ export default function WithdrawLocalBConfirm() {
       if (result.success) {
         setShowPasscodeModal(false);
         setPasscode("");
-        setAlertConfig({
-          title: t("withdraw.successTitle"),
-          message: t("withdraw.successMessage"),
+        
+        const txId = (result.data as any)?.id || t("investment.pending");
+        (navigation as any).navigate("depositReceipt", {
+          transactionId: txId,
+          amount: amount.toString(),
+          currency: "PHP",
+          depositMethod: t("withdraw.bankTransfer"),
+          type: "Withdrawal",
+          successMessage: t("withdraw.successMessage"),
+          date: new Date().toLocaleString()
         });
-        setShowAlertModal(true);
-        setTimeout(() => {
-          setShowAlertModal(false);
-          navigation.navigate("Main");
-        }, 2000);
       } else {
         setAlertConfig({
           title: t("common.error"),
@@ -358,12 +360,7 @@ export default function WithdrawLocalBConfirm() {
               <Text style={styles.alertMessage}>{alertConfig.message}</Text>
               <TouchableOpacity
                 style={styles.alertButton}
-                onPress={() => {
-                  setShowAlertModal(false);
-                  if (alertConfig.title === "Success") {
-                    navigation.navigate("Main");
-                  }
-                }}
+                onPress={() => setShowAlertModal(false)}
               >
                 <Text style={styles.alertButtonText}>{t("common.ok")}</Text>
               </TouchableOpacity>

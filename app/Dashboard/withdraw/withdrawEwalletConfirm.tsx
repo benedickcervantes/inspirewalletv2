@@ -84,11 +84,17 @@ export default function EWalletConfirm() {
       if (result.success) {
         setShowPasscodeModal(false);
         setPasscode("");
-        setAlertConfig({
-          title: t("withdraw.successTitle"),
-          message: t("withdraw.successMessage"),
+        
+        const txId = (result.data as any)?.id || t("investment.pending");
+        (navigation as any).navigate("depositReceipt", {
+          transactionId: txId,
+          amount: amount.toString(),
+          currency: "PHP",
+          depositMethod: t("withdraw.ewallet"),
+          type: "Withdrawal",
+          successMessage: t("withdraw.successMessage"),
+          date: new Date().toLocaleString()
         });
-        setShowAlertModal(true);
       } else {
         setAlertConfig({
           title: t("common.error"),
@@ -343,12 +349,7 @@ export default function EWalletConfirm() {
               <Text style={styles.alertMessage}>{alertConfig.message}</Text>
               <TouchableOpacity
                 style={styles.alertButton}
-                onPress={() => {
-                  setShowAlertModal(false);
-                  if (alertConfig.title === "Success") {
-                    navigation.navigate("Main");
-                  }
-                }}
+                onPress={() => setShowAlertModal(false)}
               >
                 <Text style={styles.alertButtonText}>{t("common.ok")}</Text>
               </TouchableOpacity>

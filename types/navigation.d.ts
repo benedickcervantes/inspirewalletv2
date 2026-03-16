@@ -84,6 +84,7 @@ export type RootStackParamList = {
   TimeDepositConfirm: Record<string, unknown>;
   topup: undefined;
   TopupConfirm: Record<string, unknown>;
+  depositReceipt: Record<string, unknown>;
   Withdraw: undefined;
   WithdrawMethod: { type?: string };
   WithdrawBank: undefined;

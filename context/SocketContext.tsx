@@ -72,7 +72,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             onAccountDeletionApproved: () => {
                 notifyAccountDeletionApproved();
             },
-            onAccountDeletionRejected: (payload: { adminNotes?: string | null }) => {
+            onAccountDeletionRejected: (payload?: { adminNotes?: string | null }) => {
                 notifyAccountDeletionRejected(payload?.adminNotes);
             },
             onWalletUpdate: (payload: any) => {

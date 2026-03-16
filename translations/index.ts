@@ -6,6 +6,17 @@
 export type TranslationMap = Record<string, string>;
 
 const en: TranslationMap = {
+  "deposit.missingRequestId": "Missing Request ID. Please go back and try again.",
+  "deposit.receiptUploadFailed": "Receipt upload failed: ",
+  "deposit.timeDepositCreatedUploadFailed": "Time Deposit Created, but receipt upload failed: ",
+  "deposit.pleaseContactSupport": ". Please contact support.",
+  "deposit.optional": "(Optional)",
+  "deposit.acceptedFormats": "JPG, PNG or PDF",
+  "deposit.acceptedFormatsMax": "JPG, PNG or PDF (Max 5MB)",
+  "deposit.timeDepositSuccessMessage": "Your time deposit request has been submitted successfully and the amount has been deducted from your available balance.",
+  "dashboard.underMaintenance": "Under maintenance",
+  "dashboard.maintenanceMessage": "This service is currently under maintenance. We're working hard to bring you an improved experience. Please check back soon!",
+  "dashboard.gotIt": "Got it",
   // Common
   "common.cancel": "Cancel",
   "common.user": "User",
@@ -47,13 +58,13 @@ const en: TranslationMap = {
     "You haven't set up a passcode yet. Sign in with your email and password, then you can set up passcode in Settings after logging in.",
   "auth.passwordUpdateRequired": "Password Update Required",
   "auth.passwordUpdateMessage":
-    'Your account ({email}) requires a password update for security purposes.\n\nTap "Send Reset Email" to receive a secure link in your inbox to set a new password.',
+    'Your account ({email}) requires a password update for security purposes.Tap "Send Reset Email" to receive a secure link in your inbox to set a new password.',
   "auth.sendResetEmail": "Send Reset Email",
   "auth.sendingEmail": "Sending Email",
   "auth.sendingEmailMessage": "Sending password reset link to {email}…",
   "auth.emailSentTitle": "Email Sent!",
   "auth.emailSentMessage":
-    "If an account exists for {email}, a password reset link has been sent.\n\nCheck your inbox (and spam folder), follow the link to set your new password, then log in again.",
+    "If an account exists for {email}, a password reset link has been sent.Check your inbox (and spam folder), follow the link to set your new password, then log in again.",
   "auth.backToLogin": "Back to Login",
   "auth.couldNotSendEmail": "Could Not Send Email",
   "auth.tryAgain": "Try Again",
@@ -142,6 +153,7 @@ const en: TranslationMap = {
   "kyc.uploadGovIdBackHint":
     "Upload a clear photo of the back of your government-issued ID",
   "kyc.uploadSelfiePhoto": "Upload Selfie Photo",
+  "kyc.changeImage": "Change Image",
   "kyc.uploadSelfieHint": "Take a clear selfie photo for verification",
   "kyc.uploaded": "Uploaded",
   "kyc.permissionRequired": "Permission required",
@@ -168,6 +180,7 @@ const en: TranslationMap = {
   "kyc.confirmRequiredMessage":
     "Please confirm that all information provided is accurate by checking the confirmation box before submitting.",
   "kyc.ok": "OK",
+  "kyc.okay": "Okay",
 
   // Dashboard
   "dashboard.goodMorning": "Good Morning",
@@ -387,13 +400,18 @@ const en: TranslationMap = {
   "deposit.reviewConfirm": "Review & Confirm",
   "deposit.reviewDetails": "Review your deposit details",
   "deposit.depositType": "Deposit Type",
+  "deposit.transactionReceipt": "Transaction Receipt",
+  "deposit.bankDetailsSentTitle": "Bank Details Sent",
+  "deposit.bankDetailsSentMessage": "We've emailed you the banking credentials. Please check your inbox and upload your proof of payment once done.",
   "deposit.topUpSubtitle": "Add funds to your available balance",
   "deposit.pleaseLoginTopup": "Please log in to submit a top-up request.",
-  "deposit.topUpSuccess":
-    "Your top-up request has been submitted successfully.",
+  "deposit.topUpSuccess": "Your request has been submitted successfully.",
+  "deposit.uploadSuccessMessage": "Receipt uploaded successfully.",
   "deposit.insufficientBalanceStock":
     "Insufficient balance. Available: {amount}",
   "deposit.availableBalanceStock": "Your available balance",
+  "deposit.proofOfPayment": "Proof of Payment",
+  "deposit.uploadProofOfPayment": "Upload Proof of Payment",
   "deposit.proofOfPaymentTitle": "Proof of Receipt / Payment",
   "deposit.proofOfPaymentSubtitle":
     "Upload your proof of receipt or proof of payment to proceed. This is required to submit your request.",
@@ -769,6 +787,7 @@ const en: TranslationMap = {
   "history.amount": "AMOUNT",
   "history.type": "Type",
   "history.description": "Description",
+  "history.date": "Date",
   "history.dateTime": "Date & Time",
   "history.selectAll": "Select All",
   "history.deselectAll": "Deselect All",
@@ -1591,13 +1610,13 @@ const ko: TranslationMap = {
     "아직 패스코드를 설정하지 않으셨습니다. 이메일과 비밀번호로 로그인한 후 설정에서 패스코드를 설정할 수 있습니다.",
   "auth.passwordUpdateRequired": "비밀번호 업데이트 필요",
   "auth.passwordUpdateMessage":
-    '보안을 위해 계정({email})의 비밀번호 업데이트가 필요합니다.\n\n새 비밀번호를 설정할 수 있는 보안 링크를 받으려면 "이메일 보내기"를 탭하세요.',
+    '보안을 위해 계정({email})의 비밀번호 업데이트가 필요합니다.새 비밀번호를 설정할 수 있는 보안 링크를 받으려면 "이메일 보내기"를 탭하세요.',
   "auth.sendResetEmail": "이메일 보내기",
   "auth.sendingEmail": "이메일 전송 중",
   "auth.sendingEmailMessage": "{email}(으)로 비밀번호 재설정 링크 전송 중…",
   "auth.emailSentTitle": "이메일 전송 완료!",
   "auth.emailSentMessage":
-    "{email}로 등록된 계정이 있다면 비밀번호 재설정 링크가 전송되었습니다.\n\n받은편지함(및 스팸 폴더)을 확인하고 링크를 따라 새 비밀번호를 설정한 후 다시 로그인해 주세요.",
+    "{email}로 등록된 계정이 있다면 비밀번호 재설정 링크가 전송되었습니다.받은편지함(및 스팸 폴더)을 확인하고 링크를 따라 새 비밀번호를 설정한 후 다시 로그인해 주세요.",
   "auth.backToLogin": "로그인으로 돌아가기",
   "auth.couldNotSendEmail": "이메일 전송 실패",
   "auth.tryAgain": "다시 시도",
@@ -2242,6 +2261,7 @@ const ko: TranslationMap = {
   "history.amount": "금액",
   "history.type": "유형",
   "history.description": "상세",
+  "history.date": "날짜",
   "history.dateTime": "날짜 및 시간",
   "history.selectAll": "전체 선택",
   "history.deselectAll": "전체 선택 해제",
@@ -3018,13 +3038,13 @@ const ja: TranslationMap = {
     "パスコードをまだ設定していません。メールとパスワードでログイン後、設定でパスコードを設定できます。",
   "auth.passwordUpdateRequired": "パスワードの更新が必要です",
   "auth.passwordUpdateMessage":
-    "セキュリティのため、アカウント({email})のパスワード更新が必要です。\n\n新しいパスワードを設定するためのリンクを受け取るには「リセットメールを送信」をタップしてください。",
+    "セキュリティのため、アカウント({email})のパスワード更新が必要です。新しいパスワードを設定するためのリンクを受け取るには「リセットメールを送信」をタップしてください。",
   "auth.sendResetEmail": "リセットメールを送信",
   "auth.sendingEmail": "メール送信中",
   "auth.sendingEmailMessage": "{email}へパスワードリセットリンクを送信中…",
   "auth.emailSentTitle": "メール送信完了！",
   "auth.emailSentMessage":
-    "{email}のアカウントが存在する場合、パスワードリセットリンクが送信されました。\n\n受信トレイ（およびスパムフォルダ）を確認し、リンクに従って新しいパスワードを設定してから再度ログインしてください。",
+    "{email}のアカウントが存在する場合、パスワードリセットリンクが送信されました。受信トレイ（およびスパムフォルダ）を確認し、リンクに従って新しいパスワードを設定してから再度ログインしてください。",
   "auth.backToLogin": "ログインに戻る",
   "auth.couldNotSendEmail": "メール送信に失敗しました",
   "auth.tryAgain": "再試行",
@@ -3606,6 +3626,7 @@ const ja: TranslationMap = {
   "history.amount": "金額",
   "history.type": "タイプ",
   "history.description": "説明",
+  "history.date": "日付",
   "history.dateTime": "日時",
   "history.selectAll": "すべて選択",
   "history.deselectAll": "選択解除",
@@ -4442,14 +4463,14 @@ const ar: TranslationMap = {
     "لم تقم بتعيين رمز المرور بعد. سجل الدخول بالبريد الإلكتروني وكلمة المرور، ثم يمكنك تعيين رمز المرور في الإعدادات.",
   "auth.passwordUpdateRequired": "مطلوب تحديث كلمة المرور",
   "auth.passwordUpdateMessage":
-    'يتطلب حسابك ({email}) تحديث كلمة المرور لأسباب أمنية.\n\nاضغط على "إرسال بريد إعادة التعيين" لتلقي رابط آمن في بريدك الوارد.',
+    'يتطلب حسابك ({email}) تحديث كلمة المرور لأسباب أمنية.اضغط على "إرسال بريد إعادة التعيين" لتلقي رابط آمن في بريدك الوارد.',
   "auth.sendResetEmail": "إرسال بريد إعادة التعيين",
   "auth.sendingEmail": "جاري إرسال البريد",
   "auth.sendingEmailMessage":
     "جاري إرسال رابط إعادة تعيين كلمة المرور إلى {email}…",
   "auth.emailSentTitle": "تم إرسال البريد!",
   "auth.emailSentMessage":
-    "إذا كان هناك حساب لـ {email}، تم إرسال رابط إعادة تعيين كلمة المرور.\n\nتحقق من بريدك الوارد (ومجلد البريد العشوائي)، واتبع الرابط لتعيين كلمة مرور جديدة ثم سجل الدخول مرة أخرى.",
+    "إذا كان هناك حساب لـ {email}، تم إرسال رابط إعادة تعيين كلمة المرور.تحقق من بريدك الوارد (ومجلد البريد العشوائي)، واتبع الرابط لتعيين كلمة مرور جديدة ثم سجل الدخول مرة أخرى.",
   "auth.backToLogin": "العودة لتسجيل الدخول",
   "auth.couldNotSendEmail": "تعذر إرسال البريد",
   "auth.tryAgain": "حاول مرة أخرى",
@@ -4998,6 +5019,7 @@ const ar: TranslationMap = {
   "history.amount": "المبلغ",
   "history.type": "النوع",
   "history.description": "الوصف",
+  "history.date": "التاريخ",
   "history.dateTime": "التاريخ والوقت",
   "history.selectAll": "تحديد الكل",
   "history.deselectAll": "إلغاء تحديد الكل",
