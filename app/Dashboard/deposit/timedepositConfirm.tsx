@@ -3,7 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   Alert,
   Image,
@@ -16,9 +16,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
-  getOrCreateMainWallet,
-  submitTimeDepositRequest,
-  uploadTimeDepositReceiptFile,
+  uploadTimeDepositReceiptFile
 } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
 

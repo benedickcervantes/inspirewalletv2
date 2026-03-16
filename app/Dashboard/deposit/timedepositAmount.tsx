@@ -15,8 +15,8 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   calculateExchange,
-  submitTimeDepositRequest,
   getOrCreateMainWallet,
+  submitTimeDepositRequest,
 } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
 
