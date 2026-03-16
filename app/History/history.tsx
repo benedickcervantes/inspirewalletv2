@@ -3,7 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
-import { useCallback, useEffect, useState, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Modal,
@@ -1107,7 +1107,7 @@ export default function HistoryScreen() {
                 onPress={() => setShowDetailModal(false)}
                 activeOpacity={0.8}
               >
-                <Text style={styles.detailModalCloseButtonText}>{t("common.close")}</Text>
+                <Text style={styles.detailModalCloseButtonText}>{t("Close")}</Text>
               </TouchableOpacity>
             </ScrollView>
           </View>
