@@ -34,14 +34,17 @@ export default function KYCcompany() {
   const [commercialRegister, setCommercialRegister] = useState<string | null>(
     null,
   );
+  const [commercialRegisterMime, setCommercialRegisterMime] = useState<string | null>(null);
   const [commercialRegisterName, setCommercialRegisterName] = useState<
     string | null
   >(null);
   const [bankStatement, setBankStatement] = useState<string | null>(null);
+  const [bankStatementMime, setBankStatementMime] = useState<string | null>(null);
   const [bankStatementName, setBankStatementName] = useState<string | null>(
     null,
   );
   const [proofOfBilling, setProofOfBilling] = useState<string | null>(null);
+  const [proofOfBillingMime, setProofOfBillingMime] = useState<string | null>(null);
   const [proofOfBillingName, setProofOfBillingName] = useState<string | null>(
     null,
   );
@@ -51,6 +54,7 @@ export default function KYCcompany() {
   const pickDocument = async (
     setUri: (uri: string | null) => void,
     setName: (name: string | null) => void,
+    setMime: (mime: string | null) => void,
     label: string,
   ) => {
     try {
@@ -63,20 +67,27 @@ export default function KYCcompany() {
         const asset = result.assets[0];
         const mimeType = asset.mimeType ?? "";
         const fileName = asset.name ?? asset.uri.split("/").pop() ?? "";
-        const isPdf =
+        const lower = fileName.toLowerCase();
+        const isSupported =
           mimeType === "application/pdf" ||
-          fileName.toLowerCase().endsWith(".pdf");
+          mimeType === "application/msword" ||
+          mimeType ===
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+          lower.endsWith(".pdf") ||
+          lower.endsWith(".doc") ||
+          lower.endsWith(".docx");
 
-        if (!isPdf) {
+        if (!isSupported) {
           Alert.alert(
             "Invalid File",
-            `Only PDF files are accepted for ${label}. Please select a .pdf file.`,
+            `Only PDF or Word documents are accepted for ${label}. Please select a .pdf, .doc, or .docx file.`,
           );
           return;
         }
 
         setUri(asset.uri);
         setName(fileName);
+        setMime(mimeType || null);
       }
     } catch (error) {
       console.error("Error picking document:", error);
@@ -84,12 +95,16 @@ export default function KYCcompany() {
     }
   };
 
-  const toPdfDataUrl = async (uri: string): Promise<string> => {
+  const toFileDataUrl = async (uri: string, mimeType: string): Promise<string> => {
     const base64 = await FileSystem.readAsStringAsync(uri, {
       // Use literal encoding string to avoid depending on platform-specific enums
       encoding: "base64" as any,
     });
-    return `data:application/pdf;base64,${base64}`;
+    const safeMime =
+      mimeType && typeof mimeType === "string"
+        ? mimeType
+        : "application/octet-stream";
+    return `data:${safeMime};base64,${base64}`;
   };
 
   const handleSave = async () => {
@@ -111,9 +126,18 @@ export default function KYCcompany() {
 
       const [commercialRegisterData, bankStatementData, proofOfBillingData] =
         await Promise.all([
-          toPdfDataUrl(commercialRegister),
-          toPdfDataUrl(bankStatement),
-          toPdfDataUrl(proofOfBilling),
+          toFileDataUrl(
+            commercialRegister,
+            commercialRegisterMime || "application/pdf",
+          ),
+          toFileDataUrl(
+            bankStatement,
+            bankStatementMime || "application/pdf",
+          ),
+          toFileDataUrl(
+            proofOfBilling,
+            proofOfBillingMime || "application/pdf",
+          ),
         ]);
 
       const { success, error } = await submitCompanyKyc(token, {
@@ -164,6 +188,7 @@ export default function KYCcompany() {
       name: commercialRegisterName,
       setUri: setCommercialRegister,
       setName: setCommercialRegisterName,
+      setMime: setCommercialRegisterMime,
     },
     {
       label: "Bank Statement",
@@ -171,6 +196,7 @@ export default function KYCcompany() {
       name: bankStatementName,
       setUri: setBankStatement,
       setName: setBankStatementName,
+      setMime: setBankStatementMime,
     },
     {
       label: "Proof of Billing",
@@ -178,6 +204,7 @@ export default function KYCcompany() {
       name: proofOfBillingName,
       setUri: setProofOfBilling,
       setName: setProofOfBillingName,
+      setMime: setProofOfBillingMime,
     },
   ];
 
@@ -269,7 +296,7 @@ export default function KYCcompany() {
                 <TouchableOpacity
                   style={styles.docRow}
                   onPress={() =>
-                    pickDocument(doc.setUri, doc.setName, doc.label)
+                    pickDocument(doc.setUri, doc.setName, doc.setMime, doc.label)
                   }
                   activeOpacity={0.7}
                 >
