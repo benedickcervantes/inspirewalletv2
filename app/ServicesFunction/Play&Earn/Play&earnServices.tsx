@@ -18,6 +18,9 @@ import {
 } from "react-native";
 import { useLanguage } from "../../../context/LanguageContext";
 import { isServiceUnderMaintenance } from "../../../lib/maintenance";
+import CryptoPriceChart from "./CryptoPriceChart";
+import { CHART_COLORS } from "./CryptoPriceChart";
+import { COIN_IDS, fetchCoinGeckoMarketChart } from "./coingecko";
 
 const THEME_COLOR = "#E15816";
 const ORANGE_GRADIENT: readonly [string, string] = ["#E15816", "#FF7E47"];
@@ -184,6 +187,12 @@ export default function PlayEarnServices() {
   const [checkingMaintenance, setCheckingMaintenance] = useState(true);
   const [isLoadingBalance, setIsLoadingBalance] = useState(false);
 
+  // Graph: filter (null = show all), modal, chart data from CoinGecko
+  const [graphFilter, setGraphFilter] = useState<"BTC" | "ETH" | "USDT" | null>("BTC");
+  const [graphModalVisible, setGraphModalVisible] = useState(false);
+  const [chartData, setChartData] = useState<Record<string, [number, number][]>>({});
+  const [chartLoading, setChartLoading] = useState(false);
+
   // Price States
   const [cryptoPrices, setCryptoPrices] = useState<Record<string, string>>({
     BTC: MOCK_DATA.price,
@@ -331,6 +340,37 @@ export default function PlayEarnServices() {
     }, [selectedAsset, selectedTimeRange, selectedForexTimeRange])
   );
 
+  // Fetch CoinGecko chart data for graph
+  useFocusEffect(
+    useCallback(() => {
+      const days = selectedTimeRange === "7d" ? 7 : 1;
+      const ids = graphFilter ? [graphFilter] : (["BTC", "ETH", "USDT"] as const);
+      const fetchChart = async () => {
+        setChartLoading(true);
+        try {
+          const results = await Promise.all(
+            ids.map(async (id) => {
+              const coinId = COIN_IDS[id];
+              const res = coinId ? await fetchCoinGeckoMarketChart(coinId, days, "php") : null;
+              const prices = res?.prices ?? [];
+              return { id, prices };
+            })
+          );
+          const next: Record<string, [number, number][]> = {};
+          results.forEach(({ id, prices }) => {
+            next[id] = prices;
+          });
+          setChartData(next);
+        } catch (e) {
+          console.error("[Chart] CoinGecko fetch error:", e);
+        } finally {
+          setChartLoading(false);
+        }
+      };
+      fetchChart();
+    }, [graphFilter, selectedTimeRange])
+  );
+
   useEffect(() => {
     const backAction = () => {
       navigation.navigate("Main");
@@ -414,7 +454,7 @@ export default function PlayEarnServices() {
             <BalanceCard balance={availableBalance} label={t("playEarn.availableBalance")} />
           </View>
 
-          {/* Asset Cards Row - CRYPTO & FOREX */}
+          {/* Asset Cards Row - CRYPTO & FOREX (below available balance) */}
           <View style={styles.assetCardsRow}>
             <View style={[styles.assetCard, isXSScreen && styles.cardCompact]}>
               <View style={styles.assetCardHeader}>
@@ -469,7 +509,66 @@ export default function PlayEarnServices() {
             </View>
           </View>
 
-          {/* ALL CRYPTO Section */}
+          {/* Price Graph - below crypto & forex cards */}
+          <View style={styles.graphSection}>
+            <View style={styles.graphHeaderRow}>
+              <View style={styles.timeRangeFilters}>
+                {TIME_RANGES.map((range) => (
+                  <TouchableOpacity
+                    key={range}
+                    style={[
+                      styles.rangeFilterBtn,
+                      selectedTimeRange === range && styles.rangeFilterBtnActive,
+                    ]}
+                    onPress={() => setSelectedTimeRange(range)}
+                  >
+                    <Text
+                      style={[
+                        styles.rangeFilterText,
+                        selectedTimeRange === range && styles.rangeFilterTextActive,
+                      ]}
+                    >
+                      {range}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+              {graphFilter !== null && (
+                <TouchableOpacity
+                  style={styles.clearFilterBtn}
+                  onPress={() => {
+                    setGraphFilter(null);
+                    setSelectedAsset(null);
+                  }}
+                >
+                  <Text style={styles.clearFilterText}>Clear filter</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+            <CryptoPriceChart
+              series={(["BTC", "ETH", "USDT"] as const).map((id) => ({
+                id,
+                label: id,
+                color: CHART_COLORS[id] ?? "#666",
+                data: (chartData[id] ?? []).map(([t, v]) => ({ t, v })),
+              }))}
+              visibleIds={graphFilter ? [graphFilter] : ["BTC", "ETH", "USDT"]}
+              selectedPrice={
+                chartLoading
+                  ? null
+                  : (() => {
+                      const vid = graphFilter ?? "BTC";
+                      const raw = cryptoPricesRaw[vid];
+                      return raw != null && raw > 0 ? `₱ ${formatCurrency(raw)}` : null;
+                    })()
+              }
+              isLoading={chartLoading}
+              compact={true}
+              onPress={() => setGraphModalVisible(true)}
+            />
+          </View>
+
+          {/* ALL CRYPTO Section - time range is in graph above */}
           <View style={styles.allCryptoHeader}>
             <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
               <Text style={styles.allCryptoTitle}>ALL CRYPTO</Text>
@@ -494,27 +593,6 @@ export default function PlayEarnServices() {
                 </TouchableOpacity>
               </View>
             </View>
-            <View style={styles.timeRangeFilters}>
-              {TIME_RANGES.map((range) => (
-                <TouchableOpacity
-                  key={range}
-                  style={[
-                    styles.rangeFilterBtn,
-                    selectedTimeRange === range && styles.rangeFilterBtnActive,
-                  ]}
-                  onPress={() => setSelectedTimeRange(range)}
-                >
-                  <Text
-                    style={[
-                      styles.rangeFilterText,
-                      selectedTimeRange === range && styles.rangeFilterTextActive,
-                    ]}
-                  >
-                    {range}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
           </View>
 
           {/* Crypto Grid */}
@@ -522,7 +600,10 @@ export default function PlayEarnServices() {
             {CRYPTO_ASSETS.map((asset) => (
               <TouchableOpacity
                 key={asset.id}
-                onPress={() => setSelectedAsset({ id: asset.id, fullName: asset.id === "BTC" ? "Bitcoin" : asset.id === "ETH" ? "Ethereum" : "Tether", type: 'crypto' })}
+                onPress={() => {
+                  setSelectedAsset({ id: asset.id, fullName: asset.id === "BTC" ? "Bitcoin" : asset.id === "ETH" ? "Ethereum" : "Tether", type: "crypto" });
+                  setGraphFilter(asset.id as "BTC" | "ETH" | "USDT");
+                }}
                 activeOpacity={0.7}
                 style={{ width: "48%" }}
               >
@@ -621,6 +702,95 @@ export default function PlayEarnServices() {
           <View style={styles.bottomSpacing} />
         </ScrollView>
       </SafeAreaView>
+
+      {/* Graph fullscreen modal - enhanced */}
+      <Modal
+        visible={graphModalVisible}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={() => setGraphModalVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.graphModalOverlay}
+          activeOpacity={1}
+          onPress={() => setGraphModalVisible(false)}
+        >
+          <SafeAreaView style={styles.graphModalSafe} pointerEvents="box-none">
+            <TouchableOpacity
+              style={styles.graphModalCard}
+              activeOpacity={1}
+              onPress={(e) => e.stopPropagation()}
+            >
+              <View style={styles.graphModalHeader}>
+                <Text style={styles.graphModalTitle}>Price chart</Text>
+                <TouchableOpacity
+                  onPress={() => setGraphModalVisible(false)}
+                  style={styles.graphModalCloseBtn}
+                  hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                >
+                  <Ionicons name="close" size={26} color="#1F2937" />
+                </TouchableOpacity>
+              </View>
+              <ScrollView
+                style={styles.graphModalScroll}
+                contentContainerStyle={styles.graphModalScrollContent}
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+              >
+                <View style={styles.graphModalTimeRow}>
+                  {TIME_RANGES.map((range) => (
+                    <TouchableOpacity
+                      key={range}
+                      style={[
+                        styles.graphModalRangeBtn,
+                        selectedTimeRange === range && styles.graphModalRangeBtnActive,
+                      ]}
+                      onPress={() => setSelectedTimeRange(range)}
+                    >
+                      <Text
+                        style={[
+                          styles.graphModalRangeText,
+                          selectedTimeRange === range && styles.graphModalRangeTextActive,
+                        ]}
+                      >
+                        {range}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+                <View style={styles.graphModalValueWrap}>
+                  <Text style={styles.graphModalValueLabel}>PRICE GRAPH</Text>
+                  <Text style={styles.graphModalValue} numberOfLines={1}>
+                    {chartLoading
+                      ? "Loading..."
+                      : (() => {
+                          const vid = graphFilter ?? "BTC";
+                          const raw = cryptoPricesRaw[vid];
+                          return raw != null && raw > 0 ? `₱ ${formatCurrency(raw)}` : "—";
+                        })()}
+                  </Text>
+                </View>
+                <View style={styles.graphModalChartWrap}>
+                  <CryptoPriceChart
+                    series={(["BTC", "ETH", "USDT"] as const).map((id) => ({
+                      id,
+                      label: id,
+                      color: CHART_COLORS[id] ?? "#666",
+                      data: (chartData[id] ?? []).map(([t, v]) => ({ t, v })),
+                    }))}
+                    visibleIds={graphFilter ? [graphFilter] : ["BTC", "ETH", "USDT"]}
+                    selectedPrice={null}
+                    isLoading={chartLoading}
+                    compact={false}
+                    showHeader={false}
+                  />
+                </View>
+                <Text style={styles.graphModalHint}>Tap outside to close</Text>
+              </ScrollView>
+            </TouchableOpacity>
+          </SafeAreaView>
+        </TouchableOpacity>
+      </Modal>
 
       {/* Trade Modal */}
       <Modal
@@ -1191,5 +1361,128 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "600",
     color: "#6B7280",
+  },
+  graphSection: {
+    marginBottom: 8,
+  },
+  graphHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 8,
+    paddingHorizontal: 0,
+  },
+  clearFilterBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    backgroundColor: "#F3F4F6",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+  },
+  clearFilterText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: THEME_COLOR,
+  },
+  graphModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.55)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 16,
+  },
+  graphModalSafe: {
+    flex: 1,
+    width: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  graphModalCard: {
+    width: "100%",
+    maxWidth: 480,
+    maxHeight: "90%",
+    backgroundColor: "#FFF",
+    borderRadius: 20,
+    padding: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 24,
+    elevation: 12,
+    overflow: "hidden",
+  },
+  graphModalHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 16,
+  },
+  graphModalTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: PREMIUM_DARK,
+  },
+  graphModalCloseBtn: {
+    padding: 8,
+    borderRadius: 12,
+    backgroundColor: "#F3F4F6",
+  },
+  graphModalTimeRow: {
+    flexDirection: "row",
+    gap: 8,
+    marginBottom: 12,
+  },
+  graphModalRangeBtn: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 10,
+    backgroundColor: "#F3F4F6",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+  },
+  graphModalRangeBtnActive: {
+    backgroundColor: THEME_COLOR,
+    borderColor: THEME_COLOR,
+  },
+  graphModalRangeText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#6B7280",
+  },
+  graphModalRangeTextActive: {
+    color: "#FFF",
+  },
+  graphModalValueWrap: {
+    marginBottom: 12,
+  },
+  graphModalValueLabel: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#71717A",
+    letterSpacing: 0.5,
+    marginBottom: 4,
+  },
+  graphModalValue: {
+    fontSize: 24,
+    fontWeight: "800",
+    color: PREMIUM_DARK,
+    letterSpacing: -0.5,
+  },
+  graphModalChartWrap: {
+    minHeight: 280,
+    marginBottom: 12,
+  },
+  graphModalScroll: {
+    flexGrow: 0,
+    maxHeight: 520,
+  },
+  graphModalScrollContent: {
+    paddingBottom: 8,
+  },
+  graphModalHint: {
+    fontSize: 12,
+    color: "#9CA3AF",
+    textAlign: "center",
   },
 });
