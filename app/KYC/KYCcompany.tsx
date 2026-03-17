@@ -2,6 +2,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import * as DocumentPicker from "expo-document-picker";
 import { LinearGradient } from "expo-linear-gradient";
+import * as FileSystem from "expo-file-system/legacy";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useState } from "react";
 import {
   Alert,
@@ -18,6 +20,7 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { useLanguage } from "../../context/LanguageContext";
+import { submitCompanyKyc } from "../../configs/api";
 
 const THEME_COLOR = "#E15816";
 
@@ -43,6 +46,7 @@ export default function KYCcompany() {
     null,
   );
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const pickDocument = async (
     setUri: (uri: string | null) => void,
@@ -80,7 +84,15 @@ export default function KYCcompany() {
     }
   };
 
-  const handleSave = () => {
+  const toPdfDataUrl = async (uri: string): Promise<string> => {
+    const base64 = await FileSystem.readAsStringAsync(uri, {
+      // Use literal encoding string to avoid depending on platform-specific enums
+      encoding: "base64" as any,
+    });
+    return `data:application/pdf;base64,${base64}`;
+  };
+
+  const handleSave = async () => {
     if (!companyName.trim()) {
       Alert.alert("Validation", "Please enter your company name.");
       return;
@@ -89,8 +101,45 @@ export default function KYCcompany() {
       Alert.alert("Validation", "Please upload all required documents.");
       return;
     }
-    // TODO: Save documents to backend
-    setShowSuccessModal(true);
+    try {
+      setSubmitting(true);
+      const token = await AsyncStorage.getItem("access_token");
+      if (!token) {
+        Alert.alert("Error", "You must be logged in to submit company KYC.");
+        return;
+      }
+
+      const [commercialRegisterData, bankStatementData, proofOfBillingData] =
+        await Promise.all([
+          toPdfDataUrl(commercialRegister),
+          toPdfDataUrl(bankStatement),
+          toPdfDataUrl(proofOfBilling),
+        ]);
+
+      const { success, error } = await submitCompanyKyc(token, {
+        companyName: companyName.trim(),
+        documents: {
+          commercialRegister: commercialRegisterData,
+          bankStatement: bankStatementData,
+          proofOfBilling: proofOfBillingData,
+        },
+      });
+
+      if (!success) {
+        Alert.alert("Error", error || "Failed to submit company KYC.");
+        return;
+      }
+
+      setShowSuccessModal(true);
+    } catch (e: any) {
+      console.error("Error submitting company KYC:", e);
+      Alert.alert(
+        "Error",
+        e?.message || "Failed to submit company KYC. Please try again.",
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleSuccessClose = () => {
@@ -272,11 +321,11 @@ export default function KYCcompany() {
           <TouchableOpacity
             style={[
               styles.saveButtonWrapper,
-              !isFormComplete && styles.saveButtonDisabled,
+              (!isFormComplete || submitting) && styles.saveButtonDisabled,
             ]}
             onPress={handleSave}
-            activeOpacity={isFormComplete ? 0.9 : 1}
-            disabled={!isFormComplete}
+            activeOpacity={isFormComplete && !submitting ? 0.9 : 1}
+            disabled={!isFormComplete || submitting}
           >
             <LinearGradient
               colors={
@@ -286,7 +335,9 @@ export default function KYCcompany() {
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
             >
-              <Text style={styles.saveButtonText}>Save</Text>
+              <Text style={styles.saveButtonText}>
+                {submitting ? "Submitting..." : "Save"}
+              </Text>
             </LinearGradient>
           </TouchableOpacity>
         </View>
