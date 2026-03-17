@@ -262,6 +262,19 @@ export default function Register() {
     "referral" | "line" | "viber" | "whatsapp" | null
   >(null);
   const [permission, requestPermission] = useCameraPermissions();
+  const clearMessagingContactErrors = () => {
+    if (errors.lineContact || errors.viberContact || errors.whatsappContact) {
+      setErrors((prev) => {
+        const {
+          lineContact: _lineContact,
+          viberContact: _viberContact,
+          whatsappContact: _whatsappContact,
+          ...rest
+        } = prev;
+        return rest;
+      });
+    }
+  };
 
   const handleNextStep = () => {
     if (isProcessingQR) return;
@@ -300,6 +313,14 @@ export default function Register() {
       setErrors({});
       setCurrentStep(2);
     } else if (currentStep === 2) {
+      const hasAtLeastOneMessagingContact =
+        lineContact.trim() || viberContact.trim() || whatsappContact.trim();
+      if (!hasAtLeastOneMessagingContact) {
+        const requiredContactError = t("register.errorAtLeastOneMessagingContact");
+        newErrors.lineContact = requiredContactError;
+        newErrors.viberContact = requiredContactError;
+        newErrors.whatsappContact = requiredContactError;
+      }
       if (lineContact.trim() && !isProbablyLink(lineContact)) {
         newErrors.lineContact = "Please enter a valid link.";
       }
@@ -1143,12 +1164,7 @@ export default function Register() {
                           value={lineContact}
                           onChangeText={(text) => {
                             setLineContact(text);
-                            if (errors.lineContact) {
-                              setErrors((prev) => {
-                                const { lineContact, ...rest } = prev;
-                                return rest;
-                              });
-                            }
+                            clearMessagingContactErrors();
                           }}
                           autoCapitalize="none"
                           keyboardType="url"
@@ -1218,12 +1234,7 @@ export default function Register() {
                           value={viberContact}
                           onChangeText={(text) => {
                             setViberContact(text);
-                            if (errors.viberContact) {
-                              setErrors((prev) => {
-                                const { viberContact, ...rest } = prev;
-                                return rest;
-                              });
-                            }
+                            clearMessagingContactErrors();
                           }}
                           autoCapitalize="none"
                           keyboardType="url"
@@ -1295,12 +1306,7 @@ export default function Register() {
                           value={whatsappContact}
                           onChangeText={(text) => {
                             setWhatsappContact(text);
-                            if (errors.whatsappContact) {
-                              setErrors((prev) => {
-                                const { whatsappContact, ...rest } = prev;
-                                return rest;
-                              });
-                            }
+                            clearMessagingContactErrors();
                           }}
                           autoCapitalize="none"
                           keyboardType="url"

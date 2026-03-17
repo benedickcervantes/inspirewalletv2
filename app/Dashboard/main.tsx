@@ -247,10 +247,19 @@ export default function Dashboard() {
   >(null);
   const [showBankingServiceLockedModal, setShowBankingServiceLockedModal] =
     useState(false);
+  const [showKycLockedModal, setShowKycLockedModal] = useState(false);
   const [activeCardDesign, setActiveCardDesign] = useState<string | null>(null);
 
   const BANKING_SERVICE_MIN_BALANCE = 200_000;
   const isBankingServiceLocked = timeDeposit < BANKING_SERVICE_MIN_BALANCE;
+  const userRole = String(userData?.role ?? "").toUpperCase();
+  const kycAccountStatus = String(userData?.kycAccountStatus ?? "").toUpperCase();
+  const kycStatus = String(userData?.kycStatus ?? "").toUpperCase();
+  const isKycVerified =
+    kycAccountStatus === "VERIFIED" ||
+    kycStatus === "APPROVED" ||
+    kycStatus === "VERIFIED";
+  const isKycRestrictedUser = userRole === "USER" && !isKycVerified;
 
   const getActiveCardStorageKey = (accountNumber?: string) =>
     accountNumber
@@ -306,10 +315,12 @@ export default function Dashboard() {
           user = null;
         }
       }
-      if (!user?.firstName) {
-        const meRes = await getMe(accessToken);
-        if (meRes.success && meRes.user)
-          user = meRes.user as Record<string, unknown>;
+      const meRes = await getMe(accessToken);
+      if (meRes.success && meRes.user) {
+        user = {
+          ...(user ?? {}),
+          ...(meRes.user as Record<string, unknown>),
+        };
       }
       if (user) {
         setUserData({
@@ -318,6 +329,8 @@ export default function Dashboard() {
           email: user.email,
           accountNumber: user.accountNumber,
           role: (user as Record<string, unknown>).role ?? 'USER',
+          kycAccountStatus: (user as Record<string, unknown>).kycAccountStatus,
+          kycStatus: (user as Record<string, unknown>).kycStatus,
         });
 
         // Load cached active card design once we know the account number
@@ -475,6 +488,19 @@ export default function Dashboard() {
   const refetchJwtData = useCallback(async () => {
     const accessToken = await AsyncStorage.getItem("access_token");
     if (!accessToken) return;
+    const meRes = await getMe(accessToken);
+    if (meRes.success && meRes.user) {
+      const user = meRes.user as Record<string, unknown>;
+      setUserData({
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        accountNumber: user.accountNumber,
+        role: (user as Record<string, unknown>).role ?? "USER",
+        kycAccountStatus: (user as Record<string, unknown>).kycAccountStatus,
+        kycStatus: (user as Record<string, unknown>).kycStatus,
+      });
+    }
     const { success: walletSuccess, wallet } =
       await getOrCreateMainWallet(accessToken);
     const w = wallet as RawApiWallet | undefined;
@@ -801,6 +827,59 @@ export default function Dashboard() {
         </View>
       </Modal>
       <Modal
+        visible={showKycLockedModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowKycLockedModal(false)}
+      >
+        <View style={styles.maintenanceModalOverlay}>
+          <View style={styles.bankingLockModalContent}>
+            <View style={styles.bankingLockHeader}>
+              <View style={styles.bankingLockIconCircle}>
+                <MaterialCommunityIcons
+                  name="shield-alert"
+                  size={22}
+                  color="#FFFFFF"
+                />
+              </View>
+              <Text style={styles.bankingLockTitle}>
+                {t("dashboard.kycLockedTitle")}
+              </Text>
+            </View>
+            <View style={styles.bankingLockRequirementBox}>
+              <Text style={styles.bankingLockRequirementLabel}>
+                {t("dashboard.kycLockedRequirement")}
+              </Text>
+              <Text style={styles.bankingLockRequirementValue}>
+                {t("dashboard.kycLockedRequirementValue")}
+              </Text>
+            </View>
+            <Text style={styles.bankingLockMessage}>
+              {t("dashboard.kycLockedMessage")}
+            </Text>
+            <TouchableOpacity
+              style={styles.kycVerifyModalButton}
+              onPress={() => {
+                setShowKycLockedModal(false);
+                (navigation as { navigate: (name: string) => void }).navigate(
+                  "KYCVerification",
+                );
+              }}
+            >
+              <Text style={styles.kycVerifyModalButtonText}>
+                {t("profile.verify")}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.maintenanceModalButton}
+              onPress={() => setShowKycLockedModal(false)}
+            >
+              <Text style={styles.maintenanceModalButtonText}>{t("dashboard.gotIt")}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+      <Modal
         visible={showFirstTimeLanguageModal}
         transparent
         animationType="fade"
@@ -932,6 +1011,8 @@ export default function Dashboard() {
               flipAnimation={flipAnimation}
               isCardFlipped={isCardFlipped}
               flipCard={flipCard}
+              isWithdrawalLocked={isKycRestrictedUser}
+              onWithdrawalLockedPress={() => setShowKycLockedModal(true)}
             />
           )}
           {activeTab === "Cards" && (
@@ -946,6 +1027,8 @@ export default function Dashboard() {
               initialDesign={activeCardDesign}
               onActiveDesignChange={setActiveCardDesign}
               onRefresh={refetchJwtData}
+              isBuyingCardsLocked={isKycRestrictedUser}
+              onBuyingCardsLockedPress={() => setShowKycLockedModal(true)}
             />
           )}
           {activeTab === "Investment" && (
@@ -975,17 +1058,25 @@ export default function Dashboard() {
               <TouchableOpacity
                 style={[
                   styles.quickActionButton,
+                  isKycRestrictedUser && styles.quickActionButtonLocked,
                   {
                     paddingVertical: Math.round(14 * qaSpacing),
                     paddingHorizontal: Math.round(6 * qaSpacing),
                     minWidth: 0,
                   },
                 ]}
-                onPress={() => navigation.navigate("Transfer")}
+                onPress={() => {
+                  if (isKycRestrictedUser) {
+                    setShowKycLockedModal(true);
+                  } else {
+                    navigation.navigate("Transfer");
+                  }
+                }}
               >
                 <View
                   style={[
                     styles.quickActionIcon,
+                    isKycRestrictedUser && styles.quickActionIconLocked,
                     {
                       width: Math.round(48 * qaSpacing),
                       height: Math.round(48 * qaSpacing),
@@ -996,11 +1087,24 @@ export default function Dashboard() {
                   <MaterialCommunityIcons
                     name="swap-horizontal"
                     size={qaIconSize}
-                    color="#E15816"
+                    color={isKycRestrictedUser ? "#CCCCCC" : "#E15816"}
                   />
+                  {isKycRestrictedUser && (
+                    <View style={styles.quickActionLockBadge}>
+                      <MaterialCommunityIcons
+                        name="lock"
+                        size={13}
+                        color="#FFFFFF"
+                      />
+                    </View>
+                  )}
                 </View>
                 <Text
-                  style={[styles.quickActionLabel, { fontSize: qaLabelSize }]}
+                  style={[
+                    styles.quickActionLabel,
+                    { fontSize: qaLabelSize },
+                    isKycRestrictedUser && styles.quickActionLabelLocked,
+                  ]}
                   numberOfLines={2}
                 >
                   {t("dashboard.transfer")}
@@ -1067,17 +1171,25 @@ export default function Dashboard() {
               <TouchableOpacity
                 style={[
                   styles.quickActionButton,
+                  isKycRestrictedUser && styles.quickActionButtonLocked,
                   {
                     paddingVertical: Math.round(14 * qaSpacing),
                     paddingHorizontal: Math.round(6 * qaSpacing),
                     minWidth: 0,
                   },
                 ]}
-                onPress={() => navigation.navigate("Travel")}
+                onPress={() => {
+                  if (isKycRestrictedUser) {
+                    setShowKycLockedModal(true);
+                  } else {
+                    navigation.navigate("Travel");
+                  }
+                }}
               >
                 <View
                   style={[
                     styles.quickActionIcon,
+                    isKycRestrictedUser && styles.quickActionIconLocked,
                     {
                       width: Math.round(48 * qaSpacing),
                       height: Math.round(48 * qaSpacing),
@@ -1088,11 +1200,24 @@ export default function Dashboard() {
                   <MaterialCommunityIcons
                     name="airplane"
                     size={qaIconSize}
-                    color="#E15816"
+                    color={isKycRestrictedUser ? "#CCCCCC" : "#E15816"}
                   />
+                  {isKycRestrictedUser && (
+                    <View style={styles.quickActionLockBadge}>
+                      <MaterialCommunityIcons
+                        name="lock"
+                        size={13}
+                        color="#FFFFFF"
+                      />
+                    </View>
+                  )}
                 </View>
                 <Text
-                  style={[styles.quickActionLabel, { fontSize: qaLabelSize }]}
+                  style={[
+                    styles.quickActionLabel,
+                    { fontSize: qaLabelSize },
+                    isKycRestrictedUser && styles.quickActionLabelLocked,
+                  ]}
                   numberOfLines={2}
                 >
                   {t("dashboard.travelProtection")}
@@ -1157,6 +1282,8 @@ export default function Dashboard() {
                   const isUnderMaintenance = maintenanceStatus[serviceId];
                   const isEwalletLockedByDeposit =
                     item.route === "EwalletService" && isBankingServiceLocked;
+                  const isTradingLockedByKyc =
+                    item.route === "PlayEarn" && isKycRestrictedUser;
                   // DEVELOPER, ADMIN and SUPER_ADMIN bypass maintenance blocks
                   const userRole = userData?.role as string | undefined;
                   const isDeveloperOrAdmin =
@@ -1165,7 +1292,8 @@ export default function Dashboard() {
                     userRole === 'SUPER_ADMIN';
                   const isBlocked =
                     (isUnderMaintenance && !isDeveloperOrAdmin) ||
-                    isEwalletLockedByDeposit;
+                    isEwalletLockedByDeposit ||
+                    isTradingLockedByKyc;
 
                   return (
                     <TouchableOpacity
@@ -1178,6 +1306,10 @@ export default function Dashboard() {
                         if (isBlocked) {
                           if (isEwalletLockedByDeposit) {
                             setShowBankingServiceLockedModal(true);
+                            return;
+                          }
+                          if (isTradingLockedByKyc) {
+                            setShowKycLockedModal(true);
                             return;
                           }
                           setSelectedMaintenanceService(item.labelKey);
@@ -1766,6 +1898,22 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "600",
+    textAlign: "center",
+  },
+  kycVerifyModalButton: {
+    width: "100%",
+    backgroundColor: "#FFF5F0",
+    borderWidth: 1,
+    borderColor: "#E15816",
+    paddingVertical: 11,
+    paddingHorizontal: 24,
+    borderRadius: 10,
+    marginBottom: 10,
+  },
+  kycVerifyModalButtonText: {
+    color: "#E15816",
+    fontSize: 16,
+    fontWeight: "700",
     textAlign: "center",
   },
   languageModalContentOuter: {

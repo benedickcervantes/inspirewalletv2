@@ -660,7 +660,7 @@ export default function Placeholder() {
             icon="trophy-outline"
             label="KYC STATUS"
             value={accountLevelLabel}
-            badge={accountLevelLabel}
+            badge={isKycVerified ? accountLevelLabel : undefined}
             badgeColor={isKycVerified ? "#10B981" : "#999"}
             verified={isKycVerified}
             showVerifyButton={!isKycVerified}

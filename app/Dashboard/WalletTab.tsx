@@ -46,6 +46,8 @@ interface WalletTabProps {
   flipAnimation: Animated.Value;
   isCardFlipped: boolean;
   flipCard: () => void;
+  isWithdrawalLocked?: boolean;
+  onWithdrawalLockedPress?: () => void;
 }
 
 const getDesignFrontImage = (design?: string) => {
@@ -89,6 +91,8 @@ export default function WalletTab({
   flipAnimation,
   isCardFlipped,
   flipCard,
+  isWithdrawalLocked = false,
+  onWithdrawalLockedPress,
 }: WalletTabProps) {
   const navigation = useNavigation();
   const { t } = useLanguage();
@@ -314,13 +318,20 @@ export default function WalletTab({
               <TouchableOpacity
                 style={[
                   styles.cardButtonWithdraw,
+                  isWithdrawalLocked && styles.cardButtonWithdrawLocked,
                   {
                     backgroundColor: theme.withdrawButtonBg,
                     paddingVertical: Math.round(14 * spacingScale),
                     gap: Math.round(7 * spacingScale),
                   },
                 ]}
-                onPress={() => navigation.navigate("Withdraw")}
+                onPress={() => {
+                  if (isWithdrawalLocked) {
+                    onWithdrawalLockedPress?.();
+                  } else {
+                    navigation.navigate("Withdraw");
+                  }
+                }}
                 activeOpacity={0.7}
               >
                 <SvgXml
@@ -333,6 +344,7 @@ export default function WalletTab({
                 <Text
                   style={[
                     styles.cardButtonWithdrawText,
+                    isWithdrawalLocked && styles.cardButtonWithdrawTextLocked,
                     {
                       color: theme.withdrawButtonText,
                       fontSize: Math.round(14 * fontScale),
@@ -473,9 +485,15 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderRadius: 15,
   },
+  cardButtonWithdrawLocked: {
+    opacity: 0.55,
+  },
   cardButtonWithdrawText: {
     fontSize: 15,
     fontWeight: "600",
     // Color is now theme-based
+  },
+  cardButtonWithdrawTextLocked: {
+    color: "#999",
   },
 });
