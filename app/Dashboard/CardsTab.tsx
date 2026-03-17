@@ -46,6 +46,10 @@ interface CardsTabProps {
   onActiveDesignChange?: (design: string | null) => void;
   /** Callback to refresh wallet balance and other data after purchase. */
   onRefresh?: () => Promise<void>;
+  /** Locks all card purchasing actions when true. */
+  isBuyingCardsLocked?: boolean;
+  /** Called when user taps a locked card purchase action. */
+  onBuyingCardsLockedPress?: () => void;
 }
 
 const getActiveCardStorageKey = (accountNumber?: string) =>
@@ -62,6 +66,8 @@ export default function CardsTab({
   initialDesign,
   onActiveDesignChange,
   onRefresh,
+  isBuyingCardsLocked = false,
+  onBuyingCardsLockedPress,
 }: CardsTabProps) {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
@@ -217,6 +223,10 @@ export default function CardsTab({
   }, []);
 
   const handleBuyCard = async (designSlug: string, price: number) => {
+    if (isBuyingCardsLocked) {
+      onBuyingCardsLockedPress?.();
+      return;
+    }
     if (availableBalance < price) {
       alert(t("ct.insufficientBalance") || "Insufficient Balance");
       return;
@@ -587,7 +597,13 @@ export default function CardsTab({
                     styles.upgradeButton,
                     isDiamondEligible && styles.activeUpgradeButton,
                   ]}
-                  onPress={() => setIsVipModalVisible(true)}
+                  onPress={() => {
+                    if (isBuyingCardsLocked) {
+                      onBuyingCardsLockedPress?.();
+                      return;
+                    }
+                    setIsVipModalVisible(true);
+                  }}
                 >
                   <Text
                     style={[
@@ -629,7 +645,13 @@ export default function CardsTab({
 
               <TouchableOpacity
                 style={styles.getStartedButton}
-                onPress={() => setIsPurchaseModalVisible(true)}
+                onPress={() => {
+                  if (isBuyingCardsLocked) {
+                    onBuyingCardsLockedPress?.();
+                    return;
+                  }
+                  setIsPurchaseModalVisible(true);
+                }}
               >
                 <Text style={styles.getStartedButtonText}>
                   {t("ct.getStarted")}
@@ -701,6 +723,10 @@ export default function CardsTab({
                     availableBalance >= 250 && styles.activeUpgradeButton,
                   ]}
                   onPress={() => {
+                    if (isBuyingCardsLocked) {
+                      onBuyingCardsLockedPress?.();
+                      return;
+                    }
                     setSelectedDesignCard({
                       id: "ORANGE_ELITE",
                       title: t("ct.orangeElite") || "Orange Elite",
@@ -763,6 +789,10 @@ export default function CardsTab({
                     availableBalance >= 5000 && styles.activeUpgradeButton,
                   ]}
                   onPress={() => {
+                    if (isBuyingCardsLocked) {
+                      onBuyingCardsLockedPress?.();
+                      return;
+                    }
                     setSelectedDesignCard({
                       id: "ROYAL_CURVE",
                       title: t("ct.royalCurve") || "Royal Curve",
@@ -1092,7 +1122,13 @@ export default function CardsTab({
               {isDiamondEligible && !isDiamondActive ? (
                 <TouchableOpacity
                   style={styles.diamondGotItButton}
-                  onPress={() => handleBuyCard("DIAMOND_ELITE", 0)}
+                  onPress={() => {
+                    if (isBuyingCardsLocked) {
+                      onBuyingCardsLockedPress?.();
+                      return;
+                    }
+                    handleBuyCard("DIAMOND_ELITE", 0);
+                  }}
                   activeOpacity={0.7}
                 >
                   <Text style={styles.diamondGotItButtonText}>
@@ -1396,15 +1432,21 @@ export default function CardsTab({
                 style={[
                   styles.vipBuyButton,
                   (availableBalance < 10000 ||
-                    (isGoldActive && !isGoldRenewalAvailable)) &&
+                    (isGoldActive && !isGoldRenewalAvailable) ||
+                    isBuyingCardsLocked) &&
                     styles.vipBuyButtonDisabled,
                 ]}
                 disabled={
                   availableBalance < 10000 ||
-                  (isGoldActive && !isGoldRenewalAvailable)
+                  (isGoldActive && !isGoldRenewalAvailable) ||
+                  isBuyingCardsLocked
                 }
                 activeOpacity={0.7}
                 onPress={async () => {
+                  if (isBuyingCardsLocked) {
+                    onBuyingCardsLockedPress?.();
+                    return;
+                  }
                   if (isGoldActive && !isGoldRenewalAvailable) {
                     Alert.alert(
                       t("Already Have Plan"),
@@ -1601,12 +1643,20 @@ export default function CardsTab({
                 <TouchableOpacity
                   style={[
                     styles.designBuyButton,
-                    availableBalance < selectedDesignCard.price &&
+                    (availableBalance < selectedDesignCard.price ||
+                      isBuyingCardsLocked) &&
                       styles.designBuyButtonDisabled,
                   ]}
-                  disabled={availableBalance < selectedDesignCard.price}
+                  disabled={
+                    availableBalance < selectedDesignCard.price ||
+                    isBuyingCardsLocked
+                  }
                   activeOpacity={0.7}
                   onPress={async () => {
+                    if (isBuyingCardsLocked) {
+                      onBuyingCardsLockedPress?.();
+                      return;
+                    }
                     try {
                       await handleBuyCard(
                         selectedDesignCard.id as string,

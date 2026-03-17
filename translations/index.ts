@@ -213,6 +213,11 @@ const en: TranslationMap = {
   "dashboard.bankingServiceLockedRequirement": "Required Time Deposit",
   "dashboard.bankingServiceLockedMessage":
     "Your Time Deposit balance under Investment must be at least ₱200,000 to unlock Banking Service. Your current balance is below this requirement. Please grow your Investment to ₱200,000 to unlock this feature.",
+  "dashboard.kycLockedTitle": "KYC Verification Required",
+  "dashboard.kycLockedRequirement": "Required Status",
+  "dashboard.kycLockedRequirementValue": "KYC VERIFIED",
+  "dashboard.kycLockedMessage":
+    "Transfer, Buying Cards, Travel Protection, Trading, and Withdrawal are locked for USER accounts until KYC is verified. Please complete and verify your KYC to unlock these features.",
 
   // Withdraw
   "withdraw.fromAvailableBalance": "Withdraw from available balance",
@@ -1533,6 +1538,8 @@ const en: TranslationMap = {
   "register.placeholderViber": "Enter your Viber contact",
   "register.whatsapp": "WhatsApp",
   "register.placeholderWhatsapp": "Enter your WhatsApp contact",
+  "register.errorAtLeastOneMessagingContact":
+    "Please provide at least one contact link: LINE, Viber, or WhatsApp.",
   "register.accountType": "Account Type",
   "register.agentOrInvestor": "Are you an agent or investor?",
   "register.imAgent": "I'm an agent",
@@ -2163,6 +2170,11 @@ const ko: TranslationMap = {
   "dashboard.bankingServiceLockedRequirement": "필요 정기예금",
   "dashboard.bankingServiceLockedMessage":
     "뱅킹 서비스를 이용하려면 투자 탭의 정기예금 잔액이 최소 ₱200,000 이상이어야 합니다. 현재 잔액이 요건에 미달합니다. 투자를 ₱200,000까지 늘리시면 잠금이 해제됩니다.",
+  "dashboard.kycLockedTitle": "KYC 인증 필요",
+  "dashboard.kycLockedRequirement": "필수 상태",
+  "dashboard.kycLockedRequirementValue": "KYC 인증 완료",
+  "dashboard.kycLockedMessage":
+    "USER 계정은 KYC 인증이 완료되기 전까지 송금, 카드 구매, 여행 보호, 트레이딩, 출금 기능이 잠깁니다. KYC를 완료하고 인증을 마치면 기능이 해제됩니다.",
 
   "common.retry": "재시도",
   "common.success": "성공",
@@ -2961,6 +2973,8 @@ const ko: TranslationMap = {
   "register.placeholderViber": "바이버 연락처 입력",
   "register.whatsapp": "왓츠앱",
   "register.placeholderWhatsapp": "왓츠앱 연락처 입력",
+  "register.errorAtLeastOneMessagingContact":
+    "LINE, Viber 또는 WhatsApp 연락처 중 하나 이상을 입력해 주세요.",
   "register.accountType": "계정 유형",
   "register.agentOrInvestor": "에이전트인가요, 투자자인가요?",
   "register.imAgent": "에이전트입니다",
@@ -3523,6 +3537,11 @@ const ja: TranslationMap = {
   "dashboard.bankingServiceLockedRequirement": "必要な定期預金",
   "dashboard.bankingServiceLockedMessage":
     "銀行情報を利用するには、投資タブの定期預金残高が最低₱200,000以上必要です。現在の残高が要件を満たしていません。投資を₱200,000まで増やすとロックが解除されます。",
+  "dashboard.kycLockedTitle": "KYC認証が必要です",
+  "dashboard.kycLockedRequirement": "必要なステータス",
+  "dashboard.kycLockedRequirementValue": "KYC認証済み",
+  "dashboard.kycLockedMessage":
+    "USERアカウントはKYC認証が完了するまで、送金・カード購入・旅行保護・取引・出金がロックされます。KYCを完了して認証されると機能が解放されます。",
 
   "common.retry": "再試行",
   "common.success": "成功",
@@ -4386,6 +4405,8 @@ const ja: TranslationMap = {
   "register.placeholderViber": "Viber連絡先を入力",
   "register.whatsapp": "WhatsApp",
   "register.placeholderWhatsapp": "WhatsApp連絡先を入力",
+  "register.errorAtLeastOneMessagingContact":
+    "LINE、Viber、WhatsAppのいずれか1つ以上の連絡先を入力してください。",
   "register.accountType": "アカウントタイプ",
   "register.agentOrInvestor": "エージェントですか、投資家ですか？",
   "register.imAgent": "エージェントです",
@@ -4948,6 +4969,11 @@ const ar: TranslationMap = {
   "dashboard.bankingServiceLockedRequirement": "الوديعة المطلوبة",
   "dashboard.bankingServiceLockedMessage":
     "يجب أن يكون رصيد الودائع لأجل في تبويب الاستثمار 200,000₱ على الأقل لفتح خدمة البنك. رصيدك الحالي أقل من المتطلب. يرجى زيادة استثمارك إلى 200,000₱ لفتح هذه الميزة.",
+  "dashboard.kycLockedTitle": "مطلوب توثيق KYC",
+  "dashboard.kycLockedRequirement": "الحالة المطلوبة",
+  "dashboard.kycLockedRequirementValue": "تم توثيق KYC",
+  "dashboard.kycLockedMessage":
+    "بالنسبة لحسابات USER، يتم قفل التحويل وشراء البطاقات وحماية السفر والتداول والسحب حتى يتم توثيق KYC. يرجى إكمال وتوثيق KYC لفتح هذه الميزات.",
 
   "common.retry": "إعادة المحاولة",
   "common.success": "نجاح",
@@ -5781,6 +5807,8 @@ const ar: TranslationMap = {
   "register.placeholderViber": "أدخل جهة اتصال Viber",
   "register.whatsapp": "WhatsApp",
   "register.placeholderWhatsapp": "أدخل جهة اتصال WhatsApp",
+  "register.errorAtLeastOneMessagingContact":
+    "يرجى إدخال وسيلة تواصل واحدة على الأقل: LINE أو Viber أو WhatsApp.",
   "register.accountType": "نوع الحساب",
   "register.agentOrInvestor": "هل أنت وكيل أم مستثمر؟",
   "register.imAgent": "أنا وكيل",
