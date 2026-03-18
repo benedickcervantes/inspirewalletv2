@@ -24,6 +24,7 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { useLanguage } from "../../context/LanguageContext";
+import { submitCompanyKyc } from "../../configs/api";
 
 const REFERENCE_WIDTH = 393;
 
