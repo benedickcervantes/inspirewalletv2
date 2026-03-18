@@ -22,10 +22,6 @@ export interface GetTransactionsResult {
   error?: string;
 }
 
-export function getMe(
-  accessToken: string,
-): Promise<{ success: boolean; user?: unknown; error?: string }>;
-
 export function getOrCreateMainWallet(
   accessToken: string,
 ): Promise<GetOrCreateMainWalletResult>;
@@ -500,4 +496,15 @@ export function submitEwalletApplication(
     contactInfo?: object;
     addressInfo?: object;
   },
+): Promise<{ success: boolean; data?: unknown; error?: string }>;
+
+// KYC API
+export function submitPersonalKyc(
+  accessToken: string,
+  body: Record<string, unknown>,
+): Promise<{ success: boolean; data?: unknown; error?: string }>;
+
+export function submitCompanyKyc(
+  accessToken: string,
+  body: { companyName: string; documents: Record<string, string> },
 ): Promise<{ success: boolean; data?: unknown; error?: string }>;
