@@ -20,6 +20,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { disableBiometric, enableBiometric, getReferralCode, resendVerification, verifyEmail } from '../../configs/api';
+import { useIdleTimeout } from '../../context/IdleTimeoutContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useResponsive } from '../../utils/responsive';
 import AccountDeletionModal from '../AccountDeletion/AccountDeletionModal';
@@ -33,6 +34,7 @@ interface UserData {
 const Settings = () => {
   const navigation = useNavigation();
   const { t } = useLanguage();
+  const { stopIdleSession } = useIdleTimeout();
   const { width: screenWidth, scale: scaleFn } = useResponsive();
   const scaled = (n: number) => Math.round(scaleFn(n));
 
@@ -149,6 +151,9 @@ const Settings = () => {
 
   /** Sign out: navigate to Passcode page while keeping session active (tokens remain). */
   const handleSignOut = async () => {
+    // Stop the idle session timer
+    await stopIdleSession();
+
     try {
       // Clear the passcode login flag
       await AsyncStorage.removeItem('passcodeLoginComplete');
