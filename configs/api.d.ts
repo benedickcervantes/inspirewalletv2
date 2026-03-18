@@ -501,3 +501,27 @@ export function submitEwalletApplication(
     addressInfo?: object;
   },
 ): Promise<{ success: boolean; data?: unknown; error?: string }>;
+
+// KYC API
+export function submitPersonalKyc(
+  accessToken: string,
+  body: Record<string, unknown>,
+): Promise<{ success: boolean; data?: unknown; error?: string }>;
+
+export function submitCompanyKyc(
+  accessToken: string,
+  body: { companyName: string; documents: Record<string, string> },
+): Promise<{ success: boolean; data?: unknown; error?: string }>;
+
+export function getCompanyKycStatus(
+  accessToken: string,
+): Promise<{
+  success: boolean;
+  data?: {
+    id?: string;
+    status?: string;
+    companyName?: string;
+    [key: string]: unknown;
+  } | null;
+  error?: string;
+}>;

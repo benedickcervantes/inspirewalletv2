@@ -2723,22 +2723,13 @@ export async function submitPersonalKyc(accessToken, body) {
 /**
  * Submit a company KYC request via the backend.
  * POST /kyc-requests/company
- * @param {string} accessToken - Backend JWT
- * @param {Object} body - { companyName: string, documents: { commercialRegister, bankStatement, proofOfBilling } }
  */
 export async function submitCompanyKyc(accessToken, body) {
   const url = buildUrl("/kyc-requests/company");
   if (!url) return { success: false, error: "Backend URL not configured" };
   if (!accessToken) return { success: false, error: "Not authenticated" };
   try {
-    if (__DEV__)
-      console.log(
-        "[Company KYC API] POST",
-        url,
-        "(keys:",
-        Object.keys(body || {}),
-        ")",
-      );
+    if (__DEV__) console.log("[Company KYC API] POST", url);
     const res = await apiFetch(url, {
       method: "POST",
       headers: {
@@ -2757,6 +2748,34 @@ export async function submitCompanyKyc(accessToken, body) {
     return { success: true, data: data.data ?? data };
   } catch (e) {
     if (__DEV__) console.error("[Company KYC API] Error", e);
+    return { success: false, error: e.message || "Network error" };
+  }
+}
+
+/**
+ * Fetch the current user's company KYC request/status.
+ * GET /kyc-requests/company/me
+ */
+export async function getCompanyKycStatus(accessToken) {
+  const url = buildUrl("/kyc-requests/company/me");
+  if (!url) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
+  try {
+    if (__DEV__) console.log("[Company KYC API] GET", url);
+    const res = await apiFetch(url, {
+      method: "GET",
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    return { success: true, data: data.data ?? data ?? null };
+  } catch (e) {
+    if (__DEV__) console.error("[Company KYC API] Status Error", e);
     return { success: false, error: e.message || "Network error" };
   }
 }
