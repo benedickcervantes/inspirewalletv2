@@ -21,8 +21,8 @@ import {
 } from "react-native";
 import { navigationRef } from "../lib/navigationRef";
 
-const INACTIVITY_LIMIT_MS = 15 * 1000; // 15 seconds (for testing – change back to 10 * 60 * 1000 for production)
-const CHECK_INTERVAL_MS = 1000; // 1 second (for testing – change back to 60 * 1000 for production)
+const INACTIVITY_LIMIT_MS = 10 * 60 * 1000; // 10 minutes
+const CHECK_INTERVAL_MS = 60 * 1000; // check every minute
 const LAST_ACTIVITY_KEY = "lastActivityAt";
 const IDLE_SESSION_ACTIVE_KEY = "idleSessionActive";
 
