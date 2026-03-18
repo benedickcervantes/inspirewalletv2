@@ -1,16 +1,22 @@
+import { getCompanyKycStatus, submitCompanyKyc } from "@/configs/api";
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import * as DocumentPicker from "expo-document-picker";
+import * as FileSystem from "expo-file-system/legacy";
 import { LinearGradient } from "expo-linear-gradient";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Alert,
   Modal,
+  Platform,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from "react-native";
 import {
@@ -19,34 +25,71 @@ import {
 } from "react-native-safe-area-context";
 import { useLanguage } from "../../context/LanguageContext";
 
+const REFERENCE_WIDTH = 393;
+
 const THEME_COLOR = "#E15816";
 
 export default function KYCcompany() {
   const navigation = useNavigation();
   const { t } = useLanguage();
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+
+  const scale = Math.min(width / REFERENCE_WIDTH, 1.2);
+  const headerPaddingTop =
+    Platform.OS === "ios"
+      ? Math.max(insets.top, 12)
+      : Math.max(StatusBar.currentHeight ?? 0, insets.top, 12);
+  const headerPaddingBottom = Math.round(14 * scale);
+  const headerPaddingHorizontal = Math.max(16, Math.min(24, Math.round(width * 0.052)));
+  const headerTitleFontSize = Math.round(18 * scale + 2);
+  const headerBackButtonSize = Math.round(40 * scale);
+  const headerBackIconSize = Math.round(22 * scale + 2);
+  const statusBadgeMarginTop = Math.round(8 * scale + 2);
+  const statusBadgeFontSize = Math.round(12 * scale);
+  const statusBadgeIconSize = Math.round(14 * scale);
 
   const [companyName, setCompanyName] = useState("");
   const [isEditing, setIsEditing] = useState(false);
-  const [commercialRegister, setCommercialRegister] = useState<string | null>(
-    null,
-  );
-  const [commercialRegisterName, setCommercialRegisterName] = useState<
-    string | null
-  >(null);
+  const [commercialRegister, setCommercialRegister] = useState<string | null>(null);
+  const [commercialRegisterMime, setCommercialRegisterMime] = useState<string | null>(null);
+  const [commercialRegisterName, setCommercialRegisterName] = useState<string | null>(null);
   const [bankStatement, setBankStatement] = useState<string | null>(null);
-  const [bankStatementName, setBankStatementName] = useState<string | null>(
-    null,
-  );
+  const [bankStatementMime, setBankStatementMime] = useState<string | null>(null);
+  const [bankStatementName, setBankStatementName] = useState<string | null>(null);
   const [proofOfBilling, setProofOfBilling] = useState<string | null>(null);
-  const [proofOfBillingName, setProofOfBillingName] = useState<string | null>(
-    null,
-  );
+  const [proofOfBillingMime, setProofOfBillingMime] = useState<string | null>(null);
+  const [proofOfBillingName, setProofOfBillingName] = useState<string | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [companyKycStatus, setCompanyKycStatus] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchStatus = async () => {
+      try {
+        const token = await AsyncStorage.getItem("access_token");
+        if (!token) return;
+        const result = await getCompanyKycStatus(token);
+        if (result.success && result.data) {
+          const data = result.data;
+          const status = String(data.status ?? "").toUpperCase();
+          setCompanyKycStatus(status || null);
+          const name = data.companyName;
+          if (typeof name === "string") {
+            setCompanyName((prev) => prev || name);
+          }
+        }
+      } catch (e) {
+        console.error("[Company KYC] Failed to load status", e);
+      }
+    };
+    fetchStatus();
+  }, []);
 
   const pickDocument = async (
     setUri: (uri: string | null) => void,
     setName: (name: string | null) => void,
+    setMime: (mime: string | null) => void,
     label: string,
   ) => {
     try {
@@ -54,25 +97,23 @@ export default function KYCcompany() {
         type: "*/*",
         copyToCacheDirectory: true,
       });
-
-      if (!result.canceled && result.assets && result.assets[0]) {
+      if (!result.canceled && result.assets?.[0]) {
         const asset = result.assets[0];
         const mimeType = asset.mimeType ?? "";
         const fileName = asset.name ?? asset.uri.split("/").pop() ?? "";
-        const isPdf =
+        const lower = fileName.toLowerCase();
+        const isSupported =
           mimeType === "application/pdf" ||
-          fileName.toLowerCase().endsWith(".pdf");
-
-        if (!isPdf) {
-          Alert.alert(
-            "Invalid File",
-            `Only PDF files are accepted for ${label}. Please select a .pdf file.`,
-          );
+          mimeType === "application/msword" ||
+          mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+          lower.endsWith(".pdf") || lower.endsWith(".doc") || lower.endsWith(".docx");
+        if (!isSupported) {
+          Alert.alert("Invalid File", `Only PDF or Word documents are accepted for ${label}.`);
           return;
         }
-
         setUri(asset.uri);
         setName(fileName);
+        setMime(mimeType || null);
       }
     } catch (error) {
       console.error("Error picking document:", error);
@@ -80,7 +121,15 @@ export default function KYCcompany() {
     }
   };
 
-  const handleSave = () => {
+  const toFileDataUrl = async (uri: string, mimeType: string): Promise<string> => {
+    const base64 = await FileSystem.readAsStringAsync(uri, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+    const safeMime = mimeType && typeof mimeType === "string" ? mimeType : "application/octet-stream";
+    return `data:${safeMime};base64,${base64}`;
+  };
+
+  const handleSave = async () => {
     if (!companyName.trim()) {
       Alert.alert("Validation", "Please enter your company name.");
       return;
@@ -89,8 +138,38 @@ export default function KYCcompany() {
       Alert.alert("Validation", "Please upload all required documents.");
       return;
     }
-    // TODO: Save documents to backend
-    setShowSuccessModal(true);
+    try {
+      setSubmitting(true);
+      const token = await AsyncStorage.getItem("access_token");
+      if (!token) {
+        Alert.alert("Error", "You must be logged in to submit company KYC.");
+        return;
+      }
+      const [crData, bsData, pbData] = await Promise.all([
+        toFileDataUrl(commercialRegister, commercialRegisterMime || "application/pdf"),
+        toFileDataUrl(bankStatement, bankStatementMime || "application/pdf"),
+        toFileDataUrl(proofOfBilling, proofOfBillingMime || "application/pdf"),
+      ]);
+      const { success, error } = await submitCompanyKyc(token, {
+        companyName: companyName.trim(),
+        documents: {
+          commercialRegister: crData,
+          bankStatement: bsData,
+          proofOfBilling: pbData,
+        },
+      });
+      if (!success) {
+        Alert.alert("Error", error || "Failed to submit company KYC.");
+        return;
+      }
+      setCompanyKycStatus("PENDING");
+      setShowSuccessModal(true);
+    } catch (e: unknown) {
+      console.error("Error submitting company KYC:", e);
+      Alert.alert("Error", (e as Error)?.message || "Failed to submit. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleSuccessClose = () => {
@@ -108,6 +187,12 @@ export default function KYCcompany() {
     !!bankStatement &&
     !!proofOfBilling;
 
+  const isApproved = companyKycStatus === "APPROVED";
+  const isPending = companyKycStatus === "PENDING";
+  const isRejected = companyKycStatus === "REJECTED";
+  const isLocked = isApproved || isPending;
+  const showStatusBadge = !!companyKycStatus;
+
   const docs = [
     {
       label: "Commercial Register",
@@ -115,6 +200,7 @@ export default function KYCcompany() {
       name: commercialRegisterName,
       setUri: setCommercialRegister,
       setName: setCommercialRegisterName,
+      setMime: setCommercialRegisterMime,
     },
     {
       label: "Bank Statement",
@@ -122,6 +208,7 @@ export default function KYCcompany() {
       name: bankStatementName,
       setUri: setBankStatement,
       setName: setBankStatementName,
+      setMime: setBankStatementMime,
     },
     {
       label: "Proof of Billing",
@@ -129,6 +216,7 @@ export default function KYCcompany() {
       name: proofOfBillingName,
       setUri: setProofOfBilling,
       setName: setProofOfBillingName,
+      setMime: setProofOfBillingMime,
     },
   ];
 
@@ -138,23 +226,57 @@ export default function KYCcompany() {
         style={styles.container}
         edges={["bottom", "left", "right"]}
       >
-        {/* Plain header */}
-        <View style={styles.pageHeader}>
-          <View style={styles.pageTitleBlock}>
-            <Text style={styles.pageTitle}>Company Verification</Text>
-            <Text style={styles.pageSubtitle}>
-              Please upload the following legal documents to verify your
-              business account.
-            </Text>
+        {/* Gradient header — back left, title centered, status badge */}
+        <LinearGradient
+          colors={["#E15816", "#F48F38"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={[
+            styles.gradientHeader,
+            {
+              paddingTop: headerPaddingTop,
+              paddingBottom: headerPaddingBottom,
+              paddingHorizontal: headerPaddingHorizontal,
+            },
+          ]}
+        >
+          <View style={styles.gradientHeaderRow}>
+            <TouchableOpacity
+              style={[styles.headerBackButton, { width: headerBackButtonSize, height: headerBackButtonSize }]}
+              onPress={handleCancel}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <Ionicons name="arrow-back" size={headerBackIconSize} color="#FFFFFF" />
+            </TouchableOpacity>
+            <View style={styles.headerTitleBlock}>
+              <Text style={[styles.headerTitle, { fontSize: headerTitleFontSize }]} numberOfLines={1} adjustsFontSizeToFit>
+                Company Verification
+              </Text>
+            </View>
+            <View style={[styles.headerRightSpacer, { width: headerBackButtonSize, height: headerBackButtonSize }]} />
           </View>
-          <TouchableOpacity
-            style={styles.closeButton}
-            onPress={handleCancel}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <Ionicons name="close" size={28} color="#333333" />
-          </TouchableOpacity>
-        </View>
+          {showStatusBadge && (
+            <View style={[styles.statusBadgeRow, { marginTop: statusBadgeMarginTop }]}>
+              <View
+                style={[
+                  styles.statusBadge,
+                  isApproved && styles.statusBadgeApproved,
+                  isPending && styles.statusBadgePending,
+                  isRejected && styles.statusBadgeRejected,
+                ]}
+              >
+                <Ionicons
+                  name={isApproved ? "checkmark-circle" : isRejected ? "close-circle" : "time-outline"}
+                  size={statusBadgeIconSize}
+                  color="#FFFFFF"
+                />
+                <Text style={[styles.statusBadgeText, { fontSize: statusBadgeFontSize }]}>
+                  {isApproved ? "Verified" : isRejected ? "Rejected" : "Unverified"}
+                </Text>
+              </View>
+            </View>
+          )}
+        </LinearGradient>
 
         <ScrollView
           style={styles.scrollView}
@@ -176,11 +298,12 @@ export default function KYCcompany() {
               </Text>
             </View>
             <TextInput
-              style={styles.textInput}
+              style={[styles.textInput, isLocked && styles.readonlyInput]}
               placeholder="Sample Company"
               placeholderTextColor="#BDBDBD"
               value={companyName}
-              onChangeText={setCompanyName}
+              onChangeText={isLocked ? undefined : setCompanyName}
+              editable={!isLocked}
             />
           </View>
 
@@ -219,10 +342,9 @@ export default function KYCcompany() {
                 {index > 0 && <View style={styles.docRowDivider} />}
                 <TouchableOpacity
                   style={styles.docRow}
-                  onPress={() =>
-                    pickDocument(doc.setUri, doc.setName, doc.label)
-                  }
-                  activeOpacity={0.7}
+                  onPress={isLocked ? undefined : () => pickDocument(doc.setUri, doc.setName, doc.setMime, doc.label)}
+                  activeOpacity={isLocked ? 1 : 0.7}
+                  disabled={isLocked}
                 >
                   <View
                     style={[
@@ -272,21 +394,21 @@ export default function KYCcompany() {
           <TouchableOpacity
             style={[
               styles.saveButtonWrapper,
-              !isFormComplete && styles.saveButtonDisabled,
+              (!isFormComplete || submitting || isLocked) && styles.saveButtonDisabled,
             ]}
             onPress={handleSave}
-            activeOpacity={isFormComplete ? 0.9 : 1}
-            disabled={!isFormComplete}
+            activeOpacity={isFormComplete && !submitting && !isLocked ? 0.9 : 1}
+            disabled={!isFormComplete || submitting || isLocked}
           >
             <LinearGradient
               colors={
-                isFormComplete ? ["#E15816", "#F48F38"] : ["#BDBDBD", "#BDBDBD"]
+                isFormComplete && !isLocked ? ["#E15816", "#F48F38"] : ["#BDBDBD", "#BDBDBD"]
               }
               style={styles.saveButton}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
             >
-              <Text style={styles.saveButtonText}>Save</Text>
+              <Text style={styles.saveButtonText}>{submitting ? "Submitting..." : "Save"}</Text>
             </LinearGradient>
           </TouchableOpacity>
         </View>
@@ -341,35 +463,46 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#F5F5F5",
   },
-  // ── Page header (transparent, reaches screen top) ─────────────────────────
-  pageHeader: {
+  gradientHeader: {},
+  gradientHeaderRow: {
     flexDirection: "row",
-    alignItems: "flex-start",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 16,
-    backgroundColor: "transparent",
+    alignItems: "center",
   },
-  pageTitleBlock: {
-    flex: 1,
-  },
-  pageTitle: {
-    fontSize: 22,
-    fontWeight: "700",
-    color: "#111111",
-    marginBottom: 2,
-  },
-  pageSubtitle: {
-    fontSize: 13,
-    color: "#9E9E9E",
-  },
-  closeButton: {
-    width: 40,
-    height: 40,
+  headerBackButton: {
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 2,
+  },
+  headerTitleBlock: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  headerTitle: {
+    fontWeight: "700",
+    color: "#FFFFFF",
+    textAlign: "center",
+  },
+  headerRightSpacer: {},
+  statusBadgeRow: {},
+  statusBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-start",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+    backgroundColor: "#9CA3AF",
+    gap: 6,
+  },
+  statusBadgeApproved: { backgroundColor: "#10B981" },
+  statusBadgePending: { backgroundColor: "#F59E0B" },
+  statusBadgeRejected: { backgroundColor: "#EF4444" },
+  statusBadgeText: {
+    fontWeight: "600",
+    color: "#FFFFFF",
+  },
+  readonlyInput: {
+    backgroundColor: "#E5E7EB",
   },
   // ─────────────────────────────────────────────────────────────────────────
   scrollView: {

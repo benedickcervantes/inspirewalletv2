@@ -22,7 +22,7 @@ import {
     View,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { getMe, submitPersonalKyc } from "../../configs/api";
+import { getMe, submitPersonalKyc } from "@/configs/api";
 import { useLanguage } from "../../context/LanguageContext";
 import type { RootStackParamList } from "../../types/navigation";
 
