@@ -66,6 +66,7 @@ import HelpCenter from './app/Settings/HelpCenter';
 import PrivacyPolicy from './app/Settings/PrivacyPolicy';
 import Settings from './app/Settings/settings';
 import TermsConditions from './app/Settings/TermsConditions';
+import { IdleTimeoutProvider } from './context/IdleTimeoutContext';
 import { LanguageProvider } from './context/LanguageContext';
 import { SocketProvider } from './context/SocketContext';
 import { UnreadNotificationsProvider } from './context/UnreadNotificationsContext';
@@ -88,6 +89,7 @@ export default function App() {
     <LanguageProvider>
       <SocketProvider>
         <UnreadNotificationsProvider>
+        <IdleTimeoutProvider>
         <OfflineWrapper>
           <NavigationContainer ref={navigationRef}>
             <Stack.Navigator
@@ -191,6 +193,7 @@ export default function App() {
             <StatusBar style="auto" />
           </NavigationContainer>
         </OfflineWrapper>
+        </IdleTimeoutProvider>
         </UnreadNotificationsProvider>
       </SocketProvider>
     </LanguageProvider>

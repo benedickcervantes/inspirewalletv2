@@ -35,6 +35,7 @@ import {
   languageChoiceDoneKey,
   SUPPORTED_LANGUAGES,
 } from "../../constants/locales";
+import { useIdleTimeout } from "../../context/IdleTimeoutContext";
 import { useLanguage } from "../../context/LanguageContext";
 import { useSocket } from "../../context/SocketContext";
 import { useUnreadNotifications } from "../../context/UnreadNotificationsContext";
@@ -204,6 +205,7 @@ export default function Dashboard() {
   const navigation = useNavigation();
   const route = useRoute();
   const { t, setLanguage } = useLanguage();
+  const { startIdleSession, registerActivity } = useIdleTimeout();
   const insets = useSafeAreaInsets();
   const { width, horizontalPadding, isSmallScreen } = useResponsive();
   const qaSpacing = width < 360 ? 0.75 : isSmallScreen ? 0.85 : 1;
@@ -466,10 +468,13 @@ export default function Dashboard() {
         setAnnouncements([]);
         setAnnouncementVisible(false);
       }
+
+      // Start idle session timer after successful login and dashboard load
+      startIdleSession();
     };
 
     init();
-  }, [navigation]);
+  }, [navigation, startIdleSession]);
 
   useEffect(() => {
     if (!announcementVisible) return;
