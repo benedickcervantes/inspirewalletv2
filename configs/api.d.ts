@@ -518,6 +518,6 @@ export function getCompanyKycStatus(
     status?: string;
     companyName?: string;
     [key: string]: unknown;
-  };
+  } | null;
   error?: string;
 }>;

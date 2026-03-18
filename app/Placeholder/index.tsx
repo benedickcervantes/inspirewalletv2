@@ -1,6 +1,6 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useFocusEffect, useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { doc, getDoc } from "firebase/firestore";
 import * as ImagePicker from "expo-image-picker";
@@ -29,7 +29,7 @@ import {
   getCompanyKycStatus,
   getMe,
   updateProfile,
-} from "../../configs/api";
+} from "@/configs/api";
 import { auth, firestore } from "../../configs/firebase";
 import { useResponsive } from "../../utils/responsive";
 import {
@@ -82,6 +82,7 @@ export default function Placeholder() {
     status?: string;
     companyName?: string;
   } | null>(null);
+  const [showCompanyRejectedModal, setShowCompanyRejectedModal] = useState(false);
 
   const fetchUserData = useCallback(async () => {
     try {
@@ -94,7 +95,6 @@ export default function Placeholder() {
           getMe(accessToken),
           getCompanyKycStatus(accessToken).catch(() => null),
         ]);
-
         if (meResult.success && meResult.user) {
           const u = meResult.user as Record<string, unknown>;
           const merged = {
@@ -104,17 +104,12 @@ export default function Placeholder() {
           };
           setUserData(merged);
         }
-
         if (companyResult && companyResult.success && companyResult.data) {
-          const data = companyResult.data as {
-            status?: string;
-            companyName?: string;
-          };
-          setCompanyKycView({
-            status: data.status,
-            companyName: data.companyName,
-          });
+          const data = companyResult.data as { status?: string; companyName?: string };
+          setCompanyKycView({ status: data.status, companyName: data.companyName });
         }
+        setLoading(false);
+        return;
       }
 
       const user = auth?.currentUser;
@@ -143,6 +138,12 @@ export default function Placeholder() {
 
   // Refetch when profile screen is focused (e.g. after submitting company KYC)
   // so company name row shows Unverified/Verified badge.
+  useFocusEffect(
+    useCallback(() => {
+      fetchUserData();
+    }, [fetchUserData]),
+  );
+
   useFocusEffect(
     useCallback(() => {
       fetchUserData();
@@ -430,32 +431,22 @@ export default function Placeholder() {
     rawCompanyNameFromUser ||
     t("Tap to add company name") ||
     "Tap to add company name";
-
   const rawCompanyKycStatus: string | undefined =
     companyKycView?.status ??
     (userData?.companyKycStatus as string | undefined) ??
     (userData?.company_kyc_status as string | undefined) ??
     undefined;
-
   const normalizedCompanyKycStatus = rawCompanyKycStatus
     ? String(rawCompanyKycStatus).toLowerCase()
     : undefined;
-
   const isCompanyKycVerified =
     normalizedCompanyKycStatus === "approved" ||
     normalizedCompanyKycStatus === "verified";
   const isCompanyKycPending =
     normalizedCompanyKycStatus === "pending" ||
     normalizedCompanyKycStatus === "in_review";
-
   const isCompanyKycRejected = normalizedCompanyKycStatus === "rejected";
-
-  // Lock only when there is an active/pending or verified company KYC.
-  // When rejected, allow user to open Company KYC again to resubmit.
   const hasCompanyKycRequest = isCompanyKycVerified || isCompanyKycPending;
-
-  const [showCompanyRejectedModal, setShowCompanyRejectedModal] =
-    useState(false);
 
   const handleCompanyRowPress = () => {
     if (isCompanyKycRejected) {
@@ -464,6 +455,7 @@ export default function Placeholder() {
       openCompanyModal();
     }
   };
+
   const contactNumber =
     userData?.phone ??
     userData?.phoneNumber ??
@@ -662,6 +654,9 @@ export default function Placeholder() {
             editable={!hasCompanyKycRequest}
             onEdit={hasCompanyKycRequest ? undefined : handleCompanyRowPress}
             isPlaceholder={!rawCompanyNameFromUser && !companyKycView?.companyName}
+            editable={!hasCompanyKycRequest}
+            onEdit={handleCompanyRowPress}
+            isPlaceholder={!rawCompanyNameFromUser && !companyKycView?.companyName}
             badge={
               isCompanyKycVerified
                 ? "Verified"
@@ -670,6 +665,11 @@ export default function Placeholder() {
                 : isCompanyKycRejected
                 ? "Rejected"
                 : undefined
+                : isCompanyKycPending
+                  ? "Unverified"
+                  : isCompanyKycRejected
+                    ? "Rejected"
+                    : undefined
             }
             badgeColor={
               isCompanyKycVerified
@@ -679,6 +679,11 @@ export default function Placeholder() {
                 : isCompanyKycRejected
                 ? "#EF4444"
                 : undefined
+                : isCompanyKycPending
+                  ? "#F59E0B"
+                  : isCompanyKycRejected
+                    ? "#EF4444"
+                    : undefined
             }
             verified={isCompanyKycVerified}
           />
@@ -1195,6 +1200,38 @@ export default function Placeholder() {
         transparent
         animationType="fade"
         onRequestClose={() => setShowCompanyRejectedModal(false)}
+      >
+        <View style={styles.successOverlay}>
+          <View style={styles.successContent}>
+            <Ionicons
+              name="alert-circle"
+              size={40}
+              color="#EF4444"
+              style={{ marginBottom: 8 }}
+            />
+            <Text style={styles.successTitle}>Company KYC Rejected</Text>
+            <Text style={styles.successMessage}>
+              Your submitted company documents were rejected. Please review your
+              information and upload your company requirements again.
+            </Text>
+            <TouchableOpacity
+              style={styles.successButton}
+              onPress={() => {
+                setShowCompanyRejectedModal(false);
+                openCompanyModal();
+              }}
+            >
+              <Text style={styles.successButtonText}>OK</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Company KYC Rejected Modal */}
+      <Modal
+        visible={showCompanyRejectedModal}
+        transparent
+        animationType="fade"
       >
         <View style={styles.successOverlay}>
           <View style={styles.successContent}>
