@@ -28,11 +28,13 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 
   const setLanguage = useCallback((label: string) => {
     const normalized = normalizeLanguage(label);
+    console.log("[LanguageContext] Setting language to:", normalized);
     setLanguageState(normalized);
     AsyncStorage.setItem(USER_PREFERRED_LANGUAGE_KEY, normalized);
     
     // Sync with backend if user is logged in
     AsyncStorage.getItem("access_token").then((token) => {
+      console.log("[LanguageContext] Token exists:", !!token);
       if (token) {
         // Find matching backend enum value using the predefined labels
         let backendLang = "ENGLISH";
@@ -40,9 +42,16 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
         else if (normalized === "Japanese") backendLang = "JAPANESE";
         else if (normalized === "Korean") backendLang = "KOREAN";
         
-        updateProfile(token, { language: backendLang }).catch(err => {
-          console.warn("Failed to sync language to backend:", err);
-        });
+        console.log("[LanguageContext] Syncing to backend:", backendLang);
+        updateProfile(token, { language: backendLang })
+          .then((result) => {
+            console.log("[LanguageContext] Backend sync result:", JSON.stringify(result));
+          })
+          .catch(err => {
+            console.error("[LanguageContext] Failed to sync language to backend:", err);
+          });
+      } else {
+        console.warn("[LanguageContext] No access token - skipping backend sync");
       }
     });
   }, []);

@@ -1,6 +1,6 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useFocusEffect, useFocusEffect, useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { doc, getDoc } from "firebase/firestore";
 import * as ImagePicker from "expo-image-picker";
@@ -491,6 +491,7 @@ export default function Placeholder() {
       } catch (_) {}
     }
     setLanguageModalVisible(false);
+
   };
 
   const memberSince =
@@ -655,8 +656,6 @@ export default function Placeholder() {
             onEdit={hasCompanyKycRequest ? undefined : handleCompanyRowPress}
             isPlaceholder={!rawCompanyNameFromUser && !companyKycView?.companyName}
             editable={!hasCompanyKycRequest}
-            onEdit={handleCompanyRowPress}
-            isPlaceholder={!rawCompanyNameFromUser && !companyKycView?.companyName}
             badge={
               isCompanyKycVerified
                 ? "Verified"
@@ -665,11 +664,6 @@ export default function Placeholder() {
                 : isCompanyKycRejected
                 ? "Rejected"
                 : undefined
-                : isCompanyKycPending
-                  ? "Unverified"
-                  : isCompanyKycRejected
-                    ? "Rejected"
-                    : undefined
             }
             badgeColor={
               isCompanyKycVerified
@@ -679,11 +673,6 @@ export default function Placeholder() {
                 : isCompanyKycRejected
                 ? "#EF4444"
                 : undefined
-                : isCompanyKycPending
-                  ? "#F59E0B"
-                  : isCompanyKycRejected
-                    ? "#EF4444"
-                    : undefined
             }
             verified={isCompanyKycVerified}
           />
