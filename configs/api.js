@@ -2760,3 +2760,34 @@ export async function submitCompanyKyc(accessToken, body) {
     return { success: false, error: e.message || "Network error" };
   }
 }
+
+/**
+ * Fetch the current user's company KYC request/status.
+ * Typically returns the most recent company KYC request for the authenticated user.
+ * Expected backend route example: GET /kyc-requests/company/me
+ */
+export async function getCompanyKycStatus(accessToken) {
+  const url = buildUrl("/kyc-requests/company/me");
+  if (!url) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
+  try {
+    if (__DEV__) console.log("[Company KYC API] GET", url);
+    const res = await apiFetch(url, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    return { success: true, data: data.data ?? data };
+  } catch (e) {
+    if (__DEV__) console.error("[Company KYC API] Status Error", e);
+    return { success: false, error: e.message || "Network error" };
+  }
+}

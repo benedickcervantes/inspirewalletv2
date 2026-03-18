@@ -1,6 +1,6 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { doc, getDoc } from "firebase/firestore";
 import * as ImagePicker from "expo-image-picker";
@@ -24,7 +24,12 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { decodeQrImage, getMe, updateProfile } from "../../configs/api";
+import {
+  decodeQrImage,
+  getCompanyKycStatus,
+  getMe,
+  updateProfile,
+} from "../../configs/api";
 import { auth, firestore } from "../../configs/firebase";
 import { useResponsive } from "../../utils/responsive";
 import {
@@ -73,6 +78,10 @@ export default function Placeholder() {
   const [passcode, setPasscode] = useState("");
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [companyKycView, setCompanyKycView] = useState<{
+    status?: string;
+    companyName?: string;
+  } | null>(null);
 
   const fetchUserData = useCallback(async () => {
     try {
@@ -81,17 +90,30 @@ export default function Placeholder() {
       );
       const accessToken = await AsyncStorage.getItem("access_token");
       if (accessToken) {
-        const result = await getMe(accessToken);
-        if (result.success && result.user) {
-          const u = result.user as Record<string, unknown>;
+        const [meResult, companyResult] = await Promise.all([
+          getMe(accessToken),
+          getCompanyKycStatus(accessToken).catch(() => null),
+        ]);
+
+        if (meResult.success && meResult.user) {
+          const u = meResult.user as Record<string, unknown>;
           const merged = {
             ...u,
             language:
               (u.language as string) ?? preferredLang ?? DEFAULT_LANGUAGE,
           };
           setUserData(merged);
-          setLoading(false);
-          return;
+        }
+
+        if (companyResult && companyResult.success && companyResult.data) {
+          const data = companyResult.data as {
+            status?: string;
+            companyName?: string;
+          };
+          setCompanyKycView({
+            status: data.status,
+            companyName: data.companyName,
+          });
         }
       }
 
@@ -118,6 +140,14 @@ export default function Placeholder() {
   useEffect(() => {
     fetchUserData();
   }, [fetchUserData]);
+
+  // Refetch when profile screen is focused (e.g. after submitting company KYC)
+  // so company name row shows Unverified/Verified badge.
+  useFocusEffect(
+    useCallback(() => {
+      fetchUserData();
+    }, [fetchUserData]),
+  );
 
   const hasPasscode = !!userData?.hasPasscode;
 
@@ -394,12 +424,46 @@ export default function Placeholder() {
     String(userData?.kycStatus || "").toLowerCase() === "approved";
   const accountNumber =
     userData?.accountNumber || userData?.id || "000053126300";
+  const rawCompanyNameFromUser = userData?.companyName;
   const companyName =
-    userData?.companyName ||
+    companyKycView?.companyName ||
+    rawCompanyNameFromUser ||
     t("Tap to add company name") ||
     "Tap to add company name";
-  const companyKycStatus: string | undefined =
-    userData?.companyKycStatus ?? userData?.company_kyc_status ?? undefined;
+
+  const rawCompanyKycStatus: string | undefined =
+    companyKycView?.status ??
+    (userData?.companyKycStatus as string | undefined) ??
+    (userData?.company_kyc_status as string | undefined) ??
+    undefined;
+
+  const normalizedCompanyKycStatus = rawCompanyKycStatus
+    ? String(rawCompanyKycStatus).toLowerCase()
+    : undefined;
+
+  const isCompanyKycVerified =
+    normalizedCompanyKycStatus === "approved" ||
+    normalizedCompanyKycStatus === "verified";
+  const isCompanyKycPending =
+    normalizedCompanyKycStatus === "pending" ||
+    normalizedCompanyKycStatus === "in_review";
+
+  const isCompanyKycRejected = normalizedCompanyKycStatus === "rejected";
+
+  // Lock only when there is an active/pending or verified company KYC.
+  // When rejected, allow user to open Company KYC again to resubmit.
+  const hasCompanyKycRequest = isCompanyKycVerified || isCompanyKycPending;
+
+  const [showCompanyRejectedModal, setShowCompanyRejectedModal] =
+    useState(false);
+
+  const handleCompanyRowPress = () => {
+    if (isCompanyKycRejected) {
+      setShowCompanyRejectedModal(true);
+    } else {
+      openCompanyModal();
+    }
+  };
   const contactNumber =
     userData?.phone ??
     userData?.phoneNumber ??
@@ -595,24 +659,28 @@ export default function Placeholder() {
             icon="business-outline"
             label={t("profile.companyName")}
             value={companyName}
-            editable
-            onEdit={openCompanyModal}
-            isPlaceholder={!userData?.companyName}
+            editable={!hasCompanyKycRequest}
+            onEdit={hasCompanyKycRequest ? undefined : handleCompanyRowPress}
+            isPlaceholder={!rawCompanyNameFromUser && !companyKycView?.companyName}
             badge={
-              companyKycStatus === "verified"
+              isCompanyKycVerified
                 ? "Verified"
-                : companyKycStatus === "pending"
-                  ? "Pending"
-                  : undefined
+                : isCompanyKycPending
+                ? "Unverified"
+                : isCompanyKycRejected
+                ? "Rejected"
+                : undefined
             }
             badgeColor={
-              companyKycStatus === "verified"
+              isCompanyKycVerified
                 ? "#10B981"
-                : companyKycStatus === "pending"
-                  ? "#F59E0B"
-                  : undefined
+                : isCompanyKycPending
+                ? "#F59E0B"
+                : isCompanyKycRejected
+                ? "#EF4444"
+                : undefined
             }
-            verified={companyKycStatus === "verified"}
+            verified={isCompanyKycVerified}
           />
           <DetailItem
             icon="call-outline"
@@ -671,6 +739,8 @@ export default function Placeholder() {
             }
             verifyButtonLabel={t("profile.verify")}
           />
+          {/* Company KYC status (if available) */}
+          {/* This row can be wired to real backend data in the future by reusing getCompanyKycStatus */}
           <DetailItem
             icon="people-outline"
             label={t("profile.agentReferrer")}
@@ -1112,6 +1182,39 @@ export default function Placeholder() {
             <TouchableOpacity
               style={styles.successButton}
               onPress={() => setShowSuccessModal(false)}
+            >
+              <Text style={styles.successButtonText}>OK</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Company KYC Rejected Modal */}
+      <Modal
+        visible={showCompanyRejectedModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowCompanyRejectedModal(false)}
+      >
+        <View style={styles.successOverlay}>
+          <View style={styles.successContent}>
+            <Ionicons
+              name="alert-circle"
+              size={40}
+              color="#EF4444"
+              style={{ marginBottom: 8 }}
+            />
+            <Text style={styles.successTitle}>Company KYC Rejected</Text>
+            <Text style={styles.successMessage}>
+              Your submitted company documents were rejected. Please review your
+              information and upload your company requirements again.
+            </Text>
+            <TouchableOpacity
+              style={styles.successButton}
+              onPress={() => {
+                setShowCompanyRejectedModal(false);
+                openCompanyModal();
+              }}
             >
               <Text style={styles.successButtonText}>OK</Text>
             </TouchableOpacity>

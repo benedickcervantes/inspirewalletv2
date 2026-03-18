@@ -508,3 +508,16 @@ export function submitCompanyKyc(
   accessToken: string,
   body: { companyName: string; documents: Record<string, string> },
 ): Promise<{ success: boolean; data?: unknown; error?: string }>;
+
+export function getCompanyKycStatus(
+  accessToken: string,
+): Promise<{
+  success: boolean;
+  data?: {
+    id?: string;
+    status?: string;
+    companyName?: string;
+    [key: string]: unknown;
+  };
+  error?: string;
+}>;
