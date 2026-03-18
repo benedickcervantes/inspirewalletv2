@@ -1,6 +1,6 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useFocusEffect, useFocusEffect, useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { doc, getDoc } from "firebase/firestore";
 import * as ImagePicker from "expo-image-picker";
@@ -138,12 +138,6 @@ export default function Placeholder() {
 
   // Refetch when profile screen is focused (e.g. after submitting company KYC)
   // so company name row shows Unverified/Verified badge.
-  useFocusEffect(
-    useCallback(() => {
-      fetchUserData();
-    }, [fetchUserData]),
-  );
-
   useFocusEffect(
     useCallback(() => {
       fetchUserData();
@@ -654,9 +648,6 @@ export default function Placeholder() {
             editable={!hasCompanyKycRequest}
             onEdit={hasCompanyKycRequest ? undefined : handleCompanyRowPress}
             isPlaceholder={!rawCompanyNameFromUser && !companyKycView?.companyName}
-            editable={!hasCompanyKycRequest}
-            onEdit={handleCompanyRowPress}
-            isPlaceholder={!rawCompanyNameFromUser && !companyKycView?.companyName}
             badge={
               isCompanyKycVerified
                 ? "Verified"
@@ -665,11 +656,6 @@ export default function Placeholder() {
                 : isCompanyKycRejected
                 ? "Rejected"
                 : undefined
-                : isCompanyKycPending
-                  ? "Unverified"
-                  : isCompanyKycRejected
-                    ? "Rejected"
-                    : undefined
             }
             badgeColor={
               isCompanyKycVerified
@@ -679,11 +665,6 @@ export default function Placeholder() {
                 : isCompanyKycRejected
                 ? "#EF4444"
                 : undefined
-                : isCompanyKycPending
-                  ? "#F59E0B"
-                  : isCompanyKycRejected
-                    ? "#EF4444"
-                    : undefined
             }
             verified={isCompanyKycVerified}
           />
@@ -1200,38 +1181,6 @@ export default function Placeholder() {
         transparent
         animationType="fade"
         onRequestClose={() => setShowCompanyRejectedModal(false)}
-      >
-        <View style={styles.successOverlay}>
-          <View style={styles.successContent}>
-            <Ionicons
-              name="alert-circle"
-              size={40}
-              color="#EF4444"
-              style={{ marginBottom: 8 }}
-            />
-            <Text style={styles.successTitle}>Company KYC Rejected</Text>
-            <Text style={styles.successMessage}>
-              Your submitted company documents were rejected. Please review your
-              information and upload your company requirements again.
-            </Text>
-            <TouchableOpacity
-              style={styles.successButton}
-              onPress={() => {
-                setShowCompanyRejectedModal(false);
-                openCompanyModal();
-              }}
-            >
-              <Text style={styles.successButtonText}>OK</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Company KYC Rejected Modal */}
-      <Modal
-        visible={showCompanyRejectedModal}
-        transparent
-        animationType="fade"
       >
         <View style={styles.successOverlay}>
           <View style={styles.successContent}>
