@@ -1,28 +1,21 @@
 import { getCompanyKycStatus, submitCompanyKyc } from "@/configs/api";
-import { getCompanyKycStatus, submitCompanyKyc } from "@/configs/api";
 import { Ionicons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system/legacy";
-import * as FileSystem from "expo-file-system/legacy";
 import { LinearGradient } from "expo-linear-gradient";
-import { useEffect, useState } from "react";
 import { useEffect, useState } from "react";
 import {
   Alert,
   Modal,
   Platform,
-  Platform,
   ScrollView,
-  StatusBar,
   StatusBar,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  useWindowDimensions,
   useWindowDimensions,
   View,
 } from "react-native";
@@ -43,21 +36,6 @@ export default function KYCcompany() {
   const { width } = useWindowDimensions();
 
   // Scale for smaller/larger devices
-  const scale = Math.min(width / REFERENCE_WIDTH, 1.2);
-  const headerPaddingTop =
-    Platform.OS === "ios"
-      ? Math.max(insets.top, 12)
-      : Math.max(StatusBar.currentHeight ?? 0, insets.top, 12);
-  const headerPaddingBottom = Math.round(14 * scale);
-  const headerPaddingHorizontal = Math.max(16, Math.min(24, Math.round(width * 0.052)));
-  const headerTitleFontSize = Math.round(18 * scale + 2);
-  const headerBackButtonSize = Math.round(40 * scale);
-  const headerBackIconSize = Math.round(22 * scale + 2);
-  const statusBadgeMarginTop = Math.round(8 * scale + 2);
-  const statusBadgeFontSize = Math.round(12 * scale);
-  const statusBadgeIconSize = Math.round(14 * scale);
-  const { width } = useWindowDimensions();
-
   const scale = Math.min(width / REFERENCE_WIDTH, 1.2);
   const headerPaddingTop =
     Platform.OS === "ios"
@@ -116,29 +94,6 @@ export default function KYCcompany() {
     };
 
     void fetchStatus();
-  }, []);
-  const [companyKycStatus, setCompanyKycStatus] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchStatus = async () => {
-      try {
-        const token = await AsyncStorage.getItem("access_token");
-        if (!token) return;
-        const result = await getCompanyKycStatus(token);
-        if (result.success && result.data) {
-          const data = result.data;
-          const status = String(data.status ?? "").toUpperCase();
-          setCompanyKycStatus(status || null);
-          const name = data.companyName;
-          if (typeof name === "string") {
-            setCompanyName((prev) => prev || name);
-          }
-        }
-      } catch (e) {
-        console.error("[Company KYC] Failed to load status", e);
-      }
-    };
-    fetchStatus();
   }, []);
 
   const pickDocument = async (
@@ -252,12 +207,6 @@ export default function KYCcompany() {
   // (pending review or already approved). Rejected can be edited/resubmitted.
   const isLocked = isApproved || isPending;
 
-  const showStatusBadge = !!companyKycStatus;
-
-  const isApproved = companyKycStatus === "APPROVED";
-  const isPending = companyKycStatus === "PENDING";
-  const isRejected = companyKycStatus === "REJECTED";
-  const isLocked = isApproved || isPending;
   const showStatusBadge = !!companyKycStatus;
 
   const docs = [
@@ -445,15 +394,14 @@ export default function KYCcompany() {
             </View>
             <TextInput
               style={[
-                [styles.textInput,
+                styles.textInput,
                 isLocked && styles.readonlyInput,
-              ], isLocked && styles.readonlyInput]}
+              ]}
               placeholder="Sample Company"
               placeholderTextColor="#BDBDBD"
               value={companyName}
-              onChangeText={isLocked ? undefined : isLocked ? undefined : setCompanyName}
               editable={!isLocked}
-              editable={!isLocked}
+              onChangeText={isLocked ? undefined : setCompanyName}
             />
           </View>
 
@@ -492,9 +440,6 @@ export default function KYCcompany() {
                 {index > 0 && <View style={styles.docRowDivider} />}
                 <TouchableOpacity
                   style={styles.docRow}
-                  onPress={isLocked ? undefined : () => pickDocument(doc.setUri, doc.setName, doc.setMime, doc.label)}
-                  activeOpacity={isLocked ? 1 : 0.7}
-                  disabled={isLocked}
                   onPress={
                     isLocked
                       ? undefined
@@ -631,22 +576,13 @@ const styles = StyleSheet.create({
   },
   gradientHeader: {},
   gradientHeaderRow: {
-  // ── Gradient header (sizes set inline for responsiveness) ─────────────────
-  gradientHeader: {},
-  gradientHeaderRow: {
     flexDirection: "row",
     alignItems: "center",
   },
   headerBackButton: {
     justifyContent: "center",
     alignItems: "center",
-    alignItems: "center",
   },
-  headerBackButton: {
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  headerTitleBlock: {
   headerTitleBlock: {
     flex: 1,
     justifyContent: "center",
@@ -679,11 +615,6 @@ const styles = StyleSheet.create({
   },
   readonlyInput: {
     backgroundColor: "#E5E7EB",
-  },
-  headerTitle: {
-    fontWeight: "700",
-    color: "#FFFFFF",
-    textAlign: "center",
   },
   // ─────────────────────────────────────────────────────────────────────────
   scrollView: {
