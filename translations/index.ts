@@ -6,16 +6,20 @@
 export type TranslationMap = Record<string, string>;
 
 const en: TranslationMap = {
-  "deposit.missingRequestId": "Missing Request ID. Please go back and try again.",
+  "deposit.missingRequestId":
+    "Missing Request ID. Please go back and try again.",
   "deposit.receiptUploadFailed": "Receipt upload failed: ",
-  "deposit.timeDepositCreatedUploadFailed": "Time Deposit Created, but receipt upload failed: ",
+  "deposit.timeDepositCreatedUploadFailed":
+    "Time Deposit Created, but receipt upload failed: ",
   "deposit.pleaseContactSupport": ". Please contact support.",
   "deposit.optional": "(Optional)",
   "deposit.acceptedFormats": "JPG, PNG or PDF",
   "deposit.acceptedFormatsMax": "JPG, PNG or PDF (Max 5MB)",
-  "deposit.timeDepositSuccessMessage": "Your time deposit request has been submitted successfully and the amount has been deducted from your available balance.",
+  "deposit.timeDepositSuccessMessage":
+    "Your time deposit request has been submitted successfully and the amount has been deducted from your available balance.",
   "dashboard.underMaintenance": "Under maintenance",
-  "dashboard.maintenanceMessage": "This service is currently under maintenance. We're working hard to bring you an improved experience. Please check back soon!",
+  "dashboard.maintenanceMessage":
+    "This service is currently under maintenance. We're working hard to bring you an improved experience. Please check back soon!",
   "dashboard.gotIt": "Got it",
   // Common
   "common.cancel": "Cancel",
@@ -200,7 +204,8 @@ const en: TranslationMap = {
   "kycCompany.submitting": "Submitting...",
   "kycCompany.save": "Save",
   "kycCompany.invalidFile": "Invalid File",
-  "kycCompany.invalidFileMessage": "Only PDF or Word documents are accepted for {label}.",
+  "kycCompany.invalidFileMessage":
+    "Only PDF or Word documents are accepted for {label}.",
   "kycCompany.errorPickingDoc": "Failed to pick document",
   "kycCompany.validationEnterCompanyName": "Please enter your company name.",
   "kycCompany.validationUploadDocs": "Please upload all required documents.",
@@ -321,6 +326,15 @@ const en: TranslationMap = {
   "tx.fee": "Fee",
   "tx.refund": "Refund",
   "tx.timeDeposit": "Time Deposit",
+  "tx.timeDepositDividend": "Time Deposit Dividend",
+  "tx.timeDepositPrincipalReturn": "Time Deposit Principal Return",
+  "tx.agentCommission": "Agent Commission",
+  "tx.cardPurchase": "Card Purchase",
+  "tx.cardSubscription": "Card Subscription",
+  "tx.stockBuy": "Stock Buy",
+  "tx.stockSell": "Stock Sell",
+  "tx.planSubscriptionPayment": "Plan Subscription Payment",
+  "tx.planSubscriptionCashback": "Plan Subscription Cashback",
   "tx.travelProtection": "Travel Protection",
   "tx.transaction": "Transaction",
 
@@ -341,10 +355,8 @@ const en: TranslationMap = {
   "investment.emptyPending":
     "Submitted deposits will appear here once created.",
   "investment.emptyActive": "Approved time deposits will appear here.",
-  "investment.emptyCompleted":
-    "Matured contracts will appear here.",
-  "investment.emptyCancelled":
-    "Cancelled contracts will appear here.",
+  "investment.emptyCompleted": "Matured contracts will appear here.",
+  "investment.emptyCancelled": "Cancelled contracts will appear here.",
   "investment.contractDetails": "Contract Details",
   "investment.amount": "Amount",
   "investment.interestRate": "Interest Rate",
@@ -436,7 +448,8 @@ const en: TranslationMap = {
   "deposit.depositType": "Deposit Type",
   "deposit.transactionReceipt": "Transaction Receipt",
   "deposit.bankDetailsSentTitle": "Bank Details Sent",
-  "deposit.bankDetailsSentMessage": "We've emailed you the banking credentials. Please check your inbox and upload your proof of payment once done.",
+  "deposit.bankDetailsSentMessage":
+    "We've emailed you the banking credentials. Please check your inbox and upload your proof of payment once done.",
   "deposit.topUpSubtitle": "Add funds to your available balance",
   "deposit.pleaseLoginTopup": "Please log in to submit a top-up request.",
   "deposit.topUpSuccess": "Your request has been submitted successfully.",
@@ -450,7 +463,8 @@ const en: TranslationMap = {
   "deposit.proofOfPaymentSubtitle":
     "Upload your proof of receipt or proof of payment to proceed. This is required to submit your request.",
   "deposit.proofRequiredBadge": "Required",
-  "deposit.receiptRequired": "Please attach proof of payment to submit your request.",
+  "deposit.receiptRequired":
+    "Please attach proof of payment to submit your request.",
   "deposit.uploadFiles": "Upload Files",
   "deposit.useCamera": "Use Camera",
   "deposit.proofUploaded": "Proof uploaded",
@@ -481,7 +495,8 @@ const en: TranslationMap = {
   "settings.biometricLogin": "{type} Login",
   "settings.biometricSubtitle": "Use {type} for faster and secure login",
   "settings.enableBiometric": "Enable {type}",
-  "settings.biometricSetupSubtitle": "Please enter your password to confirm linking this device to your account for {type} login.",
+  "settings.biometricSetupSubtitle":
+    "Please enter your password to confirm linking this device to your account for {type} login.",
   "settings.passwordPlaceholder": "Enter your password",
   "settings.enterPassword": "Password is required",
   "settings.enable": "Enable",
@@ -528,8 +543,7 @@ const en: TranslationMap = {
   "passcode.passcodesDoNotMatch": "The passcodes do not match.",
   "passcode.invalidTitle": "Invalid Passcode",
   "passcode.invalidPasscodeLength": "Passcode must be exactly 4 digits.",
-  "passcode.resetInfoMessage":
-    "Your passcode has been reset successfully.",
+  "passcode.resetInfoMessage": "Your passcode has been reset successfully.",
   "settings.deleteAccount": "Delete Account",
   "settings.customerRelationship": "Customer Relationship",
   "settings.aboutUs": "About us",
@@ -602,16 +616,13 @@ const en: TranslationMap = {
     "No referred clients with approved time deposits yet",
   "agent.emptyReferredClientsHint":
     "When your referrals create time deposits and they get approved, you'll earn commission and see them here.",
-  "agent.emptyDirectReferrals":
-    "No direct referrals yet",
+  "agent.emptyDirectReferrals": "No direct referrals yet",
   "agent.emptyDirectReferralsHint":
     "People you invite directly with your referral code will appear here.",
-  "agent.emptyTotalNetwork":
-    "Your total network is still empty",
+  "agent.emptyTotalNetwork": "Your total network is still empty",
   "agent.emptyTotalNetworkHint":
     "Once referrals start inviting more people, your full network will show here.",
-  "agent.emptyPendingCommissions":
-    "No pending agent commissions right now",
+  "agent.emptyPendingCommissions": "No pending agent commissions right now",
   "agent.emptyPendingCommissionsHint":
     "Pending commissions from new referred time deposits will appear here until their release date.",
   "agent.loadingDashboard": "LOADING AGENT DASHBOARD...",
@@ -855,6 +866,15 @@ const en: TranslationMap = {
   "history.loading": "LOADING HISTORY...",
   "history.createdAccount": "Created Account",
   "history.freeDefaultCard": "Free Default Card",
+  "history.timeDepositApprovedTopUp":
+    "Time deposit approved - request amount top-up",
+  "history.topUpApprovedRequest": "Top-up approved: request {requestId}",
+  "history.agentCommissionFromTimeDeposit":
+    "Agent commission from time deposit {id}",
+  "history.stockPurchaseListing": "Stock purchase: listing {listingId}",
+  "history.stockSaleListing": "Stock sale: listing {listingId}",
+  "history.stockSoldListing": "Stock sold: listing {listingId}",
+  "history.stockPurchasedListing": "Stock purchased: listing {listingId}",
   "history.resultText": "Result {count}/{total}",
   "history.loadMore": "Load More",
 
@@ -872,9 +892,11 @@ const en: TranslationMap = {
   "delete.requiredReason": "Please select a reason for deleting your account.",
   "delete.required": "Required",
   "delete.approvedTitle": "Account Deleted",
-  "delete.approvedMessage": "Your account has been deleted. Please click OK to log out.",
+  "delete.approvedMessage":
+    "Your account has been deleted. Please click OK to log out.",
   "delete.rejectedTitle": "Request Rejected",
-  "delete.rejectedMessage": "Your account deletion request was rejected by our admin team.",
+  "delete.rejectedMessage":
+    "Your account deletion request was rejected by our admin team.",
   "delete.adminComment": "Admin comment",
 
   // Privacy Policy
@@ -964,9 +986,12 @@ const en: TranslationMap = {
   "notification.delete": "Delete",
   "notification.deleteAll": "Delete All",
   "notification.deleteSelected": "Delete Selected",
-  "notification.deleteConfirmOne": "Are you sure you want to delete this notification?",
-  "notification.deleteConfirmAll": "Are you sure you want to delete all notifications?",
-  "notification.deleteConfirmSelected": "Are you sure you want to delete {count} notification(s)?",
+  "notification.deleteConfirmOne":
+    "Are you sure you want to delete this notification?",
+  "notification.deleteConfirmAll":
+    "Are you sure you want to delete all notifications?",
+  "notification.deleteConfirmSelected":
+    "Are you sure you want to delete {count} notification(s)?",
   "notification.close": "Close",
   "notification.acceptReferral": "Accept",
   "notification.declineReferral": "Decline",
@@ -1650,13 +1675,16 @@ const en: TranslationMap = {
   "common.discardExit": "Discard & Exit",
   "common.cancelApplication": "Cancel Application?",
   "common.goBack": "Go Back",
-  "common.authTokenNotFound": "Authentication token not found. Please login again.",
+  "common.authTokenNotFound":
+    "Authentication token not found. Please login again.",
 
   // Banking additions
-  "banking.cancelApplicationMessage": "Are you sure you want to cancel? Your current progress on this banking form will be lost.",
+  "banking.cancelApplicationMessage":
+    "Are you sure you want to cancel? Your current progress on this banking form will be lost.",
 
   // E-Wallet additions
-  "ewallet.cancelApplicationMessage": "Are you sure you want to cancel? Your current progress on this e-wallet form will be lost.",
+  "ewallet.cancelApplicationMessage":
+    "Are you sure you want to cancel? Your current progress on this e-wallet form will be lost.",
   "ewallet.emailRequired": "Email address is required",
   "ewallet.emailInvalid": "Please enter a valid email address",
   "ewallet.mobileRequired": "Mobile number is required",
@@ -1706,16 +1734,21 @@ const en: TranslationMap = {
 
   // Register additions
   "register.invalidLink": "Please enter a valid link.",
-  "register.lineQRMismatch": "The scanned QR code does not match LINE. Please scan a valid LINE account link.",
-  "register.viberQRMismatch": "The scanned QR code does not match Viber. Please scan a valid Viber account link.",
-  "register.whatsappQRMismatch": "The scanned QR code does not match WhatsApp. Please scan a valid WhatsApp account link.",
+  "register.lineQRMismatch":
+    "The scanned QR code does not match LINE. Please scan a valid LINE account link.",
+  "register.viberQRMismatch":
+    "The scanned QR code does not match Viber. Please scan a valid Viber account link.",
+  "register.whatsappQRMismatch":
+    "The scanned QR code does not match WhatsApp. Please scan a valid WhatsApp account link.",
   "register.notice": "Notice",
 
   // Passcode additions
   "passcode.biometricPrompt": "Log in with {type}",
   "passcode.noTokenFound": "No biometric token found",
-  "passcode.biometricLoginFailed": "Biometric login failed on server. Please use passcode.",
-  "passcode.biometricAuthError": "Biometric authentication error. Please use passcode.",
+  "passcode.biometricLoginFailed":
+    "Biometric login failed on server. Please use passcode.",
+  "passcode.biometricAuthError":
+    "Biometric authentication error. Please use passcode.",
   "passcode.useFallback": "Use Passcode",
 
   // Notification additions
@@ -1736,7 +1769,8 @@ const en: TranslationMap = {
   "withdraw.mobileInvalid": "Please enter a valid 10-digit mobile number.",
 
   // Travel additions
-  "travel.cancelApplicationMessage": "Are you sure you want to cancel? Your current progress on this travel protection form will be lost.",
+  "travel.cancelApplicationMessage":
+    "Are you sure you want to cancel? Your current progress on this travel protection form will be lost.",
   "travel.notAuthenticated": "Not authenticated",
   "travel.insufficientBalance": "Insufficient balance",
   "travel.submitFailed": "Failed to submit application",
@@ -1745,15 +1779,19 @@ const en: TranslationMap = {
 
   // Stock Sell additions
   "stock.invalidAmountTitle": "Invalid Amount",
-  "stock.invalidAmountMessage": "Please enter a valid number of stocks to sell.",
+  "stock.invalidAmountMessage":
+    "Please enter a valid number of stocks to sell.",
   "stock.insufficientStocksTitle": "Insufficient Stocks",
-  "stock.insufficientStocksMessage": "You only have {count} stock(s). Please enter a number less than or equal to {count}.",
+  "stock.insufficientStocksMessage":
+    "You only have {count} stock(s). Please enter a number less than or equal to {count}.",
   "stock.notAuthenticatedTitle": "Not Authenticated",
   "stock.notAuthenticatedMessage": "Please log in and try again.",
   "stock.walletNotFoundTitle": "Wallet Not Found",
-  "stock.walletNotFoundMessage": "Could not find your STOCK wallet. Please try again.",
+  "stock.walletNotFoundMessage":
+    "Could not find your STOCK wallet. Please try again.",
   "stock.requestSubmittedTitle": "Request Submitted",
-  "stock.requestSubmittedMessage": "Your sell request has been submitted. You will be notified when it is processed.",
+  "stock.requestSubmittedMessage":
+    "Your sell request has been submitted. You will be notified when it is processed.",
   "stock.submissionFailedTitle": "Submission Failed",
   "stock.submissionFailed": "Something went wrong. Please try again.",
   "stock.unexpectedError": "An unexpected error occurred. Please try again.",
@@ -1770,7 +1808,8 @@ const en: TranslationMap = {
   "stock.myOrders": "My Orders",
   "stock.marketplace": "Marketplace",
   "stock.purchaseSuccessTitle": "Purchase Successful 🎉",
-  "stock.purchaseSuccessMessage": "You purchased {count} stock(s) for ₱{amount}. Your portfolio has been updated.",
+  "stock.purchaseSuccessMessage":
+    "You purchased {count} stock(s) for ₱{amount}. Your portfolio has been updated.",
   "stock.purchaseFailedTitle": "Purchase Failed",
   "stock.purchaseFailed": "Something went wrong.",
   "stock.noBuyRequests": "No buy requests yet",
@@ -1945,7 +1984,8 @@ const ko: TranslationMap = {
   "kycCompany.submitting": "제출 중...",
   "kycCompany.save": "저장",
   "kycCompany.invalidFile": "잘못된 파일",
-  "kycCompany.invalidFileMessage": "{label}은(는) PDF 또는 Word 문서만 허용됩니다.",
+  "kycCompany.invalidFileMessage":
+    "{label}은(는) PDF 또는 Word 문서만 허용됩니다.",
   "kycCompany.errorPickingDoc": "문서 선택 실패",
   "kycCompany.validationEnterCompanyName": "회사명을 입력해 주세요.",
   "kycCompany.validationUploadDocs": "필수 서류를 모두 업로드해 주세요.",
@@ -2037,6 +2077,15 @@ const ko: TranslationMap = {
   "tx.fee": "수수료",
   "tx.refund": "환불",
   "tx.timeDeposit": "정기 예금",
+  "tx.timeDepositDividend": "정기 예금 배당",
+  "tx.timeDepositPrincipalReturn": "정기 예금 원금 반환",
+  "tx.agentCommission": "에이전트 수수료",
+  "tx.cardPurchase": "카드 구매",
+  "tx.cardSubscription": "카드 구독",
+  "tx.stockBuy": "주식 매수",
+  "tx.stockSell": "주식 매도",
+  "tx.planSubscriptionPayment": "플랜 구독 결제",
+  "tx.planSubscriptionCashback": "플랜 구독 캐시백",
   "tx.travelProtection": "여행 보호",
   "tx.transaction": "거래",
   "investment.timeDeposit": "정기 예금",
@@ -2158,9 +2207,11 @@ const ko: TranslationMap = {
   "settings.updatePinSubtitle": "4자리 PIN 업데이트",
   "settings.changePin": "PIN 변경",
   "settings.biometricLogin": "{type} 로그인",
-  "settings.biometricSubtitle": "빠르고 안전한 로그인을 위해 {type}을(를) 사용하세요.",
+  "settings.biometricSubtitle":
+    "빠르고 안전한 로그인을 위해 {type}을(를) 사용하세요.",
   "settings.enableBiometric": "{type} 활성화",
-  "settings.biometricSetupSubtitle": "{type} 로그인을 위해 기기 연결을 확인하려면 비밀번호를 입력하세요.",
+  "settings.biometricSetupSubtitle":
+    "{type} 로그인을 위해 기기 연결을 확인하려면 비밀번호를 입력하세요.",
   "passcode.headerTitle": "패스코드 변경",
   "passcode.stepIndicator": "3단계 중 {step}단계",
   "passcode.instructionCurrent": "현재 패스코드를 입력하세요",
@@ -2202,8 +2253,7 @@ const ko: TranslationMap = {
   "passcode.passcodesDoNotMatch": "패스코드가 일치하지 않습니다.",
   "passcode.invalidTitle": "잘못된 패스코드",
   "passcode.invalidPasscodeLength": "패스코드는 정확히 4자리여야 합니다.",
-  "passcode.resetInfoMessage":
-    "패스코드가 성공적으로 재설정되었습니다.",
+  "passcode.resetInfoMessage": "패스코드가 성공적으로 재설정되었습니다.",
   "settings.deleteAccount": "계정 삭제",
   "settings.customerRelationship": "고객 관계",
   "settings.aboutUs": "회사 소개",
@@ -2235,6 +2285,8 @@ const ko: TranslationMap = {
   "settings.helpCenter": "고객센터",
   "settings.privacyPolicy": "개인정보 처리방침",
   "settings.termsAndCondition": "이용약관",
+  "settings.currencyCalculator": "환율 계산기",
+  "settings.currencyCalculatorSubtitle": "통화를 빠르게 변환",
   "settings.language": "언어",
   "settings.signOut": "로그아웃",
   "settings.verifyEmail": "이메일 인증",
@@ -2501,6 +2553,14 @@ const ko: TranslationMap = {
   "history.loading": "내역 로딩 중...",
   "history.createdAccount": "계정 생성",
   "history.freeDefaultCard": "무료 기본 카드",
+  "history.timeDepositApprovedTopUp": "정기 예금 승인 - 신청 금액 충전",
+  "history.topUpApprovedRequest": "충전 승인: 요청 {requestId}",
+  "history.agentCommissionFromTimeDeposit":
+    "정기 예금 {id}에서 발생한 에이전트 수수료",
+  "history.stockPurchaseListing": "주식 매수: 상장 {listingId}",
+  "history.stockSaleListing": "주식 매도: 상장 {listingId}",
+  "history.stockSoldListing": "주식 매도 완료: 상장 {listingId}",
+  "history.stockPurchasedListing": "주식 매수 완료: 상장 {listingId}",
   "history.resultText": "결과 {count}/{total}",
   "history.loadMore": "더 보기",
 
@@ -2518,7 +2578,8 @@ const ko: TranslationMap = {
   "delete.requiredReason": "탈퇴 사유를 선택해 주세요.",
   "delete.required": "필수",
   "delete.approvedTitle": "계정 삭제됨",
-  "delete.approvedMessage": "계정이 삭제되었습니다. 로그아웃하려면 확인을 클릭하세요.",
+  "delete.approvedMessage":
+    "계정이 삭제되었습니다. 로그아웃하려면 확인을 클릭하세요.",
   "delete.rejectedTitle": "요청 거부됨",
   "delete.rejectedMessage": "관리자에 의해 계정 삭제 요청이 거부되었습니다.",
   "delete.adminComment": "관리자 코멘트",
@@ -2602,7 +2663,8 @@ const ko: TranslationMap = {
   "notification.deleteSelected": "선택 항목 삭제",
   "notification.deleteConfirmOne": "이 알림을 삭제하시겠습니까?",
   "notification.deleteConfirmAll": "모든 알림을 삭제하시겠습니까?",
-  "notification.deleteConfirmSelected": "선택한 {count}개의 알림을 삭제하시겠습니까?",
+  "notification.deleteConfirmSelected":
+    "선택한 {count}개의 알림을 삭제하시겠습니까?",
   "notification.close": "닫기",
   "notification.acceptReferral": "수락",
   "notification.declineReferral": "거절",
@@ -3250,13 +3312,16 @@ const ko: TranslationMap = {
   "common.discardExit": "삭제 후 나가기",
   "common.cancelApplication": "신청을 취소하시겠습니까?",
   "common.goBack": "뒤로 가기",
-  "common.authTokenNotFound": "인증 토큰을 찾을 수 없습니다. 다시 로그인해 주세요.",
+  "common.authTokenNotFound":
+    "인증 토큰을 찾을 수 없습니다. 다시 로그인해 주세요.",
 
   // Banking additions
-  "banking.cancelApplicationMessage": "정말 취소하시겠습니까? 현재 진행 중인 뱅킹 양식이 삭제됩니다.",
+  "banking.cancelApplicationMessage":
+    "정말 취소하시겠습니까? 현재 진행 중인 뱅킹 양식이 삭제됩니다.",
 
   // E-Wallet additions
-  "ewallet.cancelApplicationMessage": "정말 취소하시겠습니까? 현재 진행 중인 전자지갑 양식이 삭제됩니다.",
+  "ewallet.cancelApplicationMessage":
+    "정말 취소하시겠습니까? 현재 진행 중인 전자지갑 양식이 삭제됩니다.",
   "ewallet.emailRequired": "이메일 주소가 필요합니다",
   "ewallet.emailInvalid": "유효한 이메일 주소를 입력해 주세요",
   "ewallet.mobileRequired": "휴대전화 번호가 필요합니다",
@@ -3292,7 +3357,8 @@ const ko: TranslationMap = {
   "currency.convertedTo": "환산",
   "currency.totalResult": "총 결과",
   "currency.exchangeRateUnavailable": "환율을 사용할 수 없습니다",
-  "currency.disclaimer": "* 은행의 실시간 환율입니다. 환율은 변동될 수 있습니다.",
+  "currency.disclaimer":
+    "* 은행의 실시간 환율입니다. 환율은 변동될 수 있습니다.",
   "currency.selectFromCurrency": "출발 통화 선택",
   "currency.selectToCurrency": "도착 통화 선택",
 
@@ -3301,20 +3367,25 @@ const ko: TranslationMap = {
   "settings.deleteRequestFailed": "요청 제출에 실패했습니다",
 
   // Login additions
-  "login.resetEmailFailed": "재설정 이메일 전송에 실패했습니다. 다시 시도해 주세요.",
+  "login.resetEmailFailed":
+    "재설정 이메일 전송에 실패했습니다. 다시 시도해 주세요.",
   "login.networkError": "네트워크 오류. 다시 시도해 주세요.",
 
   // Register additions
   "register.invalidLink": "유효한 링크를 입력해 주세요.",
-  "register.lineQRMismatch": "스캔한 QR 코드가 LINE과 일치하지 않습니다. 유효한 LINE 계정 링크를 스캔해 주세요.",
-  "register.viberQRMismatch": "스캔한 QR 코드가 Viber와 일치하지 않습니다. 유효한 Viber 계정 링크를 스캔해 주세요.",
-  "register.whatsappQRMismatch": "스캔한 QR 코드가 WhatsApp과 일치하지 않습니다. 유효한 WhatsApp 계정 링크를 스캔해 주세요.",
+  "register.lineQRMismatch":
+    "스캔한 QR 코드가 LINE과 일치하지 않습니다. 유효한 LINE 계정 링크를 스캔해 주세요.",
+  "register.viberQRMismatch":
+    "스캔한 QR 코드가 Viber와 일치하지 않습니다. 유효한 Viber 계정 링크를 스캔해 주세요.",
+  "register.whatsappQRMismatch":
+    "스캔한 QR 코드가 WhatsApp과 일치하지 않습니다. 유효한 WhatsApp 계정 링크를 스캔해 주세요.",
   "register.notice": "공지",
 
   // Passcode additions
   "passcode.biometricPrompt": "{type}으로 로그인",
   "passcode.noTokenFound": "생체 인증 토큰을 찾을 수 없습니다",
-  "passcode.biometricLoginFailed": "서버에서 생체 인증 로그인에 실패했습니다. 패스코드를 사용하세요.",
+  "passcode.biometricLoginFailed":
+    "서버에서 생체 인증 로그인에 실패했습니다. 패스코드를 사용하세요.",
   "passcode.biometricAuthError": "생체 인증 오류. 패스코드를 사용하세요.",
   "passcode.useFallback": "패스코드 사용",
 
@@ -3336,7 +3407,8 @@ const ko: TranslationMap = {
   "withdraw.mobileInvalid": "유효한 10자리 휴대전화 번호를 입력해 주세요.",
 
   // Travel additions
-  "travel.cancelApplicationMessage": "정말 취소하시겠습니까? 현재 진행 중인 여행 보호 양식이 삭제됩니다.",
+  "travel.cancelApplicationMessage":
+    "정말 취소하시겠습니까? 현재 진행 중인 여행 보호 양식이 삭제됩니다.",
   "travel.notAuthenticated": "인증되지 않음",
   "travel.insufficientBalance": "잔액이 부족합니다",
   "travel.submitFailed": "신청 제출에 실패했습니다",
@@ -3347,16 +3419,20 @@ const ko: TranslationMap = {
   "stock.invalidAmountTitle": "유효하지 않은 금액",
   "stock.invalidAmountMessage": "판매할 유효한 주식 수를 입력해 주세요.",
   "stock.insufficientStocksTitle": "주식 부족",
-  "stock.insufficientStocksMessage": "{count}주(식)만 보유하고 있습니다. {count} 이하의 숫자를 입력해 주세요.",
+  "stock.insufficientStocksMessage":
+    "{count}주(식)만 보유하고 있습니다. {count} 이하의 숫자를 입력해 주세요.",
   "stock.notAuthenticatedTitle": "인증되지 않음",
   "stock.notAuthenticatedMessage": "로그인 후 다시 시도해 주세요.",
   "stock.walletNotFoundTitle": "지갑을 찾을 수 없음",
-  "stock.walletNotFoundMessage": "STOCK 지갑을 찾을 수 없습니다. 다시 시도해 주세요.",
+  "stock.walletNotFoundMessage":
+    "STOCK 지갑을 찾을 수 없습니다. 다시 시도해 주세요.",
   "stock.requestSubmittedTitle": "요청 제출됨",
-  "stock.requestSubmittedMessage": "판매 요청이 제출되었습니다. 처리되면 알림을 받으실 것입니다.",
+  "stock.requestSubmittedMessage":
+    "판매 요청이 제출되었습니다. 처리되면 알림을 받으실 것입니다.",
   "stock.submissionFailedTitle": "제출 실패",
   "stock.submissionFailed": "오류가 발생했습니다. 다시 시도해 주세요.",
-  "stock.unexpectedError": "예상치 못한 오류가 발생했습니다. 다시 시도해 주세요.",
+  "stock.unexpectedError":
+    "예상치 못한 오류가 발생했습니다. 다시 시도해 주세요.",
   "stock.youHave": "보유 중",
   "stock.available": "사용 가능",
   "stock.percentageToSell": "판매 비율",
@@ -3370,13 +3446,15 @@ const ko: TranslationMap = {
   "stock.myOrders": "내 주문",
   "stock.marketplace": "마켓플레이스",
   "stock.purchaseSuccessTitle": "구매 성공 🎉",
-  "stock.purchaseSuccessMessage": "{count}주(식)을 ₱{amount}에 구매했습니다. 포트폴리오가 업데이트되었습니다.",
+  "stock.purchaseSuccessMessage":
+    "{count}주(식)을 ₱{amount}에 구매했습니다. 포트폴리오가 업데이트되었습니다.",
   "stock.purchaseFailedTitle": "구매 실패",
   "stock.purchaseFailed": "오류가 발생했습니다.",
   "stock.noBuyRequests": "아직 구매 요청이 없습니다",
   "stock.noSellListings": "아직 판매 등록이 없습니다",
   "stock.noListingsAvailable": "등록된 매물이 없습니다",
-  "stock.beTheFirst": "첫 번째가 되어보세요! 포트폴리오에서 주식 판매를 탭하세요.",
+  "stock.beTheFirst":
+    "첫 번째가 되어보세요! 포트폴리오에서 주식 판매를 탭하세요.",
   "stock.loadingDashboard": "주식 대시보드 로딩 중...",
 };
 
@@ -3541,10 +3619,12 @@ const ja: TranslationMap = {
   "kycCompany.submitting": "送信中...",
   "kycCompany.save": "保存",
   "kycCompany.invalidFile": "無効なファイル",
-  "kycCompany.invalidFileMessage": "{label}にはPDFまたはWordのみが許可されています。",
+  "kycCompany.invalidFileMessage":
+    "{label}にはPDFまたはWordのみが許可されています。",
   "kycCompany.errorPickingDoc": "書類の選択に失敗しました",
   "kycCompany.validationEnterCompanyName": "会社名を入力してください。",
-  "kycCompany.validationUploadDocs": "すべての必須書類をアップロードしてください。",
+  "kycCompany.validationUploadDocs":
+    "すべての必須書類をアップロードしてください。",
   "kycCompany.notLoggedIn": "企業KYCを提出するにはログインが必要です。",
   "kycCompany.submitFailed": "企業KYCの提出に失敗しました。",
   "kycCompany.submitError": "提出に失敗しました。もう一度お試しください。",
@@ -3636,6 +3716,15 @@ const ja: TranslationMap = {
   "tx.fee": "手数料",
   "tx.refund": "返金",
   "tx.timeDeposit": "定期預金",
+  "tx.timeDepositDividend": "定期預金配当",
+  "tx.timeDepositPrincipalReturn": "定期預金元本返還",
+  "tx.agentCommission": "エージェント手数料",
+  "tx.cardPurchase": "カード購入",
+  "tx.cardSubscription": "カードサブスクリプション",
+  "tx.stockBuy": "株式購入",
+  "tx.stockSell": "株式売却",
+  "tx.planSubscriptionPayment": "プラン購読支払い",
+  "tx.planSubscriptionCashback": "プラン購読キャッシュバック",
   "tx.travelProtection": "旅行保護",
   "tx.transaction": "取引",
   "investment.timeDeposit": "定期預金",
@@ -3653,10 +3742,8 @@ const ja: TranslationMap = {
   "investment.noPendingContracts": "保留中の契約はありません",
   "investment.emptyPending": "申請した預金は作成後にここに表示されます。",
   "investment.emptyActive": "承認された定期預金がここに表示されます。",
-  "investment.emptyCompleted":
-    "満期した契約がここに表示されます。",
-  "investment.emptyCancelled":
-    "キャンセルされた契約がここに表示されます。",
+  "investment.emptyCompleted": "満期した契約がここに表示されます。",
+  "investment.emptyCancelled": "キャンセルされた契約がここに表示されます。",
   "investment.contractDetails": "契約詳細",
   "investment.amount": "金額",
   "investment.interestRate": "金利",
@@ -3741,7 +3828,8 @@ const ja: TranslationMap = {
   "deposit.pleaseLoginTopup": "チャージを申請するにはログインしてください。",
   "deposit.topUpSuccess": "チャージの申請が完了しました。",
   "deposit.proofRequiredBadge": "必須",
-  "deposit.receiptRequired": "申請を提出するにはお支払い証明を添付してください。",
+  "deposit.receiptRequired":
+    "申請を提出するにはお支払い証明を添付してください。",
   "settings.title": "設定",
   "settings.preferences": "環境設定",
   "settings.supportAndLegal": "サポートと法的情報",
@@ -3760,9 +3848,11 @@ const ja: TranslationMap = {
   "settings.updatePinSubtitle": "4桁のPINを更新",
   "settings.changePin": "PINを変更",
   "settings.biometricLogin": "{type} ログイン",
-  "settings.biometricSubtitle": "より速く安全にログインするために{type}を使用してください。",
+  "settings.biometricSubtitle":
+    "より速く安全にログインするために{type}を使用してください。",
   "settings.enableBiometric": "{type} を有効にする",
-  "settings.biometricSetupSubtitle": "{type} ログインのためにこのデバイスのアカウント連携を確認するため、パスワードを入力してください。",
+  "settings.biometricSetupSubtitle":
+    "{type} ログインのためにこのデバイスのアカウント連携を確認するため、パスワードを入力してください。",
   "settings.deleteAccount": "アカウント削除",
   "settings.customerRelationship": "お客様サポート",
   "settings.aboutUs": "会社概要",
@@ -3793,6 +3883,8 @@ const ja: TranslationMap = {
   "settings.helpCenter": "ヘルプセンター",
   "settings.privacyPolicy": "プライバシーポリシー",
   "settings.termsAndCondition": "利用規約",
+  "settings.currencyCalculator": "通貨換算",
+  "settings.currencyCalculatorSubtitle": "通貨をすばやく換算",
   "settings.language": "言語",
   "settings.signOut": "ログアウト",
   "settings.verifyEmail": "メール認証",
@@ -4038,6 +4130,14 @@ const ja: TranslationMap = {
   "history.loading": "履歴を読み込み中...",
   "history.createdAccount": "アカウント作成",
   "history.freeDefaultCard": "無料デフォルトカード",
+  "history.timeDepositApprovedTopUp": "定期預金承認 - 申請金額チャージ",
+  "history.topUpApprovedRequest": "チャージ承認: リクエスト {requestId}",
+  "history.agentCommissionFromTimeDeposit":
+    "定期預金 {id} からのエージェント手数料",
+  "history.stockPurchaseListing": "株式購入: リスティング {listingId}",
+  "history.stockSaleListing": "株式売却: リスティング {listingId}",
+  "history.stockSoldListing": "株式売却完了: リスティング {listingId}",
+  "history.stockPurchasedListing": "株式購入完了: リスティング {listingId}",
   "history.resultText": "結果 {count}/{total}",
   "passcode.headerTitle": "パスコード変更",
   "passcode.stepIndicator": "ステップ {step}/3",
@@ -4084,8 +4184,7 @@ const ja: TranslationMap = {
   "passcode.passcodesDoNotMatch": "パスコードが一致しません。",
   "passcode.invalidTitle": "無効なパスコード",
   "passcode.invalidPasscodeLength": "パスコードは4桁である必要があります。",
-  "passcode.resetInfoMessage":
-    "パスコードが正常にリセットされました。",
+  "passcode.resetInfoMessage": "パスコードが正常にリセットされました。",
   "history.loadMore": "もっと見る",
 
   "tickets.status.OPEN": "未解決",
@@ -4102,9 +4201,11 @@ const ja: TranslationMap = {
   "delete.requiredReason": "退会理由を選択してください。",
   "delete.required": "必須",
   "delete.approvedTitle": "アカウント削除完了",
-  "delete.approvedMessage": "アカウントは削除されました。ログアウトするにはOKをクリックしてください。",
+  "delete.approvedMessage":
+    "アカウントは削除されました。ログアウトするにはOKをクリックしてください。",
   "delete.rejectedTitle": "リクエスト拒否",
-  "delete.rejectedMessage": "アカウント削除リクエストは管理者により拒否されました。",
+  "delete.rejectedMessage":
+    "アカウント削除リクエストは管理者により拒否されました。",
   "delete.adminComment": "管理者コメント",
   "privacy.title": "プライバシーポリシー",
   "privacy.h1": "プライバシーを大切にしています",
@@ -4187,7 +4288,8 @@ const ja: TranslationMap = {
   "notification.deleteSelected": "選択したものを削除",
   "notification.deleteConfirmOne": "この通知を削除してもよろしいですか？",
   "notification.deleteConfirmAll": "すべての通知を削除してもよろしいですか？",
-  "notification.deleteConfirmSelected": "選択した{count}件の通知を削除してもよろしいですか？",
+  "notification.deleteConfirmSelected":
+    "選択した{count}件の通知を削除してもよろしいですか？",
   "notification.close": "閉じる",
   "notification.acceptReferral": "承諾",
   "notification.declineReferral": "辞退",
@@ -4848,13 +4950,16 @@ const ja: TranslationMap = {
   "common.discardExit": "破棄して終了",
   "common.cancelApplication": "申請をキャンセルしますか？",
   "common.goBack": "戻る",
-  "common.authTokenNotFound": "認証トークンが見つかりません。もう一度ログインしてください。",
+  "common.authTokenNotFound":
+    "認証トークンが見つかりません。もう一度ログインしてください。",
 
   // Banking additions
-  "banking.cancelApplicationMessage": "本当にキャンセルしますか？このバンキングフォームの現在の進行状況が失われます。",
+  "banking.cancelApplicationMessage":
+    "本当にキャンセルしますか？このバンキングフォームの現在の進行状況が失われます。",
 
   // E-Wallet additions
-  "ewallet.cancelApplicationMessage": "本当にキャンセルしますか？このeウォレットフォームの現在の進行状況が失われます。",
+  "ewallet.cancelApplicationMessage":
+    "本当にキャンセルしますか？このeウォレットフォームの現在の進行状況が失われます。",
   "ewallet.emailRequired": "メールアドレスは必須です",
   "ewallet.emailInvalid": "有効なメールアドレスを入力してください",
   "ewallet.mobileRequired": "携帯番号は必須です",
@@ -4873,11 +4978,13 @@ const ja: TranslationMap = {
   "goldElite.renewalAvailable": "更新可能",
   "goldElite.dayLeft": "日残り",
   "goldElite.daysLeft": "日残り",
-  "goldElite.expiresMessage": "ゴールドエリートのサブスクリプションは{date}に期限切れになります",
+  "goldElite.expiresMessage":
+    "ゴールドエリートのサブスクリプションは{date}に期限切れになります",
   "goldElite.price": "₱10,000/月",
   "goldElite.renewing": "更新中...",
   "goldElite.renewNow": "今すぐ更新",
-  "goldElite.renewSuccess": "ゴールドエリートのサブスクリプションが更新されました！",
+  "goldElite.renewSuccess":
+    "ゴールドエリートのサブスクリプションが更新されました！",
   "goldElite.renewFailed": "サブスクリプションの更新に失敗しました",
   "goldElite.networkError": "ネットワークエラー",
 
@@ -4890,7 +4997,8 @@ const ja: TranslationMap = {
   "currency.convertedTo": "換算先",
   "currency.totalResult": "合計結果",
   "currency.exchangeRateUnavailable": "為替レートが利用できません",
-  "currency.disclaimer": "* 銀行のライブ為替レートです。レートは変動する場合があります。",
+  "currency.disclaimer":
+    "* 銀行のライブ為替レートです。レートは変動する場合があります。",
   "currency.selectFromCurrency": "変換元通貨を選択",
   "currency.selectToCurrency": "変換先通貨を選択",
 
@@ -4899,20 +5007,25 @@ const ja: TranslationMap = {
   "settings.deleteRequestFailed": "リクエストの送信に失敗しました",
 
   // Login additions
-  "login.resetEmailFailed": "リセットメールの送信に失敗しました。もう一度お試しください。",
+  "login.resetEmailFailed":
+    "リセットメールの送信に失敗しました。もう一度お試しください。",
   "login.networkError": "ネットワークエラー。もう一度お試しください。",
 
   // Register additions
   "register.invalidLink": "有効なリンクを入力してください。",
-  "register.lineQRMismatch": "スキャンしたQRコードはLINEと一致しません。有効なLINEアカウントリンクをスキャンしてください。",
-  "register.viberQRMismatch": "スキャンしたQRコードはViberと一致しません。有効なViberアカウントリンクをスキャンしてください。",
-  "register.whatsappQRMismatch": "スキャンしたQRコードはWhatsAppと一致しません。有効なWhatsAppアカウントリンクをスキャンしてください。",
+  "register.lineQRMismatch":
+    "スキャンしたQRコードはLINEと一致しません。有効なLINEアカウントリンクをスキャンしてください。",
+  "register.viberQRMismatch":
+    "スキャンしたQRコードはViberと一致しません。有効なViberアカウントリンクをスキャンしてください。",
+  "register.whatsappQRMismatch":
+    "スキャンしたQRコードはWhatsAppと一致しません。有効なWhatsAppアカウントリンクをスキャンしてください。",
   "register.notice": "お知らせ",
 
   // Passcode additions
   "passcode.biometricPrompt": "{type}でログイン",
   "passcode.noTokenFound": "生体認証トークンが見つかりません",
-  "passcode.biometricLoginFailed": "サーバーでの生体認証ログインに失敗しました。パスコードをお使いください。",
+  "passcode.biometricLoginFailed":
+    "サーバーでの生体認証ログインに失敗しました。パスコードをお使いください。",
   "passcode.biometricAuthError": "生体認証エラー。パスコードをお使いください。",
   "passcode.useFallback": "パスコードを使用",
 
@@ -4934,7 +5047,8 @@ const ja: TranslationMap = {
   "withdraw.mobileInvalid": "有効な10桁の携帯番号を入力してください。",
 
   // Travel additions
-  "travel.cancelApplicationMessage": "本当にキャンセルしますか？この旅行保護フォームの現在の進行状況が失われます。",
+  "travel.cancelApplicationMessage":
+    "本当にキャンセルしますか？この旅行保護フォームの現在の進行状況が失われます。",
   "travel.notAuthenticated": "認証されていません",
   "travel.insufficientBalance": "残高不足",
   "travel.submitFailed": "申請の送信に失敗しました",
@@ -4945,16 +5059,20 @@ const ja: TranslationMap = {
   "stock.invalidAmountTitle": "無効な金額",
   "stock.invalidAmountMessage": "有効な売却株数を入力してください。",
   "stock.insufficientStocksTitle": "株式不足",
-  "stock.insufficientStocksMessage": "{count}株しか保有していません。{count}以下の数を入力してください。",
+  "stock.insufficientStocksMessage":
+    "{count}株しか保有していません。{count}以下の数を入力してください。",
   "stock.notAuthenticatedTitle": "認証されていません",
   "stock.notAuthenticatedMessage": "ログインして再試行してください。",
   "stock.walletNotFoundTitle": "ウォレットが見つかりません",
-  "stock.walletNotFoundMessage": "STOCKウォレットが見つかりません。再試行してください。",
+  "stock.walletNotFoundMessage":
+    "STOCKウォレットが見つかりません。再試行してください。",
   "stock.requestSubmittedTitle": "リクエスト送信済み",
-  "stock.requestSubmittedMessage": "売却リクエストが送信されました。処理されると通知されます。",
+  "stock.requestSubmittedMessage":
+    "売却リクエストが送信されました。処理されると通知されます。",
   "stock.submissionFailedTitle": "送信失敗",
   "stock.submissionFailed": "問題が発生しました。再試行してください。",
-  "stock.unexpectedError": "予期しないエラーが発生しました。再試行してください。",
+  "stock.unexpectedError":
+    "予期しないエラーが発生しました。再試行してください。",
   "stock.youHave": "保有",
   "stock.available": "利用可能",
   "stock.percentageToSell": "売却割合",
@@ -4968,13 +5086,15 @@ const ja: TranslationMap = {
   "stock.myOrders": "注文履歴",
   "stock.marketplace": "マーケットプレイス",
   "stock.purchaseSuccessTitle": "購入成功 🎉",
-  "stock.purchaseSuccessMessage": "{count}株を₱{amount}で購入しました。ポートフォリオが更新されました。",
+  "stock.purchaseSuccessMessage":
+    "{count}株を₱{amount}で購入しました。ポートフォリオが更新されました。",
   "stock.purchaseFailedTitle": "購入失敗",
   "stock.purchaseFailed": "問題が発生しました。",
   "stock.noBuyRequests": "まだ買い注文はありません",
   "stock.noSellListings": "まだ売り注文はありません",
   "stock.noListingsAvailable": "出品はありません",
-  "stock.beTheFirst": "最初になりましょう！ポートフォリオで株式を売るをタップしてください。",
+  "stock.beTheFirst":
+    "最初になりましょう！ポートフォリオで株式を売るをタップしてください。",
   "stock.loadingDashboard": "株式ダッシュボードを読み込み中...",
 };
 
@@ -5231,6 +5351,15 @@ const ar: TranslationMap = {
   "tx.fee": "رسوم",
   "tx.refund": "استرداد",
   "tx.timeDeposit": "وديعة لأجل",
+  "tx.timeDepositDividend": "أرباح الوديعة لأجل",
+  "tx.timeDepositPrincipalReturn": "إرجاع أصل الوديعة لأجل",
+  "tx.agentCommission": "عمولة الوكيل",
+  "tx.cardPurchase": "شراء بطاقة",
+  "tx.cardSubscription": "اشتراك البطاقة",
+  "tx.stockBuy": "شراء أسهم",
+  "tx.stockSell": "بيع أسهم",
+  "tx.planSubscriptionPayment": "دفع اشتراك الخطة",
+  "tx.planSubscriptionCashback": "استرداد اشتراك الخطة",
   "tx.travelProtection": "حماية السفر",
   "tx.transaction": "معاملة",
   "history.allTransactions": "جميع المعاملات",
@@ -5240,6 +5369,14 @@ const ar: TranslationMap = {
   "history.loadMore": "تحميل المزيد",
   "history.freeDefaultCard": "بطاقة افتراضية مجانية",
   "history.createdAccount": "إنشاء الحساب",
+  "history.timeDepositApprovedTopUp":
+    "تمت الموافقة على الوديعة لأجل - شحن مبلغ الطلب",
+  "history.topUpApprovedRequest": "تمت الموافقة على الشحن: الطلب {requestId}",
+  "history.agentCommissionFromTimeDeposit": "عمولة وكيل من الوديعة لأجل {id}",
+  "history.stockPurchaseListing": "شراء أسهم: الإدراج {listingId}",
+  "history.stockSaleListing": "بيع أسهم: الإدراج {listingId}",
+  "history.stockSoldListing": "تم بيع الأسهم: الإدراج {listingId}",
+  "history.stockPurchasedListing": "تم شراء الأسهم: الإدراج {listingId}",
   "investment.timeDeposit": "الوديعة الثابتة",
   "investment.amountWalletLabel": "الأرباح المتوقعة",
   "investment.amountWalletHint": "إجمالي الأرباح المتوقعة من جميع العقود",
@@ -5358,9 +5495,11 @@ const ar: TranslationMap = {
   "settings.updatePinSubtitle": "تحديث الرمز السري المكون من 4 أرقام",
   "settings.changePin": "تغيير الرمز السري",
   "settings.biometricLogin": "تسجيل الدخول باستخدام {type}",
-  "settings.biometricSubtitle": "استخدم {type} لتسجيل الدخول بشكل أسرع وأكثر أمانًا",
+  "settings.biometricSubtitle":
+    "استخدم {type} لتسجيل الدخول بشكل أسرع وأكثر أمانًا",
   "settings.enableBiometric": "تمكين {type}",
-  "settings.biometricSetupSubtitle": "يرجى إدخال كلمة المرور لتأكيد ربط هذا الجهاز بحسابك لتسجيل الدخول باستخدام {type}.",
+  "settings.biometricSetupSubtitle":
+    "يرجى إدخال كلمة المرور لتأكيد ربط هذا الجهاز بحسابك لتسجيل الدخول باستخدام {type}.",
   "settings.deleteAccount": "حذف الحساب",
   "settings.customerRelationship": "دعم العملاء",
   "settings.aboutUs": "من نحن",
@@ -5391,6 +5530,8 @@ const ar: TranslationMap = {
   "settings.helpCenter": "مركز المساعدة",
   "settings.privacyPolicy": "سياسة الخصوصية",
   "settings.termsAndCondition": "الشروط والأحكام",
+  "settings.currencyCalculator": "حاسبة العملات",
+  "settings.currencyCalculatorSubtitle": "تحويل العملات بسرعة",
   "settings.language": "اللغة",
   "settings.signOut": "تسجيل الخروج",
   "settings.verifyEmail": "التحقق من البريد",
@@ -5647,8 +5788,7 @@ const ar: TranslationMap = {
   "passcode.passcodesDoNotMatch": "رموز المرور غير متطابقة.",
   "passcode.invalidTitle": "رمز مرور غير صالح",
   "passcode.invalidPasscodeLength": "يجب أن يكون رمز المرور 4 أرقام بالضبط.",
-  "passcode.resetInfoMessage":
-    "تم إعادة تعيين رمز المرور بنجاح.",
+  "passcode.resetInfoMessage": "تم إعادة تعيين رمز المرور بنجاح.",
   "tickets.you": "أنت",
   "tickets.admin": "المسؤول",
   "tickets.emptyMessage": "(رسالة فارغة)",
@@ -5771,7 +5911,8 @@ const ar: TranslationMap = {
   "notification.deleteSelected": "حذف المحدد",
   "notification.deleteConfirmOne": "هل أنت متأكد من حذف هذا الإشعار؟",
   "notification.deleteConfirmAll": "هل أنت متأكد من حذف جميع الإشعارات؟",
-  "notification.deleteConfirmSelected": "هل أنت متأكد من حذف {count} إشعار(ات)؟",
+  "notification.deleteConfirmSelected":
+    "هل أنت متأكد من حذف {count} إشعار(ات)؟",
   "notification.close": "إغلاق",
   "notification.acceptReferral": "قبول",
   "notification.declineReferral": "رفض",
@@ -6413,13 +6554,16 @@ const ar: TranslationMap = {
   "common.discardExit": "تجاهل والخروج",
   "common.cancelApplication": "إلغاء الطلب؟",
   "common.goBack": "العودة",
-  "common.authTokenNotFound": "لم يتم العثور على رمز المصادقة. يرجى تسجيل الدخول مرة أخرى.",
+  "common.authTokenNotFound":
+    "لم يتم العثور على رمز المصادقة. يرجى تسجيل الدخول مرة أخرى.",
 
   // Banking additions
-  "banking.cancelApplicationMessage": "هل أنت متأكد من الإلغاء؟ سيتم فقدان تقدمك الحالي في هذا النموذج المصرفي.",
+  "banking.cancelApplicationMessage":
+    "هل أنت متأكد من الإلغاء؟ سيتم فقدان تقدمك الحالي في هذا النموذج المصرفي.",
 
   // E-Wallet additions
-  "ewallet.cancelApplicationMessage": "هل أنت متأكد من الإلغاء؟ سيتم فقدان تقدمك الحالي في نموذج المحفظة الإلكترونية.",
+  "ewallet.cancelApplicationMessage":
+    "هل أنت متأكد من الإلغاء؟ سيتم فقدان تقدمك الحالي في نموذج المحفظة الإلكترونية.",
   "ewallet.emailRequired": "البريد الإلكتروني مطلوب",
   "ewallet.emailInvalid": "يرجى إدخال عنوان بريد إلكتروني صحيح",
   "ewallet.mobileRequired": "رقم الهاتف المحمول مطلوب",
@@ -6464,21 +6608,27 @@ const ar: TranslationMap = {
   "settings.deleteRequestFailed": "فشل تقديم الطلب",
 
   // Login additions
-  "login.resetEmailFailed": "فشل إرسال البريد الإلكتروني لإعادة التعيين. يرجى المحاولة مرة أخرى.",
+  "login.resetEmailFailed":
+    "فشل إرسال البريد الإلكتروني لإعادة التعيين. يرجى المحاولة مرة أخرى.",
   "login.networkError": "خطأ في الشبكة. يرجى المحاولة مرة أخرى.",
 
   // Register additions
   "register.invalidLink": "يرجى إدخال رابط صحيح.",
-  "register.lineQRMismatch": "رمز QR الممسوح لا يطابق LINE. يرجى مسح رابط حساب LINE صحيح.",
-  "register.viberQRMismatch": "رمز QR الممسوح لا يطابق Viber. يرجى مسح رابط حساب Viber صحيح.",
-  "register.whatsappQRMismatch": "رمز QR الممسوح لا يطابق WhatsApp. يرجى مسح رابط حساب WhatsApp صحيح.",
+  "register.lineQRMismatch":
+    "رمز QR الممسوح لا يطابق LINE. يرجى مسح رابط حساب LINE صحيح.",
+  "register.viberQRMismatch":
+    "رمز QR الممسوح لا يطابق Viber. يرجى مسح رابط حساب Viber صحيح.",
+  "register.whatsappQRMismatch":
+    "رمز QR الممسوح لا يطابق WhatsApp. يرجى مسح رابط حساب WhatsApp صحيح.",
   "register.notice": "تنبيه",
 
   // Passcode additions
   "passcode.biometricPrompt": "تسجيل الدخول بـ {type}",
   "passcode.noTokenFound": "لم يتم العثور على رمز المصادقة البيومترية",
-  "passcode.biometricLoginFailed": "فشل تسجيل الدخول البيومتري على الخادم. يرجى استخدام الرمز السري.",
-  "passcode.biometricAuthError": "خطأ في المصادقة البيومترية. يرجى استخدام الرمز السري.",
+  "passcode.biometricLoginFailed":
+    "فشل تسجيل الدخول البيومتري على الخادم. يرجى استخدام الرمز السري.",
+  "passcode.biometricAuthError":
+    "خطأ في المصادقة البيومترية. يرجى استخدام الرمز السري.",
   "passcode.useFallback": "استخدم الرمز السري",
 
   // Notification additions
@@ -6499,7 +6649,8 @@ const ar: TranslationMap = {
   "withdraw.mobileInvalid": "يرجى إدخال رقم هاتف محمول صحيح مكون من 10 أرقام.",
 
   // Travel additions
-  "travel.cancelApplicationMessage": "هل أنت متأكد من الإلغاء؟ سيتم فقدان تقدمك الحالي في نموذج حماية السفر.",
+  "travel.cancelApplicationMessage":
+    "هل أنت متأكد من الإلغاء؟ سيتم فقدان تقدمك الحالي في نموذج حماية السفر.",
   "travel.notAuthenticated": "غير موثق",
   "travel.insufficientBalance": "رصيد غير كافٍ",
   "travel.submitFailed": "فشل تقديم الطلب",
@@ -6510,13 +6661,16 @@ const ar: TranslationMap = {
   "stock.invalidAmountTitle": "مبلغ غير صالح",
   "stock.invalidAmountMessage": "يرجى إدخال عدد صحيح من الأسهم للبيع.",
   "stock.insufficientStocksTitle": "أسهم غير كافية",
-  "stock.insufficientStocksMessage": "لديك {count} سهم(أسهم) فقط. يرجى إدخال رقم أقل من أو يساوي {count}.",
+  "stock.insufficientStocksMessage":
+    "لديك {count} سهم(أسهم) فقط. يرجى إدخال رقم أقل من أو يساوي {count}.",
   "stock.notAuthenticatedTitle": "غير موثق",
   "stock.notAuthenticatedMessage": "يرجى تسجيل الدخول والمحاولة مرة أخرى.",
   "stock.walletNotFoundTitle": "المحفظة غير موجودة",
-  "stock.walletNotFoundMessage": "تعذر العثور على محفظة STOCK الخاصة بك. يرجى المحاولة مرة أخرى.",
+  "stock.walletNotFoundMessage":
+    "تعذر العثور على محفظة STOCK الخاصة بك. يرجى المحاولة مرة أخرى.",
   "stock.requestSubmittedTitle": "تم تقديم الطلب",
-  "stock.requestSubmittedMessage": "تم تقديم طلب البيع. ستتلقى إشعاراً عند معالجته.",
+  "stock.requestSubmittedMessage":
+    "تم تقديم طلب البيع. ستتلقى إشعاراً عند معالجته.",
   "stock.submissionFailedTitle": "فشل الإرسال",
   "stock.submissionFailed": "حدث خطأ ما. يرجى المحاولة مرة أخرى.",
   "stock.unexpectedError": "حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.",
@@ -6533,7 +6687,8 @@ const ar: TranslationMap = {
   "stock.myOrders": "طلباتي",
   "stock.marketplace": "السوق",
   "stock.purchaseSuccessTitle": "تمت الشراء بنجاح 🎉",
-  "stock.purchaseSuccessMessage": "لقد اشتريت {count} سهم(أسهم) مقابل ₱{amount}. تم تحديث محفظتك.",
+  "stock.purchaseSuccessMessage":
+    "لقد اشتريت {count} سهم(أسهم) مقابل ₱{amount}. تم تحديث محفظتك.",
   "stock.purchaseFailedTitle": "فشل الشراء",
   "stock.purchaseFailed": "حدث خطأ ما.",
   "stock.noBuyRequests": "لا توجد طلبات شراء بعد",
