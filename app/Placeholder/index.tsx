@@ -3,6 +3,7 @@ import {
   getCompanyKycStatus,
   getMe,
   getReferralCode,
+  getReferralTree,
   updateProfile,
 } from "@/configs/api";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
@@ -31,13 +32,6 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import {
-  decodeQrImage,
-  getCompanyKycStatus,
-  getMe,
-  getReferralTree,
-  updateProfile,
-} from "@/configs/api";
 import { auth, firestore } from "../../configs/firebase";
 import {
   DEFAULT_LANGUAGE,
@@ -137,11 +131,13 @@ export default function Placeholder() {
       );
       const accessToken = await AsyncStorage.getItem("access_token");
       if (accessToken) {
-        const [meResult, companyResult, referralTreeResult] = await Promise.all([
-          getMe(accessToken),
-          getCompanyKycStatus(accessToken).catch(() => null),
-          getReferralTree(accessToken).catch(() => null),
-        ]);
+        const [meResult, companyResult, referralTreeResult] = await Promise.all(
+          [
+            getMe(accessToken),
+            getCompanyKycStatus(accessToken).catch(() => null),
+            getReferralTree(accessToken).catch(() => null),
+          ],
+        );
         if (meResult.success && meResult.user) {
           const u = meResult.user as Record<string, unknown>;
           const merged = {
@@ -152,11 +148,14 @@ export default function Placeholder() {
           setUserData(merged);
 
           const isAgentUser =
-            u.isAgent === true || String(u.role ?? "").toLowerCase() === "agent";
+            u.isAgent === true ||
+            String(u.role ?? "").toLowerCase() === "agent";
           if (isAgentUser) {
             const tree =
               referralTreeResult && referralTreeResult.success
-                ? (referralTreeResult.tree as Record<string, unknown> | undefined)
+                ? (referralTreeResult.tree as
+                    | Record<string, unknown>
+                    | undefined)
                 : undefined;
             setAgentHierarchyRole(
               tree ? getAgentHierarchyRoleFromTree(tree) : "agent",
@@ -694,18 +693,26 @@ export default function Placeholder() {
           {/* Badges */}
           <View style={styles.badgesContainer}>
             {resolvedAgentRole ? (
-              <View style={[styles.agentBadge, { backgroundColor: headerRoleColor }]}>
+              <View
+                style={[
+                  styles.agentBadge,
+                  { backgroundColor: headerRoleColor },
+                ]}
+              >
                 <MaterialCommunityIcons
                   name="shield-account"
                   size={16}
                   color="#FFFFFF"
                 />
-                <Text style={styles.badgeText}>
-                  {headerRoleLabel}
-                </Text>
+                <Text style={styles.badgeText}>{headerRoleLabel}</Text>
               </View>
             ) : (
-              <View style={[styles.investorBadge, { backgroundColor: headerRoleColor }]}>
+              <View
+                style={[
+                  styles.investorBadge,
+                  { backgroundColor: headerRoleColor },
+                ]}
+              >
                 <MaterialCommunityIcons
                   name="shield-account"
                   size={16}
