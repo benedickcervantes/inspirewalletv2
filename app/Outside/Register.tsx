@@ -170,6 +170,8 @@ export default function Register() {
   const [referralCode, setReferralCode] = useState("");
   const [registerLoading, setRegisterLoading] = useState(false);
   const [registerError, setRegisterError] = useState("");
+  const [appAlertVisible, setAppAlertVisible] = useState(false);
+  const [appAlertMessage, setAppAlertMessage] = useState("");
 
   const [emailAddress, setEmailAddress] = useState("");
   const [password, setPassword] = useState("");
@@ -255,6 +257,45 @@ export default function Register() {
     }
     return false;
   };
+  const detectMessagingProviderFromLink = (
+    raw: string,
+  ): "line" | "viber" | "whatsapp" | null => {
+    const v = raw.trim().toLowerCase();
+    if (!v) return null;
+
+    if (
+      v.startsWith("line://") ||
+      v.includes("line.me/") ||
+      v.includes("liff.line.me/")
+    ) {
+      return "line";
+    }
+    if (
+      v.startsWith("whatsapp://") ||
+      v.includes("wa.me/") ||
+      v.includes("chat.whatsapp.com/")
+    ) {
+      return "whatsapp";
+    }
+    if (
+      v.startsWith("viber://") ||
+      v.includes("viber.me/") ||
+      v.includes("vb.me/") ||
+      v.includes("invite.viber.com/") ||
+      v.includes("chats.viber.com/")
+    ) {
+      return "viber";
+    }
+
+    return null;
+  };
+  const isLinkMatchingMessagingProvider = (
+    raw: string,
+    provider: "line" | "viber" | "whatsapp",
+  ): boolean => {
+    const detected = detectMessagingProviderFromLink(raw);
+    return detected === null || detected === provider;
+  };
 
   const [isCountryModalVisible, setIsCountryModalVisible] = useState(false);
   const [isQRScannerVisible, setIsQRScannerVisible] = useState(false);
@@ -274,6 +315,10 @@ export default function Register() {
         return rest;
       });
     }
+  };
+  const showAppAlert = (message: string) => {
+    setAppAlertMessage(message);
+    setAppAlertVisible(true);
   };
 
   const handleNextStep = () => {
@@ -317,8 +362,6 @@ export default function Register() {
         lineContact.trim() || viberContact.trim() || whatsappContact.trim();
       if (!hasAtLeastOneMessagingContact) {
         const requiredContactError = t("register.errorAtLeastOneMessagingContact");
-        newErrors.lineContact = requiredContactError;
-        newErrors.viberContact = requiredContactError;
         newErrors.whatsappContact = requiredContactError;
       }
       if (lineContact.trim() && !isProbablyLink(lineContact)) {
@@ -454,10 +497,25 @@ export default function Register() {
       // fallback to setting exactly what was scanned
       setReferralCode(data.toUpperCase());
     } else if (activeQRField === "line") {
+      if (!isLinkMatchingMessagingProvider(data, "line")) {
+        showAppAlert("The scanned QR code does not match LINE. Please scan a valid LINE account link.");
+        setActiveQRField(null);
+        return;
+      }
       setLineContact(normalizeMessagingLink(data, "line"));
     } else if (activeQRField === "viber") {
+      if (!isLinkMatchingMessagingProvider(data, "viber")) {
+        showAppAlert("The scanned QR code does not match Viber. Please scan a valid Viber account link.");
+        setActiveQRField(null);
+        return;
+      }
       setViberContact(normalizeMessagingLink(data, "viber"));
     } else if (activeQRField === "whatsapp") {
+      if (!isLinkMatchingMessagingProvider(data, "whatsapp")) {
+        showAppAlert("The scanned QR code does not match WhatsApp. Please scan a valid WhatsApp account link.");
+        setActiveQRField(null);
+        return;
+      }
       setWhatsappContact(normalizeMessagingLink(data, "whatsapp"));
     }
 
@@ -470,7 +528,7 @@ export default function Register() {
     if (!permission?.granted) {
       const response = await requestPermission();
       if (!response.granted) {
-        alert(t("register.cameraPermissionRequired"));
+        showAppAlert(t("register.cameraPermissionRequired"));
         return;
       }
     }
@@ -501,13 +559,13 @@ export default function Register() {
 
       const decoded = await decodeQrImage(asset.uri, provider, asset.mimeType);
       if (!decoded.success) {
-        alert(decoded.error || t("register.errorUnexpected"));
+        showAppAlert(decoded.error || t("register.errorUnexpected"));
         return;
       }
 
       const raw = (decoded.normalizedLink || decoded.text || "").trim();
       if (!raw) {
-        alert(
+        showAppAlert(
           t("register.noQRFound") ||
             "No QR code found in the image. Please pick a clearer QR code image.",
         );
@@ -534,15 +592,27 @@ export default function Register() {
         }
         setReferralCode(normalized.toUpperCase().slice(0, 5));
       } else if (fieldType === "line") {
+        if (!isLinkMatchingMessagingProvider(normalized, "line")) {
+          showAppAlert("The scanned QR code does not match LINE. Please scan a valid LINE account link.");
+          return;
+        }
         setLineContact(normalized);
       } else if (fieldType === "viber") {
+        if (!isLinkMatchingMessagingProvider(normalized, "viber")) {
+          showAppAlert("The scanned QR code does not match Viber. Please scan a valid Viber account link.");
+          return;
+        }
         setViberContact(normalized);
       } else if (fieldType === "whatsapp") {
+        if (!isLinkMatchingMessagingProvider(normalized, "whatsapp")) {
+          showAppAlert("The scanned QR code does not match WhatsApp. Please scan a valid WhatsApp account link.");
+          return;
+        }
         setWhatsappContact(normalized);
       }
     } catch (error) {
       console.log("Error scanning from image:", error);
-      alert(t("register.errorUnexpected"));
+      showAppAlert(t("register.errorUnexpected"));
     } finally {
       setIsProcessingQR(false);
     }
@@ -620,113 +690,6 @@ export default function Register() {
             )}
           </View>
 
-          <View
-            style={[
-              styles.progressContainer,
-              {
-                paddingVertical:
-                  isCompact || isSmallScreen ? 14 : isLargeScreen ? 16 : 24,
-                paddingHorizontal: isTinyScreen ? 16 : isSmallScreen ? 24 : 40,
-              },
-            ]}
-          >
-            <View style={styles.stepItem}>
-              <View
-                style={[
-                  styles.stepCircle,
-                  styles.stepActive,
-                  isTinyScreen && { width: 36, height: 36, borderRadius: 18 },
-                  isSmallScreen &&
-                    !isTinyScreen && {
-                      width: 42,
-                      height: 42,
-                      borderRadius: 21,
-                    },
-                ]}
-              >
-                {currentStep > 1 ? (
-                  <Ionicons
-                    name="checkmark"
-                    size={isTinyScreen ? 18 : isSmallScreen ? 20 : 24}
-                    color="#FFFFFF"
-                  />
-                ) : (
-                  <Ionicons
-                    name="person"
-                    size={isTinyScreen ? 16 : isSmallScreen ? 18 : 20}
-                    color="#FFFFFF"
-                  />
-                )}
-              </View>
-              <View
-                style={[
-                  styles.stepLine,
-                  currentStep > 1 && styles.stepLineActive,
-                  isTinyScreen && { width: 36 },
-                  isSmallScreen && !isTinyScreen && { width: 48 },
-                ]}
-              />
-            </View>
-            <View style={styles.stepItem}>
-              <View
-                style={[
-                  styles.stepCircle,
-                  currentStep >= 2 && styles.stepActive,
-                  isTinyScreen && { width: 36, height: 36, borderRadius: 18 },
-                  isSmallScreen &&
-                    !isTinyScreen && {
-                      width: 42,
-                      height: 42,
-                      borderRadius: 21,
-                    },
-                ]}
-              >
-                {currentStep > 2 ? (
-                  <Ionicons
-                    name="checkmark"
-                    size={isTinyScreen ? 18 : isSmallScreen ? 20 : 24}
-                    color="#FFFFFF"
-                  />
-                ) : (
-                  <Ionicons
-                    name="call"
-                    size={isTinyScreen ? 16 : isSmallScreen ? 18 : 20}
-                    color={currentStep >= 2 ? "#FFFFFF" : "#E25A17"}
-                  />
-                )}
-              </View>
-              <View
-                style={[
-                  styles.stepLine,
-                  currentStep > 2 && styles.stepLineActive,
-                  isTinyScreen && { width: 36 },
-                  isSmallScreen && !isTinyScreen && { width: 48 },
-                ]}
-              />
-            </View>
-            <View style={styles.stepItem}>
-              <View
-                style={[
-                  styles.stepCircle,
-                  currentStep >= 3 && styles.stepActive,
-                  isTinyScreen && { width: 36, height: 36, borderRadius: 18 },
-                  isSmallScreen &&
-                    !isTinyScreen && {
-                      width: 42,
-                      height: 42,
-                      borderRadius: 21,
-                    },
-                ]}
-              >
-                <Ionicons
-                  name="lock-closed"
-                  size={isTinyScreen ? 16 : isSmallScreen ? 18 : 20}
-                  color={currentStep >= 3 ? "#FFFFFF" : "#E25A17"}
-                />
-              </View>
-            </View>
-          </View>
-
           <View style={styles.keyboardAvoidWrap}>
             <KeyboardAwareScrollView
               style={styles.scrollView}
@@ -745,6 +708,114 @@ export default function Register() {
               extraScrollHeight={Platform.OS === "ios" ? 60 : 40}
               extraHeight={Platform.OS === "android" ? 80 : 60}
             >
+              <View
+                style={[
+                  styles.progressContainer,
+                  {
+                    paddingVertical:
+                      isCompact || isSmallScreen ? 8 : isLargeScreen ? 10 : 12,
+                    paddingHorizontal:
+                      isTinyScreen ? 12 : isSmallScreen ? 18 : 24,
+                  },
+                ]}
+              >
+                <View style={styles.stepItem}>
+                  <View
+                    style={[
+                      styles.stepCircle,
+                      styles.stepActive,
+                      isTinyScreen && { width: 32, height: 32, borderRadius: 16 },
+                      isSmallScreen &&
+                        !isTinyScreen && {
+                          width: 34,
+                          height: 34,
+                          borderRadius: 17,
+                        },
+                    ]}
+                  >
+                    {currentStep > 1 ? (
+                      <Ionicons
+                        name="checkmark"
+                        size={isTinyScreen ? 16 : isSmallScreen ? 17 : 20}
+                        color="#FFFFFF"
+                      />
+                    ) : (
+                      <Ionicons
+                        name="person"
+                        size={isTinyScreen ? 14 : isSmallScreen ? 15 : 18}
+                        color="#FFFFFF"
+                      />
+                    )}
+                  </View>
+                  <View
+                    style={[
+                      styles.stepLine,
+                      currentStep > 1 && styles.stepLineActive,
+                      isTinyScreen && { width: 28 },
+                      isSmallScreen && !isTinyScreen && { width: 36 },
+                    ]}
+                  />
+                </View>
+                <View style={styles.stepItem}>
+                  <View
+                    style={[
+                      styles.stepCircle,
+                      currentStep >= 2 && styles.stepActive,
+                      isTinyScreen && { width: 32, height: 32, borderRadius: 16 },
+                      isSmallScreen &&
+                        !isTinyScreen && {
+                          width: 34,
+                          height: 34,
+                          borderRadius: 17,
+                        },
+                    ]}
+                  >
+                    {currentStep > 2 ? (
+                      <Ionicons
+                        name="checkmark"
+                        size={isTinyScreen ? 16 : isSmallScreen ? 17 : 20}
+                        color="#FFFFFF"
+                      />
+                    ) : (
+                      <Ionicons
+                        name="call"
+                        size={isTinyScreen ? 14 : isSmallScreen ? 15 : 18}
+                        color={currentStep >= 2 ? "#FFFFFF" : "#E25A17"}
+                      />
+                    )}
+                  </View>
+                  <View
+                    style={[
+                      styles.stepLine,
+                      currentStep > 2 && styles.stepLineActive,
+                      isTinyScreen && { width: 28 },
+                      isSmallScreen && !isTinyScreen && { width: 36 },
+                    ]}
+                  />
+                </View>
+                <View style={styles.stepItem}>
+                  <View
+                    style={[
+                      styles.stepCircle,
+                      currentStep >= 3 && styles.stepActive,
+                      isTinyScreen && { width: 32, height: 32, borderRadius: 16 },
+                      isSmallScreen &&
+                        !isTinyScreen && {
+                          width: 34,
+                          height: 34,
+                          borderRadius: 17,
+                        },
+                    ]}
+                  >
+                    <Ionicons
+                      name="lock-closed"
+                      size={isTinyScreen ? 14 : isSmallScreen ? 15 : 18}
+                      color={currentStep >= 3 ? "#FFFFFF" : "#E25A17"}
+                    />
+                  </View>
+                </View>
+              </View>
+
               {currentStep === 1 && (
                 <>
                   <Text
@@ -1138,7 +1209,11 @@ export default function Register() {
                     >
                       {t("register.contactInfo")}
                     </Text>
-                    <View style={styles.sectionUnderline} />
+                    <View style={[styles.sectionUnderline, { marginBottom: 4 }]} />
+                    <Text style={[styles.helperText, { marginTop: 0, marginBottom: 14 }]}>
+                      You are required to input at least 1 account link in contact
+                      information.
+                    </Text>
                     <View style={styles.inputGroup}>
                       <Text
                         style={[
@@ -2045,6 +2120,29 @@ export default function Register() {
             </View>
           </TouchableOpacity>
         </Modal>
+
+        <Modal
+          visible={appAlertVisible}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setAppAlertVisible(false)}
+        >
+          <View style={styles.appAlertOverlay}>
+            <View style={styles.appAlertCard}>
+              <View style={styles.appAlertIconWrap}>
+                <Ionicons name="alert-circle" size={22} color="#E25A17" />
+              </View>
+              <Text style={styles.appAlertTitle}>Notice</Text>
+              <Text style={styles.appAlertMessage}>{appAlertMessage}</Text>
+              <TouchableOpacity
+                style={styles.appAlertButton}
+                onPress={() => setAppAlertVisible(false)}
+              >
+                <Text style={styles.appAlertButtonText}>OK</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
       </SafeAreaView>
     </>
   );
@@ -2080,15 +2178,15 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 24,
-    paddingHorizontal: 40,
-    backgroundColor: "#FFFFFF",
+    paddingVertical: 10,
+    paddingHorizontal: 24,
+    backgroundColor: "transparent",
   },
   stepItem: { flexDirection: "row", alignItems: "center" },
   stepCircle: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     backgroundColor: "#FFF",
     borderWidth: 2,
     borderColor: "#E25A17",
@@ -2096,7 +2194,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   stepActive: { backgroundColor: "#E25A17" },
-  stepLine: { width: 60, height: 2, backgroundColor: "#E0E0E0" },
+  stepLine: { width: 40, height: 2, backgroundColor: "#E0E0E0" },
   stepLineActive: { backgroundColor: "#E25A17" },
   scrollView: { flex: 1 },
   scrollContent: { padding: 20, paddingBottom: 100 },
@@ -2750,6 +2848,67 @@ const styles = StyleSheet.create({
   languageModalCancelText: {
     fontSize: 16,
     color: "#666",
+  },
+  appAlertOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.35)",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 24,
+  },
+  appAlertCard: {
+    width: "100%",
+    maxWidth: 340,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 20,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#FFE4D6",
+    ...Platform.select({
+      ios: {
+        shadowColor: "#E25A17",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.18,
+        shadowRadius: 10,
+      },
+      android: { elevation: 8 },
+    }),
+  },
+  appAlertIconWrap: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: "#FFF2EB",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  appAlertTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#E25A17",
+    marginBottom: 8,
+  },
+  appAlertMessage: {
+    fontSize: 14,
+    color: "#444",
+    textAlign: "center",
+    lineHeight: 20,
+    marginBottom: 18,
+  },
+  appAlertButton: {
+    minWidth: 120,
+    paddingVertical: 10,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    backgroundColor: "#E25A17",
+    alignItems: "center",
+  },
+  appAlertButtonText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "700",
   },
   comingSoonBanner: {
     backgroundColor: "#FFF5F0",
