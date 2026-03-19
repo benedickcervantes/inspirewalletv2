@@ -1,14 +1,14 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import {
-  ActivityIndicator,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLanguage } from "../../../context/LanguageContext";
@@ -18,6 +18,13 @@ export default function DepositIndex() {
   const { t } = useLanguage();
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Reset loading when user navigates back to this screen
+  useFocusEffect(
+    useCallback(() => {
+      setLoading(false);
+    }, [])
+  );
 
   const depositTypes = [
     {
@@ -78,14 +85,6 @@ export default function DepositIndex() {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          {/* Step Progress Bar */}
-          <View style={styles.stepProgressContainer}>
-            <View style={styles.stepProgressBar}>
-              <View style={styles.stepProgressFill} />
-            </View>
-            <Text style={styles.stepText}>{t("deposit.step1of3")}</Text>
-          </View>
-
           {/* Icon Circle */}
           <View style={styles.iconCircle}>
             <Ionicons name="trending-up" size={48} color="#FFFFFF" />
@@ -201,30 +200,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 20,
-  },
-  stepProgressContainer: {
-    backgroundColor: "#FFFFFF",
-    paddingVertical: 20,
-    paddingHorizontal: 20,
-    marginBottom: 8,
-  },
-  stepProgressBar: {
-    height: 6,
-    backgroundColor: "#E0E0E0",
-    borderRadius: 3,
-    overflow: "hidden",
-    marginBottom: 8,
-  },
-  stepProgressFill: {
-    height: "100%",
-    width: "33.33%",
-    backgroundColor: "#E25A17",
-  },
-  stepText: {
-    fontSize: 14,
-    color: "#E25A17",
-    textAlign: "center",
-    fontWeight: "600",
   },
   iconCircle: {
     width: 88,
