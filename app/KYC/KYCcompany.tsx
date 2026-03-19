@@ -139,8 +139,8 @@ export default function KYCcompany() {
           lower.endsWith(".docx");
         if (!isSupported) {
           Alert.alert(
-            "Invalid File",
-            `Only PDF or Word documents are accepted for ${label}.`,
+            t("kycCompany.invalidFile"),
+            t("kycCompany.invalidFileMessage", { label }),
           );
           return;
         }
@@ -150,7 +150,7 @@ export default function KYCcompany() {
       }
     } catch (error) {
       console.error("Error picking document:", error);
-      Alert.alert("Error", "Failed to pick document");
+      Alert.alert(t("common.error"), t("kycCompany.errorPickingDoc"));
     }
   };
 
@@ -170,18 +170,18 @@ export default function KYCcompany() {
 
   const handleSave = async () => {
     if (!companyName.trim()) {
-      Alert.alert("Validation", "Please enter your company name.");
+      Alert.alert(t("common.error"), t("kycCompany.validationEnterCompanyName"));
       return;
     }
     if (!commercialRegister || !bankStatement || !proofOfBilling) {
-      Alert.alert("Validation", "Please upload all required documents.");
+      Alert.alert(t("common.error"), t("kycCompany.validationUploadDocs"));
       return;
     }
     try {
       setSubmitting(true);
       const token = await AsyncStorage.getItem("access_token");
       if (!token) {
-        Alert.alert("Error", "You must be logged in to submit company KYC.");
+        Alert.alert(t("common.error"), t("kycCompany.notLoggedIn"));
         return;
       }
       const [crData, bsData, pbData] = await Promise.all([
@@ -201,7 +201,7 @@ export default function KYCcompany() {
         },
       });
       if (!success) {
-        Alert.alert("Error", error || "Failed to submit company KYC.");
+        Alert.alert(t("common.error"), error || t("kycCompany.submitFailed"));
         return;
       }
       // Immediately reflect that the request is now pending review
@@ -210,8 +210,8 @@ export default function KYCcompany() {
     } catch (e: unknown) {
       console.error("Error submitting company KYC:", e);
       Alert.alert(
-        "Error",
-        (e as Error)?.message || "Failed to submit. Please try again.",
+        t("common.error"),
+        (e as Error)?.message || t("kycCompany.submitError"),
       );
     } finally {
       setSubmitting(false);
@@ -245,7 +245,7 @@ export default function KYCcompany() {
 
   const docs = [
     {
-      label: "Commercial Register",
+      label: t("kycCompany.commercialRegister"),
       uri: commercialRegister,
       name: commercialRegisterName,
       setUri: setCommercialRegister,
@@ -253,7 +253,7 @@ export default function KYCcompany() {
       setMime: setCommercialRegisterMime,
     },
     {
-      label: "Bank Statement",
+      label: t("kycCompany.bankStatement"),
       uri: bankStatement,
       name: bankStatementName,
       setUri: setBankStatement,
@@ -261,7 +261,7 @@ export default function KYCcompany() {
       setMime: setBankStatementMime,
     },
     {
-      label: "Proof of Billing",
+      label: t("kycCompany.proofOfBilling"),
       uri: proofOfBilling,
       name: proofOfBillingName,
       setUri: setProofOfBilling,
@@ -311,7 +311,7 @@ export default function KYCcompany() {
                 numberOfLines={1}
                 adjustsFontSizeToFit
               >
-                Company Verification
+                {t("kycCompany.title")}
               </Text>
             </View>
             <View
@@ -354,10 +354,10 @@ export default function KYCcompany() {
                   ]}
                 >
                   {isApproved
-                    ? "Verified"
+                    ? t("kycCompany.verified")
                     : isRejected
-                      ? "Rejected"
-                      : "Unverified"}
+                      ? t("kycCompany.rejected")
+                      : t("kycCompany.unverified")}
                 </Text>
               </View>
             </View>
@@ -380,12 +380,12 @@ export default function KYCcompany() {
                 />
               </View>
               <Text style={styles.cardTitle}>
-                Company Name <Text style={styles.required}>*</Text>
+                {t("kycCompany.companyNameLabel")} <Text style={styles.required}>*</Text>
               </Text>
             </View>
             <TextInput
               style={[styles.textInput, isLocked && styles.readonlyInput]}
-              placeholder="Sample Company"
+              placeholder={t("kycCompany.placeholderCompanyName")}
               placeholderTextColor="#BDBDBD"
               value={companyName}
               onChangeText={isLocked ? undefined : setCompanyName}
@@ -404,7 +404,7 @@ export default function KYCcompany() {
                 />
               </View>
               <Text style={[styles.cardTitle, { flex: 1 }]}>
-                Business Requirements
+                {t("kycCompany.businessRequirements")}
               </Text>
               <TouchableOpacity
                 style={styles.editButton}
@@ -417,7 +417,7 @@ export default function KYCcompany() {
                   color={THEME_COLOR}
                 />
                 <Text style={styles.editButtonText}>
-                  {isEditing ? "Done" : "Edit"}
+                  {isEditing ? t("kycCompany.done") : t("kycCompany.edit")}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -459,7 +459,7 @@ export default function KYCcompany() {
                       {doc.label} <Text style={styles.required}>*</Text>
                     </Text>
                     <Text style={styles.docRowSubtitle} numberOfLines={1}>
-                      {doc.name ?? "Select PDF file"}
+                      {doc.name ?? t("kycCompany.selectPdfFile")}
                     </Text>
                   </View>
                   {doc.uri && (
@@ -469,7 +469,7 @@ export default function KYCcompany() {
                         size={14}
                         color="#10B981"
                       />
-                      <Text style={styles.uploadedRowBadgeText}>Uploaded</Text>
+                      <Text style={styles.uploadedRowBadgeText}>{t("kycCompany.uploaded")}</Text>
                     </View>
                   )}
                 </TouchableOpacity>
@@ -485,7 +485,7 @@ export default function KYCcompany() {
             onPress={handleCancel}
             activeOpacity={0.8}
           >
-            <Text style={styles.cancelButtonText}>Cancel</Text>
+            <Text style={styles.cancelButtonText}>{t("common.cancel")}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[
@@ -510,7 +510,7 @@ export default function KYCcompany() {
               end={{ x: 1, y: 0 }}
             >
               <Text style={styles.saveButtonText}>
-                {submitting ? "Submitting..." : "Save"}
+                {submitting ? t("kycCompany.submitting") : t("kycCompany.save")}
               </Text>
             </LinearGradient>
           </TouchableOpacity>
@@ -536,9 +536,9 @@ export default function KYCcompany() {
                 <Ionicons name="checkmark" size={48} color="#FFFFFF" />
               </LinearGradient>
             </View>
-            <Text style={styles.successTitle}>Success</Text>
+            <Text style={styles.successTitle}>{t("common.success")}</Text>
             <Text style={styles.successMessage}>
-              Business documents uploaded successfully!
+              {t("kycCompany.successMessage")}
             </Text>
             <TouchableOpacity
               style={styles.successButtonWrapper}
@@ -551,7 +551,7 @@ export default function KYCcompany() {
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
               >
-                <Text style={styles.successButtonText}>OK</Text>
+                <Text style={styles.successButtonText}>{t("common.ok")}</Text>
               </LinearGradient>
             </TouchableOpacity>
           </View>

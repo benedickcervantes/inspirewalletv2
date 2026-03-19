@@ -107,12 +107,12 @@ function PasswordResetRequiredModal({
         setPhase("sent");
       } else {
         setErrorMsg(
-          result.error || "Failed to send reset email. Please try again.",
+          result.error || t("login.resetEmailFailed"),
         );
         setPhase("error");
       }
     } catch {
-      setErrorMsg("Network error. Please try again.");
+      setErrorMsg(t("login.networkError"));
       setPhase("error");
     }
   };
@@ -274,7 +274,7 @@ function ForgotPasswordInputModal({
       if (result.success) {
         setPhase('sent');
       } else {
-        setErrorMsg(result.error || 'Failed to send reset email. Please try again.');
+        setErrorMsg(result.error || t("login.resetEmailFailed"));
         setPhase('error');
       }
     } catch {

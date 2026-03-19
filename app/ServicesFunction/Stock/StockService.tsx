@@ -242,26 +242,26 @@ export default function StockService() {
     try {
       const accessToken = await AsyncStorage.getItem("access_token");
       if (!accessToken) {
-        showAlertModal("Not Authenticated", "Please log in and try again.");
+        showAlertModal(t("stock.notAuthenticatedTitle"), t("stock.notAuthenticatedMessage"));
         return;
       }
       const result = await purchaseStockListing(accessToken, listing.id);
       if (result.success) {
         showAlertModal(
-          "Purchase Successful 🎉",
-          `You purchased ${formatStocks(listing.stocksToSell)} stock(s) for ₱${formatCurrency(listing.phpAmount)}. Your portfolio has been updated.`,
+          t("stock.purchaseSuccessTitle"),
+          t("stock.purchaseSuccessMessage", { count: String(formatStocks(listing.stocksToSell)), amount: formatCurrency(listing.phpAmount) }),
         );
         await loadData();
       } else {
         showAlertModal(
-          "Purchase Failed",
-          result.error ?? "Something went wrong.",
+          t("stock.purchaseFailedTitle"),
+          result.error ?? t("stock.purchaseFailed"),
         );
       }
     } catch {
       showAlertModal(
-        "Error",
-        "An unexpected error occurred. Please try again.",
+        t("common.error"),
+        t("stock.unexpectedError"),
       );
     } finally {
       setBuyingId(null);
@@ -269,7 +269,7 @@ export default function StockService() {
   };
 
   if (isLoading) {
-    return <CustomLoader text="Loading stock dashboard..." />;
+    return <CustomLoader text={t("stock.loadingDashboard")} />;
   }
 
   return (
@@ -312,10 +312,10 @@ export default function StockService() {
                 ]}
               >
                 {tab === "portfolio"
-                  ? "Portfolio"
+                  ? t("stock.portfolio")
                   : tab === "orders"
-                    ? "My Orders"
-                    : "Marketplace"}
+                    ? t("stock.myOrders")
+                    : t("stock.marketplace")}
               </Text>
             </TouchableOpacity>
           ))}
@@ -526,8 +526,8 @@ export default function StockService() {
                   />
                   <Text style={styles.emptyText}>
                     {orderHistoryFilter === "buy"
-                      ? "No buy requests yet"
-                      : "No sell listings yet"}
+                      ? t("stock.noBuyRequests")
+                      : t("stock.noSellListings")}
                   </Text>
                 </View>
               ) : (
@@ -653,9 +653,9 @@ export default function StockService() {
                   size={48}
                   color="#ccc"
                 />
-                <Text style={styles.emptyText}>No listings available</Text>
+                <Text style={styles.emptyText}>{t("stock.noListingsAvailable")}</Text>
                 <Text style={styles.emptySubText}>
-                  Be the first! Tap Sell Stock in Portfolio.
+                  {t("stock.beTheFirst")}
                 </Text>
               </View>
             }

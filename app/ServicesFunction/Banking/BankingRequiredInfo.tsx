@@ -702,7 +702,7 @@ export default function BankingRequiredInfo() {
               end={{ x: 0, y: 1 }}
             >
               <Ionicons name="checkmark-circle" size={60} color="#FFFFFF" />
-              <Text style={styles.successModalTitle}>Success</Text>
+              <Text style={styles.successModalTitle}>{t("common.success")}</Text>
               <Text style={styles.successModalMessage}>
                 {t("banking.submitSuccess")}
               </Text>
@@ -713,7 +713,7 @@ export default function BankingRequiredInfo() {
                   navigation.navigate("Main");
                 }}
               >
-                <Text style={styles.successModalButtonText}>OK</Text>
+                <Text style={styles.successModalButtonText}>{t("common.ok")}</Text>
               </TouchableOpacity>
             </LinearGradient>
           </View>
@@ -730,10 +730,9 @@ export default function BankingRequiredInfo() {
             <View style={styles.exitModalIconWrap}>
               <Ionicons name="warning-outline" size={28} color={THEME_COLOR} />
             </View>
-            <Text style={styles.exitModalTitle}>Cancel Application?</Text>
+            <Text style={styles.exitModalTitle}>{t("common.cancelApplication")}</Text>
             <Text style={styles.exitModalMessage}>
-              Are you sure you want to cancel? Your current progress on this
-              banking form will be lost.
+              {t("banking.cancelApplicationMessage")}
             </Text>
             <View style={styles.exitModalButtons}>
               <TouchableOpacity
@@ -746,7 +745,7 @@ export default function BankingRequiredInfo() {
                     styles.exitModalKeepEditingButtonText,
                   ]}
                 >
-                  Keep Editing
+                  {t("common.keepEditing")}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -756,7 +755,7 @@ export default function BankingRequiredInfo() {
                 <Text
                   style={[styles.exitModalButtonText, styles.exitModalDiscardButtonText]}
                 >
-                  Discard & Exit
+                  {t("common.discardExit")}
                 </Text>
               </TouchableOpacity>
             </View>

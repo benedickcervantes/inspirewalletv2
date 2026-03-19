@@ -182,6 +182,33 @@ const en: TranslationMap = {
   "kyc.ok": "OK",
   "kyc.okay": "Okay",
 
+  // Company KYC
+  "kycCompany.title": "Company Verification",
+  "kycCompany.verified": "Verified",
+  "kycCompany.rejected": "Rejected",
+  "kycCompany.unverified": "Unverified",
+  "kycCompany.companyNameLabel": "Company Name",
+  "kycCompany.placeholderCompanyName": "Sample Company",
+  "kycCompany.businessRequirements": "Business Requirements",
+  "kycCompany.done": "Done",
+  "kycCompany.edit": "Edit",
+  "kycCompany.commercialRegister": "Commercial Register",
+  "kycCompany.bankStatement": "Bank Statement",
+  "kycCompany.proofOfBilling": "Proof of Billing",
+  "kycCompany.selectPdfFile": "Select PDF file",
+  "kycCompany.uploaded": "Uploaded",
+  "kycCompany.submitting": "Submitting...",
+  "kycCompany.save": "Save",
+  "kycCompany.invalidFile": "Invalid File",
+  "kycCompany.invalidFileMessage": "Only PDF or Word documents are accepted for {label}.",
+  "kycCompany.errorPickingDoc": "Failed to pick document",
+  "kycCompany.validationEnterCompanyName": "Please enter your company name.",
+  "kycCompany.validationUploadDocs": "Please upload all required documents.",
+  "kycCompany.notLoggedIn": "You must be logged in to submit company KYC.",
+  "kycCompany.submitFailed": "Failed to submit company KYC.",
+  "kycCompany.submitError": "Failed to submit. Please try again.",
+  "kycCompany.successMessage": "Business documents uploaded successfully!",
+
   // Dashboard
   "dashboard.goodMorning": "Good Morning",
   "dashboard.goodAfternoon": "Good Afternoon",
@@ -1616,6 +1643,141 @@ const en: TranslationMap = {
     "No QR code found in the image. Please pick a clearer QR code image.",
   "register.uploadImage": "Upload Image",
   "register.processing": "Processing...",
+
+  // Common additions
+  "common.close": "Close",
+  "common.keepEditing": "Keep Editing",
+  "common.discardExit": "Discard & Exit",
+  "common.cancelApplication": "Cancel Application?",
+  "common.goBack": "Go Back",
+  "common.authTokenNotFound": "Authentication token not found. Please login again.",
+
+  // Banking additions
+  "banking.cancelApplicationMessage": "Are you sure you want to cancel? Your current progress on this banking form will be lost.",
+
+  // E-Wallet additions
+  "ewallet.cancelApplicationMessage": "Are you sure you want to cancel? Your current progress on this e-wallet form will be lost.",
+  "ewallet.emailRequired": "Email address is required",
+  "ewallet.emailInvalid": "Please enter a valid email address",
+  "ewallet.mobileRequired": "Mobile number is required",
+  "ewallet.mobileInvalid": "Enter a valid 10-11 digit mobile number",
+  "ewallet.sourceOfFundRequired": "Source of fund is required",
+  "ewallet.incomeRequired": "Income amount is required",
+  "ewallet.incomeInvalid": "Enter a valid income amount",
+  "ewallet.currencyRequired": "Currency is required",
+  "ewallet.addressRequired": "Complete address is required",
+
+  // Gold Elite
+  "goldElite.active": "Gold Elite Active",
+  "goldElite.expires": "Expires {date}",
+  "goldElite.dayRemaining": "day remaining",
+  "goldElite.daysRemaining": "days remaining",
+  "goldElite.renewalAvailable": "Renewal Available",
+  "goldElite.dayLeft": "day left",
+  "goldElite.daysLeft": "days left",
+  "goldElite.expiresMessage": "Your Gold Elite subscription expires on {date}",
+  "goldElite.price": "₱10,000/month",
+  "goldElite.renewing": "Renewing...",
+  "goldElite.renewNow": "Renew Now",
+  "goldElite.renewSuccess": "Your Gold Elite subscription has been renewed!",
+  "goldElite.renewFailed": "Failed to renew subscription",
+  "goldElite.networkError": "Network error",
+
+  // Announcement
+  "announcement.defaultTitle": "Announcement",
+  "announcement.close": "Close",
+
+  // Currency Calculator
+  "currency.amount": "Amount",
+  "currency.convertedTo": "Converted to",
+  "currency.totalResult": "Total Result",
+  "currency.exchangeRateUnavailable": "Exchange rate unavailable",
+  "currency.disclaimer": "* Live exchange rates from the bank. Rates may vary.",
+  "currency.selectFromCurrency": "Select From Currency",
+  "currency.selectToCurrency": "Select To Currency",
+
+  // Settings additions
+  "settings.deleteNotAuthenticated": "Not authenticated",
+  "settings.deleteRequestFailed": "Failed to submit request",
+
+  // Login additions
+  "login.resetEmailFailed": "Failed to send reset email. Please try again.",
+  "login.networkError": "Network error. Please try again.",
+
+  // Register additions
+  "register.invalidLink": "Please enter a valid link.",
+  "register.lineQRMismatch": "The scanned QR code does not match LINE. Please scan a valid LINE account link.",
+  "register.viberQRMismatch": "The scanned QR code does not match Viber. Please scan a valid Viber account link.",
+  "register.whatsappQRMismatch": "The scanned QR code does not match WhatsApp. Please scan a valid WhatsApp account link.",
+  "register.notice": "Notice",
+
+  // Passcode additions
+  "passcode.biometricPrompt": "Log in with {type}",
+  "passcode.noTokenFound": "No biometric token found",
+  "passcode.biometricLoginFailed": "Biometric login failed on server. Please use passcode.",
+  "passcode.biometricAuthError": "Biometric authentication error. Please use passcode.",
+  "passcode.useFallback": "Use Passcode",
+
+  // Notification additions
+  "notification.transfer": "Transfer",
+  "notification.withdrawal": "Withdrawal",
+
+  // Deposit additions
+  "deposit.months": "{count} Months",
+  "deposit.amountRequired": "Amount is required",
+  "deposit.amountInvalid": "Please enter a valid amount greater than 0",
+  "deposit.amountGreaterThan0": "Amount must be greater than 0",
+  "deposit.minTimeDeposit": "Minimum time deposit amount is ₱50,000.00",
+  "deposit.stockRate": "Stock Rate",
+  "deposit.youWillReceive": "You will receive: ",
+  "deposit.stock": "stock(s)",
+
+  // Withdraw additions
+  "withdraw.mobileInvalid": "Please enter a valid 10-digit mobile number.",
+
+  // Travel additions
+  "travel.cancelApplicationMessage": "Are you sure you want to cancel? Your current progress on this travel protection form will be lost.",
+  "travel.notAuthenticated": "Not authenticated",
+  "travel.insufficientBalance": "Insufficient balance",
+  "travel.submitFailed": "Failed to submit application",
+  "travel.unexpectedError": "An unexpected error occurred",
+  "travel.availableBalance": "Available Balance",
+
+  // Stock Sell additions
+  "stock.invalidAmountTitle": "Invalid Amount",
+  "stock.invalidAmountMessage": "Please enter a valid number of stocks to sell.",
+  "stock.insufficientStocksTitle": "Insufficient Stocks",
+  "stock.insufficientStocksMessage": "You only have {count} stock(s). Please enter a number less than or equal to {count}.",
+  "stock.notAuthenticatedTitle": "Not Authenticated",
+  "stock.notAuthenticatedMessage": "Please log in and try again.",
+  "stock.walletNotFoundTitle": "Wallet Not Found",
+  "stock.walletNotFoundMessage": "Could not find your STOCK wallet. Please try again.",
+  "stock.requestSubmittedTitle": "Request Submitted",
+  "stock.requestSubmittedMessage": "Your sell request has been submitted. You will be notified when it is processed.",
+  "stock.submissionFailedTitle": "Submission Failed",
+  "stock.submissionFailed": "Something went wrong. Please try again.",
+  "stock.unexpectedError": "An unexpected error occurred. Please try again.",
+  "stock.youHave": "You have",
+  "stock.available": "available",
+  "stock.percentageToSell": "Percentage to Sell",
+  "stock.all": "All",
+  "stock.stocksLabel": "Stocks",
+  "stock.youReceive": "You Receive",
+  "stock.enterExactAmount": "Or enter exact amount:",
+  "stock.stocksToSell": "Stocks to Sell",
+  "stock.stockUnit": "Stock(s)",
+  "stock.portfolio": "Portfolio",
+  "stock.myOrders": "My Orders",
+  "stock.marketplace": "Marketplace",
+  "stock.purchaseSuccessTitle": "Purchase Successful 🎉",
+  "stock.purchaseSuccessMessage": "You purchased {count} stock(s) for ₱{amount}. Your portfolio has been updated.",
+  "stock.purchaseFailedTitle": "Purchase Failed",
+  "stock.purchaseFailed": "Something went wrong.",
+  "stock.noBuyRequests": "No buy requests yet",
+  "stock.noSellListings": "No sell listings yet",
+  "stock.noListingsAvailable": "No listings available",
+  "stock.beTheFirst": "Be the first! Tap Sell Stock in Portfolio.",
+  "stock.loadingDashboard": "Loading stock dashboard...",
 };
 
 const ko: TranslationMap = {
@@ -1764,6 +1926,34 @@ const ko: TranslationMap = {
   "kyc.confirmRequiredMessage":
     "제출 전 확인란을 선택하여 제공한 모든 정보가 정확함을 확인해 주세요.",
   "kyc.ok": "확인",
+
+  // Company KYC
+  "kycCompany.title": "기업 인증",
+  "kycCompany.verified": "인증됨",
+  "kycCompany.rejected": "거절됨",
+  "kycCompany.unverified": "미인증",
+  "kycCompany.companyNameLabel": "회사명",
+  "kycCompany.placeholderCompanyName": "샘플 회사",
+  "kycCompany.businessRequirements": "사업 요건",
+  "kycCompany.done": "완료",
+  "kycCompany.edit": "편집",
+  "kycCompany.commercialRegister": "사업자 등록증",
+  "kycCompany.bankStatement": "은행 명세서",
+  "kycCompany.proofOfBilling": "청구서 증빙",
+  "kycCompany.selectPdfFile": "PDF 파일 선택",
+  "kycCompany.uploaded": "업로드됨",
+  "kycCompany.submitting": "제출 중...",
+  "kycCompany.save": "저장",
+  "kycCompany.invalidFile": "잘못된 파일",
+  "kycCompany.invalidFileMessage": "{label}은(는) PDF 또는 Word 문서만 허용됩니다.",
+  "kycCompany.errorPickingDoc": "문서 선택 실패",
+  "kycCompany.validationEnterCompanyName": "회사명을 입력해 주세요.",
+  "kycCompany.validationUploadDocs": "필수 서류를 모두 업로드해 주세요.",
+  "kycCompany.notLoggedIn": "기업 KYC를 제출하려면 로그인해야 합니다.",
+  "kycCompany.submitFailed": "기업 KYC 제출에 실패했습니다.",
+  "kycCompany.submitError": "제출 실패. 다시 시도해 주세요.",
+  "kycCompany.successMessage": "사업 서류가 성공적으로 업로드되었습니다!",
+
   "dashboard.goodMorning": "좋은 아침이에요",
   "dashboard.goodAfternoon": "좋은 오후에요",
   "dashboard.goodEvening": "좋은 저녁이에요",
@@ -3053,6 +3243,141 @@ const ko: TranslationMap = {
     "이미지에서 QR 코드를 찾을 수 없습니다. 더 선명한 QR 코드 이미지를 선택해주세요.",
   "register.uploadImage": "이미지 업로드",
   "register.processing": "처리 중...",
+
+  // Common additions
+  "common.close": "닫기",
+  "common.keepEditing": "계속 편집",
+  "common.discardExit": "삭제 후 나가기",
+  "common.cancelApplication": "신청을 취소하시겠습니까?",
+  "common.goBack": "뒤로 가기",
+  "common.authTokenNotFound": "인증 토큰을 찾을 수 없습니다. 다시 로그인해 주세요.",
+
+  // Banking additions
+  "banking.cancelApplicationMessage": "정말 취소하시겠습니까? 현재 진행 중인 뱅킹 양식이 삭제됩니다.",
+
+  // E-Wallet additions
+  "ewallet.cancelApplicationMessage": "정말 취소하시겠습니까? 현재 진행 중인 전자지갑 양식이 삭제됩니다.",
+  "ewallet.emailRequired": "이메일 주소가 필요합니다",
+  "ewallet.emailInvalid": "유효한 이메일 주소를 입력해 주세요",
+  "ewallet.mobileRequired": "휴대전화 번호가 필요합니다",
+  "ewallet.mobileInvalid": "유효한 10-11자리 휴대전화 번호를 입력해 주세요",
+  "ewallet.sourceOfFundRequired": "자금 출처가 필요합니다",
+  "ewallet.incomeRequired": "소득 금액이 필요합니다",
+  "ewallet.incomeInvalid": "유효한 소득 금액을 입력해 주세요",
+  "ewallet.currencyRequired": "통화가 필요합니다",
+  "ewallet.addressRequired": "완전한 주소가 필요합니다",
+
+  // Gold Elite
+  "goldElite.active": "골드 엘리트 활성",
+  "goldElite.expires": "{date}에 만료",
+  "goldElite.dayRemaining": "일 남음",
+  "goldElite.daysRemaining": "일 남음",
+  "goldElite.renewalAvailable": "갱신 가능",
+  "goldElite.dayLeft": "일 남음",
+  "goldElite.daysLeft": "일 남음",
+  "goldElite.expiresMessage": "골드 엘리트 구독이 {date}에 만료됩니다",
+  "goldElite.price": "₱10,000/월",
+  "goldElite.renewing": "갱신 중...",
+  "goldElite.renewNow": "지금 갱신",
+  "goldElite.renewSuccess": "골드 엘리트 구독이 갱신되었습니다!",
+  "goldElite.renewFailed": "구독 갱신에 실패했습니다",
+  "goldElite.networkError": "네트워크 오류",
+
+  // Announcement
+  "announcement.defaultTitle": "공지",
+  "announcement.close": "닫기",
+
+  // Currency Calculator
+  "currency.amount": "금액",
+  "currency.convertedTo": "환산",
+  "currency.totalResult": "총 결과",
+  "currency.exchangeRateUnavailable": "환율을 사용할 수 없습니다",
+  "currency.disclaimer": "* 은행의 실시간 환율입니다. 환율은 변동될 수 있습니다.",
+  "currency.selectFromCurrency": "출발 통화 선택",
+  "currency.selectToCurrency": "도착 통화 선택",
+
+  // Settings additions
+  "settings.deleteNotAuthenticated": "인증되지 않음",
+  "settings.deleteRequestFailed": "요청 제출에 실패했습니다",
+
+  // Login additions
+  "login.resetEmailFailed": "재설정 이메일 전송에 실패했습니다. 다시 시도해 주세요.",
+  "login.networkError": "네트워크 오류. 다시 시도해 주세요.",
+
+  // Register additions
+  "register.invalidLink": "유효한 링크를 입력해 주세요.",
+  "register.lineQRMismatch": "스캔한 QR 코드가 LINE과 일치하지 않습니다. 유효한 LINE 계정 링크를 스캔해 주세요.",
+  "register.viberQRMismatch": "스캔한 QR 코드가 Viber와 일치하지 않습니다. 유효한 Viber 계정 링크를 스캔해 주세요.",
+  "register.whatsappQRMismatch": "스캔한 QR 코드가 WhatsApp과 일치하지 않습니다. 유효한 WhatsApp 계정 링크를 스캔해 주세요.",
+  "register.notice": "공지",
+
+  // Passcode additions
+  "passcode.biometricPrompt": "{type}으로 로그인",
+  "passcode.noTokenFound": "생체 인증 토큰을 찾을 수 없습니다",
+  "passcode.biometricLoginFailed": "서버에서 생체 인증 로그인에 실패했습니다. 패스코드를 사용하세요.",
+  "passcode.biometricAuthError": "생체 인증 오류. 패스코드를 사용하세요.",
+  "passcode.useFallback": "패스코드 사용",
+
+  // Notification additions
+  "notification.transfer": "송금",
+  "notification.withdrawal": "출금",
+
+  // Deposit additions
+  "deposit.months": "{count}개월",
+  "deposit.amountRequired": "금액이 필요합니다",
+  "deposit.amountInvalid": "0보다 큰 유효한 금액을 입력해 주세요",
+  "deposit.amountGreaterThan0": "금액은 0보다 커야 합니다",
+  "deposit.minTimeDeposit": "최소 정기예금 금액은 ₱50,000.00입니다",
+  "deposit.stockRate": "주식 환율",
+  "deposit.youWillReceive": "받을 금액: ",
+  "deposit.stock": "주(식)",
+
+  // Withdraw additions
+  "withdraw.mobileInvalid": "유효한 10자리 휴대전화 번호를 입력해 주세요.",
+
+  // Travel additions
+  "travel.cancelApplicationMessage": "정말 취소하시겠습니까? 현재 진행 중인 여행 보호 양식이 삭제됩니다.",
+  "travel.notAuthenticated": "인증되지 않음",
+  "travel.insufficientBalance": "잔액이 부족합니다",
+  "travel.submitFailed": "신청 제출에 실패했습니다",
+  "travel.unexpectedError": "예상치 못한 오류가 발생했습니다",
+  "travel.availableBalance": "사용 가능 잔액",
+
+  // Stock Sell additions
+  "stock.invalidAmountTitle": "유효하지 않은 금액",
+  "stock.invalidAmountMessage": "판매할 유효한 주식 수를 입력해 주세요.",
+  "stock.insufficientStocksTitle": "주식 부족",
+  "stock.insufficientStocksMessage": "{count}주(식)만 보유하고 있습니다. {count} 이하의 숫자를 입력해 주세요.",
+  "stock.notAuthenticatedTitle": "인증되지 않음",
+  "stock.notAuthenticatedMessage": "로그인 후 다시 시도해 주세요.",
+  "stock.walletNotFoundTitle": "지갑을 찾을 수 없음",
+  "stock.walletNotFoundMessage": "STOCK 지갑을 찾을 수 없습니다. 다시 시도해 주세요.",
+  "stock.requestSubmittedTitle": "요청 제출됨",
+  "stock.requestSubmittedMessage": "판매 요청이 제출되었습니다. 처리되면 알림을 받으실 것입니다.",
+  "stock.submissionFailedTitle": "제출 실패",
+  "stock.submissionFailed": "오류가 발생했습니다. 다시 시도해 주세요.",
+  "stock.unexpectedError": "예상치 못한 오류가 발생했습니다. 다시 시도해 주세요.",
+  "stock.youHave": "보유 중",
+  "stock.available": "사용 가능",
+  "stock.percentageToSell": "판매 비율",
+  "stock.all": "전체",
+  "stock.stocksLabel": "주식",
+  "stock.youReceive": "받을 금액",
+  "stock.enterExactAmount": "또는 정확한 금액 입력:",
+  "stock.stocksToSell": "판매할 주식",
+  "stock.stockUnit": "주(식)",
+  "stock.portfolio": "포트폴리오",
+  "stock.myOrders": "내 주문",
+  "stock.marketplace": "마켓플레이스",
+  "stock.purchaseSuccessTitle": "구매 성공 🎉",
+  "stock.purchaseSuccessMessage": "{count}주(식)을 ₱{amount}에 구매했습니다. 포트폴리오가 업데이트되었습니다.",
+  "stock.purchaseFailedTitle": "구매 실패",
+  "stock.purchaseFailed": "오류가 발생했습니다.",
+  "stock.noBuyRequests": "아직 구매 요청이 없습니다",
+  "stock.noSellListings": "아직 판매 등록이 없습니다",
+  "stock.noListingsAvailable": "등록된 매물이 없습니다",
+  "stock.beTheFirst": "첫 번째가 되어보세요! 포트폴리오에서 주식 판매를 탭하세요.",
+  "stock.loadingDashboard": "주식 대시보드 로딩 중...",
 };
 
 const ja: TranslationMap = {
@@ -3197,6 +3522,34 @@ const ja: TranslationMap = {
   "kyc.confirmAccuracy":
     "この申請を送信することで、提供した情報が正確であることを確認します。",
   "kyc.confirmAndSubmit": "確認して送信",
+
+  // Company KYC
+  "kycCompany.title": "企業認証",
+  "kycCompany.verified": "認証済み",
+  "kycCompany.rejected": "却下",
+  "kycCompany.unverified": "未認証",
+  "kycCompany.companyNameLabel": "会社名",
+  "kycCompany.placeholderCompanyName": "サンプル会社",
+  "kycCompany.businessRequirements": "事業要件",
+  "kycCompany.done": "完了",
+  "kycCompany.edit": "編集",
+  "kycCompany.commercialRegister": "商業登記",
+  "kycCompany.bankStatement": "銀行明細書",
+  "kycCompany.proofOfBilling": "請求書証明",
+  "kycCompany.selectPdfFile": "PDFファイルを選択",
+  "kycCompany.uploaded": "アップロード済み",
+  "kycCompany.submitting": "送信中...",
+  "kycCompany.save": "保存",
+  "kycCompany.invalidFile": "無効なファイル",
+  "kycCompany.invalidFileMessage": "{label}にはPDFまたはWordのみが許可されています。",
+  "kycCompany.errorPickingDoc": "書類の選択に失敗しました",
+  "kycCompany.validationEnterCompanyName": "会社名を入力してください。",
+  "kycCompany.validationUploadDocs": "すべての必須書類をアップロードしてください。",
+  "kycCompany.notLoggedIn": "企業KYCを提出するにはログインが必要です。",
+  "kycCompany.submitFailed": "企業KYCの提出に失敗しました。",
+  "kycCompany.submitError": "提出に失敗しました。もう一度お試しください。",
+  "kycCompany.successMessage": "事業書類が正常にアップロードされました！",
+
   "dashboard.goodMorning": "おはようございます",
   "dashboard.goodAfternoon": "こんにちは",
   "dashboard.goodEvening": "こんばんは",
@@ -4488,6 +4841,141 @@ const ja: TranslationMap = {
     "画像内にQRコードが見つかりません。もっと鮮明なQRコード画像を選択してください。",
   "register.uploadImage": "画像をアップロード",
   "register.processing": "処理中...",
+
+  // Common additions
+  "common.close": "閉じる",
+  "common.keepEditing": "編集を続ける",
+  "common.discardExit": "破棄して終了",
+  "common.cancelApplication": "申請をキャンセルしますか？",
+  "common.goBack": "戻る",
+  "common.authTokenNotFound": "認証トークンが見つかりません。もう一度ログインしてください。",
+
+  // Banking additions
+  "banking.cancelApplicationMessage": "本当にキャンセルしますか？このバンキングフォームの現在の進行状況が失われます。",
+
+  // E-Wallet additions
+  "ewallet.cancelApplicationMessage": "本当にキャンセルしますか？このeウォレットフォームの現在の進行状況が失われます。",
+  "ewallet.emailRequired": "メールアドレスは必須です",
+  "ewallet.emailInvalid": "有効なメールアドレスを入力してください",
+  "ewallet.mobileRequired": "携帯番号は必須です",
+  "ewallet.mobileInvalid": "有効な10〜11桁の携帯番号を入力してください",
+  "ewallet.sourceOfFundRequired": "資金源は必須です",
+  "ewallet.incomeRequired": "収入金額は必須です",
+  "ewallet.incomeInvalid": "有効な収入金額を入力してください",
+  "ewallet.currencyRequired": "通貨は必須です",
+  "ewallet.addressRequired": "完全な住所は必須です",
+
+  // Gold Elite
+  "goldElite.active": "ゴールドエリート有効",
+  "goldElite.expires": "{date}に期限切れ",
+  "goldElite.dayRemaining": "日残り",
+  "goldElite.daysRemaining": "日残り",
+  "goldElite.renewalAvailable": "更新可能",
+  "goldElite.dayLeft": "日残り",
+  "goldElite.daysLeft": "日残り",
+  "goldElite.expiresMessage": "ゴールドエリートのサブスクリプションは{date}に期限切れになります",
+  "goldElite.price": "₱10,000/月",
+  "goldElite.renewing": "更新中...",
+  "goldElite.renewNow": "今すぐ更新",
+  "goldElite.renewSuccess": "ゴールドエリートのサブスクリプションが更新されました！",
+  "goldElite.renewFailed": "サブスクリプションの更新に失敗しました",
+  "goldElite.networkError": "ネットワークエラー",
+
+  // Announcement
+  "announcement.defaultTitle": "お知らせ",
+  "announcement.close": "閉じる",
+
+  // Currency Calculator
+  "currency.amount": "金額",
+  "currency.convertedTo": "換算先",
+  "currency.totalResult": "合計結果",
+  "currency.exchangeRateUnavailable": "為替レートが利用できません",
+  "currency.disclaimer": "* 銀行のライブ為替レートです。レートは変動する場合があります。",
+  "currency.selectFromCurrency": "変換元通貨を選択",
+  "currency.selectToCurrency": "変換先通貨を選択",
+
+  // Settings additions
+  "settings.deleteNotAuthenticated": "認証されていません",
+  "settings.deleteRequestFailed": "リクエストの送信に失敗しました",
+
+  // Login additions
+  "login.resetEmailFailed": "リセットメールの送信に失敗しました。もう一度お試しください。",
+  "login.networkError": "ネットワークエラー。もう一度お試しください。",
+
+  // Register additions
+  "register.invalidLink": "有効なリンクを入力してください。",
+  "register.lineQRMismatch": "スキャンしたQRコードはLINEと一致しません。有効なLINEアカウントリンクをスキャンしてください。",
+  "register.viberQRMismatch": "スキャンしたQRコードはViberと一致しません。有効なViberアカウントリンクをスキャンしてください。",
+  "register.whatsappQRMismatch": "スキャンしたQRコードはWhatsAppと一致しません。有効なWhatsAppアカウントリンクをスキャンしてください。",
+  "register.notice": "お知らせ",
+
+  // Passcode additions
+  "passcode.biometricPrompt": "{type}でログイン",
+  "passcode.noTokenFound": "生体認証トークンが見つかりません",
+  "passcode.biometricLoginFailed": "サーバーでの生体認証ログインに失敗しました。パスコードをお使いください。",
+  "passcode.biometricAuthError": "生体認証エラー。パスコードをお使いください。",
+  "passcode.useFallback": "パスコードを使用",
+
+  // Notification additions
+  "notification.transfer": "送金",
+  "notification.withdrawal": "出金",
+
+  // Deposit additions
+  "deposit.months": "{count}ヶ月",
+  "deposit.amountRequired": "金額は必須です",
+  "deposit.amountInvalid": "0より大きい有効な金額を入力してください",
+  "deposit.amountGreaterThan0": "金額は0より大きくなければなりません",
+  "deposit.minTimeDeposit": "最低定期預金額は₱50,000.00です",
+  "deposit.stockRate": "株式レート",
+  "deposit.youWillReceive": "受け取り: ",
+  "deposit.stock": "株",
+
+  // Withdraw additions
+  "withdraw.mobileInvalid": "有効な10桁の携帯番号を入力してください。",
+
+  // Travel additions
+  "travel.cancelApplicationMessage": "本当にキャンセルしますか？この旅行保護フォームの現在の進行状況が失われます。",
+  "travel.notAuthenticated": "認証されていません",
+  "travel.insufficientBalance": "残高不足",
+  "travel.submitFailed": "申請の送信に失敗しました",
+  "travel.unexpectedError": "予期しないエラーが発生しました",
+  "travel.availableBalance": "利用可能残高",
+
+  // Stock Sell additions
+  "stock.invalidAmountTitle": "無効な金額",
+  "stock.invalidAmountMessage": "有効な売却株数を入力してください。",
+  "stock.insufficientStocksTitle": "株式不足",
+  "stock.insufficientStocksMessage": "{count}株しか保有していません。{count}以下の数を入力してください。",
+  "stock.notAuthenticatedTitle": "認証されていません",
+  "stock.notAuthenticatedMessage": "ログインして再試行してください。",
+  "stock.walletNotFoundTitle": "ウォレットが見つかりません",
+  "stock.walletNotFoundMessage": "STOCKウォレットが見つかりません。再試行してください。",
+  "stock.requestSubmittedTitle": "リクエスト送信済み",
+  "stock.requestSubmittedMessage": "売却リクエストが送信されました。処理されると通知されます。",
+  "stock.submissionFailedTitle": "送信失敗",
+  "stock.submissionFailed": "問題が発生しました。再試行してください。",
+  "stock.unexpectedError": "予期しないエラーが発生しました。再試行してください。",
+  "stock.youHave": "保有",
+  "stock.available": "利用可能",
+  "stock.percentageToSell": "売却割合",
+  "stock.all": "全て",
+  "stock.stocksLabel": "株式",
+  "stock.youReceive": "受け取り",
+  "stock.enterExactAmount": "または正確な金額を入力:",
+  "stock.stocksToSell": "売却する株式",
+  "stock.stockUnit": "株",
+  "stock.portfolio": "ポートフォリオ",
+  "stock.myOrders": "注文履歴",
+  "stock.marketplace": "マーケットプレイス",
+  "stock.purchaseSuccessTitle": "購入成功 🎉",
+  "stock.purchaseSuccessMessage": "{count}株を₱{amount}で購入しました。ポートフォリオが更新されました。",
+  "stock.purchaseFailedTitle": "購入失敗",
+  "stock.purchaseFailed": "問題が発生しました。",
+  "stock.noBuyRequests": "まだ買い注文はありません",
+  "stock.noSellListings": "まだ売り注文はありません",
+  "stock.noListingsAvailable": "出品はありません",
+  "stock.beTheFirst": "最初になりましょう！ポートフォリオで株式を売るをタップしてください。",
+  "stock.loadingDashboard": "株式ダッシュボードを読み込み中...",
 };
 
 const ar: TranslationMap = {
@@ -4633,6 +5121,34 @@ const ar: TranslationMap = {
   "kyc.confirmAccuracy":
     "بإرسال هذا الطلب، تؤكد أن جميع المعلومات المقدمة دقيقة.",
   "kyc.confirmAndSubmit": "تأكيد وإرسال",
+
+  // Company KYC
+  "kycCompany.title": "التحقق من الشركة",
+  "kycCompany.verified": "موثق",
+  "kycCompany.rejected": "مرفوض",
+  "kycCompany.unverified": "غير موثق",
+  "kycCompany.companyNameLabel": "اسم الشركة",
+  "kycCompany.placeholderCompanyName": "شركة نموذجية",
+  "kycCompany.businessRequirements": "متطلبات العمل",
+  "kycCompany.done": "تم",
+  "kycCompany.edit": "تعديل",
+  "kycCompany.commercialRegister": "السجل التجاري",
+  "kycCompany.bankStatement": "كشف الحساب البنكي",
+  "kycCompany.proofOfBilling": "إثبات الفاتورة",
+  "kycCompany.selectPdfFile": "اختر ملف PDF",
+  "kycCompany.uploaded": "تم الرفع",
+  "kycCompany.submitting": "جارٍ الإرسال...",
+  "kycCompany.save": "حفظ",
+  "kycCompany.invalidFile": "ملف غير صالح",
+  "kycCompany.invalidFileMessage": "يُقبل لـ {label} ملفات PDF أو Word فقط.",
+  "kycCompany.errorPickingDoc": "فشل في اختيار المستند",
+  "kycCompany.validationEnterCompanyName": "يرجى إدخال اسم الشركة.",
+  "kycCompany.validationUploadDocs": "يرجى رفع جميع المستندات المطلوبة.",
+  "kycCompany.notLoggedIn": "يجب تسجيل الدخول لتقديم KYC الشركة.",
+  "kycCompany.submitFailed": "فشل في تقديم KYC الشركة.",
+  "kycCompany.submitError": "فشل الإرسال. يرجى المحاولة مرة أخرى.",
+  "kycCompany.successMessage": "تم رفع مستندات العمل بنجاح!",
+
   "dashboard.goodMorning": "صباح الخير",
   "dashboard.goodAfternoon": "مساء الخير",
   "dashboard.goodEvening": "مساء الخير",
@@ -5890,6 +6406,141 @@ const ar: TranslationMap = {
     "لم يتم العثور على رمز QR الاستجابة السريعة في الصورة. يرجى اختيار صورة أوضح لرمز QR الاستجابة السريعة.",
   "register.uploadImage": "تحميل صورة",
   "register.processing": "جاري المعالجة...",
+
+  // Common additions
+  "common.close": "إغلاق",
+  "common.keepEditing": "الاستمرار في التعديل",
+  "common.discardExit": "تجاهل والخروج",
+  "common.cancelApplication": "إلغاء الطلب؟",
+  "common.goBack": "العودة",
+  "common.authTokenNotFound": "لم يتم العثور على رمز المصادقة. يرجى تسجيل الدخول مرة أخرى.",
+
+  // Banking additions
+  "banking.cancelApplicationMessage": "هل أنت متأكد من الإلغاء؟ سيتم فقدان تقدمك الحالي في هذا النموذج المصرفي.",
+
+  // E-Wallet additions
+  "ewallet.cancelApplicationMessage": "هل أنت متأكد من الإلغاء؟ سيتم فقدان تقدمك الحالي في نموذج المحفظة الإلكترونية.",
+  "ewallet.emailRequired": "البريد الإلكتروني مطلوب",
+  "ewallet.emailInvalid": "يرجى إدخال عنوان بريد إلكتروني صحيح",
+  "ewallet.mobileRequired": "رقم الهاتف المحمول مطلوب",
+  "ewallet.mobileInvalid": "أدخل رقم هاتف محمول صحيح مكون من 10-11 أرقام",
+  "ewallet.sourceOfFundRequired": "مصدر التمويل مطلوب",
+  "ewallet.incomeRequired": "مبلغ الدخل مطلوب",
+  "ewallet.incomeInvalid": "أدخل مبلغ دخل صحيح",
+  "ewallet.currencyRequired": "العملة مطلوبة",
+  "ewallet.addressRequired": "العنوان الكامل مطلوب",
+
+  // Gold Elite
+  "goldElite.active": "الذهبي النخبة نشط",
+  "goldElite.expires": "ينتهي في {date}",
+  "goldElite.dayRemaining": "يوم متبقٍ",
+  "goldElite.daysRemaining": "أيام متبقية",
+  "goldElite.renewalAvailable": "التجديد متاح",
+  "goldElite.dayLeft": "يوم متبقٍ",
+  "goldElite.daysLeft": "أيام متبقية",
+  "goldElite.expiresMessage": "اشتراكك في الذهبي النخبة ينتهي في {date}",
+  "goldElite.price": "₱10,000/شهر",
+  "goldElite.renewing": "جارٍ التجديد...",
+  "goldElite.renewNow": "جدد الآن",
+  "goldElite.renewSuccess": "تم تجديد اشتراكك في الذهبي النخبة!",
+  "goldElite.renewFailed": "فشل تجديد الاشتراك",
+  "goldElite.networkError": "خطأ في الشبكة",
+
+  // Announcement
+  "announcement.defaultTitle": "إعلان",
+  "announcement.close": "إغلاق",
+
+  // Currency Calculator
+  "currency.amount": "المبلغ",
+  "currency.convertedTo": "تحويل إلى",
+  "currency.totalResult": "النتيجة الإجمالية",
+  "currency.exchangeRateUnavailable": "سعر الصرف غير متاح",
+  "currency.disclaimer": "* أسعار صرف مباشرة من البنك. قد تتفاوت الأسعار.",
+  "currency.selectFromCurrency": "اختر عملة المصدر",
+  "currency.selectToCurrency": "اختر عملة الوجهة",
+
+  // Settings additions
+  "settings.deleteNotAuthenticated": "غير موثق",
+  "settings.deleteRequestFailed": "فشل تقديم الطلب",
+
+  // Login additions
+  "login.resetEmailFailed": "فشل إرسال البريد الإلكتروني لإعادة التعيين. يرجى المحاولة مرة أخرى.",
+  "login.networkError": "خطأ في الشبكة. يرجى المحاولة مرة أخرى.",
+
+  // Register additions
+  "register.invalidLink": "يرجى إدخال رابط صحيح.",
+  "register.lineQRMismatch": "رمز QR الممسوح لا يطابق LINE. يرجى مسح رابط حساب LINE صحيح.",
+  "register.viberQRMismatch": "رمز QR الممسوح لا يطابق Viber. يرجى مسح رابط حساب Viber صحيح.",
+  "register.whatsappQRMismatch": "رمز QR الممسوح لا يطابق WhatsApp. يرجى مسح رابط حساب WhatsApp صحيح.",
+  "register.notice": "تنبيه",
+
+  // Passcode additions
+  "passcode.biometricPrompt": "تسجيل الدخول بـ {type}",
+  "passcode.noTokenFound": "لم يتم العثور على رمز المصادقة البيومترية",
+  "passcode.biometricLoginFailed": "فشل تسجيل الدخول البيومتري على الخادم. يرجى استخدام الرمز السري.",
+  "passcode.biometricAuthError": "خطأ في المصادقة البيومترية. يرجى استخدام الرمز السري.",
+  "passcode.useFallback": "استخدم الرمز السري",
+
+  // Notification additions
+  "notification.transfer": "تحويل",
+  "notification.withdrawal": "سحب",
+
+  // Deposit additions
+  "deposit.months": "{count} أشهر",
+  "deposit.amountRequired": "المبلغ مطلوب",
+  "deposit.amountInvalid": "يرجى إدخال مبلغ صحيح أكبر من 0",
+  "deposit.amountGreaterThan0": "يجب أن يكون المبلغ أكبر من 0",
+  "deposit.minTimeDeposit": "الحد الأدنى لمبلغ الوديعة الثابتة هو ₱50,000.00",
+  "deposit.stockRate": "سعر السهم",
+  "deposit.youWillReceive": "ستحصل على: ",
+  "deposit.stock": "سهم",
+
+  // Withdraw additions
+  "withdraw.mobileInvalid": "يرجى إدخال رقم هاتف محمول صحيح مكون من 10 أرقام.",
+
+  // Travel additions
+  "travel.cancelApplicationMessage": "هل أنت متأكد من الإلغاء؟ سيتم فقدان تقدمك الحالي في نموذج حماية السفر.",
+  "travel.notAuthenticated": "غير موثق",
+  "travel.insufficientBalance": "رصيد غير كافٍ",
+  "travel.submitFailed": "فشل تقديم الطلب",
+  "travel.unexpectedError": "حدث خطأ غير متوقع",
+  "travel.availableBalance": "الرصيد المتاح",
+
+  // Stock Sell additions
+  "stock.invalidAmountTitle": "مبلغ غير صالح",
+  "stock.invalidAmountMessage": "يرجى إدخال عدد صحيح من الأسهم للبيع.",
+  "stock.insufficientStocksTitle": "أسهم غير كافية",
+  "stock.insufficientStocksMessage": "لديك {count} سهم(أسهم) فقط. يرجى إدخال رقم أقل من أو يساوي {count}.",
+  "stock.notAuthenticatedTitle": "غير موثق",
+  "stock.notAuthenticatedMessage": "يرجى تسجيل الدخول والمحاولة مرة أخرى.",
+  "stock.walletNotFoundTitle": "المحفظة غير موجودة",
+  "stock.walletNotFoundMessage": "تعذر العثور على محفظة STOCK الخاصة بك. يرجى المحاولة مرة أخرى.",
+  "stock.requestSubmittedTitle": "تم تقديم الطلب",
+  "stock.requestSubmittedMessage": "تم تقديم طلب البيع. ستتلقى إشعاراً عند معالجته.",
+  "stock.submissionFailedTitle": "فشل الإرسال",
+  "stock.submissionFailed": "حدث خطأ ما. يرجى المحاولة مرة أخرى.",
+  "stock.unexpectedError": "حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.",
+  "stock.youHave": "لديك",
+  "stock.available": "متاح",
+  "stock.percentageToSell": "نسبة البيع",
+  "stock.all": "الكل",
+  "stock.stocksLabel": "الأسهم",
+  "stock.youReceive": "ستحصل على",
+  "stock.enterExactAmount": "أو أدخل المبلغ الدقيق:",
+  "stock.stocksToSell": "الأسهم للبيع",
+  "stock.stockUnit": "سهم(أسهم)",
+  "stock.portfolio": "المحفظة",
+  "stock.myOrders": "طلباتي",
+  "stock.marketplace": "السوق",
+  "stock.purchaseSuccessTitle": "تمت الشراء بنجاح 🎉",
+  "stock.purchaseSuccessMessage": "لقد اشتريت {count} سهم(أسهم) مقابل ₱{amount}. تم تحديث محفظتك.",
+  "stock.purchaseFailedTitle": "فشل الشراء",
+  "stock.purchaseFailed": "حدث خطأ ما.",
+  "stock.noBuyRequests": "لا توجد طلبات شراء بعد",
+  "stock.noSellListings": "لا توجد قوائم بيع بعد",
+  "stock.noListingsAvailable": "لا توجد قوائم متاحة",
+  "stock.beTheFirst": "كن الأول! انقر على بيع الأسهم في المحفظة.",
+  "stock.loadingDashboard": "جارٍ تحميل لوحة الأسهم...",
 };
 
 export const translations: Record<string, TranslationMap> = { en, ko, ja, ar };

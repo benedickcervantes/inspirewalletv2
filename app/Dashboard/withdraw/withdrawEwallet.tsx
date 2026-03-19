@@ -125,7 +125,7 @@ export default function EWalletWithdrawal() {
     if (!trimmedAccountNumber)
       newErrors.accountNumber = t("withdraw.validation.walletAccNumber");
     else if (trimmedAccountNumber.length !== 10)
-      newErrors.accountNumber = "Please enter a valid 10-digit mobile number.";
+      newErrors.accountNumber = t("withdraw.mobileInvalid");
     if (!accountName.trim())
       newErrors.accountName = t("withdraw.validation.walletAccName");
 

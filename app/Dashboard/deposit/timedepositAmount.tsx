@@ -90,7 +90,7 @@ export default function TimeDepositAmount() {
         }
       } else {
         setPhpEquivalent(0);
-        setConvertError(result.error || "Exchange rate unavailable");
+        setConvertError(result.error || t("currency.exchangeRateUnavailable"));
         if (__DEV__) {
           console.warn("[TimeDeposit] Exchange API failed:", result.error);
         }
@@ -131,12 +131,12 @@ export default function TimeDepositAmount() {
     const amountStr = unformatNumberString(amount).trim();
 
     if (!amountStr) {
-      newErrors.amount = "Amount is required";
+      newErrors.amount = t("deposit.amountRequired");
     } else {
       const phpValue =
         selectedCurrency === "PHP" ? parseFloat(amountStr) : phpEquivalent;
       if (phpValue < 50000) {
-        newErrors.amount = "Minimum time deposit amount is ₱50,000.00";
+        newErrors.amount = t("deposit.minTimeDeposit");
       }
     }
 

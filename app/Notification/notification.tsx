@@ -353,8 +353,8 @@ const Notification = () => {
          };
 
          let displayType = notif.title.replace(' Requested', '');
-         if (notif.title.includes('Transfer')) displayType = 'Transfer';
-         if (notif.title.includes('Withdrawal')) displayType = 'Withdrawal';
+         if (notif.title.includes('Transfer')) displayType = t('notification.transfer');
+         if (notif.title.includes('Withdrawal')) displayType = t('notification.withdrawal');
          const fetchedAmount = await fetchTransactionAmount(notif.referenceId);
          const fallbackAmount = extractAmountFromMessage(notif.message);
          

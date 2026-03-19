@@ -83,11 +83,11 @@ export default function StockInvestment() {
     const amountStr = unformatNumberString(amount).trim();
 
     if (!amountStr) {
-      newErrors.amount = "Amount is required";
+      newErrors.amount = t("deposit.amountRequired");
     } else {
       const amountNum = parseFloat(amountStr);
       if (amountNum <= 0) {
-        newErrors.amount = "Amount must be greater than 0";
+        newErrors.amount = t("deposit.amountGreaterThan0");
       } else if (availableBalance !== null && amountNum > availableBalance) {
         const symbol = getSelectedCurrency().symbol;
         newErrors.amount = t("deposit.insufficientBalanceStock").replace(
@@ -225,7 +225,7 @@ export default function StockInvestment() {
                 />
               </View>
               <View style={styles.infoContent}>
-                <Text style={styles.infoTitle}>Stock Rate</Text>
+                <Text style={styles.infoTitle}>{t("deposit.stockRate")}</Text>
                 <Text style={styles.infoValue}>
                   1 Stock = {getSelectedCurrency().symbol}
                   {isLoadingCurrencies ? "..." : minAmount.toLocaleString()}
@@ -239,13 +239,12 @@ export default function StockInvestment() {
                 )}
                 {parsedAmountNum > 0 && (
                   <Text style={styles.stocksPreview}>
-                    You will receive:{" "}
+                    {t("deposit.youWillReceive")}
                     {stocksToReceive.toLocaleString(undefined, {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 4,
                     })}{" "}
-                    stock
-                    {stocksToReceive !== 1 ? "s" : ""}
+                    {t("deposit.stock")}
                   </Text>
                 )}
               </View>

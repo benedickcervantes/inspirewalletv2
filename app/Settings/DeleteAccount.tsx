@@ -52,7 +52,7 @@ const DeleteAccount = () => {
     try {
       const accessToken = await AsyncStorage.getItem('access_token');
       if (!accessToken) {
-        Alert.alert(t('delete.required'), t('delete.notAuthenticated') || 'Not authenticated');
+        Alert.alert(t('delete.required'), t('delete.notAuthenticated') || t('settings.deleteNotAuthenticated'));
         return;
       }
 
@@ -62,7 +62,7 @@ const DeleteAccount = () => {
       });
 
       if (!res?.success) {
-        Alert.alert(t('common.error') || 'Error', res?.error || 'Failed to submit request');
+        Alert.alert(t('common.error'), res?.error || t('settings.deleteRequestFailed'));
         return;
       }
 
