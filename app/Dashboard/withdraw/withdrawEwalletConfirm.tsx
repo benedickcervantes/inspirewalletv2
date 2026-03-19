@@ -4,28 +4,41 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useState } from "react";
 import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { getOrCreateMainWallet, submitWithdrawalRequest } from "../../../configs/api";
+import {
+    getOrCreateMainWallet,
+    submitWithdrawalRequest,
+} from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
 
 export default function EWalletConfirm() {
   const navigation = useNavigation();
   const route = useRoute();
   const { t } = useLanguage();
-  const params = (route.params || {}) as { method?: string; walletType?: string; accountNumber?: string; accountName?: string; amount?: string; email?: string };
+  const params = (route.params || {}) as {
+    method?: string;
+    walletType?: string;
+    accountNumber?: string;
+    accountName?: string;
+    amount?: string;
+    email?: string;
+  };
   const [showAlertModal, setShowAlertModal] = useState(false);
-  const [alertConfig, setAlertConfig] = useState<{ title: string; message: string }>({ title: "", message: "" });
+  const [alertConfig, setAlertConfig] = useState<{
+    title: string;
+    message: string;
+  }>({ title: "", message: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPasscodeModal, setShowPasscodeModal] = useState(false);
   const [passcode, setPasscode] = useState("");
@@ -45,7 +58,7 @@ export default function EWalletConfirm() {
         try {
           const user = JSON.parse(userJson) as { hasPasscode?: boolean };
           setHasPasscode(!!user?.hasPasscode);
-        } catch (_) { }
+        } catch (_) {}
       }
     })();
   }, []);
@@ -57,14 +70,21 @@ export default function EWalletConfirm() {
     try {
       const accessToken = await AsyncStorage.getItem("access_token");
       if (!accessToken) {
-        setAlertConfig({ title: t("common.error"), message: t("withdraw.errorLogin") });
+        setAlertConfig({
+          title: t("common.error"),
+          message: t("withdraw.errorLogin"),
+        });
         setShowAlertModal(true);
         setIsSubmitting(false);
         return;
       }
-      const { success: walletSuccess, wallet } = await getOrCreateMainWallet(accessToken);
+      const { success: walletSuccess, wallet } =
+        await getOrCreateMainWallet(accessToken);
       if (!walletSuccess || !wallet?.id) {
-        setAlertConfig({ title: t("common.error"), message: t("withdraw.errorLoadWallet") });
+        setAlertConfig({
+          title: t("common.error"),
+          message: t("withdraw.errorLoadWallet"),
+        });
         setShowAlertModal(true);
         setIsSubmitting(false);
         return;
@@ -84,7 +104,7 @@ export default function EWalletConfirm() {
       if (result.success) {
         setShowPasscodeModal(false);
         setPasscode("");
-        
+
         const txId = (result.data as any)?.id || t("investment.pending");
         (navigation as any).navigate("depositReceipt", {
           transactionId: txId,
@@ -93,7 +113,7 @@ export default function EWalletConfirm() {
           depositMethod: t("withdraw.ewallet"),
           type: "Withdrawal",
           successMessage: t("withdraw.successMessage"),
-          date: new Date().toLocaleString()
+          date: new Date().toLocaleString(),
         });
       } else {
         setAlertConfig({
@@ -105,7 +125,12 @@ export default function EWalletConfirm() {
       }
     } catch (error) {
       console.error("Error submitting withdrawal:", error);
-      setAlertConfig({ title: t("common.error"), message: t("deposit.unexpectedError") || "An unexpected error occurred. Please try again." });
+      setAlertConfig({
+        title: t("common.error"),
+        message:
+          t("deposit.unexpectedError") ||
+          "An unexpected error occurred. Please try again.",
+      });
       setShowAlertModal(true);
       if (passcodeToSend) setPasscode("");
     } finally {
@@ -127,9 +152,9 @@ export default function EWalletConfirm() {
   };
 
   const formatAmount = (value: string) => {
-    return parseFloat(value).toLocaleString('en-US', {
+    return parseFloat(value).toLocaleString("en-US", {
       minimumFractionDigits: 2,
-      maximumFractionDigits: 2
+      maximumFractionDigits: 2,
     });
   };
 
@@ -152,9 +177,7 @@ export default function EWalletConfirm() {
 
           <Text style={styles.headerTitle}>{t("withdraw.title")}</Text>
 
-          <TouchableOpacity style={styles.refreshButton}>
-            <Ionicons name="refresh" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
+          <View style={styles.refreshButton} />
         </LinearGradient>
 
         {/* Progress Steps */}
@@ -189,14 +212,18 @@ export default function EWalletConfirm() {
           {/* Details Card */}
           <View style={styles.detailsCard}>
             <View style={styles.orangeHeader}>
-              <Text style={styles.orangeHeaderText}>{t("withdraw.details")}</Text>
+              <Text style={styles.orangeHeaderText}>
+                {t("withdraw.details")}
+              </Text>
             </View>
 
             {/* Withdrawal Method */}
             <View style={styles.detailRow}>
               <View style={styles.leftBorder} />
               <View style={styles.detailContent}>
-                <Text style={styles.detailLabel}>{t("withdraw.withdrawalMethod")}</Text>
+                <Text style={styles.detailLabel}>
+                  {t("withdraw.withdrawalMethod")}
+                </Text>
                 <Text style={styles.detailValue}>{t("withdraw.ewallet")}</Text>
               </View>
             </View>
@@ -205,8 +232,12 @@ export default function EWalletConfirm() {
             <View style={styles.detailRow}>
               <View style={styles.leftBorder} />
               <View style={styles.detailContent}>
-                <Text style={styles.detailLabel}>{t("withdraw.ewalletType")}</Text>
-                <Text style={styles.detailValue}>{walletType.charAt(0).toUpperCase() + walletType.slice(1)}</Text>
+                <Text style={styles.detailLabel}>
+                  {t("withdraw.ewalletType")}
+                </Text>
+                <Text style={styles.detailValue}>
+                  {walletType.charAt(0).toUpperCase() + walletType.slice(1)}
+                </Text>
               </View>
             </View>
 
@@ -214,7 +245,9 @@ export default function EWalletConfirm() {
             <View style={styles.detailRow}>
               <View style={styles.leftBorder} />
               <View style={styles.detailContent}>
-                <Text style={styles.detailLabel}>{t("withdraw.walletAccNumber")}</Text>
+                <Text style={styles.detailLabel}>
+                  {t("withdraw.walletAccNumber")}
+                </Text>
                 <Text style={styles.detailValue}>{accountNumber}</Text>
               </View>
             </View>
@@ -223,7 +256,9 @@ export default function EWalletConfirm() {
             <View style={styles.detailRow}>
               <View style={styles.leftBorder} />
               <View style={styles.detailContent}>
-                <Text style={styles.detailLabel}>{t("withdraw.walletAccName")}</Text>
+                <Text style={styles.detailLabel}>
+                  {t("withdraw.walletAccName")}
+                </Text>
                 <Text style={styles.detailValue}>{accountName}</Text>
               </View>
             </View>
@@ -262,7 +297,9 @@ export default function EWalletConfirm() {
                 <ActivityIndicator size="small" color="#FFFFFF" />
               ) : (
                 <>
-                  <Text style={styles.confirmText}>{t("withdraw.confirm")}</Text>
+                  <Text style={styles.confirmText}>
+                    {t("withdraw.confirm")}
+                  </Text>
                   <Ionicons name="checkmark" size={20} color="#FFFFFF" />
                 </>
               )}
@@ -286,13 +323,16 @@ export default function EWalletConfirm() {
           >
             <View style={styles.passcodeOverlay}>
               <View style={styles.passcodeModalContent}>
-                <Text style={styles.passcodeModalTitle}>{t("withdraw.enterPasscode")}</Text>
+                <Text style={styles.passcodeModalTitle}>
+                  {t("withdraw.enterPasscode")}
+                </Text>
                 <TextInput
                   style={styles.passcodeInput}
                   value={passcode}
-                  onChangeText={(val) => setPasscode(val.replace(/\D/g, "").slice(0, 4))}
-                  placeholder="••••"
-                  placeholderTextColor="#999"
+                  onChangeText={(val) =>
+                    setPasscode(val.replace(/\D/g, "").slice(0, 4))
+                  }
+                  placeholder=""
                   secureTextEntry
                   maxLength={4}
                   keyboardType="number-pad"
@@ -304,24 +344,56 @@ export default function EWalletConfirm() {
                   selectionColor="#E25A17"
                   underlineColorAndroid="transparent"
                 />
+                <View style={styles.passcodeIndicatorRow}>
+                  {[0, 1, 2, 3].map((index) => (
+                    <View
+                      key={`passcode-indicator-${index}`}
+                      style={[
+                        styles.passcodeIndicatorBox,
+                        index < passcode.length &&
+                          styles.passcodeIndicatorBoxFilled,
+                      ]}
+                    >
+                      {index < passcode.length ? (
+                        <View style={styles.passcodeIndicatorDot} />
+                      ) : null}
+                    </View>
+                  ))}
+                </View>
                 <View style={styles.passcodeModalButtons}>
                   <TouchableOpacity
-                    style={[styles.passcodeModalButton, styles.passcodeModalButtonCancel]}
-                    onPress={() => { setShowPasscodeModal(false); setPasscode(""); }}
+                    style={[
+                      styles.passcodeModalButton,
+                      styles.passcodeModalButtonCancel,
+                    ]}
+                    onPress={() => {
+                      setShowPasscodeModal(false);
+                      setPasscode("");
+                    }}
                     disabled={isSubmitting}
                   >
-                    <Text style={styles.passcodeModalButtonCancelText}>{t("common.cancel")}</Text>
+                    <Text style={styles.passcodeModalButtonCancelText}>
+                      {t("common.cancel")}
+                    </Text>
                   </TouchableOpacity>
                   <TouchableOpacity
-                    style={[styles.passcodeModalButton, styles.passcodeModalButtonConfirm]}
+                    style={[
+                      styles.passcodeModalButton,
+                      styles.passcodeModalButtonConfirm,
+                    ]}
                     onPress={handlePasscodeConfirm}
                     disabled={isSubmitting || passcode.length !== 4}
                   >
-                    <LinearGradient colors={["#E25A17", "#F28934"]} style={styles.passcodeModalButtonGradient}>
+                    <LinearGradient
+                      colors={["#E25A17", "#F28934"]}
+                      style={styles.passcodeModalButtonGradient}
+                    >
                       {isSubmitting ? (
                         <ActivityIndicator size="small" color="#FFFFFF" />
                       ) : (
-                        <Text style={styles.passcodeModalButtonConfirmText}>{t("withdraw.confirm")}</Text>
+                        <Text style={styles.passcodeModalButtonConfirmText}>
+                          {t("withdraw.confirm")}
+                        </Text>
                       )}
                     </LinearGradient>
                   </TouchableOpacity>
@@ -624,10 +696,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#E25A17",
     borderRadius: 8,
-    paddingHorizontal: 16,
+    paddingHorizontal: 0,
     paddingVertical: 12,
     fontSize: 18,
     textAlign: "center",
+    writingDirection: "ltr",
     letterSpacing: 8,
     marginBottom: 20,
     shadowColor: "transparent",
@@ -635,6 +708,34 @@ const styles = StyleSheet.create({
     shadowOpacity: 0,
     shadowRadius: 0,
     elevation: 0,
+    color: "#111827",
+  },
+  passcodeIndicatorRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 10,
+    marginTop: -8,
+    marginBottom: 18,
+  },
+  passcodeIndicatorBox: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    borderWidth: 1,
+    borderColor: "#D1D5DB",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFFFFF",
+  },
+  passcodeIndicatorBoxFilled: {
+    borderColor: "#E25A17",
+    backgroundColor: "#FFF7ED",
+  },
+  passcodeIndicatorDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#E25A17",
   },
   passcodeModalButtons: {
     flexDirection: "row",

@@ -3,12 +3,12 @@ import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useState } from "react";
 import {
-  Image,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Image,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLanguage } from "../../../context/LanguageContext";
@@ -73,9 +73,7 @@ export default function WithdrawRequest() {
 
           <Text style={styles.headerTitle}>{t("withdraw.title")}</Text>
 
-          <TouchableOpacity style={styles.refreshButton}>
-            <Ionicons name="refresh" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
+          <View style={styles.refreshButton} />
         </LinearGradient>
 
         {/* Progress Steps */}
@@ -106,7 +104,9 @@ export default function WithdrawRequest() {
           {/* Title */}
           <View style={styles.titleContainer}>
             <Text style={styles.title}>{t("withdraw.selectMethod")}</Text>
-            <Text style={styles.subtitle}>{t("withdraw.chooseHowToWithdraw")}</Text>
+            <Text style={styles.subtitle}>
+              {t("withdraw.chooseHowToWithdraw")}
+            </Text>
           </View>
 
           {/* Withdrawal Method Options */}
@@ -147,7 +147,9 @@ export default function WithdrawRequest() {
                 </View>
                 <View style={styles.methodInfo}>
                   <Text style={styles.methodTitle}>{t(method.titleKey)}</Text>
-                  <Text style={styles.methodSubtitle}>{t(method.subtitleKey)}</Text>
+                  <Text style={styles.methodSubtitle}>
+                    {t(method.subtitleKey)}
+                  </Text>
                 </View>
                 <View style={styles.radioButton}>
                   {selectedMethod === method.id && (
@@ -181,7 +183,9 @@ export default function WithdrawRequest() {
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
               >
-                <Text style={styles.continueText}>{t("withdraw.continue")}</Text>
+                <Text style={styles.continueText}>
+                  {t("withdraw.continue")}
+                </Text>
                 <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
               </LinearGradient>
             </TouchableOpacity>

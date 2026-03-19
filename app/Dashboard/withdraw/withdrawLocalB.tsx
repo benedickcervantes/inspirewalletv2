@@ -5,22 +5,22 @@ import { LinearGradient } from "expo-linear-gradient";
 import { doc, getDoc } from "firebase/firestore";
 import { useCallback, useEffect, useState } from "react";
 import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { getOrCreateMainWallet } from "../../../configs/api";
 import { auth, firestore } from "../../../configs/firebase";
 import { useLanguage } from "../../../context/LanguageContext";
 import {
-  formatAmountWithCommas,
-  unformatNumberString,
+    formatAmountWithCommas,
+    unformatNumberString,
 } from "../../../utils/numberFormat";
 
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -33,6 +33,11 @@ const filterEmailInput = (text: string) =>
 const filterNameInput = (text: string) => text.replace(/[^A-Za-zÑñ ]/g, "");
 
 const filterPhoneInput = (text: string) => text.replace(/[^0-9]/g, "");
+
+const BANK_ACCOUNT_MAX_DIGITS = 16;
+
+const formatBankAccountNumber = (digits: string) =>
+  digits.replace(/(.{4})/g, "$1 ").trim();
 
 const capitalizeWords = (text: string) =>
   text.replace(/\b\w/g, (char) => char.toUpperCase());
@@ -100,13 +105,16 @@ export default function BankWithdrawal() {
 
   const handleContinue = () => {
     const newErrors: Record<string, string> = {};
+    const accountNumberDigits = filterPhoneInput(accountNumber);
 
-    if (!accountNumber.trim())
+    if (!accountNumberDigits)
       newErrors.accountNumber = t("withdraw.validation.accNumber");
     if (!accountHolderName.trim())
       newErrors.accountHolderName = t("withdraw.validation.accName");
-    if (!bankName.trim()) newErrors.bankName = t("withdraw.validation.bankName");
-    if (!branchName.trim()) newErrors.branchName = t("withdraw.validation.branchName");
+    if (!bankName.trim())
+      newErrors.bankName = t("withdraw.validation.bankName");
+    if (!branchName.trim())
+      newErrors.branchName = t("withdraw.validation.branchName");
 
     const amountStr = unformatNumberString(withdrawalAmount).trim();
     if (!amountStr) {
@@ -143,7 +151,7 @@ export default function BankWithdrawal() {
     // Navigate to confirm screen with data
     navigation.navigate("WithdrawLocalBConfirm", {
       method: "local-bank",
-      accountNumber,
+      accountNumber: accountNumberDigits,
       accountHolderName,
       bankName,
       branchName,
@@ -171,9 +179,7 @@ export default function BankWithdrawal() {
 
           <Text style={styles.headerTitle}>{t("withdraw.title")}</Text>
 
-          <TouchableOpacity style={styles.refreshButton}>
-            <Ionicons name="refresh" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
+          <View style={styles.refreshButton} />
         </LinearGradient>
 
         {/* Progress Steps */}
@@ -224,6 +230,30 @@ export default function BankWithdrawal() {
                 </Text>
               </View>
 
+              {/* Bank Name */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>{t("withdraw.bankName")}</Text>
+                <TextInput
+                  style={[styles.input, errors.bankName && styles.inputError]}
+                  placeholder={t("withdraw.placeholder.bankName")}
+                  placeholderTextColor="#CCC"
+                  value={bankName}
+                  onChangeText={(text) => {
+                    setBankName(capitalizeWords(text));
+                    if (errors.bankName) {
+                      setErrors((prev) => {
+                        const { bankName, ...rest } = prev;
+                        return rest;
+                      });
+                    }
+                  }}
+                />
+
+                {errors.bankName && (
+                  <Text style={styles.errorText}>{errors.bankName}</Text>
+                )}
+              </View>
+
               {/* Bank Account Number */}
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>{t("withdraw.accNumber")}</Text>
@@ -232,11 +262,15 @@ export default function BankWithdrawal() {
                     styles.input,
                     errors.accountNumber && styles.inputError,
                   ]}
-                  placeholder={t("withdraw.placeholder.accNumber")}
+                  placeholder="1234 5678 9012 3456"
                   placeholderTextColor="#CCC"
                   value={accountNumber}
                   onChangeText={(text) => {
-                    setAccountNumber(filterPhoneInput(text));
+                    const digitsOnly = filterPhoneInput(text).slice(
+                      0,
+                      BANK_ACCOUNT_MAX_DIGITS,
+                    );
+                    setAccountNumber(formatBankAccountNumber(digitsOnly));
                     if (errors.accountNumber) {
                       setErrors((prev) => {
                         const { accountNumber, ...rest } = prev;
@@ -245,6 +279,7 @@ export default function BankWithdrawal() {
                     }
                   }}
                   keyboardType="numeric"
+                  maxLength={19}
                 />
                 {errors.accountNumber && (
                   <Text style={styles.errorText}>{errors.accountNumber}</Text>
@@ -281,32 +316,11 @@ export default function BankWithdrawal() {
                 )}
               </View>
 
-              {/* Bank Name */}
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>{t("withdraw.bankName")}</Text>
-                <TextInput
-                  style={[styles.input, errors.bankName && styles.inputError]}
-                  placeholder={t("withdraw.placeholder.bankName")}
-                  placeholderTextColor="#CCC"
-                  value={bankName}
-                  onChangeText={(text) => {
-                    setBankName(capitalizeWords(text));
-                    if (errors.bankName) {
-                      setErrors((prev) => {
-                        const { bankName, ...rest } = prev;
-                        return rest;
-                      });
-                    }
-                  }}
-                />
-                {errors.bankName && (
-                  <Text style={styles.errorText}>{errors.bankName}</Text>
-                )}
-              </View>
-
               {/* Branch Name */}
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>{t("withdraw.branchName")}</Text>
+                <Text style={styles.inputLabel}>
+                  {t("withdraw.branchName")}
+                </Text>
                 <TextInput
                   style={[styles.input, errors.branchName && styles.inputError]}
                   placeholder={t("withdraw.placeholder.branchName")}
@@ -347,7 +361,9 @@ export default function BankWithdrawal() {
                     size={18}
                     color="#E25A17"
                   />
-                  <Text style={styles.inputLabel}>{t("withdraw.amountLabel")}</Text>
+                  <Text style={styles.inputLabel}>
+                    {t("withdraw.amountLabel")}
+                  </Text>
                 </View>
                 <View
                   style={[
@@ -427,7 +443,9 @@ export default function BankWithdrawal() {
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
               >
-                <Text style={styles.continueText}>{t("withdraw.continue")}</Text>
+                <Text style={styles.continueText}>
+                  {t("withdraw.continue")}
+                </Text>
                 <Ionicons name="play" size={20} color="#FFFFFF" />
               </LinearGradient>
             </TouchableOpacity>
