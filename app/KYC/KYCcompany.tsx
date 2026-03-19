@@ -42,7 +42,10 @@ export default function KYCcompany() {
       ? Math.max(insets.top, 12)
       : Math.max(StatusBar.currentHeight ?? 0, insets.top, 12);
   const headerPaddingBottom = Math.round(14 * scale);
-  const headerPaddingHorizontal = Math.max(16, Math.min(24, Math.round(width * 0.052)));
+  const headerPaddingHorizontal = Math.max(
+    16,
+    Math.min(24, Math.round(width * 0.052)),
+  );
   const headerTitleFontSize = Math.round(18 * scale + 2);
   const headerBackButtonSize = Math.round(40 * scale);
   const headerBackIconSize = Math.round(22 * scale + 2);
@@ -52,15 +55,29 @@ export default function KYCcompany() {
 
   const [companyName, setCompanyName] = useState("");
   const [isEditing, setIsEditing] = useState(false);
-  const [commercialRegister, setCommercialRegister] = useState<string | null>(null);
-  const [commercialRegisterMime, setCommercialRegisterMime] = useState<string | null>(null);
-  const [commercialRegisterName, setCommercialRegisterName] = useState<string | null>(null);
+  const [commercialRegister, setCommercialRegister] = useState<string | null>(
+    null,
+  );
+  const [commercialRegisterMime, setCommercialRegisterMime] = useState<
+    string | null
+  >(null);
+  const [commercialRegisterName, setCommercialRegisterName] = useState<
+    string | null
+  >(null);
   const [bankStatement, setBankStatement] = useState<string | null>(null);
-  const [bankStatementMime, setBankStatementMime] = useState<string | null>(null);
-  const [bankStatementName, setBankStatementName] = useState<string | null>(null);
+  const [bankStatementMime, setBankStatementMime] = useState<string | null>(
+    null,
+  );
+  const [bankStatementName, setBankStatementName] = useState<string | null>(
+    null,
+  );
   const [proofOfBilling, setProofOfBilling] = useState<string | null>(null);
-  const [proofOfBillingMime, setProofOfBillingMime] = useState<string | null>(null);
-  const [proofOfBillingName, setProofOfBillingName] = useState<string | null>(null);
+  const [proofOfBillingMime, setProofOfBillingMime] = useState<string | null>(
+    null,
+  );
+  const [proofOfBillingName, setProofOfBillingName] = useState<string | null>(
+    null,
+  );
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [loadingStatus, setLoadingStatus] = useState(true);
@@ -115,10 +132,16 @@ export default function KYCcompany() {
         const isSupported =
           mimeType === "application/pdf" ||
           mimeType === "application/msword" ||
-          mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
-          lower.endsWith(".pdf") || lower.endsWith(".doc") || lower.endsWith(".docx");
+          mimeType ===
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+          lower.endsWith(".pdf") ||
+          lower.endsWith(".doc") ||
+          lower.endsWith(".docx");
         if (!isSupported) {
-          Alert.alert("Invalid File", `Only PDF or Word documents are accepted for ${label}.`);
+          Alert.alert(
+            "Invalid File",
+            `Only PDF or Word documents are accepted for ${label}.`,
+          );
           return;
         }
         setUri(asset.uri);
@@ -131,11 +154,17 @@ export default function KYCcompany() {
     }
   };
 
-  const toFileDataUrl = async (uri: string, mimeType: string): Promise<string> => {
+  const toFileDataUrl = async (
+    uri: string,
+    mimeType: string,
+  ): Promise<string> => {
     const base64 = await FileSystem.readAsStringAsync(uri, {
       encoding: FileSystem.EncodingType.Base64,
     });
-    const safeMime = mimeType && typeof mimeType === "string" ? mimeType : "application/octet-stream";
+    const safeMime =
+      mimeType && typeof mimeType === "string"
+        ? mimeType
+        : "application/octet-stream";
     return `data:${safeMime};base64,${base64}`;
   };
 
@@ -156,7 +185,10 @@ export default function KYCcompany() {
         return;
       }
       const [crData, bsData, pbData] = await Promise.all([
-        toFileDataUrl(commercialRegister, commercialRegisterMime || "application/pdf"),
+        toFileDataUrl(
+          commercialRegister,
+          commercialRegisterMime || "application/pdf",
+        ),
         toFileDataUrl(bankStatement, bankStatementMime || "application/pdf"),
         toFileDataUrl(proofOfBilling, proofOfBillingMime || "application/pdf"),
       ]);
@@ -177,7 +209,10 @@ export default function KYCcompany() {
       setShowSuccessModal(true);
     } catch (e: unknown) {
       console.error("Error submitting company KYC:", e);
-      Alert.alert("Error", (e as Error)?.message || "Failed to submit. Please try again.");
+      Alert.alert(
+        "Error",
+        (e as Error)?.message || "Failed to submit. Please try again.",
+      );
     } finally {
       setSubmitting(false);
     }
@@ -241,57 +276,6 @@ export default function KYCcompany() {
         style={styles.container}
         edges={["bottom", "left", "right"]}
       >
-        {/* Gradient header — back left, title centered, status badge */}
-        <LinearGradient
-          colors={["#E15816", "#F48F38"]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={[
-            styles.gradientHeader,
-            {
-              paddingTop: headerPaddingTop,
-              paddingBottom: headerPaddingBottom,
-              paddingHorizontal: headerPaddingHorizontal,
-            },
-          ]}
-        >
-          <View style={styles.gradientHeaderRow}>
-            <TouchableOpacity
-              style={[styles.headerBackButton, { width: headerBackButtonSize, height: headerBackButtonSize }]}
-              onPress={handleCancel}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            >
-              <Ionicons name="arrow-back" size={headerBackIconSize} color="#FFFFFF" />
-            </TouchableOpacity>
-            <View style={styles.headerTitleBlock}>
-              <Text style={[styles.headerTitle, { fontSize: headerTitleFontSize }]} numberOfLines={1} adjustsFontSizeToFit>
-                Company Verification
-              </Text>
-            </View>
-            <View style={[styles.headerRightSpacer, { width: headerBackButtonSize, height: headerBackButtonSize }]} />
-          </View>
-          {showStatusBadge && (
-            <View style={[styles.statusBadgeRow, { marginTop: statusBadgeMarginTop }]}>
-              <View
-                style={[
-                  styles.statusBadge,
-                  isApproved && styles.statusBadgeApproved,
-                  isPending && styles.statusBadgePending,
-                  isRejected && styles.statusBadgeRejected,
-                ]}
-              >
-                <Ionicons
-                  name={isApproved ? "checkmark-circle" : isRejected ? "close-circle" : "time-outline"}
-                  size={statusBadgeIconSize}
-                  color="#FFFFFF"
-                />
-                <Text style={[styles.statusBadgeText, { fontSize: statusBadgeFontSize }]}>
-                  {isApproved ? "Verified" : isRejected ? "Rejected" : "Unverified"}
-                </Text>
-              </View>
-            </View>
-          )}
-        </LinearGradient>
         {/* Gradient header — responsive for iOS (e.g. iPhone 14 Pro) and Android */}
         <LinearGradient
           colors={["#E15816", "#F48F38"]}
@@ -338,7 +322,12 @@ export default function KYCcompany() {
             />
           </View>
           {showStatusBadge && (
-            <View style={[styles.statusBadgeRow, { marginTop: statusBadgeMarginTop }]}>
+            <View
+              style={[
+                styles.statusBadgeRow,
+                { marginTop: statusBadgeMarginTop },
+              ]}
+            >
               <View
                 style={[
                   styles.statusBadge,
@@ -352,20 +341,23 @@ export default function KYCcompany() {
                     isApproved
                       ? "checkmark-circle"
                       : isRejected
-                      ? "close-circle"
-                      : "time-outline"
+                        ? "close-circle"
+                        : "time-outline"
                   }
                   size={statusBadgeIconSize}
                   color="#FFFFFF"
                 />
                 <Text
-                  style={[styles.statusBadgeText, { fontSize: statusBadgeFontSize }]}
+                  style={[
+                    styles.statusBadgeText,
+                    { fontSize: statusBadgeFontSize },
+                  ]}
                 >
                   {isApproved
                     ? "Verified"
                     : isRejected
-                    ? "Rejected"
-                    : "Unverified"}
+                      ? "Rejected"
+                      : "Unverified"}
                 </Text>
               </View>
             </View>
@@ -392,10 +384,7 @@ export default function KYCcompany() {
               </Text>
             </View>
             <TextInput
-              style={[
-                styles.textInput,
-                isLocked && styles.readonlyInput,
-              ]}
+              style={[styles.textInput, isLocked && styles.readonlyInput]}
               placeholder="Sample Company"
               placeholderTextColor="#BDBDBD"
               value={companyName}
@@ -439,7 +428,17 @@ export default function KYCcompany() {
                 {index > 0 && <View style={styles.docRowDivider} />}
                 <TouchableOpacity
                   style={styles.docRow}
-                  onPress={isLocked ? undefined : () => pickDocument(doc.setUri, doc.setName, doc.setMime, doc.label)}
+                  onPress={
+                    isLocked
+                      ? undefined
+                      : () =>
+                          pickDocument(
+                            doc.setUri,
+                            doc.setName,
+                            doc.setMime,
+                            doc.label,
+                          )
+                  }
                   activeOpacity={isLocked ? 1 : 0.7}
                   disabled={isLocked}
                 >
@@ -502,13 +501,17 @@ export default function KYCcompany() {
           >
             <LinearGradient
               colors={
-                isFormComplete && !isLocked ? ["#E15816", "#F48F38"] : ["#BDBDBD", "#BDBDBD"]
+                isFormComplete && !isLocked
+                  ? ["#E15816", "#F48F38"]
+                  : ["#BDBDBD", "#BDBDBD"]
               }
               style={styles.saveButton}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
             >
-              <Text style={styles.saveButtonText}>{submitting ? "Submitting..." : "Save"}</Text>
+              <Text style={styles.saveButtonText}>
+                {submitting ? "Submitting..." : "Save"}
+              </Text>
             </LinearGradient>
           </TouchableOpacity>
         </View>
