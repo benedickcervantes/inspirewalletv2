@@ -1,7 +1,7 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { doc, getDoc } from "firebase/firestore";
 import { useCallback, useEffect, useState } from "react";
 import {
@@ -18,6 +18,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { getOrCreateMainWallet } from "../../../configs/api";
 import { auth, firestore } from "../../../configs/firebase";
 import { useLanguage } from "../../../context/LanguageContext";
+import {
+  formatAmountWithCommas,
+  unformatNumberString,
+} from "../../../utils/numberFormat";
 
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 const isValidEmail = (email: string) =>
@@ -104,7 +108,7 @@ export default function BankWithdrawal() {
     if (!bankName.trim()) newErrors.bankName = t("withdraw.validation.bankName");
     if (!branchName.trim()) newErrors.branchName = t("withdraw.validation.branchName");
 
-    const amountStr = withdrawalAmount.trim();
+    const amountStr = unformatNumberString(withdrawalAmount).trim();
     if (!amountStr) {
       newErrors.withdrawalAmount = t("withdraw.validation.amount");
     } else {
@@ -143,7 +147,7 @@ export default function BankWithdrawal() {
       accountHolderName,
       bankName,
       branchName,
-      amount: withdrawalAmount,
+      amount: unformatNumberString(withdrawalAmount),
       email: emailAddress,
     });
   };
@@ -358,7 +362,7 @@ export default function BankWithdrawal() {
                     placeholderTextColor="#CCC"
                     value={withdrawalAmount}
                     onChangeText={(text) => {
-                      setWithdrawalAmount(text.replace(/[^0-9.]/g, ""));
+                      setWithdrawalAmount(formatAmountWithCommas(text));
                       if (errors.withdrawalAmount) {
                         setErrors((prev) => {
                           const { withdrawalAmount, ...rest } = prev;

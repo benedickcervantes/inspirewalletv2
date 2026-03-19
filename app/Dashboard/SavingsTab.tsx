@@ -589,6 +589,23 @@ export default function SavingsTab({
                     </Text>
                   </View>
                   <View style={styles.modalDetailRow}>
+                    <Text style={styles.modalDetailLabel}>{t("investment.totalAmountInReturn")}</Text>
+                    <Text style={styles.modalDetailValue}>
+                      ₱{" "}
+                      {formatCurrency(
+                        (() => {
+                          const principal = parseAmount(selectedContract.amount);
+                          const schedule = getPayoutSchedule(selectedContract);
+                          const totalInterest = schedule.reduce(
+                            (sum, p) => sum + parseAmount(p.amount),
+                            0
+                          );
+                          return principal + totalInterest;
+                        })()
+                      )}
+                    </Text>
+                  </View>
+                  <View style={styles.modalDetailRow}>
                     <Text style={styles.modalDetailLabel}>{t("investment.referredBy")}</Text>
                     <Text style={styles.modalDetailValue}>
                       {(() => {

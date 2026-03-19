@@ -15,6 +15,10 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { getOrCreateMainWallet, submitTopUpRequest } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
+import {
+  formatAmountWithCommas,
+  unformatNumberString,
+} from "../../../utils/numberFormat";
 
 export default function TopUpBalance() {
   const navigation = useNavigation();
@@ -36,7 +40,7 @@ export default function TopUpBalance() {
   const handleContinue = async () => {
     setSubmitError(null);
     const newErrors: Record<string, string> = {};
-    const amountStr = amount.trim();
+    const amountStr = unformatNumberString(amount).trim();
 
     if (!amountStr) {
       newErrors.amount = "Amount is required";
@@ -70,7 +74,7 @@ export default function TopUpBalance() {
 
       const body = {
         walletId: wallet.id as string,
-        amount: String(parseFloat(amount)),
+        amount: String(parseFloat(unformatNumberString(amount))),
       };
 
       const result = await submitTopUpRequest(accessToken, body);
@@ -83,7 +87,7 @@ export default function TopUpBalance() {
       const selectedCurrencyData = getSelectedCurrency();
       navigation.navigate("TopupConfirm", {
         currency: selectedCurrency,
-        amount: amount,
+        amount: unformatNumberString(amount),
         currencySymbol: selectedCurrencyData.symbol,
         requestId: result.data.id,
       });
@@ -207,8 +211,7 @@ export default function TopUpBalance() {
                   keyboardType="numeric"
                   value={amount}
                   onChangeText={(text) => {
-                    const filtered = text.replace(/[^0-9.]/g, "");
-                    setAmount(filtered);
+                    setAmount(formatAmountWithCommas(text));
                     if (errors.amount) {
                       setErrors((prev) => {
                         const { amount, ...rest } = prev;

@@ -5,26 +5,27 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useState } from "react";
 import {
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLanguage } from "../../../context/LanguageContext";
 import type { RootStackParamList } from "../../../types/navigation";
+import { formatAmountWithCommas } from "../../../utils/numberFormat";
 
 const THEME_COLOR = "#E15816";
 const ORANGE_GRADIENT = ["#E25A17", "#F28934"] as const;
 const GREEN_COMPLETE = "#10B981";
 
-const filterIncomeInput = (text: string) => text.replace(/[^0-9.]/g, "");
+const filterIncomeInput = (text: string) => formatAmountWithCommas(text);
 
 const SOURCE_OF_FUND_OPTIONS = [
   "Employment",

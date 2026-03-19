@@ -7,22 +7,23 @@ import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  Keyboard,
-  Modal,
-  Platform,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
+    Keyboard,
+    Modal,
+    Platform,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { getTimeDeposits, submitTravelProtection } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
 import type { RootStackParamList } from "../../../types/navigation";
+import { unformatNumberString } from "../../../utils/numberFormat";
 import { useResponsive } from "../../../utils/responsive";
 import CustomLoader from "../../Loader/CustomLoader";
 import TravelProtectDetails from "./TravelProtectDetails";
@@ -676,8 +677,8 @@ export default function TravelProtection() {
         civilStatus,
         citizenship,
         sourceOfFund,
-        grossMonthlyIncome: `${grossMonthlyIncome} ${grossMonthlyIncomeCurrency}`,
-        cashOnHand,
+        grossMonthlyIncome: `${unformatNumberString(grossMonthlyIncome)} ${grossMonthlyIncomeCurrency}`,
+        cashOnHand: unformatNumberString(cashOnHand),
         destinationAddress,
         checkInDate: formatDate(checkInDate),
         duration,

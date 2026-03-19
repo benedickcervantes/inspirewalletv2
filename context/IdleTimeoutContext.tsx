@@ -265,13 +265,13 @@ export const IdleTimeoutProvider: React.FC<{ children: React.ReactNode }> = ({
 
         if (!isSessionActive) return;
 
-        // When going inactive/background, record the time
+        // When going inactive/background, DO NOT treat it as user activity.
+        // We keep the existing lastActivity so time away contributes to inactivity.
         if (nextState === "inactive" || nextState === "background") {
-          const now = Date.now();
-          lastActivityRef.current = now;
-          await AsyncStorage.setItem(LAST_ACTIVITY_KEY, String(now)).catch(
-            () => {},
-          );
+          // Persist whatever the last known activity time is (best-effort),
+          // in case the app is killed while backgrounded.
+          const last = lastActivityRef.current;
+          await AsyncStorage.setItem(LAST_ACTIVITY_KEY, String(last)).catch(() => {});
           return;
         }
 

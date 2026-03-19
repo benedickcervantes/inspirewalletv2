@@ -19,6 +19,10 @@ import {
   submitTimeDepositRequest,
 } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
+import {
+  formatAmountWithCommas,
+  unformatNumberString,
+} from "../../../utils/numberFormat";
 
 export default function TimeDepositAmount() {
   const navigation = useNavigation();
@@ -56,7 +60,7 @@ export default function TimeDepositAmount() {
 
   const updatePhpEquivalent = useCallback(
     async (value: string, currency: string) => {
-      const num = parseFloat(value) || 0;
+      const num = parseFloat(unformatNumberString(value)) || 0;
       if (!value.trim() || num <= 0) {
         setPhpEquivalent(0);
         setConvertError(null);
@@ -103,7 +107,7 @@ export default function TimeDepositAmount() {
       setConvertError(null);
       return;
     }
-    const num = parseFloat(value);
+    const num = parseFloat(unformatNumberString(value));
     if (isNaN(num) || num <= 0) {
       setPhpEquivalent(0);
       setConvertError(null);
@@ -124,7 +128,7 @@ export default function TimeDepositAmount() {
   const handleContinue = async () => {
     setSubmitError(null);
     const newErrors: Record<string, string> = {};
-    const amountStr = amount.trim();
+    const amountStr = unformatNumberString(amount).trim();
 
     if (!amountStr) {
       newErrors.amount = "Amount is required";
@@ -144,7 +148,9 @@ export default function TimeDepositAmount() {
     setErrors({});
     
     const amountInPhp =
-      selectedCurrency === "PHP" ? parseFloat(amount) : phpEquivalent;
+      selectedCurrency === "PHP"
+        ? parseFloat(unformatNumberString(amount))
+        : phpEquivalent;
 
     try {
       setIsSubmitting(true);
@@ -182,7 +188,7 @@ export default function TimeDepositAmount() {
       navigation.navigate("TimeDepositConfirm", {
         depositMethod,
         contractPeriod,
-        amount,
+        amount: unformatNumberString(amount),
         amountInPhp,
         currency: selectedCurrency,
         requestId: res.data.id,
@@ -312,8 +318,7 @@ export default function TimeDepositAmount() {
                   keyboardType="numeric"
                   value={amount}
                   onChangeText={(text) => {
-                    const filtered = text.replace(/[^0-9.]/g, "");
-                    setAmount(filtered);
+                    setAmount(formatAmountWithCommas(text));
                     if (errors.amount) {
                       setErrors((prev) => {
                         const { amount, ...rest } = prev;
