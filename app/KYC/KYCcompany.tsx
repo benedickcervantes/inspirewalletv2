@@ -393,14 +393,15 @@ export default function KYCcompany() {
             </View>
             <TextInput
               style={[
-                [styles.textInput,
+                styles.textInput,
                 isLocked && styles.readonlyInput,
-              ], isLocked && styles.readonlyInput]}
+              ]}
               placeholder="Sample Company"
               placeholderTextColor="#BDBDBD"
               value={companyName}
               onChangeText={isLocked ? undefined : setCompanyName}
               editable={!isLocked}
+              onChangeText={isLocked ? undefined : setCompanyName}
             />
           </View>
 

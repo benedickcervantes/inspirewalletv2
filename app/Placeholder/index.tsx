@@ -144,12 +144,6 @@ export default function Placeholder() {
     }, [fetchUserData]),
   );
 
-  useFocusEffect(
-    useCallback(() => {
-      fetchUserData();
-    }, [fetchUserData]),
-  );
-
   const hasPasscode = !!userData?.hasPasscode;
 
   const normalizeMessagingLink = (
@@ -1189,38 +1183,6 @@ export default function Placeholder() {
         transparent
         animationType="fade"
         onRequestClose={() => setShowCompanyRejectedModal(false)}
-      >
-        <View style={styles.successOverlay}>
-          <View style={styles.successContent}>
-            <Ionicons
-              name="alert-circle"
-              size={40}
-              color="#EF4444"
-              style={{ marginBottom: 8 }}
-            />
-            <Text style={styles.successTitle}>Company KYC Rejected</Text>
-            <Text style={styles.successMessage}>
-              Your submitted company documents were rejected. Please review your
-              information and upload your company requirements again.
-            </Text>
-            <TouchableOpacity
-              style={styles.successButton}
-              onPress={() => {
-                setShowCompanyRejectedModal(false);
-                openCompanyModal();
-              }}
-            >
-              <Text style={styles.successButtonText}>OK</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Company KYC Rejected Modal */}
-      <Modal
-        visible={showCompanyRejectedModal}
-        transparent
-        animationType="fade"
       >
         <View style={styles.successOverlay}>
           <View style={styles.successContent}>
