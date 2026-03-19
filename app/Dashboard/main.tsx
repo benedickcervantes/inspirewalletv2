@@ -1,39 +1,39 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
-    useFocusEffect,
-    useNavigation,
-    useRoute,
+  useFocusEffect,
+  useNavigation,
+  useRoute,
 } from "@react-navigation/native";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-    Animated,
-    Image,
-    Linking,
-    Modal,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Animated,
+  Image,
+  Linking,
+  Modal,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import {
-    SafeAreaView,
-    useSafeAreaInsets,
+  SafeAreaView,
+  useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import {
-    getActiveAnnouncements,
-    getMe,
-    getNotifications,
-    getOrCreateMainWallet,
-    getReferralTree,
-    getTimeDeposits,
-    getTransactions,
+  getActiveAnnouncements,
+  getMe,
+  getNotifications,
+  getOrCreateMainWallet,
+  getReferralTree,
+  getTimeDeposits,
+  getTransactions,
 } from "../../configs/api";
 import {
-    languageChoiceDoneKey,
-    SUPPORTED_LANGUAGES,
+  languageChoiceDoneKey,
+  SUPPORTED_LANGUAGES,
 } from "../../constants/locales";
 import { useIdleTimeout } from "../../context/IdleTimeoutContext";
 import { useLanguage } from "../../context/LanguageContext";
@@ -45,8 +45,8 @@ import type { NavProp } from "../../types/navigation";
 import { useResponsive } from "../../utils/responsive";
 import AccountDeletionModal from "../AccountDeletion/AccountDeletionModal";
 import {
-    AnnouncementModal,
-    type AnnouncementItem,
+  AnnouncementModal,
+  type AnnouncementItem,
 } from "../AnnouncementModal/AnnouncementModal";
 import NotificationBadge from "../Notification/NotificationBadge";
 import CardsTab from "./CardsTab";
@@ -351,6 +351,14 @@ export default function Dashboard() {
           kycAccountStatus: (user as Record<string, unknown>).kycAccountStatus,
           kycStatus: (user as Record<string, unknown>).kycStatus,
         });
+
+        // Always keep lastLoggedEmail in sync so that after any kind of logout
+        // (manual, idle timeout, or OS kill), the app knows whose email to
+        // pre-fill and can navigate to Passcode on next launch.
+        const emailStr = user.email as string | undefined;
+        if (emailStr) {
+          AsyncStorage.setItem('lastLoggedEmail', emailStr.toLowerCase()).catch(() => { });
+        }
 
         // Load cached active card design once we know the account number
         try {
@@ -909,7 +917,7 @@ export default function Dashboard() {
         visible={showFirstTimeLanguageModal}
         transparent
         animationType="fade"
-        onRequestClose={() => {}}
+        onRequestClose={() => { }}
       >
         <View style={styles.languageModalOverlay}>
           <View style={styles.languageModalContentOuter}>
@@ -971,7 +979,7 @@ export default function Dashboard() {
               onPress={() => navigation.navigate("Notification")}
             >
               <Ionicons name="notifications" size={24} color="#E15816" />
-          <NotificationBadge />
+              <NotificationBadge />
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.iconButton}
@@ -1445,7 +1453,7 @@ export default function Dashboard() {
                     style={[
                       styles.languageDot,
                       currentLanguageIndex === index &&
-                        styles.languageActiveDot,
+                      styles.languageActiveDot,
                     ]}
                   />
                 ))}
