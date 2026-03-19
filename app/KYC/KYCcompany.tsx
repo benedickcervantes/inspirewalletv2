@@ -401,7 +401,6 @@ export default function KYCcompany() {
               value={companyName}
               onChangeText={isLocked ? undefined : setCompanyName}
               editable={!isLocked}
-              onChangeText={isLocked ? undefined : setCompanyName}
             />
           </View>
 

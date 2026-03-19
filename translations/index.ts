@@ -1554,7 +1554,7 @@ const en: TranslationMap = {
   "register.companyName": "Company Name",
   "register.placeholderCompanyName": "Enter your company name",
   "register.errorCompanyName": "Please enter your company name",
-  "register.contactInfo": "Contact Information (Optional)",
+  "register.contactInfo": "Contact Information",
   "register.contactInfoComingSoon":
     "This feature is coming soon. LINE, Viber, and WhatsApp contact links will be available in a future update.",
   "register.lineAccountLink": "LINE Account Link",
@@ -2989,7 +2989,7 @@ const ko: TranslationMap = {
   "register.companyName": "회사명",
   "register.placeholderCompanyName": "회사명 입력",
   "register.errorCompanyName": "회사명을 입력해 주세요",
-  "register.contactInfo": "연락처 정보 (선택)",
+  "register.contactInfo": "연락처 정보",
   "register.contactInfoComingSoon":
     "이 기능은 곧 제공됩니다. LINE, Viber, WhatsApp 연락처 링크는 추후 업데이트에서 이용할 수 있습니다.",
   "register.lineAccountLink": "라인 계정 링크",
@@ -4421,7 +4421,7 @@ const ja: TranslationMap = {
   "register.companyName": "会社名",
   "register.placeholderCompanyName": "会社名を入力",
   "register.errorCompanyName": "会社名を入力してください",
-  "register.contactInfo": "連絡先（任意）",
+  "register.contactInfo": "連絡先",
   "register.contactInfoComingSoon":
     "この機能は近日公開予定です。LINE、Viber、WhatsAppの連絡先リンクは今後のアップデートでご利用いただけます。",
   "register.lineAccountLink": "LINEアカウントリンク",
@@ -5823,7 +5823,7 @@ const ar: TranslationMap = {
   "register.companyName": "اسم الشركة",
   "register.placeholderCompanyName": "أدخل اسم شركتك",
   "register.errorCompanyName": "يرجى إدخال اسم الشركة",
-  "register.contactInfo": "معلومات الاتصال (اختياري)",
+  "register.contactInfo": "معلومات الاتصال",
   "register.contactInfoComingSoon":
     "هذه الميزة قادمة قريباً. روابط LINE و Viber و WhatsApp ستكون متاحة في تحديث قادم.",
   "register.lineAccountLink": "رابط حساب LINE",
