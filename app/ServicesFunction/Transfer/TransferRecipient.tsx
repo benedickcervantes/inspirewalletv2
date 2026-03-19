@@ -175,7 +175,22 @@ export default function TransferRecipient() {
     fetchBalance();
     loadContacts();
     loadUserAccountNumber();
+    loadMostRecentRecipientIntoField();
   }, []);
+
+  const loadMostRecentRecipientIntoField = async () => {
+    try {
+      if ((params.scannedAccount || "").trim()) return;
+      if ((accountNumber || "").trim()) return;
+      const raw = await AsyncStorage.getItem("saved_accounts");
+      if (!raw) return;
+      const saved = JSON.parse(raw) as Array<{ accountNumber?: string }>;
+      const mostRecent = saved?.[0]?.accountNumber;
+      if (mostRecent) setAccountNumber(String(mostRecent));
+    } catch (e) {
+      console.warn("Failed to load recent recipient:", e);
+    }
+  };
 
   const fetchBalance = async () => {
     try {
