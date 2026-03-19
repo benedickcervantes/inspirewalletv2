@@ -541,6 +541,7 @@ const en: TranslationMap = {
   "agent.share": "Share",
   "agent.directReferrals": "Direct Referrals",
   "agent.totalNetwork": "Total Network",
+  "agent.pendingCommission": "Pending Commission",
   "agent.myUplines": "My Uplines",
   "agent.myReferrals": "My Downlines",
   "agent.referrer": "Referrer",
@@ -549,16 +550,41 @@ const en: TranslationMap = {
   "agent.agentTag": "AGENT",
   "agent.loading": "Loading data...",
   "agent.referralFallback": "Referral",
+  "agent.level": "Level",
   "agent.directReferralInNetwork": "direct referral in your network",
   "agent.directReferralsInNetwork": "direct referrals in your network",
+  "agent.directReferralListTitle": "Direct Referrals",
+  "agent.directReferralListSubtitle":
+    "People you referred directly into your network",
+  "agent.totalNetworkListTitle": "Total Network",
+  "agent.totalNetworkListSubtitle":
+    "Everyone in your referral network, including indirect downlines",
   "agent.referredClientsTitle": "Referred Clients with Time Deposits",
   "agent.referredClientsSubtitle":
     "Clients you referred who had approved time deposits (commission earned)",
+  "agent.pendingCommissionListTitle": "Pending Agent Commissions",
+  "agent.pendingCommissionListSubtitle":
+    "Commissions from referred time deposits that are still waiting for release",
   "agent.commissionFromClient": "Commission from referred client",
+  "agent.pendingCommissionItemTitle":
+    "Pending agent commission from time deposit",
+  "agent.pendingCommissionReleasePrefix": "Releases on",
   "agent.emptyReferredClients":
     "No referred clients with approved time deposits yet",
   "agent.emptyReferredClientsHint":
     "When your referrals create time deposits and they get approved, you'll earn commission and see them here.",
+  "agent.emptyDirectReferrals":
+    "No direct referrals yet",
+  "agent.emptyDirectReferralsHint":
+    "People you invite directly with your referral code will appear here.",
+  "agent.emptyTotalNetwork":
+    "Your total network is still empty",
+  "agent.emptyTotalNetworkHint":
+    "Once referrals start inviting more people, your full network will show here.",
+  "agent.emptyPendingCommissions":
+    "No pending agent commissions right now",
+  "agent.emptyPendingCommissionsHint":
+    "Pending commissions from new referred time deposits will appear here until their release date.",
   "agent.loadingDashboard": "LOADING AGENT DASHBOARD...",
 
   // About
