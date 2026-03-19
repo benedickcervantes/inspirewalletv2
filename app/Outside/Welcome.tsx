@@ -31,12 +31,13 @@ const BUTTON_LOGIN = '#F88A36';
 const WHITE = '#FFFFFF';
 
 const USER_PREFERRED_LANGUAGE_KEY = 'user_preferred_language';
+let hasShownStartupLoaderThisSession = false;
 
 export default function Welcome() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const { horizontalPadding, scale, width, height, isShortScreen, isSmallScreen } = useResponsive();
-  const [showStartup, setShowStartup] = useState(true);
+  const [showStartup, setShowStartup] = useState(!hasShownStartupLoaderThisSession);
   const [languageModalVisible, setLanguageModalVisible] = useState(false);
   const { t, language: contextLanguage, setLanguage } = useLanguage();
   const language = normalizeLanguage(contextLanguage ?? DEFAULT_LANGUAGE);
@@ -48,9 +49,16 @@ export default function Welcome() {
   };
 
   useEffect(() => {
+    if (!showStartup) return;
     const t = setTimeout(() => setShowStartup(false), 4000);
     return () => clearTimeout(t);
-  }, []);
+  }, [showStartup]);
+
+  useEffect(() => {
+    if (!showStartup) {
+      hasShownStartupLoaderThisSession = true;
+    }
+  }, [showStartup]);
 
   if (showStartup) {
     return <CustomLoader text={t('common.loading')} />;
