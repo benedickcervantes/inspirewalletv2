@@ -35,6 +35,30 @@ interface CommissionTransaction {
   metadata?: Record<string, unknown>;
 }
 
+interface PendingCommissionItem {
+  id: string;
+  amount: number;
+  releaseAt: string;
+}
+
+interface ReferralTreeMember {
+  userId: string;
+  referredById?: string | null;
+  referralCode?: string | null;
+  name?: string;
+  firstName?: string;
+  lastName?: string;
+  isAgent?: boolean;
+  depth?: number;
+  directReferralCount?: number;
+}
+
+type DetailSectionView =
+  | "earned"
+  | "pending"
+  | "direct_referrals"
+  | "total_network";
+
 const IPHONE_SE_WIDTH = 320;
 const SMALL_PHONE_WIDTH = 375;
 
@@ -58,16 +82,45 @@ export default function AgentDashboard() {
   const [uplines, setUplines] = useState<
     { userId: string; referralCode?: string | null; name: string; firstName: string; lastName: string; isAgent: boolean; depth: number }[]
   >([]);
-  const [directReferrals, setDirectReferrals] = useState<
-    { userId: string; referralCode?: string; name?: string; firstName?: string; lastName?: string; isAgent?: boolean }[]
-  >([]);
+  const [directReferrals, setDirectReferrals] = useState<ReferralTreeMember[]>([]);
+  const [networkReferrals, setNetworkReferrals] = useState<ReferralTreeMember[]>([]);
   const [referredClientsWithDeposits, setReferredClientsWithDeposits] = useState<
     CommissionTransaction[]
   >([]);
+  const [pendingAgentCommissions, setPendingAgentCommissions] = useState<
+    PendingCommissionItem[]
+  >([]);
+  const [detailSectionView, setDetailSectionView] =
+    useState<DetailSectionView>("earned");
   const [error, setError] = useState<string | null>(null);
 
   const formatCurrency = (amount: number) =>
     amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const pendingCommissionCount = pendingAgentCommissions.length;
+  const showingPendingCommissionList = detailSectionView === "pending";
+  const showingDirectReferralsList = detailSectionView === "direct_referrals";
+  const showingTotalNetworkList = detailSectionView === "total_network";
+  const getReferralDisplayName = (item: ReferralTreeMember) =>
+    item.name ||
+    [item.firstName, item.lastName].filter(Boolean).join(" ") ||
+    t("agent.referralFallback");
+  const normalizeReferralMember = (
+    member: Record<string, unknown>,
+    fallbackDepth?: number
+  ): ReferralTreeMember => ({
+    userId: String(member.userId ?? ""),
+    referredById:
+      member.referredById == null ? null : String(member.referredById),
+    referralCode:
+      member.referralCode == null ? null : String(member.referralCode),
+    name: typeof member.name === "string" ? member.name : undefined,
+    firstName:
+      typeof member.firstName === "string" ? member.firstName : undefined,
+    lastName: typeof member.lastName === "string" ? member.lastName : undefined,
+    isAgent: Boolean(member.isAgent),
+    depth: Number(member.depth ?? fallbackDepth ?? 0),
+    directReferralCount: Number(member.directReferralCount ?? 0),
+  });
 
   const fetchData = useCallback(async () => {
     const accessToken = await AsyncStorage.getItem("access_token");
@@ -103,6 +156,26 @@ export default function AgentDashboard() {
         setAgentCommission(Number.isNaN(commission) ? 0 : commission);
         const curr = wallet.currency as Record<string, string> | undefined;
         if (curr?.symbol) setCurrencySymbol(curr.symbol);
+        const pending = Array.isArray(wallet.pendingAgentCommissions)
+          ? wallet.pendingAgentCommissions
+              .map((item, index) => {
+                const pendingItem = item as Record<string, unknown>;
+                const amount = parseFloat(String(pendingItem.amount ?? 0));
+                return {
+                  id: `${String(pendingItem.releaseAt ?? "pending")}-${index}`,
+                  amount: Number.isNaN(amount) ? 0 : amount,
+                  releaseAt: String(pendingItem.releaseAt ?? ""),
+                };
+              })
+              .sort((a, b) => {
+                const first = a.releaseAt ? new Date(a.releaseAt).getTime() : 0;
+                const second = b.releaseAt ? new Date(b.releaseAt).getTime() : 0;
+                return first - second;
+              })
+          : [];
+        setPendingAgentCommissions(pending);
+      } else {
+        setPendingAgentCommissions([]);
       }
 
       // Referral QR Payload
@@ -145,10 +218,25 @@ export default function AgentDashboard() {
         console.log("==> REFERRAL TREE RES", JSON.stringify(tree, null, 2));
 
         const refs = tree.directReferrals as
-          | { userId: string; referralCode?: string; name?: string; firstName?: string; lastName?: string; isAgent?: boolean }[]
+          | Record<string, unknown>[]
           | undefined;
-        if (Array.isArray(refs)) setDirectReferrals(refs);
-        else setDirectReferrals([]);
+        const normalizedDirectReferrals = Array.isArray(refs)
+          ? refs.map((ref) => normalizeReferralMember(ref, 1))
+          : [];
+        setDirectReferrals(normalizedDirectReferrals);
+
+        const descendants = tree.descendants as
+          | Record<string, unknown>[]
+          | undefined;
+        const normalizedNetworkReferrals = Array.isArray(descendants)
+          ? descendants.map((descendant) =>
+              normalizeReferralMember(descendant)
+            )
+          : normalizedDirectReferrals.map((referral) => ({
+              ...referral,
+              depth: referral.depth ?? 1,
+            }));
+        setNetworkReferrals(normalizedNetworkReferrals);
 
         const ancs = tree.ancestors as
           | { userId: string; referralCode?: string | null; name: string; firstName: string; lastName: string; isAgent: boolean; depth: number }[]
@@ -156,6 +244,9 @@ export default function AgentDashboard() {
         // Sort ancestors by depth to show closest referrer first (depth 0 = direct referrer)
         if (Array.isArray(ancs)) setUplines([...ancs].sort((a, b) => a.depth - b.depth));
         else setUplines([]);
+      } else {
+        setDirectReferrals([]);
+        setNetworkReferrals([]);
       }
 
       // Referred clients who successfully added time deposit = AGENT_COMMISSION transactions
@@ -223,6 +314,12 @@ export default function AgentDashboard() {
     } catch {
       // User cancelled or share failed
     }
+  };
+
+  const handleDetailSectionPress = (view: DetailSectionView) => {
+    setDetailSectionView((currentView) =>
+      currentView === view ? "earned" : view
+    );
   };
 
   return (
@@ -332,14 +429,110 @@ export default function AgentDashboard() {
 
           {/* Referral Stats */}
           <View style={[styles.statsRow, isXSScreen && styles.statsRowCompact]}>
-            <View style={[styles.statCard, isXSScreen && styles.statCardCompact]}>
-              <Text style={[styles.statValue, isXSScreen && styles.statValueCompact]}>{directReferralCount}</Text>
-              <Text style={[styles.statLabel, isXSScreen && styles.textCompact]}>{t("agent.directReferrals")}</Text>
-            </View>
-            <View style={[styles.statCard, isXSScreen && styles.statCardCompact]}>
-              <Text style={[styles.statValue, isXSScreen && styles.statValueCompact]}>{totalDescendantCount}</Text>
-              <Text style={[styles.statLabel, isXSScreen && styles.textCompact]}>{t("agent.totalNetwork")}</Text>
-            </View>
+            <TouchableOpacity
+              activeOpacity={0.86}
+              onPress={() => handleDetailSectionPress("direct_referrals")}
+              style={[
+                styles.statCard,
+                styles.statCardInteractive,
+                isXSScreen && styles.statCardCompact,
+                showingDirectReferralsList && styles.statCardActive,
+              ]}
+              accessibilityRole="button"
+              accessibilityState={{ selected: showingDirectReferralsList }}
+            >
+              <Text
+                style={[
+                  styles.statValue,
+                  isXSScreen && styles.statValueCompact,
+                  showingDirectReferralsList && styles.statValueActive,
+                ]}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.75}
+              >
+                {directReferralCount}
+              </Text>
+              <Text
+                style={[
+                  styles.statLabel,
+                  isXSScreen && styles.textCompact,
+                  showingDirectReferralsList && styles.statLabelActive,
+                ]}
+              >
+                {t("agent.directReferrals")}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              activeOpacity={0.86}
+              onPress={() => handleDetailSectionPress("total_network")}
+              style={[
+                styles.statCard,
+                styles.statCardInteractive,
+                isXSScreen && styles.statCardCompact,
+                showingTotalNetworkList && styles.statCardActive,
+              ]}
+              accessibilityRole="button"
+              accessibilityState={{ selected: showingTotalNetworkList }}
+            >
+              <Text
+                style={[
+                  styles.statValue,
+                  isXSScreen && styles.statValueCompact,
+                  showingTotalNetworkList && styles.statValueActive,
+                ]}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.75}
+              >
+                {totalDescendantCount}
+              </Text>
+              <Text
+                style={[
+                  styles.statLabel,
+                  isXSScreen && styles.textCompact,
+                  showingTotalNetworkList && styles.statLabelActive,
+                ]}
+              >
+                {t("agent.totalNetwork")}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              activeOpacity={0.86}
+              onPress={() => handleDetailSectionPress("pending")}
+              style={[
+                styles.statCard,
+                styles.statCardInteractive,
+                isXSScreen && styles.statCardCompact,
+                showingPendingCommissionList && styles.statCardActive,
+              ]}
+              accessibilityRole="button"
+              accessibilityState={{ selected: showingPendingCommissionList }}
+            >
+              <Text
+                style={[
+                  styles.statValue,
+                  styles.pendingStatValue,
+                  isXSScreen && styles.pendingStatValueCompact,
+                  showingPendingCommissionList && styles.statValueActive,
+                ]}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.68}
+              >
+                {pendingCommissionCount}
+              </Text>
+              <Text
+                style={[
+                  styles.statLabel,
+                  styles.statLabelCentered,
+                  isXSScreen && styles.textCompact,
+                  showingPendingCommissionList && styles.statLabelActive,
+                ]}
+              >
+                {t("agent.pendingCommission")}
+              </Text>
+            </TouchableOpacity>
           </View>
 
           {/* My Upline */}
@@ -414,15 +607,120 @@ export default function AgentDashboard() {
             </View>
           )}
 
-          {/* Referred Clients with Time Deposits */}
+          {/* Detail Section */}
           <View style={[styles.section, isXSScreen && styles.cardCompact]}>
             <Text style={[styles.sectionTitle, isXSScreen && styles.sectionTitleCompact]}>
-              {t("agent.referredClientsTitle")}
+              {showingPendingCommissionList
+                ? t("agent.pendingCommissionListTitle")
+                : showingDirectReferralsList
+                ? t("agent.directReferralListTitle")
+                : showingTotalNetworkList
+                ? t("agent.totalNetworkListTitle")
+                : t("agent.referredClientsTitle")}
             </Text>
             <Text style={[styles.sectionSubtitle, isXSScreen && styles.textCompact]}>
-              {t("agent.referredClientsSubtitle")}
+              {showingPendingCommissionList
+                ? t("agent.pendingCommissionListSubtitle")
+                : showingDirectReferralsList
+                ? t("agent.directReferralListSubtitle")
+                : showingTotalNetworkList
+                ? t("agent.totalNetworkListSubtitle")
+                : t("agent.referredClientsSubtitle")}
             </Text>
-            {referredClientsWithDeposits.length > 0 ? (
+            {showingPendingCommissionList ? (
+              pendingAgentCommissions.length > 0 ? (
+                pendingAgentCommissions.map((item) => (
+                  <View key={item.id} style={[styles.commissionItem, isXSScreen && styles.commissionItemCompact]}>
+                    <View style={[styles.commissionItemLeft, isXSScreen && styles.commissionItemLeftCompact]}>
+                      <Text style={[styles.commissionItemDesc, isXSScreen && styles.textCompact]} numberOfLines={2}>
+                        {t("agent.pendingCommissionItemTitle")}
+                      </Text>
+                      <Text style={styles.commissionItemDate}>
+                        {item.releaseAt
+                          ? `${t("agent.pendingCommissionReleasePrefix")} ${new Date(item.releaseAt).toLocaleDateString(undefined, {
+                              year: "numeric",
+                              month: "short",
+                              day: "numeric",
+                            })}`
+                          : ""}
+                      </Text>
+                    </View>
+                    <Text style={[styles.commissionItemAmount, styles.pendingCommissionItemAmount, isXSScreen && styles.textCompact]}>
+                      {currencySymbol} {formatCurrency(item.amount)}
+                    </Text>
+                  </View>
+                ))
+              ) : (
+                <View style={[styles.emptyState, isXSScreen && styles.emptyStateCompact]}>
+                  <Ionicons name="timer-outline" size={48} color="#CCC" />
+                  <Text style={styles.emptyStateText}>
+                    {t("agent.emptyPendingCommissions")}
+                  </Text>
+                  <Text style={styles.emptyStateSubtext}>
+                    {t("agent.emptyPendingCommissionsHint")}
+                  </Text>
+                </View>
+              )
+            ) : showingDirectReferralsList || showingTotalNetworkList ? (
+              (showingTotalNetworkList ? networkReferrals : directReferrals).length > 0 ? (
+                (showingTotalNetworkList ? networkReferrals : directReferrals).map((item) => (
+                  <View
+                    key={`${item.userId}-${item.depth ?? 1}`}
+                    style={[styles.referralItem, isXSScreen && styles.referralItemCompact]}
+                  >
+                    <View style={styles.referralItemLeft}>
+                      <View style={styles.nameRow}>
+                        <Text
+                          style={[styles.referralItemName, isXSScreen && styles.textCompact]}
+                          numberOfLines={1}
+                        >
+                          {getReferralDisplayName(item)}
+                        </Text>
+                        {item.isAgent && (
+                          <View style={styles.agentTag}>
+                            <Text style={styles.agentTagText}>{t("agent.agentTag")}</Text>
+                          </View>
+                        )}
+                      </View>
+                      <View style={styles.codeRoleRow}>
+                        <Text style={styles.referralItemCode}>
+                          {`${t("agent.level")} ${Math.max(1, item.depth ?? 1)}`}
+                        </Text>
+                        {item.referralCode && (
+                          <>
+                            <Text style={styles.dotSeparator}>â€¢</Text>
+                            <Text style={styles.referralItemCode}>{item.referralCode}</Text>
+                          </>
+                        )}
+                      </View>
+                    </View>
+                    <Ionicons
+                      name={showingTotalNetworkList ? "people-outline" : "arrow-down-circle-outline"}
+                      size={24}
+                      color={showingTotalNetworkList ? "#E25A17" : "#059669"}
+                    />
+                  </View>
+                ))
+              ) : (
+                <View style={[styles.emptyState, isXSScreen && styles.emptyStateCompact]}>
+                  <Ionicons
+                    name={showingTotalNetworkList ? "people-outline" : "person-add-outline"}
+                    size={48}
+                    color="#CCC"
+                  />
+                  <Text style={styles.emptyStateText}>
+                    {showingTotalNetworkList
+                      ? t("agent.emptyTotalNetwork")
+                      : t("agent.emptyDirectReferrals")}
+                  </Text>
+                  <Text style={styles.emptyStateSubtext}>
+                    {showingTotalNetworkList
+                      ? t("agent.emptyTotalNetworkHint")
+                      : t("agent.emptyDirectReferralsHint")}
+                  </Text>
+                </View>
+              )
+            ) : referredClientsWithDeposits.length > 0 ? (
               referredClientsWithDeposits.map((item) => (
                 <View key={item.id} style={[styles.commissionItem, isXSScreen && styles.commissionItemCompact]}>
                   <View style={[styles.commissionItemLeft, isXSScreen && styles.commissionItemLeftCompact]}>
@@ -574,10 +872,23 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
   },
+  statCardInteractive: {
+    borderWidth: 1,
+    borderColor: "#F3F4F6",
+  },
+  statCardActive: {
+    backgroundColor: "#FFF7ED",
+    borderColor: "#F59E0B",
+  },
   statCardCompact: { padding: 12 },
-  statValue: { fontSize: 24, fontWeight: "700", color: "#E25A17" },
+  statValue: { fontSize: 24, fontWeight: "700", color: "#E25A17", textAlign: "center" },
   statValueCompact: { fontSize: 20 },
-  statLabel: { fontSize: 12, color: "#6B7280", marginTop: 4 },
+  pendingStatValue: { fontSize: 18 },
+  pendingStatValueCompact: { fontSize: 16 },
+  statValueActive: { color: "#C2410C" },
+  statLabel: { fontSize: 12, color: "#6B7280", marginTop: 4, textAlign: "center" },
+  statLabelCentered: { textAlign: "center" },
+  statLabelActive: { color: "#C2410C" },
   section: {
     backgroundColor: "#FFFFFF",
     borderRadius: 12,
@@ -633,6 +944,7 @@ const styles = StyleSheet.create({
   commissionItemDesc: { fontSize: 15, color: "#1F2937" },
   commissionItemDate: { fontSize: 12, color: "#9CA3AF", marginTop: 2 },
   commissionItemAmount: { fontSize: 15, fontWeight: "600", color: "#059669" },
+  pendingCommissionItemAmount: { color: "#E25A17" },
   emptyState: {
     alignItems: "center",
     paddingVertical: 32,
