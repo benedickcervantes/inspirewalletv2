@@ -31,6 +31,13 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
+import {
+  decodeQrImage,
+  getCompanyKycStatus,
+  getMe,
+  getReferralTree,
+  updateProfile,
+} from "@/configs/api";
 import { auth, firestore } from "../../configs/firebase";
 import {
   DEFAULT_LANGUAGE,
@@ -43,6 +50,37 @@ import CustomLoader from "../Loader/CustomLoader";
 
 const THEME_COLOR = "#E15816";
 const USER_PREFERRED_LANGUAGE_KEY = "user_preferred_language";
+
+type AgentHierarchyRole = "master_agent" | "agent" | "consultant_agent";
+
+const AGENT_ROLE_LABELS: Record<AgentHierarchyRole, string> = {
+  master_agent: "Master Agent",
+  agent: "Agent",
+  consultant_agent: "Consultant Agent",
+};
+
+const AGENT_ROLE_BADGE_LABELS: Record<AgentHierarchyRole, string> = {
+  master_agent: "MASTER AGENT",
+  agent: "AGENT",
+  consultant_agent: "CONSULTANT AGENT",
+};
+
+const ROLE_BADGE_COLORS: Record<AgentHierarchyRole, string> = {
+  master_agent: "#B45309",
+  agent: "#E15816",
+  consultant_agent: "#0E7490",
+};
+
+const INVESTOR_ROLE_COLOR = "#2E7D32";
+
+const getAgentHierarchyRoleFromTree = (
+  tree: Record<string, unknown> | null | undefined,
+): AgentHierarchyRole => {
+  const ancestors = Array.isArray(tree?.ancestors) ? tree.ancestors : [];
+  if (ancestors.length === 0) return "master_agent";
+  if (ancestors.length === 1) return "agent";
+  return "consultant_agent";
+};
 
 export default function Placeholder() {
   const navigation = useNavigation();
@@ -79,6 +117,8 @@ export default function Placeholder() {
   const [passcode, setPasscode] = useState("");
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [agentHierarchyRole, setAgentHierarchyRole] =
+    useState<AgentHierarchyRole | null>(null);
   const [companyKycView, setCompanyKycView] = useState<{
     status?: string;
     companyName?: string;
@@ -97,9 +137,10 @@ export default function Placeholder() {
       );
       const accessToken = await AsyncStorage.getItem("access_token");
       if (accessToken) {
-        const [meResult, companyResult] = await Promise.all([
+        const [meResult, companyResult, referralTreeResult] = await Promise.all([
           getMe(accessToken),
           getCompanyKycStatus(accessToken).catch(() => null),
+          getReferralTree(accessToken).catch(() => null),
         ]);
         if (meResult.success && meResult.user) {
           const u = meResult.user as Record<string, unknown>;
@@ -109,6 +150,20 @@ export default function Placeholder() {
               (u.language as string) ?? preferredLang ?? DEFAULT_LANGUAGE,
           };
           setUserData(merged);
+
+          const isAgentUser =
+            u.isAgent === true || String(u.role ?? "").toLowerCase() === "agent";
+          if (isAgentUser) {
+            const tree =
+              referralTreeResult && referralTreeResult.success
+                ? (referralTreeResult.tree as Record<string, unknown> | undefined)
+                : undefined;
+            setAgentHierarchyRole(
+              tree ? getAgentHierarchyRoleFromTree(tree) : "agent",
+            );
+          } else {
+            setAgentHierarchyRole(null);
+          }
         }
         if (companyResult && companyResult.success && companyResult.data) {
           const data = companyResult.data as {
@@ -135,6 +190,12 @@ export default function Placeholder() {
               (data?.language as string) ?? preferredLang,
             ),
           });
+
+          const isAgentUser =
+            data?.isAgent === true ||
+            String((data as { role?: string })?.role ?? "").toLowerCase() ===
+              "agent";
+          setAgentHierarchyRole(isAgentUser ? "agent" : null);
         }
       }
     } catch (error) {
@@ -458,6 +519,19 @@ export default function Placeholder() {
   const isKycVerified =
     String(userData?.kycAccountStatus || "").toUpperCase() === "VERIFIED" ||
     String(userData?.kycStatus || "").toLowerCase() === "approved";
+  const resolvedAgentRole = isAgent ? (agentHierarchyRole ?? "agent") : null;
+  const headerRoleLabel = resolvedAgentRole
+    ? AGENT_ROLE_BADGE_LABELS[resolvedAgentRole]
+    : t("profile.investor").toUpperCase();
+  const headerRoleColor = resolvedAgentRole
+    ? ROLE_BADGE_COLORS[resolvedAgentRole]
+    : INVESTOR_ROLE_COLOR;
+  const accountTypeLabel = resolvedAgentRole
+    ? AGENT_ROLE_LABELS[resolvedAgentRole]
+    : t("profile.investor");
+  const accountTypeBadgeColor = resolvedAgentRole
+    ? ROLE_BADGE_COLORS[resolvedAgentRole]
+    : INVESTOR_ROLE_COLOR;
   const accountNumber =
     userData?.accountNumber || userData?.id || "000053126300";
   const rawCompanyNameFromUser = userData?.companyName;
@@ -523,7 +597,7 @@ export default function Placeholder() {
           "user",
           JSON.stringify({ ...user, language: selectedLabel }),
         );
-      } catch (_) {}
+      } catch {}
     }
     setLanguageModalVisible(false);
   };
@@ -619,19 +693,19 @@ export default function Placeholder() {
 
           {/* Badges */}
           <View style={styles.badgesContainer}>
-            {isAgent ? (
-              <View style={styles.agentBadge}>
+            {resolvedAgentRole ? (
+              <View style={[styles.agentBadge, { backgroundColor: headerRoleColor }]}>
                 <MaterialCommunityIcons
                   name="shield-account"
                   size={16}
                   color="#FFFFFF"
                 />
                 <Text style={styles.badgeText}>
-                  {t("profile.agent").toUpperCase()}
+                  {headerRoleLabel}
                 </Text>
               </View>
             ) : (
-              <View style={styles.investorBadge}>
+              <View style={[styles.investorBadge, { backgroundColor: headerRoleColor }]}>
                 <MaterialCommunityIcons
                   name="shield-account"
                   size={16}
@@ -820,9 +894,9 @@ export default function Placeholder() {
           <DetailItem
             icon="star-outline"
             label={t("profile.accountType")}
-            value={isAgent ? t("profile.agent") : t("profile.investor")}
-            badge={isAgent ? t("profile.agent") : t("profile.investor")}
-            badgeColor={isAgent ? "#E15816" : "#999"}
+            value={accountTypeLabel}
+            badge={accountTypeLabel}
+            badgeColor={accountTypeBadgeColor}
           />
           <DetailItem
             icon="trophy-outline"
