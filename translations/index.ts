@@ -294,6 +294,7 @@ const en: TranslationMap = {
   "tx.fee": "Fee",
   "tx.refund": "Refund",
   "tx.timeDeposit": "Time Deposit",
+  "tx.travelProtection": "Travel Protection",
   "tx.transaction": "Transaction",
 
   // Investment / Savings tab & Deposit flows
@@ -1846,6 +1847,7 @@ const ko: TranslationMap = {
   "tx.fee": "수수료",
   "tx.refund": "환불",
   "tx.timeDeposit": "정기 예금",
+  "tx.travelProtection": "여행 보호",
   "tx.transaction": "거래",
   "investment.timeDeposit": "정기 예금",
   "investment.amountWalletLabel": "예상 배당금",
@@ -3281,6 +3283,7 @@ const ja: TranslationMap = {
   "tx.fee": "手数料",
   "tx.refund": "返金",
   "tx.timeDeposit": "定期預金",
+  "tx.travelProtection": "旅行保護",
   "tx.transaction": "取引",
   "investment.timeDeposit": "定期預金",
   "investment.amountWalletLabel": "予想配当金",
@@ -4712,6 +4715,7 @@ const ar: TranslationMap = {
   "tx.fee": "رسوم",
   "tx.refund": "استرداد",
   "tx.timeDeposit": "وديعة لأجل",
+  "tx.travelProtection": "حماية السفر",
   "tx.transaction": "معاملة",
   "history.allTransactions": "جميع المعاملات",
   "history.totalSpent": "إجمالي المصروف",
