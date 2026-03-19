@@ -82,6 +82,7 @@ export default function KYCcompany() {
   const [submitting, setSubmitting] = useState(false);
   const [loadingStatus, setLoadingStatus] = useState(true);
   const [companyKycStatus, setCompanyKycStatus] = useState<string | null>(null);
+  const [footerHeight, setFooterHeight] = useState(0);
   const [existingCompanyName, setExistingCompanyName] = useState<string | null>(
     null,
   );
@@ -366,7 +367,10 @@ export default function KYCcompany() {
 
         <ScrollView
           style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingBottom: 40 + footerHeight },
+          ]}
           showsVerticalScrollIndicator={false}
         >
           {/* Card 1 — Company Name */}
@@ -479,7 +483,10 @@ export default function KYCcompany() {
         </ScrollView>
 
         {/* Footer Buttons */}
-        <View style={styles.footer}>
+        <View
+          style={styles.footer}
+          onLayout={(event) => setFooterHeight(event.nativeEvent.layout.height)}
+        >
           <TouchableOpacity
             style={styles.cancelButton}
             onPress={handleCancel}
@@ -730,6 +737,10 @@ const styles = StyleSheet.create({
   },
   // ─────────────────────────────────────────────────────────────────────────
   footer: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
