@@ -212,7 +212,7 @@ const en: TranslationMap = {
   "dashboard.bankingServiceLockedTitle": "Banking Service Locked",
   "dashboard.bankingServiceLockedRequirement": "Required Time Deposit",
   "dashboard.bankingServiceLockedMessage":
-    "Your Time Deposit balance under Investment must be at least ₱200,000 to unlock Banking Service. Your current balance is below this requirement. Please grow your Investment to ₱200,000 to unlock this feature.",
+    "You need a ₱200,000 2-yr Time Deposit to unlock Banking Service.",
   "dashboard.kycLockedTitle": "KYC Verification Required",
   "dashboard.kycLockedRequirement": "Required Status",
   "dashboard.kycLockedRequirementValue": "KYC VERIFIED",
@@ -541,6 +541,7 @@ const en: TranslationMap = {
   "agent.share": "Share",
   "agent.directReferrals": "Direct Referrals",
   "agent.totalNetwork": "Total Network",
+  "agent.pendingCommission": "Pending Commission",
   "agent.myUplines": "My Uplines",
   "agent.myReferrals": "My Downlines",
   "agent.referrer": "Referrer",
@@ -549,16 +550,41 @@ const en: TranslationMap = {
   "agent.agentTag": "AGENT",
   "agent.loading": "Loading data...",
   "agent.referralFallback": "Referral",
+  "agent.level": "Level",
   "agent.directReferralInNetwork": "direct referral in your network",
   "agent.directReferralsInNetwork": "direct referrals in your network",
+  "agent.directReferralListTitle": "Direct Referrals",
+  "agent.directReferralListSubtitle":
+    "People you referred directly into your network",
+  "agent.totalNetworkListTitle": "Total Network",
+  "agent.totalNetworkListSubtitle":
+    "Everyone in your referral network, including indirect downlines",
   "agent.referredClientsTitle": "Referred Clients with Time Deposits",
   "agent.referredClientsSubtitle":
     "Clients you referred who had approved time deposits (commission earned)",
+  "agent.pendingCommissionListTitle": "Pending Agent Commissions",
+  "agent.pendingCommissionListSubtitle":
+    "Commissions from referred time deposits that are still waiting for release",
   "agent.commissionFromClient": "Commission from referred client",
+  "agent.pendingCommissionItemTitle":
+    "Pending agent commission from time deposit",
+  "agent.pendingCommissionReleasePrefix": "Releases on",
   "agent.emptyReferredClients":
     "No referred clients with approved time deposits yet",
   "agent.emptyReferredClientsHint":
     "When your referrals create time deposits and they get approved, you'll earn commission and see them here.",
+  "agent.emptyDirectReferrals":
+    "No direct referrals yet",
+  "agent.emptyDirectReferralsHint":
+    "People you invite directly with your referral code will appear here.",
+  "agent.emptyTotalNetwork":
+    "Your total network is still empty",
+  "agent.emptyTotalNetworkHint":
+    "Once referrals start inviting more people, your full network will show here.",
+  "agent.emptyPendingCommissions":
+    "No pending agent commissions right now",
+  "agent.emptyPendingCommissionsHint":
+    "Pending commissions from new referred time deposits will appear here until their release date.",
   "agent.loadingDashboard": "LOADING AGENT DASHBOARD...",
 
   // About
@@ -2169,7 +2195,7 @@ const ko: TranslationMap = {
   "dashboard.bankingServiceLockedTitle": "뱅킹 서비스 잠김",
   "dashboard.bankingServiceLockedRequirement": "필요 정기예금",
   "dashboard.bankingServiceLockedMessage":
-    "뱅킹 서비스를 이용하려면 투자 탭의 정기예금 잔액이 최소 ₱200,000 이상이어야 합니다. 현재 잔액이 요건에 미달합니다. 투자를 ₱200,000까지 늘리시면 잠금이 해제됩니다.",
+    "뱅킹 서비스를 이용하려면 ₱200,000 2년 정기예금이 필요합니다.",
   "dashboard.kycLockedTitle": "KYC 인증 필요",
   "dashboard.kycLockedRequirement": "필수 상태",
   "dashboard.kycLockedRequirementValue": "KYC 인증 완료",
@@ -3536,7 +3562,7 @@ const ja: TranslationMap = {
   "dashboard.bankingServiceLockedTitle": "銀行情報がロックされています",
   "dashboard.bankingServiceLockedRequirement": "必要な定期預金",
   "dashboard.bankingServiceLockedMessage":
-    "銀行情報を利用するには、投資タブの定期預金残高が最低₱200,000以上必要です。現在の残高が要件を満たしていません。投資を₱200,000まで増やすとロックが解除されます。",
+    "銀行情報を利用するには、₱200,000の2年定期預金が必要です。",
   "dashboard.kycLockedTitle": "KYC認証が必要です",
   "dashboard.kycLockedRequirement": "必要なステータス",
   "dashboard.kycLockedRequirementValue": "KYC認証済み",
@@ -4968,7 +4994,7 @@ const ar: TranslationMap = {
   "dashboard.bankingServiceLockedTitle": "خدمة البنك مقفلة",
   "dashboard.bankingServiceLockedRequirement": "الوديعة المطلوبة",
   "dashboard.bankingServiceLockedMessage":
-    "يجب أن يكون رصيد الودائع لأجل في تبويب الاستثمار 200,000₱ على الأقل لفتح خدمة البنك. رصيدك الحالي أقل من المتطلب. يرجى زيادة استثمارك إلى 200,000₱ لفتح هذه الميزة.",
+    "لفتح خدمة البنك، تحتاج إلى وديعة لأجل بعقد سنتين بقيمة 200,000₱.",
   "dashboard.kycLockedTitle": "مطلوب توثيق KYC",
   "dashboard.kycLockedRequirement": "الحالة المطلوبة",
   "dashboard.kycLockedRequirementValue": "تم توثيق KYC",

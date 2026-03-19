@@ -2,8 +2,8 @@ import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import * as Contacts from "expo-contacts";
-import { LinearGradient } from "expo-linear-gradient";
 import * as FileSystem from "expo-file-system/legacy";
+import { LinearGradient } from "expo-linear-gradient";
 import * as Sharing from "expo-sharing";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -26,6 +26,10 @@ import {
   getRecipientByAccountNumber,
 } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
+import {
+  formatAmountWithCommas,
+  unformatNumberString,
+} from "../../../utils/numberFormat";
 import { useResponsive } from "../../../utils/responsive";
 import CustomLoader from "../../Loader/CustomLoader";
 import ContactsModal from "./ContactsModal";
@@ -115,7 +119,7 @@ export const validateTransferForm = (
     };
   }
 
-  const transferAmount = parseFloat(amount);
+  const transferAmount = parseFloat(unformatNumberString(amount));
   if (isNaN(transferAmount) || transferAmount <= 0) {
     return {
       isValid: false,
@@ -171,7 +175,22 @@ export default function TransferRecipient() {
     fetchBalance();
     loadContacts();
     loadUserAccountNumber();
+    loadMostRecentRecipientIntoField();
   }, []);
+
+  const loadMostRecentRecipientIntoField = async () => {
+    try {
+      if ((params.scannedAccount || "").trim()) return;
+      if ((accountNumber || "").trim()) return;
+      const raw = await AsyncStorage.getItem("saved_accounts");
+      if (!raw) return;
+      const saved = JSON.parse(raw) as Array<{ accountNumber?: string }>;
+      const mostRecent = saved?.[0]?.accountNumber;
+      if (mostRecent) setAccountNumber(String(mostRecent));
+    } catch (e) {
+      console.warn("Failed to load recent recipient:", e);
+    }
+  };
 
   const fetchBalance = async () => {
     try {
@@ -271,7 +290,7 @@ export default function TransferRecipient() {
       navigation.navigate("TransferConfirm", {
         balanceType: balanceType ?? "available",
         accountNumber,
-        amount,
+        amount: unformatNumberString(amount),
         description,
         recipientName,
         recipientId: "",
@@ -515,7 +534,7 @@ export default function TransferRecipient() {
                 placeholder="0.00"
                 placeholderTextColor="#CCC"
                 value={amount}
-                onChangeText={setAmount}
+                onChangeText={(text) => setAmount(formatAmountWithCommas(text))}
                 keyboardType="decimal-pad"
               />
               <Text style={styles.availableText}>

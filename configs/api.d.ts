@@ -316,11 +316,25 @@ export function getReferralTree(accessToken: string): Promise<{
     }[];
     directReferrals?: {
       userId: string;
-      referralCode?: string;
+      referredById?: string | null;
+      referralCode?: string | null;
       name?: string;
       firstName?: string;
       lastName?: string;
       isAgent?: boolean;
+      depth?: number;
+      directReferralCount?: number;
+    }[];
+    descendants?: {
+      userId: string;
+      referredById?: string | null;
+      referralCode?: string | null;
+      name?: string;
+      firstName?: string;
+      lastName?: string;
+      isAgent?: boolean;
+      depth?: number;
+      directReferralCount?: number;
     }[];
   };
   error?: string;

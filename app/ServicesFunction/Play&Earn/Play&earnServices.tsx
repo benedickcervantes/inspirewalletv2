@@ -3,23 +3,23 @@ import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useCallback, useEffect, useState } from "react";
 import {
-  BackHandler,
-  Modal,
-  Platform,
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  useWindowDimensions,
-  View
+    BackHandler,
+    Modal,
+    Platform,
+    SafeAreaView,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    useWindowDimensions,
+    View
 } from "react-native";
 import { useLanguage } from "../../../context/LanguageContext";
 import { isServiceUnderMaintenance } from "../../../lib/maintenance";
-import CryptoPriceChart from "./CryptoPriceChart";
-import { CHART_COLORS } from "./CryptoPriceChart";
+import { formatAmountWithCommas } from "../../../utils/numberFormat";
+import CryptoPriceChart, { CHART_COLORS } from "./CryptoPriceChart";
 import { COIN_IDS, fetchCoinGeckoMarketChart } from "./coingecko";
 
 const THEME_COLOR = "#E15816";
@@ -816,7 +816,7 @@ export default function PlayEarnServices() {
                 <TextInput
                   style={styles.modalInput}
                   value={tradeAmount}
-                  onChangeText={setTradeAmount}
+                  onChangeText={(text) => setTradeAmount(formatAmountWithCommas(text))}
                   keyboardType="decimal-pad"
                   placeholder="0.00"
                   autoFocus
