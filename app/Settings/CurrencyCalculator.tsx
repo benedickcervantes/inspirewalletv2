@@ -75,7 +75,7 @@ const CurrencyCalculator = () => {
             setConvertError(null);
         } else {
             setConvertedAmount(null);
-            setConvertError(result.error || 'Exchange rate unavailable');
+            setConvertError(result.error || t('currency.exchangeRateUnavailable'));
         }
     }, []);
 
@@ -193,7 +193,7 @@ const CurrencyCalculator = () => {
                 style={{ flex: 1 }}
             >
                 <ScrollView style={r.container} showsVerticalScrollIndicator={false}>
-                    <Text style={[styles.label, r.label]}>Amount</Text>
+                    <Text style={[styles.label, r.label]}>{t('currency.amount')}</Text>
                     <View style={r.inputContainer}>
                         <TextInput
                             style={r.input}
@@ -216,7 +216,7 @@ const CurrencyCalculator = () => {
                         </TouchableOpacity>
                     </View>
 
-                    <Text style={[styles.label, r.label]}>Converted to</Text>
+                    <Text style={[styles.label, r.label]}>{t('currency.convertedTo')}</Text>
                     <View style={r.inputContainer}>
                         <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
                             {isConverting ? (
@@ -238,7 +238,7 @@ const CurrencyCalculator = () => {
                     </View>
 
                     <View style={r.resultContainer}>
-                        <Text style={r.resultLabel}>Total Result</Text>
+                        <Text style={r.resultLabel}>{t('currency.totalResult')}</Text>
                         <Text style={r.resultValue}>
                             {toCurrency.symbol}{' '}
                             {isConverting ? '...' : displayAmount}
@@ -249,13 +249,13 @@ const CurrencyCalculator = () => {
 
                     <View style={{ height: 40 }} />
                     <Text style={styles.disclaimer}>
-                        * Live exchange rates from the bank. Rates may vary.
+                        {t('currency.disclaimer')}
                     </Text>
 
                     {fromModalVisible && (
                         <View style={styles.modalOverlay}>
                             <View style={styles.modalContent}>
-                                <Text style={styles.modalTitle}>Select From Currency</Text>
+                                <Text style={styles.modalTitle}>{t('currency.selectFromCurrency')}</Text>
                                 <ScrollView>
                                     {CURRENCIES.map((curr) => (
                                         <TouchableOpacity
@@ -273,7 +273,7 @@ const CurrencyCalculator = () => {
                                     ))}
                                 </ScrollView>
                                 <TouchableOpacity onPress={() => setFromModalVisible(false)} style={styles.closeButton}>
-                                    <Text style={styles.closeButtonText}>Close</Text>
+                                    <Text style={styles.closeButtonText}>{t('common.close')}</Text>
                                 </TouchableOpacity>
                             </View>
                         </View>
@@ -282,7 +282,7 @@ const CurrencyCalculator = () => {
                     {toModalVisible && (
                         <View style={styles.modalOverlay}>
                             <View style={styles.modalContent}>
-                                <Text style={styles.modalTitle}>Select To Currency</Text>
+                                <Text style={styles.modalTitle}>{t('currency.selectToCurrency')}</Text>
                                 <ScrollView>
                                     {CURRENCIES.map((curr) => (
                                         <TouchableOpacity
@@ -300,7 +300,7 @@ const CurrencyCalculator = () => {
                                     ))}
                                 </ScrollView>
                                 <TouchableOpacity onPress={() => setToModalVisible(false)} style={styles.closeButton}>
-                                    <Text style={styles.closeButtonText}>Close</Text>
+                                    <Text style={styles.closeButtonText}>{t('common.close')}</Text>
                                 </TouchableOpacity>
                             </View>
                         </View>

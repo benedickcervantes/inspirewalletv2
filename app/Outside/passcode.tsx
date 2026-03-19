@@ -215,12 +215,12 @@ export default function Passcode() {
 
       const token = await SecureStore.getItemAsync('biometricToken');
       if (!token) {
-        throw new Error("No biometric token found");
+        throw new Error(t("passcode.noTokenFound"));
       }
 
       const authResult = await LocalAuthentication.authenticateAsync({
-        promptMessage: `Log in with ${biometricType}`,
-        fallbackLabel: 'Use Passcode',
+        promptMessage: t("passcode.biometricPrompt", { type: biometricType }),
+        fallbackLabel: t("passcode.useFallback"),
         disableDeviceFallback: false,
       });
 
@@ -238,7 +238,7 @@ export default function Passcode() {
           await AsyncStorage.setItem('passcodeLoginComplete', 'true');
           (navigation as unknown as NavProp).replace('Main');
         } else {
-          setError(result.error || 'Biometric login failed on server. Please use passcode.');
+          setError(result.error || t("passcode.biometricLoginFailed"));
           setVerifyingPasscode(false);
           triggerShake();
         }
@@ -248,7 +248,7 @@ export default function Passcode() {
       }
     } catch (e: any) {
       console.error("Biometric auth error:", e);
-      setError('Biometric authentication error. Please use passcode.');
+      setError(t("passcode.biometricAuthError"));
       setVerifyingPasscode(false);
     }
   };

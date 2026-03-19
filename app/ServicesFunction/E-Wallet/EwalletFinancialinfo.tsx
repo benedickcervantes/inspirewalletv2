@@ -85,16 +85,16 @@ export default function EwalletFinancialInfo() {
 
   const handleSubmit = async () => {
     const newErrors: typeof errors = {};
-    if (!sourceOfFund.trim()) newErrors.source = "Source of fund is required";
+    if (!sourceOfFund.trim()) newErrors.source = t("ewallet.sourceOfFundRequired");
     if (!grossMonthlyIncome.trim()) {
-      newErrors.income = "Income amount is required";
+      newErrors.income = t("ewallet.incomeRequired");
     } else {
       const n = parseFloat(unformatNumberString(grossMonthlyIncome));
       if (Number.isNaN(n) || n <= 0) {
-        newErrors.income = "Enter a valid income amount";
+        newErrors.income = t("ewallet.incomeInvalid");
       }
     }
-    if (!grossMonthlyIncomeCurrency) newErrors.currency = "Currency is required";
+    if (!grossMonthlyIncomeCurrency) newErrors.currency = t("ewallet.currencyRequired");
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -107,7 +107,7 @@ export default function EwalletFinancialInfo() {
     try {
       const token = await AsyncStorage.getItem("access_token");
       if (!token) {
-        Alert.alert(t("common.error"), "Authentication token not found. Please login again.");
+        Alert.alert(t("common.error"), t("common.authTokenNotFound"));
         setLoading(false);
         return;
       }
@@ -127,7 +127,7 @@ export default function EwalletFinancialInfo() {
       if (result.success) {
         setShowSuccessModal(true);
       } else {
-        Alert.alert(t("common.error"), result.error || "Failed to submit application.");
+        Alert.alert(t("common.error"), result.error || t("travel.submitFailed"));
       }
     } catch (error: any) {
       console.error("[EwalletFinancialinfo] Submit error:", error);
@@ -452,7 +452,7 @@ export default function EwalletFinancialInfo() {
                   });
                 }}
               >
-                <Text style={styles.successButtonText}>OK</Text>
+                <Text style={styles.successButtonText}>{t("common.ok")}</Text>
               </TouchableOpacity>
             </LinearGradient>
           </View>
@@ -471,10 +471,9 @@ export default function EwalletFinancialInfo() {
             <View style={styles.exitModalIconWrap}>
               <Ionicons name="warning-outline" size={28} color={THEME_COLOR} />
             </View>
-            <Text style={styles.exitModalTitle}>Cancel Application?</Text>
+            <Text style={styles.exitModalTitle}>{t("common.cancelApplication")}</Text>
             <Text style={styles.exitModalMessage}>
-              Are you sure you want to cancel? Your current progress on this
-              e-wallet form will be lost.
+              {t("ewallet.cancelApplicationMessage")}
             </Text>
             <View style={styles.exitModalButtons}>
               <TouchableOpacity
@@ -487,7 +486,7 @@ export default function EwalletFinancialInfo() {
                     styles.exitModalKeepEditingButtonText,
                   ]}
                 >
-                  Keep Editing
+                  {t("common.keepEditing")}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -497,7 +496,7 @@ export default function EwalletFinancialInfo() {
                 <Text
                   style={[styles.exitModalButtonText, styles.exitModalDiscardButtonText]}
                 >
-                  Discard & Exit
+                  {t("common.discardExit")}
                 </Text>
               </TouchableOpacity>
             </View>

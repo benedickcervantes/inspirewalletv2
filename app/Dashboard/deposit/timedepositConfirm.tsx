@@ -58,7 +58,7 @@ export default function TimeDepositConfirm() {
   const getMaturityDate = () => {
     const months =
       contractPeriod === "6 Months" ? 6 : contractPeriod === "1 Year" ? 12 : 24;
-    return `${months} Months`;
+    return t("deposit.months", { count: String(months) });
   };
 
   const pickFromGallery = async () => {

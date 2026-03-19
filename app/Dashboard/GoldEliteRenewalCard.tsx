@@ -10,6 +10,7 @@ import {
     View,
 } from "react-native";
 import * as api from "../../configs/api";
+import { useLanguage } from "../../context/LanguageContext";
 
 interface GoldEliteRenewalCardProps {
   accessToken: string;
@@ -25,6 +26,7 @@ export default function GoldEliteRenewalCard({
   onRenewalError,
 }: GoldEliteRenewalCardProps) {
   const { width } = useWindowDimensions();
+  const { t } = useLanguage();
   const compact = width < 360;
   const [isRenewing, setIsRenewing] = useState(false);
 
@@ -54,18 +56,18 @@ export default function GoldEliteRenewalCard({
       const result = await (api as any).renewCard(accessToken, "GOLD_ELITE");
       if (result.success) {
         Alert.alert(
-          "Success",
-          "Your Gold Elite subscription has been renewed!",
-          [{ text: "OK", onPress: () => onRenewalSuccess?.() }]
+          t("common.success"),
+          t("goldElite.renewSuccess"),
+          [{ text: t("common.ok"), onPress: () => onRenewalSuccess?.() }]
         );
       } else {
-        const errorMsg = result.error || "Failed to renew subscription";
-        Alert.alert("Error", errorMsg, [{ text: "OK" }]);
+        const errorMsg = result.error || t("goldElite.renewFailed");
+        Alert.alert(t("common.error"), errorMsg, [{ text: t("common.ok") }]);
         onRenewalError?.(errorMsg);
       }
     } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : "Network error";
-      Alert.alert("Error", errorMsg, [{ text: "OK" }]);
+      const errorMsg = error instanceof Error ? error.message : t("goldElite.networkError");
+      Alert.alert(t("common.error"), errorMsg, [{ text: t("common.ok") }]);
       onRenewalError?.(errorMsg);
     } finally {
       setIsRenewing(false);
@@ -81,13 +83,13 @@ export default function GoldEliteRenewalCard({
             <Ionicons name="checkmark-circle" size={24} color="#059669" />
           </View>
           <View style={[styles.inactiveText, { flex: 1, minWidth: 0 }]}>
-            <Text style={[styles.inactiveLabel, compact && { fontSize: 13 }]}>Gold Elite Active</Text>
+            <Text style={[styles.inactiveLabel, compact && { fontSize: 13 }]}>{t("goldElite.active")}</Text>
             <Text style={[styles.inactiveDate, compact && { fontSize: 11 }]}>
-              Expires {formatDate(expiryDate)}
+              {t("goldElite.expires", { date: formatDate(expiryDate) })}
             </Text>
             {daysUntilExpiry > 0 && (
               <Text style={styles.inactiveDays}>
-                {daysUntilExpiry} day{daysUntilExpiry !== 1 ? "s" : ""} remaining
+                {daysUntilExpiry} {daysUntilExpiry !== 1 ? t("goldElite.daysRemaining") : t("goldElite.dayRemaining")}
               </Text>
             )}
           </View>
@@ -104,18 +106,18 @@ export default function GoldEliteRenewalCard({
           <Ionicons name="alert-circle" size={compact ? 20 : 24} color="#E25A17" />
         </View>
         <View style={[styles.renewalTitle, { flex: 1, minWidth: 0 }]}>
-          <Text style={[styles.renewalLabel, compact && { fontSize: 13 }]}>Renewal Available</Text>
+          <Text style={[styles.renewalLabel, compact && { fontSize: 13 }]}>{t("goldElite.renewalAvailable")}</Text>
           <Text style={[styles.renewalDays, compact && { fontSize: 11 }]}>
-            {daysUntilExpiry} day{daysUntilExpiry !== 1 ? "s" : ""} left
+            {daysUntilExpiry} {daysUntilExpiry !== 1 ? t("goldElite.daysLeft") : t("goldElite.dayLeft")}
           </Text>
         </View>
       </View>
 
       <View style={[styles.renewalDetails, compact && { marginBottom: 10 }]}>
         <Text style={[styles.renewalDetailText, compact && { fontSize: 11, lineHeight: 16 }]}>
-          Your Gold Elite subscription expires on {formatDate(expiryDate)}
+          {t("goldElite.expiresMessage", { date: formatDate(expiryDate) })}
         </Text>
-        <Text style={[styles.renewalPrice, compact && { fontSize: 12 }]}>₱10,000/month</Text>
+        <Text style={[styles.renewalPrice, compact && { fontSize: 12 }]}>{t("goldElite.price")}</Text>
       </View>
 
       <TouchableOpacity
@@ -127,12 +129,12 @@ export default function GoldEliteRenewalCard({
         {isRenewing ? (
           <>
             <ActivityIndicator size="small" color="#FFFFFF" />
-            <Text style={styles.renewalButtonText}>Renewing...</Text>
+            <Text style={styles.renewalButtonText}>{t("goldElite.renewing")}</Text>
           </>
         ) : (
           <>
             <Ionicons name="refresh" size={18} color="#FFFFFF" />
-            <Text style={[styles.renewalButtonText, compact && { fontSize: 13 }]}>Renew Now</Text>
+            <Text style={[styles.renewalButtonText, compact && { fontSize: 13 }]}>{t("goldElite.renewNow")}</Text>
           </>
         )}
       </TouchableOpacity>

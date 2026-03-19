@@ -365,13 +365,13 @@ export default function Register() {
         newErrors.whatsappContact = requiredContactError;
       }
       if (lineContact.trim() && !isProbablyLink(lineContact)) {
-        newErrors.lineContact = "Please enter a valid link.";
+        newErrors.lineContact = t("register.invalidLink");
       }
       if (viberContact.trim() && !isProbablyLink(viberContact)) {
-        newErrors.viberContact = "Please enter a valid link.";
+        newErrors.viberContact = t("register.invalidLink");
       }
       if (whatsappContact.trim() && !isProbablyLink(whatsappContact)) {
-        newErrors.whatsappContact = "Please enter a valid link.";
+        newErrors.whatsappContact = t("register.invalidLink");
       }
       if (isAgent === null) {
         newErrors.isAgent = t("register.errorAgentSelection");
@@ -498,21 +498,21 @@ export default function Register() {
       setReferralCode(data.toUpperCase());
     } else if (activeQRField === "line") {
       if (!isLinkMatchingMessagingProvider(data, "line")) {
-        showAppAlert("The scanned QR code does not match LINE. Please scan a valid LINE account link.");
+        showAppAlert(t("register.lineQRMismatch"));
         setActiveQRField(null);
         return;
       }
       setLineContact(normalizeMessagingLink(data, "line"));
     } else if (activeQRField === "viber") {
       if (!isLinkMatchingMessagingProvider(data, "viber")) {
-        showAppAlert("The scanned QR code does not match Viber. Please scan a valid Viber account link.");
+        showAppAlert(t("register.viberQRMismatch"));
         setActiveQRField(null);
         return;
       }
       setViberContact(normalizeMessagingLink(data, "viber"));
     } else if (activeQRField === "whatsapp") {
       if (!isLinkMatchingMessagingProvider(data, "whatsapp")) {
-        showAppAlert("The scanned QR code does not match WhatsApp. Please scan a valid WhatsApp account link.");
+        showAppAlert(t("register.whatsappQRMismatch"));
         setActiveQRField(null);
         return;
       }
@@ -593,19 +593,19 @@ export default function Register() {
         setReferralCode(normalized.toUpperCase().slice(0, 5));
       } else if (fieldType === "line") {
         if (!isLinkMatchingMessagingProvider(normalized, "line")) {
-          showAppAlert("The scanned QR code does not match LINE. Please scan a valid LINE account link.");
+          showAppAlert(t("register.lineQRMismatch"));
           return;
         }
         setLineContact(normalized);
       } else if (fieldType === "viber") {
         if (!isLinkMatchingMessagingProvider(normalized, "viber")) {
-          showAppAlert("The scanned QR code does not match Viber. Please scan a valid Viber account link.");
+          showAppAlert(t("register.viberQRMismatch"));
           return;
         }
         setViberContact(normalized);
       } else if (fieldType === "whatsapp") {
         if (!isLinkMatchingMessagingProvider(normalized, "whatsapp")) {
-          showAppAlert("The scanned QR code does not match WhatsApp. Please scan a valid WhatsApp account link.");
+          showAppAlert(t("register.whatsappQRMismatch"));
           return;
         }
         setWhatsappContact(normalized);
@@ -2132,13 +2132,13 @@ export default function Register() {
               <View style={styles.appAlertIconWrap}>
                 <Ionicons name="alert-circle" size={22} color="#E25A17" />
               </View>
-              <Text style={styles.appAlertTitle}>Notice</Text>
+              <Text style={styles.appAlertTitle}>{t("register.notice")}</Text>
               <Text style={styles.appAlertMessage}>{appAlertMessage}</Text>
               <TouchableOpacity
                 style={styles.appAlertButton}
                 onPress={() => setAppAlertVisible(false)}
               >
-                <Text style={styles.appAlertButtonText}>OK</Text>
+                <Text style={styles.appAlertButtonText}>{t("common.ok")}</Text>
               </TouchableOpacity>
             </View>
           </View>

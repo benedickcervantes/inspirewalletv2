@@ -243,7 +243,7 @@ export default function StockInvestmentConfirm() {
                   }
                 }}
               >
-                <Text style={styles.alertButtonText}>OK</Text>
+                <Text style={styles.alertButtonText}>{t("common.ok")}</Text>
               </TouchableOpacity>
             </LinearGradient>
           </View>

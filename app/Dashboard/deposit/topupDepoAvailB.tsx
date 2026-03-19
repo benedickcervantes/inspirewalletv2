@@ -43,11 +43,11 @@ export default function TopUpBalance() {
     const amountStr = unformatNumberString(amount).trim();
 
     if (!amountStr) {
-      newErrors.amount = "Amount is required";
+      newErrors.amount = t("deposit.amountRequired");
     } else {
       const amountNum = parseFloat(amountStr);
       if (isNaN(amountNum) || amountNum <= 0) {
-        newErrors.amount = "Please enter a valid amount greater than 0";
+        newErrors.amount = t("deposit.amountInvalid");
       }
     }
 

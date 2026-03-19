@@ -68,15 +68,15 @@ export default function EwalletContactInfo() {
     const newErrors: { email?: string; mobile?: string } = {};
 
     if (!email.trim()) {
-      newErrors.email = "Email address is required";
+      newErrors.email = t("ewallet.emailRequired");
     } else if (!validateEmail(email.trim())) {
-      newErrors.email = "Please enter a valid email address";
+      newErrors.email = t("ewallet.emailInvalid");
     }
 
     if (!mobileNumber.trim()) {
-      newErrors.mobile = "Mobile number is required";
+      newErrors.mobile = t("ewallet.mobileRequired");
     } else if (!validateMobile(mobileNumber.trim())) {
-      newErrors.mobile = "Enter a valid 10-11 digit mobile number";
+      newErrors.mobile = t("ewallet.mobileInvalid");
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -293,10 +293,9 @@ export default function EwalletContactInfo() {
             <View style={styles.exitModalIconWrap}>
               <Ionicons name="warning-outline" size={28} color={THEME_COLOR} />
             </View>
-            <Text style={styles.exitModalTitle}>Cancel Application?</Text>
+            <Text style={styles.exitModalTitle}>{t("common.cancelApplication")}</Text>
             <Text style={styles.exitModalMessage}>
-              Are you sure you want to cancel? Your current progress on this
-              e-wallet form will be lost.
+              {t("ewallet.cancelApplicationMessage")}
             </Text>
             <View style={styles.exitModalButtons}>
               <TouchableOpacity
@@ -309,7 +308,7 @@ export default function EwalletContactInfo() {
                     styles.exitModalKeepEditingButtonText,
                   ]}
                 >
-                  Keep Editing
+                  {t("common.keepEditing")}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -319,7 +318,7 @@ export default function EwalletContactInfo() {
                 <Text
                   style={[styles.exitModalButtonText, styles.exitModalDiscardButtonText]}
                 >
-                  Discard & Exit
+                  {t("common.discardExit")}
                 </Text>
               </TouchableOpacity>
             </View>

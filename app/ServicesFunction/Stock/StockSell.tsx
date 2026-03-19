@@ -91,16 +91,16 @@ export default function StockSell() {
   const handleContinue = () => {
     if (stocksNum <= 0) {
       setAlertConfig({
-        title: "Invalid Amount",
-        message: "Please enter a valid number of stocks to sell.",
+        title: t("stock.invalidAmountTitle"),
+        message: t("stock.invalidAmountMessage"),
       });
       setShowAlertModal(true);
       return;
     }
     if (stocksNum > stockCount) {
       setAlertConfig({
-        title: "Insufficient Stocks",
-        message: `You only have ${stockCount} stock(s). Please enter a number less than or equal to ${stockCount}.`,
+        title: t("stock.insufficientStocksTitle"),
+        message: t("stock.insufficientStocksMessage", { count: String(stockCount) }),
       });
       setShowAlertModal(true);
       return;
@@ -114,8 +114,8 @@ export default function StockSell() {
       const accessToken = await AsyncStorage.getItem("access_token");
       if (!accessToken) {
         setAlertConfig({
-          title: "Not Authenticated",
-          message: "Please log in and try again.",
+          title: t("stock.notAuthenticatedTitle"),
+          message: t("stock.notAuthenticatedMessage"),
         });
         setShowAlertModal(true);
         return;
@@ -133,8 +133,8 @@ export default function StockSell() {
 
       if (!stockWallet?.id) {
         setAlertConfig({
-          title: "Wallet Not Found",
-          message: "Could not find your STOCK wallet. Please try again.",
+          title: t("stock.walletNotFoundTitle"),
+          message: t("stock.walletNotFoundMessage"),
         });
         setShowAlertModal(true);
         return;
@@ -147,9 +147,8 @@ export default function StockSell() {
 
       if (result.success) {
         setAlertConfig({
-          title: "Request Submitted",
-          message:
-            "Your sell request has been submitted. You will be notified when it is processed.",
+          title: t("stock.requestSubmittedTitle"),
+          message: t("stock.requestSubmittedMessage"),
         });
         setShowAlertModal(true);
         setTimeout(() => {
@@ -161,15 +160,15 @@ export default function StockSell() {
         }, 2000);
       } else {
         setAlertConfig({
-          title: "Submission Failed",
-          message: result.error ?? "Something went wrong. Please try again.",
+          title: t("stock.submissionFailedTitle"),
+          message: result.error ?? t("stock.submissionFailed"),
         });
         setShowAlertModal(true);
       }
     } catch (err) {
       setAlertConfig({
-        title: "Error",
-        message: "An unexpected error occurred. Please try again.",
+        title: t("common.error"),
+        message: t("stock.unexpectedError"),
       });
       setShowAlertModal(true);
     } finally {
@@ -312,9 +311,9 @@ export default function StockSell() {
                   numberOfLines={2}
                   ellipsizeMode="tail"
                 >
-                  You have {stockCount}{" "}
+                  {t("stock.youHave")} {stockCount}{" "}
                   {stockCount !== 1 ? t("stock.stocks") : t("stock.stock")}{" "}
-                  available
+                  {t("stock.available")}
                 </Text>
               </View>
 
@@ -354,7 +353,7 @@ export default function StockSell() {
                       { fontSize: Math.round(15 * fontScale) },
                     ]}
                   >
-                    Percentage to Sell
+                    {t("stock.percentageToSell")}
                   </Text>
                 </View>
 
@@ -393,7 +392,7 @@ export default function StockSell() {
                           sellPct === pct && styles.quickBtnTextActive,
                         ]}
                       >
-                        {pct === 100 ? "All" : `${pct}%`}
+                        {pct === 100 ? t("stock.all") : `${pct}%`}
                       </Text>
                     </TouchableOpacity>
                   ))}
@@ -402,14 +401,14 @@ export default function StockSell() {
                 {/* Live preview */}
                 <View style={styles.previewRow}>
                   <View style={styles.previewCol}>
-                    <Text style={styles.previewLabel}>Stocks</Text>
+                    <Text style={styles.previewLabel}>{t("stock.stocksLabel")}</Text>
                     <Text style={styles.previewVal}>
                       {stocksNum.toFixed(8).replace(/\.?0+$/, "") || "0"}
                     </Text>
                   </View>
                   <View style={styles.previewDivider} />
                   <View style={styles.previewCol}>
-                    <Text style={styles.previewLabel}>You Receive</Text>
+                    <Text style={styles.previewLabel}>{t("stock.youReceive")}</Text>
                     <Text style={[styles.previewVal, { color: "#22c55e" }]}>
                       ₱
                       {(stocksNum * stockRate).toLocaleString("en-PH", {
@@ -422,7 +421,7 @@ export default function StockSell() {
 
                 {/* Manual input for precision */}
                 <View style={styles.manualRow}>
-                  <Text style={styles.manualLabel}>Or enter exact amount:</Text>
+                  <Text style={styles.manualLabel}>{t("stock.enterExactAmount")}</Text>
                   <View
                     style={[
                       styles.amountInput,
@@ -527,10 +526,10 @@ export default function StockSell() {
                 ]}
               >
                 <View style={styles.leftBorder} />
-                <Text style={styles.detailLabel}>Stocks to Sell</Text>
+                <Text style={styles.detailLabel}>{t("stock.stocksToSell")}</Text>
                 <Text style={styles.detailValue}>
                   {stocksNum % 1 === 0 ? stocksNum : stocksNum.toFixed(4)}{" "}
-                  Stock(s)
+                  {t("stock.stockUnit")}
                 </Text>
               </View>
 
@@ -657,7 +656,7 @@ export default function StockSell() {
                 style={styles.alertButton}
                 onPress={() => setShowAlertModal(false)}
               >
-                <Text style={styles.alertButtonText}>OK</Text>
+                <Text style={styles.alertButtonText}>{t("common.ok")}</Text>
               </TouchableOpacity>
             </LinearGradient>
           </View>

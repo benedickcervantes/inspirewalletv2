@@ -263,10 +263,9 @@ export default function EwalletService() {
             <View style={styles.exitModalIconWrap}>
               <Ionicons name="warning-outline" size={28} color={THEME_COLOR} />
             </View>
-            <Text style={styles.exitModalTitle}>Cancel Application?</Text>
+            <Text style={styles.exitModalTitle}>{t("common.cancelApplication")}</Text>
             <Text style={styles.exitModalMessage}>
-              Are you sure you want to cancel? Your current progress on this
-              e-wallet form will be lost.
+              {t("ewallet.cancelApplicationMessage")}
             </Text>
             <View style={styles.exitModalButtons}>
               <TouchableOpacity
@@ -279,7 +278,7 @@ export default function EwalletService() {
                     styles.exitModalKeepEditingButtonText,
                   ]}
                 >
-                  Keep Editing
+                  {t("common.keepEditing")}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -289,7 +288,7 @@ export default function EwalletService() {
                 <Text
                   style={[styles.exitModalButtonText, styles.exitModalDiscardButtonText]}
                 >
-                  Discard & Exit
+                  {t("common.discardExit")}
                 </Text>
               </TouchableOpacity>
             </View>

@@ -1,5 +1,6 @@
 import { Modal, StyleSheet, Text, TouchableOpacity, View, Image, Dimensions, ActivityIndicator } from "react-native";
 import { useState, useEffect } from "react";
+import { useLanguage } from "../../context/LanguageContext";
 
 export type AnnouncementItem = {
   id: string;
@@ -18,6 +19,7 @@ export function AnnouncementModal(props: {
   onClose: () => void;
 }) {
   const { visible, announcement, onClose } = props;
+  const { t } = useLanguage();
 
   const [imageDimensions, setImageDimensions] = useState<{ width: number; height: number } | null>(null);
   const [loading, setLoading] = useState(true);
@@ -90,10 +92,10 @@ export function AnnouncementModal(props: {
             )
           ) : (
             <View style={styles.noImageCard}>
-              <Text style={styles.title}>{announcement?.title ?? "Announcement"}</Text>
+              <Text style={styles.title}>{announcement?.title ?? t("announcement.defaultTitle")}</Text>
               <Text style={styles.message}>{announcement?.message ?? ""}</Text>
               <TouchableOpacity style={styles.button} onPress={onClose}>
-                <Text style={styles.buttonText}>Close</Text>
+                <Text style={styles.buttonText}>{t("announcement.close")}</Text>
               </TouchableOpacity>
             </View>
           )}

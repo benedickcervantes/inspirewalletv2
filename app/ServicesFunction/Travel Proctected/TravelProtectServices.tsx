@@ -688,14 +688,14 @@ export default function TravelProtection() {
     try {
       const accessToken = await AsyncStorage.getItem("access_token");
       if (!accessToken) {
-        showAlert(t("travel.error"), "Not authenticated", "error");
+        showAlert(t("travel.error"), t("travel.notAuthenticated"), "error");
         return;
       }
 
       if (availableBalance < protectionFee) {
         showAlert(
           t("travel.error"),
-          t("sendMoney.insufficientBalance") || "Insufficient balance",
+          t("sendMoney.insufficientBalance") || t("travel.insufficientBalance"),
           "error",
         );
         return;
@@ -761,13 +761,13 @@ export default function TravelProtection() {
       } else {
         showAlert(
           t("travel.error"),
-          result.error || "Failed to submit application",
+          result.error || t("travel.submitFailed"),
           "error",
         );
       }
     } catch (error) {
       console.error("Travel protection API error:", error);
-      showAlert(t("travel.error"), "An unexpected error occurred", "error");
+      showAlert(t("travel.error"), t("travel.unexpectedError"), "error");
     } finally {
       setLoading(false);
     }
@@ -989,7 +989,7 @@ export default function TravelProtection() {
                   {isFeeLoading ? "..." : `₱ ${protectionFee.toLocaleString()}`}
                 </Text>
                 <Text style={styles.feeSubtext}>
-                  Available Balance: ₱ {availableBalance.toLocaleString()}
+                  {t("travel.availableBalance")}: ₱ {availableBalance.toLocaleString()}
                 </Text>
               </View>
 
@@ -1459,10 +1459,9 @@ export default function TravelProtection() {
             <View style={styles.exitModalIconWrap}>
               <Ionicons name="warning-outline" size={28} color={THEME_COLOR} />
             </View>
-            <Text style={styles.exitModalTitle}>Cancel Application?</Text>
+            <Text style={styles.exitModalTitle}>{t("common.cancelApplication")}</Text>
             <Text style={styles.exitModalMessage}>
-              Are you sure you want to cancel? Your current progress on this
-              travel protection form will be lost.
+              {t("travel.cancelApplicationMessage")}
             </Text>
             <View style={styles.exitModalButtons}>
               <TouchableOpacity
@@ -1475,7 +1474,7 @@ export default function TravelProtection() {
                     styles.exitModalKeepEditingButtonText,
                   ]}
                 >
-                  Keep Editing
+                  {t("common.keepEditing")}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -1485,7 +1484,7 @@ export default function TravelProtection() {
                 <Text
                   style={[styles.exitModalButtonText, styles.exitModalDiscardButtonText]}
                 >
-                  Discard & Exit
+                  {t("common.discardExit")}
                 </Text>
               </TouchableOpacity>
             </View>
