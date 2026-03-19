@@ -3,16 +3,16 @@ import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useCallback, useState } from "react";
 import {
-  ActivityIndicator,
-  Modal,
-  Platform,
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Modal,
+    Platform,
+    SafeAreaView,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { useLanguage } from "../../../context/LanguageContext";
 import { isServiceUnderMaintenance } from "../../../lib/maintenance";
@@ -23,10 +23,6 @@ const ORANGE_GRADIENT = ["#E25A17", "#F28934"];
 const E_WALLET_PROVIDERS = [
   "GCash",
   "Maya",
-  "GrabPay",
-  "PayMaya",
-  "Coins.ph",
-  "DragonPay",
 ];
 
 export default function EwalletService() {

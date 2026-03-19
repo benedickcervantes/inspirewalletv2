@@ -19,6 +19,7 @@ import {
 import { calculateExchangePair } from '../../configs/api';
 import { useLanguage } from '../../context/LanguageContext';
 import type { NavProp } from '../../types/navigation';
+import { formatAmountWithCommas, unformatNumberString } from '../../utils/numberFormat';
 import { useResponsive } from '../../utils/responsive';
 
 interface Currency {
@@ -80,7 +81,7 @@ const CurrencyCalculator = () => {
 
     useEffect(() => {
         if (debounceRef.current) clearTimeout(debounceRef.current);
-        const numAmount = parseFloat(amount) || 0;
+        const numAmount = parseFloat(unformatNumberString(amount)) || 0;
         if (!amount.trim() || numAmount <= 0) {
             setConvertedAmount(null);
             setConvertError(null);
@@ -198,8 +199,7 @@ const CurrencyCalculator = () => {
                             style={r.input}
                             value={amount}
                             onChangeText={(text) => {
-                                const filtered = text.replace(/[^0-9.]/g, '');
-                                setAmount(filtered);
+                                setAmount(formatAmountWithCommas(text));
                             }}
                             keyboardType="numeric"
                             placeholder="0.00"
