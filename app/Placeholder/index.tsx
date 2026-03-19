@@ -3,6 +3,7 @@ import {
   getCompanyKycStatus,
   getMe,
   getReferralCode,
+  getReferralTree,
   updateProfile,
 } from "@/configs/api";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
@@ -31,13 +32,6 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import {
-  decodeQrImage,
-  getCompanyKycStatus,
-  getMe,
-  getReferralTree,
-  updateProfile,
-} from "@/configs/api";
 import { auth, firestore } from "../../configs/firebase";
 import {
   DEFAULT_LANGUAGE,
