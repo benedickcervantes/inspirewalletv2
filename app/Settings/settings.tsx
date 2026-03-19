@@ -72,8 +72,8 @@ const Settings = () => {
     if (userJson) {
       try {
         const user = JSON.parse(userJson) as UserData;
-        setUserData({ 
-          email: user.email, 
+        setUserData({
+          email: user.email,
           emailVerified: user.emailVerified,
           biometricEnabled: user.biometricEnabled || false // Handle legacy data
         });
@@ -132,7 +132,7 @@ const Settings = () => {
         const compatible = await LocalAuthentication.hasHardwareAsync();
         const enrolled = await LocalAuthentication.isEnrolledAsync();
         const supportedTypes = await LocalAuthentication.supportedAuthenticationTypesAsync();
-        
+
         setHasBiometricHardware(compatible && enrolled);
 
         if (supportedTypes.includes(LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION)) {
@@ -158,10 +158,14 @@ const Settings = () => {
       // Clear the passcode login flag
       await AsyncStorage.removeItem('passcodeLoginComplete');
 
-      // Unregister Push Notifications
+      // Unregister Push Notifications and save email
       const userStr = await AsyncStorage.getItem('user');
       if (userStr) {
         const userObj = JSON.parse(userStr);
+        if (userObj?.email) {
+          await AsyncStorage.setItem('lastLoggedEmail', userObj.email.toLowerCase());
+        }
+
         const userId = userObj?.id || userObj?._id;
         const appId = process.env.EXPO_PUBLIC_NATIVE_NOTIFY_APP_ID;
         const appToken = process.env.EXPO_PUBLIC_NATIVE_NOTIFY_APP_TOKEN;
@@ -257,7 +261,7 @@ const Settings = () => {
       // Disable biometric
       const accessToken = await AsyncStorage.getItem('access_token');
       if (!accessToken) return;
-      
+
       try {
         await SecureStore.deleteItemAsync('biometricToken');
         const res = await disableBiometric(accessToken);
@@ -278,7 +282,7 @@ const Settings = () => {
         openEmailVerifyModal();
         return;
       }
-      
+
       // Open setup modal
       setBiometricPassword('');
       setBiometricError(null);
@@ -314,15 +318,15 @@ const Settings = () => {
       if (!accessToken) throw new Error("No access token");
 
       const res = await enableBiometric(accessToken, userData.email, biometricPassword);
-      
+
       if (res.success && res.token) {
         // 3. Store token securely
         await SecureStore.setItemAsync('biometricToken', res.token);
         await AsyncStorage.setItem('biometricEmail', userData.email.toLowerCase());
-        
+
         // 4. Update UI state
         setUserData(prev => prev ? { ...prev, biometricEnabled: true } : null);
-        
+
         // 5. Update async storage
         const userJson = await AsyncStorage.getItem('user');
         if (userJson) {
@@ -377,7 +381,7 @@ const Settings = () => {
       subtitle: o.subtitleKey ? t(o.subtitleKey) : '',
     };
   });
-  
+
   const supportOptionsWithLabels = supportOptions.map((o) => ({
     ...o,
     title: t(o.titleKey ?? ''),
@@ -576,7 +580,7 @@ const Settings = () => {
                 <Ionicons name="chevron-forward" size={r.iconSizeSmall} color="#CCC" />
               </TouchableOpacity>
             ))}
-            
+
             {hasBiometricHardware && (
               <TouchableOpacity
                 style={[styles.optionItem, r.optionItem]}
@@ -584,10 +588,10 @@ const Settings = () => {
               >
                 <View style={styles.optionLeft}>
                   <View style={[styles.iconContainer, r.iconContainer]}>
-                    <Ionicons 
-                      name={Platform.OS === 'ios' ? 'scan' : 'finger-print'} 
-                      size={r.iconSize} 
-                      color="#F38B35" 
+                    <Ionicons
+                      name={Platform.OS === 'ios' ? 'scan' : 'finger-print'}
+                      size={r.iconSize}
+                      color="#F38B35"
                     />
                   </View>
                   <View style={[styles.optionText, r.optionText]}>

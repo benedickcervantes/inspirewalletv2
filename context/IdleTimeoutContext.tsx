@@ -1,23 +1,22 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as SecureStore from "expo-secure-store";
 import React, {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useRef,
-  useCallback,
   useState,
 } from "react";
 import {
+  Animated,
   AppState,
   AppStateStatus,
   Modal,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
-  Animated,
   TouchableWithoutFeedback,
+  View,
 } from "react-native";
 import { navigationRef } from "../lib/navigationRef";
 
@@ -64,24 +63,28 @@ export const IdleTimeoutProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const clearAuthData = useCallback(async () => {
     try {
-      // Clear auth-related storage keys
-      await AsyncStorage.multiRemove([
-        "access_token",
-        "user",
-        "passcodeLoginComplete",
-        "registrationPasscodePending",
-        "lastLoggedEmail",
-        "biometricEmail",
-        IDLE_SESSION_ACTIVE_KEY,
-        LAST_ACTIVITY_KEY,
-      ]);
-
-      // Clear biometric token if present
+      // Save the user's email before clearing so it can be pre-filled later
       try {
-        await SecureStore.deleteItemAsync("biometricToken");
+        const userStr = await AsyncStorage.getItem("user");
+        if (userStr) {
+          const userObj = JSON.parse(userStr);
+          if (userObj?.email) {
+            await AsyncStorage.setItem("lastLoggedEmail", userObj.email.toLowerCase());
+          }
+        }
       } catch {
         // non-fatal
       }
+
+      // Only clear session flags — keep access_token and biometric data
+      // so the user can re-authenticate via Passcode without re-entering their email/password.
+      await AsyncStorage.multiRemove([
+        "user",
+        "passcodeLoginComplete",
+        "registrationPasscodePending",
+        IDLE_SESSION_ACTIVE_KEY,
+        LAST_ACTIVITY_KEY,
+      ]);
     } catch {
       // ignore errors
     }
@@ -131,16 +134,11 @@ export const IdleTimeoutProvider: React.FC<{ children: React.ReactNode }> = ({
       }),
     ]).start(() => {
       setShowModal(false);
-      // Navigate back to Login screen
+      // Navigate to Passcode so the user can re-authenticate without re-entering email
       if (navigationRef.isReady()) {
         navigationRef.reset({
           index: 0,
-          routes: [
-            {
-              name: "Login",
-              params: { fromSignOut: true } as any,
-            },
-          ],
+          routes: [{ name: "Passcode" }],
         });
       }
     });
@@ -185,7 +183,7 @@ export const IdleTimeoutProvider: React.FC<{ children: React.ReactNode }> = ({
     const now = Date.now();
     lastActivityRef.current = now;
     // Async storage update (fire and forget for performance)
-    AsyncStorage.setItem(LAST_ACTIVITY_KEY, String(now)).catch(() => {});
+    AsyncStorage.setItem(LAST_ACTIVITY_KEY, String(now)).catch(() => { });
   }, [isSessionActive]);
 
   // On mount, check if there was an active session (app was killed and reopened)
@@ -271,7 +269,7 @@ export const IdleTimeoutProvider: React.FC<{ children: React.ReactNode }> = ({
           // Persist whatever the last known activity time is (best-effort),
           // in case the app is killed while backgrounded.
           const last = lastActivityRef.current;
-          await AsyncStorage.setItem(LAST_ACTIVITY_KEY, String(last)).catch(() => {});
+          await AsyncStorage.setItem(LAST_ACTIVITY_KEY, String(last)).catch(() => { });
           return;
         }
 
@@ -297,7 +295,7 @@ export const IdleTimeoutProvider: React.FC<{ children: React.ReactNode }> = ({
             // still within window – update activity to now
             lastActivityRef.current = now;
             await AsyncStorage.setItem(LAST_ACTIVITY_KEY, String(now)).catch(
-              () => {},
+              () => { },
             );
           }
         }
@@ -319,7 +317,7 @@ export const IdleTimeoutProvider: React.FC<{ children: React.ReactNode }> = ({
     const now = Date.now();
     lastActivityRef.current = now;
     // Fire and forget for performance
-    AsyncStorage.setItem(LAST_ACTIVITY_KEY, String(now)).catch(() => {});
+    AsyncStorage.setItem(LAST_ACTIVITY_KEY, String(now)).catch(() => { });
   }, [isSessionActive]);
 
   return (
