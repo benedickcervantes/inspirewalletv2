@@ -485,6 +485,7 @@ export default function Placeholder() {
       } catch (_) {}
     }
     setLanguageModalVisible(false);
+
   };
 
   const memberSince =
@@ -648,6 +649,7 @@ export default function Placeholder() {
             editable={!hasCompanyKycRequest}
             onEdit={hasCompanyKycRequest ? undefined : handleCompanyRowPress}
             isPlaceholder={!rawCompanyNameFromUser && !companyKycView?.companyName}
+            editable={!hasCompanyKycRequest}
             badge={
               isCompanyKycVerified
                 ? "Verified"

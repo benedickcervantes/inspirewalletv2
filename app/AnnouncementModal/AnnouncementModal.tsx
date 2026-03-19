@@ -1,5 +1,5 @@
-import { Modal, StyleSheet, Text, TouchableOpacity, View, Image } from "react-native";
-import { useState } from "react";
+import { Modal, StyleSheet, Text, TouchableOpacity, View, Image, Dimensions, ActivityIndicator } from "react-native";
+import { useState, useEffect } from "react";
 
 export type AnnouncementItem = {
   id: string;
@@ -8,6 +8,10 @@ export type AnnouncementItem = {
   imageUrl?: string | null;
 };
 
+const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
+const MAX_IMAGE_WIDTH = screenWidth * 0.9;
+const MAX_IMAGE_HEIGHT = screenHeight * 0.75;
+
 export function AnnouncementModal(props: {
   visible: boolean;
   announcement: AnnouncementItem | null;
@@ -15,76 +19,134 @@ export function AnnouncementModal(props: {
 }) {
   const { visible, announcement, onClose } = props;
 
-  const [fullImageVisible, setFullImageVisible] = useState(false);
+  const [imageDimensions, setImageDimensions] = useState<{ width: number; height: number } | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const hasImage = !!announcement?.imageUrl;
 
+  useEffect(() => {
+    if (visible && hasImage && announcement?.imageUrl) {
+      setLoading(true);
+      setImageDimensions(null);
+      
+      Image.getSize(
+        announcement.imageUrl,
+        (width, height) => {
+          const aspectRatio = width / height;
+          let finalWidth = MAX_IMAGE_WIDTH;
+          let finalHeight = finalWidth / aspectRatio;
+
+          if (finalHeight > MAX_IMAGE_HEIGHT) {
+            finalHeight = MAX_IMAGE_HEIGHT;
+            finalWidth = finalHeight * aspectRatio;
+          }
+
+          setImageDimensions({ width: finalWidth, height: finalHeight });
+          setLoading(false);
+        },
+        () => {
+          setImageDimensions({ width: MAX_IMAGE_WIDTH, height: MAX_IMAGE_WIDTH * 0.75 });
+          setLoading(false);
+        }
+      );
+    }
+  }, [visible, announcement?.imageUrl, hasImage]);
+
+  useEffect(() => {
+    if (!visible) {
+      setImageDimensions(null);
+      setLoading(true);
+    }
+  }, [visible]);
+
   return (
-    <>
-      <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-        <View style={styles.overlay}>
-          <View style={styles.card}>
-            <Text style={styles.title}>{announcement?.title ?? "Announcement"}</Text>
-            {hasImage && (
-              <TouchableOpacity
-                activeOpacity={0.8}
-                onPress={() => setFullImageVisible(true)}
-              >
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <View style={styles.overlay}>
+        <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={onClose} />
+        
+        <View style={styles.contentContainer}>
+          {hasImage ? (
+            loading ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color="#fff" />
+              </View>
+            ) : (
+              <View style={styles.imageWrapper}>
                 <Image
                   source={{ uri: announcement!.imageUrl! }}
-                  style={styles.image}
-                  resizeMode="cover"
+                  style={[
+                    styles.image,
+                    imageDimensions && {
+                      width: imageDimensions.width,
+                      height: imageDimensions.height,
+                    },
+                  ]}
+                  resizeMode="contain"
                 />
+                <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+                  <Text style={styles.closeButtonText}>✕</Text>
+                </TouchableOpacity>
+              </View>
+            )
+          ) : (
+            <View style={styles.noImageCard}>
+              <Text style={styles.title}>{announcement?.title ?? "Announcement"}</Text>
+              <Text style={styles.message}>{announcement?.message ?? ""}</Text>
+              <TouchableOpacity style={styles.button} onPress={onClose}>
+                <Text style={styles.buttonText}>Close</Text>
               </TouchableOpacity>
-            )}
-            <Text style={styles.message}>{announcement?.message ?? ""}</Text>
-            <TouchableOpacity style={styles.button} onPress={onClose}>
-              <Text style={styles.buttonText}>Close</Text>
-            </TouchableOpacity>
-          </View>
+            </View>
+          )}
         </View>
-      </Modal>
-
-      {/* Full-screen image modal */}
-      <Modal
-        visible={fullImageVisible && hasImage}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setFullImageVisible(false)}
-      >
-        <View style={styles.fullOverlay}>
-          <View style={styles.fullCard}>
-            {hasImage && (
-              <Image
-                source={{ uri: announcement!.imageUrl! }}
-                style={styles.fullImage}
-                resizeMode="contain"
-              />
-            )}
-          </View>
-          <TouchableOpacity
-            style={styles.fullCloseBar}
-            activeOpacity={0.8}
-            onPress={() => setFullImageVisible(false)}
-          >
-            <Text style={styles.fullCloseText}>Tap to close</Text>
-          </TouchableOpacity>
-        </View>
-      </Modal>
-    </>
+      </View>
+    </Modal>
   );
 }
 
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.55)",
+    backgroundColor: "rgba(0,0,0,0.85)",
     justifyContent: "center",
     alignItems: "center",
-    padding: 16,
   },
-  card: {
-    width: "100%",
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  contentContainer: {
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingContainer: {
+    width: 100,
+    height: 100,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  imageWrapper: {
+    position: "relative",
+  },
+  image: {
+    borderRadius: 0,
+  },
+  closeButton: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  closeButtonText: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "600",
+  },
+  noImageCard: {
+    width: "90%",
     maxWidth: 380,
     backgroundColor: "#fff",
     borderRadius: 18,
@@ -101,13 +163,6 @@ const styles = StyleSheet.create({
     color: "#111",
     marginBottom: 10,
     textAlign: "center",
-  },
-  image: {
-    width: "100%",
-    height: 170,
-    borderRadius: 12,
-    marginBottom: 12,
-    backgroundColor: "#f1f1f1",
   },
   message: {
     fontSize: 14,
@@ -127,35 +182,4 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     textAlign: "center",
   },
-  fullOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.95)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  fullCard: {
-    maxWidth: "90%",
-    maxHeight: "80%",
-    borderRadius: 16,
-    overflow: "hidden",
-    backgroundColor: "#000",
-  },
-  fullImage: {
-    width: "100%",
-    height: "100%",
-  },
-  fullCloseBar: {
-    marginTop: 12,
-    paddingHorizontal: 24,
-    paddingVertical: 8,
-    borderRadius: 999,
-    backgroundColor: "rgba(0,0,0,0.6)",
-  },
-  fullCloseText: {
-    color: "#fff",
-    fontSize: 14,
-    textAlign: "center",
-    opacity: 0.85,
-  },
 });
-

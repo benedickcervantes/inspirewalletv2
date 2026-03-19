@@ -172,7 +172,6 @@ export default function KYCcompany() {
         Alert.alert("Error", error || "Failed to submit company KYC.");
         return;
       }
-      setCompanyKycStatus("PENDING");
       // Immediately reflect that the request is now pending review
       setCompanyKycStatus("PENDING");
       setShowSuccessModal(true);
@@ -400,6 +399,7 @@ export default function KYCcompany() {
               placeholder="Sample Company"
               placeholderTextColor="#BDBDBD"
               value={companyName}
+              onChangeText={isLocked ? undefined : setCompanyName}
               editable={!isLocked}
               onChangeText={isLocked ? undefined : setCompanyName}
             />
@@ -440,17 +440,7 @@ export default function KYCcompany() {
                 {index > 0 && <View style={styles.docRowDivider} />}
                 <TouchableOpacity
                   style={styles.docRow}
-                  onPress={
-                    isLocked
-                      ? undefined
-                      : () =>
-                          pickDocument(
-                            doc.setUri,
-                            doc.setName,
-                            doc.setMime,
-                            doc.label,
-                          )
-                  }
+                  onPress={isLocked ? undefined : () => pickDocument(doc.setUri, doc.setName, doc.setMime, doc.label)}
                   activeOpacity={isLocked ? 1 : 0.7}
                   disabled={isLocked}
                 >
@@ -616,7 +606,6 @@ const styles = StyleSheet.create({
   readonlyInput: {
     backgroundColor: "#E5E7EB",
   },
-  // ─────────────────────────────────────────────────────────────────────────
   scrollView: {
     flex: 1,
   },
