@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
-import React, { useState } from "react";
+import { useState } from "react";
 import {
     Modal,
     ScrollView,
@@ -18,7 +18,10 @@ export default function WithdrawType() {
   const { t } = useLanguage();
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [showAlertModal, setShowAlertModal] = useState(false);
-  const [alertConfig, setAlertConfig] = useState<{ title: string; message: string }>({ title: "", message: "" });
+  const [alertConfig, setAlertConfig] = useState<{
+    title: string;
+    message: string;
+  }>({ title: "", message: "" });
 
   const withdrawalTypes = [
     {
@@ -39,7 +42,7 @@ export default function WithdrawType() {
     if (!selectedType) {
       setAlertConfig({
         title: t("sendMoney.selectionRequired"),
-        message: t("withdraw.selectTypeToContinue")
+        message: t("withdraw.selectTypeToContinue"),
       });
       setShowAlertModal(true);
       return;
@@ -68,9 +71,7 @@ export default function WithdrawType() {
 
           <Text style={styles.headerTitle}>{t("withdraw.headerTitle")}</Text>
 
-          <TouchableOpacity style={styles.refreshButton}>
-            <Ionicons name="refresh" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
+          <View style={styles.refreshButton} />
         </LinearGradient>
 
         {/* Progress Steps */}
@@ -95,7 +96,9 @@ export default function WithdrawType() {
           {/* Title */}
           <View style={styles.titleContainer}>
             <Text style={styles.title}>{t("withdraw.selectType")}</Text>
-            <Text style={styles.subtitle}>{t("withdraw.fromAvailableBalance")}</Text>
+            <Text style={styles.subtitle}>
+              {t("withdraw.fromAvailableBalance")}
+            </Text>
           </View>
 
           {/* Form Card */}
@@ -104,8 +107,12 @@ export default function WithdrawType() {
 
             {/* Section Header */}
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>{t("withdraw.selectMethod")}</Text>
-              <Text style={styles.sectionSubtitle}>{t("withdraw.chooseHowToWithdraw")}</Text>
+              <Text style={styles.sectionTitle}>
+                {t("withdraw.selectMethod")}
+              </Text>
+              <Text style={styles.sectionSubtitle}>
+                {t("withdraw.chooseHowToWithdraw")}
+              </Text>
             </View>
 
             {/* Withdrawal Type Options */}
@@ -115,21 +122,19 @@ export default function WithdrawType() {
                   key={type.id}
                   style={[
                     styles.typeOption,
-                    selectedType === type.id && styles.typeOptionSelected
+                    selectedType === type.id && styles.typeOptionSelected,
                   ]}
                   onPress={() => setSelectedType(type.id)}
                   activeOpacity={0.7}
                 >
                   <View style={styles.typeIconBox}>
-                    <Ionicons
-                      name={type.icon}
-                      size={28}
-                      color="#E25A17"
-                    />
+                    <Ionicons name={type.icon} size={28} color="#E25A17" />
                   </View>
                   <View style={styles.typeInfo}>
                     <Text style={styles.typeTitle}>{t(type.titleKey)}</Text>
-                    <Text style={styles.typeSubtitle}>{t(type.subtitleKey)}</Text>
+                    <Text style={styles.typeSubtitle}>
+                      {t(type.subtitleKey)}
+                    </Text>
                   </View>
                 </TouchableOpacity>
               ))}

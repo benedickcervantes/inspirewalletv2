@@ -5,22 +5,22 @@ import { LinearGradient } from "expo-linear-gradient";
 import { doc, getDoc } from "firebase/firestore";
 import { useCallback, useEffect, useState } from "react";
 import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { getOrCreateMainWallet } from "../../../configs/api";
 import { auth, firestore } from "../../../configs/firebase";
 import { useLanguage } from "../../../context/LanguageContext";
 import {
-  formatAmountWithCommas,
-  unformatNumberString,
+    formatAmountWithCommas,
+    unformatNumberString,
 } from "../../../utils/numberFormat";
 
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -33,6 +33,7 @@ const filterEmailInput = (text: string) =>
 const filterNameInput = (text: string) => text.replace(/[^A-Za-zÑñ ]/g, "");
 
 const filterPhoneInput = (text: string) => text.replace(/[^0-9]/g, "");
+const PH_PHONE_PREFIX = "+63";
 
 const capitalizeWords = (text: string) =>
   text.replace(/\b\w/g, (char) => char.toUpperCase());
@@ -114,13 +115,17 @@ export default function EWalletWithdrawal() {
 
   const handleContinue = () => {
     const newErrors: Record<string, string> = {};
+    const trimmedAccountNumber = accountNumber.trim();
+    const prefixedAccountNumber = `${PH_PHONE_PREFIX}${trimmedAccountNumber}`;
 
     if (!selectedWallet) {
       newErrors.selectedWallet = t("withdraw.validation.walletType");
     }
 
-    if (!accountNumber.trim())
+    if (!trimmedAccountNumber)
       newErrors.accountNumber = t("withdraw.validation.walletAccNumber");
+    else if (trimmedAccountNumber.length !== 10)
+      newErrors.accountNumber = "Please enter a valid 10-digit mobile number.";
     if (!accountName.trim())
       newErrors.accountName = t("withdraw.validation.walletAccName");
 
@@ -159,7 +164,7 @@ export default function EWalletWithdrawal() {
     navigation.navigate("WithdrawEwalletConfirm", {
       method: "e-wallet",
       walletType: selectedWallet,
-      accountNumber,
+      accountNumber: prefixedAccountNumber,
       accountName,
       amount: unformatNumberString(withdrawalAmount),
       email: emailAddress,
@@ -185,9 +190,7 @@ export default function EWalletWithdrawal() {
 
           <Text style={styles.headerTitle}>{t("withdraw.title")}</Text>
 
-          <TouchableOpacity style={styles.refreshButton}>
-            <Ionicons name="refresh" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
+          <View style={styles.refreshButton} />
         </LinearGradient>
 
         {/* Progress Steps */}
@@ -227,7 +230,9 @@ export default function EWalletWithdrawal() {
 
             {/* Select E-Wallet Type */}
             <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>{t("withdraw.selectEwalletType")}</Text>
+              <Text style={styles.sectionTitle}>
+                {t("withdraw.selectEwalletType")}
+              </Text>
 
               <View style={styles.walletOptionsContainer}>
                 {walletTypes.map((wallet) => (
@@ -236,7 +241,7 @@ export default function EWalletWithdrawal() {
                     style={[
                       styles.walletOption,
                       selectedWallet === wallet.id &&
-                      styles.walletOptionSelected,
+                        styles.walletOptionSelected,
                     ]}
                     onPress={() => {
                       setSelectedWallet(wallet.id);
@@ -273,27 +278,35 @@ export default function EWalletWithdrawal() {
                   size={20}
                   color="#E25A17"
                 />
-                <Text style={styles.inputLabel}>{t("withdraw.walletAccNumber")}</Text>
+                <Text style={styles.inputLabel}>
+                  {t("withdraw.walletAccNumber")}
+                </Text>
               </View>
-              <TextInput
+              <View
                 style={[
-                  styles.input,
+                  styles.phoneInputContainer,
                   errors.accountNumber && styles.inputError,
                 ]}
-                placeholder={t("withdraw.placeholder.walletAccNumber")}
-                placeholderTextColor="#CCC"
-                value={accountNumber}
-                onChangeText={(text) => {
-                  setAccountNumber(filterPhoneInput(text));
-                  if (errors.accountNumber) {
-                    setErrors((prev) => {
-                      const { accountNumber, ...rest } = prev;
-                      return rest;
-                    });
-                  }
-                }}
-                keyboardType="numeric"
-              />
+              >
+                <Text style={styles.phonePrefix}>{PH_PHONE_PREFIX}</Text>
+                <TextInput
+                  style={styles.phoneInputField}
+                  placeholder="9XXXXXXXXX"
+                  placeholderTextColor="#CCC"
+                  value={accountNumber}
+                  onChangeText={(text) => {
+                    setAccountNumber(filterPhoneInput(text).slice(0, 10));
+                    if (errors.accountNumber) {
+                      setErrors((prev) => {
+                        const { accountNumber, ...rest } = prev;
+                        return rest;
+                      });
+                    }
+                  }}
+                  keyboardType="numeric"
+                  maxLength={10}
+                />
+              </View>
               {errors.accountNumber && (
                 <Text style={styles.errorText}>{errors.accountNumber}</Text>
               )}
@@ -307,7 +320,9 @@ export default function EWalletWithdrawal() {
                   size={20}
                   color="#E25A17"
                 />
-                <Text style={styles.inputLabel}>{t("withdraw.walletAccName")}</Text>
+                <Text style={styles.inputLabel}>
+                  {t("withdraw.walletAccName")}
+                </Text>
               </View>
               <TextInput
                 style={[styles.input, errors.accountName && styles.inputError]}
@@ -333,7 +348,9 @@ export default function EWalletWithdrawal() {
             <View style={styles.inputContainer}>
               <View style={styles.labelWithIcon}>
                 <MaterialCommunityIcons name="cash" size={20} color="#E25A17" />
-                <Text style={styles.inputLabel}>{t("withdraw.amountLabel")}</Text>
+                <Text style={styles.inputLabel}>
+                  {t("withdraw.amountLabel")}
+                </Text>
               </View>
               <View
                 style={[
@@ -407,7 +424,9 @@ export default function EWalletWithdrawal() {
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
               >
-                <Text style={styles.continueText}>{t("withdraw.continue")}</Text>
+                <Text style={styles.continueText}>
+                  {t("withdraw.continue")}
+                </Text>
                 <Ionicons name="play" size={20} color="#FFFFFF" />
               </LinearGradient>
             </TouchableOpacity>
@@ -582,6 +601,27 @@ const styles = StyleSheet.create({
     color: "#333",
     borderWidth: 1,
     borderColor: "#E0E0E0",
+  },
+  phoneInputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+    paddingHorizontal: 14,
+  },
+  phonePrefix: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#E25A17",
+    marginRight: 10,
+  },
+  phoneInputField: {
+    flex: 1,
+    paddingVertical: 14,
+    fontSize: 14,
+    color: "#333",
   },
   inputError: {
     borderColor: "#FF3B30",
