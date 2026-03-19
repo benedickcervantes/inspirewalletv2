@@ -1,15 +1,16 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useState } from "react";
 import {
-  Modal,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    Modal,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { useLanguage } from "../../../context/LanguageContext";
+import { formatAmountWithCommas } from "../../../utils/numberFormat";
 
 const THEME_COLOR = "#E15816";
 
@@ -150,7 +151,7 @@ export default function TravelProtectFinanInfo({
               placeholder="0"
               placeholderTextColor="#999"
               value={grossMonthlyIncome}
-              onChangeText={setGrossMonthlyIncome}
+              onChangeText={(text) => setGrossMonthlyIncome(formatAmountWithCommas(text))}
               keyboardType="numeric"
             />
           </View>
@@ -170,7 +171,7 @@ export default function TravelProtectFinanInfo({
           placeholder="0"
           placeholderTextColor="#999"
           value={cashOnHand}
-          onChangeText={setCashOnHand}
+          onChangeText={(text) => setCashOnHand(formatAmountWithCommas(text))}
           keyboardType="numeric"
         />
         {cashOnHandError ? (

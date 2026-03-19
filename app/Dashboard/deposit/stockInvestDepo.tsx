@@ -20,6 +20,10 @@ import {
   getStockInvestmentMinAmount,
 } from "../../../configs/currencies";
 import { useLanguage } from "../../../context/LanguageContext";
+import {
+  formatAmountWithCommas,
+  unformatNumberString,
+} from "../../../utils/numberFormat";
 
 export default function StockInvestment() {
   const navigation = useNavigation();
@@ -76,7 +80,7 @@ export default function StockInvestment() {
 
   const handleContinue = () => {
     const newErrors: Record<string, string> = {};
-    const amountStr = amount.trim();
+    const amountStr = unformatNumberString(amount).trim();
 
     if (!amountStr) {
       newErrors.amount = "Amount is required";
@@ -109,9 +113,9 @@ export default function StockInvestment() {
   };
 
   // Calculate stocks to receive: amount / price per stock (e.g. 1M / 2M = 0.5 stock)
-  const amountNum = parseFloat(amount.trim()) || 0;
+  const parsedAmountNum = parseFloat(unformatNumberString(amount).trim()) || 0;
   const stocksToReceive =
-    amountNum > 0 && minAmount > 0 ? amountNum / minAmount : 0;
+    parsedAmountNum > 0 && minAmount > 0 ? parsedAmountNum / minAmount : 0;
 
   const getSelectedCurrency = () => {
     if (currencies.length === 0) {
@@ -233,14 +237,15 @@ export default function StockInvestment() {
                     {availableBalance.toLocaleString()}
                   </Text>
                 )}
-                {amountNum > 0 && (
+                {parsedAmountNum > 0 && (
                   <Text style={styles.stocksPreview}>
                     You will receive:{" "}
                     {stocksToReceive.toLocaleString(undefined, {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 4,
                     })}{" "}
-                    stock{stocksToReceive !== 1 ? "s" : ""}
+                    stock
+                    {stocksToReceive !== 1 ? "s" : ""}
                   </Text>
                 )}
               </View>
@@ -272,8 +277,7 @@ export default function StockInvestment() {
                   keyboardType="numeric"
                   value={amount}
                   onChangeText={(text) => {
-                    const filtered = text.replace(/[^0-9.]/g, "");
-                    setAmount(filtered);
+                    setAmount(formatAmountWithCommas(text));
                     if (errors.amount) {
                       setErrors((prev) => {
                         const { amount, ...rest } = prev;

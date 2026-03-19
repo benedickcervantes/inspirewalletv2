@@ -1,39 +1,39 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
-  useFocusEffect,
-  useNavigation,
-  useRoute,
+    useFocusEffect,
+    useNavigation,
+    useRoute,
 } from "@react-navigation/native";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  Animated,
-  Image,
-  Linking,
-  Modal,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Animated,
+    Image,
+    Linking,
+    Modal,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import {
-  SafeAreaView,
-  useSafeAreaInsets,
+    SafeAreaView,
+    useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import {
-  getActiveAnnouncements,
-  getMe,
-  getNotifications,
-  getOrCreateMainWallet,
-  getReferralTree,
-  getTimeDeposits,
-  getTransactions,
+    getActiveAnnouncements,
+    getMe,
+    getNotifications,
+    getOrCreateMainWallet,
+    getReferralTree,
+    getTimeDeposits,
+    getTransactions,
 } from "../../configs/api";
 import {
-  languageChoiceDoneKey,
-  SUPPORTED_LANGUAGES,
+    languageChoiceDoneKey,
+    SUPPORTED_LANGUAGES,
 } from "../../constants/locales";
 import { useIdleTimeout } from "../../context/IdleTimeoutContext";
 import { useLanguage } from "../../context/LanguageContext";
@@ -45,8 +45,8 @@ import type { NavProp } from "../../types/navigation";
 import { useResponsive } from "../../utils/responsive";
 import AccountDeletionModal from "../AccountDeletion/AccountDeletionModal";
 import {
-  AnnouncementModal,
-  type AnnouncementItem,
+    AnnouncementModal,
+    type AnnouncementItem,
 } from "../AnnouncementModal/AnnouncementModal";
 import NotificationBadge from "../Notification/NotificationBadge";
 import CardsTab from "./CardsTab";
@@ -112,9 +112,24 @@ interface TimeDeposit {
   payout_schedule?: PayoutScheduleItem[]; // API may return snake_case
 }
 
+function isTwoYearContract(contractType: string | null | undefined): boolean {
+  const v = String(contractType ?? "").trim().toLowerCase();
+  return v === "twoyears" || v === "two_years" || v === "2 years" || v === "2 year";
+}
+
 function computeTimeDepositTotal(deposits: TimeDeposit[]): number {
   return deposits
     .filter((d) => d.status === "ACTIVE" || d.status === "MATURED")
+    .reduce((sum, d) => sum + (parseFloat(String(d?.amount ?? 0)) || 0), 0);
+}
+
+function computeTwoYearTimeDepositTotal(deposits: TimeDeposit[]): number {
+  return deposits
+    .filter(
+      (d) =>
+        (d.status === "ACTIVE" || d.status === "MATURED") &&
+        isTwoYearContract(d.contractType),
+    )
     .reduce((sum, d) => sum + (parseFloat(String(d?.amount ?? 0)) || 0), 0);
 }
 
@@ -218,6 +233,7 @@ export default function Dashboard() {
   const [availableBalance, setAvailableBalance] = useState(0);
   const [isBalanceLoading, setIsBalanceLoading] = useState(true);
   const [timeDeposit, setTimeDeposit] = useState(0);
+  const [twoYearTimeDeposit, setTwoYearTimeDeposit] = useState(0);
   const [deposits, setDeposits] = useState<TimeDeposit[]>([]);
   const [activeTab, setActiveTab] = useState("Wallet");
   const [announcements, setAnnouncements] = useState<AnnouncementItem[]>([]);
@@ -253,7 +269,8 @@ export default function Dashboard() {
   const [activeCardDesign, setActiveCardDesign] = useState<string | null>(null);
 
   const BANKING_SERVICE_MIN_BALANCE = 200_000;
-  const isBankingServiceLocked = timeDeposit < BANKING_SERVICE_MIN_BALANCE;
+  const isBankingServiceLocked =
+    twoYearTimeDeposit < BANKING_SERVICE_MIN_BALANCE;
   const userRole = String(userData?.role ?? "").toUpperCase();
   const kycAccountStatus = String(userData?.kycAccountStatus ?? "").toUpperCase();
   const kycStatus = String(userData?.kycStatus ?? "").toUpperCase();
@@ -358,6 +375,7 @@ export default function Dashboard() {
 
       setAvailableBalance(0);
       setTimeDeposit(0);
+      setTwoYearTimeDeposit(0);
       setDeposits([]);
       setUnreadNotifications(0);
 
@@ -390,6 +408,7 @@ export default function Dashboard() {
         const list = tdRes.deposits as TimeDeposit[];
         setDeposits(list);
         setTimeDeposit(computeTimeDepositTotal(list));
+        setTwoYearTimeDeposit(computeTwoYearTimeDepositTotal(list));
       } else if (!tdRes.success && __DEV__) {
         console.warn("[Dashboard] getTimeDeposits failed:", tdRes.error);
       }
@@ -518,6 +537,7 @@ export default function Dashboard() {
       const list = tdRes.deposits as TimeDeposit[];
       setDeposits(list);
       setTimeDeposit(computeTimeDepositTotal(list));
+      setTwoYearTimeDeposit(computeTwoYearTimeDepositTotal(list));
     } else if (!tdRes.success && __DEV__) {
       console.warn("[Dashboard] getTimeDeposits failed:", tdRes.error);
     }
@@ -818,6 +838,7 @@ export default function Dashboard() {
                 {t("dashboard.bankingServiceLockedRequirement")}
               </Text>
               <Text style={styles.bankingLockRequirementValue}>₱200,000</Text>
+              <Text style={styles.bankingLockRequirementLabel}>2 Years</Text>
             </View>
             <Text style={styles.bankingLockMessage}>
               {t("dashboard.bankingServiceLockedMessage")}

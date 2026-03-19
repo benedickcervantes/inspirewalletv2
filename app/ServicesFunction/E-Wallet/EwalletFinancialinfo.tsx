@@ -6,22 +6,26 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useState } from "react";
 import {
-  Alert,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    Alert,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    SafeAreaView,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { submitEwalletApplication } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
 import type { RootStackParamList } from "../../../types/navigation";
+import {
+    formatAmountWithCommas,
+    unformatNumberString,
+} from "../../../utils/numberFormat";
 
 const THEME_COLOR = "#E15816";
 const ORANGE_GRADIENT = ["#E25A17", "#F28934"] as const;
@@ -74,8 +78,11 @@ export default function EwalletFinancialInfo() {
     if (!sourceOfFund.trim()) newErrors.source = "Source of fund is required";
     if (!grossMonthlyIncome.trim()) {
       newErrors.income = "Income amount is required";
-    } else if (isNaN(Number(grossMonthlyIncome)) || Number(grossMonthlyIncome) <= 0) {
-      newErrors.income = "Enter a valid income amount";
+    } else {
+      const n = parseFloat(unformatNumberString(grossMonthlyIncome));
+      if (Number.isNaN(n) || n <= 0) {
+        newErrors.income = "Enter a valid income amount";
+      }
     }
     if (!grossMonthlyIncomeCurrency) newErrors.currency = "Currency is required";
 
@@ -98,7 +105,7 @@ export default function EwalletFinancialInfo() {
       const payload = {
         provider: selectedProvider,
         sourceOfFund: sourceOfFund,
-        grossMonthlyIncome: grossMonthlyIncome,
+        grossMonthlyIncome: unformatNumberString(grossMonthlyIncome),
         grossMonthlyIncomeCurrency: grossMonthlyIncomeCurrency,
         personalInfo: route.params?.applicationData?.personalInfo,
         contactInfo: route.params?.applicationData?.contactInfo,
@@ -262,7 +269,7 @@ export default function EwalletFinancialInfo() {
                     placeholderTextColor="#9E9E9E"
                     value={grossMonthlyIncome}
                     onChangeText={(text) => {
-                      setGrossMonthlyIncome(text);
+                      setGrossMonthlyIncome(formatAmountWithCommas(text));
                       if (errors.income) setErrors({ ...errors, income: undefined });
                     }}
                     keyboardType="numeric"

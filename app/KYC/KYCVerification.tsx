@@ -1,3 +1,4 @@
+import { getMe, submitPersonalKyc } from "@/configs/api";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
@@ -7,24 +8,24 @@ import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useEffect, useState } from "react";
 import {
-  Alert,
-  Image,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
+    Alert,
+    Image,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    useWindowDimensions,
+    View,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { getMe, submitPersonalKyc } from "@/configs/api";
 import { useLanguage } from "../../context/LanguageContext";
 import type { RootStackParamList } from "../../types/navigation";
+import { formatAmountWithCommas, unformatNumberString } from "../../utils/numberFormat";
 
 const THEME_COLOR = "#E15816";
 const ORANGE_GRADIENT = ["#E25A17", "#F28934"] as const;
@@ -265,7 +266,7 @@ export default function KYCVerification() {
           gender,
           nationality,
           sourceOfIncome,
-          monthlyIncome,
+          monthlyIncome: unformatNumberString(monthlyIncome),
           dateOfBirth: birthday ? birthday.toISOString() : null,
         },
         addressInfo: {
@@ -497,7 +498,9 @@ export default function KYCVerification() {
                 <TextInput
                   style={[styles.textInput, { fontSize: inputFontSize }]}
                   value={monthlyIncome}
-                  onChangeText={(text) => setMonthlyIncome(text.replace(/[^0-9]/g, ""))}
+                  onChangeText={(text) =>
+                    setMonthlyIncome(formatAmountWithCommas(text))
+                  }
                   placeholder={t("kyc.placeholderMonthlyIncome")}
                   placeholderTextColor="#9E9E9E"
                   keyboardType="number-pad"
