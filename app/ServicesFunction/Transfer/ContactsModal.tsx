@@ -69,6 +69,11 @@ export default function ContactsModal({ visible, onClose, onSelectContact }: Con
         const accounts = JSON.parse(saved) as SavedAccount[];
         setSavedAccounts(accounts);
         setFilteredSaved(accounts);
+        if ((accounts?.length ?? 0) === 0) setActiveTab("device");
+      } else {
+        setSavedAccounts([]);
+        setFilteredSaved([]);
+        setActiveTab("device");
       }
     } catch (error) {
       console.error("Error loading saved accounts:", error);
