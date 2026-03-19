@@ -29,6 +29,7 @@ import { useLanguage } from "../../../context/LanguageContext";
 import CustomLoader from "../../Loader/CustomLoader";
 import ContactsModal from "./ContactsModal";
 import QRScanner from "./QRScanner";
+import { getMe } from "../../../configs/api";
 
 const width = (() => {
   try {
@@ -69,6 +70,25 @@ export default function TransferConfirm() {
   const recipientName = params.recipientName || "";
   const mainWalletId = params.mainWalletId || "";
 
+  const saveRecentRecipient = async (recipient: {
+    name: string;
+    accountNumber: string;
+  }) => {
+    try {
+      const acct = String(recipient.accountNumber || "").replace(/\D/g, "");
+      if (!acct) return;
+      const name = (recipient.name || "").trim() || t("common.unknown");
+
+      const raw = await AsyncStorage.getItem("saved_accounts");
+      const existing = raw ? (JSON.parse(raw) as Array<{ id: string; name: string; accountNumber: string }>) : [];
+      const without = existing.filter((x) => String(x.accountNumber || "").replace(/\D/g, "") !== acct);
+      const next = [{ id: acct, name, accountNumber: acct }, ...without].slice(0, 20);
+      await AsyncStorage.setItem("saved_accounts", JSON.stringify(next));
+    } catch (e) {
+      console.warn("Failed to save recent recipient:", e);
+    }
+  };
+
   const [currentBalance, setCurrentBalance] = useState(0);
   const [newBalance, setNewBalance] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -97,6 +117,30 @@ export default function TransferConfirm() {
       }
     })();
   }, []);
+
+  const refreshHasPasscode = async (): Promise<boolean> => {
+    try {
+      const accessToken = await AsyncStorage.getItem("access_token");
+      if (!accessToken) return hasPasscode;
+
+      const me = await getMe(accessToken);
+      if (!me.success || !me.user) return hasPasscode;
+
+      // Keep local storage in sync so other screens stay accurate.
+      await AsyncStorage.setItem("user", JSON.stringify(me.user));
+      const next = !!(me.user as { hasPasscode?: boolean })?.hasPasscode;
+      setHasPasscode(next);
+      return next;
+    } catch (e) {
+      console.warn("Failed to refresh hasPasscode:", e);
+      return hasPasscode;
+    }
+  };
+
+  const isPasscodeRequiredError = (message: string) => {
+    const m = (message || "").toLowerCase();
+    return m.includes("passcode is required") || m.includes("set a passcode") || m.includes("provide your current passcode");
+  };
 
   const loadBalance = async () => {
     try {
@@ -177,10 +221,16 @@ export default function TransferConfirm() {
         beneficiaryBody.passcode = passcodeToSend;
       const createRes = await createBeneficiary(accessToken, beneficiaryBody);
       if (!createRes.success || !createRes.data) {
-        setErrorMessage(
-          createRes.error || t("sendMoney.errorSetupRecipient"),
-        );
-        setShowErrorModal(true);
+        const msg = createRes.error || t("sendMoney.errorSetupRecipient");
+        // If the backend now requires passcode (e.g. passcode recently updated),
+        // prompt immediately instead of failing the flow.
+        if (!passcodeToSend && isPasscodeRequiredError(msg)) {
+          await refreshHasPasscode();
+          setShowPasscodeModal(true);
+        } else {
+          setErrorMessage(msg);
+          setShowErrorModal(true);
+        }
         if (passcodeToSend) setPasscode("");
         setIsProcessing(false);
         return;
@@ -202,6 +252,7 @@ export default function TransferConfirm() {
       if (hasPasscode && passcodeToSend) transferBody.passcode = passcodeToSend;
       const result = await submitTransfer(accessToken, transferBody);
       if (result.success) {
+        await saveRecentRecipient({ name: recipientName, accountNumber });
         setShowPasscodeModal(false);
         setPasscode("");
         
@@ -224,8 +275,14 @@ export default function TransferConfirm() {
           date: new Date().toLocaleString()
         });
       } else {
-        setErrorMessage(result.error || t("sendMoney.transferFailed"));
-        setShowErrorModal(true);
+        const msg = result.error || t("sendMoney.transferFailed");
+        if (!passcodeToSend && isPasscodeRequiredError(msg)) {
+          await refreshHasPasscode();
+          setShowPasscodeModal(true);
+        } else {
+          setErrorMessage(msg);
+          setShowErrorModal(true);
+        }
         if (passcodeToSend) setPasscode("");
       }
     } catch (error) {
@@ -239,7 +296,8 @@ export default function TransferConfirm() {
   };
 
   const handleConfirm = async () => {
-    if (hasPasscode) {
+    const latestHasPasscode = await refreshHasPasscode();
+    if (latestHasPasscode) {
       setShowPasscodeModal(true);
       return;
     }
