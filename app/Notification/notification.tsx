@@ -25,6 +25,7 @@ import {
   markAllNotificationsAsRead as apiMarkAllNotificationsAsRead,
   markNotificationAsRead as apiMarkNotificationAsRead,
   getNotifications,
+  getTransactions,
 } from '../../configs/api';
 import { auth } from '../../configs/firebase';
 import { useLanguage } from '../../context/LanguageContext';
@@ -40,6 +41,13 @@ interface NotificationItemBackend {
   type?: string;
   referenceId?: string | null;
   referralHandled?: boolean;
+}
+
+interface ApiTransactionLike {
+  id?: string | number;
+  amount?: string | number;
+  createdAt?: string;
+  type?: string;
 }
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -315,14 +323,48 @@ const Notification = () => {
         notif.title === 'Withdrawal Requested' ||
         notif.title === 'Withdrawal Approved'
       ) {
+         const extractAmountFromMessage = (message?: string): string | undefined => {
+           if (!message) return undefined;
+           // Supports values like: 1,234.56 / 1234 / ₱1,234.56 / PHP 1234.56
+           const match = message.match(/(?:₱|PHP\s*)?(-?\d{1,3}(?:,\d{3})*(?:\.\d{1,2})|-?\d+(?:\.\d{1,2})?)/i);
+           if (!match?.[1]) return undefined;
+           const normalized = Number(match[1].replace(/,/g, ''));
+           if (!Number.isFinite(normalized)) return undefined;
+           return normalized.toString();
+         };
+
+         const fetchTransactionAmount = async (referenceId?: string | null): Promise<string | undefined> => {
+           if (!referenceId) return undefined;
+           try {
+             const accessToken = await AsyncStorage.getItem("access_token");
+             if (!accessToken) return undefined;
+             const txRes = await getTransactions(accessToken, { limit: 100 });
+             if (!txRes.success || !Array.isArray(txRes.transactions)) return undefined;
+             const tx = (txRes.transactions as ApiTransactionLike[]).find(
+               (item) => String(item?.id ?? '') === String(referenceId)
+             );
+             if (!tx?.amount && tx?.amount !== 0) return undefined;
+             const parsed = Number(tx.amount);
+             return Number.isFinite(parsed) ? parsed.toString() : undefined;
+           } catch (error) {
+             if (__DEV__) console.warn('[Notification] Failed to fetch tx amount:', error);
+             return undefined;
+           }
+         };
+
          let displayType = notif.title.replace(' Requested', '');
          if (notif.title.includes('Transfer')) displayType = 'Transfer';
          if (notif.title.includes('Withdrawal')) displayType = 'Withdrawal';
+         const fetchedAmount = await fetchTransactionAmount(notif.referenceId);
+         const fallbackAmount = extractAmountFromMessage(notif.message);
          
          navigation.navigate("depositReceipt", {
            transactionId: notif.referenceId || "N/A",
+           amount: fetchedAmount || fallbackAmount,
+           currency: "PHP",
            type: displayType,
            successMessage: notif.message,
+           date: notif.createdAt ? new Date(notif.createdAt).toLocaleString() : new Date().toLocaleString(),
          });
          return;
       }
