@@ -1,5 +1,5 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useLanguage } from "../../../context/LanguageContext";
 
 const THEME_COLOR = "#E15816";
@@ -7,21 +7,36 @@ const THEME_COLOR = "#E15816";
 export interface TravelRequiredDocuProps {
   passportPhoto: string | null;
   governmentId: string | null;
+  governmentIdType: string;
+  governmentIdNumber: string;
   passportPhotoError?: string;
   governmentIdError?: string;
   onPickPassportPhoto: () => void;
   onPickGovernmentId: () => void;
+  onGovernmentIdTypeChange: (value: string) => void;
+  onGovernmentIdNumberChange: (value: string) => void;
 }
 
 export default function TravelRequiredDocu({
   passportPhoto,
   governmentId,
+  governmentIdType,
+  governmentIdNumber,
   passportPhotoError,
   governmentIdError,
   onPickPassportPhoto,
   onPickGovernmentId,
+  onGovernmentIdTypeChange,
+  onGovernmentIdNumberChange,
 }: TravelRequiredDocuProps) {
   const { t } = useLanguage();
+
+  const idTypeOptions = [
+    { label: "National ID", value: "National_ID" },
+    { label: "Driver's License", value: "Driver_License" },
+    { label: "Passport ID", value: "Passport_ID" },
+    { label: "Other", value: "Other" },
+  ];
 
   return (
     <View style={styles.formCard}>
@@ -78,10 +93,60 @@ export default function TravelRequiredDocu({
         ) : null}
       </View>
 
-      {/* Government ID */}
+      {/* Government ID Section */}
+      <View style={styles.sectionDivider} />
+
+      {/* Government ID Type */}
       <View style={styles.inputGroup}>
         <Text style={styles.inputLabel}>
-          {t("travel.governmentId")} <Text style={styles.required}>*</Text>
+          {t("travel.governmentIdType")} <Text style={styles.required}>*</Text>
+        </Text>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.idTypeContainer}
+        >
+          {idTypeOptions.map((option) => (
+            <TouchableOpacity
+              key={option.value}
+              style={[
+                styles.idTypeButton,
+                governmentIdType === option.value && styles.idTypeButtonActive,
+              ]}
+              onPress={() => onGovernmentIdTypeChange(option.value)}
+            >
+              <Text
+                style={[
+                  styles.idTypeButtonText,
+                  governmentIdType === option.value &&
+                    styles.idTypeButtonTextActive,
+                ]}
+              >
+                {option.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
+
+      {/* Government ID Number */}
+      <View style={styles.inputGroup}>
+        <Text style={styles.inputLabel}>
+          {t("travel.governmentIdNumber")} <Text style={styles.required}>*</Text>
+        </Text>
+        <TextInput
+          style={styles.textInput}
+          placeholder="Enter ID number"
+          value={governmentIdNumber}
+          onChangeText={onGovernmentIdNumberChange}
+          placeholderTextColor="#BDBDBD"
+        />
+      </View>
+
+      {/* Government ID Photo */}
+      <View style={styles.inputGroup}>
+        <Text style={styles.inputLabel}>
+          {t("travel.governmentIdPhoto")} <Text style={styles.required}>*</Text>
         </Text>
         <TouchableOpacity
           style={[
@@ -164,6 +229,45 @@ const styles = StyleSheet.create({
   },
   required: {
     color: THEME_COLOR,
+  },
+  sectionDivider: {
+    height: 1,
+    backgroundColor: "#E0E0E0",
+    marginVertical: 16,
+  },
+  idTypeContainer: {
+    marginBottom: 8,
+  },
+  idTypeButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+    backgroundColor: "#F9F9F9",
+    marginRight: 8,
+  },
+  idTypeButtonActive: {
+    backgroundColor: THEME_COLOR,
+    borderColor: THEME_COLOR,
+  },
+  idTypeButtonText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#666666",
+  },
+  idTypeButtonTextActive: {
+    color: "#FFFFFF",
+  },
+  textInput: {
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    fontSize: 14,
+    color: "#000000",
+    backgroundColor: "#F9F9F9",
   },
   uploadBox: {
     backgroundColor: "#F9F9F9",

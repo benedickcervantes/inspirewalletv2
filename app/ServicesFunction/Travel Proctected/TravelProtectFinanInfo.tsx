@@ -10,7 +10,7 @@ import {
     View,
 } from "react-native";
 import { useLanguage } from "../../../context/LanguageContext";
-import { formatAmountWithCommas } from "../../../utils/numberFormat";
+import { formatWholeNumbersOnly } from "../../../utils/numberFormat";
 
 const THEME_COLOR = "#E15816";
 
@@ -40,11 +40,12 @@ export interface TravelProtectFinanInfoProps {
   grossMonthlyIncomeCurrency: string;
   grossMonthlyIncomeError?: string;
   setGrossMonthlyIncome: (value: string) => void;
+  setGrossMonthlyIncomeError: (value: string) => void;
   setGrossMonthlyIncomeCurrency: (value: string) => void;
   cashOnHand: string;
-
   cashOnHandError?: string;
   setCashOnHand: (value: string) => void;
+  setCashOnHandError: (value: string) => void;
 }
 
 const CURRENCY_OPTIONS = ["PHP", "USD", "EUR", "KRW"];
@@ -64,11 +65,12 @@ export default function TravelProtectFinanInfo({
   grossMonthlyIncomeCurrency,
   grossMonthlyIncomeError,
   setGrossMonthlyIncome,
+  setGrossMonthlyIncomeError,
   setGrossMonthlyIncomeCurrency,
   cashOnHand,
-
   cashOnHandError,
   setCashOnHand,
+  setCashOnHandError,
 }: TravelProtectFinanInfoProps) {
   const { t } = useLanguage();
   const [showSourceOfFundModal, setShowSourceOfFundModal] = useState(false);
@@ -151,7 +153,20 @@ export default function TravelProtectFinanInfo({
               placeholder="0"
               placeholderTextColor="#999"
               value={grossMonthlyIncome}
-              onChangeText={(text) => setGrossMonthlyIncome(formatAmountWithCommas(text))}
+              onChangeText={(text) => {
+                const formatted = formatWholeNumbersOnly(text);
+                setGrossMonthlyIncome(formatted);
+                
+                // Clear error if input becomes valid
+                if (formatted) {
+                  const cleanedIncome = formatted.replace(/,/g, "");
+                  const incomeNum = parseFloat(cleanedIncome);
+                  
+                  if (!cleanedIncome.includes(".") && incomeNum >= 0 && Number.isInteger(incomeNum)) {
+                    setGrossMonthlyIncomeError("");
+                  }
+                }
+              }}
               keyboardType="numeric"
             />
           </View>
@@ -171,7 +186,20 @@ export default function TravelProtectFinanInfo({
           placeholder="0"
           placeholderTextColor="#999"
           value={cashOnHand}
-          onChangeText={(text) => setCashOnHand(formatAmountWithCommas(text))}
+          onChangeText={(text) => {
+            const formatted = formatWholeNumbersOnly(text);
+            setCashOnHand(formatted);
+            
+            // Clear error if input becomes valid
+            if (formatted) {
+              const cleanedAmount = formatted.replace(/,/g, "");
+              const amountNum = parseFloat(cleanedAmount);
+              
+              if (!cleanedAmount.includes(".") && amountNum >= 0 && Number.isInteger(amountNum)) {
+                setCashOnHandError("");
+              }
+            }
+          }}
           keyboardType="numeric"
         />
         {cashOnHandError ? (

@@ -430,6 +430,8 @@ export default function TravelProtection() {
   // Form fields - Step 5
   const [passportPhoto, setPassportPhoto] = useState<string | null>(null);
   const [passportPhotoError, setPassportPhotoError] = useState("");
+  const [governmentIdType, setGovernmentIdType] = useState<string>("");
+  const [governmentIdNumber, setGovernmentIdNumber] = useState<string>("");
   const [governmentId, setGovernmentId] = useState<string | null>(null);
   const [governmentIdError, setGovernmentIdError] = useState("");
 
@@ -571,10 +573,34 @@ export default function TravelProtection() {
       if (!grossMonthlyIncome) {
         setGrossMonthlyIncomeError(t("travel.fieldRequired") || "Required");
         hasError = true;
+      } else {
+        // Validate gross monthly income is a positive whole number (no decimals, no negatives)
+        const cleanedIncome = grossMonthlyIncome.replace(/,/g, "");
+        const incomeNum = parseInt(cleanedIncome, 10);
+        
+        // Must be a valid positive integer with no decimals
+        if (!cleanedIncome || cleanedIncome.includes(".") || isNaN(incomeNum) || incomeNum <= 0) {
+          setGrossMonthlyIncomeError(
+            t("travel.grossMonthlyIncomeInvalid") || "Must be a positive whole number"
+          );
+          hasError = true;
+        }
       }
       if (!cashOnHand) {
         setCashOnHandError(t("travel.fieldRequired") || "Required");
         hasError = true;
+      } else {
+        // Validate cash on hand is a positive whole number (no decimals, no negatives)
+        const cleanedCash = cashOnHand.replace(/,/g, "");
+        const cashNum = parseInt(cleanedCash, 10);
+        
+        // Must be a valid positive integer with no decimals
+        if (!cleanedCash || cleanedCash.includes(".") || isNaN(cashNum) || cashNum <= 0) {
+          setCashOnHandError(
+            t("travel.cashOnHandInvalid") || "Must be a positive whole number"
+          );
+          hasError = true;
+        }
       }
 
       if (hasError) {
@@ -706,6 +732,11 @@ export default function TravelProtection() {
         passportPhotoBase64 = await uriToBase64DataUrl(passportPhoto);
       }
 
+      let governmentIdPhotoBase64: string | undefined;
+      if (governmentId) {
+        governmentIdPhotoBase64 = await uriToBase64DataUrl(governmentId);
+      }
+
       // Formulate the time strings like "08:00 AM"
       const formatTime = (d: Date) =>
         d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -734,9 +765,21 @@ export default function TravelProtection() {
         passportNumber,
         purposeOfTravel,
         passportPhoto: passportPhotoBase64,
+        // Government ID fields (optional)
+        governmentIdType: governmentIdType || undefined,
+        governmentIdNumber: governmentIdNumber || undefined,
+        governmentIdPhoto: governmentIdPhotoBase64,
       };
 
+      console.log("[TravelProtection] Submitting data:", JSON.stringify({
+        ...applicationData,
+        passportPhoto: applicationData.passportPhoto ? `[base64-${applicationData.passportPhoto.length} chars]` : undefined,
+        governmentIdPhoto: applicationData.governmentIdPhoto ? `[base64-${applicationData.governmentIdPhoto.length} chars]` : undefined,
+      }, null, 2));
+
       const result = await submitTravelProtection(accessToken, applicationData);
+
+      console.log("[TravelProtection] API Response:", result);
 
       if (result.success) {
         const response = (result.data ?? {}) as {
@@ -1309,6 +1352,7 @@ export default function TravelProtection() {
                     setGrossMonthlyIncome(val);
                     if (grossMonthlyIncomeError) setGrossMonthlyIncomeError("");
                   }}
+                  setGrossMonthlyIncomeError={setGrossMonthlyIncomeError}
                   setGrossMonthlyIncomeCurrency={setGrossMonthlyIncomeCurrency}
                   cashOnHand={cashOnHand}
                   cashOnHandError={cashOnHandError}
@@ -1316,6 +1360,7 @@ export default function TravelProtection() {
                     setCashOnHand(val);
                     if (cashOnHandError) setCashOnHandError("");
                   }}
+                  setCashOnHandError={setCashOnHandError}
                 />
               )}
 
@@ -1389,6 +1434,8 @@ export default function TravelProtection() {
                   passportPhotoError={passportPhotoError}
                   governmentId={governmentId}
                   governmentIdError={governmentIdError}
+                  governmentIdType={governmentIdType}
+                  governmentIdNumber={governmentIdNumber}
                   onPickPassportPhoto={() => {
                     pickPassportPhoto();
                     if (passportPhotoError) setPassportPhotoError("");
@@ -1396,6 +1443,12 @@ export default function TravelProtection() {
                   onPickGovernmentId={() => {
                     pickGovernmentId();
                     if (governmentIdError) setGovernmentIdError("");
+                  }}
+                  onGovernmentIdTypeChange={(val) => {
+                    setGovernmentIdType(val);
+                  }}
+                  onGovernmentIdNumberChange={(val) => {
+                    setGovernmentIdNumber(val);
                   }}
                 />
               )}
