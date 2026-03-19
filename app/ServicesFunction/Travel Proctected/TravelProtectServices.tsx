@@ -7,20 +7,25 @@ import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-    Keyboard,
-    Modal,
-    Platform,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  Keyboard,
+  Modal,
+  Platform,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { getTimeDeposits, submitTravelProtection } from "../../../configs/api";
+import {
+  getOrCreateMainWallet,
+  getTimeDeposits,
+  getTransactions,
+  submitTravelProtection,
+} from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
 import type { RootStackParamList } from "../../../types/navigation";
 import { unformatNumberString } from "../../../utils/numberFormat";
@@ -252,30 +257,48 @@ export default function TravelProtection() {
 
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [isFeeLoading, setIsFeeLoading] = useState(true);
   const [userTimeDeposit, setUserTimeDeposit] = useState(0);
+  const [availableBalance, setAvailableBalance] = useState(0);
 
   // Travel protection fee: ₱625 if time deposit >= 200,000, otherwise ₱1,250
   const protectionFee = userTimeDeposit >= 50000 ? 625 : 1250;
 
   // Fetch user's time deposit total from backend
   const fetchTimeDeposits = useCallback(async () => {
+    setIsFeeLoading(true);
+    try {
+      const accessToken = await AsyncStorage.getItem("access_token");
+      if (!accessToken) return;
+      const result = await getTimeDeposits(accessToken);
+      if (!result.success || !Array.isArray(result.deposits)) return;
+      const list = result.deposits as TimeDeposit[];
+      const total = computeTimeDepositTotal(list);
+      setUserTimeDeposit(total);
+    } finally {
+      setIsFeeLoading(false);
+    }
+  }, []);
+
+  const fetchAvailableBalance = useCallback(async () => {
     const accessToken = await AsyncStorage.getItem("access_token");
     if (!accessToken) return;
-    const result = await getTimeDeposits(accessToken);
-    if (!result.success || !Array.isArray(result.deposits)) return;
-    const list = result.deposits as TimeDeposit[];
-    const total = computeTimeDepositTotal(list);
-    setUserTimeDeposit(total);
+    const walletRes = await getOrCreateMainWallet(accessToken);
+    const wallet = walletRes.wallet as { balance?: number | string } | undefined;
+    const bal = parseFloat(String(wallet?.balance ?? 0));
+    setAvailableBalance(Number.isNaN(bal) ? 0 : bal);
   }, []);
 
   useEffect(() => {
     fetchTimeDeposits();
-  }, [fetchTimeDeposits]);
+    fetchAvailableBalance();
+  }, [fetchTimeDeposits, fetchAvailableBalance]);
 
   useFocusEffect(
     useCallback(() => {
       fetchTimeDeposits();
-    }, [fetchTimeDeposits]),
+      fetchAvailableBalance();
+    }, [fetchTimeDeposits, fetchAvailableBalance]),
   );
 
   // Text input refs for Step 1
@@ -423,6 +446,7 @@ export default function TravelProtection() {
     type: "info",
     confirmText: "OK",
   });
+  const [showExitConfirmModal, setShowExitConfirmModal] = useState(false);
 
   const showAlert = (
     title: string,
@@ -642,8 +666,21 @@ export default function TravelProtection() {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
     } else {
-      navigation.goBack();
+      if (navigation.canGoBack()) {
+        navigation.goBack();
+      } else {
+        navigation.navigate("Main");
+      }
     }
+  };
+
+  const handleTopBackPress = () => {
+    setShowExitConfirmModal(true);
+  };
+
+  const handleConfirmExit = () => {
+    setShowExitConfirmModal(false);
+    navigation.navigate("Main");
   };
 
   const handleSubmit = async () => {
@@ -652,6 +689,15 @@ export default function TravelProtection() {
       const accessToken = await AsyncStorage.getItem("access_token");
       if (!accessToken) {
         showAlert(t("travel.error"), "Not authenticated", "error");
+        return;
+      }
+
+      if (availableBalance < protectionFee) {
+        showAlert(
+          t("travel.error"),
+          t("sendMoney.insufficientBalance") || "Insufficient balance",
+          "error",
+        );
         return;
       }
 
@@ -693,6 +739,17 @@ export default function TravelProtection() {
       const result = await submitTravelProtection(accessToken, applicationData);
 
       if (result.success) {
+        const response = (result.data ?? {}) as {
+          status?: string;
+          price?: string | number;
+        };
+        const normalizedStatus = String(response.status ?? "").toUpperCase();
+        if (normalizedStatus === "APPROVED" || normalizedStatus === "ACCEPTED") {
+          await Promise.all([
+            fetchAvailableBalance(),
+            getTransactions(accessToken, { limit: 20 }),
+          ]);
+        }
         showAlert(
           t("travel.applicationSubmitted"),
           t("travel.applicationSuccess"),
@@ -856,7 +913,7 @@ export default function TravelProtection() {
             >
               <TouchableOpacity
                 style={styles.backButton}
-                onPress={() => navigation.goBack()}
+                onPress={handleTopBackPress}
               >
                 <Ionicons name="arrow-back" size={scale(28)} color="#E25A17" />
               </TouchableOpacity>
@@ -929,7 +986,10 @@ export default function TravelProtection() {
                   </Text>
                 </View>
                 <Text style={[styles.feeAmount, dynamicStyles.feeAmount]}>
-                  ₱ {protectionFee.toLocaleString()}
+                  {isFeeLoading ? "..." : `₱ ${protectionFee.toLocaleString()}`}
+                </Text>
+                <Text style={styles.feeSubtext}>
+                  Available Balance: ₱ {availableBalance.toLocaleString()}
                 </Text>
               </View>
 
@@ -1360,7 +1420,10 @@ export default function TravelProtection() {
             >
               <Text style={styles.backButtonText}>{t("travel.back")}</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
+            <TouchableOpacity
+              style={styles.nextButton}
+              onPress={handleNext}
+            >
               <LinearGradient
                 colors={["#E25A17", "#F28934"]}
                 style={styles.nextButtonGradient}
@@ -1385,6 +1448,50 @@ export default function TravelProtection() {
         type={alertConfig.type}
         confirmText={alertConfig.confirmText}
       />
+      <Modal
+        transparent
+        animationType="fade"
+        visible={showExitConfirmModal}
+        onRequestClose={() => setShowExitConfirmModal(false)}
+      >
+        <View style={styles.exitModalOverlay}>
+          <View style={styles.exitModalContainer}>
+            <View style={styles.exitModalIconWrap}>
+              <Ionicons name="warning-outline" size={28} color={THEME_COLOR} />
+            </View>
+            <Text style={styles.exitModalTitle}>Cancel Application?</Text>
+            <Text style={styles.exitModalMessage}>
+              Are you sure you want to cancel? Your current progress on this
+              travel protection form will be lost.
+            </Text>
+            <View style={styles.exitModalButtons}>
+              <TouchableOpacity
+                style={[styles.exitModalButton, styles.exitModalKeepEditingButton]}
+                onPress={() => setShowExitConfirmModal(false)}
+              >
+                <Text
+                  style={[
+                    styles.exitModalButtonText,
+                    styles.exitModalKeepEditingButtonText,
+                  ]}
+                >
+                  Keep Editing
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.exitModalButton, styles.exitModalDiscardButton]}
+                onPress={handleConfirmExit}
+              >
+                <Text
+                  style={[styles.exitModalButtonText, styles.exitModalDiscardButtonText]}
+                >
+                  Discard & Exit
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
         </>
       )}
     </View>
@@ -1788,5 +1895,83 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#FFFFFF",
     letterSpacing: 0.5,
+  },
+  exitModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 20,
+  },
+  exitModalContainer: {
+    width: "100%",
+    maxWidth: 360,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "#ECEFF4",
+    paddingHorizontal: 20,
+    paddingTop: 22,
+    paddingBottom: 18,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  exitModalIconWrap: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: "#FFF7E9",
+    borderWidth: 1,
+    borderColor: "#FFE2AF",
+    alignSelf: "center",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 12,
+  },
+  exitModalTitle: {
+    fontSize: 21,
+    fontWeight: "700",
+    color: "#0F172A",
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  exitModalMessage: {
+    fontSize: 14,
+    color: "#64748B",
+    lineHeight: 20,
+    textAlign: "center",
+    marginBottom: 16,
+  },
+  exitModalButtons: {
+    width: "100%",
+  },
+  exitModalButton: {
+    width: "100%",
+    borderRadius: 12,
+    paddingVertical: 13,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  exitModalDiscardButton: {
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#F3C3B1",
+  },
+  exitModalKeepEditingButton: {
+    backgroundColor: THEME_COLOR,
+    marginBottom: 10,
+  },
+  exitModalButtonText: {
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  exitModalDiscardButtonText: {
+    color: "#D9480F",
+  },
+  exitModalKeepEditingButtonText: {
+    color: "#FFFFFF",
   },
 });

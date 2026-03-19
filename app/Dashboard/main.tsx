@@ -62,6 +62,8 @@ const TRANSACTION_TYPE_KEYS: Record<string, string> = {
   FEE: "tx.fee",
   REFUND: "tx.refund",
   TIME_DEPOSIT: "tx.timeDeposit",
+  TRAVEL_PROTECTION: "tx.travelProtection",
+  TRAVEL_PROTECTION_FEE: "tx.travelProtection",
 };
 
 interface Transaction {
