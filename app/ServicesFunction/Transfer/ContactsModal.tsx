@@ -3,6 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Contacts from "expo-contacts";
 import { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Modal,
   ScrollView,
   StyleSheet,
@@ -50,6 +51,7 @@ export default function ContactsModal({ visible, onClose, onSelectContact }: Con
   const [filteredDevice, setFilteredDevice] = useState<Contact[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [hasContactPermission, setHasContactPermission] = useState(false);
+  const [isLoadingDeviceContacts, setIsLoadingDeviceContacts] = useState(false);
 
   useEffect(() => {
     if (visible) {
@@ -61,6 +63,13 @@ export default function ContactsModal({ visible, onClose, onSelectContact }: Con
   useEffect(() => {
     handleSearch(searchQuery);
   }, [searchQuery, savedAccounts, deviceContacts, activeTab]);
+
+  useEffect(() => {
+    if (!visible) return;
+    if (activeTab !== "device") return;
+    // Ensure device list is fresh when user switches tabs.
+    loadDeviceContacts();
+  }, [activeTab, visible]);
 
   const loadSavedAccounts = async () => {
     try {
@@ -82,9 +91,12 @@ export default function ContactsModal({ visible, onClose, onSelectContact }: Con
 
   const loadDeviceContacts = async () => {
     try {
+      setIsLoadingDeviceContacts(true);
       const { status } = await Contacts.requestPermissionsAsync();
       if (status !== "granted") {
         setHasContactPermission(false);
+        setDeviceContacts([]);
+        setFilteredDevice([]);
         return;
       }
       setHasContactPermission(true);
@@ -103,9 +115,16 @@ export default function ContactsModal({ visible, onClose, onSelectContact }: Con
         }));
         setDeviceContacts(contacts);
         setFilteredDevice(contacts);
+      } else {
+        setDeviceContacts([]);
+        setFilteredDevice([]);
       }
     } catch (error) {
       console.error("Error loading device contacts:", error);
+      setDeviceContacts([]);
+      setFilteredDevice([]);
+    } finally {
+      setIsLoadingDeviceContacts(false);
     }
   };
 
@@ -136,10 +155,16 @@ export default function ContactsModal({ visible, onClose, onSelectContact }: Con
   };
 
   const handleSelectContact = (contact: Contact | SavedAccount) => {
+    const rawAccount =
+      (contact as Contact)?.accountNumber ||
+      (contact as Contact)?.phoneNumbers?.[0] ||
+      (contact as SavedAccount)?.accountNumber ||
+      "";
     const selectedContact: Contact = {
-      ...contact,
+      ...(contact as any),
+      accountNumber: String(rawAccount).replace(/\D/g, ""),
       type: activeTab,
-    } as Contact;
+    };
     onSelectContact(selectedContact);
   };
 
@@ -246,6 +271,14 @@ export default function ContactsModal({ visible, onClose, onSelectContact }: Con
                   </TouchableOpacity>
                 ))
               )
+            ) : isLoadingDeviceContacts ? (
+              <View style={styles.emptyState}>
+                <ActivityIndicator size="large" color="#E25A17" />
+                <Text style={styles.emptyStateTitle}>{t("common.loading")}</Text>
+                <Text style={styles.emptyStateText}>
+                  {t("sendMoney.loadingContacts") || "Loading device contacts..."}
+                </Text>
+              </View>
             ) : !hasContactPermission ? (
               <View style={styles.emptyState}>
                 <Ionicons name="lock-closed-outline" size={64} color="#CCC" />
@@ -285,7 +318,9 @@ export default function ContactsModal({ visible, onClose, onSelectContact }: Con
                   <View style={styles.contactInfo}>
                     <Text style={styles.contactName}>{contact.name}</Text>
                     <Text style={styles.contactAccount}>
-                      {contact.phoneNumbers?.[0] || contact.accountNumber || t("sendMoney.noPhone")}
+                      {contact.phoneNumbers?.[0] ||
+                        contact.accountNumber ||
+                        t("sendMoney.noPhone")}
                     </Text>
                   </View>
                   <Ionicons name="chevron-forward" size={20} color="#999" />
