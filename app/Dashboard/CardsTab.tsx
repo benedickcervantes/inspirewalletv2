@@ -644,7 +644,10 @@ export default function CardsTab({
               </Text>
 
               <TouchableOpacity
-                style={styles.getStartedButton}
+                style={[
+                  styles.getStartedButton,
+                  isGoldOwned && { backgroundColor: "#E0E0E0" },
+                ]}
                 onPress={() => {
                   if (isBuyingCardsLocked) {
                     onBuyingCardsLockedPress?.();
@@ -654,7 +657,9 @@ export default function CardsTab({
                 }}
               >
                 <Text style={styles.getStartedButtonText}>
-                  {t("ct.getStarted")}
+                  {isGoldOwned
+                    ? (t("ct.renewPlan") || "Renew Plan")
+                    : t("ct.getStarted")}
                 </Text>
               </TouchableOpacity>
             </View>
