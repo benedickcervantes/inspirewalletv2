@@ -1,9 +1,16 @@
+import {
+  decodeQrImage,
+  getCompanyKycStatus,
+  getMe,
+  getReferralCode,
+  updateProfile,
+} from "@/configs/api";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { doc, getDoc } from "firebase/firestore";
-import * as ImagePicker from "expo-image-picker";
 import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -24,20 +31,14 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import {
-  decodeQrImage,
-  getCompanyKycStatus,
-  getMe,
-  updateProfile,
-} from "@/configs/api";
 import { auth, firestore } from "../../configs/firebase";
-import { useResponsive } from "../../utils/responsive";
 import {
   DEFAULT_LANGUAGE,
   normalizeLanguage,
   SUPPORTED_LANGUAGES,
 } from "../../constants/locales";
 import { useLanguage } from "../../context/LanguageContext";
+import { useResponsive } from "../../utils/responsive";
 import CustomLoader from "../Loader/CustomLoader";
 
 const THEME_COLOR = "#E15816";
@@ -82,7 +83,12 @@ export default function Placeholder() {
     status?: string;
     companyName?: string;
   } | null>(null);
-  const [showCompanyRejectedModal, setShowCompanyRejectedModal] = useState(false);
+  const [showCompanyRejectedModal, setShowCompanyRejectedModal] =
+    useState(false);
+
+  const [referralCode, setReferralCode] = useState<string | null>(null);
+  const [referralLoading, setReferralLoading] = useState(false);
+  const [referralError, setReferralError] = useState<string | null>(null);
 
   const fetchUserData = useCallback(async () => {
     try {
@@ -105,8 +111,14 @@ export default function Placeholder() {
           setUserData(merged);
         }
         if (companyResult && companyResult.success && companyResult.data) {
-          const data = companyResult.data as { status?: string; companyName?: string };
-          setCompanyKycView({ status: data.status, companyName: data.companyName });
+          const data = companyResult.data as {
+            status?: string;
+            companyName?: string;
+          };
+          setCompanyKycView({
+            status: data.status,
+            companyName: data.companyName,
+          });
         }
         setLoading(false);
         return;
@@ -132,16 +144,43 @@ export default function Placeholder() {
     }
   }, []);
 
+  const loadReferralCode = useCallback(async () => {
+    const accessToken = await AsyncStorage.getItem("access_token");
+    if (!accessToken) return;
+    setReferralError(null);
+    setReferralLoading(true);
+    try {
+      const result = await getReferralCode(accessToken);
+      if (result.success && result.referralCode) {
+        setReferralCode(result.referralCode);
+      } else if (result.error) {
+        setReferralError(result.error);
+      }
+    } catch {
+      setReferralError(
+        t("settings.failedToLoadReferral") || "Failed to load referral code",
+      );
+    } finally {
+      setReferralLoading(false);
+    }
+  }, [t]);
+
+  const handleRefreshReferralCode = () => {
+    loadReferralCode();
+  };
+
   useEffect(() => {
     fetchUserData();
-  }, [fetchUserData]);
+    loadReferralCode();
+  }, [fetchUserData, loadReferralCode]);
 
   // Refetch when profile screen is focused (e.g. after submitting company KYC)
   // so company name row shows Unverified/Verified badge.
   useFocusEffect(
     useCallback(() => {
       fetchUserData();
-    }, [fetchUserData]),
+      loadReferralCode();
+    }, [fetchUserData, loadReferralCode]),
   );
 
   const hasPasscode = !!userData?.hasPasscode;
@@ -162,7 +201,10 @@ export default function Placeholder() {
     const lowered = v.toLowerCase();
 
     if (provider === "line") {
-      if (lowered.startsWith("line.me/") || lowered.startsWith("liff.line.me/")) {
+      if (
+        lowered.startsWith("line.me/") ||
+        lowered.startsWith("liff.line.me/")
+      ) {
         return `https://${v}`;
       }
       if (lowered.startsWith("line://")) {
@@ -285,7 +327,8 @@ export default function Placeholder() {
     const whatsapp = editWhatsappLink.trim();
     if (line) body.lineAccountLink = normalizeMessagingLink(line, "line");
     if (viber) body.viberLink = normalizeMessagingLink(viber, "viber");
-    if (whatsapp) body.whatsappLink = normalizeMessagingLink(whatsapp, "whatsapp");
+    if (whatsapp)
+      body.whatsappLink = normalizeMessagingLink(whatsapp, "whatsapp");
 
     if (!body.lineAccountLink && !body.viberLink && !body.whatsappLink) {
       Alert.alert("Validation", "Please enter at least one contact link.");
@@ -316,7 +359,8 @@ export default function Placeholder() {
 
   const openContactLinksModal = () => {
     setEditLineLink(
-      userData?.lineAccountLink && userData.lineAccountLink !== t("common.notProvided")
+      userData?.lineAccountLink &&
+        userData.lineAccountLink !== t("common.notProvided")
         ? userData.lineAccountLink
         : "",
     );
@@ -326,7 +370,8 @@ export default function Placeholder() {
         : "",
     );
     setEditWhatsappLink(
-      userData?.whatsappLink && userData.whatsappLink !== t("common.notProvided")
+      userData?.whatsappLink &&
+        userData.whatsappLink !== t("common.notProvided")
         ? userData.whatsappLink
         : "",
     );
@@ -350,11 +395,7 @@ export default function Placeholder() {
       }
 
       const asset = result.assets[0];
-      const decoded = await decodeQrImage(
-        asset.uri,
-        provider,
-        asset.mimeType,
-      );
+      const decoded = await decodeQrImage(asset.uri, provider, asset.mimeType);
       if (!decoded.success) {
         Alert.alert(
           "QR Decode Failed",
@@ -485,7 +526,6 @@ export default function Placeholder() {
       } catch (_) {}
     }
     setLanguageModalVisible(false);
-
   };
 
   const memberSince =
@@ -613,6 +653,77 @@ export default function Placeholder() {
           </View>
         </LinearGradient>
 
+        {/* Referral Section */}
+        <View
+          style={[
+            styles.section,
+            {
+              marginHorizontal: sectionMarginHorizontal,
+              padding: sectionPadding,
+            },
+          ]}
+        >
+          <View style={styles.sectionHeader}>
+            <Ionicons name="gift-outline" size={22} color="#E15816" />
+            <Text
+              style={[
+                styles.sectionTitle,
+                { fontSize: Math.round(16 * scale) },
+              ]}
+            >
+              {t("settings.referral") || "Referral"}
+            </Text>
+          </View>
+
+          <View style={styles.detailItem}>
+            <TouchableOpacity
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+              onPress={handleRefreshReferralCode}
+              disabled={referralLoading}
+            >
+              <View style={{ flex: 1 }}>
+                <View style={styles.detailHeader}>
+                  <Ionicons name="gift" size={18} color={THEME_COLOR} />
+                  <Text style={styles.detailLabel}>
+                    {t("settings.myReferralCode") || "My Referral Code"}
+                  </Text>
+                </View>
+                <View style={styles.detailValueContainer}>
+                  <Text style={styles.detailValue}>
+                    {referralLoading
+                      ? t("settings.loading") || "Loading..."
+                      : referralCode ||
+                        t("settings.tapToRefresh") ||
+                        "Tap to refresh"}
+                  </Text>
+                </View>
+              </View>
+              {referralLoading ? (
+                <ActivityIndicator size="small" color={THEME_COLOR} />
+              ) : (
+                <Text
+                  style={{
+                    fontSize: 13,
+                    color: THEME_COLOR,
+                    fontWeight: "600",
+                  }}
+                >
+                  {t("settings.refresh") || "REFRESH"}
+                </Text>
+              )}
+            </TouchableOpacity>
+            {referralError ? (
+              <Text style={{ color: "red", fontSize: 12, marginTop: 4 }}>
+                {referralError}
+              </Text>
+            ) : null}
+          </View>
+        </View>
+
         {/* Account Details Section */}
         <View
           style={[
@@ -648,25 +759,26 @@ export default function Placeholder() {
             value={companyName}
             editable={!hasCompanyKycRequest}
             onEdit={hasCompanyKycRequest ? undefined : handleCompanyRowPress}
-            isPlaceholder={!rawCompanyNameFromUser && !companyKycView?.companyName}
-            editable={!hasCompanyKycRequest}
+            isPlaceholder={
+              !rawCompanyNameFromUser && !companyKycView?.companyName
+            }
             badge={
               isCompanyKycVerified
                 ? "Verified"
                 : isCompanyKycPending
-                ? "Unverified"
-                : isCompanyKycRejected
-                ? "Rejected"
-                : undefined
+                  ? "Unverified"
+                  : isCompanyKycRejected
+                    ? "Rejected"
+                    : undefined
             }
             badgeColor={
               isCompanyKycVerified
                 ? "#10B981"
                 : isCompanyKycPending
-                ? "#F59E0B"
-                : isCompanyKycRejected
-                ? "#EF4444"
-                : undefined
+                  ? "#F59E0B"
+                  : isCompanyKycRejected
+                    ? "#EF4444"
+                    : undefined
             }
             verified={isCompanyKycVerified}
           />
@@ -933,11 +1045,7 @@ export default function Placeholder() {
       </Modal>
 
       {/* Contact Links Edit Modal */}
-      <Modal
-        visible={showContactLinksModal}
-        transparent
-        animationType="fade"
-      >
+      <Modal visible={showContactLinksModal} transparent animationType="fade">
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : undefined}
           style={styles.modalOverlay}
@@ -975,7 +1083,9 @@ export default function Placeholder() {
                   disabled={saving || isProcessingContactQR}
                 >
                   <Text style={styles.qrUploadButtonText}>
-                    {isProcessingContactQR ? "Reading QR..." : "Upload LINE QR image"}
+                    {isProcessingContactQR
+                      ? "Reading QR..."
+                      : "Upload LINE QR image"}
                   </Text>
                 </TouchableOpacity>
 
@@ -998,7 +1108,9 @@ export default function Placeholder() {
                   disabled={saving || isProcessingContactQR}
                 >
                   <Text style={styles.qrUploadButtonText}>
-                    {isProcessingContactQR ? "Reading QR..." : "Upload Viber QR image"}
+                    {isProcessingContactQR
+                      ? "Reading QR..."
+                      : "Upload Viber QR image"}
                   </Text>
                 </TouchableOpacity>
 
@@ -1021,7 +1133,9 @@ export default function Placeholder() {
                   disabled={saving || isProcessingContactQR}
                 >
                   <Text style={styles.qrUploadButtonText}>
-                    {isProcessingContactQR ? "Reading QR..." : "Upload WhatsApp QR image"}
+                    {isProcessingContactQR
+                      ? "Reading QR..."
+                      : "Upload WhatsApp QR image"}
                   </Text>
                 </TouchableOpacity>
 
@@ -1111,7 +1225,10 @@ export default function Placeholder() {
                 {t("profile.selectLanguage")}
               </Text>
             </View>
-            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+            >
               {SUPPORTED_LANGUAGES.map(({ label, flag }) => (
                 <TouchableOpacity
                   key={label}
