@@ -24,6 +24,7 @@ import { navigationRef } from "../lib/navigationRef";
 
 const INACTIVITY_LIMIT_MS = 5 * 60 * 1000; // 5 minutes
 const CHECK_INTERVAL_MS = 60 * 1000; // check every minute
+const ACTIVITY_PERSIST_THROTTLE_MS = 15 * 1000; // avoid storage write on every touch
 const LAST_ACTIVITY_KEY = "lastActivityAt";
 const IDLE_SESSION_ACTIVE_KEY = "idleSessionActive";
 
@@ -46,6 +47,7 @@ export const IdleTimeoutProvider: React.FC<{ children: React.ReactNode }> = ({
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const isSmallScreen = screenWidth <= 375 || screenHeight <= 667;
   const lastActivityRef = useRef<number>(Date.now());
+  const lastPersistedActivityRef = useRef<number>(0);
   const appStateRef = useRef<AppStateStatus>(AppState.currentState);
   const hasLoggedOutRef = useRef(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -157,6 +159,7 @@ export const IdleTimeoutProvider: React.FC<{ children: React.ReactNode }> = ({
     }
     const now = Date.now();
     lastActivityRef.current = now;
+    lastPersistedActivityRef.current = now;
     setIsSessionActive(true);
     try {
       await AsyncStorage.setItem(LAST_ACTIVITY_KEY, String(now));
@@ -187,8 +190,11 @@ export const IdleTimeoutProvider: React.FC<{ children: React.ReactNode }> = ({
     if (!isSessionActive || hasLoggedOutRef.current) return;
     const now = Date.now();
     lastActivityRef.current = now;
-    // Async storage update (fire and forget for performance)
-    AsyncStorage.setItem(LAST_ACTIVITY_KEY, String(now)).catch(() => { });
+    if (now - lastPersistedActivityRef.current >= ACTIVITY_PERSIST_THROTTLE_MS) {
+      lastPersistedActivityRef.current = now;
+      // Async storage update (fire and forget for performance)
+      AsyncStorage.setItem(LAST_ACTIVITY_KEY, String(now)).catch(() => { });
+    }
   }, [isSessionActive]);
 
   // On mount, check if there was an active session (app was killed and reopened)
@@ -321,8 +327,11 @@ export const IdleTimeoutProvider: React.FC<{ children: React.ReactNode }> = ({
     if (!isSessionActive || hasLoggedOutRef.current) return;
     const now = Date.now();
     lastActivityRef.current = now;
-    // Fire and forget for performance
-    AsyncStorage.setItem(LAST_ACTIVITY_KEY, String(now)).catch(() => { });
+    if (now - lastPersistedActivityRef.current >= ACTIVITY_PERSIST_THROTTLE_MS) {
+      lastPersistedActivityRef.current = now;
+      // Fire and forget for performance
+      AsyncStorage.setItem(LAST_ACTIVITY_KEY, String(now)).catch(() => { });
+    }
   }, [isSessionActive]);
 
   return (

@@ -635,7 +635,7 @@ export default function Login() {
       title: "",
       message: "",
       type: "info",
-      confirmText: "OK",
+      confirmText: t("common.ok"),
       onConfirm: null,
       secondaryText: undefined,
       onSecondary: undefined,
@@ -1000,7 +1000,7 @@ export default function Login() {
         title={modalConfig.title}
         message={modalConfig.message}
         type={modalConfig.type}
-        confirmText={modalConfig.confirmText}
+        confirmText={modalConfig.confirmText || t("common.ok")}
         onConfirm={modalConfig.onConfirm}
         secondaryText={modalConfig.secondaryText}
         onSecondary={modalConfig.onSecondary}
