@@ -77,7 +77,7 @@ export default function EwalletService() {
         <SafeAreaView style={styles.safeArea}>
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={THEME_COLOR} />
-            <Text style={styles.loadingText}>Service under maintenance</Text>
+            <Text style={styles.loadingText}>{t("support.serviceMaintenance")}</Text>
           </View>
         </SafeAreaView>
       </View>

@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
+import * as Clipboard from 'expo-clipboard';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as LocalAuthentication from 'expo-local-authentication';
 import * as SecureStore from 'expo-secure-store';
@@ -15,6 +16,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  ToastAndroid,
   TouchableOpacity,
   View
 } from 'react-native';
@@ -42,6 +44,7 @@ const Settings = () => {
   const [referralCode, setReferralCode] = useState<string | null>(null);
   const [referralLoading, setReferralLoading] = useState(false);
   const [referralError, setReferralError] = useState<string | null>(null);
+  const [copySuccess, setCopySuccess] = useState(false);
   const [emailVerifyModalVisible, setEmailVerifyModalVisible] = useState(false);
   const [emailOtp, setEmailOtp] = useState('');
   const [emailVerifyLoading, setEmailVerifyLoading] = useState(false);
@@ -186,7 +189,17 @@ const Settings = () => {
     });
   };
 
-  const handleRefreshReferralCode = () => {
+  const handleReferralCodeAction = async () => {
+    if (referralLoading) return;
+    if (referralCode) {
+      await Clipboard.setStringAsync(referralCode);
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 1500);
+      if (Platform.OS === 'android') {
+        ToastAndroid.show(t('settings.copySuccess'), ToastAndroid.SHORT);
+      }
+      return;
+    }
     loadReferralCode();
   };
 
@@ -514,7 +527,7 @@ const Settings = () => {
           <View style={[styles.sectionCard, r.sectionCard]}>
             <TouchableOpacity
               style={[styles.referralOptionItem, r.referralOptionItem]}
-              onPress={handleRefreshReferralCode}
+              onPress={handleReferralCodeAction}
               disabled={referralLoading}
             >
               <View style={styles.optionLeft}>
@@ -531,7 +544,9 @@ const Settings = () => {
               {referralLoading ? (
                 <ActivityIndicator size="small" color="#F38B35" />
               ) : (
-                <Text style={[styles.generateButtonText, r.generateButtonText]}>{t('settings.refresh')}</Text>
+                <Text style={[styles.generateButtonText, r.generateButtonText]}>
+                  {copySuccess ? t('settings.copySuccess') : t('settings.copy')}
+                </Text>
               )}
             </TouchableOpacity>
             {referralError ? (

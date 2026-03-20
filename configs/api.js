@@ -2721,6 +2721,36 @@ export async function submitPersonalKyc(accessToken, body) {
 }
 
 /**
+ * Fetch the current user's latest personal KYC request/status.
+ * GET /kyc-requests/me
+ */
+export async function getPersonalKycStatus(accessToken) {
+  const url = buildUrl("/kyc-requests/me");
+  if (!url) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
+  try {
+    if (__DEV__) console.log("[KYC API] GET", url);
+    const res = await apiFetch(url, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    return { success: true, data: data.data ?? data ?? null };
+  } catch (e) {
+    if (__DEV__) console.error("[KYC API] Status Error", e);
+    return { success: false, error: e.message || "Network error" };
+  }
+}
+
+/**
  * Submit a company KYC request via the backend.
  * POST /kyc-requests/company
  */

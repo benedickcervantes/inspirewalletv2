@@ -2,6 +2,7 @@ import {
   decodeQrImage,
   getCompanyKycStatus,
   getMe,
+  getPersonalKycStatus,
   getReferralCode,
   getReferralTree,
   updateProfile,
@@ -9,6 +10,7 @@ import {
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import * as Clipboard from "expo-clipboard";
 import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { doc, getDoc } from "firebase/firestore";
@@ -25,6 +27,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  ToastAndroid,
   TouchableOpacity,
   useWindowDimensions,
   View,
@@ -46,7 +49,8 @@ import CustomLoader from "../Loader/CustomLoader";
 const THEME_COLOR = "#E15816";
 const USER_PREFERRED_LANGUAGE_KEY = "user_preferred_language";
 const COMPANY_KYC_PENDING_KEY = "company_kyc_pending";
-const COMPANY_KYC_POLL_MS = 5000;
+const PERSONAL_KYC_PENDING_KEY = "personal_kyc_pending";
+const PROFILE_KYC_POLL_MS = 2000;
 
 type AgentHierarchyRole = "master_agent" | "agent" | "consultant_agent";
 
@@ -120,13 +124,18 @@ export default function Placeholder() {
     status?: string;
     companyName?: string;
   } | null>(null);
+  const [personalKycView, setPersonalKycView] = useState<{
+    status?: string;
+  } | null>(null);
   const [showCompanyRejectedModal, setShowCompanyRejectedModal] =
     useState(false);
   const [localCompanyPending, setLocalCompanyPending] = useState(false);
+  const [localPersonalPending, setLocalPersonalPending] = useState(false);
 
   const [referralCode, setReferralCode] = useState<string | null>(null);
   const [referralLoading, setReferralLoading] = useState(false);
   const [referralError, setReferralError] = useState<string | null>(null);
+  const [copySuccess, setCopySuccess] = useState(false);
 
   const fetchUserData = useCallback(async () => {
     try {
@@ -136,11 +145,16 @@ export default function Placeholder() {
       const accessToken = await AsyncStorage.getItem("access_token");
       if (accessToken) {
         const localPending = await AsyncStorage.getItem(COMPANY_KYC_PENDING_KEY);
+        const localPersonalPendingValue = await AsyncStorage.getItem(
+          PERSONAL_KYC_PENDING_KEY,
+        );
         setLocalCompanyPending(localPending === "1");
-        const [meResult, companyResult, referralTreeResult] = await Promise.all(
+        setLocalPersonalPending(localPersonalPendingValue === "1");
+        const [meResult, companyResult, personalResult, referralTreeResult] = await Promise.all(
           [
             getMe(accessToken),
             getCompanyKycStatus(accessToken).catch(() => null),
+            getPersonalKycStatus(accessToken).catch(() => null),
             getReferralTree(accessToken).catch(() => null),
           ],
         );
@@ -179,6 +193,10 @@ export default function Placeholder() {
             status: data.status,
             companyName: data.companyName,
           });
+        }
+        if (personalResult && personalResult.success) {
+          const data = (personalResult.data ?? null) as { status?: string } | null;
+          setPersonalKycView(data?.status ? { status: data.status } : null);
         }
         setLoading(false);
         return;
@@ -231,9 +249,19 @@ export default function Placeholder() {
     }
   }, [t]);
 
-  const handleRefreshReferralCode = () => {
+  const handleReferralCodeAction = useCallback(async () => {
+    if (referralLoading) return;
+    if (referralCode) {
+      await Clipboard.setStringAsync(referralCode);
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 1500);
+      if (Platform.OS === "android") {
+        ToastAndroid.show(t("settings.copySuccess"), ToastAndroid.SHORT);
+      }
+      return;
+    }
     loadReferralCode();
-  };
+  }, [loadReferralCode, referralCode, referralLoading, t]);
 
   useEffect(() => {
     fetchUserData();
@@ -253,13 +281,78 @@ export default function Placeholder() {
     let isActive = true;
     let timer: ReturnType<typeof setInterval> | undefined;
 
-    const syncCompanyKycStatus = async () => {
+    const syncKycStatus = async () => {
       try {
         const accessToken = await AsyncStorage.getItem("access_token");
         if (!accessToken || !isActive) return;
 
-        const companyResult = await getCompanyKycStatus(accessToken);
-        if (!isActive || !companyResult?.success || !companyResult.data) return;
+        const [companyResult, personalResult, meResult] = await Promise.all([
+          getCompanyKycStatus(accessToken),
+          getPersonalKycStatus(accessToken).catch(() => null),
+          getMe(accessToken).catch(() => null),
+        ]);
+        if (!isActive) return;
+
+        if (personalResult?.success) {
+          const latestPersonal = (personalResult.data ?? null) as
+            | { status?: string }
+            | null;
+          const personalStatus = String(latestPersonal?.status ?? "")
+            .toUpperCase()
+            .trim();
+          const personalAccountStatus = String(
+            (meResult?.success && meResult.user
+              ? (meResult.user as Record<string, unknown>).kycAccountStatus
+              : "") ?? "",
+          )
+            .toUpperCase()
+            .trim();
+          const personalPending =
+            personalStatus === "PENDING" ||
+            personalStatus === "IN_REVIEW" ||
+            personalStatus === "SUBMITTED";
+          const personalResolved =
+            personalStatus === "APPROVED" ||
+            personalStatus === "VERIFIED" ||
+            personalStatus === "REJECTED" ||
+            personalAccountStatus === "VERIFIED";
+
+          if (personalPending) {
+            await AsyncStorage.setItem(PERSONAL_KYC_PENDING_KEY, "1");
+            if (isActive) setLocalPersonalPending(true);
+          } else if (personalResolved) {
+            await AsyncStorage.removeItem(PERSONAL_KYC_PENDING_KEY);
+            if (isActive) setLocalPersonalPending(false);
+          } else if (!personalStatus) {
+            await AsyncStorage.removeItem(PERSONAL_KYC_PENDING_KEY);
+            if (isActive) setLocalPersonalPending(false);
+          }
+
+          if (isActive) {
+            setPersonalKycView(
+              latestPersonal?.status ? { status: latestPersonal.status } : null,
+            );
+            setUserData((prev: any) =>
+              prev
+                ? {
+                    ...prev,
+                    ...(latestPersonal?.status
+                      ? { kycStatus: latestPersonal.status }
+                      : {}),
+                    ...(meResult?.success && meResult.user
+                      ? {
+                          kycAccountStatus: (
+                            meResult.user as Record<string, unknown>
+                          ).kycAccountStatus,
+                        }
+                      : {}),
+                  }
+                : prev,
+            );
+          }
+        }
+
+        if (!companyResult?.success || !companyResult.data) return;
 
         const data = companyResult.data as { status?: string; companyName?: string };
         const normalizedStatus = String(data.status ?? "").toUpperCase();
@@ -284,10 +377,10 @@ export default function Placeholder() {
     };
 
     const startPolling = () => {
-      void syncCompanyKycStatus();
+      void syncKycStatus();
       timer = setInterval(() => {
-        void syncCompanyKycStatus();
-      }, COMPANY_KYC_POLL_MS);
+        void syncKycStatus();
+      }, PROFILE_KYC_POLL_MS);
     };
 
     const stopPolling = () => {
@@ -583,9 +676,31 @@ export default function Placeholder() {
   const isAgent = userData?.isAgent || userData?.role === "agent" || false;
   const isPremium =
     userData?.isPremium || userData?.accountLevel === "premium" || false;
-  const isKycVerified =
-    String(userData?.kycAccountStatus || "").toUpperCase() === "VERIFIED" ||
-    String(userData?.kycStatus || "").toLowerCase() === "approved";
+  const normalizedPersonalKycStatus = String(
+    personalKycView?.status ?? userData?.kycStatus ?? "",
+  )
+    .toLowerCase()
+    .trim();
+  const normalizedPersonalKycAccountStatus = String(
+    userData?.kycAccountStatus || "",
+  )
+    .toLowerCase()
+    .trim();
+  const isPersonalKycVerified =
+    normalizedPersonalKycAccountStatus === "verified" ||
+    normalizedPersonalKycStatus === "approved" ||
+    normalizedPersonalKycStatus === "verified";
+  const isPersonalKycRejected = normalizedPersonalKycStatus === "rejected";
+  const hasBackendPersonalPendingStatus =
+    normalizedPersonalKycStatus === "pending" ||
+    normalizedPersonalKycStatus === "in_review" ||
+    normalizedPersonalKycStatus === "submitted";
+  const isPersonalKycPending =
+    !isPersonalKycVerified &&
+    !isPersonalKycRejected &&
+    (hasBackendPersonalPendingStatus || localPersonalPending);
+  const isPersonalKycUnverified =
+    !isPersonalKycVerified && !isPersonalKycPending && !isPersonalKycRejected;
   const resolvedAgentRole = isAgent ? (agentHierarchyRole ?? "agent") : null;
   const headerRoleLabel = resolvedAgentRole
     ? AGENT_ROLE_BADGE_LABELS[resolvedAgentRole]
@@ -657,9 +772,13 @@ export default function Placeholder() {
     userData?.lineAccountLink ?? userData?.lineLink ?? t("common.notProvided");
   const viberLink = userData?.viberLink || t("common.notProvided");
   const whatsappLink = userData?.whatsappLink || t("common.notProvided");
-  const accountLevelLabel = isKycVerified
-    ? t("profile.verifiedStatus")
-    : t("profile.notVerifiedStatus");
+  const accountLevelLabel = isPersonalKycVerified
+    ? "Verified"
+    : isPersonalKycPending
+      ? t("kycCompany.pending")
+      : isPersonalKycRejected
+        ? t("kycCompany.rejected")
+        : "Not Verified";
   const referrerName =
     userData?.referrerName ??
     userData?.agentReferrer ??
@@ -849,7 +968,7 @@ export default function Placeholder() {
                 alignItems: "center",
                 justifyContent: "space-between",
               }}
-              onPress={handleRefreshReferralCode}
+              onPress={handleReferralCodeAction}
               disabled={referralLoading}
             >
               <View style={{ flex: 1 }}>
@@ -872,15 +991,11 @@ export default function Placeholder() {
               {referralLoading ? (
                 <ActivityIndicator size="small" color={THEME_COLOR} />
               ) : (
-                <Text
-                  style={{
-                    fontSize: 13,
-                    color: THEME_COLOR,
-                    fontWeight: "600",
-                  }}
-                >
-                  {t("settings.refresh") || "REFRESH"}
-                </Text>
+                <Ionicons
+                  name={copySuccess ? "checkmark-outline" : "copy-outline"}
+                  size={18}
+                  color={THEME_COLOR}
+                />
               )}
             </TouchableOpacity>
             {referralError ? (
@@ -999,16 +1114,30 @@ export default function Placeholder() {
             icon="trophy-outline"
             label={t("profile.kycStatus")}
             value={accountLevelLabel}
-            badge={isKycVerified ? accountLevelLabel : undefined}
-            badgeColor={isKycVerified ? "#10B981" : "#999"}
-            verified={isKycVerified}
-            showVerifyButton={!isKycVerified}
+            badge={
+              isPersonalKycVerified || isPersonalKycPending || isPersonalKycRejected
+                ? accountLevelLabel
+                : undefined
+            }
+            badgeColor={
+              isPersonalKycVerified
+                ? "#10B981"
+                : isPersonalKycPending
+                  ? "#F59E0B"
+                  : isPersonalKycRejected
+                    ? "#EF4444"
+                    : "#999"
+            }
+            verified={isPersonalKycVerified}
+            showVerifyButton={isPersonalKycUnverified || isPersonalKycRejected}
             onVerifyPress={() =>
               (navigation as { navigate: (name: string) => void }).navigate(
                 "KYCVerification",
               )
             }
-            verifyButtonLabel={t("profile.verify")}
+            verifyButtonLabel={
+              isPersonalKycRejected ? t("profile.resubmit") : t("profile.verify")
+            }
           />
           {/* Company KYC status (if available) */}
           {/* This row can be wired to real backend data in the future by reusing getCompanyKycStatus */}
@@ -1515,6 +1644,14 @@ interface DetailItemProps {
   isPlaceholder?: boolean;
 }
 
+const toSentenceCase = (text?: string): string | undefined => {
+  if (!text) return text;
+  const trimmed = text.trim();
+  if (!trimmed) return trimmed;
+  const normalized = trimmed.toLowerCase();
+  return normalized.charAt(0).toUpperCase() + normalized.slice(1);
+};
+
 function DetailItem({
   icon,
   label,
@@ -1532,6 +1669,8 @@ function DetailItem({
 }: DetailItemProps) {
   const onEditHandler = onEditPress ?? onEdit;
   const handlePress = editable && onEditHandler ? onEditHandler : undefined;
+  const normalizedBadge = toSentenceCase(badge);
+  const normalizedVerifyButtonLabel = toSentenceCase(verifyButtonLabel);
   const content = (
     <>
       <View style={styles.detailHeader}>
@@ -1546,9 +1685,9 @@ function DetailItem({
         >
           {value}
         </Text>
-        {badge && (
+        {normalizedBadge && (
           <View style={[styles.badge, { backgroundColor: badgeColor }]}>
-            <Text style={styles.badgeTextSmall}>{badge}</Text>
+            <Text style={styles.badgeTextSmall}>{normalizedBadge}</Text>
             {verified && (
               <Ionicons
                 name="checkmark-circle"
@@ -1566,7 +1705,7 @@ function DetailItem({
             activeOpacity={0.7}
           >
             <Ionicons name="settings-outline" size={14} color="#333" />
-            <Text style={styles.verifyBadgeText}>{verifyButtonLabel}</Text>
+            <Text style={styles.verifyBadgeText}>{normalizedVerifyButtonLabel}</Text>
           </TouchableOpacity>
         )}
         {editable && onEditHandler && (
