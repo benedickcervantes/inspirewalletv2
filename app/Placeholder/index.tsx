@@ -16,6 +16,7 @@ import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  AppState,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -44,6 +45,8 @@ import CustomLoader from "../Loader/CustomLoader";
 
 const THEME_COLOR = "#E15816";
 const USER_PREFERRED_LANGUAGE_KEY = "user_preferred_language";
+const COMPANY_KYC_PENDING_KEY = "company_kyc_pending";
+const COMPANY_KYC_POLL_MS = 5000;
 
 type AgentHierarchyRole = "master_agent" | "agent" | "consultant_agent";
 
@@ -119,6 +122,7 @@ export default function Placeholder() {
   } | null>(null);
   const [showCompanyRejectedModal, setShowCompanyRejectedModal] =
     useState(false);
+  const [localCompanyPending, setLocalCompanyPending] = useState(false);
 
   const [referralCode, setReferralCode] = useState<string | null>(null);
   const [referralLoading, setReferralLoading] = useState(false);
@@ -131,6 +135,8 @@ export default function Placeholder() {
       );
       const accessToken = await AsyncStorage.getItem("access_token");
       if (accessToken) {
+        const localPending = await AsyncStorage.getItem(COMPANY_KYC_PENDING_KEY);
+        setLocalCompanyPending(localPending === "1");
         const [meResult, companyResult, referralTreeResult] = await Promise.all(
           [
             getMe(accessToken),
@@ -242,6 +248,68 @@ export default function Placeholder() {
       loadReferralCode();
     }, [fetchUserData, loadReferralCode]),
   );
+
+  useEffect(() => {
+    let isActive = true;
+    let timer: ReturnType<typeof setInterval> | undefined;
+
+    const syncCompanyKycStatus = async () => {
+      try {
+        const accessToken = await AsyncStorage.getItem("access_token");
+        if (!accessToken || !isActive) return;
+
+        const companyResult = await getCompanyKycStatus(accessToken);
+        if (!isActive || !companyResult?.success || !companyResult.data) return;
+
+        const data = companyResult.data as { status?: string; companyName?: string };
+        const normalizedStatus = String(data.status ?? "").toUpperCase();
+
+        if (normalizedStatus === "PENDING" || normalizedStatus === "IN_REVIEW" || normalizedStatus === "SUBMITTED") {
+          await AsyncStorage.setItem(COMPANY_KYC_PENDING_KEY, "1");
+          if (isActive) setLocalCompanyPending(true);
+        } else if (normalizedStatus === "APPROVED" || normalizedStatus === "REJECTED") {
+          await AsyncStorage.removeItem(COMPANY_KYC_PENDING_KEY);
+          if (isActive) setLocalCompanyPending(false);
+        }
+
+        if (isActive) {
+          setCompanyKycView({
+            status: data.status,
+            companyName: data.companyName,
+          });
+        }
+      } catch {
+        // keep current UI state when sync fails
+      }
+    };
+
+    const startPolling = () => {
+      void syncCompanyKycStatus();
+      timer = setInterval(() => {
+        void syncCompanyKycStatus();
+      }, COMPANY_KYC_POLL_MS);
+    };
+
+    const stopPolling = () => {
+      if (timer) clearInterval(timer);
+      timer = undefined;
+    };
+
+    startPolling();
+    const appStateSubscription = AppState.addEventListener("change", (state) => {
+      if (state === "active") {
+        startPolling();
+      } else {
+        stopPolling();
+      }
+    });
+
+    return () => {
+      isActive = false;
+      stopPolling();
+      appStateSubscription.remove();
+    };
+  }, []);
 
   const hasPasscode = !!userData?.hasPasscode;
 
@@ -534,10 +602,6 @@ export default function Placeholder() {
   const accountNumber =
     userData?.accountNumber || userData?.id || "000053126300";
   const rawCompanyNameFromUser = userData?.companyName;
-  const companyName =
-    companyKycView?.companyName ||
-    rawCompanyNameFromUser ||
-    t("profile.tapToAddCompanyName");
   const rawCompanyKycStatus: string | undefined =
     companyKycView?.status ??
     (userData?.companyKycStatus as string | undefined) ??
@@ -546,14 +610,36 @@ export default function Placeholder() {
   const normalizedCompanyKycStatus = rawCompanyKycStatus
     ? String(rawCompanyKycStatus).toLowerCase()
     : undefined;
+  const hasCompanyNameFromCompanyKyc =
+    typeof companyKycView?.companyName === "string" &&
+    companyKycView.companyName.trim().length > 0;
   const isCompanyKycVerified =
     normalizedCompanyKycStatus === "approved" ||
     normalizedCompanyKycStatus === "verified";
+  const approvedCompanyNameFromKyc =
+    isCompanyKycVerified && hasCompanyNameFromCompanyKyc
+      ? companyKycView?.companyName?.trim()
+      : undefined;
   const isCompanyKycPending =
     normalizedCompanyKycStatus === "pending" ||
-    normalizedCompanyKycStatus === "in_review";
+    normalizedCompanyKycStatus === "in_review" ||
+    normalizedCompanyKycStatus === "submitted" ||
+    (!normalizedCompanyKycStatus &&
+      (localCompanyPending || hasCompanyNameFromCompanyKyc));
   const isCompanyKycRejected = normalizedCompanyKycStatus === "rejected";
   const hasCompanyKycRequest = isCompanyKycVerified || isCompanyKycPending;
+  const hasAnyCompanyKycSignal =
+    hasCompanyKycRequest ||
+    localCompanyPending ||
+    hasCompanyNameFromCompanyKyc ||
+    !!normalizedCompanyKycStatus;
+  const canEditCompanyName = isCompanyKycRejected || !hasAnyCompanyKycSignal;
+  const companyName =
+    approvedCompanyNameFromKyc ||
+    rawCompanyNameFromUser ||
+    (isCompanyKycPending
+      ? t("kycCompany.pending")
+      : t("profile.tapToAddCompanyName"));
 
   const handleCompanyRowPress = () => {
     if (isCompanyKycRejected) {
@@ -838,18 +924,17 @@ export default function Placeholder() {
             icon="business-outline"
             label={t("profile.companyName")}
             value={companyName}
-            editable={!hasCompanyKycRequest}
-            onEdit={hasCompanyKycRequest ? undefined : handleCompanyRowPress}
+            editable={false}
             isPlaceholder={
               !rawCompanyNameFromUser && !companyKycView?.companyName
             }
             badge={
               isCompanyKycVerified
-                ? "Verified"
+                ? t("kycCompany.verified")
                 : isCompanyKycPending
-                  ? "Unverified"
+                  ? t("kycCompany.pending")
                   : isCompanyKycRejected
-                    ? "Rejected"
+                    ? t("kycCompany.rejected")
                     : undefined
             }
             badgeColor={
@@ -862,6 +947,11 @@ export default function Placeholder() {
                     : undefined
             }
             verified={isCompanyKycVerified}
+            showVerifyButton={canEditCompanyName}
+            onVerifyPress={canEditCompanyName ? handleCompanyRowPress : undefined}
+            verifyButtonLabel={
+              isCompanyKycRejected ? t("profile.resubmit") : t("profile.verify")
+            }
           />
           <DetailItem
             icon="call-outline"

@@ -28,6 +28,7 @@ import { useLanguage } from "../../context/LanguageContext";
 const REFERENCE_WIDTH = 393;
 
 const THEME_COLOR = "#E15816";
+const COMPANY_KYC_PENDING_KEY = "company_kyc_pending";
 
 export default function KYCcompany() {
   const navigation = useNavigation();
@@ -96,6 +97,11 @@ export default function KYCcompany() {
         if (result.success && result.data) {
           const status = String(result.data.status ?? "").toUpperCase();
           setCompanyKycStatus(status || null);
+          if (status === "PENDING" || status === "IN_REVIEW") {
+            await AsyncStorage.setItem(COMPANY_KYC_PENDING_KEY, "1");
+          } else if (status === "APPROVED" || status === "REJECTED") {
+            await AsyncStorage.removeItem(COMPANY_KYC_PENDING_KEY);
+          }
           if (typeof result.data.companyName === "string") {
             setExistingCompanyName(result.data.companyName);
             if (!companyName) {
@@ -207,6 +213,7 @@ export default function KYCcompany() {
       }
       // Immediately reflect that the request is now pending review
       setCompanyKycStatus("PENDING");
+      await AsyncStorage.setItem(COMPANY_KYC_PENDING_KEY, "1");
       setShowSuccessModal(true);
     } catch (e: unknown) {
       console.error("Error submitting company KYC:", e);
@@ -358,7 +365,7 @@ export default function KYCcompany() {
                     ? t("kycCompany.verified")
                     : isRejected
                       ? t("kycCompany.rejected")
-                      : t("kycCompany.unverified")}
+                      : t("kycCompany.pending")}
                 </Text>
               </View>
             </View>
@@ -414,6 +421,7 @@ export default function KYCcompany() {
                 style={styles.editButton}
                 onPress={() => setIsEditing((prev) => !prev)}
                 activeOpacity={0.7}
+                disabled={isLocked}
               >
                 <Ionicons
                   name={isEditing ? "checkmark-outline" : "create-outline"}
@@ -497,14 +505,14 @@ export default function KYCcompany() {
           <TouchableOpacity
             style={[
               styles.saveButtonWrapper,
-              (!isFormComplete || submitting || isLocked || isLocked) &&
+              (!isFormComplete || submitting || isLocked) &&
                 styles.saveButtonDisabled,
             ]}
             onPress={handleSave}
             activeOpacity={
-              isFormComplete && !submitting && !isLocked && !isLocked ? 0.9 : 1
+              isFormComplete && !submitting && !isLocked ? 0.9 : 1
             }
-            disabled={!isFormComplete || submitting || isLocked || isLocked}
+            disabled={!isFormComplete || submitting || isLocked}
           >
             <LinearGradient
               colors={
