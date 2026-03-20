@@ -1,6 +1,7 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useLanguage } from "../../../context/LanguageContext";
+import { useResponsive } from "../../../utils/responsive";
 
 const THEME_COLOR = "#E15816";
 
@@ -30,16 +31,17 @@ export default function TravelRequiredDocu({
   onGovernmentIdNumberChange,
 }: TravelRequiredDocuProps) {
   const { t } = useLanguage();
+  const { isSmallScreen } = useResponsive();
 
   const idTypeOptions = [
-    { label: "National ID", value: "National_ID" },
-    { label: "Driver's License", value: "Driver_License" },
-    { label: "Passport ID", value: "Passport_ID" },
-    { label: "Other", value: "Other" },
+    { label: t("banking.idNationalId"), value: "National_ID" },
+    { label: t("banking.idDriverLicense"), value: "Driver_License" },
+    { label: t("banking.idPassport"), value: "Passport_ID" },
+    { label: t("kyc.other"), value: "Other" },
   ];
 
   return (
-    <View style={styles.formCard}>
+    <View style={[styles.formCard, isSmallScreen && styles.formCardSmall]}>
       <View style={styles.formHeader}>
         <View style={styles.formIconContainer}>
           <MaterialCommunityIcons
@@ -48,7 +50,7 @@ export default function TravelRequiredDocu({
             color={THEME_COLOR}
           />
         </View>
-        <View>
+        <View style={styles.formHeaderTextContainer}>
           <Text style={styles.formTitle}>{t("travel.requiredDocs")}</Text>
           <Text style={styles.formSubtitle}>
             {t("travel.requiredDocsSubtitle")}
@@ -136,7 +138,7 @@ export default function TravelRequiredDocu({
         </Text>
         <TextInput
           style={styles.textInput}
-          placeholder="Enter ID number"
+          placeholder={t("travel.placeholderGovernmentIdNumber")}
           value={governmentIdNumber}
           onChangeText={onGovernmentIdNumberChange}
           placeholderTextColor="#BDBDBD"
@@ -194,11 +196,18 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 4,
   },
+  formCardSmall: {
+    padding: 16,
+  },
   formHeader: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     marginBottom: 24,
     gap: 12,
+  },
+  formHeaderTextContainer: {
+    flex: 1,
+    minWidth: 0,
   },
   formIconContainer: {
     width: 48,
@@ -217,6 +226,7 @@ const styles = StyleSheet.create({
   formSubtitle: {
     fontSize: 12,
     color: "#9E9E9E",
+    flexShrink: 1,
   },
   inputGroup: {
     marginBottom: 20,

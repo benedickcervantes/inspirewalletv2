@@ -55,6 +55,8 @@ const CurrencyCalculator = () => {
     const [isConverting, setIsConverting] = useState(false);
     const [convertError, setConvertError] = useState<string | null>(null);
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const requestIdRef = useRef(0);
+    const rateCacheRef = useRef<Map<string, number>>(new Map());
 
     const fetchConversion = useCallback(async (from: string, to: string, amountVal: number) => {
         if (amountVal <= 0 || !from || !to || from === to) {
@@ -62,22 +64,38 @@ const CurrencyCalculator = () => {
             setConvertError(null);
             return;
         }
+        const requestId = ++requestIdRef.current;
         setIsConverting(true);
         setConvertError(null);
-        const result = await calculateExchangePair({
-            fromCurrency: from,
-            toCurrency: to,
-            amount: amountVal,
-        });
-        setIsConverting(false);
-        if (result.success && result.convertedAmount != null) {
-            setConvertedAmount(result.convertedAmount);
-            setConvertError(null);
-        } else {
+        try {
+            const result = await calculateExchangePair({
+                fromCurrency: from,
+                toCurrency: to,
+                amount: amountVal,
+            });
+
+            // Ignore stale responses from older requests.
+            if (requestId !== requestIdRef.current) return;
+
+            setIsConverting(false);
+            if (result.success && result.convertedAmount != null) {
+                const effectiveRate = result.convertedAmount / amountVal;
+                if (Number.isFinite(effectiveRate) && effectiveRate > 0) {
+                    rateCacheRef.current.set(`${from}->${to}`, effectiveRate);
+                }
+                setConvertedAmount(result.convertedAmount);
+                setConvertError(null);
+            } else {
+                setConvertedAmount(null);
+                setConvertError(result.error || t('currency.exchangeRateUnavailable'));
+            }
+        } catch {
+            if (requestId !== requestIdRef.current) return;
+            setIsConverting(false);
             setConvertedAmount(null);
-            setConvertError(result.error || t('currency.exchangeRateUnavailable'));
+            setConvertError(t('currency.exchangeRateUnavailable'));
         }
-    }, []);
+    }, [t]);
 
     useEffect(() => {
         if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -90,11 +108,21 @@ const CurrencyCalculator = () => {
         if (fromCurrency.code === toCurrency.code) {
             setConvertedAmount(numAmount);
             setConvertError(null);
+            setIsConverting(false);
             return;
         }
+
+        const pairKey = `${fromCurrency.code}->${toCurrency.code}`;
+        const cachedRate = rateCacheRef.current.get(pairKey);
+        if (cachedRate && Number.isFinite(cachedRate)) {
+            // Show immediate estimate while fetching fresh rate.
+            setConvertedAmount(numAmount * cachedRate);
+            setConvertError(null);
+        }
+
         debounceRef.current = setTimeout(() => {
             fetchConversion(fromCurrency.code, toCurrency.code, numAmount);
-        }, 400);
+        }, 180);
         return () => {
             if (debounceRef.current) clearTimeout(debounceRef.current);
         };
