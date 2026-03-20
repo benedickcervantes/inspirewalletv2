@@ -1326,7 +1326,8 @@ const styles = StyleSheet.create({
   },
   alertButtonRow: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
+    justifyContent: 'center',
+    alignItems: 'center',
     gap: 12,
   },
   alertCancelButton: {

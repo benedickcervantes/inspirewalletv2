@@ -251,7 +251,8 @@ interface AlertConfig {
 
 export default function TravelProtection() {
   const { t } = useLanguage();
-  const { scale, verticalScale, horizontalPadding } = useResponsive();
+  const { scale, verticalScale, horizontalPadding, isTinyScreen, isSmallScreen } =
+    useResponsive();
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList, "Travel">>();
 
@@ -491,7 +492,7 @@ export default function TravelProtection() {
         setEmailError(t("travel.fieldRequired") || "Required");
         hasError = true;
       } else if (!validateEmail(emailAddress)) {
-        setEmailError(t("Please Enter Valid Email") || "Invalid email");
+        setEmailError(t("travel.errorValidEmail"));
         hasError = true;
       }
 
@@ -499,9 +500,7 @@ export default function TravelProtection() {
         setMobileError(t("travel.fieldRequired") || "Required");
         hasError = true;
       } else if (!validateMobileNumber(mobileNumber)) {
-        setMobileError(
-          t("Please Enter Valid Number") || "Mobile must be 10-11 digits",
-        );
+        setMobileError(t("travel.errorValidMobile"));
         hasError = true;
       }
 
@@ -511,10 +510,7 @@ export default function TravelProtection() {
       }
 
       if (landlineNumber && !validateLandlineNumber(landlineNumber)) {
-        setLandlineError(
-          t("Please Enter Valid Landline Number") ||
-            "Landline must be 8 digits",
-        );
+        setLandlineError(t("travel.errorValidLandline"));
         hasError = true;
       }
 
@@ -932,8 +928,31 @@ export default function TravelProtection() {
     feeCard: { padding: scale(20), marginBottom: verticalScale(16) },
     feeAmount: { fontSize: scale(32) },
     stepIndicator: { gap: scale(12), marginBottom: verticalScale(24) },
-    stepDot: { width: scale(32), height: scale(32) },
+    stepDot: {
+      width: isSmallScreen ? scale(28) : scale(32),
+      height: isSmallScreen ? scale(28) : scale(32),
+    },
     formCard: { padding: scale(20) },
+    buttonContainer: {
+      flexDirection: isTinyScreen ? "column" : "row",
+      gap: isTinyScreen ? 10 : 12,
+    },
+    countryDropdown: {
+      paddingHorizontal: isTinyScreen ? 8 : isSmallScreen ? 10 : 16,
+      paddingVertical: isTinyScreen ? 12 : 14,
+      gap: isTinyScreen ? 2 : 6,
+    },
+    countryFlag: {
+      fontSize: isTinyScreen ? 16 : 20,
+      lineHeight: isTinyScreen ? 16 : 20,
+    },
+    countryCode: {
+      fontSize: isTinyScreen ? 12 : isSmallScreen ? 14 : 16,
+    },
+    mobileInput: {
+      paddingHorizontal: isTinyScreen ? 10 : 16,
+      fontSize: isTinyScreen ? 14 : 16,
+    },
   };
 
   return (
@@ -1040,6 +1059,7 @@ export default function TravelProtection() {
                 style={[
                   styles.stepIndicatorContainer,
                   dynamicStyles.stepIndicator,
+                  isSmallScreen && styles.stepIndicatorSmall,
                 ]}
               >
                 {[1, 2, 3, 4, 5, 6].map((step) => (
@@ -1133,13 +1153,13 @@ export default function TravelProtection() {
                     </Text>
                     <View style={styles.mobileInputContainer}>
                       <TouchableOpacity
-                        style={styles.countryDropdown}
+                        style={[styles.countryDropdown, dynamicStyles.countryDropdown]}
                         onPress={() => setShowCountryDropdown(true)}
                       >
-                        <Text style={styles.countryFlag}>
+                        <Text style={[styles.countryFlag, dynamicStyles.countryFlag]}>
                           {selectedCountry.flag}
                         </Text>
-                        <Text style={styles.countryCode}>
+                        <Text style={[styles.countryCode, dynamicStyles.countryCode]}>
                           {selectedCountry.dialCode}
                         </Text>
                         <Ionicons name="chevron-down" size={18} color="#666" />
@@ -1148,6 +1168,7 @@ export default function TravelProtection() {
                         ref={mobileRef}
                         style={[
                           styles.mobileInput,
+                          dynamicStyles.mobileInput,
                           mobileError && styles.inputError,
                         ]}
                         placeholder={selectedCountry.example}
@@ -1466,7 +1487,7 @@ export default function TravelProtection() {
               )}
 
               {/* Buttons at bottom of scroll content */}
-              <View style={styles.buttonContainer}>
+              <View style={[styles.buttonContainer, dynamicStyles.buttonContainer]}>
             <TouchableOpacity
               style={styles.backButtonBottom}
               onPress={handleBack}
@@ -1709,6 +1730,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 12,
     marginBottom: 24,
+  },
+  stepIndicatorSmall: {
+    gap: 8,
   },
   stepDot: {
     width: 32,

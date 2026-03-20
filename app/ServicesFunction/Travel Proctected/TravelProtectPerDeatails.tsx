@@ -114,7 +114,7 @@ export default function TravelProtectPerDeatails({
               color={THEME_COLOR}
             />
           </View>
-          <View>
+          <View style={styles.formHeaderTextContainer}>
             <Text style={styles.formTitle}>{t("travel.personalDetails")}</Text>
             <Text style={styles.formSubtitle}>
               {t("travel.personalSubtitle")}
@@ -531,9 +531,13 @@ const styles = StyleSheet.create({
   },
   formHeader: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     marginBottom: 24,
     gap: 12,
+  },
+  formHeaderTextContainer: {
+    flex: 1,
+    minWidth: 0,
   },
   formIconContainer: {
     width: 48,
@@ -552,6 +556,7 @@ const styles = StyleSheet.create({
   formSubtitle: {
     fontSize: 12,
     color: "#9E9E9E",
+    flexShrink: 1,
   },
   inputGroup: {
     marginBottom: 20,
@@ -591,6 +596,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#000000",
     fontWeight: "500",
+    flex: 1,
+    marginRight: 8,
   },
   dropdownPlaceholder: {
     color: "#9E9E9E",
