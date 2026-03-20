@@ -5,9 +5,10 @@ import {
   useNavigation,
   useRoute,
 } from "@react-navigation/native";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated,
+  AppState,
   Image,
   Linking,
   Modal,
@@ -62,14 +63,31 @@ const TRANSACTION_TYPE_KEYS: Record<string, string> = {
   FEE: "tx.fee",
   REFUND: "tx.refund",
   TIME_DEPOSIT: "tx.timeDeposit",
+  TIME_DEPOSIT_DIVIDEND: "tx.timeDepositDividend",
+  TIME_DEPOSIT_PRINCIPAL_RETURN: "tx.timeDepositPrincipalReturn",
+  AGENT_COMMISSION: "tx.agentCommission",
+  CARD_PURCHASE: "tx.cardPurchase",
+  CARD_SUBSCRIPTION: "tx.cardSubscription",
+  STOCK_BUY: "tx.stockBuy",
+  STOCK_SELL: "tx.stockSell",
+  PLAN_SUBSCRIPTION_PAYMENT: "tx.planSubscriptionPayment",
+  PLAN_SUBSCRIPTION_CASHBACK: "tx.planSubscriptionCashback",
   TRAVEL_PROTECTION: "tx.travelProtection",
   TRAVEL_PROTECTION_FEE: "tx.travelProtection",
+};
+
+const CARD_DESIGN_KEYS: Record<string, string> = {
+  ORANGE_ELITE: "ct.orangeElite",
+  ROYAL_CURVE: "ct.royalCurve",
+  DIAMOND_ELITE: "ct.diamondElite",
+  GOLD_ELITE: "ct.goldElite",
 };
 
 interface Transaction {
   id: string;
   type?: string;
   amount?: number;
+  description?: string;
   timestamp?: { toDate?: () => Date };
 }
 
@@ -93,6 +111,7 @@ interface RawApiTransaction {
   id?: unknown;
   type?: unknown;
   amount?: unknown;
+  description?: unknown;
   createdAt?: unknown;
 }
 
@@ -114,24 +133,18 @@ interface TimeDeposit {
   payout_schedule?: PayoutScheduleItem[]; // API may return snake_case
 }
 
-function isTwoYearContract(contractType: string | null | undefined): boolean {
-  const v = String(contractType ?? "").trim().toLowerCase();
-  return v === "twoyears" || v === "two_years" || v === "2 years" || v === "2 year";
-}
-
 function computeTimeDepositTotal(deposits: TimeDeposit[]): number {
   return deposits
     .filter((d) => d.status === "ACTIVE" || d.status === "MATURED")
     .reduce((sum, d) => sum + (parseFloat(String(d?.amount ?? 0)) || 0), 0);
 }
 
-function computeTwoYearTimeDepositTotal(deposits: TimeDeposit[]): number {
+/** ACTIVE only — any contract type; summed to unlock Banking / E-Wallet (≥ ₱200k). */
+function computeActiveTimeDepositPrincipalTotal(
+  deposits: TimeDeposit[],
+): number {
   return deposits
-    .filter(
-      (d) =>
-        (d.status === "ACTIVE" || d.status === "MATURED") &&
-        isTwoYearContract(d.contractType),
-    )
+    .filter((d) => d.status === "ACTIVE")
     .reduce((sum, d) => sum + (parseFloat(String(d?.amount ?? 0)) || 0), 0);
 }
 
@@ -215,7 +228,12 @@ function getTransactionTypeLabel(
 ): string {
   if (!type) return t("tx.transaction");
   const key = TRANSACTION_TYPE_KEYS[type];
-  return key ? t(key) : type;
+  if (key) return t(key);
+  return type
+    .toLowerCase()
+    .split("_")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
 }
 
 export default function Dashboard() {
@@ -235,7 +253,6 @@ export default function Dashboard() {
   const [availableBalance, setAvailableBalance] = useState(0);
   const [isBalanceLoading, setIsBalanceLoading] = useState(true);
   const [timeDeposit, setTimeDeposit] = useState(0);
-  const [twoYearTimeDeposit, setTwoYearTimeDeposit] = useState(0);
   const [deposits, setDeposits] = useState<TimeDeposit[]>([]);
   const [activeTab, setActiveTab] = useState("Wallet");
   const [announcements, setAnnouncements] = useState<AnnouncementItem[]>([]);
@@ -249,6 +266,9 @@ export default function Dashboard() {
   const languageScrollRef = useRef<ScrollView | null>(null);
   const mainWalletIdRef = useRef<string | null>(null);
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const timeDepositPollRef = useRef<ReturnType<typeof setInterval> | null>(
+    null,
+  );
   const [currentLanguageIndex, setCurrentLanguageIndex] = useState(0);
   const { unreadCount: unreadNotifications, setUnreadCount: setUnreadNotifications } =
     useUnreadNotifications();
@@ -267,12 +287,19 @@ export default function Dashboard() {
   >(null);
   const [showBankingServiceLockedModal, setShowBankingServiceLockedModal] =
     useState(false);
+  const [bankingLockModalContext, setBankingLockModalContext] = useState<
+    "banking" | "ewallet"
+  >("banking");
   const [showKycLockedModal, setShowKycLockedModal] = useState(false);
   const [activeCardDesign, setActiveCardDesign] = useState<string | null>(null);
 
   const BANKING_SERVICE_MIN_BALANCE = 200_000;
+  const activeTimeDepositPrincipalTotal = useMemo(
+    () => computeActiveTimeDepositPrincipalTotal(deposits),
+    [deposits],
+  );
   const isBankingServiceLocked =
-    twoYearTimeDeposit < BANKING_SERVICE_MIN_BALANCE;
+    activeTimeDepositPrincipalTotal < BANKING_SERVICE_MIN_BALANCE;
   const userRole = String(userData?.role ?? "").toUpperCase();
   const kycAccountStatus = String(userData?.kycAccountStatus ?? "").toUpperCase();
   const kycStatus = String(userData?.kycStatus ?? "").toUpperCase();
@@ -385,7 +412,6 @@ export default function Dashboard() {
 
       setAvailableBalance(0);
       setTimeDeposit(0);
-      setTwoYearTimeDeposit(0);
       setDeposits([]);
       setUnreadNotifications(0);
 
@@ -418,7 +444,6 @@ export default function Dashboard() {
         const list = tdRes.deposits as TimeDeposit[];
         setDeposits(list);
         setTimeDeposit(computeTimeDepositTotal(list));
-        setTwoYearTimeDeposit(computeTwoYearTimeDepositTotal(list));
       } else if (!tdRes.success && __DEV__) {
         console.warn("[Dashboard] getTimeDeposits failed:", tdRes.error);
       }
@@ -463,6 +488,7 @@ export default function Dashboard() {
             const a = parseFloat(String(tx.amount ?? 0));
             return Number.isNaN(a) ? 0 : a;
           })(),
+          description: String(tx.description ?? ""),
           timestamp: {
             toDate: () => new Date(String(tx.createdAt ?? "")),
           },
@@ -519,10 +545,36 @@ export default function Dashboard() {
     return () => clearTimeout(timer);
   }, [announcementVisible, announcementIndex, announcements.length]);
 
+  const syncAvailableBalanceOnly = useCallback(async () => {
+    const accessToken = await AsyncStorage.getItem("access_token");
+    if (!accessToken) return null;
+    const { success: walletSuccess, wallet } =
+      await getOrCreateMainWallet(accessToken);
+    const w = wallet as RawApiWallet | undefined;
+    if (walletSuccess && w?.balance != null) {
+      const bal = parseFloat(String(w.balance));
+      setAvailableBalance(Number.isNaN(bal) ? 0 : bal);
+    }
+    return w;
+  }, []);
+
   const refetchJwtData = useCallback(async () => {
     const accessToken = await AsyncStorage.getItem("access_token");
     if (!accessToken) return;
-    const meRes = await getMe(accessToken);
+    // Prioritize balance update first so wallet amount appears quickly.
+    const w = await syncAvailableBalanceOnly();
+
+    const [meRes, tdRes, treeRes, txRes, notifRes] = await Promise.all([
+      getMe(accessToken),
+      getTimeDeposits(accessToken),
+      getReferralTree(accessToken),
+      getTransactions(accessToken, {
+        walletId: w?.id ?? mainWalletIdRef.current ?? undefined,
+        limit: 20,
+      }),
+      getNotifications(accessToken, { limit: 50 }),
+    ]);
+
     if (meRes.success && meRes.user) {
       const user = meRes.user as Record<string, unknown>;
       setUserData({
@@ -535,23 +587,15 @@ export default function Dashboard() {
         kycStatus: (user as Record<string, unknown>).kycStatus,
       });
     }
-    const { success: walletSuccess, wallet } =
-      await getOrCreateMainWallet(accessToken);
-    const w = wallet as RawApiWallet | undefined;
-    if (walletSuccess && w?.balance != null) {
-      const bal = parseFloat(String(w.balance));
-      setAvailableBalance(Number.isNaN(bal) ? 0 : bal);
-    }
-    const tdRes = await getTimeDeposits(accessToken);
+
     if (tdRes.success && Array.isArray(tdRes.deposits)) {
       const list = tdRes.deposits as TimeDeposit[];
       setDeposits(list);
       setTimeDeposit(computeTimeDepositTotal(list));
-      setTwoYearTimeDeposit(computeTwoYearTimeDepositTotal(list));
     } else if (!tdRes.success && __DEV__) {
       console.warn("[Dashboard] getTimeDeposits failed:", tdRes.error);
     }
-    const treeRes = await getReferralTree(accessToken);
+
     if (treeRes.success && treeRes.tree) {
       const tree = treeRes.tree as {
         ancestors?: {
@@ -581,10 +625,7 @@ export default function Dashboard() {
     } else {
       setUserReferrer(null);
     }
-    const txRes = await getTransactions(accessToken, {
-      walletId: w?.id ?? mainWalletIdRef.current ?? undefined,
-      limit: 20,
-    });
+
     if (txRes.success && txRes.transactions) {
       const txs = txRes.transactions as RawApiTransaction[];
       const mapped: Transaction[] = txs.map((tx) => ({
@@ -594,6 +635,7 @@ export default function Dashboard() {
           const a = parseFloat(String(tx.amount ?? 0));
           return Number.isNaN(a) ? 0 : a;
         })(),
+        description: String(tx.description ?? ""),
         timestamp: {
           toDate: () => new Date(String(tx.createdAt ?? "")),
         },
@@ -601,12 +643,25 @@ export default function Dashboard() {
       setRecentTransactions(mapped);
     }
 
-    const notifRes = await getNotifications(accessToken, { limit: 50 });
     if (notifRes.success && notifRes.data) {
       const unreadCount = (notifRes.data as { isRead: boolean }[]).filter(
         (n) => !n.isRead,
       ).length;
       setUnreadNotifications(unreadCount);
+    }
+  }, [syncAvailableBalanceOnly]);
+
+  /** Lightweight sync so Banking/E-Wallet unlock updates without opening Investment tab. */
+  const syncTimeDepositsOnly = useCallback(async () => {
+    const accessToken = await AsyncStorage.getItem("access_token");
+    if (!accessToken) return;
+    const tdRes = await getTimeDeposits(accessToken);
+    if (tdRes.success && Array.isArray(tdRes.deposits)) {
+      const list = tdRes.deposits as TimeDeposit[];
+      setDeposits(list);
+      setTimeDeposit(computeTimeDepositTotal(list));
+    } else if (!tdRes.success && __DEV__) {
+      console.warn("[Dashboard] syncTimeDepositsOnly failed:", tdRes.error);
     }
   }, []);
 
@@ -616,7 +671,7 @@ export default function Dashboard() {
     const startPolling = () => {
       if (pollIntervalRef.current) return;
       refetchJwtData();
-      pollIntervalRef.current = setInterval(refetchJwtData, 15000);
+      pollIntervalRef.current = setInterval(refetchJwtData, 10000);
     };
 
     const stopPolling = () => {
@@ -626,48 +681,82 @@ export default function Dashboard() {
       }
     };
 
-    if (!isSocketConnected) {
-      startPolling();
-    } else {
-      stopPolling();
-    }
+    const startTimeDepositPolling = () => {
+      if (timeDepositPollRef.current) return;
+      void syncTimeDepositsOnly();
+      timeDepositPollRef.current = setInterval(syncTimeDepositsOnly, 5000);
+    };
+
+    const stopTimeDepositPolling = () => {
+      if (timeDepositPollRef.current) {
+        clearInterval(timeDepositPollRef.current);
+        timeDepositPollRef.current = null;
+      }
+    };
+
+    // Always poll: when socket is connected we previously stopped polling, so time deposits
+    // (and Banking/E-Wallet unlock) stayed stale until Investment refresh or a socket event.
+    startPolling();
+    // Light TD-only poll so unlock reflects sooner without waiting for full dashboard refetch.
+    startTimeDepositPolling();
 
     setConnectionStatus(isSocketConnected);
     const socket = getSocket();
 
-    if (socket && isSocketConnected) {
-      const handleWalletUpdate = (payload: {
-        walletId?: string;
-        balance?: number | string;
-      }) => {
-        if (
-          payload?.walletId === mainWalletIdRef.current &&
-          payload?.balance != null
-        ) {
-          const bal = parseFloat(String(payload.balance));
-          setAvailableBalance(Number.isNaN(bal) ? 0 : bal);
-          // Also refresh time deposits & related locks in real-time
-          refetchJwtData();
-        }
-      };
-
-      const handleTransactionCreated = () => {
+    const handleWalletUpdate = (payload: {
+      walletId?: string;
+      balance?: number | string;
+    }) => {
+      if (
+        payload?.walletId === mainWalletIdRef.current &&
+        payload?.balance != null
+      ) {
+        const bal = parseFloat(String(payload.balance));
+        setAvailableBalance(Number.isNaN(bal) ? 0 : bal);
+        void syncTimeDepositsOnly();
         refetchJwtData();
-      };
+      }
+    };
 
+    const handleTransactionCreated = () => {
+      void syncTimeDepositsOnly();
+      refetchJwtData();
+    };
+
+    if (socket && isSocketConnected) {
       socket.on("WALLET_UPDATE", handleWalletUpdate);
       socket.on("TRANSACTION_CREATED", handleTransactionCreated);
-
-      return () => {
-        socket.off("WALLET_UPDATE", handleWalletUpdate);
-        socket.off("TRANSACTION_CREATED", handleTransactionCreated);
-      };
     }
 
     return () => {
       stopPolling();
+      stopTimeDepositPolling();
+      if (socket && isSocketConnected) {
+        socket.off("WALLET_UPDATE", handleWalletUpdate);
+        socket.off("TRANSACTION_CREATED", handleTransactionCreated);
+      }
     };
-  }, [isSocketConnected, getSocket, refetchJwtData]);
+  }, [isSocketConnected, getSocket, refetchJwtData, syncTimeDepositsOnly]);
+
+  useEffect(() => {
+    const sub = AppState.addEventListener("change", (state) => {
+      if (state === "active") void syncTimeDepositsOnly();
+    });
+    return () => sub.remove();
+  }, [syncTimeDepositsOnly]);
+
+  // Refresh time deposits when user returns to Wallet tab (same screen — focus effect may not run).
+  useEffect(() => {
+    if (activeTab !== "Wallet") return;
+    let cancelled = false;
+    void (async () => {
+      await syncTimeDepositsOnly();
+      if (cancelled) return;
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTab, syncTimeDepositsOnly]);
 
   useFocusEffect(
     useCallback(() => {
@@ -713,6 +802,79 @@ export default function Dashboard() {
       maximumFractionDigits: 2,
     }).format(amount);
   };
+
+  const getTranslatedDescription = useCallback(
+    (description?: string) => {
+      if (!description) return null;
+      const normalized = description.trim();
+      if (!normalized) return null;
+
+      const getTranslatedCardDesign = (designRaw?: string) => {
+        if (!designRaw) return "";
+        const normalizedDesign = designRaw
+          .trim()
+          .replace(/[-\s]+/g, "_")
+          .replace(/__+/g, "_")
+          .toUpperCase();
+        const designKey = CARD_DESIGN_KEYS[normalizedDesign];
+        if (designKey) return t(designKey);
+        return designRaw
+          .trim()
+          .replace(/[_-]+/g, " ")
+          .replace(/\s+/g, " ")
+          .split(" ")
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+          .join(" ");
+      };
+
+      const cardPurchaseMatch = normalized.match(/^(.+)\s+card purchase$/i);
+      if (cardPurchaseMatch?.[1]) {
+        return t("history.cardPurchaseDesign", {
+          design: getTranslatedCardDesign(cardPurchaseMatch[1]),
+        });
+      }
+
+      if (/stock\s*investment/i.test(normalized) && /\bapproved\b/i.test(normalized))
+        return t("history.stockInvestmentApproved");
+      if (/stock\s*investment/i.test(normalized) && /\brejected\b/i.test(normalized))
+        return t("history.stockInvestmentRejected");
+      if (/stock\s*investment/i.test(normalized) && /\brequest(ed)?\b/i.test(normalized))
+        return t("history.stockInvestmentRequested");
+
+      if (/withdrawal/i.test(normalized) && /\bapproved\b/i.test(normalized))
+        return t("history.withdrawalApproved");
+      if (/withdrawal/i.test(normalized) && /\brejected\b/i.test(normalized))
+        return t("history.withdrawalRejected");
+      if (/withdrawal/i.test(normalized) && /\brequest(ed)?\b/i.test(normalized))
+        return t("history.withdrawalRequested");
+
+      const topUpApprovedMatch = normalized.match(/^Top[- ]?up approved:\s*request\s+(.+)$/i);
+      if (topUpApprovedMatch?.[1]) {
+        return t("history.topUpApprovedRequest", {
+          requestId: topUpApprovedMatch[1].trim(),
+        });
+      }
+
+      const stockInvestmentApprovedRequestMatch = normalized.match(
+        /^Stock\s+investment\s+approved:\s*request\s+(.+)$/i,
+      );
+      if (stockInvestmentApprovedRequestMatch?.[1]) {
+        return `${t("history.stockInvestmentApproved")}: ${stockInvestmentApprovedRequestMatch[1].trim()}`;
+      }
+
+      return null;
+    },
+    [t],
+  );
+
+  const getTransactionDisplayName = useCallback(
+    (tx: Transaction) => {
+      const translatedDescription = getTranslatedDescription(tx.description);
+      if (translatedDescription) return translatedDescription;
+      return tx.description?.trim() || getTransactionTypeLabel(t, tx.type);
+    },
+    [getTranslatedDescription, t],
+  );
 
   const flipCard = () => {
     if (activeTab !== "Cards") return;
@@ -840,7 +1002,9 @@ export default function Dashboard() {
                 />
               </View>
               <Text style={styles.bankingLockTitle}>
-                {t("dashboard.bankingServiceLockedTitle")}
+                {bankingLockModalContext === "ewallet"
+                  ? t("dashboard.eWalletLockedTitle")
+                  : t("dashboard.bankingServiceLockedTitle")}
               </Text>
             </View>
             <View style={styles.bankingLockRequirementBox}>
@@ -848,7 +1012,9 @@ export default function Dashboard() {
                 {t("dashboard.bankingServiceLockedRequirement")}
               </Text>
               <Text style={styles.bankingLockRequirementValue}>₱200,000</Text>
-              <Text style={styles.bankingLockRequirementLabel}>2 Years</Text>
+              <Text style={styles.bankingLockRequirementLabelCentered}>
+                {t("dashboard.bankingServiceLockedCombinedContracts")}
+              </Text>
             </View>
             <Text style={styles.bankingLockMessage}>
               {t("dashboard.bankingServiceLockedMessage")}
@@ -1147,9 +1313,12 @@ export default function Dashboard() {
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
+                key={isBankingServiceLocked ? "banking-qa-locked" : "banking-qa-open"}
                 style={[
                   styles.quickActionButton,
-                  isBankingServiceLocked && styles.quickActionButtonLocked,
+                  isBankingServiceLocked
+                    ? styles.quickActionButtonLocked
+                    : styles.quickActionBorderClear,
                   {
                     paddingVertical: Math.round(14 * qaSpacing),
                     paddingHorizontal: Math.round(6 * qaSpacing),
@@ -1158,6 +1327,7 @@ export default function Dashboard() {
                 ]}
                 onPress={() => {
                   if (isBankingServiceLocked) {
+                    setBankingLockModalContext("banking");
                     setShowBankingServiceLockedModal(true);
                   } else {
                     (
@@ -1170,7 +1340,9 @@ export default function Dashboard() {
                 <View
                   style={[
                     styles.quickActionIcon,
-                    isBankingServiceLocked && styles.quickActionIconLocked,
+                    isBankingServiceLocked
+                      ? styles.quickActionIconLocked
+                      : styles.quickActionIconClear,
                     {
                       width: Math.round(48 * qaSpacing),
                       height: Math.round(48 * qaSpacing),
@@ -1304,7 +1476,7 @@ export default function Dashboard() {
                 </Text>
               </View>
               <View style={styles.menuGrid}>
-                {menuItems.map((item, index) => {
+                {menuItems.map((item) => {
                   // Map route names to service IDs
                   const routeToServiceMap: Record<string, string> = {
                     EwalletService: "ewallet",
@@ -1331,9 +1503,14 @@ export default function Dashboard() {
                     isEwalletLockedByDeposit ||
                     isTradingLockedByKyc;
 
+                  const menuKey =
+                    item.route === "EwalletService"
+                      ? `EwalletService-${isBankingServiceLocked ? "L" : "U"}`
+                      : item.route;
+
                   return (
                     <TouchableOpacity
-                      key={index}
+                      key={menuKey}
                       style={[
                         styles.menuItem,
                         isBlocked && styles.menuItemDisabled,
@@ -1341,6 +1518,7 @@ export default function Dashboard() {
                       onPress={() => {
                         if (isBlocked) {
                           if (isEwalletLockedByDeposit) {
+                            setBankingLockModalContext("ewallet");
                             setShowBankingServiceLockedModal(true);
                             return;
                           }
@@ -1360,7 +1538,9 @@ export default function Dashboard() {
                       <View
                         style={[
                           styles.menuIcon,
-                          isBlocked && styles.menuIconDisabled,
+                          isBlocked
+                            ? styles.menuIconDisabled
+                            : styles.menuIconBorderClear,
                         ]}
                       >
                         <MaterialCommunityIcons
@@ -1483,7 +1663,7 @@ export default function Dashboard() {
                     </View>
                     <View style={styles.transactionDetails}>
                       <Text style={styles.transactionName}>
-                        {getTransactionTypeLabel(t, transaction.type)}
+                        {getTransactionDisplayName(transaction)}
                       </Text>
                       <Text style={styles.transactionDate}>
                         {transaction.timestamp
@@ -1653,8 +1833,17 @@ const styles = StyleSheet.create({
     borderColor: "#E5E5E5",
     borderStyle: "dashed",
   },
+  /** RN can leave dashed border artifacts when toggling lock — reset explicitly when unlocked. */
+  quickActionBorderClear: {
+    borderWidth: 0,
+    borderColor: "transparent",
+    borderStyle: "solid",
+  },
   quickActionIconLocked: {
     backgroundColor: "#F0F0F0",
+  },
+  quickActionIconClear: {
+    backgroundColor: "#FFF5F0",
   },
   quickActionLabelLocked: {
     color: "#999",
@@ -1726,6 +1915,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#666",
     marginBottom: 4,
+  },
+  bankingLockRequirementLabelCentered: {
+    fontSize: 12,
+    color: "#666",
+    marginBottom: 4,
+    textAlign: "center",
   },
   bankingLockRequirementValue: {
     fontSize: 22,
@@ -1799,6 +1994,11 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "#E5E5E5",
     borderStyle: "dashed",
+  },
+  menuIconBorderClear: {
+    borderWidth: 0,
+    borderColor: "transparent",
+    borderStyle: "solid",
   },
   menuLabelDisabled: {
     color: "#999",

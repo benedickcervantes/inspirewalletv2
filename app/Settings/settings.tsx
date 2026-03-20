@@ -47,6 +47,7 @@ const Settings = () => {
   const [emailVerifyLoading, setEmailVerifyLoading] = useState(false);
   const [emailVerifyError, setEmailVerifyError] = useState<string | null>(null);
   const [emailVerifySuccess, setEmailVerifySuccess] = useState(false);
+  const [emailVerifyFromBiometric, setEmailVerifyFromBiometric] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
 
   // Biometric state
@@ -242,11 +243,12 @@ const Settings = () => {
     }
   };
 
-  const openEmailVerifyModal = () => {
+  const openEmailVerifyModal = (fromBiometric = false) => {
     setEmailVerifyModalVisible(true);
     setEmailOtp('');
     setEmailVerifyError(null);
     setEmailVerifySuccess(false);
+    setEmailVerifyFromBiometric(fromBiometric);
   };
 
   const closeEmailVerifyModal = () => {
@@ -254,6 +256,17 @@ const Settings = () => {
     setEmailOtp('');
     setEmailVerifyError(null);
     setEmailVerifySuccess(false);
+    setEmailVerifyFromBiometric(false);
+  };
+
+  const handleEmailVerifyDone = () => {
+    const shouldOpenBiometric = emailVerifyFromBiometric;
+    closeEmailVerifyModal();
+    if (shouldOpenBiometric) {
+      setBiometricPassword('');
+      setBiometricError(null);
+      setBiometricModalVisible(true);
+    }
   };
 
   const handleToggleBiometric = async () => {
@@ -279,7 +292,7 @@ const Settings = () => {
     } else {
       // Check if email is verified
       if (!userData?.emailVerified) {
-        openEmailVerifyModal();
+        openEmailVerifyModal(true);
         return;
       }
 
@@ -688,7 +701,7 @@ const Settings = () => {
                 <View style={[styles.emailVerifySuccess, r.emailVerifySuccess]}>
                   <Ionicons name="checkmark-circle" size={r.iconSizeLarge} color="#22C55E" />
                   <Text style={[styles.emailVerifySuccessText, r.emailVerifySuccessText]}>{t('settings.emailVerifiedSuccess')}</Text>
-                  <TouchableOpacity style={[styles.modalButton, r.modalButton]} onPress={closeEmailVerifyModal}>
+                  <TouchableOpacity style={[styles.modalButton, r.modalButton]} onPress={handleEmailVerifyDone} activeOpacity={0.8}>
                     <Text style={[styles.modalButtonText, r.modalButtonText]}>{t('settings.done')}</Text>
                   </TouchableOpacity>
                 </View>

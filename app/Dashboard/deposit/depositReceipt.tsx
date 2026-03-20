@@ -2,20 +2,25 @@ import { Ionicons } from "@expo/vector-icons";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import {
-  Dimensions,
   Image,
+  ScrollView,
   SafeAreaView,
   StyleSheet,
   Text,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { getLanguageCode } from "../../../constants/locales";
 import { useLanguage } from "../../../context/LanguageContext";
 
 export default function DepositReceipt() {
   const route = useRoute();
   const navigation = useNavigation<any>();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const insets = useSafeAreaInsets();
+  const { width, height } = useWindowDimensions();
 
   const params = (route.params || {}) as {
     transactionId?: string;
@@ -39,14 +44,38 @@ export default function DepositReceipt() {
     successMessage,
   } = params;
 
+  const languageCode = getLanguageCode(language);
+  const localeByLanguageCode: Record<string, string> = {
+    en: "en-PH",
+    ko: "ko-KR",
+    ja: "ja-JP",
+    ar: "ar-SA",
+  };
+  const locale = localeByLanguageCode[languageCode] ?? "en-PH";
+
+  const getReceiptTypeLabel = () => {
+    const normalized = String(type ?? "").trim().toLowerCase();
+    if (normalized === "transfer") return t("tx.transfer");
+    if (normalized === "withdrawal") return t("tx.withdraw");
+    return t("tx.deposit");
+  };
+
+  const getSuccessSubtitle = () => {
+    if (successMessage) return successMessage;
+    if (String(type).trim().toLowerCase() === "time deposit") {
+      return t("deposit.timeDepositSuccessMessage");
+    }
+    return t("deposit.uploadSuccessMessage");
+  };
+
   const handleClose = () => {
     // Navigate back to main Dashboard
     navigation.navigate("Main"); 
   };
 
-  const { width } = Dimensions.get("window");
   const logoWidth = Math.min(220, width * 0.55);
   const logoHeight = Math.round(logoWidth * (72 / 200));
+  const isSmallScreen = width <= 375 || height <= 700;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -56,11 +85,24 @@ export default function DepositReceipt() {
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
       >
-        <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
+        <TouchableOpacity
+          style={[styles.closeButton, { top: Math.max(insets.top + 8, 16), right: 12 }]}
+          onPress={handleClose}
+        >
           <Ionicons name="close" size={32} color="#FFFFFF" />
         </TouchableOpacity>
 
-        <View style={styles.content}>
+        <ScrollView
+          contentContainerStyle={[
+            styles.scrollContent,
+            {
+              paddingTop: Math.max(insets.top + 48, 64),
+              paddingBottom: Math.max(insets.bottom + 20, 28),
+            },
+          ]}
+          showsVerticalScrollIndicator={false}
+        >
+        <View style={[styles.content, isSmallScreen && styles.contentSmall]}>
           <Image
             source={require("../../../assets/images/InpireLogo.png")}
             style={[styles.logo, { width: logoWidth, height: logoHeight }]}
@@ -68,20 +110,20 @@ export default function DepositReceipt() {
           />
 
           <View style={styles.successIconContainer}>
-            <Ionicons name="checkmark-circle" size={80} color="#FFFFFF" />
+            <Ionicons name="checkmark-circle" size={isSmallScreen ? 68 : 80} color="#FFFFFF" />
           </View>
           
-          <Text style={styles.successTitle}>{t("deposit.success")}</Text>
-          <Text style={styles.successSubtitle}>
-            {successMessage || (type === "Time Deposit" ? t("deposit.timeDepositSuccessMessage") : t("deposit.uploadSuccessMessage"))}
+          <Text style={[styles.successTitle, isSmallScreen && styles.successTitleSmall]}>{t("deposit.success")}</Text>
+          <Text style={[styles.successSubtitle, isSmallScreen && styles.successSubtitleSmall]}>
+            {getSuccessSubtitle()}
           </Text>
 
-          <View style={styles.cardContainer}>
-            <Text style={styles.receiptHeader}>{t("deposit.transactionReceipt")}</Text>
+          <View style={[styles.cardContainer, isSmallScreen && styles.cardContainerSmall]}>
+            <Text style={[styles.receiptHeader, isSmallScreen && styles.receiptHeaderSmall]}>{t("deposit.transactionReceipt")}</Text>
 
             <View style={styles.row}>
               <Text style={styles.label}>{t("history.id")}</Text>
-              <Text style={styles.value}>{transactionId}</Text>
+              <Text style={styles.value} numberOfLines={2}>{transactionId}</Text>
             </View>
 
             <View style={styles.divider} />
@@ -90,7 +132,7 @@ export default function DepositReceipt() {
               <Text style={styles.label}>{t("investment.amount")}</Text>
               <Text style={styles.value}>
                 {currency === "PHP" ? "₱" : ""}
-                {Number(amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                {Number(amount).toLocaleString(locale, { minimumFractionDigits: 2 })}
                 {currency !== "PHP" ? ` ${currency}` : ""}
               </Text>
             </View>
@@ -100,7 +142,7 @@ export default function DepositReceipt() {
                 <View style={styles.divider} />
                 <View style={styles.row}>
                   <Text style={styles.label}>{t("deposit.contractPeriod")}</Text>
-                  <Text style={styles.value}>{contractPeriod}</Text>
+                  <Text style={styles.value} numberOfLines={2}>{contractPeriod}</Text>
                 </View>
               </>
             )}
@@ -109,17 +151,17 @@ export default function DepositReceipt() {
 
             <View style={styles.row}>
               <Text style={styles.label}>
-                {type === "Transfer" 
+                {String(type).trim().toLowerCase() === "transfer"
                   ? t("sendMoney.from") 
-                  : type === "Withdrawal" 
+                  : String(type).trim().toLowerCase() === "withdrawal"
                     ? t("withdraw.withdrawalMethod") 
                     : t("deposit.depositMethod")}
               </Text>
-              <Text style={styles.value}>
+              <Text style={styles.value} numberOfLines={2}>
                 {depositMethod || (
-                  type === "Transfer" ? t("sendMoney.availableBalance") : 
-                  type === "Withdrawal" ? t("withdraw.bankTransfer") : 
-                  t("common.na")
+                  String(type).trim().toLowerCase() === "transfer" ? t("sendMoney.availableBalance") :
+                  String(type).trim().toLowerCase() === "withdrawal" ? t("withdraw.bankTransfer") :
+                  getReceiptTypeLabel()
                 )}
               </Text>
             </View>
@@ -128,10 +170,11 @@ export default function DepositReceipt() {
 
             <View style={styles.row}>
               <Text style={styles.label}>{t("history.date") || "Date"}</Text>
-              <Text style={styles.value}>{date}</Text>
+              <Text style={styles.value} numberOfLines={2}>{date}</Text>
             </View>
           </View>
         </View>
+        </ScrollView>
       </LinearGradient>
     </SafeAreaView>
   );
@@ -144,7 +187,7 @@ const styles = StyleSheet.create({
   },
   gradientBackground: {
     flex: 1,
-    paddingHorizontal: 20,
+    paddingHorizontal: 14,
   },
   closeButton: {
     position: "absolute",
@@ -154,10 +197,17 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   content: {
-    flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    paddingBottom: 40,
+    width: "100%",
+  },
+  contentSmall: {
+    justifyContent: "flex-start",
+  },
+  scrollContent: {
+    flexGrow: 1,
+    width: "100%",
+    alignItems: "center",
   },
   logo: {
     marginBottom: 40,
@@ -171,6 +221,10 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     marginBottom: 12,
   },
+  successTitleSmall: {
+    fontSize: 24,
+    marginBottom: 8,
+  },
   successSubtitle: {
     fontSize: 16,
     color: "rgba(255, 255, 255, 0.95)",
@@ -179,12 +233,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     lineHeight: 24,
   },
+  successSubtitleSmall: {
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 22,
+  },
   cardContainer: {
     backgroundColor: "rgba(255, 255, 255, 0.15)",
     borderRadius: 16,
-    padding: 24,
+    padding: 18,
     width: "100%",
     maxWidth: 400,
+  },
+  cardContainerSmall: {
+    padding: 14,
+    borderRadius: 14,
   },
   receiptHeader: {
     fontSize: 18,
@@ -194,23 +257,31 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     letterSpacing: 0.5,
   },
+  receiptHeaderSmall: {
+    fontSize: 16,
+    marginBottom: 14,
+  },
   row: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
+    alignItems: "flex-start",
     paddingVertical: 6,
+    gap: 12,
   },
   label: {
     fontSize: 14,
     color: "rgba(255, 255, 255, 0.8)",
     fontWeight: "500",
+    flex: 1,
+    paddingRight: 6,
   },
   value: {
     fontSize: 15,
     color: "#FFFFFF",
     fontWeight: "600",
-    maxWidth: "60%",
+    maxWidth: "58%",
     textAlign: "right",
+    flexShrink: 1,
   },
   divider: {
     height: 1,
