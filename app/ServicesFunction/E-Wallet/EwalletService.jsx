@@ -12,6 +12,7 @@ import {
     StyleSheet,
     Text,
     TouchableOpacity,
+    useWindowDimensions,
     View,
 } from "react-native";
 import { useLanguage } from "../../../context/LanguageContext";
@@ -28,6 +29,9 @@ const E_WALLET_PROVIDERS = [
 export default function EwalletService() {
   const navigation = useNavigation();
   const { t } = useLanguage();
+  const { width } = useWindowDimensions();
+  const isXSScreen = width <= 320;
+  const isSmallScreen = width < 375;
   const [selectedProvider, setSelectedProvider] = useState("");
   const [showProviderModal, setShowProviderModal] = useState(false);
   const [showExitConfirmModal, setShowExitConfirmModal] = useState(false);
@@ -89,50 +93,68 @@ export default function EwalletService() {
             style={styles.backButton}
             onPress={handleTopBackPress}
           >
-            <Ionicons name="arrow-back" size={28} color={THEME_COLOR} />
+            <Ionicons name="arrow-back" size={isXSScreen ? 24 : 28} color={THEME_COLOR} />
           </TouchableOpacity>
 
           <View style={styles.headerCard}>
             <LinearGradient
               colors={ORANGE_GRADIENT}
-              style={styles.headerGradient}
+              style={[
+                styles.headerGradient,
+                isXSScreen && styles.headerGradientXS,
+                isSmallScreen && styles.headerGradientSmall,
+              ]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
             >
               <View style={styles.headerIconWrapper}>
                 <MaterialCommunityIcons
                   name="wallet"
-                  size={40}
+                  size={isXSScreen ? 32 : isSmallScreen ? 36 : 40}
                   color="#FFFFFF"
                 />
               </View>
-              <Text style={styles.headerTitle}>{t("ewallet.headerTitle")}</Text>
-              <Text style={styles.headerSubtitle}>{t("ewallet.headerSubtitle")}</Text>
+              <Text style={[styles.headerTitle, isXSScreen && styles.headerTitleXS]}>
+                {t("ewallet.headerTitle")}
+              </Text>
+              <Text style={[styles.headerSubtitle, isXSScreen && styles.headerSubtitleXS]}>
+                {t("ewallet.headerSubtitle")}
+              </Text>
             </LinearGradient>
           </View>
         </View>
 
         {/* Progress Stepper - 5 steps */}
-        <View style={styles.progressContainer}>
+        <View
+          style={[
+            styles.progressContainer,
+            isXSScreen && styles.progressContainerXS,
+            isSmallScreen && styles.progressContainerSmall,
+          ]}
+        >
           <View style={styles.stepRow}>
             {[1, 2, 3, 4, 5].map((step) => (
               <React.Fragment key={step}>
                 <View
                   style={[
                     styles.stepCircle,
+                    isXSScreen && styles.stepCircleXS,
                     currentStep === step && styles.stepCircleActive,
                   ]}
                 >
                   <Text
                     style={[
                       styles.stepNumber,
+                      isXSScreen && styles.stepNumberXS,
                       currentStep === step && styles.stepNumberActive,
                     ]}
                   >
                     {step}
                   </Text>
                 </View>
-                {step < 5 && <View style={styles.stepLine} />}
+                {step < 5 && (
+                  <View style={[styles.stepLine, isXSScreen && styles.stepLineXS]} />
+                )}
               </React.Fragment>
             ))}
           </View>
@@ -148,24 +170,29 @@ export default function EwalletService() {
             <View style={styles.stepIconWrapper}>
               <MaterialCommunityIcons
                 name="wallet-outline"
-                size={28}
+                size={isXSScreen ? 24 : 28}
                 color={THEME_COLOR}
               />
             </View>
-            <Text style={styles.contentTitle}>{t("ewallet.chooseProvider")}</Text>
-            <Text style={styles.contentDescription}>
+            <Text style={[styles.contentTitle, isXSScreen && styles.contentTitleXS]}>
+              {t("ewallet.chooseProvider")}
+            </Text>
+            <Text style={[styles.contentDescription, isXSScreen && styles.contentDescriptionXS]}>
               {t("ewallet.chooseProviderDesc")}
             </Text>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>{t("ewallet.selectEwalletType")}</Text>
+              <Text style={[styles.inputLabel, isXSScreen && styles.inputLabelXS]}>
+                {t("ewallet.selectEwalletType")}
+              </Text>
               <TouchableOpacity
-                style={styles.dropdown}
+                style={[styles.dropdown, isXSScreen && styles.dropdownXS]}
                 onPress={() => setShowProviderModal(true)}
               >
                 <Text
                   style={[
                     styles.dropdownText,
+                    isXSScreen && styles.dropdownTextXS,
                     !selectedProvider && styles.dropdownPlaceholder,
                   ]}
                 >
@@ -177,11 +204,11 @@ export default function EwalletService() {
           </View>
 
           {/* Info Box */}
-          <View style={styles.infoBox}>
+          <View style={[styles.infoBox, isXSScreen && styles.infoBoxXS]}>
             <View style={styles.infoIconCircle}>
               <Text style={styles.infoIconText}>i</Text>
             </View>
-            <Text style={styles.infoText}>
+            <Text style={[styles.infoText, isXSScreen && styles.infoTextXS]}>
               {t("ewallet.infoNote")}
             </Text>
           </View>
@@ -331,6 +358,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     alignItems: "center",
   },
+  headerGradientSmall: {
+    paddingVertical: 20,
+    paddingHorizontal: 16,
+  },
+  headerGradientXS: {
+    paddingVertical: 18,
+    paddingHorizontal: 14,
+  },
   headerIconWrapper: {
     width: 64,
     height: 64,
@@ -347,15 +382,28 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     textAlign: "center",
   },
+  headerTitleXS: {
+    fontSize: 17,
+  },
   headerSubtitle: {
     fontSize: 14,
     color: "rgba(255, 255, 255, 0.95)",
     fontWeight: "500",
   },
+  headerSubtitleXS: {
+    fontSize: 12,
+  },
   progressContainer: {
     paddingVertical: 16,
     paddingHorizontal: 24,
     backgroundColor: "#FFFFFF",
+  },
+  progressContainerSmall: {
+    paddingHorizontal: 16,
+  },
+  progressContainerXS: {
+    paddingHorizontal: 12,
+    paddingVertical: 12,
   },
   stepRow: {
     flexDirection: "row",
@@ -370,6 +418,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  stepCircleXS: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+  },
   stepCircleActive: {
     backgroundColor: "#9E9E9E",
     borderWidth: 2,
@@ -380,6 +433,9 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#9E9E9E",
   },
+  stepNumberXS: {
+    fontSize: 11,
+  },
   stepNumberActive: {
     color: "#FFFFFF",
   },
@@ -388,6 +444,10 @@ const styles = StyleSheet.create({
     height: 2,
     backgroundColor: "#E0E0E0",
     marginHorizontal: 4,
+  },
+  stepLineXS: {
+    width: 12,
+    marginHorizontal: 2,
   },
   scrollView: {
     flex: 1,
@@ -423,12 +483,20 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 12,
   },
+  contentTitleXS: {
+    fontSize: 16,
+  },
   contentDescription: {
     fontSize: 14,
     color: "#9E9E9E",
     lineHeight: 22,
     textAlign: "center",
     marginBottom: 24,
+  },
+  contentDescriptionXS: {
+    fontSize: 13,
+    lineHeight: 20,
+    marginBottom: 18,
   },
   inputGroup: {
     marginTop: 4,
@@ -438,6 +506,10 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#000000",
     marginBottom: 10,
+  },
+  inputLabelXS: {
+    fontSize: 13,
+    marginBottom: 8,
   },
   dropdown: {
     flexDirection: "row",
@@ -450,10 +522,17 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 16,
   },
+  dropdownXS: {
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+  },
   dropdownText: {
     fontSize: 16,
     color: "#000000",
     fontWeight: "500",
+  },
+  dropdownTextXS: {
+    fontSize: 14,
   },
   dropdownPlaceholder: {
     color: "#9E9E9E",
@@ -468,6 +547,9 @@ const styles = StyleSheet.create({
     marginTop: 16,
     borderWidth: 1,
     borderColor: "rgba(225, 88, 22, 0.35)",
+  },
+  infoBoxXS: {
+    padding: 12,
   },
   infoIconCircle: {
     width: 24,
@@ -488,6 +570,10 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: "#333333",
     lineHeight: 20,
+  },
+  infoTextXS: {
+    fontSize: 12,
+    lineHeight: 18,
   },
   bottomSpacing: {
     height: 20,

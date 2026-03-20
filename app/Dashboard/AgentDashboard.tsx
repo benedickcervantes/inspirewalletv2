@@ -369,7 +369,7 @@ export default function AgentDashboard() {
             <View style={{ flex: 1, justifyContent: "center", alignItems: "center", paddingTop: 80 }}>
               <ActivityIndicator size="large" color="#E25A17" />
               <Text style={{ marginTop: 16, fontSize: 15, color: "#6B7280" }}>
-                {t("agent.loading") || "Loading data..."}
+                {t("agent.loading")}
               </Text>
             </View>
           ) : (

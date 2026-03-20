@@ -819,6 +819,8 @@ const styles = StyleSheet.create({
     flex: 1,
     borderRadius: 14,
     overflow: "hidden",
+    borderWidth: 2,
+    borderColor: "transparent",
   },
   submitGradient: {
     paddingVertical: 16,

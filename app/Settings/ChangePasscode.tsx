@@ -230,8 +230,8 @@ export default function ChangePasscode() {
     const accessToken = await AsyncStorage.getItem("access_token");
     if (!accessToken) {
       showModal({
-        title: t("common.sessionExpired"),
-        message: t("common.pleaseLoginAgain"),
+        title: t("common.sessionExpiredTitle"),
+        message: t("common.sessionExpiredMessage"),
         onConfirm: () => (navigation as unknown as NavProp).replace("Login"),
       });
       return;
@@ -287,8 +287,8 @@ export default function ChangePasscode() {
     const accessToken = await AsyncStorage.getItem("access_token");
     if (!accessToken) {
       showModal({
-        title: t("common.sessionExpired"),
-        message: t("common.pleaseLoginAgain"),
+        title: t("common.sessionExpiredTitle"),
+        message: t("common.sessionExpiredMessage"),
         onConfirm: () => (navigation as unknown as NavProp).replace("Login"),
       });
       return;

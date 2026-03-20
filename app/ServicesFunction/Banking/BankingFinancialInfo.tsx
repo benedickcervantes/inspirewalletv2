@@ -14,6 +14,7 @@ import {
     Text,
     TextInput,
     TouchableOpacity,
+    useWindowDimensions,
     View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -59,6 +60,9 @@ export default function BankingFinancialInfo() {
   const route =
     useRoute<RouteProp<RootStackParamList, "BankingFinancialInfo">>();
   const { t } = useLanguage();
+  const { width } = useWindowDimensions();
+  const isXSScreen = width <= 320;
+  const isSmallScreen = width < 375;
   const selectedBank = route.params?.selectedBank ?? "UnionBank";
   const applicationData = route.params?.applicationData ?? {};
 
@@ -126,26 +130,36 @@ export default function BankingFinancialInfo() {
               style={styles.backButton}
               onPress={handleTopBackPress}
             >
-              <Ionicons name="arrow-back" size={28} color={THEME_COLOR} />
+              <Ionicons
+                name="arrow-back"
+                size={isXSScreen ? 24 : 28}
+                color={THEME_COLOR}
+              />
             </TouchableOpacity>
 
             <View style={styles.headerCard}>
               <LinearGradient
                 colors={ORANGE_GRADIENT}
-                style={styles.headerGradient}
+                style={[
+                  styles.headerGradient,
+                  isXSScreen && styles.headerGradientXS,
+                  isSmallScreen && styles.headerGradientSmall,
+                ]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 0, y: 1 }}
               >
                 <MaterialCommunityIcons
                   name="bank"
-                  size={40}
+                  size={isXSScreen ? 32 : isSmallScreen ? 36 : 40}
                   color="#FFFFFF"
                   style={styles.headerIcon}
                 />
-                <Text style={styles.headerTitle}>
+                <Text style={[styles.headerTitle, isXSScreen && styles.headerTitleXS]}>
                   {t("banking.headerTitle")}
                 </Text>
-                <Text style={styles.headerSubtitle}>
+                <Text
+                  style={[styles.headerSubtitle, isXSScreen && styles.headerSubtitleXS]}
+                >
                   {t("banking.headerSubtitle")}
                 </Text>
               </LinearGradient>
@@ -153,23 +167,35 @@ export default function BankingFinancialInfo() {
           </View>
 
           {/* Progress Stepper - Steps 1–4 complete (green), Step 5 active */}
-          <View style={styles.progressContainer}>
+          <View
+            style={[
+              styles.progressContainer,
+              isXSScreen && styles.progressContainerXS,
+              isSmallScreen && styles.progressContainerSmall,
+            ]}
+          >
             <View style={styles.stepRow}>
               {[1, 2, 3, 4, 5, 6].map((step) => (
                 <React.Fragment key={step}>
                   <View
                     style={[
                       styles.stepCircle,
+                      isXSScreen && styles.stepCircleXS,
                       step < currentStep && styles.stepCircleComplete,
                       step === currentStep && styles.stepCircleActive,
                     ]}
                   >
                     {step < currentStep ? (
-                      <Ionicons name="checkmark" size={16} color="#FFFFFF" />
+                      <Ionicons
+                        name="checkmark"
+                        size={isXSScreen ? 14 : 16}
+                        color="#FFFFFF"
+                      />
                     ) : (
                       <Text
                         style={[
                           styles.stepNumber,
+                          isXSScreen && styles.stepNumberXS,
                           step === currentStep && styles.stepNumberActive,
                         ]}
                       >
@@ -181,6 +207,7 @@ export default function BankingFinancialInfo() {
                     <View
                       style={[
                         styles.stepLine,
+                        isXSScreen && styles.stepLineXS,
                         step < currentStep && styles.stepLineComplete,
                       ]}
                     />
@@ -201,25 +228,28 @@ export default function BankingFinancialInfo() {
               <View style={styles.stepIconWrapper}>
                 <MaterialCommunityIcons
                   name="cash-multiple"
-                  size={28}
+                  size={isXSScreen ? 24 : 28}
                   color={THEME_COLOR}
                 />
               </View>
-              <Text style={styles.contentTitle}>
+              <Text style={[styles.contentTitle, isXSScreen && styles.contentTitleXS]}>
                 {t("banking.financialInfo")}
               </Text>
-              <Text style={styles.contentDescription}>
+              <Text
+                style={[styles.contentDescription, isXSScreen && styles.contentDescriptionXS]}
+              >
                 {t("banking.financialInfoDesc")}
               </Text>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>
+                <Text style={[styles.inputLabel, isXSScreen && styles.inputLabelXS]}>
                   {t("banking.sourceOfFund")}
                   <Text style={styles.required}>*</Text>
                 </Text>
                 <TouchableOpacity
                   style={[
                     styles.dropdown,
+                    isXSScreen && styles.dropdownXS,
                     errors.sourceOfFund && styles.inputError,
                   ]}
                   onPress={() => {
@@ -235,6 +265,7 @@ export default function BankingFinancialInfo() {
                   <Text
                     style={[
                       styles.dropdownText,
+                      isXSScreen && styles.dropdownTextXS,
                       !sourceOfFund && styles.dropdownPlaceholder,
                     ]}
                   >
@@ -250,15 +281,16 @@ export default function BankingFinancialInfo() {
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>
+                <Text style={[styles.inputLabel, isXSScreen && styles.inputLabelXS]}>
                   {t("banking.grossMonthlyIncome")}
                   <Text style={styles.required}>*</Text>
                 </Text>
-                <View style={styles.incomeRow}>
+                <View style={[styles.incomeRow, isXSScreen && styles.incomeRowXS]}>
                   <TouchableOpacity
                     style={[
                       styles.dropdown,
                       styles.currencyDropdown,
+                      isXSScreen && styles.dropdownXS,
                       errors.grossMonthlyIncomeCurrency && styles.inputError,
                     ]}
                     onPress={() => {
@@ -273,6 +305,7 @@ export default function BankingFinancialInfo() {
                     <Text
                       style={[
                         styles.dropdownText,
+                        isXSScreen && styles.dropdownTextXS,
                         !grossMonthlyIncomeCurrency &&
                           styles.dropdownPlaceholder,
                       ]}
@@ -287,6 +320,7 @@ export default function BankingFinancialInfo() {
                     <TextInput
                       style={[
                         styles.input,
+                        isXSScreen && styles.inputXS,
                         errors.grossMonthlyIncome && styles.inputError,
                       ]}
                       placeholder="0"
@@ -318,11 +352,13 @@ export default function BankingFinancialInfo() {
             </View>
 
             {/* Info Box */}
-            <View style={styles.infoBox}>
+            <View style={[styles.infoBox, isXSScreen && styles.infoBoxXS]}>
               <View style={styles.infoIconCircle}>
                 <Text style={styles.infoIconText}>i</Text>
               </View>
-              <Text style={styles.infoText}>{t("banking.infoNote")}</Text>
+              <Text style={[styles.infoText, isXSScreen && styles.infoTextXS]}>
+                {t("banking.infoNote")}
+              </Text>
             </View>
 
             <View style={styles.bottomSpacing} />
@@ -532,6 +568,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     alignItems: "center",
   },
+  headerGradientSmall: {
+    paddingVertical: 20,
+    paddingHorizontal: 16,
+  },
+  headerGradientXS: {
+    paddingVertical: 18,
+    paddingHorizontal: 14,
+  },
   headerIcon: {
     marginBottom: 12,
   },
@@ -542,15 +586,28 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     textAlign: "center",
   },
+  headerTitleXS: {
+    fontSize: 17,
+  },
   headerSubtitle: {
     fontSize: 14,
     color: "rgba(255, 255, 255, 0.95)",
     fontWeight: "500",
   },
+  headerSubtitleXS: {
+    fontSize: 12,
+  },
   progressContainer: {
     paddingVertical: 16,
     paddingHorizontal: 24,
     backgroundColor: "#FFFFFF",
+  },
+  progressContainerSmall: {
+    paddingHorizontal: 16,
+  },
+  progressContainerXS: {
+    paddingHorizontal: 12,
+    paddingVertical: 12,
   },
   stepRow: {
     flexDirection: "row",
@@ -567,6 +624,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  stepCircleXS: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+  },
   stepCircleComplete: {
     backgroundColor: GREEN_COMPLETE,
     borderColor: GREEN_COMPLETE,
@@ -580,6 +642,9 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#9E9E9E",
   },
+  stepNumberXS: {
+    fontSize: 11,
+  },
   stepNumberActive: {
     color: "#757575",
   },
@@ -588,6 +653,10 @@ const styles = StyleSheet.create({
     height: 2,
     backgroundColor: "#E0E0E0",
     marginHorizontal: 4,
+  },
+  stepLineXS: {
+    width: 12,
+    marginHorizontal: 2,
   },
   stepLineComplete: {
     backgroundColor: GREEN_COMPLETE,
@@ -626,12 +695,20 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 12,
   },
+  contentTitleXS: {
+    fontSize: 16,
+  },
   contentDescription: {
     fontSize: 14,
     color: "#9E9E9E",
     lineHeight: 22,
     textAlign: "center",
     marginBottom: 24,
+  },
+  contentDescriptionXS: {
+    fontSize: 13,
+    lineHeight: 20,
+    marginBottom: 18,
   },
   inputGroup: {
     marginBottom: 20,
@@ -641,6 +718,10 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#000000",
     marginBottom: 10,
+  },
+  inputLabelXS: {
+    fontSize: 13,
+    marginBottom: 8,
   },
   required: {
     color: THEME_COLOR,
@@ -657,6 +738,11 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     maxWidth: "100%",
   },
+  inputXS: {
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    fontSize: 14,
+  },
 
   dropdown: {
     flexDirection: "row",
@@ -669,10 +755,17 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 16,
   },
+  dropdownXS: {
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+  },
   dropdownText: {
     fontSize: 16,
     color: "#000000",
     fontWeight: "500",
+  },
+  dropdownTextXS: {
+    fontSize: 14,
   },
   dropdownPlaceholder: {
     color: "#9E9E9E",
@@ -691,6 +784,9 @@ const styles = StyleSheet.create({
   incomeRow: {
     flexDirection: "row",
     gap: 12,
+  },
+  incomeRowXS: {
+    gap: 8,
   },
   currencyDropdown: {
     flex: 0,
@@ -761,6 +857,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(225, 88, 22, 0.35)",
   },
+  infoBoxXS: {
+    padding: 12,
+  },
   infoIconCircle: {
     width: 24,
     height: 24,
@@ -780,6 +879,10 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: "#333333",
     lineHeight: 20,
+  },
+  infoTextXS: {
+    fontSize: 12,
+    lineHeight: 18,
   },
   bottomSpacing: {
     height: 20,
@@ -812,6 +915,8 @@ const styles = StyleSheet.create({
     flex: 1,
     borderRadius: 14,
     overflow: "hidden",
+    borderWidth: 2,
+    borderColor: "transparent",
   },
   nextGradient: {
     paddingVertical: 16,

@@ -43,6 +43,8 @@ const TRANSACTION_TYPE_KEYS: Record<string, string> = {
   STOCK_SELL: "tx.stockSell",
   PLAN_SUBSCRIPTION_PAYMENT: "tx.planSubscriptionPayment",
   PLAN_SUBSCRIPTION_CASHBACK: "tx.planSubscriptionCashback",
+  TRAVEL_PROTECTION: "tx.travelProtection",
+  TRAVEL_PROTECTION_FEE: "tx.travelProtection",
 };
 
 const SPENT_TYPES = [
@@ -54,6 +56,8 @@ const SPENT_TYPES = [
   "CARD_SUBSCRIPTION",
   "STOCK_BUY",
   "PLAN_SUBSCRIPTION_PAYMENT",
+  "TRAVEL_PROTECTION",
+  "TRAVEL_PROTECTION_FEE",
 ];
 const INCOME_TYPES = [
   "TOP_UP",
@@ -69,10 +73,27 @@ const INCOME_TYPES = [
 const TRANSACTION_DESCRIPTION_KEYS: Record<string, string> = {
   "Free Default Card": "history.freeDefaultCard",
   "Created Account": "history.createdAccount",
+  "Withdrawal Requested": "history.withdrawalRequested",
+  "Withdrawal Approved": "history.withdrawalApproved",
+  "Withdrawal Rejected": "history.withdrawalRejected",
+  "Stock Investment Requested": "history.stockInvestmentRequested",
+  "Stock Investment Approved": "history.stockInvestmentApproved",
+  "Stock Investment Rejected": "history.stockInvestmentRejected",
+  "Gold Elite monthly subscription renewal":
+    "history.goldEliteMonthlySubscriptionRenewal",
+  "Gold Elite monthly subscription (first month)":
+    "history.goldEliteMonthlySubscriptionFirstMonth",
   "Time deposit approved - request amount top-up":
     "history.timeDepositApprovedTopUp",
   "Time deposit approved – request amount top-up":
     "history.timeDepositApprovedTopUp",
+};
+
+const CARD_DESIGN_KEYS: Record<string, string> = {
+  ORANGE_ELITE: "ct.orangeElite",
+  ROYAL_CURVE: "ct.royalCurve",
+  DIAMOND_ELITE: "ct.diamondElite",
+  GOLD_ELITE: "ct.goldElite",
 };
 
 interface Transaction {
@@ -138,10 +159,33 @@ export default function HistoryScreen() {
   const getTransactionTypeLabel = (type?: string) => {
     if (!type) return t("tx.transaction");
     const key = TRANSACTION_TYPE_KEYS[type];
-    return key ? t(key) : type;
+    if (key) return t(key);
+    return type
+      .toLowerCase()
+      .split("_")
+      .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+      .join(" ");
   };
 
   const getTranslatedDescription = (description?: string) => {
+    const getTranslatedCardDesign = (designRaw?: string) => {
+      if (!designRaw) return "";
+      const normalizedDesign = designRaw
+        .trim()
+        .replace(/[-\s]+/g, "_")
+        .replace(/__+/g, "_")
+        .toUpperCase();
+      const designKey = CARD_DESIGN_KEYS[normalizedDesign];
+      if (designKey) return t(designKey);
+      return designRaw
+        .trim()
+        .replace(/[_-]+/g, " ")
+        .replace(/\s+/g, " ")
+        .split(" ")
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(" ");
+    };
+
     if (!description) return null;
 
     const normalized = description.trim();
@@ -202,6 +246,80 @@ export default function HistoryScreen() {
       return t("history.stockPurchasedListing", {
         listingId: stockPurchasedListingMatch[1].trim(),
       });
+    }
+
+    const stockInvestmentApprovedRequestMatch = normalized.match(
+      /^Stock\s+investment\s+approved:\s*request\s+(.+)$/i,
+    );
+    if (stockInvestmentApprovedRequestMatch?.[1]) {
+      return `${t("history.stockInvestmentApproved")}: ${stockInvestmentApprovedRequestMatch[1].trim()}`;
+    }
+
+    const topUpApprovedRequestMatch = normalized.match(
+      /^Top[- ]?up\s+approved:\s*request\s+(.+)$/i,
+    );
+    if (topUpApprovedRequestMatch?.[1]) {
+      return t("history.topUpApprovedRequest", {
+        requestId: topUpApprovedRequestMatch[1].trim(),
+      });
+    }
+
+    // Handle backend text variations for stock investment and withdrawal statuses.
+    if (
+      /stock\s*investment/i.test(normalized) &&
+      /\brequest(ed)?\b/i.test(normalized) &&
+      !/\bapproved\b/i.test(normalized) &&
+      !/\brejected\b/i.test(normalized)
+    ) {
+      return t("history.stockInvestmentRequested");
+    }
+    if (
+      /stock\s*investment/i.test(normalized) &&
+      /\bapproved\b/i.test(normalized)
+    ) {
+      return t("history.stockInvestmentApproved");
+    }
+    if (
+      /stock\s*investment/i.test(normalized) &&
+      /\brejected\b/i.test(normalized)
+    ) {
+      return t("history.stockInvestmentRejected");
+    }
+
+    if (
+      /\bwithdrawal\b/i.test(normalized) &&
+      /\brequest(ed)?\b/i.test(normalized) &&
+      !/\bapproved\b/i.test(normalized) &&
+      !/\brejected\b/i.test(normalized)
+    ) {
+      return t("history.withdrawalRequested");
+    }
+    if (
+      /\bwithdrawal\b/i.test(normalized) &&
+      /\bapproved\b/i.test(normalized)
+    ) {
+      return t("history.withdrawalApproved");
+    }
+    if (
+      /\bwithdrawal\b/i.test(normalized) &&
+      /\brejected\b/i.test(normalized)
+    ) {
+      return t("history.withdrawalRejected");
+    }
+
+    const cardPurchaseMatch = normalized.match(/^(.+)\s+card purchase$/i);
+    if (cardPurchaseMatch?.[1]) {
+      return t("history.cardPurchaseDesign", {
+        design: getTranslatedCardDesign(cardPurchaseMatch[1]),
+      });
+    }
+
+    const normalizedTypeToken = normalized
+      .replace(/[-\s]+/g, "_")
+      .replace(/__+/g, "_")
+      .toUpperCase();
+    if (TRANSACTION_TYPE_KEYS[normalizedTypeToken]) {
+      return getTransactionTypeLabel(normalizedTypeToken);
     }
 
     return null;

@@ -72,19 +72,9 @@ import { SocketProvider } from './context/SocketContext';
 import { UnreadNotificationsProvider } from './context/UnreadNotificationsContext';
 import type { RootStackParamList } from './types/navigation';
 
-import registerNNPushToken from 'native-notify';
-
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function App() {
-  const appId = process.env.EXPO_PUBLIC_NATIVE_NOTIFY_APP_ID;
-  const appToken = process.env.EXPO_PUBLIC_NATIVE_NOTIFY_APP_TOKEN;
-
-  // Initialize Native Notify Push Notifications
-  if (appId && appToken) {
-    registerNNPushToken(Number(appId), appToken);
-  }
-
   return (
     <LanguageProvider>
       <SocketProvider>

@@ -48,15 +48,15 @@ const USER_PREFERRED_LANGUAGE_KEY = "user_preferred_language";
 type AgentHierarchyRole = "master_agent" | "agent" | "consultant_agent";
 
 const AGENT_ROLE_LABELS: Record<AgentHierarchyRole, string> = {
-  master_agent: "Master Agent",
-  agent: "Agent",
-  consultant_agent: "Consultant Agent",
+  master_agent: "profile.masterAgent",
+  agent: "profile.agent",
+  consultant_agent: "profile.consultantAgent",
 };
 
 const AGENT_ROLE_BADGE_LABELS: Record<AgentHierarchyRole, string> = {
-  master_agent: "MASTER AGENT",
-  agent: "AGENT",
-  consultant_agent: "CONSULTANT AGENT",
+  master_agent: "profile.masterAgent",
+  agent: "profile.agent",
+  consultant_agent: "profile.consultantAgent",
 };
 
 const ROLE_BADGE_COLORS: Record<AgentHierarchyRole, string> = {
@@ -521,13 +521,13 @@ export default function Placeholder() {
   const resolvedAgentRole = isAgent ? (agentHierarchyRole ?? "agent") : null;
   const headerRoleLabel = resolvedAgentRole
     ? AGENT_ROLE_BADGE_LABELS[resolvedAgentRole]
-    : t("profile.investor").toUpperCase();
+    : "profile.investor";
   const headerRoleColor = resolvedAgentRole
     ? ROLE_BADGE_COLORS[resolvedAgentRole]
     : INVESTOR_ROLE_COLOR;
   const accountTypeLabel = resolvedAgentRole
     ? AGENT_ROLE_LABELS[resolvedAgentRole]
-    : t("profile.investor");
+    : "profile.investor";
   const accountTypeBadgeColor = resolvedAgentRole
     ? ROLE_BADGE_COLORS[resolvedAgentRole]
     : INVESTOR_ROLE_COLOR;
@@ -537,8 +537,7 @@ export default function Placeholder() {
   const companyName =
     companyKycView?.companyName ||
     rawCompanyNameFromUser ||
-    t("Tap to add company name") ||
-    "Tap to add company name";
+    t("profile.tapToAddCompanyName");
   const rawCompanyKycStatus: string | undefined =
     companyKycView?.status ??
     (userData?.companyKycStatus as string | undefined) ??
@@ -567,13 +566,14 @@ export default function Placeholder() {
   const contactNumber =
     userData?.phone ??
     userData?.phoneNumber ??
-    t("Tap to add phone number") ??
-    "Tap to add phone number";
+    t("profile.tapToAddPhoneNumber");
   const lineLink =
     userData?.lineAccountLink ?? userData?.lineLink ?? t("common.notProvided");
   const viberLink = userData?.viberLink || t("common.notProvided");
   const whatsappLink = userData?.whatsappLink || t("common.notProvided");
-  const accountLevelLabel = isKycVerified ? "VERIFIED" : "NOT VERIFIED";
+  const accountLevelLabel = isKycVerified
+    ? t("profile.verifiedStatus")
+    : t("profile.notVerifiedStatus");
   const referrerName =
     userData?.referrerName ??
     userData?.agentReferrer ??
@@ -704,7 +704,7 @@ export default function Placeholder() {
                   size={16}
                   color="#FFFFFF"
                 />
-                <Text style={styles.badgeText}>{headerRoleLabel}</Text>
+                <Text style={styles.badgeText}>{t(headerRoleLabel).toUpperCase()}</Text>
               </View>
             ) : (
               <View
@@ -901,13 +901,13 @@ export default function Placeholder() {
           <DetailItem
             icon="star-outline"
             label={t("profile.accountType")}
-            value={accountTypeLabel}
-            badge={accountTypeLabel}
+            value={t(accountTypeLabel)}
+            badge={t(accountTypeLabel)}
             badgeColor={accountTypeBadgeColor}
           />
           <DetailItem
             icon="trophy-outline"
-            label="KYC STATUS"
+            label={t("profile.kycStatus")}
             value={accountLevelLabel}
             badge={isKycVerified ? accountLevelLabel : undefined}
             badgeColor={isKycVerified ? "#10B981" : "#999"}
@@ -987,7 +987,7 @@ export default function Placeholder() {
         >
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Edit Name</Text>
+              <Text style={styles.modalTitle}>{t("profile.editName")}</Text>
               <TouchableOpacity
                 onPress={() => !saving && setShowNameModal(false)}
                 disabled={saving}
@@ -1000,44 +1000,44 @@ export default function Placeholder() {
               style={styles.modalScroll}
             >
               <View style={styles.modalBody}>
-                <Text style={styles.inputLabel}>First Name *</Text>
+                <Text style={styles.inputLabel}>{t("profile.firstNameRequired")}</Text>
                 <TextInput
                   style={styles.input}
                   value={editFirstName}
                   onChangeText={setEditFirstName}
-                  placeholder="First name"
+                  placeholder={t("profile.placeholderFirstName")}
                   placeholderTextColor="#999"
                   editable={!saving}
                   autoCapitalize="words"
                 />
-                <Text style={styles.inputLabel}>Last Name *</Text>
+                <Text style={styles.inputLabel}>{t("profile.lastNameRequired")}</Text>
                 <TextInput
                   style={styles.input}
                   value={editLastName}
                   onChangeText={setEditLastName}
-                  placeholder="Last name"
+                  placeholder={t("profile.placeholderLastName")}
                   placeholderTextColor="#999"
                   editable={!saving}
                   autoCapitalize="words"
                 />
-                <Text style={styles.inputLabel}>Middle Name (optional)</Text>
+                <Text style={styles.inputLabel}>{t("profile.middleNameOptional")}</Text>
                 <TextInput
                   style={styles.input}
                   value={editMiddleName}
                   onChangeText={setEditMiddleName}
-                  placeholder="Middle name"
+                  placeholder={t("profile.placeholderMiddleName")}
                   placeholderTextColor="#999"
                   editable={!saving}
                   autoCapitalize="words"
                 />
                 {hasPasscode && (
                   <>
-                    <Text style={styles.inputLabel}>Passcode *</Text>
+                    <Text style={styles.inputLabel}>{t("profile.passcodeRequiredField")}</Text>
                     <TextInput
                       style={styles.input}
                       value={passcode}
                       onChangeText={setPasscode}
-                      placeholder="4-digit passcode"
+                      placeholder={t("profile.placeholderPasscode")}
                       placeholderTextColor="#999"
                       keyboardType="number-pad"
                       maxLength={4}
@@ -1056,7 +1056,7 @@ export default function Placeholder() {
               {saving ? (
                 <ActivityIndicator color="#FFF" />
               ) : (
-                <Text style={styles.saveButtonText}>Save</Text>
+                <Text style={styles.saveButtonText}>{t("common.save")}</Text>
               )}
             </TouchableOpacity>
           </View>
@@ -1071,7 +1071,7 @@ export default function Placeholder() {
         >
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Edit Contact Number</Text>
+              <Text style={styles.modalTitle}>{t("profile.editContactNumber")}</Text>
               <TouchableOpacity
                 onPress={() => !saving && setShowPhoneModal(false)}
                 disabled={saving}
@@ -1080,27 +1080,27 @@ export default function Placeholder() {
               </TouchableOpacity>
             </View>
             <View style={styles.modalBody}>
-              <Text style={styles.inputLabel}>Contact Number *</Text>
+              <Text style={styles.inputLabel}>{t("profile.contactNumberRequired")}</Text>
               <Text style={styles.inputHint}>
-                Include country code (e.g., +1, +81, +82, +966, +63)
+                {t("profile.contactNumberHint")}
               </Text>
               <TextInput
                 style={styles.input}
                 value={editPhone}
                 onChangeText={setEditPhone}
-                placeholder="+1234567890"
+                placeholder={t("profile.placeholderPhoneNumber")}
                 placeholderTextColor="#999"
                 keyboardType="phone-pad"
                 editable={!saving}
               />
               {hasPasscode && (
                 <>
-                  <Text style={styles.inputLabel}>Passcode *</Text>
+                  <Text style={styles.inputLabel}>{t("profile.passcodeRequiredField")}</Text>
                   <TextInput
                     style={styles.input}
                     value={passcode}
                     onChangeText={setPasscode}
-                    placeholder="4-digit passcode"
+                    placeholder={t("profile.placeholderPasscode")}
                     placeholderTextColor="#999"
                     keyboardType="number-pad"
                     maxLength={4}
@@ -1118,7 +1118,7 @@ export default function Placeholder() {
               {saving ? (
                 <ActivityIndicator color="#FFF" />
               ) : (
-                <Text style={styles.saveButtonText}>Save</Text>
+                <Text style={styles.saveButtonText}>{t("common.save")}</Text>
               )}
             </TouchableOpacity>
           </View>
@@ -1133,7 +1133,7 @@ export default function Placeholder() {
         >
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Edit Contact Links</Text>
+              <Text style={styles.modalTitle}>{t("profile.editContactLinks")}</Text>
               <TouchableOpacity
                 onPress={() => !saving && setShowContactLinksModal(false)}
                 disabled={saving}
@@ -1147,7 +1147,7 @@ export default function Placeholder() {
               bounces={false}
             >
               <View style={styles.modalBody}>
-                <Text style={styles.inputLabel}>LINE Link</Text>
+                <Text style={styles.inputLabel}>{t("profile.lineLinkLabel")}</Text>
                 <TextInput
                   style={styles.input}
                   value={editLineLink}
@@ -1165,13 +1165,13 @@ export default function Placeholder() {
                 >
                   <Text style={styles.qrUploadButtonText}>
                     {isProcessingContactQR
-                      ? "Reading QR..."
-                      : "Upload LINE QR image"}
+                      ? t("profile.readingQr")
+                      : t("profile.uploadLineQr")}
                   </Text>
                 </TouchableOpacity>
 
                 <Text style={[styles.inputLabel, { marginTop: 12 }]}>
-                  Viber Link
+                  {t("profile.viberLinkLabel")}
                 </Text>
                 <TextInput
                   style={styles.input}
@@ -1190,13 +1190,13 @@ export default function Placeholder() {
                 >
                   <Text style={styles.qrUploadButtonText}>
                     {isProcessingContactQR
-                      ? "Reading QR..."
-                      : "Upload Viber QR image"}
+                      ? t("profile.readingQr")
+                      : t("profile.uploadViberQr")}
                   </Text>
                 </TouchableOpacity>
 
                 <Text style={[styles.inputLabel, { marginTop: 12 }]}>
-                  WhatsApp Link
+                  {t("profile.whatsappLinkLabel")}
                 </Text>
                 <TextInput
                   style={styles.input}
@@ -1215,26 +1215,25 @@ export default function Placeholder() {
                 >
                   <Text style={styles.qrUploadButtonText}>
                     {isProcessingContactQR
-                      ? "Reading QR..."
-                      : "Upload WhatsApp QR image"}
+                      ? t("profile.readingQr")
+                      : t("profile.uploadWhatsappQr")}
                   </Text>
                 </TouchableOpacity>
 
                 <Text style={[styles.inputHint, { marginTop: 10 }]}>
-                  You can paste links directly or upload a QR image from LINE,
-                  Viber, or WhatsApp to auto-fill.
+                  {t("profile.contactLinksHint")}
                 </Text>
 
                 {hasPasscode && (
                   <>
                     <Text style={[styles.inputLabel, { marginTop: 16 }]}>
-                      Passcode *
+                      {t("profile.passcodeRequiredField")}
                     </Text>
                     <TextInput
                       style={styles.input}
                       value={passcode}
                       onChangeText={setPasscode}
-                      placeholder="4-digit passcode"
+                      placeholder={t("profile.placeholderPasscode")}
                       placeholderTextColor="#999"
                       keyboardType="number-pad"
                       maxLength={4}
@@ -1256,7 +1255,7 @@ export default function Placeholder() {
               {saving ? (
                 <ActivityIndicator color="#FFF" />
               ) : (
-                <Text style={styles.saveButtonText}>Save</Text>
+                <Text style={styles.saveButtonText}>{t("common.save")}</Text>
               )}
             </TouchableOpacity>
           </View>
@@ -1361,15 +1360,15 @@ export default function Placeholder() {
               color="#10B981"
               style={{ marginBottom: 8 }}
             />
-            <Text style={styles.successTitle}>Success</Text>
+            <Text style={styles.successTitle}>{t("common.success")}</Text>
             <Text style={styles.successMessage}>
-              {successMessage ?? "Your profile has been updated."}
+              {successMessage ?? t("profile.updatedSuccess")}
             </Text>
             <TouchableOpacity
               style={styles.successButton}
               onPress={() => setShowSuccessModal(false)}
             >
-              <Text style={styles.successButtonText}>OK</Text>
+              <Text style={styles.successButtonText}>{t("common.ok")}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -1390,10 +1389,9 @@ export default function Placeholder() {
               color="#EF4444"
               style={{ marginBottom: 8 }}
             />
-            <Text style={styles.successTitle}>Company KYC Rejected</Text>
+            <Text style={styles.successTitle}>{t("profile.companyKycRejectedTitle")}</Text>
             <Text style={styles.successMessage}>
-              Your submitted company documents were rejected. Please review your
-              information and upload your company requirements again.
+              {t("profile.companyKycRejectedMessage")}
             </Text>
             <TouchableOpacity
               style={styles.successButton}
@@ -1402,7 +1400,7 @@ export default function Placeholder() {
                 openCompanyModal();
               }}
             >
-              <Text style={styles.successButtonText}>OK</Text>
+              <Text style={styles.successButtonText}>{t("common.ok")}</Text>
             </TouchableOpacity>
           </View>
         </View>

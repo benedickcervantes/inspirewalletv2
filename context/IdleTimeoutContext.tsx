@@ -11,6 +11,7 @@ import {
   Animated,
   AppState,
   AppStateStatus,
+  useWindowDimensions,
   Modal,
   StyleSheet,
   Text,
@@ -18,6 +19,7 @@ import {
   TouchableWithoutFeedback,
   View,
 } from "react-native";
+import { useLanguage } from "./LanguageContext";
 import { navigationRef } from "../lib/navigationRef";
 
 const INACTIVITY_LIMIT_MS = 5 * 60 * 1000; // 5 minutes
@@ -40,6 +42,9 @@ const IdleTimeoutContext = createContext<IdleTimeoutContextValue | null>(null);
 export const IdleTimeoutProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
+  const { t } = useLanguage();
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+  const isSmallScreen = screenWidth <= 375 || screenHeight <= 667;
   const lastActivityRef = useRef<number>(Date.now());
   const appStateRef = useRef<AppStateStatus>(AppState.currentState);
   const hasLoggedOutRef = useRef(false);
@@ -343,22 +348,32 @@ export const IdleTimeoutProvider: React.FC<{ children: React.ReactNode }> = ({
       >
         <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}>
           <Animated.View
-            style={[styles.modalBox, { transform: [{ scale: scaleAnim }] }]}
+            style={[
+              styles.modalBox,
+              {
+                width: Math.min(screenWidth - 32, 340),
+                maxHeight: Math.floor(screenHeight * 0.8),
+                paddingVertical: isSmallScreen ? 20 : 28,
+                paddingHorizontal: isSmallScreen ? 18 : 28,
+                transform: [{ scale: scaleAnim }],
+              },
+            ]}
           >
             <View style={styles.iconWrap}>
               <Text style={styles.iconText}>⏰</Text>
             </View>
-            <Text style={styles.title}>Session Expired</Text>
-            <Text style={styles.message}>
-              You have been automatically logged out due to inactivity. Please
-              log in again to continue.
+            <Text style={[styles.title, isSmallScreen && styles.titleSmall]}>
+              {t("common.sessionExpiredTitle")}
+            </Text>
+            <Text style={[styles.message, isSmallScreen && styles.messageSmall]}>
+              {t("common.sessionExpiredMessage")}
             </Text>
             <TouchableOpacity
-              style={styles.button}
+              style={[styles.button, isSmallScreen && styles.buttonSmall]}
               onPress={handleModalDismiss}
               activeOpacity={0.8}
             >
-              <Text style={styles.buttonText}>OK</Text>
+              <Text style={styles.buttonText}>{t("common.ok")}</Text>
             </TouchableOpacity>
           </Animated.View>
         </Animated.View>
@@ -383,7 +398,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     paddingVertical: 28,
     paddingHorizontal: 28,
-    width: "100%",
     maxWidth: 340,
     alignItems: "center",
   },
@@ -413,6 +427,15 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     lineHeight: 22,
   },
+  titleSmall: {
+    fontSize: 18,
+    marginBottom: 8,
+  },
+  messageSmall: {
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 18,
+  },
   button: {
     backgroundColor: THEME_COLOR,
     paddingVertical: 14,
@@ -420,6 +443,11 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     minWidth: 140,
     alignItems: "center",
+  },
+  buttonSmall: {
+    minWidth: 120,
+    paddingVertical: 12,
+    paddingHorizontal: 36,
   },
   buttonText: {
     color: WHITE,

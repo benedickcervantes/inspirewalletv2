@@ -340,8 +340,8 @@ export default function Passcode() {
       if (!accessToken) {
         setResetLoading(false);
         showModal({
-          title: t('common.sessionExpired'),
-          message: t('common.pleaseLoginAgain'),
+          title: t('common.sessionExpiredTitle'),
+          message: t('common.sessionExpiredMessage'),
           onConfirm: () => {
             closeResetModal();
             (navigation as unknown as NavProp).replace('Login');
