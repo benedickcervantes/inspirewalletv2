@@ -30,6 +30,7 @@ import { formatAmountWithCommas, unformatNumberString } from "../../utils/number
 const THEME_COLOR = "#E15816";
 const ORANGE_GRADIENT = ["#E25A17", "#F28934"] as const;
 const GREEN_UPLOADED = "#10B981";
+const PERSONAL_KYC_PENDING_KEY = "personal_kyc_pending";
 
 const GENDER_OPTIONS = ["Male", "Female", "Other"];
 const NATIONALITY_OPTIONS = ["Filipino", "Dual Citizen", "Foreign National", "Other"];
@@ -290,6 +291,7 @@ export default function KYCVerification() {
         return;
       }
 
+      await AsyncStorage.setItem(PERSONAL_KYC_PENDING_KEY, "1");
       setShowSuccessModal(true);
     } catch (error) {
       console.error("[KYC] submit error", error);

@@ -1,15 +1,18 @@
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import * as Clipboard from "expo-clipboard";
 import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useState } from "react";
 import {
     ActivityIndicator,
+    Platform,
     RefreshControl,
     ScrollView,
     Share,
     StyleSheet,
     Text,
+    ToastAndroid,
     TouchableOpacity,
     useWindowDimensions,
     View,
@@ -93,6 +96,8 @@ export default function AgentDashboard() {
   const [detailSectionView, setDetailSectionView] =
     useState<DetailSectionView>("earned");
   const [error, setError] = useState<string | null>(null);
+  const [copySuccess, setCopySuccess] = useState(false);
+  const showInlineCopyBanner = copySuccess && Platform.OS === "ios";
 
   const formatCurrency = (amount: number) =>
     amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -322,6 +327,16 @@ export default function AgentDashboard() {
     );
   };
 
+  const handleCopyReferralCode = useCallback(async () => {
+    if (!referralCode) return;
+    await Clipboard.setStringAsync(referralCode);
+    setCopySuccess(true);
+    setTimeout(() => setCopySuccess(false), 1500);
+    if (Platform.OS === "android") {
+      ToastAndroid.show(t("settings.copySuccess"), ToastAndroid.SHORT);
+    }
+  }, [referralCode, t]);
+
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
@@ -342,16 +357,22 @@ export default function AgentDashboard() {
           </Text>
           <TouchableOpacity
             style={styles.refreshButton}
-            onPress={onRefresh}
-            disabled={refreshing}
+            onPress={handleCopyReferralCode}
+            disabled={!referralCode}
           >
-            {refreshing ? (
-              <ActivityIndicator size="small" color="#FFFFFF" />
-            ) : (
-              <Ionicons name="refresh" size={isXSScreen ? 22 : 24} color="#FFFFFF" />
-            )}
+            <Ionicons
+              name={copySuccess ? "checkmark-outline" : "copy-outline"}
+              size={isXSScreen ? 22 : 24}
+              color={referralCode ? "#FFFFFF" : "rgba(255,255,255,0.6)"}
+            />
           </TouchableOpacity>
         </LinearGradient>
+        {showInlineCopyBanner && (
+          <View style={styles.copyBanner}>
+            <Ionicons name="checkmark-circle" size={16} color="#FFFFFF" />
+            <Text style={styles.copyBannerText}>{t("settings.copySuccess")}</Text>
+          </View>
+        )}
 
         <ScrollView
           style={styles.scrollView}
@@ -779,6 +800,19 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 18, fontWeight: "700", color: "#FFFFFF", flex: 1, textAlign: "center" },
   headerTitleCompact: { fontSize: 16 },
   refreshButton: { padding: 12, minWidth: 44, minHeight: 44, justifyContent: "center" },
+  copyBanner: {
+    alignSelf: "center",
+    marginTop: 8,
+    marginBottom: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+    backgroundColor: "#111827",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  copyBannerText: { color: "#FFFFFF", fontSize: 12, fontWeight: "600" },
   scrollView: { flex: 1 },
   scrollContent: { paddingBottom: 32 },
   errorBanner: {

@@ -5,7 +5,7 @@ import { useNavigation } from "@react-navigation/native";
 import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system/legacy";
 import { LinearGradient } from "expo-linear-gradient";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Alert,
   Modal,
@@ -87,6 +87,9 @@ export default function KYCcompany() {
   const [existingCompanyName, setExistingCompanyName] = useState<string | null>(
     null,
   );
+  const [inlineBannerMessage, setInlineBannerMessage] = useState("");
+  const [showInlineBanner, setShowInlineBanner] = useState(false);
+  const bannerTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const fetchStatus = async () => {
@@ -119,6 +122,34 @@ export default function KYCcompany() {
 
     void fetchStatus();
   }, []);
+
+  useEffect(() => {
+    return () => {
+      if (bannerTimeoutRef.current) {
+        clearTimeout(bannerTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const triggerInlineBanner = (message: string) => {
+    if (Platform.OS !== "ios") return;
+    if (bannerTimeoutRef.current) {
+      clearTimeout(bannerTimeoutRef.current);
+    }
+    setInlineBannerMessage(message);
+    setShowInlineBanner(true);
+    bannerTimeoutRef.current = setTimeout(() => {
+      setShowInlineBanner(false);
+    }, 2200);
+  };
+
+  const handleToggleEdit = () => {
+    const nextEditing = !isEditing;
+    setIsEditing(nextEditing);
+    triggerInlineBanner(
+      nextEditing ? "Edit mode enabled for business requirements." : "Edit mode saved.",
+    );
+  };
 
   const pickDocument = async (
     setUri: (uri: string | null) => void,
@@ -371,6 +402,12 @@ export default function KYCcompany() {
             </View>
           )}
         </LinearGradient>
+        {showInlineBanner && (
+          <View style={styles.inlineBanner}>
+            <Ionicons name="checkmark-circle" size={16} color="#FFFFFF" />
+            <Text style={styles.inlineBannerText}>{inlineBannerMessage}</Text>
+          </View>
+        )}
 
         <ScrollView
           style={styles.scrollView}
@@ -419,7 +456,7 @@ export default function KYCcompany() {
               </Text>
               <TouchableOpacity
                 style={styles.editButton}
-                onPress={() => setIsEditing((prev) => !prev)}
+                onPress={handleToggleEdit}
                 activeOpacity={0.7}
                 disabled={isLocked}
               >
@@ -438,10 +475,20 @@ export default function KYCcompany() {
             {docs.map((doc, index) => (
               <View key={doc.label}>
                 {index > 0 && <View style={styles.docRowDivider} />}
+                {/*
+                  Edit mode controls replacement of already uploaded files.
+                  New uploads remain allowed even when edit mode is off.
+                */}
+                {(() => {
+                  const canPickDocument = !isLocked && (isEditing || !doc.uri);
+                  return (
                 <TouchableOpacity
-                  style={styles.docRow}
+                  style={[
+                    styles.docRow,
+                    !canPickDocument && styles.docRowDisabled,
+                  ]}
                   onPress={
-                    isLocked
+                    !canPickDocument
                       ? undefined
                       : () =>
                           pickDocument(
@@ -451,8 +498,8 @@ export default function KYCcompany() {
                             doc.label,
                           )
                   }
-                  activeOpacity={isLocked ? 1 : 0.7}
-                  disabled={isLocked}
+                  activeOpacity={canPickDocument ? 0.7 : 1}
+                  disabled={!canPickDocument}
                 >
                   <View
                     style={[
@@ -485,6 +532,8 @@ export default function KYCcompany() {
                     </View>
                   )}
                 </TouchableOpacity>
+                  );
+                })()}
               </View>
             ))}
           </View>
@@ -620,6 +669,24 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#FFFFFF",
   },
+  inlineBanner: {
+    marginHorizontal: 16,
+    marginTop: 10,
+    marginBottom: 6,
+    backgroundColor: "#111827",
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  inlineBannerText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "500",
+    flex: 1,
+  },
   readonlyInput: {
     backgroundColor: "#E5E7EB",
   },
@@ -704,6 +771,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 14,
     gap: 12,
+  },
+  docRowDisabled: {
+    opacity: 0.65,
   },
   docIconCircle: {
     width: 44,

@@ -27,6 +27,7 @@ import {
   getActiveAnnouncements,
   getCompanyKycStatus,
   getMe,
+  getPersonalKycStatus,
   getNotifications,
   getOrCreateMainWallet,
   getReferralTree,
@@ -270,10 +271,13 @@ export default function Dashboard() {
   const timeDepositPollRef = useRef<ReturnType<typeof setInterval> | null>(
     null,
   );
+  const kycPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const refetchInFlightRef = useRef(false);
   const lastRefetchAtRef = useRef(0);
   const timeDepositInFlightRef = useRef(false);
   const lastTimeDepositSyncAtRef = useRef(0);
+  const kycInFlightRef = useRef(false);
+  const lastKycSyncAtRef = useRef(0);
   const isUserScrollingRef = useRef(false);
   const lastScrollAtRef = useRef(0);
   const [currentLanguageIndex, setCurrentLanguageIndex] = useState(0);
@@ -721,6 +725,47 @@ export default function Dashboard() {
     }
   }, []);
 
+  /** Fast KYC-only sync so lock/unlock updates almost instantly. */
+  const syncKycStatusOnly = useCallback(async () => {
+    const now = Date.now();
+    if (kycInFlightRef.current) return;
+    if (now - lastKycSyncAtRef.current < 1200) return;
+    kycInFlightRef.current = true;
+    lastKycSyncAtRef.current = now;
+
+    try {
+      const accessToken = await AsyncStorage.getItem("access_token");
+      if (!accessToken) return;
+
+      const [meRes, personalKycRes] = await Promise.all([
+        getMe(accessToken),
+        getPersonalKycStatus(accessToken).catch(() => null),
+      ]);
+
+      if (meRes.success && meRes.user) {
+        const meUser = meRes.user as Record<string, unknown>;
+        const personalStatus =
+          personalKycRes && personalKycRes.success && personalKycRes.data
+            ? String(
+                (personalKycRes.data as { status?: string }).status ?? "",
+              ).toUpperCase()
+            : undefined;
+
+        setUserData((prev) =>
+          prev
+            ? {
+                ...prev,
+                kycAccountStatus: meUser.kycAccountStatus,
+                ...(personalStatus ? { kycStatus: personalStatus } : {}),
+              }
+            : prev,
+        );
+      }
+    } finally {
+      kycInFlightRef.current = false;
+    }
+  }, []);
+
   const { getSocket, isConnected: isSocketConnected } = useSocket();
 
   useEffect(() => {
@@ -754,10 +799,26 @@ export default function Dashboard() {
       }, 15000);
     };
 
+    const startKycPolling = () => {
+      if (kycPollRef.current) return;
+      void syncKycStatusOnly();
+      kycPollRef.current = setInterval(() => {
+        if (shouldDeferPolling()) return;
+        void syncKycStatusOnly();
+      }, 2000);
+    };
+
     const stopTimeDepositPolling = () => {
       if (timeDepositPollRef.current) {
         clearInterval(timeDepositPollRef.current);
         timeDepositPollRef.current = null;
+      }
+    };
+
+    const stopKycPolling = () => {
+      if (kycPollRef.current) {
+        clearInterval(kycPollRef.current);
+        kycPollRef.current = null;
       }
     };
 
@@ -766,6 +827,8 @@ export default function Dashboard() {
     startPolling();
     // Light TD-only poll so unlock reflects sooner without waiting for full dashboard refetch.
     startTimeDepositPolling();
+    // Fast KYC-only poll so blocked features unlock quickly after admin approval.
+    startKycPolling();
 
     setConnectionStatus(isSocketConnected);
     const socket = getSocket();
@@ -798,19 +861,29 @@ export default function Dashboard() {
     return () => {
       stopPolling();
       stopTimeDepositPolling();
+      stopKycPolling();
       if (socket && isSocketConnected) {
         socket.off("WALLET_UPDATE", handleWalletUpdate);
         socket.off("TRANSACTION_CREATED", handleTransactionCreated);
       }
     };
-  }, [isSocketConnected, getSocket, refetchJwtData, syncTimeDepositsOnly]);
+  }, [
+    isSocketConnected,
+    getSocket,
+    refetchJwtData,
+    syncTimeDepositsOnly,
+    syncKycStatusOnly,
+  ]);
 
   useEffect(() => {
     const sub = AppState.addEventListener("change", (state) => {
-      if (state === "active") void syncTimeDepositsOnly();
+      if (state === "active") {
+        void syncTimeDepositsOnly();
+        void syncKycStatusOnly();
+      }
     });
     return () => sub.remove();
-  }, [syncTimeDepositsOnly]);
+  }, [syncTimeDepositsOnly, syncKycStatusOnly]);
 
   // Refresh time deposits when user returns to Wallet tab (same screen — focus effect may not run).
   useEffect(() => {
