@@ -25,6 +25,7 @@ import {
 } from "react-native-safe-area-context";
 import {
   getActiveAnnouncements,
+  getCompanyKycStatus,
   getMe,
   getNotifications,
   getOrCreateMainWallet,
@@ -370,6 +371,20 @@ export default function Dashboard() {
         }
       }
       const meRes = await getMe(accessToken);
+      const companyKycRes = await getCompanyKycStatus(accessToken).catch(
+        () => null,
+      );
+      const companyKycData =
+        companyKycRes && companyKycRes.success && companyKycRes.data
+          ? (companyKycRes.data as { status?: string; companyName?: string })
+          : null;
+      const approvedCompanyNameFromKyc =
+        companyKycData &&
+        ["approved", "verified"].includes(
+          String(companyKycData.status ?? "").toLowerCase(),
+        )
+          ? companyKycData.companyName
+          : undefined;
       if (meRes.success && meRes.user) {
         user = {
           ...(user ?? {}),
@@ -380,6 +395,7 @@ export default function Dashboard() {
         setUserData({
           firstName: user.firstName,
           lastName: user.lastName,
+          companyName: approvedCompanyNameFromKyc || user.companyName,
           email: user.email,
           accountNumber: user.accountNumber,
           role: (user as Record<string, unknown>).role ?? 'USER',
@@ -578,7 +594,7 @@ export default function Dashboard() {
     // Prioritize balance update first so wallet amount appears quickly.
     const w = await syncAvailableBalanceOnly();
 
-    const [meRes, tdRes, treeRes, txRes, notifRes] = await Promise.all([
+    const [meRes, tdRes, treeRes, txRes, notifRes, companyKycRes] = await Promise.all([
       getMe(accessToken),
       getTimeDeposits(accessToken),
       getReferralTree(accessToken),
@@ -587,13 +603,26 @@ export default function Dashboard() {
         limit: 20,
       }),
       getNotifications(accessToken, { limit: 50 }),
+      getCompanyKycStatus(accessToken).catch(() => null),
     ]);
 
     if (meRes.success && meRes.user) {
       const user = meRes.user as Record<string, unknown>;
+      const companyKycData =
+        companyKycRes && companyKycRes.success && companyKycRes.data
+          ? (companyKycRes.data as { status?: string; companyName?: string })
+          : null;
+      const approvedCompanyNameFromKyc =
+        companyKycData &&
+        ["approved", "verified"].includes(
+          String(companyKycData.status ?? "").toLowerCase(),
+        )
+          ? companyKycData.companyName
+          : undefined;
       setUserData({
         firstName: user.firstName,
         lastName: user.lastName,
+        companyName: approvedCompanyNameFromKyc || user.companyName,
         email: user.email,
         accountNumber: user.accountNumber,
         role: (user as Record<string, unknown>).role ?? "USER",

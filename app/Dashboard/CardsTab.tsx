@@ -32,6 +32,7 @@ interface CardsTabProps {
   userData: {
     firstName?: string;
     lastName?: string;
+    companyName?: string;
     accountNumber?: string;
   } | null;
   availableBalance: number;
@@ -486,6 +487,21 @@ export default function CardsTab({
                       .join(" ")
                       .toUpperCase() || t("ct.placeholderName")}
                   </Text>
+                  {userData?.companyName ? (
+                    <Text
+                      style={[
+                        styles.cardCompanyName,
+                        {
+                          color: theme.secondaryText,
+                          fontSize: Math.round(11 * fontScale),
+                        },
+                      ]}
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
+                    >
+                      {String(userData.companyName).toUpperCase()}
+                    </Text>
+                  ) : null}
                   <Text
                     style={[
                       styles.cardBalanceLabel,
@@ -1805,6 +1821,13 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#FFFFFF",
     marginBottom: 4,
+  },
+  cardCompanyName: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#D9D9D9",
+    marginBottom: 4,
+    letterSpacing: 0.3,
   },
   cardBalanceLabel: {
     fontSize: 11,

@@ -114,7 +114,7 @@ const en: TranslationMap = {
     "Default is English. Choose your preferred language.",
   "profile.premium": "Premium",
   "profile.consultantAgent": "Consultant Agent",
-  "profile.tapToAddCompanyName": "Tap to add company name",
+  "profile.tapToAddCompanyName": "Not Verified Company Name",
   "profile.tapToAddPhoneNumber": "Tap to add phone number",
   "profile.verifiedStatus": "VERIFIED",
   "profile.notVerifiedStatus": "NOT VERIFIED",
@@ -147,6 +147,7 @@ const en: TranslationMap = {
   "profile.companyKycRejectedTitle": "Company KYC Rejected",
   "profile.companyKycRejectedMessage":
     "Your submitted company documents were rejected. Please review your information and upload your company requirements again.",
+  "profile.resubmit": "Resubmit",
 
   // KYC Verification
   "kyc.title": "KYC Verification",
@@ -229,10 +230,11 @@ const en: TranslationMap = {
   // Company KYC
   "kycCompany.title": "Company Verification",
   "kycCompany.verified": "Verified",
+  "kycCompany.pending": "Pending",
   "kycCompany.rejected": "Rejected",
   "kycCompany.unverified": "Unverified",
   "kycCompany.companyNameLabel": "Company Name",
-  "kycCompany.placeholderCompanyName": "Sample Company",
+  "kycCompany.placeholderCompanyName": "Registered Company Name",
   "kycCompany.businessRequirements": "Business Requirements",
   "kycCompany.done": "Done",
   "kycCompany.edit": "Edit",
@@ -1993,7 +1995,7 @@ const ko: TranslationMap = {
   "profile.defaultIsEnglish": "기본값은 영어입니다. 원하는 언어를 선택하세요.",
   "profile.premium": "프리미엄",
   "profile.consultantAgent": "컨설턴트 에이전트",
-  "profile.tapToAddCompanyName": "회사명을 추가하려면 탭하세요",
+  "profile.tapToAddCompanyName": "미인증 회사명",
   "profile.tapToAddPhoneNumber": "전화번호를 추가하려면 탭하세요",
   "profile.verifiedStatus": "인증됨",
   "profile.notVerifiedStatus": "미인증",
@@ -2026,6 +2028,7 @@ const ko: TranslationMap = {
   "profile.companyKycRejectedTitle": "회사 KYC 반려",
   "profile.companyKycRejectedMessage":
     "제출한 회사 서류가 반려되었습니다. 정보를 다시 확인하고 회사 요건 서류를 다시 업로드해 주세요.",
+  "profile.resubmit": "재제출",
   "kyc.title": "KYC 인증",
   "kyc.personalDetails": "개인 정보",
   "kyc.personalDetailsDesc": "개인 정보를 입력해 주세요",
@@ -2103,10 +2106,11 @@ const ko: TranslationMap = {
   // Company KYC
   "kycCompany.title": "기업 인증",
   "kycCompany.verified": "인증됨",
+  "kycCompany.pending": "대기 중",
   "kycCompany.rejected": "거절됨",
   "kycCompany.unverified": "미인증",
   "kycCompany.companyNameLabel": "회사명",
-  "kycCompany.placeholderCompanyName": "샘플 회사",
+  "kycCompany.placeholderCompanyName": "등록된 회사명",
   "kycCompany.businessRequirements": "사업 요건",
   "kycCompany.done": "완료",
   "kycCompany.edit": "편집",
@@ -3741,7 +3745,7 @@ const ja: TranslationMap = {
     "デフォルトは英語です。希望の言語を選択してください。",
   "profile.premium": "プレミアム",
   "profile.consultantAgent": "コンサルタントエージェント",
-  "profile.tapToAddCompanyName": "会社名を追加するにはタップ",
+  "profile.tapToAddCompanyName": "未認証の会社名",
   "profile.tapToAddPhoneNumber": "電話番号を追加するにはタップ",
   "profile.verifiedStatus": "認証済み",
   "profile.notVerifiedStatus": "未認証",
@@ -3774,6 +3778,7 @@ const ja: TranslationMap = {
   "profile.companyKycRejectedTitle": "法人KYC却下",
   "profile.companyKycRejectedMessage":
     "提出した法人書類が却下されました。情報を見直し、法人要件書類を再アップロードしてください。",
+  "profile.resubmit": "再提出",
   "kyc.title": "KYC本人確認",
   "kyc.personalDetails": "個人情報",
   "kyc.personalDetailsDesc": "個人情報をご記入ください",
@@ -3846,10 +3851,11 @@ const ja: TranslationMap = {
   // Company KYC
   "kycCompany.title": "企業認証",
   "kycCompany.verified": "認証済み",
+  "kycCompany.pending": "保留中",
   "kycCompany.rejected": "却下",
   "kycCompany.unverified": "未認証",
   "kycCompany.companyNameLabel": "会社名",
-  "kycCompany.placeholderCompanyName": "サンプル会社",
+  "kycCompany.placeholderCompanyName": "登録済み会社名",
   "kycCompany.businessRequirements": "事業要件",
   "kycCompany.done": "完了",
   "kycCompany.edit": "編集",
@@ -4210,7 +4216,7 @@ const ja: TranslationMap = {
   "help.validationCategory": "カテゴリを選択してください。",
   "help.validationConcern": "お問い合わせ内容を入力してください。",
   "help.validationError": "入力エラー",
-  "common.ok": "OK",
+  "common.ok": "確認",
   "delete.title": "アカウント削除",
   "delete.confirmTitle": "本当にアカウントを削除しますか？",
   "delete.confirmSubtitle":
@@ -5488,7 +5494,7 @@ const ar: TranslationMap = {
   "profile.defaultIsEnglish": "الافتراضي هو الإنجليزية. اختر لغتك المفضلة.",
   "profile.premium": "بريميوم",
   "profile.consultantAgent": "وكيل استشاري",
-  "profile.tapToAddCompanyName": "اضغط لإضافة اسم الشركة",
+  "profile.tapToAddCompanyName": "اسم شركة غير موثّق",
   "profile.tapToAddPhoneNumber": "اضغط لإضافة رقم الهاتف",
   "profile.verifiedStatus": "موثق",
   "profile.notVerifiedStatus": "غير موثق",
@@ -5521,6 +5527,7 @@ const ar: TranslationMap = {
   "profile.companyKycRejectedTitle": "تم رفض KYC الشركة",
   "profile.companyKycRejectedMessage":
     "تم رفض مستندات الشركة التي أرسلتها. يرجى مراجعة معلوماتك ورفع متطلبات الشركة مرة أخرى.",
+  "profile.resubmit": "إعادة الإرسال",
   "common.sessionExpired": "انتهت الجلسة",
   "common.sessionExpiredTitle": "انتهت الجلسة",
   "common.sessionExpiredMessage":
@@ -5598,10 +5605,11 @@ const ar: TranslationMap = {
   // Company KYC
   "kycCompany.title": "التحقق من الشركة",
   "kycCompany.verified": "موثق",
+  "kycCompany.pending": "قيد المراجعة",
   "kycCompany.rejected": "مرفوض",
   "kycCompany.unverified": "غير موثق",
   "kycCompany.companyNameLabel": "اسم الشركة",
-  "kycCompany.placeholderCompanyName": "شركة نموذجية",
+  "kycCompany.placeholderCompanyName": "الاسم التجاري المسجل",
   "kycCompany.businessRequirements": "متطلبات العمل",
   "kycCompany.done": "تم",
   "kycCompany.edit": "تعديل",
