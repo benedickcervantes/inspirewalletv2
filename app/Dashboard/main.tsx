@@ -269,6 +269,12 @@ export default function Dashboard() {
   const timeDepositPollRef = useRef<ReturnType<typeof setInterval> | null>(
     null,
   );
+  const refetchInFlightRef = useRef(false);
+  const lastRefetchAtRef = useRef(0);
+  const timeDepositInFlightRef = useRef(false);
+  const lastTimeDepositSyncAtRef = useRef(0);
+  const isUserScrollingRef = useRef(false);
+  const lastScrollAtRef = useRef(0);
   const [currentLanguageIndex, setCurrentLanguageIndex] = useState(0);
   const { unreadCount: unreadNotifications, setUnreadCount: setUnreadNotifications } =
     useUnreadNotifications();
@@ -559,6 +565,14 @@ export default function Dashboard() {
   }, []);
 
   const refetchJwtData = useCallback(async () => {
+    const now = Date.now();
+    if (refetchInFlightRef.current) return;
+    // Prevent burst calls from intervals + focus + socket events.
+    if (now - lastRefetchAtRef.current < 3000) return;
+    refetchInFlightRef.current = true;
+    lastRefetchAtRef.current = now;
+
+    try {
     const accessToken = await AsyncStorage.getItem("access_token");
     if (!accessToken) return;
     // Prioritize balance update first so wallet amount appears quickly.
@@ -649,10 +663,20 @@ export default function Dashboard() {
       ).length;
       setUnreadNotifications(unreadCount);
     }
+    } finally {
+      refetchInFlightRef.current = false;
+    }
   }, [syncAvailableBalanceOnly]);
 
   /** Lightweight sync so Banking/E-Wallet unlock updates without opening Investment tab. */
   const syncTimeDepositsOnly = useCallback(async () => {
+    const now = Date.now();
+    if (timeDepositInFlightRef.current) return;
+    if (now - lastTimeDepositSyncAtRef.current < 2500) return;
+    timeDepositInFlightRef.current = true;
+    lastTimeDepositSyncAtRef.current = now;
+
+    try {
     const accessToken = await AsyncStorage.getItem("access_token");
     if (!accessToken) return;
     const tdRes = await getTimeDeposits(accessToken);
@@ -663,15 +687,26 @@ export default function Dashboard() {
     } else if (!tdRes.success && __DEV__) {
       console.warn("[Dashboard] syncTimeDepositsOnly failed:", tdRes.error);
     }
+    } finally {
+      timeDepositInFlightRef.current = false;
+    }
   }, []);
 
   const { getSocket, isConnected: isSocketConnected } = useSocket();
 
   useEffect(() => {
+    const shouldDeferPolling = () => {
+      const now = Date.now();
+      return isUserScrollingRef.current || now - lastScrollAtRef.current < 1500;
+    };
+
     const startPolling = () => {
       if (pollIntervalRef.current) return;
-      refetchJwtData();
-      pollIntervalRef.current = setInterval(refetchJwtData, 10000);
+      void refetchJwtData();
+      pollIntervalRef.current = setInterval(() => {
+        if (shouldDeferPolling()) return;
+        void refetchJwtData();
+      }, 20000);
     };
 
     const stopPolling = () => {
@@ -684,7 +719,10 @@ export default function Dashboard() {
     const startTimeDepositPolling = () => {
       if (timeDepositPollRef.current) return;
       void syncTimeDepositsOnly();
-      timeDepositPollRef.current = setInterval(syncTimeDepositsOnly, 5000);
+      timeDepositPollRef.current = setInterval(() => {
+        if (shouldDeferPolling()) return;
+        void syncTimeDepositsOnly();
+      }, 15000);
     };
 
     const stopTimeDepositPolling = () => {
@@ -714,13 +752,13 @@ export default function Dashboard() {
         const bal = parseFloat(String(payload.balance));
         setAvailableBalance(Number.isNaN(bal) ? 0 : bal);
         void syncTimeDepositsOnly();
-        refetchJwtData();
+        void refetchJwtData();
       }
     };
 
     const handleTransactionCreated = () => {
       void syncTimeDepositsOnly();
-      refetchJwtData();
+      void refetchJwtData();
     };
 
     if (socket && isSocketConnected) {
@@ -1158,7 +1196,25 @@ export default function Dashboard() {
           </View>
         </View>
 
-        <ScrollView showsVerticalScrollIndicator={false}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          onScrollBeginDrag={() => {
+            isUserScrollingRef.current = true;
+            lastScrollAtRef.current = Date.now();
+          }}
+          onScrollEndDrag={() => {
+            isUserScrollingRef.current = false;
+            lastScrollAtRef.current = Date.now();
+          }}
+          onMomentumScrollBegin={() => {
+            isUserScrollingRef.current = true;
+            lastScrollAtRef.current = Date.now();
+          }}
+          onMomentumScrollEnd={() => {
+            isUserScrollingRef.current = false;
+            lastScrollAtRef.current = Date.now();
+          }}
+        >
           <View
             style={[
               styles.tabs,
