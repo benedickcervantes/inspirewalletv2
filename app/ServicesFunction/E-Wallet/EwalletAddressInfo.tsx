@@ -36,11 +36,21 @@ export default function EwalletAddressInfo() {
 
   const [completeAddress, setCompleteAddress] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [showExitConfirmModal, setShowExitConfirmModal] = useState(false);
 
   const currentStep = 4;
 
   const handleBack = () => {
     navigation.goBack();
+  };
+
+  const handleTopBackPress = () => {
+    setShowExitConfirmModal(true);
+  };
+
+  const handleConfirmExit = () => {
+    setShowExitConfirmModal(false);
+    navigation.navigate("Main");
   };
 
   const handleNext = () => {
