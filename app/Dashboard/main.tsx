@@ -1057,7 +1057,7 @@ export default function Dashboard() {
       route: "PlayEarn",
     },
     {
-      icon: "card-account-details-outline",
+      icon: "credit-card",
       labelText: "P-Card",
       route: "PCard",
     },
