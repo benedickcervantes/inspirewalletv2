@@ -117,15 +117,6 @@ export default function TimeDepositConfirm() {
   };
 
   const handleConfirm = async () => {
-    if (
-      depositMethod !== "Available Balance" &&
-      depositMethod !== "available_balance" &&
-      !proofUri
-    ) {
-      setErrorMessage(t("deposit.uploadProofRequired"));
-      return;
-    }
-    
     setLoading(true);
     setErrorMessage(null);
     try {
@@ -294,7 +285,7 @@ export default function TimeDepositConfirm() {
             {depositMethod !== "Available Balance" && depositMethod !== "available_balance" && (
               <View style={[styles.detailItem, { marginTop: 12 }]}>
                 <Text style={styles.detailLabel}>
-                  {t("deposit.proofOfPayment")}
+                  {t("deposit.proofOfPayment")} {t("deposit.optional")}
                 </Text>
                 <TouchableOpacity
                   style={styles.uploadButton}
@@ -324,7 +315,7 @@ export default function TimeDepositConfirm() {
                         {t("deposit.uploadProofOfPayment")}
                       </Text>
                       <Text style={styles.uploadSubtext}>
-                        {t("deposit.acceptedFormats")}
+                        {t("deposit.acceptedFormatsMax")}
                       </Text>
                     </View>
                   )}
