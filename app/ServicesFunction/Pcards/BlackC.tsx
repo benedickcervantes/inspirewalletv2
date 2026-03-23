@@ -306,7 +306,6 @@ export default function BlackC() {
                     <Animated.View
                       style={[
                         styles.cardFace,
-                        styles.frontFace,
                         {
                           transform: [{ perspective: 1300 }, { rotateY: frontRotateY }],
                         },
@@ -603,11 +602,8 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     backfaceVisibility: "hidden",
   },
-  frontFace: {
-    backgroundColor: "#FFFFFF",
-  },
   backFace: {
-    backgroundColor: "#0F172A",
+    backgroundColor: "#000000",
     borderWidth: 2.6,
   },
   cardImage: {
@@ -620,7 +616,6 @@ const styles = StyleSheet.create({
   },
   edgeMask: {
     ...StyleSheet.absoluteFillObject,
-    borderWidth: 6,
     borderColor: "#000000",
     borderRadius: 22,
   },

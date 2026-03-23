@@ -1058,7 +1058,7 @@ export default function Dashboard() {
     },
     {
       icon: "credit-card",
-      labelText: "P-Card",
+      labelText: "Inspire Card",
       route: "PCard",
     },
   ];
