@@ -30,15 +30,16 @@ import { useLanguage } from "../../../context/LanguageContext";
 
 const THEME_COLOR = "#E15816";
 const STOCK_HEADER_GRADIENT = ["#E25A17", "#F28934"] as const;
-const AUTO_ROTATE_DELAY_MS = 5000;
+const AUTO_ROTATE_DELAY_MS = 2000;
 /** One full 360° spin in milliseconds — lower = faster (e.g. 4000 = 4s per rotation) */
 const GLOBE_SPIN_DURATION_MS = 6000;
 const GOLD_ACCENT = "#C9A227";
 const MODAL_SCROLL_MAX_H = Math.round(Dimensions.get("window").height * 0.72);
+const FRONT_CARD_IMAGE_CROP_SCALE = 1;
+const BACK_CARD_IMAGE_CROP_SCALE = 1;
 
-// Replace with your own assets when ready.
-const FRONT_CARD_IMAGE: ImageSourcePropType | null = null;
-const BACK_CARD_IMAGE: ImageSourcePropType | null = null;
+const FRONT_CARD_IMAGE: ImageSourcePropType = require("../../../assets/cards/p-cards/Pcard-front.png");
+const BACK_CARD_IMAGE: ImageSourcePropType = require("../../../assets/cards/p-cards/Pcard-back.png");
 
 export default function BlackC() {
   const { t } = useLanguage();
@@ -54,19 +55,16 @@ export default function BlackC() {
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const globeLoopRef = useRef<Animated.CompositeAnimation | null>(null);
 
-  const rotateYFront = flipAnim.interpolate({
-    inputRange: [0, 180],
-    outputRange: ["0deg", "180deg"],
+  const totalRotate = Animated.add(flipAnim, globeAnim);
+  const frontRotateY = totalRotate.interpolate({
+    inputRange: [0, 540],
+    outputRange: ["0deg", "540deg"],
+    extrapolate: "extend",
   });
-
-  const rotateYBack = flipAnim.interpolate({
-    inputRange: [0, 180],
-    outputRange: ["180deg", "360deg"],
-  });
-
-  const globeRotateY = globeAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ["0deg", "360deg"],
+  const backRotateY = totalRotate.interpolate({
+    inputRange: [0, 540],
+    outputRange: ["180deg", "720deg"],
+    extrapolate: "extend",
   });
 
   const stopGlobeSpin = useCallback(() => {
@@ -85,7 +83,7 @@ export default function BlackC() {
     globeAnim.setValue(0);
     globeLoopRef.current = Animated.loop(
       Animated.timing(globeAnim, {
-        toValue: 1,
+        toValue: 360,
         duration: GLOBE_SPIN_DURATION_MS,
         easing: Easing.linear,
         useNativeDriver: true,
@@ -284,63 +282,72 @@ export default function BlackC() {
                 style={[
                   styles.globeSpinWrap,
                   {
-                    transform: [{ perspective: 1400 }, { rotateY: globeRotateY }],
+                    transform: [{ perspective: 1400 }],
                   },
                 ]}
               >
                 <View style={styles.cardStack}>
-                  <Animated.View
-                    style={[
-                      styles.cardFace,
-                      styles.frontFace,
-                      {
-                        transform: [{ perspective: 1300 }, { rotateY: rotateYFront }],
-                      },
-                    ]}
-                  >
-                    {FRONT_CARD_IMAGE ? (
-                      <Image
-                        source={FRONT_CARD_IMAGE}
-                        style={styles.cardImage}
-                        resizeMode="cover"
-                      />
-                    ) : (
-                      <View style={styles.imagePlaceholder}>
-                        <Ionicons name="image-outline" size={36} color="#A3A3A3" />
-                        <Text style={styles.placeholderTitle}>Front Card Image</Text>
-                        <Text style={styles.placeholderSubtext}>
-                          Set FRONT_CARD_IMAGE in this file
-                        </Text>
-                      </View>
-                    )}
-                  </Animated.View>
+                    <Animated.View
+                      style={[
+                        styles.cardFace,
+                        styles.frontFace,
+                        {
+                          transform: [{ perspective: 1300 }, { rotateY: frontRotateY }],
+                        },
+                      ]}
+                    >
+                      {FRONT_CARD_IMAGE ? (
+                        <Image
+                          source={FRONT_CARD_IMAGE}
+                          style={[
+                            styles.cardImageCropped,
+                            { transform: [{ scale: FRONT_CARD_IMAGE_CROP_SCALE }] },
+                          ]}
+                          resizeMode="cover"
+                        />
+                      ) : (
+                        <View style={styles.imagePlaceholder}>
+                          <Ionicons name="image-outline" size={36} color="#A3A3A3" />
+                          <Text style={styles.placeholderTitle}>Front Card Image</Text>
+                          <Text style={styles.placeholderSubtext}>
+                            Set FRONT_CARD_IMAGE in this file
+                          </Text>
+                        </View>
+                      )}
+                    </Animated.View>
 
-                  <Animated.View
-                    style={[
-                      styles.cardFace,
-                      styles.backFace,
-                      {
-                        transform: [{ perspective: 1300 }, { rotateY: rotateYBack }],
-                      },
-                    ]}
-                  >
-                    {BACK_CARD_IMAGE ? (
-                      <Image
-                        source={BACK_CARD_IMAGE}
-                        style={styles.cardImage}
-                        resizeMode="cover"
-                      />
-                    ) : (
-                      <View style={styles.imagePlaceholder}>
-                        <Ionicons name="image-outline" size={36} color="#A3A3A3" />
-                        <Text style={styles.placeholderTitle}>Back Card Image</Text>
-                        <Text style={styles.placeholderSubtext}>
-                          Set BACK_CARD_IMAGE in this file
-                        </Text>
-                      </View>
-                    )}
-                  </Animated.View>
-                </View>
+                    <Animated.View
+                      style={[
+                        styles.cardFace,
+                        styles.backFace,
+                        {
+                          transform: [{ perspective: 1300 }, { rotateY: backRotateY }],
+                        },
+                      ]}
+                    >
+                      {BACK_CARD_IMAGE ? (
+                        <>
+                          <Image
+                            source={BACK_CARD_IMAGE}
+                            style={[
+                              styles.cardImageCropped,
+                              { transform: [{ scale: BACK_CARD_IMAGE_CROP_SCALE }] },
+                            ]}
+                            resizeMode="cover"
+                          />
+                          <View pointerEvents="none" style={styles.edgeMask} />
+                        </>
+                      ) : (
+                        <View style={styles.imagePlaceholder}>
+                          <Ionicons name="image-outline" size={36} color="#A3A3A3" />
+                          <Text style={styles.placeholderTitle}>Back Card Image</Text>
+                          <Text style={styles.placeholderSubtext}>
+                            Set BACK_CARD_IMAGE in this file
+                          </Text>
+                        </View>
+                      )}
+                    </Animated.View>
+                  </View>
               </Animated.View>
             </Pressable>
           </View>
@@ -564,8 +571,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   cardStack: {
-    width: 320,
-    height: 205,
+    width: 350,
+    height: 224,
     maxWidth: "100%",
   },
   cardFace: {
@@ -574,8 +581,6 @@ const styles = StyleSheet.create({
     height: "100%",
     borderRadius: 22,
     overflow: "hidden",
-    borderWidth: 2,
-    borderColor: "#AAB4C4",
     backfaceVisibility: "hidden",
   },
   frontFace: {
@@ -583,10 +588,21 @@ const styles = StyleSheet.create({
   },
   backFace: {
     backgroundColor: "#0F172A",
+    borderWidth: 2.6,
   },
   cardImage: {
     width: "100%",
     height: "100%",
+  },
+  cardImageCropped: {
+    width: "100%",
+    height: "100%",
+  },
+  edgeMask: {
+    ...StyleSheet.absoluteFillObject,
+    borderWidth: 6,
+    borderColor: "#000000",
+    borderRadius: 22,
   },
   imagePlaceholder: {
     flex: 1,
