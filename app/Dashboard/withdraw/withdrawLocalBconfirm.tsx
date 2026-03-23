@@ -52,6 +52,8 @@ export default function WithdrawLocalBConfirm() {
   const branchName = params?.branchName || "";
   const amount = params?.amount || "0";
   const email = params?.email || "";
+  const isUnionBank = bankName.trim().toUpperCase() === "UNIONBANK";
+  const transactionFee = isUnionBank ? 0 : 25;
 
   React.useEffect(() => {
     (async () => {
@@ -281,6 +283,25 @@ export default function WithdrawLocalBConfirm() {
               <View style={styles.detailContent}>
                 <Text style={styles.detailLabel}>{t("withdraw.email")}</Text>
                 <Text style={styles.detailValue}>{email}</Text>
+              </View>
+            </View>
+
+            {/* Transaction Fee */}
+            <View style={styles.detailRow}>
+              <View style={styles.leftBorder} />
+              <View style={styles.detailContent}>
+                <Text style={styles.detailLabel}>Transaction Fee</Text>
+                <Text
+                  style={[
+                    styles.detailValue,
+                    styles.transactionFeeValue,
+                    transactionFee === 0
+                      ? styles.transactionFeeFree
+                      : styles.transactionFeePaid,
+                  ]}
+                >
+                  {transactionFee === 0 ? "Free" : "PHP 25"}
+                </Text>
               </View>
             </View>
           </View>
@@ -575,6 +596,15 @@ const styles = StyleSheet.create({
   detailValue: {
     fontSize: 13,
     color: "#999",
+  },
+  transactionFeeValue: {
+    fontWeight: "700",
+  },
+  transactionFeeFree: {
+    color: "#10B981",
+  },
+  transactionFeePaid: {
+    color: "#FF3B30",
   },
   amountCard: {
     backgroundColor: "#E25A17",

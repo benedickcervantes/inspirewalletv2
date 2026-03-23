@@ -5,6 +5,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { doc, getDoc } from "firebase/firestore";
 import { useCallback, useEffect, useState } from "react";
 import {
+    Image,
     KeyboardAvoidingView,
     Platform,
     ScrollView,
@@ -57,13 +58,15 @@ export default function EWalletWithdrawal() {
       id: "gcash",
       name: "GCash",
       icon: "cellphone" as const,
-      useImage: false,
+      useImage: true,
+      image: require("../../../assets/images/gcashlogo.png"),
     },
     {
       id: "maya",
       name: "Maya",
       icon: "wallet" as const,
-      useImage: false,
+      useImage: true,
+      image: require("../../../assets/images/maya2.0.png"),
     },
   ];
 
@@ -255,11 +258,23 @@ export default function EWalletWithdrawal() {
                     activeOpacity={0.7}
                   >
                     <View style={styles.walletIconBox}>
-                      <MaterialCommunityIcons
-                        name={wallet.icon}
-                        size={32}
-                        color="#E25A17"
-                      />
+                      {wallet.useImage && wallet.image ? (
+                        <Image
+                          source={wallet.image}
+                          style={
+                            wallet.id === "maya"
+                              ? styles.walletIconMaya
+                              : styles.walletIcon
+                          }
+                          resizeMode="contain"
+                        />
+                      ) : (
+                        <MaterialCommunityIcons
+                          name={wallet.icon}
+                          size={32}
+                          color="#E25A17"
+                        />
+                      )}
                     </View>
                     <Text style={styles.walletName}>{wallet.name}</Text>
                   </TouchableOpacity>
@@ -379,6 +394,9 @@ export default function EWalletWithdrawal() {
               {errors.withdrawalAmount && (
                 <Text style={styles.errorText}>{errors.withdrawalAmount}</Text>
               )}
+              <Text style={styles.feeNoteText}>
+                E-wallet transactions have a ₱25 transaction fee.
+              </Text>
             </View>
 
             {/* Email Address */}
@@ -631,6 +649,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 4,
     marginLeft: 0,
+  },
+  feeNoteText: {
+    marginTop: 8,
+    fontSize: 12,
+    color: "#FF3B30",
   },
   amountInputContainer: {
     flexDirection: "row",

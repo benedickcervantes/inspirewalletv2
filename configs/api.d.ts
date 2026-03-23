@@ -345,6 +345,16 @@ export function submitTravelProtection(
   body: Record<string, unknown>,
 ): Promise<{ success: boolean; data?: unknown; error?: string }>;
 
+export function submitPhysicalCardRequest(
+  accessToken: string,
+  body: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+  },
+): Promise<{ success: boolean; data?: unknown; error?: string }>;
+
 // Card Collection API
 export interface CardCatalogItem {
   design: string;
