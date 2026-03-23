@@ -27,9 +27,9 @@ import {
   getActiveAnnouncements,
   getCompanyKycStatus,
   getMe,
-  getPersonalKycStatus,
   getNotifications,
   getOrCreateMainWallet,
+  getPersonalKycStatus,
   getReferralTree,
   getTimeDeposits,
   getTransactions,
@@ -441,7 +441,11 @@ export default function Dashboard() {
       setDeposits([]);
       setUnreadNotifications(0);
 
-      const { success, wallet } = await getOrCreateMainWallet(accessToken);
+      const [walletRes, tdRes] = await Promise.all([
+        getOrCreateMainWallet(accessToken),
+        getTimeDeposits(accessToken),
+      ]);
+      const { success, wallet } = walletRes;
       const w = wallet as RawApiWallet | undefined;
       mainWalletIdRef.current = w?.id ?? null;
       if (success && w?.balance != null) {
@@ -450,10 +454,17 @@ export default function Dashboard() {
       }
       setIsBalanceLoading(false);
 
+      if (tdRes.success && Array.isArray(tdRes.deposits)) {
+        const list = tdRes.deposits as TimeDeposit[];
+        setDeposits(list);
+        setTimeDeposit(computeTimeDepositTotal(list));
+      } else if (!tdRes.success && __DEV__) {
+        console.warn("[Dashboard] getTimeDeposits failed:", tdRes.error);
+      }
+
       const walletId = w?.id;
-      const [tdRes, treeRes, txRes, status, notifRes, hasChosen, annRes] =
+      const [treeRes, txRes, status, notifRes, hasChosen, annRes] =
         await Promise.all([
-          getTimeDeposits(accessToken),
           getReferralTree(accessToken),
           getTransactions(accessToken, { walletId, limit: 20 }),
           getMaintenanceStatus(),
@@ -465,14 +476,6 @@ export default function Dashboard() {
           ),
           getActiveAnnouncements(accessToken),
         ]);
-
-      if (tdRes.success && Array.isArray(tdRes.deposits)) {
-        const list = tdRes.deposits as TimeDeposit[];
-        setDeposits(list);
-        setTimeDeposit(computeTimeDepositTotal(list));
-      } else if (!tdRes.success && __DEV__) {
-        console.warn("[Dashboard] getTimeDeposits failed:", tdRes.error);
-      }
 
       if (treeRes.success && treeRes.tree) {
         const tree = treeRes.tree as {
@@ -595,20 +598,18 @@ export default function Dashboard() {
     try {
     const accessToken = await AsyncStorage.getItem("access_token");
     if (!accessToken) return;
-    // Prioritize balance update first so wallet amount appears quickly.
-    const w = await syncAvailableBalanceOnly();
-
-    const [meRes, tdRes, treeRes, txRes, notifRes, companyKycRes] = await Promise.all([
+    const [w, meRes, tdRes, treeRes, notifRes, companyKycRes] = await Promise.all([
+      syncAvailableBalanceOnly(),
       getMe(accessToken),
       getTimeDeposits(accessToken),
       getReferralTree(accessToken),
-      getTransactions(accessToken, {
-        walletId: w?.id ?? mainWalletIdRef.current ?? undefined,
-        limit: 20,
-      }),
       getNotifications(accessToken, { limit: 50 }),
       getCompanyKycStatus(accessToken).catch(() => null),
     ]);
+    const txRes = await getTransactions(accessToken, {
+      walletId: w?.id ?? mainWalletIdRef.current ?? undefined,
+      limit: 20,
+    });
 
     if (meRes.success && meRes.user) {
       const user = meRes.user as Record<string, unknown>;
@@ -1036,7 +1037,12 @@ export default function Dashboard() {
     setIsCardFlipped(!isCardFlipped);
   };
 
-  const menuItems = [
+  const menuItems: Array<{
+    icon: React.ComponentProps<typeof MaterialCommunityIcons>["name"];
+    labelKey?: string;
+    labelText?: string;
+    route: string;
+  }> = [
     {
       icon: "wallet-outline",
       labelKey: "dashboard.eWallet",
@@ -1049,6 +1055,11 @@ export default function Dashboard() {
       icon: "chart-areaspline",
       labelKey: "dashboard.trading",
       route: "PlayEarn",
+    },
+    {
+      icon: "card-account-details-outline",
+      labelText: "P-Card",
+      route: "PCard",
     },
   ];
 
@@ -1642,6 +1653,7 @@ export default function Dashboard() {
                     Stockholder: "stock",
                     AgentRequest: "agent",
                     PlayEarn: "trading",
+                    PCard: "pcard",
                   };
                   const serviceId =
                     routeToServiceMap[item.route] || item.route.toLowerCase();
@@ -1684,7 +1696,9 @@ export default function Dashboard() {
                             setShowKycLockedModal(true);
                             return;
                           }
-                          setSelectedMaintenanceService(item.labelKey);
+                          if (item.labelKey) {
+                            setSelectedMaintenanceService(item.labelKey);
+                          }
                         } else {
                           (
                             navigation as { navigate: (name: string) => void }
@@ -1726,7 +1740,7 @@ export default function Dashboard() {
                           isBlocked && styles.menuLabelDisabled,
                         ]}
                       >
-                        {t(item.labelKey)}
+                        {item.labelKey ? t(item.labelKey) : item.labelText}
                       </Text>
                     </TouchableOpacity>
                   );
