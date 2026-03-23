@@ -6,6 +6,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { useCallback, useEffect, useState } from "react";
 import {
     KeyboardAvoidingView,
+    Modal,
     Platform,
     ScrollView,
     StyleSheet,
@@ -42,12 +43,26 @@ const formatBankAccountNumber = (digits: string) =>
 const capitalizeWords = (text: string) =>
   text.replace(/\b\w/g, (char) => char.toUpperCase());
 
+const OTHER_BANK_OPTION = "Others";
+
+const BANK_OPTIONS = [
+  "UnionBank",
+  "BDO",
+  "BPI",
+  "SECURITY BANK",
+  "METROBANK",
+  OTHER_BANK_OPTION,
+];
+
 export default function BankWithdrawal() {
   const navigation = useNavigation();
   const { t } = useLanguage();
   const [accountNumber, setAccountNumber] = useState("");
   const [accountHolderName, setAccountHolderName] = useState("");
   const [bankName, setBankName] = useState("");
+  const [selectedBank, setSelectedBank] = useState("");
+  const [isOtherBank, setIsOtherBank] = useState(false);
+  const [showBankOptionsModal, setShowBankOptionsModal] = useState(false);
   const [branchName, setBranchName] = useState("");
   const [withdrawalAmount, setWithdrawalAmount] = useState("");
   const [emailAddress, setEmailAddress] = useState("");
@@ -56,6 +71,18 @@ export default function BankWithdrawal() {
     null,
   );
   const [availableBalance, setAvailableBalance] = useState(0);
+  const normalizedBankName = bankName.trim().toUpperCase();
+  const hasSelectedBank = normalizedBankName.length > 0;
+  const isUnionBank = normalizedBankName === "UNIONBANK";
+
+  const clearBankNameError = () => {
+    if (errors.bankName) {
+      setErrors((prev) => {
+        const { bankName, ...rest } = prev;
+        return rest;
+      });
+    }
+  };
 
   const fetchUserData = useCallback(async () => {
     if (!auth || !firestore) return;
@@ -233,21 +260,75 @@ export default function BankWithdrawal() {
               {/* Bank Name */}
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>{t("withdraw.bankName")}</Text>
-                <TextInput
-                  style={[styles.input, errors.bankName && styles.inputError]}
-                  placeholder={t("withdraw.placeholder.bankName")}
-                  placeholderTextColor="#CCC"
-                  value={bankName}
-                  onChangeText={(text) => {
-                    setBankName(capitalizeWords(text));
-                    if (errors.bankName) {
-                      setErrors((prev) => {
-                        const { bankName, ...rest } = prev;
-                        return rest;
-                      });
+                {!isOtherBank ? (
+                  <TouchableOpacity
+                    style={[
+                      styles.dropdownSelector,
+                      errors.bankName && styles.inputError,
+                    ]}
+                    onPress={() => {
+                      setShowBankOptionsModal(true);
+                      clearBankNameError();
+                    }}
+                  >
+                    <Text
+                      style={[
+                        styles.dropdownText,
+                        !selectedBank && styles.dropdownPlaceholder,
+                      ]}
+                    >
+                      {selectedBank || t("withdraw.placeholder.bankName")}
+                    </Text>
+                    <Ionicons name="chevron-down" size={18} color="#999" />
+                  </TouchableOpacity>
+                ) : (
+                  <TextInput
+                    style={[styles.input, errors.bankName && styles.inputError]}
+                    placeholder={t("withdraw.placeholder.bankName")}
+                    placeholderTextColor="#CCC"
+                    value={bankName}
+                    onChangeText={(text) => {
+                      setBankName(capitalizeWords(text));
+                      clearBankNameError();
+                    }}
+                  />
+                )}
+
+                <TouchableOpacity
+                  style={styles.checkboxRow}
+                  onPress={() => {
+                    const nextIsOther = !isOtherBank;
+                    setIsOtherBank(nextIsOther);
+                    setShowBankOptionsModal(false);
+                    if (nextIsOther) {
+                      setSelectedBank("");
+                      setBankName("");
+                    } else {
+                      setBankName("");
                     }
+                    clearBankNameError();
                   }}
-                />
+                >
+                  <Ionicons
+                    name={isOtherBank ? "checkbox" : "square-outline"}
+                    size={20}
+                    color={isOtherBank ? "#E25A17" : "#999"}
+                  />
+                  <Text style={styles.checkboxLabel}>Others</Text>
+                </TouchableOpacity>
+
+                {hasSelectedBank && (
+                  <Text
+                    style={[
+                      styles.processingFeeNote,
+                      isUnionBank ? styles.freeFeeText : styles.paidFeeText,
+                    ]}
+                  >
+                    {isUnionBank
+                      ? "UnionBank transaction is free."
+                      : "A processing fee of PHP 25 applies for this bank."}
+                  </Text>
+                )}
 
                 {errors.bankName && (
                   <Text style={styles.errorText}>{errors.bankName}</Text>
@@ -351,6 +432,13 @@ export default function BankWithdrawal() {
                 <Text style={styles.cardSubtitle}>
                   {t("withdraw.detailsSubtitle")}
                 </Text>
+                {hasSelectedBank && (
+                  <Text style={styles.detailsFeeText}>
+                    {isUnionBank
+                      ? "Transaction fee: Free"
+                      : "Transaction fee: PHP 25"}
+                  </Text>
+                )}
               </View>
 
               {/* Withdrawal Amount */}
@@ -452,6 +540,47 @@ export default function BankWithdrawal() {
 
             <View style={styles.bottomPadding} />
           </ScrollView>
+
+          <Modal
+            visible={showBankOptionsModal}
+            transparent
+            animationType="fade"
+            onRequestClose={() => setShowBankOptionsModal(false)}
+          >
+            <View style={styles.bankModalOverlay}>
+              <View style={styles.bankModalContainer}>
+                {BANK_OPTIONS.map((option) => (
+                  <TouchableOpacity
+                    key={option}
+                    style={styles.bankOptionRow}
+                    onPress={() => {
+                      if (option === OTHER_BANK_OPTION) {
+                        setSelectedBank("");
+                        setBankName("");
+                        setIsOtherBank(true);
+                      } else {
+                        setSelectedBank(option);
+                        setBankName(option);
+                        setIsOtherBank(false);
+                      }
+                      setShowBankOptionsModal(false);
+                      clearBankNameError();
+                    }}
+                  >
+                    <Text style={styles.bankOptionText}>{option}</Text>
+                    {(selectedBank === option ||
+                      (option === OTHER_BANK_OPTION && isOtherBank)) && (
+                      <Ionicons
+                        name="checkmark-circle"
+                        size={20}
+                        color="#E25A17"
+                      />
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          </Modal>
         </KeyboardAvoidingView>
       </SafeAreaView>
     </View>
@@ -580,6 +709,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#999",
   },
+  detailsFeeText: {
+    marginTop: 6,
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#333",
+  },
   inputGroup: {
     marginBottom: 16,
   },
@@ -604,6 +739,47 @@ const styles = StyleSheet.create({
     color: "#333",
     borderWidth: 1,
     borderColor: "#E0E0E0",
+  },
+  dropdownSelector: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+  },
+  dropdownText: {
+    fontSize: 14,
+    color: "#333",
+  },
+  dropdownPlaceholder: {
+    color: "#CCC",
+  },
+  checkboxRow: {
+    marginTop: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  checkboxLabel: {
+    fontSize: 14,
+    color: "#333",
+    fontWeight: "500",
+  },
+  processingFeeNote: {
+    marginTop: 8,
+    marginLeft: 2,
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  freeFeeText: {
+    color: "#10B981",
+  },
+  paidFeeText: {
+    color: "#FF3B30",
   },
   inputError: {
     borderColor: "#FF3B30",
@@ -634,6 +810,30 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     fontSize: 14,
     color: "#333",
+  },
+  bankModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.3)",
+    justifyContent: "center",
+    paddingHorizontal: 24,
+  },
+  bankModalContainer: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    paddingVertical: 8,
+    marginTop: 130,
+  },
+  bankOptionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  bankOptionText: {
+    fontSize: 14,
+    color: "#333",
+    fontWeight: "500",
   },
   continueButton: {
     marginTop: 8,
