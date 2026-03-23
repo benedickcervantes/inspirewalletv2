@@ -390,25 +390,6 @@ export default function HistoryScreen() {
     });
   };
 
-  const defaultTransactions: Transaction[] = [
-    {
-      id: "1",
-      type: "TOP_UP",
-      amount: 0,
-      description: "Free Default Card",
-      timestamp: { toDate: () => new Date("2026-02-12T14:56:00") },
-      createdAt: "2026-02-12T14:56:00",
-    },
-    {
-      id: "2",
-      type: "TOP_UP",
-      amount: 0,
-      description: "Created Account",
-      timestamp: { toDate: () => new Date("2026-02-01T16:30:00") },
-      createdAt: "2026-02-01T16:30:00",
-    },
-  ];
-
   const filterTransactionsByDate = (txList: Transaction[]) => {
     if (!dateRange.start || !dateRange.end) return txList;
     return txList.filter((tx) => {
@@ -420,11 +401,7 @@ export default function HistoryScreen() {
     });
   };
 
-  // Merge real transactions with defaults, then apply date filter
-  const allTransactions =
-    transactions.length > 0
-      ? [...defaultTransactions, ...transactions]
-      : defaultTransactions;
+  const allTransactions = transactions;
   const displayTransactions = filterTransactionsByDate(allTransactions);
   const totalPagesCount = Math.max(
     1,
@@ -638,10 +615,7 @@ export default function HistoryScreen() {
 
   const handleLoadMore = () => {
     if (!loadingMore && hasMore) {
-      const count =
-        transactions.length > 0
-          ? transactions.length
-          : defaultTransactions.length;
+      const count = transactions.length;
       fetchTransactions(
         true,
         count,
