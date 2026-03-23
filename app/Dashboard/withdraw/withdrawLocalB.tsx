@@ -46,7 +46,7 @@ const capitalizeWords = (text: string) =>
 const OTHER_BANK_OPTION = "Others";
 
 const BANK_OPTIONS = [
-  "UnionBank",
+  "UNIONBANK",
   "BDO",
   "BPI",
   "SECURITY BANK",
@@ -325,7 +325,7 @@ export default function BankWithdrawal() {
                     ]}
                   >
                     {isUnionBank
-                      ? "UnionBank transaction is free."
+                      ? "UNIONBANK transaction is free."
                       : "A processing fee of PHP 25 applies for this bank."}
                   </Text>
                 )}
