@@ -429,6 +429,10 @@ export default function BlackC() {
                 style={styles.modalScroll}
                 contentContainerStyle={styles.modalScrollContent}
               >
+                <View style={styles.paymentAmountCard}>
+                  <Text style={styles.paymentAmountLabel}>Amount to pay</Text>
+                  <Text style={styles.paymentAmountValue}>1000 pesos</Text>
+                </View>
                 <Text style={styles.modalTitle}>{t("pcard.modalTitle")}</Text>
                 <Text style={styles.modalHint}>{t("pcard.modalHint")}</Text>
 
@@ -758,6 +762,30 @@ const styles = StyleSheet.create({
   },
   modalScrollContent: {
     paddingBottom: 8,
+  },
+  paymentAmountCard: {
+    backgroundColor: "#FFF7ED",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#FDBA74",
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    marginBottom: 14,
+    alignItems: "center",
+  },
+  paymentAmountLabel: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#9A3412",
+    textTransform: "uppercase",
+    letterSpacing: 0.4,
+    marginBottom: 4,
+  },
+  paymentAmountValue: {
+    fontSize: 22,
+    fontWeight: "800",
+    color: "#E15816",
+    letterSpacing: 0.2,
   },
   modalTitle: {
     fontSize: 18,
