@@ -271,6 +271,15 @@ export default function EWalletConfirm() {
                 <Text style={styles.detailValue}>{email}</Text>
               </View>
             </View>
+
+            {/* Transaction Fee */}
+            <View style={styles.detailRow}>
+              <View style={styles.leftBorder} />
+              <View style={styles.detailContent}>
+                <Text style={styles.detailLabel}>Transaction Fee</Text>
+                <Text style={styles.detailValue}>₱25</Text>
+              </View>
+            </View>
           </View>
 
           {/* Withdrawal Amount Card */}
@@ -279,6 +288,9 @@ export default function EWalletConfirm() {
             <View style={styles.amountBox}>
               <Text style={styles.amountValue}>₱ {formatAmount(amount)}</Text>
             </View>
+            <Text style={styles.feeNoteText}>
+              E-wallet transactions have a ₱25 transaction fee.
+            </Text>
           </View>
 
           {/* Confirm Button */}
@@ -591,6 +603,12 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: "700",
     color: "#FFFFFF",
+    textAlign: "center",
+  },
+  feeNoteText: {
+    marginTop: 10,
+    fontSize: 12,
+    color: "#FF3B30",
     textAlign: "center",
   },
   confirmButton: {
