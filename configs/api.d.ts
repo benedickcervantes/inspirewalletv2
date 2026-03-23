@@ -518,6 +518,18 @@ export function submitPersonalKyc(
   body: Record<string, unknown>,
 ): Promise<{ success: boolean; data?: unknown; error?: string }>;
 
+export function getPersonalKycStatus(
+  accessToken: string,
+): Promise<{
+  success: boolean;
+  data?: {
+    id?: string;
+    status?: string;
+    [key: string]: unknown;
+  } | null;
+  error?: string;
+}>;
+
 export function submitCompanyKyc(
   accessToken: string,
   body: { companyName: string; documents: Record<string, string> },
