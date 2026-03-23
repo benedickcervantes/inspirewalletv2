@@ -25,7 +25,7 @@ const en: TranslationMap = {
   "pcard.subtitle": "View your P-Card front and back — tap to flip.",
   "pcard.hint":
     "When idle, the card rotates slowly like a display. Tap anytime to flip or stop.",
-  "pcard.exclusiveTitle": "Exclusive P-Card benefits",
+  "pcard.exclusiveTitle": "Exclusive Inspire Card Benefits",
   "pcard.exclusiveBody1":
     "Inspire P-Card is a premium membership experience inside Inspire Wallet — bringing card services together with your deposits, time deposits, stock investing, transfers, Play & Earn, and e-wallet tools in one secure place.",
   "pcard.exclusiveBody2":
