@@ -9,12 +9,16 @@ export type ServiceId =
   | 'message'
   | 'task'
   | 'agent'
-  | 'trading';
+  | 'trading'
+  | 'pcard'
+  | 'physical_cards';
+
+type MaintenanceStatusMap = Record<ServiceId, boolean>;
 
 /**
  * Get maintenance status for all services
  */
-export async function getMaintenanceStatus(): Promise<Record<ServiceId, boolean>> {
+export async function getMaintenanceStatus(): Promise<MaintenanceStatusMap> {
   try {
     const response = await fetch(`${API_BASE_URL}/maintenance/status`, {
       headers: {
@@ -24,7 +28,18 @@ export async function getMaintenanceStatus(): Promise<Record<ServiceId, boolean>
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
     }
-    return await response.json();
+    const data = (await response.json()) as Record<string, boolean>;
+    const physicalCards = Boolean(data.physical_cards ?? data.pcard ?? false);
+    return {
+      stock: Boolean(data.stock),
+      ewallet: Boolean(data.ewallet),
+      message: Boolean(data.message),
+      task: Boolean(data.task),
+      agent: Boolean(data.agent),
+      trading: Boolean(data.trading),
+      physical_cards: physicalCards,
+      pcard: physicalCards,
+    };
   } catch (error) {
     console.error('[Maintenance] Failed to fetch status:', error);
     // Return all services as online if API fails
@@ -35,6 +50,8 @@ export async function getMaintenanceStatus(): Promise<Record<ServiceId, boolean>
       task: false,
       agent: false,
       trading: false,
+      physical_cards: false,
+      pcard: false,
     };
   }
 }
@@ -56,7 +73,7 @@ export async function isServiceUnderMaintenance(
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
     }
-    const data = await response.json();
+    const data = (await response.json()) as { isUnderMaintenance?: boolean };
     console.log(`[Maintenance] ${serviceId} status:`, data);
     return data.isUnderMaintenance ?? false;
   } catch (error) {
@@ -69,7 +86,7 @@ export async function isServiceUnderMaintenance(
  * Cache maintenance status locally for offline support
  */
 export async function cacheMaintenanceStatus(
-  status: Record<ServiceId, boolean>,
+  status: MaintenanceStatusMap,
 ): Promise<void> {
   try {
     await AsyncStorage.setItem(
@@ -87,7 +104,7 @@ export async function cacheMaintenanceStatus(
 /**
  * Get cached maintenance status
  */
-export async function getCachedMaintenanceStatus(): Promise<Record<ServiceId, boolean> | null> {
+export async function getCachedMaintenanceStatus(): Promise<MaintenanceStatusMap | null> {
   try {
     const cached = await AsyncStorage.getItem('maintenanceStatus');
     if (!cached) return null;
