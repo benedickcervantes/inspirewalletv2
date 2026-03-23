@@ -1036,7 +1036,12 @@ export default function Dashboard() {
     setIsCardFlipped(!isCardFlipped);
   };
 
-  const menuItems = [
+  const menuItems: Array<{
+    icon: React.ComponentProps<typeof MaterialCommunityIcons>["name"];
+    labelKey?: string;
+    labelText?: string;
+    route: string;
+  }> = [
     {
       icon: "wallet-outline",
       labelKey: "dashboard.eWallet",
@@ -1049,6 +1054,11 @@ export default function Dashboard() {
       icon: "chart-areaspline",
       labelKey: "dashboard.trading",
       route: "PlayEarn",
+    },
+    {
+      icon: "card-account-details-outline",
+      labelText: "P-Card",
+      route: "PCard",
     },
   ];
 
@@ -1642,6 +1652,7 @@ export default function Dashboard() {
                     Stockholder: "stock",
                     AgentRequest: "agent",
                     PlayEarn: "trading",
+                    PCard: "pcard",
                   };
                   const serviceId =
                     routeToServiceMap[item.route] || item.route.toLowerCase();
@@ -1684,7 +1695,9 @@ export default function Dashboard() {
                             setShowKycLockedModal(true);
                             return;
                           }
-                          setSelectedMaintenanceService(item.labelKey);
+                          if (item.labelKey) {
+                            setSelectedMaintenanceService(item.labelKey);
+                          }
                         } else {
                           (
                             navigation as { navigate: (name: string) => void }
@@ -1726,7 +1739,7 @@ export default function Dashboard() {
                           isBlocked && styles.menuLabelDisabled,
                         ]}
                       >
-                        {t(item.labelKey)}
+                        {item.labelKey ? t(item.labelKey) : item.labelText}
                       </Text>
                     </TouchableOpacity>
                   );

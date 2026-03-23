@@ -51,6 +51,7 @@ import DepositCrypto from './app/ServicesFunction/Play&Earn/depositCrypto';
 import DepositCryptoEth from './app/ServicesFunction/Play&Earn/depositCryptoEth';
 import DepositCryptoUSDT from './app/ServicesFunction/Play&Earn/depositCryptoUSDT';
 import PlayEarnServices from './app/ServicesFunction/Play&Earn/Play&earnServices';
+import BlackC from './app/ServicesFunction/Pcards/BlackC';
 import StockBuy from './app/ServicesFunction/Stock/StockBuy';
 import StockSell from './app/ServicesFunction/Stock/StockSell';
 import StockService from './app/ServicesFunction/Stock/StockService';
@@ -148,6 +149,7 @@ export default function App() {
                 component={PlayEarnServices}
                 options={{ animation: 'none' }}
               />
+              <Stack.Screen name="PCard" component={BlackC} />
               <Stack.Screen
                 name="DepositCrypto"
                 component={DepositCrypto}
