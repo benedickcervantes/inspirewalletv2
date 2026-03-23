@@ -938,6 +938,39 @@ export async function submitTravelProtection(accessToken, body) {
 }
 
 /**
+ * POST /physical-cards/request — requires JWT
+ * Creates a physical card application record for admin processing.
+ * @param {string} accessToken
+ * @param {{ firstName: string, lastName: string, email: string, phone: string }} body
+ * @returns {{ success: boolean, data?: object, error?: string }}
+ */
+export async function submitPhysicalCardRequest(accessToken, body) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "No token" };
+  try {
+    const res = await apiFetch(`${base}/physical-cards/request`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(body || {}),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || "Failed to submit physical card request";
+      return { success: false, error: msg };
+    }
+    return { success: true, data };
+  } catch (e) {
+    return { success: false, error: e.message || "Network error" };
+  }
+}
+
+/**
  * Get user's withdrawal requests.
  * GET /withdrawal-requests
  * @param {string} accessToken - Backend JWT
