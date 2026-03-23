@@ -25,7 +25,7 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
-import { updateProfile } from "../../../configs/api";
+import { submitPhysicalCardRequest, updateProfile } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
 
 const THEME_COLOR = "#E15816";
@@ -201,7 +201,7 @@ export default function BlackC() {
     }
 
     const { firstName, lastName } = splitFullName(name);
-    const body: Record<string, string> = {
+    const body: { firstName: string; lastName: string; email: string; phone: string } = {
       firstName,
       lastName,
       email,
@@ -210,6 +210,16 @@ export default function BlackC() {
 
     setSubmitting(true);
     try {
+      const requestResult = await submitPhysicalCardRequest(accessToken, body);
+      if (!requestResult.success) {
+        setSubmitting(false);
+        Alert.alert(
+          t("common.error"),
+          requestResult.error || t("pcard.applyError"),
+        );
+        return;
+      }
+
       const result = await updateProfile(accessToken, body);
       setSubmitting(false);
       if (result.success && result.user) {
@@ -217,10 +227,16 @@ export default function BlackC() {
         Alert.alert(t("pcard.applySuccessTitle"), t("pcard.applySuccess"), [
           { text: t("common.ok"), onPress: closeApplyModal },
         ]);
+      } else if (result.success) {
+        Alert.alert(t("pcard.applySuccessTitle"), t("pcard.applySuccess"), [
+          { text: t("common.ok"), onPress: closeApplyModal },
+        ]);
       } else {
+        // Card request is already saved in backend; profile update failed only.
         Alert.alert(
-          t("common.error"),
-          result.error || t("pcard.applyError")
+          t("pcard.applySuccessTitle"),
+          `${t("pcard.applySuccess")}\n\n${result.error || "Profile sync failed."}`,
+          [{ text: t("common.ok"), onPress: closeApplyModal }],
         );
       }
     } catch {
