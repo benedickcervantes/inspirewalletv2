@@ -77,6 +77,15 @@ export default function EwalletPersonalInfo() {
     navigation.goBack();
   };
 
+  const handleTopBackPress = () => {
+    setShowExitConfirmModal(true);
+  };
+
+  const handleConfirmExit = () => {
+    setShowExitConfirmModal(false);
+    navigation.navigate("Main");
+  };
+
   const handleNext = () => {
     const newErrors: typeof errors = {};
     if (!gender) newErrors.gender = "Gender is required";
