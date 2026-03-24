@@ -2,20 +2,93 @@ import { Ionicons } from "@expo/vector-icons";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import {
-  Dimensions,
   Image,
   SafeAreaView,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { getLanguageCode } from "../../../constants/locales";
 import { useLanguage } from "../../../context/LanguageContext";
 
+// ─── Thin separator ───────────────────────────────────────────────────────────
+function Separator({ style }: { style?: object }) {
+  return <View style={[sepStyles.line, style]} />;
+}
+const sepStyles = StyleSheet.create({
+  line: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: "#E8E2DA",
+    marginVertical: 2,
+  },
+});
+
+// ─── Receipt data row ─────────────────────────────────────────────────────────
+function ReceiptRow({
+  label,
+  value,
+  valueBold = false,
+  valueColor,
+}: {
+  label: string;
+  value: string;
+  valueBold?: boolean;
+  valueColor?: string;
+}) {
+  return (
+    <View style={rowStyles.row}>
+      <Text style={rowStyles.label}>{label}</Text>
+      <Text
+        style={[
+          rowStyles.value,
+          valueBold && rowStyles.bold,
+          valueColor ? { color: valueColor } : null,
+        ]}
+        numberOfLines={2}
+      >
+        {value}
+      </Text>
+    </View>
+  );
+}
+const rowStyles = StyleSheet.create({
+  row: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    paddingVertical: 9,
+    gap: 16,
+  },
+  label: {
+    fontSize: 12,
+    color: "#A09488",
+    fontWeight: "500",
+    flex: 1,
+  },
+  value: {
+    fontSize: 12,
+    color: "#1E160E",
+    fontWeight: "600",
+    maxWidth: "58%",
+    textAlign: "right",
+  },
+  bold: {
+    fontSize: 13,
+    fontWeight: "700",
+  },
+});
+
+// ─── Main component ───────────────────────────────────────────────────────────
 export default function DepositReceipt() {
   const route = useRoute();
   const navigation = useNavigation<any>();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
 
   const params = (route.params || {}) as {
     transactionId?: string;
@@ -23,9 +96,10 @@ export default function DepositReceipt() {
     currency?: string;
     depositMethod?: string;
     contractPeriod?: string;
-    type?: string; 
+    type?: string;
     date?: string;
     successMessage?: string;
+    source?: string;
   };
 
   const {
@@ -37,184 +111,486 @@ export default function DepositReceipt() {
     type = "Deposit",
     date = new Date().toLocaleString(),
     successMessage,
+    source,
   } = params;
 
-  const handleClose = () => {
-    // Navigate back to main Dashboard
-    navigation.navigate("Main"); 
+  const languageCode = getLanguageCode(language);
+  const localeByLanguageCode: Record<string, string> = {
+    en: "en-PH",
+    ko: "ko-KR",
+    ja: "ja-JP",
+    ar: "ar-SA",
+  };
+  const locale = localeByLanguageCode[languageCode] ?? "en-PH";
+  const normalizedType = String(type ?? "").trim().toLowerCase();
+
+  const getReceiptTypeLabel = () => {
+    if (normalizedType === "transfer") return t("tx.transfer");
+    if (normalizedType === "withdrawal") return t("tx.withdraw");
+    return t("tx.deposit");
   };
 
-  const { width } = Dimensions.get("window");
-  const logoWidth = Math.min(220, width * 0.55);
-  const logoHeight = Math.round(logoWidth * (72 / 200));
+  const getSuccessSubtitle = () => {
+    if (successMessage) return successMessage;
+    if (normalizedType === "time deposit")
+      return t("deposit.timeDepositSuccessMessage");
+    return t("deposit.uploadSuccessMessage");
+  };
+
+  const getMethodLabel = () => {
+    if (depositMethod) return depositMethod;
+    if (normalizedType === "transfer") return t("sendMoney.availableBalance");
+    if (normalizedType === "withdrawal") return t("withdraw.bankTransfer");
+    return getReceiptTypeLabel();
+  };
+
+  const getMethodKey = () => {
+    if (normalizedType === "transfer") return t("sendMoney.from");
+    if (normalizedType === "withdrawal") return t("withdraw.withdrawalMethod");
+    return t("deposit.depositMethod");
+  };
+
+  const handleClose = () => {
+    if (source === "history") {
+      if (navigation.canGoBack?.()) navigation.goBack();
+      else navigation.navigate("history");
+      return;
+    }
+    navigation.navigate("Main");
+  };
+
+  const formattedAmount = `${currency === "PHP" ? "₱" : ""}${Number(
+    amount
+  ).toLocaleString(locale, { minimumFractionDigits: 2 })}${
+    currency !== "PHP" ? ` ${currency}` : ""
+  }`;
+
+  const receiptWidth = Math.min(380, width - 32);
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.safeArea}>
       <LinearGradient
-        colors={["#E25A17", "#F28934"]}
-        style={styles.gradientBackground}
+        colors={["#191410", "#231A11", "#191410"]}
+        style={styles.bg}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
       >
-        <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
-          <Ionicons name="close" size={32} color="#FFFFFF" />
-        </TouchableOpacity>
+        <ScrollView
+          contentContainerStyle={[
+            styles.scroll,
+            {
+              paddingTop: Math.max(insets.top + 20, 28),
+              paddingBottom: Math.max(insets.bottom + 24, 32),
+            },
+          ]}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* ═══════════════ RECEIPT CARD ═══════════════ */}
+          <View style={[styles.card, { width: receiptWidth }]}>
 
-        <View style={styles.content}>
-          <Image
-            source={require("../../../assets/images/InpireLogo.png")}
-            style={[styles.logo, { width: logoWidth, height: logoHeight }]}
-            resizeMode="contain"
-          />
+            {/* ── Brand header ── */}
+            <LinearGradient
+              colors={["#C44A0C", "#E06828"]}
+              style={styles.headerBand}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            >
+              {/* Decorative circles */}
+              <View style={styles.deco1} />
+              <View style={styles.deco2} />
 
-          <View style={styles.successIconContainer}>
-            <Ionicons name="checkmark-circle" size={80} color="#FFFFFF" />
-          </View>
-          
-          <Text style={styles.successTitle}>{t("deposit.success")}</Text>
-          <Text style={styles.successSubtitle}>
-            {successMessage || (type === "Time Deposit" ? t("deposit.timeDepositSuccessMessage") : t("deposit.uploadSuccessMessage"))}
-          </Text>
-
-          <View style={styles.cardContainer}>
-            <Text style={styles.receiptHeader}>{t("deposit.transactionReceipt")}</Text>
-
-            <View style={styles.row}>
-              <Text style={styles.label}>{t("history.id")}</Text>
-              <Text style={styles.value}>{transactionId}</Text>
-            </View>
-
-            <View style={styles.divider} />
-
-            <View style={styles.row}>
-              <Text style={styles.label}>{t("investment.amount")}</Text>
-              <Text style={styles.value}>
-                {currency === "PHP" ? "₱" : ""}
-                {Number(amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                {currency !== "PHP" ? ` ${currency}` : ""}
-              </Text>
-            </View>
-
-            {contractPeriod && (
-              <>
-                <View style={styles.divider} />
-                <View style={styles.row}>
-                  <Text style={styles.label}>{t("deposit.contractPeriod")}</Text>
-                  <Text style={styles.value}>{contractPeriod}</Text>
+              <View style={styles.headerInner}>
+                <Image
+                  source={require("../../../assets/images/InpireLogo.png")}
+                  style={styles.logo}
+                  resizeMode="contain"
+                />
+                <View style={styles.headerMeta}>
+                  <Text style={styles.headerLabel}>OFFICIAL RECEIPT</Text>
+                  <Text style={styles.headerDateText}>{date}</Text>
                 </View>
-              </>
-            )}
+              </View>
+            </LinearGradient>
 
-            <View style={styles.divider} />
-
-            <View style={styles.row}>
-              <Text style={styles.label}>
-                {type === "Transfer" 
-                  ? t("sendMoney.from") 
-                  : type === "Withdrawal" 
-                    ? t("withdraw.withdrawalMethod") 
-                    : t("deposit.depositMethod")}
-              </Text>
-              <Text style={styles.value}>
-                {depositMethod || (
-                  type === "Transfer" ? t("sendMoney.availableBalance") : 
-                  type === "Withdrawal" ? t("withdraw.bankTransfer") : 
-                  t("common.na")
-                )}
+            {/* ── Status badge ── */}
+            <View style={styles.statusBar}>
+              <View style={styles.statusBadge}>
+                <View style={styles.statusDot} />
+                <Text style={styles.statusText}>TRANSACTION SUCCESSFUL</Text>
+              </View>
+              <Text style={styles.receiptNo}>
+                #{String(transactionId).slice(-8).toUpperCase()}
               </Text>
             </View>
-            
-            <View style={styles.divider} />
 
-            <View style={styles.row}>
-              <Text style={styles.label}>{t("history.date") || "Date"}</Text>
-              <Text style={styles.value}>{date}</Text>
+            <Separator style={{ marginHorizontal: 20 }} />
+
+            {/* ── Amount hero ── */}
+            <View style={styles.amountBlock}>
+              <Text style={styles.txTypeTag}>
+                {getReceiptTypeLabel().toUpperCase()}
+              </Text>
+              <Text style={styles.amountFigure}>{formattedAmount}</Text>
+              <Text style={styles.amountCaption}>{getSuccessSubtitle()}</Text>
+            </View>
+
+            <Separator style={{ marginHorizontal: 20 }} />
+
+            {/* ── Transaction details ── */}
+            <View style={styles.detailsSection}>
+              <Text style={styles.sectionLabel}>TRANSACTION DETAILS</Text>
+
+              <ReceiptRow
+                label={t("history.id") || "Transaction ID"}
+                value={transactionId}
+              />
+              <Separator />
+              <ReceiptRow
+                label={t("history.date") || "Date & Time"}
+                value={date}
+              />
+              <Separator />
+              <ReceiptRow label={getMethodKey()} value={getMethodLabel()} />
+              {contractPeriod && (
+                <>
+                  <Separator />
+                  <ReceiptRow
+                    label={t("deposit.contractPeriod")}
+                    value={contractPeriod}
+                  />
+                </>
+              )}
+              <Separator />
+              <ReceiptRow
+                label="Status"
+                value="Successful"
+                valueBold
+                valueColor="#1A7A36"
+              />
+            </View>
+
+            <Separator style={{ marginHorizontal: 20 }} />
+
+            {/* ── Total summary ── */}
+            <View style={styles.totalSection}>
+              <Text style={styles.totalLabel}>TOTAL</Text>
+              <Text style={styles.totalValue}>{formattedAmount}</Text>
+            </View>
+
+            {/* ── Footer strip ── */}
+            <View style={styles.footerStrip}>
+              <Text style={styles.footerMain}>
+                Thank you for using Inpire Financial Services
+              </Text>
+              <Text style={styles.footerSub}>
+                Please keep this receipt for your records
+              </Text>
             </View>
           </View>
-        </View>
+
+          {/* ═══════════════ ACTION BUTTONS ═══════════════ */}
+          <View style={[styles.actionsRow, { width: receiptWidth }]}>
+            {/* Download — primary */}
+            <TouchableOpacity
+              style={styles.downloadBtn}
+              activeOpacity={0.82}
+            >
+              <LinearGradient
+                colors={["#C44A0C", "#E06828"]}
+                style={styles.downloadGrad}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+              >
+                <Ionicons name="download-outline" size={19} color="#FFF" />
+                <Text
+                  style={styles.downloadText}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                  allowFontScaling={false}
+                >
+                  Download Receipt
+                </Text>
+              </LinearGradient>
+            </TouchableOpacity>
+
+            {/* Share — secondary */}
+            <TouchableOpacity
+              style={styles.shareBtn}
+              activeOpacity={0.82}
+            >
+              <Ionicons name="share-social-outline" size={19} color="#E06828" />
+              <Text style={styles.shareText}>Share</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Done */}
+          <TouchableOpacity
+            style={[styles.doneBtn, { width: receiptWidth }]}
+            onPress={handleClose}
+            activeOpacity={0.75}
+          >
+            <Text style={styles.doneText}>Done</Text>
+          </TouchableOpacity>
+        </ScrollView>
       </LinearGradient>
     </SafeAreaView>
   );
 }
 
+// ─── Styles ───────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#E25A17",
-  },
-  gradientBackground: {
-    flex: 1,
-    paddingHorizontal: 20,
-  },
-  closeButton: {
-    position: "absolute",
-    top: 50,
-    right: 20,
-    zIndex: 10,
-    padding: 8,
-  },
-  content: {
-    flex: 1,
+  safeArea: { flex: 1, backgroundColor: "#191410" },
+  bg: { flex: 1 },
+
+  scroll: {
+    flexGrow: 1,
     alignItems: "center",
     justifyContent: "center",
-    paddingBottom: 40,
+    gap: 10,
   },
-  logo: {
-    marginBottom: 40,
-  },
-  successIconContainer: {
-    marginBottom: 16,
-  },
-  successTitle: {
-    fontSize: 28,
-    fontWeight: "700",
-    color: "#FFFFFF",
-    marginBottom: 12,
-  },
-  successSubtitle: {
-    fontSize: 16,
-    color: "rgba(255, 255, 255, 0.95)",
-    textAlign: "center",
-    marginBottom: 36,
-    paddingHorizontal: 10,
-    lineHeight: 24,
-  },
-  cardContainer: {
-    backgroundColor: "rgba(255, 255, 255, 0.15)",
+
+  // ── Card ──────────────────────────────────────────────────────────────────
+  card: {
+    backgroundColor: "#FDFAF6",
     borderRadius: 16,
-    padding: 24,
-    width: "100%",
-    maxWidth: 400,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 20 },
+    shadowOpacity: 0.55,
+    shadowRadius: 36,
+    elevation: 24,
   },
-  receiptHeader: {
-    fontSize: 18,
+
+  // ── Header ────────────────────────────────────────────────────────────────
+  headerBand: {
+    paddingVertical: 22,
+    paddingHorizontal: 22,
+    overflow: "hidden",
+  },
+  deco1: {
+    position: "absolute",
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    backgroundColor: "rgba(255,255,255,0.08)",
+    top: -70,
+    right: -40,
+  },
+  deco2: {
+    position: "absolute",
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    backgroundColor: "rgba(255,255,255,0.06)",
+    bottom: -35,
+    left: 10,
+  },
+  headerInner: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  logo: { width: 126, height: 38 },
+  headerMeta: { alignItems: "flex-end", gap: 4 },
+  headerLabel: {
+    fontSize: 9,
+    color: "rgba(255,255,255,0.72)",
+    letterSpacing: 2.6,
     fontWeight: "700",
-    color: "#FFFFFF",
-    textAlign: "center",
-    marginBottom: 20,
-    letterSpacing: 0.5,
   },
-  row: {
+  headerDateText: {
+    fontSize: 10,
+    color: "rgba(255,255,255,0.55)",
+    fontWeight: "500",
+  },
+
+  // ── Status bar ────────────────────────────────────────────────────────────
+  statusBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 10,
+  },
+  statusBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#EAF5ED",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 999,
+  },
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: "#1A7A36",
+  },
+  statusText: {
+    fontSize: 9,
+    color: "#1A7A36",
+    fontWeight: "800",
+    letterSpacing: 1.4,
+  },
+  receiptNo: {
+    fontSize: 11,
+    color: "#C0B5AB",
+    fontWeight: "600",
+    letterSpacing: 1,
+  },
+
+  // ── Amount ────────────────────────────────────────────────────────────────
+  amountBlock: {
+    paddingHorizontal: 20,
+    paddingVertical: 18,
+  },
+  txTypeTag: {
+    fontSize: 10,
+    color: "#B8AFA6",
+    letterSpacing: 2,
+    fontWeight: "700",
+    marginBottom: 6,
+  },
+  amountFigure: {
+    fontSize: 40,
+    fontWeight: "800",
+    color: "#1C1410",
+    letterSpacing: -1,
+    marginBottom: 8,
+  },
+  amountCaption: {
+    fontSize: 12,
+    color: "#9C9189",
+    lineHeight: 18,
+  },
+
+  // ── Details ───────────────────────────────────────────────────────────────
+  detailsSection: {
+    paddingHorizontal: 20,
+    paddingTop: 14,
+    paddingBottom: 8,
+  },
+  sectionLabel: {
+    fontSize: 9,
+    color: "#C8BEB4",
+    letterSpacing: 2.2,
+    fontWeight: "700",
+    marginBottom: 4,
+  },
+
+  // ── Total ─────────────────────────────────────────────────────────────────
+  totalSection: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: 6,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
   },
-  label: {
-    fontSize: 14,
-    color: "rgba(255, 255, 255, 0.8)",
-    fontWeight: "500",
+  totalLabel: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#1C1410",
+    letterSpacing: 2,
   },
-  value: {
-    fontSize: 15,
-    color: "#FFFFFF",
+  totalValue: {
+    fontSize: 20,
+    fontWeight: "800",
+    color: "#C44A0C",
+    letterSpacing: -0.4,
+  },
+
+  // ── Footer strip ──────────────────────────────────────────────────────────
+  footerStrip: {
+    backgroundColor: "#F3EDE5",
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    alignItems: "center",
+    gap: 3,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: "#E4DDD4",
+  },
+  footerMain: {
+    fontSize: 11,
+    color: "#6B6256",
     fontWeight: "600",
-    maxWidth: "60%",
-    textAlign: "right",
+    textAlign: "center",
   },
-  divider: {
-    height: 1,
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
-    marginVertical: 12,
+  footerSub: {
+    fontSize: 10,
+    color: "#A89A8C",
+    textAlign: "center",
+  },
+
+  // ── Action buttons ────────────────────────────────────────────────────────
+  actionsRow: {
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 2,
+  },
+  downloadBtn: {
+    flex: 1,
+    minWidth: 0,
+    borderRadius: 12,
+    overflow: "hidden",
+    shadowColor: "#C44A0C",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.38,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  downloadGrad: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 15,
+    paddingHorizontal: 10,
+  },
+  downloadText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#FFFFFF",
+    letterSpacing: 0.2,
+    flexShrink: 1,
+    includeFontPadding: false,
+    textAlign: "center",
+  },
+  shareBtn: {
+    width: 140,
+    flexShrink: 0,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 7,
+    paddingVertical: 15,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: "#E06828",
+    backgroundColor: "rgba(224, 104, 40, 0.07)",
+  },
+  shareText: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#E06828",
+    letterSpacing: 0.2,
+  },
+
+  // ── Done ──────────────────────────────────────────────────────────────────
+  doneBtn: {
+    paddingVertical: 14,
+    borderRadius: 12,
+    backgroundColor: "rgba(255,255,255,0.06)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.09)",
+    alignItems: "center",
+  },
+  doneText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#B8AFA6",
+    letterSpacing: 0.4,
   },
 });
