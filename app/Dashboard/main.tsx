@@ -1057,8 +1057,8 @@ export default function Dashboard() {
       route: "PlayEarn",
     },
     {
-      icon: "card-account-details-outline",
-      labelText: "P-Card",
+      icon: "credit-card",
+      labelText: "Inspire Card",
       route: "PCard",
     },
   ];
@@ -1653,11 +1653,14 @@ export default function Dashboard() {
                     Stockholder: "stock",
                     AgentRequest: "agent",
                     PlayEarn: "trading",
-                    PCard: "pcard",
+                    PCard: "physical_cards",
                   };
                   const serviceId =
                     routeToServiceMap[item.route] || item.route.toLowerCase();
-                  const isUnderMaintenance = maintenanceStatus[serviceId];
+                  const isUnderMaintenance =
+                    item.route === "PCard"
+                      ? maintenanceStatus.physical_cards ?? maintenanceStatus.pcard
+                      : maintenanceStatus[serviceId];
                   const isEwalletLockedByDeposit =
                     item.route === "EwalletService" && isBankingServiceLocked;
                   const isTradingLockedByKyc =

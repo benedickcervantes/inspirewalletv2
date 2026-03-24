@@ -22,21 +22,24 @@ const en: TranslationMap = {
     "This service is currently under maintenance. We're working hard to bring you an improved experience. Please check back soon!",
   "dashboard.gotIt": "Got it",
   "pcard.title": "Premium Card Holder",
-  "pcard.subtitle": "View your P-Card front and back — tap to flip.",
+  "pcard.subtitle":
+    "The Inspire Physical Card brings your Inspire Wallet to life — allowing you to spend, withdraw, and access your funds anywhere, anytime.",
   "pcard.hint":
-    "When idle, the card rotates slowly like a display. Tap anytime to flip or stop.",
-  "pcard.exclusiveTitle": "Exclusive P-Card benefits",
+    "Seamlessly connected to your wallet, it integrates your deposits, time deposits, stock investments, transfers, Play & Earn, and e-wallet services into one powerful, real-world payment experience.",
+  "pcard.exclusiveTitle": "Exclusive Inspire Card Benefits",
   "pcard.exclusiveBody1":
-    "Inspire P-Card is a premium membership experience inside Inspire Wallet — bringing card services together with your deposits, time deposits, stock investing, transfers, Play & Earn, and e-wallet tools in one secure place.",
+    "Whether you're making everyday purchases or managing your finances on the go, the Inspire Physical Card gives you reliable access with enhanced support and security.",
   "pcard.exclusiveBody2":
-    "Entering new markets or financial products without clear guidance can involve real risk. P-Card membership is designed to give you priority support and structured access so you can use Inspire Wallet services with greater clarity and confidence.",
-  "pcard.benefit1": "Priority Support",
-  "pcard.benefit2": "Exclusive Benefits",
-  "pcard.benefit3": "VIP Access",
+    "Designed for convenience and confidence, it ensures you stay in control of your finances wherever you are.",
+  "pcard.benefit1": "Use Anywhere, Anytime",
+  "pcard.benefit2": "Priority Support",
+  "pcard.benefit3": "Exclusive Benefits",
+  "pcard.benefit4": "VIP Access",
+  "pcard.benefit5": "Secure & Convenient Transactions",
   "pcard.apply": "Apply",
-  "pcard.modalTitle": "Apply for P-Card",
+  "pcard.modalTitle": "Inspire Card Payment",
   "pcard.modalHint":
-    "We filled in your name and email from your account. Add or confirm your phone number, then submit.",
+    "This amount will be deducted from your available balance once you submit.",
   "pcard.fullName": "Full name",
   "pcard.fullNamePlaceholder": "Your full name",
   "pcard.email": "Email",
@@ -49,7 +52,8 @@ const en: TranslationMap = {
   "pcard.enterPhone": "Please enter your phone number",
   "pcard.notAuthenticated": "Please sign in to apply for P-Card.",
   "pcard.applySuccessTitle": "Submitted",
-  "pcard.applySuccess": "Your details were saved. We will process your P-Card request.",
+  "pcard.applySuccess":
+    "Your details were saved. We will process your P-Card request.",
   "pcard.applyError": "Could not save your details. Please try again.",
   // Common
   "common.cancel": "Cancel",
@@ -292,7 +296,7 @@ const en: TranslationMap = {
   "dashboard.goodEvening": "Good Evening",
   "dashboard.wallet": "Wallet",
   "dashboard.investment": "Investment",
-  "dashboard.cards": "Cards",
+  "dashboard.cards": "Virtual Cards",
   "dashboard.transfer": "Transfer",
   "dashboard.bankingService": "Banking Service",
   "dashboard.travelProtection": "Travel Protection",
@@ -1105,7 +1109,8 @@ const en: TranslationMap = {
   "notification.titleTransferReceived": "Transfer Received",
   "notification.titleTransferSent": "Transfer Sent",
   "notification.titleNewReferralSignup": "New Referral Signup",
-  "notification.titleReferralCommissionReleased": "Referral Commission Released",
+  "notification.titleReferralCommissionReleased":
+    "Referral Commission Released",
   "notification.titleTicketUpdate": "Ticket Update",
   "notification.titleNewSupportReply": "New Support Reply",
   "notification.titleNewCustomerReply": "New Customer Reply",
@@ -2466,8 +2471,7 @@ const ko: TranslationMap = {
     "추천인이 정기예금을 만들고 승인되면 수수료를 받고 여기에 표시됩니다.",
   "agent.pendingCommission": "지급 대기 수수료",
   "agent.pendingCommissionListTitle": "지급 대기 에이전트 수수료",
-  "agent.pendingCommissionListSubtitle":
-    "아직 해제되지 않은 지급 대기 수수료",
+  "agent.pendingCommissionListSubtitle": "아직 해제되지 않은 지급 대기 수수료",
   "agent.pendingCommissionItemTitle": "지급 대기 에이전트 수수료",
   "agent.pendingCommissionReleasePrefix": "지급 예정일",
   "agent.loading": "데이터를 불러오는 중...",
@@ -2792,8 +2796,7 @@ const ko: TranslationMap = {
   "history.stockInvestmentApproved": "주식 투자 승인됨",
   "history.stockInvestmentRejected": "주식 투자 거절됨",
   "history.cardPurchaseDesign": "{design} 카드 구매",
-  "history.goldEliteMonthlySubscriptionRenewal":
-    "골드 엘리트 월간 구독 갱신",
+  "history.goldEliteMonthlySubscriptionRenewal": "골드 엘리트 월간 구독 갱신",
   "history.goldEliteMonthlySubscriptionFirstMonth":
     "골드 엘리트 월간 구독 (첫 달)",
   "history.timeDepositApprovedTopUp": "정기 예금 승인 - 신청 금액 충전",
@@ -4218,8 +4221,7 @@ const ja: TranslationMap = {
     "紹介先が定期預金を作成し承認されると、手数料が発生しここに表示されます。",
   "agent.pendingCommission": "保留中の手数料",
   "agent.pendingCommissionListTitle": "保留中のエージェント手数料",
-  "agent.pendingCommissionListSubtitle":
-    "まだ解放されていない保留中の手数料",
+  "agent.pendingCommissionListSubtitle": "まだ解放されていない保留中の手数料",
   "agent.pendingCommissionItemTitle": "保留中のエージェント手数料",
   "agent.pendingCommissionReleasePrefix": "リリース予定日",
   "agent.loading": "データを読み込み中...",

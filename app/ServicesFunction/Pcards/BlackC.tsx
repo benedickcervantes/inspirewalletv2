@@ -87,7 +87,7 @@ export default function BlackC() {
         duration: GLOBE_SPIN_DURATION_MS,
         easing: Easing.linear,
         useNativeDriver: true,
-      })
+      }),
     );
     globeLoopRef.current.start();
   }, [globeAnim, stopGlobeSpin]);
@@ -148,8 +148,7 @@ export default function BlackC() {
           typeof u.lastName === "string" ? u.lastName.trim() : "";
         const singleName = typeof u.name === "string" ? u.name.trim() : "";
         const displayName =
-          singleName ||
-          [firstName, lastName].filter(Boolean).join(" ").trim();
+          singleName || [firstName, lastName].filter(Boolean).join(" ").trim();
         if (displayName) setApplyName(displayName);
         const em = typeof u.email === "string" ? u.email.trim() : "";
         if (em) setApplyEmail(em);
@@ -171,8 +170,7 @@ export default function BlackC() {
     const trimmed = full.trim();
     const parts = trimmed.split(/\s+/).filter(Boolean);
     const firstName = parts[0] ?? "";
-    const lastName =
-      parts.length > 1 ? parts.slice(1).join(" ") : firstName;
+    const lastName = parts.length > 1 ? parts.slice(1).join(" ") : firstName;
     return { firstName, lastName };
   };
 
@@ -201,7 +199,12 @@ export default function BlackC() {
     }
 
     const { firstName, lastName } = splitFullName(name);
-    const body: { firstName: string; lastName: string; email: string; phone: string } = {
+    const body: {
+      firstName: string;
+      lastName: string;
+      email: string;
+      phone: string;
+    } = {
       firstName,
       lastName,
       email,
@@ -256,6 +259,8 @@ export default function BlackC() {
     t("pcard.benefit1"),
     t("pcard.benefit2"),
     t("pcard.benefit3"),
+    t("pcard.benefit4"),
+    t("pcard.benefit5"),
   ];
 
   return (
@@ -303,74 +308,99 @@ export default function BlackC() {
                 ]}
               >
                 <View style={styles.cardStack}>
-                    <Animated.View
-                      style={[
-                        styles.cardFace,
-                        styles.frontFace,
-                        {
-                          transform: [{ perspective: 1300 }, { rotateY: frontRotateY }],
-                        },
-                      ]}
-                    >
-                      {FRONT_CARD_IMAGE ? (
+                  <Animated.View
+                    style={[
+                      styles.cardFace,
+                      {
+                        transform: [
+                          { perspective: 1300 },
+                          { rotateY: frontRotateY },
+                        ],
+                      },
+                    ]}
+                  >
+                    {FRONT_CARD_IMAGE ? (
+                      <Image
+                        source={FRONT_CARD_IMAGE}
+                        style={[
+                          styles.cardImageCropped,
+                          {
+                            transform: [{ scale: FRONT_CARD_IMAGE_CROP_SCALE }],
+                          },
+                        ]}
+                        resizeMode="cover"
+                      />
+                    ) : (
+                      <View style={styles.imagePlaceholder}>
+                        <Ionicons
+                          name="image-outline"
+                          size={36}
+                          color="#A3A3A3"
+                        />
+                        <Text style={styles.placeholderTitle}>
+                          Front Card Image
+                        </Text>
+                        <Text style={styles.placeholderSubtext}>
+                          Set FRONT_CARD_IMAGE in this file
+                        </Text>
+                      </View>
+                    )}
+                  </Animated.View>
+
+                  <Animated.View
+                    style={[
+                      styles.cardFace,
+                      styles.backFace,
+                      {
+                        transform: [
+                          { perspective: 1300 },
+                          { rotateY: backRotateY },
+                        ],
+                      },
+                    ]}
+                  >
+                    {BACK_CARD_IMAGE ? (
+                      <>
                         <Image
-                          source={FRONT_CARD_IMAGE}
+                          source={BACK_CARD_IMAGE}
                           style={[
                             styles.cardImageCropped,
-                            { transform: [{ scale: FRONT_CARD_IMAGE_CROP_SCALE }] },
+                            {
+                              transform: [
+                                { scale: BACK_CARD_IMAGE_CROP_SCALE },
+                              ],
+                            },
                           ]}
                           resizeMode="cover"
                         />
-                      ) : (
-                        <View style={styles.imagePlaceholder}>
-                          <Ionicons name="image-outline" size={36} color="#A3A3A3" />
-                          <Text style={styles.placeholderTitle}>Front Card Image</Text>
-                          <Text style={styles.placeholderSubtext}>
-                            Set FRONT_CARD_IMAGE in this file
-                          </Text>
-                        </View>
-                      )}
-                    </Animated.View>
-
-                    <Animated.View
-                      style={[
-                        styles.cardFace,
-                        styles.backFace,
-                        {
-                          transform: [{ perspective: 1300 }, { rotateY: backRotateY }],
-                        },
-                      ]}
-                    >
-                      {BACK_CARD_IMAGE ? (
-                        <>
-                          <Image
-                            source={BACK_CARD_IMAGE}
-                            style={[
-                              styles.cardImageCropped,
-                              { transform: [{ scale: BACK_CARD_IMAGE_CROP_SCALE }] },
-                            ]}
-                            resizeMode="cover"
-                          />
-                          <View pointerEvents="none" style={styles.edgeMask} />
-                        </>
-                      ) : (
-                        <View style={styles.imagePlaceholder}>
-                          <Ionicons name="image-outline" size={36} color="#A3A3A3" />
-                          <Text style={styles.placeholderTitle}>Back Card Image</Text>
-                          <Text style={styles.placeholderSubtext}>
-                            Set BACK_CARD_IMAGE in this file
-                          </Text>
-                        </View>
-                      )}
-                    </Animated.View>
-                  </View>
+                        <View pointerEvents="none" style={styles.edgeMask} />
+                      </>
+                    ) : (
+                      <View style={styles.imagePlaceholder}>
+                        <Ionicons
+                          name="image-outline"
+                          size={36}
+                          color="#A3A3A3"
+                        />
+                        <Text style={styles.placeholderTitle}>
+                          Back Card Image
+                        </Text>
+                        <Text style={styles.placeholderSubtext}>
+                          Set BACK_CARD_IMAGE in this file
+                        </Text>
+                      </View>
+                    )}
+                  </Animated.View>
+                </View>
               </Animated.View>
             </Pressable>
           </View>
 
           {/* Exclusive benefits — Inspire Wallet context */}
           <View style={styles.exclusiveSection}>
-            <Text style={styles.exclusiveTitle}>{t("pcard.exclusiveTitle")}</Text>
+            <Text style={styles.exclusiveTitle}>
+              {t("pcard.exclusiveTitle")}
+            </Text>
 
             <View style={styles.starDivider}>
               <View style={styles.starLine} />
@@ -378,7 +408,9 @@ export default function BlackC() {
               <View style={styles.starLine} />
             </View>
 
-            <Text style={styles.exclusiveBody}>{t("pcard.exclusiveBody1")}</Text>
+            <Text style={styles.exclusiveBody}>
+              {t("pcard.exclusiveBody1")}
+            </Text>
             <Text style={styles.exclusiveBodySecondary}>
               {t("pcard.exclusiveBody2")}
             </Text>
@@ -386,7 +418,11 @@ export default function BlackC() {
             <View style={styles.benefitsRow}>
               {benefits.map((label, index) => (
                 <View key={`pcard-benefit-${index}`} style={styles.benefitChip}>
-                  <Ionicons name="checkmark-circle" size={17} color={GOLD_ACCENT} />
+                  <Ionicons
+                    name="checkmark-circle"
+                    size={17}
+                    color={GOLD_ACCENT}
+                  />
                   <Text style={styles.benefitChipText}>{label}</Text>
                 </View>
               ))}
@@ -429,6 +465,10 @@ export default function BlackC() {
                 style={styles.modalScroll}
                 contentContainerStyle={styles.modalScrollContent}
               >
+                <View style={styles.paymentAmountCard}>
+                  <Text style={styles.paymentAmountLabel}>Amount to pay</Text>
+                  <Text style={styles.paymentAmountValue}>₱1000</Text>
+                </View>
                 <Text style={styles.modalTitle}>{t("pcard.modalTitle")}</Text>
                 <Text style={styles.modalHint}>{t("pcard.modalHint")}</Text>
 
@@ -477,7 +517,9 @@ export default function BlackC() {
                     disabled={submitting}
                     activeOpacity={0.85}
                   >
-                    <Text style={styles.modalBtnCancelText}>{t("common.cancel")}</Text>
+                    <Text style={styles.modalBtnCancelText}>
+                      {t("common.cancel")}
+                    </Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={styles.modalBtnSubmit}
@@ -488,7 +530,9 @@ export default function BlackC() {
                     {submitting ? (
                       <ActivityIndicator color="#FFFFFF" size="small" />
                     ) : (
-                      <Text style={styles.modalBtnSubmitText}>{t("pcard.apply")}</Text>
+                      <Text style={styles.modalBtnSubmitText}>
+                        {t("pcard.apply")}
+                      </Text>
                     )}
                   </TouchableOpacity>
                 </View>
@@ -599,11 +643,8 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     backfaceVisibility: "hidden",
   },
-  frontFace: {
-    backgroundColor: "#FFFFFF",
-  },
   backFace: {
-    backgroundColor: "#0F172A",
+    backgroundColor: "#000000",
     borderWidth: 2.6,
   },
   cardImage: {
@@ -616,7 +657,6 @@ const styles = StyleSheet.create({
   },
   edgeMask: {
     ...StyleSheet.absoluteFillObject,
-    borderWidth: 6,
     borderColor: "#000000",
     borderRadius: 22,
   },
@@ -758,6 +798,30 @@ const styles = StyleSheet.create({
   },
   modalScrollContent: {
     paddingBottom: 8,
+  },
+  paymentAmountCard: {
+    backgroundColor: "#FFF7ED",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#FDBA74",
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    marginBottom: 14,
+    alignItems: "center",
+  },
+  paymentAmountLabel: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#9A3412",
+    textTransform: "uppercase",
+    letterSpacing: 0.4,
+    marginBottom: 4,
+  },
+  paymentAmountValue: {
+    fontSize: 22,
+    fontWeight: "800",
+    color: "#E15816",
+    letterSpacing: 0.2,
   },
   modalTitle: {
     fontSize: 18,
