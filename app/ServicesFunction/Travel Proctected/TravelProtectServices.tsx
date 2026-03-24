@@ -2,7 +2,7 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import * as FileSystem from "expo-file-system/legacy";
+import * as ImageManipulator from "expo-image-manipulator";
 import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -39,6 +39,8 @@ import TravelRequiredDocu from "./TravelRequiredDocu";
 
 const EMPTY_PLACEHOLDER = "__empty__";
 const FRONT_AND_BACK_GOVERNMENT_ID_TYPES = ["National_ID", "Driver_License"];
+const TARGET_IMAGE_BYTES = 3 * 1024 * 1024;
+const INITIAL_IMAGE_WIDTH = 1600;
 
 /** Convert a local file URI to base64 data URL for API submission */
 async function uriToBase64DataUrl(uri: string): Promise<string> {
@@ -54,20 +56,34 @@ async function uriToBase64DataUrl(uri: string): Promise<string> {
     });
   }
 
-  const base64 = await FileSystem.readAsStringAsync(uri, {
-    encoding: "base64",
-  });
-  const ext = uri.split(".").pop()?.toLowerCase() ?? "jpg";
+  let workingUri = uri;
+  let width = INITIAL_IMAGE_WIDTH;
+  let quality = 0.8;
 
-  const mime =
-    ext === "png"
-      ? "image/png"
-      : ext === "gif"
-        ? "image/gif"
-        : ext === "webp"
-          ? "image/webp"
-          : "image/jpeg";
-  return `data:${mime};base64,${base64}`;
+  // Iteratively compress selected images to keep payloads manageable.
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    const manipulated = await ImageManipulator.manipulateAsync(
+      workingUri,
+      [{ resize: { width } }],
+      {
+        compress: quality,
+        format: ImageManipulator.SaveFormat.JPEG,
+        base64: true,
+      },
+    );
+
+    const base64 = manipulated.base64 ?? "";
+    const approxDecodedBytes = Math.floor((base64.length * 3) / 4);
+    if (approxDecodedBytes <= TARGET_IMAGE_BYTES || attempt === 3) {
+      return `data:image/jpeg;base64,${base64}`;
+    }
+
+    workingUri = manipulated.uri;
+    width = Math.max(900, Math.floor(width * 0.8));
+    quality = Math.max(0.5, quality - 0.1);
+  }
+
+  throw new Error("Failed to optimize selected image");
 }
 
 interface TimeDeposit {
@@ -782,7 +798,6 @@ export default function TravelProtection() {
         // Government ID fields (optional)
         governmentIdType: governmentIdType || undefined,
         governmentIdNumber: governmentIdNumber || undefined,
-        governmentIdPhoto: governmentIdPhotoFrontBase64,
         governmentIdPhotoFront: governmentIdPhotoFrontBase64,
         governmentIdPhotoBack: governmentIdPhotoBackBase64,
       };
@@ -790,7 +805,6 @@ export default function TravelProtection() {
       console.log("[TravelProtection] Submitting data:", JSON.stringify({
         ...applicationData,
         passportPhoto: applicationData.passportPhoto ? `[base64-${applicationData.passportPhoto.length} chars]` : undefined,
-        governmentIdPhoto: applicationData.governmentIdPhoto ? `[base64-${String(applicationData.governmentIdPhoto).length} chars]` : undefined,
         governmentIdPhotoFront: applicationData.governmentIdPhotoFront ? `[base64-${String(applicationData.governmentIdPhotoFront).length} chars]` : undefined,
         governmentIdPhotoBack: applicationData.governmentIdPhotoBack ? `[base64-${String(applicationData.governmentIdPhotoBack).length} chars]` : undefined,
       }, null, 2));
@@ -964,7 +978,7 @@ export default function TravelProtection() {
     },
     formCard: { padding: scale(20) },
     buttonContainer: {
-      flexDirection: isTinyScreen ? "column" : "row",
+      flexDirection: isTinyScreen ? ("column" as const) : ("row" as const),
       gap: isTinyScreen ? 10 : 12,
     },
     countryDropdown: {
