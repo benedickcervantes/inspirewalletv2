@@ -22,6 +22,14 @@ import {
 } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
 
+const BANK_FEE_THRESHOLD = 100000;
+
+const getLocalBankTransactionFee = (amountValue: number, isUnionBank: boolean) => {
+  if (Number.isNaN(amountValue) || amountValue <= 0) return 0;
+  if (isUnionBank) return amountValue > BANK_FEE_THRESHOLD ? 250 : 0;
+  return amountValue > BANK_FEE_THRESHOLD ? 150 : 50;
+};
+
 export default function WithdrawLocalBConfirm() {
   const navigation = useNavigation();
   const route = useRoute();
@@ -52,8 +60,13 @@ export default function WithdrawLocalBConfirm() {
   const branchName = params?.branchName || "";
   const amount = params?.amount || "0";
   const email = params?.email || "";
+  const parsedAmount = parseFloat(amount);
   const isUnionBank = bankName.trim().toUpperCase() === "UNIONBANK";
-  const transactionFee = isUnionBank ? 0 : 25;
+  const transactionFee = getLocalBankTransactionFee(parsedAmount, isUnionBank);
+  const netWithdrawalAmount = Math.max(
+    0,
+    (Number.isNaN(parsedAmount) ? 0 : parsedAmount) - transactionFee,
+  );
 
   React.useEffect(() => {
     (async () => {
@@ -257,12 +270,12 @@ export default function WithdrawLocalBConfirm() {
               </View>
             </View>
 
-            {/* Bank Name */}
+            {/* Email Address */}
             <View style={styles.detailRow}>
               <View style={styles.leftBorder} />
               <View style={styles.detailContent}>
-                <Text style={styles.detailLabel}>{t("withdraw.bankName")}</Text>
-                <Text style={styles.detailValue}>{bankName}</Text>
+                <Text style={styles.detailLabel}>{t("withdraw.email")}</Text>
+                <Text style={styles.detailValue}>{email}</Text>
               </View>
             </View>
 
@@ -277,12 +290,12 @@ export default function WithdrawLocalBConfirm() {
               </View>
             </View>
 
-            {/* Email Address */}
+            {/* Bank Name */}
             <View style={styles.detailRow}>
               <View style={styles.leftBorder} />
               <View style={styles.detailContent}>
-                <Text style={styles.detailLabel}>{t("withdraw.email")}</Text>
-                <Text style={styles.detailValue}>{email}</Text>
+                <Text style={styles.detailLabel}>{t("withdraw.bankName")}</Text>
+                <Text style={styles.detailValue}>{bankName}</Text>
               </View>
             </View>
 
@@ -291,26 +304,29 @@ export default function WithdrawLocalBConfirm() {
               <View style={styles.leftBorder} />
               <View style={styles.detailContent}>
                 <Text style={styles.detailLabel}>Transaction Fee</Text>
-                <Text
-                  style={[
-                    styles.detailValue,
-                    styles.transactionFeeValue,
-                    transactionFee === 0
-                      ? styles.transactionFeeFree
-                      : styles.transactionFeePaid,
-                  ]}
-                >
-                  {transactionFee === 0 ? "Free" : "PHP 25"}
+                <Text style={styles.detailValue}>
+                  {transactionFee === 0
+                    ? "Free"
+                    : `PHP ${transactionFee.toLocaleString("en-US", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}`}
                 </Text>
               </View>
             </View>
+
           </View>
 
           {/* Withdrawal Amount Card */}
           <View style={styles.amountCard}>
             <Text style={styles.amountLabel}>{t("withdraw.amountLabel")}</Text>
             <View style={styles.amountBox}>
-              <Text style={styles.amountValue}>{formatAmount(amount)}</Text>
+              <Text style={styles.amountValue}>
+                {netWithdrawalAmount.toLocaleString("en-US", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </Text>
             </View>
           </View>
 
@@ -595,15 +611,6 @@ const styles = StyleSheet.create({
   detailValue: {
     fontSize: 13,
     color: "#999",
-  },
-  transactionFeeValue: {
-    fontWeight: "700",
-  },
-  transactionFeeFree: {
-    color: "#10B981",
-  },
-  transactionFeePaid: {
-    color: "#FF3B30",
   },
   amountCard: {
     backgroundColor: "#E25A17",
