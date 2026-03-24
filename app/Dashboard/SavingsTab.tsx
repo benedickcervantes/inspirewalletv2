@@ -12,6 +12,7 @@ import {
   useWindowDimensions,
   View
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLanguage } from "../../context/LanguageContext";
 import { useResponsive } from "../../utils/responsive";
 
@@ -130,6 +131,7 @@ export default function SavingsTab({
   userReferrer,
 }: SavingsTabProps) {
   const { t } = useLanguage();
+  const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const { horizontalPadding, isTinyScreen } = useResponsive();
   const isSmallScreen = width < 360;
@@ -138,6 +140,7 @@ export default function SavingsTab({
   const [contractTab, setContractTab] = useState<"Active" | "Completed" | "Cancelled" | "Pending">("Active");
   const [contractPage, setContractPage] = useState(1);
   const [selectedContract, setSelectedContract] = useState<TimeDeposit | null>(null);
+  const [showContractComingSoonModal, setShowContractComingSoonModal] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
   const contractsSectionYRef = useRef(0);
@@ -517,7 +520,10 @@ export default function SavingsTab({
                   </TouchableOpacity>
                 </View>
                 <ScrollView
-                  style={[styles.modalBody, { padding: compact ? 16 : 20, paddingBottom: compact ? 32 : 40 }]}
+                  style={[styles.modalBody, { padding: compact ? 16 : 20 }]}
+                  contentContainerStyle={{
+                    paddingBottom: (compact ? 32 : 40) + insets.bottom,
+                  }}
                   showsVerticalScrollIndicator={false}
                 >
                   <View
@@ -683,9 +689,51 @@ export default function SavingsTab({
                   {getPayoutSchedule(selectedContract).length === 0 && (
                     <Text style={styles.noPayoutsText}>{t("investment.noPayoutSchedule")}</Text>
                   )}
+                  <View style={styles.contractRequestButtons}>
+                    <TouchableOpacity
+                      style={[styles.contractRequestButton, styles.contractRequestPrimaryButton]}
+                      activeOpacity={0.8}
+                      onPress={() => setShowContractComingSoonModal(true)}
+                    >
+                      <Text style={[styles.contractRequestButtonText, styles.contractRequestPrimaryButtonText]}>
+                        Request a Contract
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.contractRequestButton, styles.contractRequestSecondaryButton]}
+                      activeOpacity={0.8}
+                      onPress={() => setShowContractComingSoonModal(true)}
+                    >
+                      <Text style={styles.contractRequestButtonText}>Request Original Copy</Text>
+                    </TouchableOpacity>
+                  </View>
                 </ScrollView>
               </>
             )}
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={showContractComingSoonModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowContractComingSoonModal(false)}
+      >
+        <View style={styles.confirmationOverlay}>
+          <View style={[styles.confirmationCard, { marginBottom: insets.bottom > 0 ? insets.bottom : 16 }]}>
+            <Ionicons name="time-outline" size={28} color="#E25A17" />
+            <Text style={styles.confirmationTitle}>Coming Soon</Text>
+            <Text style={styles.confirmationMessage}>
+              Contract request is not available yet. This feature will be enabled once contract processing is ready.
+            </Text>
+            <TouchableOpacity
+              style={styles.confirmationButton}
+              onPress={() => setShowContractComingSoonModal(false)}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.confirmationButtonText}>OK</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -973,4 +1021,144 @@ const styles = StyleSheet.create({
   payoutStatusPending: {},
   payoutStatusText: { fontSize: 12, fontWeight: "600" },
   noPayoutsText: { fontSize: 14, color: "#9CA3AF", fontStyle: "italic" },
+  contractRequestButtons: {
+    marginTop: 20,
+    gap: 10,
+  },
+  contractRequestButton: {
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+  },
+  contractRequestPrimaryButton: {
+    backgroundColor: "#E25A17",
+    borderColor: "#E25A17",
+  },
+  contractRequestSecondaryButton: {
+    backgroundColor: "#FFFFFF",
+    borderColor: "#E25A17",
+  },
+  contractRequestButtonText: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#E25A17",
+  },
+  contractRequestPrimaryButtonText: {
+    color: "#FFFFFF",
+  },
+  confirmationOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.45)",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 20,
+  },
+  confirmationCard: {
+    width: "100%",
+    maxWidth: 360,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 18,
+    alignItems: "center",
+  },
+  confirmationTitle: {
+    marginTop: 10,
+    fontSize: 17,
+    fontWeight: "700",
+    color: "#1F2937",
+    textAlign: "center",
+  },
+  confirmationMessage: {
+    marginTop: 8,
+    fontSize: 14,
+    color: "#4B5563",
+    textAlign: "center",
+    lineHeight: 20,
+  },
+  confirmationButton: {
+    marginTop: 16,
+    width: "100%",
+    backgroundColor: "#E25A17",
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: "center",
+  },
+  confirmationButtonText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  requestDetailBox: {
+    width: "100%",
+    marginTop: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    backgroundColor: "#F9FAFB",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  requestDetailRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E5E7EB",
+    gap: 12,
+  },
+  requestDetailRowNoBorder: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 10,
+    gap: 12,
+  },
+  requestDetailLabel: {
+    fontSize: 13,
+    color: "#6B7280",
+    flex: 1,
+  },
+  requestDetailValue: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#1F2937",
+    flex: 1,
+    textAlign: "right",
+  },
+  confirmActionRow: {
+    width: "100%",
+    marginTop: 14,
+    flexDirection: "row",
+    gap: 10,
+  },
+  cancelConfirmButton: {
+    flex: 1,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#D1D5DB",
+    paddingVertical: 11,
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+  },
+  cancelConfirmButtonText: {
+    color: "#4B5563",
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  approveConfirmButton: {
+    flex: 1,
+    borderRadius: 12,
+    backgroundColor: "#E25A17",
+    paddingVertical: 11,
+    alignItems: "center",
+  },
+  approveConfirmButtonText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "700",
+  },
 });
