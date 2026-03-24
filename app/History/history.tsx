@@ -21,6 +21,7 @@ import Svg, { Path } from "react-native-svg";
 import { getOrCreateMainWallet, getTransactions } from "../../configs/api";
 import type { TransactionDoc } from "../../configs/firebase";
 import { auth, subscribeToTransactions } from "../../configs/firebase";
+import { getLanguageCode } from "../../constants/locales";
 import { useLanguage } from "../../context/LanguageContext";
 import type { NavProp } from "../../types/navigation";
 import CustomLoader from "../Loader/CustomLoader";
@@ -33,10 +34,67 @@ const TRANSACTION_TYPE_KEYS: Record<string, string> = {
   FEE: "tx.fee",
   REFUND: "tx.refund",
   TIME_DEPOSIT: "tx.timeDeposit",
+  TIME_DEPOSIT_DIVIDEND: "tx.timeDepositDividend",
+  TIME_DEPOSIT_PRINCIPAL_RETURN: "tx.timeDepositPrincipalReturn",
+  AGENT_COMMISSION: "tx.agentCommission",
+  CARD_PURCHASE: "tx.cardPurchase",
+  CARD_SUBSCRIPTION: "tx.cardSubscription",
+  STOCK_BUY: "tx.stockBuy",
+  STOCK_SELL: "tx.stockSell",
+  PLAN_SUBSCRIPTION_PAYMENT: "tx.planSubscriptionPayment",
+  PLAN_SUBSCRIPTION_CASHBACK: "tx.planSubscriptionCashback",
+  TRAVEL_PROTECTION: "tx.travelProtection",
+  TRAVEL_PROTECTION_FEE: "tx.travelProtection",
 };
 
-const SPENT_TYPES = ["PAYMENT", "TRANSFER_OUT", "FEE"];
-const INCOME_TYPES = ["TOP_UP", "TRANSFER_IN", "REFUND"];
+const SPENT_TYPES = [
+  "PAYMENT",
+  "TRANSFER_OUT",
+  "FEE",
+  "TIME_DEPOSIT",
+  "CARD_PURCHASE",
+  "CARD_SUBSCRIPTION",
+  "STOCK_BUY",
+  "PLAN_SUBSCRIPTION_PAYMENT",
+  "TRAVEL_PROTECTION",
+  "TRAVEL_PROTECTION_FEE",
+];
+const INCOME_TYPES = [
+  "TOP_UP",
+  "TRANSFER_IN",
+  "REFUND",
+  "TIME_DEPOSIT_DIVIDEND",
+  "TIME_DEPOSIT_PRINCIPAL_RETURN",
+  "AGENT_COMMISSION",
+  "STOCK_SELL",
+  "PLAN_SUBSCRIPTION_CASHBACK",
+];
+
+const TRANSACTION_DESCRIPTION_KEYS: Record<string, string> = {
+  "Free Default Card": "history.freeDefaultCard",
+  "Created Account": "history.createdAccount",
+  "Withdrawal Requested": "history.withdrawalRequested",
+  "Withdrawal Approved": "history.withdrawalApproved",
+  "Withdrawal Rejected": "history.withdrawalRejected",
+  "Stock Investment Requested": "history.stockInvestmentRequested",
+  "Stock Investment Approved": "history.stockInvestmentApproved",
+  "Stock Investment Rejected": "history.stockInvestmentRejected",
+  "Gold Elite monthly subscription renewal":
+    "history.goldEliteMonthlySubscriptionRenewal",
+  "Gold Elite monthly subscription (first month)":
+    "history.goldEliteMonthlySubscriptionFirstMonth",
+  "Time deposit approved - request amount top-up":
+    "history.timeDepositApprovedTopUp",
+  "Time deposit approved – request amount top-up":
+    "history.timeDepositApprovedTopUp",
+};
+
+const CARD_DESIGN_KEYS: Record<string, string> = {
+  ORANGE_ELITE: "ct.orangeElite",
+  ROYAL_CURVE: "ct.royalCurve",
+  DIAMOND_ELITE: "ct.diamondElite",
+  GOLD_ELITE: "ct.goldElite",
+};
 
 interface Transaction {
   id: string;
@@ -87,19 +145,190 @@ export default function HistoryScreen() {
   const { t, language } = useLanguage();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
+  const languageCode = getLanguageCode(language);
+
+  const localeByLanguageCode: Record<string, string> = {
+    en: "en-PH",
+    ko: "ko-KR",
+    ja: "ja-JP",
+    ar: "ar-SA",
+  };
+
+  const locale = localeByLanguageCode[languageCode] ?? "en-PH";
 
   const getTransactionTypeLabel = (type?: string) => {
     if (!type) return t("tx.transaction");
     const key = TRANSACTION_TYPE_KEYS[type];
-    return key ? t(key) : type;
+    if (key) return t(key);
+    return type
+      .toLowerCase()
+      .split("_")
+      .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+      .join(" ");
+  };
+
+  const getTranslatedDescription = (description?: string) => {
+    const getTranslatedCardDesign = (designRaw?: string) => {
+      if (!designRaw) return "";
+      const normalizedDesign = designRaw
+        .trim()
+        .replace(/[-\s]+/g, "_")
+        .replace(/__+/g, "_")
+        .toUpperCase();
+      const designKey = CARD_DESIGN_KEYS[normalizedDesign];
+      if (designKey) return t(designKey);
+      return designRaw
+        .trim()
+        .replace(/[_-]+/g, " ")
+        .replace(/\s+/g, " ")
+        .split(" ")
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(" ");
+    };
+
+    if (!description) return null;
+
+    const normalized = description.trim();
+    if (!normalized) return null;
+
+    const exactKey = TRANSACTION_DESCRIPTION_KEYS[normalized];
+    if (exactKey) return t(exactKey);
+
+    const topUpApprovedMatch = normalized.match(
+      /^Top[- ]up approved:\s*request\s+(.+)$/i,
+    );
+    if (topUpApprovedMatch?.[1]) {
+      return t("history.topUpApprovedRequest", {
+        requestId: topUpApprovedMatch[1].trim(),
+      });
+    }
+
+    const agentCommissionMatch = normalized.match(
+      /^Agent commission from time deposit\s+(.+)$/i,
+    );
+    if (agentCommissionMatch?.[1]) {
+      return t("history.agentCommissionFromTimeDeposit", {
+        id: agentCommissionMatch[1].trim(),
+      });
+    }
+
+    const stockPurchaseListingMatch = normalized.match(
+      /^Stock purchase:\s*listing\s+(.+)$/i,
+    );
+    if (stockPurchaseListingMatch?.[1]) {
+      return t("history.stockPurchaseListing", {
+        listingId: stockPurchaseListingMatch[1].trim(),
+      });
+    }
+
+    const stockSaleListingMatch = normalized.match(
+      /^Stock sale:\s*listing\s+(.+)$/i,
+    );
+    if (stockSaleListingMatch?.[1]) {
+      return t("history.stockSaleListing", {
+        listingId: stockSaleListingMatch[1].trim(),
+      });
+    }
+
+    const stockSoldListingMatch = normalized.match(
+      /^Stock sold:\s*listing\s+(.+)$/i,
+    );
+    if (stockSoldListingMatch?.[1]) {
+      return t("history.stockSoldListing", {
+        listingId: stockSoldListingMatch[1].trim(),
+      });
+    }
+
+    const stockPurchasedListingMatch = normalized.match(
+      /^Stock purchased:\s*listing\s+(.+)$/i,
+    );
+    if (stockPurchasedListingMatch?.[1]) {
+      return t("history.stockPurchasedListing", {
+        listingId: stockPurchasedListingMatch[1].trim(),
+      });
+    }
+
+    const stockInvestmentApprovedRequestMatch = normalized.match(
+      /^Stock\s+investment\s+approved:\s*request\s+(.+)$/i,
+    );
+    if (stockInvestmentApprovedRequestMatch?.[1]) {
+      return `${t("history.stockInvestmentApproved")}: ${stockInvestmentApprovedRequestMatch[1].trim()}`;
+    }
+
+    const topUpApprovedRequestMatch = normalized.match(
+      /^Top[- ]?up\s+approved:\s*request\s+(.+)$/i,
+    );
+    if (topUpApprovedRequestMatch?.[1]) {
+      return t("history.topUpApprovedRequest", {
+        requestId: topUpApprovedRequestMatch[1].trim(),
+      });
+    }
+
+    // Handle backend text variations for stock investment and withdrawal statuses.
+    if (
+      /stock\s*investment/i.test(normalized) &&
+      /\brequest(ed)?\b/i.test(normalized) &&
+      !/\bapproved\b/i.test(normalized) &&
+      !/\brejected\b/i.test(normalized)
+    ) {
+      return t("history.stockInvestmentRequested");
+    }
+    if (
+      /stock\s*investment/i.test(normalized) &&
+      /\bapproved\b/i.test(normalized)
+    ) {
+      return t("history.stockInvestmentApproved");
+    }
+    if (
+      /stock\s*investment/i.test(normalized) &&
+      /\brejected\b/i.test(normalized)
+    ) {
+      return t("history.stockInvestmentRejected");
+    }
+
+    if (
+      /\bwithdrawal\b/i.test(normalized) &&
+      /\brequest(ed)?\b/i.test(normalized) &&
+      !/\bapproved\b/i.test(normalized) &&
+      !/\brejected\b/i.test(normalized)
+    ) {
+      return t("history.withdrawalRequested");
+    }
+    if (
+      /\bwithdrawal\b/i.test(normalized) &&
+      /\bapproved\b/i.test(normalized)
+    ) {
+      return t("history.withdrawalApproved");
+    }
+    if (
+      /\bwithdrawal\b/i.test(normalized) &&
+      /\brejected\b/i.test(normalized)
+    ) {
+      return t("history.withdrawalRejected");
+    }
+
+    const cardPurchaseMatch = normalized.match(/^(.+)\s+card purchase$/i);
+    if (cardPurchaseMatch?.[1]) {
+      return t("history.cardPurchaseDesign", {
+        design: getTranslatedCardDesign(cardPurchaseMatch[1]),
+      });
+    }
+
+    const normalizedTypeToken = normalized
+      .replace(/[-\s]+/g, "_")
+      .replace(/__+/g, "_")
+      .toUpperCase();
+    if (TRANSACTION_TYPE_KEYS[normalizedTypeToken]) {
+      return getTransactionTypeLabel(normalizedTypeToken);
+    }
+
+    return null;
   };
 
   const getTransactionDisplayName = (tx: Transaction) => {
-    if (tx.description === "Free Default Card")
-      return t("history.freeDefaultCard");
-    if (tx.description === "Created Account")
-      return t("history.createdAccount");
-    return tx.description || getTransactionTypeLabel(tx.type);
+    const translated = getTranslatedDescription(tx.description);
+    if (translated) return translated;
+    return tx.description?.trim() || getTransactionTypeLabel(tx.type);
   };
 
   const contentBottomPadding = Math.max(insets.bottom, 16);
@@ -132,7 +361,8 @@ export default function HistoryScreen() {
   const [isSelectMode, setIsSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [showDeleteOptions, setShowDeleteOptions] = useState(false);
-  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [selectedTransaction, setSelectedTransaction] =
+    useState<Transaction | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
 
@@ -140,7 +370,7 @@ export default function HistoryScreen() {
   const unsubRef = useRef<(() => void) | null>(null);
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat(language === "en" ? "en-PH" : language, {
+    return new Intl.NumberFormat(locale, {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(amount);
@@ -151,7 +381,7 @@ export default function HistoryScreen() {
       tx.timestamp?.toDate?.() ??
       (tx.createdAt ? new Date(tx.createdAt) : null);
     if (!date) return "";
-    return date.toLocaleString(language === "ko" ? "ko-KR" : language === "ja" ? "ja-JP" : language === "ar" ? "ar-SA" : "en-US", {
+    return date.toLocaleString(locale, {
       month: "short",
       day: "numeric",
       year: "numeric",
@@ -159,25 +389,6 @@ export default function HistoryScreen() {
       minute: "2-digit",
     });
   };
-
-  const defaultTransactions: Transaction[] = [
-    {
-      id: "1",
-      type: "TOP_UP",
-      amount: 0,
-      description: "Free Default Card",
-      timestamp: { toDate: () => new Date("2026-02-12T14:56:00") },
-      createdAt: "2026-02-12T14:56:00",
-    },
-    {
-      id: "2",
-      type: "TOP_UP",
-      amount: 0,
-      description: "Created Account",
-      timestamp: { toDate: () => new Date("2026-02-01T16:30:00") },
-      createdAt: "2026-02-01T16:30:00",
-    },
-  ];
 
   const filterTransactionsByDate = (txList: Transaction[]) => {
     if (!dateRange.start || !dateRange.end) return txList;
@@ -190,14 +401,15 @@ export default function HistoryScreen() {
     });
   };
 
-  // Merge real transactions with defaults, then apply date filter
-  const allTransactions =
-    transactions.length > 0 ? [...defaultTransactions, ...transactions] : defaultTransactions;
+  const allTransactions = transactions;
   const displayTransactions = filterTransactionsByDate(allTransactions);
-  const totalPagesCount = Math.max(1, Math.ceil(displayTransactions.length / ITEMS_PER_PAGE));
+  const totalPagesCount = Math.max(
+    1,
+    Math.ceil(displayTransactions.length / ITEMS_PER_PAGE),
+  );
   const paginatedTransactions = displayTransactions.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
+    currentPage * ITEMS_PER_PAGE,
   );
 
   const totalSpent = displayTransactions
@@ -210,7 +422,8 @@ export default function HistoryScreen() {
 
   const getTransactionIcon = (tx: Transaction) => {
     if (tx.description?.toLowerCase().includes("card")) return "card-outline";
-    if (tx.description?.toLowerCase().includes("account")) return "people-outline";
+    if (tx.description?.toLowerCase().includes("account"))
+      return "people-outline";
     return "swap-horizontal";
   };
 
@@ -219,7 +432,7 @@ export default function HistoryScreen() {
       loadMore = false,
       currentCount = 0,
       startDate?: Date,
-      endDate?: Date
+      endDate?: Date,
     ) => {
       const accessToken = await AsyncStorage.getItem("access_token");
       if (!accessToken) {
@@ -255,7 +468,9 @@ export default function HistoryScreen() {
 
         // ✅ Ensure transactions is an array before mapping
         if (txRes.success && Array.isArray(txRes.transactions)) {
-          const mapped: Transaction[] = (txRes.transactions as RawApiTransaction[]).map((tx) => ({
+          const mapped: Transaction[] = (
+            txRes.transactions as RawApiTransaction[]
+          ).map((tx) => ({
             id: String(tx.id ?? ""),
             type: String(tx.type ?? ""),
             amount: (() => {
@@ -271,7 +486,10 @@ export default function HistoryScreen() {
 
           // ✅ Append when loading more, replace otherwise
           setTransactions((prev) => (loadMore ? [...prev, ...mapped] : mapped));
-          setHasMore(mapped.length >= (loadMore ? currentCount + ITEMS_PER_PAGE : ITEMS_PER_PAGE));
+          setHasMore(
+            mapped.length >=
+              (loadMore ? currentCount + ITEMS_PER_PAGE : ITEMS_PER_PAGE),
+          );
           setTotalPages(Math.max(1, Math.ceil(mapped.length / ITEMS_PER_PAGE)));
         } else {
           // If no transactions or invalid response, set empty array
@@ -286,7 +504,7 @@ export default function HistoryScreen() {
         setLoadingMore(false);
       }
     },
-    [] // No dependencies needed because ITEMS_PER_PAGE is a constant
+    [], // No dependencies needed because ITEMS_PER_PAGE is a constant
   );
 
   useEffect(() => {
@@ -295,7 +513,9 @@ export default function HistoryScreen() {
     const init = async () => {
       // Load deleted IDs from AsyncStorage
       try {
-        const savedDeletedIds = await AsyncStorage.getItem("deleted_transaction_ids");
+        const savedDeletedIds = await AsyncStorage.getItem(
+          "deleted_transaction_ids",
+        );
         if (savedDeletedIds) {
           setDeletedIds(new Set(JSON.parse(savedDeletedIds)));
         }
@@ -328,7 +548,9 @@ export default function HistoryScreen() {
             description: String(d.description ?? ""),
             timestamp: {
               toDate: () =>
-                d.createdAt?.toMillis ? new Date(d.createdAt.toMillis()) : new Date(),
+                d.createdAt?.toMillis
+                  ? new Date(d.createdAt.toMillis())
+                  : new Date(),
             },
             createdAt: d.createdAt?.toMillis
               ? new Date(d.createdAt.toMillis()).toISOString()
@@ -336,7 +558,7 @@ export default function HistoryScreen() {
           }));
           setTransactions(mapped);
           setLoading(false);
-        }
+        },
       );
     };
 
@@ -354,7 +576,7 @@ export default function HistoryScreen() {
       try {
         await AsyncStorage.setItem(
           "deleted_transaction_ids",
-          JSON.stringify([...deletedIds])
+          JSON.stringify([...deletedIds]),
         );
       } catch (error) {
         console.error("Failed to save deleted IDs:", error);
@@ -391,14 +613,34 @@ export default function HistoryScreen() {
     }
   };
 
+  const handleViewReceipt = () => {
+    if (!selectedTransaction) return;
+    setShowDetailModal(false);
+    setSelectedTransaction(null);
+    const rawType = String(selectedTransaction.type ?? "").trim().toLowerCase();
+    let receiptType = "Deposit";
+    if (rawType.includes("transfer")) receiptType = "Transfer";
+    else if (rawType.includes("withdraw")) receiptType = "Withdrawal";
+
+    (navigation as unknown as NavProp).navigate("depositReceipt", {
+      transactionId: selectedTransaction.id || t("investment.pending"),
+      amount: String(selectedTransaction.amount ?? 0),
+      currency: "PHP",
+      type: receiptType,
+      successMessage: getTransactionDisplayName(selectedTransaction),
+      date: formatDateTime(selectedTransaction) || new Date().toLocaleString(),
+      source: "history",
+    });
+  };
+
   const handleLoadMore = () => {
     if (!loadingMore && hasMore) {
-      const count = transactions.length > 0 ? transactions.length : defaultTransactions.length;
+      const count = transactions.length;
       fetchTransactions(
         true,
         count,
         dateRange.start ?? undefined,
-        dateRange.end ?? undefined
+        dateRange.end ?? undefined,
       );
       setCurrentPage((prev) => prev + 1);
     }
@@ -416,7 +658,7 @@ export default function HistoryScreen() {
         true,
         offset + ITEMS_PER_PAGE,
         dateRange.start ?? undefined,
-        dateRange.end ?? undefined
+        dateRange.end ?? undefined,
       );
     }
   };
@@ -479,14 +721,42 @@ export default function HistoryScreen() {
 
     switch (filterType) {
       case "today":
-        start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
-        end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+        start = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate(),
+          0,
+          0,
+          0,
+        );
+        end = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate(),
+          23,
+          59,
+          59,
+        );
         break;
       case "yesterday":
         const yesterday = new Date(now);
         yesterday.setDate(yesterday.getDate() - 1);
-        start = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 0, 0, 0);
-        end = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 23, 59, 59);
+        start = new Date(
+          yesterday.getFullYear(),
+          yesterday.getMonth(),
+          yesterday.getDate(),
+          0,
+          0,
+          0,
+        );
+        end = new Date(
+          yesterday.getFullYear(),
+          yesterday.getMonth(),
+          yesterday.getDate(),
+          23,
+          59,
+          59,
+        );
         break;
       case "week":
       case "last7days":
@@ -596,10 +866,7 @@ export default function HistoryScreen() {
           </TouchableOpacity>
         </View>
         <Text
-          style={[
-            styles.headerTitle,
-            isSmallWidth && styles.headerTitleSmall,
-          ]}
+          style={[styles.headerTitle, isSmallWidth && styles.headerTitleSmall]}
           numberOfLines={1}
         >
           {t("history.allTransactions")}
@@ -615,7 +882,9 @@ export default function HistoryScreen() {
             </TouchableOpacity>
             {showFilterDropdown && (
               <View style={styles.filterDropdownMenu}>
-                <Text style={styles.filterDropdownTitle}>{t("history.filterByDate")}</Text>
+                <Text style={styles.filterDropdownTitle}>
+                  {t("history.filterByDate")}
+                </Text>
                 <TouchableOpacity
                   style={[
                     styles.filterOption,
@@ -627,7 +896,8 @@ export default function HistoryScreen() {
                     <Text
                       style={[
                         styles.filterOptionText,
-                        selectedFilter === "all" && styles.filterOptionTextSelected,
+                        selectedFilter === "all" &&
+                          styles.filterOptionTextSelected,
                       ]}
                     >
                       {t("history.allTime")}
@@ -648,7 +918,8 @@ export default function HistoryScreen() {
                     <Text
                       style={[
                         styles.filterOptionText,
-                        selectedFilter === "today" && styles.filterOptionTextSelected,
+                        selectedFilter === "today" &&
+                          styles.filterOptionTextSelected,
                       ]}
                     >
                       {t("history.today")}
@@ -669,7 +940,8 @@ export default function HistoryScreen() {
                     <Text
                       style={[
                         styles.filterOptionText,
-                        selectedFilter === "week" && styles.filterOptionTextSelected,
+                        selectedFilter === "week" &&
+                          styles.filterOptionTextSelected,
                       ]}
                     >
                       {t("history.thisWeek")}
@@ -690,7 +962,8 @@ export default function HistoryScreen() {
                     <Text
                       style={[
                         styles.filterOptionText,
-                        selectedFilter === "month" && styles.filterOptionTextSelected,
+                        selectedFilter === "month" &&
+                          styles.filterOptionTextSelected,
                       ]}
                     >
                       {t("history.thisMonth")}
@@ -711,7 +984,8 @@ export default function HistoryScreen() {
                     <Text
                       style={[
                         styles.filterOptionText,
-                        selectedFilter === "custom" && styles.filterOptionTextSelected,
+                        selectedFilter === "custom" &&
+                          styles.filterOptionTextSelected,
                       ]}
                     >
                       {t("history.customRange")}
@@ -741,13 +1015,17 @@ export default function HistoryScreen() {
       >
         <View style={styles.summaryCards}>
           <View style={styles.summaryCard}>
-            <Text style={styles.summaryLabel}>{t("history.totalSpent").toUpperCase()}</Text>
+            <Text style={styles.summaryLabel}>
+              {t("history.totalSpent").toUpperCase()}
+            </Text>
             <Text style={styles.summaryValue}>
               {CURRENCY_SYMBOL} {formatCurrency(totalSpent)}
             </Text>
           </View>
           <View style={styles.summaryCard}>
-            <Text style={styles.summaryLabel}>{t("history.totalIncome").toUpperCase()}</Text>
+            <Text style={styles.summaryLabel}>
+              {t("history.totalIncome").toUpperCase()}
+            </Text>
             <Text style={styles.summaryValue}>
               {CURRENCY_SYMBOL} {formatCurrency(totalIncome)}
             </Text>
@@ -765,7 +1043,9 @@ export default function HistoryScreen() {
               if (selectedIds.size === paginatedTransactions.length) {
                 setSelectedIds(new Set());
               } else {
-                setSelectedIds(new Set(paginatedTransactions.map((tx) => tx.id)));
+                setSelectedIds(
+                  new Set(paginatedTransactions.map((tx) => tx.id)),
+                );
               }
             }}
             activeOpacity={0.7}
@@ -798,13 +1078,17 @@ export default function HistoryScreen() {
               )}
               <View style={styles.transactionIcon}>
                 <Ionicons
-                  name={getTransactionIcon(tx) as keyof typeof Ionicons.glyphMap}
+                  name={
+                    getTransactionIcon(tx) as keyof typeof Ionicons.glyphMap
+                  }
                   size={22}
                   color="#E15816"
                 />
               </View>
               <View style={styles.transactionDetails}>
-                <Text style={styles.transactionName}>{getTransactionDisplayName(tx)}</Text>
+                <Text style={styles.transactionName}>
+                  {getTransactionDisplayName(tx)}
+                </Text>
                 <Text style={styles.transactionDate}>{formatDateTime(tx)}</Text>
               </View>
               <Text style={styles.transactionAmount}>
@@ -814,12 +1098,14 @@ export default function HistoryScreen() {
           ))}
         </View>
 
-        {displayTransactions.length > 0 && !hasMore && currentPage >= totalPagesCount && (
-          <View style={styles.endOfListContainer}>
-            <Ionicons name="checkmark-circle" size={20} color="#10B981" />
-            <Text style={styles.endOfListText}>{t("history.allLoaded")}</Text>
-          </View>
-        )}
+        {displayTransactions.length > 0 &&
+          !hasMore &&
+          currentPage >= totalPagesCount && (
+            <View style={styles.endOfListContainer}>
+              <Ionicons name="checkmark-circle" size={20} color="#10B981" />
+              <Text style={styles.endOfListText}>{t("history.allLoaded")}</Text>
+            </View>
+          )}
       </ScrollView>
 
       {/* Pagination Bar */}
@@ -832,7 +1118,8 @@ export default function HistoryScreen() {
                   style={[
                     styles.paginationArrow,
                     currentPage > 1 && styles.paginationArrowEnabled,
-                    (currentPage === 1 || loadingMore) && styles.paginationArrowDisabled,
+                    (currentPage === 1 || loadingMore) &&
+                      styles.paginationArrowDisabled,
                   ]}
                   onPress={handlePreviousPage}
                   disabled={currentPage === 1 || loadingMore}
@@ -852,7 +1139,9 @@ export default function HistoryScreen() {
                       styles.pageButton,
                       page === currentPage && styles.pageButtonActive,
                     ]}
-                    onPress={() => typeof page === "number" && handlePageChange(page)}
+                    onPress={() =>
+                      typeof page === "number" && handlePageChange(page)
+                    }
                     disabled={loadingMore || page === currentPage}
                     activeOpacity={0.7}
                   >
@@ -870,18 +1159,28 @@ export default function HistoryScreen() {
                 <TouchableOpacity
                   style={[
                     styles.paginationArrow,
-                    hasMore && currentPage < totalPagesCount && styles.paginationArrowEnabled,
-                    (!hasMore || currentPage >= totalPagesCount || loadingMore) &&
+                    hasMore &&
+                      currentPage < totalPagesCount &&
+                      styles.paginationArrowEnabled,
+                    (!hasMore ||
+                      currentPage >= totalPagesCount ||
+                      loadingMore) &&
                       styles.paginationArrowDisabled,
                   ]}
                   onPress={handleNextPage}
-                  disabled={!hasMore || currentPage >= totalPagesCount || loadingMore}
+                  disabled={
+                    !hasMore || currentPage >= totalPagesCount || loadingMore
+                  }
                   activeOpacity={0.7}
                 >
                   <Ionicons
                     name="chevron-forward"
                     size={20}
-                    color={!hasMore || currentPage >= totalPagesCount ? "#CCC" : "#E15816"}
+                    color={
+                      !hasMore || currentPage >= totalPagesCount
+                        ? "#CCC"
+                        : "#E15816"
+                    }
                   />
                 </TouchableOpacity>
               </View>
@@ -889,7 +1188,9 @@ export default function HistoryScreen() {
             {loadingMore && (
               <View style={styles.paginationLoading}>
                 <ActivityIndicator size="small" color="#E15816" />
-                <Text style={styles.paginationLoadingText}>{t("history.loadingMore")}</Text>
+                <Text style={styles.paginationLoadingText}>
+                  {t("history.loadingMore")}
+                </Text>
               </View>
             )}
           </View>
@@ -908,14 +1209,21 @@ export default function HistoryScreen() {
           activeOpacity={1}
           onPress={() => setShowCustomDatePicker(false)}
         >
-          <TouchableOpacity activeOpacity={1} onPress={(e) => e.stopPropagation()}>
+          <TouchableOpacity
+            activeOpacity={1}
+            onPress={(e) => e.stopPropagation()}
+          >
             <View style={styles.filterModal}>
               <View style={styles.modalHeader}>
                 <View style={styles.modalIconContainer}>
                   <Ionicons name="calendar-outline" size={28} color="#E15816" />
                 </View>
-                <Text style={styles.filterModalTitle}>{t("history.selectDateRange")}</Text>
-                <Text style={styles.filterModalSubtitle}>{t("history.chooseDatesSubtitle")}</Text>
+                <Text style={styles.filterModalTitle}>
+                  {t("history.selectDateRange")}
+                </Text>
+                <Text style={styles.filterModalSubtitle}>
+                  {t("history.chooseDatesSubtitle")}
+                </Text>
               </View>
               <View style={styles.customDateSection}>
                 <View style={styles.dateInputContainer}>
@@ -925,7 +1233,11 @@ export default function HistoryScreen() {
                     onPress={() => setShowStartDatePicker(true)}
                     activeOpacity={0.7}
                   >
-                    <Ionicons name="calendar-outline" size={20} color="#E15816" />
+                    <Ionicons
+                      name="calendar-outline"
+                      size={20}
+                      color="#E15816"
+                    />
                     <Text
                       style={[
                         styles.dateInputText,
@@ -944,7 +1256,11 @@ export default function HistoryScreen() {
                     onPress={() => setShowEndDatePicker(true)}
                     activeOpacity={0.7}
                   >
-                    <Ionicons name="calendar-outline" size={20} color="#E15816" />
+                    <Ionicons
+                      name="calendar-outline"
+                      size={20}
+                      color="#E15816"
+                    />
                     <Text
                       style={[
                         styles.dateInputText,
@@ -961,7 +1277,9 @@ export default function HistoryScreen() {
                   onPress={applyCustomDateRange}
                   activeOpacity={0.8}
                 >
-                  <Text style={styles.applyCustomButtonText}>{t("history.applyFilter")}</Text>
+                  <Text style={styles.applyCustomButtonText}>
+                    {t("history.applyFilter")}
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -1003,35 +1321,46 @@ export default function HistoryScreen() {
             activeOpacity={1}
             onPress={() => setShowDeleteOptions(false)}
           >
-            <TouchableOpacity activeOpacity={1} onPress={(e) => e.stopPropagation()}>
+            <TouchableOpacity
+              activeOpacity={1}
+              onPress={(e) => e.stopPropagation()}
+            >
               <View style={[styles.filterModal, { padding: modalPadding }]}>
                 <Text style={styles.filterModalTitle}>
                   {t("history.deleteTransactionsTitle")
                     .replace("{count}", String(selectedIds.size))
                     .replace("{s}", selectedIds.size > 1 ? "s" : "")}
                 </Text>
-                <Text style={styles.deleteModalSubtitle}>{t("history.deleteModalSubtitle")}</Text>
+                <Text style={styles.deleteModalSubtitle}>
+                  {t("history.deleteModalSubtitle")}
+                </Text>
                 <View style={styles.deleteOptionsContainer}>
                   <TouchableOpacity
                     style={[styles.deleteOptionButton, styles.deleteButton]}
                     onPress={handleBulkDelete}
                     activeOpacity={0.7}
                   >
-                    <Text style={styles.deleteOptionButtonText}>{t("history.deleteSelected")}</Text>
+                    <Text style={styles.deleteOptionButtonText}>
+                      {t("history.deleteSelected")}
+                    </Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.deleteOptionButton, styles.keepButton]}
                     onPress={handleKeepSelected}
                     activeOpacity={0.7}
                   >
-                    <Text style={styles.keepOptionButtonText}>{t("history.keepOnlySelected")}</Text>
+                    <Text style={styles.keepOptionButtonText}>
+                      {t("history.keepOnlySelected")}
+                    </Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.deleteOptionButton, styles.cancelButton]}
                     onPress={() => setShowDeleteOptions(false)}
                     activeOpacity={0.7}
                   >
-                    <Text style={styles.cancelOptionButtonText}>{t("common.cancel")}</Text>
+                    <Text style={styles.cancelOptionButtonText}>
+                      {t("common.cancel")}
+                    </Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -1054,60 +1383,94 @@ export default function HistoryScreen() {
                 <Ionicons
                   name={
                     selectedTransaction
-                      ? (getTransactionIcon(selectedTransaction) as keyof typeof Ionicons.glyphMap)
+                      ? (getTransactionIcon(
+                          selectedTransaction,
+                        ) as keyof typeof Ionicons.glyphMap)
                       : "swap-horizontal"
                   }
                   size={24}
                   color="#E15816"
                 />
               </View>
-              <Text style={styles.detailModalTitle}>{t("history.transactionDetails")}</Text>
+              <Text style={styles.detailModalTitle}>
+                {t("history.transactionDetails")}
+              </Text>
               <TouchableOpacity onPress={() => setShowDetailModal(false)}>
                 <Ionicons name="close" size={24} color="#333" />
               </TouchableOpacity>
             </View>
-            <ScrollView style={styles.detailModalContent} showsVerticalScrollIndicator={false}>
+            <ScrollView
+              style={styles.detailModalContent}
+              showsVerticalScrollIndicator={false}
+            >
               <View style={styles.detailAmountContainer}>
-                <Text style={styles.detailAmountLabel}>{t("history.amount")}</Text>
+                <Text style={styles.detailAmountLabel}>
+                  {t("history.amount")}
+                </Text>
                 <Text style={styles.detailAmountValue}>
-                  {CURRENCY_SYMBOL} {formatCurrency(selectedTransaction?.amount ?? 0)}
+                  {CURRENCY_SYMBOL}{" "}
+                  {formatCurrency(selectedTransaction?.amount ?? 0)}
                 </Text>
               </View>
 
               <View style={styles.detailInfoRow}>
                 <Text style={styles.detailInfoLabel}>{t("history.type")}</Text>
                 <Text style={styles.detailInfoValue}>
-                  {selectedTransaction ? getTransactionTypeLabel(selectedTransaction.type) : "-"}
+                  {selectedTransaction
+                    ? getTransactionTypeLabel(selectedTransaction.type)
+                    : "-"}
                 </Text>
               </View>
 
               <View style={styles.detailInfoRow}>
-                <Text style={styles.detailInfoLabel}>{t("history.description")}</Text>
+                <Text style={styles.detailInfoLabel}>
+                  {t("history.description")}
+                </Text>
                 <Text style={styles.detailInfoValue}>
-                  {selectedTransaction ? getTransactionDisplayName(selectedTransaction) : "-"}
+                  {selectedTransaction
+                    ? getTransactionDisplayName(selectedTransaction)
+                    : "-"}
                 </Text>
               </View>
 
               <View style={styles.detailInfoRow}>
-                <Text style={styles.detailInfoLabel}>{t("history.dateTime")}</Text>
+                <Text style={styles.detailInfoLabel}>
+                  {t("history.dateTime")}
+                </Text>
                 <Text style={styles.detailInfoValue}>
-                  {selectedTransaction ? formatDateTime(selectedTransaction) : "-"}
+                  {selectedTransaction
+                    ? formatDateTime(selectedTransaction)
+                    : "-"}
                 </Text>
               </View>
 
               <View style={styles.detailInfoRow}>
                 <Text style={styles.detailInfoLabel}>{t("history.id")}</Text>
-                <Text style={[styles.detailInfoValue, styles.detailInfoValueMono]}>
+                <Text
+                  style={[styles.detailInfoValue, styles.detailInfoValueMono]}
+                >
                   {selectedTransaction?.id ?? "-"}
                 </Text>
               </View>
+
+              <TouchableOpacity
+                style={styles.detailModalViewReceiptButton}
+                onPress={handleViewReceipt}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.detailModalViewReceiptButtonText}>
+                  {t("View Receipt") ?? "View Receipt"}
+                </Text>
+              </TouchableOpacity>
 
               <TouchableOpacity
                 style={styles.detailModalCloseButton}
                 onPress={() => setShowDetailModal(false)}
                 activeOpacity={0.8}
               >
-                <Text style={styles.detailModalCloseButtonText}>{t("Close")}</Text>
+                <Text style={styles.detailModalCloseButtonText}>
+                  {t("common.close")}
+                </Text>
               </TouchableOpacity>
             </ScrollView>
           </View>
@@ -1657,12 +2020,26 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: "center",
-    marginTop: 16,
+    marginTop: 10,
     marginBottom: 24,
   },
   detailModalCloseButtonText: {
     fontSize: 16,
     fontWeight: "700",
     color: "#FFFFFF",
+  },
+  detailModalViewReceiptButton: {
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1.5,
+    borderColor: "#E15816",
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: "center",
+    marginTop: 16,
+  },
+  detailModalViewReceiptButtonText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#E15816",
   },
 });

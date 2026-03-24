@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
+import * as Clipboard from 'expo-clipboard';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as LocalAuthentication from 'expo-local-authentication';
 import * as SecureStore from 'expo-secure-store';
@@ -15,6 +16,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  ToastAndroid,
   TouchableOpacity,
   View
 } from 'react-native';
@@ -42,11 +44,13 @@ const Settings = () => {
   const [referralCode, setReferralCode] = useState<string | null>(null);
   const [referralLoading, setReferralLoading] = useState(false);
   const [referralError, setReferralError] = useState<string | null>(null);
+  const [copySuccess, setCopySuccess] = useState(false);
   const [emailVerifyModalVisible, setEmailVerifyModalVisible] = useState(false);
   const [emailOtp, setEmailOtp] = useState('');
   const [emailVerifyLoading, setEmailVerifyLoading] = useState(false);
   const [emailVerifyError, setEmailVerifyError] = useState<string | null>(null);
   const [emailVerifySuccess, setEmailVerifySuccess] = useState(false);
+  const [emailVerifyFromBiometric, setEmailVerifyFromBiometric] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
 
   // Biometric state
@@ -72,8 +76,8 @@ const Settings = () => {
     if (userJson) {
       try {
         const user = JSON.parse(userJson) as UserData;
-        setUserData({ 
-          email: user.email, 
+        setUserData({
+          email: user.email,
           emailVerified: user.emailVerified,
           biometricEnabled: user.biometricEnabled || false // Handle legacy data
         });
@@ -132,7 +136,7 @@ const Settings = () => {
         const compatible = await LocalAuthentication.hasHardwareAsync();
         const enrolled = await LocalAuthentication.isEnrolledAsync();
         const supportedTypes = await LocalAuthentication.supportedAuthenticationTypesAsync();
-        
+
         setHasBiometricHardware(compatible && enrolled);
 
         if (supportedTypes.includes(LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION)) {
@@ -158,10 +162,14 @@ const Settings = () => {
       // Clear the passcode login flag
       await AsyncStorage.removeItem('passcodeLoginComplete');
 
-      // Unregister Push Notifications
+      // Unregister Push Notifications and save email
       const userStr = await AsyncStorage.getItem('user');
       if (userStr) {
         const userObj = JSON.parse(userStr);
+        if (userObj?.email) {
+          await AsyncStorage.setItem('lastLoggedEmail', userObj.email.toLowerCase());
+        }
+
         const userId = userObj?.id || userObj?._id;
         const appId = process.env.EXPO_PUBLIC_NATIVE_NOTIFY_APP_ID;
         const appToken = process.env.EXPO_PUBLIC_NATIVE_NOTIFY_APP_TOKEN;
@@ -181,7 +189,17 @@ const Settings = () => {
     });
   };
 
-  const handleRefreshReferralCode = () => {
+  const handleReferralCodeAction = async () => {
+    if (referralLoading) return;
+    if (referralCode) {
+      await Clipboard.setStringAsync(referralCode);
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 1500);
+      if (Platform.OS === 'android') {
+        ToastAndroid.show(t('settings.copySuccess'), ToastAndroid.SHORT);
+      }
+      return;
+    }
     loadReferralCode();
   };
 
@@ -238,11 +256,12 @@ const Settings = () => {
     }
   };
 
-  const openEmailVerifyModal = () => {
+  const openEmailVerifyModal = (fromBiometric = false) => {
     setEmailVerifyModalVisible(true);
     setEmailOtp('');
     setEmailVerifyError(null);
     setEmailVerifySuccess(false);
+    setEmailVerifyFromBiometric(fromBiometric);
   };
 
   const closeEmailVerifyModal = () => {
@@ -250,6 +269,17 @@ const Settings = () => {
     setEmailOtp('');
     setEmailVerifyError(null);
     setEmailVerifySuccess(false);
+    setEmailVerifyFromBiometric(false);
+  };
+
+  const handleEmailVerifyDone = () => {
+    const shouldOpenBiometric = emailVerifyFromBiometric;
+    closeEmailVerifyModal();
+    if (shouldOpenBiometric) {
+      setBiometricPassword('');
+      setBiometricError(null);
+      setBiometricModalVisible(true);
+    }
   };
 
   const handleToggleBiometric = async () => {
@@ -257,7 +287,7 @@ const Settings = () => {
       // Disable biometric
       const accessToken = await AsyncStorage.getItem('access_token');
       if (!accessToken) return;
-      
+
       try {
         await SecureStore.deleteItemAsync('biometricToken');
         const res = await disableBiometric(accessToken);
@@ -275,10 +305,10 @@ const Settings = () => {
     } else {
       // Check if email is verified
       if (!userData?.emailVerified) {
-        openEmailVerifyModal();
+        openEmailVerifyModal(true);
         return;
       }
-      
+
       // Open setup modal
       setBiometricPassword('');
       setBiometricError(null);
@@ -314,15 +344,15 @@ const Settings = () => {
       if (!accessToken) throw new Error("No access token");
 
       const res = await enableBiometric(accessToken, userData.email, biometricPassword);
-      
+
       if (res.success && res.token) {
         // 3. Store token securely
         await SecureStore.setItemAsync('biometricToken', res.token);
         await AsyncStorage.setItem('biometricEmail', userData.email.toLowerCase());
-        
+
         // 4. Update UI state
         setUserData(prev => prev ? { ...prev, biometricEnabled: true } : null);
-        
+
         // 5. Update async storage
         const userJson = await AsyncStorage.getItem('user');
         if (userJson) {
@@ -377,7 +407,7 @@ const Settings = () => {
       subtitle: o.subtitleKey ? t(o.subtitleKey) : '',
     };
   });
-  
+
   const supportOptionsWithLabels = supportOptions.map((o) => ({
     ...o,
     title: t(o.titleKey ?? ''),
@@ -497,7 +527,7 @@ const Settings = () => {
           <View style={[styles.sectionCard, r.sectionCard]}>
             <TouchableOpacity
               style={[styles.referralOptionItem, r.referralOptionItem]}
-              onPress={handleRefreshReferralCode}
+              onPress={handleReferralCodeAction}
               disabled={referralLoading}
             >
               <View style={styles.optionLeft}>
@@ -514,7 +544,9 @@ const Settings = () => {
               {referralLoading ? (
                 <ActivityIndicator size="small" color="#F38B35" />
               ) : (
-                <Text style={[styles.generateButtonText, r.generateButtonText]}>{t('settings.refresh')}</Text>
+                <Text style={[styles.generateButtonText, r.generateButtonText]}>
+                  {copySuccess ? t('settings.copySuccess') : t('settings.copy')}
+                </Text>
               )}
             </TouchableOpacity>
             {referralError ? (
@@ -576,7 +608,7 @@ const Settings = () => {
                 <Ionicons name="chevron-forward" size={r.iconSizeSmall} color="#CCC" />
               </TouchableOpacity>
             ))}
-            
+
             {hasBiometricHardware && (
               <TouchableOpacity
                 style={[styles.optionItem, r.optionItem]}
@@ -584,10 +616,10 @@ const Settings = () => {
               >
                 <View style={styles.optionLeft}>
                   <View style={[styles.iconContainer, r.iconContainer]}>
-                    <Ionicons 
-                      name={Platform.OS === 'ios' ? 'scan' : 'finger-print'} 
-                      size={r.iconSize} 
-                      color="#F38B35" 
+                    <Ionicons
+                      name={Platform.OS === 'ios' ? 'scan' : 'finger-print'}
+                      size={r.iconSize}
+                      color="#F38B35"
                     />
                   </View>
                   <View style={[styles.optionText, r.optionText]}>
@@ -684,8 +716,12 @@ const Settings = () => {
                 <View style={[styles.emailVerifySuccess, r.emailVerifySuccess]}>
                   <Ionicons name="checkmark-circle" size={r.iconSizeLarge} color="#22C55E" />
                   <Text style={[styles.emailVerifySuccessText, r.emailVerifySuccessText]}>{t('settings.emailVerifiedSuccess')}</Text>
-                  <TouchableOpacity style={[styles.modalButton, r.modalButton]} onPress={closeEmailVerifyModal}>
-                    <Text style={[styles.modalButtonText, r.modalButtonText]}>{t('settings.done')}</Text>
+                  <TouchableOpacity
+                    style={[styles.modalButton, r.modalButton, styles.modalDoneButton]}
+                    onPress={handleEmailVerifyDone}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.modalButtonText, r.modalButtonText, styles.modalDoneButtonText]}>{t('settings.done')}</Text>
                   </TouchableOpacity>
                 </View>
               ) : (
@@ -1034,6 +1070,19 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+  modalDoneButton: {
+    width: '100%',
+    minHeight: 52,
+    justifyContent: 'center',
+    borderRadius: 12,
+    marginTop: 4,
+    paddingHorizontal: 20,
+  },
+  modalDoneButtonText: {
+    fontSize: 18,
+    fontWeight: '700',
+    letterSpacing: 0.3,
   },
   recentTransactionText: {
     color: '#8e8e93',

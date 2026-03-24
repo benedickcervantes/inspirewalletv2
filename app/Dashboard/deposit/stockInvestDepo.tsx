@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Modal,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -13,6 +14,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { getOrCreateMainWallet } from "../../../configs/api";
 import {
@@ -83,11 +85,11 @@ export default function StockInvestment() {
     const amountStr = unformatNumberString(amount).trim();
 
     if (!amountStr) {
-      newErrors.amount = "Amount is required";
+      newErrors.amount = t("deposit.amountRequired");
     } else {
       const amountNum = parseFloat(amountStr);
       if (amountNum <= 0) {
-        newErrors.amount = "Amount must be greater than 0";
+        newErrors.amount = t("deposit.amountGreaterThan0");
       } else if (availableBalance !== null && amountNum > availableBalance) {
         const symbol = getSelectedCurrency().symbol;
         newErrors.amount = t("deposit.insufficientBalanceStock").replace(
@@ -144,9 +146,6 @@ export default function StockInvestment() {
 
           <Text style={styles.headerTitle}>{t("deposit.depositRequest")}</Text>
 
-          <TouchableOpacity style={styles.refreshButton}>
-            <Ionicons name="refresh" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
         </LinearGradient>
 
         {/* Progress Steps */}
@@ -160,10 +159,16 @@ export default function StockInvestment() {
           </View>
         </View>
 
-        <ScrollView
+        <KeyboardAwareScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          enableOnAndroid
+          enableAutomaticScroll
+          extraScrollHeight={Platform.OS === "ios" ? 32 : 120}
+          keyboardOpeningTime={0}
+          nestedScrollEnabled
         >
           {/* Title */}
           <View style={styles.titleContainer}>
@@ -225,7 +230,7 @@ export default function StockInvestment() {
                 />
               </View>
               <View style={styles.infoContent}>
-                <Text style={styles.infoTitle}>Stock Rate</Text>
+                <Text style={styles.infoTitle}>{t("deposit.stockRate")}</Text>
                 <Text style={styles.infoValue}>
                   1 Stock = {getSelectedCurrency().symbol}
                   {isLoadingCurrencies ? "..." : minAmount.toLocaleString()}
@@ -239,13 +244,12 @@ export default function StockInvestment() {
                 )}
                 {parsedAmountNum > 0 && (
                   <Text style={styles.stocksPreview}>
-                    You will receive:{" "}
+                    {t("deposit.youWillReceive")}
                     {stocksToReceive.toLocaleString(undefined, {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 4,
                     })}{" "}
-                    stock
-                    {stocksToReceive !== 1 ? "s" : ""}
+                    {t("deposit.stock")}
                   </Text>
                 )}
               </View>
@@ -275,6 +279,8 @@ export default function StockInvestment() {
                   placeholder={t("deposit.enterAmount")}
                   placeholderTextColor="#999"
                   keyboardType="numeric"
+                  returnKeyType="done"
+                  blurOnSubmit={false}
                   value={amount}
                   onChangeText={(text) => {
                     setAmount(formatAmountWithCommas(text));
@@ -310,7 +316,7 @@ export default function StockInvestment() {
           </TouchableOpacity>
 
           <View style={styles.bottomPadding} />
-        </ScrollView>
+        </KeyboardAwareScrollView>
 
         {/* Currency Selector Modal */}
         <Modal
@@ -394,12 +400,6 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: "center",
   },
-  refreshButton: {
-    width: 40,
-    height: 40,
-    justifyContent: "center",
-    alignItems: "center",
-  },
   progressContainer: {
     paddingVertical: 20,
     paddingHorizontal: 40,
@@ -432,6 +432,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 20,
+    paddingBottom: 32,
   },
   titleContainer: {
     alignItems: "center",
@@ -563,7 +564,7 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
   },
   bottomPadding: {
-    height: 20,
+    height: Platform.OS === "android" ? 10 : 28,
   },
   modalOverlay: {
     flex: 1,

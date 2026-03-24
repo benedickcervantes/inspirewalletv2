@@ -19,8 +19,12 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const [isServerOffline, setIsServerOffline] = useState(false);
     const socketRef = useRef<any>(null);
     const heartbeatCleanupRef = useRef<(() => void) | null>(null);
+    const isConnectingRef = useRef(false);
 
     const connect = async () => {
+        if (isConnectingRef.current) return;
+        isConnectingRef.current = true;
+        try {
         const token = await AsyncStorage.getItem('access_token');
         if (!token) {
             if (socketRef.current) {
@@ -103,6 +107,9 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
         if (socket) {
             socketRef.current = socket;
+        }
+        } finally {
+            isConnectingRef.current = false;
         }
     };
 

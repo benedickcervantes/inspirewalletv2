@@ -7,20 +7,25 @@ import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-    Keyboard,
-    Modal,
-    Platform,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  Keyboard,
+  Modal,
+  Platform,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { getTimeDeposits, submitTravelProtection } from "../../../configs/api";
+import {
+  getOrCreateMainWallet,
+  getTimeDeposits,
+  getTransactions,
+  submitTravelProtection,
+} from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
 import type { RootStackParamList } from "../../../types/navigation";
 import { unformatNumberString } from "../../../utils/numberFormat";
@@ -246,36 +251,55 @@ interface AlertConfig {
 
 export default function TravelProtection() {
   const { t } = useLanguage();
-  const { scale, verticalScale, horizontalPadding } = useResponsive();
+  const { scale, verticalScale, horizontalPadding, isTinyScreen, isSmallScreen } =
+    useResponsive();
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList, "Travel">>();
 
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [isFeeLoading, setIsFeeLoading] = useState(true);
   const [userTimeDeposit, setUserTimeDeposit] = useState(0);
+  const [availableBalance, setAvailableBalance] = useState(0);
 
   // Travel protection fee: ₱625 if time deposit >= 200,000, otherwise ₱1,250
   const protectionFee = userTimeDeposit >= 50000 ? 625 : 1250;
 
   // Fetch user's time deposit total from backend
   const fetchTimeDeposits = useCallback(async () => {
+    setIsFeeLoading(true);
+    try {
+      const accessToken = await AsyncStorage.getItem("access_token");
+      if (!accessToken) return;
+      const result = await getTimeDeposits(accessToken);
+      if (!result.success || !Array.isArray(result.deposits)) return;
+      const list = result.deposits as TimeDeposit[];
+      const total = computeTimeDepositTotal(list);
+      setUserTimeDeposit(total);
+    } finally {
+      setIsFeeLoading(false);
+    }
+  }, []);
+
+  const fetchAvailableBalance = useCallback(async () => {
     const accessToken = await AsyncStorage.getItem("access_token");
     if (!accessToken) return;
-    const result = await getTimeDeposits(accessToken);
-    if (!result.success || !Array.isArray(result.deposits)) return;
-    const list = result.deposits as TimeDeposit[];
-    const total = computeTimeDepositTotal(list);
-    setUserTimeDeposit(total);
+    const walletRes = await getOrCreateMainWallet(accessToken);
+    const wallet = walletRes.wallet as { balance?: number | string } | undefined;
+    const bal = parseFloat(String(wallet?.balance ?? 0));
+    setAvailableBalance(Number.isNaN(bal) ? 0 : bal);
   }, []);
 
   useEffect(() => {
     fetchTimeDeposits();
-  }, [fetchTimeDeposits]);
+    fetchAvailableBalance();
+  }, [fetchTimeDeposits, fetchAvailableBalance]);
 
   useFocusEffect(
     useCallback(() => {
       fetchTimeDeposits();
-    }, [fetchTimeDeposits]),
+      fetchAvailableBalance();
+    }, [fetchTimeDeposits, fetchAvailableBalance]),
   );
 
   // Text input refs for Step 1
@@ -407,6 +431,8 @@ export default function TravelProtection() {
   // Form fields - Step 5
   const [passportPhoto, setPassportPhoto] = useState<string | null>(null);
   const [passportPhotoError, setPassportPhotoError] = useState("");
+  const [governmentIdType, setGovernmentIdType] = useState<string>("");
+  const [governmentIdNumber, setGovernmentIdNumber] = useState<string>("");
   const [governmentId, setGovernmentId] = useState<string | null>(null);
   const [governmentIdError, setGovernmentIdError] = useState("");
 
@@ -423,6 +449,7 @@ export default function TravelProtection() {
     type: "info",
     confirmText: "OK",
   });
+  const [showExitConfirmModal, setShowExitConfirmModal] = useState(false);
 
   const showAlert = (
     title: string,
@@ -465,7 +492,7 @@ export default function TravelProtection() {
         setEmailError(t("travel.fieldRequired") || "Required");
         hasError = true;
       } else if (!validateEmail(emailAddress)) {
-        setEmailError(t("Please Enter Valid Email") || "Invalid email");
+        setEmailError(t("travel.errorValidEmail"));
         hasError = true;
       }
 
@@ -473,9 +500,7 @@ export default function TravelProtection() {
         setMobileError(t("travel.fieldRequired") || "Required");
         hasError = true;
       } else if (!validateMobileNumber(mobileNumber)) {
-        setMobileError(
-          t("Please Enter Valid Number") || "Mobile must be 10-11 digits",
-        );
+        setMobileError(t("travel.errorValidMobile"));
         hasError = true;
       }
 
@@ -485,10 +510,7 @@ export default function TravelProtection() {
       }
 
       if (landlineNumber && !validateLandlineNumber(landlineNumber)) {
-        setLandlineError(
-          t("Please Enter Valid Landline Number") ||
-            "Landline must be 8 digits",
-        );
+        setLandlineError(t("travel.errorValidLandline"));
         hasError = true;
       }
 
@@ -547,10 +569,34 @@ export default function TravelProtection() {
       if (!grossMonthlyIncome) {
         setGrossMonthlyIncomeError(t("travel.fieldRequired") || "Required");
         hasError = true;
+      } else {
+        // Validate gross monthly income is a positive whole number (no decimals, no negatives)
+        const cleanedIncome = grossMonthlyIncome.replace(/,/g, "");
+        const incomeNum = parseInt(cleanedIncome, 10);
+        
+        // Must be a valid positive integer with no decimals
+        if (!cleanedIncome || cleanedIncome.includes(".") || isNaN(incomeNum) || incomeNum <= 0) {
+          setGrossMonthlyIncomeError(
+            t("travel.grossMonthlyIncomeInvalid") || "Must be a positive whole number"
+          );
+          hasError = true;
+        }
       }
       if (!cashOnHand) {
         setCashOnHandError(t("travel.fieldRequired") || "Required");
         hasError = true;
+      } else {
+        // Validate cash on hand is a positive whole number (no decimals, no negatives)
+        const cleanedCash = cashOnHand.replace(/,/g, "");
+        const cashNum = parseInt(cleanedCash, 10);
+        
+        // Must be a valid positive integer with no decimals
+        if (!cleanedCash || cleanedCash.includes(".") || isNaN(cashNum) || cashNum <= 0) {
+          setCashOnHandError(
+            t("travel.cashOnHandInvalid") || "Must be a positive whole number"
+          );
+          hasError = true;
+        }
       }
 
       if (hasError) {
@@ -642,8 +688,21 @@ export default function TravelProtection() {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
     } else {
-      navigation.goBack();
+      if (navigation.canGoBack()) {
+        navigation.goBack();
+      } else {
+        navigation.navigate("Main");
+      }
     }
+  };
+
+  const handleTopBackPress = () => {
+    setShowExitConfirmModal(true);
+  };
+
+  const handleConfirmExit = () => {
+    setShowExitConfirmModal(false);
+    navigation.navigate("Main");
   };
 
   const handleSubmit = async () => {
@@ -651,13 +710,27 @@ export default function TravelProtection() {
     try {
       const accessToken = await AsyncStorage.getItem("access_token");
       if (!accessToken) {
-        showAlert(t("travel.error"), "Not authenticated", "error");
+        showAlert(t("travel.error"), t("travel.notAuthenticated"), "error");
+        return;
+      }
+
+      if (availableBalance < protectionFee) {
+        showAlert(
+          t("travel.error"),
+          t("sendMoney.insufficientBalance") || t("travel.insufficientBalance"),
+          "error",
+        );
         return;
       }
 
       let passportPhotoBase64: string | undefined;
       if (passportPhoto) {
         passportPhotoBase64 = await uriToBase64DataUrl(passportPhoto);
+      }
+
+      let governmentIdPhotoBase64: string | undefined;
+      if (governmentId) {
+        governmentIdPhotoBase64 = await uriToBase64DataUrl(governmentId);
       }
 
       // Formulate the time strings like "08:00 AM"
@@ -688,11 +761,34 @@ export default function TravelProtection() {
         passportNumber,
         purposeOfTravel,
         passportPhoto: passportPhotoBase64,
+        // Government ID fields (optional)
+        governmentIdType: governmentIdType || undefined,
+        governmentIdNumber: governmentIdNumber || undefined,
+        governmentIdPhoto: governmentIdPhotoBase64,
       };
+
+      console.log("[TravelProtection] Submitting data:", JSON.stringify({
+        ...applicationData,
+        passportPhoto: applicationData.passportPhoto ? `[base64-${applicationData.passportPhoto.length} chars]` : undefined,
+        governmentIdPhoto: applicationData.governmentIdPhoto ? `[base64-${applicationData.governmentIdPhoto.length} chars]` : undefined,
+      }, null, 2));
 
       const result = await submitTravelProtection(accessToken, applicationData);
 
+      console.log("[TravelProtection] API Response:", result);
+
       if (result.success) {
+        const response = (result.data ?? {}) as {
+          status?: string;
+          price?: string | number;
+        };
+        const normalizedStatus = String(response.status ?? "").toUpperCase();
+        if (normalizedStatus === "APPROVED" || normalizedStatus === "ACCEPTED") {
+          await Promise.all([
+            fetchAvailableBalance(),
+            getTransactions(accessToken, { limit: 20 }),
+          ]);
+        }
         showAlert(
           t("travel.applicationSubmitted"),
           t("travel.applicationSuccess"),
@@ -704,13 +800,13 @@ export default function TravelProtection() {
       } else {
         showAlert(
           t("travel.error"),
-          result.error || "Failed to submit application",
+          result.error || t("travel.submitFailed"),
           "error",
         );
       }
     } catch (error) {
       console.error("Travel protection API error:", error);
-      showAlert(t("travel.error"), "An unexpected error occurred", "error");
+      showAlert(t("travel.error"), t("travel.unexpectedError"), "error");
     } finally {
       setLoading(false);
     }
@@ -832,8 +928,31 @@ export default function TravelProtection() {
     feeCard: { padding: scale(20), marginBottom: verticalScale(16) },
     feeAmount: { fontSize: scale(32) },
     stepIndicator: { gap: scale(12), marginBottom: verticalScale(24) },
-    stepDot: { width: scale(32), height: scale(32) },
+    stepDot: {
+      width: isSmallScreen ? scale(28) : scale(32),
+      height: isSmallScreen ? scale(28) : scale(32),
+    },
     formCard: { padding: scale(20) },
+    buttonContainer: {
+      flexDirection: isTinyScreen ? "column" : "row",
+      gap: isTinyScreen ? 10 : 12,
+    },
+    countryDropdown: {
+      paddingHorizontal: isTinyScreen ? 8 : isSmallScreen ? 10 : 16,
+      paddingVertical: isTinyScreen ? 12 : 14,
+      gap: isTinyScreen ? 2 : 6,
+    },
+    countryFlag: {
+      fontSize: isTinyScreen ? 16 : 20,
+      lineHeight: isTinyScreen ? 16 : 20,
+    },
+    countryCode: {
+      fontSize: isTinyScreen ? 12 : isSmallScreen ? 14 : 16,
+    },
+    mobileInput: {
+      paddingHorizontal: isTinyScreen ? 10 : 16,
+      fontSize: isTinyScreen ? 14 : 16,
+    },
   };
 
   return (
@@ -856,7 +975,7 @@ export default function TravelProtection() {
             >
               <TouchableOpacity
                 style={styles.backButton}
-                onPress={() => navigation.goBack()}
+                onPress={handleTopBackPress}
               >
                 <Ionicons name="arrow-back" size={scale(28)} color="#E25A17" />
               </TouchableOpacity>
@@ -929,7 +1048,10 @@ export default function TravelProtection() {
                   </Text>
                 </View>
                 <Text style={[styles.feeAmount, dynamicStyles.feeAmount]}>
-                  ₱ {protectionFee.toLocaleString()}
+                  {isFeeLoading ? "..." : `₱ ${protectionFee.toLocaleString()}`}
+                </Text>
+                <Text style={styles.feeSubtext}>
+                  {t("travel.availableBalance")}: ₱ {availableBalance.toLocaleString()}
                 </Text>
               </View>
 
@@ -937,6 +1059,7 @@ export default function TravelProtection() {
                 style={[
                   styles.stepIndicatorContainer,
                   dynamicStyles.stepIndicator,
+                  isSmallScreen && styles.stepIndicatorSmall,
                 ]}
               >
                 {[1, 2, 3, 4, 5, 6].map((step) => (
@@ -1030,13 +1153,13 @@ export default function TravelProtection() {
                     </Text>
                     <View style={styles.mobileInputContainer}>
                       <TouchableOpacity
-                        style={styles.countryDropdown}
+                        style={[styles.countryDropdown, dynamicStyles.countryDropdown]}
                         onPress={() => setShowCountryDropdown(true)}
                       >
-                        <Text style={styles.countryFlag}>
+                        <Text style={[styles.countryFlag, dynamicStyles.countryFlag]}>
                           {selectedCountry.flag}
                         </Text>
-                        <Text style={styles.countryCode}>
+                        <Text style={[styles.countryCode, dynamicStyles.countryCode]}>
                           {selectedCountry.dialCode}
                         </Text>
                         <Ionicons name="chevron-down" size={18} color="#666" />
@@ -1045,6 +1168,7 @@ export default function TravelProtection() {
                         ref={mobileRef}
                         style={[
                           styles.mobileInput,
+                          dynamicStyles.mobileInput,
                           mobileError && styles.inputError,
                         ]}
                         placeholder={selectedCountry.example}
@@ -1249,6 +1373,7 @@ export default function TravelProtection() {
                     setGrossMonthlyIncome(val);
                     if (grossMonthlyIncomeError) setGrossMonthlyIncomeError("");
                   }}
+                  setGrossMonthlyIncomeError={setGrossMonthlyIncomeError}
                   setGrossMonthlyIncomeCurrency={setGrossMonthlyIncomeCurrency}
                   cashOnHand={cashOnHand}
                   cashOnHandError={cashOnHandError}
@@ -1256,6 +1381,7 @@ export default function TravelProtection() {
                     setCashOnHand(val);
                     if (cashOnHandError) setCashOnHandError("");
                   }}
+                  setCashOnHandError={setCashOnHandError}
                 />
               )}
 
@@ -1329,6 +1455,8 @@ export default function TravelProtection() {
                   passportPhotoError={passportPhotoError}
                   governmentId={governmentId}
                   governmentIdError={governmentIdError}
+                  governmentIdType={governmentIdType}
+                  governmentIdNumber={governmentIdNumber}
                   onPickPassportPhoto={() => {
                     pickPassportPhoto();
                     if (passportPhotoError) setPassportPhotoError("");
@@ -1336,6 +1464,12 @@ export default function TravelProtection() {
                   onPickGovernmentId={() => {
                     pickGovernmentId();
                     if (governmentIdError) setGovernmentIdError("");
+                  }}
+                  onGovernmentIdTypeChange={(val) => {
+                    setGovernmentIdType(val);
+                  }}
+                  onGovernmentIdNumberChange={(val) => {
+                    setGovernmentIdNumber(val);
                   }}
                 />
               )}
@@ -1353,14 +1487,17 @@ export default function TravelProtection() {
               )}
 
               {/* Buttons at bottom of scroll content */}
-              <View style={styles.buttonContainer}>
+              <View style={[styles.buttonContainer, dynamicStyles.buttonContainer]}>
             <TouchableOpacity
               style={styles.backButtonBottom}
               onPress={handleBack}
             >
               <Text style={styles.backButtonText}>{t("travel.back")}</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
+            <TouchableOpacity
+              style={styles.nextButton}
+              onPress={handleNext}
+            >
               <LinearGradient
                 colors={["#E25A17", "#F28934"]}
                 style={styles.nextButtonGradient}
@@ -1385,6 +1522,49 @@ export default function TravelProtection() {
         type={alertConfig.type}
         confirmText={alertConfig.confirmText}
       />
+      <Modal
+        transparent
+        animationType="fade"
+        visible={showExitConfirmModal}
+        onRequestClose={() => setShowExitConfirmModal(false)}
+      >
+        <View style={styles.exitModalOverlay}>
+          <View style={styles.exitModalContainer}>
+            <View style={styles.exitModalIconWrap}>
+              <Ionicons name="warning-outline" size={28} color={THEME_COLOR} />
+            </View>
+            <Text style={styles.exitModalTitle}>{t("common.cancelApplication")}</Text>
+            <Text style={styles.exitModalMessage}>
+              {t("travel.cancelApplicationMessage")}
+            </Text>
+            <View style={styles.exitModalButtons}>
+              <TouchableOpacity
+                style={[styles.exitModalButton, styles.exitModalKeepEditingButton]}
+                onPress={() => setShowExitConfirmModal(false)}
+              >
+                <Text
+                  style={[
+                    styles.exitModalButtonText,
+                    styles.exitModalKeepEditingButtonText,
+                  ]}
+                >
+                  {t("common.keepEditing")}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.exitModalButton, styles.exitModalDiscardButton]}
+                onPress={handleConfirmExit}
+              >
+                <Text
+                  style={[styles.exitModalButtonText, styles.exitModalDiscardButtonText]}
+                >
+                  {t("common.discardExit")}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
         </>
       )}
     </View>
@@ -1550,6 +1730,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 12,
     marginBottom: 24,
+  },
+  stepIndicatorSmall: {
+    gap: 8,
   },
   stepDot: {
     width: 32,
@@ -1788,5 +1971,83 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#FFFFFF",
     letterSpacing: 0.5,
+  },
+  exitModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 20,
+  },
+  exitModalContainer: {
+    width: "100%",
+    maxWidth: 360,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "#ECEFF4",
+    paddingHorizontal: 20,
+    paddingTop: 22,
+    paddingBottom: 18,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  exitModalIconWrap: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: "#FFF7E9",
+    borderWidth: 1,
+    borderColor: "#FFE2AF",
+    alignSelf: "center",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 12,
+  },
+  exitModalTitle: {
+    fontSize: 21,
+    fontWeight: "700",
+    color: "#0F172A",
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  exitModalMessage: {
+    fontSize: 14,
+    color: "#64748B",
+    lineHeight: 20,
+    textAlign: "center",
+    marginBottom: 16,
+  },
+  exitModalButtons: {
+    width: "100%",
+  },
+  exitModalButton: {
+    width: "100%",
+    borderRadius: 12,
+    paddingVertical: 13,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  exitModalDiscardButton: {
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#F3C3B1",
+  },
+  exitModalKeepEditingButton: {
+    backgroundColor: THEME_COLOR,
+    marginBottom: 10,
+  },
+  exitModalButtonText: {
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  exitModalDiscardButtonText: {
+    color: "#D9480F",
+  },
+  exitModalKeepEditingButtonText: {
+    color: "#FFFFFF",
   },
 });

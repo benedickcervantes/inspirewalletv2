@@ -2,18 +2,20 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   AppState,
   AppStateStatus,
   FlatList,
   Modal,
+  Platform,
   RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -25,6 +27,7 @@ import {
   purchaseStockListing,
 } from "../../../configs/api";
 import { getStockInvestmentMinAmount } from "../../../configs/currencies";
+import { getLanguageCode } from "../../../constants/locales";
 import { useLanguage } from "../../../context/LanguageContext";
 import CustomLoader from "../../Loader/CustomLoader";
 
@@ -51,36 +54,71 @@ interface StockRequest {
   type?: "buy" | "sell";
 }
 
-function formatCurrency(value: number) {
-  return value.toLocaleString("en-PH", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-}
-
-function formatStocks(count: number) {
-  if (count === 0) return "0";
-  if (count >= 1)
-    return count.toLocaleString("en-PH", { maximumFractionDigits: 4 });
-  return count.toFixed(8).replace(/\.?0+$/, "");
-}
-
 function StatusBadge({ status }: { status: string }) {
+  const { t } = useLanguage();
   const colors: Record<string, string> = {
     PENDING: "#F59E0B",
     APPROVED: "#10B981",
     REJECTED: "#EF4444",
   };
+  const normalized = String(status).toUpperCase();
+  const label =
+    normalized === "PENDING"
+      ? t("stock.statusPending")
+      : normalized === "APPROVED"
+        ? t("stock.statusApproved")
+        : normalized === "REJECTED"
+          ? t("stock.statusRejected")
+          : status;
   return (
-    <View style={[styles.badge, { backgroundColor: colors[status] ?? "#999" }]}>
-      <Text style={styles.badgeText}>{status}</Text>
+    <View
+      style={[styles.badge, { backgroundColor: colors[normalized] ?? "#999" }]}
+    >
+      <Text style={styles.badgeText}>{label}</Text>
     </View>
   );
 }
 
 export default function StockService() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const navigation = useNavigation<any>();
+  const { width: windowWidth } = useWindowDimensions();
+  /** iPhone SE / narrow devices — translated tab labels need smaller type & wrapping */
+  const isCompactStockTabs = windowWidth < 375;
+  const isTinyStockTabs = windowWidth < 340;
+  /** Android: adjustsFontSizeToFit is limited; allow horizontal scroll on very narrow widths */
+  const useScrollableTabs = windowWidth < 360;
+  const tabScrollMinWidth = Math.max(96, Math.round(windowWidth * 0.34));
+
+  const locale = useMemo(() => {
+    const code = getLanguageCode(language);
+    const map: Record<string, string> = {
+      en: "en-PH",
+      ko: "ko-KR",
+      ja: "ja-JP",
+      ar: "ar-SA",
+    };
+    return map[code] ?? "en-PH";
+  }, [language]);
+
+  const formatCurrency = useCallback(
+    (value: number) =>
+      value.toLocaleString(locale, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }),
+    [locale],
+  );
+
+  const formatStocks = useCallback(
+    (count: number) => {
+      if (count === 0) return "0";
+      if (count >= 1)
+        return count.toLocaleString(locale, { maximumFractionDigits: 4 });
+      return count.toFixed(8).replace(/\.?0+$/, "");
+    },
+    [locale],
+  );
 
   const [activeTab, setActiveTab] = useState<Tab>("portfolio");
   const [isLoading, setIsLoading] = useState(true);
@@ -242,26 +280,26 @@ export default function StockService() {
     try {
       const accessToken = await AsyncStorage.getItem("access_token");
       if (!accessToken) {
-        showAlertModal("Not Authenticated", "Please log in and try again.");
+        showAlertModal(t("stock.notAuthenticatedTitle"), t("stock.notAuthenticatedMessage"));
         return;
       }
       const result = await purchaseStockListing(accessToken, listing.id);
       if (result.success) {
         showAlertModal(
-          "Purchase Successful 🎉",
-          `You purchased ${formatStocks(listing.stocksToSell)} stock(s) for ₱${formatCurrency(listing.phpAmount)}. Your portfolio has been updated.`,
+          t("stock.purchaseSuccessTitle"),
+          t("stock.purchaseSuccessMessage", { count: String(formatStocks(listing.stocksToSell)), amount: formatCurrency(listing.phpAmount) }),
         );
         await loadData();
       } else {
         showAlertModal(
-          "Purchase Failed",
-          result.error ?? "Something went wrong.",
+          t("stock.purchaseFailedTitle"),
+          result.error ?? t("stock.purchaseFailed"),
         );
       }
     } catch {
       showAlertModal(
-        "Error",
-        "An unexpected error occurred. Please try again.",
+        t("common.error"),
+        t("stock.unexpectedError"),
       );
     } finally {
       setBuyingId(null);
@@ -269,7 +307,7 @@ export default function StockService() {
   };
 
   if (isLoading) {
-    return <CustomLoader text="Loading stock dashboard..." />;
+    return <CustomLoader text={t("stock.loadingDashboard")} />;
   }
 
   return (
@@ -288,38 +326,96 @@ export default function StockService() {
           >
             <Ionicons name="arrow-back" size={22} color="#FFFFFF" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Inspire Stockholder</Text>
-          <TouchableOpacity style={styles.refreshButton} onPress={onRefresh}>
-            <Ionicons name="refresh" size={22} color="#FFFFFF" />
-          </TouchableOpacity>
+          <Text style={styles.headerTitle}>{t("stock.dashboardHeader")}</Text>
+          <View style={styles.headerSpacer} />
         </LinearGradient>
 
-        {/* Tab Bar */}
-        <View style={styles.tabBar}>
-          {(["portfolio", "orders", "marketplace"] as Tab[]).map((tab) => (
-            <TouchableOpacity
-              key={tab}
-              style={[
-                styles.tabItem,
-                activeTab === tab && styles.tabItemActive,
-              ]}
-              onPress={() => setActiveTab(tab)}
-            >
-              <Text
+        {/* Tab Bar — responsive for long translations (KR/JA/AR) on small screens */}
+        {useScrollableTabs ? (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            bounces={false}
+            keyboardShouldPersistTaps="handled"
+            style={styles.tabBar}
+            contentContainerStyle={styles.tabBarScrollContent}
+          >
+            {(["portfolio", "orders", "marketplace"] as Tab[]).map((tab) => (
+              <TouchableOpacity
+                key={tab}
                 style={[
-                  styles.tabLabel,
-                  activeTab === tab && styles.tabLabelActive,
+                  styles.tabItemScroll,
+                  { minWidth: tabScrollMinWidth },
+                  isCompactStockTabs && styles.tabItemCompact,
+                  isTinyStockTabs && styles.tabItemTiny,
+                  activeTab === tab && styles.tabItemActive,
                 ]}
+                onPress={() => setActiveTab(tab)}
+                activeOpacity={0.7}
               >
-                {tab === "portfolio"
-                  ? "Portfolio"
-                  : tab === "orders"
-                    ? "My Orders"
-                    : "Marketplace"}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+                <Text
+                  style={[
+                    styles.tabLabel,
+                    isCompactStockTabs && styles.tabLabelCompact,
+                    isTinyStockTabs && styles.tabLabelTiny,
+                    activeTab === tab && styles.tabLabelActive,
+                  ]}
+                  numberOfLines={Platform.OS === "ios" ? 2 : 3}
+                  {...(Platform.OS === "ios"
+                    ? {
+                        adjustsFontSizeToFit: true,
+                        minimumFontScale: isTinyStockTabs ? 0.68 : 0.78,
+                      }
+                    : {})}
+                >
+                  {tab === "portfolio"
+                    ? t("stock.portfolio")
+                    : tab === "orders"
+                      ? t("stock.myOrders")
+                      : t("stock.marketplace")}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        ) : (
+          <View style={styles.tabBar}>
+            {(["portfolio", "orders", "marketplace"] as Tab[]).map((tab) => (
+              <TouchableOpacity
+                key={tab}
+                style={[
+                  styles.tabItem,
+                  isCompactStockTabs && styles.tabItemCompact,
+                  isTinyStockTabs && styles.tabItemTiny,
+                  activeTab === tab && styles.tabItemActive,
+                ]}
+                onPress={() => setActiveTab(tab)}
+                activeOpacity={0.7}
+              >
+                <Text
+                  style={[
+                    styles.tabLabel,
+                    isCompactStockTabs && styles.tabLabelCompact,
+                    isTinyStockTabs && styles.tabLabelTiny,
+                    activeTab === tab && styles.tabLabelActive,
+                  ]}
+                  numberOfLines={Platform.OS === "ios" ? 2 : 3}
+                  {...(Platform.OS === "ios"
+                    ? {
+                        adjustsFontSizeToFit: true,
+                        minimumFontScale: isTinyStockTabs ? 0.68 : 0.78,
+                      }
+                    : {})}
+                >
+                  {tab === "portfolio"
+                    ? t("stock.portfolio")
+                    : tab === "orders"
+                      ? t("stock.myOrders")
+                      : t("stock.marketplace")}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
 
         {/* Content */}
         {activeTab === "portfolio" && (
@@ -347,22 +443,26 @@ export default function StockService() {
                 color="#fff"
               />
               <Text style={styles.rateBannerText}>
-                1 Stock = ₱{formatCurrency(stockRate)} PHP
+                {t("stock.rateEqualsPhp", { rate: formatCurrency(stockRate) })}
               </Text>
             </LinearGradient>
 
             {/* Stock Portfolio Card */}
             <View style={styles.portfolioCard}>
               <View style={styles.leftBorder} />
-              <Text style={styles.cardLabel}>Stock Portfolio</Text>
+              <Text style={styles.cardLabel}>
+                {t("stock.stockPortfolioCard")}
+              </Text>
               <Text style={styles.cardMainValue}>
                 {formatStocks(stockCount)}{" "}
                 <Text style={styles.cardUnit}>
-                  {stockCount === 1 ? "Stock" : "Stocks"}
+                  {stockCount === 1 ? t("stock.stock") : t("stock.stocks")}
                 </Text>
               </Text>
               <View style={styles.divider} />
-              <Text style={styles.cardLabel}>Total Portfolio Value</Text>
+              <Text style={styles.cardLabel}>
+                {t("stock.totalPortfolioValue")}
+              </Text>
               <Text style={styles.cardSubValue}>
                 ₱{formatCurrency(totalPortfolioValue)} PHP
               </Text>
@@ -387,7 +487,7 @@ export default function StockService() {
                   end={{ x: 1, y: 0 }}
                 >
                   <Ionicons name="trending-up" size={20} color="#fff" />
-                  <Text style={styles.actionBtnText}>Buy Stock</Text>
+                  <Text style={styles.actionBtnText}>{t("stock.buyStock")}</Text>
                 </LinearGradient>
               </TouchableOpacity>
 
@@ -407,7 +507,7 @@ export default function StockService() {
                   end={{ x: 1, y: 0 }}
                 >
                   <Ionicons name="trending-down" size={20} color="#fff" />
-                  <Text style={styles.actionBtnText}>Sell Stock</Text>
+                  <Text style={styles.actionBtnText}>{t("stock.sellStock")}</Text>
                 </LinearGradient>
               </TouchableOpacity>
             </View>
@@ -420,8 +520,7 @@ export default function StockService() {
                 color="#E25A17"
               />
               <Text style={styles.infoText}>
-                Tap <Text style={{ fontWeight: "700" }}>Marketplace</Text> above
-                to buy stocks from other users directly.
+                {t("stock.portfolioMarketplaceHint")}
               </Text>
             </View>
           </ScrollView>
@@ -479,7 +578,7 @@ export default function StockService() {
                         styles.orderHistoryBtnTextActive,
                     ]}
                   >
-                    Buy History
+                    {t("stock.buyHistory")}
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -507,7 +606,7 @@ export default function StockService() {
                         styles.orderHistoryBtnTextActive,
                     ]}
                   >
-                    Sell History
+                    {t("stock.sellHistory")}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -526,8 +625,8 @@ export default function StockService() {
                   />
                   <Text style={styles.emptyText}>
                     {orderHistoryFilter === "buy"
-                      ? "No buy requests yet"
-                      : "No sell listings yet"}
+                      ? t("stock.noBuyRequests")
+                      : t("stock.noSellListings")}
                   </Text>
                 </View>
               ) : (
@@ -539,8 +638,8 @@ export default function StockService() {
                         <View style={styles.orderRow}>
                           <Text style={styles.orderLabel}>
                             {orderHistoryFilter === "buy"
-                              ? "Amount"
-                              : "Stocks to Sell"}
+                              ? t("stock.orderAmountLabel")
+                              : t("stock.stocksToSell")}
                           </Text>
                           <Text style={styles.orderValue}>
                             {orderHistoryFilter === "buy"
@@ -552,7 +651,7 @@ export default function StockService() {
                         </View>
                         <View style={styles.orderRow}>
                           <Text style={styles.orderLabel}>
-                            {new Date(r.createdAt).toLocaleDateString()}
+                            {new Date(r.createdAt).toLocaleDateString(locale)}
                           </Text>
                           <StatusBadge status={r.status} />
                         </View>
@@ -587,11 +686,14 @@ export default function StockService() {
                               styles.paginationBtnTextDisabled,
                           ]}
                         >
-                          Prev
+                          {t("stock.paginationPrev")}
                         </Text>
                       </TouchableOpacity>
                       <Text style={styles.paginationInfo}>
-                        Page {currentPage} of {totalPages}
+                        {t("stock.paginationPageOf", {
+                          current: String(currentPage),
+                          total: String(totalPages),
+                        })}
                       </Text>
                       <TouchableOpacity
                         style={[
@@ -613,7 +715,7 @@ export default function StockService() {
                               styles.paginationBtnTextDisabled,
                           ]}
                         >
-                          Next
+                          {t("stock.paginationNext")}
                         </Text>
                         <Ionicons
                           name="chevron-forward"
@@ -653,9 +755,9 @@ export default function StockService() {
                   size={48}
                   color="#ccc"
                 />
-                <Text style={styles.emptyText}>No listings available</Text>
+                <Text style={styles.emptyText}>{t("stock.noListingsAvailable")}</Text>
                 <Text style={styles.emptySubText}>
-                  Be the first! Tap Sell Stock in Portfolio.
+                  {t("stock.beTheFirst")}
                 </Text>
               </View>
             }
@@ -665,13 +767,16 @@ export default function StockService() {
                 <View style={styles.listingContent}>
                   <View style={styles.listingInfo}>
                     <Text style={styles.listingStocks}>
-                      {formatStocks(item.stocksToSell)} Stocks
+                      {formatStocks(item.stocksToSell)}{" "}
+                      {item.stocksToSell === 1
+                        ? t("stock.stock")
+                        : t("stock.stocks")}
                     </Text>
                     <Text style={styles.listingPrice}>
                       ₱{formatCurrency(item.phpAmount)}
                     </Text>
                     <Text style={styles.listingDate}>
-                      {new Date(item.createdAt).toLocaleDateString()}
+                      {new Date(item.createdAt).toLocaleDateString(locale)}
                     </Text>
                   </View>
                   <TouchableOpacity
@@ -684,7 +789,9 @@ export default function StockService() {
                     ) : (
                       <>
                         <Ionicons name="cart" size={16} color="#fff" />
-                        <Text style={styles.buyListingText}>Buy</Text>
+                        <Text style={styles.buyListingText}>
+                          {t("stock.buyListing")}
+                        </Text>
                       </>
                     )}
                   </TouchableOpacity>
@@ -709,11 +816,16 @@ export default function StockService() {
                 color={THEME_COLOR}
                 style={{ marginBottom: 12 }}
               />
-              <Text style={styles.confirmTitle}>Confirm Purchase</Text>
+              <Text style={styles.confirmTitle}>
+                {t("stock.confirmPurchaseTitle")}
+              </Text>
               {confirmListing && (
                 <>
                   <Text style={styles.confirmDetail}>
-                    {formatStocks(confirmListing.stocksToSell)} Stock(s)
+                    {formatStocks(confirmListing.stocksToSell)}{" "}
+                    {confirmListing.stocksToSell === 1
+                      ? t("stock.stock")
+                      : t("stock.stocks")}
                   </Text>
                   <LinearGradient
                     colors={["#F28934", "#E25A17"]}
@@ -721,13 +833,15 @@ export default function StockService() {
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 0 }}
                   >
-                    <Text style={styles.confirmAmountLabel}>Total Cost</Text>
+                    <Text style={styles.confirmAmountLabel}>
+                      {t("stock.totalCost")}
+                    </Text>
                     <Text style={styles.confirmAmount}>
                       ₱{formatCurrency(confirmListing.phpAmount)}
                     </Text>
                   </LinearGradient>
                   <Text style={styles.confirmNote}>
-                    This will be deducted from your available balance.
+                    {t("stock.purchaseDeductNote")}
                   </Text>
                 </>
               )}
@@ -736,7 +850,9 @@ export default function StockService() {
                   style={styles.confirmCancelBtn}
                   onPress={() => setConfirmListing(null)}
                 >
-                  <Text style={styles.confirmCancelText}>Cancel</Text>
+                  <Text style={styles.confirmCancelText}>
+                    {t("common.cancel")}
+                  </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.confirmBuyBtn}
@@ -744,7 +860,9 @@ export default function StockService() {
                     confirmListing && handlePurchase(confirmListing)
                   }
                 >
-                  <Text style={styles.confirmBuyText}>Confirm</Text>
+                  <Text style={styles.confirmBuyText}>
+                    {t("deposit.confirm")}
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -771,7 +889,7 @@ export default function StockService() {
                 style={styles.alertButton}
                 onPress={() => setShowAlert(false)}
               >
-                <Text style={styles.alertButtonText}>OK</Text>
+                <Text style={styles.alertButtonText}>{t("common.ok")}</Text>
               </TouchableOpacity>
             </LinearGradient>
           </View>
@@ -797,11 +915,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  refreshButton: {
+  headerSpacer: {
     width: 40,
     height: 40,
-    justifyContent: "center",
-    alignItems: "center",
   },
   headerTitle: {
     fontSize: 18,
@@ -818,15 +934,56 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#F0F0F0",
   },
+  tabBarScrollContent: {
+    flexDirection: "row",
+    alignItems: "stretch",
+    paddingHorizontal: 4,
+    flexGrow: 1,
+  },
   tabItem: {
     flex: 1,
+    minWidth: 0,
     paddingVertical: 14,
+    paddingHorizontal: 4,
     alignItems: "center",
+    justifyContent: "center",
     borderBottomWidth: 2,
     borderBottomColor: "transparent",
   },
+  tabItemScroll: {
+    flexGrow: 0,
+    flexShrink: 0,
+    paddingVertical: 14,
+    paddingHorizontal: 6,
+    alignItems: "center",
+    justifyContent: "center",
+    borderBottomWidth: 2,
+    borderBottomColor: "transparent",
+  },
+  tabItemCompact: {
+    paddingVertical: 10,
+    paddingHorizontal: 2,
+  },
+  tabItemTiny: {
+    paddingVertical: 8,
+    paddingHorizontal: 1,
+  },
   tabItemActive: { borderBottomColor: THEME_COLOR },
-  tabLabel: { fontSize: 13, fontWeight: "500", color: "#999" },
+  tabLabel: {
+    fontSize: 13,
+    fontWeight: "500",
+    color: "#999",
+    width: "100%",
+    textAlign: "center",
+  },
+  tabLabelCompact: {
+    fontSize: 11,
+    lineHeight: 14,
+  },
+  tabLabelTiny: {
+    fontSize: 10,
+    lineHeight: 13,
+  },
   tabLabelActive: { color: THEME_COLOR, fontWeight: "700" },
 
   // Scroll

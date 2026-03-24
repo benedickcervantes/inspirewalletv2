@@ -70,6 +70,45 @@ const Notification = () => {
   const [detailModalNotification, setDetailModalNotification] = useState<NotificationItem | NotificationItemBackend | null>(null);
   const [referralActionLoading, setReferralActionLoading] = useState(false);
 
+  const getTranslatedNotificationTitle = (title?: string): string => {
+    const normalized = String(title ?? '').trim().toLowerCase();
+    if (!normalized) return '';
+
+    const titleKeyMap: Record<string, string> = {
+      'top up requested': 'notification.titleTopUpRequested',
+      'top-up requested': 'notification.titleTopUpRequested',
+      'top-up approved': 'notification.titleTopUpApproved',
+      'top up approved': 'notification.titleTopUpApproved',
+      'top-up rejected': 'notification.titleTopUpRejected',
+      'top up rejected': 'notification.titleTopUpRejected',
+      'stock investment requested': 'notification.titleStockInvestmentRequested',
+      'withdrawal requested': 'notification.titleWithdrawalRequested',
+      'withdrawal approved': 'notification.titleWithdrawalApproved',
+      'withdrawal rejected': 'notification.titleWithdrawalRejected',
+      'time deposit requested': 'notification.titleTimeDepositRequested',
+      'time deposit approved': 'notification.titleTimeDepositApproved',
+      'time deposit rejected': 'notification.titleTimeDepositRejected',
+      'transfer received': 'notification.titleTransferReceived',
+      'transfer sent': 'notification.titleTransferSent',
+      'new referral signup': 'notification.titleNewReferralSignup',
+      'referral commission released': 'notification.titleReferralCommissionReleased',
+      'ticket update': 'notification.titleTicketUpdate',
+      'new support reply': 'notification.titleNewSupportReply',
+      'new customer reply': 'notification.titleNewCustomerReply',
+      'new message': 'notification.titleNewMessage',
+      'account updated': 'notification.titleAccountUpdated',
+      'invoice generated': 'notification.titleInvoiceGenerated',
+      'subscription activated': 'notification.titleSubscriptionActivated',
+      'subscription cancelled': 'notification.titleSubscriptionCancelled',
+      'subscription expired': 'notification.titleSubscriptionExpired',
+      'your stock was sold!': 'notification.titleYourStockWasSold',
+      'stock purchase successful': 'notification.titleStockPurchaseSuccessful',
+    };
+
+    const key = titleKeyMap[normalized];
+    return key ? t(key) : (title ?? '');
+  };
+
   useEffect(() => {
     const checkAuth = async () => {
       const accessToken = await AsyncStorage.getItem("access_token");
@@ -290,7 +329,6 @@ const Notification = () => {
       return;
     }
 
-    // Check if this is a deposit receipt notification
     if (useBackend) {
       const notif = notification as NotificationItemBackend;
       if (!notif.isRead) {
@@ -304,27 +342,6 @@ const Notification = () => {
         } catch (error) {
           console.error('Error marking backend notification as read:', error);
         }
-      }
-
-      if (
-        notif.title === 'Time Deposit Requested' || 
-        notif.title === 'Top Up Requested' || 
-        notif.title === 'Stock Investment Requested' ||
-        notif.title === 'Transfer Received' ||
-        notif.title === 'Transfer Sent' ||
-        notif.title === 'Withdrawal Requested' ||
-        notif.title === 'Withdrawal Approved'
-      ) {
-         let displayType = notif.title.replace(' Requested', '');
-         if (notif.title.includes('Transfer')) displayType = 'Transfer';
-         if (notif.title.includes('Withdrawal')) displayType = 'Withdrawal';
-         
-         navigation.navigate("depositReceipt", {
-           transactionId: notif.referenceId || "N/A",
-           type: displayType,
-           successMessage: notif.message,
-         });
-         return;
       }
 
       setDetailModalNotification(notification);
@@ -418,7 +435,7 @@ const Notification = () => {
     const isBackend = 'isRead' in notif;
     const fields: { label: string; value: string }[] = [];
 
-    fields.push({ label: t('notification.detailTitle') ?? 'Title', value: notif.title ?? '—' });
+    fields.push({ label: t('notification.detailTitle') ?? 'Title', value: getTranslatedNotificationTitle(notif.title) || '—' });
     fields.push({ label: t('notification.detailMessage') ?? 'Message', value: notif.message ?? '—' });
     fields.push({ label: t('notification.detailDate') ?? 'Date', value: formatDetailTimestamp(notif) });
     fields.push({
@@ -554,7 +571,7 @@ const Notification = () => {
         <View style={styles.textContainer}>
           <View style={styles.titleRow}>
             <Text style={styles.notificationTitle}>
-              {item.title}
+              {getTranslatedNotificationTitle(item.title)}
             </Text>
             {item.title?.toLowerCase().includes('referral commission') && !selectMode && (
               <Ionicons name="checkmark-circle" size={20} color="#4CAF50" />
@@ -641,7 +658,7 @@ const Notification = () => {
 
         <View style={styles.textContainer}>
           <View style={styles.titleRow}>
-            <Text style={styles.notificationTitle}>{item.title}</Text>
+            <Text style={styles.notificationTitle}>{getTranslatedNotificationTitle(item.title)}</Text>
             {(item.type === 'referral_approved' || item.title?.toLowerCase().includes('referral commission')) && !selectMode && (
               <Ionicons name="checkmark-circle" size={20} color="#4CAF50" />
             )}
@@ -919,25 +936,29 @@ const Notification = () => {
                 style={styles.detailHeader}
               >
                 <View style={styles.detailHeaderTop}>
-                  <View style={styles.detailIconWrapper}>
-                    <Ionicons
-                      name={(detailModalNotification && 'createdAt' in detailModalNotification)
-                        ? (getNotificationIcon((detailModalNotification as NotificationItemBackend)?.type, detailModalNotification?.title) as 'information-circle')
-                        : (getNotificationIcon((detailModalNotification as NotificationItem)?.type ?? 'system', detailModalNotification?.title) as 'information-circle')}
-                      size={28}
-                      color="#FFFFFF"
-                    />
+                  <View style={styles.detailHeaderSlotLeft}>
+                    <View style={styles.detailIconWrapper}>
+                      <Ionicons
+                        name={(detailModalNotification && 'createdAt' in detailModalNotification)
+                          ? (getNotificationIcon((detailModalNotification as NotificationItemBackend)?.type, detailModalNotification?.title) as 'information-circle')
+                          : (getNotificationIcon((detailModalNotification as NotificationItem)?.type ?? 'system', detailModalNotification?.title) as 'information-circle')}
+                        size={28}
+                        color="#FFFFFF"
+                      />
+                    </View>
                   </View>
                   <Text style={styles.detailTitle} numberOfLines={2}>
-                    {detailModalNotification?.title ?? '—'}
+                    {getTranslatedNotificationTitle(detailModalNotification?.title) || '—'}
                   </Text>
-                  <TouchableOpacity
-                    style={styles.detailCloseButton}
-                    onPress={() => setDetailModalNotification(null)}
-                    hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-                  >
-                    <Ionicons name="close-circle" size={28} color="rgba(255,255,255,0.9)" />
-                  </TouchableOpacity>
+                  <View style={styles.detailHeaderSlotRight}>
+                    <TouchableOpacity
+                      style={styles.detailCloseButton}
+                      onPress={() => setDetailModalNotification(null)}
+                      hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                    >
+                      <Ionicons name="close-circle" size={28} color="rgba(255,255,255,0.9)" />
+                    </TouchableOpacity>
+                  </View>
                 </View>
               </LinearGradient>
               <ScrollView
@@ -1241,7 +1262,8 @@ const styles = StyleSheet.create({
   },
   alertButtonRow: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
+    justifyContent: 'center',
+    alignItems: 'center',
     gap: 12,
   },
   alertCancelButton: {
@@ -1306,8 +1328,17 @@ const styles = StyleSheet.create({
   },
   detailHeaderTop: {
     flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  detailHeaderSlotLeft: {
+    width: 44,
     alignItems: 'flex-start',
-    gap: 10,
+  },
+  detailHeaderSlotRight: {
+    width: 44,
+    alignItems: 'flex-end',
   },
   detailIconWrapper: {
     width: 40,
@@ -1323,11 +1354,11 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#FFFFFF',
     lineHeight: 24,
-    paddingRight: 4,
+    textAlign: 'center',
+    paddingHorizontal: 4,
   },
   detailCloseButton: {
-    padding: 4,
-    marginTop: -4,
+    padding: 2,
   },
   detailScroll: {
     flexGrow: 1,

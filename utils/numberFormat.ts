@@ -27,3 +27,24 @@ export function formatAmountWithCommas(input: string): string {
   return `${formattedInt}.${rawDec}`;
 }
 
+/**
+ * Format input to only allow positive whole numbers with comma separators.
+ * Removes any negative signs, decimals, and non-numeric characters.
+ * Accepts numbers like 1000, 50000, 1000000 and formats them with commas.
+ * @param input - The input string to format
+ * @returns Formatted string with only positive whole numbers and commas (e.g., "1,000,000")
+ */
+export function formatWholeNumbersOnly(input: string): string {
+  // Remove all non-numeric characters (including decimals, negative signs, etc.)
+  const cleaned = (input || "").replace(/[^0-9]/g, "");
+  
+  if (!cleaned) return "";
+  
+  // Remove leading zeros but keep at least one digit
+  const withoutLeadingZeros = cleaned.replace(/^0+(?=\d)/, "");
+  const finalNumber = withoutLeadingZeros || "0";
+  
+  // Add comma separators for thousands (e.g., 1000000 -> 1,000,000)
+  return finalNumber.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+

@@ -345,6 +345,16 @@ export function submitTravelProtection(
   body: Record<string, unknown>,
 ): Promise<{ success: boolean; data?: unknown; error?: string }>;
 
+export function submitPhysicalCardRequest(
+  accessToken: string,
+  body: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+  },
+): Promise<{ success: boolean; data?: unknown; error?: string }>;
+
 // Card Collection API
 export interface CardCatalogItem {
   design: string;
@@ -517,6 +527,18 @@ export function submitPersonalKyc(
   accessToken: string,
   body: Record<string, unknown>,
 ): Promise<{ success: boolean; data?: unknown; error?: string }>;
+
+export function getPersonalKycStatus(
+  accessToken: string,
+): Promise<{
+  success: boolean;
+  data?: {
+    id?: string;
+    status?: string;
+    [key: string]: unknown;
+  } | null;
+  error?: string;
+}>;
 
 export function submitCompanyKyc(
   accessToken: string,

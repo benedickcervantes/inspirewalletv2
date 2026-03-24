@@ -33,7 +33,7 @@ export default function TravelProtectReviewSubmit({
             color={THEME_COLOR}
           />
         </View>
-        <View>
+        <View style={styles.formHeaderTextContainer}>
           <Text style={styles.formTitle}>{t("travel.reviewSubmit")}</Text>
           <Text style={styles.formSubtitle}>{t("travel.reviewSubtitle")}</Text>
         </View>
@@ -118,9 +118,13 @@ const styles = StyleSheet.create({
   },
   formHeader: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     marginBottom: 24,
     gap: 12,
+  },
+  formHeaderTextContainer: {
+    flex: 1,
+    minWidth: 0,
   },
   formIconContainer: {
     width: 48,
@@ -139,6 +143,7 @@ const styles = StyleSheet.create({
   formSubtitle: {
     fontSize: 12,
     color: "#9E9E9E",
+    flexShrink: 1,
   },
   reviewSection: {
     marginBottom: 20,
@@ -171,6 +176,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#333",
     lineHeight: 20,
+    flexShrink: 1,
   },
   termsBox: {
     backgroundColor: "rgba(255, 235, 205, 0.4)",

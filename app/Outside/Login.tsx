@@ -3,24 +3,24 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
+import * as SecureStore from 'expo-secure-store';
 import { registerIndieID } from 'native-notify';
 import { useEffect, useRef, useState } from "react";
-import * as SecureStore from 'expo-secure-store';
 import {
-    ActivityIndicator,
-    Animated,
-    BackHandler,
-    Keyboard,
-    Modal,
-    Platform,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    useWindowDimensions,
-    View,
+  ActivityIndicator,
+  Animated,
+  BackHandler,
+  Keyboard,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -30,10 +30,10 @@ import {
   normalizeLanguage,
   SUPPORTED_LANGUAGES,
 } from "../../constants/locales";
+import { useLanguage } from "../../context/LanguageContext";
 import type { NavProp } from "../../types/navigation";
 import { useResponsive } from "../../utils/responsive";
 import CustomLoader from "../Loader/CustomLoader";
-import { useLanguage } from "../../context/LanguageContext";
 
 const GRADIENT_START = "#E15816";
 const GRADIENT_END = "#F48F38";
@@ -107,12 +107,12 @@ function PasswordResetRequiredModal({
         setPhase("sent");
       } else {
         setErrorMsg(
-          result.error || "Failed to send reset email. Please try again.",
+          result.error || t("login.resetEmailFailed"),
         );
         setPhase("error");
       }
     } catch {
-      setErrorMsg("Network error. Please try again.");
+      setErrorMsg(t("login.networkError"));
       setPhase("error");
     }
   };
@@ -274,7 +274,7 @@ function ForgotPasswordInputModal({
       if (result.success) {
         setPhase('sent');
       } else {
-        setErrorMsg(result.error || 'Failed to send reset email. Please try again.');
+        setErrorMsg(result.error || t("login.resetEmailFailed"));
         setPhase('error');
       }
     } catch {
@@ -590,6 +590,26 @@ export default function Login() {
   }, [fromSignOut]);
 
   const [email, setEmail] = useState("");
+
+  useEffect(() => {
+    const purgeSessionAndLoadEmail = async () => {
+      try {
+        await AsyncStorage.multiRemove([
+          "access_token",
+          "user",
+          "passcodeLoginComplete",
+          "registrationPasscodePending",
+        ]);
+        const savedEmail = await AsyncStorage.getItem("lastLoggedEmail");
+        if (savedEmail) {
+          setEmail(savedEmail);
+        }
+      } catch (e) {
+        // ignore
+      }
+    };
+    purgeSessionAndLoadEmail();
+  }, []);
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -615,7 +635,7 @@ export default function Login() {
       title: "",
       message: "",
       type: "info",
-      confirmText: "OK",
+      confirmText: t("common.ok"),
       onConfirm: null,
       secondaryText: undefined,
       onSecondary: undefined,
@@ -687,11 +707,11 @@ export default function Login() {
       try {
         const oldEmail = await AsyncStorage.getItem('lastLoggedEmail');
         const currentEmail = trimmedEmail.toLowerCase();
-        
+
         // If the user logging in has a different email, or no past email is known, clear the old biometric token
         if (!oldEmail || oldEmail.toLowerCase() !== currentEmail) {
-            await SecureStore.deleteItemAsync('biometricToken');
-            await AsyncStorage.removeItem('biometricEmail');
+          await SecureStore.deleteItemAsync('biometricToken');
+          await AsyncStorage.removeItem('biometricEmail');
         }
         await AsyncStorage.setItem('lastLoggedEmail', currentEmail);
       } catch (e) {
@@ -701,6 +721,15 @@ export default function Login() {
       await AsyncStorage.setItem("access_token", result.access_token || "");
       await AsyncStorage.setItem("user", JSON.stringify(result.user || {}));
       await AsyncStorage.removeItem("passcodeLoginComplete");
+
+      // Save password securely for silent auto-login on next app launch.
+      // Also record the timestamp so it can be expired after 2 days.
+      try {
+        await SecureStore.setItemAsync("savedPassword", password);
+        await AsyncStorage.setItem("savedPasswordAt", String(Date.now()));
+      } catch (e) {
+        console.warn("Failed to save password to SecureStore", e);
+      }
 
       // Register device for Indie Push Notifications
       const userObj = result.user as any;
@@ -971,7 +1000,7 @@ export default function Login() {
         title={modalConfig.title}
         message={modalConfig.message}
         type={modalConfig.type}
-        confirmText={modalConfig.confirmText}
+        confirmText={modalConfig.confirmText || t("common.ok")}
         onConfirm={modalConfig.onConfirm}
         secondaryText={modalConfig.secondaryText}
         onSecondary={modalConfig.onSecondary}

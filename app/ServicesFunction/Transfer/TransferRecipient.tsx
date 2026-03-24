@@ -405,9 +405,7 @@ export default function TransferRecipient() {
           <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{t("sendMoney.title")}</Text>
-        <TouchableOpacity style={styles.notificationButton}>
-          <Ionicons name="notifications-outline" size={24} color="#FFFFFF" />
-        </TouchableOpacity>
+        <View style={styles.headerRightPlaceholder} />
       </LinearGradient>
 
       <KeyboardAvoidingView
@@ -769,6 +767,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    minHeight: 72,
     paddingHorizontal: 20,
     paddingVertical: 16,
   },
@@ -779,15 +778,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   headerTitle: {
+    flex: 1,
+    textAlign: "center",
     fontSize: 20,
     fontWeight: "700",
     color: "#FFFFFF",
   },
-  notificationButton: {
+  headerRightPlaceholder: {
     width: 40,
     height: 40,
-    justifyContent: "center",
-    alignItems: "center",
   },
   keyboardView: {
     flex: 1,

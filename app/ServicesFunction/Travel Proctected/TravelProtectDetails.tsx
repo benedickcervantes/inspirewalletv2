@@ -155,7 +155,7 @@ export default function TravelProtectDetails({
               />
             </View>
 
-            <View>
+            <View style={styles.formHeaderTextContainer}>
               <Text style={styles.formTitle}>{t("travel.travelDetails")}</Text>
 
               <Text style={styles.formSubtitle}>
@@ -656,9 +656,13 @@ const styles = StyleSheet.create({
 
   formHeader: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     marginBottom: 24,
     gap: 12,
+  },
+  formHeaderTextContainer: {
+    flex: 1,
+    minWidth: 0,
   },
 
   formIconContainer: {
@@ -680,6 +684,7 @@ const styles = StyleSheet.create({
   formSubtitle: {
     fontSize: 12,
     color: "#9E9E9E",
+    flexShrink: 1,
   },
 
   inputGroup: {
@@ -729,6 +734,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#000000",
     fontWeight: "500",
+    flex: 1,
+    marginRight: 8,
   },
 
   dropdownPlaceholder: {

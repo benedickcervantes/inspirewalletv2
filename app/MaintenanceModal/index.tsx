@@ -1,6 +1,7 @@
 import { useNavigation } from "@react-navigation/native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useLanguage } from "../../context/LanguageContext";
 
 const THEME_COLOR = "#E15816";
 
@@ -11,6 +12,7 @@ interface MaintenanceModalProps {
 
 export function MaintenanceModal({ visible, onClose }: MaintenanceModalProps) {
   const navigation = useNavigation();
+  const { t } = useLanguage();
 
   const handleGoBack = () => {
     onClose();
@@ -40,17 +42,16 @@ export function MaintenanceModal({ visible, onClose }: MaintenanceModalProps) {
                 color="#FFFFFF"
               />
             </View>
-            <Text style={styles.title}>Under maintenance</Text>
+            <Text style={styles.title}>{t("dashboard.underMaintenance")}</Text>
           </View>
           <Text style={styles.modalMessage}>
-            This service is currently under maintenance. We're working hard to
-            bring you an improved experience. Please check back soon!
+            {t("dashboard.maintenanceMessage")}
           </Text>
           <TouchableOpacity
             style={styles.modalButton}
             onPress={handleGoBack}
           >
-            <Text style={styles.modalButtonText}>Go Back</Text>
+            <Text style={styles.modalButtonText}>{t("common.goBack")}</Text>
           </TouchableOpacity>
         </View>
       </View>

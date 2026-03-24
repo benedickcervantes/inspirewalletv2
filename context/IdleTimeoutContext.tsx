@@ -1,28 +1,30 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as SecureStore from "expo-secure-store";
 import React, {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useRef,
-  useCallback,
   useState,
 } from "react";
 import {
+  Animated,
   AppState,
   AppStateStatus,
+  useWindowDimensions,
   Modal,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
-  Animated,
   TouchableWithoutFeedback,
+  View,
 } from "react-native";
+import { useLanguage } from "./LanguageContext";
 import { navigationRef } from "../lib/navigationRef";
 
 const INACTIVITY_LIMIT_MS = 5 * 60 * 1000; // 5 minutes
 const CHECK_INTERVAL_MS = 60 * 1000; // check every minute
+const ACTIVITY_PERSIST_THROTTLE_MS = 15 * 1000; // avoid storage write on every touch
 const LAST_ACTIVITY_KEY = "lastActivityAt";
 const IDLE_SESSION_ACTIVE_KEY = "idleSessionActive";
 
@@ -41,7 +43,11 @@ const IdleTimeoutContext = createContext<IdleTimeoutContextValue | null>(null);
 export const IdleTimeoutProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
+  const { t } = useLanguage();
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+  const isSmallScreen = screenWidth <= 375 || screenHeight <= 667;
   const lastActivityRef = useRef<number>(Date.now());
+  const lastPersistedActivityRef = useRef<number>(0);
   const appStateRef = useRef<AppStateStatus>(AppState.currentState);
   const hasLoggedOutRef = useRef(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -64,24 +70,28 @@ export const IdleTimeoutProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const clearAuthData = useCallback(async () => {
     try {
-      // Clear auth-related storage keys
-      await AsyncStorage.multiRemove([
-        "access_token",
-        "user",
-        "passcodeLoginComplete",
-        "registrationPasscodePending",
-        "lastLoggedEmail",
-        "biometricEmail",
-        IDLE_SESSION_ACTIVE_KEY,
-        LAST_ACTIVITY_KEY,
-      ]);
-
-      // Clear biometric token if present
+      // Save the user's email before clearing so it can be pre-filled later
       try {
-        await SecureStore.deleteItemAsync("biometricToken");
+        const userStr = await AsyncStorage.getItem("user");
+        if (userStr) {
+          const userObj = JSON.parse(userStr);
+          if (userObj?.email) {
+            await AsyncStorage.setItem("lastLoggedEmail", userObj.email.toLowerCase());
+          }
+        }
       } catch {
         // non-fatal
       }
+
+      // Only clear session flags — keep access_token and biometric data
+      // so the user can re-authenticate via Passcode without re-entering their email/password.
+      await AsyncStorage.multiRemove([
+        "user",
+        "passcodeLoginComplete",
+        "registrationPasscodePending",
+        IDLE_SESSION_ACTIVE_KEY,
+        LAST_ACTIVITY_KEY,
+      ]);
     } catch {
       // ignore errors
     }
@@ -131,16 +141,11 @@ export const IdleTimeoutProvider: React.FC<{ children: React.ReactNode }> = ({
       }),
     ]).start(() => {
       setShowModal(false);
-      // Navigate back to Login screen
+      // Navigate to Passcode so the user can re-authenticate without re-entering email
       if (navigationRef.isReady()) {
         navigationRef.reset({
           index: 0,
-          routes: [
-            {
-              name: "Login",
-              params: { fromSignOut: true } as any,
-            },
-          ],
+          routes: [{ name: "Passcode" }],
         });
       }
     });
@@ -154,6 +159,7 @@ export const IdleTimeoutProvider: React.FC<{ children: React.ReactNode }> = ({
     }
     const now = Date.now();
     lastActivityRef.current = now;
+    lastPersistedActivityRef.current = now;
     setIsSessionActive(true);
     try {
       await AsyncStorage.setItem(LAST_ACTIVITY_KEY, String(now));
@@ -184,8 +190,11 @@ export const IdleTimeoutProvider: React.FC<{ children: React.ReactNode }> = ({
     if (!isSessionActive || hasLoggedOutRef.current) return;
     const now = Date.now();
     lastActivityRef.current = now;
-    // Async storage update (fire and forget for performance)
-    AsyncStorage.setItem(LAST_ACTIVITY_KEY, String(now)).catch(() => {});
+    if (now - lastPersistedActivityRef.current >= ACTIVITY_PERSIST_THROTTLE_MS) {
+      lastPersistedActivityRef.current = now;
+      // Async storage update (fire and forget for performance)
+      AsyncStorage.setItem(LAST_ACTIVITY_KEY, String(now)).catch(() => { });
+    }
   }, [isSessionActive]);
 
   // On mount, check if there was an active session (app was killed and reopened)
@@ -271,7 +280,7 @@ export const IdleTimeoutProvider: React.FC<{ children: React.ReactNode }> = ({
           // Persist whatever the last known activity time is (best-effort),
           // in case the app is killed while backgrounded.
           const last = lastActivityRef.current;
-          await AsyncStorage.setItem(LAST_ACTIVITY_KEY, String(last)).catch(() => {});
+          await AsyncStorage.setItem(LAST_ACTIVITY_KEY, String(last)).catch(() => { });
           return;
         }
 
@@ -297,7 +306,7 @@ export const IdleTimeoutProvider: React.FC<{ children: React.ReactNode }> = ({
             // still within window – update activity to now
             lastActivityRef.current = now;
             await AsyncStorage.setItem(LAST_ACTIVITY_KEY, String(now)).catch(
-              () => {},
+              () => { },
             );
           }
         }
@@ -318,8 +327,11 @@ export const IdleTimeoutProvider: React.FC<{ children: React.ReactNode }> = ({
     if (!isSessionActive || hasLoggedOutRef.current) return;
     const now = Date.now();
     lastActivityRef.current = now;
-    // Fire and forget for performance
-    AsyncStorage.setItem(LAST_ACTIVITY_KEY, String(now)).catch(() => {});
+    if (now - lastPersistedActivityRef.current >= ACTIVITY_PERSIST_THROTTLE_MS) {
+      lastPersistedActivityRef.current = now;
+      // Fire and forget for performance
+      AsyncStorage.setItem(LAST_ACTIVITY_KEY, String(now)).catch(() => { });
+    }
   }, [isSessionActive]);
 
   return (
@@ -345,22 +357,32 @@ export const IdleTimeoutProvider: React.FC<{ children: React.ReactNode }> = ({
       >
         <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}>
           <Animated.View
-            style={[styles.modalBox, { transform: [{ scale: scaleAnim }] }]}
+            style={[
+              styles.modalBox,
+              {
+                width: Math.min(screenWidth - 32, 340),
+                maxHeight: Math.floor(screenHeight * 0.8),
+                paddingVertical: isSmallScreen ? 20 : 28,
+                paddingHorizontal: isSmallScreen ? 18 : 28,
+                transform: [{ scale: scaleAnim }],
+              },
+            ]}
           >
             <View style={styles.iconWrap}>
               <Text style={styles.iconText}>⏰</Text>
             </View>
-            <Text style={styles.title}>Session Expired</Text>
-            <Text style={styles.message}>
-              You have been automatically logged out due to inactivity. Please
-              log in again to continue.
+            <Text style={[styles.title, isSmallScreen && styles.titleSmall]}>
+              {t("common.sessionExpiredTitle")}
+            </Text>
+            <Text style={[styles.message, isSmallScreen && styles.messageSmall]}>
+              {t("common.sessionExpiredMessage")}
             </Text>
             <TouchableOpacity
-              style={styles.button}
+              style={[styles.button, isSmallScreen && styles.buttonSmall]}
               onPress={handleModalDismiss}
               activeOpacity={0.8}
             >
-              <Text style={styles.buttonText}>OK</Text>
+              <Text style={styles.buttonText}>{t("common.ok")}</Text>
             </TouchableOpacity>
           </Animated.View>
         </Animated.View>
@@ -385,7 +407,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     paddingVertical: 28,
     paddingHorizontal: 28,
-    width: "100%",
     maxWidth: 340,
     alignItems: "center",
   },
@@ -415,6 +436,15 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     lineHeight: 22,
   },
+  titleSmall: {
+    fontSize: 18,
+    marginBottom: 8,
+  },
+  messageSmall: {
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 18,
+  },
   button: {
     backgroundColor: THEME_COLOR,
     paddingVertical: 14,
@@ -422,6 +452,11 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     minWidth: 140,
     alignItems: "center",
+  },
+  buttonSmall: {
+    minWidth: 120,
+    paddingVertical: 12,
+    paddingHorizontal: 36,
   },
   buttonText: {
     color: WHITE,

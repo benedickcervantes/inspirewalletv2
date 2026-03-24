@@ -64,6 +64,7 @@ export default function EwalletFinancialInfo() {
   const [showSourceOfFundModal, setShowSourceOfFundModal] = useState(false);
   const [showCurrencyModal, setShowCurrencyModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showExitConfirmModal, setShowExitConfirmModal] = useState(false);
 
   const [loading, setLoading] = useState(false);
 
@@ -73,18 +74,27 @@ export default function EwalletFinancialInfo() {
     navigation.goBack();
   };
 
+  const handleTopBackPress = () => {
+    setShowExitConfirmModal(true);
+  };
+
+  const handleConfirmExit = () => {
+    setShowExitConfirmModal(false);
+    navigation.navigate("Main");
+  };
+
   const handleSubmit = async () => {
     const newErrors: typeof errors = {};
-    if (!sourceOfFund.trim()) newErrors.source = "Source of fund is required";
+    if (!sourceOfFund.trim()) newErrors.source = t("ewallet.sourceOfFundRequired");
     if (!grossMonthlyIncome.trim()) {
-      newErrors.income = "Income amount is required";
+      newErrors.income = t("ewallet.incomeRequired");
     } else {
       const n = parseFloat(unformatNumberString(grossMonthlyIncome));
       if (Number.isNaN(n) || n <= 0) {
-        newErrors.income = "Enter a valid income amount";
+        newErrors.income = t("ewallet.incomeInvalid");
       }
     }
-    if (!grossMonthlyIncomeCurrency) newErrors.currency = "Currency is required";
+    if (!grossMonthlyIncomeCurrency) newErrors.currency = t("ewallet.currencyRequired");
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -97,7 +107,7 @@ export default function EwalletFinancialInfo() {
     try {
       const token = await AsyncStorage.getItem("access_token");
       if (!token) {
-        Alert.alert(t("common.error"), "Authentication token not found. Please login again.");
+        Alert.alert(t("common.error"), t("common.authTokenNotFound"));
         setLoading(false);
         return;
       }
@@ -117,7 +127,7 @@ export default function EwalletFinancialInfo() {
       if (result.success) {
         setShowSuccessModal(true);
       } else {
-        Alert.alert(t("common.error"), result.error || "Failed to submit application.");
+        Alert.alert(t("common.error"), result.error || t("travel.submitFailed"));
       }
     } catch (error: any) {
       console.error("[EwalletFinancialinfo] Submit error:", error);
@@ -138,7 +148,7 @@ export default function EwalletFinancialInfo() {
           <View style={styles.topSection}>
             <TouchableOpacity
               style={styles.backButton}
-              onPress={handleBack}
+              onPress={handleTopBackPress}
             >
               <Ionicons name="arrow-back" size={28} color={THEME_COLOR} />
             </TouchableOpacity>
@@ -442,9 +452,54 @@ export default function EwalletFinancialInfo() {
                   });
                 }}
               >
-                <Text style={styles.successButtonText}>OK</Text>
+                <Text style={styles.successButtonText}>{t("common.ok")}</Text>
               </TouchableOpacity>
             </LinearGradient>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Exit confirmation modal */}
+      <Modal
+        transparent
+        animationType="fade"
+        visible={showExitConfirmModal}
+        onRequestClose={() => setShowExitConfirmModal(false)}
+      >
+        <View style={styles.exitModalOverlay}>
+          <View style={styles.exitModalContainer}>
+            <View style={styles.exitModalIconWrap}>
+              <Ionicons name="warning-outline" size={28} color={THEME_COLOR} />
+            </View>
+            <Text style={styles.exitModalTitle}>{t("common.cancelApplication")}</Text>
+            <Text style={styles.exitModalMessage}>
+              {t("ewallet.cancelApplicationMessage")}
+            </Text>
+            <View style={styles.exitModalButtons}>
+              <TouchableOpacity
+                style={[styles.exitModalButton, styles.exitModalKeepEditingButton]}
+                onPress={() => setShowExitConfirmModal(false)}
+              >
+                <Text
+                  style={[
+                    styles.exitModalButtonText,
+                    styles.exitModalKeepEditingButtonText,
+                  ]}
+                >
+                  {t("common.keepEditing")}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.exitModalButton, styles.exitModalDiscardButton]}
+                onPress={handleConfirmExit}
+              >
+                <Text
+                  style={[styles.exitModalButtonText, styles.exitModalDiscardButtonText]}
+                >
+                  {t("common.discardExit")}
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
@@ -764,6 +819,8 @@ const styles = StyleSheet.create({
     flex: 1,
     borderRadius: 14,
     overflow: "hidden",
+    borderWidth: 2,
+    borderColor: "transparent",
   },
   submitGradient: {
     paddingVertical: 16,
@@ -823,5 +880,83 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: "#E15816",
+  },
+  exitModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 20,
+  },
+  exitModalContainer: {
+    width: "100%",
+    maxWidth: 360,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "#ECEFF4",
+    paddingHorizontal: 20,
+    paddingTop: 22,
+    paddingBottom: 18,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  exitModalIconWrap: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: "#FFF7E9",
+    borderWidth: 1,
+    borderColor: "#FFE2AF",
+    alignSelf: "center",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 12,
+  },
+  exitModalTitle: {
+    fontSize: 21,
+    fontWeight: "700",
+    color: "#0F172A",
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  exitModalMessage: {
+    fontSize: 14,
+    color: "#64748B",
+    lineHeight: 20,
+    textAlign: "center",
+    marginBottom: 16,
+  },
+  exitModalButtons: {
+    width: "100%",
+  },
+  exitModalButton: {
+    width: "100%",
+    borderRadius: 12,
+    paddingVertical: 13,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  exitModalDiscardButton: {
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#F3C3B1",
+  },
+  exitModalKeepEditingButton: {
+    backgroundColor: THEME_COLOR,
+    marginBottom: 10,
+  },
+  exitModalButtonText: {
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  exitModalDiscardButtonText: {
+    color: "#D9480F",
+  },
+  exitModalKeepEditingButtonText: {
+    color: "#FFFFFF",
   },
 });

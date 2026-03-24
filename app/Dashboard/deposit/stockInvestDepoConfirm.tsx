@@ -17,6 +17,7 @@ import {
   submitStockInvestmentRequest,
 } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
+import { unformatNumberString } from "../../../utils/numberFormat";
 
 export default function StockInvestmentConfirm() {
   const navigation = useNavigation();
@@ -35,6 +36,8 @@ export default function StockInvestmentConfirm() {
   const currency = params.currency || "PHP";
   const amount = params.amount || "0";
   const currencySymbol = params.currencySymbol || "₱";
+  const amountNumeric =
+    parseFloat(unformatNumberString(amount).trim()) || 0;
 
   const handleConfirm = async () => {
     if (isSubmitting) return;
@@ -172,7 +175,7 @@ export default function StockInvestmentConfirm() {
             </Text>
             <Text style={styles.amountValue}>
               {currencySymbol}{" "}
-              {parseFloat(amount).toLocaleString(undefined, {
+              {amountNumeric.toLocaleString(undefined, {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })}{" "}
@@ -243,7 +246,7 @@ export default function StockInvestmentConfirm() {
                   }
                 }}
               >
-                <Text style={styles.alertButtonText}>OK</Text>
+                <Text style={styles.alertButtonText}>{t("common.ok")}</Text>
               </TouchableOpacity>
             </LinearGradient>
           </View>

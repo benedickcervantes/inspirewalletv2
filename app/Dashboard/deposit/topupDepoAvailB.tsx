@@ -43,11 +43,11 @@ export default function TopUpBalance() {
     const amountStr = unformatNumberString(amount).trim();
 
     if (!amountStr) {
-      newErrors.amount = "Amount is required";
+      newErrors.amount = t("deposit.amountRequired");
     } else {
       const amountNum = parseFloat(amountStr);
       if (isNaN(amountNum) || amountNum <= 0) {
-        newErrors.amount = "Please enter a valid amount greater than 0";
+        newErrors.amount = t("deposit.amountInvalid");
       }
     }
 
@@ -123,9 +123,6 @@ export default function TopUpBalance() {
 
           <Text style={styles.headerTitle}>{t("deposit.depositRequest")}</Text>
 
-          <TouchableOpacity style={styles.refreshButton}>
-            <Ionicons name="refresh" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
         </LinearGradient>
 
         {/* Progress Steps */}
@@ -339,12 +336,6 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     flex: 1,
     textAlign: "center",
-  },
-  refreshButton: {
-    width: 40,
-    height: 40,
-    justifyContent: "center",
-    alignItems: "center",
   },
   progressContainer: {
     paddingVertical: 20,

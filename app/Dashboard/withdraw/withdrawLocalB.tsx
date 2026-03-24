@@ -5,22 +5,23 @@ import { LinearGradient } from "expo-linear-gradient";
 import { doc, getDoc } from "firebase/firestore";
 import { useCallback, useEffect, useState } from "react";
 import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { getOrCreateMainWallet } from "../../../configs/api";
 import { auth, firestore } from "../../../configs/firebase";
 import { useLanguage } from "../../../context/LanguageContext";
 import {
-  formatAmountWithCommas,
-  unformatNumberString,
+    formatAmountWithCommas,
+    unformatNumberString,
 } from "../../../utils/numberFormat";
 
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -34,8 +35,32 @@ const filterNameInput = (text: string) => text.replace(/[^A-Za-zÑñ ]/g, "");
 
 const filterPhoneInput = (text: string) => text.replace(/[^0-9]/g, "");
 
+const BANK_ACCOUNT_MAX_DIGITS = 16;
+
+const formatBankAccountNumber = (digits: string) =>
+  digits.replace(/(.{4})/g, "$1 ").trim();
+
 const capitalizeWords = (text: string) =>
   text.replace(/\b\w/g, (char) => char.toUpperCase());
+
+const OTHER_BANK_OPTION = "Others";
+
+const BANK_OPTIONS = [
+  "UNIONBANK",
+  "BDO",
+  "BPI",
+  "SECURITY BANK",
+  "METROBANK",
+  OTHER_BANK_OPTION,
+];
+
+const BANK_FEE_THRESHOLD = 100000;
+
+const getLocalBankTransactionFee = (amount: number, isUnionBank: boolean) => {
+  if (Number.isNaN(amount) || amount <= 0) return 0;
+  if (isUnionBank) return amount > BANK_FEE_THRESHOLD ? 250 : 0;
+  return amount > BANK_FEE_THRESHOLD ? 150 : 50;
+};
 
 export default function BankWithdrawal() {
   const navigation = useNavigation();
@@ -43,6 +68,9 @@ export default function BankWithdrawal() {
   const [accountNumber, setAccountNumber] = useState("");
   const [accountHolderName, setAccountHolderName] = useState("");
   const [bankName, setBankName] = useState("");
+  const [selectedBank, setSelectedBank] = useState("");
+  const [isOtherBank, setIsOtherBank] = useState(false);
+  const [showBankOptionsModal, setShowBankOptionsModal] = useState(false);
   const [branchName, setBranchName] = useState("");
   const [withdrawalAmount, setWithdrawalAmount] = useState("");
   const [emailAddress, setEmailAddress] = useState("");
@@ -51,6 +79,27 @@ export default function BankWithdrawal() {
     null,
   );
   const [availableBalance, setAvailableBalance] = useState(0);
+  const normalizedBankName = bankName.trim().toUpperCase();
+  const hasSelectedBank = normalizedBankName.length > 0;
+  const isUnionBank = normalizedBankName === "UNIONBANK";
+  const parsedWithdrawalAmount = parseFloat(
+    unformatNumberString(withdrawalAmount).trim(),
+  );
+  const transactionFee = getLocalBankTransactionFee(
+    parsedWithdrawalAmount,
+    isUnionBank,
+  );
+  const hasValidAmount =
+    !Number.isNaN(parsedWithdrawalAmount) && parsedWithdrawalAmount > 0;
+
+  const clearBankNameError = () => {
+    if (errors.bankName) {
+      setErrors((prev) => {
+        const { bankName, ...rest } = prev;
+        return rest;
+      });
+    }
+  };
 
   const fetchUserData = useCallback(async () => {
     if (!auth || !firestore) return;
@@ -100,13 +149,16 @@ export default function BankWithdrawal() {
 
   const handleContinue = () => {
     const newErrors: Record<string, string> = {};
+    const accountNumberDigits = filterPhoneInput(accountNumber);
 
-    if (!accountNumber.trim())
+    if (!accountNumberDigits)
       newErrors.accountNumber = t("withdraw.validation.accNumber");
     if (!accountHolderName.trim())
       newErrors.accountHolderName = t("withdraw.validation.accName");
-    if (!bankName.trim()) newErrors.bankName = t("withdraw.validation.bankName");
-    if (!branchName.trim()) newErrors.branchName = t("withdraw.validation.branchName");
+    if (!bankName.trim())
+      newErrors.bankName = t("withdraw.validation.bankName");
+    if (!branchName.trim())
+      newErrors.branchName = t("withdraw.validation.branchName");
 
     const amountStr = unformatNumberString(withdrawalAmount).trim();
     if (!amountStr) {
@@ -143,7 +195,7 @@ export default function BankWithdrawal() {
     // Navigate to confirm screen with data
     navigation.navigate("WithdrawLocalBConfirm", {
       method: "local-bank",
-      accountNumber,
+      accountNumber: accountNumberDigits,
       accountHolderName,
       bankName,
       branchName,
@@ -171,9 +223,7 @@ export default function BankWithdrawal() {
 
           <Text style={styles.headerTitle}>{t("withdraw.title")}</Text>
 
-          <TouchableOpacity style={styles.refreshButton}>
-            <Ionicons name="refresh" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
+          <View style={styles.refreshButton} />
         </LinearGradient>
 
         {/* Progress Steps */}
@@ -213,6 +263,144 @@ export default function BankWithdrawal() {
               </Text>
             </View>
 
+            {/* Withdrawal Amount Card */}
+            <View style={styles.formCard}>
+              <View style={styles.leftBorder} />
+
+              <View style={styles.cardHeader}>
+                <Text style={styles.cardTitle}>{t("withdraw.details")}</Text>
+                <Text style={styles.cardSubtitle}>
+                  {t("withdraw.detailsSubtitle")}
+                </Text>
+              </View>
+
+              {/* Withdrawal Amount */}
+              <View style={styles.inputGroup}>
+                <View style={styles.labelWithIcon}>
+                  <MaterialCommunityIcons
+                    name="cash"
+                    size={18}
+                    color="#E25A17"
+                  />
+                  <Text style={styles.inputLabel}>
+                    {t("withdraw.amountLabel")}
+                  </Text>
+                </View>
+                <View
+                  style={[
+                    styles.amountInputContainer,
+                    errors.withdrawalAmount && styles.inputError,
+                  ]}
+                >
+                  <Text style={styles.currencySymbol}>₱</Text>
+                  <TextInput
+                    style={styles.amountInput}
+                    placeholder="0.00"
+                    placeholderTextColor="#CCC"
+                    value={withdrawalAmount}
+                    onChangeText={(text) => {
+                      setWithdrawalAmount(formatAmountWithCommas(text));
+                      if (errors.withdrawalAmount) {
+                        setErrors((prev) => {
+                          const { withdrawalAmount, ...rest } = prev;
+                          return rest;
+                        });
+                      }
+                    }}
+                    keyboardType="numeric"
+                  />
+                </View>
+                {errors.withdrawalAmount && (
+                  <Text style={styles.errorText}>
+                    {errors.withdrawalAmount}
+                  </Text>
+                )}
+              </View>
+
+              {/* Bank Name */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>{t("withdraw.bankName")}</Text>
+                {!isOtherBank ? (
+                  <TouchableOpacity
+                    style={[
+                      styles.dropdownSelector,
+                      errors.bankName && styles.inputError,
+                    ]}
+                    onPress={() => {
+                      setShowBankOptionsModal(true);
+                      clearBankNameError();
+                    }}
+                  >
+                    <Text
+                      style={[
+                        styles.dropdownText,
+                        !selectedBank && styles.dropdownPlaceholder,
+                      ]}
+                    >
+                      {selectedBank || t("withdraw.placeholder.bankName")}
+                    </Text>
+                    <Ionicons name="chevron-down" size={18} color="#999" />
+                  </TouchableOpacity>
+                ) : (
+                  <TextInput
+                    style={[styles.input, errors.bankName && styles.inputError]}
+                    placeholder={t("withdraw.placeholder.bankName")}
+                    placeholderTextColor="#CCC"
+                    value={bankName}
+                    onChangeText={(text) => {
+                      setBankName(capitalizeWords(text));
+                      clearBankNameError();
+                    }}
+                  />
+                )}
+
+                <TouchableOpacity
+                  style={styles.checkboxRow}
+                  onPress={() => {
+                    const nextIsOther = !isOtherBank;
+                    setIsOtherBank(nextIsOther);
+                    setShowBankOptionsModal(false);
+                    if (nextIsOther) {
+                      setSelectedBank("");
+                      setBankName("");
+                    } else {
+                      setBankName("");
+                    }
+                    clearBankNameError();
+                  }}
+                >
+                  <Ionicons
+                    name={isOtherBank ? "checkbox" : "square-outline"}
+                    size={20}
+                    color={isOtherBank ? "#E25A17" : "#999"}
+                  />
+                  <Text style={styles.checkboxLabel}>Others</Text>
+                </TouchableOpacity>
+
+                {hasSelectedBank && hasValidAmount && (
+                  <Text
+                    style={[
+                      styles.processingFeeNote,
+                      transactionFee === 0
+                        ? styles.freeFeeText
+                        : styles.paidFeeText,
+                    ]}
+                  >
+                    {transactionFee === 0
+                      ? "UNIONBANK transaction is free."
+                      : `A processing fee of PHP ${transactionFee.toLocaleString("en-US", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })} applies for this bank.`}
+                  </Text>
+                )}
+
+                {errors.bankName && (
+                  <Text style={styles.errorText}>{errors.bankName}</Text>
+                )}
+              </View>
+            </View>
+
             {/* Banking Information Card */}
             <View style={styles.formCard}>
               <View style={styles.leftBorder} />
@@ -232,11 +420,15 @@ export default function BankWithdrawal() {
                     styles.input,
                     errors.accountNumber && styles.inputError,
                   ]}
-                  placeholder={t("withdraw.placeholder.accNumber")}
+                  placeholder="1234 5678 9012 3456"
                   placeholderTextColor="#CCC"
                   value={accountNumber}
                   onChangeText={(text) => {
-                    setAccountNumber(filterPhoneInput(text));
+                    const digitsOnly = filterPhoneInput(text).slice(
+                      0,
+                      BANK_ACCOUNT_MAX_DIGITS,
+                    );
+                    setAccountNumber(formatBankAccountNumber(digitsOnly));
                     if (errors.accountNumber) {
                       setErrors((prev) => {
                         const { accountNumber, ...rest } = prev;
@@ -245,6 +437,7 @@ export default function BankWithdrawal() {
                     }
                   }}
                   keyboardType="numeric"
+                  maxLength={19}
                 />
                 {errors.accountNumber && (
                   <Text style={styles.errorText}>{errors.accountNumber}</Text>
@@ -281,32 +474,11 @@ export default function BankWithdrawal() {
                 )}
               </View>
 
-              {/* Bank Name */}
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>{t("withdraw.bankName")}</Text>
-                <TextInput
-                  style={[styles.input, errors.bankName && styles.inputError]}
-                  placeholder={t("withdraw.placeholder.bankName")}
-                  placeholderTextColor="#CCC"
-                  value={bankName}
-                  onChangeText={(text) => {
-                    setBankName(capitalizeWords(text));
-                    if (errors.bankName) {
-                      setErrors((prev) => {
-                        const { bankName, ...rest } = prev;
-                        return rest;
-                      });
-                    }
-                  }}
-                />
-                {errors.bankName && (
-                  <Text style={styles.errorText}>{errors.bankName}</Text>
-                )}
-              </View>
-
               {/* Branch Name */}
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>{t("withdraw.branchName")}</Text>
+                <Text style={styles.inputLabel}>
+                  {t("withdraw.branchName")}
+                </Text>
                 <TextInput
                   style={[styles.input, errors.branchName && styles.inputError]}
                   placeholder={t("withdraw.placeholder.branchName")}
@@ -324,59 +496,6 @@ export default function BankWithdrawal() {
                 />
                 {errors.branchName && (
                   <Text style={styles.errorText}>{errors.branchName}</Text>
-                )}
-              </View>
-            </View>
-
-            {/* Withdrawal Amount Card */}
-            <View style={styles.formCard}>
-              <View style={styles.leftBorder} />
-
-              <View style={styles.cardHeader}>
-                <Text style={styles.cardTitle}>{t("withdraw.details")}</Text>
-                <Text style={styles.cardSubtitle}>
-                  {t("withdraw.detailsSubtitle")}
-                </Text>
-              </View>
-
-              {/* Withdrawal Amount */}
-              <View style={styles.inputGroup}>
-                <View style={styles.labelWithIcon}>
-                  <MaterialCommunityIcons
-                    name="cash"
-                    size={18}
-                    color="#E25A17"
-                  />
-                  <Text style={styles.inputLabel}>{t("withdraw.amountLabel")}</Text>
-                </View>
-                <View
-                  style={[
-                    styles.amountInputContainer,
-                    errors.withdrawalAmount && styles.inputError,
-                  ]}
-                >
-                  <Text style={styles.currencySymbol}>₱</Text>
-                  <TextInput
-                    style={styles.amountInput}
-                    placeholder="0.00"
-                    placeholderTextColor="#CCC"
-                    value={withdrawalAmount}
-                    onChangeText={(text) => {
-                      setWithdrawalAmount(formatAmountWithCommas(text));
-                      if (errors.withdrawalAmount) {
-                        setErrors((prev) => {
-                          const { withdrawalAmount, ...rest } = prev;
-                          return rest;
-                        });
-                      }
-                    }}
-                    keyboardType="numeric"
-                  />
-                </View>
-                {errors.withdrawalAmount && (
-                  <Text style={styles.errorText}>
-                    {errors.withdrawalAmount}
-                  </Text>
                 )}
               </View>
 
@@ -427,13 +546,56 @@ export default function BankWithdrawal() {
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
               >
-                <Text style={styles.continueText}>{t("withdraw.continue")}</Text>
+                <Text style={styles.continueText}>
+                  {t("withdraw.continue")}
+                </Text>
                 <Ionicons name="play" size={20} color="#FFFFFF" />
               </LinearGradient>
             </TouchableOpacity>
 
             <View style={styles.bottomPadding} />
           </ScrollView>
+
+          <Modal
+            visible={showBankOptionsModal}
+            transparent
+            animationType="fade"
+            onRequestClose={() => setShowBankOptionsModal(false)}
+          >
+            <View style={styles.bankModalOverlay}>
+              <View style={styles.bankModalContainer}>
+                {BANK_OPTIONS.map((option) => (
+                  <TouchableOpacity
+                    key={option}
+                    style={styles.bankOptionRow}
+                    onPress={() => {
+                      if (option === OTHER_BANK_OPTION) {
+                        setSelectedBank("");
+                        setBankName("");
+                        setIsOtherBank(true);
+                      } else {
+                        setSelectedBank(option);
+                        setBankName(option);
+                        setIsOtherBank(false);
+                      }
+                      setShowBankOptionsModal(false);
+                      clearBankNameError();
+                    }}
+                  >
+                    <Text style={styles.bankOptionText}>{option}</Text>
+                    {(selectedBank === option ||
+                      (option === OTHER_BANK_OPTION && isOtherBank)) && (
+                      <Ionicons
+                        name="checkmark-circle"
+                        size={20}
+                        color="#E25A17"
+                      />
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          </Modal>
         </KeyboardAvoidingView>
       </SafeAreaView>
     </View>
@@ -562,6 +724,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#999",
   },
+  detailsFeeText: {
+    marginTop: 6,
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#333",
+  },
   inputGroup: {
     marginBottom: 16,
   },
@@ -586,6 +754,47 @@ const styles = StyleSheet.create({
     color: "#333",
     borderWidth: 1,
     borderColor: "#E0E0E0",
+  },
+  dropdownSelector: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+  },
+  dropdownText: {
+    fontSize: 14,
+    color: "#333",
+  },
+  dropdownPlaceholder: {
+    color: "#CCC",
+  },
+  checkboxRow: {
+    marginTop: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  checkboxLabel: {
+    fontSize: 14,
+    color: "#333",
+    fontWeight: "500",
+  },
+  processingFeeNote: {
+    marginTop: 8,
+    marginLeft: 2,
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  freeFeeText: {
+    color: "#10B981",
+  },
+  paidFeeText: {
+    color: "#FF3B30",
   },
   inputError: {
     borderColor: "#FF3B30",
@@ -616,6 +825,30 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     fontSize: 14,
     color: "#333",
+  },
+  bankModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.3)",
+    justifyContent: "center",
+    paddingHorizontal: 24,
+  },
+  bankModalContainer: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    paddingVertical: 8,
+    marginTop: 130,
+  },
+  bankOptionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  bankOptionText: {
+    fontSize: 14,
+    color: "#333",
+    fontWeight: "500",
   },
   continueButton: {
     marginTop: 8,

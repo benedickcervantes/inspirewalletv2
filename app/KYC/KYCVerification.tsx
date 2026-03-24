@@ -30,6 +30,7 @@ import { formatAmountWithCommas, unformatNumberString } from "../../utils/number
 const THEME_COLOR = "#E15816";
 const ORANGE_GRADIENT = ["#E25A17", "#F28934"] as const;
 const GREEN_UPLOADED = "#10B981";
+const PERSONAL_KYC_PENDING_KEY = "personal_kyc_pending";
 
 const GENDER_OPTIONS = ["Male", "Female", "Other"];
 const NATIONALITY_OPTIONS = ["Filipino", "Dual Citizen", "Foreign National", "Other"];
@@ -56,6 +57,7 @@ const DAYS = Array.from({ length: 31 }, (_, i) => (i + 1).toString());
 const YEARS = Array.from({ length: 71 }, (_, i) => (2010 - i).toString());
 
 const REFERENCE_WIDTH = 375;
+const FOOTER_BUTTON_HEIGHT = 54;
 
 const inferMimeFromUri = (uri: string): string => {
   const clean = uri.split("?")[0].toLowerCase();
@@ -112,6 +114,7 @@ export default function KYCVerification() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showConfirmRequiredModal, setShowConfirmRequiredModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [footerHeight, setFooterHeight] = useState(0);
 
   const fetchUserData = useCallback(async () => {
     try {
@@ -288,6 +291,7 @@ export default function KYCVerification() {
         return;
       }
 
+      await AsyncStorage.setItem(PERSONAL_KYC_PENDING_KEY, "1");
       setShowSuccessModal(true);
     } catch (error) {
       console.error("[KYC] submit error", error);
@@ -336,6 +340,7 @@ export default function KYCVerification() {
 
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
+          enabled={Platform.OS === "ios"}
           style={styles.keyboardView}
         >
           <ScrollView
@@ -345,7 +350,7 @@ export default function KYCVerification() {
               {
                 paddingHorizontal: horizontalPadding,
                 paddingTop: 4,
-                paddingBottom: 24 + safePaddingBottom,
+                paddingBottom: 24 + safePaddingBottom + footerHeight,
               },
             ]}
             showsVerticalScrollIndicator={false}
@@ -914,7 +919,10 @@ export default function KYCVerification() {
           </ScrollView>
 
           {/* Footer: step 1 = Next; steps 2–3 = Back + Next; step 4 = Confirm and Submit */}
-          <View style={[styles.footer, { paddingHorizontal: horizontalPadding, paddingBottom: footerPaddingBottom }]}>
+          <View
+            style={[styles.footer, { paddingHorizontal: horizontalPadding, paddingBottom: footerPaddingBottom }]}
+            onLayout={(event) => setFooterHeight(event.nativeEvent.layout.height)}
+          >
             {currentStep === 4 ? (
               <TouchableOpacity
                 style={styles.nextButton}
@@ -1646,9 +1654,15 @@ const styles = StyleSheet.create({
     height: 20,
   },
   footer: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
     padding: 16,
     paddingBottom: Platform.OS === "ios" ? 34 : 20,
     backgroundColor: "#FFFFFF",
+    borderTopWidth: 1,
+    borderTopColor: "#F0F0F0",
   },
   buttonRow: {
     flexDirection: "row",
@@ -1656,7 +1670,7 @@ const styles = StyleSheet.create({
   },
   backButtonFooter: {
     flex: 1,
-    paddingVertical: 16,
+    height: FOOTER_BUTTON_HEIGHT,
     borderRadius: 14,
     borderWidth: 2,
     borderColor: THEME_COLOR,
@@ -1665,26 +1679,30 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   backButtonText: {
-    fontSize: 18,
+    fontSize: 16,
+    lineHeight: 20,
     fontWeight: "700",
     color: THEME_COLOR,
   },
   nextButton: {
     borderRadius: 14,
     overflow: "hidden",
+    height: FOOTER_BUTTON_HEIGHT,
   },
   nextButtonFlex: {
     flex: 1,
     borderRadius: 14,
     overflow: "hidden",
+    height: FOOTER_BUTTON_HEIGHT,
   },
   nextGradient: {
-    paddingVertical: 16,
+    height: "100%",
     alignItems: "center",
     justifyContent: "center",
   },
   nextButtonText: {
-    fontSize: 18,
+    fontSize: 16,
+    lineHeight: 20,
     fontWeight: "700",
     color: "#FFFFFF",
   },

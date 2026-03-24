@@ -5,16 +5,18 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useState } from "react";
 import {
-  KeyboardAvoidingView,
-  Platform,
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    SafeAreaView,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    useWindowDimensions,
+    View,
 } from "react-native";
 import { useLanguage } from "../../../context/LanguageContext";
 import type { RootStackParamList } from "../../../types/navigation";
@@ -28,6 +30,9 @@ const filterAddressInput = (text: string) =>
 
 export default function BankingAddressInfo() {
   const { t } = useLanguage();
+  const { width } = useWindowDimensions();
+  const isXSScreen = width <= 320;
+  const isSmallScreen = width < 375;
   const navigation =
     useNavigation<
       NativeStackNavigationProp<RootStackParamList, "BankingAddressInfo">
@@ -38,11 +43,21 @@ export default function BankingAddressInfo() {
 
   const [completeAddress, setCompleteAddress] = useState("");
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [showExitConfirmModal, setShowExitConfirmModal] = useState(false);
 
   const currentStep = 4;
 
   const handleBack = () => {
     navigation.goBack();
+  };
+
+  const handleTopBackPress = () => {
+    setShowExitConfirmModal(true);
+  };
+
+  const handleConfirmExit = () => {
+    setShowExitConfirmModal(false);
+    navigation.navigate("Main");
   };
 
   const handleNext = () => {
@@ -69,27 +84,40 @@ export default function BankingAddressInfo() {
         >
           {/* Top: Back arrow + Header card */}
           <View style={styles.topSection}>
-            <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-              <Ionicons name="arrow-back" size={28} color={THEME_COLOR} />
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={handleTopBackPress}
+            >
+              <Ionicons
+                name="arrow-back"
+                size={isXSScreen ? 24 : 28}
+                color={THEME_COLOR}
+              />
             </TouchableOpacity>
 
             <View style={styles.headerCard}>
               <LinearGradient
                 colors={ORANGE_GRADIENT}
-                style={styles.headerGradient}
+                style={[
+                  styles.headerGradient,
+                  isXSScreen && styles.headerGradientXS,
+                  isSmallScreen && styles.headerGradientSmall,
+                ]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 0, y: 1 }}
               >
                 <MaterialCommunityIcons
                   name="bank"
-                  size={40}
+                  size={isXSScreen ? 32 : isSmallScreen ? 36 : 40}
                   color="#FFFFFF"
                   style={styles.headerIcon}
                 />
-                <Text style={styles.headerTitle}>
+                <Text style={[styles.headerTitle, isXSScreen && styles.headerTitleXS]}>
                   {t("banking.headerTitle")}
                 </Text>
-                <Text style={styles.headerSubtitle}>
+                <Text
+                  style={[styles.headerSubtitle, isXSScreen && styles.headerSubtitleXS]}
+                >
                   {t("banking.headerSubtitle")}
                 </Text>
               </LinearGradient>
@@ -97,23 +125,35 @@ export default function BankingAddressInfo() {
           </View>
 
           {/* Progress Stepper - Steps 1–3 complete (green), Step 4 active */}
-          <View style={styles.progressContainer}>
+          <View
+            style={[
+              styles.progressContainer,
+              isXSScreen && styles.progressContainerXS,
+              isSmallScreen && styles.progressContainerSmall,
+            ]}
+          >
             <View style={styles.stepRow}>
               {[1, 2, 3, 4, 5, 6].map((step) => (
                 <React.Fragment key={step}>
                   <View
                     style={[
                       styles.stepCircle,
+                      isXSScreen && styles.stepCircleXS,
                       step < currentStep && styles.stepCircleComplete,
                       step === currentStep && styles.stepCircleActive,
                     ]}
                   >
                     {step < currentStep ? (
-                      <Ionicons name="checkmark" size={16} color="#FFFFFF" />
+                      <Ionicons
+                        name="checkmark"
+                        size={isXSScreen ? 14 : 16}
+                        color="#FFFFFF"
+                      />
                     ) : (
                       <Text
                         style={[
                           styles.stepNumber,
+                          isXSScreen && styles.stepNumberXS,
                           step === currentStep && styles.stepNumberActive,
                         ]}
                       >
@@ -125,6 +165,7 @@ export default function BankingAddressInfo() {
                     <View
                       style={[
                         styles.stepLine,
+                        isXSScreen && styles.stepLineXS,
                         step < currentStep && styles.stepLineComplete,
                       ]}
                     />
@@ -143,23 +184,30 @@ export default function BankingAddressInfo() {
             {/* Main Content Card - Address Information */}
             <View style={styles.contentCard}>
               <View style={styles.stepIconWrapper}>
-                <Ionicons name="location" size={28} color={THEME_COLOR} />
+                <Ionicons
+                  name="location"
+                  size={isXSScreen ? 24 : 28}
+                  color={THEME_COLOR}
+                />
               </View>
-              <Text style={styles.contentTitle}>
+              <Text style={[styles.contentTitle, isXSScreen && styles.contentTitleXS]}>
                 {t("banking.addressInfo")}
               </Text>
-              <Text style={styles.contentDescription}>
+              <Text
+                style={[styles.contentDescription, isXSScreen && styles.contentDescriptionXS]}
+              >
                 {t("banking.addressInfoDesc")}
               </Text>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>
+                <Text style={[styles.inputLabel, isXSScreen && styles.inputLabelXS]}>
                   {t("banking.completeAddress")}
                   <Text style={styles.required}>*</Text>
                 </Text>
                 <TextInput
                   style={[
                     styles.addressInput,
+                    isXSScreen && styles.addressInputXS,
                     errors.completeAddress && styles.inputError,
                   ]}
                   placeholder={t("banking.placeholderAddress")}
@@ -185,11 +233,13 @@ export default function BankingAddressInfo() {
             </View>
 
             {/* Info Box */}
-            <View style={styles.infoBox}>
+            <View style={[styles.infoBox, isXSScreen && styles.infoBoxXS]}>
               <View style={styles.infoIconCircle}>
                 <Text style={styles.infoIconText}>i</Text>
               </View>
-              <Text style={styles.infoText}>{t("banking.infoNote")}</Text>
+              <Text style={[styles.infoText, isXSScreen && styles.infoTextXS]}>
+                {t("banking.infoNote")}
+              </Text>
             </View>
 
             <View style={styles.bottomSpacing} />
@@ -223,6 +273,49 @@ export default function BankingAddressInfo() {
           </View>
         </KeyboardAvoidingView>
       </SafeAreaView>
+      <Modal
+        transparent
+        animationType="fade"
+        visible={showExitConfirmModal}
+        onRequestClose={() => setShowExitConfirmModal(false)}
+      >
+        <View style={styles.exitModalOverlay}>
+          <View style={styles.exitModalContainer}>
+            <View style={styles.exitModalIconWrap}>
+              <Ionicons name="warning-outline" size={28} color={THEME_COLOR} />
+            </View>
+            <Text style={styles.exitModalTitle}>{t("common.cancelApplication")}</Text>
+            <Text style={styles.exitModalMessage}>
+              {t("banking.cancelApplicationMessage")}
+            </Text>
+            <View style={styles.exitModalButtons}>
+              <TouchableOpacity
+                style={[styles.exitModalButton, styles.exitModalKeepEditingButton]}
+                onPress={() => setShowExitConfirmModal(false)}
+              >
+                <Text
+                  style={[
+                    styles.exitModalButtonText,
+                    styles.exitModalKeepEditingButtonText,
+                  ]}
+                >
+                  {t("common.keepEditing")}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.exitModalButton, styles.exitModalDiscardButton]}
+                onPress={handleConfirmExit}
+              >
+                <Text
+                  style={[styles.exitModalButtonText, styles.exitModalDiscardButtonText]}
+                >
+                  {t("common.discardExit")}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -262,6 +355,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     alignItems: "center",
   },
+  headerGradientSmall: {
+    paddingVertical: 20,
+    paddingHorizontal: 16,
+  },
+  headerGradientXS: {
+    paddingVertical: 18,
+    paddingHorizontal: 14,
+  },
   headerIcon: {
     marginBottom: 12,
   },
@@ -272,15 +373,28 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     textAlign: "center",
   },
+  headerTitleXS: {
+    fontSize: 17,
+  },
   headerSubtitle: {
     fontSize: 14,
     color: "rgba(255, 255, 255, 0.95)",
     fontWeight: "500",
   },
+  headerSubtitleXS: {
+    fontSize: 12,
+  },
   progressContainer: {
     paddingVertical: 16,
     paddingHorizontal: 24,
     backgroundColor: "#FFFFFF",
+  },
+  progressContainerSmall: {
+    paddingHorizontal: 16,
+  },
+  progressContainerXS: {
+    paddingHorizontal: 12,
+    paddingVertical: 12,
   },
   stepRow: {
     flexDirection: "row",
@@ -297,6 +411,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  stepCircleXS: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+  },
   stepCircleComplete: {
     backgroundColor: GREEN_COMPLETE,
     borderColor: GREEN_COMPLETE,
@@ -310,6 +429,9 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#9E9E9E",
   },
+  stepNumberXS: {
+    fontSize: 11,
+  },
   stepNumberActive: {
     color: "#757575",
   },
@@ -318,6 +440,10 @@ const styles = StyleSheet.create({
     height: 2,
     backgroundColor: "#E0E0E0",
     marginHorizontal: 4,
+  },
+  stepLineXS: {
+    width: 12,
+    marginHorizontal: 2,
   },
   stepLineComplete: {
     backgroundColor: GREEN_COMPLETE,
@@ -356,12 +482,20 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 12,
   },
+  contentTitleXS: {
+    fontSize: 16,
+  },
   contentDescription: {
     fontSize: 14,
     color: "#9E9E9E",
     lineHeight: 22,
     textAlign: "center",
     marginBottom: 24,
+  },
+  contentDescriptionXS: {
+    fontSize: 13,
+    lineHeight: 20,
+    marginBottom: 18,
   },
   inputGroup: {
     marginBottom: 0,
@@ -371,6 +505,10 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#000000",
     marginBottom: 10,
+  },
+  inputLabelXS: {
+    fontSize: 13,
+    marginBottom: 8,
   },
   required: {
     color: THEME_COLOR,
@@ -385,6 +523,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#000000",
     minHeight: 100,
+  },
+  addressInputXS: {
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    fontSize: 14,
+    minHeight: 90,
   },
   inputError: {
     borderColor: "#FF3B30",
@@ -406,6 +550,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(225, 88, 22, 0.35)",
   },
+  infoBoxXS: {
+    padding: 12,
+  },
   infoIconCircle: {
     width: 24,
     height: 24,
@@ -425,6 +572,10 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: "#333333",
     lineHeight: 20,
+  },
+  infoTextXS: {
+    fontSize: 12,
+    lineHeight: 18,
   },
   bottomSpacing: {
     height: 20,
@@ -457,6 +608,8 @@ const styles = StyleSheet.create({
     flex: 1,
     borderRadius: 14,
     overflow: "hidden",
+    borderWidth: 2,
+    borderColor: "transparent",
   },
   nextGradient: {
     paddingVertical: 16,
@@ -466,6 +619,84 @@ const styles = StyleSheet.create({
   nextButtonText: {
     fontSize: 18,
     fontWeight: "700",
+    color: "#FFFFFF",
+  },
+  exitModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 20,
+  },
+  exitModalContainer: {
+    width: "100%",
+    maxWidth: 360,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "#ECEFF4",
+    paddingHorizontal: 20,
+    paddingTop: 22,
+    paddingBottom: 18,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  exitModalIconWrap: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: "#FFF7E9",
+    borderWidth: 1,
+    borderColor: "#FFE2AF",
+    alignSelf: "center",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 12,
+  },
+  exitModalTitle: {
+    fontSize: 21,
+    fontWeight: "700",
+    color: "#0F172A",
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  exitModalMessage: {
+    fontSize: 14,
+    color: "#64748B",
+    lineHeight: 20,
+    textAlign: "center",
+    marginBottom: 16,
+  },
+  exitModalButtons: {
+    width: "100%",
+  },
+  exitModalButton: {
+    width: "100%",
+    borderRadius: 12,
+    paddingVertical: 13,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  exitModalDiscardButton: {
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#F3C3B1",
+  },
+  exitModalKeepEditingButton: {
+    backgroundColor: THEME_COLOR,
+    marginBottom: 10,
+  },
+  exitModalButtonText: {
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  exitModalDiscardButtonText: {
+    color: "#D9480F",
+  },
+  exitModalKeepEditingButtonText: {
     color: "#FFFFFF",
   },
 });

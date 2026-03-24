@@ -2,6 +2,7 @@ import {
   decodeQrImage,
   getCompanyKycStatus,
   getMe,
+  getPersonalKycStatus,
   getReferralCode,
   getReferralTree,
   updateProfile,
@@ -9,6 +10,7 @@ import {
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import * as Clipboard from "expo-clipboard";
 import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { doc, getDoc } from "firebase/firestore";
@@ -16,6 +18,7 @@ import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  AppState,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -24,6 +27,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  ToastAndroid,
   TouchableOpacity,
   useWindowDimensions,
   View,
@@ -44,19 +48,22 @@ import CustomLoader from "../Loader/CustomLoader";
 
 const THEME_COLOR = "#E15816";
 const USER_PREFERRED_LANGUAGE_KEY = "user_preferred_language";
+const COMPANY_KYC_PENDING_KEY = "company_kyc_pending";
+const PERSONAL_KYC_PENDING_KEY = "personal_kyc_pending";
+const PROFILE_KYC_POLL_MS = 2000;
 
 type AgentHierarchyRole = "master_agent" | "agent" | "consultant_agent";
 
 const AGENT_ROLE_LABELS: Record<AgentHierarchyRole, string> = {
-  master_agent: "Master Agent",
-  agent: "Agent",
-  consultant_agent: "Consultant Agent",
+  master_agent: "profile.masterAgent",
+  agent: "profile.agent",
+  consultant_agent: "profile.consultantAgent",
 };
 
 const AGENT_ROLE_BADGE_LABELS: Record<AgentHierarchyRole, string> = {
-  master_agent: "MASTER AGENT",
-  agent: "AGENT",
-  consultant_agent: "CONSULTANT AGENT",
+  master_agent: "profile.masterAgent",
+  agent: "profile.agent",
+  consultant_agent: "profile.consultantAgent",
 };
 
 const ROLE_BADGE_COLORS: Record<AgentHierarchyRole, string> = {
@@ -117,12 +124,18 @@ export default function Placeholder() {
     status?: string;
     companyName?: string;
   } | null>(null);
+  const [personalKycView, setPersonalKycView] = useState<{
+    status?: string;
+  } | null>(null);
   const [showCompanyRejectedModal, setShowCompanyRejectedModal] =
     useState(false);
+  const [localCompanyPending, setLocalCompanyPending] = useState(false);
+  const [localPersonalPending, setLocalPersonalPending] = useState(false);
 
   const [referralCode, setReferralCode] = useState<string | null>(null);
   const [referralLoading, setReferralLoading] = useState(false);
   const [referralError, setReferralError] = useState<string | null>(null);
+  const [copySuccess, setCopySuccess] = useState(false);
 
   const fetchUserData = useCallback(async () => {
     try {
@@ -131,10 +144,17 @@ export default function Placeholder() {
       );
       const accessToken = await AsyncStorage.getItem("access_token");
       if (accessToken) {
-        const [meResult, companyResult, referralTreeResult] = await Promise.all(
+        const localPending = await AsyncStorage.getItem(COMPANY_KYC_PENDING_KEY);
+        const localPersonalPendingValue = await AsyncStorage.getItem(
+          PERSONAL_KYC_PENDING_KEY,
+        );
+        setLocalCompanyPending(localPending === "1");
+        setLocalPersonalPending(localPersonalPendingValue === "1");
+        const [meResult, companyResult, personalResult, referralTreeResult] = await Promise.all(
           [
             getMe(accessToken),
             getCompanyKycStatus(accessToken).catch(() => null),
+            getPersonalKycStatus(accessToken).catch(() => null),
             getReferralTree(accessToken).catch(() => null),
           ],
         );
@@ -173,6 +193,10 @@ export default function Placeholder() {
             status: data.status,
             companyName: data.companyName,
           });
+        }
+        if (personalResult && personalResult.success) {
+          const data = (personalResult.data ?? null) as { status?: string } | null;
+          setPersonalKycView(data?.status ? { status: data.status } : null);
         }
         setLoading(false);
         return;
@@ -225,9 +249,19 @@ export default function Placeholder() {
     }
   }, [t]);
 
-  const handleRefreshReferralCode = () => {
+  const handleReferralCodeAction = useCallback(async () => {
+    if (referralLoading) return;
+    if (referralCode) {
+      await Clipboard.setStringAsync(referralCode);
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 1500);
+      if (Platform.OS === "android") {
+        ToastAndroid.show(t("settings.copySuccess"), ToastAndroid.SHORT);
+      }
+      return;
+    }
     loadReferralCode();
-  };
+  }, [loadReferralCode, referralCode, referralLoading, t]);
 
   useEffect(() => {
     fetchUserData();
@@ -242,6 +276,133 @@ export default function Placeholder() {
       loadReferralCode();
     }, [fetchUserData, loadReferralCode]),
   );
+
+  useEffect(() => {
+    let isActive = true;
+    let timer: ReturnType<typeof setInterval> | undefined;
+
+    const syncKycStatus = async () => {
+      try {
+        const accessToken = await AsyncStorage.getItem("access_token");
+        if (!accessToken || !isActive) return;
+
+        const [companyResult, personalResult, meResult] = await Promise.all([
+          getCompanyKycStatus(accessToken),
+          getPersonalKycStatus(accessToken).catch(() => null),
+          getMe(accessToken).catch(() => null),
+        ]);
+        if (!isActive) return;
+
+        if (personalResult?.success) {
+          const latestPersonal = (personalResult.data ?? null) as
+            | { status?: string }
+            | null;
+          const personalStatus = String(latestPersonal?.status ?? "")
+            .toUpperCase()
+            .trim();
+          const personalAccountStatus = String(
+            (meResult?.success && meResult.user
+              ? (meResult.user as Record<string, unknown>).kycAccountStatus
+              : "") ?? "",
+          )
+            .toUpperCase()
+            .trim();
+          const personalPending =
+            personalStatus === "PENDING" ||
+            personalStatus === "IN_REVIEW" ||
+            personalStatus === "SUBMITTED";
+          const personalResolved =
+            personalStatus === "APPROVED" ||
+            personalStatus === "VERIFIED" ||
+            personalStatus === "REJECTED" ||
+            personalAccountStatus === "VERIFIED";
+
+          if (personalPending) {
+            await AsyncStorage.setItem(PERSONAL_KYC_PENDING_KEY, "1");
+            if (isActive) setLocalPersonalPending(true);
+          } else if (personalResolved) {
+            await AsyncStorage.removeItem(PERSONAL_KYC_PENDING_KEY);
+            if (isActive) setLocalPersonalPending(false);
+          } else if (!personalStatus) {
+            await AsyncStorage.removeItem(PERSONAL_KYC_PENDING_KEY);
+            if (isActive) setLocalPersonalPending(false);
+          }
+
+          if (isActive) {
+            setPersonalKycView(
+              latestPersonal?.status ? { status: latestPersonal.status } : null,
+            );
+            setUserData((prev: any) =>
+              prev
+                ? {
+                    ...prev,
+                    ...(latestPersonal?.status
+                      ? { kycStatus: latestPersonal.status }
+                      : {}),
+                    ...(meResult?.success && meResult.user
+                      ? {
+                          kycAccountStatus: (
+                            meResult.user as Record<string, unknown>
+                          ).kycAccountStatus,
+                        }
+                      : {}),
+                  }
+                : prev,
+            );
+          }
+        }
+
+        if (!companyResult?.success || !companyResult.data) return;
+
+        const data = companyResult.data as { status?: string; companyName?: string };
+        const normalizedStatus = String(data.status ?? "").toUpperCase();
+
+        if (normalizedStatus === "PENDING" || normalizedStatus === "IN_REVIEW" || normalizedStatus === "SUBMITTED") {
+          await AsyncStorage.setItem(COMPANY_KYC_PENDING_KEY, "1");
+          if (isActive) setLocalCompanyPending(true);
+        } else if (normalizedStatus === "APPROVED" || normalizedStatus === "REJECTED") {
+          await AsyncStorage.removeItem(COMPANY_KYC_PENDING_KEY);
+          if (isActive) setLocalCompanyPending(false);
+        }
+
+        if (isActive) {
+          setCompanyKycView({
+            status: data.status,
+            companyName: data.companyName,
+          });
+        }
+      } catch {
+        // keep current UI state when sync fails
+      }
+    };
+
+    const startPolling = () => {
+      void syncKycStatus();
+      timer = setInterval(() => {
+        void syncKycStatus();
+      }, PROFILE_KYC_POLL_MS);
+    };
+
+    const stopPolling = () => {
+      if (timer) clearInterval(timer);
+      timer = undefined;
+    };
+
+    startPolling();
+    const appStateSubscription = AppState.addEventListener("change", (state) => {
+      if (state === "active") {
+        startPolling();
+      } else {
+        stopPolling();
+      }
+    });
+
+    return () => {
+      isActive = false;
+      stopPolling();
+      appStateSubscription.remove();
+    };
+  }, []);
 
   const hasPasscode = !!userData?.hasPasscode;
 
@@ -515,30 +676,47 @@ export default function Placeholder() {
   const isAgent = userData?.isAgent || userData?.role === "agent" || false;
   const isPremium =
     userData?.isPremium || userData?.accountLevel === "premium" || false;
-  const isKycVerified =
-    String(userData?.kycAccountStatus || "").toUpperCase() === "VERIFIED" ||
-    String(userData?.kycStatus || "").toLowerCase() === "approved";
+  const normalizedPersonalKycStatus = String(
+    personalKycView?.status ?? userData?.kycStatus ?? "",
+  )
+    .toLowerCase()
+    .trim();
+  const normalizedPersonalKycAccountStatus = String(
+    userData?.kycAccountStatus || "",
+  )
+    .toLowerCase()
+    .trim();
+  const isPersonalKycVerified =
+    normalizedPersonalKycAccountStatus === "verified" ||
+    normalizedPersonalKycStatus === "approved" ||
+    normalizedPersonalKycStatus === "verified";
+  const isPersonalKycRejected = normalizedPersonalKycStatus === "rejected";
+  const hasBackendPersonalPendingStatus =
+    normalizedPersonalKycStatus === "pending" ||
+    normalizedPersonalKycStatus === "in_review" ||
+    normalizedPersonalKycStatus === "submitted";
+  const isPersonalKycPending =
+    !isPersonalKycVerified &&
+    !isPersonalKycRejected &&
+    (hasBackendPersonalPendingStatus || localPersonalPending);
+  const isPersonalKycUnverified =
+    !isPersonalKycVerified && !isPersonalKycPending && !isPersonalKycRejected;
   const resolvedAgentRole = isAgent ? (agentHierarchyRole ?? "agent") : null;
   const headerRoleLabel = resolvedAgentRole
     ? AGENT_ROLE_BADGE_LABELS[resolvedAgentRole]
-    : t("profile.investor").toUpperCase();
+    : "profile.investor";
   const headerRoleColor = resolvedAgentRole
     ? ROLE_BADGE_COLORS[resolvedAgentRole]
     : INVESTOR_ROLE_COLOR;
   const accountTypeLabel = resolvedAgentRole
     ? AGENT_ROLE_LABELS[resolvedAgentRole]
-    : t("profile.investor");
+    : "profile.investor";
   const accountTypeBadgeColor = resolvedAgentRole
     ? ROLE_BADGE_COLORS[resolvedAgentRole]
     : INVESTOR_ROLE_COLOR;
   const accountNumber =
     userData?.accountNumber || userData?.id || "000053126300";
   const rawCompanyNameFromUser = userData?.companyName;
-  const companyName =
-    companyKycView?.companyName ||
-    rawCompanyNameFromUser ||
-    t("Tap to add company name") ||
-    "Tap to add company name";
   const rawCompanyKycStatus: string | undefined =
     companyKycView?.status ??
     (userData?.companyKycStatus as string | undefined) ??
@@ -547,14 +725,36 @@ export default function Placeholder() {
   const normalizedCompanyKycStatus = rawCompanyKycStatus
     ? String(rawCompanyKycStatus).toLowerCase()
     : undefined;
+  const hasCompanyNameFromCompanyKyc =
+    typeof companyKycView?.companyName === "string" &&
+    companyKycView.companyName.trim().length > 0;
   const isCompanyKycVerified =
     normalizedCompanyKycStatus === "approved" ||
     normalizedCompanyKycStatus === "verified";
+  const approvedCompanyNameFromKyc =
+    isCompanyKycVerified && hasCompanyNameFromCompanyKyc
+      ? companyKycView?.companyName?.trim()
+      : undefined;
   const isCompanyKycPending =
     normalizedCompanyKycStatus === "pending" ||
-    normalizedCompanyKycStatus === "in_review";
+    normalizedCompanyKycStatus === "in_review" ||
+    normalizedCompanyKycStatus === "submitted" ||
+    (!normalizedCompanyKycStatus &&
+      (localCompanyPending || hasCompanyNameFromCompanyKyc));
   const isCompanyKycRejected = normalizedCompanyKycStatus === "rejected";
   const hasCompanyKycRequest = isCompanyKycVerified || isCompanyKycPending;
+  const hasAnyCompanyKycSignal =
+    hasCompanyKycRequest ||
+    localCompanyPending ||
+    hasCompanyNameFromCompanyKyc ||
+    !!normalizedCompanyKycStatus;
+  const canEditCompanyName = isCompanyKycRejected || !hasAnyCompanyKycSignal;
+  const companyName =
+    approvedCompanyNameFromKyc ||
+    rawCompanyNameFromUser ||
+    (isCompanyKycPending
+      ? t("kycCompany.pending")
+      : t("profile.tapToAddCompanyName"));
 
   const handleCompanyRowPress = () => {
     if (isCompanyKycRejected) {
@@ -567,13 +767,18 @@ export default function Placeholder() {
   const contactNumber =
     userData?.phone ??
     userData?.phoneNumber ??
-    t("Tap to add phone number") ??
-    "Tap to add phone number";
+    t("profile.tapToAddPhoneNumber");
   const lineLink =
     userData?.lineAccountLink ?? userData?.lineLink ?? t("common.notProvided");
   const viberLink = userData?.viberLink || t("common.notProvided");
   const whatsappLink = userData?.whatsappLink || t("common.notProvided");
-  const accountLevelLabel = isKycVerified ? "VERIFIED" : "NOT VERIFIED";
+  const accountLevelLabel = isPersonalKycVerified
+    ? "Verified"
+    : isPersonalKycPending
+      ? t("kycCompany.pending")
+      : isPersonalKycRejected
+        ? t("kycCompany.rejected")
+        : "Not Verified";
   const referrerName =
     userData?.referrerName ??
     userData?.agentReferrer ??
@@ -704,7 +909,7 @@ export default function Placeholder() {
                   size={16}
                   color="#FFFFFF"
                 />
-                <Text style={styles.badgeText}>{headerRoleLabel}</Text>
+                <Text style={styles.badgeText}>{t(headerRoleLabel).toUpperCase()}</Text>
               </View>
             ) : (
               <View
@@ -763,7 +968,7 @@ export default function Placeholder() {
                 alignItems: "center",
                 justifyContent: "space-between",
               }}
-              onPress={handleRefreshReferralCode}
+              onPress={handleReferralCodeAction}
               disabled={referralLoading}
             >
               <View style={{ flex: 1 }}>
@@ -786,15 +991,11 @@ export default function Placeholder() {
               {referralLoading ? (
                 <ActivityIndicator size="small" color={THEME_COLOR} />
               ) : (
-                <Text
-                  style={{
-                    fontSize: 13,
-                    color: THEME_COLOR,
-                    fontWeight: "600",
-                  }}
-                >
-                  {t("settings.refresh") || "REFRESH"}
-                </Text>
+                <Ionicons
+                  name={copySuccess ? "checkmark-outline" : "copy-outline"}
+                  size={18}
+                  color={THEME_COLOR}
+                />
               )}
             </TouchableOpacity>
             {referralError ? (
@@ -838,18 +1039,17 @@ export default function Placeholder() {
             icon="business-outline"
             label={t("profile.companyName")}
             value={companyName}
-            editable={!hasCompanyKycRequest}
-            onEdit={hasCompanyKycRequest ? undefined : handleCompanyRowPress}
+            editable={false}
             isPlaceholder={
               !rawCompanyNameFromUser && !companyKycView?.companyName
             }
             badge={
               isCompanyKycVerified
-                ? "Verified"
+                ? t("kycCompany.verified")
                 : isCompanyKycPending
-                  ? "Unverified"
+                  ? t("kycCompany.pending")
                   : isCompanyKycRejected
-                    ? "Rejected"
+                    ? t("kycCompany.rejected")
                     : undefined
             }
             badgeColor={
@@ -862,6 +1062,11 @@ export default function Placeholder() {
                     : undefined
             }
             verified={isCompanyKycVerified}
+            showVerifyButton={canEditCompanyName}
+            onVerifyPress={canEditCompanyName ? handleCompanyRowPress : undefined}
+            verifyButtonLabel={
+              isCompanyKycRejected ? t("profile.resubmit") : t("profile.verify")
+            }
           />
           <DetailItem
             icon="call-outline"
@@ -901,24 +1106,38 @@ export default function Placeholder() {
           <DetailItem
             icon="star-outline"
             label={t("profile.accountType")}
-            value={accountTypeLabel}
-            badge={accountTypeLabel}
+            value={t(accountTypeLabel)}
+            badge={t(accountTypeLabel)}
             badgeColor={accountTypeBadgeColor}
           />
           <DetailItem
             icon="trophy-outline"
-            label="KYC STATUS"
+            label={t("profile.kycStatus")}
             value={accountLevelLabel}
-            badge={isKycVerified ? accountLevelLabel : undefined}
-            badgeColor={isKycVerified ? "#10B981" : "#999"}
-            verified={isKycVerified}
-            showVerifyButton={!isKycVerified}
+            badge={
+              isPersonalKycVerified || isPersonalKycPending || isPersonalKycRejected
+                ? accountLevelLabel
+                : undefined
+            }
+            badgeColor={
+              isPersonalKycVerified
+                ? "#10B981"
+                : isPersonalKycPending
+                  ? "#F59E0B"
+                  : isPersonalKycRejected
+                    ? "#EF4444"
+                    : "#999"
+            }
+            verified={isPersonalKycVerified}
+            showVerifyButton={isPersonalKycUnverified || isPersonalKycRejected}
             onVerifyPress={() =>
               (navigation as { navigate: (name: string) => void }).navigate(
                 "KYCVerification",
               )
             }
-            verifyButtonLabel={t("profile.verify")}
+            verifyButtonLabel={
+              isPersonalKycRejected ? t("profile.resubmit") : t("profile.verify")
+            }
           />
           {/* Company KYC status (if available) */}
           {/* This row can be wired to real backend data in the future by reusing getCompanyKycStatus */}
@@ -987,7 +1206,7 @@ export default function Placeholder() {
         >
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Edit Name</Text>
+              <Text style={styles.modalTitle}>{t("profile.editName")}</Text>
               <TouchableOpacity
                 onPress={() => !saving && setShowNameModal(false)}
                 disabled={saving}
@@ -1000,44 +1219,44 @@ export default function Placeholder() {
               style={styles.modalScroll}
             >
               <View style={styles.modalBody}>
-                <Text style={styles.inputLabel}>First Name *</Text>
+                <Text style={styles.inputLabel}>{t("profile.firstNameRequired")}</Text>
                 <TextInput
                   style={styles.input}
                   value={editFirstName}
                   onChangeText={setEditFirstName}
-                  placeholder="First name"
+                  placeholder={t("profile.placeholderFirstName")}
                   placeholderTextColor="#999"
                   editable={!saving}
                   autoCapitalize="words"
                 />
-                <Text style={styles.inputLabel}>Last Name *</Text>
+                <Text style={styles.inputLabel}>{t("profile.lastNameRequired")}</Text>
                 <TextInput
                   style={styles.input}
                   value={editLastName}
                   onChangeText={setEditLastName}
-                  placeholder="Last name"
+                  placeholder={t("profile.placeholderLastName")}
                   placeholderTextColor="#999"
                   editable={!saving}
                   autoCapitalize="words"
                 />
-                <Text style={styles.inputLabel}>Middle Name (optional)</Text>
+                <Text style={styles.inputLabel}>{t("profile.middleNameOptional")}</Text>
                 <TextInput
                   style={styles.input}
                   value={editMiddleName}
                   onChangeText={setEditMiddleName}
-                  placeholder="Middle name"
+                  placeholder={t("profile.placeholderMiddleName")}
                   placeholderTextColor="#999"
                   editable={!saving}
                   autoCapitalize="words"
                 />
                 {hasPasscode && (
                   <>
-                    <Text style={styles.inputLabel}>Passcode *</Text>
+                    <Text style={styles.inputLabel}>{t("profile.passcodeRequiredField")}</Text>
                     <TextInput
                       style={styles.input}
                       value={passcode}
                       onChangeText={setPasscode}
-                      placeholder="4-digit passcode"
+                      placeholder={t("profile.placeholderPasscode")}
                       placeholderTextColor="#999"
                       keyboardType="number-pad"
                       maxLength={4}
@@ -1056,7 +1275,7 @@ export default function Placeholder() {
               {saving ? (
                 <ActivityIndicator color="#FFF" />
               ) : (
-                <Text style={styles.saveButtonText}>Save</Text>
+                <Text style={styles.saveButtonText}>{t("common.save")}</Text>
               )}
             </TouchableOpacity>
           </View>
@@ -1071,7 +1290,7 @@ export default function Placeholder() {
         >
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Edit Contact Number</Text>
+              <Text style={styles.modalTitle}>{t("profile.editContactNumber")}</Text>
               <TouchableOpacity
                 onPress={() => !saving && setShowPhoneModal(false)}
                 disabled={saving}
@@ -1080,27 +1299,27 @@ export default function Placeholder() {
               </TouchableOpacity>
             </View>
             <View style={styles.modalBody}>
-              <Text style={styles.inputLabel}>Contact Number *</Text>
+              <Text style={styles.inputLabel}>{t("profile.contactNumberRequired")}</Text>
               <Text style={styles.inputHint}>
-                Include country code (e.g., +1, +81, +82, +966, +63)
+                {t("profile.contactNumberHint")}
               </Text>
               <TextInput
                 style={styles.input}
                 value={editPhone}
                 onChangeText={setEditPhone}
-                placeholder="+1234567890"
+                placeholder={t("profile.placeholderPhoneNumber")}
                 placeholderTextColor="#999"
                 keyboardType="phone-pad"
                 editable={!saving}
               />
               {hasPasscode && (
                 <>
-                  <Text style={styles.inputLabel}>Passcode *</Text>
+                  <Text style={styles.inputLabel}>{t("profile.passcodeRequiredField")}</Text>
                   <TextInput
                     style={styles.input}
                     value={passcode}
                     onChangeText={setPasscode}
-                    placeholder="4-digit passcode"
+                    placeholder={t("profile.placeholderPasscode")}
                     placeholderTextColor="#999"
                     keyboardType="number-pad"
                     maxLength={4}
@@ -1118,7 +1337,7 @@ export default function Placeholder() {
               {saving ? (
                 <ActivityIndicator color="#FFF" />
               ) : (
-                <Text style={styles.saveButtonText}>Save</Text>
+                <Text style={styles.saveButtonText}>{t("common.save")}</Text>
               )}
             </TouchableOpacity>
           </View>
@@ -1133,7 +1352,7 @@ export default function Placeholder() {
         >
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Edit Contact Links</Text>
+              <Text style={styles.modalTitle}>{t("profile.editContactLinks")}</Text>
               <TouchableOpacity
                 onPress={() => !saving && setShowContactLinksModal(false)}
                 disabled={saving}
@@ -1147,7 +1366,7 @@ export default function Placeholder() {
               bounces={false}
             >
               <View style={styles.modalBody}>
-                <Text style={styles.inputLabel}>LINE Link</Text>
+                <Text style={styles.inputLabel}>{t("profile.lineLinkLabel")}</Text>
                 <TextInput
                   style={styles.input}
                   value={editLineLink}
@@ -1165,13 +1384,13 @@ export default function Placeholder() {
                 >
                   <Text style={styles.qrUploadButtonText}>
                     {isProcessingContactQR
-                      ? "Reading QR..."
-                      : "Upload LINE QR image"}
+                      ? t("profile.readingQr")
+                      : t("profile.uploadLineQr")}
                   </Text>
                 </TouchableOpacity>
 
                 <Text style={[styles.inputLabel, { marginTop: 12 }]}>
-                  Viber Link
+                  {t("profile.viberLinkLabel")}
                 </Text>
                 <TextInput
                   style={styles.input}
@@ -1190,13 +1409,13 @@ export default function Placeholder() {
                 >
                   <Text style={styles.qrUploadButtonText}>
                     {isProcessingContactQR
-                      ? "Reading QR..."
-                      : "Upload Viber QR image"}
+                      ? t("profile.readingQr")
+                      : t("profile.uploadViberQr")}
                   </Text>
                 </TouchableOpacity>
 
                 <Text style={[styles.inputLabel, { marginTop: 12 }]}>
-                  WhatsApp Link
+                  {t("profile.whatsappLinkLabel")}
                 </Text>
                 <TextInput
                   style={styles.input}
@@ -1215,26 +1434,25 @@ export default function Placeholder() {
                 >
                   <Text style={styles.qrUploadButtonText}>
                     {isProcessingContactQR
-                      ? "Reading QR..."
-                      : "Upload WhatsApp QR image"}
+                      ? t("profile.readingQr")
+                      : t("profile.uploadWhatsappQr")}
                   </Text>
                 </TouchableOpacity>
 
                 <Text style={[styles.inputHint, { marginTop: 10 }]}>
-                  You can paste links directly or upload a QR image from LINE,
-                  Viber, or WhatsApp to auto-fill.
+                  {t("profile.contactLinksHint")}
                 </Text>
 
                 {hasPasscode && (
                   <>
                     <Text style={[styles.inputLabel, { marginTop: 16 }]}>
-                      Passcode *
+                      {t("profile.passcodeRequiredField")}
                     </Text>
                     <TextInput
                       style={styles.input}
                       value={passcode}
                       onChangeText={setPasscode}
-                      placeholder="4-digit passcode"
+                      placeholder={t("profile.placeholderPasscode")}
                       placeholderTextColor="#999"
                       keyboardType="number-pad"
                       maxLength={4}
@@ -1256,7 +1474,7 @@ export default function Placeholder() {
               {saving ? (
                 <ActivityIndicator color="#FFF" />
               ) : (
-                <Text style={styles.saveButtonText}>Save</Text>
+                <Text style={styles.saveButtonText}>{t("common.save")}</Text>
               )}
             </TouchableOpacity>
           </View>
@@ -1361,15 +1579,15 @@ export default function Placeholder() {
               color="#10B981"
               style={{ marginBottom: 8 }}
             />
-            <Text style={styles.successTitle}>Success</Text>
+            <Text style={styles.successTitle}>{t("common.success")}</Text>
             <Text style={styles.successMessage}>
-              {successMessage ?? "Your profile has been updated."}
+              {successMessage ?? t("profile.updatedSuccess")}
             </Text>
             <TouchableOpacity
               style={styles.successButton}
               onPress={() => setShowSuccessModal(false)}
             >
-              <Text style={styles.successButtonText}>OK</Text>
+              <Text style={styles.successButtonText}>{t("common.ok")}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -1390,10 +1608,9 @@ export default function Placeholder() {
               color="#EF4444"
               style={{ marginBottom: 8 }}
             />
-            <Text style={styles.successTitle}>Company KYC Rejected</Text>
+            <Text style={styles.successTitle}>{t("profile.companyKycRejectedTitle")}</Text>
             <Text style={styles.successMessage}>
-              Your submitted company documents were rejected. Please review your
-              information and upload your company requirements again.
+              {t("profile.companyKycRejectedMessage")}
             </Text>
             <TouchableOpacity
               style={styles.successButton}
@@ -1402,7 +1619,7 @@ export default function Placeholder() {
                 openCompanyModal();
               }}
             >
-              <Text style={styles.successButtonText}>OK</Text>
+              <Text style={styles.successButtonText}>{t("common.ok")}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -1427,6 +1644,14 @@ interface DetailItemProps {
   isPlaceholder?: boolean;
 }
 
+const toSentenceCase = (text?: string): string | undefined => {
+  if (!text) return text;
+  const trimmed = text.trim();
+  if (!trimmed) return trimmed;
+  const normalized = trimmed.toLowerCase();
+  return normalized.charAt(0).toUpperCase() + normalized.slice(1);
+};
+
 function DetailItem({
   icon,
   label,
@@ -1444,6 +1669,8 @@ function DetailItem({
 }: DetailItemProps) {
   const onEditHandler = onEditPress ?? onEdit;
   const handlePress = editable && onEditHandler ? onEditHandler : undefined;
+  const normalizedBadge = toSentenceCase(badge);
+  const normalizedVerifyButtonLabel = toSentenceCase(verifyButtonLabel);
   const content = (
     <>
       <View style={styles.detailHeader}>
@@ -1458,9 +1685,9 @@ function DetailItem({
         >
           {value}
         </Text>
-        {badge && (
+        {normalizedBadge && (
           <View style={[styles.badge, { backgroundColor: badgeColor }]}>
-            <Text style={styles.badgeTextSmall}>{badge}</Text>
+            <Text style={styles.badgeTextSmall}>{normalizedBadge}</Text>
             {verified && (
               <Ionicons
                 name="checkmark-circle"
@@ -1478,7 +1705,7 @@ function DetailItem({
             activeOpacity={0.7}
           >
             <Ionicons name="settings-outline" size={14} color="#333" />
-            <Text style={styles.verifyBadgeText}>{verifyButtonLabel}</Text>
+            <Text style={styles.verifyBadgeText}>{normalizedVerifyButtonLabel}</Text>
           </TouchableOpacity>
         )}
         {editable && onEditHandler && (

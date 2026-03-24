@@ -23,7 +23,7 @@ const SECTIONS = [
   { headingKey: 'terms.h7', bodyKey: 'terms.b7' },
   { headingKey: 'terms.h8', bodyKey: 'terms.b8' },
   { headingKey: 'terms.h9', bodyKey: 'terms.b9' },
-  { headingKey: 'terms.h10', introKey: 'terms.i10', contactTextKey: 'terms.contactText', contactUrl: 'tel:85963571' },
+  { headingKey: 'terms.h10', introKey: 'terms.i10', contactTextKey: 'terms.contactText', contactUrl: 'tel:0253221002' },
 ];
 
 const TermsConditions = () => {

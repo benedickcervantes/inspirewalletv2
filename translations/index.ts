@@ -6,17 +6,55 @@
 export type TranslationMap = Record<string, string>;
 
 const en: TranslationMap = {
-  "deposit.missingRequestId": "Missing Request ID. Please go back and try again.",
+  "deposit.missingRequestId":
+    "Missing Request ID. Please go back and try again.",
   "deposit.receiptUploadFailed": "Receipt upload failed: ",
-  "deposit.timeDepositCreatedUploadFailed": "Time Deposit Created, but receipt upload failed: ",
+  "deposit.timeDepositCreatedUploadFailed":
+    "Time Deposit Created, but receipt upload failed: ",
   "deposit.pleaseContactSupport": ". Please contact support.",
   "deposit.optional": "(Optional)",
   "deposit.acceptedFormats": "JPG, PNG or PDF",
   "deposit.acceptedFormatsMax": "JPG, PNG or PDF (Max 5MB)",
-  "deposit.timeDepositSuccessMessage": "Your time deposit request has been submitted successfully and the amount has been deducted from your available balance.",
+  "deposit.timeDepositSuccessMessage":
+    "Your time deposit request has been submitted successfully and the amount has been deducted from your available balance.",
   "dashboard.underMaintenance": "Under maintenance",
-  "dashboard.maintenanceMessage": "This service is currently under maintenance. We're working hard to bring you an improved experience. Please check back soon!",
+  "dashboard.maintenanceMessage":
+    "This service is currently under maintenance. We're working hard to bring you an improved experience. Please check back soon!",
   "dashboard.gotIt": "Got it",
+  "pcard.title": "Premium Card Holder",
+  "pcard.subtitle":
+    "The Inspire Physical Card brings your Inspire Wallet to life — allowing you to spend, withdraw, and access your funds anywhere, anytime.",
+  "pcard.hint":
+    "Seamlessly connected to your wallet, it integrates your deposits, time deposits, stock investments, transfers, Play & Earn, and e-wallet services into one powerful, real-world payment experience.",
+  "pcard.exclusiveTitle": "Exclusive Inspire Card Benefits",
+  "pcard.exclusiveBody1":
+    "Whether you're making everyday purchases or managing your finances on the go, the Inspire Physical Card gives you reliable access with enhanced support and security.",
+  "pcard.exclusiveBody2":
+    "Designed for convenience and confidence, it ensures you stay in control of your finances wherever you are.",
+  "pcard.benefit1": "Use Anywhere, Anytime",
+  "pcard.benefit2": "Priority Support",
+  "pcard.benefit3": "Exclusive Benefits",
+  "pcard.benefit4": "VIP Access",
+  "pcard.benefit5": "Secure & Convenient Transactions",
+  "pcard.apply": "Apply",
+  "pcard.modalTitle": "Inspire Card Payment",
+  "pcard.modalHint":
+    "This amount will be deducted from your available balance once you submit.",
+  "pcard.fullName": "Full name",
+  "pcard.fullNamePlaceholder": "Your full name",
+  "pcard.email": "Email",
+  "pcard.phone": "Phone number",
+  "pcard.phonePlaceholder": "+63 9XX XXX XXXX",
+  "pcard.password": "Password",
+  "pcard.confirmPassword": "Confirm password",
+  "pcard.passwordMismatch": "Passwords do not match",
+  "pcard.enterName": "Please enter your full name",
+  "pcard.enterPhone": "Please enter your phone number",
+  "pcard.notAuthenticated": "Please sign in to apply for P-Card.",
+  "pcard.applySuccessTitle": "Submitted",
+  "pcard.applySuccess":
+    "Your details were saved. We will process your P-Card request.",
+  "pcard.applyError": "Could not save your details. Please try again.",
   // Common
   "common.cancel": "Cancel",
   "common.user": "User",
@@ -27,9 +65,15 @@ const en: TranslationMap = {
   "common.ok": "OK",
   "common.retry": "Retry",
   "common.success": "Success",
+  "common.save": "Save",
   "common.back": "Back",
   "common.loading": "LOADING",
   "common.checking": "CHECKING...",
+  "common.sessionExpired": "Session expired.",
+  "common.pleaseLoginAgain": "Please log in again.",
+  "common.sessionExpiredTitle": "Session Expired",
+  "common.sessionExpiredMessage":
+    "You have been automatically logged out due to inactivity. Please log in again to continue.",
   "common.serverError": "Server error. Please try again later.",
   "common.timeout": "Request timed out. Please try again.",
 
@@ -103,6 +147,41 @@ const en: TranslationMap = {
   "profile.defaultIsEnglish":
     "Default is English. Choose your preferred language.",
   "profile.premium": "Premium",
+  "profile.consultantAgent": "Consultant Agent",
+  "profile.tapToAddCompanyName": "Not Verified Company Name",
+  "profile.tapToAddPhoneNumber": "Tap to add phone number",
+  "profile.verifiedStatus": "VERIFIED",
+  "profile.notVerifiedStatus": "NOT VERIFIED",
+  "profile.kycStatus": "KYC STATUS",
+  "profile.editName": "Edit Name",
+  "profile.editContactNumber": "Edit Contact Number",
+  "profile.editContactLinks": "Edit Contact Links",
+  "profile.firstNameRequired": "First Name *",
+  "profile.lastNameRequired": "Last Name *",
+  "profile.middleNameOptional": "Middle Name (optional)",
+  "profile.passcodeRequiredField": "Passcode *",
+  "profile.placeholderFirstName": "First name",
+  "profile.placeholderLastName": "Last name",
+  "profile.placeholderMiddleName": "Middle name",
+  "profile.placeholderPasscode": "4-digit passcode",
+  "profile.contactNumberRequired": "Contact Number *",
+  "profile.contactNumberHint":
+    "Include country code (e.g., +1, +81, +82, +966, +63)",
+  "profile.placeholderPhoneNumber": "+1234567890",
+  "profile.lineLinkLabel": "LINE Link",
+  "profile.viberLinkLabel": "Viber Link",
+  "profile.whatsappLinkLabel": "WhatsApp Link",
+  "profile.uploadLineQr": "Upload LINE QR image",
+  "profile.uploadViberQr": "Upload Viber QR image",
+  "profile.uploadWhatsappQr": "Upload WhatsApp QR image",
+  "profile.readingQr": "Reading QR...",
+  "profile.contactLinksHint":
+    "You can paste links directly or upload a QR image from LINE, Viber, or WhatsApp to auto-fill.",
+  "profile.updatedSuccess": "Your profile has been updated.",
+  "profile.companyKycRejectedTitle": "Company KYC Rejected",
+  "profile.companyKycRejectedMessage":
+    "Your submitted company documents were rejected. Please review your information and upload your company requirements again.",
+  "profile.resubmit": "Resubmit",
 
   // KYC Verification
   "kyc.title": "KYC Verification",
@@ -182,13 +261,42 @@ const en: TranslationMap = {
   "kyc.ok": "OK",
   "kyc.okay": "Okay",
 
+  // Company KYC
+  "kycCompany.title": "Company Verification",
+  "kycCompany.verified": "Verified",
+  "kycCompany.pending": "Pending",
+  "kycCompany.rejected": "Rejected",
+  "kycCompany.unverified": "Unverified",
+  "kycCompany.companyNameLabel": "Company Name",
+  "kycCompany.placeholderCompanyName": "Registered Company Name",
+  "kycCompany.businessRequirements": "Business Requirements",
+  "kycCompany.done": "Done",
+  "kycCompany.edit": "Edit",
+  "kycCompany.commercialRegister": "Commercial Register",
+  "kycCompany.bankStatement": "Bank Statement",
+  "kycCompany.proofOfBilling": "Proof of Billing",
+  "kycCompany.selectPdfFile": "Select PDF file",
+  "kycCompany.uploaded": "Uploaded",
+  "kycCompany.submitting": "Submitting...",
+  "kycCompany.save": "Save",
+  "kycCompany.invalidFile": "Invalid File",
+  "kycCompany.invalidFileMessage":
+    "Only PDF or Word documents are accepted for {label}.",
+  "kycCompany.errorPickingDoc": "Failed to pick document",
+  "kycCompany.validationEnterCompanyName": "Please enter your company name.",
+  "kycCompany.validationUploadDocs": "Please upload all required documents.",
+  "kycCompany.notLoggedIn": "You must be logged in to submit company KYC.",
+  "kycCompany.submitFailed": "Failed to submit company KYC.",
+  "kycCompany.submitError": "Failed to submit. Please try again.",
+  "kycCompany.successMessage": "Business documents uploaded successfully!",
+
   // Dashboard
   "dashboard.goodMorning": "Good Morning",
   "dashboard.goodAfternoon": "Good Afternoon",
   "dashboard.goodEvening": "Good Evening",
   "dashboard.wallet": "Wallet",
   "dashboard.investment": "Investment",
-  "dashboard.cards": "Cards",
+  "dashboard.cards": "Virtual Cards",
   "dashboard.transfer": "Transfer",
   "dashboard.bankingService": "Banking Service",
   "dashboard.travelProtection": "Travel Protection",
@@ -210,9 +318,12 @@ const en: TranslationMap = {
   "dashboard.loadingAgent": "LOADING AGENT...",
   "dashboard.loadingSupport": "LOADING SUPPORT...",
   "dashboard.bankingServiceLockedTitle": "Banking Service Locked",
-  "dashboard.bankingServiceLockedRequirement": "Required Time Deposit",
+  "dashboard.eWalletLockedTitle": "E-Wallet Locked",
+  "dashboard.bankingServiceLockedRequirement": "Active time deposits (total)",
+  "dashboard.bankingServiceLockedCombinedContracts":
+    "Combined across all active contracts, regardless of term length.",
   "dashboard.bankingServiceLockedMessage":
-    "You need a ₱200,000 2-yr Time Deposit to unlock Banking Service.",
+    "Have at least ₱200,000 total principal in active time deposits to unlock Banking Service and E-Wallet. Amounts from multiple contracts add together.",
   "dashboard.kycLockedTitle": "KYC Verification Required",
   "dashboard.kycLockedRequirement": "Required Status",
   "dashboard.kycLockedRequirementValue": "KYC VERIFIED",
@@ -294,6 +405,16 @@ const en: TranslationMap = {
   "tx.fee": "Fee",
   "tx.refund": "Refund",
   "tx.timeDeposit": "Time Deposit",
+  "tx.timeDepositDividend": "Time Deposit Dividend",
+  "tx.timeDepositPrincipalReturn": "Time Deposit Principal Return",
+  "tx.agentCommission": "Agent Commission",
+  "tx.cardPurchase": "Card Purchase",
+  "tx.cardSubscription": "Card Subscription",
+  "tx.stockBuy": "Stock Buy",
+  "tx.stockSell": "Stock Sell",
+  "tx.planSubscriptionPayment": "Plan Subscription Payment",
+  "tx.planSubscriptionCashback": "Plan Subscription Cashback",
+  "tx.travelProtection": "Travel Protection",
   "tx.transaction": "Transaction",
 
   // Investment / Savings tab & Deposit flows
@@ -313,10 +434,8 @@ const en: TranslationMap = {
   "investment.emptyPending":
     "Submitted deposits will appear here once created.",
   "investment.emptyActive": "Approved time deposits will appear here.",
-  "investment.emptyCompleted":
-    "Matured contracts will appear here.",
-  "investment.emptyCancelled":
-    "Cancelled contracts will appear here.",
+  "investment.emptyCompleted": "Matured contracts will appear here.",
+  "investment.emptyCancelled": "Cancelled contracts will appear here.",
   "investment.contractDetails": "Contract Details",
   "investment.amount": "Amount",
   "investment.interestRate": "Interest Rate",
@@ -408,7 +527,8 @@ const en: TranslationMap = {
   "deposit.depositType": "Deposit Type",
   "deposit.transactionReceipt": "Transaction Receipt",
   "deposit.bankDetailsSentTitle": "Bank Details Sent",
-  "deposit.bankDetailsSentMessage": "We've emailed you the banking credentials. Please check your inbox and upload your proof of payment once done.",
+  "deposit.bankDetailsSentMessage":
+    "We've emailed you the banking credentials. Please check your inbox and upload your proof of payment once done.",
   "deposit.topUpSubtitle": "Add funds to your available balance",
   "deposit.pleaseLoginTopup": "Please log in to submit a top-up request.",
   "deposit.topUpSuccess": "Your request has been submitted successfully.",
@@ -422,7 +542,8 @@ const en: TranslationMap = {
   "deposit.proofOfPaymentSubtitle":
     "Upload your proof of receipt or proof of payment to proceed. This is required to submit your request.",
   "deposit.proofRequiredBadge": "Required",
-  "deposit.receiptRequired": "Please attach proof of payment to submit your request.",
+  "deposit.receiptRequired":
+    "Please attach proof of payment to submit your request.",
   "deposit.uploadFiles": "Upload Files",
   "deposit.useCamera": "Use Camera",
   "deposit.proofUploaded": "Proof uploaded",
@@ -441,6 +562,8 @@ const en: TranslationMap = {
   "settings.loading": "Loading...",
   "settings.tapToRefresh": "Tap to refresh",
   "settings.refresh": "Refresh",
+  "settings.copy": "Copy",
+  "settings.copySuccess": "Copied!",
   "settings.emailVerification": "Email Verification",
   "settings.verified": "Verified",
   "settings.notVerified": "Not verified",
@@ -453,7 +576,8 @@ const en: TranslationMap = {
   "settings.biometricLogin": "{type} Login",
   "settings.biometricSubtitle": "Use {type} for faster and secure login",
   "settings.enableBiometric": "Enable {type}",
-  "settings.biometricSetupSubtitle": "Please enter your password to confirm linking this device to your account for {type} login.",
+  "settings.biometricSetupSubtitle":
+    "Please enter your password to confirm linking this device to your account for {type} login.",
   "settings.passwordPlaceholder": "Enter your password",
   "settings.enterPassword": "Password is required",
   "settings.enable": "Enable",
@@ -500,8 +624,7 @@ const en: TranslationMap = {
   "passcode.passcodesDoNotMatch": "The passcodes do not match.",
   "passcode.invalidTitle": "Invalid Passcode",
   "passcode.invalidPasscodeLength": "Passcode must be exactly 4 digits.",
-  "passcode.resetInfoMessage":
-    "Your passcode has been reset successfully.",
+  "passcode.resetInfoMessage": "Your passcode has been reset successfully.",
   "settings.deleteAccount": "Delete Account",
   "settings.customerRelationship": "Customer Relationship",
   "settings.aboutUs": "About us",
@@ -574,16 +697,13 @@ const en: TranslationMap = {
     "No referred clients with approved time deposits yet",
   "agent.emptyReferredClientsHint":
     "When your referrals create time deposits and they get approved, you'll earn commission and see them here.",
-  "agent.emptyDirectReferrals":
-    "No direct referrals yet",
+  "agent.emptyDirectReferrals": "No direct referrals yet",
   "agent.emptyDirectReferralsHint":
     "People you invite directly with your referral code will appear here.",
-  "agent.emptyTotalNetwork":
-    "Your total network is still empty",
+  "agent.emptyTotalNetwork": "Your total network is still empty",
   "agent.emptyTotalNetworkHint":
     "Once referrals start inviting more people, your full network will show here.",
-  "agent.emptyPendingCommissions":
-    "No pending agent commissions right now",
+  "agent.emptyPendingCommissions": "No pending agent commissions right now",
   "agent.emptyPendingCommissionsHint":
     "Pending commissions from new referred time deposits will appear here until their release date.",
   "agent.loadingDashboard": "LOADING AGENT DASHBOARD...",
@@ -827,6 +947,26 @@ const en: TranslationMap = {
   "history.loading": "LOADING HISTORY...",
   "history.createdAccount": "Created Account",
   "history.freeDefaultCard": "Free Default Card",
+  "history.withdrawalRequested": "Withdrawal Requested",
+  "history.withdrawalApproved": "Withdrawal Approved",
+  "history.withdrawalRejected": "Withdrawal Rejected",
+  "history.stockInvestmentRequested": "Stock Investment Requested",
+  "history.stockInvestmentApproved": "Stock Investment Approved",
+  "history.stockInvestmentRejected": "Stock Investment Rejected",
+  "history.cardPurchaseDesign": "{design} card purchase",
+  "history.goldEliteMonthlySubscriptionRenewal":
+    "Gold Elite monthly subscription renewal",
+  "history.goldEliteMonthlySubscriptionFirstMonth":
+    "Gold Elite monthly subscription (first month)",
+  "history.timeDepositApprovedTopUp":
+    "Time deposit approved - request amount top-up",
+  "history.topUpApprovedRequest": "Top-up approved: request {requestId}",
+  "history.agentCommissionFromTimeDeposit":
+    "Agent commission from time deposit {id}",
+  "history.stockPurchaseListing": "Stock purchase: listing {listingId}",
+  "history.stockSaleListing": "Stock sale: listing {listingId}",
+  "history.stockSoldListing": "Stock sold: listing {listingId}",
+  "history.stockPurchasedListing": "Stock purchased: listing {listingId}",
   "history.resultText": "Result {count}/{total}",
   "history.loadMore": "Load More",
 
@@ -844,9 +984,11 @@ const en: TranslationMap = {
   "delete.requiredReason": "Please select a reason for deleting your account.",
   "delete.required": "Required",
   "delete.approvedTitle": "Account Deleted",
-  "delete.approvedMessage": "Your account has been deleted. Please click OK to log out.",
+  "delete.approvedMessage":
+    "Your account has been deleted. Please click OK to log out.",
   "delete.rejectedTitle": "Request Rejected",
-  "delete.rejectedMessage": "Your account deletion request was rejected by our admin team.",
+  "delete.rejectedMessage":
+    "Your account deletion request was rejected by our admin team.",
   "delete.adminComment": "Admin comment",
 
   // Privacy Policy
@@ -919,7 +1061,7 @@ const en: TranslationMap = {
   "terms.h10": "Contact",
   "terms.i10":
     "For questions or concerns regarding these terms, please contact us at",
-  "terms.contactText": "inspireholdings.ph: 85963571",
+  "terms.contactText": "inspireholdings.ph: (02) 5322 1002",
 
   // Notification
   "notification.title": "Notifications",
@@ -936,9 +1078,12 @@ const en: TranslationMap = {
   "notification.delete": "Delete",
   "notification.deleteAll": "Delete All",
   "notification.deleteSelected": "Delete Selected",
-  "notification.deleteConfirmOne": "Are you sure you want to delete this notification?",
-  "notification.deleteConfirmAll": "Are you sure you want to delete all notifications?",
-  "notification.deleteConfirmSelected": "Are you sure you want to delete {count} notification(s)?",
+  "notification.deleteConfirmOne":
+    "Are you sure you want to delete this notification?",
+  "notification.deleteConfirmAll":
+    "Are you sure you want to delete all notifications?",
+  "notification.deleteConfirmSelected":
+    "Are you sure you want to delete {count} notification(s)?",
   "notification.close": "Close",
   "notification.acceptReferral": "Accept",
   "notification.declineReferral": "Decline",
@@ -951,6 +1096,32 @@ const en: TranslationMap = {
   "notification.detailStatus": "Status",
   "notification.detailType": "Type",
   "notification.detailId": "ID",
+  "notification.titleTopUpRequested": "Top-Up Requested",
+  "notification.titleTopUpApproved": "Top-Up Approved",
+  "notification.titleTopUpRejected": "Top-Up Rejected",
+  "notification.titleStockInvestmentRequested": "Stock Investment Requested",
+  "notification.titleWithdrawalRequested": "Withdrawal Requested",
+  "notification.titleWithdrawalApproved": "Withdrawal Approved",
+  "notification.titleWithdrawalRejected": "Withdrawal Rejected",
+  "notification.titleTimeDepositRequested": "Time Deposit Requested",
+  "notification.titleTimeDepositApproved": "Time Deposit Approved",
+  "notification.titleTimeDepositRejected": "Time Deposit Rejected",
+  "notification.titleTransferReceived": "Transfer Received",
+  "notification.titleTransferSent": "Transfer Sent",
+  "notification.titleNewReferralSignup": "New Referral Signup",
+  "notification.titleReferralCommissionReleased":
+    "Referral Commission Released",
+  "notification.titleTicketUpdate": "Ticket Update",
+  "notification.titleNewSupportReply": "New Support Reply",
+  "notification.titleNewCustomerReply": "New Customer Reply",
+  "notification.titleNewMessage": "New Message",
+  "notification.titleAccountUpdated": "Account Updated",
+  "notification.titleInvoiceGenerated": "Invoice Generated",
+  "notification.titleSubscriptionActivated": "Subscription Activated",
+  "notification.titleSubscriptionCancelled": "Subscription Cancelled",
+  "notification.titleSubscriptionExpired": "Subscription Expired",
+  "notification.titleYourStockWasSold": "Your Stock Was Sold!",
+  "notification.titleStockPurchaseSuccessful": "Stock Purchase Successful",
 
   // Cards tab
   "ct.yourInspireCard": "Your Inspire Card",
@@ -1131,6 +1302,10 @@ const en: TranslationMap = {
   "travel.uploadPassport": "Upload Passport",
   "travel.passportUploaded": "Passport Photo Uploaded",
   "travel.tapToSelectImage": "Tap to select image",
+  "travel.governmentIdType": "Government ID Type",
+  "travel.governmentIdNumber": "Government ID Number",
+  "travel.placeholderGovernmentIdNumber": "Enter government ID number",
+  "travel.governmentIdPhoto": "Government ID Photo",
   "travel.governmentId": "Government ID",
   "travel.uploadGovernmentId": "Upload Government ID",
   "travel.governmentIdUploaded": "Government ID Uploaded",
@@ -1152,6 +1327,12 @@ const en: TranslationMap = {
   "travel.back": "Back",
   "travel.next": "Next",
   "travel.apply": "Apply",
+  "travel.fieldRequired": "Required",
+  "travel.errorValidEmail": "Please enter a valid email address.",
+  "travel.errorValidMobile": "Please enter a valid mobile number.",
+  "travel.errorValidLandline": "Please enter a valid landline number.",
+  "travel.grossMonthlyIncomeInvalid": "Must be a positive whole number",
+  "travel.cashOnHandInvalid": "Must be a positive whole number",
   "travel.requiredFields": "Required Fields",
   "travel.fillRequired": "Please fill in all required fields",
   "travel.requiredDocuments": "Required Documents",
@@ -1615,6 +1796,175 @@ const en: TranslationMap = {
     "No QR code found in the image. Please pick a clearer QR code image.",
   "register.uploadImage": "Upload Image",
   "register.processing": "Processing...",
+
+  // Common additions
+  "common.close": "Close",
+  "common.keepEditing": "Keep Editing",
+  "common.discardExit": "Discard & Exit",
+  "common.cancelApplication": "Cancel Application?",
+  "common.goBack": "Go Back",
+  "common.authTokenNotFound":
+    "Authentication token not found. Please login again.",
+
+  // Banking additions
+  "banking.cancelApplicationMessage":
+    "Are you sure you want to cancel? Your current progress on this banking form will be lost.",
+
+  // E-Wallet additions
+  "ewallet.cancelApplicationMessage":
+    "Are you sure you want to cancel? Your current progress on this e-wallet form will be lost.",
+  "ewallet.emailRequired": "Email address is required",
+  "ewallet.emailInvalid": "Please enter a valid email address",
+  "ewallet.mobileRequired": "Mobile number is required",
+  "ewallet.mobileInvalid": "Enter a valid 10-11 digit mobile number",
+  "ewallet.sourceOfFundRequired": "Source of fund is required",
+  "ewallet.incomeRequired": "Income amount is required",
+  "ewallet.incomeInvalid": "Enter a valid income amount",
+  "ewallet.currencyRequired": "Currency is required",
+  "ewallet.addressRequired": "Complete address is required",
+
+  // Gold Elite
+  "goldElite.active": "Gold Elite Active",
+  "goldElite.expires": "Expires {date}",
+  "goldElite.dayRemaining": "day remaining",
+  "goldElite.daysRemaining": "days remaining",
+  "goldElite.renewalAvailable": "Renewal Available",
+  "goldElite.dayLeft": "day left",
+  "goldElite.daysLeft": "days left",
+  "goldElite.expiresMessage": "Your Gold Elite subscription expires on {date}",
+  "goldElite.price": "₱10,000/month",
+  "goldElite.renewing": "Renewing...",
+  "goldElite.renewNow": "Renew Now",
+  "goldElite.renewSuccess": "Your Gold Elite subscription has been renewed!",
+  "goldElite.renewFailed": "Failed to renew subscription",
+  "goldElite.networkError": "Network error",
+
+  // Announcement
+  "announcement.defaultTitle": "Announcement",
+  "announcement.close": "Close",
+
+  // Currency Calculator
+  "currency.amount": "Amount",
+  "currency.convertedTo": "Converted to",
+  "currency.totalResult": "Total Result",
+  "currency.exchangeRateUnavailable": "Exchange rate unavailable",
+  "currency.disclaimer": "* Live exchange rates from the bank. Rates may vary.",
+  "currency.selectFromCurrency": "Select From Currency",
+  "currency.selectToCurrency": "Select To Currency",
+
+  // Settings additions
+  "settings.deleteNotAuthenticated": "Not authenticated",
+  "settings.deleteRequestFailed": "Failed to submit request",
+
+  // Login additions
+  "login.resetEmailFailed": "Failed to send reset email. Please try again.",
+  "login.networkError": "Network error. Please try again.",
+
+  // Register additions
+  "register.invalidLink": "Please enter a valid link.",
+  "register.lineQRMismatch":
+    "The scanned QR code does not match LINE. Please scan a valid LINE account link.",
+  "register.viberQRMismatch":
+    "The scanned QR code does not match Viber. Please scan a valid Viber account link.",
+  "register.whatsappQRMismatch":
+    "The scanned QR code does not match WhatsApp. Please scan a valid WhatsApp account link.",
+  "register.notice": "Notice",
+
+  // Passcode additions
+  "passcode.biometricPrompt": "Log in with {type}",
+  "passcode.noTokenFound": "No biometric token found",
+  "passcode.biometricLoginFailed":
+    "Biometric login failed on server. Please use passcode.",
+  "passcode.biometricAuthError":
+    "Biometric authentication error. Please use passcode.",
+  "passcode.useFallback": "Use Passcode",
+
+  // Notification additions
+  "notification.transfer": "Transfer",
+  "notification.withdrawal": "Withdrawal",
+
+  // Deposit additions
+  "deposit.months": "{count} Months",
+  "deposit.amountRequired": "Amount is required",
+  "deposit.amountInvalid": "Please enter a valid amount greater than 0",
+  "deposit.amountGreaterThan0": "Amount must be greater than 0",
+  "deposit.stockRate": "Stock Rate",
+  "deposit.youWillReceive": "You will receive: ",
+  "deposit.stock": "stock(s)",
+
+  // Withdraw additions
+  "withdraw.mobileInvalid": "Please enter a valid 10-digit mobile number.",
+
+  // Travel additions
+  "travel.cancelApplicationMessage":
+    "Are you sure you want to cancel? Your current progress on this travel protection form will be lost.",
+  "travel.notAuthenticated": "Not authenticated",
+  "travel.insufficientBalance": "Insufficient balance",
+  "travel.submitFailed": "Failed to submit application",
+  "travel.unexpectedError": "An unexpected error occurred",
+  "travel.availableBalance": "Available Balance",
+
+  // Stock Sell additions
+  "stock.invalidAmountTitle": "Invalid Amount",
+  "stock.invalidAmountMessage":
+    "Please enter a valid number of stocks to sell.",
+  "stock.insufficientStocksTitle": "Insufficient Stocks",
+  "stock.insufficientStocksMessage":
+    "You only have {count} stock(s). Please enter a number less than or equal to {count}.",
+  "stock.notAuthenticatedTitle": "Not Authenticated",
+  "stock.notAuthenticatedMessage": "Please log in and try again.",
+  "stock.walletNotFoundTitle": "Wallet Not Found",
+  "stock.walletNotFoundMessage":
+    "Could not find your STOCK wallet. Please try again.",
+  "stock.requestSubmittedTitle": "Request Submitted",
+  "stock.requestSubmittedMessage":
+    "Your sell request has been submitted. You will be notified when it is processed.",
+  "stock.submissionFailedTitle": "Submission Failed",
+  "stock.submissionFailed": "Something went wrong. Please try again.",
+  "stock.unexpectedError": "An unexpected error occurred. Please try again.",
+  "stock.youHave": "You have",
+  "stock.available": "available",
+  "stock.percentageToSell": "Percentage to Sell",
+  "stock.all": "All",
+  "stock.stocksLabel": "Stocks",
+  "stock.youReceive": "You Receive",
+  "stock.enterExactAmount": "Or enter exact amount:",
+  "stock.stocksToSell": "Stocks to Sell",
+  "stock.stockUnit": "Stock(s)",
+  "stock.portfolio": "Portfolio",
+  "stock.myOrders": "My Orders",
+  "stock.marketplace": "Marketplace",
+  "stock.purchaseSuccessTitle": "Purchase Successful 🎉",
+  "stock.purchaseSuccessMessage":
+    "You purchased {count} stock(s) for ₱{amount}. Your portfolio has been updated.",
+  "stock.purchaseFailedTitle": "Purchase Failed",
+  "stock.purchaseFailed": "Something went wrong.",
+  "stock.noBuyRequests": "No buy requests yet",
+  "stock.noSellListings": "No sell listings yet",
+  "stock.noListingsAvailable": "No listings available",
+  "stock.beTheFirst": "Be the first! Tap Sell Stock in Portfolio.",
+  "stock.loadingDashboard": "Loading stock dashboard...",
+  "stock.dashboardHeader": "Inspire Stockholder",
+  "stock.rateEqualsPhp": "1 Stock = ₱{rate} PHP",
+  "stock.stockPortfolioCard": "Stock Portfolio",
+  "stock.buyStock": "Buy Stock",
+  "stock.sellStock": "Sell Stock",
+  "stock.portfolioMarketplaceHint":
+    "Tap Marketplace above to buy stocks from other users directly.",
+  "stock.buyHistory": "Buy History",
+  "stock.sellHistory": "Sell History",
+  "stock.orderAmountLabel": "Amount",
+  "stock.paginationPrev": "Prev",
+  "stock.paginationNext": "Next",
+  "stock.paginationPageOf": "Page {current} of {total}",
+  "stock.buyListing": "Buy",
+  "stock.confirmPurchaseTitle": "Confirm Purchase",
+  "stock.totalCost": "Total Cost",
+  "stock.purchaseDeductNote":
+    "This will be deducted from your available balance.",
+  "stock.statusPending": "Pending",
+  "stock.statusApproved": "Approved",
+  "stock.statusRejected": "Rejected",
 };
 
 const ko: TranslationMap = {
@@ -1690,6 +2040,41 @@ const ko: TranslationMap = {
   "profile.selectLanguage": "언어 선택",
   "profile.defaultIsEnglish": "기본값은 영어입니다. 원하는 언어를 선택하세요.",
   "profile.premium": "프리미엄",
+  "profile.consultantAgent": "컨설턴트 에이전트",
+  "profile.tapToAddCompanyName": "미인증 회사명",
+  "profile.tapToAddPhoneNumber": "전화번호를 추가하려면 탭하세요",
+  "profile.verifiedStatus": "인증됨",
+  "profile.notVerifiedStatus": "미인증",
+  "profile.kycStatus": "KYC 상태",
+  "profile.editName": "이름 수정",
+  "profile.editContactNumber": "연락처 수정",
+  "profile.editContactLinks": "연락처 링크 수정",
+  "profile.firstNameRequired": "이름 *",
+  "profile.lastNameRequired": "성 *",
+  "profile.middleNameOptional": "중간 이름 (선택)",
+  "profile.passcodeRequiredField": "패스코드 *",
+  "profile.placeholderFirstName": "이름",
+  "profile.placeholderLastName": "성",
+  "profile.placeholderMiddleName": "중간 이름",
+  "profile.placeholderPasscode": "4자리 패스코드",
+  "profile.contactNumberRequired": "연락처 *",
+  "profile.contactNumberHint":
+    "국가 코드를 포함하세요 (예: +1, +81, +82, +966, +63)",
+  "profile.placeholderPhoneNumber": "+1234567890",
+  "profile.lineLinkLabel": "LINE 링크",
+  "profile.viberLinkLabel": "Viber 링크",
+  "profile.whatsappLinkLabel": "WhatsApp 링크",
+  "profile.uploadLineQr": "LINE QR 이미지 업로드",
+  "profile.uploadViberQr": "Viber QR 이미지 업로드",
+  "profile.uploadWhatsappQr": "WhatsApp QR 이미지 업로드",
+  "profile.readingQr": "QR 읽는 중...",
+  "profile.contactLinksHint":
+    "링크를 직접 붙여넣거나 LINE/Viber/WhatsApp QR 이미지를 업로드해 자동 입력할 수 있습니다.",
+  "profile.updatedSuccess": "프로필이 업데이트되었습니다.",
+  "profile.companyKycRejectedTitle": "회사 KYC 반려",
+  "profile.companyKycRejectedMessage":
+    "제출한 회사 서류가 반려되었습니다. 정보를 다시 확인하고 회사 요건 서류를 다시 업로드해 주세요.",
+  "profile.resubmit": "재제출",
   "kyc.title": "KYC 인증",
   "kyc.personalDetails": "개인 정보",
   "kyc.personalDetailsDesc": "개인 정보를 입력해 주세요",
@@ -1763,6 +2148,36 @@ const ko: TranslationMap = {
   "kyc.confirmRequiredMessage":
     "제출 전 확인란을 선택하여 제공한 모든 정보가 정확함을 확인해 주세요.",
   "kyc.ok": "확인",
+
+  // Company KYC
+  "kycCompany.title": "기업 인증",
+  "kycCompany.verified": "인증됨",
+  "kycCompany.pending": "대기 중",
+  "kycCompany.rejected": "거절됨",
+  "kycCompany.unverified": "미인증",
+  "kycCompany.companyNameLabel": "회사명",
+  "kycCompany.placeholderCompanyName": "등록된 회사명",
+  "kycCompany.businessRequirements": "사업 요건",
+  "kycCompany.done": "완료",
+  "kycCompany.edit": "편집",
+  "kycCompany.commercialRegister": "사업자 등록증",
+  "kycCompany.bankStatement": "은행 명세서",
+  "kycCompany.proofOfBilling": "청구서 증빙",
+  "kycCompany.selectPdfFile": "PDF 파일 선택",
+  "kycCompany.uploaded": "업로드됨",
+  "kycCompany.submitting": "제출 중...",
+  "kycCompany.save": "저장",
+  "kycCompany.invalidFile": "잘못된 파일",
+  "kycCompany.invalidFileMessage":
+    "{label}은(는) PDF 또는 Word 문서만 허용됩니다.",
+  "kycCompany.errorPickingDoc": "문서 선택 실패",
+  "kycCompany.validationEnterCompanyName": "회사명을 입력해 주세요.",
+  "kycCompany.validationUploadDocs": "필수 서류를 모두 업로드해 주세요.",
+  "kycCompany.notLoggedIn": "기업 KYC를 제출하려면 로그인해야 합니다.",
+  "kycCompany.submitFailed": "기업 KYC 제출에 실패했습니다.",
+  "kycCompany.submitError": "제출 실패. 다시 시도해 주세요.",
+  "kycCompany.successMessage": "사업 서류가 성공적으로 업로드되었습니다!",
+
   "dashboard.goodMorning": "좋은 아침이에요",
   "dashboard.goodAfternoon": "좋은 오후에요",
   "dashboard.goodEvening": "좋은 저녁이에요",
@@ -1846,6 +2261,16 @@ const ko: TranslationMap = {
   "tx.fee": "수수료",
   "tx.refund": "환불",
   "tx.timeDeposit": "정기 예금",
+  "tx.timeDepositDividend": "정기 예금 배당",
+  "tx.timeDepositPrincipalReturn": "정기 예금 원금 반환",
+  "tx.agentCommission": "에이전트 수수료",
+  "tx.cardPurchase": "카드 구매",
+  "tx.cardSubscription": "카드 구독",
+  "tx.stockBuy": "주식 매수",
+  "tx.stockSell": "주식 매도",
+  "tx.planSubscriptionPayment": "플랜 구독 결제",
+  "tx.planSubscriptionCashback": "플랜 구독 캐시백",
+  "tx.travelProtection": "여행 보호",
   "tx.transaction": "거래",
   "investment.timeDeposit": "정기 예금",
   "investment.amountWalletLabel": "예상 배당금",
@@ -1915,6 +2340,8 @@ const ko: TranslationMap = {
   "deposit.currencySaudiRiyal": "사우디 리얄",
   "deposit.currencyKoreanWon": "대한민국 원",
   "deposit.confirmTitle": "예금 확인",
+  "deposit.transactionReceipt": "거래 영수증",
+  "deposit.uploadSuccessMessage": "영수증이 성공적으로 업로드되었습니다.",
   "deposit.stockInvestmentTitle": "주식 투자",
   "deposit.minStock": "주식 투자 최소 ₱2,000,000",
   "deposit.stockMinShort": "최소 ₱2,000,000 · 아래에 금액 입력",
@@ -1956,6 +2383,8 @@ const ko: TranslationMap = {
   "settings.loading": "로딩 중...",
   "settings.tapToRefresh": "탭하여 새로고침",
   "settings.refresh": "새로고침",
+  "settings.copy": "복사",
+  "settings.copySuccess": "복사됨!",
   "settings.emailVerification": "이메일 인증",
   "settings.verified": "인증됨",
   "settings.notVerified": "미인증",
@@ -1966,9 +2395,11 @@ const ko: TranslationMap = {
   "settings.updatePinSubtitle": "4자리 PIN 업데이트",
   "settings.changePin": "PIN 변경",
   "settings.biometricLogin": "{type} 로그인",
-  "settings.biometricSubtitle": "빠르고 안전한 로그인을 위해 {type}을(를) 사용하세요.",
+  "settings.biometricSubtitle":
+    "빠르고 안전한 로그인을 위해 {type}을(를) 사용하세요.",
   "settings.enableBiometric": "{type} 활성화",
-  "settings.biometricSetupSubtitle": "{type} 로그인을 위해 기기 연결을 확인하려면 비밀번호를 입력하세요.",
+  "settings.biometricSetupSubtitle":
+    "{type} 로그인을 위해 기기 연결을 확인하려면 비밀번호를 입력하세요.",
   "passcode.headerTitle": "패스코드 변경",
   "passcode.stepIndicator": "3단계 중 {step}단계",
   "passcode.instructionCurrent": "현재 패스코드를 입력하세요",
@@ -2010,8 +2441,7 @@ const ko: TranslationMap = {
   "passcode.passcodesDoNotMatch": "패스코드가 일치하지 않습니다.",
   "passcode.invalidTitle": "잘못된 패스코드",
   "passcode.invalidPasscodeLength": "패스코드는 정확히 4자리여야 합니다.",
-  "passcode.resetInfoMessage":
-    "패스코드가 성공적으로 재설정되었습니다.",
+  "passcode.resetInfoMessage": "패스코드가 성공적으로 재설정되었습니다.",
   "settings.deleteAccount": "계정 삭제",
   "settings.customerRelationship": "고객 관계",
   "settings.aboutUs": "회사 소개",
@@ -2039,10 +2469,18 @@ const ko: TranslationMap = {
     "아직 승인된 정기예금 보유 추천 고객이 없습니다",
   "agent.emptyReferredClientsHint":
     "추천인이 정기예금을 만들고 승인되면 수수료를 받고 여기에 표시됩니다.",
+  "agent.pendingCommission": "지급 대기 수수료",
+  "agent.pendingCommissionListTitle": "지급 대기 에이전트 수수료",
+  "agent.pendingCommissionListSubtitle": "아직 해제되지 않은 지급 대기 수수료",
+  "agent.pendingCommissionItemTitle": "지급 대기 에이전트 수수료",
+  "agent.pendingCommissionReleasePrefix": "지급 예정일",
+  "agent.loading": "데이터를 불러오는 중...",
   "agent.loadingDashboard": "에이전트 대시보드 로딩 중...",
   "settings.helpCenter": "고객센터",
   "settings.privacyPolicy": "개인정보 처리방침",
   "settings.termsAndCondition": "이용약관",
+  "settings.currencyCalculator": "환율 계산기",
+  "settings.currencyCalculatorSubtitle": "통화를 빠르게 변환",
   "settings.language": "언어",
   "settings.signOut": "로그아웃",
   "settings.verifyEmail": "이메일 인증",
@@ -2194,10 +2632,47 @@ const ko: TranslationMap = {
   "dashboard.loadingAgent": "에이전트 로딩 중...",
   "dashboard.loadingSupport": "고객 지원 로딩 중...",
   "dashboard.loadingDashboard": "대시보드 로딩 중...",
+  "dashboard.underMaintenance": "점검 중",
+  "dashboard.maintenanceMessage":
+    "현재 이 서비스는 점검 중입니다. 더 나은 경험을 제공하기 위해 작업하고 있습니다. 잠시 후 다시 확인해 주세요!",
+  "dashboard.gotIt": "확인",
+  "pcard.title": "프리미엄 카드 홀더",
+  "pcard.subtitle": "P-Card 앞면과 뒷면을 보려면 탭하여 뒤집으세요.",
+  "pcard.hint":
+    "대기 중에는 카드가 천천히 회전합니다. 언제든 탭하여 뒤집거나 멈출 수 있습니다.",
+  "pcard.exclusiveTitle": "독점 P-Card 혜택",
+  "pcard.exclusiveBody1":
+    "Inspire P-Card는 Inspire Wallet 내 프리미엄 멤버십 경험으로, 정기 예금·주식 투자·송금·Play & Earn·이월렛 등을 한곳의 안전한 앱에서 카드 서비스와 함께 이용할 수 있게 합니다.",
+  "pcard.exclusiveBody2":
+    "새로운 시장이나 금융 상품에 명확한 안내 없이 진입하면 실질적인 위험이 따를 수 있습니다. P-Card 멤버십은 우선 지원과 체계적인 이용을 통해 Inspire Wallet 서비스를 더 명확하고 자신 있게 쓸 수 있도록 설계되었습니다.",
+  "pcard.benefit1": "우선 지원",
+  "pcard.benefit2": "독점 혜택",
+  "pcard.benefit3": "VIP 이용",
+  "pcard.apply": "신청",
+  "pcard.modalTitle": "P-Card 신청",
+  "pcard.modalHint":
+    "계정에서 이름과 이메일을 불러왔습니다. 휴대폰 번호를 입력하거나 확인한 뒤 제출하세요.",
+  "pcard.fullName": "이름",
+  "pcard.fullNamePlaceholder": "전체 이름",
+  "pcard.email": "이메일",
+  "pcard.phone": "휴대폰 번호",
+  "pcard.phonePlaceholder": "+63 9XX XXX XXXX",
+  "pcard.password": "비밀번호",
+  "pcard.confirmPassword": "비밀번호 확인",
+  "pcard.passwordMismatch": "비밀번호가 일치하지 않습니다",
+  "pcard.enterName": "전체 이름을 입력해 주세요",
+  "pcard.enterPhone": "휴대폰 번호를 입력해 주세요",
+  "pcard.notAuthenticated": "P-Card 신청을 하려면 로그인해 주세요.",
+  "pcard.applySuccessTitle": "제출됨",
+  "pcard.applySuccess": "정보가 저장되었습니다. P-Card 요청을 처리합니다.",
+  "pcard.applyError": "정보를 저장하지 못했습니다. 다시 시도해 주세요.",
   "dashboard.bankingServiceLockedTitle": "뱅킹 서비스 잠김",
-  "dashboard.bankingServiceLockedRequirement": "필요 정기예금",
+  "dashboard.eWalletLockedTitle": "E-월렛 잠김",
+  "dashboard.bankingServiceLockedRequirement": "활성 정기예금 합계",
+  "dashboard.bankingServiceLockedCombinedContracts":
+    "활성 계약 전체 합산 · 기간 무관",
   "dashboard.bankingServiceLockedMessage":
-    "뱅킹 서비스를 이용하려면 ₱200,000 2년 정기예금이 필요합니다.",
+    "활성 정기예금 원금 합계가 ₱200,000 이상이면 뱅킹 서비스와 이월렛이 열립니다. 여러 계약 금액이 합산됩니다.",
   "dashboard.kycLockedTitle": "KYC 인증 필요",
   "dashboard.kycLockedRequirement": "필수 상태",
   "dashboard.kycLockedRequirementValue": "KYC 인증 완료",
@@ -2206,8 +2681,13 @@ const ko: TranslationMap = {
 
   "common.retry": "재시도",
   "common.success": "성공",
+  "common.save": "저장",
   "common.back": "뒤로",
   "common.sessionExpired": "세션이 만료되었습니다. 다시 로그인해 주세요.",
+  "common.pleaseLoginAgain": "다시 로그인해 주세요.",
+  "common.sessionExpiredTitle": "세션 만료",
+  "common.sessionExpiredMessage":
+    "활동이 없어 자동으로 로그아웃되었습니다. 계속하려면 다시 로그인해 주세요.",
   "common.serverError": "서버 오류가 발생했습니다. 나중에 다시 시도해 주세요.",
   "common.timeout": "요청 시간이 초과되었습니다. 다시 시도해 주세요.",
 
@@ -2309,6 +2789,24 @@ const ko: TranslationMap = {
   "history.loading": "내역 로딩 중...",
   "history.createdAccount": "계정 생성",
   "history.freeDefaultCard": "무료 기본 카드",
+  "history.withdrawalRequested": "출금 요청됨",
+  "history.withdrawalApproved": "출금 승인됨",
+  "history.withdrawalRejected": "출금 거절됨",
+  "history.stockInvestmentRequested": "주식 투자 요청됨",
+  "history.stockInvestmentApproved": "주식 투자 승인됨",
+  "history.stockInvestmentRejected": "주식 투자 거절됨",
+  "history.cardPurchaseDesign": "{design} 카드 구매",
+  "history.goldEliteMonthlySubscriptionRenewal": "골드 엘리트 월간 구독 갱신",
+  "history.goldEliteMonthlySubscriptionFirstMonth":
+    "골드 엘리트 월간 구독 (첫 달)",
+  "history.timeDepositApprovedTopUp": "정기 예금 승인 - 신청 금액 충전",
+  "history.topUpApprovedRequest": "충전 승인: 요청 {requestId}",
+  "history.agentCommissionFromTimeDeposit":
+    "정기 예금 {id}에서 발생한 에이전트 수수료",
+  "history.stockPurchaseListing": "주식 매수: 상장 {listingId}",
+  "history.stockSaleListing": "주식 매도: 상장 {listingId}",
+  "history.stockSoldListing": "주식 매도 완료: 상장 {listingId}",
+  "history.stockPurchasedListing": "주식 매수 완료: 상장 {listingId}",
   "history.resultText": "결과 {count}/{total}",
   "history.loadMore": "더 보기",
 
@@ -2326,7 +2824,8 @@ const ko: TranslationMap = {
   "delete.requiredReason": "탈퇴 사유를 선택해 주세요.",
   "delete.required": "필수",
   "delete.approvedTitle": "계정 삭제됨",
-  "delete.approvedMessage": "계정이 삭제되었습니다. 로그아웃하려면 확인을 클릭하세요.",
+  "delete.approvedMessage":
+    "계정이 삭제되었습니다. 로그아웃하려면 확인을 클릭하세요.",
   "delete.rejectedTitle": "요청 거부됨",
   "delete.rejectedMessage": "관리자에 의해 계정 삭제 요청이 거부되었습니다.",
   "delete.adminComment": "관리자 코멘트",
@@ -2393,7 +2892,7 @@ const ko: TranslationMap = {
     "당사는 언제든 본 약관을 수정할 수 있습니다. 중요한 변경 사항은 앱 또는 이메일로 안내합니다. 변경 후에도 앱을 계속 이용하면 새 약관에 동의한 것으로 봅니다.",
   "terms.h10": "문의",
   "terms.i10": "본 약관에 대한 문의나 불만 사항은 다음으로 연락해 주세요.",
-  "terms.contactText": "inspireholdings.ph: 85963571",
+  "terms.contactText": "inspireholdings.ph: (02) 5322 1002",
   "notification.title": "알림",
   "notification.loginToView": "알림을 보려면 로그인하세요",
   "notification.noNotifications": "알림이 없습니다",
@@ -2410,7 +2909,8 @@ const ko: TranslationMap = {
   "notification.deleteSelected": "선택 항목 삭제",
   "notification.deleteConfirmOne": "이 알림을 삭제하시겠습니까?",
   "notification.deleteConfirmAll": "모든 알림을 삭제하시겠습니까?",
-  "notification.deleteConfirmSelected": "선택한 {count}개의 알림을 삭제하시겠습니까?",
+  "notification.deleteConfirmSelected":
+    "선택한 {count}개의 알림을 삭제하시겠습니까?",
   "notification.close": "닫기",
   "notification.acceptReferral": "수락",
   "notification.declineReferral": "거절",
@@ -2423,6 +2923,31 @@ const ko: TranslationMap = {
   "notification.detailStatus": "상태",
   "notification.detailType": "유형",
   "notification.detailId": "ID",
+  "notification.titleTopUpRequested": "충전 요청됨",
+  "notification.titleTopUpApproved": "충전 승인됨",
+  "notification.titleTopUpRejected": "충전 거절됨",
+  "notification.titleStockInvestmentRequested": "주식 투자 요청됨",
+  "notification.titleWithdrawalRequested": "출금 요청됨",
+  "notification.titleWithdrawalApproved": "출금 승인됨",
+  "notification.titleWithdrawalRejected": "출금 거절됨",
+  "notification.titleTimeDepositRequested": "정기예금 요청됨",
+  "notification.titleTimeDepositApproved": "정기예금 승인됨",
+  "notification.titleTimeDepositRejected": "정기예금 거절됨",
+  "notification.titleTransferReceived": "송금 수신",
+  "notification.titleTransferSent": "송금 발신",
+  "notification.titleNewReferralSignup": "신규 추천 가입",
+  "notification.titleReferralCommissionReleased": "추천 수수료 지급",
+  "notification.titleTicketUpdate": "티켓 업데이트",
+  "notification.titleNewSupportReply": "새 지원 답변",
+  "notification.titleNewCustomerReply": "새 고객 답변",
+  "notification.titleNewMessage": "새 메시지",
+  "notification.titleAccountUpdated": "계정 업데이트됨",
+  "notification.titleInvoiceGenerated": "청구서 생성됨",
+  "notification.titleSubscriptionActivated": "구독 활성화됨",
+  "notification.titleSubscriptionCancelled": "구독 취소됨",
+  "notification.titleSubscriptionExpired": "구독 만료됨",
+  "notification.titleYourStockWasSold": "회원님의 주식이 매도되었습니다!",
+  "notification.titleStockPurchaseSuccessful": "주식 매수 완료",
   "ct.yourInspireCard": "Inspire 카드",
   "ct.defaultCard": "기본 카드",
   "ct.viewDetails": "상세 보기",
@@ -2607,6 +3132,10 @@ const ko: TranslationMap = {
   "travel.uploadPassport": "여권 업로드",
   "travel.passportUploaded": "여권 사진 업로드됨",
   "travel.tapToSelectImage": "탭하여 이미지 선택",
+  "travel.governmentIdType": "신분증 유형",
+  "travel.governmentIdNumber": "신분증 번호",
+  "travel.placeholderGovernmentIdNumber": "신분증 번호를 입력하세요",
+  "travel.governmentIdPhoto": "신분증 사진",
   "travel.governmentId": "신분증",
   "travel.uploadGovernmentId": "신분증 업로드",
   "travel.governmentIdUploaded": "신분증 업로드됨",
@@ -2628,6 +3157,12 @@ const ko: TranslationMap = {
   "travel.back": "뒤로",
   "travel.next": "다음",
   "travel.apply": "신청",
+  "travel.fieldRequired": "필수",
+  "travel.errorValidEmail": "유효한 이메일 주소를 입력해 주세요.",
+  "travel.errorValidMobile": "유효한 휴대폰 번호를 입력해 주세요.",
+  "travel.errorValidLandline": "유효한 유선 전화번호를 입력해 주세요.",
+  "travel.grossMonthlyIncomeInvalid": "0보다 큰 정수를 입력해 주세요.",
+  "travel.cashOnHandInvalid": "0보다 큰 정수를 입력해 주세요.",
   "travel.requiredFields": "필수 항목",
   "travel.fillRequired": "필수 항목을 모두 입력해 주세요",
   "travel.requiredDocuments": "필수 서류",
@@ -3051,6 +3586,176 @@ const ko: TranslationMap = {
     "이미지에서 QR 코드를 찾을 수 없습니다. 더 선명한 QR 코드 이미지를 선택해주세요.",
   "register.uploadImage": "이미지 업로드",
   "register.processing": "처리 중...",
+
+  // Common additions
+  "common.close": "닫기",
+  "common.keepEditing": "계속 편집",
+  "common.discardExit": "삭제 후 나가기",
+  "common.cancelApplication": "신청을 취소하시겠습니까?",
+  "common.goBack": "뒤로 가기",
+  "common.authTokenNotFound":
+    "인증 토큰을 찾을 수 없습니다. 다시 로그인해 주세요.",
+
+  // Banking additions
+  "banking.cancelApplicationMessage":
+    "정말 취소하시겠습니까? 현재 진행 중인 뱅킹 양식이 삭제됩니다.",
+
+  // E-Wallet additions
+  "ewallet.cancelApplicationMessage":
+    "정말 취소하시겠습니까? 현재 진행 중인 전자지갑 양식이 삭제됩니다.",
+  "ewallet.emailRequired": "이메일 주소가 필요합니다",
+  "ewallet.emailInvalid": "유효한 이메일 주소를 입력해 주세요",
+  "ewallet.mobileRequired": "휴대전화 번호가 필요합니다",
+  "ewallet.mobileInvalid": "유효한 10-11자리 휴대전화 번호를 입력해 주세요",
+  "ewallet.sourceOfFundRequired": "자금 출처가 필요합니다",
+  "ewallet.incomeRequired": "소득 금액이 필요합니다",
+  "ewallet.incomeInvalid": "유효한 소득 금액을 입력해 주세요",
+  "ewallet.currencyRequired": "통화가 필요합니다",
+  "ewallet.addressRequired": "완전한 주소가 필요합니다",
+
+  // Gold Elite
+  "goldElite.active": "골드 엘리트 활성",
+  "goldElite.expires": "{date}에 만료",
+  "goldElite.dayRemaining": "일 남음",
+  "goldElite.daysRemaining": "일 남음",
+  "goldElite.renewalAvailable": "갱신 가능",
+  "goldElite.dayLeft": "일 남음",
+  "goldElite.daysLeft": "일 남음",
+  "goldElite.expiresMessage": "골드 엘리트 구독이 {date}에 만료됩니다",
+  "goldElite.price": "₱10,000/월",
+  "goldElite.renewing": "갱신 중...",
+  "goldElite.renewNow": "지금 갱신",
+  "goldElite.renewSuccess": "골드 엘리트 구독이 갱신되었습니다!",
+  "goldElite.renewFailed": "구독 갱신에 실패했습니다",
+  "goldElite.networkError": "네트워크 오류",
+
+  // Announcement
+  "announcement.defaultTitle": "공지",
+  "announcement.close": "닫기",
+
+  // Currency Calculator
+  "currency.amount": "금액",
+  "currency.convertedTo": "환산",
+  "currency.totalResult": "총 결과",
+  "currency.exchangeRateUnavailable": "환율을 사용할 수 없습니다",
+  "currency.disclaimer":
+    "* 은행의 실시간 환율입니다. 환율은 변동될 수 있습니다.",
+  "currency.selectFromCurrency": "출발 통화 선택",
+  "currency.selectToCurrency": "도착 통화 선택",
+
+  // Settings additions
+  "settings.deleteNotAuthenticated": "인증되지 않음",
+  "settings.deleteRequestFailed": "요청 제출에 실패했습니다",
+
+  // Login additions
+  "login.resetEmailFailed":
+    "재설정 이메일 전송에 실패했습니다. 다시 시도해 주세요.",
+  "login.networkError": "네트워크 오류. 다시 시도해 주세요.",
+
+  // Register additions
+  "register.invalidLink": "유효한 링크를 입력해 주세요.",
+  "register.lineQRMismatch":
+    "스캔한 QR 코드가 LINE과 일치하지 않습니다. 유효한 LINE 계정 링크를 스캔해 주세요.",
+  "register.viberQRMismatch":
+    "스캔한 QR 코드가 Viber와 일치하지 않습니다. 유효한 Viber 계정 링크를 스캔해 주세요.",
+  "register.whatsappQRMismatch":
+    "스캔한 QR 코드가 WhatsApp과 일치하지 않습니다. 유효한 WhatsApp 계정 링크를 스캔해 주세요.",
+  "register.notice": "공지",
+
+  // Passcode additions
+  "passcode.biometricPrompt": "{type}으로 로그인",
+  "passcode.noTokenFound": "생체 인증 토큰을 찾을 수 없습니다",
+  "passcode.biometricLoginFailed":
+    "서버에서 생체 인증 로그인에 실패했습니다. 패스코드를 사용하세요.",
+  "passcode.biometricAuthError": "생체 인증 오류. 패스코드를 사용하세요.",
+  "passcode.useFallback": "패스코드 사용",
+
+  // Notification additions
+  "notification.transfer": "송금",
+  "notification.withdrawal": "출금",
+
+  // Deposit additions
+  "deposit.months": "{count}개월",
+  "deposit.amountRequired": "금액이 필요합니다",
+  "deposit.amountInvalid": "0보다 큰 유효한 금액을 입력해 주세요",
+  "deposit.amountGreaterThan0": "금액은 0보다 커야 합니다",
+  "deposit.stockRate": "주식 환율",
+  "deposit.youWillReceive": "받을 금액: ",
+  "deposit.stock": "주(식)",
+
+  // Withdraw additions
+  "withdraw.mobileInvalid": "유효한 10자리 휴대전화 번호를 입력해 주세요.",
+
+  // Travel additions
+  "travel.cancelApplicationMessage":
+    "정말 취소하시겠습니까? 현재 진행 중인 여행 보호 양식이 삭제됩니다.",
+  "travel.notAuthenticated": "인증되지 않음",
+  "travel.insufficientBalance": "잔액이 부족합니다",
+  "travel.submitFailed": "신청 제출에 실패했습니다",
+  "travel.unexpectedError": "예상치 못한 오류가 발생했습니다",
+  "travel.availableBalance": "사용 가능 잔액",
+
+  // Stock Sell additions
+  "stock.invalidAmountTitle": "유효하지 않은 금액",
+  "stock.invalidAmountMessage": "판매할 유효한 주식 수를 입력해 주세요.",
+  "stock.insufficientStocksTitle": "주식 부족",
+  "stock.insufficientStocksMessage":
+    "{count}주(식)만 보유하고 있습니다. {count} 이하의 숫자를 입력해 주세요.",
+  "stock.notAuthenticatedTitle": "인증되지 않음",
+  "stock.notAuthenticatedMessage": "로그인 후 다시 시도해 주세요.",
+  "stock.walletNotFoundTitle": "지갑을 찾을 수 없음",
+  "stock.walletNotFoundMessage":
+    "STOCK 지갑을 찾을 수 없습니다. 다시 시도해 주세요.",
+  "stock.requestSubmittedTitle": "요청 제출됨",
+  "stock.requestSubmittedMessage":
+    "판매 요청이 제출되었습니다. 처리되면 알림을 받으실 것입니다.",
+  "stock.submissionFailedTitle": "제출 실패",
+  "stock.submissionFailed": "오류가 발생했습니다. 다시 시도해 주세요.",
+  "stock.unexpectedError":
+    "예상치 못한 오류가 발생했습니다. 다시 시도해 주세요.",
+  "stock.youHave": "보유 중",
+  "stock.available": "사용 가능",
+  "stock.percentageToSell": "판매 비율",
+  "stock.all": "전체",
+  "stock.stocksLabel": "주식",
+  "stock.youReceive": "받을 금액",
+  "stock.enterExactAmount": "또는 정확한 금액 입력:",
+  "stock.stocksToSell": "판매할 주식",
+  "stock.stockUnit": "주(식)",
+  "stock.portfolio": "포트폴리오",
+  "stock.myOrders": "내 주문",
+  "stock.marketplace": "마켓플레이스",
+  "stock.purchaseSuccessTitle": "구매 성공 🎉",
+  "stock.purchaseSuccessMessage":
+    "{count}주(식)을 ₱{amount}에 구매했습니다. 포트폴리오가 업데이트되었습니다.",
+  "stock.purchaseFailedTitle": "구매 실패",
+  "stock.purchaseFailed": "오류가 발생했습니다.",
+  "stock.noBuyRequests": "아직 구매 요청이 없습니다",
+  "stock.noSellListings": "아직 판매 등록이 없습니다",
+  "stock.noListingsAvailable": "등록된 매물이 없습니다",
+  "stock.beTheFirst":
+    "첫 번째가 되어보세요! 포트폴리오에서 주식 판매를 탭하세요.",
+  "stock.loadingDashboard": "주식 대시보드 로딩 중...",
+  "stock.dashboardHeader": "Inspire 주주",
+  "stock.rateEqualsPhp": "1주 = ₱{rate} PHP",
+  "stock.stockPortfolioCard": "주식 포트폴리오",
+  "stock.buyStock": "주식 매수",
+  "stock.sellStock": "주식 매도",
+  "stock.portfolioMarketplaceHint":
+    "위의 마켓플레이스를 눌러 다른 사용자에게서 직접 주식을 구매할 수 있습니다.",
+  "stock.buyHistory": "매수 내역",
+  "stock.sellHistory": "매도 내역",
+  "stock.orderAmountLabel": "금액",
+  "stock.paginationPrev": "이전",
+  "stock.paginationNext": "다음",
+  "stock.paginationPageOf": "{current} / {total} 페이지",
+  "stock.buyListing": "구매",
+  "stock.confirmPurchaseTitle": "구매 확인",
+  "stock.totalCost": "총 비용",
+  "stock.purchaseDeductNote": "사용 가능 잔액에서 차감됩니다.",
+  "stock.statusPending": "대기 중",
+  "stock.statusApproved": "승인됨",
+  "stock.statusRejected": "거절됨",
 };
 
 const ja: TranslationMap = {
@@ -3127,6 +3832,41 @@ const ja: TranslationMap = {
   "profile.defaultIsEnglish":
     "デフォルトは英語です。希望の言語を選択してください。",
   "profile.premium": "プレミアム",
+  "profile.consultantAgent": "コンサルタントエージェント",
+  "profile.tapToAddCompanyName": "未認証の会社名",
+  "profile.tapToAddPhoneNumber": "電話番号を追加するにはタップ",
+  "profile.verifiedStatus": "認証済み",
+  "profile.notVerifiedStatus": "未認証",
+  "profile.kycStatus": "KYCステータス",
+  "profile.editName": "名前を編集",
+  "profile.editContactNumber": "連絡先番号を編集",
+  "profile.editContactLinks": "連絡先リンクを編集",
+  "profile.firstNameRequired": "名 *",
+  "profile.lastNameRequired": "姓 *",
+  "profile.middleNameOptional": "ミドルネーム（任意）",
+  "profile.passcodeRequiredField": "パスコード *",
+  "profile.placeholderFirstName": "名",
+  "profile.placeholderLastName": "姓",
+  "profile.placeholderMiddleName": "ミドルネーム",
+  "profile.placeholderPasscode": "4桁のパスコード",
+  "profile.contactNumberRequired": "連絡先番号 *",
+  "profile.contactNumberHint":
+    "国コードを含めて入力してください（例: +1, +81, +82, +966, +63）",
+  "profile.placeholderPhoneNumber": "+1234567890",
+  "profile.lineLinkLabel": "LINEリンク",
+  "profile.viberLinkLabel": "Viberリンク",
+  "profile.whatsappLinkLabel": "WhatsAppリンク",
+  "profile.uploadLineQr": "LINE QR画像をアップロード",
+  "profile.uploadViberQr": "Viber QR画像をアップロード",
+  "profile.uploadWhatsappQr": "WhatsApp QR画像をアップロード",
+  "profile.readingQr": "QRを読み取り中...",
+  "profile.contactLinksHint":
+    "リンクを直接貼り付けるか、LINE/Viber/WhatsAppのQR画像をアップロードして自動入力できます。",
+  "profile.updatedSuccess": "プロフィールが更新されました。",
+  "profile.companyKycRejectedTitle": "法人KYC却下",
+  "profile.companyKycRejectedMessage":
+    "提出した法人書類が却下されました。情報を見直し、法人要件書類を再アップロードしてください。",
+  "profile.resubmit": "再提出",
   "kyc.title": "KYC本人確認",
   "kyc.personalDetails": "個人情報",
   "kyc.personalDetailsDesc": "個人情報をご記入ください",
@@ -3195,6 +3935,37 @@ const ja: TranslationMap = {
   "kyc.confirmAccuracy":
     "この申請を送信することで、提供した情報が正確であることを確認します。",
   "kyc.confirmAndSubmit": "確認して送信",
+
+  // Company KYC
+  "kycCompany.title": "企業認証",
+  "kycCompany.verified": "認証済み",
+  "kycCompany.pending": "保留中",
+  "kycCompany.rejected": "却下",
+  "kycCompany.unverified": "未認証",
+  "kycCompany.companyNameLabel": "会社名",
+  "kycCompany.placeholderCompanyName": "登録済み会社名",
+  "kycCompany.businessRequirements": "事業要件",
+  "kycCompany.done": "完了",
+  "kycCompany.edit": "編集",
+  "kycCompany.commercialRegister": "商業登記",
+  "kycCompany.bankStatement": "銀行明細書",
+  "kycCompany.proofOfBilling": "請求書証明",
+  "kycCompany.selectPdfFile": "PDFファイルを選択",
+  "kycCompany.uploaded": "アップロード済み",
+  "kycCompany.submitting": "送信中...",
+  "kycCompany.save": "保存",
+  "kycCompany.invalidFile": "無効なファイル",
+  "kycCompany.invalidFileMessage":
+    "{label}にはPDFまたはWordのみが許可されています。",
+  "kycCompany.errorPickingDoc": "書類の選択に失敗しました",
+  "kycCompany.validationEnterCompanyName": "会社名を入力してください。",
+  "kycCompany.validationUploadDocs":
+    "すべての必須書類をアップロードしてください。",
+  "kycCompany.notLoggedIn": "企業KYCを提出するにはログインが必要です。",
+  "kycCompany.submitFailed": "企業KYCの提出に失敗しました。",
+  "kycCompany.submitError": "提出に失敗しました。もう一度お試しください。",
+  "kycCompany.successMessage": "事業書類が正常にアップロードされました！",
+
   "dashboard.goodMorning": "おはようございます",
   "dashboard.goodAfternoon": "こんにちは",
   "dashboard.goodEvening": "こんばんは",
@@ -3281,6 +4052,16 @@ const ja: TranslationMap = {
   "tx.fee": "手数料",
   "tx.refund": "返金",
   "tx.timeDeposit": "定期預金",
+  "tx.timeDepositDividend": "定期預金配当",
+  "tx.timeDepositPrincipalReturn": "定期預金元本返還",
+  "tx.agentCommission": "エージェント手数料",
+  "tx.cardPurchase": "カード購入",
+  "tx.cardSubscription": "カードサブスクリプション",
+  "tx.stockBuy": "株式購入",
+  "tx.stockSell": "株式売却",
+  "tx.planSubscriptionPayment": "プラン購読支払い",
+  "tx.planSubscriptionCashback": "プラン購読キャッシュバック",
+  "tx.travelProtection": "旅行保護",
   "tx.transaction": "取引",
   "investment.timeDeposit": "定期預金",
   "investment.amountWalletLabel": "予想配当金",
@@ -3297,10 +4078,8 @@ const ja: TranslationMap = {
   "investment.noPendingContracts": "保留中の契約はありません",
   "investment.emptyPending": "申請した預金は作成後にここに表示されます。",
   "investment.emptyActive": "承認された定期預金がここに表示されます。",
-  "investment.emptyCompleted":
-    "満期した契約がここに表示されます。",
-  "investment.emptyCancelled":
-    "キャンセルされた契約がここに表示されます。",
+  "investment.emptyCompleted": "満期した契約がここに表示されます。",
+  "investment.emptyCancelled": "キャンセルされた契約がここに表示されます。",
   "investment.contractDetails": "契約詳細",
   "investment.amount": "金額",
   "investment.interestRate": "金利",
@@ -3352,6 +4131,8 @@ const ja: TranslationMap = {
   "deposit.currencySaudiRiyal": "サウジリヤル",
   "deposit.currencyKoreanWon": "韓国ウォン",
   "deposit.confirmTitle": "預金確認",
+  "deposit.transactionReceipt": "取引レシート",
+  "deposit.uploadSuccessMessage": "レシートが正常にアップロードされました。",
   "deposit.stockInvestmentTitle": "株式投資",
   "deposit.minStock": "株式投資最低 ₱2,000,000",
   "deposit.stockMinShort": "最低 ₱2,000,000 · 下に金額を入力",
@@ -3385,7 +4166,8 @@ const ja: TranslationMap = {
   "deposit.pleaseLoginTopup": "チャージを申請するにはログインしてください。",
   "deposit.topUpSuccess": "チャージの申請が完了しました。",
   "deposit.proofRequiredBadge": "必須",
-  "deposit.receiptRequired": "申請を提出するにはお支払い証明を添付してください。",
+  "deposit.receiptRequired":
+    "申請を提出するにはお支払い証明を添付してください。",
   "settings.title": "設定",
   "settings.preferences": "環境設定",
   "settings.supportAndLegal": "サポートと法的情報",
@@ -3394,6 +4176,8 @@ const ja: TranslationMap = {
   "settings.loading": "読み込み中...",
   "settings.tapToRefresh": "タップして更新",
   "settings.refresh": "更新",
+  "settings.copy": "コピー",
+  "settings.copySuccess": "コピーしました！",
   "settings.emailVerification": "メール認証",
   "settings.verified": "認証済み",
   "settings.notVerified": "未認証",
@@ -3404,9 +4188,11 @@ const ja: TranslationMap = {
   "settings.updatePinSubtitle": "4桁のPINを更新",
   "settings.changePin": "PINを変更",
   "settings.biometricLogin": "{type} ログイン",
-  "settings.biometricSubtitle": "より速く安全にログインするために{type}を使用してください。",
+  "settings.biometricSubtitle":
+    "より速く安全にログインするために{type}を使用してください。",
   "settings.enableBiometric": "{type} を有効にする",
-  "settings.biometricSetupSubtitle": "{type} ログインのためにこのデバイスのアカウント連携を確認するため、パスワードを入力してください。",
+  "settings.biometricSetupSubtitle":
+    "{type} ログインのためにこのデバイスのアカウント連携を確認するため、パスワードを入力してください。",
   "settings.deleteAccount": "アカウント削除",
   "settings.customerRelationship": "お客様サポート",
   "settings.aboutUs": "会社概要",
@@ -3433,10 +4219,18 @@ const ja: TranslationMap = {
   "agent.emptyReferredClients": "承認済み定期預金の紹介先はまだありません",
   "agent.emptyReferredClientsHint":
     "紹介先が定期預金を作成し承認されると、手数料が発生しここに表示されます。",
+  "agent.pendingCommission": "保留中の手数料",
+  "agent.pendingCommissionListTitle": "保留中のエージェント手数料",
+  "agent.pendingCommissionListSubtitle": "まだ解放されていない保留中の手数料",
+  "agent.pendingCommissionItemTitle": "保留中のエージェント手数料",
+  "agent.pendingCommissionReleasePrefix": "リリース予定日",
+  "agent.loading": "データを読み込み中...",
   "agent.loadingDashboard": "エージェントダッシュボードを読み込み中...",
   "settings.helpCenter": "ヘルプセンター",
   "settings.privacyPolicy": "プライバシーポリシー",
   "settings.termsAndCondition": "利用規約",
+  "settings.currencyCalculator": "通貨換算",
+  "settings.currencyCalculatorSubtitle": "通貨をすばやく換算",
   "settings.language": "言語",
   "settings.signOut": "ログアウト",
   "settings.verifyEmail": "メール認証",
@@ -3511,7 +4305,7 @@ const ja: TranslationMap = {
   "help.validationCategory": "カテゴリを選択してください。",
   "help.validationConcern": "お問い合わせ内容を入力してください。",
   "help.validationError": "入力エラー",
-  "common.ok": "OK",
+  "common.ok": "確認",
   "delete.title": "アカウント削除",
   "delete.confirmTitle": "本当にアカウントを削除しますか？",
   "delete.confirmSubtitle":
@@ -3562,10 +4356,47 @@ const ja: TranslationMap = {
   "dashboard.loadingAgent": "エージェント読み込み中...",
   "dashboard.loadingSupport": "サポート読み込み中...",
   "dashboard.loadingDashboard": "ダッシュボードを読み込み中...",
+  "dashboard.underMaintenance": "メンテナンス中",
+  "dashboard.maintenanceMessage":
+    "現在このサービスはメンテナンス中です。より良い体験をお届けするために作業しています。しばらくしてからもう一度お試しください。",
+  "dashboard.gotIt": "了解",
+  "pcard.title": "プレミアムカードホルダー",
+  "pcard.subtitle": "Pカードの表裏を表示するにはタップしてめくります。",
+  "pcard.hint":
+    "待機中はカードがゆっくり回転します。いつでもタップしてめくるか停止できます。",
+  "pcard.exclusiveTitle": "限定P-Card特典",
+  "pcard.exclusiveBody1":
+    "Inspire P-CardはInspire Wallet内のプレミアム会員向け体験です。定期預金・株式投資・送金・Play & Earn・Eウォレットなどを、カード関連サービスとまとめて安全に利用できます。",
+  "pcard.exclusiveBody2":
+    "新しい市場や金融商品に十分な案内なしで入ると、実際のリスクが伴います。P-Card会員は優先サポートと整理されたアクセスにより、Inspire Walletの各サービスをより明確かつ自信を持ってご利用いただけます。",
+  "pcard.benefit1": "優先サポート",
+  "pcard.benefit2": "限定特典",
+  "pcard.benefit3": "VIPアクセス",
+  "pcard.apply": "申し込む",
+  "pcard.modalTitle": "P-Cardのお申し込み",
+  "pcard.modalHint":
+    "アカウントからお名前とメールを入力しました。電話番号を入力または確認して送信してください。",
+  "pcard.fullName": "氏名",
+  "pcard.fullNamePlaceholder": "フルネーム",
+  "pcard.email": "メール",
+  "pcard.phone": "電話番号",
+  "pcard.phonePlaceholder": "+63 9XX XXX XXXX",
+  "pcard.password": "パスワード",
+  "pcard.confirmPassword": "パスワード（確認）",
+  "pcard.passwordMismatch": "パスワードが一致しません",
+  "pcard.enterName": "氏名を入力してください",
+  "pcard.enterPhone": "電話番号を入力してください",
+  "pcard.notAuthenticated": "P-Cardのお申し込みにはサインインが必要です。",
+  "pcard.applySuccessTitle": "送信しました",
+  "pcard.applySuccess": "情報を保存しました。P-Cardの申請を処理します。",
+  "pcard.applyError": "情報を保存できませんでした。もう一度お試しください。",
   "dashboard.bankingServiceLockedTitle": "銀行情報がロックされています",
-  "dashboard.bankingServiceLockedRequirement": "必要な定期預金",
+  "dashboard.eWalletLockedTitle": "E-ウォレットがロックされています",
+  "dashboard.bankingServiceLockedRequirement": "有効な定期預金（合計）",
+  "dashboard.bankingServiceLockedCombinedContracts":
+    "有効な契約をすべて合算 · 期間は問いません",
   "dashboard.bankingServiceLockedMessage":
-    "銀行情報を利用するには、₱200,000の2年定期預金が必要です。",
+    "有効な定期預金の元本合計が₱200,000以上で銀行情報とEウォレットが利用できます。複数契約は合算されます。",
   "dashboard.kycLockedTitle": "KYC認証が必要です",
   "dashboard.kycLockedRequirement": "必要なステータス",
   "dashboard.kycLockedRequirementValue": "KYC認証済み",
@@ -3574,9 +4405,14 @@ const ja: TranslationMap = {
 
   "common.retry": "再試行",
   "common.success": "成功",
+  "common.save": "保存",
   "common.back": "戻る",
   "common.sessionExpired":
     "セッションの期限が切れました。もう一度ログインしてください。",
+  "common.pleaseLoginAgain": "もう一度ログインしてください。",
+  "common.sessionExpiredTitle": "セッション期限切れ",
+  "common.sessionExpiredMessage":
+    "操作がなかったため自動的にログアウトしました。続行するには、もう一度ログインしてください。",
   "common.serverError":
     "サーバーエラーが発生しました。後で再試行してください。",
   "common.timeout":
@@ -3682,6 +4518,25 @@ const ja: TranslationMap = {
   "history.loading": "履歴を読み込み中...",
   "history.createdAccount": "アカウント作成",
   "history.freeDefaultCard": "無料デフォルトカード",
+  "history.withdrawalRequested": "出金申請済み",
+  "history.withdrawalApproved": "出金承認済み",
+  "history.withdrawalRejected": "出金却下",
+  "history.stockInvestmentRequested": "株式投資申請済み",
+  "history.stockInvestmentApproved": "株式投資承認済み",
+  "history.stockInvestmentRejected": "株式投資却下",
+  "history.cardPurchaseDesign": "{design} カード購入",
+  "history.goldEliteMonthlySubscriptionRenewal":
+    "ゴールドエリート月額サブスクリプション更新",
+  "history.goldEliteMonthlySubscriptionFirstMonth":
+    "ゴールドエリート月額サブスクリプション（初月）",
+  "history.timeDepositApprovedTopUp": "定期預金承認 - 申請金額チャージ",
+  "history.topUpApprovedRequest": "チャージ承認: リクエスト {requestId}",
+  "history.agentCommissionFromTimeDeposit":
+    "定期預金 {id} からのエージェント手数料",
+  "history.stockPurchaseListing": "株式購入: リスティング {listingId}",
+  "history.stockSaleListing": "株式売却: リスティング {listingId}",
+  "history.stockSoldListing": "株式売却完了: リスティング {listingId}",
+  "history.stockPurchasedListing": "株式購入完了: リスティング {listingId}",
   "history.resultText": "結果 {count}/{total}",
   "passcode.headerTitle": "パスコード変更",
   "passcode.stepIndicator": "ステップ {step}/3",
@@ -3728,8 +4583,7 @@ const ja: TranslationMap = {
   "passcode.passcodesDoNotMatch": "パスコードが一致しません。",
   "passcode.invalidTitle": "無効なパスコード",
   "passcode.invalidPasscodeLength": "パスコードは4桁である必要があります。",
-  "passcode.resetInfoMessage":
-    "パスコードが正常にリセットされました。",
+  "passcode.resetInfoMessage": "パスコードが正常にリセットされました。",
   "history.loadMore": "もっと見る",
 
   "tickets.status.OPEN": "未解決",
@@ -3746,9 +4600,11 @@ const ja: TranslationMap = {
   "delete.requiredReason": "退会理由を選択してください。",
   "delete.required": "必須",
   "delete.approvedTitle": "アカウント削除完了",
-  "delete.approvedMessage": "アカウントは削除されました。ログアウトするにはOKをクリックしてください。",
+  "delete.approvedMessage":
+    "アカウントは削除されました。ログアウトするにはOKをクリックしてください。",
   "delete.rejectedTitle": "リクエスト拒否",
-  "delete.rejectedMessage": "アカウント削除リクエストは管理者により拒否されました。",
+  "delete.rejectedMessage":
+    "アカウント削除リクエストは管理者により拒否されました。",
   "delete.adminComment": "管理者コメント",
   "privacy.title": "プライバシーポリシー",
   "privacy.h1": "プライバシーを大切にしています",
@@ -3815,7 +4671,7 @@ const ja: TranslationMap = {
     "当社はいつでも本規約を変更できるものとします。重要な変更はアプリまたはメールでお知らせします。変更後もアプリを利用し続けることで、新規約に同意したものとみなされます。",
   "terms.h10": "お問い合わせ",
   "terms.i10": "本規約に関するご質問・ご要望は以下までご連絡ください。",
-  "terms.contactText": "inspireholdings.ph: 85963571",
+  "terms.contactText": "inspireholdings.ph: (02) 5322 1002",
   "notification.title": "通知",
   "notification.loginToView": "通知を表示するにはログインしてください",
   "notification.noNotifications": "通知はまだありません",
@@ -3831,7 +4687,8 @@ const ja: TranslationMap = {
   "notification.deleteSelected": "選択したものを削除",
   "notification.deleteConfirmOne": "この通知を削除してもよろしいですか？",
   "notification.deleteConfirmAll": "すべての通知を削除してもよろしいですか？",
-  "notification.deleteConfirmSelected": "選択した{count}件の通知を削除してもよろしいですか？",
+  "notification.deleteConfirmSelected":
+    "選択した{count}件の通知を削除してもよろしいですか？",
   "notification.close": "閉じる",
   "notification.acceptReferral": "承諾",
   "notification.declineReferral": "辞退",
@@ -3844,6 +4701,31 @@ const ja: TranslationMap = {
   "notification.detailStatus": "状態",
   "notification.detailType": "種類",
   "notification.detailId": "ID",
+  "notification.titleTopUpRequested": "チャージ申請済み",
+  "notification.titleTopUpApproved": "チャージ承認済み",
+  "notification.titleTopUpRejected": "チャージ却下",
+  "notification.titleStockInvestmentRequested": "株式投資申請済み",
+  "notification.titleWithdrawalRequested": "出金申請済み",
+  "notification.titleWithdrawalApproved": "出金承認済み",
+  "notification.titleWithdrawalRejected": "出金却下",
+  "notification.titleTimeDepositRequested": "定期預金申請済み",
+  "notification.titleTimeDepositApproved": "定期預金承認済み",
+  "notification.titleTimeDepositRejected": "定期預金却下",
+  "notification.titleTransferReceived": "送金受信",
+  "notification.titleTransferSent": "送金送信",
+  "notification.titleNewReferralSignup": "新規紹介登録",
+  "notification.titleReferralCommissionReleased": "紹介手数料が支払われました",
+  "notification.titleTicketUpdate": "チケット更新",
+  "notification.titleNewSupportReply": "サポートから新しい返信",
+  "notification.titleNewCustomerReply": "顧客から新しい返信",
+  "notification.titleNewMessage": "新しいメッセージ",
+  "notification.titleAccountUpdated": "アカウント更新",
+  "notification.titleInvoiceGenerated": "請求書が生成されました",
+  "notification.titleSubscriptionActivated": "サブスクリプション有効化",
+  "notification.titleSubscriptionCancelled": "サブスクリプション解約",
+  "notification.titleSubscriptionExpired": "サブスクリプション期限切れ",
+  "notification.titleYourStockWasSold": "あなたの株式が売却されました！",
+  "notification.titleStockPurchaseSuccessful": "株式購入が完了しました",
   "ct.yourInspireCard": "Inspireカード",
   "ct.defaultCard": "デフォルトカード",
   "ct.viewDetails": "詳細を見る",
@@ -4029,6 +4911,10 @@ const ja: TranslationMap = {
   "travel.uploadPassport": "パスポートをアップロード",
   "travel.passportUploaded": "パスポート写真をアップロードしました",
   "travel.tapToSelectImage": "タップして画像を選択",
+  "travel.governmentIdType": "身分証明書の種類",
+  "travel.governmentIdNumber": "身分証明書番号",
+  "travel.placeholderGovernmentIdNumber": "身分証明書番号を入力",
+  "travel.governmentIdPhoto": "身分証明書の写真",
   "travel.governmentId": "身分証明書",
   "travel.uploadGovernmentId": "身分証明書をアップロード",
   "travel.governmentIdUploaded": "身分証明書をアップロードしました",
@@ -4050,6 +4936,12 @@ const ja: TranslationMap = {
   "travel.back": "戻る",
   "travel.next": "次へ",
   "travel.apply": "申し込む",
+  "travel.fieldRequired": "必須",
+  "travel.errorValidEmail": "有効なメールアドレスを入力してください。",
+  "travel.errorValidMobile": "有効な携帯電話番号を入力してください。",
+  "travel.errorValidLandline": "有効な固定電話番号を入力してください。",
+  "travel.grossMonthlyIncomeInvalid": "0より大きい整数を入力してください。",
+  "travel.cashOnHandInvalid": "0より大きい整数を入力してください。",
   "travel.requiredFields": "必須項目",
   "travel.fillRequired": "必須項目をすべて入力してください",
   "travel.requiredDocuments": "必要書類",
@@ -4485,6 +5377,178 @@ const ja: TranslationMap = {
     "画像内にQRコードが見つかりません。もっと鮮明なQRコード画像を選択してください。",
   "register.uploadImage": "画像をアップロード",
   "register.processing": "処理中...",
+
+  // Common additions
+  "common.close": "閉じる",
+  "common.keepEditing": "編集を続ける",
+  "common.discardExit": "破棄して終了",
+  "common.cancelApplication": "申請をキャンセルしますか？",
+  "common.goBack": "戻る",
+  "common.authTokenNotFound":
+    "認証トークンが見つかりません。もう一度ログインしてください。",
+
+  // Banking additions
+  "banking.cancelApplicationMessage":
+    "本当にキャンセルしますか？このバンキングフォームの現在の進行状況が失われます。",
+
+  // E-Wallet additions
+  "ewallet.cancelApplicationMessage":
+    "本当にキャンセルしますか？このeウォレットフォームの現在の進行状況が失われます。",
+  "ewallet.emailRequired": "メールアドレスは必須です",
+  "ewallet.emailInvalid": "有効なメールアドレスを入力してください",
+  "ewallet.mobileRequired": "携帯番号は必須です",
+  "ewallet.mobileInvalid": "有効な10〜11桁の携帯番号を入力してください",
+  "ewallet.sourceOfFundRequired": "資金源は必須です",
+  "ewallet.incomeRequired": "収入金額は必須です",
+  "ewallet.incomeInvalid": "有効な収入金額を入力してください",
+  "ewallet.currencyRequired": "通貨は必須です",
+  "ewallet.addressRequired": "完全な住所は必須です",
+
+  // Gold Elite
+  "goldElite.active": "ゴールドエリート有効",
+  "goldElite.expires": "{date}に期限切れ",
+  "goldElite.dayRemaining": "日残り",
+  "goldElite.daysRemaining": "日残り",
+  "goldElite.renewalAvailable": "更新可能",
+  "goldElite.dayLeft": "日残り",
+  "goldElite.daysLeft": "日残り",
+  "goldElite.expiresMessage":
+    "ゴールドエリートのサブスクリプションは{date}に期限切れになります",
+  "goldElite.price": "₱10,000/月",
+  "goldElite.renewing": "更新中...",
+  "goldElite.renewNow": "今すぐ更新",
+  "goldElite.renewSuccess":
+    "ゴールドエリートのサブスクリプションが更新されました！",
+  "goldElite.renewFailed": "サブスクリプションの更新に失敗しました",
+  "goldElite.networkError": "ネットワークエラー",
+
+  // Announcement
+  "announcement.defaultTitle": "お知らせ",
+  "announcement.close": "閉じる",
+
+  // Currency Calculator
+  "currency.amount": "金額",
+  "currency.convertedTo": "換算先",
+  "currency.totalResult": "合計結果",
+  "currency.exchangeRateUnavailable": "為替レートが利用できません",
+  "currency.disclaimer":
+    "* 銀行のライブ為替レートです。レートは変動する場合があります。",
+  "currency.selectFromCurrency": "変換元通貨を選択",
+  "currency.selectToCurrency": "変換先通貨を選択",
+
+  // Settings additions
+  "settings.deleteNotAuthenticated": "認証されていません",
+  "settings.deleteRequestFailed": "リクエストの送信に失敗しました",
+
+  // Login additions
+  "login.resetEmailFailed":
+    "リセットメールの送信に失敗しました。もう一度お試しください。",
+  "login.networkError": "ネットワークエラー。もう一度お試しください。",
+
+  // Register additions
+  "register.invalidLink": "有効なリンクを入力してください。",
+  "register.lineQRMismatch":
+    "スキャンしたQRコードはLINEと一致しません。有効なLINEアカウントリンクをスキャンしてください。",
+  "register.viberQRMismatch":
+    "スキャンしたQRコードはViberと一致しません。有効なViberアカウントリンクをスキャンしてください。",
+  "register.whatsappQRMismatch":
+    "スキャンしたQRコードはWhatsAppと一致しません。有効なWhatsAppアカウントリンクをスキャンしてください。",
+  "register.notice": "お知らせ",
+
+  // Passcode additions
+  "passcode.biometricPrompt": "{type}でログイン",
+  "passcode.noTokenFound": "生体認証トークンが見つかりません",
+  "passcode.biometricLoginFailed":
+    "サーバーでの生体認証ログインに失敗しました。パスコードをお使いください。",
+  "passcode.biometricAuthError": "生体認証エラー。パスコードをお使いください。",
+  "passcode.useFallback": "パスコードを使用",
+
+  // Notification additions
+  "notification.transfer": "送金",
+  "notification.withdrawal": "出金",
+
+  // Deposit additions
+  "deposit.months": "{count}ヶ月",
+  "deposit.amountRequired": "金額は必須です",
+  "deposit.amountInvalid": "0より大きい有効な金額を入力してください",
+  "deposit.amountGreaterThan0": "金額は0より大きくなければなりません",
+  "deposit.stockRate": "株式レート",
+  "deposit.youWillReceive": "受け取り: ",
+  "deposit.stock": "株",
+
+  // Withdraw additions
+  "withdraw.mobileInvalid": "有効な10桁の携帯番号を入力してください。",
+
+  // Travel additions
+  "travel.cancelApplicationMessage":
+    "本当にキャンセルしますか？この旅行保護フォームの現在の進行状況が失われます。",
+  "travel.notAuthenticated": "認証されていません",
+  "travel.insufficientBalance": "残高不足",
+  "travel.submitFailed": "申請の送信に失敗しました",
+  "travel.unexpectedError": "予期しないエラーが発生しました",
+  "travel.availableBalance": "利用可能残高",
+
+  // Stock Sell additions
+  "stock.invalidAmountTitle": "無効な金額",
+  "stock.invalidAmountMessage": "有効な売却株数を入力してください。",
+  "stock.insufficientStocksTitle": "株式不足",
+  "stock.insufficientStocksMessage":
+    "{count}株しか保有していません。{count}以下の数を入力してください。",
+  "stock.notAuthenticatedTitle": "認証されていません",
+  "stock.notAuthenticatedMessage": "ログインして再試行してください。",
+  "stock.walletNotFoundTitle": "ウォレットが見つかりません",
+  "stock.walletNotFoundMessage":
+    "STOCKウォレットが見つかりません。再試行してください。",
+  "stock.requestSubmittedTitle": "リクエスト送信済み",
+  "stock.requestSubmittedMessage":
+    "売却リクエストが送信されました。処理されると通知されます。",
+  "stock.submissionFailedTitle": "送信失敗",
+  "stock.submissionFailed": "問題が発生しました。再試行してください。",
+  "stock.unexpectedError":
+    "予期しないエラーが発生しました。再試行してください。",
+  "stock.youHave": "保有",
+  "stock.available": "利用可能",
+  "stock.percentageToSell": "売却割合",
+  "stock.all": "全て",
+  "stock.stocksLabel": "株式",
+  "stock.youReceive": "受け取り",
+  "stock.enterExactAmount": "または正確な金額を入力:",
+  "stock.stocksToSell": "売却する株式",
+  "stock.stockUnit": "株",
+  "stock.portfolio": "ポートフォリオ",
+  "stock.myOrders": "注文履歴",
+  "stock.marketplace": "マーケットプレイス",
+  "stock.purchaseSuccessTitle": "購入成功 🎉",
+  "stock.purchaseSuccessMessage":
+    "{count}株を₱{amount}で購入しました。ポートフォリオが更新されました。",
+  "stock.purchaseFailedTitle": "購入失敗",
+  "stock.purchaseFailed": "問題が発生しました。",
+  "stock.noBuyRequests": "まだ買い注文はありません",
+  "stock.noSellListings": "まだ売り注文はありません",
+  "stock.noListingsAvailable": "出品はありません",
+  "stock.beTheFirst":
+    "最初になりましょう！ポートフォリオで株式を売るをタップしてください。",
+  "stock.loadingDashboard": "株式ダッシュボードを読み込み中...",
+  "stock.dashboardHeader": "Inspire 株主",
+  "stock.rateEqualsPhp": "1株 = ₱{rate} PHP",
+  "stock.stockPortfolioCard": "株式ポートフォリオ",
+  "stock.buyStock": "株式を買う",
+  "stock.sellStock": "株式を売る",
+  "stock.portfolioMarketplaceHint":
+    "上のマーケットプレイスから他のユーザーに直接株式を購入できます。",
+  "stock.buyHistory": "買い履歴",
+  "stock.sellHistory": "売り履歴",
+  "stock.orderAmountLabel": "金額",
+  "stock.paginationPrev": "前へ",
+  "stock.paginationNext": "次へ",
+  "stock.paginationPageOf": "{current} / {total} ページ",
+  "stock.buyListing": "購入",
+  "stock.confirmPurchaseTitle": "購入の確認",
+  "stock.totalCost": "合計金額",
+  "stock.purchaseDeductNote": "利用可能残高から差し引かれます。",
+  "stock.statusPending": "保留中",
+  "stock.statusApproved": "承認済み",
+  "stock.statusRejected": "却下",
 };
 
 const ar: TranslationMap = {
@@ -4560,7 +5624,45 @@ const ar: TranslationMap = {
   "profile.selectLanguage": "اختر اللغة",
   "profile.defaultIsEnglish": "الافتراضي هو الإنجليزية. اختر لغتك المفضلة.",
   "profile.premium": "بريميوم",
+  "profile.consultantAgent": "وكيل استشاري",
+  "profile.tapToAddCompanyName": "اسم شركة غير موثّق",
+  "profile.tapToAddPhoneNumber": "اضغط لإضافة رقم الهاتف",
+  "profile.verifiedStatus": "موثق",
+  "profile.notVerifiedStatus": "غير موثق",
+  "profile.kycStatus": "حالة KYC",
+  "profile.editName": "تعديل الاسم",
+  "profile.editContactNumber": "تعديل رقم التواصل",
+  "profile.editContactLinks": "تعديل روابط التواصل",
+  "profile.firstNameRequired": "الاسم الأول *",
+  "profile.lastNameRequired": "اسم العائلة *",
+  "profile.middleNameOptional": "الاسم الأوسط (اختياري)",
+  "profile.passcodeRequiredField": "رمز المرور *",
+  "profile.placeholderFirstName": "الاسم الأول",
+  "profile.placeholderLastName": "اسم العائلة",
+  "profile.placeholderMiddleName": "الاسم الأوسط",
+  "profile.placeholderPasscode": "رمز مرور من 4 أرقام",
+  "profile.contactNumberRequired": "رقم التواصل *",
+  "profile.contactNumberHint":
+    "أدخل رمز الدولة (مثال: +1, +81, +82, +966, +63)",
+  "profile.placeholderPhoneNumber": "+1234567890",
+  "profile.lineLinkLabel": "رابط LINE",
+  "profile.viberLinkLabel": "رابط Viber",
+  "profile.whatsappLinkLabel": "رابط WhatsApp",
+  "profile.uploadLineQr": "رفع صورة QR لـ LINE",
+  "profile.uploadViberQr": "رفع صورة QR لـ Viber",
+  "profile.uploadWhatsappQr": "رفع صورة QR لـ WhatsApp",
+  "profile.readingQr": "جارٍ قراءة QR...",
+  "profile.contactLinksHint":
+    "يمكنك لصق الروابط مباشرة أو رفع صورة QR من LINE أو Viber أو WhatsApp للتعبئة التلقائية.",
+  "profile.updatedSuccess": "تم تحديث الملف الشخصي.",
+  "profile.companyKycRejectedTitle": "تم رفض KYC الشركة",
+  "profile.companyKycRejectedMessage":
+    "تم رفض مستندات الشركة التي أرسلتها. يرجى مراجعة معلوماتك ورفع متطلبات الشركة مرة أخرى.",
+  "profile.resubmit": "إعادة الإرسال",
   "common.sessionExpired": "انتهت الجلسة",
+  "common.sessionExpiredTitle": "انتهت الجلسة",
+  "common.sessionExpiredMessage":
+    "تم تسجيل خروجك تلقائيا بسبب عدم النشاط. يرجى تسجيل الدخول مرة أخرى للمتابعة.",
   "common.pleaseLoginAgain": "يرجى تسجيل الدخول مرة أخرى.",
   "common.error": "خطأ",
   "common.na": "غير متوفر",
@@ -4630,6 +5732,35 @@ const ar: TranslationMap = {
   "kyc.confirmAccuracy":
     "بإرسال هذا الطلب، تؤكد أن جميع المعلومات المقدمة دقيقة.",
   "kyc.confirmAndSubmit": "تأكيد وإرسال",
+
+  // Company KYC
+  "kycCompany.title": "التحقق من الشركة",
+  "kycCompany.verified": "موثق",
+  "kycCompany.pending": "قيد المراجعة",
+  "kycCompany.rejected": "مرفوض",
+  "kycCompany.unverified": "غير موثق",
+  "kycCompany.companyNameLabel": "اسم الشركة",
+  "kycCompany.placeholderCompanyName": "الاسم التجاري المسجل",
+  "kycCompany.businessRequirements": "متطلبات العمل",
+  "kycCompany.done": "تم",
+  "kycCompany.edit": "تعديل",
+  "kycCompany.commercialRegister": "السجل التجاري",
+  "kycCompany.bankStatement": "كشف الحساب البنكي",
+  "kycCompany.proofOfBilling": "إثبات الفاتورة",
+  "kycCompany.selectPdfFile": "اختر ملف PDF",
+  "kycCompany.uploaded": "تم الرفع",
+  "kycCompany.submitting": "جارٍ الإرسال...",
+  "kycCompany.save": "حفظ",
+  "kycCompany.invalidFile": "ملف غير صالح",
+  "kycCompany.invalidFileMessage": "يُقبل لـ {label} ملفات PDF أو Word فقط.",
+  "kycCompany.errorPickingDoc": "فشل في اختيار المستند",
+  "kycCompany.validationEnterCompanyName": "يرجى إدخال اسم الشركة.",
+  "kycCompany.validationUploadDocs": "يرجى رفع جميع المستندات المطلوبة.",
+  "kycCompany.notLoggedIn": "يجب تسجيل الدخول لتقديم KYC الشركة.",
+  "kycCompany.submitFailed": "فشل في تقديم KYC الشركة.",
+  "kycCompany.submitError": "فشل الإرسال. يرجى المحاولة مرة أخرى.",
+  "kycCompany.successMessage": "تم رفع مستندات العمل بنجاح!",
+
   "dashboard.goodMorning": "صباح الخير",
   "dashboard.goodAfternoon": "مساء الخير",
   "dashboard.goodEvening": "مساء الخير",
@@ -4712,6 +5843,16 @@ const ar: TranslationMap = {
   "tx.fee": "رسوم",
   "tx.refund": "استرداد",
   "tx.timeDeposit": "وديعة لأجل",
+  "tx.timeDepositDividend": "أرباح الوديعة لأجل",
+  "tx.timeDepositPrincipalReturn": "إرجاع أصل الوديعة لأجل",
+  "tx.agentCommission": "عمولة الوكيل",
+  "tx.cardPurchase": "شراء بطاقة",
+  "tx.cardSubscription": "اشتراك البطاقة",
+  "tx.stockBuy": "شراء أسهم",
+  "tx.stockSell": "بيع أسهم",
+  "tx.planSubscriptionPayment": "دفع اشتراك الخطة",
+  "tx.planSubscriptionCashback": "استرداد اشتراك الخطة",
+  "tx.travelProtection": "حماية السفر",
   "tx.transaction": "معاملة",
   "history.allTransactions": "جميع المعاملات",
   "history.totalSpent": "إجمالي المصروف",
@@ -4720,6 +5861,25 @@ const ar: TranslationMap = {
   "history.loadMore": "تحميل المزيد",
   "history.freeDefaultCard": "بطاقة افتراضية مجانية",
   "history.createdAccount": "إنشاء الحساب",
+  "history.withdrawalRequested": "تم طلب السحب",
+  "history.withdrawalApproved": "تمت الموافقة على السحب",
+  "history.withdrawalRejected": "تم رفض السحب",
+  "history.stockInvestmentRequested": "تم طلب استثمار الأسهم",
+  "history.stockInvestmentApproved": "تمت الموافقة على استثمار الأسهم",
+  "history.stockInvestmentRejected": "تم رفض استثمار الأسهم",
+  "history.cardPurchaseDesign": "شراء بطاقة {design}",
+  "history.goldEliteMonthlySubscriptionRenewal":
+    "تجديد اشتراك جولد إيليت الشهري",
+  "history.goldEliteMonthlySubscriptionFirstMonth":
+    "اشتراك جولد إيليت الشهري (الشهر الأول)",
+  "history.timeDepositApprovedTopUp":
+    "تمت الموافقة على الوديعة لأجل - شحن مبلغ الطلب",
+  "history.topUpApprovedRequest": "تمت الموافقة على الشحن: الطلب {requestId}",
+  "history.agentCommissionFromTimeDeposit": "عمولة وكيل من الوديعة لأجل {id}",
+  "history.stockPurchaseListing": "شراء أسهم: الإدراج {listingId}",
+  "history.stockSaleListing": "بيع أسهم: الإدراج {listingId}",
+  "history.stockSoldListing": "تم بيع الأسهم: الإدراج {listingId}",
+  "history.stockPurchasedListing": "تم شراء الأسهم: الإدراج {listingId}",
   "investment.timeDeposit": "الوديعة الثابتة",
   "investment.amountWalletLabel": "الأرباح المتوقعة",
   "investment.amountWalletHint": "إجمالي الأرباح المتوقعة من جميع العقود",
@@ -4788,6 +5948,8 @@ const ar: TranslationMap = {
   "deposit.currencySaudiRiyal": "الريال السعودي",
   "deposit.currencyKoreanWon": "الوون الكوري",
   "deposit.confirmTitle": "تأكيد الإيداع",
+  "deposit.transactionReceipt": "إيصال المعاملة",
+  "deposit.uploadSuccessMessage": "تم رفع الإيصال بنجاح.",
   "deposit.stockInvestmentTitle": "استثمار الأسهم",
   "deposit.minStock": "الحد الأدنى ₱2,000,000 لاستثمار الأسهم",
   "deposit.stockMinShort": "الحد الأدنى ₱2,000,000 · أدخل المبلغ أدناه",
@@ -4828,6 +5990,8 @@ const ar: TranslationMap = {
   "settings.loading": "جاري التحميل...",
   "settings.tapToRefresh": "انقر للتحديث",
   "settings.refresh": "تحديث",
+  "settings.copy": "نسخ",
+  "settings.copySuccess": "تم النسخ!",
   "settings.emailVerification": "التحقق من البريد",
   "settings.verified": "تم التحقق",
   "settings.notVerified": "غير محقق",
@@ -4838,9 +6002,11 @@ const ar: TranslationMap = {
   "settings.updatePinSubtitle": "تحديث الرمز السري المكون من 4 أرقام",
   "settings.changePin": "تغيير الرمز السري",
   "settings.biometricLogin": "تسجيل الدخول باستخدام {type}",
-  "settings.biometricSubtitle": "استخدم {type} لتسجيل الدخول بشكل أسرع وأكثر أمانًا",
+  "settings.biometricSubtitle":
+    "استخدم {type} لتسجيل الدخول بشكل أسرع وأكثر أمانًا",
   "settings.enableBiometric": "تمكين {type}",
-  "settings.biometricSetupSubtitle": "يرجى إدخال كلمة المرور لتأكيد ربط هذا الجهاز بحسابك لتسجيل الدخول باستخدام {type}.",
+  "settings.biometricSetupSubtitle":
+    "يرجى إدخال كلمة المرور لتأكيد ربط هذا الجهاز بحسابك لتسجيل الدخول باستخدام {type}.",
   "settings.deleteAccount": "حذف الحساب",
   "settings.customerRelationship": "دعم العملاء",
   "settings.aboutUs": "من نحن",
@@ -4867,10 +6033,19 @@ const ar: TranslationMap = {
   "agent.emptyReferredClients": "لا يوجد عملاء مُحالون بودائع زمنية معتمدة بعد",
   "agent.emptyReferredClientsHint":
     "عندما ينشئ المُحالون ودائعاً زمنية وتُعتمد، ستحصل على عمولة وستظهر هنا.",
+  "agent.pendingCommission": "عمولة معلقة",
+  "agent.pendingCommissionListTitle": "عمولات الوكيل المعلقة",
+  "agent.pendingCommissionListSubtitle":
+    "العمولات المعلقة التي لم يتم صرفها بعد",
+  "agent.pendingCommissionItemTitle": "عمولة وكيل معلقة",
+  "agent.pendingCommissionReleasePrefix": "تاريخ الصرف",
+  "agent.loading": "جارٍ تحميل البيانات...",
   "agent.loadingDashboard": "جاري تحميل لوحة الوكيل...",
   "settings.helpCenter": "مركز المساعدة",
   "settings.privacyPolicy": "سياسة الخصوصية",
   "settings.termsAndCondition": "الشروط والأحكام",
+  "settings.currencyCalculator": "حاسبة العملات",
+  "settings.currencyCalculatorSubtitle": "تحويل العملات بسرعة",
   "settings.language": "اللغة",
   "settings.signOut": "تسجيل الخروج",
   "settings.verifyEmail": "التحقق من البريد",
@@ -4995,10 +6170,47 @@ const ar: TranslationMap = {
   "dashboard.loadingAgent": "جاري تحميل الوكيل...",
   "dashboard.loadingSupport": "جاري تحميل الدعم...",
   "dashboard.loadingDashboard": "جاري تحميل لوحة التحكم...",
+  "dashboard.underMaintenance": "تحت الصيانة",
+  "dashboard.maintenanceMessage":
+    "هذه الخدمة قيد الصيانة حالياً. نحن نعمل على تحسين تجربتك. يرجى المحاولة مرة أخرى قريباً!",
+  "dashboard.gotIt": "حسنًا",
+  "pcard.title": "حامل البطاقة المميزة",
+  "pcard.subtitle": "اعرض وجهي بطاقة P-Card — اضغط للقلب.",
+  "pcard.hint":
+    "عند الخمول تدور البطاقة ببطء. اضغط في أي وقت للقلب أو الإيقاف.",
+  "pcard.exclusiveTitle": "مزايا حصرية لبطاقة P-Card",
+  "pcard.exclusiveBody1":
+    "بطاقة Inspire P-Card هي تجربة عضوية مميزة داخل Inspire Wallet — تجمع خدمات البطاقة مع الودائع والودائع لأجل والاستثمار في الأسهم والتحويلات وPlay & Earn والمحفظة الإلكترونية في تطبيق آمن واحد.",
+  "pcard.exclusiveBody2":
+    "دخول أسواق أو منتجات مالية جديدة دون إرشاد واضح قد ينطوي على مخاطر حقيقية. عضوية P-Card مصممة لتمنحك دعماً أولوياً ووصولاً منظماً لاستخدام خدمات Inspire Wallet بوضوح وثقة أكبر.",
+  "pcard.benefit1": "دعم أولوي",
+  "pcard.benefit2": "مزايا حصرية",
+  "pcard.benefit3": "وصول VIP",
+  "pcard.apply": "تقديم الطلب",
+  "pcard.modalTitle": "التقدم للحصول على P-Card",
+  "pcard.modalHint":
+    "ملأنا اسمك وبريدك من حسابك. أضف رقم هاتفك أو أكّده ثم أرسل.",
+  "pcard.fullName": "الاسم الكامل",
+  "pcard.fullNamePlaceholder": "اسمك الكامل",
+  "pcard.email": "البريد الإلكتروني",
+  "pcard.phone": "رقم الهاتف",
+  "pcard.phonePlaceholder": "+63 9XX XXX XXXX",
+  "pcard.password": "كلمة المرور",
+  "pcard.confirmPassword": "تأكيد كلمة المرور",
+  "pcard.passwordMismatch": "كلمتا المرور غير متطابقتين",
+  "pcard.enterName": "يرجى إدخال اسمك الكامل",
+  "pcard.enterPhone": "يرجى إدخال رقم الهاتف",
+  "pcard.notAuthenticated": "يرجى تسجيل الدخول للتقدم بطلب P-Card.",
+  "pcard.applySuccessTitle": "تم الإرسال",
+  "pcard.applySuccess": "تم حفظ بياناتك. سنُعالج طلب P-Card.",
+  "pcard.applyError": "تعذّر حفظ البيانات. حاول مرة أخرى.",
   "dashboard.bankingServiceLockedTitle": "خدمة البنك مقفلة",
-  "dashboard.bankingServiceLockedRequirement": "الوديعة المطلوبة",
+  "dashboard.eWalletLockedTitle": "المحفظة الإلكترونية مقفلة",
+  "dashboard.bankingServiceLockedRequirement": "إجمالي الودائع النشطة",
+  "dashboard.bankingServiceLockedCombinedContracts":
+    "تُجمع كل الودائع النشطة · بغض النظر عن مدة العقد",
   "dashboard.bankingServiceLockedMessage":
-    "لفتح خدمة البنك، تحتاج إلى وديعة لأجل بعقد سنتين بقيمة 200,000₱.",
+    "يُفتح البنك والمحفظة الإلكترونية عندما يبلغ إجمالي أصل الودائع لأجل النشطة 200,000₱ على الأقل. تُجمع عدة عقود معًا.",
   "dashboard.kycLockedTitle": "مطلوب توثيق KYC",
   "dashboard.kycLockedRequirement": "الحالة المطلوبة",
   "dashboard.kycLockedRequirementValue": "تم توثيق KYC",
@@ -5007,6 +6219,7 @@ const ar: TranslationMap = {
 
   "common.retry": "إعادة المحاولة",
   "common.success": "نجاح",
+  "common.save": "حفظ",
   "common.back": "رجوع",
 
   "common.serverError": "خطأ في الخادم. يرجى المحاولة مرة أخرى لاحقاً.",
@@ -5127,8 +6340,7 @@ const ar: TranslationMap = {
   "passcode.passcodesDoNotMatch": "رموز المرور غير متطابقة.",
   "passcode.invalidTitle": "رمز مرور غير صالح",
   "passcode.invalidPasscodeLength": "يجب أن يكون رمز المرور 4 أرقام بالضبط.",
-  "passcode.resetInfoMessage":
-    "تم إعادة تعيين رمز المرور بنجاح.",
+  "passcode.resetInfoMessage": "تم إعادة تعيين رمز المرور بنجاح.",
   "tickets.you": "أنت",
   "tickets.admin": "المسؤول",
   "tickets.emptyMessage": "(رسالة فارغة)",
@@ -5235,7 +6447,7 @@ const ar: TranslationMap = {
     "قد نعدّل هذه الشروط في أي وقت. سنخبرك بالتغييرات المهمة عبر التطبيق أو البريد. استمرارك في استخدام التطبيق بعد التعديلات يعني قبولك للشروط الجديدة.",
   "terms.h10": "الاتصال",
   "terms.i10": "للاستفسارات أو المخاوف بخصوص هذه الشروط، يرجى الاتصال بنا على",
-  "terms.contactText": "inspireholdings.ph: 85963571",
+  "terms.contactText": "inspireholdings.ph: (02) 5322 1002",
   "notification.title": "الإشعارات",
   "notification.loginToView": "يرجى تسجيل الدخول لعرض الإشعارات",
   "notification.noNotifications": "لا توجد إشعارات بعد",
@@ -5251,7 +6463,8 @@ const ar: TranslationMap = {
   "notification.deleteSelected": "حذف المحدد",
   "notification.deleteConfirmOne": "هل أنت متأكد من حذف هذا الإشعار؟",
   "notification.deleteConfirmAll": "هل أنت متأكد من حذف جميع الإشعارات؟",
-  "notification.deleteConfirmSelected": "هل أنت متأكد من حذف {count} إشعار(ات)؟",
+  "notification.deleteConfirmSelected":
+    "هل أنت متأكد من حذف {count} إشعار(ات)؟",
   "notification.close": "إغلاق",
   "notification.acceptReferral": "قبول",
   "notification.declineReferral": "رفض",
@@ -5264,6 +6477,31 @@ const ar: TranslationMap = {
   "notification.detailStatus": "الحالة",
   "notification.detailType": "النوع",
   "notification.detailId": "المعرّف",
+  "notification.titleTopUpRequested": "تم طلب الشحن",
+  "notification.titleTopUpApproved": "تمت الموافقة على الشحن",
+  "notification.titleTopUpRejected": "تم رفض الشحن",
+  "notification.titleStockInvestmentRequested": "تم طلب استثمار الأسهم",
+  "notification.titleWithdrawalRequested": "تم طلب السحب",
+  "notification.titleWithdrawalApproved": "تمت الموافقة على السحب",
+  "notification.titleWithdrawalRejected": "تم رفض السحب",
+  "notification.titleTimeDepositRequested": "تم طلب الوديعة لأجل",
+  "notification.titleTimeDepositApproved": "تمت الموافقة على الوديعة لأجل",
+  "notification.titleTimeDepositRejected": "تم رفض الوديعة لأجل",
+  "notification.titleTransferReceived": "تم استلام تحويل",
+  "notification.titleTransferSent": "تم إرسال تحويل",
+  "notification.titleNewReferralSignup": "تسجيل إحالة جديد",
+  "notification.titleReferralCommissionReleased": "تم صرف عمولة الإحالة",
+  "notification.titleTicketUpdate": "تحديث التذكرة",
+  "notification.titleNewSupportReply": "رد جديد من الدعم",
+  "notification.titleNewCustomerReply": "رد جديد من العميل",
+  "notification.titleNewMessage": "رسالة جديدة",
+  "notification.titleAccountUpdated": "تم تحديث الحساب",
+  "notification.titleInvoiceGenerated": "تم إنشاء فاتورة",
+  "notification.titleSubscriptionActivated": "تم تفعيل الاشتراك",
+  "notification.titleSubscriptionCancelled": "تم إلغاء الاشتراك",
+  "notification.titleSubscriptionExpired": "انتهت صلاحية الاشتراك",
+  "notification.titleYourStockWasSold": "تم بيع أسهمك!",
+  "notification.titleStockPurchaseSuccessful": "تمت عملية شراء الأسهم بنجاح",
   "ct.yourInspireCard": "بطاقة Inspire الخاصة بك",
   "ct.defaultCard": "البطاقة الافتراضية",
   "ct.viewDetails": "عرض التفاصيل",
@@ -5451,6 +6689,10 @@ const ar: TranslationMap = {
   "travel.uploadPassport": "رفع جواز السفر",
   "travel.passportUploaded": "تم رفع صورة جواز السفر",
   "travel.tapToSelectImage": "اضغط لاختيار صورة",
+  "travel.governmentIdType": "نوع الهوية الرسمية",
+  "travel.governmentIdNumber": "رقم الهوية الرسمية",
+  "travel.placeholderGovernmentIdNumber": "أدخل رقم الهوية الرسمية",
+  "travel.governmentIdPhoto": "صورة الهوية الرسمية",
   "travel.governmentId": "الهوية الرسمية",
   "travel.uploadGovernmentId": "رفع الهوية الرسمية",
   "travel.governmentIdUploaded": "تم رفع الهوية الرسمية",
@@ -5472,6 +6714,12 @@ const ar: TranslationMap = {
   "travel.back": "رجوع",
   "travel.next": "التالي",
   "travel.apply": "تقدم",
+  "travel.fieldRequired": "مطلوب",
+  "travel.errorValidEmail": "يرجى إدخال بريد إلكتروني صالح.",
+  "travel.errorValidMobile": "يرجى إدخال رقم جوال صالح.",
+  "travel.errorValidLandline": "يرجى إدخال رقم هاتف أرضي صالح.",
+  "travel.grossMonthlyIncomeInvalid": "يجب أن يكون رقمًا صحيحًا موجبًا.",
+  "travel.cashOnHandInvalid": "يجب أن يكون رقمًا صحيحًا موجبًا.",
   "travel.requiredFields": "الحقول المطلوبة",
   "travel.fillRequired": "يرجى تعبئة جميع الحقول المطلوبة",
   "travel.requiredDocuments": "المستندات المطلوبة",
@@ -5886,6 +7134,174 @@ const ar: TranslationMap = {
     "لم يتم العثور على رمز QR الاستجابة السريعة في الصورة. يرجى اختيار صورة أوضح لرمز QR الاستجابة السريعة.",
   "register.uploadImage": "تحميل صورة",
   "register.processing": "جاري المعالجة...",
+
+  // Common additions
+  "common.close": "إغلاق",
+  "common.keepEditing": "الاستمرار في التعديل",
+  "common.discardExit": "تجاهل والخروج",
+  "common.cancelApplication": "إلغاء الطلب؟",
+  "common.goBack": "العودة",
+  "common.authTokenNotFound":
+    "لم يتم العثور على رمز المصادقة. يرجى تسجيل الدخول مرة أخرى.",
+
+  // Banking additions
+  "banking.cancelApplicationMessage":
+    "هل أنت متأكد من الإلغاء؟ سيتم فقدان تقدمك الحالي في هذا النموذج المصرفي.",
+
+  // E-Wallet additions
+  "ewallet.cancelApplicationMessage":
+    "هل أنت متأكد من الإلغاء؟ سيتم فقدان تقدمك الحالي في نموذج المحفظة الإلكترونية.",
+  "ewallet.emailRequired": "البريد الإلكتروني مطلوب",
+  "ewallet.emailInvalid": "يرجى إدخال عنوان بريد إلكتروني صحيح",
+  "ewallet.mobileRequired": "رقم الهاتف المحمول مطلوب",
+  "ewallet.mobileInvalid": "أدخل رقم هاتف محمول صحيح مكون من 10-11 أرقام",
+  "ewallet.sourceOfFundRequired": "مصدر التمويل مطلوب",
+  "ewallet.incomeRequired": "مبلغ الدخل مطلوب",
+  "ewallet.incomeInvalid": "أدخل مبلغ دخل صحيح",
+  "ewallet.currencyRequired": "العملة مطلوبة",
+  "ewallet.addressRequired": "العنوان الكامل مطلوب",
+
+  // Gold Elite
+  "goldElite.active": "الذهبي النخبة نشط",
+  "goldElite.expires": "ينتهي في {date}",
+  "goldElite.dayRemaining": "يوم متبقٍ",
+  "goldElite.daysRemaining": "أيام متبقية",
+  "goldElite.renewalAvailable": "التجديد متاح",
+  "goldElite.dayLeft": "يوم متبقٍ",
+  "goldElite.daysLeft": "أيام متبقية",
+  "goldElite.expiresMessage": "اشتراكك في الذهبي النخبة ينتهي في {date}",
+  "goldElite.price": "₱10,000/شهر",
+  "goldElite.renewing": "جارٍ التجديد...",
+  "goldElite.renewNow": "جدد الآن",
+  "goldElite.renewSuccess": "تم تجديد اشتراكك في الذهبي النخبة!",
+  "goldElite.renewFailed": "فشل تجديد الاشتراك",
+  "goldElite.networkError": "خطأ في الشبكة",
+
+  // Announcement
+  "announcement.defaultTitle": "إعلان",
+  "announcement.close": "إغلاق",
+
+  // Currency Calculator
+  "currency.amount": "المبلغ",
+  "currency.convertedTo": "تحويل إلى",
+  "currency.totalResult": "النتيجة الإجمالية",
+  "currency.exchangeRateUnavailable": "سعر الصرف غير متاح",
+  "currency.disclaimer": "* أسعار صرف مباشرة من البنك. قد تتفاوت الأسعار.",
+  "currency.selectFromCurrency": "اختر عملة المصدر",
+  "currency.selectToCurrency": "اختر عملة الوجهة",
+
+  // Settings additions
+  "settings.deleteNotAuthenticated": "غير موثق",
+  "settings.deleteRequestFailed": "فشل تقديم الطلب",
+
+  // Login additions
+  "login.resetEmailFailed":
+    "فشل إرسال البريد الإلكتروني لإعادة التعيين. يرجى المحاولة مرة أخرى.",
+  "login.networkError": "خطأ في الشبكة. يرجى المحاولة مرة أخرى.",
+
+  // Register additions
+  "register.invalidLink": "يرجى إدخال رابط صحيح.",
+  "register.lineQRMismatch":
+    "رمز QR الممسوح لا يطابق LINE. يرجى مسح رابط حساب LINE صحيح.",
+  "register.viberQRMismatch":
+    "رمز QR الممسوح لا يطابق Viber. يرجى مسح رابط حساب Viber صحيح.",
+  "register.whatsappQRMismatch":
+    "رمز QR الممسوح لا يطابق WhatsApp. يرجى مسح رابط حساب WhatsApp صحيح.",
+  "register.notice": "تنبيه",
+
+  // Passcode additions
+  "passcode.biometricPrompt": "تسجيل الدخول بـ {type}",
+  "passcode.noTokenFound": "لم يتم العثور على رمز المصادقة البيومترية",
+  "passcode.biometricLoginFailed":
+    "فشل تسجيل الدخول البيومتري على الخادم. يرجى استخدام الرمز السري.",
+  "passcode.biometricAuthError":
+    "خطأ في المصادقة البيومترية. يرجى استخدام الرمز السري.",
+  "passcode.useFallback": "استخدم الرمز السري",
+
+  // Notification additions
+  "notification.transfer": "تحويل",
+  "notification.withdrawal": "سحب",
+
+  // Deposit additions
+  "deposit.months": "{count} أشهر",
+  "deposit.amountRequired": "المبلغ مطلوب",
+  "deposit.amountInvalid": "يرجى إدخال مبلغ صحيح أكبر من 0",
+  "deposit.amountGreaterThan0": "يجب أن يكون المبلغ أكبر من 0",
+  "deposit.stockRate": "سعر السهم",
+  "deposit.youWillReceive": "ستحصل على: ",
+  "deposit.stock": "سهم",
+
+  // Withdraw additions
+  "withdraw.mobileInvalid": "يرجى إدخال رقم هاتف محمول صحيح مكون من 10 أرقام.",
+
+  // Travel additions
+  "travel.cancelApplicationMessage":
+    "هل أنت متأكد من الإلغاء؟ سيتم فقدان تقدمك الحالي في نموذج حماية السفر.",
+  "travel.notAuthenticated": "غير موثق",
+  "travel.insufficientBalance": "رصيد غير كافٍ",
+  "travel.submitFailed": "فشل تقديم الطلب",
+  "travel.unexpectedError": "حدث خطأ غير متوقع",
+  "travel.availableBalance": "الرصيد المتاح",
+
+  // Stock Sell additions
+  "stock.invalidAmountTitle": "مبلغ غير صالح",
+  "stock.invalidAmountMessage": "يرجى إدخال عدد صحيح من الأسهم للبيع.",
+  "stock.insufficientStocksTitle": "أسهم غير كافية",
+  "stock.insufficientStocksMessage":
+    "لديك {count} سهم(أسهم) فقط. يرجى إدخال رقم أقل من أو يساوي {count}.",
+  "stock.notAuthenticatedTitle": "غير موثق",
+  "stock.notAuthenticatedMessage": "يرجى تسجيل الدخول والمحاولة مرة أخرى.",
+  "stock.walletNotFoundTitle": "المحفظة غير موجودة",
+  "stock.walletNotFoundMessage":
+    "تعذر العثور على محفظة STOCK الخاصة بك. يرجى المحاولة مرة أخرى.",
+  "stock.requestSubmittedTitle": "تم تقديم الطلب",
+  "stock.requestSubmittedMessage":
+    "تم تقديم طلب البيع. ستتلقى إشعاراً عند معالجته.",
+  "stock.submissionFailedTitle": "فشل الإرسال",
+  "stock.submissionFailed": "حدث خطأ ما. يرجى المحاولة مرة أخرى.",
+  "stock.unexpectedError": "حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.",
+  "stock.youHave": "لديك",
+  "stock.available": "متاح",
+  "stock.percentageToSell": "نسبة البيع",
+  "stock.all": "الكل",
+  "stock.stocksLabel": "الأسهم",
+  "stock.youReceive": "ستحصل على",
+  "stock.enterExactAmount": "أو أدخل المبلغ الدقيق:",
+  "stock.stocksToSell": "الأسهم للبيع",
+  "stock.stockUnit": "سهم(أسهم)",
+  "stock.portfolio": "المحفظة",
+  "stock.myOrders": "طلباتي",
+  "stock.marketplace": "السوق",
+  "stock.purchaseSuccessTitle": "تمت الشراء بنجاح 🎉",
+  "stock.purchaseSuccessMessage":
+    "لقد اشتريت {count} سهم(أسهم) مقابل ₱{amount}. تم تحديث محفظتك.",
+  "stock.purchaseFailedTitle": "فشل الشراء",
+  "stock.purchaseFailed": "حدث خطأ ما.",
+  "stock.noBuyRequests": "لا توجد طلبات شراء بعد",
+  "stock.noSellListings": "لا توجد قوائم بيع بعد",
+  "stock.noListingsAvailable": "لا توجد قوائم متاحة",
+  "stock.beTheFirst": "كن الأول! انقر على بيع الأسهم في المحفظة.",
+  "stock.loadingDashboard": "جارٍ تحميل لوحة الأسهم...",
+  "stock.dashboardHeader": "مساهم Inspire",
+  "stock.rateEqualsPhp": "1 سهم = ₱{rate} PHP",
+  "stock.stockPortfolioCard": "محفظة الأسهم",
+  "stock.buyStock": "شراء أسهم",
+  "stock.sellStock": "بيع أسهم",
+  "stock.portfolioMarketplaceHint":
+    "اضغط على «السوق» أعلاه لشراء أسهم مباشرة من مستخدمين آخرين.",
+  "stock.buyHistory": "سجل الشراء",
+  "stock.sellHistory": "سجل البيع",
+  "stock.orderAmountLabel": "المبلغ",
+  "stock.paginationPrev": "السابق",
+  "stock.paginationNext": "التالي",
+  "stock.paginationPageOf": "صفحة {current} من {total}",
+  "stock.buyListing": "شراء",
+  "stock.confirmPurchaseTitle": "تأكيد الشراء",
+  "stock.totalCost": "التكلفة الإجمالية",
+  "stock.purchaseDeductNote": "سيتم خصم المبلغ من رصيدك المتاح.",
+  "stock.statusPending": "قيد الانتظار",
+  "stock.statusApproved": "موافق عليه",
+  "stock.statusRejected": "مرفوض",
 };
 
 export const translations: Record<string, TranslationMap> = { en, ko, ja, ar };
