@@ -138,7 +138,7 @@ export default function EwalletContactInfo() {
           {/* Progress Stepper - 5 steps, Step 1 complete, Step 2 active */}
           <View style={styles.progressContainer}>
             <View style={styles.stepRow}>
-              {[1, 2, 3, 4, 5].map((step) => (
+              {[1, 2, 3, 4, 5, 6].map((step) => (
                 <React.Fragment key={step}>
                   <View
                     style={[
@@ -160,7 +160,7 @@ export default function EwalletContactInfo() {
                       </Text>
                     )}
                   </View>
-                  {step < 5 && (
+                  {step < 6 && (
                     <View
                       style={[
                         styles.stepLine,

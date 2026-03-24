@@ -38,6 +38,7 @@ import TravelProtectReviewSubmit from "./TravelProtectReview&Submit";
 import TravelRequiredDocu from "./TravelRequiredDocu";
 
 const EMPTY_PLACEHOLDER = "__empty__";
+const FRONT_AND_BACK_GOVERNMENT_ID_TYPES = ["National_ID", "Driver_License"];
 
 /** Convert a local file URI to base64 data URL for API submission */
 async function uriToBase64DataUrl(uri: string): Promise<string> {
@@ -433,8 +434,10 @@ export default function TravelProtection() {
   const [passportPhotoError, setPassportPhotoError] = useState("");
   const [governmentIdType, setGovernmentIdType] = useState<string>("");
   const [governmentIdNumber, setGovernmentIdNumber] = useState<string>("");
-  const [governmentId, setGovernmentId] = useState<string | null>(null);
-  const [governmentIdError, setGovernmentIdError] = useState("");
+  const [governmentIdFront, setGovernmentIdFront] = useState<string | null>(null);
+  const [governmentIdBack, setGovernmentIdBack] = useState<string | null>(null);
+  const [governmentIdFrontError, setGovernmentIdFrontError] = useState("");
+  const [governmentIdBackError, setGovernmentIdBackError] = useState("");
 
   // Dropdown states
   const [showGenderDropdown, setShowGenderDropdown] = useState(false);
@@ -658,15 +661,25 @@ export default function TravelProtection() {
       setCurrentStep(5);
     } else if (currentStep === 5) {
       setPassportPhotoError("");
-      setGovernmentIdError("");
+      setGovernmentIdFrontError("");
+      setGovernmentIdBackError("");
 
       let hasError = false;
       if (!passportPhoto) {
         setPassportPhotoError(t("travel.fieldRequired") || "Required");
         hasError = true;
       }
-      if (!governmentId) {
-        setGovernmentIdError(t("travel.fieldRequired") || "Required");
+      if (!governmentIdType) {
+        setGovernmentIdFrontError(t("travel.fieldRequired") || "Required");
+        hasError = true;
+      }
+      if (!governmentIdFront) {
+        setGovernmentIdFrontError(t("travel.fieldRequired") || "Required");
+        hasError = true;
+      }
+      const requiresFrontAndBack = FRONT_AND_BACK_GOVERNMENT_ID_TYPES.includes(governmentIdType);
+      if (requiresFrontAndBack && !governmentIdBack) {
+        setGovernmentIdBackError(t("travel.fieldRequired") || "Required");
         hasError = true;
       }
 
@@ -728,9 +741,14 @@ export default function TravelProtection() {
         passportPhotoBase64 = await uriToBase64DataUrl(passportPhoto);
       }
 
-      let governmentIdPhotoBase64: string | undefined;
-      if (governmentId) {
-        governmentIdPhotoBase64 = await uriToBase64DataUrl(governmentId);
+      let governmentIdPhotoFrontBase64: string | undefined;
+      if (governmentIdFront) {
+        governmentIdPhotoFrontBase64 = await uriToBase64DataUrl(governmentIdFront);
+      }
+
+      let governmentIdPhotoBackBase64: string | undefined;
+      if (governmentIdBack) {
+        governmentIdPhotoBackBase64 = await uriToBase64DataUrl(governmentIdBack);
       }
 
       // Formulate the time strings like "08:00 AM"
@@ -764,13 +782,17 @@ export default function TravelProtection() {
         // Government ID fields (optional)
         governmentIdType: governmentIdType || undefined,
         governmentIdNumber: governmentIdNumber || undefined,
-        governmentIdPhoto: governmentIdPhotoBase64,
+        governmentIdPhoto: governmentIdPhotoFrontBase64,
+        governmentIdPhotoFront: governmentIdPhotoFrontBase64,
+        governmentIdPhotoBack: governmentIdPhotoBackBase64,
       };
 
       console.log("[TravelProtection] Submitting data:", JSON.stringify({
         ...applicationData,
         passportPhoto: applicationData.passportPhoto ? `[base64-${applicationData.passportPhoto.length} chars]` : undefined,
-        governmentIdPhoto: applicationData.governmentIdPhoto ? `[base64-${applicationData.governmentIdPhoto.length} chars]` : undefined,
+        governmentIdPhoto: applicationData.governmentIdPhoto ? `[base64-${String(applicationData.governmentIdPhoto).length} chars]` : undefined,
+        governmentIdPhotoFront: applicationData.governmentIdPhotoFront ? `[base64-${String(applicationData.governmentIdPhotoFront).length} chars]` : undefined,
+        governmentIdPhotoBack: applicationData.governmentIdPhotoBack ? `[base64-${String(applicationData.governmentIdPhotoBack).length} chars]` : undefined,
       }, null, 2));
 
       const result = await submitTravelProtection(accessToken, applicationData);
@@ -879,7 +901,9 @@ export default function TravelProtection() {
     }
   };
 
-  const pickGovernmentId = async () => {
+  const pickGovernmentIdPhoto = async (
+    side: "front" | "back",
+  ) => {
     try {
       const permissionResult =
         await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -899,7 +923,13 @@ export default function TravelProtection() {
       });
 
       if (!result.canceled && result.assets[0]) {
-        setGovernmentId(result.assets[0].uri);
+        if (side === "front") {
+          setGovernmentIdFront(result.assets[0].uri);
+          if (governmentIdFrontError) setGovernmentIdFrontError("");
+        } else {
+          setGovernmentIdBack(result.assets[0].uri);
+          if (governmentIdBackError) setGovernmentIdBackError("");
+        }
       }
     } catch (error) {
       console.error("Error picking government ID:", error);
@@ -1453,20 +1483,29 @@ export default function TravelProtection() {
                 <TravelRequiredDocu
                   passportPhoto={passportPhoto}
                   passportPhotoError={passportPhotoError}
-                  governmentId={governmentId}
-                  governmentIdError={governmentIdError}
+                  governmentIdFront={governmentIdFront}
+                  governmentIdBack={governmentIdBack}
+                  governmentIdFrontError={governmentIdFrontError}
+                  governmentIdBackError={governmentIdBackError}
                   governmentIdType={governmentIdType}
                   governmentIdNumber={governmentIdNumber}
                   onPickPassportPhoto={() => {
                     pickPassportPhoto();
                     if (passportPhotoError) setPassportPhotoError("");
                   }}
-                  onPickGovernmentId={() => {
-                    pickGovernmentId();
-                    if (governmentIdError) setGovernmentIdError("");
+                  onPickGovernmentIdFront={() => {
+                    pickGovernmentIdPhoto("front");
+                  }}
+                  onPickGovernmentIdBack={() => {
+                    pickGovernmentIdPhoto("back");
                   }}
                   onGovernmentIdTypeChange={(val) => {
                     setGovernmentIdType(val);
+                    // Changing ID type requires re-upload to avoid stale/mismatched files.
+                    setGovernmentIdFront(null);
+                    setGovernmentIdBack(null);
+                    setGovernmentIdFrontError("");
+                    setGovernmentIdBackError("");
                   }}
                   onGovernmentIdNumberChange={(val) => {
                     setGovernmentIdNumber(val);
@@ -1478,11 +1517,27 @@ export default function TravelProtection() {
               {currentStep === 6 && (
                 <TravelProtectReviewSubmit
                   emailAddress={emailAddress}
+                  mobileDialCode={selectedCountry.dialCode}
                   mobileNumber={mobileNumber}
                   landlineNumber={landlineNumber}
                   homeAddress={homeAddress}
+                  gender={gender}
+                  dateOfBirthText={dateOfBirthText}
+                  civilStatus={civilStatus}
+                  citizenship={citizenship}
+                  sourceOfFund={sourceOfFund}
+                  grossMonthlyIncome={grossMonthlyIncome}
+                  grossMonthlyIncomeCurrency={grossMonthlyIncomeCurrency}
+                  cashOnHand={cashOnHand}
                   destinationAddress={destinationAddress}
+                  checkInDateText={checkInDateText}
+                  duration={duration}
+                  departureTimeText={departureTimeText}
+                  arrivalTimeText={arrivalTimeText}
                   passportNumber={passportNumber}
+                  purposeOfTravel={purposeOfTravel}
+                  governmentIdType={governmentIdType}
+                  governmentIdNumber={governmentIdNumber}
                 />
               )}
 
