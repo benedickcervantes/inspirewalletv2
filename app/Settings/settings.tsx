@@ -716,8 +716,12 @@ const Settings = () => {
                 <View style={[styles.emailVerifySuccess, r.emailVerifySuccess]}>
                   <Ionicons name="checkmark-circle" size={r.iconSizeLarge} color="#22C55E" />
                   <Text style={[styles.emailVerifySuccessText, r.emailVerifySuccessText]}>{t('settings.emailVerifiedSuccess')}</Text>
-                  <TouchableOpacity style={[styles.modalButton, r.modalButton]} onPress={handleEmailVerifyDone} activeOpacity={0.8}>
-                    <Text style={[styles.modalButtonText, r.modalButtonText]}>{t('settings.done')}</Text>
+                  <TouchableOpacity
+                    style={[styles.modalButton, r.modalButton, styles.modalDoneButton]}
+                    onPress={handleEmailVerifyDone}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.modalButtonText, r.modalButtonText, styles.modalDoneButtonText]}>{t('settings.done')}</Text>
                   </TouchableOpacity>
                 </View>
               ) : (
@@ -1066,6 +1070,19 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+  modalDoneButton: {
+    width: '100%',
+    minHeight: 52,
+    justifyContent: 'center',
+    borderRadius: 12,
+    marginTop: 4,
+    paddingHorizontal: 20,
+  },
+  modalDoneButtonText: {
+    fontSize: 18,
+    fontWeight: '700',
+    letterSpacing: 0.3,
   },
   recentTransactionText: {
     color: '#8e8e93',

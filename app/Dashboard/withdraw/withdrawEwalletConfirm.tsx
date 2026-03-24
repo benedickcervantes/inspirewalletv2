@@ -22,6 +22,21 @@ import {
 } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
 
+const getEwalletTransactionFee = (amount: number) => {
+  if (Number.isNaN(amount) || amount <= 0) return 0;
+  if (amount <= 10000) return 25;
+  if (amount <= 20000) return 50;
+  if (amount <= 30000) return 75;
+  if (amount <= 40000) return 100;
+  if (amount <= 50000) return 125;
+  if (amount <= 60000) return 150;
+  if (amount <= 70000) return 175;
+  if (amount <= 80000) return 200;
+  if (amount <= 90000) return 225;
+  if (amount <= 100000) return 250;
+  return 275;
+};
+
 export default function EWalletConfirm() {
   const navigation = useNavigation();
   const route = useRoute();
@@ -50,6 +65,12 @@ export default function EWalletConfirm() {
   const accountName = params.accountName || "";
   const amount = params.amount || "0";
   const email = params.email || "";
+  const parsedAmount = parseFloat(amount);
+  const transactionFee = getEwalletTransactionFee(parsedAmount);
+  const netWithdrawalAmount = Math.max(
+    0,
+    (Number.isNaN(parsedAmount) ? 0 : parsedAmount) - transactionFee,
+  );
 
   React.useEffect(() => {
     (async () => {
@@ -277,19 +298,34 @@ export default function EWalletConfirm() {
               <View style={styles.leftBorder} />
               <View style={styles.detailContent}>
                 <Text style={styles.detailLabel}>Transaction Fee</Text>
-                <Text style={styles.detailValue}>₱25</Text>
+                <Text style={styles.detailValue}>
+                  {`PHP ${transactionFee.toLocaleString("en-US", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}`}
+                </Text>
               </View>
             </View>
+
           </View>
 
           {/* Withdrawal Amount Card */}
           <View style={styles.amountCard}>
             <Text style={styles.amountLabel}>{t("withdraw.amountLabel")}</Text>
             <View style={styles.amountBox}>
-              <Text style={styles.amountValue}>₱ {formatAmount(amount)}</Text>
+              <Text style={styles.amountValue}>
+                ₱{" "}
+                {netWithdrawalAmount.toLocaleString("en-US", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </Text>
             </View>
             <Text style={styles.feeNoteText}>
-              E-wallet transactions have a ₱25 transaction fee.
+              {`E-wallet transaction fee: PHP ${transactionFee.toLocaleString("en-US", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}.`}
             </Text>
           </View>
 
@@ -345,7 +381,6 @@ export default function EWalletConfirm() {
                     setPasscode(val.replace(/\D/g, "").slice(0, 4))
                   }
                   placeholder=""
-                  secureTextEntry
                   maxLength={4}
                   keyboardType="number-pad"
                   editable={!isSubmitting}

@@ -39,6 +39,21 @@ const PH_PHONE_PREFIX = "+63";
 const capitalizeWords = (text: string) =>
   text.replace(/\b\w/g, (char) => char.toUpperCase());
 
+const getEwalletTransactionFee = (amount: number) => {
+  if (Number.isNaN(amount) || amount <= 0) return 0;
+  if (amount <= 10000) return 25;
+  if (amount <= 20000) return 50;
+  if (amount <= 30000) return 75;
+  if (amount <= 40000) return 100;
+  if (amount <= 50000) return 125;
+  if (amount <= 60000) return 150;
+  if (amount <= 70000) return 175;
+  if (amount <= 80000) return 200;
+  if (amount <= 90000) return 225;
+  if (amount <= 100000) return 250;
+  return 275;
+};
+
 export default function EWalletWithdrawal() {
   const navigation = useNavigation();
   const { t } = useLanguage();
@@ -52,6 +67,12 @@ export default function EWalletWithdrawal() {
     null,
   );
   const [availableBalance, setAvailableBalance] = useState(0);
+  const parsedWithdrawalAmount = parseFloat(
+    unformatNumberString(withdrawalAmount).trim(),
+  );
+  const transactionFee = getEwalletTransactionFee(parsedWithdrawalAmount);
+  const hasValidAmount =
+    !Number.isNaN(parsedWithdrawalAmount) && parsedWithdrawalAmount > 0;
 
   const walletTypes = [
     {
@@ -394,9 +415,17 @@ export default function EWalletWithdrawal() {
               {errors.withdrawalAmount && (
                 <Text style={styles.errorText}>{errors.withdrawalAmount}</Text>
               )}
-              <Text style={styles.feeNoteText}>
-                E-wallet transactions have a ₱25 transaction fee.
-              </Text>
+              {hasValidAmount && (
+                <Text style={styles.feeNoteText}>
+                  {`E-wallet transaction fee: PHP ${transactionFee.toLocaleString(
+                    "en-US",
+                    {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    },
+                  )}.`}
+                </Text>
+              )}
             </View>
 
             {/* Email Address */}

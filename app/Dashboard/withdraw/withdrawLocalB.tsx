@@ -54,6 +54,14 @@ const BANK_OPTIONS = [
   OTHER_BANK_OPTION,
 ];
 
+const BANK_FEE_THRESHOLD = 100000;
+
+const getLocalBankTransactionFee = (amount: number, isUnionBank: boolean) => {
+  if (Number.isNaN(amount) || amount <= 0) return 0;
+  if (isUnionBank) return amount > BANK_FEE_THRESHOLD ? 250 : 0;
+  return amount > BANK_FEE_THRESHOLD ? 150 : 50;
+};
+
 export default function BankWithdrawal() {
   const navigation = useNavigation();
   const { t } = useLanguage();
@@ -74,6 +82,15 @@ export default function BankWithdrawal() {
   const normalizedBankName = bankName.trim().toUpperCase();
   const hasSelectedBank = normalizedBankName.length > 0;
   const isUnionBank = normalizedBankName === "UNIONBANK";
+  const parsedWithdrawalAmount = parseFloat(
+    unformatNumberString(withdrawalAmount).trim(),
+  );
+  const transactionFee = getLocalBankTransactionFee(
+    parsedWithdrawalAmount,
+    isUnionBank,
+  );
+  const hasValidAmount =
+    !Number.isNaN(parsedWithdrawalAmount) && parsedWithdrawalAmount > 0;
 
   const clearBankNameError = () => {
     if (errors.bankName) {
@@ -246,15 +263,58 @@ export default function BankWithdrawal() {
               </Text>
             </View>
 
-            {/* Banking Information Card */}
+            {/* Withdrawal Amount Card */}
             <View style={styles.formCard}>
               <View style={styles.leftBorder} />
 
               <View style={styles.cardHeader}>
-                <Text style={styles.cardTitle}>{t("withdraw.bankInfo")}</Text>
+                <Text style={styles.cardTitle}>{t("withdraw.details")}</Text>
                 <Text style={styles.cardSubtitle}>
-                  {t("withdraw.bankInfoSubtitle")}
+                  {t("withdraw.detailsSubtitle")}
                 </Text>
+              </View>
+
+              {/* Withdrawal Amount */}
+              <View style={styles.inputGroup}>
+                <View style={styles.labelWithIcon}>
+                  <MaterialCommunityIcons
+                    name="cash"
+                    size={18}
+                    color="#E25A17"
+                  />
+                  <Text style={styles.inputLabel}>
+                    {t("withdraw.amountLabel")}
+                  </Text>
+                </View>
+                <View
+                  style={[
+                    styles.amountInputContainer,
+                    errors.withdrawalAmount && styles.inputError,
+                  ]}
+                >
+                  <Text style={styles.currencySymbol}>₱</Text>
+                  <TextInput
+                    style={styles.amountInput}
+                    placeholder="0.00"
+                    placeholderTextColor="#CCC"
+                    value={withdrawalAmount}
+                    onChangeText={(text) => {
+                      setWithdrawalAmount(formatAmountWithCommas(text));
+                      if (errors.withdrawalAmount) {
+                        setErrors((prev) => {
+                          const { withdrawalAmount, ...rest } = prev;
+                          return rest;
+                        });
+                      }
+                    }}
+                    keyboardType="numeric"
+                  />
+                </View>
+                {errors.withdrawalAmount && (
+                  <Text style={styles.errorText}>
+                    {errors.withdrawalAmount}
+                  </Text>
+                )}
               </View>
 
               {/* Bank Name */}
@@ -317,22 +377,39 @@ export default function BankWithdrawal() {
                   <Text style={styles.checkboxLabel}>Others</Text>
                 </TouchableOpacity>
 
-                {hasSelectedBank && (
+                {hasSelectedBank && hasValidAmount && (
                   <Text
                     style={[
                       styles.processingFeeNote,
-                      isUnionBank ? styles.freeFeeText : styles.paidFeeText,
+                      transactionFee === 0
+                        ? styles.freeFeeText
+                        : styles.paidFeeText,
                     ]}
                   >
-                    {isUnionBank
+                    {transactionFee === 0
                       ? "UNIONBANK transaction is free."
-                      : "A processing fee of PHP 25 applies for this bank."}
+                      : `A processing fee of PHP ${transactionFee.toLocaleString("en-US", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })} applies for this bank.`}
                   </Text>
                 )}
 
                 {errors.bankName && (
                   <Text style={styles.errorText}>{errors.bankName}</Text>
                 )}
+              </View>
+            </View>
+
+            {/* Banking Information Card */}
+            <View style={styles.formCard}>
+              <View style={styles.leftBorder} />
+
+              <View style={styles.cardHeader}>
+                <Text style={styles.cardTitle}>{t("withdraw.bankInfo")}</Text>
+                <Text style={styles.cardSubtitle}>
+                  {t("withdraw.bankInfoSubtitle")}
+                </Text>
               </View>
 
               {/* Bank Account Number */}
@@ -419,68 +496,6 @@ export default function BankWithdrawal() {
                 />
                 {errors.branchName && (
                   <Text style={styles.errorText}>{errors.branchName}</Text>
-                )}
-              </View>
-            </View>
-
-            {/* Withdrawal Amount Card */}
-            <View style={styles.formCard}>
-              <View style={styles.leftBorder} />
-
-              <View style={styles.cardHeader}>
-                <Text style={styles.cardTitle}>{t("withdraw.details")}</Text>
-                <Text style={styles.cardSubtitle}>
-                  {t("withdraw.detailsSubtitle")}
-                </Text>
-                {hasSelectedBank && (
-                  <Text style={styles.detailsFeeText}>
-                    {isUnionBank
-                      ? "Transaction fee: Free"
-                      : "Transaction fee: PHP 25"}
-                  </Text>
-                )}
-              </View>
-
-              {/* Withdrawal Amount */}
-              <View style={styles.inputGroup}>
-                <View style={styles.labelWithIcon}>
-                  <MaterialCommunityIcons
-                    name="cash"
-                    size={18}
-                    color="#E25A17"
-                  />
-                  <Text style={styles.inputLabel}>
-                    {t("withdraw.amountLabel")}
-                  </Text>
-                </View>
-                <View
-                  style={[
-                    styles.amountInputContainer,
-                    errors.withdrawalAmount && styles.inputError,
-                  ]}
-                >
-                  <Text style={styles.currencySymbol}>₱</Text>
-                  <TextInput
-                    style={styles.amountInput}
-                    placeholder="0.00"
-                    placeholderTextColor="#CCC"
-                    value={withdrawalAmount}
-                    onChangeText={(text) => {
-                      setWithdrawalAmount(formatAmountWithCommas(text));
-                      if (errors.withdrawalAmount) {
-                        setErrors((prev) => {
-                          const { withdrawalAmount, ...rest } = prev;
-                          return rest;
-                        });
-                      }
-                    }}
-                    keyboardType="numeric"
-                  />
-                </View>
-                {errors.withdrawalAmount && (
-                  <Text style={styles.errorText}>
-                    {errors.withdrawalAmount}
-                  </Text>
                 )}
               </View>
 
