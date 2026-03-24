@@ -6,22 +6,56 @@ const THEME_COLOR = "#E15816";
 
 export interface TravelProtectReviewSubmitProps {
   emailAddress: string;
+  mobileDialCode: string;
   mobileNumber: string;
   landlineNumber: string;
   homeAddress: string;
+  gender: string;
+  dateOfBirthText: string;
+  civilStatus: string;
+  citizenship: string;
+  sourceOfFund: string;
+  grossMonthlyIncome: string;
+  grossMonthlyIncomeCurrency: string;
+  cashOnHand: string;
   destinationAddress: string;
+  checkInDateText: string;
+  duration: string;
+  departureTimeText: string;
+  arrivalTimeText: string;
   passportNumber: string;
+  purposeOfTravel: string;
+  governmentIdType: string;
+  governmentIdNumber: string;
 }
 
 export default function TravelProtectReviewSubmit({
   emailAddress,
+  mobileDialCode,
   mobileNumber,
   landlineNumber,
   homeAddress,
+  gender,
+  dateOfBirthText,
+  civilStatus,
+  citizenship,
+  sourceOfFund,
+  grossMonthlyIncome,
+  grossMonthlyIncomeCurrency,
+  cashOnHand,
   destinationAddress,
+  checkInDateText,
+  duration,
+  departureTimeText,
+  arrivalTimeText,
   passportNumber,
+  purposeOfTravel,
+  governmentIdType,
+  governmentIdNumber,
 }: TravelProtectReviewSubmitProps) {
   const { t } = useLanguage();
+  const valueOrNA = (value?: string) =>
+    value && value.trim().length > 0 ? value : (t("travel.na") || "N/A");
 
   return (
     <View style={styles.formCard}>
@@ -57,7 +91,9 @@ export default function TravelProtectReviewSubmit({
         </View>
         <View style={styles.reviewItem}>
           <Text style={styles.reviewLabel}>{t("travel.labelMobile")}</Text>
-          <Text style={styles.reviewValue}>{mobileNumber}</Text>
+          <Text style={styles.reviewValue}>
+            {valueOrNA(`${mobileDialCode}${mobileNumber}`)}
+          </Text>
         </View>
         {landlineNumber && (
           <View style={styles.reviewItem}>
@@ -68,6 +104,52 @@ export default function TravelProtectReviewSubmit({
         <View style={styles.reviewItem}>
           <Text style={styles.reviewLabel}>{t("travel.labelHomeAddress")}</Text>
           <Text style={styles.reviewValue}>{homeAddress}</Text>
+        </View>
+      </View>
+
+      {/* Personal Details Summary */}
+      <View style={styles.reviewSection}>
+        <View style={styles.reviewSectionHeader}>
+          <MaterialCommunityIcons name="account-details" size={18} color={THEME_COLOR} />
+          <Text style={styles.reviewSectionTitle}>Personal Details</Text>
+        </View>
+        <View style={styles.reviewItem}>
+          <Text style={styles.reviewLabel}>Gender</Text>
+          <Text style={styles.reviewValue}>{valueOrNA(gender)}</Text>
+        </View>
+        <View style={styles.reviewItem}>
+          <Text style={styles.reviewLabel}>Date of Birth</Text>
+          <Text style={styles.reviewValue}>{valueOrNA(dateOfBirthText)}</Text>
+        </View>
+        <View style={styles.reviewItem}>
+          <Text style={styles.reviewLabel}>Civil Status</Text>
+          <Text style={styles.reviewValue}>{valueOrNA(civilStatus)}</Text>
+        </View>
+        <View style={styles.reviewItem}>
+          <Text style={styles.reviewLabel}>Citizenship</Text>
+          <Text style={styles.reviewValue}>{valueOrNA(citizenship)}</Text>
+        </View>
+      </View>
+
+      {/* Financial Details Summary */}
+      <View style={styles.reviewSection}>
+        <View style={styles.reviewSectionHeader}>
+          <MaterialCommunityIcons name="wallet-outline" size={18} color={THEME_COLOR} />
+          <Text style={styles.reviewSectionTitle}>Financial Details</Text>
+        </View>
+        <View style={styles.reviewItem}>
+          <Text style={styles.reviewLabel}>Source of Fund</Text>
+          <Text style={styles.reviewValue}>{valueOrNA(sourceOfFund)}</Text>
+        </View>
+        <View style={styles.reviewItem}>
+          <Text style={styles.reviewLabel}>Gross Monthly Income</Text>
+          <Text style={styles.reviewValue}>
+            {valueOrNA(`${grossMonthlyIncome} ${grossMonthlyIncomeCurrency}`)}
+          </Text>
+        </View>
+        <View style={styles.reviewItem}>
+          <Text style={styles.reviewLabel}>Cash on Hand</Text>
+          <Text style={styles.reviewValue}>{valueOrNA(cashOnHand)}</Text>
         </View>
       </View>
 
@@ -85,15 +167,39 @@ export default function TravelProtectReviewSubmit({
         </View>
         <View style={styles.reviewItem}>
           <Text style={styles.reviewLabel}>{t("travel.labelDestination")}</Text>
-          <Text style={styles.reviewValue}>
-            {destinationAddress || t("travel.na")}
-          </Text>
+          <Text style={styles.reviewValue}>{valueOrNA(destinationAddress)}</Text>
+        </View>
+        <View style={styles.reviewItem}>
+          <Text style={styles.reviewLabel}>Check-in Date</Text>
+          <Text style={styles.reviewValue}>{valueOrNA(checkInDateText)}</Text>
+        </View>
+        <View style={styles.reviewItem}>
+          <Text style={styles.reviewLabel}>Duration</Text>
+          <Text style={styles.reviewValue}>{valueOrNA(duration)}</Text>
+        </View>
+        <View style={styles.reviewItem}>
+          <Text style={styles.reviewLabel}>Departure Time</Text>
+          <Text style={styles.reviewValue}>{valueOrNA(departureTimeText)}</Text>
+        </View>
+        <View style={styles.reviewItem}>
+          <Text style={styles.reviewLabel}>Arrival Time</Text>
+          <Text style={styles.reviewValue}>{valueOrNA(arrivalTimeText)}</Text>
         </View>
         <View style={styles.reviewItem}>
           <Text style={styles.reviewLabel}>{t("travel.labelPassport")}</Text>
-          <Text style={styles.reviewValue}>
-            {passportNumber || t("travel.na")}
-          </Text>
+          <Text style={styles.reviewValue}>{valueOrNA(passportNumber)}</Text>
+        </View>
+        <View style={styles.reviewItem}>
+          <Text style={styles.reviewLabel}>Purpose of Travel</Text>
+          <Text style={styles.reviewValue}>{valueOrNA(purposeOfTravel)}</Text>
+        </View>
+        <View style={styles.reviewItem}>
+          <Text style={styles.reviewLabel}>Government ID Type</Text>
+          <Text style={styles.reviewValue}>{valueOrNA(governmentIdType)}</Text>
+        </View>
+        <View style={styles.reviewItem}>
+          <Text style={styles.reviewLabel}>Government ID Number</Text>
+          <Text style={styles.reviewValue}>{valueOrNA(governmentIdNumber)}</Text>
         </View>
       </View>
 

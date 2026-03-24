@@ -133,7 +133,7 @@ export default function EwalletService() {
           ]}
         >
           <View style={styles.stepRow}>
-            {[1, 2, 3, 4, 5].map((step) => (
+            {[1, 2, 3, 4, 5, 6].map((step) => (
               <React.Fragment key={step}>
                 <View
                   style={[
@@ -152,7 +152,7 @@ export default function EwalletService() {
                     {step}
                   </Text>
                 </View>
-                {step < 5 && (
+                {step < 6 && (
                   <View style={[styles.stepLine, isXSScreen && styles.stepLineXS]} />
                 )}
               </React.Fragment>

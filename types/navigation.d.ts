@@ -11,6 +11,7 @@ export interface EwalletApplicationData {
   contactInfo?: { email: string; phone: string; landline?: string };
   personalInfo?: { gender: string; dateOfBirth: string; civilStatus: string; citizenship: string };
   addressInfo?: { completeAddress: string };
+  financialInfo?: { sourceOfFund: string; grossMonthlyIncome: string; grossMonthlyIncomeCurrency: string };
 }
 
 export type NavProp = {
@@ -67,6 +68,7 @@ export type RootStackParamList = {
   EwalletPersonalInfo: { selectedProvider: string; applicationData: EwalletApplicationData };
   EwalletAddressInfo: { selectedProvider: string; applicationData: EwalletApplicationData };
   EwalletFinancialInfo: { selectedProvider: string; applicationData: EwalletApplicationData };
+  EwalletReview: { selectedProvider: string; applicationData: EwalletApplicationData };
   Stockholder: undefined;
   StockBuy: undefined;
   StockSell: { stockCount: number; totalPortfolioValue: number };

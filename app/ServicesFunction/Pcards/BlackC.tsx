@@ -474,27 +474,27 @@ export default function BlackC() {
 
                 <Text style={styles.inputLabel}>{t("pcard.fullName")}</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, styles.readOnlyInput]}
                   value={applyName}
-                  onChangeText={setApplyName}
                   placeholder={t("pcard.fullNamePlaceholder")}
                   placeholderTextColor="#9CA3AF"
                   autoCapitalize="words"
                   autoCorrect={false}
                   textContentType="name"
+                  editable={false}
                 />
 
                 <Text style={styles.inputLabel}>{t("pcard.email")}</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, styles.readOnlyInput]}
                   value={applyEmail}
-                  onChangeText={setApplyEmail}
                   placeholder={t("auth.emailPlaceholder")}
                   placeholderTextColor="#9CA3AF"
                   autoCapitalize="none"
                   autoCorrect={false}
                   keyboardType="email-address"
                   textContentType="emailAddress"
+                  editable={false}
                 />
 
                 <Text style={styles.inputLabel}>{t("pcard.phone")}</Text>
@@ -854,6 +854,11 @@ const styles = StyleSheet.create({
     color: "#111827",
     backgroundColor: "#F9FAFB",
     marginBottom: 4,
+  },
+  readOnlyInput: {
+    backgroundColor: "#F3F4F6",
+    borderColor: "#D1D5DB",
+    color: "#6B7280",
   },
   modalActions: {
     flexDirection: "row",

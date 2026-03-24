@@ -241,6 +241,15 @@ function ForgotPasswordInputModal({
   const [phase, setPhase] = useState<'input' | 'sending' | 'sent' | 'error'>('input');
   const [errorMsg, setErrorMsg] = useState('');
 
+  const mapForgotPasswordError = (message?: string) => {
+    if (!message) return "";
+    const normalized = message.toLowerCase();
+    if (normalized.includes("must be an email")) {
+      return "please enter a valid email";
+    }
+    return message;
+  };
+
   // Sync initialEmail when modal opens
   useEffect(() => {
     if (visible) {
@@ -274,7 +283,7 @@ function ForgotPasswordInputModal({
       if (result.success) {
         setPhase('sent');
       } else {
-        setErrorMsg(result.error || t("login.resetEmailFailed"));
+        setErrorMsg(mapForgotPasswordError(result.error) || t("login.resetEmailFailed"));
         setPhase('error');
       }
     } catch {
