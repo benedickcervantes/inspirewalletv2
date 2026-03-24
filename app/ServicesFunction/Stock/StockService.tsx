@@ -327,9 +327,7 @@ export default function StockService() {
             <Ionicons name="arrow-back" size={22} color="#FFFFFF" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{t("stock.dashboardHeader")}</Text>
-          <TouchableOpacity style={styles.refreshButton} onPress={onRefresh}>
-            <Ionicons name="refresh" size={22} color="#FFFFFF" />
-          </TouchableOpacity>
+          <View style={styles.headerSpacer} />
         </LinearGradient>
 
         {/* Tab Bar — responsive for long translations (KR/JA/AR) on small screens */}
@@ -369,7 +367,6 @@ export default function StockService() {
                         minimumFontScale: isTinyStockTabs ? 0.68 : 0.78,
                       }
                     : {})}
-                  textAlign="center"
                 >
                   {tab === "portfolio"
                     ? t("stock.portfolio")
@@ -408,7 +405,6 @@ export default function StockService() {
                         minimumFontScale: isTinyStockTabs ? 0.68 : 0.78,
                       }
                     : {})}
-                  textAlign="center"
                 >
                   {tab === "portfolio"
                     ? t("stock.portfolio")
@@ -919,11 +915,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  refreshButton: {
+  headerSpacer: {
     width: 40,
     height: 40,
-    justifyContent: "center",
-    alignItems: "center",
   },
   headerTitle: {
     fontSize: 18,
