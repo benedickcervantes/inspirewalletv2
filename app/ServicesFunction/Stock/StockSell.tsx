@@ -211,9 +211,6 @@ export default function StockSell() {
           >
             {t("stock.stockSellRequest")}
           </Text>
-          <TouchableOpacity style={styles.refreshButton}>
-            <Ionicons name="refresh" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
         </LinearGradient>
 
         <View
@@ -693,12 +690,6 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     flex: 1,
     textAlign: "center",
-  },
-  refreshButton: {
-    width: 40,
-    height: 40,
-    justifyContent: "center",
-    alignItems: "center",
   },
   progressContainer: {
     paddingVertical: 20,
