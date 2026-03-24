@@ -114,7 +114,7 @@ export default function EwalletAddressInfo() {
           {/* Progress Stepper - 5 steps, Steps 1-3 complete, Step 4 active */}
           <View style={styles.progressContainer}>
             <View style={styles.stepRow}>
-              {[1, 2, 3, 4, 5].map((step) => (
+              {[1, 2, 3, 4, 5, 6].map((step) => (
                 <React.Fragment key={step}>
                   <View
                     style={[
@@ -136,7 +136,7 @@ export default function EwalletAddressInfo() {
                       </Text>
                     )}
                   </View>
-                  {step < 5 && (
+                  {step < 6 && (
                     <View
                       style={[
                         styles.stepLine,

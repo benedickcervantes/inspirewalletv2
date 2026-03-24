@@ -1,5 +1,6 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { useState } from "react";
+import { Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useLanguage } from "../../../context/LanguageContext";
 import { useResponsive } from "../../../utils/responsive";
 
@@ -7,31 +8,38 @@ const THEME_COLOR = "#E15816";
 
 export interface TravelRequiredDocuProps {
   passportPhoto: string | null;
-  governmentId: string | null;
+  governmentIdFront: string | null;
+  governmentIdBack: string | null;
   governmentIdType: string;
   governmentIdNumber: string;
   passportPhotoError?: string;
-  governmentIdError?: string;
+  governmentIdFrontError?: string;
+  governmentIdBackError?: string;
   onPickPassportPhoto: () => void;
-  onPickGovernmentId: () => void;
+  onPickGovernmentIdFront: () => void;
+  onPickGovernmentIdBack: () => void;
   onGovernmentIdTypeChange: (value: string) => void;
   onGovernmentIdNumberChange: (value: string) => void;
 }
 
 export default function TravelRequiredDocu({
   passportPhoto,
-  governmentId,
+  governmentIdFront,
+  governmentIdBack,
   governmentIdType,
   governmentIdNumber,
   passportPhotoError,
-  governmentIdError,
+  governmentIdFrontError,
+  governmentIdBackError,
   onPickPassportPhoto,
-  onPickGovernmentId,
+  onPickGovernmentIdFront,
+  onPickGovernmentIdBack,
   onGovernmentIdTypeChange,
   onGovernmentIdNumberChange,
 }: TravelRequiredDocuProps) {
   const { t } = useLanguage();
   const { isSmallScreen } = useResponsive();
+  const [showIdTypeModal, setShowIdTypeModal] = useState(false);
 
   const idTypeOptions = [
     { label: t("banking.idNationalId"), value: "National_ID" },
@@ -39,6 +47,12 @@ export default function TravelRequiredDocu({
     { label: t("banking.idPassport"), value: "Passport_ID" },
     { label: t("kyc.other"), value: "Other" },
   ];
+  const selectedIdTypeLabel =
+    idTypeOptions.find((option) => option.value === governmentIdType)?.label ||
+    t("banking.selectIdType");
+  const requiresFrontAndBack = ["National_ID", "Driver_License"].includes(
+    governmentIdType,
+  );
 
   return (
     <View style={[styles.formCard, isSmallScreen && styles.formCardSmall]}>
@@ -103,32 +117,20 @@ export default function TravelRequiredDocu({
         <Text style={styles.inputLabel}>
           {t("travel.governmentIdType")} <Text style={styles.required}>*</Text>
         </Text>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.idTypeContainer}
+        <TouchableOpacity
+          style={styles.dropdownButton}
+          onPress={() => setShowIdTypeModal(true)}
         >
-          {idTypeOptions.map((option) => (
-            <TouchableOpacity
-              key={option.value}
-              style={[
-                styles.idTypeButton,
-                governmentIdType === option.value && styles.idTypeButtonActive,
-              ]}
-              onPress={() => onGovernmentIdTypeChange(option.value)}
-            >
-              <Text
-                style={[
-                  styles.idTypeButtonText,
-                  governmentIdType === option.value &&
-                    styles.idTypeButtonTextActive,
-                ]}
-              >
-                {option.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+          <Text
+            style={[
+              styles.dropdownText,
+              !governmentIdType && styles.dropdownPlaceholder,
+            ]}
+          >
+            {selectedIdTypeLabel}
+          </Text>
+          <MaterialCommunityIcons name="chevron-down" size={22} color="#9E9E9E" />
+        </TouchableOpacity>
       </View>
 
       {/* Government ID Number */}
@@ -150,37 +152,115 @@ export default function TravelRequiredDocu({
         <Text style={styles.inputLabel}>
           {t("travel.governmentIdPhoto")} <Text style={styles.required}>*</Text>
         </Text>
-        <TouchableOpacity
-          style={[
-            styles.uploadBox,
-            governmentId && styles.uploadBoxSuccess,
-            governmentIdError ? styles.uploadBoxError : null,
-          ]}
-          onPress={onPickGovernmentId}
-        >
-          <MaterialCommunityIcons
-            name="card-account-details"
-            size={40}
-            color={governmentId ? "#10B981" : THEME_COLOR}
-          />
-          <Text
+
+        <View style={styles.idUploadRow}>
+          <TouchableOpacity
             style={[
-              styles.uploadText,
-              governmentId && styles.uploadTextSuccess,
+              styles.uploadBoxHalf,
+              governmentIdFront && styles.uploadBoxSuccess,
+              governmentIdFrontError ? styles.uploadBoxError : null,
             ]}
+            onPress={onPickGovernmentIdFront}
           >
-            {governmentId
-              ? t("travel.governmentIdUploaded")
-              : t("travel.uploadGovernmentId")}
-          </Text>
-          <Text style={styles.uploadSubtext}>
-            {t("travel.tapToUploadGovId")}
-          </Text>
-        </TouchableOpacity>
-        {governmentIdError ? (
-          <Text style={styles.errorText}>{governmentIdError}</Text>
+            <MaterialCommunityIcons
+              name="card-account-details"
+              size={32}
+              color={governmentIdFront ? "#10B981" : THEME_COLOR}
+            />
+            <Text
+              style={[
+                styles.uploadTextSmall,
+                governmentIdFront && styles.uploadTextSuccess,
+              ]}
+            >
+              {t("kyc.govIdFront")}
+            </Text>
+            <Text style={styles.uploadSubtextSmall}>
+              {governmentIdFront ? t("travel.passportUploaded") : t("travel.tapToSelectImage")}
+            </Text>
+          </TouchableOpacity>
+
+          {requiresFrontAndBack ? (
+            <TouchableOpacity
+              style={[
+                styles.uploadBoxHalf,
+                governmentIdBack && styles.uploadBoxSuccess,
+                governmentIdBackError ? styles.uploadBoxError : null,
+              ]}
+              onPress={onPickGovernmentIdBack}
+            >
+              <MaterialCommunityIcons
+                name="card-account-details-outline"
+                size={32}
+                color={governmentIdBack ? "#10B981" : THEME_COLOR}
+              />
+              <Text
+                style={[
+                  styles.uploadTextSmall,
+                  governmentIdBack && styles.uploadTextSuccess,
+                ]}
+              >
+                {t("kyc.govIdBack")}
+              </Text>
+              <Text style={styles.uploadSubtextSmall}>
+                {governmentIdBack ? t("travel.passportUploaded") : t("travel.tapToSelectImage")}
+              </Text>
+            </TouchableOpacity>
+          ) : null}
+        </View>
+
+        {governmentIdFrontError ? (
+          <Text style={styles.errorText}>{governmentIdFrontError}</Text>
+        ) : null}
+        {governmentIdBackError ? (
+          <Text style={styles.errorText}>{governmentIdBackError}</Text>
         ) : null}
       </View>
+
+      <Modal
+        transparent
+        animationType="fade"
+        visible={showIdTypeModal}
+        onRequestClose={() => setShowIdTypeModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <TouchableOpacity
+            style={styles.modalBackdrop}
+            activeOpacity={1}
+            onPress={() => setShowIdTypeModal(false)}
+          />
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>{t("banking.selectIdType")}</Text>
+            <ScrollView style={styles.modalOptionsList} showsVerticalScrollIndicator={false}>
+              {idTypeOptions.map((option) => (
+                <TouchableOpacity
+                  key={option.value}
+                  style={[
+                    styles.modalOption,
+                    governmentIdType === option.value && styles.modalOptionActive,
+                  ]}
+                  onPress={() => {
+                    onGovernmentIdTypeChange(option.value);
+                    setShowIdTypeModal(false);
+                  }}
+                >
+                  <Text
+                    style={[
+                      styles.modalOptionText,
+                      governmentIdType === option.value && styles.modalOptionTextActive,
+                    ]}
+                  >
+                    {option.label}
+                  </Text>
+                  {governmentIdType === option.value ? (
+                    <MaterialCommunityIcons name="check-circle" size={20} color={THEME_COLOR} />
+                  ) : null}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -245,29 +325,27 @@ const styles = StyleSheet.create({
     backgroundColor: "#E0E0E0",
     marginVertical: 16,
   },
-  idTypeContainer: {
-    marginBottom: 8,
-  },
-  idTypeButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 8,
-    borderWidth: 1,
+  dropdownButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderWidth: 1.5,
     borderColor: "#E0E0E0",
-    backgroundColor: "#F9F9F9",
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    backgroundColor: "#FFFFFF",
+  },
+  dropdownText: {
+    fontSize: 14,
+    color: "#111111",
+    fontWeight: "500",
+    flex: 1,
     marginRight: 8,
   },
-  idTypeButtonActive: {
-    backgroundColor: THEME_COLOR,
-    borderColor: THEME_COLOR,
-  },
-  idTypeButtonText: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: "#666666",
-  },
-  idTypeButtonTextActive: {
-    color: "#FFFFFF",
+  dropdownPlaceholder: {
+    color: "#9E9E9E",
+    fontWeight: "400",
   },
   textInput: {
     borderWidth: 1,
@@ -288,6 +366,36 @@ const styles = StyleSheet.create({
     paddingVertical: 32,
     alignItems: "center",
     justifyContent: "center",
+  },
+  idUploadRow: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  uploadBoxHalf: {
+    flex: 1,
+    backgroundColor: "#F9F9F9",
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: "#E0E0E0",
+    borderStyle: "dashed",
+    paddingVertical: 20,
+    paddingHorizontal: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 140,
+  },
+  uploadTextSmall: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: THEME_COLOR,
+    marginTop: 10,
+    textAlign: "center",
+  },
+  uploadSubtextSmall: {
+    fontSize: 11,
+    color: "#9E9E9E",
+    marginTop: 4,
+    textAlign: "center",
   },
   uploadBoxSuccess: {
     borderColor: "#10B981",
@@ -317,5 +425,56 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 4,
     marginLeft: 4,
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(0,0,0,0.35)",
+  },
+  modalBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  modalCard: {
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 22,
+    borderTopRightRadius: 22,
+    paddingHorizontal: 20,
+    paddingTop: 18,
+    paddingBottom: 28,
+    maxHeight: "65%",
+  },
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#111111",
+    marginBottom: 14,
+  },
+  modalOptionsList: {
+    width: "100%",
+  },
+  modalOption: {
+    minHeight: 48,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#ECECEC",
+    backgroundColor: "#FAFAFA",
+    marginBottom: 10,
+    paddingHorizontal: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  modalOptionActive: {
+    borderColor: "rgba(225, 88, 22, 0.4)",
+    backgroundColor: "rgba(225, 88, 22, 0.08)",
+  },
+  modalOptionText: {
+    fontSize: 14,
+    color: "#333333",
+    fontWeight: "500",
+  },
+  modalOptionTextActive: {
+    color: THEME_COLOR,
+    fontWeight: "700",
   },
 });

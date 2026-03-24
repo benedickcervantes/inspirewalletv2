@@ -74,6 +74,7 @@ import { UnreadNotificationsProvider } from './context/UnreadNotificationsContex
 import type { RootStackParamList } from './types/navigation';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
+const EwalletReview = require('./app/ServicesFunction/E-Wallet/EwalletReview').default;
 
 export default function App() {
   return (
@@ -140,6 +141,7 @@ export default function App() {
               <Stack.Screen name="EwalletPersonalInfo" component={EwalletPersonalInfo} />
               <Stack.Screen name="EwalletAddressInfo" component={EwalletAddressInfo} />
               <Stack.Screen name="EwalletFinancialInfo" component={EwalletFinancialInfo} />
+              <Stack.Screen name="EwalletReview" component={EwalletReview} />
               <Stack.Screen name="Stockholder" component={StockService} />
               <Stack.Screen name="StockBuy" component={StockBuy} />
               <Stack.Screen name="StockSell" component={StockSell} />

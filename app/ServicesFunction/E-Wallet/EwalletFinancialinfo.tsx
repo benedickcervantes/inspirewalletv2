@@ -1,12 +1,10 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { RouteProp } from "@react-navigation/native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useState } from "react";
 import {
-    Alert,
     KeyboardAvoidingView,
     Modal,
     Platform,
@@ -19,9 +17,8 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
-import { submitEwalletApplication } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
-import type { RootStackParamList } from "../../../types/navigation";
+import type { EwalletApplicationData, RootStackParamList } from "../../../types/navigation";
 import {
     formatAmountWithCommas,
     unformatNumberString,
@@ -63,10 +60,7 @@ export default function EwalletFinancialInfo() {
   const [errors, setErrors] = useState<{ source?: string; income?: string; currency?: string }>({});
   const [showSourceOfFundModal, setShowSourceOfFundModal] = useState(false);
   const [showCurrencyModal, setShowCurrencyModal] = useState(false);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showExitConfirmModal, setShowExitConfirmModal] = useState(false);
-
-  const [loading, setLoading] = useState(false);
 
   const currentStep = 5;
 
@@ -83,7 +77,7 @@ export default function EwalletFinancialInfo() {
     navigation.navigate("Main");
   };
 
-  const handleSubmit = async () => {
+  const handleNext = () => {
     const newErrors: typeof errors = {};
     if (!sourceOfFund.trim()) newErrors.source = t("ewallet.sourceOfFundRequired");
     if (!grossMonthlyIncome.trim()) {
@@ -102,39 +96,15 @@ export default function EwalletFinancialInfo() {
     }
 
     setErrors({});
-
-    setLoading(true);
-    try {
-      const token = await AsyncStorage.getItem("access_token");
-      if (!token) {
-        Alert.alert(t("common.error"), t("common.authTokenNotFound"));
-        setLoading(false);
-        return;
-      }
-
-      const payload = {
-        provider: selectedProvider,
-        sourceOfFund: sourceOfFund,
+    const applicationData: EwalletApplicationData = {
+      ...(route.params?.applicationData || {}),
+      financialInfo: {
+        sourceOfFund: sourceOfFund.trim(),
         grossMonthlyIncome: unformatNumberString(grossMonthlyIncome),
         grossMonthlyIncomeCurrency: grossMonthlyIncomeCurrency,
-        personalInfo: route.params?.applicationData?.personalInfo,
-        contactInfo: route.params?.applicationData?.contactInfo,
-        addressInfo: route.params?.applicationData?.addressInfo,
-      };
-
-      const result = await submitEwalletApplication(token, payload);
-
-      if (result.success) {
-        setShowSuccessModal(true);
-      } else {
-        Alert.alert(t("common.error"), result.error || t("travel.submitFailed"));
-      }
-    } catch (error: any) {
-      console.error("[EwalletFinancialinfo] Submit error:", error);
-      Alert.alert(t("common.error"), error.message || "An unexpected error occurred.");
-    } finally {
-      setLoading(false);
-    }
+      },
+    };
+    navigation.navigate("EwalletReview", { selectedProvider, applicationData });
   };
 
   return (
@@ -175,10 +145,10 @@ export default function EwalletFinancialInfo() {
             </View>
           </View>
 
-          {/* Progress Stepper - 5 steps, Steps 1-4 complete, Step 5 active */}
+          {/* Progress Stepper - 6 steps, Steps 1-4 complete, Step 5 active */}
           <View style={styles.progressContainer}>
             <View style={styles.stepRow}>
-              {[1, 2, 3, 4, 5].map((step) => (
+              {[1, 2, 3, 4, 5, 6].map((step) => (
                 <React.Fragment key={step}>
                   <View
                     style={[
@@ -200,7 +170,7 @@ export default function EwalletFinancialInfo() {
                       </Text>
                     )}
                   </View>
-                  {step < 5 && (
+                  {step < 6 && (
                     <View
                       style={[
                         styles.stepLine,
@@ -288,6 +258,7 @@ export default function EwalletFinancialInfo() {
                 {errors.currency && <Text style={styles.errorText}>{errors.currency}</Text>}
                 {errors.income && <Text style={styles.errorText}>{errors.income}</Text>}
               </View>
+
             </View>
 
             {/* Info Box */}
@@ -303,7 +274,7 @@ export default function EwalletFinancialInfo() {
             <View style={styles.bottomSpacing} />
           </ScrollView>
 
-          {/* Back & Submit Buttons */}
+          {/* Back & Next Buttons */}
           <View style={styles.footer}>
             <View style={styles.buttonRow}>
               <TouchableOpacity
@@ -313,18 +284,14 @@ export default function EwalletFinancialInfo() {
               >
                 <Text style={styles.backButtonText}>{t("ewallet.back")}</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.submitButton}
-                onPress={handleSubmit}
-                activeOpacity={0.9}
-              >
+              <TouchableOpacity style={styles.submitButton} onPress={handleNext} activeOpacity={0.9}>
                 <LinearGradient
                   colors={ORANGE_GRADIENT}
                   style={styles.submitGradient}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                 >
-                  <Text style={styles.submitButtonText}>{t("ewallet.submit")}</Text>
+                  <Text style={styles.submitButtonText}>{t("ewallet.next")}</Text>
                 </LinearGradient>
               </TouchableOpacity>
             </View>
@@ -408,53 +375,6 @@ export default function EwalletFinancialInfo() {
                 </TouchableOpacity>
               ))}
             </ScrollView>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Success Modal */}
-      <Modal
-        visible={showSuccessModal}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => {
-          setShowSuccessModal(false);
-          navigation.reset({
-            index: 0,
-            routes: [{ name: "Main" as never }],
-          });
-        }}
-      >
-        <View style={styles.successModalOverlay}>
-          <View style={styles.successModalContent}>
-            <LinearGradient
-              colors={["#E15816", "#F48F38"]}
-              style={styles.successModalGradient}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-            >
-              <View style={styles.successIconContainer}>
-                <Ionicons name="checkmark-circle" size={64} color="#FFFFFF" />
-              </View>
-              <Text style={styles.successTitle}>
-                {t("common.success") || "Success"}
-              </Text>
-              <Text style={styles.successMessage}>
-                {"Your application has been submitted successfully."}
-              </Text>
-              <TouchableOpacity
-                style={styles.successButton}
-                onPress={() => {
-                  setShowSuccessModal(false);
-                  navigation.reset({
-                    index: 0,
-                    routes: [{ name: "Main" as never }],
-                  });
-                }}
-              >
-                <Text style={styles.successButtonText}>{t("common.ok")}</Text>
-              </TouchableOpacity>
-            </LinearGradient>
           </View>
         </View>
       </Modal>
@@ -869,17 +789,6 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     marginBottom: 24,
     opacity: 0.95,
-  },
-  successButton: {
-    backgroundColor: "#FFFFFF",
-    paddingVertical: 12,
-    paddingHorizontal: 32,
-    borderRadius: 8,
-  },
-  successButtonText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#E15816",
   },
   exitModalOverlay: {
     flex: 1,
