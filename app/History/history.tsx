@@ -5,16 +5,16 @@ import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-    ActivityIndicator,
-    Modal,
-    Platform,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    useWindowDimensions,
-    View,
+  ActivityIndicator,
+  Modal,
+  Platform,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Path } from "react-native-svg";
@@ -611,6 +611,26 @@ export default function HistoryScreen() {
       setSelectedTransaction(tx);
       setShowDetailModal(true);
     }
+  };
+
+  const handleViewReceipt = () => {
+    if (!selectedTransaction) return;
+    setShowDetailModal(false);
+    setSelectedTransaction(null);
+    const rawType = String(selectedTransaction.type ?? "").trim().toLowerCase();
+    let receiptType = "Deposit";
+    if (rawType.includes("transfer")) receiptType = "Transfer";
+    else if (rawType.includes("withdraw")) receiptType = "Withdrawal";
+
+    (navigation as unknown as NavProp).navigate("depositReceipt", {
+      transactionId: selectedTransaction.id || t("investment.pending"),
+      amount: String(selectedTransaction.amount ?? 0),
+      currency: "PHP",
+      type: receiptType,
+      successMessage: getTransactionDisplayName(selectedTransaction),
+      date: formatDateTime(selectedTransaction) || new Date().toLocaleString(),
+      source: "history",
+    });
   };
 
   const handleLoadMore = () => {
@@ -1434,6 +1454,16 @@ export default function HistoryScreen() {
               </View>
 
               <TouchableOpacity
+                style={styles.detailModalViewReceiptButton}
+                onPress={handleViewReceipt}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.detailModalViewReceiptButtonText}>
+                  {t("View Receipt") ?? "View Receipt"}
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
                 style={styles.detailModalCloseButton}
                 onPress={() => setShowDetailModal(false)}
                 activeOpacity={0.8}
@@ -1990,12 +2020,26 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: "center",
-    marginTop: 16,
+    marginTop: 10,
     marginBottom: 24,
   },
   detailModalCloseButtonText: {
     fontSize: 16,
     fontWeight: "700",
     color: "#FFFFFF",
+  },
+  detailModalViewReceiptButton: {
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1.5,
+    borderColor: "#E15816",
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: "center",
+    marginTop: 16,
+  },
+  detailModalViewReceiptButtonText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#E15816",
   },
 });

@@ -31,6 +31,7 @@ export default function DepositReceipt() {
     type?: string; 
     date?: string;
     successMessage?: string;
+    source?: string;
   };
 
   const {
@@ -42,6 +43,7 @@ export default function DepositReceipt() {
     type = "Deposit",
     date = new Date().toLocaleString(),
     successMessage,
+    source,
   } = params;
 
   const languageCode = getLanguageCode(language);
@@ -69,8 +71,16 @@ export default function DepositReceipt() {
   };
 
   const handleClose = () => {
-    // Navigate back to main Dashboard
-    navigation.navigate("Main"); 
+    if (source === "history") {
+      if (navigation.canGoBack?.()) {
+        navigation.goBack();
+      } else {
+        navigation.navigate("history");
+      }
+      return;
+    }
+    // Navigate back to main Dashboard for non-history flows
+    navigation.navigate("Main");
   };
 
   const logoWidth = Math.min(220, width * 0.55);
@@ -103,11 +113,11 @@ export default function DepositReceipt() {
           showsVerticalScrollIndicator={false}
         >
         <View style={[styles.content, isSmallScreen && styles.contentSmall]}>
-          <Image
-            source={require("../../../assets/images/InpireLogo.png")}
-            style={[styles.logo, { width: logoWidth, height: logoHeight }]}
-            resizeMode="contain"
-          />
+            <Image
+              source={require("../../../assets/images/InpireLogo.png")}
+              style={[styles.logo, { width: logoWidth, height: logoHeight }]}
+              resizeMode="contain"
+            />
 
           <View style={styles.successIconContainer}>
             <Ionicons name="checkmark-circle" size={isSmallScreen ? 68 : 80} color="#FFFFFF" />
