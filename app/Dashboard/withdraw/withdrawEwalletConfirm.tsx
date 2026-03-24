@@ -345,7 +345,6 @@ export default function EWalletConfirm() {
                     setPasscode(val.replace(/\D/g, "").slice(0, 4))
                   }
                   placeholder=""
-                  secureTextEntry
                   maxLength={4}
                   keyboardType="number-pad"
                   editable={!isSubmitting}
