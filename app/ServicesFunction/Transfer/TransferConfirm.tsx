@@ -6,25 +6,26 @@ import { LinearGradient } from "expo-linear-gradient";
 import * as Sharing from "expo-sharing";
 import { useEffect, useRef, useState } from "react";
 import {
-    ActivityIndicator,
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    ScrollView,
-    Share,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Modal,
+  NativeModules,
+  Platform,
+  ScrollView,
+  Share,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import QRCode from "react-native-qrcode-svg";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
-    createBeneficiary,
-    getMe,
-    getOrCreateMainWallet,
-    submitTransfer,
+  createBeneficiary,
+  getMe,
+  getOrCreateMainWallet,
+  submitTransfer,
 } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
 import Loader from "../../Loader/Loader";
@@ -38,6 +39,8 @@ const width = (() => {
     return 375;
   }
 })();
+
+const transferSuccessSound = require("../../../assets/sounds/pay_now.wav");
 
 // Reusable function to get user initials
 export const getUserInitials = (name: string) => {
@@ -80,9 +83,20 @@ export default function TransferConfirm() {
       const name = (recipient.name || "").trim() || t("common.unknown");
 
       const raw = await AsyncStorage.getItem("saved_accounts");
-      const existing = raw ? (JSON.parse(raw) as Array<{ id: string; name: string; accountNumber: string }>) : [];
-      const without = existing.filter((x) => String(x.accountNumber || "").replace(/\D/g, "") !== acct);
-      const next = [{ id: acct, name, accountNumber: acct }, ...without].slice(0, 20);
+      const existing = raw
+        ? (JSON.parse(raw) as {
+            id: string;
+            name: string;
+            accountNumber: string;
+          }[])
+        : [];
+      const without = existing.filter(
+        (x) => String(x.accountNumber || "").replace(/\D/g, "") !== acct,
+      );
+      const next = [{ id: acct, name, accountNumber: acct }, ...without].slice(
+        0,
+        20,
+      );
       await AsyncStorage.setItem("saved_accounts", JSON.stringify(next));
     } catch (e) {
       console.warn("Failed to save recent recipient:", e);
@@ -103,6 +117,57 @@ export default function TransferConfirm() {
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [showContactsModal, setShowContactsModal] = useState(false);
   const qrRef = useRef<any | null>(null);
+  const transferSuccessSoundRef = useRef<{
+    unloadAsync: () => Promise<unknown>;
+    replayAsync: () => Promise<unknown>;
+    setOnPlaybackStatusUpdate: (callback: ((status: any) => void) | null) => void;
+  } | null>(null);
+
+  const playTransferSuccessSound = async () => {
+    try {
+      const hasNativeExpoAv = Boolean(
+        (NativeModules as Record<string, unknown>)?.ExponentAV,
+      );
+      if (!hasNativeExpoAv) {
+        return;
+      }
+
+      const av = await import("expo-av");
+      const Audio = av.Audio;
+      if (!Audio) {
+        return;
+      }
+      await Audio.setAudioModeAsync({
+        playsInSilentModeIOS: true,
+        shouldDuckAndroid: true,
+        playThroughEarpieceAndroid: false,
+        staysActiveInBackground: false,
+      });
+      if (transferSuccessSoundRef.current) {
+        await transferSuccessSoundRef.current.unloadAsync();
+        transferSuccessSoundRef.current = null;
+      }
+      const { sound } = await Audio.Sound.createAsync(transferSuccessSound, {
+        shouldPlay: false,
+        volume: 1.0,
+      });
+      transferSuccessSoundRef.current = sound;
+      sound.setOnPlaybackStatusUpdate((status) => {
+        if (status.isLoaded && status.didJustFinish) {
+          sound.unloadAsync().catch(() => {
+            // no-op
+          });
+          if (transferSuccessSoundRef.current === sound) {
+            transferSuccessSoundRef.current = null;
+          }
+        }
+      });
+      await sound.replayAsync();
+      await new Promise((resolve) => setTimeout(resolve, 220));
+    } catch {
+      // Ignore optional sound failures to keep transfer UX uninterrupted.
+    }
+  };
 
   useEffect(() => {
     loadBalance();
@@ -113,9 +178,19 @@ export default function TransferConfirm() {
         try {
           const user = JSON.parse(userJson) as { hasPasscode?: boolean };
           setHasPasscode(!!user?.hasPasscode);
-        } catch (_) { }
+        } catch (_) {}
       }
     })();
+
+    return () => {
+      if (transferSuccessSoundRef.current) {
+        transferSuccessSoundRef.current.setOnPlaybackStatusUpdate(null);
+        transferSuccessSoundRef.current.unloadAsync().catch(() => {
+          // no-op
+        });
+        transferSuccessSoundRef.current = null;
+      }
+    };
   }, []);
 
   const refreshHasPasscode = async (): Promise<boolean> => {
@@ -139,7 +214,11 @@ export default function TransferConfirm() {
 
   const isPasscodeRequiredError = (message: string) => {
     const m = (message || "").toLowerCase();
-    return m.includes("passcode is required") || m.includes("set a passcode") || m.includes("provide your current passcode");
+    return (
+      m.includes("passcode is required") ||
+      m.includes("set a passcode") ||
+      m.includes("provide your current passcode")
+    );
   };
 
   const loadBalance = async () => {
@@ -150,8 +229,14 @@ export default function TransferConfirm() {
       if (!success || !wallet) return;
       if (balanceType === "agent") {
         const agentBal =
-          (wallet as { agentCommission?: number | string })?.agentCommission != null
-            ? parseFloat(String((wallet as { agentCommission?: number | string }).agentCommission))
+          (wallet as { agentCommission?: number | string })?.agentCommission !=
+          null
+            ? parseFloat(
+                String(
+                  (wallet as { agentCommission?: number | string })
+                    .agentCommission,
+                ),
+              )
             : NaN;
         const balanceNum = Number.isNaN(agentBal) ? 0 : agentBal;
         setCurrentBalance(balanceNum);
@@ -194,9 +279,7 @@ export default function TransferConfirm() {
       return;
     }
     if (!mainWalletId) {
-      setErrorMessage(
-        t("sendMoney.errorResolveWallet"),
-      );
+      setErrorMessage(t("sendMoney.errorResolveWallet"));
       setShowErrorModal(true);
       return;
     }
@@ -255,24 +338,28 @@ export default function TransferConfirm() {
         await saveRecentRecipient({ name: recipientName, accountNumber });
         setShowPasscodeModal(false);
         setPasscode("");
-        
+        await playTransferSuccessSound();
+
         const txId = (result.data as any)?.id || t("investment.pending");
         (navigation as any).navigate("depositReceipt", {
           transactionId: txId,
           amount: amount.toString(),
           currency: "PHP",
-          depositMethod: balanceType === "agent" ? t("sendMoney.agentWallet") : t("sendMoney.availableBalance"),
+          depositMethod:
+            balanceType === "agent"
+              ? t("sendMoney.agentWallet")
+              : t("sendMoney.availableBalance"),
           type: "Transfer",
           successMessage: t("sendMoney.transferSuccessMessage")
-                  .replace(
-                    "{amount}",
-                    amount.toLocaleString("en-PH", {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    }),
-                  )
-                  .replace("{name}", recipientName),
-          date: new Date().toLocaleString()
+            .replace(
+              "{amount}",
+              amount.toLocaleString("en-PH", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              }),
+            )
+            .replace("{name}", recipientName),
+          date: new Date().toLocaleString(),
         });
       } else {
         const msg = result.error || t("sendMoney.transferFailed");
@@ -528,7 +615,9 @@ export default function TransferConfirm() {
         <View style={styles.summaryCard}>
           <View style={styles.summaryRow}>
             <View style={styles.summaryItem}>
-              <Text style={styles.summaryLabel}>{t("sendMoney.currentBalance")}</Text>
+              <Text style={styles.summaryLabel}>
+                {t("sendMoney.currentBalance")}
+              </Text>
               <Text style={styles.summaryValue}>
                 PHP{" "}
                 {currentBalance.toLocaleString("en-PH", {
@@ -604,7 +693,9 @@ export default function TransferConfirm() {
           keyboardVerticalOffset={Platform.OS === "ios" ? 40 : 0}
         >
           <View style={styles.passcodeModalContent}>
-            <Text style={styles.passcodeModalTitle}>{t("sendMoney.enterPasscode")}</Text>
+            <Text style={styles.passcodeModalTitle}>
+              {t("sendMoney.enterPasscode")}
+            </Text>
             <TextInput
               style={styles.passcodeInput}
               value={passcode}
@@ -644,7 +735,9 @@ export default function TransferConfirm() {
                 }}
                 disabled={isProcessing}
               >
-                <Text style={styles.passcodeModalButtonCancelText}>{t("common.cancel")}</Text>
+                <Text style={styles.passcodeModalButtonCancelText}>
+                  {t("common.cancel")}
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[
@@ -771,7 +864,9 @@ export default function TransferConfirm() {
                   end={{ x: 1, y: 0 }}
                 >
                   <Ionicons name="share-social" size={20} color="#FFFFFF" />
-                  <Text style={styles.shareQRButtonText}>{t("sendMoney.shareQr")}</Text>
+                  <Text style={styles.shareQRButtonText}>
+                    {t("sendMoney.shareQr")}
+                  </Text>
                 </LinearGradient>
               </TouchableOpacity>
 
@@ -1181,10 +1276,11 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   passcodeInput: {
+    backgroundColor: "transparent",
     borderWidth: 1,
-    borderColor: "#E0E0E0",
+    borderColor: "#E25A17",
     borderRadius: 8,
-    paddingHorizontal: 16,
+    paddingHorizontal: 0,
     paddingVertical: 12,
     fontSize: 18,
     textAlign: "center",
@@ -1364,5 +1460,3 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
 });
-
-

@@ -62,7 +62,8 @@
         {
           "faceIDPermission": "Allow InspireWallet to use Face ID for secure login."
         }
-      ]
+      ],
+      "expo-av"
     ],
     "experiments": {
       "typedRoutes": true,
