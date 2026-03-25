@@ -22,7 +22,6 @@ import {
 import { useLanguage } from "../../../context/LanguageContext";
 import { isServiceUnderMaintenance } from "../../../lib/maintenance";
 import type { RootStackParamList } from "../../../types/navigation";
-import Loader from "../../Loader/Loader";
 
 // Static theme - no backend
 const THEME_COLOR = "#E15816";
@@ -441,16 +440,36 @@ export default function AgentServices() {
   };
 
   if (checkingMaintenance) {
-    return <Loader text={t("common.checking")} />;
+    return (
+      <View style={styles.inlineLoadingScreen}>
+        <View style={styles.inlineSkeletonCard}>
+          <View style={styles.inlineSkeletonLineWide} />
+          <View style={styles.inlineSkeletonLineShort} />
+          <View style={styles.inlineSkeletonLineWide} />
+        </View>
+      </View>
+    );
   }
 
   if (isUnderMaintenance) {
-    return <Loader text={t("support.serviceMaintenance")} />;
+    return (
+      <View style={styles.inlineLoadingScreen}>
+        <View style={styles.inlineSkeletonCard}>
+          <Text style={styles.maintenanceText}>{t("support.serviceMaintenance")}</Text>
+        </View>
+      </View>
+    );
   }
 
   if (loading) {
     return (
-      <Loader text={t("agentRequest.content.submitButton.submitting")} />
+      <View style={styles.inlineLoadingScreen}>
+        <View style={styles.inlineSkeletonCard}>
+          <View style={styles.inlineSkeletonLineWide} />
+          <View style={styles.inlineSkeletonLineShort} />
+          <View style={styles.inlineSkeletonLineWide} />
+        </View>
+      </View>
     );
   }
 
@@ -850,6 +869,39 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
     backgroundColor: "#f8f9fa",
+  },
+  inlineLoadingScreen: {
+    flex: 1,
+    backgroundColor: "#f8f9fa",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 24,
+  },
+  inlineSkeletonCard: {
+    width: "100%",
+    maxWidth: 320,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 20,
+    gap: 12,
+  },
+  inlineSkeletonLineWide: {
+    height: 14,
+    borderRadius: 8,
+    backgroundColor: "#ECECEC",
+    width: "100%",
+  },
+  inlineSkeletonLineShort: {
+    height: 14,
+    borderRadius: 8,
+    backgroundColor: "#ECECEC",
+    width: "65%",
+  },
+  maintenanceText: {
+    fontSize: 15,
+    color: "#666",
+    textAlign: "center",
+    fontWeight: "600",
   },
   loadingContainer: {
     justifyContent: "center",

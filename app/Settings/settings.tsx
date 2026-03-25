@@ -28,7 +28,6 @@ import { useIdleTimeout } from '../../context/IdleTimeoutContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useResponsive } from '../../utils/responsive';
 import AccountDeletionModal from '../AccountDeletion/AccountDeletionModal';
-import Loader from '../Loader/Loader';
 import { TouchableOpacity } from "react-native-gesture-handler";
 interface UserData {
   email?: string;
@@ -492,9 +491,7 @@ const Settings = () => {
     },
   };
 
-  if (!userData) {
-    return <Loader text={t("common.loading")} />;
-  }
+  const isInitialLoading = !userData;
 
   return (
     <>
@@ -531,7 +528,7 @@ const Settings = () => {
             <TouchableOpacity
               style={[styles.referralOptionItem, r.referralOptionItem]}
               onPress={handleReferralCodeAction}
-              disabled={referralLoading}
+              disabled={referralLoading || isInitialLoading}
             >
               <View style={styles.optionLeft}>
                 <View style={[styles.iconContainer, r.iconContainer]}>
@@ -540,7 +537,11 @@ const Settings = () => {
                 <View style={[styles.optionText, r.optionText]}>
                   <Text style={[styles.optionTitle, r.optionTitle]} numberOfLines={1}>{t('settings.myReferralCode')}</Text>
                   <Text style={[styles.optionSubtitle, r.optionSubtitle]} numberOfLines={1}>
-                    {referralLoading ? t('settings.loading') : referralCode || t('settings.tapToRefresh')}
+                    {isInitialLoading
+                      ? t('settings.loading')
+                      : referralLoading
+                        ? t('settings.loading')
+                        : referralCode || t('settings.tapToRefresh')}
                   </Text>
                 </View>
               </View>
@@ -575,7 +576,7 @@ const Settings = () => {
                   </Text>
                 </View>
               </View>
-              {!userData?.emailVerified && userData?.email ? (
+              {!isInitialLoading && !userData?.emailVerified && userData?.email ? (
                 <TouchableOpacity onPress={openEmailVerifyModal}>
                   <Text style={[styles.generateButtonText, r.generateButtonText]}>{t('settings.verify')}</Text>
                 </TouchableOpacity>

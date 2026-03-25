@@ -44,7 +44,6 @@ import {
 } from "../../constants/locales";
 import { useLanguage } from "../../context/LanguageContext";
 import { useResponsive } from "../../utils/responsive";
-import Loader from "../Loader/Loader";
 
 const THEME_COLOR = "#E15816";
 const USER_PREFERRED_LANGUAGE_KEY = "user_preferred_language";
@@ -819,10 +818,6 @@ export default function Placeholder() {
   const statusRaw = userData?.status || "Active";
   const status = statusRaw === "Active" ? t("profile.active") : statusRaw;
 
-  if (loading) {
-    return <Loader text={t("common.loading")} />;
-  }
-
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView
@@ -885,14 +880,14 @@ export default function Placeholder() {
             numberOfLines={1}
             ellipsizeMode="tail"
           >
-            {fullName}
+            {loading ? " " : fullName}
           </Text>
           <Text
             style={[styles.userEmail, { fontSize: Math.round(14 * scale) }]}
             numberOfLines={1}
             ellipsizeMode="tail"
           >
-            {email}
+            {loading ? " " : email}
           </Text>
 
           {/* Badges */}
@@ -962,47 +957,60 @@ export default function Placeholder() {
           </View>
 
           <View style={styles.detailItem}>
-            <TouchableOpacity
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "space-between",
-              }}
-              onPress={handleReferralCodeAction}
-              disabled={referralLoading}
-            >
-              <View style={{ flex: 1 }}>
+            {loading ? (
+              <View>
                 <View style={styles.detailHeader}>
-                  <Ionicons name="gift" size={18} color={THEME_COLOR} />
-                  <Text style={styles.detailLabel}>
-                    {t("settings.myReferralCode") || "My Referral Code"}
-                  </Text>
+                  <View style={styles.skeletonLabelLine} />
                 </View>
                 <View style={styles.detailValueContainer}>
-                  <Text style={styles.detailValue}>
-                    {referralLoading
-                      ? t("settings.loading") || "Loading..."
-                      : referralCode ||
-                        t("settings.tapToRefresh") ||
-                        "Tap to refresh"}
-                  </Text>
+                  <View style={styles.skeletonValueLine} />
                 </View>
               </View>
-              {referralLoading ? (
-                <ActivityIndicator size="small" color={THEME_COLOR} />
-              ) : (
-                <Ionicons
-                  name={copySuccess ? "checkmark-outline" : "copy-outline"}
-                  size={18}
-                  color={THEME_COLOR}
-                />
-              )}
-            </TouchableOpacity>
-            {referralError ? (
-              <Text style={{ color: "red", fontSize: 12, marginTop: 4 }}>
-                {referralError}
-              </Text>
-            ) : null}
+            ) : (
+              <>
+                <TouchableOpacity
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                  onPress={handleReferralCodeAction}
+                  disabled={referralLoading}
+                >
+                  <View style={{ flex: 1 }}>
+                    <View style={styles.detailHeader}>
+                      <Ionicons name="gift" size={18} color={THEME_COLOR} />
+                      <Text style={styles.detailLabel}>
+                        {t("settings.myReferralCode") || "My Referral Code"}
+                      </Text>
+                    </View>
+                    <View style={styles.detailValueContainer}>
+                      <Text style={styles.detailValue}>
+                        {referralLoading
+                          ? t("settings.loading") || "Loading..."
+                          : referralCode ||
+                            t("settings.tapToRefresh") ||
+                            "Tap to refresh"}
+                      </Text>
+                    </View>
+                  </View>
+                  {referralLoading ? (
+                    <ActivityIndicator size="small" color={THEME_COLOR} />
+                  ) : (
+                    <Ionicons
+                      name={copySuccess ? "checkmark-outline" : "copy-outline"}
+                      size={18}
+                      color={THEME_COLOR}
+                    />
+                  )}
+                </TouchableOpacity>
+                {referralError ? (
+                  <Text style={{ color: "red", fontSize: 12, marginTop: 4 }}>
+                    {referralError}
+                  </Text>
+                ) : null}
+              </>
+            )}
           </View>
         </View>
 
@@ -1034,6 +1042,7 @@ export default function Placeholder() {
             value={fullName}
             editable
             onEdit={openNameModal}
+            isLoading={loading}
           />
           <DetailItem
             icon="business-outline"
@@ -1067,6 +1076,7 @@ export default function Placeholder() {
             verifyButtonLabel={
               isCompanyKycRejected ? t("profile.resubmit") : t("profile.verify")
             }
+            isLoading={loading}
           />
           <DetailItem
             icon="call-outline"
@@ -1075,6 +1085,7 @@ export default function Placeholder() {
             editable
             onEdit={openPhoneModal}
             isPlaceholder={!userData?.phone && !userData?.phoneNumber}
+            isLoading={loading}
           />
           <DetailItem
             icon="link-outline"
@@ -1082,6 +1093,7 @@ export default function Placeholder() {
             value={lineLink}
             editable
             onEdit={openContactLinksModal}
+            isLoading={loading}
           />
           <DetailItem
             icon="chatbubble-outline"
@@ -1089,6 +1101,7 @@ export default function Placeholder() {
             value={viberLink}
             editable
             onEdit={openContactLinksModal}
+            isLoading={loading}
           />
           <DetailItem
             icon="logo-whatsapp"
@@ -1096,12 +1109,14 @@ export default function Placeholder() {
             value={whatsappLink}
             editable
             onEdit={openContactLinksModal}
+            isLoading={loading}
           />
           <DetailItem
             icon="card-outline"
             label={t("profile.accountNumber")}
             value={accountNumber}
             editable
+            isLoading={loading}
           />
           <DetailItem
             icon="star-outline"
@@ -1109,6 +1124,7 @@ export default function Placeholder() {
             value={t(accountTypeLabel)}
             badge={t(accountTypeLabel)}
             badgeColor={accountTypeBadgeColor}
+            isLoading={loading}
           />
           <DetailItem
             icon="trophy-outline"
@@ -1138,6 +1154,7 @@ export default function Placeholder() {
             verifyButtonLabel={
               isPersonalKycRejected ? t("profile.resubmit") : t("profile.verify")
             }
+            isLoading={loading}
           />
           {/* Company KYC status (if available) */}
           {/* This row can be wired to real backend data in the future by reusing getCompanyKycStatus */}
@@ -1147,6 +1164,7 @@ export default function Placeholder() {
             value={agentReferrer}
             badge={referrerName ? t("profile.referred") : undefined}
             badgeColor={referrerName ? "#FFD700" : undefined}
+            isLoading={loading}
           />
           <DetailItem
             icon="language-outline"
@@ -1154,6 +1172,7 @@ export default function Placeholder() {
             value={language}
             editable
             onEditPress={() => setLanguageModalVisible(true)}
+            isLoading={loading}
           />
         </View>
 
@@ -1189,11 +1208,13 @@ export default function Placeholder() {
             value={status}
             badge={status}
             badgeColor="#4CAF50"
+            isLoading={loading}
           />
           <DetailItem
             icon="calendar-outline"
             label={t("profile.memberSince")}
             value={memberSince}
+            isLoading={loading}
           />
         </View>
       </ScrollView>
@@ -1642,6 +1663,7 @@ interface DetailItemProps {
   verifyButtonLabel?: string;
   onEdit?: () => void;
   isPlaceholder?: boolean;
+  isLoading?: boolean;
 }
 
 const toSentenceCase = (text?: string): string | undefined => {
@@ -1666,6 +1688,7 @@ function DetailItem({
   onVerifyPress,
   verifyButtonLabel = "Verify",
   isPlaceholder = false,
+  isLoading = false,
 }: DetailItemProps) {
   const onEditHandler = onEditPress ?? onEdit;
   const handlePress = editable && onEditHandler ? onEditHandler : undefined;
@@ -1674,17 +1697,27 @@ function DetailItem({
   const content = (
     <>
       <View style={styles.detailHeader}>
-        <Ionicons name={icon as any} size={18} color={THEME_COLOR} />
-        <Text style={styles.detailLabel}>{label}</Text>
+        {isLoading ? (
+          <View style={styles.skeletonLabelLine} />
+        ) : (
+          <>
+            <Ionicons name={icon as any} size={18} color={THEME_COLOR} />
+            <Text style={styles.detailLabel}>{label}</Text>
+          </>
+        )}
       </View>
       <View style={styles.detailValueContainer}>
-        <Text
-          style={
-            isPlaceholder ? styles.detailValuePlaceholder : styles.detailValue
-          }
-        >
-          {value}
-        </Text>
+        {isLoading ? (
+          <View style={styles.skeletonValueLine} />
+        ) : (
+          <Text
+            style={
+              isPlaceholder ? styles.detailValuePlaceholder : styles.detailValue
+            }
+          >
+            {value}
+          </Text>
+        )}
         {normalizedBadge && (
           <View style={[styles.badge, { backgroundColor: badgeColor }]}>
             <Text style={styles.badgeTextSmall}>{normalizedBadge}</Text>
@@ -1698,7 +1731,7 @@ function DetailItem({
             )}
           </View>
         )}
-        {showVerifyButton && onVerifyPress && (
+        {!isLoading && showVerifyButton && onVerifyPress && (
           <TouchableOpacity
             style={[styles.verifyBadge, { backgroundColor: "#FFD700" }]}
             onPress={onVerifyPress}
@@ -1708,7 +1741,7 @@ function DetailItem({
             <Text style={styles.verifyBadgeText}>{normalizedVerifyButtonLabel}</Text>
           </TouchableOpacity>
         )}
-        {editable && onEditHandler && (
+        {!isLoading && editable && onEditHandler && (
           <TouchableOpacity
             style={styles.editButton}
             onPress={onEditHandler}
@@ -2027,6 +2060,18 @@ const styles = StyleSheet.create({
   loadingText: {
     fontSize: 16,
     color: "#666",
+  },
+  skeletonLabelLine: {
+    width: 110,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: "#ECECEC",
+  },
+  skeletonValueLine: {
+    width: "65%",
+    height: 18,
+    borderRadius: 8,
+    backgroundColor: "#E5E5E5",
   },
   successOverlay: {
     flex: 1,

@@ -18,7 +18,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { getWallets, submitStockSellRequest } from "../../../configs/api";
 import { getStockInvestmentMinAmount } from "../../../configs/currencies";
 import { useLanguage } from "../../../context/LanguageContext";
-import Loader from "../../Loader/Loader";
 
 const THEME_COLOR = "#E15816";
 const STOCK_RATE_DEFAULT = 2_000_000;
@@ -184,10 +183,6 @@ export default function StockSell() {
     }
   };
 
-  if (isLoading) {
-    return <Loader text={t("deposit.processing")} />;
-  }
-
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
@@ -212,6 +207,20 @@ export default function StockSell() {
             {t("stock.stockSellRequest")}
           </Text>
         </LinearGradient>
+
+        {isLoading ? (
+          <View style={styles.pageSkeletonContainer}>
+            <View style={styles.pageSkeletonBar} />
+            <View style={styles.pageSkeletonCard}>
+              <View style={styles.pageSkeletonLineLong} />
+              <View style={styles.pageSkeletonLineShort} />
+            </View>
+            <View style={styles.pageSkeletonCard}>
+              <View style={styles.pageSkeletonLineMedium} />
+              <View style={styles.pageSkeletonLineLong} />
+            </View>
+          </View>
+        ) : null}
 
         <View
           style={[
@@ -667,6 +676,40 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#F5F5F5",
+  },
+  pageSkeletonContainer: {
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    gap: 12,
+  },
+  pageSkeletonBar: {
+    height: 46,
+    borderRadius: 12,
+    backgroundColor: "#ECECEC",
+  },
+  pageSkeletonCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 14,
+    padding: 16,
+    gap: 10,
+  },
+  pageSkeletonLineLong: {
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: "#ECECEC",
+    width: "100%",
+  },
+  pageSkeletonLineMedium: {
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: "#ECECEC",
+    width: "82%",
+  },
+  pageSkeletonLineShort: {
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: "#ECECEC",
+    width: "60%",
   },
   safeArea: {
     flex: 1,
