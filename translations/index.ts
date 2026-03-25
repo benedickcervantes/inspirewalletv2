@@ -3985,7 +3985,7 @@ const ja: TranslationMap = {
   "dashboard.goodAfternoon": "こんにちは",
   "dashboard.goodEvening": "こんばんは",
   "dashboard.wallet": "ウォレット",
-  "dashboard.investment": "期間設定型プラン",
+  "dashboard.investment": "期間設定型\nプラン",
   "dashboard.cards": "カード",
   "dashboard.transfer": "送金",
   "dashboard.bankingService": "銀行情報",
