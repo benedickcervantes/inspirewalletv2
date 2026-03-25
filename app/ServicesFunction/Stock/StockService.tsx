@@ -4,32 +4,32 @@ import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  ActivityIndicator,
-  AppState,
-  AppStateStatus,
-  FlatList,
-  Modal,
-  Platform,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
+    ActivityIndicator,
+    AppState,
+    AppStateStatus,
+    FlatList,
+    Modal,
+    Platform,
+    RefreshControl,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    useWindowDimensions,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
-  getStockInvestmentDepositRequests,
-  getStockMarketplaceListings,
-  getStockSellRequests,
-  getWallets,
-  purchaseStockListing,
+    getStockInvestmentDepositRequests,
+    getStockMarketplaceListings,
+    getStockSellRequests,
+    getWallets,
+    purchaseStockListing,
 } from "../../../configs/api";
 import { getStockInvestmentMinAmount } from "../../../configs/currencies";
 import { getLanguageCode } from "../../../constants/locales";
 import { useLanguage } from "../../../context/LanguageContext";
-import CustomLoader from "../../Loader/CustomLoader";
+import Loader from "../../Loader/Loader";
 
 const THEME_COLOR = "#E15816";
 
@@ -307,7 +307,7 @@ export default function StockService() {
   };
 
   if (isLoading) {
-    return <CustomLoader text={t("stock.loadingDashboard")} />;
+    return <Loader text={t("stock.loadingDashboard")} />;
   }
 
   return (

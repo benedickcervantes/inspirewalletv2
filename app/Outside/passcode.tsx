@@ -3,35 +3,35 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useEffect, useRef, useState } from 'react';
-import {
-  ActivityIndicator,
-  Animated,
-  BackHandler,
-  Modal,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
-} from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as LocalAuthentication from 'expo-local-authentication';
 import * as SecureStore from 'expo-secure-store';
-import { login, resetPasscode, verifyPasscode, verifyBiometric } from '../../configs/api';
+import { useEffect, useRef, useState } from 'react';
 import {
-  DEFAULT_LANGUAGE,
-  normalizeLanguage,
-  SUPPORTED_LANGUAGES,
+    ActivityIndicator,
+    Animated,
+    BackHandler,
+    Modal,
+    Platform,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    useWindowDimensions,
+    View,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { login, resetPasscode, verifyBiometric, verifyPasscode } from '../../configs/api';
+import {
+    DEFAULT_LANGUAGE,
+    normalizeLanguage,
+    SUPPORTED_LANGUAGES,
 } from '../../constants/locales';
 import { useLanguage } from '../../context/LanguageContext';
 import type { NavProp } from '../../types/navigation';
 import { useResponsive } from '../../utils/responsive';
-import CustomLoader from '../Loader/CustomLoader';
+import Loader from '../Loader/Loader';
 
 const GRADIENT_START = '#E15816';
 const GRADIENT_END = '#F48F38';
@@ -388,7 +388,7 @@ export default function Passcode() {
   return (
     <>
       {loadingPasscode || verifyingPasscode ? (
-        <CustomLoader text={t('auth.loggingIn')} />
+        <Loader text={t('auth.loggingIn')} />
       ) : (
         <LinearGradient
           colors={[GRADIENT_START, GRADIENT_END]}

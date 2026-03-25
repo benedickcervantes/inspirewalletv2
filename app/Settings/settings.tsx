@@ -8,17 +8,17 @@ import * as SecureStore from 'expo-secure-store';
 import { unregisterIndieDevice } from 'native-notify';
 import { useCallback, useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
-  Modal,
-  Platform,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  ToastAndroid,
-  TouchableOpacity,
-  View
+    ActivityIndicator,
+    Modal,
+    Platform,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TextInput,
+    ToastAndroid,
+    TouchableOpacity,
+    View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { disableBiometric, enableBiometric, getReferralCode, resendVerification, verifyEmail } from '../../configs/api';
@@ -26,7 +26,7 @@ import { useIdleTimeout } from '../../context/IdleTimeoutContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useResponsive } from '../../utils/responsive';
 import AccountDeletionModal from '../AccountDeletion/AccountDeletionModal';
-import CustomLoader from '../Loader/CustomLoader';
+import Loader from '../Loader/Loader';
 interface UserData {
   email?: string;
   emailVerified?: boolean;
@@ -490,7 +490,7 @@ const Settings = () => {
   };
 
   if (!userData) {
-    return <CustomLoader text={t("common.loading")} />;
+    return <Loader text={t("common.loading")} />;
   }
 
   return (

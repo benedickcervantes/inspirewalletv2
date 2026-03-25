@@ -7,30 +7,30 @@ import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  Keyboard,
-  Modal,
-  Platform,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
+    Keyboard,
+    Modal,
+    Platform,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
-  getOrCreateMainWallet,
-  getTimeDeposits,
-  getTransactions,
-  submitTravelProtection,
+    getOrCreateMainWallet,
+    getTimeDeposits,
+    getTransactions,
+    submitTravelProtection,
 } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
 import type { RootStackParamList } from "../../../types/navigation";
 import { unformatNumberString } from "../../../utils/numberFormat";
 import { useResponsive } from "../../../utils/responsive";
-import CustomLoader from "../../Loader/CustomLoader";
+import Loader from "../../Loader/Loader";
 import TravelProtectDetails from "./TravelProtectDetails";
 import TravelProtectFinanInfo from "./TravelProtectFinanInfo";
 import TravelProtectPerDeatails from "./TravelProtectPerDeatails";
@@ -1003,8 +1003,8 @@ export default function TravelProtection() {
     <View style={styles.container}>
       {loading ? (
         <>
-          <StatusBar barStyle="light-content" backgroundColor="#E15816" />
-          <CustomLoader text={t("banking.submitting")} />
+          <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+          <Loader text={t("banking.submitting")} />
         </>
       ) : (
         <>

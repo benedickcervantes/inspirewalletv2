@@ -4,21 +4,21 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useRef, useState } from "react";
 import {
-  Modal,
-  PanResponder,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
+    Modal,
+    PanResponder,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    useWindowDimensions,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { getWallets, submitStockSellRequest } from "../../../configs/api";
 import { getStockInvestmentMinAmount } from "../../../configs/currencies";
 import { useLanguage } from "../../../context/LanguageContext";
-import CustomLoader from "../../Loader/CustomLoader";
+import Loader from "../../Loader/Loader";
 
 const THEME_COLOR = "#E15816";
 const STOCK_RATE_DEFAULT = 2_000_000;
@@ -185,7 +185,7 @@ export default function StockSell() {
   };
 
   if (isLoading) {
-    return <CustomLoader text={t("deposit.processing")} />;
+    return <Loader text={t("deposit.processing")} />;
   }
 
   return (

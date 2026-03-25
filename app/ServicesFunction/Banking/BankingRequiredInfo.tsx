@@ -8,22 +8,22 @@ import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useState } from "react";
 import {
-  Alert,
-  Image,
-  Modal,
-  Platform,
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Alert,
+    Image,
+    Modal,
+    Platform,
+    SafeAreaView,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { submitBankingApplication } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
 import type { RootStackParamList } from "../../../types/navigation";
-import CustomLoader from "../../Loader/CustomLoader";
+import Loader from "../../Loader/Loader";
 
 const THEME_COLOR = "#E15816";
 const ORANGE_GRADIENT = ["#E25A17", "#F28934"] as const;
@@ -272,7 +272,7 @@ export default function BankingRequiredInfo() {
   return (
     <View style={styles.container}>
       {isSubmitting ? (
-        <CustomLoader text={t("banking.submitting")} />
+        <Loader text={t("banking.submitting")} />
       ) : (
         <>
           <SafeAreaView style={styles.safeArea}>

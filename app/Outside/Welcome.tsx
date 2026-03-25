@@ -5,24 +5,24 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useState } from 'react';
 import {
-  Modal,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Modal,
+    Platform,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  DEFAULT_LANGUAGE,
-  normalizeLanguage,
-  SUPPORTED_LANGUAGES,
+    DEFAULT_LANGUAGE,
+    normalizeLanguage,
+    SUPPORTED_LANGUAGES,
 } from '../../constants/locales';
 import { useLanguage } from '../../context/LanguageContext';
 import { useResponsive } from '../../utils/responsive';
-import CustomLoader from '../Loader/CustomLoader';
+import Loader from '../Loader/Loader';
 
 const GRADIENT_START = '#E15816';
 const GRADIENT_END = '#F48F38';
@@ -61,7 +61,7 @@ export default function Welcome() {
   }, [showStartup]);
 
   if (showStartup) {
-    return <CustomLoader text={t('common.loading')} />;
+    return <Loader text={t('common.loading')} />;
   }
 
   return (
