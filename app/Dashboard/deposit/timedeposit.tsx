@@ -103,19 +103,11 @@ export default function TimeDeposit() {
               <Ionicons name="checkmark" size={16} color="#FFFFFF" />
             </View>
             <View style={styles.stepLine} />
-            <View
-              style={[
-                styles.stepCircle,
-                currentStep >= 2 && styles.stepActive,
-              ]}>
-              {currentStep >= 2 ? (
-                <Ionicons name="checkmark" size={16} color="#FFFFFF" />
-              ) : null}
-            </View>
+            <View style={styles.stepCircle} />
             <View style={styles.stepLine} />
-            <View
-              style={[styles.stepCircle, currentStep >= 3 && styles.stepActive]}
-            />
+            <View style={styles.stepCircle} />
+            <View style={styles.stepLine} />
+            <View style={styles.stepCircle} />
           </View>
         </View>
 

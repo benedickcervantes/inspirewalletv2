@@ -1368,20 +1368,31 @@ export default function Dashboard() {
               {
                 paddingHorizontal: horizontalPadding,
                 paddingVertical: isSmallScreen ? 10 : 12,
-                gap: isSmallScreen ? 10 : 16,
+                gap: width < 360 ? 8 : width < 400 ? 10 : 14,
               },
             ]}
           >
-            {(["Wallet", "Investment", "Cards"] as const).map((tab) => (
+            {(["Wallet", "Investment", "Cards"] as const).map((tab) => {
+                const isActive = activeTab === tab;
+                const baseHorizontalPadding =
+                  width < 360 ? 6 : width < 400 ? 10 : 14;
+                const activeHorizontalPadding =
+                  width < 360 ? 8 : width < 400 ? 12 : 16;
+                const tabFontSize = width < 360 ? 11 : width < 400 ? 12 : 13;
+
+                return (
               <TouchableOpacity
                 key={tab}
                 style={[
                   styles.tab,
-                  activeTab === tab && styles.activeTab,
+                  isActive && styles.activeTab,
                   {
-                    paddingHorizontal: width < 360 ? 16 : width < 400 ? 22 : 28,
+                    flex: isActive ? 1.15 : 0.95,
+                    paddingHorizontal: isActive
+                      ? activeHorizontalPadding
+                      : baseHorizontalPadding,
                     paddingVertical: isSmallScreen ? 10 : 12,
-                    minWidth: width < 360 ? 80 : width < 400 ? 90 : 100,
+                    minWidth: 0,
                     minHeight: isSmallScreen ? 38 : 44,
                   },
                 ]}
@@ -1390,10 +1401,11 @@ export default function Dashboard() {
                 <Text
                   style={[
                     styles.tabText,
-                    activeTab === tab && styles.activeTabText,
-                    { fontSize: width < 360 ? 12 : width < 400 ? 13 : 14 },
+                    isActive && styles.activeTabText,
+                    { fontSize: tabFontSize },
                   ]}
                   numberOfLines={1}
+                  ellipsizeMode="clip"
                 >
                   {t(
                     tab === "Wallet"
@@ -1404,7 +1416,8 @@ export default function Dashboard() {
                   )}
                 </Text>
               </TouchableOpacity>
-            ))}
+                );
+              })}
           </View>
 
           {activeTab === "Wallet" && (
@@ -1995,6 +2008,7 @@ const styles = StyleSheet.create({
     minWidth: 100,
     minHeight: 44,
     alignItems: "center",
+    flexShrink: 1,
   },
   activeTab: { backgroundColor: "#E15816" },
   tabText: { fontSize: 14, fontWeight: "500", color: "#666" },

@@ -1,5 +1,4 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -15,8 +14,6 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   calculateExchange,
-  getOrCreateMainWallet,
-  submitTimeDepositRequest,
 } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
 import {
@@ -43,8 +40,6 @@ export default function TimeDepositAmount() {
   const [isConverting, setIsConverting] = useState(false);
   const [convertError, setConvertError] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -125,8 +120,7 @@ export default function TimeDepositAmount() {
     };
   }, [amount, selectedCurrency, updatePhpEquivalent]);
 
-  const handleContinue = async () => {
-    setSubmitError(null);
+  const handleContinue = () => {
     const newErrors: Record<string, string> = {};
     const amountStr = unformatNumberString(amount).trim();
 
@@ -152,53 +146,13 @@ export default function TimeDepositAmount() {
         ? parseFloat(unformatNumberString(amount))
         : phpEquivalent;
 
-    try {
-      setIsSubmitting(true);
-      const token = await AsyncStorage.getItem("access_token");
-      if (!token) {
-        setSubmitError(t("deposit.pleaseLoginDeposit"));
-        return;
-      }
-
-      const body: Record<string, string> = {
-        amount: Number(amountInPhp).toFixed(2),
-        contractPeriod,
-        depositMethod:
-          depositMethod === "Available Balance"
-            ? "available_balance"
-            : "request_amount",
-      };
-
-      if (depositMethod === "Available Balance") {
-        const { success, wallet } = await getOrCreateMainWallet(token);
-        if (!success || !wallet?.id) {
-          setSubmitError(t("deposit.walletLoadError"));
-          return;
-        }
-        body.walletId = wallet.id as string;
-      }
-
-      const res = await submitTimeDepositRequest(token, body);
-
-      if (!res.success || !res.data?.id) {
-        setSubmitError(res.error || t("deposit.submitError"));
-        return;
-      }
-
-      navigation.navigate("TimeDepositConfirm", {
-        depositMethod,
-        contractPeriod,
-        amount: unformatNumberString(amount),
-        amountInPhp,
-        currency: selectedCurrency,
-        requestId: res.data.id,
-      });
-    } catch (err: any) {
-      console.error("submit timedeposit failed", err);
-      setSubmitError(t("deposit.unexpectedError"));
-    } finally {
-      setIsSubmitting(false);
-    }
+    navigation.navigate("TimeDepositConfirm", {
+      depositMethod,
+      contractPeriod,
+      amount: unformatNumberString(amount),
+      amountInPhp,
+      currency: selectedCurrency,
+    });
   };
 
   const getSelectedCurrency = () => {
@@ -223,10 +177,6 @@ export default function TimeDepositAmount() {
           </TouchableOpacity>
 
           <Text style={styles.headerTitle}>{t("deposit.depositRequest")}</Text>
-
-          <TouchableOpacity style={styles.refreshButton}>
-            <Ionicons name="refresh" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
         </LinearGradient>
 
         {/* Progress Steps */}
@@ -240,9 +190,9 @@ export default function TimeDepositAmount() {
               <Ionicons name="checkmark" size={16} color="#FFFFFF" />
             </View>
             <View style={styles.stepLine} />
-            <View style={styles.stepCircle}>
-              <Ionicons name="lock-closed" size={14} color="#999" />
-            </View>
+            <View style={styles.stepCircle} />
+            <View style={styles.stepLine} />
+            <View style={styles.stepCircle} />
           </View>
         </View>
 
@@ -372,18 +322,10 @@ export default function TimeDepositAmount() {
             </LinearGradient>
           </View>
 
-          {submitError ? (
-            <View style={styles.errorBanner}>
-              <Ionicons name="alert-circle" size={20} color="#B71C1C" />
-              <Text style={styles.errorText}>{submitError}</Text>
-            </View>
-          ) : null}
-
           {/* Continue Button */}
           <TouchableOpacity
             style={styles.continueButton}
             onPress={handleContinue}
-            disabled={isSubmitting}
           >
             <LinearGradient
               colors={["#E25A17", "#F28934"]}
@@ -391,12 +333,8 @@ export default function TimeDepositAmount() {
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
             >
-              <Text style={styles.continueText}>
-                {isSubmitting ? t("deposit.processing") : t("deposit.continue")}
-              </Text>
-              {!isSubmitting && (
-                <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
-              )}
+              <Text style={styles.continueText}>{t("deposit.continue")}</Text>
+              <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
             </LinearGradient>
           </TouchableOpacity>
 
@@ -484,12 +422,6 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     flex: 1,
     textAlign: "center",
-  },
-  refreshButton: {
-    width: 40,
-    height: 40,
-    justifyContent: "center",
-    alignItems: "center",
   },
   progressContainer: {
     paddingVertical: 20,

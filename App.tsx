@@ -14,6 +14,7 @@ import StockInvestmentConfirm from './app/Dashboard/deposit/stockInvestDepoConfi
 import TimeDeposit from './app/Dashboard/deposit/timedeposit';
 import TimeDepositAmount from './app/Dashboard/deposit/timedepositAmount';
 import TimeDepositConfirm from './app/Dashboard/deposit/timedepositConfirm';
+import TimeDepositProof from './app/Dashboard/deposit/timedepositProof';
 import TopUpBalance from './app/Dashboard/deposit/topupDepoAvailB';
 import TopupConfirm from './app/Dashboard/deposit/topupDepoAvailBconfirm';
 import Dashboard from './app/Dashboard/main';
@@ -174,6 +175,7 @@ export default function App() {
               <Stack.Screen name="timedeposit" component={TimeDeposit} />
               <Stack.Screen name="TimeDepositAmount" component={TimeDepositAmount} />
               <Stack.Screen name="TimeDepositConfirm" component={TimeDepositConfirm} />
+              <Stack.Screen name="TimeDepositProof" component={TimeDepositProof} />
               <Stack.Screen name="topup" component={TopUpBalance} />
               <Stack.Screen name="TopupConfirm" component={TopupConfirm} />
               <Stack.Screen name="depositReceipt" component={DepositReceipt} />

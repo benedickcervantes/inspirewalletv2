@@ -85,6 +85,14 @@ export type RootStackParamList = {
   timedeposit: undefined;
   TimeDepositAmount: { depositMethod: string; contractPeriod: string; currency: string };
   TimeDepositConfirm: Record<string, unknown>;
+  TimeDepositProof: {
+    requestId: string;
+    depositMethod: string;
+    contractPeriod: string;
+    currency: string;
+    amount: string;
+    amountInPhp: number;
+  };
   topup: undefined;
   TopupConfirm: Record<string, unknown>;
   depositReceipt: Record<string, unknown>;
