@@ -7,25 +7,25 @@ import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useEffect, useRef, useState, type ComponentRef } from "react";
 import {
-    Keyboard,
-    Modal,
-    Platform,
-    TouchableOpacity as RNTouchableOpacity,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TextInput,
-    useWindowDimensions,
-    View,
+  Keyboard,
+  Modal,
+  Platform,
+  TouchableOpacity as RNTouchableOpacity,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import { TouchableOpacity } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
-    getOrCreateMainWallet,
-    getTimeDeposits,
-    getTransactions,
-    submitTravelProtection,
+  getOrCreateMainWallet,
+  getTimeDeposits,
+  getTransactions,
+  submitTravelProtection,
 } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
 import type { RootStackParamList } from "../../../types/navigation";
@@ -957,7 +957,8 @@ export default function TravelProtection() {
   const dynamicStyles = {
     scrollContent: {
       paddingHorizontal: horizontalPadding,
-      paddingBottom: verticalScale(150),
+      // Keep some space for the bottom buttons, but avoid a large empty gap.
+      paddingBottom: verticalScale(40),
     },
     heroCard: {
       padding: scale(24),
@@ -981,8 +982,8 @@ export default function TravelProtection() {
     },
     formCard: { padding: scale(20) },
     buttonContainer: {
-      flexDirection: isTinyScreen ? ("column" as const) : ("row" as const),
-      gap: isTinyScreen ? 10 : 12,
+      flexDirection: "column" as const,
+      gap: 12,
     },
     countryDropdown: {
       paddingHorizontal: isTinyScreen ? 8 : isSmallScreen ? 10 : 16,
