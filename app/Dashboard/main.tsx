@@ -1363,9 +1363,12 @@ export default function Dashboard() {
                 numberOfLines={1}
                 ellipsizeMode="tail"
               >
-                {(userData?.firstName as string) ||
-                  (userData?.fullName as string) ||
-                  "User"}
+                {userData?.firstName || userData?.fullName ? (
+                  ((userData?.firstName as string) ||
+                    (userData?.fullName as string)) as string
+                ) : (
+                  <View style={styles.userNameSkeleton} />
+                )}
               </Text>
             </View>
           </View>
@@ -2034,6 +2037,13 @@ const styles = StyleSheet.create({
   },
   greeting: { fontSize: 14, color: "#999", marginBottom: 2 },
   userName: { fontSize: 16, fontWeight: "700", color: "#333" },
+  userNameSkeleton: {
+    height: 16,
+    width: 120,
+    borderRadius: 8,
+    backgroundColor: "#E8E8E8",
+    marginTop: 2,
+  },
   headerRight: { flexDirection: "row", gap: 12 },
   iconButton: {
     width: 44,
