@@ -23,7 +23,6 @@ import {
 import { submitBankingApplication } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
 import type { RootStackParamList } from "../../../types/navigation";
-import Loader from "../../Loader/Loader";
 
 const THEME_COLOR = "#E15816";
 const ORANGE_GRADIENT = ["#E25A17", "#F28934"] as const;
@@ -272,9 +271,15 @@ export default function BankingRequiredInfo() {
   return (
     <View style={styles.container}>
       {isSubmitting ? (
-        <Loader text={t("banking.submitting")} />
-      ) : (
-        <>
+        <View style={styles.loadingOverlay}>
+          <View style={styles.loadingSkeletonCard}>
+            <View style={styles.loadingSkeletonLineWide} />
+            <View style={styles.loadingSkeletonLineShort} />
+            <View style={styles.loadingSkeletonLineWide} />
+          </View>
+        </View>
+      ) : null}
+      <>
           <SafeAreaView style={styles.safeArea}>
         {/* Top: Back arrow + Header card */}
         <View style={styles.topSection}>
@@ -763,7 +768,6 @@ export default function BankingRequiredInfo() {
         </View>
       </Modal>
         </>
-      )}
     </View>
   );
 }
@@ -775,10 +779,31 @@ const styles = StyleSheet.create({
   },
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.4)",
+    backgroundColor: "rgba(245,245,245,0.9)",
     justifyContent: "center",
     alignItems: "center",
-    zIndex: 9999,
+    zIndex: 50,
+    paddingHorizontal: 24,
+  },
+  loadingSkeletonCard: {
+    width: "100%",
+    maxWidth: 340,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 20,
+    gap: 12,
+  },
+  loadingSkeletonLineWide: {
+    height: 14,
+    borderRadius: 8,
+    backgroundColor: "#ECECEC",
+    width: "100%",
+  },
+  loadingSkeletonLineShort: {
+    height: 14,
+    borderRadius: 8,
+    backgroundColor: "#ECECEC",
+    width: "65%",
   },
   safeArea: {
     flex: 1,

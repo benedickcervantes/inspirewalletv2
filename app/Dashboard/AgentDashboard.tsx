@@ -5,7 +5,6 @@ import * as Clipboard from "expo-clipboard";
 import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useState } from "react";
 import {
-    ActivityIndicator,
     Platform,
     RefreshControl,
     ScrollView,
@@ -493,11 +492,21 @@ export default function AgentDashboard() {
           }
         >
           {initialLoad ? (
-            <View style={{ flex: 1, justifyContent: "center", alignItems: "center", paddingTop: 80 }}>
-              <ActivityIndicator size="large" color="#E25A17" />
-              <Text style={{ marginTop: 16, fontSize: 15, color: "#6B7280" }}>
-                {t("agent.loading")}
-              </Text>
+            <View style={styles.pageSkeletonContainer}>
+              <View style={styles.pageSkeletonCard}>
+                <View style={styles.pageSkeletonLineMedium} />
+                <View style={styles.pageSkeletonLineLong} />
+              </View>
+              <View style={styles.pageSkeletonCard}>
+                <View style={styles.pageSkeletonLineLong} />
+                <View style={styles.pageSkeletonLineShort} />
+                <View style={styles.pageSkeletonLineLong} />
+              </View>
+              <View style={styles.pageSkeletonRow}>
+                <View style={[styles.pageSkeletonCard, styles.pageSkeletonHalf]} />
+                <View style={[styles.pageSkeletonCard, styles.pageSkeletonHalf]} />
+              </View>
+              <Text style={styles.pageSkeletonHint}>{t("agent.loading")}</Text>
             </View>
           ) : (
             <>
@@ -973,6 +982,50 @@ const styles = StyleSheet.create({
   copyBannerText: { color: "#FFFFFF", fontSize: 12, fontWeight: "600" },
   scrollView: { flex: 1 },
   scrollContent: { paddingBottom: 32 },
+  pageSkeletonContainer: {
+    paddingTop: 10,
+    gap: 12,
+    paddingBottom: 20,
+  },
+  pageSkeletonCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    padding: 16,
+    gap: 10,
+  },
+  pageSkeletonLineLong: {
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: "#ECECEC",
+    width: "100%",
+  },
+  pageSkeletonLineMedium: {
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: "#ECECEC",
+    width: "82%",
+  },
+  pageSkeletonLineShort: {
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: "#ECECEC",
+    width: "60%",
+  },
+  pageSkeletonRow: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  pageSkeletonHalf: {
+    flex: 1,
+    minHeight: 72,
+  },
+  pageSkeletonHint: {
+    marginTop: 4,
+    textAlign: "center",
+    fontSize: 13,
+    color: "#6B7280",
+    fontWeight: "500",
+  },
   errorBanner: {
     flexDirection: "row",
     alignItems: "center",

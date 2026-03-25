@@ -24,7 +24,6 @@ import { auth, subscribeToTransactions } from "../../configs/firebase";
 import { getLanguageCode } from "../../constants/locales";
 import { useLanguage } from "../../context/LanguageContext";
 import type { NavProp } from "../../types/navigation";
-import Loader from "../Loader/Loader";
 
 const TRANSACTION_TYPE_KEYS: Record<string, string> = {
   TOP_UP: "tx.deposit",
@@ -834,10 +833,6 @@ export default function HistoryScreen() {
       setCustomEndDate(selectedDate.toISOString().split("T")[0]);
     }
   };
-
-  if (loading && transactions.length === 0) {
-    return <Loader text={t("history.loading")} />;
-  }
 
   return (
     <View

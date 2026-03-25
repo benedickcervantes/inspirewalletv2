@@ -29,7 +29,6 @@ import {
 import { getStockInvestmentMinAmount } from "../../../configs/currencies";
 import { getLanguageCode } from "../../../constants/locales";
 import { useLanguage } from "../../../context/LanguageContext";
-import Loader from "../../Loader/Loader";
 
 const THEME_COLOR = "#E15816";
 
@@ -306,10 +305,6 @@ export default function StockService() {
     }
   };
 
-  if (isLoading) {
-    return <Loader text={t("stock.loadingDashboard")} />;
-  }
-
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
@@ -418,7 +413,20 @@ export default function StockService() {
         )}
 
         {/* Content */}
-        {activeTab === "portfolio" && (
+        {isLoading ? (
+          <View style={styles.pageSkeletonContainer}>
+            <View style={styles.pageSkeletonBanner} />
+            <View style={styles.pageSkeletonCard}>
+              <View style={styles.pageSkeletonLineLong} />
+              <View style={styles.pageSkeletonLineShort} />
+              <View style={styles.pageSkeletonLineLong} />
+            </View>
+            <View style={styles.pageSkeletonCard}>
+              <View style={styles.pageSkeletonLineMedium} />
+              <View style={styles.pageSkeletonLineLong} />
+            </View>
+          </View>
+        ) : activeTab === "portfolio" && (
           <ScrollView
             style={styles.scrollView}
             contentContainerStyle={styles.scrollContent}
@@ -901,6 +909,40 @@ export default function StockService() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F5F5F5" },
+  pageSkeletonContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    gap: 12,
+  },
+  pageSkeletonBanner: {
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: "#ECECEC",
+  },
+  pageSkeletonCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 14,
+    padding: 16,
+    gap: 10,
+  },
+  pageSkeletonLineLong: {
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: "#ECECEC",
+    width: "100%",
+  },
+  pageSkeletonLineMedium: {
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: "#ECECEC",
+    width: "82%",
+  },
+  pageSkeletonLineShort: {
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: "#ECECEC",
+    width: "60%",
+  },
   safeArea: { flex: 1 },
   header: {
     flexDirection: "row",
