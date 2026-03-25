@@ -62,9 +62,14 @@ const CryptoCard = React.memo(({
   selectedTimeRange: string;
   selected?: boolean;
 }) => {
-  const isPositive = change.startsWith("+");
-  const badgeColor = isPositive ? "#22C55E" : "#EF4444";
-  const badgeBg = isPositive ? "rgba(34, 197, 94, 0.1)" : "rgba(239, 68, 68, 0.1)";
+  const hasChange = change !== "—";
+  const isPositive = hasChange && change.startsWith("+");
+  const badgeColor = hasChange ? (isPositive ? "#22C55E" : "#EF4444") : "#6B7280";
+  const badgeBg = hasChange
+    ? isPositive
+      ? "rgba(34, 197, 94, 0.1)"
+      : "rgba(239, 68, 68, 0.1)"
+    : "rgba(107, 114, 128, 0.1)";
 
   return (
     <View style={[styles.newAssetCard, selected && styles.newAssetCardSelected]}>
@@ -88,16 +93,20 @@ const CryptoCard = React.memo(({
       </View>
 
       <Text style={styles.newAssetName}>{fullName}</Text>
-      <Text style={styles.newAssetPrice}>₱ {price}</Text>
+      <Text style={styles.newAssetPrice}>{price === "—" ? "—" : `₱ ${price}`}</Text>
 
       <View style={[styles.changeBadge, { backgroundColor: badgeBg }]}>
-        <Ionicons
-          name={isPositive ? "caret-up" : "caret-down"}
-          size={12}
-          color={badgeColor}
-          style={{ marginRight: 4 }}
-        />
-        <Text style={[styles.changeText, { color: badgeColor }]}>{change.replace(/[+-]/, "")}</Text>
+        {hasChange && (
+          <Ionicons
+            name={isPositive ? "caret-up" : "caret-down"}
+            size={12}
+            color={badgeColor}
+            style={{ marginRight: 4 }}
+          />
+        )}
+        <Text style={[styles.changeText, { color: badgeColor }]}>
+          {hasChange ? change.replace(/[+-]/, "") : change}
+        </Text>
       </View>
     </View>
   );
@@ -108,23 +117,10 @@ function formatCurrency(value: number | string): string {
   return num.toLocaleString("en-PH", { minimumFractionDigits: 2 });
 }
 
-const MOCK_DATA = {
-  price: "3,845,755.81",
-  priceChange: "+2.4%",
-  balance: 205115,
-  cryptoBalances: {
-    BTC: "0.00000",
-    ETH: "0.00000",
-    USDT: "0.00000",
-  },
-  forexBalances: {
-    USD: "0.00",
-    JPY: "0.00",
-  }
-};
+const NO_DATA = "—";
 
-
-const BalanceCard = React.memo(({ balance, label }: { balance: number; label: string }) => (
+const BalanceCard = React.memo(
+  ({ balance, label }: { balance: number | null; label: string }) => (
   <LinearGradient
     colors={ORANGE_GRADIENT}
     start={{ x: 0, y: 0 }}
@@ -136,11 +132,12 @@ const BalanceCard = React.memo(({ balance, label }: { balance: number; label: st
       <MaterialCommunityIcons name="wallet-outline" size={24} color="#FFF" opacity={0.7} />
     </View>
     <Text style={styles.balanceValue}>
-      ₱ {formatCurrency(balance)}
+      {balance == null ? NO_DATA : `₱ ${formatCurrency(balance)}`}
     </Text>
     <View style={styles.balanceDecorativeCircle} />
   </LinearGradient>
-));
+  )
+);
 
 const FOREX_ASSETS = [
   { id: "USD", label: "USD", fullName: "US Dollar", icon: "logo-usd" },
@@ -160,25 +157,29 @@ export default function PlayEarnServices() {
   const [selectedAsset, setSelectedAsset] = useState<{ id: string; fullName: string; type: 'crypto' | 'forex' } | null>({ id: "BTC", fullName: "Bitcoin", type: 'crypto' });
   const [selectedTimeRange, setSelectedTimeRange] = useState<TimeRange>("24h");
   const [selectedForexTimeRange, setSelectedForexTimeRange] = useState<TimeRange>("24h");
-  const [availableBalance, setAvailableBalance] = useState(MOCK_DATA.balance);
+  const [availableBalance, setAvailableBalance] = useState<number | null>(null);
+  const [forexBalances, setForexBalances] = useState<Record<string, number | null>>({
+    USD: null,
+    JPY: null,
+  });
 
   // Trade Modal State
   const [tradeModalVisible, setTradeModalVisible] = useState(false);
   const [tradeMode, setTradeMode] = useState<'BUY' | 'SELL'>('BUY');
   const [tradeAmount, setTradeAmount] = useState('');
   const [cryptoBalances, setCryptoBalances] = useState<{
-    BTC: string;
-    ETH: string;
-    USDT: string;
+    BTC: number | null;
+    ETH: number | null;
+    USDT: number | null;
   }>({
-    BTC: "0.00000",
-    ETH: "0.00000",
-    USDT: "0.00000",
+    BTC: null,
+    ETH: null,
+    USDT: null,
   });
-  const [cryptoPricesRaw, setCryptoPricesRaw] = useState<Record<string, number>>({
-    BTC: 0,
-    ETH: 0,
-    USDT: 0,
+  const [cryptoPricesRaw, setCryptoPricesRaw] = useState<Record<string, number | null>>({
+    BTC: null,
+    ETH: null,
+    USDT: null,
   });
   const [forexPrices, setForexPrices] = useState<Record<string, string>>({});
   const [forexChanges, setForexChanges] = useState<Record<string, any>>({});
@@ -194,16 +195,10 @@ export default function PlayEarnServices() {
   const [chartLoading, setChartLoading] = useState(false);
 
   // Price States
-  const [cryptoPrices, setCryptoPrices] = useState<Record<string, string>>({
-    BTC: MOCK_DATA.price,
-    ETH: "150,000.00",
-    USDT: "56.00"
-  });
-  const [priceChanges, setPriceChanges] = useState<Record<string, Record<string, string>>>({
-    BTC: { "1h": "+0.00%", "24h": "+0.00%", "7d": "+0.00%" },
-    ETH: { "1h": "+0.00%", "24h": "+0.00%", "7d": "+0.00%" },
-    USDT: { "1h": "+0.00%", "24h": "+0.00%", "7d": "+0.00%" }
-  });
+  const [cryptoPrices, setCryptoPrices] = useState<Record<string, string>>({});
+  const [priceChanges, setPriceChanges] = useState<
+    Record<string, Record<string, string>>
+  >({});
   const [isLoadingPrice, setIsLoadingPrice] = useState(false);
   const isFetchingRef = React.useRef(false);
 
@@ -240,14 +235,16 @@ export default function PlayEarnServices() {
       const fetchUserBalances = () => {
         setIsLoadingBalance(true);
         try {
-          // Using MOCK_DATA balance
-          setAvailableBalance(MOCK_DATA.balance);
-
-          // Update Crypto Balances from MOCK_DATA
+          // Placeholder until real balances are wired from backend.
+          setAvailableBalance(null);
           setCryptoBalances({
-            BTC: MOCK_DATA.cryptoBalances.BTC,
-            ETH: MOCK_DATA.cryptoBalances.ETH,
-            USDT: MOCK_DATA.cryptoBalances.USDT,
+            BTC: null,
+            ETH: null,
+            USDT: null,
+          });
+          setForexBalances({
+            USD: null,
+            JPY: null,
           });
         } catch (error) {
           console.error("[Balance] Error updating mock balance:", error);
@@ -282,29 +279,27 @@ export default function PlayEarnServices() {
             const data = await resCrypto.json();
             setCryptoPricesRaw(prev => ({
               ...prev,
-              ...(data.BTC?.php && { BTC: data.BTC.php }),
-              ...(data.ETH?.php && { ETH: data.ETH.php }),
-              ...(data.USDT?.php && { USDT: data.USDT.php }),
+              ...(data.BTC?.php != null ? { BTC: Number(data.BTC.php) } : {}),
+              ...(data.ETH?.php != null ? { ETH: Number(data.ETH.php) } : {}),
+              ...(data.USDT?.php != null ? { USDT: Number(data.USDT.php) } : {}),
             }));
 
             setCryptoPrices(prev => ({
               ...prev,
-              ...(data.BTC?.php && { BTC: formatCurrency(data.BTC.php) }),
-              ...(data.ETH?.php && { ETH: formatCurrency(data.ETH.php) }),
-              ...(data.USDT?.php && { USDT: formatCurrency(data.USDT.php) }),
+              ...(data.BTC?.php != null ? { BTC: formatCurrency(data.BTC.php) } : {}),
+              ...(data.ETH?.php != null ? { ETH: formatCurrency(data.ETH.php) } : {}),
+              ...(data.USDT?.php != null ? { USDT: formatCurrency(data.USDT.php) } : {}),
             }));
 
             setPriceChanges(prev => {
               const newChanges = { ...prev };
-              Object.keys(data).forEach(key => {
+              Object.entries(data).forEach(([key, val]: [string, any]) => {
                 const crypto = key.toUpperCase();
-                if (newChanges[crypto]) {
-                  newChanges[crypto] = {
-                    "1h": data[key].change1h || "+0.00%",
-                    "24h": data[key].change24h || "+0.00%",
-                    "7d": data[key].change7d || "+0.00%"
-                  };
-                }
+                newChanges[crypto] = {
+                  "1h": String(val?.change1h ?? NO_DATA),
+                  "24h": String(val?.change24h ?? NO_DATA),
+                  "7d": String(val?.change7d ?? NO_DATA),
+                };
               });
               return newChanges;
             });
@@ -319,9 +314,9 @@ export default function PlayEarnServices() {
               const phpValue = (1 / val.rate);
               prices[key] = phpValue.toFixed(2);
               changes[key] = {
-                "1h": val.change1h || "+0.00%",
-                "24h": val.change24h || "+0.00%",
-                "7d": val.change7d || "+0.00%",
+                "1h": String(val?.change1h ?? NO_DATA),
+                "24h": String(val?.change24h ?? NO_DATA),
+                "7d": String(val?.change7d ?? NO_DATA),
               };
             });
             setForexPrices(prices);
@@ -464,27 +459,39 @@ export default function PlayEarnServices() {
               <View style={styles.assetItem}>
                 <Text style={styles.assetLabel}>BTC</Text>
                 <View style={{ alignItems: "flex-end" }}>
-                  <Text style={styles.assetValue}>{cryptoBalances.BTC}</Text>
+                  <Text style={styles.assetValue}>
+                    {cryptoBalances.BTC == null ? NO_DATA : cryptoBalances.BTC.toFixed(5)}
+                  </Text>
                   <Text style={styles.assetSubValue}>
-                    ₱ {formatCurrency(parseFloat(cryptoBalances.BTC) * cryptoPricesRaw.BTC)}
+                    {cryptoBalances.BTC != null && cryptoPricesRaw.BTC != null
+                      ? `₱ ${formatCurrency(cryptoBalances.BTC * cryptoPricesRaw.BTC)}`
+                      : NO_DATA}
                   </Text>
                 </View>
               </View>
               <View style={styles.assetItem}>
                 <Text style={styles.assetLabel}>ETH</Text>
                 <View style={{ alignItems: "flex-end" }}>
-                  <Text style={styles.assetValue}>{cryptoBalances.ETH}</Text>
+                  <Text style={styles.assetValue}>
+                    {cryptoBalances.ETH == null ? NO_DATA : cryptoBalances.ETH.toFixed(5)}
+                  </Text>
                   <Text style={styles.assetSubValue}>
-                    ₱ {formatCurrency(parseFloat(cryptoBalances.ETH) * cryptoPricesRaw.ETH)}
+                    {cryptoBalances.ETH != null && cryptoPricesRaw.ETH != null
+                      ? `₱ ${formatCurrency(cryptoBalances.ETH * cryptoPricesRaw.ETH)}`
+                      : NO_DATA}
                   </Text>
                 </View>
               </View>
               <View style={styles.assetItem}>
                 <Text style={styles.assetLabel}>USDT</Text>
                 <View style={{ alignItems: "flex-end" }}>
-                  <Text style={styles.assetValue}>{cryptoBalances.USDT}</Text>
+                  <Text style={styles.assetValue}>
+                    {cryptoBalances.USDT == null ? NO_DATA : cryptoBalances.USDT.toFixed(5)}
+                  </Text>
                   <Text style={styles.assetSubValue}>
-                    ₱ {formatCurrency(parseFloat(cryptoBalances.USDT) * cryptoPricesRaw.USDT)}
+                    {cryptoBalances.USDT != null && cryptoPricesRaw.USDT != null
+                      ? `₱ ${formatCurrency(cryptoBalances.USDT * cryptoPricesRaw.USDT)}`
+                      : NO_DATA}
                   </Text>
                 </View>
               </View>
@@ -500,11 +507,15 @@ export default function PlayEarnServices() {
               </View>
               <View style={styles.assetItem}>
                 <Text style={styles.assetLabel}>USD</Text>
-                <Text style={styles.assetValue}>{MOCK_DATA.forexBalances.USD}</Text>
+                <Text style={styles.assetValue}>
+                  {forexBalances.USD == null ? NO_DATA : forexBalances.USD.toFixed(2)}
+                </Text>
               </View>
               <View style={styles.assetItem}>
                 <Text style={styles.assetLabel}>JPY</Text>
-                <Text style={styles.assetValue}>{MOCK_DATA.forexBalances.JPY}</Text>
+                <Text style={styles.assetValue}>
+                  {forexBalances.JPY == null ? NO_DATA : forexBalances.JPY.toFixed(2)}
+                </Text>
               </View>
             </View>
           </View>
@@ -611,8 +622,8 @@ export default function PlayEarnServices() {
                   id={asset.id}
                   label={asset.label}
                   fullName={asset.id === "BTC" ? "Bitcoin" : asset.id === "ETH" ? "Ethereum" : "Tether"}
-                  price={cryptoPrices[asset.id] || "0.00"}
-                  change={priceChanges[asset.id]?.[selectedTimeRange] || "+0.00%"}
+                  price={cryptoPrices[asset.id] ?? NO_DATA}
+                  change={priceChanges[asset.id]?.[selectedTimeRange] ?? NO_DATA}
                   icon={asset.icon}
                   selectedTimeRange={selectedTimeRange}
                   selected={selectedAsset?.id === asset.id}
@@ -682,8 +693,8 @@ export default function PlayEarnServices() {
                   id={asset.id}
                   label={asset.label}
                   fullName={asset.fullName}
-                  price={forexPrices[asset.id] || "0.00"}
-                  change={forexChanges[asset.id]?.[selectedForexTimeRange] || "+0.00%"}
+                  price={forexPrices[asset.id] ?? NO_DATA}
+                  change={forexChanges[asset.id]?.[selectedForexTimeRange] ?? NO_DATA}
                   icon={asset.icon}
                   selectedTimeRange={selectedForexTimeRange}
                   selected={selectedAsset?.id === asset.id}
