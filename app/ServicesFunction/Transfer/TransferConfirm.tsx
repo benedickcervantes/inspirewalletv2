@@ -7,15 +7,12 @@ import * as Sharing from "expo-sharing";
 import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  KeyboardAvoidingView,
   Modal,
   NativeModules,
-  Platform,
   ScrollView,
   Share,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -28,6 +25,7 @@ import {
   submitTransfer,
 } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
+import PasscodeModal from "../../components/PasscodeModal";
 import Loader from "../../Loader/Loader";
 import ContactsModal from "./ContactsModal";
 import QRScanner from "./QRScanner";
@@ -683,93 +681,20 @@ export default function TransferConfirm() {
       </ScrollView>
 
       {/* Passcode modal (when user has passcode set) */}
-      <Modal
+      <PasscodeModal
         visible={showPasscodeModal}
-        transparent
-        animationType="fade"
-        onRequestClose={() => !isProcessing && setShowPasscodeModal(false)}
-      >
-        <KeyboardAvoidingView
-          style={styles.modalOverlay}
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          keyboardVerticalOffset={Platform.OS === "ios" ? 40 : 0}
-        >
-          <View style={styles.passcodeModalContent}>
-            <Text style={styles.passcodeModalTitle}>
-              {t("sendMoney.enterPasscode")}
-            </Text>
-            <TextInput
-              style={styles.passcodeInput}
-              value={passcode}
-              onChangeText={(t) =>
-                setPasscode(t.replace(/\D/g, "").slice(0, 4))
-              }
-              placeholder="----"
-              placeholderTextColor="#9CA3AF"
-              maxLength={4}
-              keyboardType="number-pad"
-              editable={!isProcessing}
-              secureTextEntry={false}
-              autoFocus
-              selectTextOnFocus={false}
-              autoComplete="off"
-              caretHidden={false}
-              selectionColor="#E25A17"
-              underlineColorAndroid="transparent"
-            />
-            <View style={styles.passcodeIndicatorRow}>
-              {[0, 1, 2, 3].map((index) => (
-                <View
-                  key={`transfer-passcode-indicator-${index}`}
-                  style={[
-                    styles.passcodeIndicatorBox,
-                    index < passcode.length &&
-                      styles.passcodeIndicatorBoxFilled,
-                  ]}
-                >
-                  <Text style={styles.passcodeIndicatorBullet}>
-                    {index < passcode.length ? "•" : ""}
-                  </Text>
-                </View>
-              ))}
-            </View>
-            <View style={styles.passcodeModalButtons}>
-              <TouchableOpacity
-                style={[
-                  styles.passcodeModalButton,
-                  styles.passcodeModalButtonCancel,
-                ]}
-                onPress={() => {
-                  setShowPasscodeModal(false);
-                  setPasscode("");
-                }}
-                disabled={isProcessing}
-              >
-                <Text style={styles.passcodeModalButtonCancelText}>
-                  {t("common.cancel")}
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.passcodeModalButton,
-                  styles.passcodeModalButtonConfirm,
-                ]}
-                onPress={handlePasscodeConfirm}
-                disabled={isProcessing || passcode.length !== 4}
-              >
-                <LinearGradient
-                  colors={["#E25A17", "#F28934"]}
-                  style={styles.passcodeModalButtonGradient}
-                >
-                  <Text style={styles.passcodeModalButtonConfirmText}>
-                    {t("sendMoney.confirm")}
-                  </Text>
-                </LinearGradient>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
+        passcode={passcode}
+        title={t("sendMoney.enterPasscode")}
+        confirmLabel={t("sendMoney.confirm")}
+        cancelLabel={t("common.cancel")}
+        loading={isProcessing}
+        onChangePasscode={setPasscode}
+        onConfirm={handlePasscodeConfirm}
+        onCancel={() => {
+          setShowPasscodeModal(false);
+          setPasscode("");
+        }}
+      />
 
       {/* Error Modal */}
       <Modal
