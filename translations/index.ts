@@ -6,6 +6,9 @@
 export type TranslationMap = Record<string, string>;
 
 const en: TranslationMap = {
+  "kyc.takePhoto": "Take a Photo",
+  "kyc.chooseFromLibrary": "Choose from Library",
+  "kyc.selectUploadMethod": "Select Upload Method",
   "deposit.missingRequestId":
     "Missing Request ID. Please go back and try again.",
   "deposit.receiptUploadFailed": "Receipt upload failed: ",
@@ -1971,6 +1974,9 @@ const en: TranslationMap = {
 };
 
 const ko: TranslationMap = {
+  "kyc.takePhoto": "사진 찍기",
+  "kyc.chooseFromLibrary": "라이브러리에서 선택",
+  "kyc.selectUploadMethod": "업로드 방법 선택",
   "auth.loggingIn": "로그인 중",
   "auth.emailPlaceholder": "이메일 주소",
   "auth.passwordPlaceholder": "비밀번호 입력",
@@ -3765,6 +3771,9 @@ const ko: TranslationMap = {
 };
 
 const ja: TranslationMap = {
+  "kyc.takePhoto": "写真を撮る",
+  "kyc.chooseFromLibrary": "ライブラリから選択",
+  "kyc.selectUploadMethod": "アップロード方法を選択",
   "auth.loggingIn": "ログイン中",
   "auth.emailPlaceholder": "メールアドレス",
   "auth.passwordPlaceholder": "パスワードを入力",
@@ -5561,6 +5570,9 @@ const ja: TranslationMap = {
 };
 
 const ar: TranslationMap = {
+  "kyc.takePhoto": "التقاط صورة",
+  "kyc.chooseFromLibrary": "اختر من المكتبة",
+  "kyc.selectUploadMethod": "حدد طريقة التحميل",
   "auth.loggingIn": "جاري تسجيل الدخول",
   "auth.emailPlaceholder": "البريد الإلكتروني",
   "auth.passwordPlaceholder": "أدخل كلمة المرور",
