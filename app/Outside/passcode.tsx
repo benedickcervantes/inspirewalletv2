@@ -1,5 +1,5 @@
 import {
-    Ionicons
+  Ionicons
 } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
@@ -8,31 +8,31 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as LocalAuthentication from 'expo-local-authentication';
 import * as SecureStore from 'expo-secure-store';
 import {
-    useEffect,
-    useRef,
-    useState
+  useEffect,
+  useRef,
+  useState
 } from 'react';
 import {
-    ActivityIndicator,
-    Animated,
-    BackHandler,
-    Modal,
-    Platform,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    useWindowDimensions,
-    View,
+  ActivityIndicator,
+  Animated,
+  BackHandler,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import { TouchableOpacity } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { login, resetPasscode, verifyBiometric, verifyPasscode } from '../../configs/api';
 import {
-    DEFAULT_LANGUAGE,
-    normalizeLanguage,
-    SUPPORTED_LANGUAGES,
+  DEFAULT_LANGUAGE,
+  normalizeLanguage,
+  SUPPORTED_LANGUAGES,
 } from '../../constants/locales';
 import { useLanguage } from '../../context/LanguageContext';
 import type { NavProp } from '../../types/navigation';
@@ -401,23 +401,30 @@ export default function Passcode() {
           locations={[0, 1]}
           style={[styles.gradient, { paddingTop: insets.top, paddingBottom: insets.bottom, paddingHorizontal: horizontalPadding }]}
         >
-        {!needsAuth ? (
+        <View style={[styles.topBar, { top: insets.top + 12, left: horizontalPadding, right: horizontalPadding }]}>
+          {!needsAuth ? (
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => (navigation as unknown as NavProp).replace('Login')}
+              activeOpacity={0.8}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              accessibilityRole="button"
+            >
+              <Ionicons name="arrow-back" size={26} color={WHITE} />
+            </TouchableOpacity>
+          ) : (
+            <View style={styles.headerSpacer} />
+          )}
           <TouchableOpacity
-            style={[styles.backButton, { top: insets.top + 12 }]}
-            onPress={() => (navigation as unknown as NavProp).replace('Login')}
-            activeOpacity={0.8}
+            style={styles.languageButton}
+            onPress={() => setLanguageModalVisible(true)}
+            accessibilityLabel={t('profile.selectLanguage')}
+            accessibilityRole="button"
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <Ionicons name="arrow-back" size={26} color={WHITE} />
+            <Ionicons name="language-outline" size={isSmallScreen ? 24 : 26} color={WHITE} />
           </TouchableOpacity>
-        ) : null}
-        <TouchableOpacity
-          style={[styles.languageButton, { top: insets.top + 12, right: horizontalPadding }]}
-          onPress={() => setLanguageModalVisible(true)}
-          accessibilityLabel={t('profile.selectLanguage')}
-          accessibilityRole="button"
-        >
-          <Ionicons name="language-outline" size={isSmallScreen ? 24 : 26} color={WHITE} />
-        </TouchableOpacity>
+        </View>
         <ScrollView
           style={styles.scroll}
           contentContainerStyle={[
@@ -526,7 +533,7 @@ export default function Passcode() {
                 </View>
               </View>
 
-              <View style={[styles.bottomRow, { maxWidth: Math.min(280, width - horizontalPadding * 2), marginTop: bottomRowMarginTop }]}>
+              <View style={[styles.bottomRow, { marginTop: bottomRowMarginTop }]}>
                 <TouchableOpacity style={[styles.bottomButton, styles.bottomButtonPrimary, isSmallScreen && { minHeight: 48 }, tiny && { minHeight: 40, paddingVertical: 8 }]} onPress={() => (navigation as unknown as NavProp).replace('Login')}>
                   <Text style={[styles.bottomButtonTextPrimary, isSmallScreen && { fontSize: 16 }]}>{t('passcode.useEmail')}</Text>
                 </TouchableOpacity>
@@ -744,20 +751,30 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     alignItems: 'center',
   },
-  languageButton: {
+  topBar: {
     position: 'absolute',
-    zIndex: 10,
+    zIndex: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  headerSpacer: {
     width: 44,
     height: 44,
+  },
+  languageButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.22)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   backButton: {
-    position: 'absolute',
-    left: 20,
-    zIndex: 10,
     width: 44,
     height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.22)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -901,13 +918,15 @@ const styles = StyleSheet.create({
   },
   bottomRow: {
     width: '100%',
-    maxWidth: 280,
+    maxWidth: '100%',
     marginTop: 16,
-    alignItems: 'center',
+    alignSelf: 'stretch',
+    alignItems: 'stretch',
     gap: 16,
   },
   bottomButton: {
     width: '100%',
+    alignSelf: 'stretch',
     paddingVertical: 16,
     borderRadius: 999,
     alignItems: 'center',
@@ -925,11 +944,14 @@ const styles = StyleSheet.create({
   forgotLinkWrap: {
     paddingVertical: 8,
     paddingHorizontal: 4,
+    width: '100%',
+    alignItems: 'center',
   },
   forgotLink: {
     fontSize: 16,
     fontWeight: '500',
     color: WHITE,
+    textAlign: 'center',
     textDecorationLine: 'underline',
     textDecorationColor: 'rgba(255,255,255,0.8)',
   },
