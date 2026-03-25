@@ -302,6 +302,9 @@ export default function Dashboard() {
     "banking" | "ewallet"
   >("banking");
   const [showKycLockedModal, setShowKycLockedModal] = useState(false);
+  const [kycGateModalVariant, setKycGateModalVariant] = useState<
+    "pending" | "verify"
+  >("verify");
   const [activeCardDesign, setActiveCardDesign] = useState<string | null>(null);
 
   const BANKING_SERVICE_MIN_BALANCE = 200_000;
@@ -318,7 +321,16 @@ export default function Dashboard() {
     kycAccountStatus === "VERIFIED" ||
     kycStatus === "APPROVED" ||
     kycStatus === "VERIFIED";
+  const isPersonalKycPending =
+    kycStatus === "PENDING" ||
+    kycStatus === "IN_REVIEW" ||
+    kycStatus === "SUBMITTED";
   const isKycRestrictedUser = userRole === "USER" && !isKycVerified;
+
+  const openKycGateModal = useCallback(() => {
+    setKycGateModalVariant(isPersonalKycPending ? "pending" : "verify");
+    setShowKycLockedModal(true);
+  }, [isPersonalKycPending]);
 
   const getActiveCardStorageKey = (accountNumber?: string) =>
     accountNumber
@@ -598,14 +610,16 @@ export default function Dashboard() {
     try {
     const accessToken = await AsyncStorage.getItem("access_token");
     if (!accessToken) return;
-    const [w, meRes, tdRes, treeRes, notifRes, companyKycRes] = await Promise.all([
-      syncAvailableBalanceOnly(),
-      getMe(accessToken),
-      getTimeDeposits(accessToken),
-      getReferralTree(accessToken),
-      getNotifications(accessToken, { limit: 50 }),
-      getCompanyKycStatus(accessToken).catch(() => null),
-    ]);
+    const [w, meRes, tdRes, treeRes, notifRes, companyKycRes, personalKycRes] =
+      await Promise.all([
+        syncAvailableBalanceOnly(),
+        getMe(accessToken),
+        getTimeDeposits(accessToken),
+        getReferralTree(accessToken),
+        getNotifications(accessToken, { limit: 50 }),
+        getCompanyKycStatus(accessToken).catch(() => null),
+        getPersonalKycStatus(accessToken).catch(() => null),
+      ]);
     const txRes = await getTransactions(accessToken, {
       walletId: w?.id ?? mainWalletIdRef.current ?? undefined,
       limit: 20,
@@ -624,6 +638,12 @@ export default function Dashboard() {
         )
           ? companyKycData.companyName
           : undefined;
+      const personalStatusFromApi =
+        personalKycRes && personalKycRes.success && personalKycRes.data
+          ? String(
+              (personalKycRes.data as { status?: string }).status ?? "",
+            ).toUpperCase()
+          : "";
       setUserData({
         firstName: user.firstName,
         lastName: user.lastName,
@@ -632,7 +652,9 @@ export default function Dashboard() {
         accountNumber: user.accountNumber,
         role: (user as Record<string, unknown>).role ?? "USER",
         kycAccountStatus: (user as Record<string, unknown>).kycAccountStatus,
-        kycStatus: (user as Record<string, unknown>).kycStatus,
+        kycStatus: personalStatusFromApi
+          ? personalStatusFromApi
+          : (user as Record<string, unknown>).kycStatus,
       });
     }
 
@@ -1190,39 +1212,51 @@ export default function Dashboard() {
             <View style={styles.bankingLockHeader}>
               <View style={styles.bankingLockIconCircle}>
                 <MaterialCommunityIcons
-                  name="shield-alert"
+                  name={
+                    kycGateModalVariant === "pending"
+                      ? "clock-outline"
+                      : "shield-alert"
+                  }
                   size={22}
                   color="#FFFFFF"
                 />
               </View>
               <Text style={styles.bankingLockTitle}>
-                {t("dashboard.kycLockedTitle")}
+                {kycGateModalVariant === "pending"
+                  ? t("dashboard.kycPendingTitle")
+                  : t("dashboard.kycLockedTitle")}
               </Text>
             </View>
-            <View style={styles.bankingLockRequirementBox}>
-              <Text style={styles.bankingLockRequirementLabel}>
-                {t("dashboard.kycLockedRequirement")}
-              </Text>
-              <Text style={styles.bankingLockRequirementValue}>
-                {t("dashboard.kycLockedRequirementValue")}
-              </Text>
-            </View>
+            {kycGateModalVariant === "verify" ? (
+              <View style={styles.bankingLockRequirementBox}>
+                <Text style={styles.bankingLockRequirementLabel}>
+                  {t("dashboard.kycLockedRequirement")}
+                </Text>
+                <Text style={styles.bankingLockRequirementValue}>
+                  {t("dashboard.kycLockedRequirementValue")}
+                </Text>
+              </View>
+            ) : null}
             <Text style={styles.bankingLockMessage}>
-              {t("dashboard.kycLockedMessage")}
+              {kycGateModalVariant === "pending"
+                ? t("dashboard.kycPendingMessage")
+                : t("dashboard.kycLockedMessage")}
             </Text>
-            <TouchableOpacity
-              style={styles.kycVerifyModalButton}
-              onPress={() => {
-                setShowKycLockedModal(false);
-                (navigation as { navigate: (name: string) => void }).navigate(
-                  "KYCVerification",
-                );
-              }}
-            >
-              <Text style={styles.kycVerifyModalButtonText}>
-                {t("profile.verify")}
-              </Text>
-            </TouchableOpacity>
+            {kycGateModalVariant === "verify" ? (
+              <TouchableOpacity
+                style={styles.kycVerifyModalButton}
+                onPress={() => {
+                  setShowKycLockedModal(false);
+                  (navigation as { navigate: (name: string) => void }).navigate(
+                    "KYCVerification",
+                  );
+                }}
+              >
+                <Text style={styles.kycVerifyModalButtonText}>
+                  {t("profile.verify")}
+                </Text>
+              </TouchableOpacity>
+            ) : null}
             <TouchableOpacity
               style={styles.maintenanceModalButton}
               onPress={() => setShowKycLockedModal(false)}
@@ -1383,7 +1417,7 @@ export default function Dashboard() {
               isCardFlipped={isCardFlipped}
               flipCard={flipCard}
               isWithdrawalLocked={isKycRestrictedUser}
-              onWithdrawalLockedPress={() => setShowKycLockedModal(true)}
+              onWithdrawalLockedPress={openKycGateModal}
             />
           )}
           {activeTab === "Cards" && (
@@ -1399,7 +1433,7 @@ export default function Dashboard() {
               onActiveDesignChange={setActiveCardDesign}
               onRefresh={refetchJwtData}
               isBuyingCardsLocked={isKycRestrictedUser}
-              onBuyingCardsLockedPress={() => setShowKycLockedModal(true)}
+              onBuyingCardsLockedPress={openKycGateModal}
             />
           )}
           {activeTab === "Investment" && (
@@ -1438,7 +1472,7 @@ export default function Dashboard() {
                 ]}
                 onPress={() => {
                   if (isKycRestrictedUser) {
-                    setShowKycLockedModal(true);
+                    openKycGateModal();
                   } else {
                     navigation.navigate("Transfer");
                   }
@@ -1557,7 +1591,7 @@ export default function Dashboard() {
                 ]}
                 onPress={() => {
                   if (isKycRestrictedUser) {
-                    setShowKycLockedModal(true);
+                    openKycGateModal();
                   } else {
                     navigation.navigate("Travel");
                   }
@@ -1696,7 +1730,7 @@ export default function Dashboard() {
                             return;
                           }
                           if (isTradingLockedByKyc) {
-                            setShowKycLockedModal(true);
+                            openKycGateModal();
                             return;
                           }
                           if (item.labelKey) {
