@@ -120,7 +120,9 @@ export default function TransferConfirm() {
   const transferSuccessSoundRef = useRef<{
     unloadAsync: () => Promise<unknown>;
     replayAsync: () => Promise<unknown>;
-    setOnPlaybackStatusUpdate: (callback: ((status: any) => void) | null) => void;
+    setOnPlaybackStatusUpdate: (
+      callback: ((status: any) => void) | null,
+    ) => void;
   } | null>(null);
 
   const playTransferSuccessSound = async () => {
@@ -702,25 +704,33 @@ export default function TransferConfirm() {
               onChangeText={(t) =>
                 setPasscode(t.replace(/\D/g, "").slice(0, 4))
               }
-              placeholder=""
+              placeholder="----"
+              placeholderTextColor="#9CA3AF"
               maxLength={4}
               keyboardType="number-pad"
               editable={!isProcessing}
+              secureTextEntry={false}
               autoFocus
-              caretHidden
-              selectionColor="transparent"
+              selectTextOnFocus={false}
+              autoComplete="off"
+              caretHidden={false}
+              selectionColor="#E25A17"
               underlineColorAndroid="transparent"
-              secureTextEntry
             />
-            <View style={styles.passcodeDotsRow} pointerEvents="none">
-              {[0, 1, 2, 3].map((i) => (
+            <View style={styles.passcodeIndicatorRow}>
+              {[0, 1, 2, 3].map((index) => (
                 <View
-                  key={`passcode-dot-${i}`}
+                  key={`transfer-passcode-indicator-${index}`}
                   style={[
-                    styles.passcodeDot,
-                    i < passcode.length && styles.passcodeDotFilled,
+                    styles.passcodeIndicatorBox,
+                    index < passcode.length &&
+                      styles.passcodeIndicatorBoxFilled,
                   ]}
-                />
+                >
+                  <Text style={styles.passcodeIndicatorBullet}>
+                    {index < passcode.length ? "•" : ""}
+                  </Text>
+                </View>
               ))}
             </View>
             <View style={styles.passcodeModalButtons}>
@@ -1284,28 +1294,50 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     fontSize: 18,
     textAlign: "center",
-    // NOTE: secureTextEntry + letterSpacing can render as blank spaces on Android.
-    letterSpacing: 0,
+    writingDirection: "ltr",
+    letterSpacing: 8,
     marginBottom: 20,
-    // Keep the input functional (for keyboard), but make its contents invisible.
-    opacity: 0,
-    color: "transparent",
+    shadowColor: "transparent",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    elevation: 0,
+    color: "#111827",
+    fontWeight: "600",
   },
-  passcodeDotsRow: {
+  passcodeIndicatorRow: {
     flexDirection: "row",
     justifyContent: "center",
-    gap: 14,
-    marginTop: -46,
-    marginBottom: 26,
+    gap: 10,
+    marginTop: -8,
+    marginBottom: 18,
   },
-  passcodeDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: "#D1D5DB", // gray
+  passcodeIndicatorBox: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    borderWidth: 1,
+    borderColor: "#D1D5DB",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFFFFF",
   },
-  passcodeDotFilled: {
-    backgroundColor: "#111827", // near-black
+  passcodeIndicatorBoxFilled: {
+    borderColor: "#E25A17",
+    backgroundColor: "#FFF7ED",
+  },
+  passcodeIndicatorDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#E25A17",
+  },
+  passcodeIndicatorBullet: {
+    fontSize: 16,
+    lineHeight: 18,
+    color: "#E25A17",
+    fontWeight: "700",
+    textAlign: "center",
   },
   passcodeModalButtons: {
     flexDirection: "row",
