@@ -11,6 +11,7 @@ import {
   Animated,
   AppState,
   AppStateStatus,
+  PanResponder,
   useWindowDimensions,
   Modal,
   StyleSheet,
@@ -55,6 +56,20 @@ export const IdleTimeoutProvider: React.FC<{ children: React.ReactNode }> = ({
   const [showModal, setShowModal] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.9)).current;
+
+  // Global touch interceptor to reset the idle timer on user actions
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponderCapture: () => {
+        registerActivity();
+        return false;
+      },
+      onMoveShouldSetPanResponderCapture: () => {
+        registerActivity();
+        return false;
+      },
+    })
+  ).current;
 
   const recordActivity = useCallback(async () => {
     if (!isSessionActive) return;
@@ -325,7 +340,9 @@ export const IdleTimeoutProvider: React.FC<{ children: React.ReactNode }> = ({
     <IdleTimeoutContext.Provider
       value={{ registerActivity, startIdleSession, stopIdleSession, isSessionActive }}
     >
-      <View style={styles.container}>{children}</View>
+      <View style={styles.container} {...panResponder.panHandlers}>
+        {children}
+      </View>
 
       {/* Inactivity Logout Modal */}
       <Modal
