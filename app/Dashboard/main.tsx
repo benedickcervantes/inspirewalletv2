@@ -307,6 +307,7 @@ export default function Dashboard() {
     "pending" | "verify"
   >("verify");
   const [activeCardDesign, setActiveCardDesign] = useState<string | null>(null);
+  const accountNumberRef = useRef<string | undefined>(undefined);
 
   const BANKING_SERVICE_MIN_BALANCE = 200_000;
   const activeTimeDepositPrincipalTotal = useMemo(
@@ -409,6 +410,7 @@ export default function Dashboard() {
         };
       }
       if (user) {
+        accountNumberRef.current = (user as { accountNumber?: string })?.accountNumber;
         setUserData({
           firstName: user.firstName,
           lastName: user.lastName,
@@ -476,17 +478,18 @@ export default function Dashboard() {
       }
 
       const walletId = w?.id;
-      const [treeRes, txRes, notifRes, hasChosen, annRes] =
+      const accountNumberFromInit =
+        (user as { accountNumber?: string })?.accountNumber;
+      const accountKey = languageChoiceDoneKey(accountNumberFromInit);
+      const globalKey = languageChoiceDoneKey(undefined);
+      const [treeRes, txRes, notifRes, hasChosen, hasChosenGlobal, annRes] =
         await Promise.all([
           getReferralTree(accessToken),
           getTransactions(accessToken, { walletId, limit: 20 }),
           fetchMaintenanceStatus(),
           getNotifications(accessToken, { limit: 50 }),
-          AsyncStorage.getItem(
-            languageChoiceDoneKey(
-              (user as { accountNumber?: string })?.accountNumber,
-            ),
-          ),
+          AsyncStorage.getItem(accountKey),
+          AsyncStorage.getItem(globalKey),
           getActiveAnnouncements(accessToken),
         ]);
 
@@ -538,7 +541,17 @@ export default function Dashboard() {
         setRecentTransactions(mapped);
       }
 
-      if (hasChosen !== "true") {
+      // One-time migration: if user previously saved language under global key,
+      // promote it to account-scoped key so the modal doesn't reappear.
+      if (
+        hasChosen !== "true" &&
+        hasChosenGlobal === "true" &&
+        accountNumberFromInit
+      ) {
+        await AsyncStorage.setItem(accountKey, "true");
+      }
+
+      if (hasChosen !== "true" && hasChosenGlobal !== "true") {
         setShowFirstTimeLanguageModal(true);
       }
 
@@ -1086,9 +1099,13 @@ export default function Dashboard() {
 
   const handleFirstTimeLanguageSelect = (label: string) => {
     setLanguage(label);
-    const accountNumber = userData?.accountNumber as string | undefined;
-    AsyncStorage.setItem(languageChoiceDoneKey(accountNumber), "true");
-    setShowFirstTimeLanguageModal(false);
+    const accountNumber =
+      accountNumberRef.current ??
+      (userData?.accountNumber as string | undefined);
+    void (async () => {
+      await AsyncStorage.setItem(languageChoiceDoneKey(accountNumber), "true");
+      setShowFirstTimeLanguageModal(false);
+    })();
   };
 
   const handleBannerPress = async (url?: string, action?: string) => {
