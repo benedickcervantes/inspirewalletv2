@@ -1,12 +1,9 @@
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
-  Alert,
-  Image,
   Modal,
   ScrollView,
   StyleSheet,
@@ -15,9 +12,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import {
-  uploadTimeDepositReceiptFile
-} from "../../../configs/api";
+import { getOrCreateMainWallet, submitTimeDepositRequest } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
 
 export default function TimeDepositConfirm() {
@@ -30,14 +25,11 @@ export default function TimeDepositConfirm() {
     amount?: string;
     amountInPhp?: number;
     currency?: string;
-    requestId?: string;
   };
 
   const [loading, setLoading] = useState(false);
-  const [proofUri, setProofUri] = useState<string | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [generatedRequestId, setGeneratedRequestId] = useState<string | null>(params.requestId || null);
   const [showEmailSentModal, setShowEmailSentModal] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const depositMethod = params.depositMethod || "Request Amount";
   const contractPeriod = params.contractPeriod || "";
@@ -45,15 +37,8 @@ export default function TimeDepositConfirm() {
   const amountInPhp = params.amountInPhp ?? (parseFloat(amount) || 0);
   const currency = params.currency || "PHP";
 
-  useEffect(() => {
-    // Show email sent modal once when the confirm screen loads if bank credentials were sent
-    if (
-      depositMethod !== "Available Balance" &&
-      depositMethod !== "available_balance"
-    ) {
-      setShowEmailSentModal(true);
-    }
-  }, []);
+  const shouldShowBankDetailsModal =
+    depositMethod !== "Available Balance" && depositMethod !== "available_balance";
 
   const getMaturityDate = () => {
     const months =
@@ -61,121 +46,70 @@ export default function TimeDepositConfirm() {
     return t("deposit.months", { count: String(months) });
   };
 
-  const pickFromGallery = async () => {
-    try {
-      const { status } =
-        await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== "granted") {
-        Alert.alert(t("deposit.error"), t("kyc.allowPhotos"));
+  const createRequestAndGoToFinalStep = async () => {
+    setSubmitError(null);
+    const token = await AsyncStorage.getItem("access_token");
+    if (!token) {
+      setSubmitError(t("deposit.pleaseLoginDeposit"));
+      return;
+    }
+
+    const body: Record<string, string> = {
+      amount: Number(amountInPhp).toFixed(2),
+      contractPeriod,
+      depositMethod:
+        depositMethod === "Available Balance"
+          ? "available_balance"
+          : "request_amount",
+    };
+
+    if (depositMethod === "Available Balance") {
+      const { success, wallet } = await getOrCreateMainWallet(token);
+      if (!success || !wallet?.id) {
+        setSubmitError(t("deposit.walletLoadError"));
         return;
       }
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        quality: 0.8,
-      });
-      if (!result.canceled && result.assets[0]) {
-        setProofUri(result.assets[0].uri);
-      }
-    } catch (error) {
-      console.error("Error picking image:", error);
-      Alert.alert(t("deposit.error"), t("kyc.failedToPickImage"));
+      body.walletId = wallet.id as string;
     }
+
+    const created = await submitTimeDepositRequest(token, body);
+    if (!created.success || !created.data?.id) {
+      setSubmitError(created.error || t("deposit.submitError"));
+      return;
+    }
+
+    const requestId = created.data.id as string;
+
+    navigation.navigate("TimeDepositProof", {
+      requestId,
+      amount,
+      currency,
+      depositMethod,
+      contractPeriod,
+      amountInPhp,
+    });
   };
 
-  const takePhoto = async () => {
-    try {
-      const { status } = await ImagePicker.requestCameraPermissionsAsync();
-      if (status !== "granted") {
-        Alert.alert(t("deposit.error"), t("deposit.cameraPermissionRequired"));
-        return;
-      }
-      const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        quality: 0.8,
-      });
-      if (!result.canceled && result.assets[0]) {
-        setProofUri(result.assets[0].uri);
-      }
-    } catch (error) {
-      console.error("Error taking photo:", error);
-      Alert.alert(t("deposit.error"), t("kyc.failedToPickImage"));
-    }
-  };
-
-  const handleUploadPress = () => {
-    Alert.alert(
-      t("deposit.proofOfPayment"),
-      t("deposit.uploadProofOfPayment"),
-      [
-        { text: t("deposit.useCamera"), onPress: takePhoto },
-        { text: t("deposit.uploadFiles"), onPress: pickFromGallery },
-        { text: t("deposit.cancel"), style: "cancel" },
-      ]
-    );
+  const navigateToFinalStep = () => {
+    navigation.navigate("TimeDepositProof", {
+      amount,
+      currency,
+      depositMethod,
+      contractPeriod,
+      amountInPhp,
+    });
   };
 
   const handleConfirm = async () => {
     setLoading(true);
-    setErrorMessage(null);
     try {
-      const accessToken = await AsyncStorage.getItem("access_token");
-      if (!accessToken) {
-        setErrorMessage(t("deposit.pleaseLoginDeposit"));
-        setLoading(false);
+      if (shouldShowBankDetailsModal) {
+        setShowEmailSentModal(true);
         return;
       }
-
-      const newRequestId = generatedRequestId;
-
-      if (!newRequestId) {
-        setErrorMessage(t("deposit.missingRequestId"));
-        setLoading(false);
-        return;
-      }
-
-      // Blocking Receipt Upload
-      if (proofUri) {
-        const uriLower = proofUri.toLowerCase();
-        const mimeType = uriLower.endsWith(".png")
-          ? "image/png"
-          : uriLower.endsWith(".gif")
-            ? "image/gif"
-            : uriLower.endsWith(".webp")
-              ? "image/webp"
-              : "image/jpeg";
-        const uploadRes = await uploadTimeDepositReceiptFile(
-          accessToken,
-          newRequestId,
-          proofUri,
-          mimeType,
-        );
-        if (!uploadRes.success) {
-          setErrorMessage(`${t("deposit.timeDepositCreatedUploadFailed")}${uploadRes.error}${t("deposit.pleaseContactSupport")}`);
-          setLoading(false);
-          return;
-        }
-      }
-
-      setProofUri(null);
-      setGeneratedRequestId(newRequestId);
-      
-      navigation.navigate("depositReceipt", {
-        transactionId: newRequestId || t("investment.pending"),
-        amount,
-        currency,
-        depositMethod,
-        contractPeriod,
-        type: "Time Deposit",
-        successMessage:
-          depositMethod === "Available Balance"
-            ? t("deposit.timeDepositSuccessMessage")
-            : t("deposit.uploadSuccessMessage"),
-      });
+      await createRequestAndGoToFinalStep();
     } catch (error) {
-      console.error("Error confirming deposit:", error);
-      setErrorMessage(t("deposit.unexpectedError"));
+      console.error("Error moving to final step:", error);
     } finally {
       setLoading(false);
     }
@@ -198,9 +132,6 @@ export default function TimeDepositConfirm() {
 
           <Text style={styles.headerTitle}>{t("deposit.depositRequest")}</Text>
 
-          <TouchableOpacity style={styles.refreshButton}>
-            <Ionicons name="refresh" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
         </LinearGradient>
 
         {/* Progress Steps */}
@@ -215,12 +146,10 @@ export default function TimeDepositConfirm() {
             </View>
             <View style={[styles.stepLine, styles.stepLineActive]} />
             <View style={[styles.stepCircle, styles.stepActive]}>
-              <MaterialCommunityIcons
-                name="clipboard-check"
-                size={16}
-                color="#FFFFFF"
-              />
+              <Ionicons name="checkmark" size={16} color="#FFFFFF" />
             </View>
+            <View style={styles.stepLine} />
+            <View style={styles.stepCircle} />
           </View>
         </View>
 
@@ -281,47 +210,6 @@ export default function TimeDepositConfirm() {
               </Text>
               <Text style={styles.detailValue}>{depositMethod}</Text>
             </View>
-
-            {depositMethod !== "Available Balance" && depositMethod !== "available_balance" && (
-              <View style={[styles.detailItem, { marginTop: 12 }]}>
-                <Text style={styles.detailLabel}>
-                  {t("deposit.proofOfPayment")} {t("deposit.optional")}
-                </Text>
-                <TouchableOpacity
-                  style={styles.uploadButton}
-                  onPress={handleUploadPress}
-                >
-                  {proofUri ? (
-                    <View style={styles.selectedImageContainer}>
-                      <Image
-                        source={{ uri: proofUri }}
-                        style={styles.selectedImage}
-                      />
-                      <View style={styles.changeImageOverlay}>
-                        <Ionicons name="camera" size={20} color="#FFFFFF" />
-                        <Text style={styles.changeImageText}>
-                          {t("kyc.changeImage")}
-                        </Text>
-                      </View>
-                    </View>
-                  ) : (
-                    <View style={styles.uploadPlaceholder}>
-                      <MaterialCommunityIcons
-                        name="cloud-upload"
-                        size={40}
-                        color="#E25A17"
-                      />
-                      <Text style={styles.uploadText}>
-                        {t("deposit.uploadProofOfPayment")}
-                      </Text>
-                      <Text style={styles.uploadSubtext}>
-                        {t("deposit.acceptedFormatsMax")}
-                      </Text>
-                    </View>
-                  )}
-                </TouchableOpacity>
-              </View>
-            )}
           </View>
 
           {/* Deposit Summary Card */}
@@ -356,10 +244,10 @@ export default function TimeDepositConfirm() {
             </View>
           </View>
 
-          {errorMessage ? (
+          {submitError ? (
             <View style={styles.errorBanner}>
               <Ionicons name="alert-circle" size={20} color="#B71C1C" />
-              <Text style={styles.errorText}>{errorMessage}</Text>
+              <Text style={styles.errorText}>{submitError}</Text>
             </View>
           ) : null}
 
@@ -381,7 +269,7 @@ export default function TimeDepositConfirm() {
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}>
                 <Text style={styles.confirmText}>
-                  {loading ? t("deposit.processing") : t("deposit.confirm")}
+                  {loading ? t("deposit.processing") : t("deposit.continue")}
                 </Text>
                 {!loading && (
                   <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
@@ -405,18 +293,29 @@ export default function TimeDepositConfirm() {
               style={styles.alertContainer}
               start={{ x: 0, y: 0 }}
               end={{ x: 0, y: 1 }}>
-              <Text style={styles.alertTitle}>{t("deposit.bankDetailsSentTitle")}</Text>
-              <Text style={styles.alertMessage}>{t("deposit.bankDetailsSentMessage")}</Text>
+              <Text style={styles.alertTitle}>
+                {t("deposit.bankDetailsSentTitle")}
+              </Text>
+              <Text style={styles.alertMessage}>
+                {t("deposit.bankDetailsSentMessage")}
+              </Text>
               <TouchableOpacity
                 style={styles.alertButton}
-                onPress={() => setShowEmailSentModal(false)}>
+                onPress={async () => {
+                  setShowEmailSentModal(false);
+                  setLoading(true);
+                  try {
+                    await createRequestAndGoToFinalStep();
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+                disabled={loading}>
                 <Text style={styles.alertButtonText}>{t("deposit.ok")}</Text>
               </TouchableOpacity>
             </LinearGradient>
           </View>
         </Modal>
-
-
       </SafeAreaView>
     </View>
   );
@@ -449,12 +348,6 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     flex: 1,
     textAlign: "center",
-  },
-  refreshButton: {
-    width: 40,
-    height: 40,
-    justifyContent: "center",
-    alignItems: "center",
   },
   progressContainer: {
     paddingVertical: 20,
@@ -533,56 +426,6 @@ const styles = StyleSheet.create({
     color: "#999",
     marginBottom: 4,
   },
-  uploadButton: {
-    borderWidth: 2,
-    borderColor: "#FFE0B2",
-    borderStyle: "dashed",
-    borderRadius: 12,
-    backgroundColor: "#FFF8E1",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 20,
-    marginTop: 8,
-  },
-  selectedImageContainer: {
-    width: "100%",
-    height: 120,
-    borderRadius: 10,
-    overflow: "hidden",
-  },
-  selectedImage: {
-    width: "100%",
-    height: "100%",
-    resizeMode: "cover",
-  },
-  changeImageOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0, 0, 0, 0.4)",
-    alignItems: "center",
-    justifyContent: "center",
-    flexDirection: "row",
-    gap: 8,
-  },
-  changeImageText: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  uploadPlaceholder: {
-    alignItems: "center",
-  },
-  uploadText: {
-    marginTop: 8,
-    fontSize: 14,
-    color: "#E25A17",
-    fontWeight: "500",
-  },
-  uploadSubtext: {
-    fontSize: 12,
-    color: "#EF6C00",
-    marginTop: 4,
-    opacity: 0.8,
-  },
   amountCard: {
     width: "100%",
     borderRadius: 14,
@@ -634,6 +477,22 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 2,
   },
+  errorBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "#FFEBEE",
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+    borderLeftWidth: 4,
+    borderLeftColor: "#B71C1C",
+  },
+  errorText: {
+    flex: 1,
+    fontSize: 14,
+    color: "#B71C1C",
+  },
   summaryTitle: {
     fontSize: 16,
     fontWeight: "700",
@@ -672,22 +531,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "600",
     color: "#4CAF50",
-  },
-  errorBanner: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    backgroundColor: "#FFEBEE",
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 16,
-    borderLeftWidth: 4,
-    borderLeftColor: "#B71C1C",
-  },
-  errorText: {
-    flex: 1,
-    fontSize: 14,
-    color: "#B71C1C",
   },
   buttonContainer: {
     flexDirection: "row",
@@ -772,152 +615,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: "#E15816",
-  },
-
-  proofModalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  proofModalContent: {
-    width: "90%",
-    maxWidth: 400,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 16,
-    padding: 24,
-    borderLeftWidth: 4,
-    borderLeftColor: "#E25A17",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  proofModalHeader: {
-    marginBottom: 20,
-  },
-  proofModalTitleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    marginBottom: 8,
-  },
-  proofModalTitle: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#333",
-    flex: 1,
-  },
-  proofRequiredBadge: {
-    backgroundColor: "#E25A17",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  proofRequiredBadgeText: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: "#FFFFFF",
-    textTransform: "uppercase",
-  },
-  proofModalSubtitle: {
-    fontSize: 14,
-    color: "#666",
-    lineHeight: 20,
-  },
-  proofUploadArea: {
-    flexDirection: "row",
-    gap: 12,
-    marginBottom: 20,
-  },
-  proofUploadBtn: {
-    flex: 1,
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 16,
-    paddingHorizontal: 12,
-    backgroundColor: "#FFF5F0",
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: "#E25A17",
-  },
-  proofUploadBtnText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#E25A17",
-    marginTop: 8,
-  },
-  proofPreviewContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 12,
-    backgroundColor: "#F5F5F5",
-    borderRadius: 12,
-    marginBottom: 20,
-  },
-  proofPreviewImage: {
-    width: 64,
-    height: 64,
-    borderRadius: 8,
-  },
-  proofPreviewInfo: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  proofUploadedText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#4CAF50",
-    marginBottom: 4,
-  },
-  removeProofBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    alignSelf: "flex-start",
-    gap: 4,
-  },
-  removeProofText: {
-    fontSize: 14,
-    color: "#B71C1C",
-    fontWeight: "500",
-  },
-  proofModalFooter: {
-    flexDirection: "row",
-    gap: 12,
-  },
-  proofCancelBtn: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 12,
-    backgroundColor: "#E0E0E0",
-    alignItems: "center",
-  },
-  proofCancelText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#666",
-  },
-  proofSubmitBtn: {
-    flex: 1,
-    borderRadius: 12,
-    overflow: "hidden",
-  },
-  proofSubmitDisabled: {
-    opacity: 0.7,
-  },
-  proofSubmitGradient: {
-    paddingVertical: 14,
-    alignItems: "center",
-  },
-  proofSubmitText: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#FFFFFF",
-  },
-  proofSubmitTextDisabled: {
-    color: "#FFFFFF",
-    opacity: 0.9,
   },
 });
