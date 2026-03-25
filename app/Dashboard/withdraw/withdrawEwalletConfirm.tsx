@@ -5,13 +5,10 @@ import { LinearGradient } from "expo-linear-gradient";
 import React, { useState } from "react";
 import {
     ActivityIndicator,
-    KeyboardAvoidingView,
     Modal,
-    Platform,
     ScrollView,
     StyleSheet,
     Text,
-    TextInput,
     TouchableOpacity,
     View,
 } from "react-native";
@@ -21,6 +18,7 @@ import {
     submitWithdrawalRequest,
 } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
+import PasscodeModal from "../../components/PasscodeModal";
 
 const getEwalletTransactionFee = (amount: number) => {
   if (Number.isNaN(amount) || amount <= 0) return 0;
@@ -357,100 +355,21 @@ export default function EWalletConfirm() {
           <View style={styles.bottomPadding} />
         </ScrollView>
 
-        {/* Passcode modal - outer glow (palit sa dark overlay), loading + Confirm */}
-        <Modal
+        {/* Shared passcode modal */}
+        <PasscodeModal
           visible={showPasscodeModal}
-          transparent
-          animationType="slide"
-          onRequestClose={() => !isSubmitting && setShowPasscodeModal(false)}
-        >
-          <KeyboardAvoidingView
-            style={styles.passcodeModalOverlay}
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
-            keyboardVerticalOffset={Platform.OS === "ios" ? 40 : 0}
-          >
-            <View style={styles.passcodeOverlay}>
-              <View style={styles.passcodeModalContent}>
-                <Text style={styles.passcodeModalTitle}>
-                  {t("withdraw.enterPasscode")}
-                </Text>
-                <TextInput
-                  style={styles.passcodeInput}
-                  value={passcode}
-                  onChangeText={(val) =>
-                    setPasscode(val.replace(/\D/g, "").slice(0, 4))
-                  }
-                  placeholder="••••"
-                  placeholderTextColor="#9CA3AF"
-                  secureTextEntry
-                  maxLength={4}
-                  keyboardType="number-pad"
-                  editable={!isSubmitting}
-                  autoFocus
-                  selectTextOnFocus={false}
-                  autoComplete="off"
-                  caretHidden={false}
-                  selectionColor="#E25A17"
-                  underlineColorAndroid="transparent"
-                />
-                <View style={styles.passcodeIndicatorRow}>
-                  {[0, 1, 2, 3].map((index) => (
-                    <View
-                      key={`passcode-indicator-${index}`}
-                      style={[
-                        styles.passcodeIndicatorBox,
-                        index < passcode.length &&
-                          styles.passcodeIndicatorBoxFilled,
-                      ]}
-                    >
-                      {index < passcode.length ? (
-                        <View style={styles.passcodeIndicatorDot} />
-                      ) : null}
-                    </View>
-                  ))}
-                </View>
-                <View style={styles.passcodeModalButtons}>
-                  <TouchableOpacity
-                    style={[
-                      styles.passcodeModalButton,
-                      styles.passcodeModalButtonCancel,
-                    ]}
-                    onPress={() => {
-                      setShowPasscodeModal(false);
-                      setPasscode("");
-                    }}
-                    disabled={isSubmitting}
-                  >
-                    <Text style={styles.passcodeModalButtonCancelText}>
-                      {t("common.cancel")}
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[
-                      styles.passcodeModalButton,
-                      styles.passcodeModalButtonConfirm,
-                    ]}
-                    onPress={handlePasscodeConfirm}
-                    disabled={isSubmitting || passcode.length !== 4}
-                  >
-                    <LinearGradient
-                      colors={["#E25A17", "#F28934"]}
-                      style={styles.passcodeModalButtonGradient}
-                    >
-                      {isSubmitting ? (
-                        <ActivityIndicator size="small" color="#FFFFFF" />
-                      ) : (
-                        <Text style={styles.passcodeModalButtonConfirmText}>
-                          {t("withdraw.confirm")}
-                        </Text>
-                      )}
-                    </LinearGradient>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </View>
-          </KeyboardAvoidingView>
-        </Modal>
+          passcode={passcode}
+          title={t("withdraw.enterPasscode")}
+          confirmLabel={t("withdraw.confirm")}
+          cancelLabel={t("common.cancel")}
+          loading={isSubmitting}
+          onChangePasscode={setPasscode}
+          onConfirm={handlePasscodeConfirm}
+          onCancel={() => {
+            setShowPasscodeModal(false);
+            setPasscode("");
+          }}
+        />
 
         {/* Custom Alert Modal */}
         <Modal
