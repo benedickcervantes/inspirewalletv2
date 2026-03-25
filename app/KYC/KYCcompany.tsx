@@ -7,6 +7,7 @@ import * as FileSystem from "expo-file-system/legacy";
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Modal,
   Platform,
@@ -573,9 +574,13 @@ export default function KYCcompany() {
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
             >
-              <Text style={styles.saveButtonText}>
-                {submitting ? t("kycCompany.submitting") : t("kycCompany.save")}
-              </Text>
+              {submitting ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <Text style={styles.saveButtonText}>
+                  {t("kycCompany.save")}
+                </Text>
+              )}
             </LinearGradient>
           </TouchableOpacity>
         </View>
