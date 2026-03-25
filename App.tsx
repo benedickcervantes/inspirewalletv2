@@ -1,6 +1,7 @@
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-gesture-handler';
 import 'react-native-reanimated';
 import { navigationRef } from './lib/navigationRef';
@@ -78,6 +79,7 @@ const EwalletReview = require('./app/ServicesFunction/E-Wallet/EwalletReview').d
 
 export default function App() {
   return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
     <LanguageProvider>
       <SocketProvider>
         <UnreadNotificationsProvider>
@@ -191,5 +193,6 @@ export default function App() {
         </UnreadNotificationsProvider>
       </SocketProvider>
     </LanguageProvider>
+    </GestureHandlerRootView>
   );
 }

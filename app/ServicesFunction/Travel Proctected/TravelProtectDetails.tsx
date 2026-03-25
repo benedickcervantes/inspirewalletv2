@@ -5,9 +5,9 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  TouchableOpacity,
   View,
 } from "react-native";
+import { TouchableOpacity } from "react-native-gesture-handler";
 
 import { useLanguage } from "../../../context/LanguageContext";
 
@@ -143,10 +143,10 @@ export default function TravelProtectDetails({
 
   return (
     <>
-      <View style={styles.container}>
-        <View style={styles.formCard}>
+      <View style={styles.container} pointerEvents="box-none">
+        <View style={styles.formCard} pointerEvents="box-none">
           {/* HEADER */}
-          <View style={styles.formHeader}>
+          <View style={styles.formHeader} pointerEvents="box-none">
             <View style={styles.formIconContainer}>
               <MaterialCommunityIcons
                 name="airplane-takeoff"
@@ -155,7 +155,7 @@ export default function TravelProtectDetails({
               />
             </View>
 
-            <View style={styles.formHeaderTextContainer}>
+            <View style={styles.formHeaderTextContainer} pointerEvents="box-none">
               <Text style={styles.formTitle}>{t("travel.travelDetails")}</Text>
 
               <Text style={styles.formSubtitle}>
@@ -165,7 +165,7 @@ export default function TravelProtectDetails({
           </View>
 
           {/* DESTINATION */}
-          <View style={styles.inputGroup}>
+          <View style={styles.inputGroup} pointerEvents="box-none">
             <Text style={styles.inputLabel}>
               {t("travel.destinationAddress")}{" "}
               <Text style={styles.required}>*</Text>
@@ -191,7 +191,7 @@ export default function TravelProtectDetails({
           </View>
 
           {/* CHECK IN DATE */}
-          <View style={styles.inputGroup}>
+          <View style={styles.inputGroup} pointerEvents="box-none">
             <Text style={styles.inputLabel}>
               {t("travel.checkInDate")} <Text style={styles.required}>*</Text>
             </Text>
@@ -223,7 +223,7 @@ export default function TravelProtectDetails({
           </View>
 
           {/* DURATION */}
-          <View style={styles.inputGroup}>
+          <View style={styles.inputGroup} pointerEvents="box-none">
             <Text style={styles.inputLabel}>
               {t("travel.durationDays")} <Text style={styles.required}>*</Text>
             </Text>
@@ -243,7 +243,7 @@ export default function TravelProtectDetails({
           </View>
 
           {/* DEPARTURE TIME */}
-          <View style={styles.inputGroup}>
+          <View style={styles.inputGroup} pointerEvents="box-none">
             <Text style={styles.inputLabel}>
               {t("travel.departureTime")} <Text style={styles.required}>*</Text>
             </Text>
@@ -275,7 +275,7 @@ export default function TravelProtectDetails({
           </View>
 
           {/* ARRIVAL TIME */}
-          <View style={styles.inputGroup}>
+          <View style={styles.inputGroup} pointerEvents="box-none">
             <Text style={styles.inputLabel}>
               {t("travel.arrivalTime")} <Text style={styles.required}>*</Text>
             </Text>
@@ -307,7 +307,7 @@ export default function TravelProtectDetails({
           </View>
 
           {/* PASSPORT */}
-          <View style={styles.inputGroup}>
+          <View style={styles.inputGroup} pointerEvents="box-none">
             <Text style={styles.inputLabel}>
               {t("travel.passportNumber")}{" "}
               <Text style={styles.required}>*</Text>
@@ -331,7 +331,7 @@ export default function TravelProtectDetails({
           </View>
 
           {/* PURPOSE */}
-          <View style={styles.inputGroup}>
+          <View style={styles.inputGroup} pointerEvents="box-none">
             <Text style={styles.inputLabel}>
               {t("travel.purposeOfTravel")}{" "}
               <Text style={styles.required}>*</Text>
@@ -378,6 +378,7 @@ export default function TravelProtectDetails({
                 <ScrollView
                   style={styles.dateScroll}
                   showsVerticalScrollIndicator={false}
+                  nestedScrollEnabled
                 >
                   {MONTH_KEYS.map((key, i) => (
                     <TouchableOpacity
@@ -401,6 +402,7 @@ export default function TravelProtectDetails({
                 <ScrollView
                   style={styles.dateScroll}
                   showsVerticalScrollIndicator={false}
+                  nestedScrollEnabled
                 >
                   {DAYS.map((d) => (
                     <TouchableOpacity
@@ -427,6 +429,7 @@ export default function TravelProtectDetails({
                 <ScrollView
                   style={styles.dateScroll}
                   showsVerticalScrollIndicator={false}
+                  nestedScrollEnabled
                 >
                   {YEARS.map((y) => (
                     <TouchableOpacity
@@ -486,6 +489,7 @@ export default function TravelProtectDetails({
                 <ScrollView
                   style={styles.dateScroll}
                   showsVerticalScrollIndicator={false}
+                  nestedScrollEnabled
                 >
                   {HOURS.map((h) => (
                     <TouchableOpacity
@@ -514,6 +518,7 @@ export default function TravelProtectDetails({
                 <ScrollView
                   style={styles.dateScroll}
                   showsVerticalScrollIndicator={false}
+                  nestedScrollEnabled
                 >
                   {MINUTES.map((m) => (
                     <TouchableOpacity
@@ -569,6 +574,7 @@ export default function TravelProtectDetails({
                 <ScrollView
                   style={styles.dateScroll}
                   showsVerticalScrollIndicator={false}
+                  nestedScrollEnabled
                 >
                   {HOURS.map((h) => (
                     <TouchableOpacity
@@ -597,6 +603,7 @@ export default function TravelProtectDetails({
                 <ScrollView
                   style={styles.dateScroll}
                   showsVerticalScrollIndicator={false}
+                  nestedScrollEnabled
                 >
                   {MINUTES.map((m) => (
                     <TouchableOpacity
@@ -753,6 +760,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     maxHeight: "60%",
+    flexDirection: "column",
   },
   dateModalContainer: {
     maxHeight: "70%",

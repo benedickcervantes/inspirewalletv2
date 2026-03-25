@@ -1,4 +1,5 @@
-import { Ionicons } from '@expo/vector-icons';
+import {
+  Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import * as Clipboard from 'expo-clipboard';
@@ -6,20 +7,21 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as LocalAuthentication from 'expo-local-authentication';
 import * as SecureStore from 'expo-secure-store';
 import { unregisterIndieDevice } from 'native-notify';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback,
+  useEffect,
+  useState } from 'react';
 import {
     ActivityIndicator,
-    Modal,
-    Platform,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TextInput,
-    ToastAndroid,
-    TouchableOpacity,
-    View
-} from 'react-native';
+  Modal,
+  Platform,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  ToastAndroid,
+  View,
+} from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { disableBiometric, enableBiometric, getReferralCode, resendVerification, verifyEmail } from '../../configs/api';
 import { useIdleTimeout } from '../../context/IdleTimeoutContext';
@@ -27,6 +29,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { useResponsive } from '../../utils/responsive';
 import AccountDeletionModal from '../AccountDeletion/AccountDeletionModal';
 import Loader from '../Loader/Loader';
+import { TouchableOpacity } from "react-native-gesture-handler";
 interface UserData {
   email?: string;
   emailVerified?: boolean;

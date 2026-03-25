@@ -12,9 +12,9 @@ import {
   Share,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View
 } from "react-native";
+import { TouchableOpacity } from "react-native-gesture-handler";
 import QRCode from "react-native-qrcode-svg";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { getOrCreateMainWallet } from "../../../configs/api";
@@ -993,3 +993,6 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
 });
+
+
+

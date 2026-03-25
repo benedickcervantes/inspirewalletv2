@@ -1,4 +1,5 @@
-import { Ionicons } from '@expo/vector-icons';
+import {
+  Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Linking from 'expo-linking';
@@ -7,11 +8,11 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
-} from 'react-native';
+} from "react-native";
 import { useLanguage } from '../../context/LanguageContext';
 import type { NavProp } from '../../types/navigation';
+import { TouchableOpacity } from "react-native-gesture-handler";
 
 const SECTIONS = [
   { headingKey: 'privacy.h1', headingOrange: true, bodyKey: 'privacy.b1' },
@@ -206,3 +207,4 @@ const styles = StyleSheet.create({
 });
 
 export default PrivacyPolicy;
+

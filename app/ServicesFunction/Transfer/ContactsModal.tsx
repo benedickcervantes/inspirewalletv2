@@ -9,9 +9,9 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  TouchableOpacity,
   View
 } from "react-native";
+import { TouchableOpacity } from "react-native-gesture-handler";
 import { useLanguage } from "../../../context/LanguageContext";
 
 const width = (() => {
@@ -477,3 +477,6 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
   },
 });
+
+
+

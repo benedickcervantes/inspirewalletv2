@@ -1,4 +1,6 @@
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import {
+  Ionicons,
+  MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -12,13 +14,13 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  TouchableOpacity,
   View,
-} from 'react-native';
+} from "react-native";
 import { submitAccountDeletionRequest } from '../../configs/api';
 import { useLanguage } from '../../context/LanguageContext';
 import type { NavProp } from '../../types/navigation';
 import AccountDeletionModal from '../AccountDeletion/AccountDeletionModal';
+import { TouchableOpacity } from "react-native-gesture-handler";
 
 const REASON_KEYS = ['delete.reasonNoLonger', 'delete.reasonBetter', 'delete.reasonPrivacy', 'delete.reasonExpensive', 'delete.reasonTechnical', 'delete.reasonOther'] as const;
 
@@ -506,3 +508,4 @@ const styles = StyleSheet.create({
 });
 
 export default DeleteAccount;
+

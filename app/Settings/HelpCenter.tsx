@@ -1,4 +1,6 @@
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import {
+  Ionicons,
+  MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
@@ -7,11 +9,11 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
-} from 'react-native';
+} from "react-native";
 import { useLanguage } from '../../context/LanguageContext';
 import type { NavProp } from '../../types/navigation';
+import { TouchableOpacity } from "react-native-gesture-handler";
 
 const HelpCenter = () => {
   const navigation = useNavigation();
@@ -278,3 +280,4 @@ const styles = StyleSheet.create({
 });
 
 export default HelpCenter;
+

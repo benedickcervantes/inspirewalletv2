@@ -16,7 +16,6 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  TouchableWithoutFeedback,
   View,
 } from "react-native";
 import { useLanguage } from "./LanguageContext";
@@ -322,31 +321,11 @@ export const IdleTimeoutProvider: React.FC<{ children: React.ReactNode }> = ({
     };
   }, [isSessionActive, performLogout]);
 
-  // Handle touch events to reset activity timer
-  const handleUserActivity = useCallback(() => {
-    if (!isSessionActive || hasLoggedOutRef.current) return;
-    const now = Date.now();
-    lastActivityRef.current = now;
-    if (now - lastPersistedActivityRef.current >= ACTIVITY_PERSIST_THROTTLE_MS) {
-      lastPersistedActivityRef.current = now;
-      // Fire and forget for performance
-      AsyncStorage.setItem(LAST_ACTIVITY_KEY, String(now)).catch(() => { });
-    }
-  }, [isSessionActive]);
-
   return (
     <IdleTimeoutContext.Provider
       value={{ registerActivity, startIdleSession, stopIdleSession, isSessionActive }}
     >
-      {/* Wrap children in a touch detector to capture all user interactions */}
-      <TouchableWithoutFeedback onPress={handleUserActivity}>
-        <View style={styles.container} onStartShouldSetResponder={() => {
-          handleUserActivity();
-          return false; // Don't capture the touch, let it pass through
-        }}>
-          {children}
-        </View>
-      </TouchableWithoutFeedback>
+      <View style={styles.container}>{children}</View>
 
       {/* Inactivity Logout Modal */}
       <Modal

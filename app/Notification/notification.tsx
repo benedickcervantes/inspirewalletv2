@@ -1,8 +1,10 @@
-import { Ionicons } from '@expo/vector-icons';
+import {
+  Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useEffect, useState } from 'react';
+import { useEffect,
+  useState } from 'react';
 import {
   ActivityIndicator,
   Dimensions,
@@ -13,8 +15,8 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
-} from 'react-native';
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   acceptReferralRequest as apiAcceptReferralRequest,
@@ -1433,3 +1435,4 @@ const styles = StyleSheet.create({
 });
 
 export default Notification;
+

@@ -1,22 +1,24 @@
-import { Ionicons } from '@expo/vector-icons';
+import {
+  Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import { unregisterIndieDevice } from 'native-notify';
-import { useEffect, useState } from 'react';
+import { useEffect,
+  useState } from 'react';
 import {
     Modal,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
-} from 'react-native';
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { useLanguage } from '../../context/LanguageContext';
 import {
     subscribeToAccountDeletionApproved,
     subscribeToAccountDeletionRejected,
 } from '../../lib/accountDeletionEvents';
 import { navigateToWelcome } from '../../lib/navigationRef';
+import { TouchableOpacity } from "react-native-gesture-handler";
 
 type ModalState = 'none' | 'approved' | 'rejected';
 type ModalData = { adminNotes?: string | null };
@@ -229,3 +231,4 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
 });
+

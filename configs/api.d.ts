@@ -340,6 +340,32 @@ export function getReferralTree(accessToken: string): Promise<{
   error?: string;
 }>;
 
+export function getReferralTreeList(
+  accessToken: string,
+  options: { type: "direct" | "network"; page?: number; limit?: number },
+): Promise<{
+  success: boolean;
+  data?: {
+    type: "direct" | "network";
+    items: {
+      userId: string;
+      referredById?: string | null;
+      referralCode?: string | null;
+      name?: string;
+      firstName?: string;
+      lastName?: string;
+      isAgent?: boolean;
+      depth?: number;
+      directReferralCount?: number;
+    }[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+  error?: string;
+}>;
+
 export function submitTravelProtection(
   accessToken: string,
   body: Record<string, unknown>,

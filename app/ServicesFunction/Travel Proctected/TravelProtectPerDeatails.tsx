@@ -4,9 +4,10 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TouchableOpacity,
+  useWindowDimensions,
   View,
 } from "react-native";
+import { TouchableOpacity } from "react-native-gesture-handler";
 import { useLanguage } from "../../../context/LanguageContext";
 
 const EMPTY_PLACEHOLDER = "__empty__";
@@ -97,6 +98,8 @@ export default function TravelProtectPerDeatails({
   applyDateFromTemp,
 }: TravelProtectPerDeatailsProps) {
   const { t } = useLanguage();
+  const { height: windowHeight } = useWindowDimensions();
+  const modalListMaxHeight = Math.min(420, windowHeight * 0.45);
 
   const handleDateConfirm = () => {
     applyDateFromTemp(tempDate.month, tempDate.day, tempDate.year);
@@ -105,8 +108,8 @@ export default function TravelProtectPerDeatails({
 
   return (
     <>
-      <View style={styles.formCard}>
-        <View style={styles.formHeader}>
+      <View style={styles.formCard} pointerEvents="box-none">
+        <View style={styles.formHeader} pointerEvents="box-none">
           <View style={styles.formIconContainer}>
             <MaterialCommunityIcons
               name="account-circle"
@@ -114,7 +117,7 @@ export default function TravelProtectPerDeatails({
               color={THEME_COLOR}
             />
           </View>
-          <View style={styles.formHeaderTextContainer}>
+          <View style={styles.formHeaderTextContainer} pointerEvents="box-none">
             <Text style={styles.formTitle}>{t("travel.personalDetails")}</Text>
             <Text style={styles.formSubtitle}>
               {t("travel.personalSubtitle")}
@@ -122,7 +125,7 @@ export default function TravelProtectPerDeatails({
           </View>
         </View>
 
-        <View style={styles.inputGroup}>
+        <View style={styles.inputGroup} pointerEvents="box-none">
           <Text style={styles.inputLabel}>
             {t("travel.gender")} <Text style={styles.required}>*</Text>
           </Text>
@@ -151,7 +154,7 @@ export default function TravelProtectPerDeatails({
           ) : null}
         </View>
 
-        <View style={styles.inputGroup}>
+        <View style={styles.inputGroup} pointerEvents="box-none">
           <Text style={styles.inputLabel}>
             {t("travel.dateOfBirth")} <Text style={styles.required}>*</Text>
           </Text>
@@ -189,7 +192,7 @@ export default function TravelProtectPerDeatails({
           ) : null}
         </View>
 
-        <View style={styles.inputGroup}>
+        <View style={styles.inputGroup} pointerEvents="box-none">
           <Text style={styles.inputLabel}>
             {t("travel.civilStatus")} <Text style={styles.required}>*</Text>
           </Text>
@@ -225,7 +228,7 @@ export default function TravelProtectPerDeatails({
           ) : null}
         </View>
 
-        <View style={styles.inputGroup}>
+        <View style={styles.inputGroup} pointerEvents="box-none">
           <Text style={styles.inputLabel}>
             {t("travel.citizenship")} <Text style={styles.required}>*</Text>
           </Text>
@@ -275,7 +278,11 @@ export default function TravelProtectPerDeatails({
                 <Ionicons name="close" size={24} color="#333" />
               </TouchableOpacity>
             </View>
-            <ScrollView style={styles.modalContent}>
+            <ScrollView
+              style={[styles.modalContent, { maxHeight: modalListMaxHeight }]}
+              nestedScrollEnabled
+              keyboardShouldPersistTaps="handled"
+            >
               {GENDER_OPTIONS.map((opt) => (
                 <TouchableOpacity
                   key={opt}
@@ -328,7 +335,11 @@ export default function TravelProtectPerDeatails({
                 <Ionicons name="close" size={24} color="#333" />
               </TouchableOpacity>
             </View>
-            <ScrollView style={styles.modalContent}>
+            <ScrollView
+              style={[styles.modalContent, { maxHeight: modalListMaxHeight }]}
+              nestedScrollEnabled
+              keyboardShouldPersistTaps="handled"
+            >
               {CIVIL_STATUS_OPTIONS.map((opt) => (
                 <TouchableOpacity
                   key={opt}
@@ -389,6 +400,7 @@ export default function TravelProtectPerDeatails({
                 <ScrollView
                   style={styles.dateScroll}
                   showsVerticalScrollIndicator={false}
+                  nestedScrollEnabled
                 >
                   {MONTH_KEYS.map((key, i) => (
                     <TouchableOpacity
@@ -411,6 +423,7 @@ export default function TravelProtectPerDeatails({
                 <ScrollView
                   style={styles.dateScroll}
                   showsVerticalScrollIndicator={false}
+                  nestedScrollEnabled
                 >
                   {DAYS.map((d) => (
                     <TouchableOpacity
@@ -434,6 +447,7 @@ export default function TravelProtectPerDeatails({
                 <ScrollView
                   style={styles.dateScroll}
                   showsVerticalScrollIndicator={false}
+                  nestedScrollEnabled
                 >
                   {YEARS.map((y) => (
                     <TouchableOpacity
@@ -481,7 +495,11 @@ export default function TravelProtectPerDeatails({
                 <Ionicons name="close" size={24} color="#333" />
               </TouchableOpacity>
             </View>
-            <ScrollView style={styles.modalContent}>
+            <ScrollView
+              style={[styles.modalContent, { maxHeight: modalListMaxHeight }]}
+              nestedScrollEnabled
+              keyboardShouldPersistTaps="handled"
+            >
               {CITIZENSHIP_OPTIONS.map((opt) => (
                 <TouchableOpacity
                   key={opt}
@@ -613,6 +631,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     maxHeight: "60%",
+    flexDirection: "column",
   },
   dateModalContainer: {
     maxHeight: "70%",
