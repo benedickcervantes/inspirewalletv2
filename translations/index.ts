@@ -329,6 +329,9 @@ const en: TranslationMap = {
   "dashboard.kycLockedRequirementValue": "KYC VERIFIED",
   "dashboard.kycLockedMessage":
     "Transfer, Buying Cards, Travel Protection, Trading, and Withdrawal are locked for USER accounts until KYC is verified. Please complete and verify your KYC to unlock these features.",
+  "dashboard.kycPendingTitle": "KYC under review",
+  "dashboard.kycPendingMessage":
+    "You have already submitted your personal KYC. Please wait for an administrator to review and approve it. Locked features will unlock once your KYC is verified.",
 
   // Withdraw
   "withdraw.fromAvailableBalance": "Withdraw from available balance",
@@ -2678,6 +2681,9 @@ const ko: TranslationMap = {
   "dashboard.kycLockedRequirementValue": "KYC 인증 완료",
   "dashboard.kycLockedMessage":
     "USER 계정은 KYC 인증이 완료되기 전까지 송금, 카드 구매, 여행 보호, 트레이딩, 출금 기능이 잠깁니다. KYC를 완료하고 인증을 마치면 기능이 해제됩니다.",
+  "dashboard.kycPendingTitle": "KYC 검토 중",
+  "dashboard.kycPendingMessage":
+    "개인 KYC를 이미 제출했습니다. 관리자의 검토 및 승인을 기다려 주세요. KYC가 승인되면 잠긴 기능이 해제됩니다.",
 
   "common.retry": "재시도",
   "common.success": "성공",
@@ -4402,6 +4408,9 @@ const ja: TranslationMap = {
   "dashboard.kycLockedRequirementValue": "KYC認証済み",
   "dashboard.kycLockedMessage":
     "USERアカウントはKYC認証が完了するまで、送金・カード購入・旅行保護・取引・出金がロックされます。KYCを完了して認証されると機能が解放されます。",
+  "dashboard.kycPendingTitle": "KYC審査中",
+  "dashboard.kycPendingMessage":
+    "個人KYCはすでに送信済みです。管理者の確認と承認をお待ちください。KYCが承認されるとロックされた機能が利用できます。",
 
   "common.retry": "再試行",
   "common.success": "成功",
@@ -6216,6 +6225,9 @@ const ar: TranslationMap = {
   "dashboard.kycLockedRequirementValue": "تم توثيق KYC",
   "dashboard.kycLockedMessage":
     "بالنسبة لحسابات USER، يتم قفل التحويل وشراء البطاقات وحماية السفر والتداول والسحب حتى يتم توثيق KYC. يرجى إكمال وتوثيق KYC لفتح هذه الميزات.",
+  "dashboard.kycPendingTitle": "KYC قيد المراجعة",
+  "dashboard.kycPendingMessage":
+    "لقد قمت بالفعل بإرسال توثيق KYC الشخصي. يرجى انتظار مراجعة المسؤول والموافقة. ستُفتح الميزات المقفلة بعد التحقق من KYC.",
 
   "common.retry": "إعادة المحاولة",
   "common.success": "نجاح",
