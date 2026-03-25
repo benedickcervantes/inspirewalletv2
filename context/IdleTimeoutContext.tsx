@@ -21,7 +21,7 @@ import {
 import { useLanguage } from "./LanguageContext";
 import { navigationRef } from "../lib/navigationRef";
 
-const INACTIVITY_LIMIT_MS = 90 * 1000; // 1 minute 30 seconds
+const INACTIVITY_LIMIT_MS = 150 * 1000; // 2 minutes 30 seconds
 const CHECK_INTERVAL_MS = 60 * 1000; // check every minute
 const ACTIVITY_PERSIST_THROTTLE_MS = 15 * 1000; // avoid storage write on every touch
 const LAST_ACTIVITY_KEY = "lastActivityAt";
