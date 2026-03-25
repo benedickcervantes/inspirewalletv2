@@ -5,16 +5,16 @@ import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
-  Modal,
-  Platform,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
+    ActivityIndicator,
+    Modal,
+    Platform,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    useWindowDimensions,
+    View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Path } from "react-native-svg";
@@ -24,7 +24,7 @@ import { auth, subscribeToTransactions } from "../../configs/firebase";
 import { getLanguageCode } from "../../constants/locales";
 import { useLanguage } from "../../context/LanguageContext";
 import type { NavProp } from "../../types/navigation";
-import CustomLoader from "../Loader/CustomLoader";
+import Loader from "../Loader/Loader";
 
 const TRANSACTION_TYPE_KEYS: Record<string, string> = {
   TOP_UP: "tx.deposit",
@@ -836,7 +836,7 @@ export default function HistoryScreen() {
   };
 
   if (loading && transactions.length === 0) {
-    return <CustomLoader text={t("history.loading")} />;
+    return <Loader text={t("history.loading")} />;
   }
 
   return (

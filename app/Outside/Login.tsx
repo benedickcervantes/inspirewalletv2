@@ -7,33 +7,33 @@ import * as SecureStore from 'expo-secure-store';
 import { registerIndieID } from 'native-notify';
 import { useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
-  Animated,
-  BackHandler,
-  Keyboard,
-  Modal,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
+    ActivityIndicator,
+    Animated,
+    BackHandler,
+    Keyboard,
+    Modal,
+    Platform,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    useWindowDimensions,
+    View,
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { forgotPassword, login } from "../../configs/api";
 import {
-  DEFAULT_LANGUAGE,
-  normalizeLanguage,
-  SUPPORTED_LANGUAGES,
+    DEFAULT_LANGUAGE,
+    normalizeLanguage,
+    SUPPORTED_LANGUAGES,
 } from "../../constants/locales";
 import { useLanguage } from "../../context/LanguageContext";
 import type { NavProp } from "../../types/navigation";
 import { useResponsive } from "../../utils/responsive";
-import CustomLoader from "../Loader/CustomLoader";
+import Loader from "../Loader/Loader";
 
 const GRADIENT_START = "#E15816";
 const GRADIENT_END = "#F48F38";
@@ -781,7 +781,7 @@ export default function Login() {
   const isWeb = Platform.OS === "web";
 
   if (loading) {
-    return <CustomLoader text={t("auth.loggingIn")} />;
+    return <Loader text={t("auth.loggingIn")} />;
   }
 
   // Responsive logo/form sizes for smaller screens

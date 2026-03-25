@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { getMe, login } from "../../configs/api";
 import { useLanguage } from "../../context/LanguageContext";
 import type { RootStackParamList } from "../../types/navigation";
-import CustomLoader from "../Loader/CustomLoader";
+import Loader from "../Loader/Loader";
 
 const MIN_SPLASH_MS = 0;
 
@@ -173,5 +173,5 @@ export default function AuthLoader() {
 
   if (!loading) return null;
 
-  return <CustomLoader text={t("common.loading")} />;
+  return <Loader text={t("common.loading")} />;
 }

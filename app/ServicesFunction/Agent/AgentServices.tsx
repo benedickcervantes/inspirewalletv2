@@ -3,26 +3,26 @@ import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
-  Animated,
-  Keyboard,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-  type TextStyle,
+    ActivityIndicator,
+    Animated,
+    Keyboard,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    SafeAreaView,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
+    type TextStyle,
 } from "react-native";
 import { useLanguage } from "../../../context/LanguageContext";
 import { isServiceUnderMaintenance } from "../../../lib/maintenance";
 import type { RootStackParamList } from "../../../types/navigation";
-import CustomLoader from "../../Loader/CustomLoader";
+import Loader from "../../Loader/Loader";
 
 // Static theme - no backend
 const THEME_COLOR = "#E15816";
@@ -441,16 +441,16 @@ export default function AgentServices() {
   };
 
   if (checkingMaintenance) {
-    return <CustomLoader text={t("common.checking")} />;
+    return <Loader text={t("common.checking")} />;
   }
 
   if (isUnderMaintenance) {
-    return <CustomLoader text={t("support.serviceMaintenance")} />;
+    return <Loader text={t("support.serviceMaintenance")} />;
   }
 
   if (loading) {
     return (
-      <CustomLoader text={t("agentRequest.content.submitButton.submitting")} />
+      <Loader text={t("agentRequest.content.submitButton.submitting")} />
     );
   }
 

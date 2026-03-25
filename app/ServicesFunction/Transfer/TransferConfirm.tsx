@@ -6,30 +6,30 @@ import { LinearGradient } from "expo-linear-gradient";
 import * as Sharing from "expo-sharing";
 import { useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  ScrollView,
-  Share,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    ScrollView,
+    Share,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import QRCode from "react-native-qrcode-svg";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
-  createBeneficiary,
-  getOrCreateMainWallet,
-  submitTransfer,
+    createBeneficiary,
+    getMe,
+    getOrCreateMainWallet,
+    submitTransfer,
 } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
-import CustomLoader from "../../Loader/CustomLoader";
+import Loader from "../../Loader/Loader";
 import ContactsModal from "./ContactsModal";
 import QRScanner from "./QRScanner";
-import { getMe } from "../../../configs/api";
 
 const width = (() => {
   try {
@@ -374,7 +374,7 @@ export default function TransferConfirm() {
   };
 
   if (isProcessing) {
-    return <CustomLoader text={t("sendMoney.processing")} />;
+    return <Loader text={t("sendMoney.processing")} />;
   }
 
   return (

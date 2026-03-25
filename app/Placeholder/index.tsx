@@ -1,11 +1,11 @@
 import {
-  decodeQrImage,
-  getCompanyKycStatus,
-  getMe,
-  getPersonalKycStatus,
-  getReferralCode,
-  getReferralTree,
-  updateProfile,
+    decodeQrImage,
+    getCompanyKycStatus,
+    getMe,
+    getPersonalKycStatus,
+    getReferralCode,
+    getReferralTree,
+    updateProfile,
 } from "@/configs/api";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -16,35 +16,35 @@ import { LinearGradient } from "expo-linear-gradient";
 import { doc, getDoc } from "firebase/firestore";
 import { useCallback, useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  AppState,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  ToastAndroid,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
+    ActivityIndicator,
+    Alert,
+    AppState,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TextInput,
+    ToastAndroid,
+    TouchableOpacity,
+    useWindowDimensions,
+    View,
 } from "react-native";
 import {
-  SafeAreaView,
-  useSafeAreaInsets,
+    SafeAreaView,
+    useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { auth, firestore } from "../../configs/firebase";
 import {
-  DEFAULT_LANGUAGE,
-  normalizeLanguage,
-  SUPPORTED_LANGUAGES,
+    DEFAULT_LANGUAGE,
+    normalizeLanguage,
+    SUPPORTED_LANGUAGES,
 } from "../../constants/locales";
 import { useLanguage } from "../../context/LanguageContext";
 import { useResponsive } from "../../utils/responsive";
-import CustomLoader from "../Loader/CustomLoader";
+import Loader from "../Loader/Loader";
 
 const THEME_COLOR = "#E15816";
 const USER_PREFERRED_LANGUAGE_KEY = "user_preferred_language";
@@ -820,7 +820,7 @@ export default function Placeholder() {
   const status = statusRaw === "Active" ? t("profile.active") : statusRaw;
 
   if (loading) {
-    return <CustomLoader text={t("common.loading")} />;
+    return <Loader text={t("common.loading")} />;
   }
 
   return (
