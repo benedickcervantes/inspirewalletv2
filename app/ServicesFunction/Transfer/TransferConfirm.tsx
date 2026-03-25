@@ -15,9 +15,9 @@ import {
     StyleSheet,
     Text,
     TextInput,
+    TouchableOpacity,
     View,
 } from "react-native";
-import { TouchableOpacity } from "react-native-gesture-handler";
 import QRCode from "react-native-qrcode-svg";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
@@ -611,13 +611,27 @@ export default function TransferConfirm() {
               onChangeText={(t) =>
                 setPasscode(t.replace(/\D/g, "").slice(0, 4))
               }
-              placeholder="••••"
-              placeholderTextColor="#999"
-              secureTextEntry
+              placeholder=""
               maxLength={4}
               keyboardType="number-pad"
               editable={!isProcessing}
+              autoFocus
+              caretHidden
+              selectionColor="transparent"
+              underlineColorAndroid="transparent"
+              secureTextEntry
             />
+            <View style={styles.passcodeDotsRow} pointerEvents="none">
+              {[0, 1, 2, 3].map((i) => (
+                <View
+                  key={`passcode-dot-${i}`}
+                  style={[
+                    styles.passcodeDot,
+                    i < passcode.length && styles.passcodeDotFilled,
+                  ]}
+                />
+              ))}
+            </View>
             <View style={styles.passcodeModalButtons}>
               <TouchableOpacity
                 style={[
@@ -1174,8 +1188,28 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     fontSize: 18,
     textAlign: "center",
-    letterSpacing: 8,
+    // NOTE: secureTextEntry + letterSpacing can render as blank spaces on Android.
+    letterSpacing: 0,
     marginBottom: 20,
+    // Keep the input functional (for keyboard), but make its contents invisible.
+    opacity: 0,
+    color: "transparent",
+  },
+  passcodeDotsRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 14,
+    marginTop: -46,
+    marginBottom: 26,
+  },
+  passcodeDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: "#D1D5DB", // gray
+  },
+  passcodeDotFilled: {
+    backgroundColor: "#111827", // near-black
   },
   passcodeModalButtons: {
     flexDirection: "row",

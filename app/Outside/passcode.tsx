@@ -1,28 +1,32 @@
 import {
-  Ionicons } from '@expo/vector-icons';
+    Ionicons
+} from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as LocalAuthentication from 'expo-local-authentication';
 import * as SecureStore from 'expo-secure-store';
-import { useEffect,
-  useRef,
-  useState } from 'react';
+import {
+    useEffect,
+    useRef,
+    useState
+} from 'react';
 import {
     ActivityIndicator,
-  Animated,
-  BackHandler,
-  Modal,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  useWindowDimensions,
-  View,
+    Animated,
+    BackHandler,
+    Modal,
+    Platform,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    useWindowDimensions,
+    View,
 } from "react-native";
+import { TouchableOpacity } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { login, resetPasscode, verifyBiometric, verifyPasscode } from '../../configs/api';
 import {
@@ -34,7 +38,6 @@ import { useLanguage } from '../../context/LanguageContext';
 import type { NavProp } from '../../types/navigation';
 import { useResponsive } from '../../utils/responsive';
 import Loader from '../Loader/Loader';
-import { TouchableOpacity } from "react-native-gesture-handler";
 
 const GRADIENT_START = '#E15816';
 const GRADIENT_END = '#F48F38';
@@ -690,6 +693,7 @@ export default function Passcode() {
                     placeholderTextColor="#666"
                     keyboardType="numeric"
                     maxLength={4}
+                    secureTextEntry
                     value={newPasscode}
                     onChangeText={setNewPasscode}
                   />
@@ -699,6 +703,7 @@ export default function Passcode() {
                     placeholderTextColor="#666"
                     keyboardType="numeric"
                     maxLength={4}
+                    secureTextEntry
                     value={confirmNewPasscode}
                     onChangeText={setConfirmNewPasscode}
                   />

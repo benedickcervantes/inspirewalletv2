@@ -32,12 +32,12 @@ import type { RootStackParamList } from "../../../types/navigation";
 import { unformatNumberString } from "../../../utils/numberFormat";
 import { useResponsive } from "../../../utils/responsive";
 import Loader from "../../Loader/Loader";
+import KeyboardAwareGHScrollView from "./KeyboardAwareGHScrollView";
 import TravelProtectDetails from "./TravelProtectDetails";
 import TravelProtectFinanInfo from "./TravelProtectFinanInfo";
 import TravelProtectPerDeatails from "./TravelProtectPerDeatails";
 import TravelProtectReviewSubmit from "./TravelProtectReview&Submit";
 import TravelRequiredDocu from "./TravelRequiredDocu";
-import KeyboardAwareGHScrollView from "./KeyboardAwareGHScrollView";
 
 const EMPTY_PLACEHOLDER = "__empty__";
 const FRONT_AND_BACK_GOVERNMENT_ID_TYPES = ["National_ID", "Driver_License"];
@@ -180,14 +180,14 @@ const CustomAlertModal = ({
             </View>
             <Text style={customAlertStyles.modalTitle}>{title}</Text>
             <Text style={customAlertStyles.modalMessage}>{message}</Text>
-            <TouchableOpacity
+            <RNTouchableOpacity
               style={customAlertStyles.confirmButton}
               onPress={onClose}
             >
               <Text style={customAlertStyles.confirmButtonText}>
                 {confirmText}
               </Text>
-            </TouchableOpacity>
+            </RNTouchableOpacity>
           </LinearGradient>
         </View>
       </View>
