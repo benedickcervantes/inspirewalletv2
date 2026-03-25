@@ -957,8 +957,7 @@ export default function TravelProtection() {
   const dynamicStyles = {
     scrollContent: {
       paddingHorizontal: horizontalPadding,
-      // Keep some space for the bottom buttons, but avoid a large empty gap.
-      paddingBottom: verticalScale(40),
+      paddingBottom: verticalScale(24),
     },
     heroCard: {
       padding: scale(24),
@@ -982,7 +981,7 @@ export default function TravelProtection() {
     },
     formCard: { padding: scale(20) },
     buttonContainer: {
-      flexDirection: "column" as const,
+      flexDirection: "row" as const,
       gap: 12,
     },
     countryDropdown: {
@@ -1578,22 +1577,15 @@ export default function TravelProtection() {
                   governmentIdNumber={governmentIdNumber}
                 />
               )}
+        </KeyboardAwareGHScrollView>
 
-              {/* Buttons at bottom of scroll content */}
-              <View
-                style={[styles.buttonContainer, dynamicStyles.buttonContainer]}
-                pointerEvents="box-none"
-              >
-            <TouchableOpacity
-              style={styles.backButtonBottom}
-              onPress={handleBack}
-            >
+        {/* Footer buttons (Banking-style) */}
+        <View style={styles.footer} pointerEvents="box-none">
+          <View style={[styles.buttonContainer, dynamicStyles.buttonContainer]}>
+            <RNTouchableOpacity style={styles.backButtonBottom} onPress={handleBack}>
               <Text style={styles.backButtonText}>{t("travel.back")}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.nextButton}
-              onPress={handleNext}
-            >
+            </RNTouchableOpacity>
+            <RNTouchableOpacity style={styles.nextButton} onPress={handleNext}>
               <LinearGradient
                 colors={["#E25A17", "#F28934"]}
                 style={styles.nextButtonGradient}
@@ -1604,9 +1596,9 @@ export default function TravelProtection() {
                   {currentStep === 6 ? t("travel.apply") : t("travel.next")}
                 </Text>
               </LinearGradient>
-            </TouchableOpacity>
+            </RNTouchableOpacity>
           </View>
-        </KeyboardAwareGHScrollView>
+        </View>
       </SafeAreaView>
 
       {/* Custom Alert Modal */}
@@ -1727,6 +1719,13 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 20,
     paddingBottom: 20,
+  },
+  footer: {
+    width: "100%",
+    alignSelf: "stretch",
+    padding: 16,
+    paddingBottom: Platform.OS === "ios" ? 24 : 20,
+    backgroundColor: "#FFFFFF",
   },
   heroCard: {
     borderRadius: 20,
@@ -2031,40 +2030,41 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     backgroundColor: "transparent",
-    paddingHorizontal: 0,
-    paddingTop: 24,
-    paddingBottom: 24,
+    width: "100%",
+    alignSelf: "stretch",
     flexDirection: "row",
     gap: 12,
   },
   backButtonBottom: {
     flex: 1,
-    borderRadius: 12,
+    borderRadius: 14,
     borderWidth: 2,
     borderColor: THEME_COLOR,
     backgroundColor: "#FFFFFF",
-    paddingVertical: 14,
+    paddingVertical: 16,
     alignItems: "center",
     justifyContent: "center",
   },
   backButtonText: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: "700",
     color: THEME_COLOR,
     letterSpacing: 0.5,
   },
   nextButton: {
     flex: 1,
-    borderRadius: 12,
+    borderRadius: 14,
     overflow: "hidden",
   },
   nextButtonGradient: {
+    width: "100%",
     paddingVertical: 16,
     alignItems: "center",
-    borderRadius: 12,
+    justifyContent: "center",
+    borderRadius: 14,
   },
   nextButtonText: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: "700",
     color: "#FFFFFF",
     letterSpacing: 0.5,
