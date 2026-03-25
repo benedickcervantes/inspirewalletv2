@@ -293,6 +293,7 @@ export default function Dashboard() {
   const [maintenanceStatus, setMaintenanceStatus] = useState<
     Record<string, boolean>
   >({});
+  const [isMaintenanceLoading, setIsMaintenanceLoading] = useState(true);
   const [selectedMaintenanceService, setSelectedMaintenanceService] = useState<
     string | null
   >(null);
@@ -475,11 +476,11 @@ export default function Dashboard() {
       }
 
       const walletId = w?.id;
-      const [treeRes, txRes, status, notifRes, hasChosen, annRes] =
+      const [treeRes, txRes, notifRes, hasChosen, annRes] =
         await Promise.all([
           getReferralTree(accessToken),
           getTransactions(accessToken, { walletId, limit: 20 }),
-          getMaintenanceStatus(),
+          fetchMaintenanceStatus(),
           getNotifications(accessToken, { limit: 50 }),
           AsyncStorage.getItem(
             languageChoiceDoneKey(
@@ -541,8 +542,6 @@ export default function Dashboard() {
         setShowFirstTimeLanguageModal(true);
       }
 
-      setMaintenanceStatus(status);
-
       if (notifRes.success && notifRes.data) {
         const unreadCount = (notifRes.data as { isRead: boolean }[]).filter(
           (n) => !n.isRead,
@@ -570,7 +569,7 @@ export default function Dashboard() {
     };
 
     init();
-  }, [navigation, startIdleSession]);
+  }, [fetchMaintenanceStatus, navigation, startIdleSession]);
 
   useEffect(() => {
     if (!announcementVisible) return;
@@ -927,8 +926,8 @@ export default function Dashboard() {
         if (token) refetchJwtData();
       });
       // Also refresh maintenance status
-      getMaintenanceStatus().then(setMaintenanceStatus);
-    }, [refetchJwtData]),
+      void fetchMaintenanceStatus();
+    }, [fetchMaintenanceStatus, refetchJwtData]),
   );
 
   useEffect(() => {
@@ -1107,6 +1106,33 @@ export default function Dashboard() {
       console.error("Error opening URL:", error);
     }
   };
+
+  const fetchMaintenanceStatus = useCallback(async () => {
+    setIsMaintenanceLoading(true);
+    try {
+      const status = await getMaintenanceStatus();
+      setMaintenanceStatus(status);
+      return status;
+    } finally {
+      setIsMaintenanceLoading(false);
+    }
+  }, []);
+
+  const renderLockBadge = (isSkeleton = false) => (
+    <View
+      style={[
+        styles.quickActionLockBadge,
+        isSkeleton && styles.quickActionLockBadgeSkeleton,
+      ]}
+    >
+      {!isSkeleton ? (
+        <MaterialCommunityIcons name="lock" size={13} color="#FFFFFF" />
+      ) : null}
+    </View>
+  );
+
+  const shouldShowServiceContainersSkeleton =
+    isBalanceLoading || isMaintenanceLoading;
 
   return (
     <>
@@ -1463,225 +1489,245 @@ export default function Dashboard() {
           )}
 
           {activeTab !== "Cards" && activeTab !== "Investment" && (
-            <View
-              style={[
-                styles.quickActionsContainer,
-                {
-                  paddingHorizontal: horizontalPadding,
-                  paddingVertical: Math.round(16 * qaSpacing),
-                  gap: Math.round(10 * qaSpacing),
-                },
-              ]}
-            >
-              <TouchableOpacity
+            shouldShowServiceContainersSkeleton ? (
+              <View
                 style={[
-                  styles.quickActionButton,
-                  isKycRestrictedUser && styles.quickActionButtonLocked,
+                  styles.quickActionsContainer,
                   {
-                    paddingVertical: Math.round(14 * qaSpacing),
-                    paddingHorizontal: Math.round(6 * qaSpacing),
-                    minWidth: 0,
+                    paddingHorizontal: horizontalPadding,
+                    paddingVertical: Math.round(16 * qaSpacing),
+                    gap: Math.round(10 * qaSpacing),
                   },
                 ]}
-                onPress={() => {
-                  if (isKycRestrictedUser) {
-                    openKycGateModal();
-                  } else {
-                    navigation.navigate("Transfer");
-                  }
-                }}
               >
-                <View
+                {[0, 1, 2, 3].map((item) => (
+                  <View
+                    key={`quick-action-skeleton-${item}`}
+                    style={[
+                      styles.quickActionButton,
+                      styles.quickActionButtonSkeleton,
+                      {
+                        paddingVertical: Math.round(14 * qaSpacing),
+                        paddingHorizontal: Math.round(6 * qaSpacing),
+                        minWidth: 0,
+                      },
+                    ]}
+                  >
+                    <View
+                      style={[
+                        styles.quickActionIcon,
+                        styles.quickActionIconSkeleton,
+                        {
+                          width: Math.round(48 * qaSpacing),
+                          height: Math.round(48 * qaSpacing),
+                          marginBottom: Math.round(6 * qaSpacing),
+                        },
+                      ]}
+                    />
+                    <View style={styles.quickActionLabelSkeleton} />
+                  </View>
+                ))}
+              </View>
+            ) : (
+              <View
+                style={[
+                  styles.quickActionsContainer,
+                  {
+                    paddingHorizontal: horizontalPadding,
+                    paddingVertical: Math.round(16 * qaSpacing),
+                    gap: Math.round(10 * qaSpacing),
+                  },
+                ]}
+              >
+                <TouchableOpacity
                   style={[
-                    styles.quickActionIcon,
-                    isKycRestrictedUser && styles.quickActionIconLocked,
+                    styles.quickActionButton,
+                    isKycRestrictedUser && styles.quickActionButtonLocked,
                     {
-                      width: Math.round(48 * qaSpacing),
-                      height: Math.round(48 * qaSpacing),
-                      marginBottom: Math.round(6 * qaSpacing),
+                      paddingVertical: Math.round(14 * qaSpacing),
+                      paddingHorizontal: Math.round(6 * qaSpacing),
+                      minWidth: 0,
                     },
                   ]}
+                  onPress={() => {
+                    if (isKycRestrictedUser) {
+                      openKycGateModal();
+                    } else {
+                      navigation.navigate("Transfer");
+                    }
+                  }}
                 >
-                  <MaterialCommunityIcons
-                    name="swap-horizontal"
-                    size={qaIconSize}
-                    color={isKycRestrictedUser ? "#CCCCCC" : "#E15816"}
-                  />
-                  {isKycRestrictedUser && (
-                    <View style={styles.quickActionLockBadge}>
-                      <MaterialCommunityIcons
-                        name="lock"
-                        size={13}
-                        color="#FFFFFF"
-                      />
-                    </View>
-                  )}
-                </View>
-                <Text
+                  <View
+                    style={[
+                      styles.quickActionIcon,
+                      isKycRestrictedUser && styles.quickActionIconLocked,
+                      {
+                        width: Math.round(48 * qaSpacing),
+                        height: Math.round(48 * qaSpacing),
+                        marginBottom: Math.round(6 * qaSpacing),
+                      },
+                    ]}
+                  >
+                    <MaterialCommunityIcons
+                      name="swap-horizontal"
+                      size={qaIconSize}
+                      color={isKycRestrictedUser ? "#CCCCCC" : "#E15816"}
+                    />
+                    {(isMaintenanceLoading || isKycRestrictedUser) &&
+                      renderLockBadge(isMaintenanceLoading)}
+                  </View>
+                  <Text
+                    style={[
+                      styles.quickActionLabel,
+                      { fontSize: qaLabelSize },
+                      isKycRestrictedUser && styles.quickActionLabelLocked,
+                    ]}
+                    numberOfLines={2}
+                  >
+                    {t("dashboard.transfer")}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  key={isBankingServiceLocked ? "banking-qa-locked" : "banking-qa-open"}
                   style={[
-                    styles.quickActionLabel,
-                    { fontSize: qaLabelSize },
-                    isKycRestrictedUser && styles.quickActionLabelLocked,
-                  ]}
-                  numberOfLines={2}
-                >
-                  {t("dashboard.transfer")}
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                key={isBankingServiceLocked ? "banking-qa-locked" : "banking-qa-open"}
-                style={[
-                  styles.quickActionButton,
-                  isBankingServiceLocked
-                    ? styles.quickActionButtonLocked
-                    : styles.quickActionBorderClear,
-                  {
-                    paddingVertical: Math.round(14 * qaSpacing),
-                    paddingHorizontal: Math.round(6 * qaSpacing),
-                    minWidth: 0,
-                  },
-                ]}
-                onPress={() => {
-                  if (isBankingServiceLocked) {
-                    setBankingLockModalContext("banking");
-                    setShowBankingServiceLockedModal(true);
-                  } else {
-                    (
-                      navigation as { navigate: (name: string) => void }
-                    ).navigate("Bdo");
-                  }
-                }}
-                activeOpacity={0.7}
-              >
-                <View
-                  style={[
-                    styles.quickActionIcon,
+                    styles.quickActionButton,
                     isBankingServiceLocked
-                      ? styles.quickActionIconLocked
-                      : styles.quickActionIconClear,
+                      ? styles.quickActionButtonLocked
+                      : styles.quickActionBorderClear,
                     {
-                      width: Math.round(48 * qaSpacing),
-                      height: Math.round(48 * qaSpacing),
-                      marginBottom: Math.round(6 * qaSpacing),
+                      paddingVertical: Math.round(14 * qaSpacing),
+                      paddingHorizontal: Math.round(6 * qaSpacing),
+                      minWidth: 0,
                     },
                   ]}
+                  onPress={() => {
+                    if (isBankingServiceLocked) {
+                      setBankingLockModalContext("banking");
+                      setShowBankingServiceLockedModal(true);
+                    } else {
+                      (
+                        navigation as { navigate: (name: string) => void }
+                      ).navigate("Bdo");
+                    }
+                  }}
+                  activeOpacity={0.7}
                 >
-                  <MaterialCommunityIcons
-                    name="bank"
-                    size={qaIconSize}
-                    color={isBankingServiceLocked ? "#CCCCCC" : "#E15816"}
-                  />
-                  {isBankingServiceLocked && (
-                    <View style={styles.quickActionLockBadge}>
-                      <MaterialCommunityIcons
-                        name="lock"
-                        size={13}
-                        color="#FFFFFF"
-                      />
-                    </View>
-                  )}
-                </View>
-                <Text
+                  <View
+                    style={[
+                      styles.quickActionIcon,
+                      isBankingServiceLocked
+                        ? styles.quickActionIconLocked
+                        : styles.quickActionIconClear,
+                      {
+                        width: Math.round(48 * qaSpacing),
+                        height: Math.round(48 * qaSpacing),
+                        marginBottom: Math.round(6 * qaSpacing),
+                      },
+                    ]}
+                  >
+                    <MaterialCommunityIcons
+                      name="bank"
+                      size={qaIconSize}
+                      color={isBankingServiceLocked ? "#CCCCCC" : "#E15816"}
+                    />
+                    {(isMaintenanceLoading || isBankingServiceLocked) &&
+                      renderLockBadge(isMaintenanceLoading)}
+                  </View>
+                  <Text
+                    style={[
+                      styles.quickActionLabel,
+                      { fontSize: qaLabelSize },
+                      isBankingServiceLocked && styles.quickActionLabelLocked,
+                    ]}
+                    numberOfLines={2}
+                  >
+                    {t("dashboard.bankingService")}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
                   style={[
-                    styles.quickActionLabel,
-                    { fontSize: qaLabelSize },
-                    isBankingServiceLocked && styles.quickActionLabelLocked,
-                  ]}
-                  numberOfLines={2}
-                >
-                  {t("dashboard.bankingService")}
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.quickActionButton,
-                  isKycRestrictedUser && styles.quickActionButtonLocked,
-                  {
-                    paddingVertical: Math.round(14 * qaSpacing),
-                    paddingHorizontal: Math.round(6 * qaSpacing),
-                    minWidth: 0,
-                  },
-                ]}
-                onPress={() => {
-                  if (isKycRestrictedUser) {
-                    openKycGateModal();
-                  } else {
-                    navigation.navigate("Travel");
-                  }
-                }}
-              >
-                <View
-                  style={[
-                    styles.quickActionIcon,
-                    isKycRestrictedUser && styles.quickActionIconLocked,
+                    styles.quickActionButton,
+                    isKycRestrictedUser && styles.quickActionButtonLocked,
                     {
-                      width: Math.round(48 * qaSpacing),
-                      height: Math.round(48 * qaSpacing),
-                      marginBottom: Math.round(6 * qaSpacing),
+                      paddingVertical: Math.round(14 * qaSpacing),
+                      paddingHorizontal: Math.round(6 * qaSpacing),
+                      minWidth: 0,
                     },
                   ]}
+                  onPress={() => {
+                    if (isKycRestrictedUser) {
+                      openKycGateModal();
+                    } else {
+                      navigation.navigate("Travel");
+                    }
+                  }}
                 >
-                  <MaterialCommunityIcons
-                    name="airplane"
-                    size={qaIconSize}
-                    color={isKycRestrictedUser ? "#CCCCCC" : "#E15816"}
-                  />
-                  {isKycRestrictedUser && (
-                    <View style={styles.quickActionLockBadge}>
-                      <MaterialCommunityIcons
-                        name="lock"
-                        size={13}
-                        color="#FFFFFF"
-                      />
-                    </View>
-                  )}
-                </View>
-                <Text
+                  <View
+                    style={[
+                      styles.quickActionIcon,
+                      isKycRestrictedUser && styles.quickActionIconLocked,
+                      {
+                        width: Math.round(48 * qaSpacing),
+                        height: Math.round(48 * qaSpacing),
+                        marginBottom: Math.round(6 * qaSpacing),
+                      },
+                    ]}
+                  >
+                    <MaterialCommunityIcons
+                      name="airplane"
+                      size={qaIconSize}
+                      color={isKycRestrictedUser ? "#CCCCCC" : "#E15816"}
+                    />
+                    {(isMaintenanceLoading || isKycRestrictedUser) &&
+                      renderLockBadge(isMaintenanceLoading)}
+                  </View>
+                  <Text
+                    style={[
+                      styles.quickActionLabel,
+                      { fontSize: qaLabelSize },
+                      isKycRestrictedUser && styles.quickActionLabelLocked,
+                    ]}
+                    numberOfLines={2}
+                  >
+                    {t("dashboard.travelProtection")}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
                   style={[
-                    styles.quickActionLabel,
-                    { fontSize: qaLabelSize },
-                    isKycRestrictedUser && styles.quickActionLabelLocked,
-                  ]}
-                  numberOfLines={2}
-                >
-                  {t("dashboard.travelProtection")}
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.quickActionButton,
-                  {
-                    paddingVertical: Math.round(14 * qaSpacing),
-                    paddingHorizontal: Math.round(6 * qaSpacing),
-                    minWidth: 0,
-                  },
-                ]}
-                onPress={() => navigation.navigate("History")}
-              >
-                <View
-                  style={[
-                    styles.quickActionIcon,
+                    styles.quickActionButton,
                     {
-                      width: Math.round(48 * qaSpacing),
-                      height: Math.round(48 * qaSpacing),
-                      marginBottom: Math.round(6 * qaSpacing),
+                      paddingVertical: Math.round(14 * qaSpacing),
+                      paddingHorizontal: Math.round(6 * qaSpacing),
+                      minWidth: 0,
                     },
                   ]}
+                  onPress={() => navigation.navigate("History")}
                 >
-                  <MaterialCommunityIcons
-                    name="history"
-                    size={qaIconSize}
-                    color="#E15816"
-                  />
-                </View>
-                <Text
-                  style={[styles.quickActionLabel, { fontSize: qaLabelSize }]}
-                  numberOfLines={2}
-                >
-                  {t("dashboard.history")}
-                </Text>
-              </TouchableOpacity>
-            </View>
+                  <View
+                    style={[
+                      styles.quickActionIcon,
+                      {
+                        width: Math.round(48 * qaSpacing),
+                        height: Math.round(48 * qaSpacing),
+                        marginBottom: Math.round(6 * qaSpacing),
+                      },
+                    ]}
+                  >
+                    <MaterialCommunityIcons
+                      name="history"
+                      size={qaIconSize}
+                      color="#E15816"
+                    />
+                  </View>
+                  <Text
+                    style={[styles.quickActionLabel, { fontSize: qaLabelSize }]}
+                    numberOfLines={2}
+                  >
+                    {t("dashboard.history")}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )
           )}
 
           {activeTab !== "Cards" && activeTab !== "Investment" && (
@@ -1691,8 +1737,18 @@ export default function Dashboard() {
                   {t("dashboard.services")}
                 </Text>
               </View>
-              <View style={styles.menuGrid}>
-                {menuItems.map((item) => {
+              {shouldShowServiceContainersSkeleton ? (
+                <View style={styles.menuGrid}>
+                  {menuItems.map((item) => (
+                    <View key={`menu-skeleton-${item.route}`} style={styles.menuItem}>
+                      <View style={[styles.menuIcon, styles.menuIconSkeleton]} />
+                      <View style={styles.menuLabelSkeleton} />
+                    </View>
+                  ))}
+                </View>
+              ) : (
+                <View style={styles.menuGrid}>
+                  {menuItems.map((item) => {
                   // Map route names to service IDs
                   const routeToServiceMap: Record<string, string> = {
                     EwalletService: "ewallet",
@@ -1718,8 +1774,11 @@ export default function Dashboard() {
                     userRole === 'DEVELOPER' ||
                     userRole === 'ADMIN' ||
                     userRole === 'SUPER_ADMIN';
+                  const isMaintenanceBlocked =
+                    isMaintenanceLoading ||
+                    (isUnderMaintenance && !isDeveloperOrAdmin);
                   const isBlocked =
-                    (isUnderMaintenance && !isDeveloperOrAdmin) ||
+                    isMaintenanceBlocked ||
                     isEwalletLockedByDeposit ||
                     isTradingLockedByKyc;
 
@@ -1774,15 +1833,8 @@ export default function Dashboard() {
                           size={24}
                           color={isBlocked ? "#CCCCCC" : "#000000"}
                         />
-                        {isBlocked && (
-                          <View style={styles.quickActionLockBadge}>
-                            <MaterialCommunityIcons
-                              name="lock"
-                              size={13}
-                              color="#FFFFFF"
-                            />
-                          </View>
-                        )}
+                        {(isBlocked || isMaintenanceLoading) &&
+                          renderLockBadge(isMaintenanceLoading)}
                       </View>
                       <Text
                         style={[
@@ -1794,8 +1846,9 @@ export default function Dashboard() {
                       </Text>
                     </TouchableOpacity>
                   );
-                })}
-              </View>
+                  })}
+                </View>
+              )}
             </View>
           )}
 
@@ -2056,6 +2109,10 @@ const styles = StyleSheet.create({
     borderColor: "#E5E5E5",
     borderStyle: "dashed",
   },
+  quickActionButtonSkeleton: {
+    backgroundColor: "#FFFFFF",
+    borderWidth: 0,
+  },
   /** RN can leave dashed border artifacts when toggling lock — reset explicitly when unlocked. */
   quickActionBorderClear: {
     borderWidth: 0,
@@ -2065,11 +2122,20 @@ const styles = StyleSheet.create({
   quickActionIconLocked: {
     backgroundColor: "#F0F0F0",
   },
+  quickActionIconSkeleton: {
+    backgroundColor: "#E9E9E9",
+  },
   quickActionIconClear: {
     backgroundColor: "#FFF5F0",
   },
   quickActionLabelLocked: {
     color: "#999",
+  },
+  quickActionLabelSkeleton: {
+    width: "75%",
+    height: 10,
+    borderRadius: 6,
+    backgroundColor: "#E9E9E9",
   },
   quickActionLockBadge: {
     position: "absolute",
@@ -2090,6 +2156,12 @@ const styles = StyleSheet.create({
     elevation: 4,
     borderWidth: 2,
     borderColor: "#FFFFFF",
+  },
+  quickActionLockBadgeSkeleton: {
+    backgroundColor: "#D9D9D9",
+    shadowOpacity: 0,
+    elevation: 0,
+    borderColor: "#F2F2F2",
   },
   bankingLockModalContent: {
     backgroundColor: "#FFFFFF",
@@ -2204,12 +2276,25 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     position: "relative",
   },
+  menuIconSkeleton: {
+    backgroundColor: "#E9E9E9",
+    shadowOpacity: 0,
+    elevation: 0,
+    borderWidth: 0,
+  },
   customIconImage: { width: 24, height: 24 },
   menuLabel: {
     fontSize: 10,
     color: "#666",
     textAlign: "center",
     lineHeight: 12,
+  },
+  menuLabelSkeleton: {
+    width: "80%",
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#E9E9E9",
+    marginTop: 2,
   },
   menuItemDisabled: {},
   menuIconDisabled: {

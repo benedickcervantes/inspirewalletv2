@@ -576,7 +576,22 @@ export default function CardsTab({
         </View>
 
         <View style={styles.cardsGrid}>
-          <View style={styles.cardItem}>
+          {isLoading ? (
+            <>
+              {[0, 1].map((idx) => (
+                <View key={`vip-skeleton-${idx}`} style={styles.cardItem}>
+                  <View style={[styles.cardPreview, styles.cardPreviewSkeleton]} />
+                  <View style={styles.cardInfo}>
+                    <View style={styles.cardItemTitleSkeleton} />
+                    <View style={styles.cardItemSubtitleSkeleton} />
+                    <View style={styles.cardActionSkeleton} />
+                  </View>
+                </View>
+              ))}
+            </>
+          ) : (
+            <>
+              <View style={styles.cardItem}>
             <View style={styles.cardPreview}>
               <ImageBackground
                 source={require("../../assets/cards/vip_collection/vp2/front.png")}
@@ -634,8 +649,8 @@ export default function CardsTab({
                 </TouchableOpacity>
               )}
             </View>
-          </View>
-          <View style={styles.cardItem}>
+              </View>
+              <View style={styles.cardItem}>
             <View style={styles.cardPreview}>
               <ImageBackground
                 source={require("../../assets/cards/vip_collection/vp1/front.png")}
@@ -679,7 +694,9 @@ export default function CardsTab({
                 </Text>
               </TouchableOpacity>
             </View>
-          </View>
+              </View>
+            </>
+          )}
         </View>
       </View>
 
@@ -706,7 +723,22 @@ export default function CardsTab({
         </View>
 
         <View style={styles.cardsGrid}>
-          <View style={styles.cardItem}>
+          {isLoading ? (
+            <>
+              {[0, 1].map((idx) => (
+                <View key={`design-skeleton-${idx}`} style={styles.cardItem}>
+                  <View style={[styles.cardPreview, styles.cardPreviewSkeleton]} />
+                  <View style={styles.cardInfo}>
+                    <View style={styles.cardItemTitleSkeleton} />
+                    <View style={styles.cardItemSubtitleSkeleton} />
+                    <View style={styles.cardActionSkeleton} />
+                  </View>
+                </View>
+              ))}
+            </>
+          ) : (
+            <>
+              <View style={styles.cardItem}>
             <View style={styles.cardPreview}>
               <ImageBackground
                 source={require("../../assets/cards/design_collection/dc1/front.png")}
@@ -769,8 +801,8 @@ export default function CardsTab({
                 </TouchableOpacity>
               )}
             </View>
-          </View>
-          <View style={styles.cardItem}>
+              </View>
+              <View style={styles.cardItem}>
             <View style={styles.cardPreview}>
               <ImageBackground
                 source={require("../../assets/cards/design_collection/dc2/front.png")}
@@ -836,7 +868,9 @@ export default function CardsTab({
                 </TouchableOpacity>
               )}
             </View>
-          </View>
+              </View>
+            </>
+          )}
         </View>
       </View>
 
@@ -1887,6 +1921,9 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 16,
     overflow: "hidden",
   },
+  cardPreviewSkeleton: {
+    backgroundColor: "#E8E8E8",
+  },
 
   cardPreviewImage: {
     flex: 1,
@@ -1926,10 +1963,30 @@ const styles = StyleSheet.create({
     color: "#333",
     marginBottom: 2,
   },
+  cardItemTitleSkeleton: {
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: "#E3E3E3",
+    marginBottom: 8,
+    width: "70%",
+  },
   cardItemSubtitle: {
     fontSize: 11,
     color: "#999",
     marginBottom: 8,
+  },
+  cardItemSubtitleSkeleton: {
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: "#E8E8E8",
+    marginBottom: 10,
+    width: "90%",
+  },
+  cardActionSkeleton: {
+    height: 34,
+    borderRadius: 10,
+    backgroundColor: "#DCDCDC",
+    width: "100%",
   },
   upgradeButton: {
     backgroundColor: "#EDEDED",
