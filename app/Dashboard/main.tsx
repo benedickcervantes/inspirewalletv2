@@ -1417,11 +1417,34 @@ export default function Dashboard() {
           >
             {(["Wallet", "Investment", "Cards"] as const).map((tab) => {
                 const isActive = activeTab === tab;
+                const label = t(
+                  tab === "Wallet"
+                    ? "dashboard.wallet"
+                    : tab === "Investment"
+                      ? "dashboard.investment"
+                      : "dashboard.cards",
+                );
                 const baseHorizontalPadding =
-                  width < 360 ? 6 : width < 400 ? 10 : 14;
+                  width < 360 ? 6 : width < 400 ? 9 : 12;
                 const activeHorizontalPadding =
-                  width < 360 ? 8 : width < 400 ? 12 : 16;
-                const tabFontSize = width < 360 ? 11 : width < 400 ? 12 : 13;
+                  width < 360 ? 8 : width < 400 ? 11 : 14;
+                const hasWideLabel =
+                  /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uac00-\ud7af]/.test(
+                    label,
+                  );
+                const compactLabelThreshold = hasWideLabel ? 7 : 12;
+                const veryLongLabelThreshold = hasWideLabel ? 10 : 16;
+                const isCompactLabel = label.length >= compactLabelThreshold;
+                const isVeryLongLabel = label.length >= veryLongLabelThreshold;
+                const baseTabFontSize =
+                  width < 360 ? 11 : width < 400 ? 12 : 13;
+                const compactTabFontSize =
+                  width < 360 ? 10 : width < 400 ? 11 : 12;
+                const tabFontSize = isVeryLongLabel
+                  ? compactTabFontSize - 1
+                  : isCompactLabel
+                    ? compactTabFontSize
+                    : baseTabFontSize;
 
                 return (
               <TouchableOpacity
@@ -1430,13 +1453,13 @@ export default function Dashboard() {
                   styles.tab,
                   isActive && styles.activeTab,
                   {
-                    flex: isActive ? 1.15 : 0.95,
+                    flex: 1,
                     paddingHorizontal: isActive
                       ? activeHorizontalPadding
                       : baseHorizontalPadding,
-                    paddingVertical: isSmallScreen ? 10 : 12,
+                    paddingVertical: isSmallScreen ? 9 : 11,
                     minWidth: 0,
-                    minHeight: isSmallScreen ? 38 : 44,
+                    minHeight: isSmallScreen ? 40 : 46,
                   },
                 ]}
                 onPress={() => setActiveTab(tab)}
@@ -1445,18 +1468,15 @@ export default function Dashboard() {
                   style={[
                     styles.tabText,
                     isActive && styles.activeTabText,
+                    isCompactLabel && styles.tabTextCompact,
                     { fontSize: tabFontSize },
                   ]}
-                  numberOfLines={1}
-                  ellipsizeMode="clip"
+                  numberOfLines={isCompactLabel ? 2 : 1}
+                  adjustsFontSizeToFit={isVeryLongLabel}
+                  minimumFontScale={isVeryLongLabel ? 0.88 : undefined}
+                  ellipsizeMode={isCompactLabel ? "tail" : "clip"}
                 >
-                  {t(
-                    tab === "Wallet"
-                      ? "dashboard.wallet"
-                      : tab === "Investment"
-                        ? "dashboard.investment"
-                        : "dashboard.cards",
-                  )}
+                  {label}
                 </Text>
               </TouchableOpacity>
                 );
@@ -2078,10 +2098,24 @@ const styles = StyleSheet.create({
     minWidth: 100,
     minHeight: 44,
     alignItems: "center",
+    justifyContent: "center",
     flexShrink: 1,
   },
   activeTab: { backgroundColor: "#E15816" },
-  tabText: { fontSize: 14, fontWeight: "500", color: "#666" },
+  tabText: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#666",
+    textAlign: "center",
+    alignSelf: "center",
+    flexShrink: 1,
+    width: "100%",
+    includeFontPadding: false,
+  },
+  tabTextCompact: {
+    lineHeight: 14,
+    textAlign: "center",
+  },
   activeTabText: { color: "#FFFFFF" },
   quickActionsContainer: {
     flexDirection: "row",
