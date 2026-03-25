@@ -285,76 +285,101 @@ export default function WalletTab({
               ]}
               pointerEvents="box-none"
             >
-              <TouchableOpacity
-                style={[
-                  styles.cardButtonDeposit,
-                  {
-                    backgroundColor: theme.actionButtonBg,
-                    paddingVertical: Math.round(14 * spacingScale),
-                    gap: Math.round(7 * spacingScale),
-                  },
-                ]}
-                onPress={() => navigation.navigate("Deposit")}
-                activeOpacity={0.7}
-              >
-                <SvgXml
-                  xml={depositSvg}
-                  width={isSmallScreen ? 14 : 16}
-                  height={isSmallScreen ? 14 : 16}
-                />
-                <Text
-                  style={[
-                    styles.cardButtonDepositText,
-                    {
-                      color: theme.actionButtonText,
-                      fontSize: Math.round(13 * fontScale),
-                    },
-                  ]}
-                  numberOfLines={1}
-                >
-                  {t("dashboard.deposit")}
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.cardButtonWithdraw,
-                  isWithdrawalLocked && styles.cardButtonWithdrawLocked,
-                  {
-                    backgroundColor: theme.withdrawButtonBg,
-                    paddingVertical: Math.round(14 * spacingScale),
-                    gap: Math.round(7 * spacingScale),
-                  },
-                ]}
-                onPress={() => {
-                  if (isWithdrawalLocked) {
-                    onWithdrawalLockedPress?.();
-                  } else {
-                    navigation.navigate("Withdraw");
-                  }
-                }}
-                activeOpacity={0.7}
-              >
-                <SvgXml
-                  xml={`<svg width="20" height="20" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+              {isBalanceLoading ? (
+                <>
+                  <View
+                    style={[
+                      styles.cardButtonSkeleton,
+                      { paddingVertical: Math.round(14 * spacingScale) },
+                    ]}
+                  >
+                    <View style={styles.cardButtonSkeletonIcon} />
+                    <View style={styles.cardButtonSkeletonText} />
+                  </View>
+                  <View
+                    style={[
+                      styles.cardButtonSkeleton,
+                      { paddingVertical: Math.round(14 * spacingScale) },
+                    ]}
+                  >
+                    <View style={styles.cardButtonSkeletonIcon} />
+                    <View style={styles.cardButtonSkeletonText} />
+                  </View>
+                </>
+              ) : (
+                <>
+                  <TouchableOpacity
+                    style={[
+                      styles.cardButtonDeposit,
+                      {
+                        backgroundColor: theme.actionButtonBg,
+                        paddingVertical: Math.round(14 * spacingScale),
+                        gap: Math.round(7 * spacingScale),
+                      },
+                    ]}
+                    onPress={() => navigation.navigate("Deposit")}
+                    activeOpacity={0.7}
+                  >
+                    <SvgXml
+                      xml={depositSvg}
+                      width={isSmallScreen ? 14 : 16}
+                      height={isSmallScreen ? 14 : 16}
+                    />
+                    <Text
+                      style={[
+                        styles.cardButtonDepositText,
+                        {
+                          color: theme.actionButtonText,
+                          fontSize: Math.round(13 * fontScale),
+                        },
+                      ]}
+                      numberOfLines={1}
+                    >
+                      {t("dashboard.deposit")}
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.cardButtonWithdraw,
+                      isWithdrawalLocked && styles.cardButtonWithdrawLocked,
+                      {
+                        backgroundColor: theme.withdrawButtonBg,
+                        paddingVertical: Math.round(14 * spacingScale),
+                        gap: Math.round(7 * spacingScale),
+                      },
+                    ]}
+                    onPress={() => {
+                      if (isWithdrawalLocked) {
+                        onWithdrawalLockedPress?.();
+                      } else {
+                        navigation.navigate("Withdraw");
+                      }
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <SvgXml
+                      xml={`<svg width="20" height="20" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
 <path d="M1.00006 8.0711L8.07113 1.00004M8.07113 1.00004L7.8691 6.85892M8.07113 1.00004L2.21224 1.20207" stroke="${theme.withdrawButtonText}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>`}
-                  width={isSmallScreen ? 14 : 16}
-                  height={isSmallScreen ? 14 : 16}
-                />
-                <Text
-                  style={[
-                    styles.cardButtonWithdrawText,
-                    isWithdrawalLocked && styles.cardButtonWithdrawTextLocked,
-                    {
-                      color: theme.withdrawButtonText,
-                      fontSize: Math.round(14 * fontScale),
-                    },
-                  ]}
-                  numberOfLines={1}
-                >
-                  {t("dashboard.withdraw")}
-                </Text>
-              </TouchableOpacity>
+                      width={isSmallScreen ? 14 : 16}
+                      height={isSmallScreen ? 14 : 16}
+                    />
+                    <Text
+                      style={[
+                        styles.cardButtonWithdrawText,
+                        isWithdrawalLocked && styles.cardButtonWithdrawTextLocked,
+                        {
+                          color: theme.withdrawButtonText,
+                          fontSize: Math.round(14 * fontScale),
+                        },
+                      ]}
+                      numberOfLines={1}
+                    >
+                      {t("dashboard.withdraw")}
+                    </Text>
+                  </TouchableOpacity>
+                </>
+              )}
             </View>
           </View>
         </ImageBackground>
@@ -495,5 +520,27 @@ const styles = StyleSheet.create({
   },
   cardButtonWithdrawTextLocked: {
     color: "#999",
+  },
+  cardButtonSkeleton: {
+    flex: 1,
+    minWidth: 0,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 15,
+    backgroundColor: "rgba(255, 255, 255, 0.22)",
+    gap: 7,
+  },
+  cardButtonSkeletonIcon: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: "rgba(255, 255, 255, 0.55)",
+  },
+  cardButtonSkeletonText: {
+    width: 58,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: "rgba(255, 255, 255, 0.55)",
   },
 });

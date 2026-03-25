@@ -577,7 +577,7 @@ const Settings = () => {
                 </View>
               </View>
               {!isInitialLoading && !userData?.emailVerified && userData?.email ? (
-                <TouchableOpacity onPress={openEmailVerifyModal}>
+                <TouchableOpacity onPress={() => openEmailVerifyModal()}>
                   <Text style={[styles.generateButtonText, r.generateButtonText]}>{t('settings.verify')}</Text>
                 </TouchableOpacity>
               ) : (
