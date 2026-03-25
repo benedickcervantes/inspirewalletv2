@@ -1527,6 +1527,46 @@ export async function getReferralTree(accessToken) {
 }
 
 /**
+ * GET /referrals/tree-list?type=direct|network&page=1&limit=5 — requires JWT
+ * Returns one paginated list chunk for referrals.
+ * @param {string} accessToken
+ * @param {{ type: "direct" | "network", page?: number, limit?: number }} options
+ * @returns {{ success: boolean, data?: { type: string, items: object[], total: number, page: number, limit: number, totalPages: number }, error?: string }}
+ */
+export async function getReferralTreeList(accessToken, options) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "No token" };
+
+  const type = options?.type === "network" ? "network" : "direct";
+  const page = Number(options?.page ?? 1);
+  const limit = Number(options?.limit ?? 5);
+
+  const query = new URLSearchParams({
+    type,
+    page: String(Number.isFinite(page) && page > 0 ? Math.floor(page) : 1),
+    limit: String(Number.isFinite(limit) && limit > 0 ? Math.floor(limit) : 5),
+  }).toString();
+
+  try {
+    const res = await apiFetch(`${base}/referrals/tree-list?${query}`, {
+      method: "GET",
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      return {
+        success: false,
+        error: data.message || "Failed to get paginated referral list",
+      };
+    }
+    return { success: true, data };
+  } catch (e) {
+    return { success: false, error: e.message || "Network error" };
+  }
+}
+
+/**
  * POST /referrals/generate — requires JWT
  * Generates the user's referral code. Returns existing if already present.
  * @param {string} accessToken

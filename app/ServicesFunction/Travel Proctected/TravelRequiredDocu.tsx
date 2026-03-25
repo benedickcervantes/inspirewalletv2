@@ -1,6 +1,15 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useState } from "react";
-import { Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import {
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  useWindowDimensions,
+  View,
+} from "react-native";
+import { TouchableOpacity } from "react-native-gesture-handler";
 import { useLanguage } from "../../../context/LanguageContext";
 import { useResponsive } from "../../../utils/responsive";
 
@@ -39,6 +48,8 @@ export default function TravelRequiredDocu({
 }: TravelRequiredDocuProps) {
   const { t } = useLanguage();
   const { isSmallScreen } = useResponsive();
+  const { height: windowHeight } = useWindowDimensions();
+  const modalListMaxHeight = Math.min(420, windowHeight * 0.45);
   const [showIdTypeModal, setShowIdTypeModal] = useState(false);
 
   const idTypeOptions = [
@@ -64,7 +75,7 @@ export default function TravelRequiredDocu({
             color={THEME_COLOR}
           />
         </View>
-        <View style={styles.formHeaderTextContainer}>
+        <View style={styles.formHeaderTextContainer} pointerEvents="box-none">
           <Text style={styles.formTitle}>{t("travel.requiredDocs")}</Text>
           <Text style={styles.formSubtitle}>
             {t("travel.requiredDocsSubtitle")}
@@ -73,7 +84,7 @@ export default function TravelRequiredDocu({
       </View>
 
       {/* Passport Photo */}
-      <View style={styles.inputGroup}>
+      <View style={styles.inputGroup} pointerEvents="box-none">
         <Text style={styles.inputLabel}>
           {t("travel.passportPhoto")} <Text style={styles.required}>*</Text>
         </Text>
@@ -113,7 +124,7 @@ export default function TravelRequiredDocu({
       <View style={styles.sectionDivider} />
 
       {/* Government ID Type */}
-      <View style={styles.inputGroup}>
+      <View style={styles.inputGroup} pointerEvents="box-none">
         <Text style={styles.inputLabel}>
           {t("travel.governmentIdType")} <Text style={styles.required}>*</Text>
         </Text>
@@ -134,7 +145,7 @@ export default function TravelRequiredDocu({
       </View>
 
       {/* Government ID Number */}
-      <View style={styles.inputGroup}>
+      <View style={styles.inputGroup} pointerEvents="box-none">
         <Text style={styles.inputLabel}>
           {t("travel.governmentIdNumber")} <Text style={styles.required}>*</Text>
         </Text>
@@ -148,7 +159,7 @@ export default function TravelRequiredDocu({
       </View>
 
       {/* Government ID Photo */}
-      <View style={styles.inputGroup}>
+      <View style={styles.inputGroup} pointerEvents="box-none">
         <Text style={styles.inputLabel}>
           {t("travel.governmentIdPhoto")} <Text style={styles.required}>*</Text>
         </Text>
@@ -231,7 +242,12 @@ export default function TravelRequiredDocu({
           />
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>{t("banking.selectIdType")}</Text>
-            <ScrollView style={styles.modalOptionsList} showsVerticalScrollIndicator={false}>
+            <ScrollView
+              style={[styles.modalOptionsList, { maxHeight: modalListMaxHeight }]}
+              showsVerticalScrollIndicator={false}
+              nestedScrollEnabled
+              keyboardShouldPersistTaps="handled"
+            >
               {idTypeOptions.map((option) => (
                 <TouchableOpacity
                   key={option.value}
@@ -442,6 +458,7 @@ const styles = StyleSheet.create({
     paddingTop: 18,
     paddingBottom: 28,
     maxHeight: "65%",
+    flexDirection: "column",
   },
   modalTitle: {
     fontSize: 16,

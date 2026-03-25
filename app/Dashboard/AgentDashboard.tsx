@@ -24,6 +24,7 @@ import {
     getOrCreateMainWallet,
     getReferralCode,
     getReferralQrPayload,
+    getReferralTreeList,
     getReferralTree,
     getTransactions,
 } from "../../configs/api";
@@ -64,6 +65,7 @@ type DetailSectionView =
 
 const IPHONE_SE_WIDTH = 320;
 const SMALL_PHONE_WIDTH = 375;
+const REFERRAL_PAGE_SIZE = 5;
 
 export default function AgentDashboard() {
   const navigation = useNavigation();
@@ -85,6 +87,7 @@ export default function AgentDashboard() {
   const [uplines, setUplines] = useState<
     { userId: string; referralCode?: string | null; name: string; firstName: string; lastName: string; isAgent: boolean; depth: number }[]
   >([]);
+  const [downlineReferrals, setDownlineReferrals] = useState<ReferralTreeMember[]>([]);
   const [directReferrals, setDirectReferrals] = useState<ReferralTreeMember[]>([]);
   const [networkReferrals, setNetworkReferrals] = useState<ReferralTreeMember[]>([]);
   const [referredClientsWithDeposits, setReferredClientsWithDeposits] = useState<
@@ -97,6 +100,13 @@ export default function AgentDashboard() {
     useState<DetailSectionView>("earned");
   const [error, setError] = useState<string | null>(null);
   const [copySuccess, setCopySuccess] = useState(false);
+  const [downlinePage, setDownlinePage] = useState(1);
+  const [directListPage, setDirectListPage] = useState(1);
+  const [networkListPage, setNetworkListPage] = useState(1);
+  const [downlineTotalPages, setDownlineTotalPages] = useState(1);
+  const [directListTotalPages, setDirectListTotalPages] = useState(1);
+  const [networkListTotalPages, setNetworkListTotalPages] = useState(1);
+  const [listLoading, setListLoading] = useState(false);
   const showInlineCopyBanner = copySuccess && Platform.OS === "ios";
 
   const formatCurrency = (amount: number) =>
@@ -105,6 +115,13 @@ export default function AgentDashboard() {
   const showingPendingCommissionList = detailSectionView === "pending";
   const showingDirectReferralsList = detailSectionView === "direct_referrals";
   const showingTotalNetworkList = detailSectionView === "total_network";
+  const paginatedDownlines = downlineReferrals;
+  const activeReferralList = showingTotalNetworkList ? networkReferrals : directReferrals;
+  const activePage = showingTotalNetworkList ? networkListPage : directListPage;
+  const totalActivePages = showingTotalNetworkList
+    ? networkListTotalPages
+    : directListTotalPages;
+  const paginatedActiveReferralList = activeReferralList;
   const getReferralDisplayName = (item: ReferralTreeMember) =>
     item.name ||
     [item.firstName, item.lastName].filter(Boolean).join(" ") ||
@@ -126,6 +143,51 @@ export default function AgentDashboard() {
     depth: Number(member.depth ?? fallbackDepth ?? 0),
     directReferralCount: Number(member.directReferralCount ?? 0),
   });
+
+  const fetchReferralListPage = useCallback(
+    async (args: { type: "direct" | "network"; page: number; target: "downline" | "directDetail" | "networkDetail" }) => {
+      const accessToken = await AsyncStorage.getItem("access_token");
+      if (!accessToken) {
+        setError(t("agent.notAuthenticated"));
+        return;
+      }
+
+      setListLoading(true);
+      try {
+        const res = await getReferralTreeList(accessToken, {
+          type: args.type,
+          page: args.page,
+          limit: REFERRAL_PAGE_SIZE,
+        });
+        if (!res.success || !res.data) return;
+
+        const normalized = Array.isArray(res.data.items)
+          ? res.data.items.map((item) => normalizeReferralMember(item as Record<string, unknown>, args.type === "direct" ? 1 : undefined))
+          : [];
+
+        if (args.target === "downline") {
+          setDownlineReferrals(normalized);
+          setDownlinePage(res.data.page || 1);
+          setDownlineTotalPages(res.data.totalPages || 1);
+          return;
+        }
+
+        if (args.target === "directDetail") {
+          setDirectReferrals(normalized);
+          setDirectListPage(res.data.page || 1);
+          setDirectListTotalPages(res.data.totalPages || 1);
+          return;
+        }
+
+        setNetworkReferrals(normalized);
+        setNetworkListPage(res.data.page || 1);
+        setNetworkListTotalPages(res.data.totalPages || 1);
+      } finally {
+        setListLoading(false);
+      }
+    },
+    [t]
+  );
 
   const fetchData = useCallback(async () => {
     const accessToken = await AsyncStorage.getItem("access_token");
@@ -222,26 +284,15 @@ export default function AgentDashboard() {
         
         console.log("==> REFERRAL TREE RES", JSON.stringify(tree, null, 2));
 
-        const refs = tree.directReferrals as
-          | Record<string, unknown>[]
-          | undefined;
-        const normalizedDirectReferrals = Array.isArray(refs)
-          ? refs.map((ref) => normalizeReferralMember(ref, 1))
-          : [];
-        setDirectReferrals(normalizedDirectReferrals);
-
-        const descendants = tree.descendants as
-          | Record<string, unknown>[]
-          | undefined;
-        const normalizedNetworkReferrals = Array.isArray(descendants)
-          ? descendants.map((descendant) =>
-              normalizeReferralMember(descendant)
-            )
-          : normalizedDirectReferrals.map((referral) => ({
-              ...referral,
-              depth: referral.depth ?? 1,
-            }));
-        setNetworkReferrals(normalizedNetworkReferrals);
+        setDownlineReferrals([]);
+        setDirectReferrals([]);
+        setDownlinePage(1);
+        setDownlineTotalPages(Math.max(1, Math.ceil(Number(tree.directReferralCount ?? 0) / REFERRAL_PAGE_SIZE)));
+        setDirectListPage(1);
+        setDirectListTotalPages(Math.max(1, Math.ceil(Number(tree.directReferralCount ?? 0) / REFERRAL_PAGE_SIZE)));
+        setNetworkReferrals([]);
+        setNetworkListPage(1);
+        setNetworkListTotalPages(Math.max(1, Math.ceil(Number(tree.totalDescendantCount ?? 0) / REFERRAL_PAGE_SIZE)));
 
         const ancs = tree.ancestors as
           | { userId: string; referralCode?: string | null; name: string; firstName: string; lastName: string; isAgent: boolean; depth: number }[]
@@ -250,8 +301,15 @@ export default function AgentDashboard() {
         if (Array.isArray(ancs)) setUplines([...ancs].sort((a, b) => a.depth - b.depth));
         else setUplines([]);
       } else {
+        setDownlineReferrals([]);
         setDirectReferrals([]);
         setNetworkReferrals([]);
+        setDownlinePage(1);
+        setDownlineTotalPages(1);
+        setDirectListPage(1);
+        setDirectListTotalPages(1);
+        setNetworkListPage(1);
+        setNetworkListTotalPages(1);
       }
 
       // Referred clients who successfully added time deposit = AGENT_COMMISSION transactions
@@ -288,10 +346,15 @@ export default function AgentDashboard() {
       } else {
         setReferredClientsWithDeposits([]);
       }
+
+      await Promise.all([
+        fetchReferralListPage({ type: "direct", page: 1, target: "downline" }),
+        fetchReferralListPage({ type: "direct", page: 1, target: "directDetail" }),
+      ]);
     } catch (e) {
       setError(e instanceof Error ? e.message : t("agent.failedToLoad"));
     }
-  }, [t]);
+  }, [fetchReferralListPage, t]);
 
   useFocusEffect(
     useCallback(() => {
@@ -322,9 +385,52 @@ export default function AgentDashboard() {
   };
 
   const handleDetailSectionPress = (view: DetailSectionView) => {
-    setDetailSectionView((currentView) =>
-      currentView === view ? "earned" : view
-    );
+    setDetailSectionView((currentView) => {
+      const nextView = currentView === view ? "earned" : view;
+      if (nextView === "direct_referrals") {
+        fetchReferralListPage({ type: "direct", page: 1, target: "directDetail" }).catch(() => null);
+      }
+      if (nextView === "total_network") {
+        fetchReferralListPage({ type: "network", page: 1, target: "networkDetail" }).catch(() => null);
+      }
+      return nextView;
+    });
+  };
+
+  const handleDownlinePrevPage = () => {
+    const nextPage = Math.max(1, downlinePage - 1);
+    if (nextPage === downlinePage) return;
+    fetchReferralListPage({ type: "direct", page: nextPage, target: "downline" }).catch(() => null);
+  };
+
+  const handleDownlineNextPage = () => {
+    const nextPage = Math.min(downlineTotalPages, downlinePage + 1);
+    if (nextPage === downlinePage) return;
+    fetchReferralListPage({ type: "direct", page: nextPage, target: "downline" }).catch(() => null);
+  };
+
+  const handleActivePrevPage = () => {
+    if (showingTotalNetworkList) {
+      const nextPage = Math.max(1, networkListPage - 1);
+      if (nextPage === networkListPage) return;
+      fetchReferralListPage({ type: "network", page: nextPage, target: "networkDetail" }).catch(() => null);
+      return;
+    }
+    const nextPage = Math.max(1, directListPage - 1);
+    if (nextPage === directListPage) return;
+    fetchReferralListPage({ type: "direct", page: nextPage, target: "directDetail" }).catch(() => null);
+  };
+
+  const handleActiveNextPage = () => {
+    if (showingTotalNetworkList) {
+      const nextPage = Math.min(networkListTotalPages, networkListPage + 1);
+      if (nextPage === networkListPage) return;
+      fetchReferralListPage({ type: "network", page: nextPage, target: "networkDetail" }).catch(() => null);
+      return;
+    }
+    const nextPage = Math.min(directListTotalPages, directListPage + 1);
+    if (nextPage === directListPage) return;
+    fetchReferralListPage({ type: "direct", page: nextPage, target: "directDetail" }).catch(() => null);
   };
 
   const handleCopyReferralCode = useCallback(async () => {
@@ -596,11 +702,12 @@ export default function AgentDashboard() {
           )}
 
           {/* My Downlines */}
-          {(directReferrals.length > 0 || directReferralCount > 0) && (
+          {(downlineReferrals.length > 0 || directReferralCount > 0) && (
             <View style={[styles.section, isXSScreen && styles.cardCompact]}>
               <Text style={[styles.sectionTitle, isXSScreen && styles.sectionTitleCompact]}>{t("agent.myReferrals")}</Text>
-              {directReferrals.length > 0 ? (
-                directReferrals.map((ref) => (
+              {downlineReferrals.length > 0 ? (
+                <>
+                {paginatedDownlines.map((ref) => (
                   <View key={ref.userId} style={[styles.referralItem, isXSScreen && styles.referralItemCompact]}>
                     <View style={styles.referralItemLeft}>
                       <View style={styles.nameRow}>
@@ -619,7 +726,32 @@ export default function AgentDashboard() {
                     </View>
                     <Ionicons name="arrow-down-circle-outline" size={24} color="#059669" />
                   </View>
-                ))
+                ))}
+                {downlineTotalPages > 1 && (
+                  <View style={styles.paginationRow}>
+                    <TouchableOpacity
+                      style={[styles.paginationButton, downlinePage === 1 && styles.paginationButtonDisabled]}
+                      onPress={handleDownlinePrevPage}
+                      disabled={downlinePage === 1 || listLoading}
+                    >
+                      <Text style={styles.paginationButtonText}>{"<"}</Text>
+                    </TouchableOpacity>
+                    <Text style={styles.paginationInfo}>
+                      {downlinePage} / {downlineTotalPages}
+                    </Text>
+                    <TouchableOpacity
+                      style={[
+                        styles.paginationButton,
+                        downlinePage === downlineTotalPages && styles.paginationButtonDisabled,
+                      ]}
+                      onPress={handleDownlineNextPage}
+                      disabled={downlinePage === downlineTotalPages || listLoading}
+                    >
+                      <Text style={styles.paginationButtonText}>{">"}</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+                </>
               ) : (
                 <Text style={styles.emptyHint}>
                   {directReferralCount} {t(directReferralCount === 1 ? "agent.directReferralInNetwork" : "agent.directReferralsInNetwork")}
@@ -683,8 +815,9 @@ export default function AgentDashboard() {
                 </View>
               )
             ) : showingDirectReferralsList || showingTotalNetworkList ? (
-              (showingTotalNetworkList ? networkReferrals : directReferrals).length > 0 ? (
-                (showingTotalNetworkList ? networkReferrals : directReferrals).map((item) => (
+              activeReferralList.length > 0 ? (
+                <>
+                {paginatedActiveReferralList.map((item) => (
                   <View
                     key={`${item.userId}-${item.depth ?? 1}`}
                     style={[styles.referralItem, isXSScreen && styles.referralItemCompact]}
@@ -721,7 +854,32 @@ export default function AgentDashboard() {
                       color={showingTotalNetworkList ? "#E25A17" : "#059669"}
                     />
                   </View>
-                ))
+                ))}
+                {totalActivePages > 1 && (
+                  <View style={styles.paginationRow}>
+                    <TouchableOpacity
+                      style={[styles.paginationButton, activePage === 1 && styles.paginationButtonDisabled]}
+                      onPress={handleActivePrevPage}
+                      disabled={activePage === 1 || listLoading}
+                    >
+                      <Text style={styles.paginationButtonText}>{"<"}</Text>
+                    </TouchableOpacity>
+                    <Text style={styles.paginationInfo}>
+                      {activePage} / {totalActivePages}
+                    </Text>
+                    <TouchableOpacity
+                      style={[
+                        styles.paginationButton,
+                        activePage === totalActivePages && styles.paginationButtonDisabled,
+                      ]}
+                      onPress={handleActiveNextPage}
+                      disabled={activePage === totalActivePages || listLoading}
+                    >
+                      <Text style={styles.paginationButtonText}>{">"}</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+                </>
               ) : (
                 <View style={[styles.emptyState, isXSScreen && styles.emptyStateCompact]}>
                   <Ionicons
@@ -997,5 +1155,33 @@ const styles = StyleSheet.create({
     color: "#9CA3AF",
     marginTop: 6,
     textAlign: "center",
+  },
+  paginationRow: {
+    marginTop: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
+  },
+  paginationButton: {
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#F3C3B1",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: "#FFF7ED",
+  },
+  paginationButtonDisabled: {
+    opacity: 0.45,
+  },
+  paginationButtonText: {
+    color: "#D9480F",
+    fontWeight: "700",
+    fontSize: 13,
+  },
+  paginationInfo: {
+    color: "#6B7280",
+    fontSize: 14,
+    fontWeight: "600",
   },
 });

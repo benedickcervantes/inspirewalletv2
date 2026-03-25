@@ -16,9 +16,9 @@ import {
     StyleSheet,
     Text,
     TextInput,
-    TouchableOpacity,
     View,
 } from "react-native";
+import { TouchableOpacity } from "react-native-gesture-handler";
 import QRCode from "react-native-qrcode-svg";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
@@ -1265,3 +1265,6 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
 });
+
+
+

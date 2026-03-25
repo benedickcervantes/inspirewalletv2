@@ -58,8 +58,8 @@ export default function TravelProtectReviewSubmit({
     value && value.trim().length > 0 ? value : (t("travel.na") || "N/A");
 
   return (
-    <View style={styles.formCard}>
-      <View style={styles.formHeader}>
+    <View style={styles.formCard} pointerEvents="box-none">
+      <View style={styles.formHeader} pointerEvents="box-none">
         <View style={styles.formIconContainer}>
           <MaterialCommunityIcons
             name="clipboard-check"
@@ -67,15 +67,15 @@ export default function TravelProtectReviewSubmit({
             color={THEME_COLOR}
           />
         </View>
-        <View style={styles.formHeaderTextContainer}>
+        <View style={styles.formHeaderTextContainer} pointerEvents="box-none">
           <Text style={styles.formTitle}>{t("travel.reviewSubmit")}</Text>
           <Text style={styles.formSubtitle}>{t("travel.reviewSubtitle")}</Text>
         </View>
       </View>
 
       {/* Contact Information Summary */}
-      <View style={styles.reviewSection}>
-        <View style={styles.reviewSectionHeader}>
+      <View style={styles.reviewSection} pointerEvents="box-none">
+        <View style={styles.reviewSectionHeader} pointerEvents="box-none">
           <MaterialCommunityIcons
             name="home-account"
             size={18}
@@ -85,77 +85,77 @@ export default function TravelProtectReviewSubmit({
             {t("travel.reviewContactInfo")}
           </Text>
         </View>
-        <View style={styles.reviewItem}>
+        <View style={styles.reviewItem} pointerEvents="box-none">
           <Text style={styles.reviewLabel}>{t("travel.labelEmail")}</Text>
           <Text style={styles.reviewValue}>{emailAddress}</Text>
         </View>
-        <View style={styles.reviewItem}>
+        <View style={styles.reviewItem} pointerEvents="box-none">
           <Text style={styles.reviewLabel}>{t("travel.labelMobile")}</Text>
           <Text style={styles.reviewValue}>
             {valueOrNA(`${mobileDialCode}${mobileNumber}`)}
           </Text>
         </View>
         {landlineNumber && (
-          <View style={styles.reviewItem}>
+          <View style={styles.reviewItem} pointerEvents="box-none">
             <Text style={styles.reviewLabel}>{t("travel.labelLandline")}</Text>
             <Text style={styles.reviewValue}>{landlineNumber}</Text>
           </View>
         )}
-        <View style={styles.reviewItem}>
+        <View style={styles.reviewItem} pointerEvents="box-none">
           <Text style={styles.reviewLabel}>{t("travel.labelHomeAddress")}</Text>
           <Text style={styles.reviewValue}>{homeAddress}</Text>
         </View>
       </View>
 
       {/* Personal Details Summary */}
-      <View style={styles.reviewSection}>
-        <View style={styles.reviewSectionHeader}>
+      <View style={styles.reviewSection} pointerEvents="box-none">
+        <View style={styles.reviewSectionHeader} pointerEvents="box-none">
           <MaterialCommunityIcons name="account-details" size={18} color={THEME_COLOR} />
           <Text style={styles.reviewSectionTitle}>Personal Details</Text>
         </View>
-        <View style={styles.reviewItem}>
+        <View style={styles.reviewItem} pointerEvents="box-none">
           <Text style={styles.reviewLabel}>Gender</Text>
           <Text style={styles.reviewValue}>{valueOrNA(gender)}</Text>
         </View>
-        <View style={styles.reviewItem}>
+        <View style={styles.reviewItem} pointerEvents="box-none">
           <Text style={styles.reviewLabel}>Date of Birth</Text>
           <Text style={styles.reviewValue}>{valueOrNA(dateOfBirthText)}</Text>
         </View>
-        <View style={styles.reviewItem}>
+        <View style={styles.reviewItem} pointerEvents="box-none">
           <Text style={styles.reviewLabel}>Civil Status</Text>
           <Text style={styles.reviewValue}>{valueOrNA(civilStatus)}</Text>
         </View>
-        <View style={styles.reviewItem}>
+        <View style={styles.reviewItem} pointerEvents="box-none">
           <Text style={styles.reviewLabel}>Citizenship</Text>
           <Text style={styles.reviewValue}>{valueOrNA(citizenship)}</Text>
         </View>
       </View>
 
       {/* Financial Details Summary */}
-      <View style={styles.reviewSection}>
-        <View style={styles.reviewSectionHeader}>
+      <View style={styles.reviewSection} pointerEvents="box-none">
+        <View style={styles.reviewSectionHeader} pointerEvents="box-none">
           <MaterialCommunityIcons name="wallet-outline" size={18} color={THEME_COLOR} />
           <Text style={styles.reviewSectionTitle}>Financial Details</Text>
         </View>
-        <View style={styles.reviewItem}>
+        <View style={styles.reviewItem} pointerEvents="box-none">
           <Text style={styles.reviewLabel}>Source of Fund</Text>
           <Text style={styles.reviewValue}>{valueOrNA(sourceOfFund)}</Text>
         </View>
-        <View style={styles.reviewItem}>
+        <View style={styles.reviewItem} pointerEvents="box-none">
           <Text style={styles.reviewLabel}>Gross Monthly Income</Text>
           <Text style={styles.reviewValue}>
             {valueOrNA(`${grossMonthlyIncome} ${grossMonthlyIncomeCurrency}`)}
           </Text>
         </View>
-        <View style={styles.reviewItem}>
+        <View style={styles.reviewItem} pointerEvents="box-none">
           <Text style={styles.reviewLabel}>Cash on Hand</Text>
           <Text style={styles.reviewValue}>{valueOrNA(cashOnHand)}</Text>
         </View>
       </View>
 
       {/* Travel Details Summary */}
-      <View style={styles.reviewSection}>
-        <View style={styles.reviewSectionHeader}>
+      <View style={styles.reviewSection} pointerEvents="box-none">
+        <View style={styles.reviewSectionHeader} pointerEvents="box-none">
           <MaterialCommunityIcons
             name="airplane-takeoff"
             size={18}
@@ -165,46 +165,46 @@ export default function TravelProtectReviewSubmit({
             {t("travel.reviewTravelDetails")}
           </Text>
         </View>
-        <View style={styles.reviewItem}>
+        <View style={styles.reviewItem} pointerEvents="box-none">
           <Text style={styles.reviewLabel}>{t("travel.labelDestination")}</Text>
           <Text style={styles.reviewValue}>{valueOrNA(destinationAddress)}</Text>
         </View>
-        <View style={styles.reviewItem}>
+        <View style={styles.reviewItem} pointerEvents="box-none">
           <Text style={styles.reviewLabel}>Check-in Date</Text>
           <Text style={styles.reviewValue}>{valueOrNA(checkInDateText)}</Text>
         </View>
-        <View style={styles.reviewItem}>
+        <View style={styles.reviewItem} pointerEvents="box-none">
           <Text style={styles.reviewLabel}>Duration</Text>
           <Text style={styles.reviewValue}>{valueOrNA(duration)}</Text>
         </View>
-        <View style={styles.reviewItem}>
+        <View style={styles.reviewItem} pointerEvents="box-none">
           <Text style={styles.reviewLabel}>Departure Time</Text>
           <Text style={styles.reviewValue}>{valueOrNA(departureTimeText)}</Text>
         </View>
-        <View style={styles.reviewItem}>
+        <View style={styles.reviewItem} pointerEvents="box-none">
           <Text style={styles.reviewLabel}>Arrival Time</Text>
           <Text style={styles.reviewValue}>{valueOrNA(arrivalTimeText)}</Text>
         </View>
-        <View style={styles.reviewItem}>
+        <View style={styles.reviewItem} pointerEvents="box-none">
           <Text style={styles.reviewLabel}>{t("travel.labelPassport")}</Text>
           <Text style={styles.reviewValue}>{valueOrNA(passportNumber)}</Text>
         </View>
-        <View style={styles.reviewItem}>
+        <View style={styles.reviewItem} pointerEvents="box-none">
           <Text style={styles.reviewLabel}>Purpose of Travel</Text>
           <Text style={styles.reviewValue}>{valueOrNA(purposeOfTravel)}</Text>
         </View>
-        <View style={styles.reviewItem}>
+        <View style={styles.reviewItem} pointerEvents="box-none">
           <Text style={styles.reviewLabel}>Government ID Type</Text>
           <Text style={styles.reviewValue}>{valueOrNA(governmentIdType)}</Text>
         </View>
-        <View style={styles.reviewItem}>
+        <View style={styles.reviewItem} pointerEvents="box-none">
           <Text style={styles.reviewLabel}>Government ID Number</Text>
           <Text style={styles.reviewValue}>{valueOrNA(governmentIdNumber)}</Text>
         </View>
       </View>
 
       {/* Terms & Conditions */}
-      <View style={styles.termsBox}>
+      <View style={styles.termsBox} pointerEvents="box-none">
         <Text style={styles.termsText}>{t("travel.termsText")}</Text>
       </View>
     </View>
