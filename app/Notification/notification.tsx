@@ -44,6 +44,8 @@ interface NotificationItemBackend {
   referralHandled?: boolean;
 }
 
+const HANDLED_REFERRAL_NOTIFICATION_KEYS_KEY = 'handled_referral_notification_keys';
+
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const DETAIL_MODAL_WIDTH = Math.min(SCREEN_WIDTH * 0.86, 420);
 const DETAIL_MODAL_MAX_HEIGHT = SCREEN_HEIGHT * 0.78;
@@ -71,6 +73,50 @@ const Notification = () => {
   }>({ title: '', message: '', onConfirm: () => {} });
   const [detailModalNotification, setDetailModalNotification] = useState<NotificationItem | NotificationItemBackend | null>(null);
   const [referralActionLoading, setReferralActionLoading] = useState(false);
+  const [handledReferralNotificationKeys, setHandledReferralNotificationKeys] = useState<Set<string>>(new Set());
+
+  const loadHandledReferralNotificationKeys = async () => {
+    try {
+      const raw = await AsyncStorage.getItem(HANDLED_REFERRAL_NOTIFICATION_KEYS_KEY);
+      if (!raw) {
+        setHandledReferralNotificationKeys(new Set());
+        return;
+      }
+      const parsed = JSON.parse(raw) as string[];
+      setHandledReferralNotificationKeys(new Set(Array.isArray(parsed) ? parsed : []));
+    } catch {
+      setHandledReferralNotificationKeys(new Set());
+    }
+  };
+
+  const isHandledReferralNotification = (
+    item: Pick<NotificationItemBackend, 'id' | 'referenceId' | 'referralHandled'>,
+    handledKeys: Set<string>,
+  ) => {
+    return Boolean(
+      item.referralHandled ||
+      handledKeys.has(item.id) ||
+      (item.referenceId ? handledKeys.has(item.referenceId) : false),
+    );
+  };
+
+  const persistHandledReferralNotification = async (
+    notificationId: string,
+    referenceId?: string | null,
+  ) => {
+    try {
+      const next = new Set(handledReferralNotificationKeys);
+      next.add(notificationId);
+      if (referenceId) next.add(referenceId);
+      setHandledReferralNotificationKeys(next);
+      await AsyncStorage.setItem(
+        HANDLED_REFERRAL_NOTIFICATION_KEYS_KEY,
+        JSON.stringify(Array.from(next)),
+      );
+    } catch {
+      // no-op
+    }
+  };
 
   const getTranslatedNotificationTitle = (title?: string): string => {
     const normalized = String(title ?? '').trim().toLowerCase();
@@ -113,6 +159,7 @@ const Notification = () => {
 
   useEffect(() => {
     const checkAuth = async () => {
+      await loadHandledReferralNotificationKeys();
       const accessToken = await AsyncStorage.getItem("access_token");
       if (accessToken) {
         setUseBackend(true);
@@ -142,7 +189,16 @@ const Notification = () => {
 
       const result = await getNotifications(accessToken, { limit: 50 });
       if (result.success && result.data) {
-        const list = result.data as NotificationItemBackend[];
+        const storedHandledKeysRaw = await AsyncStorage.getItem(
+          HANDLED_REFERRAL_NOTIFICATION_KEYS_KEY,
+        );
+        const storedHandledKeys = new Set<string>(
+          storedHandledKeysRaw ? (JSON.parse(storedHandledKeysRaw) as string[]) : [],
+        );
+        const list = (result.data as NotificationItemBackend[]).map((item) => ({
+          ...item,
+          referralHandled: isHandledReferralNotification(item, storedHandledKeys),
+        }));
         setBackendNotifications(list);
         const unread = list.filter((n) => !n.isRead).length;
         setUnreadCount(unread);
@@ -154,6 +210,17 @@ const Notification = () => {
       setRefreshing(false);
     }
   };
+
+  useEffect(() => {
+    if (!useBackend) return;
+    setBackendNotifications((prev) =>
+      prev.map((item) =>
+        isHandledReferralNotification(item, handledReferralNotificationKeys)
+          ? { ...item, referralHandled: true }
+          : item,
+      ),
+    );
+  }, [handledReferralNotificationKeys, useBackend]);
 
   useEffect(() => {
     if (!user) {
@@ -447,9 +514,6 @@ const Notification = () => {
 
     if (!isBackend) {
       const item = notif as NotificationItem;
-      if (item.type) {
-        fields.push({ label: t('notification.detailType') ?? 'Type', value: item.type });
-      }
       // Include any other non-standard fields
       const skip = new Set(['id', 'read', 'type', 'title', 'message', 'timestamp', 'readAt']);
       Object.entries(item).forEach(([key, val]) => {
@@ -459,10 +523,6 @@ const Notification = () => {
         }
       });
     } else {
-      const backendNotif = notif as NotificationItemBackend;
-      if (backendNotif.type) {
-        fields.push({ label: t('notification.detailType') ?? 'Type', value: backendNotif.type });
-      }
       // Intentionally hide technical IDs from the detail view
     }
 
@@ -496,6 +556,11 @@ const Notification = () => {
       if (!accessToken) return;
       const result = await apiAcceptReferralRequest(accessToken, id);
       if (result.success) {
+        const referralReferenceId =
+          'referenceId' in detailModalNotification
+            ? (detailModalNotification.referenceId ?? null)
+            : null;
+        await persistHandledReferralNotification(id, referralReferenceId);
         setBackendNotifications((prev) =>
           prev.map((n) =>
             n.id === id ? { ...n, isRead: true, referralHandled: true } : n
@@ -520,6 +585,11 @@ const Notification = () => {
       if (!accessToken) return;
       const result = await apiDeclineReferralRequest(accessToken, id);
       if (result.success) {
+        const referralReferenceId =
+          'referenceId' in detailModalNotification
+            ? (detailModalNotification.referenceId ?? null)
+            : null;
+        await persistHandledReferralNotification(id, referralReferenceId);
         setBackendNotifications((prev) =>
           prev.map((n) =>
             n.id === id ? { ...n, isRead: true, referralHandled: true } : n
