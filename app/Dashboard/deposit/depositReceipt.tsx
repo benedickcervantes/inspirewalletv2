@@ -1,7 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
+import React, { useRef } from "react";
 import {
+  Alert,
   Image,
   ScrollView,
   SafeAreaView,
@@ -12,6 +14,9 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import ViewShot from "react-native-view-shot";
+import * as MediaLibrary from "expo-media-library";
+import * as Sharing from "expo-sharing";
 import { getLanguageCode } from "../../../constants/locales";
 import { useLanguage } from "../../../context/LanguageContext";
 
@@ -89,6 +94,50 @@ export default function DepositReceipt() {
   const { t, language } = useLanguage();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
+
+  const viewShotRef = useRef<ViewShot>(null);
+
+  const handleDownload = async () => {
+    try {
+      const { status } = await MediaLibrary.requestPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert(
+          t("common.error") || "Error",
+          "Permission to access media library is required to save the receipt."
+        );
+        return;
+      }
+
+      if (viewShotRef.current?.capture) {
+        const uri = await viewShotRef.current.capture();
+        await MediaLibrary.saveToLibraryAsync(uri);
+        Alert.alert(
+          t("common.success") || "Success",
+          "Receipt saved to your photos successfully."
+        );
+      }
+    } catch (error) {
+      console.error("Failed to download receipt:", error);
+      Alert.alert(t("common.error") || "Error", "Failed to save receipt.");
+    }
+  };
+
+  const handleShare = async () => {
+    try {
+      if (viewShotRef.current?.capture) {
+        const uri = await viewShotRef.current.capture();
+        const isAvailable = await Sharing.isAvailableAsync();
+        if (isAvailable) {
+          await Sharing.shareAsync(uri);
+        } else {
+          Alert.alert(t("common.error") || "Error", "Sharing is not available on this device.");
+        }
+      }
+    } catch (error) {
+      console.error("Failed to share receipt:", error);
+      Alert.alert(t("common.error") || "Error", "Failed to share receipt.");
+    }
+  };
 
   const params = (route.params || {}) as {
     transactionId?: string;
@@ -186,7 +235,12 @@ export default function DepositReceipt() {
           showsVerticalScrollIndicator={false}
         >
           {/* ═══════════════ RECEIPT CARD ═══════════════ */}
-          <View style={[styles.card, { width: receiptWidth }]}>
+          <ViewShot
+            ref={viewShotRef}
+            options={{ format: "png", quality: 1.0 }}
+            style={{ backgroundColor: "transparent" }}
+          >
+            <View style={[styles.card, { width: receiptWidth }]}>
 
             {/* ── Brand header ── */}
             <LinearGradient
@@ -287,6 +341,7 @@ export default function DepositReceipt() {
               </Text>
             </View>
           </View>
+          </ViewShot>
 
           {/* ═══════════════ ACTION BUTTONS ═══════════════ */}
           <View style={[styles.actionsRow, { width: receiptWidth }]}>
@@ -294,6 +349,7 @@ export default function DepositReceipt() {
             <TouchableOpacity
               style={styles.downloadBtn}
               activeOpacity={0.82}
+              onPress={handleDownload}
             >
               <LinearGradient
                 colors={["#C44A0C", "#E06828"]}
@@ -317,6 +373,7 @@ export default function DepositReceipt() {
             <TouchableOpacity
               style={styles.shareBtn}
               activeOpacity={0.82}
+              onPress={handleShare}
             >
               <Ionicons name="share-social-outline" size={19} color="#E06828" />
               <Text style={styles.shareText}>Share</Text>

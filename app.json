@@ -39,6 +39,13 @@
     "plugins": [
       "expo-router",
       [
+        "expo-media-library",
+        {
+          "photosPermission": "Allow Inspire Wallet to access your photos to save receipts.",
+          "savePhotosPermission": "Allow Inspire Wallet to save receipts to your photos."
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "image": "./assets/images/Startup_DONE.jpg",
