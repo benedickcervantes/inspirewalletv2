@@ -164,10 +164,11 @@ export default function TravelRequiredDocu({
           {t("travel.governmentIdPhoto")} <Text style={styles.required}>*</Text>
         </Text>
 
-        <View style={styles.idUploadRow}>
+        <View style={styles.idUploadColumn} pointerEvents="box-none">
           <TouchableOpacity
             style={[
-              styles.uploadBoxHalf,
+              styles.uploadBox,
+              styles.uploadBoxCompact,
               governmentIdFront && styles.uploadBoxSuccess,
               governmentIdFrontError ? styles.uploadBoxError : null,
             ]}
@@ -175,26 +176,25 @@ export default function TravelRequiredDocu({
           >
             <MaterialCommunityIcons
               name="card-account-details"
-              size={32}
+              size={40}
               color={governmentIdFront ? "#10B981" : THEME_COLOR}
             />
             <Text
               style={[
-                styles.uploadTextSmall,
+                styles.uploadText,
                 governmentIdFront && styles.uploadTextSuccess,
               ]}
             >
-              {t("kyc.govIdFront")}
+              {governmentIdFront ? t("travel.passportUploaded") : t("kyc.govIdFront")}
             </Text>
-            <Text style={styles.uploadSubtextSmall}>
-              {governmentIdFront ? t("travel.passportUploaded") : t("travel.tapToSelectImage")}
-            </Text>
+            <Text style={styles.uploadSubtext}>{t("travel.tapToSelectImage")}</Text>
           </TouchableOpacity>
 
           {requiresFrontAndBack ? (
             <TouchableOpacity
               style={[
-                styles.uploadBoxHalf,
+                styles.uploadBox,
+                styles.uploadBoxCompact,
                 governmentIdBack && styles.uploadBoxSuccess,
                 governmentIdBackError ? styles.uploadBoxError : null,
               ]}
@@ -202,20 +202,18 @@ export default function TravelRequiredDocu({
             >
               <MaterialCommunityIcons
                 name="card-account-details-outline"
-                size={32}
+                size={40}
                 color={governmentIdBack ? "#10B981" : THEME_COLOR}
               />
               <Text
                 style={[
-                  styles.uploadTextSmall,
+                  styles.uploadText,
                   governmentIdBack && styles.uploadTextSuccess,
                 ]}
               >
-                {t("kyc.govIdBack")}
+                {governmentIdBack ? t("travel.passportUploaded") : t("kyc.govIdBack")}
               </Text>
-              <Text style={styles.uploadSubtextSmall}>
-                {governmentIdBack ? t("travel.passportUploaded") : t("travel.tapToSelectImage")}
-              </Text>
+              <Text style={styles.uploadSubtext}>{t("travel.tapToSelectImage")}</Text>
             </TouchableOpacity>
           ) : null}
         </View>
@@ -383,35 +381,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  idUploadRow: {
-    flexDirection: "row",
-    gap: 10,
+  uploadBoxCompact: {
+    paddingVertical: 24,
   },
-  uploadBoxHalf: {
-    flex: 1,
-    backgroundColor: "#F9F9F9",
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: "#E0E0E0",
-    borderStyle: "dashed",
-    paddingVertical: 20,
-    paddingHorizontal: 10,
-    alignItems: "center",
-    justifyContent: "center",
-    minHeight: 140,
-  },
-  uploadTextSmall: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: THEME_COLOR,
-    marginTop: 10,
-    textAlign: "center",
-  },
-  uploadSubtextSmall: {
-    fontSize: 11,
-    color: "#9E9E9E",
-    marginTop: 4,
-    textAlign: "center",
+  idUploadColumn: {
+    flexDirection: "column",
+    gap: 12,
   },
   uploadBoxSuccess: {
     borderColor: "#10B981",
