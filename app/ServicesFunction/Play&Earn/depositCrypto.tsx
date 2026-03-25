@@ -19,7 +19,7 @@ import {
   View,
 } from "react-native";
 import QRCode from "react-native-qrcode-svg";
-import { useLanguage } from "../../../context/LanguageContext";
+import { getMe } from "../../../configs/api";
 
 const THEME_COLOR = "#E15816";
 const IPHONE_SE_WIDTH = 320;
@@ -57,8 +57,6 @@ export default function DepositCrypto() {
   const [accountEmail, setAccountEmail] = useState(MOCK_DATA.accountEmail);
   const [receiptUri, setReceiptUri] = useState<string | null>(null);
 
-  const { t } = useLanguage();
-
   useEffect(() => {
     navigation.setOptions({
       headerShown: false,
@@ -78,13 +76,38 @@ export default function DepositCrypto() {
 
   const loadUser = useCallback(async () => {
     try {
+      const accessToken = await AsyncStorage.getItem("access_token");
+      if (accessToken) {
+        const meRes = await getMe(accessToken);
+        if (meRes?.success && meRes.user) {
+          const user = meRes.user as any;
+          const name =
+            [user.firstName, user.lastName].filter(Boolean).join(" ") ||
+            user.name ||
+            MOCK_DATA.accountName;
+          const email =
+            typeof user.email === "string" ? user.email : MOCK_DATA.accountEmail;
+
+          setAccountName(name || MOCK_DATA.accountName);
+          setAccountEmail(email || MOCK_DATA.accountEmail);
+
+          // Keep local cache in sync so other screens don't show stale user info.
+          await AsyncStorage.setItem("user", JSON.stringify(user));
+          return;
+        }
+      }
+
       const userStr = await AsyncStorage.getItem("user");
       if (userStr) {
         const user = JSON.parse(userStr);
-        const name = [user.firstName, user.lastName].filter(Boolean).join(" ") || user.name || accountName;
-        const email = user.email || accountEmail;
-        setAccountName(name || accountName);
-        setAccountEmail(email || accountEmail);
+        const name =
+          [user.firstName, user.lastName].filter(Boolean).join(" ") ||
+          user.name ||
+          MOCK_DATA.accountName;
+        const email =
+          typeof user.email === "string" ? user.email : MOCK_DATA.accountEmail;
+        setAccountName(name || MOCK_DATA.accountName);
+        setAccountEmail(email || MOCK_DATA.accountEmail);
       }
     } catch {
       // use defaults
