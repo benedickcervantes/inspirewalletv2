@@ -381,7 +381,9 @@ export default function WithdrawLocalBConfirm() {
                   onChangeText={(val) =>
                     setPasscode(val.replace(/\D/g, "").slice(0, 4))
                   }
-                  placeholder=""
+                  placeholder="••••"
+                  placeholderTextColor="#9CA3AF"
+                  secureTextEntry
                   maxLength={4}
                   keyboardType="number-pad"
                   editable={!isSubmitting}
@@ -751,7 +753,8 @@ const styles = StyleSheet.create({
     fontSize: 18,
     textAlign: "center",
     writingDirection: "ltr",
-    letterSpacing: 8,
+    // NOTE: secureTextEntry + letterSpacing can render as blank spaces on Android.
+    letterSpacing: 0,
     marginBottom: 20,
     shadowColor: "transparent",
     shadowOffset: { width: 0, height: 0 },

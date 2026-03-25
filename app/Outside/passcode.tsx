@@ -1,11 +1,17 @@
-import { Ionicons } from '@expo/vector-icons';
+import {
+    Ionicons
+} from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as LocalAuthentication from 'expo-local-authentication';
 import * as SecureStore from 'expo-secure-store';
-import { useEffect, useRef, useState } from 'react';
+import {
+    useEffect,
+    useRef,
+    useState
+} from 'react';
 import {
     ActivityIndicator,
     Animated,
@@ -17,10 +23,10 @@ import {
     StyleSheet,
     Text,
     TextInput,
-    TouchableOpacity,
     useWindowDimensions,
     View,
-} from 'react-native';
+} from "react-native";
+import { TouchableOpacity } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { login, resetPasscode, verifyBiometric, verifyPasscode } from '../../configs/api';
 import {
@@ -687,6 +693,7 @@ export default function Passcode() {
                     placeholderTextColor="#666"
                     keyboardType="numeric"
                     maxLength={4}
+                    secureTextEntry
                     value={newPasscode}
                     onChangeText={setNewPasscode}
                   />
@@ -696,6 +703,7 @@ export default function Passcode() {
                     placeholderTextColor="#666"
                     keyboardType="numeric"
                     maxLength={4}
+                    secureTextEntry
                     value={confirmNewPasscode}
                     onChangeText={setConfirmNewPasscode}
                   />
@@ -1013,3 +1021,4 @@ const passcodeLanguageStyles = StyleSheet.create({
   cancelBtn: { marginTop: 12, paddingVertical: 12, alignItems: 'center' },
   cancelText: { fontSize: 16, color: '#666' },
 });
+

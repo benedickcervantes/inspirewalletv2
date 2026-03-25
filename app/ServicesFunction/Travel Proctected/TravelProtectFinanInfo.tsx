@@ -6,9 +6,10 @@ import {
     StyleSheet,
     Text,
     TextInput,
-    TouchableOpacity,
+    useWindowDimensions,
     View,
 } from "react-native";
+import { TouchableOpacity } from "react-native-gesture-handler";
 import { useLanguage } from "../../../context/LanguageContext";
 import { formatWholeNumbersOnly } from "../../../utils/numberFormat";
 
@@ -73,12 +74,14 @@ export default function TravelProtectFinanInfo({
   setCashOnHandError,
 }: TravelProtectFinanInfoProps) {
   const { t } = useLanguage();
+  const { height: windowHeight } = useWindowDimensions();
+  const modalListMaxHeight = Math.min(420, windowHeight * 0.45);
   const [showSourceOfFundModal, setShowSourceOfFundModal] = useState(false);
   const [showCurrencyModal, setShowCurrencyModal] = useState(false);
 
   return (
-    <View style={styles.formCard}>
-      <View style={styles.formHeader}>
+    <View style={styles.formCard} pointerEvents="box-none">
+      <View style={styles.formHeader} pointerEvents="box-none">
         <View style={styles.formIconContainer}>
           <MaterialCommunityIcons
             name="cash-multiple"
@@ -86,7 +89,7 @@ export default function TravelProtectFinanInfo({
             color={THEME_COLOR}
           />
         </View>
-        <View style={styles.formHeaderTextContainer}>
+        <View style={styles.formHeaderTextContainer} pointerEvents="box-none">
           <Text style={styles.formTitle}>{t("travel.financialInfo")}</Text>
           <Text style={styles.formSubtitle}>
             {t("travel.financialSubtitle")}
@@ -94,7 +97,7 @@ export default function TravelProtectFinanInfo({
         </View>
       </View>
 
-      <View style={styles.inputGroup}>
+      <View style={styles.inputGroup} pointerEvents="box-none">
         <Text style={styles.inputLabel}>
           {t("travel.sourceOfFund")} <Text style={styles.required}>*</Text>
         </Text>
@@ -122,7 +125,7 @@ export default function TravelProtectFinanInfo({
         ) : null}
       </View>
 
-      <View style={styles.inputGroup}>
+      <View style={styles.inputGroup} pointerEvents="box-none">
         <Text style={styles.inputLabel}>
           {t("travel.grossMonthlyIncome")}{" "}
           <Text style={styles.required}>*</Text>
@@ -177,7 +180,7 @@ export default function TravelProtectFinanInfo({
         ) : null}
       </View>
 
-      <View style={styles.inputGroup}>
+      <View style={styles.inputGroup} pointerEvents="box-none">
         <Text style={styles.inputLabel}>
           {t("travel.cashOnHand")} <Text style={styles.required}>*</Text>
         </Text>
@@ -224,7 +227,11 @@ export default function TravelProtectFinanInfo({
                 <Ionicons name="close" size={24} color="#333" />
               </TouchableOpacity>
             </View>
-            <ScrollView style={styles.modalContent}>
+            <ScrollView
+              style={[styles.modalContent, { maxHeight: modalListMaxHeight }]}
+              nestedScrollEnabled
+              keyboardShouldPersistTaps="handled"
+            >
               {SOURCE_OF_FUND_OPTIONS.map((opt) => (
                 <TouchableOpacity
                   key={opt}
@@ -271,7 +278,11 @@ export default function TravelProtectFinanInfo({
                 <Ionicons name="close" size={24} color="#333" />
               </TouchableOpacity>
             </View>
-            <ScrollView style={styles.modalContent}>
+            <ScrollView
+              style={[styles.modalContent, { maxHeight: modalListMaxHeight }]}
+              nestedScrollEnabled
+              keyboardShouldPersistTaps="handled"
+            >
               {CURRENCY_OPTIONS.map((opt) => (
                 <TouchableOpacity
                   key={opt}
@@ -401,6 +412,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     maxHeight: "60%",
+    flexDirection: "column",
   },
   modalHeader: {
     flexDirection: "row",

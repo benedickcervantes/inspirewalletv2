@@ -7,13 +7,13 @@ import * as Sharing from "expo-sharing";
 import { doc, getDoc } from "firebase/firestore";
 import { useEffect, useRef, useState } from "react";
 import {
-  Modal,
-  ScrollView,
-  Share,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View
+    Modal,
+    ScrollView,
+    Share,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
 } from "react-native";
 import QRCode from "react-native-qrcode-svg";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -993,3 +993,6 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
 });
+
+
+

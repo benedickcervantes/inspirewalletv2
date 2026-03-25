@@ -5,20 +5,21 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import * as ImageManipulator from "expo-image-manipulator";
 import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ComponentRef } from "react";
 import {
     Keyboard,
     Modal,
     Platform,
+    TouchableOpacity as RNTouchableOpacity,
     ScrollView,
     StatusBar,
     StyleSheet,
     Text,
     TextInput,
-    TouchableOpacity,
-    View
+    useWindowDimensions,
+    View,
 } from "react-native";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { TouchableOpacity } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
     getOrCreateMainWallet,
@@ -31,6 +32,7 @@ import type { RootStackParamList } from "../../../types/navigation";
 import { unformatNumberString } from "../../../utils/numberFormat";
 import { useResponsive } from "../../../utils/responsive";
 import Loader from "../../Loader/Loader";
+import KeyboardAwareGHScrollView from "./KeyboardAwareGHScrollView";
 import TravelProtectDetails from "./TravelProtectDetails";
 import TravelProtectFinanInfo from "./TravelProtectFinanInfo";
 import TravelProtectPerDeatails from "./TravelProtectPerDeatails";
@@ -178,14 +180,14 @@ const CustomAlertModal = ({
             </View>
             <Text style={customAlertStyles.modalTitle}>{title}</Text>
             <Text style={customAlertStyles.modalMessage}>{message}</Text>
-            <TouchableOpacity
+            <RNTouchableOpacity
               style={customAlertStyles.confirmButton}
               onPress={onClose}
             >
               <Text style={customAlertStyles.confirmButtonText}>
                 {confirmText}
               </Text>
-            </TouchableOpacity>
+            </RNTouchableOpacity>
           </LinearGradient>
         </View>
       </View>
@@ -268,6 +270,7 @@ interface AlertConfig {
 
 export default function TravelProtection() {
   const { t } = useLanguage();
+  const { height: windowHeight } = useWindowDimensions();
   const { scale, verticalScale, horizontalPadding, isTinyScreen, isSmallScreen } =
     useResponsive();
   const navigation =
@@ -320,7 +323,7 @@ export default function TravelProtection() {
   );
 
   // Text input refs for Step 1
-  const scrollViewRef = useRef<KeyboardAwareScrollView>(null);
+  const scrollViewRef = useRef<ComponentRef<typeof KeyboardAwareGHScrollView>>(null);
   const emailRef = useRef<TextInput>(null);
   const mobileRef = useRef<TextInput>(null);
   const landlineRef = useRef<TextInput>(null);
@@ -1025,7 +1028,7 @@ export default function TravelProtection() {
               </TouchableOpacity>
             </View>
 
-            <KeyboardAwareScrollView
+            <KeyboardAwareGHScrollView
               ref={scrollViewRef}
               style={styles.scrollView}
               contentContainerStyle={[
@@ -1037,17 +1040,20 @@ export default function TravelProtection() {
               extraScrollHeight={Platform.OS === "ios" ? 150 : 120}
               extraHeight={Platform.OS === "android" ? 150 : 120}
               keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="on-drag"
               showsVerticalScrollIndicator={false}
               keyboardOpeningTime={0}
               enableResetScrollToCoords={false}
+              nestedScrollEnabled
             >
               {/* Header card inside scroll */}
-              <View style={styles.headerCard}>
+              <View style={styles.headerCard} pointerEvents="box-none">
                 <LinearGradient
                   colors={["#E25A17", "#F28934"]}
                   style={styles.headerGradient}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 0, y: 1 }}
+                  pointerEvents="box-none"
                 >
                   <MaterialCommunityIcons
                     name="airplane"
@@ -1063,7 +1069,10 @@ export default function TravelProtection() {
                   </Text>
                 </LinearGradient>
               </View>
-              <View style={[styles.infoBanner, dynamicStyles.infoBanner]}>
+              <View
+                style={[styles.infoBanner, dynamicStyles.infoBanner]}
+                pointerEvents="box-none"
+              >
                 <View style={styles.infoBannerIcon}>
                   <MaterialCommunityIcons
                     name="information"
@@ -1080,7 +1089,10 @@ export default function TravelProtection() {
                 </Text>
               </View>
 
-              <View style={[styles.feeCard, dynamicStyles.feeCard]}>
+              <View
+                style={[styles.feeCard, dynamicStyles.feeCard]}
+                pointerEvents="box-none"
+              >
                 <View style={styles.feeHeader}>
                   <MaterialCommunityIcons
                     name="shield-check"
@@ -1105,6 +1117,7 @@ export default function TravelProtection() {
                   dynamicStyles.stepIndicator,
                   isSmallScreen && styles.stepIndicatorSmall,
                 ]}
+                pointerEvents="box-none"
               >
                 {[1, 2, 3, 4, 5, 6].map((step) => (
                   <View
@@ -1138,8 +1151,11 @@ export default function TravelProtection() {
 
               {/* Step 1: Contact Information */}
               {currentStep === 1 && (
-                <View style={[styles.formCard, dynamicStyles.formCard]}>
-                  <View style={styles.formHeader}>
+                <View
+                  style={[styles.formCard, dynamicStyles.formCard]}
+                  pointerEvents="box-none"
+                >
+                  <View style={styles.formHeader} pointerEvents="box-none">
                     <View style={styles.formIconContainer}>
                       <MaterialCommunityIcons
                         name="home-account"
@@ -1157,7 +1173,7 @@ export default function TravelProtection() {
                     </View>
                   </View>
 
-                  <View style={styles.inputGroup}>
+                  <View style={styles.inputGroup} pointerEvents="box-none">
                     <Text style={styles.inputLabel}>
                       {t("travel.emailAddress")}{" "}
                       <Text style={styles.required}>*</Text>
@@ -1190,12 +1206,12 @@ export default function TravelProtection() {
                     )}
                   </View>
 
-                  <View style={styles.inputGroup}>
+                  <View style={styles.inputGroup} pointerEvents="box-none">
                     <Text style={styles.inputLabel}>
                       {t("travel.mobileNumber")}{" "}
                       <Text style={styles.required}>*</Text>
                     </Text>
-                    <View style={styles.mobileInputContainer}>
+                    <View style={styles.mobileInputContainer} pointerEvents="box-none">
                       <TouchableOpacity
                         style={[styles.countryDropdown, dynamicStyles.countryDropdown]}
                         onPress={() => setShowCountryDropdown(true)}
@@ -1256,7 +1272,14 @@ export default function TravelProtection() {
                               <Ionicons name="close" size={24} color="#333" />
                             </TouchableOpacity>
                           </View>
-                          <ScrollView style={styles.dropdownMenu}>
+                          <ScrollView
+                            style={[
+                              styles.dropdownMenu,
+                              { maxHeight: Math.min(420, windowHeight * 0.5) },
+                            ]}
+                            nestedScrollEnabled
+                            keyboardShouldPersistTaps="handled"
+                          >
                             {countries.map((country) => (
                               <TouchableOpacity
                                 key={country.code}
@@ -1285,7 +1308,7 @@ export default function TravelProtection() {
                     )}
                   </View>
 
-                  <View style={styles.inputGroup}>
+                  <View style={styles.inputGroup} pointerEvents="box-none">
                     <Text style={styles.inputLabel}>
                       {t("travel.landlineNumber")}
                     </Text>
@@ -1319,7 +1342,7 @@ export default function TravelProtection() {
                     )}
                   </View>
 
-                  <View style={styles.inputGroup}>
+                  <View style={styles.inputGroup} pointerEvents="box-none">
                     <Text style={styles.inputLabel}>
                       {t("travel.homeAddress")}{" "}
                       <Text style={styles.required}>*</Text>
@@ -1556,7 +1579,10 @@ export default function TravelProtection() {
               )}
 
               {/* Buttons at bottom of scroll content */}
-              <View style={[styles.buttonContainer, dynamicStyles.buttonContainer]}>
+              <View
+                style={[styles.buttonContainer, dynamicStyles.buttonContainer]}
+                pointerEvents="box-none"
+              >
             <TouchableOpacity
               style={styles.backButtonBottom}
               onPress={handleBack}
@@ -1579,7 +1605,7 @@ export default function TravelProtection() {
               </LinearGradient>
             </TouchableOpacity>
           </View>
-        </KeyboardAwareScrollView>
+        </KeyboardAwareGHScrollView>
       </SafeAreaView>
 
       {/* Custom Alert Modal */}
@@ -1607,7 +1633,7 @@ export default function TravelProtection() {
               {t("travel.cancelApplicationMessage")}
             </Text>
             <View style={styles.exitModalButtons}>
-              <TouchableOpacity
+              <RNTouchableOpacity
                 style={[styles.exitModalButton, styles.exitModalKeepEditingButton]}
                 onPress={() => setShowExitConfirmModal(false)}
               >
@@ -1619,8 +1645,8 @@ export default function TravelProtection() {
                 >
                   {t("common.keepEditing")}
                 </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
+              </RNTouchableOpacity>
+              <RNTouchableOpacity
                 style={[styles.exitModalButton, styles.exitModalDiscardButton]}
                 onPress={handleConfirmExit}
               >
@@ -1629,7 +1655,7 @@ export default function TravelProtection() {
                 >
                   {t("common.discardExit")}
                 </Text>
-              </TouchableOpacity>
+              </RNTouchableOpacity>
             </View>
           </View>
         </View>
@@ -1967,6 +1993,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     maxHeight: "60%",
+    flexDirection: "column",
   },
   modalHeader: {
     flexDirection: "row",

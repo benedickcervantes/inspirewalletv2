@@ -702,33 +702,25 @@ export default function TransferConfirm() {
               onChangeText={(t) =>
                 setPasscode(t.replace(/\D/g, "").slice(0, 4))
               }
-              placeholder="----"
-              placeholderTextColor="#9CA3AF"
+              placeholder=""
               maxLength={4}
               keyboardType="number-pad"
               editable={!isProcessing}
-              secureTextEntry={false}
               autoFocus
-              selectTextOnFocus={false}
-              autoComplete="off"
-              caretHidden={false}
-              selectionColor="#E25A17"
+              caretHidden
+              selectionColor="transparent"
               underlineColorAndroid="transparent"
+              secureTextEntry
             />
-            <View style={styles.passcodeIndicatorRow}>
-              {[0, 1, 2, 3].map((index) => (
+            <View style={styles.passcodeDotsRow} pointerEvents="none">
+              {[0, 1, 2, 3].map((i) => (
                 <View
-                  key={`transfer-passcode-indicator-${index}`}
+                  key={`passcode-dot-${i}`}
                   style={[
-                    styles.passcodeIndicatorBox,
-                    index < passcode.length &&
-                      styles.passcodeIndicatorBoxFilled,
+                    styles.passcodeDot,
+                    i < passcode.length && styles.passcodeDotFilled,
                   ]}
-                >
-                  <Text style={styles.passcodeIndicatorBullet}>
-                    {index < passcode.length ? "•" : ""}
-                  </Text>
-                </View>
+                />
               ))}
             </View>
             <View style={styles.passcodeModalButtons}>
@@ -1292,50 +1284,28 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     fontSize: 18,
     textAlign: "center",
-    writingDirection: "ltr",
-    letterSpacing: 8,
+    // NOTE: secureTextEntry + letterSpacing can render as blank spaces on Android.
+    letterSpacing: 0,
     marginBottom: 20,
-    shadowColor: "transparent",
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0,
-    shadowRadius: 0,
-    elevation: 0,
-    color: "#111827",
-    fontWeight: "600",
+    // Keep the input functional (for keyboard), but make its contents invisible.
+    opacity: 0,
+    color: "transparent",
   },
-  passcodeIndicatorRow: {
+  passcodeDotsRow: {
     flexDirection: "row",
     justifyContent: "center",
-    gap: 10,
-    marginTop: -8,
-    marginBottom: 18,
+    gap: 14,
+    marginTop: -46,
+    marginBottom: 26,
   },
-  passcodeIndicatorBox: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    borderWidth: 1,
-    borderColor: "#D1D5DB",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#FFFFFF",
+  passcodeDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: "#D1D5DB", // gray
   },
-  passcodeIndicatorBoxFilled: {
-    borderColor: "#E25A17",
-    backgroundColor: "#FFF7ED",
-  },
-  passcodeIndicatorDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: "#E25A17",
-  },
-  passcodeIndicatorBullet: {
-    fontSize: 16,
-    lineHeight: 18,
-    color: "#E25A17",
-    fontWeight: "700",
-    textAlign: "center",
+  passcodeDotFilled: {
+    backgroundColor: "#111827", // near-black
   },
   passcodeModalButtons: {
     flexDirection: "row",

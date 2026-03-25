@@ -1,19 +1,20 @@
-import { Ionicons } from '@expo/vector-icons';
+import {
+  Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useEffect, useState } from 'react';
+import { useEffect,
+  useState } from 'react';
 import {
     Modal,
-    Platform,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
-} from 'react-native';
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
     DEFAULT_LANGUAGE,
@@ -23,6 +24,7 @@ import {
 import { useLanguage } from '../../context/LanguageContext';
 import { useResponsive } from '../../utils/responsive';
 import Loader from '../Loader/Loader';
+import { TouchableOpacity } from "react-native-gesture-handler";
 
 const GRADIENT_START = '#E15816';
 const GRADIENT_END = '#F48F38';
@@ -325,3 +327,4 @@ const welcomeLanguageStyles = StyleSheet.create({
   cancelBtn: { marginTop: 12, paddingVertical: 12, alignItems: 'center' },
   cancelText: { fontSize: 16, color: '#666' },
 });
+

@@ -1,26 +1,30 @@
-import { Ionicons } from '@expo/vector-icons';
+import {
+  Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback,
+  useEffect,
+  useRef,
+  useState } from 'react';
 import {
     ActivityIndicator,
-    KeyboardAvoidingView,
-    Platform,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TextStyle,
-    TouchableOpacity,
-    View,
-    ViewStyle,
-} from 'react-native';
+  KeyboardAvoidingView,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TextStyle,
+  View,
+  ViewStyle,
+} from "react-native";
 import { calculateExchangePair } from '../../configs/api';
 import { useLanguage } from '../../context/LanguageContext';
 import type { NavProp } from '../../types/navigation';
 import { formatAmountWithCommas, unformatNumberString } from '../../utils/numberFormat';
 import { useResponsive } from '../../utils/responsive';
+import { TouchableOpacity } from "react-native-gesture-handler";
 
 interface Currency {
     code: string;
@@ -412,3 +416,4 @@ const styles = StyleSheet.create({
 });
 
 export default CurrencyCalculator;
+
