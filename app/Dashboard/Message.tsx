@@ -466,7 +466,26 @@ export default function Message() {
               />
             }
           >
-            {messages.length === 0 ? (
+            {loading ? (
+              <View style={styles.supportSkeletonContainer}>
+                {Array.from({ length: 5 }).map((_, idx) => (
+                  <View
+                    key={idx}
+                    style={[
+                      styles.supportSkeletonRow,
+                      idx % 2 === 0
+                        ? styles.supportSkeletonRowSent
+                        : styles.supportSkeletonRowReceived,
+                    ]}
+                  >
+                    <View style={styles.supportSkeletonBubble}>
+                      <View style={styles.supportSkeletonLineLong} />
+                      <View style={styles.supportSkeletonLineShort} />
+                    </View>
+                  </View>
+                ))}
+              </View>
+            ) : messages.length === 0 ? (
               <View style={styles.emptyState}>
                 <MaterialCommunityIcons
                   name="message-outline"
@@ -827,6 +846,40 @@ const styles = StyleSheet.create({
   loadingText: {
     fontSize: 14,
     color: "#666",
+  },
+  supportSkeletonContainer: {
+    paddingHorizontal: 12,
+    paddingTop: 16,
+    gap: 10,
+  },
+  supportSkeletonRow: {
+    flexDirection: "row",
+  },
+  supportSkeletonRowSent: {
+    justifyContent: "flex-end",
+  },
+  supportSkeletonRowReceived: {
+    justifyContent: "flex-start",
+  },
+  supportSkeletonBubble: {
+    maxWidth: "80%",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    gap: 8,
+  },
+  supportSkeletonLineLong: {
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: "#ECECEC",
+    width: 170,
+  },
+  supportSkeletonLineShort: {
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: "#ECECEC",
+    width: 100,
   },
   errorText: {
     fontSize: 15,

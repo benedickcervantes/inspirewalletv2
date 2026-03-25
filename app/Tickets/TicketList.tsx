@@ -3,7 +3,6 @@ import { listUserTickets, type Ticket } from "@/lib/tickets";
 import { useFocusEffect } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
   Modal,
   RefreshControl,
   ScrollView,
@@ -136,9 +135,17 @@ function TicketList({ accessToken, onTicketSelected, refreshTrigger }: TicketLis
       }
     >
       {loading && !tickets.length ? (
-        <View style={styles.centerContent}>
-          <ActivityIndicator size="large" color="#E15816" />
-          <Text style={styles.loadingText}>{t("tickets.loading")}</Text>
+        <View style={styles.skeletonContainer}>
+          {Array.from({ length: 4 }).map((_, idx) => (
+            <View key={idx} style={styles.skeletonCard}>
+              <View style={styles.skeletonLineLong} />
+              <View style={styles.skeletonLineMedium} />
+              <View style={styles.skeletonFooter}>
+                <View style={styles.skeletonBadge} />
+                <View style={styles.skeletonDate} />
+              </View>
+            </View>
+          ))}
         </View>
       ) : tickets.length > 0 ? (
         <View style={styles.ticketsList}>
@@ -268,6 +275,46 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#666",
     marginTop: 12,
+  },
+  skeletonContainer: {
+    padding: 12,
+    gap: 12,
+  },
+  skeletonCard: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 16,
+    gap: 10,
+  },
+  skeletonLineLong: {
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: "#ECECEC",
+    width: "100%",
+  },
+  skeletonLineMedium: {
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: "#ECECEC",
+    width: "75%",
+  },
+  skeletonFooter: {
+    marginTop: 4,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  skeletonBadge: {
+    width: 72,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: "#ECECEC",
+  },
+  skeletonDate: {
+    width: 80,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: "#ECECEC",
   },
   emptyText: {
     fontSize: 18,
