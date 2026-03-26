@@ -19,6 +19,7 @@ import { auth } from "../../configs/firebase";
 import { useLanguage } from "../../context/LanguageContext";
 import { useUnreadNotifications } from "../../context/UnreadNotificationsContext";
 import ActivityModal from '../components/ActivityModal';
+import Loader from "../Loader/Loader";
 import notificationService, {
     type NotificationItem,
 } from "./notificationService";
@@ -1037,6 +1038,11 @@ const Notification = () => {
     );
   }
 
+  // While loading notifications, remove the header to keep the loader uniform.
+  if (loading) {
+    return <Loader text={t("common.loading")} />;
+  }
+
   return (
     <View
       style={[
@@ -1157,11 +1163,7 @@ const Notification = () => {
         </View>
       )}
 
-      {loading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#E25A17" />
-        </View>
-      ) : useBackend ? (
+      {useBackend ? (
         <FlatList<NotificationItemBackend>
           data={visibleBackendNotifications}
           renderItem={renderBackendNotification}
@@ -1476,11 +1478,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
     color: "#E25A17",
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
   },
   listContent: {
     padding: 16,

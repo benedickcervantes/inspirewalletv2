@@ -10,11 +10,11 @@ import { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, Platform, ScrollView, StatusBar, StyleSheet, Text, TextInput, ToastAndroid, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
-    disableBiometric,
-    enableBiometric,
-    getReferralCode,
-    resendVerification,
-    verifyEmail,
+  disableBiometric,
+  enableBiometric,
+  getReferralCode,
+  resendVerification,
+  verifyEmail,
 } from "../../configs/api";
 import { useIdleTimeout } from "../../context/IdleTimeoutContext";
 import { useLanguage } from "../../context/LanguageContext";
@@ -46,8 +46,6 @@ const Settings = () => {
   const [emailVerifyLoading, setEmailVerifyLoading] = useState(false);
   const [emailVerifyError, setEmailVerifyError] = useState<string | null>(null);
   const [emailVerifySuccess, setEmailVerifySuccess] = useState(false);
-  const [emailVerifyFromBiometric, setEmailVerifyFromBiometric] =
-    useState(false);
   const [resendLoading, setResendLoading] = useState(false);
 
   // Biometric state
@@ -268,12 +266,11 @@ const Settings = () => {
     }
   };
 
-  const openEmailVerifyModal = (fromBiometric = false) => {
+  const openEmailVerifyModal = () => {
     setEmailVerifyModalVisible(true);
     setEmailOtp("");
     setEmailVerifyError(null);
     setEmailVerifySuccess(false);
-    setEmailVerifyFromBiometric(fromBiometric);
   };
 
   const closeEmailVerifyModal = () => {
@@ -281,17 +278,10 @@ const Settings = () => {
     setEmailOtp("");
     setEmailVerifyError(null);
     setEmailVerifySuccess(false);
-    setEmailVerifyFromBiometric(false);
   };
 
   const handleEmailVerifyDone = () => {
-    const shouldOpenBiometric = emailVerifyFromBiometric;
     closeEmailVerifyModal();
-    if (shouldOpenBiometric) {
-      setBiometricPassword("");
-      setBiometricError(null);
-      setBiometricModalVisible(true);
-    }
   };
 
   const handleToggleBiometric = async () => {
@@ -320,12 +310,6 @@ const Settings = () => {
         console.error("Failed to disable biometric", e);
       }
     } else {
-      // Check if email is verified
-      if (!userData?.emailVerified) {
-        openEmailVerifyModal(true);
-        return;
-      }
-
       // Open setup modal
       setBiometricPassword("");
       setBiometricError(null);
@@ -334,8 +318,14 @@ const Settings = () => {
   };
 
   const handleEnableBiometric = async () => {
-    if (!biometricPassword.trim() || !userData?.email) {
-      setBiometricError(t("settings.enterPassword"));
+    const trimmedPassword = biometricPassword.trim();
+    if (!trimmedPassword || !userData?.email) {
+      setBiometricError("Please enter your existing login password.");
+      return;
+    }
+
+    if (trimmedPassword.length < 6) {
+      setBiometricError("Password must be at least 6 characters.");
       return;
     }
 
@@ -363,7 +353,7 @@ const Settings = () => {
       const res = await enableBiometric(
         accessToken,
         userData.email,
-        biometricPassword,
+        trimmedPassword,
       );
 
       if (res.success && res.token) {
@@ -1095,12 +1085,12 @@ const Settings = () => {
                 style={[styles.modalSubtitle, r.modalSubtitle]}
                 numberOfLines={3}
               >
-                {t("settings.biometricSetupSubtitle", { type: biometricType })}
+                Enter your account password to turn on {biometricType} login.
               </Text>
 
               <TextInput
                 style={[styles.passwordInput, r.passwordInput]}
-                placeholder={t("settings.passwordPlaceholder")}
+                placeholder="Enter account password"
                 placeholderTextColor="#999"
                 value={biometricPassword}
                 onChangeText={(val) => {
