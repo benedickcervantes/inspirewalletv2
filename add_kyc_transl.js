@@ -16,7 +16,7 @@ const newJa = `
   "kyc.takePhoto": "写真を撮る",
   "kyc.chooseFromLibrary": "ライブラリから選択",
   "kyc.selectUploadMethod": "アップロード方法を選択",`;
-
+ 
 const newAr = `
   "kyc.takePhoto": "التقاط صورة",
   "kyc.chooseFromLibrary": "اختر من المكتبة",
