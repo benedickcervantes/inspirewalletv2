@@ -13,7 +13,11 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { getOrCreateMainWallet, submitTopUpRequest } from "../../../configs/api";
+import {
+  calculateExchange,
+  getOrCreateMainWallet,
+  submitTopUpRequest,
+} from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
 import {
   formatAmountWithCommas,
@@ -72,9 +76,30 @@ export default function TopUpBalance() {
         return;
       }
 
+      const sourceAmount = parseFloat(amountStr);
+      let amountToSubmit = sourceAmount;
+
+      if (selectedCurrency !== "PHP") {
+        const conversionResult = await calculateExchange({
+          action: "BUY_PHP",
+          currency: selectedCurrency,
+          amount: sourceAmount,
+          amountType: "SOURCE_FOREIGN",
+        });
+
+        if (!conversionResult.success || conversionResult.targetAmount == null) {
+          setSubmitError(
+            conversionResult.error || t("currency.exchangeRateUnavailable"),
+          );
+          return;
+        }
+
+        amountToSubmit = conversionResult.targetAmount;
+      }
+
       const body = {
         walletId: wallet.id as string,
-        amount: String(parseFloat(unformatNumberString(amount))),
+        amount: Number(amountToSubmit).toFixed(2),
       };
 
       const result = await submitTopUpRequest(accessToken, body);
