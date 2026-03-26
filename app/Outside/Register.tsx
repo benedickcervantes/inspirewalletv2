@@ -23,7 +23,11 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { decodeQrImage, register as registerApi } from "../../configs/api";
+import {
+  decodeQrImage,
+  lookupReferralCode,
+  register as registerApi,
+} from "../../configs/api";
 import {
   DEFAULT_LANGUAGE,
   normalizeLanguage,
@@ -168,10 +172,15 @@ export default function Register() {
   const [isProcessingQR, setIsProcessingQR] = useState(false);
   const [isAgent, setIsAgent] = useState<boolean | null>(null);
   const [referralCode, setReferralCode] = useState("");
+  const [isLookingUpReferral, setIsLookingUpReferral] = useState(false);
+  const [lastShownReferralCode, setLastShownReferralCode] = useState("");
   const [registerLoading, setRegisterLoading] = useState(false);
   const [registerError, setRegisterError] = useState("");
   const [appAlertVisible, setAppAlertVisible] = useState(false);
   const [appAlertMessage, setAppAlertMessage] = useState("");
+  const [appAlertIsValidReferral, setAppAlertIsValidReferral] = useState(false);
+  const [pendingReferrerName, setPendingReferrerName] = useState("");
+  const [confirmedReferrerName, setConfirmedReferrerName] = useState("");
 
   const [emailAddress, setEmailAddress] = useState("");
   const [password, setPassword] = useState("");
@@ -316,12 +325,90 @@ export default function Register() {
       });
     }
   };
-  const showAppAlert = (message: string) => {
+  const showAppAlert = (message: string, isValidReferral = false) => {
     setAppAlertMessage(message);
+    setAppAlertIsValidReferral(isValidReferral);
     setAppAlertVisible(true);
   };
 
-  const handleNextStep = () => {
+  const closeAppAlert = () => {
+    if (appAlertIsValidReferral && pendingReferrerName) {
+      setConfirmedReferrerName(pendingReferrerName);
+    }
+    setAppAlertVisible(false);
+    setAppAlertIsValidReferral(false);
+    setPendingReferrerName("");
+  };
+
+  const validateReferralCode = async (
+    showInvalidModal: boolean,
+    codeToValidate?: string,
+  ): Promise<boolean> => {
+    const normalizedCode = (codeToValidate ?? referralCode).trim().toUpperCase();
+    if (!normalizedCode) {
+      setConfirmedReferrerName("");
+      return true;
+    }
+
+    if (normalizedCode.length !== 5) {
+      if (showInvalidModal) {
+        showAppAlert(t("register.invalidReferralCodeLength"));
+      }
+      return false;
+    }
+
+    setIsLookingUpReferral(true);
+    try {
+      const result = await lookupReferralCode(normalizedCode);
+      if (!result.success) {
+        if (showInvalidModal) {
+          setConfirmedReferrerName("");
+          showAppAlert(
+            result.error ||
+              t("register.unableValidateReferral"),
+          );
+        }
+        return false;
+      }
+
+      if (!result.exists) {
+        if (showInvalidModal) {
+          setConfirmedReferrerName("");
+          showAppAlert(t("register.invalidReferralCodeNotFound"));
+        }
+        return false;
+      }
+
+      const resolvedName =
+        result.name ||
+        [result.firstName, result.lastName].filter(Boolean).join(" ").trim();
+
+      const matchedCode = result.referralCode || normalizedCode;
+      setReferralCode(matchedCode);
+      if (
+        showInvalidModal &&
+        resolvedName &&
+        matchedCode !== lastShownReferralCode
+      ) {
+        setPendingReferrerName(resolvedName);
+        showAppAlert(
+          t("register.referralOwnerMessage").replace("{name}", resolvedName),
+          true,
+        );
+        setLastShownReferralCode(matchedCode);
+      }
+      return true;
+    } catch {
+      if (showInvalidModal) {
+        showAppAlert(t("register.errorUnexpected"));
+      }
+      return false;
+    } finally {
+      setIsLookingUpReferral(false);
+    }
+  };
+
+  const handleNextStep = async () => {
     if (isProcessingQR) return;
     setRegisterError("");
     const newErrors: Record<string, string> = {};
@@ -381,6 +468,12 @@ export default function Register() {
         setErrors(newErrors);
         return;
       }
+
+      const isReferralValid = await validateReferralCode(true);
+      if (!isReferralValid) {
+        return;
+      }
+
       setErrors({});
       setCurrentStep(3);
     } else if (currentStep === 3) {
@@ -410,6 +503,9 @@ export default function Register() {
 
   const handleRegister = async () => {
     setRegisterError("");
+    const isReferralValid = await validateReferralCode(true);
+    if (!isReferralValid) return;
+
     setRegisterLoading(true);
     try {
       const country = COUNTRY_OPTIONS.find(
@@ -486,8 +582,12 @@ export default function Register() {
           const urlParams = new URL(data);
           const ref = urlParams.searchParams.get("ref");
           if (ref) {
-            setReferralCode(ref.toUpperCase());
+            const scannedCode = filterReferralInput(ref);
+            setReferralCode(scannedCode);
+            setLastShownReferralCode("");
+            setConfirmedReferrerName("");
             setActiveQRField(null);
+            void validateReferralCode(true, scannedCode);
             return;
           }
         }
@@ -495,7 +595,11 @@ export default function Register() {
         // Not a valid URL, ignore URL parsing error
       }
       // fallback to setting exactly what was scanned
-      setReferralCode(data.toUpperCase());
+      const scannedCode = filterReferralInput(data);
+      setReferralCode(scannedCode);
+      setLastShownReferralCode("");
+      setConfirmedReferrerName("");
+      void validateReferralCode(true, scannedCode);
     } else if (activeQRField === "line") {
       if (!isLinkMatchingMessagingProvider(data, "line")) {
         showAppAlert(t("register.lineQRMismatch"));
@@ -583,14 +687,22 @@ export default function Register() {
             const urlParams = new URL(normalized);
             const ref = urlParams.searchParams.get("ref");
             if (ref) {
-              setReferralCode(ref.toUpperCase());
+              const scannedCode = filterReferralInput(ref);
+              setReferralCode(scannedCode);
+              setLastShownReferralCode("");
+              setConfirmedReferrerName("");
+              void validateReferralCode(true, scannedCode);
               return;
             }
           }
         } catch {
           // ignore url parsing error
         }
-        setReferralCode(normalized.toUpperCase().slice(0, 5));
+        const scannedCode = filterReferralInput(normalized);
+        setReferralCode(scannedCode);
+        setLastShownReferralCode("");
+        setConfirmedReferrerName("");
+        void validateReferralCode(true, scannedCode);
       } else if (fieldType === "line") {
         if (!isLinkMatchingMessagingProvider(normalized, "line")) {
           showAppAlert(t("register.lineQRMismatch"));
@@ -1536,9 +1648,16 @@ export default function Register() {
                           autoCorrect={false}
                           autoComplete="off"
                           value={referralCode}
-                          onChangeText={(text) =>
-                            setReferralCode(filterReferralInput(text))
-                          }
+                          onChangeText={(text) => {
+                            setReferralCode(filterReferralInput(text));
+                            setLastShownReferralCode("");
+                            setConfirmedReferrerName("");
+                          }}
+                          onBlur={() => {
+                            if (referralCode.trim()) {
+                              void validateReferralCode(true);
+                            }
+                          }}
                           autoCapitalize="characters"
                           maxLength={5}
                         />
@@ -1576,6 +1695,19 @@ export default function Register() {
                           </>
                         )}
                       </View>
+                      {isLookingUpReferral ? (
+                        <Text style={styles.helperText}>
+                          {t("register.checkingReferralCode")}
+                        </Text>
+                      ) : null}
+                      {confirmedReferrerName ? (
+                        <Text style={styles.confirmedReferrerText}>
+                          {t("register.underReferralOf").replace(
+                            "{name}",
+                            confirmedReferrerName,
+                          )}
+                        </Text>
+                      ) : null}
                       <Text style={styles.helperText}>
                         {t("register.referralCodeHint")}
                       </Text>
@@ -2125,19 +2257,20 @@ export default function Register() {
           visible={appAlertVisible}
           transparent
           animationType="fade"
-          onRequestClose={() => setAppAlertVisible(false)}
+          onRequestClose={closeAppAlert}
         >
           <View style={styles.appAlertOverlay}>
             <View style={styles.appAlertCard}>
               <View style={styles.appAlertIconWrap}>
-                <Ionicons name="alert-circle" size={22} color="#E25A17" />
+                <Ionicons
+                  name={appAlertIsValidReferral ? "checkmark-circle" : "alert-circle"}
+                  size={22}
+                  color="#E25A17"
+                />
               </View>
               <Text style={styles.appAlertTitle}>{t("register.notice")}</Text>
               <Text style={styles.appAlertMessage}>{appAlertMessage}</Text>
-              <TouchableOpacity
-                style={styles.appAlertButton}
-                onPress={() => setAppAlertVisible(false)}
-              >
+              <TouchableOpacity style={styles.appAlertButton} onPress={closeAppAlert}>
                 <Text style={styles.appAlertButtonText}>{t("common.ok")}</Text>
               </TouchableOpacity>
             </View>
@@ -2369,6 +2502,13 @@ const styles = StyleSheet.create({
     backgroundColor: "#FAFAFA",
   },
   helperText: { fontSize: 12, color: "#999", marginTop: 8, lineHeight: 16 },
+  confirmedReferrerText: {
+    fontSize: 12,
+    color: "#E25A17",
+    marginTop: 8,
+    lineHeight: 16,
+    fontWeight: "600",
+  },
   passwordContainer: {
     flexDirection: "row",
     alignItems: "center",

@@ -223,7 +223,7 @@ export default function Dashboard() {
   const navigation = useNavigation();
   const route = useRoute();
   const { t, setLanguage } = useLanguage();
-  const { startIdleSession, registerActivity } = useIdleTimeout();
+  const { registerActivity } = useIdleTimeout();
   const insets = useSafeAreaInsets();
   const { width, horizontalPadding, isSmallScreen } = useResponsive();
   const qaSpacing = width < 360 ? 0.75 : isSmallScreen ? 0.85 : 1;
@@ -319,6 +319,17 @@ export default function Dashboard() {
     accountNumber
       ? `active_card_design_${accountNumber}`
       : "active_card_design";
+
+  const fetchMaintenanceStatus = useCallback(async () => {
+    setIsMaintenanceLoading(true);
+    try {
+      const status = await getMaintenanceStatus();
+      setMaintenanceStatus(status);
+      return status;
+    } finally {
+      setIsMaintenanceLoading(false);
+    }
+  }, []);
 
   const languageSlides = [
     {
@@ -467,7 +478,6 @@ export default function Dashboard() {
         await Promise.all([
           getReferralTree(accessToken),
           getTransactions(accessToken, { walletId, limit: 20 }),
-          fetchMaintenanceStatus(),
           getNotifications(accessToken, { limit: 50 }),
           AsyncStorage.getItem(accountKey),
           AsyncStorage.getItem(globalKey),
@@ -558,12 +568,10 @@ export default function Dashboard() {
         setAnnouncementVisible(false);
       }
 
-      // Start idle session timer after successful login and dashboard load
-      startIdleSession();
     };
 
     init();
-  }, [fetchMaintenanceStatus, navigation, startIdleSession]);
+  }, [fetchMaintenanceStatus, navigation]);
 
   useEffect(() => {
     if (!announcementVisible) return;
@@ -1104,17 +1112,6 @@ export default function Dashboard() {
       console.error("Error opening URL:", error);
     }
   };
-
-  const fetchMaintenanceStatus = useCallback(async () => {
-    setIsMaintenanceLoading(true);
-    try {
-      const status = await getMaintenanceStatus();
-      setMaintenanceStatus(status);
-      return status;
-    } finally {
-      setIsMaintenanceLoading(false);
-    }
-  }, []);
 
   const renderLockBadge = (isSkeleton = false) => (
     <View

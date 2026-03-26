@@ -95,6 +95,7 @@ export type RootStackParamList = {
   };
   topup: undefined;
   TopupConfirm: Record<string, unknown>;
+  depositProofView: Record<string, unknown>;
   depositReceipt: Record<string, unknown>;
   Withdraw: undefined;
   WithdrawMethod: { type?: string };
