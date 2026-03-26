@@ -6,6 +6,7 @@ import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   calculateExchange,
+  getCryptoPhpQuote,
 } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
 import ActivityModal from '../../components/ActivityModal';
@@ -13,6 +14,8 @@ import {
   formatAmountWithCommas,
   unformatNumberString,
 } from "../../../utils/numberFormat";
+
+const CRYPTO_MARGIN_MULTIPLIER = 0.99;
 
 export default function TimeDepositAmount() {
   const navigation = useNavigation();
@@ -23,9 +26,11 @@ export default function TimeDepositAmount() {
     depositMethod?: string;
     contractPeriod?: string;
   };
+  const depositMethod = params.depositMethod || "Request Amount";
+  const isCryptoMode = depositMethod === "Crypto Deposit";
 
   const [selectedCurrency, setSelectedCurrency] = useState(
-    params.currency || "PHP",
+    (params.currency as string) || (isCryptoMode ? "BTC" : "PHP"),
   );
   const [showCurrencyModal, setShowCurrencyModal] = useState(false);
   const [amount, setAmount] = useState("");
@@ -36,14 +41,19 @@ export default function TimeDepositAmount() {
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const currencies = [
-    { code: "PHP", name: "Philippine Peso", flag: "🇵🇭", symbol: "₱" },
-    { code: "JPY", name: "Japanese Yen", flag: "🇯🇵", symbol: "¥" },
-    { code: "SAR", name: "Saudi Riyal", flag: "🇸🇦", symbol: "﷼" },
-    { code: "KRW", name: "Korean Won", flag: "🇰🇷", symbol: "₩" },
-  ];
+  const currencies = isCryptoMode
+    ? [
+        { code: "BTC", name: "Bitcoin", flag: "₿", symbol: "BTC" },
+        { code: "ETH", name: "Ethereum", flag: "◆", symbol: "ETH" },
+        { code: "USDT", name: "Tether USD", flag: "₮", symbol: "USDT" },
+      ]
+    : [
+        { code: "PHP", name: "Philippine Peso", flag: "🇵🇭", symbol: "₱" },
+        { code: "JPY", name: "Japanese Yen", flag: "🇯🇵", symbol: "¥" },
+        { code: "SAR", name: "Saudi Riyal", flag: "🇸🇦", symbol: "﷼" },
+        { code: "KRW", name: "Korean Won", flag: "🇰🇷", symbol: "₩" },
+      ];
 
-  const depositMethod = params.depositMethod || "Request Amount";
   const contractPeriod = params.contractPeriod || "";
 
   const updatePhpEquivalent = useCallback(
@@ -55,7 +65,7 @@ export default function TimeDepositAmount() {
         setIsConverting(false);
         return;
       }
-      if (currency === "PHP") {
+      if (!isCryptoMode && currency === "PHP") {
         setPhpEquivalent(num);
         setConvertError(null);
         setIsConverting(false);
@@ -63,19 +73,34 @@ export default function TimeDepositAmount() {
       }
       setIsConverting(true);
       setConvertError(null);
-      const result = await calculateExchange({
-        action: "BUY_PHP",
-        currency,
-        amount: num,
-        amountType: "SOURCE_FOREIGN",
-      });
+      const result = isCryptoMode
+        ? await getCryptoPhpQuote({
+            coin: currency as "BTC" | "ETH" | "USDT",
+            amount: num,
+          })
+        : await calculateExchange({
+            action: "BUY_PHP",
+            currency,
+            amount: num,
+            amountType: "SOURCE_FOREIGN",
+          });
       setIsConverting(false);
-      if (result.success && result.targetAmount != null) {
-        setPhpEquivalent(result.targetAmount);
+      if (isCryptoMode && result.success && result.data?.phpEquivalent != null) {
+        setPhpEquivalent(result.data.phpEquivalent * CRYPTO_MARGIN_MULTIPLIER);
         setConvertError(null);
         if (__DEV__) {
-          console.log("[TimeDeposit] Converted", num, currency, "->", result.targetAmount, "PHP");
+          console.log(
+            "[TimeDeposit] Converted",
+            num,
+            currency,
+            "->",
+            result.data.phpEquivalent * CRYPTO_MARGIN_MULTIPLIER,
+            "PHP",
+          );
         }
+      } else if (!isCryptoMode && result.success && result.targetAmount != null) {
+        setPhpEquivalent(result.targetAmount);
+        setConvertError(null);
       } else {
         setPhpEquivalent(0);
         setConvertError(result.error || t("currency.exchangeRateUnavailable"));
@@ -84,7 +109,7 @@ export default function TimeDepositAmount() {
         }
       }
     },
-    [],
+    [isCryptoMode, t],
   );
 
   useEffect(() => {
@@ -101,8 +126,9 @@ export default function TimeDepositAmount() {
       setConvertError(null);
       return;
     }
-    if (selectedCurrency === "PHP") {
+    if (!isCryptoMode && selectedCurrency === "PHP") {
       setPhpEquivalent(num);
+      setConvertError(null);
       return;
     }
     debounceRef.current = setTimeout(() => {
@@ -111,7 +137,7 @@ export default function TimeDepositAmount() {
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [amount, selectedCurrency, updatePhpEquivalent]);
+  }, [amount, selectedCurrency, updatePhpEquivalent, isCryptoMode]);
 
   const handleContinue = () => {
     const newErrors: Record<string, string> = {};
@@ -121,7 +147,9 @@ export default function TimeDepositAmount() {
       newErrors.amount = t("deposit.amountRequired");
     } else {
       const phpValue =
-        selectedCurrency === "PHP" ? parseFloat(amountStr) : phpEquivalent;
+        !isCryptoMode && selectedCurrency === "PHP"
+          ? parseFloat(amountStr)
+          : phpEquivalent;
       if (phpValue < 50000) {
         newErrors.amount = t("deposit.minTimeDeposit");
       }
@@ -135,9 +163,22 @@ export default function TimeDepositAmount() {
     setErrors({});
     
     const amountInPhp =
-      selectedCurrency === "PHP"
+      !isCryptoMode && selectedCurrency === "PHP"
         ? parseFloat(unformatNumberString(amount))
         : phpEquivalent;
+
+    if (isCryptoMode) {
+      navigation.navigate("TimeDepositConfirm", {
+        depositMethod,
+        contractPeriod,
+        amount: unformatNumberString(amount),
+        submittedCryptoAmount: unformatNumberString(amount),
+        cryptoType: selectedCurrency,
+        amountInPhp,
+        currency: selectedCurrency,
+      });
+      return;
+    }
 
     navigation.navigate("TimeDepositConfirm", {
       depositMethod,
@@ -215,7 +256,7 @@ export default function TimeDepositAmount() {
                   />
                 </View>
                 <Text style={styles.sectionTitle}>
-                  {t("deposit.selectCurrency")}
+                  {isCryptoMode ? "Select Crypto Type" : t("deposit.selectCurrency")}
                 </Text>
               </View>
 
@@ -345,7 +386,7 @@ export default function TimeDepositAmount() {
             <View style={styles.modalContainer}>
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>
-                  {t("deposit.selectCurrency")}
+                  {isCryptoMode ? "Select Crypto Type" : t("deposit.selectCurrency")}
                 </Text>
                 <TouchableOpacity onPress={() => setShowCurrencyModal(false)}>
                   <Ionicons name="close" size={24} color="#333" />

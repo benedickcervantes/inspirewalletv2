@@ -317,7 +317,11 @@ export default function HistoryScreen() {
   const getTransactionDisplayName = (tx: Transaction) => {
     const translated = getTranslatedDescription(tx.description);
     if (translated) return translated;
-    return tx.description?.trim() || getTransactionTypeLabel(tx.type);
+    const rawDescription = tx.description?.trim();
+    if (rawDescription && !/^(n\/a|na|null|undefined|-)$/i.test(rawDescription)) {
+      return rawDescription;
+    }
+    return getTransactionTypeLabel(tx.type);
   };
 
   const contentBottomPadding = Math.max(insets.bottom, 16);

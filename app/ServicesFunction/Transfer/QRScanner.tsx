@@ -35,6 +35,7 @@ export default function QRScanner({
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   const handleBarCodeScanned = ({ data }: { data: string }) => {
     if (scanned) return;
@@ -133,7 +134,7 @@ export default function QRScanner({
 
           {/* Instructions */}
           <LinearGradient
-            colors={["transparent", "rgba(0,0,0,0.8)"]}
+            colors={["transparent", "rgba(0,0,0,0.9)"]}
             style={styles.footer}
           >
             <View style={styles.instructionContainer}>
@@ -165,18 +166,19 @@ export default function QRScanner({
                 onPress={async () => {
                   try {
                     setIsProcessing(true);
+                    setUploadError(null);
                     const data = await pickAndDecodeQR();
                     if (data) {
                       onScan(data);
                       onClose();
                     } else {
-                      alert(
+                      setUploadError(
                         t("register.noQRFound") ||
                           "No QR code found in the image. Please pick a clearer QR code image.",
                       );
                     }
                   } catch (e) {
-                    alert(
+                    setUploadError(
                       t("register.errorUnexpected") ||
                         "An unexpected error occurred.",
                     );
@@ -188,7 +190,7 @@ export default function QRScanner({
                 {isProcessing ? (
                   <ActivityIndicator
                     size="small"
-                    color="#FFFFFF"
+                    color="#FFFFFFF"
                     style={{ marginRight: 10 }}
                   />
                 ) : (
@@ -208,6 +210,25 @@ export default function QRScanner({
                 </Text>
               </TouchableOpacity>
             </View>
+            {!!uploadError && (
+              <View style={styles.errorCard}>
+                <View style={styles.errorRow}>
+                  <Ionicons
+                    name="alert-circle-outline"
+                    size={18}
+                    color="#FFB4B4"
+                    style={styles.errorIcon}
+                  />
+                  <Text style={styles.errorText}>{uploadError}</Text>
+                  <TouchableOpacity
+                    onPress={() => setUploadError(null)}
+                    style={styles.errorCloseButton}
+                  >
+                    <Ionicons name="close" size={16} color="#FFD2D2" />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
           </LinearGradient>
         </CameraView>
       </View>
@@ -362,5 +383,31 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: "#666",
+  },
+  errorCard: {
+    marginTop: 14,
+    backgroundColor: "rgba(190, 38, 38, 0.75)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 200, 200, 0.4)",
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  errorRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  errorIcon: {
+    marginRight: 8,
+  },
+  errorText: {
+    flex: 1,
+    color: "#FFFFFF",
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  errorCloseButton: {
+    marginLeft: 8,
+    padding: 2,
   },
 });

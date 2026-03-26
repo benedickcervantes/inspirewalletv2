@@ -3,11 +3,43 @@ import { createTicket, type CreateTicketDto } from "@/lib/tickets";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useState } from "react";
-import { ActivityIndicator, Alert, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, useWindowDimensions, View } from "react-native";
+import { ActivityIndicator, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, useWindowDimensions, View } from "react-native";
+import Svg, { Circle, Path } from "react-native-svg";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLanguage } from "../../context/LanguageContext";
 
 import ActivityModal from '../components/ActivityModal';
+type FeedbackType = "success" | "error" | "warning";
+
+function FeedbackIcon({ type }: { type: FeedbackType }) {
+  if (type === "success") {
+    return (
+      <Svg width={34} height={34} viewBox="0 0 24 24" fill="none">
+        <Circle cx="12" cy="12" r="9" stroke="#22C55E" strokeWidth="2" />
+        <Path d="M8 12.4L10.7 15.1L16.2 9.6" stroke="#22C55E" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+      </Svg>
+    );
+  }
+
+  if (type === "error") {
+    return (
+      <Svg width={34} height={34} viewBox="0 0 24 24" fill="none">
+        <Path d="M12 3L21 19H3L12 3Z" stroke="#DC2626" strokeWidth="2" strokeLinejoin="round" />
+        <Path d="M12 8.6V13.4" stroke="#DC2626" strokeWidth="2" strokeLinecap="round" />
+        <Circle cx="12" cy="16.6" r="1.1" fill="#DC2626" />
+      </Svg>
+    );
+  }
+
+  return (
+    <Svg width={34} height={34} viewBox="0 0 24 24" fill="none">
+      <Circle cx="12" cy="12" r="9" stroke="#E15816" strokeWidth="2" />
+      <Path d="M12 7.2V12L15.2 13.7" stroke="#E15816" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M17.4 5.8L18.9 4.3" stroke="#E15816" strokeWidth="2" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
 interface TicketCreationProps {
   open: boolean;
   onClose: () => void;
@@ -37,32 +69,71 @@ export default function TicketCreation({
   });
   const [loading, setLoading] = useState(false);
   const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
+  const [feedbackModal, setFeedbackModal] = useState<{
+    visible: boolean;
+    type: FeedbackType;
+    title: string;
+    message: string;
+    onConfirm?: () => void;
+  }>({
+    visible: false,
+    type: "warning",
+    title: "",
+    message: "",
+  });
   const { t } = useLanguage();
+
+  const showFeedback = (
+    type: FeedbackType,
+    title: string,
+    message: string,
+    onConfirm?: () => void,
+  ) => {
+    setFeedbackModal({
+      visible: true,
+      type,
+      title,
+      message,
+      onConfirm,
+    });
+  };
+
+  const closeFeedback = () => {
+    const onConfirm = feedbackModal.onConfirm;
+    setFeedbackModal({
+      visible: false,
+      type: "warning",
+      title: "",
+      message: "",
+      onConfirm: undefined,
+    });
+    onConfirm?.();
+  };
 
   const handleSubmit = async () => {
     const title = formValue.title.trim();
     const description = formValue.description.trim();
 
     if (!title) {
-      Alert.alert(t("common.error"), t("tickets.validationTitle"));
+      showFeedback("warning", t("common.error"), t("tickets.validationTitle"));
       return;
     }
     if (title.length < 5) {
-      Alert.alert(t("common.error"), t("tickets.validationTitleMin"));
+      showFeedback("warning", t("common.error"), t("tickets.validationTitleMin"));
       return;
     }
 
     if (!description) {
-      Alert.alert(t("common.error"), t("tickets.validationDescription"));
+      showFeedback("warning", t("common.error"), t("tickets.validationDescription"));
       return;
     }
     if (description.length < 10) {
-      Alert.alert(t("common.error"), t("tickets.validationDescriptionMin"));
+      showFeedback("warning", t("common.error"), t("tickets.validationDescriptionMin"));
       return;
     }
 
     if (!formValue.category) {
-      Alert.alert(t("common.error"), t("tickets.validationCategory"));
+      showFeedback("warning", t("common.error"), t("tickets.validationCategory"));
       return;
     }
 
@@ -80,13 +151,14 @@ export default function TicketCreation({
         delete payload.category;
       }
       const result = await createTicket(accessToken, payload);
-      Alert.alert(t("common.success"), t("tickets.createdSuccess"));
       setFormValue({ title: "", description: "", priority: "MEDIUM", category: undefined });
-      onSuccess?.(result.id);
-      onClose();
+      showFeedback("success", t("common.success"), t("tickets.createdSuccess"), () => {
+        onSuccess?.(result.id);
+        onClose();
+      });
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : t("tickets.createFailed");
-      Alert.alert(t("common.error"), msg);
+      showFeedback("error", t("common.error"), msg);
     } finally {
       setLoading(false);
     }
@@ -362,6 +434,26 @@ export default function TicketCreation({
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
+
+      <ActivityModal
+        visible={feedbackModal.visible}
+        transparent
+        animationType="fade"
+        onRequestClose={closeFeedback}
+      >
+        <TouchableOpacity style={styles.feedbackOverlay} activeOpacity={1} onPress={closeFeedback}>
+          <TouchableOpacity style={styles.feedbackCard} activeOpacity={1} onPress={(e) => e.stopPropagation()}>
+            <View style={styles.feedbackIconWrap}>
+              <FeedbackIcon type={feedbackModal.type} />
+            </View>
+            <Text style={styles.feedbackTitle}>{feedbackModal.title}</Text>
+            <Text style={styles.feedbackMessage}>{feedbackModal.message}</Text>
+            <TouchableOpacity style={styles.feedbackOk} onPress={closeFeedback}>
+              <Text style={styles.feedbackOkText}>{t("common.ok")}</Text>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </ActivityModal>
     </ActivityModal>
   );
 }
@@ -649,5 +741,59 @@ const styles = StyleSheet.create({
   },
   submitTextSmall: {
     fontSize: 15,
+  },
+  feedbackOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 24,
+  },
+  feedbackCard: {
+    width: "100%",
+    maxWidth: 360,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    paddingTop: 24,
+    paddingBottom: 18,
+    paddingHorizontal: 22,
+    alignItems: "center",
+  },
+  feedbackIconWrap: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: "rgba(225,88,22,0.15)",
+    justifyContent: "center",
+    alignItems: "center",
+    alignSelf: "center",
+    marginBottom: 12,
+  },
+  feedbackTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#333",
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  feedbackMessage: {
+    fontSize: 15,
+    color: "#666",
+    marginBottom: 20,
+    lineHeight: 22,
+    textAlign: "center",
+  },
+  feedbackOk: {
+    alignSelf: "center",
+    minHeight: 48,
+    justifyContent: "center",
+    paddingHorizontal: 42,
+    borderRadius: 999,
+    backgroundColor: "#E15816",
+  },
+  feedbackOkText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#FFFFFF",
   },
 });

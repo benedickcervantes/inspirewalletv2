@@ -1,6 +1,7 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation, useRoute } from "@react-navigation/native";
+import * as Clipboard from "expo-clipboard";
 import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { useState } from "react";
@@ -42,6 +43,19 @@ export default function TimeDepositProof() {
   const amountInPhp = params.amountInPhp ?? (parseFloat(amount) || 0);
   const currency = params.currency || "PHP";
   const requestId = params.requestId || "";
+  const isCryptoDeposit = depositMethod === "Crypto Deposit";
+  const normalizedCrypto = String(currency).toUpperCase();
+
+  const cryptoWalletMap: Record<string, string> = {
+    BTC: "bc1qk7z05r68h0alw9n9mr0uumas7s30t43nuq5rc5",
+    ETH: "0xFEb2FeF956e1D035DD3A0bE8242f98333994e2B7",
+    USDT: "0xFEb2FeF956e1D035DD3A0bE8242f98333994e2B7",
+  };
+
+  const destinationWallet =
+    normalizedCrypto in cryptoWalletMap
+      ? cryptoWalletMap[normalizedCrypto]
+      : null;
 
   const pickFromGallery = async () => {
     try {
@@ -98,6 +112,12 @@ export default function TimeDepositProof() {
     );
   };
 
+  const handleCopyWallet = async () => {
+    if (!destinationWallet) return;
+    await Clipboard.setStringAsync(destinationWallet);
+    Alert.alert(t("deposit.success"), "Wallet address copied");
+  };
+
   const handleFinalConfirm = async () => {
     setLoading(true);
     setErrorMessage(null);
@@ -140,6 +160,7 @@ export default function TimeDepositProof() {
         transactionId: requestId || t("investment.pending"),
         requestId: requestId || t("investment.pending"),
         amount,
+        amountInPhp,
         currency,
         depositMethod,
         contractPeriod,
@@ -198,6 +219,24 @@ export default function TimeDepositProof() {
             <Text style={styles.title}>{t("deposit.proofOfPayment")}</Text>
             <Text style={styles.subtitle}>{t("deposit.uploadProofOfPayment")}</Text>
           </View>
+
+          {isCryptoDeposit && destinationWallet ? (
+            <View style={styles.card}>
+              <Text style={styles.sectionLabel}>Send {normalizedCrypto} To</Text>
+              <View style={styles.addressBox}>
+                <Text style={styles.addressValue}>{destinationWallet}</Text>
+              </View>
+              <TouchableOpacity style={styles.copyButton} onPress={handleCopyWallet}>
+                <Ionicons name="copy-outline" size={16} color="#FFFFFF" />
+                <Text style={styles.copyButtonText}>Copy Address</Text>
+              </TouchableOpacity>
+              <Text style={styles.networkHint}>
+                {normalizedCrypto === "USDT"
+                  ? "Use supported EVM network for this USDT address."
+                  : `Send only ${normalizedCrypto} to this wallet.`}
+              </Text>
+            </View>
+          ) : null}
 
           <View style={styles.card}>
             <Text style={styles.sectionLabel}>
@@ -328,6 +367,38 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     borderLeftWidth: 4,
     borderLeftColor: "#E25A17",
+  },
+  addressBox: {
+    backgroundColor: "#F9F9F9",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+    padding: 12,
+    marginBottom: 10,
+  },
+  addressValue: {
+    fontSize: 13,
+    color: "#333",
+    fontWeight: "600",
+  },
+  copyButton: {
+    backgroundColor: "#E25A17",
+    borderRadius: 8,
+    paddingVertical: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+    gap: 6,
+    marginBottom: 8,
+  },
+  copyButtonText: {
+    fontSize: 13,
+    color: "#FFFFFF",
+    fontWeight: "700",
+  },
+  networkHint: {
+    fontSize: 12,
+    color: "#666",
   },
   sectionLabel: {
     fontSize: 13,

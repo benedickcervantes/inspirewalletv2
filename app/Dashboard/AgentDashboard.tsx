@@ -1,10 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import * as Clipboard from "expo-clipboard";
 import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useState } from "react";
 import {
+    Modal,
     Platform,
     RefreshControl,
     ScrollView,
@@ -20,6 +22,7 @@ import QRCode from "react-native-qrcode-svg";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
     generateReferralCode,
+    getMe,
     getOrCreateMainWallet,
     getReferralCode,
     getReferralQrPayload,
@@ -28,6 +31,7 @@ import {
     getTransactions,
 } from "../../configs/api";
 import { useLanguage } from "../../context/LanguageContext";
+import type { RootStackParamList } from "../../types/navigation";
 
 interface CommissionTransaction {
   id: string;
@@ -67,7 +71,8 @@ const SMALL_PHONE_WIDTH = 375;
 const REFERRAL_PAGE_SIZE = 5;
 
 export default function AgentDashboard() {
-  const navigation = useNavigation();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { t } = useLanguage();
   const { width } = useWindowDimensions();
   const isXSScreen = width <= IPHONE_SE_WIDTH;
@@ -106,6 +111,8 @@ export default function AgentDashboard() {
   const [directListTotalPages, setDirectListTotalPages] = useState(1);
   const [networkListTotalPages, setNetworkListTotalPages] = useState(1);
   const [listLoading, setListLoading] = useState(false);
+  const [showAccessRestrictedModal, setShowAccessRestrictedModal] =
+    useState(false);
   const showInlineCopyBanner = copySuccess && Platform.OS === "ios";
 
   const formatCurrency = (amount: number) =>
@@ -188,14 +195,20 @@ export default function AgentDashboard() {
     [t]
   );
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (): Promise<boolean> => {
     const accessToken = await AsyncStorage.getItem("access_token");
     if (!accessToken) {
       setError(t("agent.notAuthenticated"));
-      return;
+      return true;
     }
     setError(null);
     try {
+      const meRes = await getMe(accessToken);
+      if (meRes.success && meRes.user && !meRes.user.isAgent) {
+        setShowAccessRestrictedModal(true);
+        return false;
+      }
+
       // Use allSettled so a failure in one call doesn't cancel the others
       const [walletResult, treeResult, qrResult, codeResult] = await Promise.allSettled([
         getOrCreateMainWallet(accessToken),
@@ -352,12 +365,20 @@ export default function AgentDashboard() {
       ]);
     } catch (e) {
       setError(e instanceof Error ? e.message : t("agent.failedToLoad"));
+      return true;
     }
+    return true;
   }, [fetchReferralListPage, t]);
 
   useFocusEffect(
     useCallback(() => {
-      fetchData().finally(() => setInitialLoad(false));
+      setShowAccessRestrictedModal(false);
+      setInitialLoad(true);
+      fetchData().then((canAccessAgentDashboard) => {
+        if (canAccessAgentDashboard) {
+          setInitialLoad(false);
+        }
+      });
     }, [fetchData])
   );
 
@@ -441,6 +462,16 @@ export default function AgentDashboard() {
       ToastAndroid.show(t("settings.copySuccess"), ToastAndroid.SHORT);
     }
   }, [referralCode, t]);
+
+  const handleRestrictedCancel = () => {
+    setShowAccessRestrictedModal(false);
+    navigation.goBack();
+  };
+
+  const handleRestrictedSubmit = () => {
+    setShowAccessRestrictedModal(false);
+    navigation.replace("AgentApplication");
+  };
 
   return (
     <View style={styles.container}>
@@ -944,6 +975,42 @@ export default function AgentDashboard() {
         )}
         </ScrollView>
       </SafeAreaView>
+
+      <Modal
+        visible={showAccessRestrictedModal}
+        transparent
+        animationType="fade"
+        onRequestClose={handleRestrictedCancel}
+      >
+        <View style={styles.restrictedModalOverlay}>
+          <View style={styles.restrictedModalCard}>
+            <Text style={styles.restrictedModalTitle}>
+              {t("agentRequest.modals.accessRestricted.title")}
+            </Text>
+            <Text style={styles.restrictedModalMessage}>
+              {t("agentRequest.modals.accessRestricted.message")}
+            </Text>
+            <View style={styles.restrictedModalActions}>
+              <TouchableOpacity
+                onPress={handleRestrictedCancel}
+                style={[styles.restrictedModalButton, styles.restrictedModalButtonSecondary]}
+              >
+                <Text style={styles.restrictedModalButtonSecondaryText}>
+                  {t("common.cancel")}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleRestrictedSubmit}
+                style={[styles.restrictedModalButton, styles.restrictedModalButtonPrimary]}
+              >
+                <Text style={styles.restrictedModalButtonPrimaryText}>
+                  {t("agentRequest.content.submitButton.submit")}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -1236,5 +1303,56 @@ const styles = StyleSheet.create({
     color: "#6B7280",
     fontSize: 14,
     fontWeight: "600",
+  },
+  restrictedModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.45)",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 24,
+  },
+  restrictedModalCard: {
+    width: "100%",
+    maxWidth: 360,
+    borderRadius: 16,
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 18,
+    paddingVertical: 20,
+  },
+  restrictedModalTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#111827",
+    marginBottom: 10,
+  },
+  restrictedModalMessage: {
+    fontSize: 14,
+    color: "#4B5563",
+    lineHeight: 22,
+  },
+  restrictedModalActions: {
+    marginTop: 18,
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    gap: 10,
+  },
+  restrictedModalButton: {
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
+  restrictedModalButtonSecondary: {
+    backgroundColor: "#F3F4F6",
+  },
+  restrictedModalButtonPrimary: {
+    backgroundColor: "#E25A17",
+  },
+  restrictedModalButtonSecondaryText: {
+    color: "#374151",
+    fontWeight: "600",
+  },
+  restrictedModalButtonPrimaryText: {
+    color: "#FFFFFF",
+    fontWeight: "700",
   },
 });

@@ -94,6 +94,21 @@ export function calculateExchangePair(params: {
   error?: string;
 }>;
 
+export function getCryptoPhpQuote(params: {
+  coin: "BTC" | "ETH" | "USDT";
+  amount?: number;
+}): Promise<{
+  success: boolean;
+  data?: {
+    coin: string;
+    ratePhp: number;
+    amount: number;
+    phpEquivalent: number;
+    cachedForSeconds: number;
+  };
+  error?: string;
+}>;
+
 export function getTransactions(
   accessToken: string,
   opts?: { walletId?: string; limit?: number; cursor?: string; type?: string },

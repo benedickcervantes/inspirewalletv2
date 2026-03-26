@@ -26,11 +26,12 @@ const SOURCE_OF_FUND_KEY: Record<string, string> = {
   Pension: "banking.sourcePension",
   Other: "banking.sourceOther",
 };
-const CURRENCY_OPTIONS = ["PHP", "USD", "EUR"];
+const CURRENCY_OPTIONS = ["PHP", "USD", "EUR", "JPY"];
 const CURRENCY_KEY: Record<string, string> = {
   PHP: "banking.currencyPHP",
   USD: "banking.currencyUSD",
   EUR: "banking.currencyEUR",
+  JPY: "banking.currencyJPY",
 };
 
 export default function EwalletFinancialInfo() {
@@ -73,7 +74,7 @@ export default function EwalletFinancialInfo() {
       newErrors.income = t("ewallet.incomeRequired");
     } else {
       const n = parseFloat(unformatNumberString(grossMonthlyIncome));
-      if (Number.isNaN(n) || n <= 0) {
+      if (Number.isNaN(n) || n < 1000) {
         newErrors.income = t("ewallet.incomeInvalid");
       }
     }
@@ -246,6 +247,7 @@ export default function EwalletFinancialInfo() {
                 </View>
                 {errors.currency && <Text style={styles.errorText}>{errors.currency}</Text>}
                 {errors.income && <Text style={styles.errorText}>{errors.income}</Text>}
+                <Text style={styles.helperText}>{t("banking.minimumIncomeGuide")}</Text>
               </View>
 
             </View>
@@ -588,6 +590,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 4,
     fontWeight: "500",
+  },
+  helperText: {
+    color: "#6B7280",
+    fontSize: 12,
+    marginTop: 4,
   },
   dropdown: {
     flexDirection: "row",
