@@ -27,6 +27,7 @@ const CURRENCY_KEY: Record<string, string> = {
   PHP: "banking.currencyPHP",
   USD: "banking.currencyUSD",
   EUR: "banking.currencyEUR",
+  JPY: "banking.currencyJPY",
 };
 
 export default function EwalletReview() {

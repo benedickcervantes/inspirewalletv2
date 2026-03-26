@@ -1485,6 +1485,8 @@ const en: TranslationMap = {
   "banking.currencyUSD": "USD",
   "banking.currencyEUR": "EUR",
   "banking.currencyKRW": "KRW",
+  "banking.currencyJPY": "JPY",
+  "banking.minimumIncomeGuide": "Minimum required income/amount is 1,000.",
 
   "banking.modalSelectCurrency": "Select Currency",
   "banking.idType": "ID Type",
@@ -1738,6 +1740,7 @@ const en: TranslationMap = {
   "register.errorFirstName": "Please enter your first name",
   "register.errorLastName": "Please enter your last name",
   "register.phoneNumber": "Phone Number",
+  "register.errorPhoneRequired": "Please enter your phone number",
   "register.errorPhoneInvalid":
     "Please enter a valid {digits}-digit phone number for the selected country.",
   "register.iHaveCompany": "I have a company",
@@ -1827,7 +1830,7 @@ const en: TranslationMap = {
   "ewallet.mobileInvalid": "Enter a valid 10-11 digit mobile number",
   "ewallet.sourceOfFundRequired": "Source of fund is required",
   "ewallet.incomeRequired": "Income amount is required",
-  "ewallet.incomeInvalid": "Enter a valid income amount",
+  "ewallet.incomeInvalid": "Amount must be at least 1,000",
   "ewallet.currencyRequired": "Currency is required",
   "ewallet.addressRequired": "Complete address is required",
 
@@ -3310,6 +3313,8 @@ const ko: TranslationMap = {
   "banking.currencyPHP": "PHP",
   "banking.currencyUSD": "USD",
   "banking.currencyEUR": "EUR",
+  "banking.currencyJPY": "JPY",
+  "banking.minimumIncomeGuide": "최소 요구 소득/금액은 1,000입니다.",
   "banking.modalSelectCurrency": "통화 선택",
   "banking.idType": "신분증 유형",
   "banking.idPassport": "여권",
@@ -3545,6 +3550,7 @@ const ko: TranslationMap = {
   "register.errorFirstName": "이름을 입력해 주세요",
   "register.errorLastName": "성을 입력해 주세요",
   "register.phoneNumber": "전화번호",
+  "register.errorPhoneRequired": "전화번호를 입력해 주세요",
   "register.errorPhoneInvalid":
     "선택한 국가의 올바른 {digits}자리 전화번호를 입력해 주세요.",
   "register.iHaveCompany": "회사가 있습니다",
@@ -3634,7 +3640,7 @@ const ko: TranslationMap = {
   "ewallet.mobileInvalid": "유효한 10-11자리 휴대전화 번호를 입력해 주세요",
   "ewallet.sourceOfFundRequired": "자금 출처가 필요합니다",
   "ewallet.incomeRequired": "소득 금액이 필요합니다",
-  "ewallet.incomeInvalid": "유효한 소득 금액을 입력해 주세요",
+  "ewallet.incomeInvalid": "금액은 최소 1,000 이상이어야 합니다",
   "ewallet.currencyRequired": "통화가 필요합니다",
   "ewallet.addressRequired": "완전한 주소가 필요합니다",
 
@@ -5109,6 +5115,8 @@ const ja: TranslationMap = {
   "banking.currencyPHP": "PHP",
   "banking.currencyUSD": "USD",
   "banking.currencyEUR": "EUR",
+  "banking.currencyJPY": "JPY",
+  "banking.minimumIncomeGuide": "最低必要収入/金額は1,000です。",
   "banking.modalSelectCurrency": "通貨を選択",
   "banking.idType": "身分証明書の種類",
   "banking.idPassport": "パスポート",
@@ -5352,6 +5360,7 @@ const ja: TranslationMap = {
   "register.errorFirstName": "名を入力してください",
   "register.errorLastName": "姓を入力してください",
   "register.phoneNumber": "電話番号",
+  "register.errorPhoneRequired": "電話番号を入力してください",
   "register.errorPhoneInvalid":
     "選択した国の{digits}桁の電話番号を正しく入力してください。",
   "register.iHaveCompany": "会社があります",
@@ -5442,7 +5451,7 @@ const ja: TranslationMap = {
   "ewallet.mobileInvalid": "有効な10〜11桁の携帯番号を入力してください",
   "ewallet.sourceOfFundRequired": "資金源は必須です",
   "ewallet.incomeRequired": "収入金額は必須です",
-  "ewallet.incomeInvalid": "有効な収入金額を入力してください",
+  "ewallet.incomeInvalid": "金額は最低1,000以上である必要があります",
   "ewallet.currencyRequired": "通貨は必須です",
   "ewallet.addressRequired": "完全な住所は必須です",
 
@@ -6899,6 +6908,8 @@ const ar: TranslationMap = {
   "banking.currencyPHP": "PHP",
   "banking.currencyUSD": "USD",
   "banking.currencyEUR": "EUR",
+  "banking.currencyJPY": "JPY",
+  "banking.minimumIncomeGuide": "الحد الأدنى المطلوب للدخل/المبلغ هو 1,000.",
   "banking.modalSelectCurrency": "اختر العملة",
   "banking.idType": "نوع الهوية",
   "banking.idPassport": "جواز السفر",
@@ -7128,6 +7139,7 @@ const ar: TranslationMap = {
   "register.errorFirstName": "يرجى إدخال اسمك الأول",
   "register.errorLastName": "يرجى إدخال اسم العائلة",
   "register.phoneNumber": "رقم الهاتف",
+  "register.errorPhoneRequired": "يرجى إدخال رقم الهاتف",
   "register.errorPhoneInvalid":
     "يرجى إدخال رقم هاتف صحيح ({digits} أرقام) للدولة المحددة.",
   "register.iHaveCompany": "لدي شركة",
@@ -7216,7 +7228,7 @@ const ar: TranslationMap = {
   "ewallet.mobileInvalid": "أدخل رقم هاتف محمول صحيح مكون من 10-11 أرقام",
   "ewallet.sourceOfFundRequired": "مصدر التمويل مطلوب",
   "ewallet.incomeRequired": "مبلغ الدخل مطلوب",
-  "ewallet.incomeInvalid": "أدخل مبلغ دخل صحيح",
+  "ewallet.incomeInvalid": "يجب أن يكون المبلغ 1,000 على الأقل",
   "ewallet.currencyRequired": "العملة مطلوبة",
   "ewallet.addressRequired": "العنوان الكامل مطلوب",
 
