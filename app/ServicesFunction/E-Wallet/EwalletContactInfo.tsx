@@ -4,22 +4,11 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useState } from "react";
-import {
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    SafeAreaView,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
-} from "react-native";
+import { KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useLanguage } from "../../../context/LanguageContext";
 import type { RootStackParamList } from "../../../types/navigation";
 
+import ActivityModal from '../../components/ActivityModal';
 const THEME_COLOR = "#E15816";
 const ORANGE_GRADIENT = ["#E25A17", "#F28934"] as const;
 const GREEN_COMPLETE = "#10B981";
@@ -282,7 +271,7 @@ export default function EwalletContactInfo() {
         </KeyboardAvoidingView>
       </SafeAreaView>
 
-      <Modal
+      <ActivityModal
         transparent
         animationType="fade"
         visible={showExitConfirmModal}
@@ -324,7 +313,7 @@ export default function EwalletContactInfo() {
             </View>
           </View>
         </View>
-      </Modal>
+      </ActivityModal>
     </View>
   );
 }

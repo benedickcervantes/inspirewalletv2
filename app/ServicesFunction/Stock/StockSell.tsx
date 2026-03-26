@@ -3,22 +3,13 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useRef, useState } from "react";
-import {
-    Modal,
-    PanResponder,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    useWindowDimensions,
-    View,
-} from "react-native";
+import { PanResponder, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { getWallets, submitStockSellRequest } from "../../../configs/api";
 import { getStockInvestmentMinAmount } from "../../../configs/currencies";
 import { useLanguage } from "../../../context/LanguageContext";
 
+import ActivityModal from '../../components/ActivityModal';
 const THEME_COLOR = "#E15816";
 const STOCK_RATE_DEFAULT = 2_000_000;
 
@@ -637,7 +628,7 @@ export default function StockSell() {
         </ScrollView>
 
         {/* Alert Modal */}
-        <Modal
+        <ActivityModal
           visible={showAlertModal}
           transparent
           animationType="fade"
@@ -666,7 +657,7 @@ export default function StockSell() {
               </TouchableOpacity>
             </LinearGradient>
           </View>
-        </Modal>
+        </ActivityModal>
       </SafeAreaView>
     </View>
   );

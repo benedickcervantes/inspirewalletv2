@@ -6,19 +6,7 @@ import * as FileSystem from "expo-file-system/legacy";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Sharing from "expo-sharing";
 import { useEffect, useRef, useState } from "react";
-import {
-    ActivityIndicator,
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    ScrollView,
-    Share,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
-} from "react-native";
+import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, Share, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import QRCode from "react-native-qrcode-svg";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
@@ -35,6 +23,7 @@ import Loader from "../../Loader/Loader";
 import ContactsModal from "./ContactsModal";
 import QRScanner from "./QRScanner";
 
+import ActivityModal from '../../components/ActivityModal';
 const width = (() => {
   try {
     return require("react-native").Dimensions?.get?.("window")?.width ?? 375;
@@ -607,7 +596,7 @@ export default function TransferRecipient() {
       </KeyboardAvoidingView>
 
       {/* Alert Modal */}
-      <Modal
+      <ActivityModal
         visible={showAlertModal}
         transparent={true}
         animationType="fade"
@@ -635,7 +624,7 @@ export default function TransferRecipient() {
             </LinearGradient>
           </View>
         </View>
-      </Modal>
+      </ActivityModal>
 
       {/* Contacts Modal */}
       <ContactsModal
@@ -656,7 +645,7 @@ export default function TransferRecipient() {
       />
 
       {/* QR Code Modal */}
-      <Modal
+      <ActivityModal
         visible={showQRModal}
         transparent={true}
         animationType="slide"
@@ -746,7 +735,7 @@ export default function TransferRecipient() {
             </View>
           </View>
         </View>
-      </Modal>
+      </ActivityModal>
 
       {/* QR Scanner */}
       <QRScanner

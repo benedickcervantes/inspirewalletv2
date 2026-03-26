@@ -5,19 +5,7 @@ import { CameraView, useCameraPermissions } from "expo-camera";
 import { LinearGradient } from "expo-linear-gradient";
 import * as ImagePicker from "expo-image-picker";
 import { useState } from "react";
-import {
-  ActivityIndicator,
-  Modal,
-  Platform,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
-} from "react-native";
+import { ActivityIndicator, Platform, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import {
   SafeAreaView,
@@ -34,6 +22,7 @@ import type { NavProp } from "../../types/navigation";
 import { useResponsive } from "../../utils/responsive";
 import * as SecureStore from 'expo-secure-store';
 
+import ActivityModal from '../components/ActivityModal';
 const getScreenWidth = () => {
   try {
     const D = require("react-native").Dimensions;
@@ -1981,7 +1970,7 @@ export default function Register() {
           </View>
         </View>
 
-        <Modal
+        <ActivityModal
           visible={isCountryModalVisible}
           transparent={true}
           animationType="slide"
@@ -2024,10 +2013,10 @@ export default function Register() {
               </ScrollView>
             </View>
           </View>
-        </Modal>
+        </ActivityModal>
 
         {/* QR Scanner Modal */}
-        <Modal
+        <ActivityModal
           visible={isQRScannerVisible}
           animationType="slide"
           transparent={false}
@@ -2123,9 +2112,9 @@ export default function Register() {
               </CameraView>
             )}
           </View>
-        </Modal>
+        </ActivityModal>
 
-        <Modal
+        <ActivityModal
           visible={appAlertVisible}
           transparent
           animationType="fade"
@@ -2147,7 +2136,7 @@ export default function Register() {
               </TouchableOpacity>
             </View>
           </View>
-        </Modal>
+        </ActivityModal>
       </SafeAreaView>
     </>
   );

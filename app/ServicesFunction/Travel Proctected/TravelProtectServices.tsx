@@ -6,20 +6,7 @@ import * as ImageManipulator from "expo-image-manipulator";
 import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useEffect, useRef, useState, type ComponentRef } from "react";
-import {
-  Keyboard,
-  Modal,
-  Platform,
-  TouchableOpacity,
-  TouchableOpacity as RNTouchableOpacity,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  useWindowDimensions,
-  View,
-} from "react-native";
+import { Keyboard, Platform, TouchableOpacity, TouchableOpacity as RNTouchableOpacity, ScrollView, StatusBar, StyleSheet, Text, TextInput, useWindowDimensions, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   getOrCreateMainWallet,
@@ -39,6 +26,7 @@ import TravelProtectPerDeatails from "./TravelProtectPerDeatails";
 import TravelProtectReviewSubmit from "./TravelProtectReview&Submit";
 import TravelRequiredDocu from "./TravelRequiredDocu";
 
+import ActivityModal from '../../components/ActivityModal';
 const EMPTY_PLACEHOLDER = "__empty__";
 const FRONT_AND_BACK_GOVERNMENT_ID_TYPES = ["National_ID", "Driver_License"];
 const TARGET_IMAGE_BYTES = 3 * 1024 * 1024;
@@ -164,7 +152,7 @@ const CustomAlertModal = ({
   if (!visible) return null;
 
   return (
-    <Modal transparent animationType="fade" visible={visible}>
+    <ActivityModal transparent animationType="fade" visible={visible}>
       <View style={customAlertStyles.modalOverlay}>
         <View style={customAlertStyles.modalContent}>
           <LinearGradient
@@ -191,7 +179,7 @@ const CustomAlertModal = ({
           </LinearGradient>
         </View>
       </View>
-    </Modal>
+    </ActivityModal>
   );
 };
 
@@ -1280,7 +1268,7 @@ export default function TravelProtection() {
                         }}
                       />
                     </View>
-                    <Modal
+                    <ActivityModal
                       visible={showCountryDropdown}
                       transparent
                       animationType="slide"
@@ -1328,7 +1316,7 @@ export default function TravelProtection() {
                           </ScrollView>
                         </View>
                       </View>
-                    </Modal>
+                    </ActivityModal>
                     {mobileError && (
                       <Text style={styles.errorMessage}>{mobileError}</Text>
                     )}
@@ -1642,7 +1630,7 @@ export default function TravelProtection() {
         type={alertConfig.type}
         confirmText={alertConfig.confirmText}
       />
-      <Modal
+      <ActivityModal
         transparent
         animationType="fade"
         visible={showExitConfirmModal}
@@ -1684,7 +1672,7 @@ export default function TravelProtection() {
             </View>
           </View>
         </View>
-      </Modal>
+      </ActivityModal>
         </>
       )}
     </View>

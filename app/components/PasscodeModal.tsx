@@ -1,17 +1,8 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useRef } from "react";
-import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { ActivityIndicator, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 
+import ActivityModal from './ActivityModal';
 type PasscodeModalProps = {
   visible: boolean;
   passcode: string;
@@ -50,7 +41,7 @@ export default function PasscodeModal({
   }, [visible, loading]);
 
   return (
-    <Modal
+    <ActivityModal
       visible={visible}
       transparent
       animationType="fade"
@@ -151,7 +142,7 @@ export default function PasscodeModal({
           </View>
         </View>
       </KeyboardAvoidingView>
-    </Modal>
+    </ActivityModal>
   );
 }
 

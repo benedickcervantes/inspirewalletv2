@@ -2,22 +2,11 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useCallback, useState } from "react";
-import {
-    ActivityIndicator,
-    Modal,
-    Platform,
-    SafeAreaView,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    useWindowDimensions,
-    View,
-} from "react-native";
+import { ActivityIndicator, Platform, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { useLanguage } from "../../../context/LanguageContext";
 import { isServiceUnderMaintenance } from "../../../lib/maintenance";
 
+import ActivityModal from '../../components/ActivityModal';
 const THEME_COLOR = "#E15816";
 const ORANGE_GRADIENT = ["#E25A17", "#F28934"];
 
@@ -236,7 +225,7 @@ export default function EwalletService() {
       </SafeAreaView>
 
       {/* E-Wallet Provider Selection Modal */}
-      <Modal
+      <ActivityModal
         visible={showProviderModal}
         transparent
         animationType="slide"
@@ -276,10 +265,10 @@ export default function EwalletService() {
             </ScrollView>
           </View>
         </View>
-      </Modal>
+      </ActivityModal>
 
       {/* Exit confirmation modal */}
-      <Modal
+      <ActivityModal
         transparent
         animationType="fade"
         visible={showExitConfirmModal}
@@ -321,7 +310,7 @@ export default function EwalletService() {
             </View>
           </View>
         </View>
-      </Modal>
+      </ActivityModal>
     </View>
   );
 }

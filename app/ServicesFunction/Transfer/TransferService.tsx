@@ -6,15 +6,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import * as Sharing from "expo-sharing";
 import { doc, getDoc } from "firebase/firestore";
 import { useEffect, useRef, useState } from "react";
-import {
-    Modal,
-    ScrollView,
-    Share,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
-} from "react-native";
+import { ScrollView, Share, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import QRCode from "react-native-qrcode-svg";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { getOrCreateMainWallet } from "../../../configs/api";
@@ -23,6 +15,7 @@ import { useLanguage } from "../../../context/LanguageContext";
 import ContactsModal from "./ContactsModal";
 import QRScanner from "./QRScanner";
 
+import ActivityModal from '../../components/ActivityModal';
 const getScreenWidth = () => {
   try {
     const D = require("react-native").Dimensions;
@@ -422,7 +415,7 @@ export default function SendMoney() {
       </ScrollView>
 
       {/* Alert Modal */}
-      <Modal
+      <ActivityModal
         visible={showAlertModal}
         transparent={true}
         animationType="fade"
@@ -452,10 +445,10 @@ export default function SendMoney() {
             </LinearGradient>
           </View>
         </View>
-      </Modal>
+      </ActivityModal>
 
       {/* QR Code Modal */}
-      <Modal
+      <ActivityModal
         visible={showQRModal}
         transparent={true}
         animationType="slide"
@@ -529,7 +522,7 @@ export default function SendMoney() {
             </View>
           </View>
         </View>
-      </Modal>
+      </ActivityModal>
 
       {/* Contacts Modal */}
       <ContactsModal

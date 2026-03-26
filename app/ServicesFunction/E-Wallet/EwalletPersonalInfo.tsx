@@ -4,20 +4,11 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useState } from "react";
-import {
-    Modal,
-    Platform,
-    SafeAreaView,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
-} from "react-native";
+import { Platform, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useLanguage } from "../../../context/LanguageContext";
 import type { EwalletApplicationData, RootStackParamList } from "../../../types/navigation";
 
+import ActivityModal from '../../components/ActivityModal';
 const THEME_COLOR = "#E15816";
 const ORANGE_GRADIENT = ["#E25A17", "#F28934"] as const;
 const GREEN_COMPLETE = "#10B981";
@@ -335,7 +326,7 @@ export default function EwalletPersonalInfo() {
       </SafeAreaView>
 
       {/* Gender Modal */}
-      <Modal
+      <ActivityModal
         visible={showGenderModal}
         transparent
         animationType="slide"
@@ -376,10 +367,10 @@ export default function EwalletPersonalInfo() {
             </ScrollView>
           </View>
         </View>
-      </Modal>
+      </ActivityModal>
 
       {/* Date of Birth Modal */}
-      <Modal
+      <ActivityModal
         visible={showDateModal}
         transparent
         animationType="slide"
@@ -471,10 +462,10 @@ export default function EwalletPersonalInfo() {
             </TouchableOpacity>
           </View>
         </View>
-      </Modal>
+      </ActivityModal>
 
       {/* Civil Status Modal */}
-      <Modal
+      <ActivityModal
         visible={showCivilStatusModal}
         transparent
         animationType="slide"
@@ -515,10 +506,10 @@ export default function EwalletPersonalInfo() {
             </ScrollView>
           </View>
         </View>
-      </Modal>
+      </ActivityModal>
 
       {/* Citizenship Modal */}
-      <Modal
+      <ActivityModal
         visible={showCitizenshipModal}
         transparent
         animationType="slide"
@@ -559,10 +550,10 @@ export default function EwalletPersonalInfo() {
             </ScrollView>
           </View>
         </View>
-      </Modal>
+      </ActivityModal>
 
       {/* Exit confirmation modal */}
-      <Modal
+      <ActivityModal
         transparent
         animationType="fade"
         visible={showExitConfirmModal}
@@ -604,7 +595,7 @@ export default function EwalletPersonalInfo() {
             </View>
           </View>
         </View>
-      </Modal>
+      </ActivityModal>
     </View>
   );
 }

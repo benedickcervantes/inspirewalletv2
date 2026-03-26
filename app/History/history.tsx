@@ -4,18 +4,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  ActivityIndicator,
-  Modal,
-  Platform,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
-} from "react-native";
+import { ActivityIndicator, Platform, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Path } from "react-native-svg";
 import { getOrCreateMainWallet, getTransactions } from "../../configs/api";
@@ -25,6 +14,7 @@ import { getLanguageCode } from "../../constants/locales";
 import { useLanguage } from "../../context/LanguageContext";
 import type { NavProp } from "../../types/navigation";
 
+import ActivityModal from '../components/ActivityModal';
 const TRANSACTION_TYPE_KEYS: Record<string, string> = {
   TOP_UP: "tx.deposit",
   PAYMENT: "tx.withdraw",
@@ -1206,7 +1196,7 @@ export default function HistoryScreen() {
       )}
 
       {/* Custom Date Picker Modal */}
-      <Modal
+      <ActivityModal
         visible={showCustomDatePicker}
         transparent
         animationType="fade"
@@ -1293,7 +1283,7 @@ export default function HistoryScreen() {
             </View>
           </TouchableOpacity>
         </TouchableOpacity>
-      </Modal>
+      </ActivityModal>
 
       {/* Date Pickers */}
       {showStartDatePicker && (
@@ -1318,7 +1308,7 @@ export default function HistoryScreen() {
 
       {/* Delete Options Modal */}
       {isSelectMode && selectedIds.size > 0 && (
-        <Modal
+        <ActivityModal
           visible={showDeleteOptions}
           transparent
           animationType="fade"
@@ -1374,11 +1364,11 @@ export default function HistoryScreen() {
               </View>
             </TouchableOpacity>
           </TouchableOpacity>
-        </Modal>
+        </ActivityModal>
       )}
 
       {/* Transaction Detail Modal */}
-      <Modal
+      <ActivityModal
         visible={showDetailModal}
         transparent
         animationType="slide"
@@ -1492,7 +1482,7 @@ export default function HistoryScreen() {
             </ScrollView>
           </View>
         </View>
-      </Modal>
+      </ActivityModal>
     </View>
   );
 }

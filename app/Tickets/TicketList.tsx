@@ -2,18 +2,11 @@ import { subscribeToNewTicketMessage, subscribeToTicketCreated } from "@/lib/tic
 import { listUserTickets, type Ticket } from "@/lib/tickets";
 import { useFocusEffect } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
-import {
-  Modal,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useLanguage } from "../../context/LanguageContext";
 import TicketDetail from "./TicketDetail";
 
+import ActivityModal from '../components/ActivityModal';
 interface TicketListProps {
   accessToken: string;
   onTicketSelected?: (selected: boolean) => void;
@@ -233,7 +226,7 @@ function TicketList({ accessToken, onTicketSelected, refreshTrigger }: TicketLis
       )}
     </ScrollView>
 
-    <Modal
+    <ActivityModal
       visible={!!selectedTicket}
       animationType="slide"
       statusBarTranslucent
@@ -253,7 +246,7 @@ function TicketList({ accessToken, onTicketSelected, refreshTrigger }: TicketLis
           }}
         />
       )}
-    </Modal>
+    </ActivityModal>
     </>
   );
 }

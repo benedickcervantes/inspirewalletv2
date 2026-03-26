@@ -31,13 +31,15 @@ const IDLE_SESSION_ACTIVE_KEY = "idleSessionActive";
 const THEME_COLOR = "#E15816";
 const WHITE = "#FFFFFF";
 
+export interface IdleActivityProps {
+  onTouchStart: () => void;
+  onStartShouldSetResponderCapture: () => boolean;
+  onMoveShouldSetResponderCapture: () => boolean;
+}
+
 interface IdleTimeoutContextValue {
   registerActivity: () => void;
-  getActivityProps: () => {
-    onTouchStart: () => void;
-    onStartShouldSetResponderCapture: () => boolean;
-    onMoveShouldSetResponderCapture: () => boolean;
-  };
+  getActivityProps: () => IdleActivityProps;
   startIdleSession: () => void;
   stopIdleSession: () => void;
   isSessionActive: boolean;

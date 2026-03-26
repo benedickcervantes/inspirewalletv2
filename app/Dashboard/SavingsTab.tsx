@@ -1,20 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useRef, useState } from "react";
-import {
-  ImageBackground,
-  Modal,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  useWindowDimensions,
-  View
-} from "react-native";
+import { ImageBackground, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLanguage } from "../../context/LanguageContext";
 import { useResponsive } from "../../utils/responsive";
+import ActivityModal from '../components/ActivityModal';
 import {
   buildProjectedPayoutSchedule,
   computeProjectedTotalDividend,
@@ -499,7 +490,7 @@ export default function SavingsTab({
 
       <View style={{ height: 20 }} />
 
-      <Modal
+      <ActivityModal
         visible={!!selectedContract}
         animationType="slide"
         transparent
@@ -732,9 +723,9 @@ export default function SavingsTab({
             )}
           </View>
         </View>
-      </Modal>
+      </ActivityModal>
 
-      <Modal
+      <ActivityModal
         visible={showContractComingSoonModal}
         transparent
         animationType="fade"
@@ -756,7 +747,7 @@ export default function SavingsTab({
             </TouchableOpacity>
           </View>
         </View>
-      </Modal>
+      </ActivityModal>
     </ScrollView>
   );
 }

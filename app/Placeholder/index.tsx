@@ -15,23 +15,7 @@ import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { doc, getDoc } from "firebase/firestore";
 import { useCallback, useEffect, useState } from "react";
-import {
-    ActivityIndicator,
-    Alert,
-    AppState,
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TextInput,
-    ToastAndroid,
-    TouchableOpacity,
-    useWindowDimensions,
-    View,
-} from "react-native";
+import { ActivityIndicator, Alert, AppState, KeyboardAvoidingView, Platform, ScrollView, StatusBar, StyleSheet, Text, TextInput, ToastAndroid, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import {
     SafeAreaView,
     useSafeAreaInsets,
@@ -45,6 +29,7 @@ import {
 import { useLanguage } from "../../context/LanguageContext";
 import { useResponsive } from "../../utils/responsive";
 
+import ActivityModal from '../components/ActivityModal';
 const THEME_COLOR = "#E15816";
 const USER_PREFERRED_LANGUAGE_KEY = "user_preferred_language";
 const COMPANY_KYC_PENDING_KEY = "company_kyc_pending";
@@ -1220,7 +1205,7 @@ export default function Placeholder() {
       </ScrollView>
 
       {/* Name Edit Modal */}
-      <Modal visible={showNameModal} transparent animationType="slide">
+      <ActivityModal visible={showNameModal} transparent animationType="slide">
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={styles.modalOverlay}
@@ -1301,10 +1286,10 @@ export default function Placeholder() {
             </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>
-      </Modal>
+      </ActivityModal>
 
       {/* Phone Edit Modal */}
-      <Modal visible={showPhoneModal} transparent animationType="slide">
+      <ActivityModal visible={showPhoneModal} transparent animationType="slide">
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={styles.modalOverlay}
@@ -1363,10 +1348,10 @@ export default function Placeholder() {
             </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>
-      </Modal>
+      </ActivityModal>
 
       {/* Contact Links Edit Modal */}
-      <Modal visible={showContactLinksModal} transparent animationType="fade">
+      <ActivityModal visible={showContactLinksModal} transparent animationType="fade">
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : undefined}
           style={styles.modalOverlay}
@@ -1500,10 +1485,10 @@ export default function Placeholder() {
             </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>
-      </Modal>
+      </ActivityModal>
 
       {/* Language Modal - matches Register language options (transparent overlay + outer glow) */}
-      <Modal
+      <ActivityModal
         visible={languageModalVisible}
         transparent
         animationType="fade"
@@ -1588,10 +1573,10 @@ export default function Placeholder() {
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
-      </Modal>
+      </ActivityModal>
 
       {/* Success Modal */}
-      <Modal visible={showSuccessModal} transparent animationType="fade">
+      <ActivityModal visible={showSuccessModal} transparent animationType="fade">
         <View style={styles.successOverlay}>
           <View style={styles.successContent}>
             <Ionicons
@@ -1612,10 +1597,10 @@ export default function Placeholder() {
             </TouchableOpacity>
           </View>
         </View>
-      </Modal>
+      </ActivityModal>
 
       {/* Company KYC Rejected Modal */}
-      <Modal
+      <ActivityModal
         visible={showCompanyRejectedModal}
         transparent
         animationType="fade"
@@ -1644,7 +1629,7 @@ export default function Placeholder() {
             </TouchableOpacity>
           </View>
         </View>
-      </Modal>
+      </ActivityModal>
     </SafeAreaView>
   );
 }

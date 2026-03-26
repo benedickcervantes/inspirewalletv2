@@ -2,17 +2,11 @@ import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useState } from "react";
-import {
-    Modal,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
-} from "react-native";
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLanguage } from "../../../context/LanguageContext";
 
+import ActivityModal from '../../components/ActivityModal';
 export default function WithdrawType() {
   const navigation = useNavigation();
   const { t } = useLanguage();
@@ -161,7 +155,7 @@ export default function WithdrawType() {
         </ScrollView>
 
         {/* Custom Alert Modal */}
-        <Modal
+        <ActivityModal
           visible={showAlertModal}
           transparent={true}
           animationType="fade"
@@ -184,7 +178,7 @@ export default function WithdrawType() {
               </TouchableOpacity>
             </LinearGradient>
           </View>
-        </Modal>
+        </ActivityModal>
       </SafeAreaView>
     </View>
   );

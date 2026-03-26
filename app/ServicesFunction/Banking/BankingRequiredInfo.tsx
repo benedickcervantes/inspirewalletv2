@@ -7,23 +7,12 @@ import * as FileSystem from "expo-file-system/legacy";
 import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useState } from "react";
-import {
-    Alert,
-    Image,
-    Modal,
-    Platform,
-    SafeAreaView,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
-} from "react-native";
+import { Alert, Image, Platform, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { submitBankingApplication } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
 import type { RootStackParamList } from "../../../types/navigation";
 
+import ActivityModal from '../../components/ActivityModal';
 const THEME_COLOR = "#E15816";
 const ORANGE_GRADIENT = ["#E25A17", "#F28934"] as const;
 const GREEN_COMPLETE = "#10B981";
@@ -647,7 +636,7 @@ export default function BankingRequiredInfo() {
       </SafeAreaView>
 
       {/* ID Type Modal */}
-      <Modal
+      <ActivityModal
         visible={showIdTypeModal}
         transparent
         animationType="slide"
@@ -689,10 +678,10 @@ export default function BankingRequiredInfo() {
             </ScrollView>
           </View>
         </View>
-      </Modal>
+      </ActivityModal>
 
       {/* Custom Success Modal */}
-      <Modal
+      <ActivityModal
         visible={showSuccessModal}
         transparent
         animationType="fade"
@@ -723,8 +712,8 @@ export default function BankingRequiredInfo() {
             </LinearGradient>
           </View>
         </View>
-      </Modal>
-      <Modal
+      </ActivityModal>
+      <ActivityModal
         transparent
         animationType="fade"
         visible={showExitConfirmModal}
@@ -766,7 +755,7 @@ export default function BankingRequiredInfo() {
             </View>
           </View>
         </View>
-      </Modal>
+      </ActivityModal>
         </>
     </View>
   );

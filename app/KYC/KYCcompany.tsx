@@ -6,26 +6,14 @@ import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system/legacy";
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useRef, useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  Modal,
-  Platform,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
-} from "react-native";
+import { ActivityIndicator, Alert, Platform, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { useLanguage } from "../../context/LanguageContext";
 
+import ActivityModal from '../components/ActivityModal';
 const REFERENCE_WIDTH = 393;
 
 const THEME_COLOR = "#E15816";
@@ -311,7 +299,7 @@ export default function KYCcompany() {
   ];
 
   return (
-    <Modal visible={true} animationType="slide" presentationStyle="pageSheet">
+    <ActivityModal visible={true} animationType="slide" presentationStyle="pageSheet">
       <SafeAreaView
         style={styles.container}
         edges={["bottom", "left", "right"]}
@@ -587,7 +575,7 @@ export default function KYCcompany() {
       </SafeAreaView>
 
       {/* Success Modal */}
-      <Modal
+      <ActivityModal
         visible={showSuccessModal}
         transparent
         animationType="fade"
@@ -625,8 +613,8 @@ export default function KYCcompany() {
             </TouchableOpacity>
           </View>
         </View>
-      </Modal>
-    </Modal>
+      </ActivityModal>
+    </ActivityModal>
   );
 }
 

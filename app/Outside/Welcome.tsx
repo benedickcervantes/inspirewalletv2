@@ -4,16 +4,7 @@ import { useNavigation } from "@react-navigation/native";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useState } from "react";
-import {
-    Modal,
-    Platform,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
-} from "react-native";
+import { Platform, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
     DEFAULT_LANGUAGE,
@@ -24,6 +15,7 @@ import { useLanguage } from "../../context/LanguageContext";
 import { useResponsive } from "../../utils/responsive";
 import Loader from "../Loader/Loader";
 
+import ActivityModal from '../components/ActivityModal';
 const GRADIENT_START = "#E15816";
 const GRADIENT_END = "#F48F38";
 const BUTTON_REGISTER = "#FFC192";
@@ -178,7 +170,7 @@ export default function Welcome() {
         </Text>
       </LinearGradient>
 
-      <Modal
+      <ActivityModal
         visible={languageModalVisible}
         transparent
         animationType="fade"
@@ -291,7 +283,7 @@ export default function Welcome() {
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
-      </Modal>
+      </ActivityModal>
     </>
   );
 }

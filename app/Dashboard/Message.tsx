@@ -2,22 +2,7 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  Alert,
-  Image,
-  Keyboard,
-  KeyboardAvoidingView,
-  Linking,
-  Modal,
-  Platform,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
-} from "react-native";
+import { Alert, Image, Keyboard, KeyboardAvoidingView, Linking, Platform, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import {
   SafeAreaView,
   useSafeAreaInsets,
@@ -36,6 +21,7 @@ import type { NavProp } from "../../types/navigation";
 import TicketCreation from "../Tickets/TicketCreation";
 import TicketList from "../Tickets/TicketList";
 
+import ActivityModal from '../components/ActivityModal';
 interface ApiMessage {
   id: string;
   content: string;
@@ -650,7 +636,7 @@ export default function Message() {
       )}
 
       {/* Message Actions Modal */}
-      <Modal
+      <ActivityModal
         visible={showMessageActions}
         transparent
         animationType="fade"
@@ -685,10 +671,10 @@ export default function Message() {
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
-      </Modal>
+      </ActivityModal>
 
       {/* Edit Message Modal */}
-      <Modal
+      <ActivityModal
         visible={!!editingMessage}
         transparent
         animationType="slide"
@@ -745,7 +731,7 @@ export default function Message() {
             </TouchableOpacity>
           </TouchableOpacity>
         </KeyboardAvoidingView>
-      </Modal>
+      </ActivityModal>
     </SafeAreaView>
   );
 }

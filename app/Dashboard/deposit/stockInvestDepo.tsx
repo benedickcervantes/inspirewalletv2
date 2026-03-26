@@ -3,17 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useState } from "react";
-import {
-  ActivityIndicator,
-  Modal,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { ActivityIndicator, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { getOrCreateMainWallet } from "../../../configs/api";
@@ -22,6 +12,7 @@ import {
   getStockInvestmentMinAmount,
 } from "../../../configs/currencies";
 import { useLanguage } from "../../../context/LanguageContext";
+import ActivityModal from '../../components/ActivityModal';
 import {
   formatAmountWithCommas,
   unformatNumberString,
@@ -319,7 +310,7 @@ export default function StockInvestment() {
         </KeyboardAwareScrollView>
 
         {/* Currency Selector Modal */}
-        <Modal
+        <ActivityModal
           visible={showCurrencyModal}
           transparent={true}
           animationType="slide"
@@ -366,7 +357,7 @@ export default function StockInvestment() {
               </ScrollView>
             </View>
           </View>
-        </Modal>
+        </ActivityModal>
       </SafeAreaView>
     </View>
   );

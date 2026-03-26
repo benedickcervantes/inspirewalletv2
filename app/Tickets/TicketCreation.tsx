@@ -3,24 +3,11 @@ import { createTicket, type CreateTicketDto } from "@/lib/tickets";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  Keyboard,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
-} from "react-native";
+import { ActivityIndicator, Alert, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLanguage } from "../../context/LanguageContext";
 
+import ActivityModal from '../components/ActivityModal';
 interface TicketCreationProps {
   open: boolean;
   onClose: () => void;
@@ -106,7 +93,7 @@ export default function TicketCreation({
   };
 
   return (
-    <Modal visible={open} animationType="slide" statusBarTranslucent>
+    <ActivityModal visible={open} animationType="slide" statusBarTranslucent>
       <SafeAreaView style={styles.container} edges={["top"]}>
         {/* Header */}
         <View style={[styles.header, isSmallScreen && styles.headerSmall]}>
@@ -263,7 +250,7 @@ export default function TicketCreation({
                   />
                 </TouchableOpacity>
 
-                <Modal
+                <ActivityModal
                   visible={categoryDropdownOpen}
                   transparent
                   animationType="fade"
@@ -336,7 +323,7 @@ export default function TicketCreation({
                       </ScrollView>
                     </TouchableOpacity>
                   </TouchableOpacity>
-                </Modal>
+                </ActivityModal>
               </View>
 
               <TouchableOpacity
@@ -375,7 +362,7 @@ export default function TicketCreation({
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
-    </Modal>
+    </ActivityModal>
   );
 }
 

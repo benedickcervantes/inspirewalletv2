@@ -2,17 +2,11 @@ import { Ionicons } from "@expo/vector-icons";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { LinearGradient } from "expo-linear-gradient";
 import { useState } from "react";
-import {
-  ActivityIndicator,
-  Modal,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useLanguage } from "../../../context/LanguageContext";
 import { pickAndDecodeQR } from "../../../utils/qrUtils";
 
+import ActivityModal from '../../components/ActivityModal';
 const getWindow = () => {
   try {
     return (
@@ -60,7 +54,7 @@ export default function QRScanner({
 
   if (!permission.granted) {
     return (
-      <Modal
+      <ActivityModal
         visible={visible}
         transparent={true}
         animationType="slide"
@@ -95,12 +89,12 @@ export default function QRScanner({
             </TouchableOpacity>
           </View>
         </View>
-      </Modal>
+      </ActivityModal>
     );
   }
 
   return (
-    <Modal
+    <ActivityModal
       visible={visible}
       transparent={false}
       animationType="slide"
@@ -217,7 +211,7 @@ export default function QRScanner({
           </LinearGradient>
         </CameraView>
       </View>
-    </Modal>
+    </ActivityModal>
   );
 }
 

@@ -3,31 +3,11 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-    ActivityIndicator,
-    Alert,
-    Animated,
-    Dimensions,
-    Easing,
-    Image,
-    type ImageSourcePropType,
-    Keyboard,
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    Pressable,
-    SafeAreaView,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
-} from "react-native";
+import { ActivityIndicator, Alert, Animated, Dimensions, Easing, Image, type ImageSourcePropType, Keyboard, KeyboardAvoidingView, Platform, Pressable, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { submitPhysicalCardRequest, updateProfile } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
 
+import ActivityModal from '../../components/ActivityModal';
 const THEME_COLOR = "#E15816";
 const STOCK_HEADER_GRADIENT = ["#E25A17", "#F28934"] as const;
 const AUTO_ROTATE_DELAY_MS = 2000;
@@ -446,7 +426,7 @@ export default function BlackC() {
         </ScrollView>
       </SafeAreaView>
 
-      <Modal
+      <ActivityModal
         visible={applyModalVisible}
         transparent
         animationType="fade"
@@ -540,7 +520,7 @@ export default function BlackC() {
             </View>
           </KeyboardAvoidingView>
         </View>
-      </Modal>
+      </ActivityModal>
     </View>
   );
 }
