@@ -136,17 +136,15 @@ export default function TimeDepositProof() {
         }
       }
 
-      navigation.navigate("depositReceipt", {
+      navigation.navigate("depositProofView", {
         transactionId: requestId || t("investment.pending"),
+        requestId: requestId || t("investment.pending"),
         amount,
         currency,
         depositMethod,
         contractPeriod,
         type: "Time Deposit",
-        successMessage:
-          depositMethod === "Available Balance"
-            ? t("deposit.timeDepositSuccessMessage")
-            : t("deposit.uploadSuccessMessage"),
+        proofUri,
       });
     } catch (error) {
       console.error("Error finalizing time deposit:", error);

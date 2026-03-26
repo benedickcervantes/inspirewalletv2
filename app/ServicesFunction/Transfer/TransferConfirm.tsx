@@ -6,29 +6,32 @@ import { LinearGradient } from "expo-linear-gradient";
 import * as Sharing from "expo-sharing";
 import { useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
-  Modal,
-  NativeModules,
-  ScrollView,
-  Share,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Modal,
+    ScrollView,
+    Share,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import QRCode from "react-native-qrcode-svg";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
-  createBeneficiary,
-  getMe,
-  getOrCreateMainWallet,
-  submitTransfer,
+    createBeneficiary,
+    getMe,
+    getOrCreateMainWallet,
+    submitTransfer,
 } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
 import PasscodeModal from "../../components/PasscodeModal";
 import Loader from "../../Loader/Loader";
 import ContactsModal from "./ContactsModal";
 import QRScanner from "./QRScanner";
+
+import {
+  refreshAdminTransferSuccessSound,
+} from "../../../constants/adminAudio";
 
 const width = (() => {
   try {
@@ -37,8 +40,6 @@ const width = (() => {
     return 375;
   }
 })();
-
-const transferSuccessSound = require("../../../assets/sounds/pay_now.wav");
 
 // Reusable function to get user initials
 export const getUserInitials = (name: string) => {
@@ -115,63 +116,12 @@ export default function TransferConfirm() {
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [showContactsModal, setShowContactsModal] = useState(false);
   const qrRef = useRef<any | null>(null);
-  const transferSuccessSoundRef = useRef<{
-    unloadAsync: () => Promise<unknown>;
-    replayAsync: () => Promise<unknown>;
-    setOnPlaybackStatusUpdate: (
-      callback: ((status: any) => void) | null,
-    ) => void;
-  } | null>(null);
-
-  const playTransferSuccessSound = async () => {
-    try {
-      const hasNativeExpoAv = Boolean(
-        (NativeModules as Record<string, unknown>)?.ExponentAV,
-      );
-      if (!hasNativeExpoAv) {
-        return;
-      }
-
-      const av = await import("expo-av");
-      const Audio = av.Audio;
-      if (!Audio) {
-        return;
-      }
-      await Audio.setAudioModeAsync({
-        playsInSilentModeIOS: true,
-        shouldDuckAndroid: true,
-        playThroughEarpieceAndroid: false,
-        staysActiveInBackground: false,
-      });
-      if (transferSuccessSoundRef.current) {
-        await transferSuccessSoundRef.current.unloadAsync();
-        transferSuccessSoundRef.current = null;
-      }
-      const { sound } = await Audio.Sound.createAsync(transferSuccessSound, {
-        shouldPlay: false,
-        volume: 1.0,
-      });
-      transferSuccessSoundRef.current = sound;
-      sound.setOnPlaybackStatusUpdate((status) => {
-        if (status.isLoaded && status.didJustFinish) {
-          sound.unloadAsync().catch(() => {
-            // no-op
-          });
-          if (transferSuccessSoundRef.current === sound) {
-            transferSuccessSoundRef.current = null;
-          }
-        }
-      });
-      await sound.replayAsync();
-      await new Promise((resolve) => setTimeout(resolve, 220));
-    } catch {
-      // Ignore optional sound failures to keep transfer UX uninterrupted.
-    }
-  };
-
   useEffect(() => {
     loadBalance();
     loadUserAccountNumber();
+    refreshAdminTransferSuccessSound().catch(() => {
+      // no-op: keep bundled fallback sound
+    });
     (async () => {
       const userJson = await AsyncStorage.getItem("user");
       if (userJson) {
@@ -182,15 +132,7 @@ export default function TransferConfirm() {
       }
     })();
 
-    return () => {
-      if (transferSuccessSoundRef.current) {
-        transferSuccessSoundRef.current.setOnPlaybackStatusUpdate(null);
-        transferSuccessSoundRef.current.unloadAsync().catch(() => {
-          // no-op
-        });
-        transferSuccessSoundRef.current = null;
-      }
-    };
+    return () => undefined;
   }, []);
 
   const refreshHasPasscode = async (): Promise<boolean> => {
@@ -338,7 +280,6 @@ export default function TransferConfirm() {
         await saveRecentRecipient({ name: recipientName, accountNumber });
         setShowPasscodeModal(false);
         setPasscode("");
-        await playTransferSuccessSound();
 
         const txId = (result.data as any)?.id || t("investment.pending");
         (navigation as any).navigate("depositReceipt", {
@@ -360,6 +301,7 @@ export default function TransferConfirm() {
             )
             .replace("{name}", recipientName),
           date: new Date().toLocaleString(),
+          playTransferSuccessAudio: true,
         });
       } else {
         const msg = result.error || t("sendMoney.transferFailed");

@@ -23,13 +23,13 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { decodeQrImage, register as registerApi } from "../../configs/api";
 import {
-  DEFAULT_LANGUAGE,
-  normalizeLanguage,
-  SUPPORTED_LANGUAGES,
-} from "../../constants/locales";
+  decodeQrImage,
+  lookupReferralCode,
+  register as registerApi,
+} from "../../configs/api";
 import { useLanguage } from "../../context/LanguageContext";
+import { useLanguageModal } from "../../context/LanguageModalContext";
 import type { NavProp } from "../../types/navigation";
 import { useResponsive } from "../../utils/responsive";
 import * as SecureStore from 'expo-secure-store';
@@ -42,8 +42,6 @@ const getScreenWidth = () => {
     return 375;
   }
 };
-
-const USER_PREFERRED_LANGUAGE_KEY = "user_preferred_language";
 
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 const filterCompanyInput = (text: string) =>
@@ -150,10 +148,9 @@ export default function Register() {
   const footerBottomPadding = insets.bottom || 16;
   const scrollPaddingBottom =
     (isCompact || isSmallScreen ? 20 : 24) + footerBottomPadding;
-  const { t, language: contextLanguage, setLanguage } = useLanguage();
-  const language = normalizeLanguage(contextLanguage ?? DEFAULT_LANGUAGE);
+  const { t } = useLanguage();
+  const { openLanguageModal } = useLanguageModal();
   const [currentStep, setCurrentStep] = useState(1);
-  const [languageModalVisible, setLanguageModalVisible] = useState(false);
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -168,10 +165,15 @@ export default function Register() {
   const [isProcessingQR, setIsProcessingQR] = useState(false);
   const [isAgent, setIsAgent] = useState<boolean | null>(null);
   const [referralCode, setReferralCode] = useState("");
+  const [isLookingUpReferral, setIsLookingUpReferral] = useState(false);
+  const [lastShownReferralCode, setLastShownReferralCode] = useState("");
   const [registerLoading, setRegisterLoading] = useState(false);
   const [registerError, setRegisterError] = useState("");
   const [appAlertVisible, setAppAlertVisible] = useState(false);
   const [appAlertMessage, setAppAlertMessage] = useState("");
+  const [appAlertIsValidReferral, setAppAlertIsValidReferral] = useState(false);
+  const [pendingReferrerName, setPendingReferrerName] = useState("");
+  const [confirmedReferrerName, setConfirmedReferrerName] = useState("");
 
   const [emailAddress, setEmailAddress] = useState("");
   const [password, setPassword] = useState("");
@@ -316,12 +318,90 @@ export default function Register() {
       });
     }
   };
-  const showAppAlert = (message: string) => {
+  const showAppAlert = (message: string, isValidReferral = false) => {
     setAppAlertMessage(message);
+    setAppAlertIsValidReferral(isValidReferral);
     setAppAlertVisible(true);
   };
 
-  const handleNextStep = () => {
+  const closeAppAlert = () => {
+    if (appAlertIsValidReferral && pendingReferrerName) {
+      setConfirmedReferrerName(pendingReferrerName);
+    }
+    setAppAlertVisible(false);
+    setAppAlertIsValidReferral(false);
+    setPendingReferrerName("");
+  };
+
+  const validateReferralCode = async (
+    showInvalidModal: boolean,
+    codeToValidate?: string,
+  ): Promise<boolean> => {
+    const normalizedCode = (codeToValidate ?? referralCode).trim().toUpperCase();
+    if (!normalizedCode) {
+      setConfirmedReferrerName("");
+      return true;
+    }
+
+    if (normalizedCode.length !== 5) {
+      if (showInvalidModal) {
+        showAppAlert(t("register.invalidReferralCodeLength"));
+      }
+      return false;
+    }
+
+    setIsLookingUpReferral(true);
+    try {
+      const result = await lookupReferralCode(normalizedCode);
+      if (!result.success) {
+        if (showInvalidModal) {
+          setConfirmedReferrerName("");
+          showAppAlert(
+            result.error ||
+              t("register.unableValidateReferral"),
+          );
+        }
+        return false;
+      }
+
+      if (!result.exists) {
+        if (showInvalidModal) {
+          setConfirmedReferrerName("");
+          showAppAlert(t("register.invalidReferralCodeNotFound"));
+        }
+        return false;
+      }
+
+      const resolvedName =
+        result.name ||
+        [result.firstName, result.lastName].filter(Boolean).join(" ").trim();
+
+      const matchedCode = result.referralCode || normalizedCode;
+      setReferralCode(matchedCode);
+      if (
+        showInvalidModal &&
+        resolvedName &&
+        matchedCode !== lastShownReferralCode
+      ) {
+        setPendingReferrerName(resolvedName);
+        showAppAlert(
+          t("register.referralOwnerMessage").replace("{name}", resolvedName),
+          true,
+        );
+        setLastShownReferralCode(matchedCode);
+      }
+      return true;
+    } catch {
+      if (showInvalidModal) {
+        showAppAlert(t("register.errorUnexpected"));
+      }
+      return false;
+    } finally {
+      setIsLookingUpReferral(false);
+    }
+  };
+
+  const handleNextStep = async () => {
     if (isProcessingQR) return;
     setRegisterError("");
     const newErrors: Record<string, string> = {};
@@ -334,9 +414,6 @@ export default function Register() {
         newErrors.lastName = t("register.errorLastName");
       }
       const phoneDigits = phoneNumber.replace(/\D/g, "");
-      if (!phoneDigits) {
-        newErrors.phoneNumber = t("register.errorPhoneRequired");
-      }
       const country = COUNTRY_OPTIONS.find(
         (c) => c.code === selectedCountryCode,
       );
@@ -384,6 +461,12 @@ export default function Register() {
         setErrors(newErrors);
         return;
       }
+
+      const isReferralValid = await validateReferralCode(true);
+      if (!isReferralValid) {
+        return;
+      }
+
       setErrors({});
       setCurrentStep(3);
     } else if (currentStep === 3) {
@@ -413,6 +496,9 @@ export default function Register() {
 
   const handleRegister = async () => {
     setRegisterError("");
+    const isReferralValid = await validateReferralCode(true);
+    if (!isReferralValid) return;
+
     setRegisterLoading(true);
     try {
       const country = COUNTRY_OPTIONS.find(
@@ -471,12 +557,6 @@ export default function Register() {
     }
   };
 
-  const handleSelectLanguage = async (selectedLabel: string) => {
-    setLanguage(selectedLabel);
-    await AsyncStorage.setItem(USER_PREFERRED_LANGUAGE_KEY, selectedLabel);
-    setLanguageModalVisible(false);
-  };
-
   const handleBarCodeScanned = ({ data }: { type: string; data: string }) => {
     setIsQRScannerVisible(false);
 
@@ -489,8 +569,12 @@ export default function Register() {
           const urlParams = new URL(data);
           const ref = urlParams.searchParams.get("ref");
           if (ref) {
-            setReferralCode(ref.toUpperCase());
+            const scannedCode = filterReferralInput(ref);
+            setReferralCode(scannedCode);
+            setLastShownReferralCode("");
+            setConfirmedReferrerName("");
             setActiveQRField(null);
+            void validateReferralCode(true, scannedCode);
             return;
           }
         }
@@ -498,7 +582,11 @@ export default function Register() {
         // Not a valid URL, ignore URL parsing error
       }
       // fallback to setting exactly what was scanned
-      setReferralCode(data.toUpperCase());
+      const scannedCode = filterReferralInput(data);
+      setReferralCode(scannedCode);
+      setLastShownReferralCode("");
+      setConfirmedReferrerName("");
+      void validateReferralCode(true, scannedCode);
     } else if (activeQRField === "line") {
       if (!isLinkMatchingMessagingProvider(data, "line")) {
         showAppAlert(t("register.lineQRMismatch"));
@@ -586,14 +674,22 @@ export default function Register() {
             const urlParams = new URL(normalized);
             const ref = urlParams.searchParams.get("ref");
             if (ref) {
-              setReferralCode(ref.toUpperCase());
+              const scannedCode = filterReferralInput(ref);
+              setReferralCode(scannedCode);
+              setLastShownReferralCode("");
+              setConfirmedReferrerName("");
+              void validateReferralCode(true, scannedCode);
               return;
             }
           }
         } catch {
           // ignore url parsing error
         }
-        setReferralCode(normalized.toUpperCase().slice(0, 5));
+        const scannedCode = filterReferralInput(normalized);
+        setReferralCode(scannedCode);
+        setLastShownReferralCode("");
+        setConfirmedReferrerName("");
+        void validateReferralCode(true, scannedCode);
       } else if (fieldType === "line") {
         if (!isLinkMatchingMessagingProvider(normalized, "line")) {
           showAppAlert(t("register.lineQRMismatch"));
@@ -673,7 +769,7 @@ export default function Register() {
                     borderRadius: isTinyScreen ? 20 : isSmallScreen ? 22 : 24,
                   },
                 ]}
-                onPress={() => setLanguageModalVisible(true)}
+                onPress={openLanguageModal}
                 accessibilityLabel={t("profile.selectLanguage")}
                 accessibilityRole="button"
               >
@@ -1008,7 +1104,6 @@ export default function Register() {
                         ]}
                       >
                         {t("register.phoneNumber")}
-                        <Text style={styles.required}>*</Text>
                       </Text>
                       <View style={styles.phoneInputContainer}>
                         <TouchableOpacity
@@ -1540,9 +1635,16 @@ export default function Register() {
                           autoCorrect={false}
                           autoComplete="off"
                           value={referralCode}
-                          onChangeText={(text) =>
-                            setReferralCode(filterReferralInput(text))
-                          }
+                          onChangeText={(text) => {
+                            setReferralCode(filterReferralInput(text));
+                            setLastShownReferralCode("");
+                            setConfirmedReferrerName("");
+                          }}
+                          onBlur={() => {
+                            if (referralCode.trim()) {
+                              void validateReferralCode(true);
+                            }
+                          }}
                           autoCapitalize="characters"
                           maxLength={5}
                         />
@@ -1580,6 +1682,19 @@ export default function Register() {
                           </>
                         )}
                       </View>
+                      {isLookingUpReferral ? (
+                        <Text style={styles.helperText}>
+                          {t("register.checkingReferralCode")}
+                        </Text>
+                      ) : null}
+                      {confirmedReferrerName ? (
+                        <Text style={styles.confirmedReferrerText}>
+                          {t("register.underReferralOf").replace(
+                            "{name}",
+                            confirmedReferrerName,
+                          )}
+                        </Text>
+                      ) : null}
                       <Text style={styles.helperText}>
                         {t("register.referralCodeHint")}
                       </Text>
@@ -2010,138 +2125,24 @@ export default function Register() {
           </View>
         </Modal>
 
-        {/* Language Modal - matches Welcome language options design */}
-        <Modal
-          visible={languageModalVisible}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setLanguageModalVisible(false)}
-        >
-          <TouchableOpacity
-            style={[
-              styles.languageModalOverlay,
-              { paddingHorizontal: Math.max(16, horizontalPadding) },
-            ]}
-            activeOpacity={1}
-            onPress={() => setLanguageModalVisible(false)}
-          >
-            <View
-              style={[
-                styles.languageModalContent,
-                {
-                  maxWidth: Math.min(360, width - 32),
-                  maxHeight: isShortScreen ? height * 0.85 : undefined,
-                  padding: isSmallScreen ? 18 : 24,
-                },
-              ]}
-              onStartShouldSetResponder={() => true}
-            >
-              <View style={styles.languageModalHeader}>
-                <Ionicons
-                  name="globe-outline"
-                  size={isSmallScreen ? 32 : 40}
-                  color="#E25A17"
-                />
-                <Text
-                  style={[
-                    styles.languageModalTitle,
-                    isSmallScreen && { fontSize: 16 },
-                  ]}
-                >
-                  {t("profile.selectLanguage")}
-                </Text>
-                <Text
-                  style={[
-                    styles.languageModalSubtitle,
-                    isSmallScreen && { fontSize: 12 },
-                  ]}
-                >
-                  {t("profile.defaultIsEnglish")}
-                </Text>
-              </View>
-              <ScrollView
-                style={isShortScreen ? { maxHeight: 200 } : undefined}
-                showsVerticalScrollIndicator={false}
-                keyboardShouldPersistTaps="handled"
-              >
-                {SUPPORTED_LANGUAGES.map(({ label, flag }) => (
-                  <TouchableOpacity
-                    key={label}
-                    style={[
-                      styles.languageOption,
-                      (isSmallScreen || isTinyScreen) && {
-                        paddingVertical: 12,
-                        paddingHorizontal: 14,
-                      },
-                      language === label && styles.languageOptionSelected,
-                    ]}
-                    onPress={() => handleSelectLanguage(label)}
-                    activeOpacity={0.7}
-                  >
-                    <Text
-                      style={[
-                        styles.languageOptionFlag,
-                        (isSmallScreen || isTinyScreen) && { fontSize: 20 },
-                      ]}
-                    >
-                      {flag}
-                    </Text>
-                    <Text
-                      style={[
-                        styles.languageOptionText,
-                        (isSmallScreen || isTinyScreen) && { fontSize: 15 },
-                        language === label && styles.languageOptionTextSelected,
-                      ]}
-                    >
-                      {label}
-                    </Text>
-                    {language === label && (
-                      <Ionicons
-                        name="checkmark-circle"
-                        size={isSmallScreen || isTinyScreen ? 20 : 22}
-                        color="#E25A17"
-                      />
-                    )}
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-              <TouchableOpacity
-                style={[
-                  styles.languageModalCancel,
-                  (isSmallScreen || isTinyScreen) && { marginTop: 8 },
-                ]}
-                onPress={() => setLanguageModalVisible(false)}
-              >
-                <Text
-                  style={[
-                    styles.languageModalCancelText,
-                    (isSmallScreen || isTinyScreen) && { fontSize: 15 },
-                  ]}
-                >
-                  {t("common.cancel")}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </TouchableOpacity>
-        </Modal>
-
         <Modal
           visible={appAlertVisible}
           transparent
           animationType="fade"
-          onRequestClose={() => setAppAlertVisible(false)}
+          onRequestClose={closeAppAlert}
         >
           <View style={styles.appAlertOverlay}>
             <View style={styles.appAlertCard}>
               <View style={styles.appAlertIconWrap}>
-                <Ionicons name="alert-circle" size={22} color="#E25A17" />
+                <Ionicons
+                  name={appAlertIsValidReferral ? "checkmark-circle" : "alert-circle"}
+                  size={22}
+                  color="#E25A17"
+                />
               </View>
               <Text style={styles.appAlertTitle}>{t("register.notice")}</Text>
               <Text style={styles.appAlertMessage}>{appAlertMessage}</Text>
-              <TouchableOpacity
-                style={styles.appAlertButton}
-                onPress={() => setAppAlertVisible(false)}
-              >
+              <TouchableOpacity style={styles.appAlertButton} onPress={closeAppAlert}>
                 <Text style={styles.appAlertButtonText}>{t("common.ok")}</Text>
               </TouchableOpacity>
             </View>
@@ -2373,6 +2374,13 @@ const styles = StyleSheet.create({
     backgroundColor: "#FAFAFA",
   },
   helperText: { fontSize: 12, color: "#999", marginTop: 8, lineHeight: 16 },
+  confirmedReferrerText: {
+    fontSize: 12,
+    color: "#E25A17",
+    marginTop: 8,
+    lineHeight: 16,
+    fontWeight: "600",
+  },
   passwordContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -2775,83 +2783,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 4,
     marginLeft: 4,
-  },
-  // Language Modal
-  languageModalOverlay: {
-    flex: 1,
-    backgroundColor: "transparent",
-    justifyContent: "center",
-    alignItems: "center",
-    paddingVertical: 20,
-  },
-  languageModalContent: {
-    width: "100%",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 20,
-    ...Platform.select({
-      ios: {
-        shadowColor: "#E25A17",
-        shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 0.5,
-        shadowRadius: 24,
-      },
-      android: { elevation: 16 },
-    }),
-  },
-  languageModalHeader: {
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  languageModalTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#333",
-    marginTop: 12,
-    marginBottom: 4,
-    textAlign: "center",
-  },
-  languageModalSubtitle: {
-    fontSize: 13,
-    color: "#666",
-    textAlign: "center",
-  },
-  languageOption: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    marginBottom: 8,
-    backgroundColor: "#F8F8F8",
-    borderWidth: 1,
-    borderColor: "transparent",
-  },
-  languageOptionSelected: {
-    backgroundColor: "#FFF0E8",
-    borderWidth: 2,
-    borderColor: "#E25A17",
-  },
-  languageOptionFlag: {
-    fontSize: 22,
-    marginRight: 12,
-  },
-  languageOptionText: {
-    fontSize: 16,
-    color: "#333",
-    flex: 1,
-  },
-  languageOptionTextSelected: {
-    fontWeight: "600",
-    color: "#E25A17",
-  },
-  languageModalCancel: {
-    marginTop: 12,
-    paddingVertical: 12,
-    alignItems: "center",
-  },
-  languageModalCancelText: {
-    fontSize: 16,
-    color: "#666",
   },
   appAlertOverlay: {
     flex: 1,
