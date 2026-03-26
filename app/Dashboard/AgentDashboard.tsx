@@ -6,7 +6,6 @@ import * as Clipboard from "expo-clipboard";
 import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useState } from "react";
 import {
-    Modal,
     Platform,
     RefreshControl,
     ScrollView,
@@ -20,6 +19,7 @@ import {
 } from "react-native";
 import QRCode from "react-native-qrcode-svg";
 import { SafeAreaView } from "react-native-safe-area-context";
+import ActivityModal from "../components/ActivityModal";
 import {
     generateReferralCode,
     getMe,
@@ -976,7 +976,7 @@ export default function AgentDashboard() {
         </ScrollView>
       </SafeAreaView>
 
-      <Modal
+      <ActivityModal
         visible={showAccessRestrictedModal}
         transparent
         animationType="fade"
@@ -984,11 +984,14 @@ export default function AgentDashboard() {
       >
         <View style={styles.restrictedModalOverlay}>
           <View style={styles.restrictedModalCard}>
-            <Text style={styles.restrictedModalTitle}>
-              {t("agentRequest.modals.accessRestricted.title")}
-            </Text>
+            <View style={styles.restrictedModalHeader}>
+              <View style={styles.restrictedModalIconCircle}>
+                <Ionicons name="lock-closed" size={20} color="#FFFFFF" />
+              </View>
+              <Text style={styles.restrictedModalTitle}>Access Restricted</Text>
+            </View>
             <Text style={styles.restrictedModalMessage}>
-              {t("agentRequest.modals.accessRestricted.message")}
+              This feature is for agent only. Your current role is investor only.
             </Text>
             <View style={styles.restrictedModalActions}>
               <TouchableOpacity
@@ -996,7 +999,7 @@ export default function AgentDashboard() {
                 style={[styles.restrictedModalButton, styles.restrictedModalButtonSecondary]}
               >
                 <Text style={styles.restrictedModalButtonSecondaryText}>
-                  {t("common.cancel")}
+                  {t("common.goBack")}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -1010,7 +1013,7 @@ export default function AgentDashboard() {
             </View>
           </View>
         </View>
-      </Modal>
+      </ActivityModal>
     </View>
   );
 }
@@ -1312,47 +1315,75 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   restrictedModalCard: {
-    width: "100%",
-    maxWidth: 360,
-    borderRadius: 16,
+    width: "80%",
+    maxWidth: 320,
+    borderRadius: 20,
     backgroundColor: "#FFFFFF",
-    paddingHorizontal: 18,
-    paddingVertical: 20,
+    paddingHorizontal: 24,
+    paddingVertical: 28,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  restrictedModalHeader: {
+    alignItems: "center",
+    marginBottom: 14,
+  },
+  restrictedModalIconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#E15816",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 10,
+    shadowColor: "#E15816",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 4,
   },
   restrictedModalTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#111827",
-    marginBottom: 10,
+    fontSize: 16,
+    fontWeight: "800",
+    color: "#333333",
+    textAlign: "center",
   },
   restrictedModalMessage: {
     fontSize: 14,
-    color: "#4B5563",
-    lineHeight: 22,
+    color: "#666666",
+    lineHeight: 20,
+    textAlign: "center",
   },
   restrictedModalActions: {
-    marginTop: 18,
-    flexDirection: "row",
-    justifyContent: "flex-end",
+    marginTop: 24,
+    width: "100%",
     gap: 10,
   },
   restrictedModalButton: {
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    width: "100%",
+    paddingVertical: 12,
+    paddingHorizontal: 32,
     borderRadius: 10,
+    alignItems: "center",
+  },
+  restrictedModalButtonPrimary: {
+    backgroundColor: "#E15816",
   },
   restrictedModalButtonSecondary: {
     backgroundColor: "#F3F4F6",
   },
-  restrictedModalButtonPrimary: {
-    backgroundColor: "#E25A17",
-  },
   restrictedModalButtonSecondaryText: {
     color: "#374151",
     fontWeight: "600",
+    fontSize: 16,
   },
   restrictedModalButtonPrimaryText: {
     color: "#FFFFFF",
-    fontWeight: "700",
+    fontWeight: "600",
+    fontSize: 16,
   },
 });
