@@ -203,26 +203,7 @@ export default function AgentServices() {
   const [isUnderMaintenance, setIsUnderMaintenance] = useState(false);
   const [checkingMaintenance, setCheckingMaintenance] = useState(true);
 
-  // Check maintenance status on focus
-  useFocusEffect(
-    useCallback(() => {
-      setCheckingMaintenance(true);
-      const checkMaintenance = async () => {
-        try {
-          const isMaintenance = await isServiceUnderMaintenance("agent");
-          setIsUnderMaintenance(isMaintenance);
-          if (!isMaintenance) {
-            await loadCurrentUser();
-          }
-        } catch (error) {
-          console.error("Error checking maintenance:", error);
-        } finally {
-          setCheckingMaintenance(false);
-        }
-      };
-      checkMaintenance();
-    }, [loadCurrentUser]),
-  );
+
 
   const [fullName, setFullName] = useState("");
   const [accessToken, setAccessToken] = useState<string | null>(null);
@@ -324,6 +305,27 @@ export default function AgentServices() {
       });
     }
   }, [navigation, t]);
+
+  // Check maintenance status on focus
+  useFocusEffect(
+    useCallback(() => {
+      setCheckingMaintenance(true);
+      const checkMaintenance = async () => {
+        try {
+          const isMaintenance = await isServiceUnderMaintenance("agent");
+          setIsUnderMaintenance(isMaintenance);
+          if (!isMaintenance) {
+            await loadCurrentUser();
+          }
+        } catch (error) {
+          console.error("Error checking maintenance:", error);
+        } finally {
+          setCheckingMaintenance(false);
+        }
+      };
+      checkMaintenance();
+    }, [loadCurrentUser]),
+  );
 
   const showModal = (config: Partial<ModalConfig>) => {
     setModalConfig({

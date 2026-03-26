@@ -733,7 +733,7 @@ const Notification = () => {
       if (result.success) {
         const referralReferenceId =
           "referenceId" in detailModalNotification
-            ? (detailModalNotification.referenceId ?? null)
+            ? ((detailModalNotification as any).referenceId as string | null)
             : null;
         await persistHandledReferralNotification(id, referralReferenceId);
         setBackendNotifications((prev) =>
@@ -763,7 +763,7 @@ const Notification = () => {
       if (result.success) {
         const referralReferenceId =
           "referenceId" in detailModalNotification
-            ? (detailModalNotification.referenceId ?? null)
+            ? ((detailModalNotification as any).referenceId as string | null)
             : null;
         await persistHandledReferralNotification(id, referralReferenceId);
         setBackendNotifications((prev) =>
@@ -956,7 +956,7 @@ const Notification = () => {
           <View style={styles.divider} />
 
           <Text style={styles.notificationMessage} numberOfLines={3}>
-            {formatNotificationMessage(item.message)}
+            {formatNotificationMessage(item.message ?? "")}
           </Text>
 
           <Text style={styles.timestamp}>

@@ -5,9 +5,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useState } from "react";
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { getOrCreateMainWallet, submitTimeDepositRequest } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
-
 import ActivityModal from '../../components/ActivityModal';
 export default function TimeDepositConfirm() {
   const navigation = useNavigation();
@@ -25,7 +23,6 @@ export default function TimeDepositConfirm() {
 
   const [loading, setLoading] = useState(false);
   const [showEmailSentModal, setShowEmailSentModal] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const depositMethod = params.depositMethod || "Request Amount";
   const contractPeriod = params.contractPeriod || "";
@@ -37,7 +34,9 @@ export default function TimeDepositConfirm() {
   const currency = params.currency || "PHP";
 
   const shouldShowBankDetailsModal =
-    depositMethod !== "Available Balance" && depositMethod !== "available_balance";
+    depositMethod !== "Available Balance" && 
+    depositMethod !== "available_balance" && 
+    !isCryptoDeposit;
 
   const getMaturityDate = () => {
     const months =
@@ -45,63 +44,18 @@ export default function TimeDepositConfirm() {
     return t("deposit.months", { count: String(months) });
   };
 
-  const createRequestAndGoToFinalStep = async () => {
-    setSubmitError(null);
-    const token = await AsyncStorage.getItem("access_token");
-    if (!token) {
-      setSubmitError(t("deposit.pleaseLoginDeposit"));
-      return;
-    }
-
-    const body: Record<string, string> = {
-      amount: Number(amountInPhp).toFixed(2),
-      contractPeriod,
-      depositMethod:
-        depositMethod === "Available Balance"
-          ? "available_balance"
-          : "request_amount",
-    };
-    if (isCryptoDeposit && cryptoType && submittedCryptoAmount) {
-      body.cryptoType = cryptoType;
-      body.submittedCryptoAmount = submittedCryptoAmount;
-    }
-
-    if (depositMethod === "Available Balance") {
-      const { success, wallet } = await getOrCreateMainWallet(token);
-      if (!success || !wallet?.id) {
-        setSubmitError(t("deposit.walletLoadError"));
-        return;
-      }
-      body.walletId = wallet.id as string;
-    }
-
-    const created = await submitTimeDepositRequest(token, body);
-    if (!created.success || !created.data?.id) {
-      setSubmitError(created.error || t("deposit.submitError"));
-      return;
-    }
-
-    const requestId = created.data.id as string;
-
-    navigation.navigate("TimeDepositProof", {
-      requestId,
-      amount,
-      currency,
-      depositMethod,
-      contractPeriod,
-      amountInPhp,
-    });
-  };
-
-  const navigateToFinalStep = () => {
+  const createRequestAndGoToFinalStep = () => {
     navigation.navigate("TimeDepositProof", {
       amount,
       currency,
       depositMethod,
       contractPeriod,
       amountInPhp,
+      submittedCryptoAmount,
+      cryptoType: cryptoType as "BTC" | "ETH" | "USDT" | undefined,
     });
   };
+
 
   const handleConfirm = async () => {
     setLoading(true);
@@ -176,18 +130,23 @@ export default function TimeDepositConfirm() {
             </Text>
             <View style={styles.amountDisplay}>
               <Text style={styles.amountValue}>
-                {currency === "PHP" ? "₱" : ""}
-                {Number(isCryptoDeposit ? submittedCryptoAmount : amount).toLocaleString(undefined, {
+                ₱ {amountInPhp.toLocaleString(undefined, {
                   minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
                 })}
-                {currency !== "PHP" ? ` ${currency}` : ""}
               </Text>
-              {amountInPhp !== parseFloat(isCryptoDeposit ? submittedCryptoAmount : amount) && currency !== "PHP" && (
+              {isCryptoDeposit && (
                 <Text style={styles.phpEquivalentText}>
-                  ≈ ₱
-                  {amountInPhp.toLocaleString(undefined, {
+                  Funded with {Number(submittedCryptoAmount).toLocaleString(undefined, {
                     minimumFractionDigits: 2,
-                  })}
+                  })} {cryptoType || currency}
+                </Text>
+              )}
+              {!isCryptoDeposit && currency !== "PHP" && amountInPhp !== parseFloat(amount) && (
+                <Text style={styles.phpEquivalentText}>
+                  ≈ {Number(amount).toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                  })} {currency}
                 </Text>
               )}
             </View>
@@ -227,8 +186,7 @@ export default function TimeDepositConfirm() {
                   {t("deposit.principalAmount")}
                 </Text>
                 <Text style={styles.summaryValue}>
-                  {currency}{" "}
-                  {parseFloat(isCryptoDeposit ? submittedCryptoAmount : amount).toLocaleString(undefined, {
+                  ₱ {amountInPhp.toLocaleString(undefined, {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
                   })}
@@ -247,12 +205,7 @@ export default function TimeDepositConfirm() {
             </View>
           </View>
 
-          {submitError ? (
-            <View style={styles.errorBanner}>
-              <Ionicons name="alert-circle" size={20} color="#B71C1C" />
-              <Text style={styles.errorText}>{submitError}</Text>
-            </View>
-          ) : null}
+
 
           {/* Action Buttons */}
           <View style={styles.buttonContainer}>

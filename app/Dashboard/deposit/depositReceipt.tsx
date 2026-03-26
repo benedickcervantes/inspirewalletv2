@@ -325,10 +325,7 @@ export default function DepositReceipt() {
     (depositMethod || "").toLowerCase() === "crypto deposit" &&
     currency !== "PHP";
   const hasPhpEquivalent = Number.isFinite(amountInPhp);
-  const phpEquivalentWithMargin =
-    isCryptoTimeDepositReceipt && hasPhpEquivalent
-      ? Number(amountInPhp) * CRYPTO_MARGIN_MULTIPLIER
-      : Number(amountInPhp ?? 0);
+  const phpEquivalentWithMargin = Number(amountInPhp ?? 0);
   const formattedPhpEquivalent = hasPhpEquivalent
     ? `₱${phpEquivalentWithMargin.toLocaleString(locale, { minimumFractionDigits: 2 })}`
     : "";

@@ -85,7 +85,7 @@ export default function TimeDepositAmount() {
             amountType: "SOURCE_FOREIGN",
           });
       setIsConverting(false);
-      if (isCryptoMode && result.success && result.data?.phpEquivalent != null) {
+      if (isCryptoMode && 'data' in result && result.success && result.data?.phpEquivalent != null) {
         setPhpEquivalent(result.data.phpEquivalent * CRYPTO_MARGIN_MULTIPLIER);
         setConvertError(null);
         if (__DEV__) {
@@ -98,8 +98,8 @@ export default function TimeDepositAmount() {
             "PHP",
           );
         }
-      } else if (!isCryptoMode && result.success && result.targetAmount != null) {
-        setPhpEquivalent(result.targetAmount);
+      } else if (!isCryptoMode && 'targetAmount' in result && result.success && result.targetAmount != null) {
+        setPhpEquivalent(result.targetAmount as number);
         setConvertError(null);
       } else {
         setPhpEquivalent(0);

@@ -308,6 +308,11 @@ export function getBulkUserActivity(
 }>;
 
 // Referral API
+export function applyAgentRequest(
+  accessToken: string,
+  body?: Record<string, unknown>,
+): Promise<{ success: boolean; referralCode?: string; error?: string }>;
+
 export function getReferralCode(
   accessToken: string,
 ): Promise<{ success: boolean; referralCode?: string; error?: string }>;
