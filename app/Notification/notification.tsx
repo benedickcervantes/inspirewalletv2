@@ -2,7 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
     ActivityIndicator,
     Dimensions,
@@ -282,14 +282,64 @@ const Notification = () => {
     ? backendNotifications.filter((n) => !n.isRead).length
     : notifications.filter((n) => !n.read).length;
 
-  const visibleBackendNotifications = backendNotifications.slice(
+  const getBackendCreatedAtMs = (item: NotificationItemBackend): number => {
+    const parsed = new Date(item.createdAt).getTime();
+    return Number.isFinite(parsed) ? parsed : 0;
+  };
+
+  const getFirebaseTimestampMs = (item: NotificationItem): number => {
+    const raw = item.timestamp;
+    if (!raw) return 0;
+
+    if (typeof (raw as { toDate?: () => Date }).toDate === "function") {
+      const date = (raw as { toDate: () => Date }).toDate();
+      const value = date.getTime();
+      return Number.isFinite(value) ? value : 0;
+    }
+
+    const value = new Date(raw as Date).getTime();
+    return Number.isFinite(value) ? value : 0;
+  };
+
+  const orderedBackendNotifications = useMemo(
+    () =>
+      [...backendNotifications].sort((a, b) => {
+        const unreadPriority =
+          Number(a.isRead) - Number(b.isRead); // unread first
+        if (unreadPriority !== 0) return unreadPriority;
+        return getBackendCreatedAtMs(b) - getBackendCreatedAtMs(a);
+      }),
+    [backendNotifications],
+  );
+
+  const orderedFirebaseNotifications = useMemo(
+    () =>
+      [...notifications].sort((a, b) => {
+        const unreadPriority = Number(!!a.read) - Number(!!b.read); // unread first
+        if (unreadPriority !== 0) return unreadPriority;
+        return getFirebaseTimestampMs(b) - getFirebaseTimestampMs(a);
+      }),
+    [notifications],
+  );
+
+  const visibleBackendNotifications = orderedBackendNotifications.slice(
     0,
     visibleCount,
   );
-  const visibleFirebaseNotifications = notifications.slice(0, visibleCount);
+  const visibleFirebaseNotifications = orderedFirebaseNotifications.slice(
+    0,
+    visibleCount,
+  );
   const hasMoreNotifications = useBackend
-    ? backendNotifications.length > visibleCount
-    : notifications.length > visibleCount;
+    ? orderedBackendNotifications.length > visibleCount
+    : orderedFirebaseNotifications.length > visibleCount;
+  const allNotificationIds = useMemo(
+    () =>
+      useBackend
+        ? orderedBackendNotifications.map((n) => n.id)
+        : orderedFirebaseNotifications.map((n) => n.id),
+    [useBackend, orderedBackendNotifications, orderedFirebaseNotifications],
+  );
 
   const handleLoadMore = () => {
     setVisibleCount((prev) => prev + NOTIFICATION_PAGE_SIZE);
@@ -444,6 +494,17 @@ const Notification = () => {
       },
     });
     setShowDeleteModal(true);
+  };
+
+  const handleSelectAll = () => {
+    if (allNotificationIds.length === 0) return;
+    setSelectedIds((prev) => {
+      const areAllSelected = allNotificationIds.every((id) => prev.has(id));
+      if (areAllSelected) {
+        return new Set();
+      }
+      return new Set(allNotificationIds);
+    });
   };
 
   const handleNotificationPress = async (
@@ -991,19 +1052,19 @@ const Notification = () => {
             <TouchableOpacity
               style={styles.refreshButton}
               onPress={toggleSelectMode}
+              accessibilityRole="button"
+              accessibilityLabel={t("notification.cancel")}
             >
-              <Text style={styles.selectButtonText}>
-                {t("notification.cancel")}
-              </Text>
+              <Ionicons name="close" size={24} color="#FFFFFF" />
             </TouchableOpacity>
           ) : (
             <TouchableOpacity
               style={styles.refreshButton}
               onPress={toggleSelectMode}
+              accessibilityRole="button"
+              accessibilityLabel={t("notification.select")}
             >
-              <Text style={styles.selectButtonText}>
-                {t("notification.select")}
-              </Text>
+              <Ionicons name="checkbox-outline" size={22} color="#FFFFFF" />
             </TouchableOpacity>
           )}
         </View>
@@ -1011,6 +1072,26 @@ const Notification = () => {
 
       {selectMode && (
         <View style={styles.deleteActionBar}>
+          <TouchableOpacity
+            onPress={handleSelectAll}
+            disabled={deleteLoading || allNotificationIds.length === 0}
+            style={[
+              styles.deleteActionButton,
+              allNotificationIds.length === 0 && styles.deleteActionButtonDisabled,
+            ]}
+          >
+            <Text
+              style={[
+                styles.deleteActionText,
+                allNotificationIds.length === 0 && styles.deleteActionTextDisabled,
+              ]}
+            >
+              {selectedIds.size === allNotificationIds.length &&
+              allNotificationIds.length > 0
+                ? "Unselect All"
+                : "Select All"}
+            </Text>
+          </TouchableOpacity>
           <TouchableOpacity
             onPress={handleDeleteAll}
             disabled={deleteLoading}
