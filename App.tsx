@@ -9,7 +9,6 @@ import { navigationRef } from './lib/navigationRef';
 import AuthLoader from './app/AuthLoader';
 import AgentDashboard from './app/Dashboard/AgentDashboard';
 import DepositScreen from './app/Dashboard/deposit/deposit';
-import DepositProofView from './app/Dashboard/deposit/depositProofView';
 import DepositReceipt from './app/Dashboard/deposit/depositReceipt';
 import StockInvestment from './app/Dashboard/deposit/stockInvestDepo';
 import StockInvestmentConfirm from './app/Dashboard/deposit/stockInvestDepoConfirm';
@@ -72,11 +71,9 @@ import Settings from './app/Settings/settings';
 import TermsConditions from './app/Settings/TermsConditions';
 import { IdleTimeoutProvider } from './context/IdleTimeoutContext';
 import { LanguageProvider } from './context/LanguageContext';
-import { LanguageModalProvider } from './context/LanguageModalContext';
 import { SocketProvider } from './context/SocketContext';
 import { UnreadNotificationsProvider } from './context/UnreadNotificationsContext';
 import type { RootStackParamList } from './types/navigation';
-import LanguageModal from './app/Settings/LanguageModal';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const EwalletReview = require('./app/ServicesFunction/E-Wallet/EwalletReview').default;
@@ -84,17 +81,16 @@ const EwalletReview = require('./app/ServicesFunction/E-Wallet/EwalletReview').d
 export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <LanguageProvider>
-        <LanguageModalProvider>
-          <SocketProvider>
-            <UnreadNotificationsProvider>
-              <IdleTimeoutProvider>
-                <OfflineWrapper>
-                  <NavigationContainer ref={navigationRef}>
-                    <Stack.Navigator
-                      initialRouteName="AuthLoader"
-                      screenOptions={{ headerShown: false }}
-                    >
+    <LanguageProvider>
+      <SocketProvider>
+        <UnreadNotificationsProvider>
+        <IdleTimeoutProvider>
+        <OfflineWrapper>
+          <NavigationContainer ref={navigationRef}>
+            <Stack.Navigator
+              initialRouteName="AuthLoader"
+              screenOptions={{ headerShown: false }}
+            >
               <Stack.Screen name="AuthLoader" component={AuthLoader} />
               <Stack.Screen name="Welcome" component={Welcome} />
               <Stack.Screen name="Login" component={Login} />
@@ -184,7 +180,6 @@ export default function App() {
               <Stack.Screen name="TimeDepositProof" component={TimeDepositProof} />
               <Stack.Screen name="topup" component={TopUpBalance} />
               <Stack.Screen name="TopupConfirm" component={TopupConfirm} />
-              <Stack.Screen name="depositProofView" component={DepositProofView} />
               <Stack.Screen name="depositReceipt" component={DepositReceipt} />
               <Stack.Screen name="Withdraw" component={WithdrawScreen} />
               <Stack.Screen name="WithdrawMethod" component={WithdrawMethodScreen} />
@@ -192,16 +187,14 @@ export default function App() {
               <Stack.Screen name="WithdrawLocalBConfirm" component={WithdrawLocalBConfirm} />
               <Stack.Screen name="WithdrawEwallet" component={EWalletWithdrawal} />
               <Stack.Screen name="WithdrawEwalletConfirm" component={EWalletConfirm} />
-                    </Stack.Navigator>
-                    <StatusBar style="auto" />
-                  </NavigationContainer>
-                  <LanguageModal />
-                </OfflineWrapper>
-              </IdleTimeoutProvider>
-            </UnreadNotificationsProvider>
-          </SocketProvider>
-        </LanguageModalProvider>
-      </LanguageProvider>
+            </Stack.Navigator>
+            <StatusBar style="auto" />
+          </NavigationContainer>
+        </OfflineWrapper>
+        </IdleTimeoutProvider>
+        </UnreadNotificationsProvider>
+      </SocketProvider>
+    </LanguageProvider>
     </GestureHandlerRootView>
   );
 }

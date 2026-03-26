@@ -15,6 +15,10 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLanguage } from "../../context/LanguageContext";
 import { useResponsive } from "../../utils/responsive";
+import {
+  buildProjectedPayoutSchedule,
+  computeProjectedTotalDividend,
+} from "./utils/termSavingsFormula";
 
 interface PayoutScheduleItem {
   payoutIndex?: number;
@@ -601,12 +605,14 @@ export default function SavingsTab({
                       {formatCurrency(
                         (() => {
                           const principal = parseAmount(selectedContract.amount);
-                          const schedule = getPayoutSchedule(selectedContract);
-                          const totalInterest = schedule.reduce(
-                            (sum, p) => sum + parseAmount(p.amount),
-                            0
-                          );
-                          return principal + totalInterest;
+                          const totalDividend = computeProjectedTotalDividend({
+                            amount: selectedContract.amount,
+                            interestRate: selectedContract.interestRate,
+                            contractType: selectedContract.contractType,
+                            payoutSchedule: selectedContract.payoutSchedule,
+                            payout_schedule: selectedContract.payout_schedule,
+                          });
+                          return principal + totalDividend;
                         })()
                       )}
                     </Text>
@@ -626,7 +632,13 @@ export default function SavingsTab({
 
                   <Text style={styles.payoutSectionTitle}>{t("investment.payoutSchedule")}</Text>
                   <View style={styles.payoutStepper}>
-                    {getPayoutSchedule(selectedContract).map((payout, idx) => (
+                    {buildProjectedPayoutSchedule({
+                      amount: selectedContract.amount,
+                      interestRate: selectedContract.interestRate,
+                      contractType: selectedContract.contractType,
+                      payoutSchedule: selectedContract.payoutSchedule,
+                      payout_schedule: selectedContract.payout_schedule,
+                    }).map((payout, idx, arr) => (
                       <View key={payout.payoutIndex ?? idx} style={styles.payoutItem}>
                         <View style={styles.payoutItemLeft}>
                           <View
@@ -637,7 +649,7 @@ export default function SavingsTab({
                                 : styles.payoutDotPending,
                             ]}
                           />
-                          {idx < getPayoutSchedule(selectedContract).length - 1 && (
+                          {idx < arr.length - 1 && (
                             <View
                             style={[
                               styles.payoutLine,
@@ -655,7 +667,9 @@ export default function SavingsTab({
                           <Text style={styles.payoutAmount}>
                             ₱ {formatCurrency(parseAmount(payout.amount))}
                             {payout.isLastPayout &&
-                              (payout.principalReturned ?? payout.principal_returned) &&
+                              parseAmount(
+                                payout.principalReturned ?? payout.principal_returned,
+                              ) > 0 &&
                               ` + ₱ ${formatCurrency(
                                 parseAmount(payout.principalReturned ?? payout.principal_returned)
                               )} ${t("investment.principal")}`}
@@ -686,7 +700,13 @@ export default function SavingsTab({
                       </View>
                     ))}
                   </View>
-                  {getPayoutSchedule(selectedContract).length === 0 && (
+                  {buildProjectedPayoutSchedule({
+                    amount: selectedContract.amount,
+                    interestRate: selectedContract.interestRate,
+                    contractType: selectedContract.contractType,
+                    payoutSchedule: selectedContract.payoutSchedule,
+                    payout_schedule: selectedContract.payout_schedule,
+                  }).length === 0 && (
                     <Text style={styles.noPayoutsText}>{t("investment.noPayoutSchedule")}</Text>
                   )}
                   <View style={styles.contractRequestButtons}>
