@@ -19,6 +19,7 @@ import { auth } from "../../configs/firebase";
 import { useLanguage } from "../../context/LanguageContext";
 import { useUnreadNotifications } from "../../context/UnreadNotificationsContext";
 import ActivityModal from '../components/ActivityModal';
+import Loader from "../Loader/Loader";
 import notificationService, {
     type NotificationItem,
 } from "./notificationService";
@@ -733,7 +734,7 @@ const Notification = () => {
       if (result.success) {
         const referralReferenceId =
           "referenceId" in detailModalNotification
-            ? ((detailModalNotification as any).referenceId as string | null)
+            ? (detailModalNotification.referenceId ?? null)
             : null;
         await persistHandledReferralNotification(id, referralReferenceId);
         setBackendNotifications((prev) =>
@@ -763,7 +764,7 @@ const Notification = () => {
       if (result.success) {
         const referralReferenceId =
           "referenceId" in detailModalNotification
-            ? ((detailModalNotification as any).referenceId as string | null)
+            ? (detailModalNotification.referenceId ?? null)
             : null;
         await persistHandledReferralNotification(id, referralReferenceId);
         setBackendNotifications((prev) =>
@@ -956,7 +957,7 @@ const Notification = () => {
           <View style={styles.divider} />
 
           <Text style={styles.notificationMessage} numberOfLines={3}>
-            {formatNotificationMessage(item.message ?? "")}
+            {formatNotificationMessage(item.message)}
           </Text>
 
           <Text style={styles.timestamp}>
@@ -1035,6 +1036,11 @@ const Notification = () => {
         </View>
       </View>
     );
+  }
+
+  // While loading notifications, remove the header to keep the loader uniform.
+  if (loading) {
+    return <Loader text={t("common.loading")} />;
   }
 
   return (
@@ -1157,11 +1163,7 @@ const Notification = () => {
         </View>
       )}
 
-      {loading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#E25A17" />
-        </View>
-      ) : useBackend ? (
+      {useBackend ? (
         <FlatList<NotificationItemBackend>
           data={visibleBackendNotifications}
           renderItem={renderBackendNotification}
@@ -1476,11 +1478,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
     color: "#E25A17",
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
   },
   listContent: {
     padding: 16,
