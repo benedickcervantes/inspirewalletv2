@@ -9,10 +9,10 @@ import { ActivityIndicator, ScrollView, Share, StyleSheet, Text, TouchableOpacit
 import QRCode from "react-native-qrcode-svg";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
-    createBeneficiary,
-    getMe,
-    getOrCreateMainWallet,
-    submitTransfer,
+  createBeneficiary,
+  getMe,
+  getOrCreateMainWallet,
+  submitTransfer,
 } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
 import PasscodeModal from "../../components/PasscodeModal";
@@ -20,10 +20,10 @@ import Loader from "../../Loader/Loader";
 import ContactsModal from "./ContactsModal";
 import QRScanner from "./QRScanner";
 
-import ActivityModal from '../../components/ActivityModal';
 import {
   refreshAdminTransferSuccessSound,
 } from "../../../constants/adminAudio";
+import ActivityModal from '../../components/ActivityModal';
 
 const width = (() => {
   try {
@@ -51,6 +51,7 @@ export default function TransferConfirm() {
   const params = (route.params || {}) as {
     balanceType?: string;
     accountNumber?: string;
+    verifiedAccountNumber?: string;
     amount?: string;
     description?: string;
     recipientName?: string;
@@ -59,6 +60,7 @@ export default function TransferConfirm() {
   };
   const balanceType = params.balanceType || "";
   const accountNumber = params.accountNumber || "";
+  const verifiedAccountNumber = params.verifiedAccountNumber || "";
   const amount = Number(parseFloat(params.amount || "0")) || 0;
   const description = (params.description ?? "").trim();
   const recipientName = params.recipientName || "";
@@ -69,28 +71,65 @@ export default function TransferConfirm() {
     accountNumber: string;
   }) => {
     try {
-      const acct = String(recipient.accountNumber || "").replace(/\D/g, "");
+      const acct = String(recipient.accountNumber || "").trim();
       if (!acct) return;
       const name = (recipient.name || "").trim() || t("common.unknown");
 
       const raw = await AsyncStorage.getItem("saved_accounts");
-      const existing = raw
-        ? (JSON.parse(raw) as {
-            id: string;
-            name: string;
-            accountNumber: string;
-          }[])
-        : [];
+      let existing: { id: string; name: string; accountNumber: string }[] = [];
+      if (raw) {
+        try {
+          const parsed = JSON.parse(raw);
+          existing = Array.isArray(parsed) ? parsed : [];
+        } catch {
+          existing = [];
+        }
+      }
       const without = existing.filter(
-        (x) => String(x.accountNumber || "").replace(/\D/g, "") !== acct,
+        (x) => {
+          const existingRaw = String(x.accountNumber || "").trim();
+          const normalizedExisting = existingRaw.replace(/\s+/g, "").toLowerCase();
+          const normalizedAcct = acct.replace(/\s+/g, "").toLowerCase();
+          return normalizedExisting !== normalizedAcct;
+        },
       );
       const next = [{ id: acct, name, accountNumber: acct }, ...without].slice(
         0,
         20,
       );
       await AsyncStorage.setItem("saved_accounts", JSON.stringify(next));
+      // Best-effort readback to normalize legacy values and ensure list is array-shaped.
+      const readBack = await AsyncStorage.getItem("saved_accounts");
+      if (!readBack) {
+        await AsyncStorage.setItem("saved_accounts", JSON.stringify(next));
+      }
     } catch (e) {
       console.warn("Failed to save recent recipient:", e);
+    }
+  };
+
+  const isAccountAlreadySaved = async (account: string) => {
+    try {
+      const normalizedTarget = String(account || "")
+        .trim()
+        .replace(/\s+/g, "")
+        .toLowerCase();
+      if (!normalizedTarget) return false;
+
+      const raw = await AsyncStorage.getItem("saved_accounts");
+      if (!raw) return false;
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return false;
+
+      return parsed.some((item: { accountNumber?: string }) => {
+        const normalizedExisting = String(item?.accountNumber || "")
+          .trim()
+          .replace(/\s+/g, "")
+          .toLowerCase();
+        return normalizedExisting === normalizedTarget;
+      });
+    } catch {
+      return false;
     }
   };
 
@@ -107,6 +146,8 @@ export default function TransferConfirm() {
   const [userName, setUserName] = useState("");
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [showContactsModal, setShowContactsModal] = useState(false);
+  const [showSaveContactModal, setShowSaveContactModal] = useState(false);
+  const [pendingReceiptParams, setPendingReceiptParams] = useState<Record<string, unknown> | null>(null);
   const qrRef = useRef<any | null>(null);
   useEffect(() => {
     loadBalance();
@@ -269,12 +310,11 @@ export default function TransferConfirm() {
       if (hasPasscode && passcodeToSend) transferBody.passcode = passcodeToSend;
       const result = await submitTransfer(accessToken, transferBody);
       if (result.success) {
-        await saveRecentRecipient({ name: recipientName, accountNumber });
         setShowPasscodeModal(false);
         setPasscode("");
 
         const txId = (result.data as any)?.id || t("investment.pending");
-        (navigation as any).navigate("depositReceipt", {
+        const receiptParams = {
           transactionId: txId,
           amount: amount.toString(),
           currency: "PHP",
@@ -294,7 +334,19 @@ export default function TransferConfirm() {
             .replace("{name}", recipientName),
           date: new Date().toLocaleString(),
           playTransferSuccessAudio: true,
-        });
+        };
+
+        if ((verifiedAccountNumber || "").trim()) {
+          const alreadySaved = await isAccountAlreadySaved(verifiedAccountNumber);
+          if (alreadySaved) {
+            (navigation as any).navigate("depositReceipt", receiptParams);
+          } else {
+            setPendingReceiptParams(receiptParams);
+            setShowSaveContactModal(true);
+          }
+        } else {
+          (navigation as any).navigate("depositReceipt", receiptParams);
+        }
       } else {
         const msg = result.error || t("sendMoney.transferFailed");
         if (!passcodeToSend && isPasscodeRequiredError(msg)) {
@@ -328,6 +380,26 @@ export default function TransferConfirm() {
   const handlePasscodeConfirm = () => {
     if (passcode.length !== 4) return;
     doTransfer(passcode);
+  };
+
+  const handleSaveContactChoice = async (shouldSave: boolean) => {
+    try {
+      if (shouldSave) {
+        await saveRecentRecipient({
+          name: recipientName || t("common.unknown"),
+          accountNumber: verifiedAccountNumber,
+        });
+      }
+    } catch (e) {
+      console.warn("Failed to save selected recipient:", e);
+    } finally {
+      const receipt = pendingReceiptParams;
+      setShowSaveContactModal(false);
+      setPendingReceiptParams(null);
+      if (receipt) {
+        (navigation as any).navigate("depositReceipt", receipt);
+      }
+    }
   };
 
   const handleShareQr = async () => {
@@ -657,6 +729,40 @@ export default function TransferConfirm() {
                 <Text style={styles.modalButtonText}>{t("common.ok")}</Text>
               </TouchableOpacity>
             </LinearGradient>
+          </View>
+        </View>
+      </ActivityModal>
+
+      {/* Save Contact Prompt Modal */}
+      <ActivityModal
+        visible={showSaveContactModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => handleSaveContactChoice(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.savePromptCard}>
+            <View style={styles.savePromptIconWrap}>
+              <Ionicons name="person-add" size={28} color="#E25A17" />
+            </View>
+            <Text style={styles.savePromptTitle}>Save recipient to contacts?</Text>
+            <Text style={styles.savePromptText}>
+              Add this account to Saved Contacts so you can transfer faster next time.
+            </Text>
+            <View style={styles.savePromptActions}>
+              <TouchableOpacity
+                style={[styles.savePromptButton, styles.savePromptButtonSecondary]}
+                onPress={() => handleSaveContactChoice(false)}
+              >
+                <Text style={styles.savePromptButtonSecondaryText}>Not now</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.savePromptButton, styles.savePromptButtonPrimary]}
+                onPress={() => handleSaveContactChoice(true)}
+              >
+                <Text style={styles.savePromptButtonPrimaryText}>Save</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </ActivityModal>
@@ -1129,6 +1235,65 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#E25A17",
     textAlign: "center",
+  },
+  savePromptCard: {
+    width: "100%",
+    maxWidth: 380,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    paddingVertical: 24,
+    paddingHorizontal: 20,
+    alignItems: "center",
+  },
+  savePromptIconWrap: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "#FFF5F0",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 14,
+  },
+  savePromptTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#333333",
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  savePromptText: {
+    fontSize: 14,
+    color: "#666666",
+    textAlign: "center",
+    lineHeight: 20,
+    marginBottom: 18,
+  },
+  savePromptActions: {
+    width: "100%",
+    flexDirection: "row",
+    gap: 10,
+  },
+  savePromptButton: {
+    flex: 1,
+    borderRadius: 14,
+    paddingVertical: 12,
+    alignItems: "center",
+  },
+  savePromptButtonSecondary: {
+    backgroundColor: "#F3F3F3",
+  },
+  savePromptButtonPrimary: {
+    backgroundColor: "#E25A17",
+  },
+  savePromptButtonSecondaryText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#333333",
+  },
+  savePromptButtonPrimaryText: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#FFFFFF",
   },
   passcodeModalContent: {
     backgroundColor: "#FFFFFF",

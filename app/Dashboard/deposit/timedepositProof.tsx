@@ -19,6 +19,7 @@ import {
   uploadTimeDepositReceiptFile,
 } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
+import ActivityModal from "../../components/ActivityModal";
 
 export default function TimeDepositProof() {
   const navigation = useNavigation();
@@ -36,6 +37,7 @@ export default function TimeDepositProof() {
   const [loading, setLoading] = useState(false);
   const [proofUri, setProofUri] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [showUploadModal, setShowUploadModal] = useState(false);
 
   const depositMethod = params.depositMethod || "Request Amount";
   const contractPeriod = params.contractPeriod || "";
@@ -59,17 +61,20 @@ export default function TimeDepositProof() {
 
   const pickFromGallery = async () => {
     try {
-      const { status } =
+      const permissionResult =
         await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== "granted") {
+      if (permissionResult.granted === false) {
         Alert.alert(t("deposit.error"), t("kyc.allowPhotos"));
         return;
       }
+
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
+        aspect: [3, 4],
         quality: 0.8,
       });
+
       if (!result.canceled && result.assets[0]) {
         setProofUri(result.assets[0].uri);
       }
@@ -81,16 +86,19 @@ export default function TimeDepositProof() {
 
   const takePhoto = async () => {
     try {
-      const { status } = await ImagePicker.requestCameraPermissionsAsync();
-      if (status !== "granted") {
+      const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+      if (permissionResult.granted === false) {
         Alert.alert(t("deposit.error"), t("deposit.cameraPermissionRequired"));
         return;
       }
+
       const result = await ImagePicker.launchCameraAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
+        aspect: [3, 4],
         quality: 0.8,
       });
+
       if (!result.canceled && result.assets[0]) {
         setProofUri(result.assets[0].uri);
       }
@@ -101,15 +109,7 @@ export default function TimeDepositProof() {
   };
 
   const handleUploadPress = () => {
-    Alert.alert(
-      t("deposit.proofOfPayment"),
-      t("deposit.uploadProofOfPayment"),
-      [
-        { text: t("deposit.useCamera"), onPress: takePhoto },
-        { text: t("deposit.uploadFiles"), onPress: pickFromGallery },
-        { text: t("deposit.cancel"), style: "cancel" },
-      ],
-    );
+    setShowUploadModal(true);
   };
 
   const handleCopyWallet = async () => {
@@ -302,6 +302,55 @@ export default function TimeDepositProof() {
           </View>
         </ScrollView>
       </SafeAreaView>
+
+      <ActivityModal
+        visible={showUploadModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowUploadModal(false)}
+      >
+        <TouchableOpacity
+          style={styles.uploadModalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowUploadModal(false)}
+        >
+          <TouchableOpacity
+            style={styles.uploadModalCard}
+            activeOpacity={1}
+            onPress={(e) => e.stopPropagation()}
+          >
+            <Text style={styles.uploadModalTitle}>{t("deposit.proofOfPayment")}</Text>
+            <Text style={styles.uploadModalSubtitle}>{t("deposit.uploadProofOfPayment")}</Text>
+
+            <TouchableOpacity
+              style={[styles.uploadModalButton, styles.uploadModalPrimaryButton]}
+              onPress={() => {
+                setShowUploadModal(false);
+                takePhoto();
+              }}
+            >
+              <Text style={styles.uploadModalPrimaryButtonText}>{t("deposit.useCamera")}</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.uploadModalButton}
+              onPress={() => {
+                setShowUploadModal(false);
+                pickFromGallery();
+              }}
+            >
+              <Text style={styles.uploadModalButtonText}>{t("deposit.uploadFiles")}</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.uploadModalButton}
+              onPress={() => setShowUploadModal(false)}
+            >
+              <Text style={styles.uploadModalButtonText}>{t("deposit.cancel")}</Text>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </ActivityModal>
     </View>
   );
 }
@@ -485,4 +534,59 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   confirmText: { fontSize: 18, fontWeight: "700", color: "#FFFFFF" },
+  uploadModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 24,
+  },
+  uploadModalCard: {
+    width: "100%",
+    maxWidth: 360,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    paddingTop: 24,
+    paddingBottom: 16,
+    paddingHorizontal: 22,
+    alignItems: "center",
+  },
+  uploadModalTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#333",
+    textAlign: "center",
+    marginBottom: 8,
+  },
+  uploadModalSubtitle: {
+    fontSize: 15,
+    color: "#666",
+    textAlign: "center",
+    lineHeight: 22,
+    marginBottom: 20,
+  },
+  uploadModalButton: {
+    width: "100%",
+    minHeight: 48,
+    borderRadius: 999,
+    backgroundColor: "#F3F4F6",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 10,
+    paddingVertical: 10,
+  },
+  uploadModalPrimaryButton: {
+    backgroundColor: "#E15816",
+    marginBottom: 12,
+  },
+  uploadModalButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#374151",
+  },
+  uploadModalPrimaryButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#FFFFFF",
+  },
 });

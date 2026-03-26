@@ -2,7 +2,7 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
@@ -26,6 +26,11 @@ export default function TopUpBalance() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [phpEquivalent, setPhpEquivalent] = useState(0);
+  const [isConverting, setIsConverting] = useState(false);
+  const [convertError, setConvertError] = useState<string | null>(null);
+
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const currencies = [
     { code: "PHP", name: "Philippine Peso", flag: "🇵🇭", symbol: "₱" },
@@ -33,6 +38,75 @@ export default function TopUpBalance() {
     { code: "SAR", name: "Saudi Riyal", flag: "🇸🇦", symbol: "﷼" },
     { code: "KRW", name: "Korean Won", flag: "🇰🇷", symbol: "₩" },
   ];
+
+  const updatePhpEquivalent = useCallback(
+    async (value: string, currency: string) => {
+      const num = parseFloat(unformatNumberString(value)) || 0;
+      if (!value.trim() || num <= 0) {
+        setPhpEquivalent(0);
+        setConvertError(null);
+        setIsConverting(false);
+        return;
+      }
+
+      if (currency === "PHP") {
+        setPhpEquivalent(num);
+        setConvertError(null);
+        setIsConverting(false);
+        return;
+      }
+
+      setIsConverting(true);
+      setConvertError(null);
+      const result = await calculateExchange({
+        action: "BUY_PHP",
+        currency,
+        amount: num,
+        amountType: "SOURCE_FOREIGN",
+      });
+      setIsConverting(false);
+
+      if (result.success && result.targetAmount != null) {
+        setPhpEquivalent(result.targetAmount);
+        setConvertError(null);
+      } else {
+        setPhpEquivalent(0);
+        setConvertError(result.error || t("currency.exchangeRateUnavailable"));
+      }
+    },
+    [t],
+  );
+
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    const value = amount.trim();
+    if (!value) {
+      setPhpEquivalent(0);
+      setConvertError(null);
+      return;
+    }
+
+    const num = parseFloat(unformatNumberString(value));
+    if (isNaN(num) || num <= 0) {
+      setPhpEquivalent(0);
+      setConvertError(null);
+      return;
+    }
+
+    if (selectedCurrency === "PHP") {
+      setPhpEquivalent(num);
+      setConvertError(null);
+      return;
+    }
+
+    debounceRef.current = setTimeout(() => {
+      updatePhpEquivalent(value, selectedCurrency);
+    }, 400);
+
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [amount, selectedCurrency, updatePhpEquivalent]);
 
   const handleContinue = async () => {
     setSubmitError(null);
@@ -73,21 +147,25 @@ export default function TopUpBalance() {
       let amountToSubmit = sourceAmount;
 
       if (selectedCurrency !== "PHP") {
-        const conversionResult = await calculateExchange({
-          action: "BUY_PHP",
-          currency: selectedCurrency,
-          amount: sourceAmount,
-          amountType: "SOURCE_FOREIGN",
-        });
+        if (phpEquivalent > 0 && !convertError) {
+          amountToSubmit = phpEquivalent;
+        } else {
+          const conversionResult = await calculateExchange({
+            action: "BUY_PHP",
+            currency: selectedCurrency,
+            amount: sourceAmount,
+            amountType: "SOURCE_FOREIGN",
+          });
 
-        if (!conversionResult.success || conversionResult.targetAmount == null) {
-          setSubmitError(
-            conversionResult.error || t("currency.exchangeRateUnavailable"),
-          );
-          return;
+          if (!conversionResult.success || conversionResult.targetAmount == null) {
+            setSubmitError(
+              conversionResult.error || t("currency.exchangeRateUnavailable"),
+            );
+            return;
+          }
+
+          amountToSubmit = conversionResult.targetAmount;
         }
-
-        amountToSubmit = conversionResult.targetAmount;
       }
 
       const body = {
@@ -240,6 +318,44 @@ export default function TopUpBalance() {
                 <Text style={styles.errorText}>{errors.amount}</Text>
               )}
             </View>
+
+            {/* PHP Equivalent Card */}
+            <LinearGradient
+              colors={["#F28934", "#E25A17"]}
+              style={styles.equivalentCard}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            >
+              <View style={styles.equivalentHeader}>
+                <MaterialCommunityIcons
+                  name="chart-line"
+                  size={20}
+                  color="#FFFFFF"
+                />
+                <Text style={styles.equivalentTitle}>
+                  {t("deposit.phpEquivalent")}
+                </Text>
+              </View>
+              <View style={styles.equivalentAmount}>
+                <MaterialCommunityIcons
+                  name="approximately-equal"
+                  size={24}
+                  color="#FFFFFF"
+                />
+                <Text style={styles.equivalentValue}>
+                  ₱
+                  {isConverting
+                    ? "..."
+                    : phpEquivalent.toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                </Text>
+              </View>
+              {convertError ? (
+                <Text style={styles.convertErrorText}>{convertError}</Text>
+              ) : null}
+            </LinearGradient>
           </View>
 
           {submitError ? (
@@ -512,6 +628,41 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#333",
     marginLeft: 8,
+  },
+  equivalentCard: {
+    borderRadius: 12,
+    padding: 20,
+    marginTop: 8,
+  },
+  equivalentHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  equivalentTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#FFFFFF",
+    marginLeft: 8,
+  },
+  equivalentAmount: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 12,
+  },
+  equivalentValue: {
+    fontSize: 24,
+    fontWeight: "700",
+    color: "#FFFFFF",
+    marginLeft: 8,
+  },
+  convertErrorText: {
+    fontSize: 12,
+    color: "#FFFFFF",
+    opacity: 0.9,
+    marginTop: 4,
+    textAlign: "center",
   },
   continueButton: {
     marginTop: 8,
