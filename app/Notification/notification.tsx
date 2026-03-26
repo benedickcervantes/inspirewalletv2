@@ -2,26 +2,36 @@ import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
-import { useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, Dimensions, FlatList, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  ActivityIndicator,
+  Dimensions,
+  FlatList,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
-    acceptReferralRequest as apiAcceptReferralRequest,
-    declineReferralRequest as apiDeclineReferralRequest,
-    deleteAllNotifications as apiDeleteAllNotifications,
-    deleteNotification as apiDeleteNotification,
-    deleteNotificationBatch as apiDeleteNotificationBatch,
-    markAllNotificationsAsRead as apiMarkAllNotificationsAsRead,
-    markNotificationAsRead as apiMarkNotificationAsRead,
-    getNotifications,
+  acceptReferralRequest as apiAcceptReferralRequest,
+  declineReferralRequest as apiDeclineReferralRequest,
+  deleteAllNotifications as apiDeleteAllNotifications,
+  deleteNotification as apiDeleteNotification,
+  deleteNotificationBatch as apiDeleteNotificationBatch,
+  markAllNotificationsAsRead as apiMarkAllNotificationsAsRead,
+  markNotificationAsRead as apiMarkNotificationAsRead,
+  getNotifications,
 } from "../../configs/api";
 import { auth } from "../../configs/firebase";
 import { useLanguage } from "../../context/LanguageContext";
 import { useUnreadNotifications } from "../../context/UnreadNotificationsContext";
-import ActivityModal from '../components/ActivityModal';
+import ActivityModal from "../components/ActivityModal";
 import Loader from "../Loader/Loader";
 import notificationService, {
-    type NotificationItem,
+  type NotificationItem,
 } from "./notificationService";
 
 interface NotificationItemBackend {
@@ -49,19 +59,19 @@ const NOTIFICATION_PAGE_SIZE = 5;
  */
 const formatNotificationMessage = (message: string): string => {
   if (!message) return message;
-  
+
   // Pattern to match amounts in notification messages
   // Matches numbers with 2 decimal places (e.g., "5454.00", "54554.00")
   const amountPattern = /\b(\d{4,})\.(\d{2})\b/g;
-  
+
   return message.replace(amountPattern, (match) => {
     const amount = parseFloat(match);
     if (!Number.isFinite(amount)) return match;
-    
-    return amount.toLocaleString('en-US', {
+
+    return amount.toLocaleString("en-US", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
-      useGrouping: true
+      useGrouping: true,
     });
   });
 };
@@ -190,31 +200,7 @@ const Notification = () => {
     return key ? t(key) : (title ?? "");
   };
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      await loadHandledReferralNotificationKeys();
-      const accessToken = await AsyncStorage.getItem("access_token");
-      if (accessToken) {
-        setUseBackend(true);
-        fetchBackendNotifications();
-      } else if (auth) {
-        const unsubscribeAuth = auth.onAuthStateChanged((currentUser) => {
-          setUser(currentUser);
-          if (!currentUser) {
-            setNotifications([]);
-            setLoading(false);
-          }
-        });
-        return () => unsubscribeAuth();
-      } else {
-        setLoading(false);
-      }
-    };
-
-    checkAuth();
-  }, []);
-
-  const fetchBackendNotifications = async () => {
+  const fetchBackendNotifications = useCallback(async () => {
     try {
       setLoading(true);
       const accessToken = await AsyncStorage.getItem("access_token");
@@ -247,7 +233,31 @@ const Notification = () => {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [setUnreadCount]);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      await loadHandledReferralNotificationKeys();
+      const accessToken = await AsyncStorage.getItem("access_token");
+      if (accessToken) {
+        setUseBackend(true);
+        fetchBackendNotifications();
+      } else if (auth) {
+        const unsubscribeAuth = auth.onAuthStateChanged((currentUser) => {
+          setUser(currentUser);
+          if (!currentUser) {
+            setNotifications([]);
+            setLoading(false);
+          }
+        });
+        return () => unsubscribeAuth();
+      } else {
+        setLoading(false);
+      }
+    };
+
+    checkAuth();
+  }, [fetchBackendNotifications]);
 
   useEffect(() => {
     if (!useBackend) return;
@@ -318,8 +328,7 @@ const Notification = () => {
   const orderedBackendNotifications = useMemo(
     () =>
       [...backendNotifications].sort((a, b) => {
-        const unreadPriority =
-          Number(a.isRead) - Number(b.isRead); // unread first
+        const unreadPriority = Number(a.isRead) - Number(b.isRead); // unread first
         if (unreadPriority !== 0) return unreadPriority;
         return getBackendCreatedAtMs(b) - getBackendCreatedAtMs(a);
       }),
@@ -734,7 +743,7 @@ const Notification = () => {
       if (result.success) {
         const referralReferenceId =
           "referenceId" in detailModalNotification
-            ? (detailModalNotification.referenceId ?? null)
+            ? ((detailModalNotification as any).referenceId as string | null)
             : null;
         await persistHandledReferralNotification(id, referralReferenceId);
         setBackendNotifications((prev) =>
@@ -764,7 +773,7 @@ const Notification = () => {
       if (result.success) {
         const referralReferenceId =
           "referenceId" in detailModalNotification
-            ? (detailModalNotification.referenceId ?? null)
+            ? ((detailModalNotification as any).referenceId as string | null)
             : null;
         await persistHandledReferralNotification(id, referralReferenceId);
         setBackendNotifications((prev) =>
@@ -957,7 +966,7 @@ const Notification = () => {
           <View style={styles.divider} />
 
           <Text style={styles.notificationMessage} numberOfLines={3}>
-            {formatNotificationMessage(item.message)}
+            {formatNotificationMessage(item.message ?? "")}
           </Text>
 
           <Text style={styles.timestamp}>
@@ -1096,13 +1105,15 @@ const Notification = () => {
             disabled={deleteLoading || allNotificationIds.length === 0}
             style={[
               styles.deleteActionButton,
-              allNotificationIds.length === 0 && styles.deleteActionButtonDisabled,
+              allNotificationIds.length === 0 &&
+                styles.deleteActionButtonDisabled,
             ]}
           >
             <Text
               style={[
                 styles.deleteActionText,
-                allNotificationIds.length === 0 && styles.deleteActionTextDisabled,
+                allNotificationIds.length === 0 &&
+                  styles.deleteActionTextDisabled,
               ]}
             >
               {selectedIds.size === allNotificationIds.length &&
