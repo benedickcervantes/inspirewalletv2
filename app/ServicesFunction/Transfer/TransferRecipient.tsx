@@ -164,22 +164,7 @@ export default function TransferRecipient() {
     fetchBalance();
     loadContacts();
     loadUserAccountNumber();
-    loadMostRecentRecipientIntoField();
   }, []);
-
-  const loadMostRecentRecipientIntoField = async () => {
-    try {
-      if ((params.scannedAccount || "").trim()) return;
-      if ((accountNumber || "").trim()) return;
-      const raw = await AsyncStorage.getItem("saved_accounts");
-      if (!raw) return;
-      const saved = JSON.parse(raw) as Array<{ accountNumber?: string }>;
-      const mostRecent = saved?.[0]?.accountNumber;
-      if (mostRecent) setAccountNumber(String(mostRecent));
-    } catch (e) {
-      console.warn("Failed to load recent recipient:", e);
-    }
-  };
 
   const fetchBalance = async () => {
     try {
@@ -276,9 +261,15 @@ export default function TransferRecipient() {
       const recipientName =
         [data.firstName, data.lastName].filter(Boolean).join(" ") ||
         t("common.unknown");
-      navigation.navigate("TransferConfirm", {
+      const resolvedAccountNumber = String(
+        data.accountNumber || accountNumber || "",
+      ).trim();
+      const verifiedAccountNumber = String(data.accountNumber || "").trim();
+
+      (navigation as any).navigate("TransferConfirm", {
         balanceType: balanceType ?? "available",
-        accountNumber,
+        accountNumber: resolvedAccountNumber,
+        verifiedAccountNumber,
         amount: unformatNumberString(amount),
         description,
         recipientName,
@@ -296,10 +287,9 @@ export default function TransferRecipient() {
 
   const selectContact = (contact: Contact) => {
     // Use account number from contact
-    const accountNum =
-      contact.accountNumber ||
-      contact.phoneNumbers?.[0]?.replace(/\D/g, "") ||
-      "";
+    const accountNum = String(
+      contact.accountNumber || contact.phoneNumbers?.[0] || "",
+    ).trim();
     setAccountNumber(accountNum);
     setShowContactsModal(false);
     setContactSearchQuery("");
@@ -634,10 +624,9 @@ export default function TransferRecipient() {
           setContactSearchQuery("");
         }}
         onSelectContact={(contact) => {
-          const accountNum =
-            contact.accountNumber ||
-            contact.phoneNumbers?.[0]?.replace(/\D/g, "") ||
-            "";
+          const accountNum = String(
+            contact.accountNumber || contact.phoneNumbers?.[0] || "",
+          ).trim();
           setAccountNumber(accountNum);
           setShowContactsModal(false);
           setContactSearchQuery("");
