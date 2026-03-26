@@ -1736,7 +1736,6 @@ const en: TranslationMap = {
   "register.errorFirstName": "Please enter your first name",
   "register.errorLastName": "Please enter your last name",
   "register.phoneNumber": "Phone Number",
-  "register.errorPhoneRequired": "Please enter your phone number",
   "register.errorPhoneInvalid":
     "Please enter a valid {digits}-digit phone number for the selected country.",
   "register.iHaveCompany": "I have a company",
@@ -1876,6 +1875,15 @@ const en: TranslationMap = {
   "register.whatsappQRMismatch":
     "The scanned QR code does not match WhatsApp. Please scan a valid WhatsApp account link.",
   "register.notice": "Notice",
+  "register.invalidReferralCodeLength":
+    "Invalid referral code. Please enter a valid 5-character code.",
+  "register.invalidReferralCodeNotFound":
+    "Invalid referral code. Referral code does not exist.",
+  "register.unableValidateReferral":
+    "Unable to validate referral code right now. Please try again.",
+  "register.referralOwnerMessage": "Referral code owner: {name}",
+  "register.checkingReferralCode": "Checking referral code...",
+  "register.underReferralOf": "Under referral of {name}",
 
   // Passcode additions
   "passcode.biometricPrompt": "Log in with {type}",
@@ -3533,7 +3541,6 @@ const ko: TranslationMap = {
   "register.errorFirstName": "이름을 입력해 주세요",
   "register.errorLastName": "성을 입력해 주세요",
   "register.phoneNumber": "전화번호",
-  "register.errorPhoneRequired": "전화번호를 입력해 주세요",
   "register.errorPhoneInvalid":
     "선택한 국가의 올바른 {digits}자리 전화번호를 입력해 주세요.",
   "register.iHaveCompany": "회사가 있습니다",
@@ -3675,6 +3682,15 @@ const ko: TranslationMap = {
   "register.whatsappQRMismatch":
     "스캔한 QR 코드가 WhatsApp과 일치하지 않습니다. 유효한 WhatsApp 계정 링크를 스캔해 주세요.",
   "register.notice": "공지",
+  "register.invalidReferralCodeLength":
+    "유효하지 않은 추천 코드입니다. 올바른 5자리 코드를 입력해 주세요.",
+  "register.invalidReferralCodeNotFound":
+    "유효하지 않은 추천 코드입니다. 해당 추천 코드를 찾을 수 없습니다.",
+  "register.unableValidateReferral":
+    "지금은 추천 코드를 확인할 수 없습니다. 잠시 후 다시 시도해 주세요.",
+  "register.referralOwnerMessage": "추천 코드 소유자: {name}",
+  "register.checkingReferralCode": "추천 코드 확인 중...",
+  "register.underReferralOf": "{name}님의 추천 하위입니다",
 
   // Passcode additions
   "passcode.biometricPrompt": "{type}으로 로그인",
@@ -5330,7 +5346,6 @@ const ja: TranslationMap = {
   "register.errorFirstName": "名を入力してください",
   "register.errorLastName": "姓を入力してください",
   "register.phoneNumber": "電話番号",
-  "register.errorPhoneRequired": "電話番号を入力してください",
   "register.errorPhoneInvalid":
     "選択した国の{digits}桁の電話番号を正しく入力してください。",
   "register.iHaveCompany": "会社があります",
@@ -5475,6 +5490,15 @@ const ja: TranslationMap = {
   "register.whatsappQRMismatch":
     "スキャンしたQRコードはWhatsAppと一致しません。有効なWhatsAppアカウントリンクをスキャンしてください。",
   "register.notice": "お知らせ",
+  "register.invalidReferralCodeLength":
+    "無効な紹介コードです。5文字の有効なコードを入力してください。",
+  "register.invalidReferralCodeNotFound":
+    "無効な紹介コードです。紹介コードが存在しません。",
+  "register.unableValidateReferral":
+    "現在、紹介コードを確認できません。しばらくしてから再度お試しください。",
+  "register.referralOwnerMessage": "紹介コードの所有者: {name}",
+  "register.checkingReferralCode": "紹介コードを確認中...",
+  "register.underReferralOf": "{name} さんの紹介下です",
 
   // Passcode additions
   "passcode.biometricPrompt": "{type}でログイン",
@@ -7096,7 +7120,6 @@ const ar: TranslationMap = {
   "register.errorFirstName": "يرجى إدخال اسمك الأول",
   "register.errorLastName": "يرجى إدخال اسم العائلة",
   "register.phoneNumber": "رقم الهاتف",
-  "register.errorPhoneRequired": "يرجى إدخال رقم هاتفك",
   "register.errorPhoneInvalid":
     "يرجى إدخال رقم هاتف صحيح ({digits} أرقام) للدولة المحددة.",
   "register.iHaveCompany": "لدي شركة",
@@ -7236,6 +7259,15 @@ const ar: TranslationMap = {
   "register.whatsappQRMismatch":
     "رمز QR الممسوح لا يطابق WhatsApp. يرجى مسح رابط حساب WhatsApp صحيح.",
   "register.notice": "تنبيه",
+  "register.invalidReferralCodeLength":
+    "رمز الإحالة غير صالح. يرجى إدخال رمز صالح مكوّن من 5 أحرف.",
+  "register.invalidReferralCodeNotFound":
+    "رمز الإحالة غير صالح. رمز الإحالة غير موجود.",
+  "register.unableValidateReferral":
+    "يتعذر التحقق من رمز الإحالة الآن. يرجى المحاولة مرة أخرى لاحقًا.",
+  "register.referralOwnerMessage": "صاحب رمز الإحالة: {name}",
+  "register.checkingReferralCode": "جارٍ التحقق من رمز الإحالة...",
+  "register.underReferralOf": "أنت تحت إحالة {name}",
 
   // Passcode additions
   "passcode.biometricPrompt": "تسجيل الدخول بـ {type}",
