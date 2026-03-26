@@ -65,7 +65,7 @@ export default function StockInvestmentConfirm() {
 
       const result = await submitStockInvestmentRequest(accessToken, {
         walletId: wallet.id as string,
-        amount: String(parseFloat(amount)),
+        amount: String(amountNumeric),
       });
 
       if (result.success) {
