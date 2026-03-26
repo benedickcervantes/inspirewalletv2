@@ -28,12 +28,8 @@ import {
   lookupReferralCode,
   register as registerApi,
 } from "../../configs/api";
-import {
-  DEFAULT_LANGUAGE,
-  normalizeLanguage,
-  SUPPORTED_LANGUAGES,
-} from "../../constants/locales";
 import { useLanguage } from "../../context/LanguageContext";
+import { useLanguageModal } from "../../context/LanguageModalContext";
 import type { NavProp } from "../../types/navigation";
 import { useResponsive } from "../../utils/responsive";
 import * as SecureStore from 'expo-secure-store';
@@ -46,8 +42,6 @@ const getScreenWidth = () => {
     return 375;
   }
 };
-
-const USER_PREFERRED_LANGUAGE_KEY = "user_preferred_language";
 
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 const filterCompanyInput = (text: string) =>
@@ -154,10 +148,9 @@ export default function Register() {
   const footerBottomPadding = insets.bottom || 16;
   const scrollPaddingBottom =
     (isCompact || isSmallScreen ? 20 : 24) + footerBottomPadding;
-  const { t, language: contextLanguage, setLanguage } = useLanguage();
-  const language = normalizeLanguage(contextLanguage ?? DEFAULT_LANGUAGE);
+  const { t } = useLanguage();
+  const { openLanguageModal } = useLanguageModal();
   const [currentStep, setCurrentStep] = useState(1);
-  const [languageModalVisible, setLanguageModalVisible] = useState(false);
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -564,12 +557,6 @@ export default function Register() {
     }
   };
 
-  const handleSelectLanguage = async (selectedLabel: string) => {
-    setLanguage(selectedLabel);
-    await AsyncStorage.setItem(USER_PREFERRED_LANGUAGE_KEY, selectedLabel);
-    setLanguageModalVisible(false);
-  };
-
   const handleBarCodeScanned = ({ data }: { type: string; data: string }) => {
     setIsQRScannerVisible(false);
 
@@ -782,7 +769,7 @@ export default function Register() {
                     borderRadius: isTinyScreen ? 20 : isSmallScreen ? 22 : 24,
                   },
                 ]}
-                onPress={() => setLanguageModalVisible(true)}
+                onPress={openLanguageModal}
                 accessibilityLabel={t("profile.selectLanguage")}
                 accessibilityRole="button"
               >
@@ -2138,121 +2125,6 @@ export default function Register() {
           </View>
         </Modal>
 
-        {/* Language Modal - matches Welcome language options design */}
-        <Modal
-          visible={languageModalVisible}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setLanguageModalVisible(false)}
-        >
-          <TouchableOpacity
-            style={[
-              styles.languageModalOverlay,
-              { paddingHorizontal: Math.max(16, horizontalPadding) },
-            ]}
-            activeOpacity={1}
-            onPress={() => setLanguageModalVisible(false)}
-          >
-            <View
-              style={[
-                styles.languageModalContent,
-                {
-                  maxWidth: Math.min(360, width - 32),
-                  maxHeight: isShortScreen ? height * 0.85 : undefined,
-                  padding: isSmallScreen ? 18 : 24,
-                },
-              ]}
-              onStartShouldSetResponder={() => true}
-            >
-              <View style={styles.languageModalHeader}>
-                <Ionicons
-                  name="globe-outline"
-                  size={isSmallScreen ? 32 : 40}
-                  color="#E25A17"
-                />
-                <Text
-                  style={[
-                    styles.languageModalTitle,
-                    isSmallScreen && { fontSize: 16 },
-                  ]}
-                >
-                  {t("profile.selectLanguage")}
-                </Text>
-                <Text
-                  style={[
-                    styles.languageModalSubtitle,
-                    isSmallScreen && { fontSize: 12 },
-                  ]}
-                >
-                  {t("profile.defaultIsEnglish")}
-                </Text>
-              </View>
-              <ScrollView
-                style={isShortScreen ? { maxHeight: 200 } : undefined}
-                showsVerticalScrollIndicator={false}
-                keyboardShouldPersistTaps="handled"
-              >
-                {SUPPORTED_LANGUAGES.map(({ label, flag }) => (
-                  <TouchableOpacity
-                    key={label}
-                    style={[
-                      styles.languageOption,
-                      (isSmallScreen || isTinyScreen) && {
-                        paddingVertical: 12,
-                        paddingHorizontal: 14,
-                      },
-                      language === label && styles.languageOptionSelected,
-                    ]}
-                    onPress={() => handleSelectLanguage(label)}
-                    activeOpacity={0.7}
-                  >
-                    <Text
-                      style={[
-                        styles.languageOptionFlag,
-                        (isSmallScreen || isTinyScreen) && { fontSize: 20 },
-                      ]}
-                    >
-                      {flag}
-                    </Text>
-                    <Text
-                      style={[
-                        styles.languageOptionText,
-                        (isSmallScreen || isTinyScreen) && { fontSize: 15 },
-                        language === label && styles.languageOptionTextSelected,
-                      ]}
-                    >
-                      {label}
-                    </Text>
-                    {language === label && (
-                      <Ionicons
-                        name="checkmark-circle"
-                        size={isSmallScreen || isTinyScreen ? 20 : 22}
-                        color="#E25A17"
-                      />
-                    )}
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-              <TouchableOpacity
-                style={[
-                  styles.languageModalCancel,
-                  (isSmallScreen || isTinyScreen) && { marginTop: 8 },
-                ]}
-                onPress={() => setLanguageModalVisible(false)}
-              >
-                <Text
-                  style={[
-                    styles.languageModalCancelText,
-                    (isSmallScreen || isTinyScreen) && { fontSize: 15 },
-                  ]}
-                >
-                  {t("common.cancel")}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </TouchableOpacity>
-        </Modal>
-
         <Modal
           visible={appAlertVisible}
           transparent
@@ -2911,83 +2783,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 4,
     marginLeft: 4,
-  },
-  // Language Modal
-  languageModalOverlay: {
-    flex: 1,
-    backgroundColor: "transparent",
-    justifyContent: "center",
-    alignItems: "center",
-    paddingVertical: 20,
-  },
-  languageModalContent: {
-    width: "100%",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 20,
-    ...Platform.select({
-      ios: {
-        shadowColor: "#E25A17",
-        shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 0.5,
-        shadowRadius: 24,
-      },
-      android: { elevation: 16 },
-    }),
-  },
-  languageModalHeader: {
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  languageModalTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#333",
-    marginTop: 12,
-    marginBottom: 4,
-    textAlign: "center",
-  },
-  languageModalSubtitle: {
-    fontSize: 13,
-    color: "#666",
-    textAlign: "center",
-  },
-  languageOption: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    marginBottom: 8,
-    backgroundColor: "#F8F8F8",
-    borderWidth: 1,
-    borderColor: "transparent",
-  },
-  languageOptionSelected: {
-    backgroundColor: "#FFF0E8",
-    borderWidth: 2,
-    borderColor: "#E25A17",
-  },
-  languageOptionFlag: {
-    fontSize: 22,
-    marginRight: 12,
-  },
-  languageOptionText: {
-    fontSize: 16,
-    color: "#333",
-    flex: 1,
-  },
-  languageOptionTextSelected: {
-    fontWeight: "600",
-    color: "#E25A17",
-  },
-  languageModalCancel: {
-    marginTop: 12,
-    paddingVertical: 12,
-    alignItems: "center",
-  },
-  languageModalCancelText: {
-    fontSize: 16,
-    color: "#666",
   },
   appAlertOverlay: {
     flex: 1,
