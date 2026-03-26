@@ -39,6 +39,85 @@ interface Contact {
   phoneNumbers?: string[];
 }
 
+const INSPIRE_TRANSFER_QR_PREFIX = "INSPIREWALLET:TRANSFER:";
+
+const normalizeAccountNumber = (value: string): string => value.replace(/\D/g, "");
+
+const isValidAccountNumber = (value: string): boolean =>
+  /^\d{12}$/.test(normalizeAccountNumber(value));
+
+const buildInspireTransferQrPayload = (accountNumber: string): string =>
+  `${INSPIRE_TRANSFER_QR_PREFIX}${normalizeAccountNumber(accountNumber)}`;
+
+const parseInspireTransferQrPayload = (raw: string): string | null => {
+  const text = String(raw ?? "").trim();
+  if (!text) return null;
+  const lowerText = text.toLowerCase();
+  if (
+    lowerText.startsWith("http://") ||
+    lowerText.startsWith("https://") ||
+    lowerText.startsWith("expo://") ||
+    lowerText.includes("://")
+  ) {
+    return null;
+  }
+
+  // Preferred Inspire Wallet transfer QR format.
+  if (text.startsWith(INSPIRE_TRANSFER_QR_PREFIX)) {
+    const account = text.slice(INSPIRE_TRANSFER_QR_PREFIX.length).trim();
+    return isValidAccountNumber(account) ? normalizeAccountNumber(account) : null;
+  }
+
+  // Optional JSON format support for future-proofing.
+  try {
+    const parsed = JSON.parse(text) as {
+      app?: string;
+      type?: string;
+      accountNumber?: string;
+    };
+    if (
+      String(parsed.app ?? "").toUpperCase() === "INSPIREWALLET" &&
+      String(parsed.type ?? "").toUpperCase() === "TRANSFER" &&
+      typeof parsed.accountNumber === "string" &&
+      isValidAccountNumber(parsed.accountNumber)
+    ) {
+      return normalizeAccountNumber(parsed.accountNumber);
+    }
+  } catch {
+    // Not JSON; ignore.
+  }
+
+  // Backward compatibility for old Inspire transfer QR payloads (plain account number).
+  if (/^[\d\s-]+$/.test(text) && isValidAccountNumber(text)) {
+    return normalizeAccountNumber(text);
+  }
+
+  return null;
+};
+
+const resolveInitialAccountValue = (raw: string | undefined): string => {
+  const value = String(raw ?? "").trim();
+  if (!value) return "";
+  const parsed = parseInspireTransferQrPayload(value);
+  if (parsed) return parsed;
+  // Allow direct/manual account number values passed from contacts/navigation.
+  return isValidAccountNumber(value) ? normalizeAccountNumber(value) : "";
+};
+
+const getInvalidInspireQrMessage = (t: (key: string) => string): string => {
+  const translated = t("sendMoney.invalidInspireQr");
+  const fallback =
+    "Invalid QR code. Please scan an Inspire Wallet transfer QR code only.";
+  if (
+    translated &&
+    translated !== "sendMoney.invalidInspireQr" &&
+    translated !== "sendMoney.invalidInspireQR"
+  ) {
+    return translated;
+  }
+  return fallback;
+};
+
 // Reusable function to fetch user balance by type (backend only)
 export const fetchBalanceByType = async (balanceType: string) => {
   const accessToken = await AsyncStorage.getItem("access_token");
@@ -142,7 +221,7 @@ export default function TransferRecipient() {
   const balanceType = params.balanceType;
 
   const [accountNumber, setAccountNumber] = useState(
-    params.scannedAccount || "",
+    resolveInitialAccountValue(params.scannedAccount),
   );
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
@@ -306,7 +385,15 @@ export default function TransferRecipient() {
   };
 
   const handleQRScan = (scannedData: string) => {
-    setAccountNumber(scannedData);
+    const parsedAccount = parseInspireTransferQrPayload(scannedData);
+    if (!parsedAccount) {
+      setAlertMessage(getInvalidInspireQrMessage(t));
+      setShowAlertModal(true);
+      setShowQRScanner(false);
+      return;
+    }
+
+    setAccountNumber(parsedAccount);
     setShowQRScanner(false);
   };
 
@@ -614,7 +701,11 @@ export default function TransferRecipient() {
                 <Ionicons name="alert-circle" size={80} color="#FFFFFF" />
               </View>
               <Text style={styles.modalTitle}>{t("sendMoney.alert")}</Text>
-              <Text style={styles.modalMessage}>{t(alertMessage)}</Text>
+              <Text style={styles.modalMessage}>
+                {alertMessage.startsWith("sendMoney.")
+                  ? t(alertMessage)
+                  : alertMessage}
+              </Text>
               <TouchableOpacity
                 style={styles.modalButton}
                 onPress={() => setShowAlertModal(false)}
@@ -674,7 +765,7 @@ export default function TransferRecipient() {
                 <View style={styles.qrCodeWrapper}>
                   {userAccountNumber ? (
                     <QRCode
-                      value={userAccountNumber}
+                      value={buildInspireTransferQrPayload(userAccountNumber)}
                       size={200}
                       color="#E25A17"
                       backgroundColor="#FFFFFF"
