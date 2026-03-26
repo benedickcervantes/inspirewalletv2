@@ -58,6 +58,10 @@ interface CardsTabProps {
 
 const getActiveCardStorageKey = (accountNumber?: string) =>
   accountNumber ? `active_card_design_${accountNumber}` : "active_card_design";
+const getDefaultCardOverrideKey = (accountNumber?: string) =>
+  accountNumber
+    ? `default_card_override_${accountNumber}`
+    : "default_card_override";
 
 export default function CardsTab({
   userData,
@@ -183,23 +187,32 @@ export default function CardsTab({
       }
 
       if (collectionRes.success && collectionRes.data) {
-        const nextCollection = collectionRes.data.collection || [];
+        const payload =
+          (collectionRes.data as { data?: any }).data ?? collectionRes.data;
+        const nextCollection = payload?.collection || [];
         const nextActive: { design?: string; id?: string } | null =
-          collectionRes.data.activeCard || null;
+          payload?.activeCard || null;
+        const storageKey = getActiveCardStorageKey(userData?.accountNumber);
+        const defaultOverrideKey = getDefaultCardOverrideKey(
+          userData?.accountNumber,
+        );
+        const isDefaultOverride = (
+          await AsyncStorage.getItem(defaultOverrideKey)
+        ) === "true";
+
         setMyCollection(nextCollection);
-        setActiveCard(nextActive);
+        setActiveCard(isDefaultOverride ? null : nextActive);
 
         // Notify parent about the resolved active design
         if (onActiveDesignChange) {
-          onActiveDesignChange(
-            (nextActive?.design as string | undefined) ?? null,
-          );
+          onActiveDesignChange(isDefaultOverride ? null : ((nextActive?.design as string | undefined) ?? null));
         }
 
         // Persist active design so we can show correct skin immediately on next app load.
         const designToCache =
-          (nextActive?.design as string | undefined) || null;
-        const storageKey = getActiveCardStorageKey(userData?.accountNumber);
+          isDefaultOverride
+            ? null
+            : (nextActive?.design as string | undefined) || null;
         if (designToCache) {
           await AsyncStorage.setItem(storageKey, designToCache);
         } else {
@@ -241,6 +254,17 @@ export default function CardsTab({
     init();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Keep local card skin in sync with parent updates in real-time.
+  useEffect(() => {
+    if (initialDesign === undefined) return;
+    setActiveCard((prev) => {
+      const prevDesign = prev?.design ?? null;
+      const nextDesign = initialDesign ?? null;
+      if (prevDesign === nextDesign) return prev;
+      return nextDesign ? { ...prev, design: nextDesign } : null;
+    });
+  }, [initialDesign]);
 
   const submitCancelAutoRenewal = async () => {
     try {
@@ -311,6 +335,9 @@ export default function CardsTab({
   const handleBuyCard = async (designSlug: string, price: number) => {
     if (isBuyingCardsLocked) {
       onBuyingCardsLockedPress?.();
+      return;
+    }
+    if (isBalanceLoading) {
       return;
     }
     if (availableBalance < price) {
@@ -471,6 +498,15 @@ export default function CardsTab({
     );
     if (localItem) {
       setActiveCard(localItem);
+      const storageKey = getActiveCardStorageKey(userData?.accountNumber);
+      const defaultOverrideKey = getDefaultCardOverrideKey(
+        userData?.accountNumber,
+      );
+      const localDesign = localItem.design as string | undefined;
+      if (localDesign) {
+        AsyncStorage.setItem(storageKey, localDesign).catch(() => {});
+      }
+      AsyncStorage.removeItem(defaultOverrideKey).catch(() => {});
       if (onActiveDesignChange) {
         onActiveDesignChange(localItem.design as string);
       }
@@ -482,14 +518,18 @@ export default function CardsTab({
       setIsLoading(true);
       const res = await setActiveCardApi(token, cardCollectionItemId);
       if (res.success && res.data) {
-        const nextCollection = res.data.collection || [];
+        const payload = (res.data as { data?: any }).data ?? res.data;
+        const nextCollection = payload?.collection || [];
         const nextActive: { design?: string; id?: string } | null =
-          res.data.activeCard || null;
+          payload?.activeCard || null;
         setMyCollection(nextCollection);
         setActiveCard(nextActive);
 
         // Persist active design for instant card skin on next load.
         const storageKey = getActiveCardStorageKey(userData?.accountNumber);
+        const defaultOverrideKey = getDefaultCardOverrideKey(
+          userData?.accountNumber,
+        );
         const designToCache =
           (nextActive?.design as string | undefined) ||
           (localItem?.design as string | undefined) ||
@@ -499,13 +539,20 @@ export default function CardsTab({
         } else {
           await AsyncStorage.removeItem(storageKey);
         }
+        await AsyncStorage.removeItem(defaultOverrideKey);
 
         if (onActiveDesignChange) {
           onActiveDesignChange(designToCache);
         }
+      } else {
+        // Backend did not persist active card; re-sync to avoid reverting on refresh.
+        await fetchCardsData();
+        Alert.alert("Error", res.error || "Failed to change active card.");
       }
     } catch (e) {
       console.error("Failed to set active card", e);
+      await fetchCardsData();
+      Alert.alert("Error", "Failed to change active card.");
     } finally {
       setIsLoading(false);
     }
@@ -516,13 +563,24 @@ export default function CardsTab({
     // persisted to backend, but gives immediate UX for this session.
     setActiveCard(null);
     const storageKey = getActiveCardStorageKey(userData?.accountNumber);
+    const defaultOverrideKey = getDefaultCardOverrideKey(
+      userData?.accountNumber,
+    );
     AsyncStorage.removeItem(storageKey).catch(() => {});
+    AsyncStorage.setItem(defaultOverrideKey, "true").catch(() => {});
     if (onActiveDesignChange) {
       onActiveDesignChange(null);
     }
   };
 
   const theme = getCardTheme(activeCard?.design as string | null | undefined);
+  const fullName = [userData?.firstName, userData?.lastName]
+    .filter(Boolean)
+    .join(" ")
+    .toUpperCase();
+  const hasAccountNumber = Boolean(userData?.accountNumber);
+  const hasFullName = Boolean(fullName);
+  const hasCompanyName = Boolean(userData?.companyName);
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -564,32 +622,47 @@ export default function CardsTab({
                 ]}
               >
                 <View style={styles.cardDetailsBottom}>
-                  <Text
-                    style={[
-                      styles.cardNumber,
-                      {
-                        color: theme.primaryText,
-                        fontSize: Math.round(16 * fontScale),
-                      },
-                    ]}
-                  >
-                    {userData?.accountNumber || t("ct.placeholderAccount")}
-                  </Text>
-                  <Text
-                    style={[
-                      styles.cardName,
-                      {
-                        color: theme.primaryText,
-                        fontSize: Math.round(16 * fontScale),
-                      },
-                    ]}
-                  >
-                    {[userData?.firstName, userData?.lastName]
-                      .filter(Boolean)
-                      .join(" ")
-                      .toUpperCase() || t("ct.placeholderName")}
-                  </Text>
-                  {userData?.companyName ? (
+                  {hasAccountNumber ? (
+                    <Text
+                      style={[
+                        styles.cardNumber,
+                        {
+                          color: theme.primaryText,
+                          fontSize: Math.round(16 * fontScale),
+                        },
+                      ]}
+                    >
+                      {userData?.accountNumber}
+                    </Text>
+                  ) : (
+                    <View
+                      style={[
+                        styles.cardTextSkeleton,
+                        { width: 150, backgroundColor: theme.skeletonBackground },
+                      ]}
+                    />
+                  )}
+                  {hasFullName ? (
+                    <Text
+                      style={[
+                        styles.cardName,
+                        {
+                          color: theme.primaryText,
+                          fontSize: Math.round(16 * fontScale),
+                        },
+                      ]}
+                    >
+                      {fullName}
+                    </Text>
+                  ) : (
+                    <View
+                      style={[
+                        styles.cardTextSkeleton,
+                        { width: 120, backgroundColor: theme.skeletonBackground },
+                      ]}
+                    />
+                  )}
+                  {hasCompanyName ? (
                     <Text
                       style={[
                         styles.cardCompanyName,
@@ -601,7 +674,7 @@ export default function CardsTab({
                       numberOfLines={1}
                       ellipsizeMode="tail"
                     >
-                      {String(userData.companyName).toUpperCase()}
+                      {String(userData?.companyName).toUpperCase()}
                     </Text>
                   ) : null}
                   <Text
@@ -615,24 +688,26 @@ export default function CardsTab({
                   >
                     {t("ct.availableBalance")}
                   </Text>
-                  <Text
-                    style={[
-                      styles.cardBalanceAmount,
-                      {
-                        color: theme.primaryText,
-                        fontSize: Math.round(18 * fontScale),
-                      },
-                    ]}
-                  >
-                    {isBalanceLoading ? (
-                      <ActivityIndicator
-                        size="small"
-                        color={theme.primaryText}
-                      />
-                    ) : (
-                      `₱ ${formatCurrency(availableBalance)}`
-                    )}
-                  </Text>
+                  {isBalanceLoading ? (
+                    <View
+                      style={[
+                        styles.cardBalanceAmountSkeleton,
+                        { backgroundColor: theme.skeletonBackground },
+                      ]}
+                    />
+                  ) : (
+                    <Text
+                      style={[
+                        styles.cardBalanceAmount,
+                        {
+                          color: theme.primaryText,
+                          fontSize: Math.round(18 * fontScale),
+                        },
+                      ]}
+                    >
+                      {`₱ ${formatCurrency(availableBalance)}`}
+                    </Text>
+                  )}
                 </View>
               </View>
             </ImageBackground>
@@ -902,7 +977,9 @@ export default function CardsTab({
                     <TouchableOpacity
                       style={[
                         styles.upgradeButton,
-                        availableBalance >= 250 && styles.activeUpgradeButton,
+                        !isBalanceLoading &&
+                          availableBalance >= 250 &&
+                          styles.activeUpgradeButton,
                       ]}
                       onPress={() => {
                         if (isBuyingCardsLocked) {
@@ -922,7 +999,8 @@ export default function CardsTab({
                       <Text
                         style={[
                           styles.upgradeButtonText,
-                          availableBalance >= 250 &&
+                          !isBalanceLoading &&
+                            availableBalance >= 250 &&
                             styles.activeUpgradeButtonText,
                         ]}
                       >
@@ -975,7 +1053,9 @@ export default function CardsTab({
                     <TouchableOpacity
                       style={[
                         styles.upgradeButton,
-                        availableBalance >= 5000 && styles.activeUpgradeButton,
+                        !isBalanceLoading &&
+                          availableBalance >= 5000 &&
+                          styles.activeUpgradeButton,
                       ]}
                       onPress={() => {
                         if (isBuyingCardsLocked) {
@@ -995,7 +1075,8 @@ export default function CardsTab({
                       <Text
                         style={[
                           styles.upgradeButtonText,
-                          availableBalance >= 5000 &&
+                          !isBalanceLoading &&
+                            availableBalance >= 5000 &&
                             styles.activeUpgradeButtonText,
                         ]}
                       >
@@ -1504,13 +1585,13 @@ export default function CardsTab({
                 <Text style={styles.vipBalanceLabel}>
                   {t("ct.yourBalance")}
                 </Text>
-                <Text style={styles.vipBalanceAmount}>
-                  {isBalanceLoading ? (
-                    <ActivityIndicator size="small" />
-                  ) : (
-                    `₱ ${formatCurrency(availableBalance || 0)}`
-                  )}
-                </Text>
+                {isBalanceLoading ? (
+                  <View style={styles.modalBalanceAmountSkeleton} />
+                ) : (
+                  <Text style={styles.vipBalanceAmount}>
+                    {`₱ ${formatCurrency(availableBalance || 0)}`}
+                  </Text>
+                )}
               </View>
 
               {isGoldActive &&
@@ -1599,12 +1680,14 @@ export default function CardsTab({
               <TouchableOpacity
                 style={[
                   styles.vipBuyButton,
-                  (availableBalance < 10000 ||
+                  (isBalanceLoading ||
+                    availableBalance < 10000 ||
                     (isGoldActive && !isGoldRenewalAvailable) ||
                     isBuyingCardsLocked) &&
                     styles.vipBuyButtonDisabled,
                 ]}
                 disabled={
+                  isBalanceLoading ||
                   availableBalance < 10000 ||
                   (isGoldActive && !isGoldRenewalAvailable) ||
                   isBuyingCardsLocked
@@ -1776,16 +1859,17 @@ export default function CardsTab({
                 <Text style={styles.designBalanceLabel}>
                   {t("ct.yourBalance")}
                 </Text>
-                <Text style={styles.designBalanceAmount}>
-                  {isBalanceLoading ? (
-                    <ActivityIndicator size="small" />
-                  ) : (
-                    `₱ ${formatCurrency(availableBalance || 0)}`
-                  )}
-                </Text>
+                {isBalanceLoading ? (
+                  <View style={styles.modalBalanceAmountSkeleton} />
+                ) : (
+                  <Text style={styles.designBalanceAmount}>
+                    {`₱ ${formatCurrency(availableBalance || 0)}`}
+                  </Text>
+                )}
               </View>
 
-              {availableBalance < selectedDesignCard.price && (
+              {!isBalanceLoading &&
+                availableBalance < selectedDesignCard.price && (
                 <View style={styles.designWarningBox}>
                   <Ionicons name="warning" size={18} color="#F44336" />
                   <Text style={styles.designWarningText}>
@@ -1811,11 +1895,13 @@ export default function CardsTab({
                 <TouchableOpacity
                   style={[
                     styles.designBuyButton,
-                    (availableBalance < selectedDesignCard.price ||
+                    (isBalanceLoading ||
+                      availableBalance < selectedDesignCard.price ||
                       isBuyingCardsLocked) &&
                       styles.designBuyButtonDisabled,
                   ]}
                   disabled={
+                    isBalanceLoading ||
                     availableBalance < selectedDesignCard.price ||
                     isBuyingCardsLocked
                   }
@@ -1992,6 +2078,11 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     letterSpacing: 0.3,
   },
+  cardTextSkeleton: {
+    height: 14,
+    borderRadius: 7,
+    marginBottom: 4,
+  },
   cardBalanceLabel: {
     fontSize: 11,
     fontWeight: "700",
@@ -2003,6 +2094,17 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "700",
     color: "#FFFFFF",
+  },
+  cardBalanceAmountSkeleton: {
+    width: 140,
+    height: 20,
+    borderRadius: 8,
+  },
+  modalBalanceAmountSkeleton: {
+    width: 92,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: "#E5E5E5",
   },
   collectionSection: {
     paddingHorizontal: 20,

@@ -1514,6 +1514,7 @@ export default function Dashboard() {
               userData={userData}
               availableBalance={availableBalance}
               isBalanceLoading={isBalanceLoading}
+              activeCardDesign={activeCardDesign}
               formatCurrency={formatCurrency}
               flipAnimation={flipAnimation}
               isCardFlipped={isCardFlipped}
@@ -1546,6 +1547,7 @@ export default function Dashboard() {
               depositGrowthData={computeDepositGrowth(deposits)}
               deposits={deposits}
               formatCurrency={formatCurrency}
+              isLoading={isBalanceLoading}
               onRefresh={refetchJwtData}
               userReferrer={userReferrer}
             />
