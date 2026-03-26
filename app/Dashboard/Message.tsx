@@ -2,7 +2,8 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Alert, Image, Keyboard, KeyboardAvoidingView, Linking, Platform, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Image, Keyboard, KeyboardAvoidingView, Linking, Platform, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import Svg, { Circle, Path } from "react-native-svg";
 import {
   SafeAreaView,
   useSafeAreaInsets,
@@ -38,6 +39,17 @@ interface DisplayMessage {
   timestamp: Date;
   status: "SENT" | "READ";
   isEdited?: boolean;
+}
+
+function DeleteFunctionIcon() {
+  return (
+    <Svg width={34} height={34} viewBox="0 0 24 24" fill="none">
+      <Path d="M8 8.2V17.2C8 18 8.7 18.7 9.5 18.7H14.5C15.3 18.7 16 18 16 17.2V8.2" stroke="#E15816" strokeWidth="2" strokeLinecap="round" />
+      <Path d="M6.5 6.8H17.5" stroke="#E15816" strokeWidth="2" strokeLinecap="round" />
+      <Path d="M10 6.7V5.8C10 5.3 10.4 4.9 10.9 4.9H13.1C13.6 4.9 14 5.3 14 5.8V6.7" stroke="#E15816" strokeWidth="2" strokeLinecap="round" />
+      <Path d="M10.2 10.4V15.7M13.8 10.4V15.7" stroke="#E15816" strokeWidth="1.8" strokeLinecap="round" />
+    </Svg>
+  );
 }
 
 const formatTime = (date: Date, lang: string) => {
@@ -92,6 +104,7 @@ export default function Message() {
     null,
   );
   const [showMessageActions, setShowMessageActions] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [editingMessage, setEditingMessage] = useState<DisplayMessage | null>(
     null,
   );
@@ -207,50 +220,28 @@ export default function Message() {
   const handleDelete = useCallback(() => {
     if (!selectedMessage) return;
     setShowMessageActions(false);
-
-    Alert.alert(
-      t("support.deleteMessage"),
-      t("support.deleteConfirm"),
-      [
-        {
-          text: t("common.cancel"),
-          style: "cancel",
-        },
-        {
-          text: t("support.deleteForMe"),
-          onPress: async () => {
-            const token = await AsyncStorage.getItem("access_token");
-            if (!token) return;
-            const result = await deleteMessage(
-              token,
-              selectedMessage.id,
-              false,
-            );
-            if (result.success) {
-              await fetchMessages();
-            } else {
-              Alert.alert(t("common.error"), result.error || t("support.failedToDelete"));
-            }
-          },
-        },
-        {
-          text: t("support.deleteForEveryone"),
-          style: "destructive",
-          onPress: async () => {
-            const token = await AsyncStorage.getItem("access_token");
-            if (!token) return;
-            const result = await deleteMessage(token, selectedMessage.id, true);
-            if (result.success) {
-              await fetchMessages();
-            } else {
-              Alert.alert(t("common.error"), result.error || t("support.failedToDelete"));
-            }
-          },
-        },
-      ],
-      { cancelable: true },
-    );
+    setShowDeleteConfirm(true);
   }, [selectedMessage, fetchMessages]);
+
+  const handleConfirmDelete = useCallback(
+    async (deleteForEveryone: boolean) => {
+      if (!selectedMessage) return;
+      setShowDeleteConfirm(false);
+      const token = await AsyncStorage.getItem("access_token");
+      if (!token) return;
+      const result = await deleteMessage(
+        token,
+        selectedMessage.id,
+        deleteForEveryone,
+      );
+      if (result.success) {
+        await fetchMessages();
+      } else {
+        setError(result.error || t("support.failedToDelete"));
+      }
+    },
+    [selectedMessage, fetchMessages, t],
+  );
 
   const handleSaveEdit = useCallback(async () => {
     if (!editingMessage || !editText.trim()) return;
@@ -271,7 +262,7 @@ export default function Message() {
       setEditingMessage(null);
       setEditText("");
     } else {
-      Alert.alert(t("common.error"), result.error || t("support.failedToEdit"));
+      setError(result.error || t("support.failedToEdit"));
     }
   }, [editingMessage, editText, fetchMessages]);
 
@@ -634,6 +625,50 @@ export default function Message() {
           accessToken={accessToken}
         />
       )}
+
+      {/* Delete Confirm Modal */}
+      <ActivityModal
+        visible={showDeleteConfirm}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowDeleteConfirm(false)}
+      >
+        <TouchableOpacity
+          style={styles.centerModalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowDeleteConfirm(false)}
+        >
+          <TouchableOpacity
+            activeOpacity={1}
+            style={styles.deleteConfirmModal}
+            onPress={(e) => e.stopPropagation()}
+          >
+            <View style={styles.deleteConfirmIconWrap}>
+              <DeleteFunctionIcon />
+            </View>
+            <Text style={styles.deleteConfirmTitle}>{t("support.deleteMessage")}</Text>
+            <Text style={styles.deleteConfirmSubtitle}>{t("support.deleteConfirm")}</Text>
+            <TouchableOpacity
+              style={[styles.deleteConfirmAction, styles.deleteConfirmActionPrimary]}
+              onPress={() => handleConfirmDelete(true)}
+            >
+              <Text style={styles.deleteConfirmActionPrimaryText}>{t("support.deleteForEveryone")}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.deleteConfirmAction}
+              onPress={() => handleConfirmDelete(false)}
+            >
+              <Text style={styles.deleteConfirmActionText}>{t("support.deleteForMe")}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.deleteConfirmAction}
+              onPress={() => setShowDeleteConfirm(false)}
+            >
+              <Text style={styles.deleteConfirmActionText}>{t("common.cancel")}</Text>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </ActivityModal>
 
       {/* Message Actions Modal */}
       <ActivityModal
@@ -1037,6 +1072,71 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.5)",
     justifyContent: "flex-end",
+  },
+  centerModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 24,
+  },
+  deleteConfirmModal: {
+    width: "100%",
+    maxWidth: 360,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    paddingTop: 24,
+    paddingBottom: 16,
+    paddingHorizontal: 22,
+    alignItems: "center",
+  },
+  deleteConfirmIconWrap: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: "rgba(225,88,22,0.15)",
+    justifyContent: "center",
+    alignItems: "center",
+    alignSelf: "center",
+    marginBottom: 12,
+  },
+  deleteConfirmTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#333",
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  deleteConfirmSubtitle: {
+    fontSize: 15,
+    color: "#666",
+    marginBottom: 20,
+    textAlign: "center",
+    lineHeight: 22,
+  },
+  deleteConfirmAction: {
+    width: "100%",
+    minHeight: 48,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 999,
+    backgroundColor: "#F3F4F6",
+    marginBottom: 10,
+    paddingVertical: 10,
+  },
+  deleteConfirmActionPrimary: {
+    backgroundColor: "#E15816",
+    marginBottom: 12,
+  },
+  deleteConfirmActionPrimaryText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#FFFFFF",
+  },
+  deleteConfirmActionText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#374151",
   },
   actionSheet: {
     backgroundColor: "#FFFFFF",
