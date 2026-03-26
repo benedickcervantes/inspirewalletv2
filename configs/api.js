@@ -2784,7 +2784,7 @@ export async function setActiveCard(accessToken, cardCollectionItemId) {
 
 /**
  * Renew an expiring Gold Elite subscription.
- * Only allowed when subscription expires within 3 days.
+ * Only allowed when subscription expires within 7 days.
  * POST /card-collection/renew
  * @param {string} accessToken - Backend JWT
  * @param {string} design - Card design to renew (e.g., "GOLD_ELITE")

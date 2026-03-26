@@ -40,7 +40,7 @@ export default function GoldEliteRenewalCard({
   };
 
   const daysUntilExpiry = getDaysUntilExpiry();
-  const canRenew = daysUntilExpiry <= 3 && daysUntilExpiry > 0;
+  const canRenew = daysUntilExpiry <= 7 && daysUntilExpiry > 0;
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString("en-US", {
@@ -98,7 +98,7 @@ export default function GoldEliteRenewalCard({
     );
   }
 
-  // Show renewal card when within 3 days
+  // Show renewal card when within 7 days
   return (
     <View style={[styles.renewalCard, compact && { padding: 10, marginBottom: 10 }]}>
       <View style={[styles.renewalHeader, compact && { gap: 8, marginBottom: 10 }]}>
@@ -143,7 +143,7 @@ export default function GoldEliteRenewalCard({
 }
 
 const styles = StyleSheet.create({
-  // Inactive state (more than 3 days remaining)
+  // Inactive state (more than 7 days remaining)
   inactiveCard: {
     backgroundColor: "#F0FDF4",
     borderRadius: 12,
@@ -184,7 +184,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 
-  // Renewal state (within 3 days)
+  // Renewal state (within 7 days)
   renewalCard: {
     backgroundColor: "#FEF3C7",
     borderRadius: 12,
