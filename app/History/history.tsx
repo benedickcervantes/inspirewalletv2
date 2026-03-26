@@ -7,7 +7,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Platform, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Path } from "react-native-svg";
-import { getOrCreateMainWallet, getTransactions } from "../../configs/api";
+import {
+  deleteTransactions,
+  getOrCreateMainWallet,
+  getTransactions,
+} from "../../configs/api";
 import type { TransactionDoc } from "../../configs/firebase";
 import { auth, subscribeToTransactions } from "../../configs/firebase";
 import { getLanguageCode } from "../../constants/locales";
@@ -357,7 +361,6 @@ export default function HistoryScreen() {
   const [selectedTransaction, setSelectedTransaction] =
     useState<Transaction | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
-  const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
 
   // Ref for unsubscribe function to avoid stale closure
   const unsubRef = useRef<(() => void) | null>(null);
@@ -504,18 +507,6 @@ export default function HistoryScreen() {
     let cancelled = false;
 
     const init = async () => {
-      // Load deleted IDs from AsyncStorage
-      try {
-        const savedDeletedIds = await AsyncStorage.getItem(
-          "deleted_transaction_ids",
-        );
-        if (savedDeletedIds) {
-          setDeletedIds(new Set(JSON.parse(savedDeletedIds)));
-        }
-      } catch (error) {
-        console.error("Failed to load deleted IDs:", error);
-      }
-
       const accessToken = await AsyncStorage.getItem("access_token");
       if (accessToken) {
         await fetchTransactions();
@@ -562,24 +553,6 @@ export default function HistoryScreen() {
       unsubRef.current?.(); // ✅ Cleanup using ref
     };
   }, [fetchTransactions]);
-
-  // Save deleted IDs to AsyncStorage whenever they change
-  useEffect(() => {
-    const saveDeletedIds = async () => {
-      try {
-        await AsyncStorage.setItem(
-          "deleted_transaction_ids",
-          JSON.stringify([...deletedIds]),
-        );
-      } catch (error) {
-        console.error("Failed to save deleted IDs:", error);
-      }
-    };
-
-    if (deletedIds.size > 0) {
-      saveDeletedIds();
-    }
-  }, [deletedIds]);
 
   const handleBack = () => {
     if (isSelectMode) {
@@ -704,12 +677,34 @@ export default function HistoryScreen() {
     }
   };
 
-  const handleBulkDelete = () => {
+  const handleBulkDelete = async () => {
     if (selectedIds.size === 0) return;
+    const idsToDelete = Array.from(selectedIds);
+    const accessToken = await AsyncStorage.getItem("access_token");
+    if (!accessToken) {
+      alert(t("auth.sessionExpired"));
+      return;
+    }
+
+    // Optimistic UI update
     setTransactions((prev) => prev.filter((tx) => !selectedIds.has(tx.id)));
-    setSelectedIds(new Set());
-    setIsSelectMode(false);
-    setShowDeleteOptions(false);
+
+    try {
+      const res = await deleteTransactions(accessToken, idsToDelete);
+      if (!res.success) {
+        await fetchTransactions(false, 0, dateRange.start ?? undefined, dateRange.end ?? undefined);
+        alert(res.error || t("history.deleteFailed"));
+      } else {
+        await fetchTransactions(false, 0, dateRange.start ?? undefined, dateRange.end ?? undefined);
+      }
+    } catch {
+      await fetchTransactions(false, 0, dateRange.start ?? undefined, dateRange.end ?? undefined);
+      alert(t("history.deleteFailed"));
+    } finally {
+      setSelectedIds(new Set());
+      setIsSelectMode(false);
+      setShowDeleteOptions(false);
+    }
   };
 
   const handleKeepSelected = () => {

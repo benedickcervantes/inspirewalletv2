@@ -113,6 +113,10 @@ export function getTransactions(
   accessToken: string,
   opts?: { walletId?: string; limit?: number; cursor?: string; type?: string },
 ): Promise<GetTransactionsResult>;
+export function deleteTransactions(
+  accessToken: string,
+  ids: string[],
+): Promise<{ success: boolean; deletedCount?: number; error?: string }>;
 
 export function getStockInvestmentDepositRequests(
   accessToken: string,
