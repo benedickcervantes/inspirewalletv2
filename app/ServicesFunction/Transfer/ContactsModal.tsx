@@ -2,7 +2,8 @@ import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Contacts from "expo-contacts";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { getBeneficiaries } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
 
 import ActivityModal from '../../components/ActivityModal';
@@ -44,11 +45,12 @@ export default function ContactsModal({ visible, onClose, onSelectContact }: Con
   const [searchQuery, setSearchQuery] = useState("");
   const [hasContactPermission, setHasContactPermission] = useState(false);
   const [isLoadingDeviceContacts, setIsLoadingDeviceContacts] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   useEffect(() => {
     if (visible) {
+      setActiveTab("saved");
       loadSavedAccounts();
-      loadDeviceContacts();
     }
   }, [visible]);
 
@@ -60,24 +62,119 @@ export default function ContactsModal({ visible, onClose, onSelectContact }: Con
     if (!visible) return;
     if (activeTab !== "device") return;
     // Ensure device list is fresh when user switches tabs.
-    loadDeviceContacts();
+    if (deviceContacts.length === 0 && !isLoadingDeviceContacts) {
+      loadDeviceContacts();
+    }
   }, [activeTab, visible]);
 
+  useEffect(() => {
+    if (!visible) return;
+
+    const showEvent = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+    const hideEvent = Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
+
+    const showSub = Keyboard.addListener(showEvent, (e) => {
+      setKeyboardHeight(e.endCoordinates?.height ?? 0);
+    });
+    const hideSub = Keyboard.addListener(hideEvent, () => {
+      setKeyboardHeight(0);
+    });
+
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, [visible]);
+
   const loadSavedAccounts = async () => {
+    let localAccounts: SavedAccount[] = [];
     try {
       const saved = await AsyncStorage.getItem("saved_accounts");
       if (saved) {
-        const accounts = JSON.parse(saved) as SavedAccount[];
-        setSavedAccounts(accounts);
-        setFilteredSaved(accounts);
-        if ((accounts?.length ?? 0) === 0) setActiveTab("device");
-      } else {
-        setSavedAccounts([]);
-        setFilteredSaved([]);
-        setActiveTab("device");
+        try {
+          const parsed = JSON.parse(saved);
+          localAccounts = Array.isArray(parsed) ? (parsed as SavedAccount[]) : [];
+        } catch {
+          localAccounts = [];
+        }
       }
     } catch (error) {
-      console.error("Error loading saved accounts:", error);
+      console.error("Error reading local saved accounts:", error);
+    }
+
+    let backendAccounts: SavedAccount[] = [];
+    try {
+      const accessToken = await AsyncStorage.getItem("access_token");
+      if (accessToken) {
+        const beneficiariesRes = await getBeneficiaries(accessToken);
+        if (beneficiariesRes.success && Array.isArray(beneficiariesRes.beneficiaries)) {
+          backendAccounts = beneficiariesRes.beneficiaries
+            .map((item: any, index: number) => {
+              const accountIdentifier = String(
+                  item?.accountNumber ||
+                  item?.recipientAccountNumber ||
+                  item?.recipient?.accountNumber ||
+                  item?.recipient?.user?.accountNumber ||
+                  item?.accountIdentifier ||
+                  item?.walletId ||
+                  item?.identifier ||
+                  "",
+              ).trim();
+              const name = String(
+                item?.nickname ||
+                  item?.name ||
+                  item?.recipientName ||
+                  item?.fullName ||
+                  "",
+              ).trim();
+              const id = String(item?.id || accountIdentifier || `beneficiary-${index}`);
+              if (!accountIdentifier) return null;
+              return {
+                id,
+                name: name || t("common.unknown"),
+                accountNumber: accountIdentifier,
+              } as SavedAccount;
+            })
+            .filter(Boolean) as SavedAccount[];
+        }
+      }
+    } catch (error) {
+      console.warn("Unable to load beneficiaries from backend:", error);
+    }
+
+    try {
+      const mergedMap = new Map<string, SavedAccount>();
+      [...backendAccounts, ...localAccounts].forEach((acc) => {
+        const acct = String(acc.accountNumber || "").trim();
+        if (!acct) return;
+        const key = acct.replace(/\s+/g, "").toLowerCase();
+        mergedMap.set(key, {
+          id: String(acc.id || acct),
+          name: String(acc.name || t("common.unknown")),
+          accountNumber: acct,
+        });
+      });
+      const mergedAccounts = Array.from(mergedMap.values());
+
+      // Keep local cache in sync so Saved Accounts is available offline.
+      await AsyncStorage.setItem("saved_accounts", JSON.stringify(mergedAccounts));
+
+      setSavedAccounts(mergedAccounts);
+      setFilteredSaved(mergedAccounts);
+      if ((mergedAccounts?.length ?? 0) === 0) {
+        setActiveTab("device");
+      } else {
+        setActiveTab("saved");
+      }
+    } catch (error) {
+      console.error("Error merging saved accounts:", error);
+      setSavedAccounts(localAccounts);
+      setFilteredSaved(localAccounts);
+      if ((localAccounts?.length ?? 0) === 0) {
+        setActiveTab("device");
+      } else {
+        setActiveTab("saved");
+      }
     }
   };
 
@@ -152,16 +249,20 @@ export default function ContactsModal({ visible, onClose, onSelectContact }: Con
       (contact as Contact)?.phoneNumbers?.[0] ||
       (contact as SavedAccount)?.accountNumber ||
       "";
+    const trimmedRaw = String(rawAccount).trim();
     const selectedContact: Contact = {
       ...(contact as any),
-      accountNumber: String(rawAccount).replace(/\D/g, ""),
+      accountNumber: trimmedRaw,
       type: activeTab,
     };
     onSelectContact(selectedContact);
+    handleClose();
   };
 
   const handleClose = () => {
+    Keyboard.dismiss();
     setSearchQuery("");
+    setKeyboardHeight(0);
     onClose();
   };
 
@@ -173,7 +274,18 @@ export default function ContactsModal({ visible, onClose, onSelectContact }: Con
       onRequestClose={handleClose}
     >
       <View style={styles.modalOverlay}>
-        <View style={styles.modalContainer}>
+        <KeyboardAvoidingView
+          style={styles.keyboardAvoidingContainer}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 20 : 0}
+        >
+        <View
+          style={[
+            styles.modalContainer,
+            Platform.OS === "android" &&
+              keyboardHeight > 0 && { marginBottom: Math.max(8, keyboardHeight - 24) },
+          ]}
+        >
           {/* Header */}
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>{t("sendMoney.contacts")}</Text>
@@ -231,7 +343,12 @@ export default function ContactsModal({ visible, onClose, onSelectContact }: Con
           </View>
 
           {/* Content */}
-          <ScrollView style={styles.contentContainer} showsVerticalScrollIndicator={false}>
+          <ScrollView
+            style={styles.contentContainer}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+          >
             {activeTab === "saved" ? (
               filteredSaved.length === 0 ? (
                 <View style={styles.emptyState}>
@@ -321,6 +438,7 @@ export default function ContactsModal({ visible, onClose, onSelectContact }: Con
             )}
           </ScrollView>
         </View>
+        </KeyboardAvoidingView>
       </View>
     </ActivityModal>
   );
@@ -332,11 +450,16 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0, 0, 0, 0.5)",
     justifyContent: "flex-end",
   },
+  keyboardAvoidingContainer: {
+    width: "100%",
+    justifyContent: "flex-end",
+  },
   modalContainer: {
     backgroundColor: "#FFFFFF",
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    maxHeight: "85%",
+    maxHeight: "92%",
+    minHeight: "70%",
     paddingTop: 20,
   },
   modalHeader: {
@@ -402,6 +525,7 @@ const styles = StyleSheet.create({
   contentContainer: {
     flex: 1,
     paddingHorizontal: 24,
+    paddingBottom: 28,
   },
   contactItem: {
     flexDirection: "row",
