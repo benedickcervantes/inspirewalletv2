@@ -1,42 +1,42 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
-  useFocusEffect,
-  useNavigation,
-  useRoute,
+    useFocusEffect,
+    useNavigation,
+    useRoute,
 } from "@react-navigation/native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  Animated,
-  AppState,
-  Image,
-  Linking,
-  Modal,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Animated,
+    AppState,
+    Image,
+    Linking,
+    Modal,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import {
-  SafeAreaView,
-  useSafeAreaInsets,
+    SafeAreaView,
+    useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import {
-  getActiveAnnouncements,
-  getCompanyKycStatus,
-  getMe,
-  getNotifications,
-  getOrCreateMainWallet,
-  getPersonalKycStatus,
-  getReferralTree,
-  getTimeDeposits,
-  getTransactions,
+    getActiveAnnouncements,
+    getCompanyKycStatus,
+    getMe,
+    getNotifications,
+    getOrCreateMainWallet,
+    getPersonalKycStatus,
+    getReferralTree,
+    getTimeDeposits,
+    getTransactions,
 } from "../../configs/api";
 import {
-  languageChoiceDoneKey,
-  SUPPORTED_LANGUAGES,
+    languageChoiceDoneKey,
+    SUPPORTED_LANGUAGES,
 } from "../../constants/locales";
 import { useIdleTimeout } from "../../context/IdleTimeoutContext";
 import { useLanguage } from "../../context/LanguageContext";
@@ -48,8 +48,8 @@ import type { NavProp } from "../../types/navigation";
 import { useResponsive } from "../../utils/responsive";
 import AccountDeletionModal from "../AccountDeletion/AccountDeletionModal";
 import {
-  AnnouncementModal,
-  type AnnouncementItem,
+    AnnouncementModal,
+    type AnnouncementItem,
 } from "../AnnouncementModal/AnnouncementModal";
 import NotificationBadge from "../Notification/NotificationBadge";
 import CardsTab from "./CardsTab";
@@ -262,8 +262,10 @@ export default function Dashboard() {
   const isUserScrollingRef = useRef(false);
   const lastScrollAtRef = useRef(0);
   const [currentLanguageIndex, setCurrentLanguageIndex] = useState(0);
-  const { unreadCount: unreadNotifications, setUnreadCount: setUnreadNotifications } =
-    useUnreadNotifications();
+  const {
+    unreadCount: unreadNotifications,
+    setUnreadCount: setUnreadNotifications,
+  } = useUnreadNotifications();
   const [userReferrer, setUserReferrer] = useState<{
     referralCode?: string;
     firstName?: string;
@@ -298,7 +300,9 @@ export default function Dashboard() {
   const isBankingServiceLocked =
     activeTimeDepositPrincipalTotal < BANKING_SERVICE_MIN_BALANCE;
   const userRole = String(userData?.role ?? "").toUpperCase();
-  const kycAccountStatus = String(userData?.kycAccountStatus ?? "").toUpperCase();
+  const kycAccountStatus = String(
+    userData?.kycAccountStatus ?? "",
+  ).toUpperCase();
   const kycStatus = String(userData?.kycStatus ?? "").toUpperCase();
   const isKycVerified =
     kycAccountStatus === "VERIFIED" ||
@@ -402,14 +406,16 @@ export default function Dashboard() {
         };
       }
       if (user) {
-        accountNumberRef.current = (user as { accountNumber?: string })?.accountNumber;
+        accountNumberRef.current = (
+          user as { accountNumber?: string }
+        )?.accountNumber;
         setUserData({
           firstName: user.firstName,
           lastName: user.lastName,
           companyName: approvedCompanyNameFromKyc || user.companyName,
           email: user.email,
           accountNumber: user.accountNumber,
-          role: (user as Record<string, unknown>).role ?? 'USER',
+          role: (user as Record<string, unknown>).role ?? "USER",
           kycAccountStatus: (user as Record<string, unknown>).kycAccountStatus,
           kycStatus: (user as Record<string, unknown>).kycStatus,
         });
@@ -419,7 +425,9 @@ export default function Dashboard() {
         // pre-fill and can navigate to Passcode on next launch.
         const emailStr = user.email as string | undefined;
         if (emailStr) {
-          AsyncStorage.setItem('lastLoggedEmail', emailStr.toLowerCase()).catch(() => { });
+          AsyncStorage.setItem("lastLoggedEmail", emailStr.toLowerCase()).catch(
+            () => {},
+          );
         }
 
         // Load cached active card design once we know the account number
@@ -470,8 +478,8 @@ export default function Dashboard() {
       }
 
       const walletId = w?.id;
-      const accountNumberFromInit =
-        (user as { accountNumber?: string })?.accountNumber;
+      const accountNumberFromInit = (user as { accountNumber?: string })
+        ?.accountNumber;
       const accountKey = languageChoiceDoneKey(accountNumberFromInit);
       const globalKey = languageChoiceDoneKey(undefined);
       const [treeRes, txRes, notifRes, hasChosen, hasChosenGlobal, annRes] =
@@ -609,10 +617,17 @@ export default function Dashboard() {
     lastRefetchAtRef.current = now;
 
     try {
-    const accessToken = await AsyncStorage.getItem("access_token");
-    if (!accessToken) return;
-    const [w, meRes, tdRes, treeRes, notifRes, companyKycRes, personalKycRes] =
-      await Promise.all([
+      const accessToken = await AsyncStorage.getItem("access_token");
+      if (!accessToken) return;
+      const [
+        w,
+        meRes,
+        tdRes,
+        treeRes,
+        notifRes,
+        companyKycRes,
+        personalKycRes,
+      ] = await Promise.all([
         syncAvailableBalanceOnly(),
         getMe(accessToken),
         getTimeDeposits(accessToken),
@@ -621,105 +636,105 @@ export default function Dashboard() {
         getCompanyKycStatus(accessToken).catch(() => null),
         getPersonalKycStatus(accessToken).catch(() => null),
       ]);
-    const txRes = await getTransactions(accessToken, {
-      walletId: w?.id ?? mainWalletIdRef.current ?? undefined,
-      limit: 20,
-    });
-
-    if (meRes.success && meRes.user) {
-      const user = meRes.user as Record<string, unknown>;
-      const companyKycData =
-        companyKycRes && companyKycRes.success && companyKycRes.data
-          ? (companyKycRes.data as { status?: string; companyName?: string })
-          : null;
-      const approvedCompanyNameFromKyc =
-        companyKycData &&
-        ["approved", "verified"].includes(
-          String(companyKycData.status ?? "").toLowerCase(),
-        )
-          ? companyKycData.companyName
-          : undefined;
-      const personalStatusFromApi =
-        personalKycRes && personalKycRes.success && personalKycRes.data
-          ? String(
-              (personalKycRes.data as { status?: string }).status ?? "",
-            ).toUpperCase()
-          : "";
-      setUserData({
-        firstName: user.firstName,
-        lastName: user.lastName,
-        companyName: approvedCompanyNameFromKyc || user.companyName,
-        email: user.email,
-        accountNumber: user.accountNumber,
-        role: (user as Record<string, unknown>).role ?? "USER",
-        kycAccountStatus: (user as Record<string, unknown>).kycAccountStatus,
-        kycStatus: personalStatusFromApi
-          ? personalStatusFromApi
-          : (user as Record<string, unknown>).kycStatus,
+      const txRes = await getTransactions(accessToken, {
+        walletId: w?.id ?? mainWalletIdRef.current ?? undefined,
+        limit: 20,
       });
-    }
 
-    if (tdRes.success && Array.isArray(tdRes.deposits)) {
-      const list = tdRes.deposits as TimeDeposit[];
-      setDeposits(list);
-      setTimeDeposit(computeTimeDepositTotal(list));
-    } else if (!tdRes.success && __DEV__) {
-      console.warn("[Dashboard] getTimeDeposits failed:", tdRes.error);
-    }
-
-    if (treeRes.success && treeRes.tree) {
-      const tree = treeRes.tree as {
-        ancestors?: {
-          referralCode?: string;
-          firstName?: string;
-          lastName?: string;
-        }[];
-      };
-      const first = tree.ancestors?.[0];
-      if (
-        first &&
-        (first.referralCode ??
-          (first as { referral_code?: string }).referral_code)
-      ) {
-        setUserReferrer({
-          referralCode:
-            first.referralCode ??
-            (first as { referral_code?: string }).referral_code,
-          firstName:
-            first.firstName ?? (first as { first_name?: string }).first_name,
-          lastName:
-            first.lastName ?? (first as { last_name?: string }).last_name,
+      if (meRes.success && meRes.user) {
+        const user = meRes.user as Record<string, unknown>;
+        const companyKycData =
+          companyKycRes && companyKycRes.success && companyKycRes.data
+            ? (companyKycRes.data as { status?: string; companyName?: string })
+            : null;
+        const approvedCompanyNameFromKyc =
+          companyKycData &&
+          ["approved", "verified"].includes(
+            String(companyKycData.status ?? "").toLowerCase(),
+          )
+            ? companyKycData.companyName
+            : undefined;
+        const personalStatusFromApi =
+          personalKycRes && personalKycRes.success && personalKycRes.data
+            ? String(
+                (personalKycRes.data as { status?: string }).status ?? "",
+              ).toUpperCase()
+            : "";
+        setUserData({
+          firstName: user.firstName,
+          lastName: user.lastName,
+          companyName: approvedCompanyNameFromKyc || user.companyName,
+          email: user.email,
+          accountNumber: user.accountNumber,
+          role: (user as Record<string, unknown>).role ?? "USER",
+          kycAccountStatus: (user as Record<string, unknown>).kycAccountStatus,
+          kycStatus: personalStatusFromApi
+            ? personalStatusFromApi
+            : (user as Record<string, unknown>).kycStatus,
         });
+      }
+
+      if (tdRes.success && Array.isArray(tdRes.deposits)) {
+        const list = tdRes.deposits as TimeDeposit[];
+        setDeposits(list);
+        setTimeDeposit(computeTimeDepositTotal(list));
+      } else if (!tdRes.success && __DEV__) {
+        console.warn("[Dashboard] getTimeDeposits failed:", tdRes.error);
+      }
+
+      if (treeRes.success && treeRes.tree) {
+        const tree = treeRes.tree as {
+          ancestors?: {
+            referralCode?: string;
+            firstName?: string;
+            lastName?: string;
+          }[];
+        };
+        const first = tree.ancestors?.[0];
+        if (
+          first &&
+          (first.referralCode ??
+            (first as { referral_code?: string }).referral_code)
+        ) {
+          setUserReferrer({
+            referralCode:
+              first.referralCode ??
+              (first as { referral_code?: string }).referral_code,
+            firstName:
+              first.firstName ?? (first as { first_name?: string }).first_name,
+            lastName:
+              first.lastName ?? (first as { last_name?: string }).last_name,
+          });
+        } else {
+          setUserReferrer(null);
+        }
       } else {
         setUserReferrer(null);
       }
-    } else {
-      setUserReferrer(null);
-    }
 
-    if (txRes.success && txRes.transactions) {
-      const txs = txRes.transactions as RawApiTransaction[];
-      const mapped: Transaction[] = txs.map((tx) => ({
-        id: String(tx.id ?? ""),
-        type: String(tx.type ?? ""),
-        amount: (() => {
-          const a = parseFloat(String(tx.amount ?? 0));
-          return Number.isNaN(a) ? 0 : a;
-        })(),
-        description: String(tx.description ?? ""),
-        timestamp: {
-          toDate: () => new Date(String(tx.createdAt ?? "")),
-        },
-      }));
-      setRecentTransactions(mapped);
-    }
+      if (txRes.success && txRes.transactions) {
+        const txs = txRes.transactions as RawApiTransaction[];
+        const mapped: Transaction[] = txs.map((tx) => ({
+          id: String(tx.id ?? ""),
+          type: String(tx.type ?? ""),
+          amount: (() => {
+            const a = parseFloat(String(tx.amount ?? 0));
+            return Number.isNaN(a) ? 0 : a;
+          })(),
+          description: String(tx.description ?? ""),
+          timestamp: {
+            toDate: () => new Date(String(tx.createdAt ?? "")),
+          },
+        }));
+        setRecentTransactions(mapped);
+      }
 
-    if (notifRes.success && notifRes.data) {
-      const unreadCount = (notifRes.data as { isRead: boolean }[]).filter(
-        (n) => !n.isRead,
-      ).length;
-      setUnreadNotifications(unreadCount);
-    }
+      if (notifRes.success && notifRes.data) {
+        const unreadCount = (notifRes.data as { isRead: boolean }[]).filter(
+          (n) => !n.isRead,
+        ).length;
+        setUnreadNotifications(unreadCount);
+      }
     } finally {
       refetchInFlightRef.current = false;
     }
@@ -734,16 +749,16 @@ export default function Dashboard() {
     lastTimeDepositSyncAtRef.current = now;
 
     try {
-    const accessToken = await AsyncStorage.getItem("access_token");
-    if (!accessToken) return;
-    const tdRes = await getTimeDeposits(accessToken);
-    if (tdRes.success && Array.isArray(tdRes.deposits)) {
-      const list = tdRes.deposits as TimeDeposit[];
-      setDeposits(list);
-      setTimeDeposit(computeTimeDepositTotal(list));
-    } else if (!tdRes.success && __DEV__) {
-      console.warn("[Dashboard] syncTimeDepositsOnly failed:", tdRes.error);
-    }
+      const accessToken = await AsyncStorage.getItem("access_token");
+      if (!accessToken) return;
+      const tdRes = await getTimeDeposits(accessToken);
+      if (tdRes.success && Array.isArray(tdRes.deposits)) {
+        const list = tdRes.deposits as TimeDeposit[];
+        setDeposits(list);
+        setTimeDeposit(computeTimeDepositTotal(list));
+      } else if (!tdRes.success && __DEV__) {
+        console.warn("[Dashboard] syncTimeDepositsOnly failed:", tdRes.error);
+      }
     } finally {
       timeDepositInFlightRef.current = false;
     }
@@ -987,7 +1002,10 @@ export default function Dashboard() {
           .replace(/[_-]+/g, " ")
           .replace(/\s+/g, " ")
           .split(" ")
-          .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+          .map(
+            (word) =>
+              word.charAt(0).toUpperCase() + word.slice(1).toLowerCase(),
+          )
           .join(" ");
       };
 
@@ -998,21 +1016,35 @@ export default function Dashboard() {
         });
       }
 
-      if (/stock\s*investment/i.test(normalized) && /\bapproved\b/i.test(normalized))
+      if (
+        /stock\s*investment/i.test(normalized) &&
+        /\bapproved\b/i.test(normalized)
+      )
         return t("history.stockInvestmentApproved");
-      if (/stock\s*investment/i.test(normalized) && /\brejected\b/i.test(normalized))
+      if (
+        /stock\s*investment/i.test(normalized) &&
+        /\brejected\b/i.test(normalized)
+      )
         return t("history.stockInvestmentRejected");
-      if (/stock\s*investment/i.test(normalized) && /\brequest(ed)?\b/i.test(normalized))
+      if (
+        /stock\s*investment/i.test(normalized) &&
+        /\brequest(ed)?\b/i.test(normalized)
+      )
         return t("history.stockInvestmentRequested");
 
       if (/withdrawal/i.test(normalized) && /\bapproved\b/i.test(normalized))
         return t("history.withdrawalApproved");
       if (/withdrawal/i.test(normalized) && /\brejected\b/i.test(normalized))
         return t("history.withdrawalRejected");
-      if (/withdrawal/i.test(normalized) && /\brequest(ed)?\b/i.test(normalized))
+      if (
+        /withdrawal/i.test(normalized) &&
+        /\brequest(ed)?\b/i.test(normalized)
+      )
         return t("history.withdrawalRequested");
 
-      const topUpApprovedMatch = normalized.match(/^Top[- ]?up approved:\s*request\s+(.+)$/i);
+      const topUpApprovedMatch = normalized.match(
+        /^Top[- ]?up approved:\s*request\s+(.+)$/i,
+      );
       if (topUpApprovedMatch?.[1]) {
         return t("history.topUpApprovedRequest", {
           requestId: topUpApprovedMatch[1].trim(),
@@ -1160,7 +1192,9 @@ export default function Dashboard() {
                   color="#FFFFFF"
                 />
               </View>
-              <Text style={styles.maintenanceTitle}>{t("dashboard.underMaintenance")}</Text>
+              <Text style={styles.maintenanceTitle}>
+                {t("dashboard.underMaintenance")}
+              </Text>
               {selectedMaintenanceService && (
                 <Text style={styles.maintenanceSubtitle}>
                   {t(selectedMaintenanceService)}
@@ -1174,7 +1208,9 @@ export default function Dashboard() {
               style={styles.maintenanceModalButton}
               onPress={() => setSelectedMaintenanceService(null)}
             >
-              <Text style={styles.maintenanceModalButtonText}>{t("dashboard.gotIt")}</Text>
+              <Text style={styles.maintenanceModalButtonText}>
+                {t("dashboard.gotIt")}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -1189,11 +1225,7 @@ export default function Dashboard() {
           <View style={styles.bankingLockModalContent}>
             <View style={styles.bankingLockHeader}>
               <View style={styles.bankingLockIconCircle}>
-                <MaterialCommunityIcons
-                  name="lock"
-                  size={22}
-                  color="#FFFFFF"
-                />
+                <MaterialCommunityIcons name="lock" size={22} color="#FFFFFF" />
               </View>
               <Text style={styles.bankingLockTitle}>
                 {bankingLockModalContext === "ewallet"
@@ -1217,7 +1249,9 @@ export default function Dashboard() {
               style={styles.maintenanceModalButton}
               onPress={() => setShowBankingServiceLockedModal(false)}
             >
-              <Text style={styles.maintenanceModalButtonText}>{t("dashboard.gotIt")}</Text>
+              <Text style={styles.maintenanceModalButtonText}>
+                {t("dashboard.gotIt")}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -1282,7 +1316,9 @@ export default function Dashboard() {
               style={styles.maintenanceModalButton}
               onPress={() => setShowKycLockedModal(false)}
             >
-              <Text style={styles.maintenanceModalButtonText}>{t("dashboard.gotIt")}</Text>
+              <Text style={styles.maintenanceModalButtonText}>
+                {t("dashboard.gotIt")}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -1291,7 +1327,7 @@ export default function Dashboard() {
         visible={showFirstTimeLanguageModal}
         transparent
         animationType="fade"
-        onRequestClose={() => { }}
+        onRequestClose={() => {}}
       >
         <View style={styles.languageModalOverlay}>
           <View style={styles.languageModalContentOuter}>
@@ -1303,7 +1339,10 @@ export default function Dashboard() {
                 {t("profile.selectLanguage")}
               </Text>
             </View>
-            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+            >
               {SUPPORTED_LANGUAGES.map(({ label, flag }) => (
                 <TouchableOpacity
                   key={label}
@@ -1461,7 +1500,54 @@ export default function Dashboard() {
                 </Text>
               </TouchableOpacity>
                 );
-              })}
+              const compactLabelThreshold = hasWideLabel ? 7 : 12;
+              const veryLongLabelThreshold = hasWideLabel ? 10 : 16;
+              const isCompactLabel = label.length >= compactLabelThreshold;
+              const isVeryLongLabel = label.length >= veryLongLabelThreshold;
+              const baseTabFontSize = width < 360 ? 11 : width < 400 ? 12 : 13;
+              const compactTabFontSize =
+                width < 360 ? 10 : width < 400 ? 11 : 12;
+              const tabFontSize = isVeryLongLabel
+                ? compactTabFontSize - 1
+                : isCompactLabel
+                  ? compactTabFontSize
+                  : baseTabFontSize;
+
+              return (
+                <TouchableOpacity
+                  key={tab}
+                  style={[
+                    styles.tab,
+                    isActive && styles.activeTab,
+                    {
+                      flex: 1,
+                      paddingHorizontal: isActive
+                        ? activeHorizontalPadding
+                        : baseHorizontalPadding,
+                      paddingVertical: isSmallScreen ? 9 : 11,
+                      minWidth: 0,
+                      minHeight: isSmallScreen ? 40 : 46,
+                    },
+                  ]}
+                  onPress={() => setActiveTab(tab)}
+                >
+                  <Text
+                    style={[
+                      styles.tabText,
+                      isActive && styles.activeTabText,
+                      isCompactLabel && styles.tabTextCompact,
+                      { fontSize: tabFontSize },
+                    ]}
+                    numberOfLines={isCompactLabel ? 2 : 1}
+                    adjustsFontSizeToFit={isVeryLongLabel}
+                    minimumFontScale={isVeryLongLabel ? 0.88 : undefined}
+                    ellipsizeMode={isCompactLabel ? "tail" : "clip"}
+                  >
+                    {label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
 
           {activeTab === "Wallet" && (
@@ -1506,8 +1592,9 @@ export default function Dashboard() {
             />
           )}
 
-          {activeTab !== "Cards" && activeTab !== "Investment" && (
-            shouldShowServiceContainersSkeleton ? (
+          {activeTab !== "Cards" &&
+            activeTab !== "Investment" &&
+            (shouldShowServiceContainersSkeleton ? (
               <View
                 style={[
                   styles.quickActionsContainer,
@@ -1606,7 +1693,11 @@ export default function Dashboard() {
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  key={isBankingServiceLocked ? "banking-qa-locked" : "banking-qa-open"}
+                  key={
+                    isBankingServiceLocked
+                      ? "banking-qa-locked"
+                      : "banking-qa-open"
+                  }
                   style={[
                     styles.quickActionButton,
                     isBankingServiceLocked
@@ -1745,8 +1836,7 @@ export default function Dashboard() {
                   </Text>
                 </TouchableOpacity>
               </View>
-            )
-          )}
+            ))}
 
           {activeTab !== "Cards" && activeTab !== "Investment" && (
             <View style={styles.menuContainer}>
@@ -1758,8 +1848,13 @@ export default function Dashboard() {
               {shouldShowServiceContainersSkeleton ? (
                 <View style={styles.menuGrid}>
                   {menuItems.map((item) => (
-                    <View key={`menu-skeleton-${item.route}`} style={styles.menuItem}>
-                      <View style={[styles.menuIcon, styles.menuIconSkeleton]} />
+                    <View
+                      key={`menu-skeleton-${item.route}`}
+                      style={styles.menuItem}
+                    >
+                      <View
+                        style={[styles.menuIcon, styles.menuIconSkeleton]}
+                      />
                       <View style={styles.menuLabelSkeleton} />
                     </View>
                   ))}
@@ -1767,103 +1862,104 @@ export default function Dashboard() {
               ) : (
                 <View style={styles.menuGrid}>
                   {menuItems.map((item) => {
-                  // Map route names to service IDs
-                  const routeToServiceMap: Record<string, string> = {
-                    EwalletService: "ewallet",
-                    Message: "message",
-                    Stockholder: "stock",
-                    AgentRequest: "agent",
-                    PlayEarn: "trading",
-                    PCard: "physical_cards",
-                  };
-                  const serviceId =
-                    routeToServiceMap[item.route] || item.route.toLowerCase();
-                  const isUnderMaintenance =
-                    item.route === "PCard"
-                      ? maintenanceStatus.physical_cards ?? maintenanceStatus.pcard
-                      : maintenanceStatus[serviceId];
-                  const isEwalletLockedByDeposit =
-                    item.route === "EwalletService" && isBankingServiceLocked;
-                  const isTradingLockedByKyc =
-                    item.route === "PlayEarn" && isKycRestrictedUser;
-                  // DEVELOPER, ADMIN and SUPER_ADMIN bypass maintenance blocks
-                  const userRole = userData?.role as string | undefined;
-                  const isDeveloperOrAdmin =
-                    userRole === 'DEVELOPER' ||
-                    userRole === 'ADMIN' ||
-                    userRole === 'SUPER_ADMIN';
-                  const isMaintenanceBlocked =
-                    isMaintenanceLoading ||
-                    (isUnderMaintenance && !isDeveloperOrAdmin);
-                  const isBlocked =
-                    isMaintenanceBlocked ||
-                    isEwalletLockedByDeposit ||
-                    isTradingLockedByKyc;
+                    // Map route names to service IDs
+                    const routeToServiceMap: Record<string, string> = {
+                      EwalletService: "ewallet",
+                      Message: "message",
+                      Stockholder: "stock",
+                      AgentRequest: "agent",
+                      PlayEarn: "trading",
+                      PCard: "physical_cards",
+                    };
+                    const serviceId =
+                      routeToServiceMap[item.route] || item.route.toLowerCase();
+                    const isUnderMaintenance =
+                      item.route === "PCard"
+                        ? (maintenanceStatus.physical_cards ??
+                          maintenanceStatus.pcard)
+                        : maintenanceStatus[serviceId];
+                    const isEwalletLockedByDeposit =
+                      item.route === "EwalletService" && isBankingServiceLocked;
+                    const isTradingLockedByKyc =
+                      item.route === "PlayEarn" && isKycRestrictedUser;
+                    // DEVELOPER, ADMIN and SUPER_ADMIN bypass maintenance blocks
+                    const userRole = userData?.role as string | undefined;
+                    const isDeveloperOrAdmin =
+                      userRole === "DEVELOPER" ||
+                      userRole === "ADMIN" ||
+                      userRole === "SUPER_ADMIN";
+                    const isMaintenanceBlocked =
+                      isMaintenanceLoading ||
+                      (isUnderMaintenance && !isDeveloperOrAdmin);
+                    const isBlocked =
+                      isMaintenanceBlocked ||
+                      isEwalletLockedByDeposit ||
+                      isTradingLockedByKyc;
 
-                  const menuKey =
-                    item.route === "EwalletService"
-                      ? `EwalletService-${isBankingServiceLocked ? "L" : "U"}`
-                      : item.route;
+                    const menuKey =
+                      item.route === "EwalletService"
+                        ? `EwalletService-${isBankingServiceLocked ? "L" : "U"}`
+                        : item.route;
 
-                  return (
-                    <TouchableOpacity
-                      key={menuKey}
-                      style={[
-                        styles.menuItem,
-                        isBlocked && styles.menuItemDisabled,
-                      ]}
-                      onPress={() => {
-                        if (isBlocked) {
-                          if (isEwalletLockedByDeposit) {
-                            setBankingLockModalContext("ewallet");
-                            setShowBankingServiceLockedModal(true);
-                            return;
-                          }
-                          if (isTradingLockedByKyc) {
-                            openKycGateModal();
-                            return;
-                          }
-                          if (item.labelKey) {
-                            setSelectedMaintenanceService(item.labelKey);
-                          }
-                        } else {
-                          (
-                            navigation as { navigate: (name: string) => void }
-                          ).navigate(item.route);
-                        }
-                      }}
-                      activeOpacity={0.7}
-                    >
-                      <View
+                    return (
+                      <TouchableOpacity
+                        key={menuKey}
                         style={[
-                          styles.menuIcon,
-                          isBlocked
-                            ? styles.menuIconDisabled
-                            : styles.menuIconBorderClear,
+                          styles.menuItem,
+                          isBlocked && styles.menuItemDisabled,
                         ]}
-                      >
-                        <MaterialCommunityIcons
-                          name={
-                            item.icon as React.ComponentProps<
-                              typeof MaterialCommunityIcons
-                            >["name"]
+                        onPress={() => {
+                          if (isBlocked) {
+                            if (isEwalletLockedByDeposit) {
+                              setBankingLockModalContext("ewallet");
+                              setShowBankingServiceLockedModal(true);
+                              return;
+                            }
+                            if (isTradingLockedByKyc) {
+                              openKycGateModal();
+                              return;
+                            }
+                            if (item.labelKey) {
+                              setSelectedMaintenanceService(item.labelKey);
+                            }
+                          } else {
+                            (
+                              navigation as { navigate: (name: string) => void }
+                            ).navigate(item.route);
                           }
-                          size={24}
-                          color={isBlocked ? "#CCCCCC" : "#000000"}
-                        />
-                        {(isBlocked || isMaintenanceLoading) &&
-                          renderLockBadge(isMaintenanceLoading)}
-                      </View>
-                      <Text
-                        style={[
-                          styles.menuLabel,
-                          isBlocked && styles.menuLabelDisabled,
-                        ]}
+                        }}
+                        activeOpacity={0.7}
                       >
-                        {item.labelKey ? t(item.labelKey) : item.labelText}
-                      </Text>
-                    </TouchableOpacity>
-                  );
+                        <View
+                          style={[
+                            styles.menuIcon,
+                            isBlocked
+                              ? styles.menuIconDisabled
+                              : styles.menuIconBorderClear,
+                          ]}
+                        >
+                          <MaterialCommunityIcons
+                            name={
+                              item.icon as React.ComponentProps<
+                                typeof MaterialCommunityIcons
+                              >["name"]
+                            }
+                            size={24}
+                            color={isBlocked ? "#CCCCCC" : "#000000"}
+                          />
+                          {(isBlocked || isMaintenanceLoading) &&
+                            renderLockBadge(isMaintenanceLoading)}
+                        </View>
+                        <Text
+                          style={[
+                            styles.menuLabel,
+                            isBlocked && styles.menuLabelDisabled,
+                          ]}
+                        >
+                          {item.labelKey ? t(item.labelKey) : item.labelText}
+                        </Text>
+                      </TouchableOpacity>
+                    );
                   })}
                 </View>
               )}
@@ -1928,7 +2024,7 @@ export default function Dashboard() {
                     style={[
                       styles.languageDot,
                       currentLanguageIndex === index &&
-                      styles.languageActiveDot,
+                        styles.languageActiveDot,
                     ]}
                   />
                 ))}
