@@ -140,7 +140,7 @@ export default function QRScanner({
 
           {/* Instructions */}
           <LinearGradient
-            colors={["transparent", "rgba(0,0,0,0.8)"]}
+            colors={["transparent", "rgba(0,0,0,0.9)"]}
             style={styles.footer}
           >
             <View style={styles.instructionContainer}>
@@ -196,7 +196,7 @@ export default function QRScanner({
                 {isProcessing ? (
                   <ActivityIndicator
                     size="small"
-                    color="#FFFFFF"
+                    color="#FFFFFFF"
                     style={{ marginRight: 10 }}
                   />
                 ) : (
