@@ -3,23 +3,12 @@ import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { LinearGradient } from "expo-linear-gradient";
 import { useState } from "react";
-import {
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
-} from "react-native";
+import { KeyboardAvoidingView, Platform, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLanguage } from "../../context/LanguageContext";
 import type { RootStackParamList } from "../../types/navigation";
 
+import ActivityModal from '../components/ActivityModal';
 const THEME_COLOR = "#E15816";
 const ORANGE_GRADIENT = ["#E25A17", "#F28934"] as const;
 const COUNTRY_OPTIONS = ["Philippines", "Japan", "South Korea", "Saudi Arabia", "Other"];
@@ -194,7 +183,7 @@ export default function KYCAddressInformation() {
       </SafeAreaView>
 
       {/* Country Modal */}
-      <Modal
+      <ActivityModal
         visible={showCountryModal}
         transparent
         animationType="slide"
@@ -227,7 +216,7 @@ export default function KYCAddressInformation() {
             </ScrollView>
           </View>
         </View>
-      </Modal>
+      </ActivityModal>
     </View>
   );
 }

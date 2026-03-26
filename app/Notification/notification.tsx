@@ -3,18 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useMemo, useState } from "react";
-import {
-    ActivityIndicator,
-    Dimensions,
-    FlatList,
-    Modal,
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
-} from "react-native";
+import { ActivityIndicator, Dimensions, FlatList, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
     acceptReferralRequest as apiAcceptReferralRequest,
@@ -29,6 +18,7 @@ import {
 import { auth } from "../../configs/firebase";
 import { useLanguage } from "../../context/LanguageContext";
 import { useUnreadNotifications } from "../../context/UnreadNotificationsContext";
+import ActivityModal from '../components/ActivityModal';
 import notificationService, {
     type NotificationItem,
 } from "./notificationService";
@@ -1196,7 +1186,7 @@ const Notification = () => {
       )}
 
       {/* Delete confirmation modal - updated to modern white card style */}
-      <Modal
+      <ActivityModal
         visible={showDeleteModal}
         transparent
         animationType="fade"
@@ -1231,10 +1221,10 @@ const Notification = () => {
             </View>
           </View>
         </View>
-      </Modal>
+      </ActivityModal>
 
       {/* Notification detail modal - modern white card with full details */}
-      <Modal
+      <ActivityModal
         visible={!!detailModalNotification}
         transparent
         animationType="fade"
@@ -1370,7 +1360,7 @@ const Notification = () => {
             </View>
           </TouchableOpacity>
         </TouchableOpacity>
-      </Modal>
+      </ActivityModal>
     </View>
   );
 };

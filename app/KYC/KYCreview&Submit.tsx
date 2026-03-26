@@ -3,18 +3,11 @@ import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { LinearGradient } from "expo-linear-gradient";
 import { useState } from "react";
-import {
-    Image,
-    Modal,
-    Platform,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
-} from "react-native";
+import { Image, Platform, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useLanguage } from "../../context/LanguageContext";
 import type { RootStackParamList } from "../../types/navigation";
 
+import ActivityModal from '../components/ActivityModal';
 const THEME_COLOR = "#E15816";
 const ORANGE_GRADIENT = ["#E25A17", "#F28934"] as const;
 const GREEN_UPLOADED = "#10B981";
@@ -332,7 +325,7 @@ export default function KYCReviewSubmit({
       </View>
 
       {/* Image viewer modal */}
-      <Modal
+      <ActivityModal
         visible={!!viewingImageUri}
         transparent
         animationType="fade"
@@ -363,10 +356,10 @@ export default function KYCReviewSubmit({
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
-      </Modal>
+      </ActivityModal>
 
       {/* Success confirmation modal */}
-      <Modal
+      <ActivityModal
         visible={showSuccessModal}
         transparent
         animationType="fade"
@@ -390,10 +383,10 @@ export default function KYCReviewSubmit({
             </TouchableOpacity>
           </View>
         </View>
-      </Modal>
+      </ActivityModal>
 
       {/* Confirm required modal */}
-      <Modal
+      <ActivityModal
         visible={showConfirmRequiredModal}
         transparent
         animationType="fade"
@@ -417,7 +410,7 @@ export default function KYCReviewSubmit({
             </TouchableOpacity>
           </View>
         </View>
-      </Modal>
+      </ActivityModal>
     </>
   );
 }

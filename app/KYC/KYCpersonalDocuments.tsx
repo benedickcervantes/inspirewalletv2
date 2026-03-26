@@ -1,19 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { useState } from "react";
-import {
-    Alert,
-    Image,
-    Modal,
-    Platform,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
-    useWindowDimensions,
-} from "react-native";
+import { Alert, Image, Platform, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from "react-native";
 import { useLanguage } from "../../context/LanguageContext";
 
+import ActivityModal from '../components/ActivityModal';
 const THEME_COLOR = "#E15816";
 const GREEN_UPLOADED = "#10B981";
 const REFERENCE_WIDTH = 375;
@@ -374,7 +365,7 @@ export default function KYCPersonalDocuments({
       </View>
 
       {/* Image Preview Modal */}
-      <Modal
+      <ActivityModal
         visible={!!viewingImageUri}
         transparent
         animationType="fade"
@@ -396,10 +387,10 @@ export default function KYCPersonalDocuments({
             />
           )}
         </View>
-      </Modal>
+      </ActivityModal>
 
       {/* Upload Action Sheet Modal */}
-      <Modal
+      <ActivityModal
         visible={actionSheetVisible}
         transparent
         animationType="slide"
@@ -447,9 +438,9 @@ export default function KYCPersonalDocuments({
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
-      </Modal>
+      </ActivityModal>
 
-      <Modal
+      <ActivityModal
         transparent
         animationType="fade"
         visible={showIdTypeModal}
@@ -500,7 +491,7 @@ export default function KYCPersonalDocuments({
             ))}
           </View>
         </View>
-      </Modal>
+      </ActivityModal>
     </>
   );
 }

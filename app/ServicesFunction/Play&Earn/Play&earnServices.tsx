@@ -2,26 +2,14 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useCallback, useEffect, useState } from "react";
-import {
-    BackHandler,
-    Modal,
-    Platform,
-    SafeAreaView,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    useWindowDimensions,
-    View
-} from "react-native";
+import { BackHandler, Platform, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { useLanguage } from "../../../context/LanguageContext";
 import { isServiceUnderMaintenance } from "../../../lib/maintenance";
 import { formatAmountWithCommas } from "../../../utils/numberFormat";
 import CryptoPriceChart, { CHART_COLORS } from "./CryptoPriceChart";
 import { COIN_IDS, fetchCoinGeckoMarketChart } from "./coingecko";
 
+import ActivityModal from '../../components/ActivityModal';
 const THEME_COLOR = "#E15816";
 const ORANGE_GRADIENT: readonly [string, string] = ["#E15816", "#FF7E47"];
 const PREMIUM_DARK = "#1A1A1A";
@@ -715,7 +703,7 @@ export default function PlayEarnServices() {
       </SafeAreaView>
 
       {/* Graph fullscreen modal - enhanced */}
-      <Modal
+      <ActivityModal
         visible={graphModalVisible}
         animationType="fade"
         transparent={true}
@@ -801,10 +789,10 @@ export default function PlayEarnServices() {
             </TouchableOpacity>
           </SafeAreaView>
         </TouchableOpacity>
-      </Modal>
+      </ActivityModal>
 
       {/* Trade Modal */}
-      <Modal
+      <ActivityModal
         visible={tradeModalVisible}
         transparent={true}
         animationType="fade"
@@ -852,7 +840,7 @@ export default function PlayEarnServices() {
             </View>
           </View>
         </View>
-      </Modal>
+      </ActivityModal>
     </View>
   );
 }

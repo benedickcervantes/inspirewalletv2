@@ -1,7 +1,8 @@
-import { Modal, StyleSheet, Text, TouchableOpacity, View, Image, Dimensions, ActivityIndicator } from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View, Image, Dimensions, ActivityIndicator } from "react-native";
 import { useState, useEffect } from "react";
 import { useLanguage } from "../../context/LanguageContext";
 
+import ActivityModal from '../components/ActivityModal';
 export type AnnouncementItem = {
   id: string;
   title: string;
@@ -62,7 +63,7 @@ export function AnnouncementModal(props: {
   }, [visible]);
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+    <ActivityModal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.overlay}>
         <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={onClose} />
         
@@ -101,7 +102,7 @@ export function AnnouncementModal(props: {
           )}
         </View>
       </View>
-    </Modal>
+    </ActivityModal>
   );
 }
 

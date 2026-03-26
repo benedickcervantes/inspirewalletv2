@@ -4,21 +4,10 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useState } from "react";
-import {
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    SafeAreaView,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
-} from "react-native";
+import { KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useLanguage } from "../../../context/LanguageContext";
 import type { EwalletApplicationData, RootStackParamList } from "../../../types/navigation";
+import ActivityModal from '../../components/ActivityModal';
 import {
     formatAmountWithCommas,
     unformatNumberString,
@@ -300,7 +289,7 @@ export default function EwalletFinancialInfo() {
       </SafeAreaView>
 
       {/* Source of Fund Modal */}
-      <Modal
+      <ActivityModal
         visible={showSourceOfFundModal}
         transparent
         animationType="slide"
@@ -337,10 +326,10 @@ export default function EwalletFinancialInfo() {
             </ScrollView>
           </View>
         </View>
-      </Modal>
+      </ActivityModal>
 
       {/* Currency Modal */}
-      <Modal
+      <ActivityModal
         visible={showCurrencyModal}
         transparent
         animationType="slide"
@@ -377,10 +366,10 @@ export default function EwalletFinancialInfo() {
             </ScrollView>
           </View>
         </View>
-      </Modal>
+      </ActivityModal>
 
       {/* Exit confirmation modal */}
-      <Modal
+      <ActivityModal
         transparent
         animationType="fade"
         visible={showExitConfirmModal}
@@ -422,7 +411,7 @@ export default function EwalletFinancialInfo() {
             </View>
           </View>
         </View>
-      </Modal>
+      </ActivityModal>
     </View>
   );
 }

@@ -5,22 +5,12 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useMemo, useState } from "react";
-import {
-  Alert,
-  Modal,
-  Platform,
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Alert, Platform, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { submitEwalletApplication } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
 import type { RootStackParamList } from "../../../types/navigation";
 
+import ActivityModal from '../../components/ActivityModal';
 const THEME_COLOR = "#E15816";
 const ORANGE_GRADIENT = ["#E25A17", "#F28934"] as const;
 const GREEN_COMPLETE = "#10B981";
@@ -254,7 +244,7 @@ export default function EwalletReview() {
         </View>
       </SafeAreaView>
 
-      <Modal
+      <ActivityModal
         visible={showSuccessModal}
         transparent
         animationType="fade"
@@ -281,9 +271,9 @@ export default function EwalletReview() {
             </LinearGradient>
           </View>
         </View>
-      </Modal>
+      </ActivityModal>
 
-      <Modal transparent animationType="fade" visible={showExitConfirmModal} onRequestClose={() => setShowExitConfirmModal(false)}>
+      <ActivityModal transparent animationType="fade" visible={showExitConfirmModal} onRequestClose={() => setShowExitConfirmModal(false)}>
         <View style={styles.exitModalOverlay}>
           <View style={styles.exitModalContainer}>
             <View style={styles.exitModalIconWrap}>
@@ -301,7 +291,7 @@ export default function EwalletReview() {
             </View>
           </View>
         </View>
-      </Modal>
+      </ActivityModal>
     </View>
   );
 }

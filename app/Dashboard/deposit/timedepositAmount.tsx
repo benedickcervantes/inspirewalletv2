@@ -2,20 +2,13 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  Modal,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   calculateExchange,
 } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
+import ActivityModal from '../../components/ActivityModal';
 import {
   formatAmountWithCommas,
   unformatNumberString,
@@ -342,7 +335,7 @@ export default function TimeDepositAmount() {
         </ScrollView>
 
         {/* Currency Selector Modal */}
-        <Modal
+        <ActivityModal
           visible={showCurrencyModal}
           transparent={true}
           animationType="slide"
@@ -389,7 +382,7 @@ export default function TimeDepositAmount() {
               </ScrollView>
             </View>
           </View>
-        </Modal>
+        </ActivityModal>
       </SafeAreaView>
     </View>
   );

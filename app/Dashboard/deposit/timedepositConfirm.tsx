@@ -3,18 +3,12 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useState } from "react";
-import {
-  Modal,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { getOrCreateMainWallet, submitTimeDepositRequest } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
 
+import ActivityModal from '../../components/ActivityModal';
 export default function TimeDepositConfirm() {
   const navigation = useNavigation();
   const route = useRoute();
@@ -282,7 +276,7 @@ export default function TimeDepositConfirm() {
         </ScrollView>
 
         {/* Bank Details Sent Modal */}
-        <Modal
+        <ActivityModal
           visible={showEmailSentModal}
           transparent={true}
           animationType="fade"
@@ -315,7 +309,7 @@ export default function TimeDepositConfirm() {
               </TouchableOpacity>
             </LinearGradient>
           </View>
-        </Modal>
+        </ActivityModal>
       </SafeAreaView>
     </View>
   );

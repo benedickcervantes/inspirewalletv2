@@ -7,27 +7,13 @@ import * as FileSystem from "expo-file-system/legacy";
 import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useEffect, useState } from "react";
-import {
-    ActivityIndicator,
-    Alert,
-    Image,
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    useWindowDimensions,
-    View,
-} from "react-native";
+import { ActivityIndicator, Alert, Image, KeyboardAvoidingView, Platform, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLanguage } from "../../context/LanguageContext";
 import type { RootStackParamList } from "../../types/navigation";
 import { formatAmountWithCommas, unformatNumberString } from "../../utils/numberFormat";
 
+import ActivityModal from '../components/ActivityModal';
 const THEME_COLOR = "#E15816";
 const ORANGE_GRADIENT = ["#E25A17", "#F28934"] as const;
 const GREEN_UPLOADED = "#10B981";
@@ -1062,7 +1048,7 @@ export default function KYCVerification() {
       </SafeAreaView>
 
       {/* Gender Modal */}
-      <Modal
+      <ActivityModal
         visible={showGenderModal}
         transparent
         animationType="slide"
@@ -1095,10 +1081,10 @@ export default function KYCVerification() {
             </ScrollView>
           </View>
         </View>
-      </Modal>
+      </ActivityModal>
 
       {/* Birthday Modal */}
-      <Modal
+      <ActivityModal
         visible={showBirthdayModal}
         transparent
         animationType="slide"
@@ -1161,10 +1147,10 @@ export default function KYCVerification() {
             </TouchableOpacity>
           </View>
         </View>
-      </Modal>
+      </ActivityModal>
 
       {/* Nationality Modal */}
-      <Modal
+      <ActivityModal
         visible={showNationalityModal}
         transparent
         animationType="slide"
@@ -1197,10 +1183,10 @@ export default function KYCVerification() {
             </ScrollView>
           </View>
         </View>
-      </Modal>
+      </ActivityModal>
 
       {/* Source of Income Modal */}
-      <Modal
+      <ActivityModal
         visible={showSourceModal}
         transparent
         animationType="slide"
@@ -1233,10 +1219,10 @@ export default function KYCVerification() {
             </ScrollView>
           </View>
         </View>
-      </Modal>
+      </ActivityModal>
 
       {/* Country Modal */}
-      <Modal
+      <ActivityModal
         visible={showCountryModal}
         transparent
         animationType="slide"
@@ -1269,10 +1255,10 @@ export default function KYCVerification() {
             </ScrollView>
           </View>
         </View>
-      </Modal>
+      </ActivityModal>
 
       {/* Government ID Type Modal */}
-      <Modal
+      <ActivityModal
         visible={showGovernmentIdTypeModal}
         transparent
         animationType="slide"
@@ -1307,10 +1293,10 @@ export default function KYCVerification() {
             </ScrollView>
           </View>
         </View>
-      </Modal>
+      </ActivityModal>
 
       {/* Image viewer modal - tap ID/selfie thumbnail to view full image */}
-      <Modal
+      <ActivityModal
         visible={!!viewingImageUri}
         transparent
         animationType="fade"
@@ -1338,10 +1324,10 @@ export default function KYCVerification() {
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
-      </Modal>
+      </ActivityModal>
 
       {/* Success confirmation modal - shown when KYC submission is complete */}
-      <Modal
+      <ActivityModal
         visible={showSuccessModal}
         transparent
         animationType="fade"
@@ -1363,10 +1349,10 @@ export default function KYCVerification() {
             </TouchableOpacity>
           </View>
         </View>
-      </Modal>
+      </ActivityModal>
 
       {/* Confirm required modal - shown when user submits without checking the confirmation box */}
-      <Modal
+      <ActivityModal
         visible={showConfirmRequiredModal}
         transparent
         animationType="fade"
@@ -1388,9 +1374,9 @@ export default function KYCVerification() {
             </TouchableOpacity>
           </View>
         </View>
-      </Modal>
+      </ActivityModal>
       {/* Upload Action Sheet Modal */}
-      <Modal
+      <ActivityModal
         visible={actionSheetVisible}
         transparent
         animationType="slide"
@@ -1438,7 +1424,7 @@ export default function KYCVerification() {
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
-      </Modal>
+      </ActivityModal>
     </View>
   );
 }

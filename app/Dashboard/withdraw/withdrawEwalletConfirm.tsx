@@ -3,15 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useState } from "react";
-import {
-    ActivityIndicator,
-    Modal,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
-} from "react-native";
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
     getOrCreateMainWallet,
@@ -20,6 +12,7 @@ import {
 import { useLanguage } from "../../../context/LanguageContext";
 import PasscodeModal from "../../components/PasscodeModal";
 
+import ActivityModal from '../../components/ActivityModal';
 const getEwalletTransactionFee = (amount: number) => {
   if (Number.isNaN(amount) || amount <= 0) return 0;
   if (amount <= 10000) return 25;
@@ -372,7 +365,7 @@ export default function EWalletConfirm() {
         />
 
         {/* Custom Alert Modal */}
-        <Modal
+        <ActivityModal
           visible={showAlertModal}
           transparent={true}
           animationType="fade"
@@ -395,7 +388,7 @@ export default function EWalletConfirm() {
               </TouchableOpacity>
             </LinearGradient>
           </View>
-        </Modal>
+        </ActivityModal>
       </SafeAreaView>
     </View>
   );

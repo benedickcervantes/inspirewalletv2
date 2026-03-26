@@ -5,16 +5,7 @@ import * as FileSystem from "expo-file-system/legacy";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Sharing from "expo-sharing";
 import { useEffect, useRef, useState } from "react";
-import {
-    ActivityIndicator,
-    Modal,
-    ScrollView,
-    Share,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
-} from "react-native";
+import { ActivityIndicator, ScrollView, Share, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import QRCode from "react-native-qrcode-svg";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
@@ -29,6 +20,7 @@ import Loader from "../../Loader/Loader";
 import ContactsModal from "./ContactsModal";
 import QRScanner from "./QRScanner";
 
+import ActivityModal from '../../components/ActivityModal';
 import {
   refreshAdminTransferSuccessSound,
 } from "../../../constants/adminAudio";
@@ -639,7 +631,7 @@ export default function TransferConfirm() {
       />
 
       {/* Error Modal */}
-      <Modal
+      <ActivityModal
         visible={showErrorModal}
         transparent={true}
         animationType="fade"
@@ -667,10 +659,10 @@ export default function TransferConfirm() {
             </LinearGradient>
           </View>
         </View>
-      </Modal>
+      </ActivityModal>
 
       {/* QR Code Modal */}
-      <Modal
+      <ActivityModal
         visible={showQRModal}
         transparent={true}
         animationType="slide"
@@ -760,7 +752,7 @@ export default function TransferConfirm() {
             </View>
           </View>
         </View>
-      </Modal>
+      </ActivityModal>
 
       {/* Contacts Modal */}
       <ContactsModal

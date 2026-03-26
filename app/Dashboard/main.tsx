@@ -6,19 +6,7 @@ import {
     useRoute,
 } from "@react-navigation/native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-    Animated,
-    AppState,
-    Image,
-    Linking,
-    Modal,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
-} from "react-native";
+import { Animated, AppState, Image, Linking, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import {
     SafeAreaView,
     useSafeAreaInsets,
@@ -57,6 +45,7 @@ import SavingsTab from "./SavingsTab";
 import { computeProjectedTotalDividend } from "./utils/termSavingsFormula";
 import WalletTab from "./WalletTab";
 
+import ActivityModal from '../components/ActivityModal';
 // API returns raw enums; keys for translation (use t() when displaying)
 const TRANSACTION_TYPE_KEYS: Record<string, string> = {
   TOP_UP: "tx.deposit",
@@ -1187,7 +1176,7 @@ export default function Dashboard() {
           }
         }}
       />
-      <Modal
+      <ActivityModal
         visible={selectedMaintenanceService !== null}
         transparent
         animationType="fade"
@@ -1225,8 +1214,8 @@ export default function Dashboard() {
             </TouchableOpacity>
           </View>
         </View>
-      </Modal>
-      <Modal
+      </ActivityModal>
+      <ActivityModal
         visible={showBankingServiceLockedModal}
         transparent
         animationType="fade"
@@ -1266,8 +1255,8 @@ export default function Dashboard() {
             </TouchableOpacity>
           </View>
         </View>
-      </Modal>
-      <Modal
+      </ActivityModal>
+      <ActivityModal
         visible={showKycLockedModal}
         transparent
         animationType="fade"
@@ -1333,8 +1322,8 @@ export default function Dashboard() {
             </TouchableOpacity>
           </View>
         </View>
-      </Modal>
-      <Modal
+      </ActivityModal>
+      <ActivityModal
         visible={showFirstTimeLanguageModal}
         transparent
         animationType="fade"
@@ -1368,7 +1357,7 @@ export default function Dashboard() {
             </ScrollView>
           </View>
         </View>
-      </Modal>
+      </ActivityModal>
       <SafeAreaView
         style={styles.container}
         edges={["left", "right", "bottom"]}
@@ -1511,53 +1500,6 @@ export default function Dashboard() {
                 </Text>
               </TouchableOpacity>
                 );
-              const compactLabelThreshold = hasWideLabel ? 7 : 12;
-              const veryLongLabelThreshold = hasWideLabel ? 10 : 16;
-              const isCompactLabel = label.length >= compactLabelThreshold;
-              const isVeryLongLabel = label.length >= veryLongLabelThreshold;
-              const baseTabFontSize = width < 360 ? 11 : width < 400 ? 12 : 13;
-              const compactTabFontSize =
-                width < 360 ? 10 : width < 400 ? 11 : 12;
-              const tabFontSize = isVeryLongLabel
-                ? compactTabFontSize - 1
-                : isCompactLabel
-                  ? compactTabFontSize
-                  : baseTabFontSize;
-
-              return (
-                <TouchableOpacity
-                  key={tab}
-                  style={[
-                    styles.tab,
-                    isActive && styles.activeTab,
-                    {
-                      flex: 1,
-                      paddingHorizontal: isActive
-                        ? activeHorizontalPadding
-                        : baseHorizontalPadding,
-                      paddingVertical: isSmallScreen ? 9 : 11,
-                      minWidth: 0,
-                      minHeight: isSmallScreen ? 40 : 46,
-                    },
-                  ]}
-                  onPress={() => setActiveTab(tab)}
-                >
-                  <Text
-                    style={[
-                      styles.tabText,
-                      isActive && styles.activeTabText,
-                      isCompactLabel && styles.tabTextCompact,
-                      { fontSize: tabFontSize },
-                    ]}
-                    numberOfLines={isCompactLabel ? 2 : 1}
-                    adjustsFontSizeToFit={isVeryLongLabel}
-                    minimumFontScale={isVeryLongLabel ? 0.88 : undefined}
-                    ellipsizeMode={isCompactLabel ? "tail" : "clip"}
-                  >
-                    {label}
-                  </Text>
-                </TouchableOpacity>
-              );
             })}
           </View>
 

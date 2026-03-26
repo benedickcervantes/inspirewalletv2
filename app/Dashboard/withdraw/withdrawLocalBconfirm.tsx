@@ -3,15 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useState } from "react";
-import {
-    ActivityIndicator,
-    Modal,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
-} from "react-native";
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
     getOrCreateMainWallet,
@@ -20,6 +12,7 @@ import {
 import { useLanguage } from "../../../context/LanguageContext";
 import PasscodeModal from "../../components/PasscodeModal";
 
+import ActivityModal from '../../components/ActivityModal';
 const BANK_FEE_THRESHOLD = 100000;
 
 const getLocalBankTransactionFee = (amountValue: number, isUnionBank: boolean) => {
@@ -373,7 +366,7 @@ export default function WithdrawLocalBConfirm() {
         />
 
         {/* Custom Alert Modal (success/error) */}
-        <Modal
+        <ActivityModal
           visible={showAlertModal}
           transparent
           animationType="slide"
@@ -396,7 +389,7 @@ export default function WithdrawLocalBConfirm() {
               </TouchableOpacity>
             </LinearGradient>
           </View>
-        </Modal>
+        </ActivityModal>
       </SafeAreaView>
     </View>
   );
