@@ -25,6 +25,52 @@ const getScreenWidth = () => {
   }
 };
 const width = getScreenWidth();
+const INSPIRE_TRANSFER_QR_PREFIX = "INSPIREWALLET:TRANSFER:";
+
+const normalizeAccountNumber = (value: string): string => value.replace(/\D/g, "");
+const isValidAccountNumber = (value: string): boolean =>
+  /^\d{12}$/.test(normalizeAccountNumber(value));
+const buildInspireTransferQrPayload = (accountNumber: string): string =>
+  `${INSPIRE_TRANSFER_QR_PREFIX}${normalizeAccountNumber(accountNumber)}`;
+const parseInspireTransferQrPayload = (raw: string): string | null => {
+  const text = String(raw ?? "").trim();
+  if (!text) return null;
+  const lowerText = text.toLowerCase();
+  if (
+    lowerText.startsWith("http://") ||
+    lowerText.startsWith("https://") ||
+    lowerText.startsWith("expo://") ||
+    lowerText.includes("://")
+  ) {
+    return null;
+  }
+  if (text.startsWith(INSPIRE_TRANSFER_QR_PREFIX)) {
+    const account = text.slice(INSPIRE_TRANSFER_QR_PREFIX.length).trim();
+    return isValidAccountNumber(account) ? normalizeAccountNumber(account) : null;
+  }
+  try {
+    const parsed = JSON.parse(text) as {
+      app?: string;
+      type?: string;
+      accountNumber?: string;
+    };
+    if (
+      String(parsed.app ?? "").toUpperCase() === "INSPIREWALLET" &&
+      String(parsed.type ?? "").toUpperCase() === "TRANSFER" &&
+      typeof parsed.accountNumber === "string" &&
+      isValidAccountNumber(parsed.accountNumber)
+    ) {
+      return normalizeAccountNumber(parsed.accountNumber);
+    }
+  } catch {
+    // Ignore non-JSON payloads.
+  }
+  // Backward compatibility for older Inspire QR codes that only encoded account number.
+  if (/^[\d\s-]+$/.test(text) && isValidAccountNumber(text)) {
+    return normalizeAccountNumber(text);
+  }
+  return null;
+};
 
 // Reusable function to fetch user balances (JWT or Firebase)
 export const fetchUserBalances = async () => {
@@ -109,6 +155,10 @@ export default function SendMoney() {
   const [userAccountNumber, setUserAccountNumber] = useState("");
   const [userName, setUserName] = useState("");
   const [showQRScanner, setShowQRScanner] = useState(false);
+  const [showInvalidQrModal, setShowInvalidQrModal] = useState(false);
+  const [invalidQrMessage, setInvalidQrMessage] = useState(
+    "Only Inspire Wallet transfer QR codes are accepted.",
+  );
   const [showContactsModal, setShowContactsModal] = useState(false);
   const qrRef = useRef<any | null>(null);
 
@@ -471,7 +521,7 @@ export default function SendMoney() {
                 <View style={styles.qrCodeWrapper}>
                   {userAccountNumber ? (
                     <QRCode
-                      value={userAccountNumber}
+                      value={buildInspireTransferQrPayload(userAccountNumber)}
                       size={200}
                       color="#E25A17"
                       backgroundColor="#FFFFFF"
@@ -545,13 +595,58 @@ export default function SendMoney() {
         onClose={() => setShowQRScanner(false)}
         onScan={(data: string) => {
           setShowQRScanner(false);
+          const parsedAccount = parseInspireTransferQrPayload(data);
+          if (!parsedAccount) {
+            const translated = t("sendMoney.invalidInspireQr");
+            const fallback =
+              "Invalid QR code. Please scan an Inspire Wallet transfer QR code only.";
+            setInvalidQrMessage(
+              translated &&
+                translated !== "sendMoney.invalidInspireQr" &&
+                translated !== "sendMoney.invalidInspireQR"
+                ? translated
+                : fallback,
+            );
+            setShowInvalidQrModal(true);
+            return;
+          }
           // Navigate to recipient screen with scanned account number
           (navigation.navigate as any)("TransferRecipient", {
             balanceType: selectedBalance ?? "available",
-            scannedAccount: data
+            scannedAccount: parsedAccount,
           });
         }}
       />
+
+      <ActivityModal
+        visible={showInvalidQrModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowInvalidQrModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <LinearGradient
+              colors={["#E25A17", "#F28934"]}
+              style={styles.modalGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            >
+              <View style={styles.iconContainer}>
+                <Ionicons name="close-circle" size={80} color="#FFFFFF" />
+              </View>
+              <Text style={styles.modalTitle}>Invalid QR</Text>
+              <Text style={styles.modalMessage}>{invalidQrMessage}</Text>
+              <TouchableOpacity
+                style={styles.modalButton}
+                onPress={() => setShowInvalidQrModal(false)}
+              >
+                <Text style={styles.modalButtonText}>{t("common.ok")}</Text>
+              </TouchableOpacity>
+            </LinearGradient>
+          </View>
+        </View>
+      </ActivityModal>
     </View>
   );
 }
