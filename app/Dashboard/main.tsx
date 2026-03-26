@@ -224,6 +224,17 @@ export default function Dashboard() {
   const route = useRoute();
   const { t, setLanguage } = useLanguage();
   const { registerActivity } = useIdleTimeout();
+  const modalActivityProps = {
+    onTouchStart: registerActivity,
+    onStartShouldSetResponderCapture: () => {
+      registerActivity();
+      return false;
+    },
+    onMoveShouldSetResponderCapture: () => {
+      registerActivity();
+      return false;
+    },
+  };
   const insets = useSafeAreaInsets();
   const { width, horizontalPadding, isSmallScreen } = useResponsive();
   const qaSpacing = width < 360 ? 0.75 : isSmallScreen ? 0.85 : 1;
@@ -1182,8 +1193,8 @@ export default function Dashboard() {
         animationType="fade"
         onRequestClose={() => setSelectedMaintenanceService(null)}
       >
-        <View style={styles.maintenanceModalOverlay}>
-          <View style={styles.maintenanceModalContent}>
+        <View style={styles.maintenanceModalOverlay} {...modalActivityProps}>
+          <View style={styles.maintenanceModalContent} {...modalActivityProps}>
             <View style={styles.maintenanceHeader}>
               <View style={styles.maintenanceIconCircle}>
                 <MaterialCommunityIcons
@@ -1221,8 +1232,8 @@ export default function Dashboard() {
         animationType="fade"
         onRequestClose={() => setShowBankingServiceLockedModal(false)}
       >
-        <View style={styles.maintenanceModalOverlay}>
-          <View style={styles.bankingLockModalContent}>
+        <View style={styles.maintenanceModalOverlay} {...modalActivityProps}>
+          <View style={styles.bankingLockModalContent} {...modalActivityProps}>
             <View style={styles.bankingLockHeader}>
               <View style={styles.bankingLockIconCircle}>
                 <MaterialCommunityIcons name="lock" size={22} color="#FFFFFF" />
@@ -1262,8 +1273,8 @@ export default function Dashboard() {
         animationType="fade"
         onRequestClose={() => setShowKycLockedModal(false)}
       >
-        <View style={styles.maintenanceModalOverlay}>
-          <View style={styles.bankingLockModalContent}>
+        <View style={styles.maintenanceModalOverlay} {...modalActivityProps}>
+          <View style={styles.bankingLockModalContent} {...modalActivityProps}>
             <View style={styles.bankingLockHeader}>
               <View style={styles.bankingLockIconCircle}>
                 <MaterialCommunityIcons
@@ -1329,8 +1340,8 @@ export default function Dashboard() {
         animationType="fade"
         onRequestClose={() => {}}
       >
-        <View style={styles.languageModalOverlay}>
-          <View style={styles.languageModalContentOuter}>
+        <View style={styles.languageModalOverlay} {...modalActivityProps}>
+          <View style={styles.languageModalContentOuter} {...modalActivityProps}>
             <View style={styles.languageModalHeader}>
               <View style={styles.languageMapGlobe}>
                 <Ionicons name="globe-outline" size={40} color="#DE5212" />

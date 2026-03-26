@@ -42,7 +42,8 @@ interface UserData {
 const Settings = () => {
   const navigation = useNavigation();
   const { t } = useLanguage();
-  const { stopIdleSession } = useIdleTimeout();
+  const { stopIdleSession, registerActivity, getActivityProps } = useIdleTimeout();
+  const activityProps = getActivityProps();
   const { width: screenWidth, scale: scaleFn } = useResponsive();
   const scaled = (n: number) => Math.round(scaleFn(n));
 
@@ -945,8 +946,8 @@ const Settings = () => {
           animationType="fade"
           onRequestClose={closeEmailVerifyModal}
         >
-          <View style={[styles.modalOverlay, r.modalOverlay]}>
-            <View style={[styles.emailVerifyModalContent, r.modalContent]}>
+          <View style={[styles.modalOverlay, r.modalOverlay]} {...activityProps}>
+            <View style={[styles.emailVerifyModalContent, r.modalContent]} {...activityProps}>
               <View style={[styles.modalHeader, r.modalHeader]}>
                 <Text
                   style={[styles.modalTitle, r.modalTitle]}
@@ -955,7 +956,10 @@ const Settings = () => {
                   {t("settings.verifyEmail")}
                 </Text>
                 <TouchableOpacity
-                  onPress={closeEmailVerifyModal}
+                  onPress={() => {
+                    registerActivity();
+                    closeEmailVerifyModal();
+                  }}
                   hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
                 >
                   <Ionicons name="close" size={r.iconSize} color="#333" />
@@ -982,7 +986,10 @@ const Settings = () => {
                       r.modalButton,
                       styles.modalDoneButton,
                     ]}
-                    onPress={handleEmailVerifyDone}
+                    onPress={() => {
+                      registerActivity();
+                      handleEmailVerifyDone();
+                    }}
                     activeOpacity={0.8}
                   >
                     <Text
@@ -1010,6 +1017,7 @@ const Settings = () => {
                     placeholderTextColor="#999"
                     value={emailOtp}
                     onChangeText={(val) => {
+                      registerActivity();
                       setEmailOtp(val.replace(/\D/g, "").slice(0, 6));
                       setEmailVerifyError(null);
                     }}
@@ -1029,7 +1037,10 @@ const Settings = () => {
                       r.modalButton,
                       emailVerifyLoading && styles.modalButtonDisabled,
                     ]}
-                    onPress={handleVerifyEmail}
+                    onPress={() => {
+                      registerActivity();
+                      handleVerifyEmail();
+                    }}
                     disabled={emailVerifyLoading || emailOtp.length !== 6}
                   >
                     {emailVerifyLoading ? (
@@ -1042,7 +1053,10 @@ const Settings = () => {
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.resendButton, r.resendButton]}
-                    onPress={handleResendVerification}
+                    onPress={() => {
+                      registerActivity();
+                      handleResendVerification();
+                    }}
                     disabled={resendLoading}
                   >
                     {resendLoading ? (
@@ -1068,8 +1082,8 @@ const Settings = () => {
           animationType="slide"
           onRequestClose={() => setBiometricModalVisible(false)}
         >
-          <View style={[styles.modalOverlay, r.modalOverlay]}>
-            <View style={[styles.emailVerifyModalContent, r.modalContent]}>
+          <View style={[styles.modalOverlay, r.modalOverlay]} {...activityProps}>
+            <View style={[styles.emailVerifyModalContent, r.modalContent]} {...activityProps}>
               <View style={[styles.modalHeader, r.modalHeader]}>
                 <Text
                   style={[styles.modalTitle, r.modalTitle]}
@@ -1078,7 +1092,10 @@ const Settings = () => {
                   {t("settings.enableBiometric", { type: biometricType })}
                 </Text>
                 <TouchableOpacity
-                  onPress={() => setBiometricModalVisible(false)}
+                  onPress={() => {
+                    registerActivity();
+                    setBiometricModalVisible(false);
+                  }}
                   hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
                 >
                   <Ionicons name="close" size={r.iconSize} color="#333" />
@@ -1098,6 +1115,7 @@ const Settings = () => {
                 placeholderTextColor="#999"
                 value={biometricPassword}
                 onChangeText={(val) => {
+                  registerActivity();
                   setBiometricPassword(val);
                   setBiometricError(null);
                 }}
@@ -1123,7 +1141,10 @@ const Settings = () => {
                   r.modalButton,
                   biometricLoading && styles.modalButtonDisabled,
                 ]}
-                onPress={handleEnableBiometric}
+                onPress={() => {
+                  registerActivity();
+                  handleEnableBiometric();
+                }}
                 disabled={biometricLoading || !biometricPassword}
               >
                 {biometricLoading ? (

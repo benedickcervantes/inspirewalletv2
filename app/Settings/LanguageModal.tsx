@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useIdleTimeout } from "../../context/IdleTimeoutContext";
 import { useLanguage } from "../../context/LanguageContext";
 import { useLanguageModal } from "../../context/LanguageModalContext";
 
@@ -13,6 +14,8 @@ const SUPPORTED_LANGUAGES = [
 export default function LanguageModal() {
   const { t, language, setLanguage } = useLanguage();
   const { languageModalVisible, closeLanguageModal } = useLanguageModal();
+  const { registerActivity, getActivityProps } = useIdleTimeout();
+  const activityProps = getActivityProps();
 
   return (
     <Modal
@@ -24,11 +27,16 @@ export default function LanguageModal() {
       <TouchableOpacity
         style={styles.languageModalOverlay}
         activeOpacity={1}
-        onPress={closeLanguageModal}
+        onPress={() => {
+          registerActivity();
+          closeLanguageModal();
+        }}
+        {...activityProps}
       >
         <View
           style={styles.languageModalContentOuter}
           onStartShouldSetResponder={() => true}
+          {...activityProps}
         >
           <View style={styles.languageModalHeader}>
             <View style={styles.languageMapGlobe}>
@@ -53,6 +61,7 @@ export default function LanguageModal() {
                   language === label && styles.languageOptionSelected,
                 ]}
                 onPress={() => {
+                  registerActivity();
                   setLanguage(label);
                   closeLanguageModal();
                 }}
@@ -75,7 +84,10 @@ export default function LanguageModal() {
           </ScrollView>
           <TouchableOpacity
             style={styles.languageModalCancel}
-            onPress={closeLanguageModal}
+            onPress={() => {
+              registerActivity();
+              closeLanguageModal();
+            }}
           >
             <Text style={styles.languageModalCancelText}>{t("common.cancel")}</Text>
           </TouchableOpacity>

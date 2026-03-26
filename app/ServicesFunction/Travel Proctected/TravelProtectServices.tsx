@@ -10,6 +10,7 @@ import {
   Keyboard,
   Modal,
   Platform,
+  TouchableOpacity,
   TouchableOpacity as RNTouchableOpacity,
   ScrollView,
   StatusBar,
@@ -19,7 +20,6 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import { TouchableOpacity } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   getOrCreateMainWallet,
@@ -471,6 +471,7 @@ export default function TravelProtection() {
     type: "info",
     confirmText: "OK",
   });
+  const [navigateAfterSuccessAlert, setNavigateAfterSuccessAlert] = useState(false);
   const [showExitConfirmModal, setShowExitConfirmModal] = useState(false);
 
   const showAlert = (
@@ -738,6 +739,7 @@ export default function TravelProtection() {
   };
 
   const handleSubmit = async () => {
+    setNavigateAfterSuccessAlert(false);
     setLoading(true);
     try {
       const accessToken = await AsyncStorage.getItem("access_token");
@@ -833,9 +835,7 @@ export default function TravelProtection() {
           t("travel.applicationSuccess"),
           "success",
         );
-        setTimeout(() => {
-          navigation.goBack();
-        }, 2000);
+        setNavigateAfterSuccessAlert(true);
       } else {
         showAlert(
           t("travel.error"),
@@ -1630,7 +1630,13 @@ export default function TravelProtection() {
       {/* Custom Alert Modal */}
       <CustomAlertModal
         visible={alertVisible}
-        onClose={() => setAlertVisible(false)}
+        onClose={() => {
+          setAlertVisible(false);
+          if (navigateAfterSuccessAlert) {
+            setNavigateAfterSuccessAlert(false);
+            navigation.navigate("Main");
+          }
+        }}
         title={alertConfig.title}
         message={alertConfig.message}
         type={alertConfig.type}

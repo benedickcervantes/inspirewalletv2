@@ -33,6 +33,11 @@ const WHITE = "#FFFFFF";
 
 interface IdleTimeoutContextValue {
   registerActivity: () => void;
+  getActivityProps: () => {
+    onTouchStart: () => void;
+    onStartShouldSetResponderCapture: () => boolean;
+    onMoveShouldSetResponderCapture: () => boolean;
+  };
   startIdleSession: () => void;
   stopIdleSession: () => void;
   isSessionActive: boolean;
@@ -211,6 +216,21 @@ export const IdleTimeoutProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, [isSessionActive]);
 
+  const getActivityProps = useCallback(
+    () => ({
+      onTouchStart: registerActivity,
+      onStartShouldSetResponderCapture: () => {
+        registerActivity();
+        return false;
+      },
+      onMoveShouldSetResponderCapture: () => {
+        registerActivity();
+        return false;
+      },
+    }),
+    [registerActivity],
+  );
+
   // On mount, check if there was an active session (app was killed and reopened)
   useEffect(() => {
     let isMounted = true;
@@ -315,7 +335,13 @@ export const IdleTimeoutProvider: React.FC<{ children: React.ReactNode }> = ({
 
   return (
     <IdleTimeoutContext.Provider
-      value={{ registerActivity, startIdleSession, stopIdleSession, isSessionActive }}
+      value={{
+        registerActivity,
+        getActivityProps,
+        startIdleSession,
+        stopIdleSession,
+        isSessionActive,
+      }}
     >
       <View style={styles.container} {...panResponder.panHandlers}>
         {children}
