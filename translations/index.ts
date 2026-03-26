@@ -138,7 +138,7 @@ const en: TranslationMap = {
   "profile.investor": "Investor",
   "profile.accountLevel": "Account Level",
   "profile.basic": "Basic",
-  "profile.agentReferrer": "AGENT REFERRER",
+  "profile.agentReferrer": "AGENT REFERRAL",
   "profile.referred": "Referred",
   "profile.verify": "Verify",
   "profile.masterAgent": "Master Agent",

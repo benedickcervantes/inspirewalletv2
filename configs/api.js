@@ -1639,6 +1639,56 @@ export async function generateReferralCode(accessToken) {
   }
 }
 
+/**
+ * POST /referrals/apply-agent — requires JWT
+ * Enables agent mode for current user and optionally links a parent referral code.
+ * @param {string} accessToken
+ * @param {{ parentReferralCode?: string }} body
+ * @returns {{ success: boolean, referralCode?: string, linkedReferrerId?: string|null, error?: string }}
+ */
+export async function applyAgentRequest(accessToken, body = {}) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "No token" };
+
+  try {
+    const parentReferralCode = String(body.parentReferralCode || "")
+      .trim()
+      .toUpperCase();
+
+    const res = await apiFetch(`${base}/referrals/apply-agent`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({
+        ...(parentReferralCode ? { parentReferralCode } : {}),
+      }),
+    });
+
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || "Failed to submit agent request";
+      return { success: false, error: msg };
+    }
+
+    return {
+      success: true,
+      referralCode:
+        typeof data.referralCode === "string" ? data.referralCode : undefined,
+      linkedReferrerId:
+        typeof data.linkedReferrerId === "string" || data.linkedReferrerId === null
+          ? data.linkedReferrerId
+          : null,
+    };
+  } catch (e) {
+    return { success: false, error: e.message || "Network error" };
+  }
+}
+
 // --- Wallets API ---
 
 /**
