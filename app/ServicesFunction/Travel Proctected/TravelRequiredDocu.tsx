@@ -1,18 +1,10 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useState } from "react";
-import {
-  Modal,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  useWindowDimensions,
-  View,
-} from "react-native";
-import { TouchableOpacity } from "react-native-gesture-handler";
+import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { useLanguage } from "../../../context/LanguageContext";
 import { useResponsive } from "../../../utils/responsive";
 
+import ActivityModal from '../../components/ActivityModal';
 const THEME_COLOR = "#E15816";
 
 export interface TravelRequiredDocuProps {
@@ -259,7 +251,7 @@ export default function TravelRequiredDocu({
         ) : null}
       </View>
 
-      <Modal
+      <ActivityModal
         transparent
         animationType="fade"
         visible={showIdTypeModal}
@@ -307,9 +299,9 @@ export default function TravelRequiredDocu({
             </ScrollView>
           </View>
         </View>
-      </Modal>
+      </ActivityModal>
 
-      <Modal
+      <ActivityModal
         transparent
         animationType="fade"
         visible={showUploadSourceModal}
@@ -343,7 +335,7 @@ export default function TravelRequiredDocu({
             </TouchableOpacity>
           </View>
         </View>
-      </Modal>
+      </ActivityModal>
     </View>
   );
 }

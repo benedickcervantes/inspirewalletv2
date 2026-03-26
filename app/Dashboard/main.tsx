@@ -6,19 +6,7 @@ import {
     useRoute,
 } from "@react-navigation/native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-    Animated,
-    AppState,
-    Image,
-    Linking,
-    Modal,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
-} from "react-native";
+import { Animated, AppState, Image, Linking, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import {
     SafeAreaView,
     useSafeAreaInsets,
@@ -57,6 +45,7 @@ import SavingsTab from "./SavingsTab";
 import { computeProjectedTotalDividend } from "./utils/termSavingsFormula";
 import WalletTab from "./WalletTab";
 
+import ActivityModal from '../components/ActivityModal';
 // API returns raw enums; keys for translation (use t() when displaying)
 const TRANSACTION_TYPE_KEYS: Record<string, string> = {
   TOP_UP: "tx.deposit",
@@ -1078,7 +1067,14 @@ export default function Dashboard() {
     (tx: Transaction) => {
       const translatedDescription = getTranslatedDescription(tx.description);
       if (translatedDescription) return translatedDescription;
-      return tx.description?.trim() || getTransactionTypeLabel(t, tx.type);
+      const rawDescription = tx.description?.trim();
+      if (
+        rawDescription &&
+        !/^(n\/a|na|null|undefined|-)$/i.test(rawDescription)
+      ) {
+        return rawDescription;
+      }
+      return getTransactionTypeLabel(t, tx.type);
     },
     [getTranslatedDescription, t],
   );
@@ -1187,7 +1183,7 @@ export default function Dashboard() {
           }
         }}
       />
-      <Modal
+      <ActivityModal
         visible={selectedMaintenanceService !== null}
         transparent
         animationType="fade"
@@ -1225,8 +1221,8 @@ export default function Dashboard() {
             </TouchableOpacity>
           </View>
         </View>
-      </Modal>
-      <Modal
+      </ActivityModal>
+      <ActivityModal
         visible={showBankingServiceLockedModal}
         transparent
         animationType="fade"
@@ -1266,8 +1262,8 @@ export default function Dashboard() {
             </TouchableOpacity>
           </View>
         </View>
-      </Modal>
-      <Modal
+      </ActivityModal>
+      <ActivityModal
         visible={showKycLockedModal}
         transparent
         animationType="fade"
@@ -1333,8 +1329,8 @@ export default function Dashboard() {
             </TouchableOpacity>
           </View>
         </View>
-      </Modal>
-      <Modal
+      </ActivityModal>
+      <ActivityModal
         visible={showFirstTimeLanguageModal}
         transparent
         animationType="fade"
@@ -1368,7 +1364,7 @@ export default function Dashboard() {
             </ScrollView>
           </View>
         </View>
-      </Modal>
+      </ActivityModal>
       <SafeAreaView
         style={styles.container}
         edges={["left", "right", "bottom"]}

@@ -4,18 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useRef, useState } from 'react';
-import {
-    Animated,
-    BackHandler,
-    Modal,
-    Platform,
-    Pressable,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    useWindowDimensions,
-    View,
-} from 'react-native';
+import { Animated, BackHandler, Platform, Pressable, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { setPasscode as setPasscodeApi } from '../../configs/api';
 import {
@@ -26,6 +15,7 @@ import {
 import { useLanguage } from '../../context/LanguageContext';
 import type { NavProp } from '../../types/navigation';
 
+import ActivityModal from '../components/ActivityModal';
 const USER_PREFERRED_LANGUAGE_KEY = 'user_preferred_language';
 
 const GRADIENT_START = '#E15816';
@@ -45,7 +35,7 @@ interface MessageModalProps {
 function MessageModal({ visible, onClose, title, message, confirmText = 'OK', onConfirm }: MessageModalProps) {
   if (!visible) return null;
   return (
-    <Modal transparent animationType="fade" visible={visible}>
+    <ActivityModal transparent animationType="fade" visible={visible}>
       <Pressable style={msgStyles.overlay} onPress={onClose}>
         <View style={msgStyles.box}>
           <Text style={msgStyles.title}>{title}</Text>
@@ -61,7 +51,7 @@ function MessageModal({ visible, onClose, title, message, confirmText = 'OK', on
           </TouchableOpacity>
         </View>
       </Pressable>
-    </Modal>
+    </ActivityModal>
   );
 }
 
@@ -356,7 +346,7 @@ export default function CreatePasscode() {
         onConfirm={modalConfig.onConfirm}
       />
 
-      <Modal
+      <ActivityModal
         visible={languageModalVisible}
         transparent
         animationType="fade"
@@ -394,7 +384,7 @@ export default function CreatePasscode() {
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
-      </Modal>
+      </ActivityModal>
     </>
   );
 }

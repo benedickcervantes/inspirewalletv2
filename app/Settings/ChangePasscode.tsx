@@ -3,23 +3,13 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useRef, useState } from "react";
-import {
-    ActivityIndicator,
-    Animated,
-    BackHandler,
-    Modal,
-    Pressable,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    useWindowDimensions,
-    View,
-} from "react-native";
+import { ActivityIndicator, Animated, BackHandler, Pressable, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { updatePasscode, verifyPasscode } from "../../configs/api";
 import { useLanguage } from "../../context/LanguageContext";
 import type { NavProp } from "../../types/navigation";
 
+import ActivityModal from '../components/ActivityModal';
 const GRADIENT_START = "#E15816";
 const GRADIENT_END = "#F48F38";
 const WHITE = "#FFFFFF";
@@ -46,7 +36,7 @@ function MessageModal({
 }: MessageModalProps) {
   if (!visible) return null;
   return (
-    <Modal transparent animationType="fade" visible={visible}>
+    <ActivityModal transparent animationType="fade" visible={visible}>
       <Pressable style={msgStyles.overlay} onPress={onClose}>
         <View style={msgStyles.box}>
           {success ? (
@@ -68,7 +58,7 @@ function MessageModal({
           </TouchableOpacity>
         </View>
       </Pressable>
-    </Modal>
+    </ActivityModal>
   );
 }
 

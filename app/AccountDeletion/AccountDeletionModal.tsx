@@ -5,13 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { unregisterIndieDevice } from 'native-notify';
 import { useEffect,
   useState } from 'react';
-import {
-    Modal,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { useLanguage } from '../../context/LanguageContext';
 import {
     subscribeToAccountDeletionApproved,
@@ -20,6 +14,7 @@ import {
 import { navigateToWelcome } from '../../lib/navigationRef';
 import { TouchableOpacity } from "react-native-gesture-handler";
 
+import ActivityModal from '../components/ActivityModal';
 type ModalState = 'none' | 'approved' | 'rejected';
 type ModalData = { adminNotes?: string | null };
 
@@ -79,7 +74,7 @@ export default function AccountDeletionModal() {
 
   if (state.type === 'approved') {
     return (
-      <Modal visible transparent animationType="fade">
+      <ActivityModal visible transparent animationType="fade">
         <View style={styles.overlay}>
           <LinearGradient
             colors={['#E15816', '#F48F38']}
@@ -99,14 +94,14 @@ export default function AccountDeletionModal() {
             </TouchableOpacity>
           </LinearGradient>
         </View>
-      </Modal>
+      </ActivityModal>
     );
   }
 
   // Rejected
   const adminNotes = state.data?.adminNotes;
   return (
-    <Modal visible transparent animationType="fade">
+    <ActivityModal visible transparent animationType="fade">
       <View style={styles.overlay}>
         <View style={styles.rejectedModal}>
           <Ionicons name="close-circle" size={56} color="#DC2626" style={styles.icon} />
@@ -135,7 +130,7 @@ export default function AccountDeletionModal() {
           </TouchableOpacity>
         </View>
       </View>
-    </Modal>
+    </ActivityModal>
   );
 }
 

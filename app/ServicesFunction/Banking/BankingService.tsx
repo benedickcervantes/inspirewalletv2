@@ -3,21 +3,11 @@ import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useState } from "react";
-import {
-    Modal,
-    Platform,
-    SafeAreaView,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    useWindowDimensions,
-    View,
-} from "react-native";
+import { Platform, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { useLanguage } from "../../../context/LanguageContext";
 import type { RootStackParamList } from "../../../types/navigation";
 
+import ActivityModal from '../../components/ActivityModal';
 const THEME_COLOR = "#E15816";
 const ORANGE_GRADIENT = ["#E25A17", "#F28934"] as const;
 
@@ -192,7 +182,7 @@ export default function BankingService() {
       </SafeAreaView>
 
       {/* Bank Selection Modal */}
-      <Modal
+      <ActivityModal
         visible={showBankModal}
         transparent
         animationType="slide"
@@ -228,8 +218,8 @@ export default function BankingService() {
             </ScrollView>
           </View>
         </View>
-      </Modal>
-      <Modal
+      </ActivityModal>
+      <ActivityModal
         transparent
         animationType="fade"
         visible={showExitConfirmModal}
@@ -271,7 +261,7 @@ export default function BankingService() {
             </View>
           </View>
         </View>
-      </Modal>
+      </ActivityModal>
     </View>
   );
 }

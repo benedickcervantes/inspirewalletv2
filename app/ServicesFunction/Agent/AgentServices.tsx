@@ -2,27 +2,12 @@ import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-    ActivityIndicator,
-    Animated,
-    Keyboard,
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    SafeAreaView,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
-    type TextStyle,
-} from "react-native";
+import { ActivityIndicator, Animated, Keyboard, KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View, type TextStyle } from "react-native";
 import { useLanguage } from "../../../context/LanguageContext";
 import { isServiceUnderMaintenance } from "../../../lib/maintenance";
 import type { RootStackParamList } from "../../../types/navigation";
 
+import ActivityModal from '../../components/ActivityModal';
 // Static theme - no backend
 const THEME_COLOR = "#E15816";
 
@@ -151,7 +136,7 @@ const ProfessionalModal = ({
   if (!visible) return null;
 
   return (
-    <Modal transparent={true} animationType="none" visible={visible}>
+    <ActivityModal transparent={true} animationType="none" visible={visible}>
       <Animated.View style={[modalStyles.modalOverlay, { opacity: fadeAnim }]}>
         <View style={modalStyles.androidModalOverlay}>
           <Animated.View
@@ -200,7 +185,7 @@ const ProfessionalModal = ({
           </Animated.View>
         </View>
       </Animated.View>
-    </Modal>
+    </ActivityModal>
   );
 };
 

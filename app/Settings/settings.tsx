@@ -7,19 +7,7 @@ import * as LocalAuthentication from "expo-local-authentication";
 import * as SecureStore from "expo-secure-store";
 import { unregisterIndieDevice } from "native-notify";
 import { useCallback, useEffect, useState } from "react";
-import {
-    ActivityIndicator,
-    Modal,
-    Platform,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TextInput,
-    ToastAndroid,
-    TouchableOpacity,
-    View,
-} from "react-native";
+import { ActivityIndicator, Platform, ScrollView, StatusBar, StyleSheet, Text, TextInput, ToastAndroid, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
     disableBiometric,
@@ -33,6 +21,7 @@ import { useLanguage } from "../../context/LanguageContext";
 import { useLanguageModal } from "../../context/LanguageModalContext";
 import { useResponsive } from "../../utils/responsive";
 import AccountDeletionModal from "../AccountDeletion/AccountDeletionModal";
+import ActivityModal from '../components/ActivityModal';
 interface UserData {
   email?: string;
   emailVerified?: boolean;
@@ -940,7 +929,7 @@ const Settings = () => {
           </TouchableOpacity>
         </ScrollView>
 
-        <Modal
+        <ActivityModal
           visible={emailVerifyModalVisible}
           transparent
           animationType="fade"
@@ -1073,10 +1062,10 @@ const Settings = () => {
               )}
             </View>
           </View>
-        </Modal>
+        </ActivityModal>
 
         {/* Biometric Setup Modal */}
-        <Modal
+        <ActivityModal
           visible={biometricModalVisible}
           transparent
           animationType="slide"
@@ -1157,7 +1146,7 @@ const Settings = () => {
               </TouchableOpacity>
             </View>
           </View>
-        </Modal>
+        </ActivityModal>
 
         <AccountDeletionModal />
       </SafeAreaView>

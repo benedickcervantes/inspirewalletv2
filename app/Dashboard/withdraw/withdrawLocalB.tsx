@@ -4,21 +4,12 @@ import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { doc, getDoc } from "firebase/firestore";
 import { useCallback, useEffect, useState } from "react";
-import {
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
-} from "react-native";
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { getOrCreateMainWallet } from "../../../configs/api";
 import { auth, firestore } from "../../../configs/firebase";
 import { useLanguage } from "../../../context/LanguageContext";
+import ActivityModal from '../../components/ActivityModal';
 import {
     formatAmountWithCommas,
     unformatNumberString,
@@ -556,7 +547,7 @@ export default function BankWithdrawal() {
             <View style={styles.bottomPadding} />
           </ScrollView>
 
-          <Modal
+          <ActivityModal
             visible={showBankOptionsModal}
             transparent
             animationType="fade"
@@ -595,7 +586,7 @@ export default function BankWithdrawal() {
                 ))}
               </View>
             </View>
-          </Modal>
+          </ActivityModal>
         </KeyboardAvoidingView>
       </SafeAreaView>
     </View>

@@ -1,8 +1,9 @@
 import { useNavigation } from "@react-navigation/native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useLanguage } from "../../context/LanguageContext";
 
+import ActivityModal from '../components/ActivityModal';
 const THEME_COLOR = "#E15816";
 
 interface MaintenanceModalProps {
@@ -26,7 +27,7 @@ export function MaintenanceModal({ visible, onClose }: MaintenanceModalProps) {
   };
 
   return (
-    <Modal
+    <ActivityModal
       visible={visible}
       transparent
       animationType="fade"
@@ -55,7 +56,7 @@ export function MaintenanceModal({ visible, onClose }: MaintenanceModalProps) {
           </TouchableOpacity>
         </View>
       </View>
-    </Modal>
+    </ActivityModal>
   );
 }
 

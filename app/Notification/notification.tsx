@@ -3,18 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useMemo, useState } from "react";
-import {
-    ActivityIndicator,
-    Dimensions,
-    FlatList,
-    Modal,
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
-} from "react-native";
+import { ActivityIndicator, Dimensions, FlatList, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
     acceptReferralRequest as apiAcceptReferralRequest,
@@ -29,6 +18,7 @@ import {
 import { auth } from "../../configs/firebase";
 import { useLanguage } from "../../context/LanguageContext";
 import { useUnreadNotifications } from "../../context/UnreadNotificationsContext";
+import ActivityModal from '../components/ActivityModal';
 import notificationService, {
     type NotificationItem,
 } from "./notificationService";
@@ -51,6 +41,29 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 const DETAIL_MODAL_WIDTH = Math.min(SCREEN_WIDTH * 0.86, 420);
 const DETAIL_MODAL_MAX_HEIGHT = SCREEN_HEIGHT * 0.78;
 const NOTIFICATION_PAGE_SIZE = 5;
+
+/**
+ * Format notification messages to add comma separators to amounts
+ * Looks for patterns like "5454.00" or "54554.00" and formats them with commas
+ */
+const formatNotificationMessage = (message: string): string => {
+  if (!message) return message;
+  
+  // Pattern to match amounts in notification messages
+  // Matches numbers with 2 decimal places (e.g., "5454.00", "54554.00")
+  const amountPattern = /\b(\d{4,})\.(\d{2})\b/g;
+  
+  return message.replace(amountPattern, (match) => {
+    const amount = parseFloat(match);
+    if (!Number.isFinite(amount)) return match;
+    
+    return amount.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+      useGrouping: true
+    });
+  });
+};
 
 const Notification = () => {
   const navigation = useNavigation();
@@ -638,7 +651,7 @@ const Notification = () => {
     });
     fields.push({
       label: t("notification.detailMessage") ?? "Message",
-      value: notif.message ?? "—",
+      value: formatNotificationMessage(notif.message ?? "—"),
     });
     fields.push({
       label: t("notification.detailDate") ?? "Date",
@@ -844,7 +857,7 @@ const Notification = () => {
           <View style={styles.divider} />
 
           <Text style={styles.notificationMessage} numberOfLines={3}>
-            {item.message}
+            {formatNotificationMessage(item.message)}
           </Text>
 
           <Text style={styles.timestamp}>
@@ -943,7 +956,7 @@ const Notification = () => {
           <View style={styles.divider} />
 
           <Text style={styles.notificationMessage} numberOfLines={3}>
-            {item.message}
+            {formatNotificationMessage(item.message)}
           </Text>
 
           <Text style={styles.timestamp}>
@@ -1196,7 +1209,7 @@ const Notification = () => {
       )}
 
       {/* Delete confirmation modal - updated to modern white card style */}
-      <Modal
+      <ActivityModal
         visible={showDeleteModal}
         transparent
         animationType="fade"
@@ -1231,10 +1244,10 @@ const Notification = () => {
             </View>
           </View>
         </View>
-      </Modal>
+      </ActivityModal>
 
       {/* Notification detail modal - modern white card with full details */}
-      <Modal
+      <ActivityModal
         visible={!!detailModalNotification}
         transparent
         animationType="fade"
@@ -1370,7 +1383,7 @@ const Notification = () => {
             </View>
           </TouchableOpacity>
         </TouchableOpacity>
-      </Modal>
+      </ActivityModal>
     </View>
   );
 };

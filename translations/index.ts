@@ -863,6 +863,8 @@ const en: TranslationMap = {
   "support.failedToEdit": "Failed to edit message",
   "support.messageTooLong": "Message is too long (max 10000 characters)",
   "support.invalidContent": "Invalid message content",
+  "support.messageDeletedForEveryone": "Deleted",
+  "support.messageDeletedForMe": "Deleted on your side",
 
   "tickets.create": "Create Ticket",
   "tickets.createTitle": "Create Support Ticket",
@@ -2725,6 +2727,8 @@ const ko: TranslationMap = {
   "support.failedToEdit": "메시지 수정에 실패했습니다",
   "support.messageTooLong": "메시지가 너무 깁니다 (최대 10000자)",
   "support.invalidContent": "유효하지 않은 메시지 내용입니다",
+  "support.messageDeletedForEveryone": "삭제됨",
+  "support.messageDeletedForMe": "내 화면에서 삭제됨",
 
   "tickets.create": "티켓 생성",
   "tickets.createTitle": "지원 티켓 생성",
@@ -4470,6 +4474,8 @@ const ja: TranslationMap = {
   "support.failedToEdit": "メッセージの編集に失敗しました",
   "support.messageTooLong": "メッセージが長すぎます（最大10000文字）",
   "support.invalidContent": "メッセージ内容が無効です",
+  "support.messageDeletedForEveryone": "削除済み",
+  "support.messageDeletedForMe": "自分の画面で削除済み",
 
   "tickets.create": "チケットを作成",
   "tickets.createTitle": "サポートチケットを作成",
@@ -6295,6 +6301,8 @@ const ar: TranslationMap = {
   "support.failedToEdit": "فشل تعديل الرسالة",
   "support.messageTooLong": "الرسالة طويلة جداً (الحد الأقصى 10000 حرف)",
   "support.invalidContent": "محتوى الرسالة غير صالح",
+  "support.messageDeletedForEveryone": "تم الحذف",
+  "support.messageDeletedForMe": "تم الحذف من جهتك",
 
   "tickets.create": "إنشاء تذكرة",
   "tickets.createTitle": "إنشاء تذكرة دعم",

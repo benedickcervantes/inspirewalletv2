@@ -2,18 +2,11 @@ import { subscribeToNewTicketMessage, subscribeToTicketCreated } from "@/lib/tic
 import { listUserTickets, type Ticket } from "@/lib/tickets";
 import { useFocusEffect } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
-import {
-  Modal,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useLanguage } from "../../context/LanguageContext";
 import TicketDetail from "./TicketDetail";
 
+import ActivityModal from '../components/ActivityModal';
 interface TicketListProps {
   accessToken: string;
   onTicketSelected?: (selected: boolean) => void;
@@ -91,15 +84,12 @@ function TicketList({ accessToken, onTicketSelected, refreshTrigger }: TicketLis
   const getStatusColor = (status: string) => {
     switch (status) {
       case "OPEN":
-        return "#3b82f6";
       case "IN_PROGRESS":
-        return "#f97316";
       case "RESOLVED":
-        return "#22c55e";
       case "CLOSED":
-        return "#6b7280";
+        return "#E15816";
       default:
-        return "#3b82f6";
+        return "#E15816";
     }
   };
 
@@ -152,7 +142,10 @@ function TicketList({ accessToken, onTicketSelected, refreshTrigger }: TicketLis
           {tickets.map((ticket: Ticket) => (
             <TouchableOpacity
               key={ticket.id}
-              style={styles.ticketCard}
+              style={[
+                styles.ticketCard,
+                { borderLeftColor: getStatusColor(ticket.status) },
+              ]}
               onPress={() => {
                 console.log("[TicketList] Ticket clicked:", ticket.id, ticket.title);
                 setSelectedTicket(ticket);
@@ -233,7 +226,7 @@ function TicketList({ accessToken, onTicketSelected, refreshTrigger }: TicketLis
       )}
     </ScrollView>
 
-    <Modal
+    <ActivityModal
       visible={!!selectedTicket}
       animationType="slide"
       statusBarTranslucent
@@ -253,7 +246,7 @@ function TicketList({ accessToken, onTicketSelected, refreshTrigger }: TicketLis
           }}
         />
       )}
-    </Modal>
+    </ActivityModal>
     </>
   );
 }
@@ -401,7 +394,7 @@ const styles = StyleSheet.create({
   paginationButton: {
     paddingHorizontal: 12,
     paddingVertical: 8,
-    backgroundColor: "#3b82f6",
+    backgroundColor: "#E15816",
     borderRadius: 6,
   },
   paginationText: {

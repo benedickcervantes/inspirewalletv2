@@ -1,15 +1,8 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import {
-  Modal,
-  ScrollView,
-  StyleSheet,
-  Text,
-  useWindowDimensions,
-  View,
-} from "react-native";
-import { TouchableOpacity } from "react-native-gesture-handler";
+import { ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { useLanguage } from "../../../context/LanguageContext";
 
+import ActivityModal from '../../components/ActivityModal';
 const EMPTY_PLACEHOLDER = "__empty__";
 const THEME_COLOR = "#E15816";
 
@@ -262,7 +255,7 @@ export default function TravelProtectPerDeatails({
       </View>
 
       {/* Gender Modal */}
-      <Modal
+      <ActivityModal
         visible={showGenderDropdown}
         transparent
         animationType="slide"
@@ -314,10 +307,10 @@ export default function TravelProtectPerDeatails({
             </ScrollView>
           </View>
         </View>
-      </Modal>
+      </ActivityModal>
 
       {/* Civil Status Modal */}
-      <Modal
+      <ActivityModal
         visible={showCivilStatusDropdown}
         transparent
         animationType="slide"
@@ -375,10 +368,10 @@ export default function TravelProtectPerDeatails({
             </ScrollView>
           </View>
         </View>
-      </Modal>
+      </ActivityModal>
 
       {/* Date of Birth Modal */}
-      <Modal
+      <ActivityModal
         visible={showDateModal}
         transparent
         animationType="slide"
@@ -475,9 +468,9 @@ export default function TravelProtectPerDeatails({
             </TouchableOpacity>
           </View>
         </View>
-      </Modal>
+      </ActivityModal>
       {/* Citizenship Modal */}
-      <Modal
+      <ActivityModal
         visible={showCitizenshipDropdown}
         transparent
         animationType="slide"
@@ -531,7 +524,7 @@ export default function TravelProtectPerDeatails({
             </ScrollView>
           </View>
         </View>
-      </Modal>
+      </ActivityModal>
     </>
   );
 }

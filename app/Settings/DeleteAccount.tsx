@@ -5,23 +5,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
-import {
-  ActivityIndicator,
-  Alert,
-  Modal,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { ActivityIndicator, Alert, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { submitAccountDeletionRequest } from '../../configs/api';
 import { useLanguage } from '../../context/LanguageContext';
 import type { NavProp } from '../../types/navigation';
 import AccountDeletionModal from '../AccountDeletion/AccountDeletionModal';
 import { TouchableOpacity } from "react-native-gesture-handler";
 
+import ActivityModal from '../components/ActivityModal';
 const REASON_KEYS = ['delete.reasonNoLonger', 'delete.reasonBetter', 'delete.reasonPrivacy', 'delete.reasonExpensive', 'delete.reasonTechnical', 'delete.reasonOther'] as const;
 
 type Step = 'confirm' | 'reason' | 'done';
@@ -175,7 +166,7 @@ const DeleteAccount = () => {
         )}
       </ScrollView>
 
-      <Modal
+      <ActivityModal
         visible={showReasonModal}
         transparent
         animationType="slide"
@@ -206,10 +197,10 @@ const DeleteAccount = () => {
             </ScrollView>
           </View>
         </View>
-      </Modal>
+      </ActivityModal>
 
       {/* Request Submitted Success Modal */}
-      <Modal
+      <ActivityModal
         visible={showSuccessModal}
         transparent
         animationType="fade"
@@ -233,7 +224,7 @@ const DeleteAccount = () => {
             </TouchableOpacity>
           </LinearGradient>
         </View>
-      </Modal>
+      </ActivityModal>
       <AccountDeletionModal />
     </SafeAreaView>
   );

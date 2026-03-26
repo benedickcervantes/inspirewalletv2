@@ -1,16 +1,9 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import {
-  Modal,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
-import { TouchableOpacity } from "react-native-gesture-handler";
+import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 
 import { useLanguage } from "../../../context/LanguageContext";
 
+import ActivityModal from '../../components/ActivityModal';
 const EMPTY_PLACEHOLDER = "__empty__";
 const THEME_COLOR = "#E15816";
 
@@ -358,7 +351,7 @@ export default function TravelProtectDetails({
       </View>
 
       {/* Check-In Date Modal */}
-      <Modal
+      <ActivityModal
         visible={showCheckInModal}
         transparent
         animationType="slide"
@@ -460,10 +453,10 @@ export default function TravelProtectDetails({
             </TouchableOpacity>
           </View>
         </View>
-      </Modal>
+      </ActivityModal>
 
       {/* Departure Time Modal */}
-      <Modal
+      <ActivityModal
         visible={showDepartureTimePicker}
         transparent
         animationType="slide"
@@ -549,10 +542,10 @@ export default function TravelProtectDetails({
             </TouchableOpacity>
           </View>
         </View>
-      </Modal>
+      </ActivityModal>
 
       {/* Arrival Time Modal */}
-      <Modal
+      <ActivityModal
         visible={showArrivalTimePicker}
         transparent
         animationType="slide"
@@ -634,7 +627,7 @@ export default function TravelProtectDetails({
             </TouchableOpacity>
           </View>
         </View>
-      </Modal>
+      </ActivityModal>
     </>
   );
 }

@@ -6,21 +6,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import * as LocalAuthentication from "expo-local-authentication";
 import * as SecureStore from "expo-secure-store";
 import { useEffect, useRef, useState } from "react";
-import {
-    ActivityIndicator,
-    Animated,
-    BackHandler,
-    Modal,
-    Platform,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    useWindowDimensions,
-    View,
-} from "react-native";
+import { ActivityIndicator, Animated, BackHandler, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
     login,
@@ -39,6 +25,7 @@ import type { NavProp } from "../../types/navigation";
 import { useResponsive } from "../../utils/responsive";
 import Loader from "../Loader/Loader";
 
+import ActivityModal from '../components/ActivityModal';
 const GRADIENT_START = "#E15816";
 const GRADIENT_END = "#F48F38";
 const WHITE = "#FFFFFF";
@@ -65,7 +52,7 @@ function MessageModal({
 }: MessageModalProps) {
   if (!visible) return null;
   return (
-    <Modal transparent animationType="fade" visible={visible}>
+    <ActivityModal transparent animationType="fade" visible={visible}>
       <Pressable
         style={msgStyles.overlay}
         onPress={() => {
@@ -89,7 +76,7 @@ function MessageModal({
           </TouchableOpacity>
         </View>
       </Pressable>
-    </Modal>
+    </ActivityModal>
   );
 }
 
@@ -926,7 +913,7 @@ export default function Passcode() {
         onConfirm={modalConfig.onConfirm}
       />
 
-      <Modal
+      <ActivityModal
         visible={languageModalVisible}
         transparent
         animationType="fade"
@@ -1050,9 +1037,9 @@ export default function Passcode() {
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
-      </Modal>
+      </ActivityModal>
 
-      <Modal
+      <ActivityModal
         transparent
         animationType="fade"
         visible={resetModalVisible}
@@ -1229,7 +1216,7 @@ export default function Passcode() {
             </ScrollView>
           </View>
         </TouchableOpacity>
-      </Modal>
+      </ActivityModal>
     </>
   );
 }

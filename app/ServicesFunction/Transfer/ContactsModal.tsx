@@ -2,18 +2,10 @@ import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Contacts from "expo-contacts";
 import { useEffect, useState } from "react";
-import {
-    ActivityIndicator,
-    Modal,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
-} from "react-native";
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useLanguage } from "../../../context/LanguageContext";
 
+import ActivityModal from '../../components/ActivityModal';
 const width = (() => {
   try {
     return require("react-native").Dimensions?.get?.("window")?.width ?? 375;
@@ -174,7 +166,7 @@ export default function ContactsModal({ visible, onClose, onSelectContact }: Con
   };
 
   return (
-    <Modal
+    <ActivityModal
       visible={visible}
       transparent={true}
       animationType="slide"
@@ -330,7 +322,7 @@ export default function ContactsModal({ visible, onClose, onSelectContact }: Con
           </ScrollView>
         </View>
       </View>
-    </Modal>
+    </ActivityModal>
   );
 }
 

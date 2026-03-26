@@ -3,21 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-    ActivityIndicator,
-    AppState,
-    AppStateStatus,
-    FlatList,
-    Modal,
-    Platform,
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    useWindowDimensions,
-    View,
-} from "react-native";
+import { ActivityIndicator, AppState, AppStateStatus, FlatList, Platform, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
     getStockInvestmentDepositRequests,
@@ -30,6 +16,7 @@ import { getStockInvestmentMinAmount } from "../../../configs/currencies";
 import { getLanguageCode } from "../../../constants/locales";
 import { useLanguage } from "../../../context/LanguageContext";
 
+import ActivityModal from '../../components/ActivityModal';
 const THEME_COLOR = "#E15816";
 
 type Tab = "portfolio" | "orders" | "marketplace";
@@ -810,7 +797,7 @@ export default function StockService() {
         )}
 
         {/* Confirm Purchase Modal */}
-        <Modal
+        <ActivityModal
           visible={!!confirmListing}
           transparent
           animationType="fade"
@@ -875,10 +862,10 @@ export default function StockService() {
               </View>
             </View>
           </View>
-        </Modal>
+        </ActivityModal>
 
         {/* Alert Modal */}
-        <Modal
+        <ActivityModal
           visible={showAlert}
           transparent
           animationType="fade"
@@ -901,7 +888,7 @@ export default function StockService() {
               </TouchableOpacity>
             </LinearGradient>
           </View>
-        </Modal>
+        </ActivityModal>
       </SafeAreaView>
     </View>
   );

@@ -3,20 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useRef, useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  Animated,
-  Image,
-  ImageBackground,
-  Modal,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
-} from "react-native";
+import { ActivityIndicator, Alert, Animated, Image, ImageBackground, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   buyCard,
@@ -28,6 +15,7 @@ import {
 import { useLanguage } from "../../context/LanguageContext";
 import { getCardTheme } from "../theme/cardThemes";
 
+import ActivityModal from '../components/ActivityModal';
 interface CardsTabProps {
   userData: {
     firstName?: string;
@@ -1030,7 +1018,7 @@ export default function CardsTab({
 
       <View style={{ height: 40 }} />
 
-      <Modal
+      <ActivityModal
         animationType="fade"
         transparent={true}
         visible={isVipModalVisible}
@@ -1204,9 +1192,9 @@ export default function CardsTab({
             </ScrollView>
           </View>
         </View>
-      </Modal>
+      </ActivityModal>
 
-      <Modal
+      <ActivityModal
         animationType="fade"
         transparent={true}
         visible={isPurchaseModalVisible}
@@ -1543,9 +1531,9 @@ export default function CardsTab({
             </View>
           </View>
         </View>
-      </Modal>
+      </ActivityModal>
 
-      <Modal
+      <ActivityModal
         animationType="fade"
         transparent={true}
         visible={isDesignModalVisible}
@@ -1729,10 +1717,10 @@ export default function CardsTab({
             </View>
           </View>
         </View>
-      </Modal>
+      </ActivityModal>
 
       {/* Success Modal */}
-      <Modal
+      <ActivityModal
         animationType="fade"
         transparent={true}
         visible={isSuccessModalVisible}
@@ -1778,7 +1766,7 @@ export default function CardsTab({
             </LinearGradient>
           </View>
         </View>
-      </Modal>
+      </ActivityModal>
     </ScrollView>
   );
 }

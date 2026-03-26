@@ -6,21 +6,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import * as SecureStore from 'expo-secure-store';
 import { registerIndieID } from 'native-notify';
 import { useEffect, useRef, useState } from "react";
-import {
-    ActivityIndicator,
-    Animated,
-    BackHandler,
-    Keyboard,
-    Modal,
-    Platform,
-    Pressable,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    useWindowDimensions,
-    View,
-} from "react-native";
+import { ActivityIndicator, Animated, BackHandler, Keyboard, Platform, Pressable, StyleSheet, Text, TextInput, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { forgotPassword, login } from "../../configs/api";
@@ -30,6 +16,7 @@ import type { NavProp } from "../../types/navigation";
 import { useResponsive } from "../../utils/responsive";
 import Loader from "../Loader/Loader";
 
+import ActivityModal from '../components/ActivityModal';
 const GRADIENT_START = "#E15816";
 const GRADIENT_END = "#F48F38";
 const WHITE = "#FFFFFF";
@@ -152,7 +139,7 @@ function PasswordResetRequiredModal({
   }[phase];
 
   return (
-    <Modal transparent animationType="none" visible={visible}>
+    <ActivityModal transparent animationType="none" visible={visible}>
       <Animated.View style={[modalStyles.overlay, { opacity: fadeAnim }]}>
         <Animated.View
           style={[modalStyles.box, { transform: [{ scale: scaleAnim }] }]}
@@ -208,7 +195,7 @@ function PasswordResetRequiredModal({
           )}
         </Animated.View>
       </Animated.View>
-    </Modal>
+    </ActivityModal>
   );
 }
 
@@ -288,7 +275,7 @@ function ForgotPasswordInputModal({
   };
 
   return (
-    <Modal transparent animationType="none" visible={visible}>
+    <ActivityModal transparent animationType="none" visible={visible}>
       <Animated.View style={[modalStyles.overlay, { opacity: fadeAnim }]}>
         <Pressable style={StyleSheet.absoluteFill} onPress={phase === 'sent' ? onClose : undefined} />
         <Animated.View style={[modalStyles.box, { transform: [{ scale: scaleAnim }] }]}>
@@ -360,7 +347,7 @@ function ForgotPasswordInputModal({
           )}
         </Animated.View>
       </Animated.View>
-    </Modal>
+    </ActivityModal>
   );
 }
 
@@ -448,7 +435,7 @@ function MessageModal({
   const icon = type === "success" ? "✓" : type === "error" ? "!" : "i";
 
   return (
-    <Modal transparent animationType="none" visible={visible}>
+    <ActivityModal transparent animationType="none" visible={visible}>
       <Animated.View style={[modalStyles.overlay, { opacity: fadeAnim }]}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
         <Animated.View
@@ -487,7 +474,7 @@ function MessageModal({
           </View>
         </Animated.View>
       </Animated.View>
-    </Modal>
+    </ActivityModal>
   );
 }
 

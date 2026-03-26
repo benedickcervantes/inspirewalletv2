@@ -2,22 +2,7 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  Alert,
-  Image,
-  Keyboard,
-  KeyboardAvoidingView,
-  Linking,
-  Modal,
-  Platform,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
-} from "react-native";
+import { Alert, Image, Keyboard, KeyboardAvoidingView, Linking, Platform, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import {
   SafeAreaView,
   useSafeAreaInsets,
@@ -36,6 +21,7 @@ import type { NavProp } from "../../types/navigation";
 import TicketCreation from "../Tickets/TicketCreation";
 import TicketList from "../Tickets/TicketList";
 
+import ActivityModal from '../components/ActivityModal';
 interface ApiMessage {
   id: string;
   content: string;
@@ -106,6 +92,7 @@ export default function Message() {
     null,
   );
   const [showMessageActions, setShowMessageActions] = useState(false);
+  const [showDeleteOptions, setShowDeleteOptions] = useState(false);
   const [editingMessage, setEditingMessage] = useState<DisplayMessage | null>(
     null,
   );
@@ -221,50 +208,32 @@ export default function Message() {
   const handleDelete = useCallback(() => {
     if (!selectedMessage) return;
     setShowMessageActions(false);
-
-    Alert.alert(
-      t("support.deleteMessage"),
-      t("support.deleteConfirm"),
-      [
-        {
-          text: t("common.cancel"),
-          style: "cancel",
-        },
-        {
-          text: t("support.deleteForMe"),
-          onPress: async () => {
-            const token = await AsyncStorage.getItem("access_token");
-            if (!token) return;
-            const result = await deleteMessage(
-              token,
-              selectedMessage.id,
-              false,
-            );
-            if (result.success) {
-              await fetchMessages();
-            } else {
-              Alert.alert(t("common.error"), result.error || t("support.failedToDelete"));
-            }
-          },
-        },
-        {
-          text: t("support.deleteForEveryone"),
-          style: "destructive",
-          onPress: async () => {
-            const token = await AsyncStorage.getItem("access_token");
-            if (!token) return;
-            const result = await deleteMessage(token, selectedMessage.id, true);
-            if (result.success) {
-              await fetchMessages();
-            } else {
-              Alert.alert(t("common.error"), result.error || t("support.failedToDelete"));
-            }
-          },
-        },
-      ],
-      { cancelable: true },
-    );
+    setShowDeleteOptions(true);
   }, [selectedMessage, fetchMessages]);
+
+  const handleDeleteOption = useCallback(
+    async (deleteForEveryone: boolean) => {
+      if (!selectedMessage) return;
+      setShowDeleteOptions(false);
+
+      const token = await AsyncStorage.getItem("access_token");
+      if (!token) return;
+      const result = await deleteMessage(
+        token,
+        selectedMessage.id,
+        deleteForEveryone,
+      );
+      if (result.success) {
+        await fetchMessages();
+      } else {
+        Alert.alert(
+          t("common.error"),
+          result.error || t("support.failedToDelete"),
+        );
+      }
+    },
+    [selectedMessage, fetchMessages],
+  );
 
   const handleSaveEdit = useCallback(async () => {
     if (!editingMessage || !editText.trim()) return;
@@ -522,12 +491,21 @@ export default function Message() {
                       const isDeletedForMe =
                         msg.text === "You deleted this message.";
                       const isDeleted = isDeletedForEveryone || isDeletedForMe;
+                      const deletedForEveryoneText = t(
+                        "support.messageDeletedForEveryone"
+                      );
+                      const deletedForMeText = t("support.messageDeletedForMe");
                       const displayText = isDeletedForEveryone
-                        ? t("support.messageDeletedForEveryone") ||
-                          "This message was deleted."
+                        ? deletedForEveryoneText &&
+                          deletedForEveryoneText !==
+                            "support.messageDeletedForEveryone"
+                          ? deletedForEveryoneText
+                          : "Deleted"
                         : isDeletedForMe
-                          ? t("support.messageDeletedForMe") ||
-                            "You deleted this message."
+                          ? deletedForMeText &&
+                            deletedForMeText !== "support.messageDeletedForMe"
+                            ? deletedForMeText
+                            : "Deleted on your side"
                           : msg.text;
 
                       return (
@@ -538,7 +516,10 @@ export default function Message() {
                               msg.isSent
                                 ? styles.bubbleTextSent
                                 : styles.bubbleTextReceived,
-                              isDeleted && styles.deletedText,
+                              isDeleted &&
+                                (msg.isSent
+                                  ? styles.deletedTextSent
+                                  : styles.deletedTextReceived),
                             ]}
                           >
                             {displayText}
@@ -650,7 +631,7 @@ export default function Message() {
       )}
 
       {/* Message Actions Modal */}
-      <Modal
+      <ActivityModal
         visible={showMessageActions}
         transparent
         animationType="fade"
@@ -685,10 +666,61 @@ export default function Message() {
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
-      </Modal>
+      </ActivityModal>
+
+      {/* Delete Options Modal */}
+      <ActivityModal
+        visible={showDeleteOptions}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowDeleteOptions(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowDeleteOptions(false)}
+        >
+          <TouchableOpacity
+            activeOpacity={1}
+            style={styles.deleteModal}
+            onPress={(e) => e.stopPropagation()}
+          >
+            <View style={styles.deleteModalTopBar} />
+            <Text style={styles.deleteModalTitle}>{t("support.deleteMessage")}</Text>
+            <Text style={styles.deleteModalSubtitle}>{t("support.deleteConfirm")}</Text>
+
+            <TouchableOpacity
+              style={styles.deleteModalPrimaryButton}
+              onPress={() => handleDeleteOption(true)}
+            >
+              <Text style={styles.deleteModalPrimaryButtonText}>
+                {t("support.deleteForEveryone")}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.deleteModalSecondaryButton}
+              onPress={() => handleDeleteOption(false)}
+            >
+              <Text style={styles.deleteModalSecondaryButtonText}>
+                {t("support.deleteForMe")}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.deleteModalCancelButton}
+              onPress={() => setShowDeleteOptions(false)}
+            >
+              <Text style={styles.deleteModalCancelButtonText}>
+                {t("common.cancel")}
+              </Text>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </ActivityModal>
 
       {/* Edit Message Modal */}
-      <Modal
+      <ActivityModal
         visible={!!editingMessage}
         transparent
         animationType="slide"
@@ -745,7 +777,7 @@ export default function Message() {
             </TouchableOpacity>
           </TouchableOpacity>
         </KeyboardAvoidingView>
-      </Modal>
+      </ActivityModal>
     </SafeAreaView>
   );
 }
@@ -1004,9 +1036,13 @@ const styles = StyleSheet.create({
   bubbleTimeReceived: {
     color: "#999",
   },
-  deletedText: {
+  deletedTextSent: {
     fontStyle: "italic",
-    color: "#888",
+    color: "rgba(255,255,255,0.82)",
+  },
+  deletedTextReceived: {
+    fontStyle: "italic",
+    color: "#333",
   },
   editedLabel: {
     marginTop: 2,
@@ -1088,6 +1124,72 @@ const styles = StyleSheet.create({
     color: "#666",
     textAlign: "center",
     flex: 1,
+  },
+  deleteModal: {
+    width: "90%",
+    maxWidth: 380,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 16,
+    alignSelf: "center",
+    marginBottom: 80,
+  },
+  deleteModalTopBar: {
+    height: 4,
+    width: 52,
+    borderRadius: 2,
+    backgroundColor: "#E15816",
+    alignSelf: "center",
+    marginBottom: 12,
+  },
+  deleteModalTitle: {
+    fontSize: 22,
+    fontWeight: "700",
+    color: "#1F2937",
+  },
+  deleteModalSubtitle: {
+    marginTop: 6,
+    fontSize: 15,
+    color: "#6B7280",
+    marginBottom: 16,
+  },
+  deleteModalPrimaryButton: {
+    backgroundColor: "#E15816",
+    borderRadius: 12,
+    minHeight: 46,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  deleteModalPrimaryButtonText: {
+    color: "#FFFFFF",
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  deleteModalSecondaryButton: {
+    borderWidth: 1,
+    borderColor: "#E15816",
+    borderRadius: 12,
+    minHeight: 46,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 10,
+    backgroundColor: "#FFF7F3",
+  },
+  deleteModalSecondaryButtonText: {
+    color: "#E15816",
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  deleteModalCancelButton: {
+    minHeight: 42,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  deleteModalCancelButtonText: {
+    color: "#6B7280",
+    fontSize: 14,
+    fontWeight: "600",
   },
   editModal: {
     backgroundColor: "#FFFFFF",

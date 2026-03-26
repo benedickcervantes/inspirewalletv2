@@ -4,20 +4,12 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useState } from "react";
-import {
-  Alert,
-  Image,
-  Modal,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { uploadTopUpReceiptFile } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
 
+import ActivityModal from '../../components/ActivityModal';
 export default function TopUpConfirm() {
   const navigation = useNavigation();
   const route = useRoute();
@@ -346,7 +338,7 @@ export default function TopUpConfirm() {
 
 
         {/* Custom Alert Modal */}
-        <Modal
+        <ActivityModal
           visible={showAlertModal}
           transparent={true}
           animationType="fade"
@@ -371,10 +363,10 @@ export default function TopUpConfirm() {
               </TouchableOpacity>
             </LinearGradient>
           </View>
-        </Modal>
+        </ActivityModal>
 
         {/* Bank Details Sent Modal */}
-        <Modal
+        <ActivityModal
           visible={showEmailSentModal}
           transparent={true}
           animationType="fade"
@@ -394,7 +386,7 @@ export default function TopUpConfirm() {
               </TouchableOpacity>
             </LinearGradient>
           </View>
-        </Modal>
+        </ActivityModal>
 
 
       </SafeAreaView>

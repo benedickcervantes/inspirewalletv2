@@ -1,9 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useIdleTimeout } from "../../context/IdleTimeoutContext";
 import { useLanguage } from "../../context/LanguageContext";
 import { useLanguageModal } from "../../context/LanguageModalContext";
 
+import ActivityModal from '../components/ActivityModal';
 const SUPPORTED_LANGUAGES = [
   { label: "English", flag: "🇺🇸" },
   { label: "Arabic", flag: "🇸🇦" },
@@ -18,7 +19,7 @@ export default function LanguageModal() {
   const activityProps = getActivityProps();
 
   return (
-    <Modal
+    <ActivityModal
       visible={languageModalVisible}
       transparent
       animationType="fade"
@@ -93,7 +94,7 @@ export default function LanguageModal() {
           </TouchableOpacity>
         </View>
       </TouchableOpacity>
-    </Modal>
+    </ActivityModal>
   );
 }
 
