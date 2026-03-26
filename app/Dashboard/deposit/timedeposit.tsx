@@ -67,7 +67,7 @@ export default function TimeDeposit() {
     navigation.navigate("TimeDepositAmount", {
       depositMethod,
       contractPeriod,
-      currency: "PHP",
+      currency: depositMethod === "Crypto Deposit" ? "BTC" : "PHP",
     });
   };
 
@@ -168,6 +168,21 @@ export default function TimeDeposit() {
                 <Text style={styles.radioLabel}>
                   {t("investment.availableBalance")}
                 </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.radioOption,
+                  depositMethod === "Crypto Deposit" &&
+                    styles.radioOptionSelected,
+                ]}
+                onPress={() => setDepositMethod("Crypto Deposit")}>
+                <View style={styles.radioCircle}>
+                  {depositMethod === "Crypto Deposit" && (
+                    <View style={styles.radioInner} />
+                  )}
+                </View>
+                <Text style={styles.radioLabel}>Crypto Deposit</Text>
               </TouchableOpacity>
             </View>
 

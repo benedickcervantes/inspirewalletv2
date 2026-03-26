@@ -561,6 +561,38 @@ export async function calculateExchangePair({
 }
 
 /**
+ * Fetch crypto to PHP quote from backend.
+ * GET /exchange-rate/crypto-php?coin=BTC&amount=0.1
+ * @param {{ coin: "BTC"|"ETH"|"USDT", amount?: number }} params
+ */
+export async function getCryptoPhpQuote({ coin, amount }) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: "Backend URL not configured." };
+  if (!coin) return { success: false, error: "coin is required" };
+
+  const q = new URLSearchParams();
+  q.set("coin", String(coin).toUpperCase());
+  if (amount != null && amount !== "") q.set("amount", String(amount));
+  const url = `${base}/exchange-rate/crypto-php?${q.toString()}`;
+
+  try {
+    const res = await apiFetch(url, { method: "GET" });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg =
+        Array.isArray(data.message)
+          ? data.message[0]
+          : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    return { success: true, data };
+  } catch (e) {
+    if (__DEV__) console.error("[CryptoQuote API] Error", e);
+    return { success: false, error: e.message || "Network error" };
+  }
+}
+
+/**
  * Submit a top-up request via the backend.
  * POST /deposit-requests/top-up
  * @param {string} accessToken - Backend JWT
