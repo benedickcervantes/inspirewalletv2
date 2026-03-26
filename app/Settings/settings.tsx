@@ -30,6 +30,7 @@ import {
 } from "../../configs/api";
 import { useIdleTimeout } from "../../context/IdleTimeoutContext";
 import { useLanguage } from "../../context/LanguageContext";
+import { useLanguageModal } from "../../context/LanguageModalContext";
 import { useResponsive } from "../../utils/responsive";
 import AccountDeletionModal from "../AccountDeletion/AccountDeletionModal";
 interface UserData {
@@ -68,14 +69,8 @@ const Settings = () => {
   const [biometricError, setBiometricError] = useState<string | null>(null);
 
   // Language state
-  const { language, setLanguage } = useLanguage();
-  const [languageModalVisible, setLanguageModalVisible] = useState(false);
-  const SUPPORTED_LANGUAGES = [
-    { label: "English", flag: "🇺🇸" },
-    { label: "Arabic", flag: "🇸🇦" },
-    { label: "Japanese", flag: "🇯🇵" },
-    { label: "Korean", flag: "🇰🇷" },
-  ];
+  const { language } = useLanguage();
+  const { openLanguageModal } = useLanguageModal();
 
   const loadUser = useCallback(async () => {
     const userJson = await AsyncStorage.getItem("user");
@@ -487,7 +482,7 @@ const Settings = () => {
       icon: "language-outline" as const,
       titleKey: "profile.language",
       subtitleKey: "",
-      onPress: () => setLanguageModalVisible(true),
+      onPress: openLanguageModal,
     },
   ];
 
@@ -1143,78 +1138,6 @@ const Settings = () => {
           </View>
         </Modal>
 
-        {/* Language Modal */}
-        <Modal
-          visible={languageModalVisible}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setLanguageModalVisible(false)}
-        >
-          <TouchableOpacity
-            style={styles.languageModalOverlay}
-            activeOpacity={1}
-            onPress={() => setLanguageModalVisible(false)}
-          >
-            <View
-              style={styles.languageModalContentOuter}
-              onStartShouldSetResponder={() => true}
-            >
-              <View style={styles.languageModalHeader}>
-                <View style={styles.languageMapGlobe}>
-                  <Ionicons name="globe-outline" size={40} color="#DE5212" />
-                </View>
-                <Text style={styles.languageModalTitle}>
-                  {t("profile.selectLanguage")}
-                </Text>
-              </View>
-              <ScrollView
-                showsVerticalScrollIndicator={false}
-                keyboardShouldPersistTaps="handled"
-              >
-                {SUPPORTED_LANGUAGES.map(({ label, flag }) => (
-                  <TouchableOpacity
-                    key={label}
-                    style={[
-                      styles.languageOption,
-                      language === label && styles.languageOptionSelected,
-                    ]}
-                    onPress={() => {
-                      setLanguage(label);
-                      setLanguageModalVisible(false);
-                    }}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={styles.languageOptionFlag}>{flag}</Text>
-                    <Text
-                      style={[
-                        styles.languageOptionText,
-                        language === label && styles.languageOptionTextSelected,
-                      ]}
-                    >
-                      {label}
-                    </Text>
-                    {language === label && (
-                      <Ionicons
-                        name="checkmark-circle"
-                        size={22}
-                        color="#DE5212"
-                      />
-                    )}
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-              <TouchableOpacity
-                style={styles.languageModalCancel}
-                onPress={() => setLanguageModalVisible(false)}
-              >
-                <Text style={styles.languageModalCancelText}>
-                  {t("common.cancel")}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </TouchableOpacity>
-        </Modal>
-
         <AccountDeletionModal />
       </SafeAreaView>
     </>
@@ -1408,88 +1331,6 @@ const styles = StyleSheet.create({
     color: "#8e8e93",
     fontSize: 14,
     fontFamily: "SF-Pro-Rounded-Medium",
-  },
-  // Language Modal Styles
-  languageModalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.6)",
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-  },
-  languageModalContentOuter: {
-    width: "100%",
-    maxWidth: 360,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 20,
-    padding: 24,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
-    shadowRadius: 16,
-    elevation: 8,
-  },
-  languageModalHeader: {
-    alignItems: "center",
-    marginBottom: 24,
-  },
-  languageMapGlobe: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: "rgba(222, 82, 18, 0.1)",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: "rgba(222, 82, 18, 0.3)",
-  },
-  languageModalTitle: {
-    fontSize: 22,
-    fontFamily: "SpaceGrotesk-Bold",
-    color: "#333333",
-    textAlign: "center",
-  },
-  languageOption: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    borderRadius: 16,
-    marginBottom: 12,
-    backgroundColor: "#F8F8F8",
-    borderWidth: 1,
-    borderColor: "#F0F0F0",
-  },
-  languageOptionSelected: {
-    backgroundColor: "#FFF0E8",
-    borderColor: "#E15816",
-  },
-  languageOptionFlag: {
-    fontSize: 24,
-    marginRight: 16,
-  },
-  languageOptionText: {
-    flex: 1,
-    fontSize: 16,
-    fontFamily: "SF-Pro-Rounded-Medium",
-    color: "#333333",
-  },
-  languageOptionTextSelected: {
-    fontFamily: "SF-Pro-Rounded-Bold",
-    color: "#E15816",
-  },
-  languageModalCancel: {
-    marginTop: 12,
-    paddingVertical: 14,
-    alignItems: "center",
-    borderRadius: 16,
-    backgroundColor: "#F5F5F5",
-  },
-  languageModalCancelText: {
-    color: "#666666",
-    fontSize: 16,
-    fontFamily: "SF-Pro-Rounded-Semibold",
   },
   resendButton: {
     paddingVertical: 12,

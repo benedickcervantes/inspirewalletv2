@@ -123,6 +123,16 @@ export function register(body: object): Promise<{
   user?: object;
   error?: string;
 }>;
+export function lookupReferralCode(code: string): Promise<{
+  success: boolean;
+  exists?: boolean;
+  referralCode?: string;
+  userId?: string;
+  firstName?: string;
+  lastName?: string;
+  name?: string;
+  error?: string;
+}>;
 export function getMe(accessToken: string): Promise<{
   success: boolean;
   user?: object;

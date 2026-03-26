@@ -6,6 +6,9 @@
 export type TranslationMap = Record<string, string>;
 
 const en: TranslationMap = {
+  "kyc.takePhoto": "Take a Photo",
+  "kyc.chooseFromLibrary": "Choose from Library",
+  "kyc.selectUploadMethod": "Select Upload Method",
   "deposit.missingRequestId":
     "Missing Request ID. Please go back and try again.",
   "deposit.receiptUploadFailed": "Receipt upload failed: ",
@@ -1872,6 +1875,15 @@ const en: TranslationMap = {
   "register.whatsappQRMismatch":
     "The scanned QR code does not match WhatsApp. Please scan a valid WhatsApp account link.",
   "register.notice": "Notice",
+  "register.invalidReferralCodeLength":
+    "Invalid referral code. Please enter a valid 5-character code.",
+  "register.invalidReferralCodeNotFound":
+    "Invalid referral code. Referral code does not exist.",
+  "register.unableValidateReferral":
+    "Unable to validate referral code right now. Please try again.",
+  "register.referralOwnerMessage": "Referral code owner: {name}",
+  "register.checkingReferralCode": "Checking referral code...",
+  "register.underReferralOf": "Under referral of {name}",
 
   // Passcode additions
   "passcode.biometricPrompt": "Log in with {type}",
@@ -1971,6 +1983,9 @@ const en: TranslationMap = {
 };
 
 const ko: TranslationMap = {
+  "kyc.takePhoto": "사진 찍기",
+  "kyc.chooseFromLibrary": "라이브러리에서 선택",
+  "kyc.selectUploadMethod": "업로드 방법 선택",
   "auth.loggingIn": "로그인 중",
   "auth.emailPlaceholder": "이메일 주소",
   "auth.passwordPlaceholder": "비밀번호 입력",
@@ -3667,6 +3682,15 @@ const ko: TranslationMap = {
   "register.whatsappQRMismatch":
     "스캔한 QR 코드가 WhatsApp과 일치하지 않습니다. 유효한 WhatsApp 계정 링크를 스캔해 주세요.",
   "register.notice": "공지",
+  "register.invalidReferralCodeLength":
+    "유효하지 않은 추천 코드입니다. 올바른 5자리 코드를 입력해 주세요.",
+  "register.invalidReferralCodeNotFound":
+    "유효하지 않은 추천 코드입니다. 해당 추천 코드를 찾을 수 없습니다.",
+  "register.unableValidateReferral":
+    "지금은 추천 코드를 확인할 수 없습니다. 잠시 후 다시 시도해 주세요.",
+  "register.referralOwnerMessage": "추천 코드 소유자: {name}",
+  "register.checkingReferralCode": "추천 코드 확인 중...",
+  "register.underReferralOf": "{name}님의 추천 하위입니다",
 
   // Passcode additions
   "passcode.biometricPrompt": "{type}으로 로그인",
@@ -3765,6 +3789,9 @@ const ko: TranslationMap = {
 };
 
 const ja: TranslationMap = {
+  "kyc.takePhoto": "写真を撮る",
+  "kyc.chooseFromLibrary": "ライブラリから選択",
+  "kyc.selectUploadMethod": "アップロード方法を選択",
   "auth.loggingIn": "ログイン中",
   "auth.emailPlaceholder": "メールアドレス",
   "auth.passwordPlaceholder": "パスワードを入力",
@@ -5463,6 +5490,15 @@ const ja: TranslationMap = {
   "register.whatsappQRMismatch":
     "スキャンしたQRコードはWhatsAppと一致しません。有効なWhatsAppアカウントリンクをスキャンしてください。",
   "register.notice": "お知らせ",
+  "register.invalidReferralCodeLength":
+    "無効な紹介コードです。5文字の有効なコードを入力してください。",
+  "register.invalidReferralCodeNotFound":
+    "無効な紹介コードです。紹介コードが存在しません。",
+  "register.unableValidateReferral":
+    "現在、紹介コードを確認できません。しばらくしてから再度お試しください。",
+  "register.referralOwnerMessage": "紹介コードの所有者: {name}",
+  "register.checkingReferralCode": "紹介コードを確認中...",
+  "register.underReferralOf": "{name} さんの紹介下です",
 
   // Passcode additions
   "passcode.biometricPrompt": "{type}でログイン",
@@ -5561,6 +5597,9 @@ const ja: TranslationMap = {
 };
 
 const ar: TranslationMap = {
+  "kyc.takePhoto": "التقاط صورة",
+  "kyc.chooseFromLibrary": "اختر من المكتبة",
+  "kyc.selectUploadMethod": "حدد طريقة التحميل",
   "auth.loggingIn": "جاري تسجيل الدخول",
   "auth.emailPlaceholder": "البريد الإلكتروني",
   "auth.passwordPlaceholder": "أدخل كلمة المرور",
@@ -7220,6 +7259,15 @@ const ar: TranslationMap = {
   "register.whatsappQRMismatch":
     "رمز QR الممسوح لا يطابق WhatsApp. يرجى مسح رابط حساب WhatsApp صحيح.",
   "register.notice": "تنبيه",
+  "register.invalidReferralCodeLength":
+    "رمز الإحالة غير صالح. يرجى إدخال رمز صالح مكوّن من 5 أحرف.",
+  "register.invalidReferralCodeNotFound":
+    "رمز الإحالة غير صالح. رمز الإحالة غير موجود.",
+  "register.unableValidateReferral":
+    "يتعذر التحقق من رمز الإحالة الآن. يرجى المحاولة مرة أخرى لاحقًا.",
+  "register.referralOwnerMessage": "صاحب رمز الإحالة: {name}",
+  "register.checkingReferralCode": "جارٍ التحقق من رمز الإحالة...",
+  "register.underReferralOf": "أنت تحت إحالة {name}",
 
   // Passcode additions
   "passcode.biometricPrompt": "تسجيل الدخول بـ {type}",

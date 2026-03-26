@@ -1099,6 +1099,51 @@ export async function register(body) {
 }
 
 /**
+ * GET /auth/referral/lookup?code=XXXXX
+ * @param {string} code
+ * @returns {{ success: boolean, exists?: boolean, referralCode?: string, userId?: string, firstName?: string, lastName?: string, name?: string, error?: string }}
+ */
+export async function lookupReferralCode(code) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  const normalizedCode = String(code ?? "").trim().toUpperCase();
+  if (!normalizedCode) {
+    return { success: false, error: "Referral code is required" };
+  }
+
+  try {
+    const query = encodeURIComponent(normalizedCode);
+    const res = await apiFetch(`${base}/auth/referral/lookup?code=${query}`, {
+      method: "GET",
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+
+    return {
+      success: true,
+      exists: !!data.exists,
+      referralCode:
+        typeof data.referralCode === "string" ? data.referralCode : undefined,
+      userId: typeof data.userId === "string" ? data.userId : undefined,
+      firstName:
+        typeof data.firstName === "string" ? data.firstName : undefined,
+      lastName: typeof data.lastName === "string" ? data.lastName : undefined,
+      name: typeof data.name === "string" ? data.name : undefined,
+    };
+  } catch (e) {
+    return {
+      success: false,
+      error: e.message || "Network error. Is the backend running?",
+    };
+  }
+}
+
+/**
  * GET /auth/me — requires JWT
  * @param {string} accessToken
  * @returns {{ success: boolean, user?: object, error?: string }}

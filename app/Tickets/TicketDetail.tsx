@@ -466,9 +466,21 @@ function TicketDetail({
         keyboardVerticalOffset={0}
       >
         {loading ? (
-          <View style={styles.centerContent}>
-            <ActivityIndicator size="large" color="#E15816" />
-            <Text style={styles.loadingText}>{t("support.loading")}</Text>
+          <View style={styles.skeletonContainer}>
+            {Array.from({ length: 5 }).map((_, idx) => (
+              <View
+                key={idx}
+                style={[
+                  styles.skeletonBubbleRow,
+                  idx % 2 === 0 ? styles.skeletonBubbleSent : styles.skeletonBubbleReceived,
+                ]}
+              >
+                <View style={styles.skeletonBubble}>
+                  <View style={styles.skeletonLineLong} />
+                  <View style={styles.skeletonLineShort} />
+                </View>
+              </View>
+            ))}
           </View>
         ) : error ? (
           <View style={styles.centerContent}>
@@ -658,6 +670,41 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#666",
     marginTop: 8,
+  },
+  skeletonContainer: {
+    flex: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 16,
+    gap: 10,
+  },
+  skeletonBubbleRow: {
+    flexDirection: "row",
+  },
+  skeletonBubbleSent: {
+    justifyContent: "flex-end",
+  },
+  skeletonBubbleReceived: {
+    justifyContent: "flex-start",
+  },
+  skeletonBubble: {
+    maxWidth: "78%",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    gap: 8,
+  },
+  skeletonLineLong: {
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: "#ECECEC",
+    width: 170,
+  },
+  skeletonLineShort: {
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: "#ECECEC",
+    width: 100,
   },
   errorText: {
     fontSize: 15,

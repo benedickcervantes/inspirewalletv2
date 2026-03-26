@@ -8,6 +8,7 @@ import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useEffect, useState } from "react";
 import {
+    ActivityIndicator,
     Alert,
     Image,
     KeyboardAvoidingView,
@@ -52,6 +53,13 @@ const SOURCE_KEY: Record<string, string> = {
   Investments: "kyc.sourceInvestments",
   Other: "kyc.other",
 };
+const GOVERNMENT_ID_TYPE_OPTIONS = [
+  { labelKey: "banking.idNationalId", value: "National_ID" },
+  { labelKey: "banking.idDriverLicense", value: "Driver_License" },
+  { labelKey: "banking.idPassport", value: "Passport_ID" },
+  { labelKey: "kyc.other", value: "Other" },
+] as const;
+const FRONT_AND_BACK_GOVERNMENT_ID_TYPES = ["National_ID", "Driver_License"] as const;
 const COUNTRY_OPTIONS = ["Philippines", "Japan", "South Korea", "Saudi Arabia", "Other"];
 const DAYS = Array.from({ length: 31 }, (_, i) => (i + 1).toString());
 const YEARS = Array.from({ length: 71 }, (_, i) => (2010 - i).toString());
@@ -105,6 +113,8 @@ export default function KYCVerification() {
   const [fullAddress, setFullAddress] = useState("");
   const [postalCode, setPostalCode] = useState("");
   const [showCountryModal, setShowCountryModal] = useState(false);
+  const [governmentIdType, setGovernmentIdType] = useState("");
+  const [showGovernmentIdTypeModal, setShowGovernmentIdTypeModal] = useState(false);
 
   const [idFrontUri, setIdFrontUri] = useState<string | null>(null);
   const [idBackUri, setIdBackUri] = useState<string | null>(null);
@@ -115,6 +125,15 @@ export default function KYCVerification() {
   const [showConfirmRequiredModal, setShowConfirmRequiredModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [footerHeight, setFooterHeight] = useState(0);
+
+  const [actionSheetVisible, setActionSheetVisible] = useState(false);
+  const [activeUploadField, setActiveUploadField] = useState<"idFront" | "idBack" | "selfie" | null>(null);
+  const requiresFrontAndBackGovernmentId = FRONT_AND_BACK_GOVERNMENT_ID_TYPES.includes(
+    governmentIdType as (typeof FRONT_AND_BACK_GOVERNMENT_ID_TYPES)[number],
+  );
+  const selectedGovernmentIdTypeLabel =
+    GOVERNMENT_ID_TYPE_OPTIONS.find((option) => option.value === governmentIdType)
+      ?.labelKey ?? "banking.selectIdType";
 
   const fetchUserData = useCallback(async () => {
     try {
@@ -166,36 +185,62 @@ export default function KYCVerification() {
     }
   };
 
-  const pickImage = async (
-    setUri: (uri: string | null) => void,
-    _label: string
-  ) => {
+  const handleUploadPress = (field: "idFront" | "idBack" | "selfie") => {
+    setActiveUploadField(field);
+    setActionSheetVisible(true);
+  };
+
+  const handleImageSelection = async (method: "camera" | "library") => {
+    setActionSheetVisible(false);
+    if (!activeUploadField) return;
+
     try {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== "granted") {
-        Alert.alert(
-          t("kyc.permissionRequired"),
-          t("kyc.allowPhotos")
-        );
-        return;
+      let result;
+      if (method === "camera") {
+        const { status } = await ImagePicker.requestCameraPermissionsAsync();
+        if (status !== "granted") {
+          Alert.alert(t("kyc.permissionRequired"), t("kyc.allowCamera", { defaultValue: "Please allow camera access to take a photo." }));
+          return;
+        }
+        result = await ImagePicker.launchCameraAsync({
+          allowsEditing: true,
+          quality: 0.8,
+          base64: true,
+        });
+      } else {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== "granted") {
+          Alert.alert(t("kyc.permissionRequired"), t("kyc.allowPhotos"));
+          return;
+        }
+        result = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          allowsEditing: true,
+          quality: 0.8,
+          base64: true,
+        });
       }
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        quality: 0.8,
-        base64: true,
-      });
-      if (!result.canceled && result.assets[0]) {
+
+      if (!result.canceled && result.assets && result.assets[0]) {
         const asset = result.assets[0];
         const mimeType = asset.mimeType || inferMimeFromUri(asset.uri);
         const payload = asset.base64
           ? `data:${mimeType};base64,${asset.base64}`
           : asset.uri;
-        setUri(payload);
+        
+        if (activeUploadField === "idFront") {
+          setIdFrontUri(payload);
+        } else if (activeUploadField === "idBack") {
+          setIdBackUri(payload);
+        } else if (activeUploadField === "selfie") {
+          setSelfieUri(payload);
+        }
       }
     } catch (error) {
       console.error("Error picking image:", error);
       Alert.alert(t("kyc.error"), t("kyc.failedToPickImage"));
+    } finally {
+      setActiveUploadField(null);
     }
   };
 
@@ -215,8 +260,9 @@ export default function KYCVerification() {
       if (!postalCode.trim()) return;
       setCurrentStep(3);
     } else if (currentStep === 3) {
+      if (!governmentIdType) return;
       if (!idFrontUri) return;
-      if (!idBackUri) return;
+      if (requiresFrontAndBackGovernmentId && !idBackUri) return;
       if (!selfieUri) return;
       setCurrentStep(4);
     }
@@ -271,6 +317,7 @@ export default function KYCVerification() {
           sourceOfIncome,
           monthlyIncome: unformatNumberString(monthlyIncome),
           dateOfBirth: birthday ? birthday.toISOString() : null,
+          governmentIdType,
         },
         addressInfo: {
           country,
@@ -278,6 +325,7 @@ export default function KYCVerification() {
           postalCode,
         },
         documents: {
+          governmentIdType,
           idFrontPhoto: idFrontPayload,
           idBackPhoto: idBackPayload,
           selfiePhoto: selfiePayload,
@@ -598,11 +646,33 @@ export default function KYCVerification() {
 
               <View style={styles.inputGroup}>
                 <Text style={[styles.inputLabel, { fontSize: labelFontSize }]}>
+                  {t("travel.governmentIdType")} <Text style={styles.required}>*</Text>
+                </Text>
+                <TouchableOpacity
+                  style={styles.dropdown}
+                  onPress={() => setShowGovernmentIdTypeModal(true)}
+                  activeOpacity={0.9}
+                >
+                  <Text
+                    style={[
+                      styles.dropdownText,
+                      !governmentIdType && styles.dropdownPlaceholder,
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {t(selectedGovernmentIdTypeLabel)}
+                  </Text>
+                  <Ionicons name="chevron-down" size={18} color="#666" />
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={[styles.inputLabel, { fontSize: labelFontSize }]}>
                   {t("kyc.govIdFront")} <Text style={styles.required}>*</Text>
                 </Text>
                 <TouchableOpacity
                   style={styles.uploadArea}
-                  onPress={() => pickImage(setIdFrontUri, "idFront")}
+                  onPress={() => handleUploadPress("idFront")}
                   activeOpacity={0.8}
                 >
                   {idFrontUri ? (
@@ -636,45 +706,47 @@ export default function KYCVerification() {
                 </TouchableOpacity>
               </View>
 
-              <View style={styles.inputGroup}>
-                <Text style={[styles.inputLabel, { fontSize: labelFontSize }]}>
-                  {t("kyc.govIdBack")} <Text style={styles.required}>*</Text>
-                </Text>
-                <TouchableOpacity
-                  style={styles.uploadArea}
-                  onPress={() => pickImage(setIdBackUri, "idBack")}
-                  activeOpacity={0.8}
-                >
-                  {idBackUri ? (
-                    <View style={styles.uploadPreviewRow}>
-                      <TouchableOpacity
-                        onPress={() => setViewingImageUri(idBackUri)}
-                        activeOpacity={0.9}
-                      >
-                        <Image
-                          source={{ uri: idBackUri }}
-                          style={styles.uploadThumbnailLeft}
-                          resizeMode="cover"
-                        />
-                      </TouchableOpacity>
-                      <View style={styles.uploadedRight}>
-                        <Text style={styles.uploadLabel}>{t("kyc.uploadGovernmentId")}</Text>
-                        <Text style={styles.uploadHint}>{t("kyc.uploadGovIdBackHint")}</Text>
-                        <View style={styles.uploadedBadge}>
-                          <Ionicons name="checkmark-circle" size={20} color={GREEN_UPLOADED} />
-                          <Text style={styles.uploadedBadgeText}>{t("kyc.uploaded")}</Text>
+              {requiresFrontAndBackGovernmentId ? (
+                <View style={styles.inputGroup}>
+                  <Text style={[styles.inputLabel, { fontSize: labelFontSize }]}>
+                    {t("kyc.govIdBack")} <Text style={styles.required}>*</Text>
+                  </Text>
+                  <TouchableOpacity
+                    style={styles.uploadArea}
+                    onPress={() => handleUploadPress("idBack")}
+                    activeOpacity={0.8}
+                  >
+                    {idBackUri ? (
+                      <View style={styles.uploadPreviewRow}>
+                        <TouchableOpacity
+                          onPress={() => setViewingImageUri(idBackUri)}
+                          activeOpacity={0.9}
+                        >
+                          <Image
+                            source={{ uri: idBackUri }}
+                            style={styles.uploadThumbnailLeft}
+                            resizeMode="cover"
+                          />
+                        </TouchableOpacity>
+                        <View style={styles.uploadedRight}>
+                          <Text style={styles.uploadLabel}>{t("kyc.uploadGovernmentId")}</Text>
+                          <Text style={styles.uploadHint}>{t("kyc.uploadGovIdBackHint")}</Text>
+                          <View style={styles.uploadedBadge}>
+                            <Ionicons name="checkmark-circle" size={20} color={GREEN_UPLOADED} />
+                            <Text style={styles.uploadedBadgeText}>{t("kyc.uploaded")}</Text>
+                          </View>
                         </View>
                       </View>
-                    </View>
-                  ) : (
-                    <>
-                      <Ionicons name="person" size={40} color={THEME_COLOR} style={styles.uploadIcon} />
-                      <Text style={styles.uploadLabel}>{t("kyc.uploadGovernmentId")}</Text>
-                      <Text style={styles.uploadHint}>{t("kyc.uploadGovIdBackHint")}</Text>
-                    </>
-                  )}
-                </TouchableOpacity>
-              </View>
+                    ) : (
+                      <>
+                        <Ionicons name="person" size={40} color={THEME_COLOR} style={styles.uploadIcon} />
+                        <Text style={styles.uploadLabel}>{t("kyc.uploadGovernmentId")}</Text>
+                        <Text style={styles.uploadHint}>{t("kyc.uploadGovIdBackHint")}</Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              ) : null}
 
               <View style={styles.inputGroup}>
                 <Text style={[styles.inputLabel, { fontSize: labelFontSize }]}>
@@ -682,7 +754,7 @@ export default function KYCVerification() {
                 </Text>
                 <TouchableOpacity
                   style={styles.uploadArea}
-                  onPress={() => pickImage(setSelfieUri, "selfie")}
+                  onPress={() => handleUploadPress("selfie")}
                   activeOpacity={0.8}
                 >
                   {selfieUri ? (
@@ -843,34 +915,36 @@ export default function KYCVerification() {
                   </View>
                 ) : null}
               </View>
-              <View style={styles.reviewDocRow}>
-                {idBackUri ? (
-                  <TouchableOpacity
-                    onPress={() => setViewingImageUri(idBackUri)}
-                    activeOpacity={0.9}
-                  >
-                    <Image
-                      source={{ uri: idBackUri }}
-                      style={styles.reviewDocThumbnail}
-                      resizeMode="cover"
-                    />
-                  </TouchableOpacity>
-                ) : (
-                  <View style={styles.reviewDocThumbnailPlaceholder}>
-                    <Ionicons name="document-outline" size={24} color="#999" />
+              {requiresFrontAndBackGovernmentId ? (
+                <View style={styles.reviewDocRow}>
+                  {idBackUri ? (
+                    <TouchableOpacity
+                      onPress={() => setViewingImageUri(idBackUri)}
+                      activeOpacity={0.9}
+                    >
+                      <Image
+                        source={{ uri: idBackUri }}
+                        style={styles.reviewDocThumbnail}
+                        resizeMode="cover"
+                      />
+                    </TouchableOpacity>
+                  ) : (
+                    <View style={styles.reviewDocThumbnailPlaceholder}>
+                      <Ionicons name="document-outline" size={24} color="#999" />
+                    </View>
+                  )}
+                  <View style={styles.reviewDocTextWrap}>
+                    <Text style={styles.reviewDocTitle}>{t("kyc.reviewIdBack")}</Text>
+                    <Text style={styles.reviewDocSubtitle}>{t("kyc.reviewGovId")}</Text>
                   </View>
-                )}
-                <View style={styles.reviewDocTextWrap}>
-                  <Text style={styles.reviewDocTitle}>{t("kyc.reviewIdBack")}</Text>
-                  <Text style={styles.reviewDocSubtitle}>{t("kyc.reviewGovId")}</Text>
+                  {idBackUri ? (
+                    <View style={styles.reviewUploadedBadge}>
+                      <Ionicons name="checkmark-circle" size={20} color={GREEN_UPLOADED} />
+                      <Text style={styles.reviewUploadedText}>{t("kyc.uploaded")}</Text>
+                    </View>
+                  ) : null}
                 </View>
-                {idBackUri ? (
-                  <View style={styles.reviewUploadedBadge}>
-                    <Ionicons name="checkmark-circle" size={20} color={GREEN_UPLOADED} />
-                    <Text style={styles.reviewUploadedText}>{t("kyc.uploaded")}</Text>
-                  </View>
-                ) : null}
-              </View>
+              ) : null}
               <View style={styles.reviewDocRow}>
                 {selfieUri ? (
                   <TouchableOpacity
@@ -931,12 +1005,16 @@ export default function KYCVerification() {
                 disabled={submitting}
               >
                 <LinearGradient
-                  colors={ORANGE_GRADIENT}
+                  colors={submitting ? ["#BDBDBD", "#BDBDBD"] : ORANGE_GRADIENT}
                   style={styles.nextGradient}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                 >
-                  <Text style={styles.nextButtonText}>{t("kyc.confirmAndSubmit")}</Text>
+                  {submitting ? (
+                    <ActivityIndicator size="small" color="#FFFFFF" />
+                  ) : (
+                    <Text style={styles.nextButtonText}>{t("kyc.confirmAndSubmit")}</Text>
+                  )}
                 </LinearGradient>
               </TouchableOpacity>
             ) : (currentStep === 2 || currentStep === 3) ? (
@@ -1193,6 +1271,44 @@ export default function KYCVerification() {
         </View>
       </Modal>
 
+      {/* Government ID Type Modal */}
+      <Modal
+        visible={showGovernmentIdTypeModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowGovernmentIdTypeModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>{t("banking.selectIdType")}</Text>
+              <TouchableOpacity onPress={() => setShowGovernmentIdTypeModal(false)}>
+                <Ionicons name="close" size={24} color="#333" />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={styles.modalContent}>
+              {GOVERNMENT_ID_TYPE_OPTIONS.map((option) => (
+                <TouchableOpacity
+                  key={option.value}
+                  style={[styles.optionRow, governmentIdType === option.value && styles.optionRowSelected]}
+                  onPress={() => {
+                    setGovernmentIdType(option.value);
+                    setIdFrontUri(null);
+                    setIdBackUri(null);
+                    setShowGovernmentIdTypeModal(false);
+                  }}
+                >
+                  <Text style={styles.optionText}>{t(option.labelKey)}</Text>
+                  {governmentIdType === option.value && (
+                    <Ionicons name="checkmark-circle" size={22} color={THEME_COLOR} />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
       {/* Image viewer modal - tap ID/selfie thumbnail to view full image */}
       <Modal
         visible={!!viewingImageUri}
@@ -1272,6 +1388,56 @@ export default function KYCVerification() {
             </TouchableOpacity>
           </View>
         </View>
+      </Modal>
+      {/* Upload Action Sheet Modal */}
+      <Modal
+        visible={actionSheetVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setActionSheetVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.actionSheetOverlay}
+          activeOpacity={1}
+          onPress={() => setActionSheetVisible(false)}
+        >
+          <View style={styles.actionSheetContent}>
+            <View style={styles.actionSheetHeader}>
+              <Text style={styles.actionSheetTitle}>
+                {t("kyc.selectUploadMethod", { defaultValue: "Select Upload Method" })}
+              </Text>
+              <TouchableOpacity
+                onPress={() => setActionSheetVisible(false)}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Ionicons name="close" size={24} color="#6B7280" />
+              </TouchableOpacity>
+            </View>
+            <TouchableOpacity
+              style={styles.actionSheetOption}
+              onPress={() => handleImageSelection("camera")}
+            >
+              <View style={styles.actionSheetIconWrapper}>
+                <Ionicons name="camera-outline" size={24} color={THEME_COLOR} />
+              </View>
+              <Text style={styles.actionSheetOptionText}>
+                {t("kyc.takePhoto", { defaultValue: "Take a Photo" })}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.actionSheetOption, { borderBottomWidth: 0 }]}
+              onPress={() => handleImageSelection("library")}
+            >
+              <View style={styles.actionSheetIconWrapper}>
+                <Ionicons name="image-outline" size={24} color={THEME_COLOR} />
+              </View>
+              <Text style={styles.actionSheetOptionText}>
+                {t("kyc.chooseFromLibrary", { defaultValue: "Choose from Library" })}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
       </Modal>
     </View>
   );
@@ -1877,5 +2043,49 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700",
     color: "#FFFFFF",
+  },
+  actionSheetOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
+  },
+  actionSheetContent: {
+    backgroundColor: "#FFF",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    paddingBottom: Platform.OS === "ios" ? 40 : 24,
+  },
+  actionSheetHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  actionSheetTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#1F2937",
+  },
+  actionSheetOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F3F4F6",
+  },
+  actionSheetIconWrapper: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#FFF5F0",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 16,
+  },
+  actionSheetOptionText: {
+    fontSize: 16,
+    fontWeight: "500",
+    color: "#374151",
   },
 });

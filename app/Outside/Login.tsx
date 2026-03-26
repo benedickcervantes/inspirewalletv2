@@ -14,7 +14,6 @@ import {
     Modal,
     Platform,
     Pressable,
-    ScrollView,
     StyleSheet,
     Text,
     TextInput,
@@ -25,12 +24,8 @@ import {
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { forgotPassword, login } from "../../configs/api";
-import {
-    DEFAULT_LANGUAGE,
-    normalizeLanguage,
-    SUPPORTED_LANGUAGES,
-} from "../../constants/locales";
 import { useLanguage } from "../../context/LanguageContext";
+import { useLanguageModal } from "../../context/LanguageModalContext";
 import type { NavProp } from "../../types/navigation";
 import { useResponsive } from "../../utils/responsive";
 import Loader from "../Loader/Loader";
@@ -586,7 +581,7 @@ export default function Login() {
   const navigation = useNavigation();
   const route = useRoute();
   const insets = useSafeAreaInsets();
-  const { scale, verticalScale, horizontalPadding, isShortScreen, isSmallScreen, width, height } =
+  const { scale, verticalScale, horizontalPadding, isShortScreen, isSmallScreen } =
     useResponsive();
   const { height: windowHeight } = useWindowDimensions();
   const fromSignOut = (route.params as { fromSignOut?: boolean } | undefined)
@@ -635,9 +630,8 @@ export default function Login() {
   const [resetModalVisible, setResetModalVisible] = useState(false);
   const [resetModalEmail, setResetModalEmail] = useState("");
   const [forgotModalVisible, setForgotModalVisible] = useState(false);
-  const [languageModalVisible, setLanguageModalVisible] = useState(false);
-  const { t, language: contextLanguage, setLanguage } = useLanguage();
-  const language = normalizeLanguage(contextLanguage ?? DEFAULT_LANGUAGE);
+  const { t } = useLanguage();
+  const { openLanguageModal } = useLanguageModal();
 
   const showModal = (config: Partial<ModalConfig>) => {
     setModalConfig({
@@ -657,12 +651,6 @@ export default function Login() {
 
   // Stores user/nav info to execute after the reset modal closes
   const pendingNavRef = useRef<{ hasPasscode: boolean } | null>(null);
-
-  const handleSelectLanguage = async (selectedLabel: string) => {
-    setLanguage(selectedLabel);
-    await AsyncStorage.setItem("user_preferred_language", selectedLabel);
-    setLanguageModalVisible(false);
-  };
 
   const doNavigate = (hasPasscode: boolean) => {
     if (hasPasscode) {
@@ -853,7 +841,7 @@ export default function Login() {
                   borderRadius: scale(22),
                 },
               ]}
-              onPress={() => setLanguageModalVisible(true)}
+              onPress={openLanguageModal}
               accessibilityLabel={t("profile.selectLanguage")}
               accessibilityRole="button"
             >
@@ -1035,88 +1023,6 @@ export default function Login() {
         initialEmail={email.trim()}
         onClose={() => setForgotModalVisible(false)}
       />
-
-      <Modal
-        visible={languageModalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setLanguageModalVisible(false)}
-      >
-        <TouchableOpacity
-          style={[
-            loginLanguageStyles.overlay,
-            { paddingHorizontal: Math.max(16, horizontalPadding) },
-          ]}
-          activeOpacity={1}
-          onPress={() => setLanguageModalVisible(false)}
-        >
-          <View
-            style={[
-              loginLanguageStyles.content,
-              {
-                maxWidth: Math.min(360, width - 32),
-                maxHeight: isShortScreen ? height * 0.85 : undefined,
-                padding: isSmallScreen ? 18 : 24,
-              },
-            ]}
-            onStartShouldSetResponder={() => true}
-          >
-            <View style={loginLanguageStyles.header}>
-              <Ionicons name="globe-outline" size={isSmallScreen ? 32 : 40} color={GRADIENT_START} />
-              <Text style={[loginLanguageStyles.title, isSmallScreen && { fontSize: 16 }]}>
-                {t("profile.selectLanguage")}
-              </Text>
-              <Text style={[loginLanguageStyles.subtitle, isSmallScreen && { fontSize: 12 }]}>
-                {t("profile.defaultIsEnglish")}
-              </Text>
-            </View>
-            <ScrollView
-              style={isShortScreen ? { maxHeight: 200 } : undefined}
-              showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
-            >
-              {SUPPORTED_LANGUAGES.map(({ label, flag }) => (
-                <TouchableOpacity
-                  key={label}
-                  style={[
-                    loginLanguageStyles.option,
-                    isSmallScreen && { paddingVertical: 12, paddingHorizontal: 14 },
-                    language === label && loginLanguageStyles.optionSelected,
-                  ]}
-                  onPress={() => handleSelectLanguage(label)}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[loginLanguageStyles.flag, isSmallScreen && { fontSize: 20 }]}>{flag}</Text>
-                  <Text
-                    style={[
-                      loginLanguageStyles.optionText,
-                      isSmallScreen && { fontSize: 15 },
-                      language === label && loginLanguageStyles.optionTextSelected,
-                    ]}
-                  >
-                    {label}
-                  </Text>
-                  {language === label && (
-                    <Ionicons
-                      name="checkmark-circle"
-                      size={isSmallScreen ? 20 : 22}
-                      color={GRADIENT_START}
-                    />
-                  )}
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-            <TouchableOpacity
-              style={[loginLanguageStyles.cancelBtn, isSmallScreen && { marginTop: 8 }]}
-              onPress={() => setLanguageModalVisible(false)}
-            >
-              <Text style={[loginLanguageStyles.cancelText, isSmallScreen && { fontSize: 15 }]}>
-                {t("common.cancel")}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </TouchableOpacity>
-      </Modal>
     </>
   );
 }
@@ -1270,49 +1176,4 @@ const styles = StyleSheet.create({
     textAlign: "center",
     paddingVertical: 16,
   },
-});
-
-const loginLanguageStyles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: "transparent",
-    justifyContent: "center",
-    alignItems: "center",
-    paddingVertical: 20,
-  },
-  content: {
-    width: "100%",
-    backgroundColor: WHITE,
-    borderRadius: 20,
-    padding: 24,
-    ...Platform.select({
-      ios: {
-        shadowColor: GRADIENT_START,
-        shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 0.5,
-        shadowRadius: 24,
-      },
-      android: { elevation: 16 },
-    }),
-  },
-  header: { alignItems: "center", marginBottom: 20 },
-  title: { fontSize: 18, fontWeight: "700", color: "#333", marginTop: 12, marginBottom: 4, textAlign: "center" },
-  subtitle: { fontSize: 13, color: "#666", textAlign: "center" },
-  option: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    marginBottom: 8,
-    backgroundColor: "#F8F8F8",
-    borderWidth: 1,
-    borderColor: "transparent",
-  },
-  optionSelected: { backgroundColor: "#FFF0E8", borderWidth: 2, borderColor: GRADIENT_START },
-  flag: { fontSize: 22, marginRight: 12 },
-  optionText: { fontSize: 16, color: "#333", flex: 1 },
-  optionTextSelected: { fontWeight: "600", color: GRADIENT_START },
-  cancelBtn: { marginTop: 12, paddingVertical: 12, alignItems: "center" },
-  cancelText: { fontSize: 16, color: "#666" },
 });

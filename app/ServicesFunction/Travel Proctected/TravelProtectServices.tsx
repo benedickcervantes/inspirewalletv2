@@ -889,25 +889,38 @@ export default function TravelProtection() {
     );
   };
 
-  const pickPassportPhoto = async () => {
+  const pickPassportPhoto = async (source: "camera" | "library") => {
     try {
       const permissionResult =
-        await ImagePicker.requestMediaLibraryPermissionsAsync();
+        source === "camera"
+          ? await ImagePicker.requestCameraPermissionsAsync()
+          : await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (permissionResult.granted === false) {
         showAlert(
           t("travel.permissionRequired"),
-          t("travel.allowPhotos"),
+          source === "camera"
+            ? t("travel.allowCamera", {
+                defaultValue: "Please allow camera access to take photos.",
+              })
+            : t("travel.allowPhotos"),
           "warning",
         );
         return;
       }
 
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [3, 4],
-        quality: 0.8,
-      });
+      const result =
+        source === "camera"
+          ? await ImagePicker.launchCameraAsync({
+              allowsEditing: true,
+              aspect: [3, 4],
+              quality: 0.8,
+            })
+          : await ImagePicker.launchImageLibraryAsync({
+              mediaTypes: ImagePicker.MediaTypeOptions.Images,
+              allowsEditing: true,
+              aspect: [3, 4],
+              quality: 0.8,
+            });
 
       if (!result.canceled && result.assets[0]) {
         setPassportPhoto(result.assets[0].uri);
@@ -920,24 +933,37 @@ export default function TravelProtection() {
 
   const pickGovernmentIdPhoto = async (
     side: "front" | "back",
+    source: "camera" | "library",
   ) => {
     try {
       const permissionResult =
-        await ImagePicker.requestMediaLibraryPermissionsAsync();
+        source === "camera"
+          ? await ImagePicker.requestCameraPermissionsAsync()
+          : await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (permissionResult.granted === false) {
         showAlert(
           t("travel.permissionRequired"),
-          t("travel.allowPhotos"),
+          source === "camera"
+            ? t("travel.allowCamera", {
+                defaultValue: "Please allow camera access to take photos.",
+              })
+            : t("travel.allowPhotos"),
           "warning",
         );
         return;
       }
 
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        quality: 0.8,
-      });
+      const result =
+        source === "camera"
+          ? await ImagePicker.launchCameraAsync({
+              allowsEditing: true,
+              quality: 0.8,
+            })
+          : await ImagePicker.launchImageLibraryAsync({
+              mediaTypes: ImagePicker.MediaTypeOptions.Images,
+              allowsEditing: true,
+              quality: 0.8,
+            });
 
       if (!result.canceled && result.assets[0]) {
         if (side === "front") {
@@ -1526,15 +1552,15 @@ export default function TravelProtection() {
                   governmentIdBackError={governmentIdBackError}
                   governmentIdType={governmentIdType}
                   governmentIdNumber={governmentIdNumber}
-                  onPickPassportPhoto={() => {
-                    pickPassportPhoto();
+                  onPickPassportPhoto={(source) => {
+                    pickPassportPhoto(source);
                     if (passportPhotoError) setPassportPhotoError("");
                   }}
-                  onPickGovernmentIdFront={() => {
-                    pickGovernmentIdPhoto("front");
+                  onPickGovernmentIdFront={(source) => {
+                    pickGovernmentIdPhoto("front", source);
                   }}
-                  onPickGovernmentIdBack={() => {
-                    pickGovernmentIdPhoto("back");
+                  onPickGovernmentIdBack={(source) => {
+                    pickGovernmentIdPhoto("back", source);
                   }}
                   onGovernmentIdTypeChange={(val) => {
                     setGovernmentIdType(val);

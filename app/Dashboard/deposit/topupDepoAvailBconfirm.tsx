@@ -157,16 +157,16 @@ export default function TopUpConfirm() {
         }
       }
 
-      setProofUri(null);
       setGeneratedRequestId(newRequestId);
-      
-      navigation.navigate("depositReceipt", {
+
+      navigation.navigate("depositProofView", {
         transactionId: newRequestId || t("investment.pending"),
+        requestId: newRequestId || t("investment.pending"),
         amount,
         currency,
         depositMethod: t("deposit.topUpBalance"),
         type: "Top Up",
-        successMessage: t("deposit.topUpSuccess"),
+        proofUri,
       });
     } catch (error) {
       console.error("Error submitting top-up:", error);

@@ -54,6 +54,7 @@ import {
 import NotificationBadge from "../Notification/NotificationBadge";
 import CardsTab from "./CardsTab";
 import SavingsTab from "./SavingsTab";
+import { computeProjectedTotalDividend } from "./utils/termSavingsFormula";
 import WalletTab from "./WalletTab";
 
 // API returns raw enums; keys for translation (use t() when displaying)
@@ -151,36 +152,16 @@ function computeActiveTimeDepositPrincipalTotal(
 }
 
 function computeDividend(deposits: TimeDeposit[]): number {
-  // Expected dividend = sum per contract (ACTIVE/MATURED only) of dividend from schedule.
-  // For each payout: use only dividend (if principalReturned is set, amount includes principal so subtract it).
+  // Align with admin formula: per-cycle net payout after 20% tax times cycle count.
   const activeOnly = deposits.filter((d) => d.status === "ACTIVE");
   return activeOnly.reduce((total, d) => {
-    const schedule = d.payoutSchedule ?? d.payout_schedule ?? [];
-    const contractDividend = (Array.isArray(schedule) ? schedule : []).reduce(
-      (
-        s: number,
-        p: {
-          amount?: string | number;
-          principalReturned?: string | number;
-          principal_returned?: string;
-        },
-      ) => {
-        const amt =
-          typeof p?.amount === "number"
-            ? p.amount
-            : parseFloat(String(p?.amount ?? 0));
-        const principal = parseFloat(
-          String(p?.principalReturned ?? p?.principal_returned ?? 0),
-        );
-        const dividendOnly = Number.isNaN(amt)
-          ? 0
-          : principal > 0
-            ? Math.max(0, amt - principal)
-            : amt;
-        return s + dividendOnly;
-      },
-      0,
-    );
+    const contractDividend = computeProjectedTotalDividend({
+      amount: d.amount,
+      interestRate: d.interestRate,
+      contractType: d.contractType,
+      payoutSchedule: d.payoutSchedule,
+      payout_schedule: d.payout_schedule,
+    });
     return total + contractDividend;
   }, 0);
 }
@@ -242,7 +223,7 @@ export default function Dashboard() {
   const navigation = useNavigation();
   const route = useRoute();
   const { t, setLanguage } = useLanguage();
-  const { startIdleSession, registerActivity } = useIdleTimeout();
+  const { registerActivity } = useIdleTimeout();
   const insets = useSafeAreaInsets();
   const { width, horizontalPadding, isSmallScreen } = useResponsive();
   const qaSpacing = width < 360 ? 0.75 : isSmallScreen ? 0.85 : 1;
@@ -342,6 +323,17 @@ export default function Dashboard() {
     accountNumber
       ? `active_card_design_${accountNumber}`
       : "active_card_design";
+
+  const fetchMaintenanceStatus = useCallback(async () => {
+    setIsMaintenanceLoading(true);
+    try {
+      const status = await getMaintenanceStatus();
+      setMaintenanceStatus(status);
+      return status;
+    } finally {
+      setIsMaintenanceLoading(false);
+    }
+  }, []);
 
   const languageSlides = [
     {
@@ -494,7 +486,6 @@ export default function Dashboard() {
         await Promise.all([
           getReferralTree(accessToken),
           getTransactions(accessToken, { walletId, limit: 20 }),
-          fetchMaintenanceStatus(),
           getNotifications(accessToken, { limit: 50 }),
           AsyncStorage.getItem(accountKey),
           AsyncStorage.getItem(globalKey),
@@ -585,12 +576,10 @@ export default function Dashboard() {
         setAnnouncementVisible(false);
       }
 
-      // Start idle session timer after successful login and dashboard load
-      startIdleSession();
     };
 
     init();
-  }, [fetchMaintenanceStatus, navigation, startIdleSession]);
+  }, [fetchMaintenanceStatus, navigation]);
 
   useEffect(() => {
     if (!announcementVisible) return;
@@ -1156,17 +1145,6 @@ export default function Dashboard() {
     }
   };
 
-  const fetchMaintenanceStatus = useCallback(async () => {
-    setIsMaintenanceLoading(true);
-    try {
-      const status = await getMaintenanceStatus();
-      setMaintenanceStatus(status);
-      return status;
-    } finally {
-      setIsMaintenanceLoading(false);
-    }
-  }, []);
-
   const renderLockBadge = (isSkeleton = false) => (
     <View
       style={[
@@ -1402,9 +1380,12 @@ export default function Dashboard() {
                 numberOfLines={1}
                 ellipsizeMode="tail"
               >
-                {(userData?.firstName as string) ||
-                  (userData?.fullName as string) ||
-                  "User"}
+                {userData?.firstName || userData?.fullName ? (
+                  ((userData?.firstName as string) ||
+                    (userData?.fullName as string)) as string
+                ) : (
+                  <View style={styles.userNameSkeleton} />
+                )}
               </Text>
             </View>
           </View>
@@ -1455,21 +1436,69 @@ export default function Dashboard() {
             ]}
           >
             {(["Wallet", "Investment", "Cards"] as const).map((tab) => {
-              const isActive = activeTab === tab;
-              const label = t(
-                tab === "Wallet"
-                  ? "dashboard.wallet"
-                  : tab === "Investment"
-                    ? "dashboard.investment"
-                    : "dashboard.cards",
-              );
-              const baseHorizontalPadding =
-                width < 360 ? 6 : width < 400 ? 9 : 12;
-              const activeHorizontalPadding =
-                width < 360 ? 8 : width < 400 ? 11 : 14;
-              const hasWideLabel =
-                /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uac00-\ud7af]/.test(
-                  label,
+                const isActive = activeTab === tab;
+                const label = t(
+                  tab === "Wallet"
+                    ? "dashboard.wallet"
+                    : tab === "Investment"
+                      ? "dashboard.investment"
+                      : "dashboard.cards",
+                );
+                const baseHorizontalPadding =
+                  width < 360 ? 6 : width < 400 ? 9 : 12;
+                const activeHorizontalPadding =
+                  width < 360 ? 8 : width < 400 ? 11 : 14;
+                const hasWideLabel =
+                  /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uac00-\ud7af]/.test(
+                    label,
+                  );
+                const compactLabelThreshold = hasWideLabel ? 7 : 12;
+                const veryLongLabelThreshold = hasWideLabel ? 10 : 16;
+                const isCompactLabel = label.length >= compactLabelThreshold;
+                const isVeryLongLabel = label.length >= veryLongLabelThreshold;
+                const baseTabFontSize =
+                  width < 360 ? 11 : width < 400 ? 12 : 13;
+                const compactTabFontSize =
+                  width < 360 ? 10 : width < 400 ? 11 : 12;
+                const tabFontSize = isVeryLongLabel
+                  ? compactTabFontSize - 1
+                  : isCompactLabel
+                    ? compactTabFontSize
+                    : baseTabFontSize;
+
+                return (
+              <TouchableOpacity
+                key={tab}
+                style={[
+                  styles.tab,
+                  isActive && styles.activeTab,
+                  {
+                    flex: 1,
+                    paddingHorizontal: isActive
+                      ? activeHorizontalPadding
+                      : baseHorizontalPadding,
+                    paddingVertical: isSmallScreen ? 9 : 11,
+                    minWidth: 0,
+                    minHeight: isSmallScreen ? 40 : 46,
+                  },
+                ]}
+                onPress={() => setActiveTab(tab)}
+              >
+                <Text
+                  style={[
+                    styles.tabText,
+                    isActive && styles.activeTabText,
+                    isCompactLabel && styles.tabTextCompact,
+                    { fontSize: tabFontSize },
+                  ]}
+                  numberOfLines={isCompactLabel ? 2 : 1}
+                  adjustsFontSizeToFit={isVeryLongLabel}
+                  minimumFontScale={isVeryLongLabel ? 0.88 : undefined}
+                  ellipsizeMode={isCompactLabel ? "tail" : "clip"}
+                >
+                  {label}
+                </Text>
+              </TouchableOpacity>
                 );
               const compactLabelThreshold = hasWideLabel ? 7 : 12;
               const veryLongLabelThreshold = hasWideLabel ? 10 : 16;
@@ -2102,6 +2131,13 @@ const styles = StyleSheet.create({
   },
   greeting: { fontSize: 14, color: "#999", marginBottom: 2 },
   userName: { fontSize: 16, fontWeight: "700", color: "#333" },
+  userNameSkeleton: {
+    height: 16,
+    width: 120,
+    borderRadius: 8,
+    backgroundColor: "#E8E8E8",
+    marginTop: 2,
+  },
   headerRight: { flexDirection: "row", gap: 12 },
   iconButton: {
     width: 44,
