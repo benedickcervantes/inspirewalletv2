@@ -1067,7 +1067,14 @@ export default function Dashboard() {
     (tx: Transaction) => {
       const translatedDescription = getTranslatedDescription(tx.description);
       if (translatedDescription) return translatedDescription;
-      return tx.description?.trim() || getTransactionTypeLabel(t, tx.type);
+      const rawDescription = tx.description?.trim();
+      if (
+        rawDescription &&
+        !/^(n\/a|na|null|undefined|-)$/i.test(rawDescription)
+      ) {
+        return rawDescription;
+      }
+      return getTransactionTypeLabel(t, tx.type);
     },
     [getTranslatedDescription, t],
   );
@@ -1452,54 +1459,53 @@ export default function Dashboard() {
                   /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uac00-\ud7af]/.test(
                     label,
                   );
-                const compactLabelThreshold = hasWideLabel ? 7 : 12;
-                const veryLongLabelThreshold = hasWideLabel ? 10 : 16;
-                const isCompactLabel = label.length >= compactLabelThreshold;
-                const isVeryLongLabel = label.length >= veryLongLabelThreshold;
-                const baseTabFontSize =
-                  width < 360 ? 11 : width < 400 ? 12 : 13;
-                const compactTabFontSize =
-                  width < 360 ? 10 : width < 400 ? 11 : 12;
-                const tabFontSize = isVeryLongLabel
-                  ? compactTabFontSize - 1
-                  : isCompactLabel
-                    ? compactTabFontSize
-                    : baseTabFontSize;
+              const compactLabelThreshold = hasWideLabel ? 7 : 12;
+              const veryLongLabelThreshold = hasWideLabel ? 10 : 16;
+              const isCompactLabel = label.length >= compactLabelThreshold;
+              const isVeryLongLabel = label.length >= veryLongLabelThreshold;
+              const baseTabFontSize = width < 360 ? 11 : width < 400 ? 12 : 13;
+              const compactTabFontSize =
+                width < 360 ? 10 : width < 400 ? 11 : 12;
+              const tabFontSize = isVeryLongLabel
+                ? compactTabFontSize - 1
+                : isCompactLabel
+                  ? compactTabFontSize
+                  : baseTabFontSize;
 
-                return (
-              <TouchableOpacity
-                key={tab}
-                style={[
-                  styles.tab,
-                  isActive && styles.activeTab,
-                  {
-                    flex: 1,
-                    paddingHorizontal: isActive
-                      ? activeHorizontalPadding
-                      : baseHorizontalPadding,
-                    paddingVertical: isSmallScreen ? 9 : 11,
-                    minWidth: 0,
-                    minHeight: isSmallScreen ? 40 : 46,
-                  },
-                ]}
-                onPress={() => setActiveTab(tab)}
-              >
-                <Text
+              return (
+                <TouchableOpacity
+                  key={tab}
                   style={[
-                    styles.tabText,
-                    isActive && styles.activeTabText,
-                    isCompactLabel && styles.tabTextCompact,
-                    { fontSize: tabFontSize },
+                    styles.tab,
+                    isActive && styles.activeTab,
+                    {
+                      flex: 1,
+                      paddingHorizontal: isActive
+                        ? activeHorizontalPadding
+                        : baseHorizontalPadding,
+                      paddingVertical: isSmallScreen ? 9 : 11,
+                      minWidth: 0,
+                      minHeight: isSmallScreen ? 40 : 46,
+                    },
                   ]}
-                  numberOfLines={isCompactLabel ? 2 : 1}
-                  adjustsFontSizeToFit={isVeryLongLabel}
-                  minimumFontScale={isVeryLongLabel ? 0.88 : undefined}
-                  ellipsizeMode={isCompactLabel ? "tail" : "clip"}
+                  onPress={() => setActiveTab(tab)}
                 >
-                  {label}
-                </Text>
-              </TouchableOpacity>
-                );
+                  <Text
+                    style={[
+                      styles.tabText,
+                      isActive && styles.activeTabText,
+                      isCompactLabel && styles.tabTextCompact,
+                      { fontSize: tabFontSize },
+                    ]}
+                    numberOfLines={isCompactLabel ? 2 : 1}
+                    adjustsFontSizeToFit={isVeryLongLabel}
+                    minimumFontScale={isVeryLongLabel ? 0.88 : undefined}
+                    ellipsizeMode={isCompactLabel ? "tail" : "clip"}
+                  >
+                    {label}
+                  </Text>
+                </TouchableOpacity>
+              );
             })}
           </View>
 

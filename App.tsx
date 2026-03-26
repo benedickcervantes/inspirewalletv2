@@ -44,6 +44,7 @@ import BankingFinancialInfo from './app/ServicesFunction/Banking/BankingFinancia
 import BankingPersonalInfo from './app/ServicesFunction/Banking/BankingPersonalInfo';
 import BankingRequiredInfo from './app/ServicesFunction/Banking/BankingRequiredInfo';
 import BankingService from './app/ServicesFunction/Banking/BankingService';
+import AgentServices from './app/ServicesFunction/Agent/AgentServices';
 import EwalletAddressInfo from './app/ServicesFunction/E-Wallet/EwalletAddressInfo';
 import EwalletContactInfo from './app/ServicesFunction/E-Wallet/EwalletContactInfo';
 import EwalletFinancialInfo from './app/ServicesFunction/E-Wallet/EwalletFinancialinfo';
@@ -149,6 +150,7 @@ function RootNavigator() {
           <Stack.Screen name="StockBuy" component={StockBuy} />
           <Stack.Screen name="StockSell" component={StockSell} />
           <Stack.Screen name="AgentRequest" component={AgentDashboard} />
+          <Stack.Screen name="AgentApplication" component={AgentServices} />
           <Stack.Screen
             name="PlayEarn"
             component={PlayEarnServices}
@@ -180,6 +182,7 @@ function RootNavigator() {
           <Stack.Screen name="TimeDepositProof" component={TimeDepositProof} />
           <Stack.Screen name="topup" component={TopUpBalance} />
           <Stack.Screen name="TopupConfirm" component={TopupConfirm} />
+          <Stack.Screen name="depositProofView" component={DepositReceipt} />
           <Stack.Screen name="depositReceipt" component={DepositReceipt} />
           <Stack.Screen name="Withdraw" component={WithdrawScreen} />
           <Stack.Screen name="WithdrawMethod" component={WithdrawMethodScreen} />
