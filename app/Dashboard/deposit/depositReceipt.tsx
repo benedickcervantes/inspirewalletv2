@@ -1,10 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
-import React, { useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import {
   Alert,
   Image,
+  NativeModules,
   ScrollView,
   SafeAreaView,
   StyleSheet,
@@ -17,6 +18,10 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import ViewShot from "react-native-view-shot";
 import * as MediaLibrary from "expo-media-library";
 import * as Sharing from "expo-sharing";
+import {
+  getTransferSuccessSound,
+  refreshAdminTransferSuccessSound,
+} from "../../../constants/adminAudio";
 import { getLanguageCode } from "../../../constants/locales";
 import { useLanguage } from "../../../context/LanguageContext";
 
@@ -96,6 +101,13 @@ export default function DepositReceipt() {
   const { width } = useWindowDimensions();
 
   const viewShotRef = useRef<ViewShot>(null);
+  const transferSuccessSoundRef = useRef<{
+    unloadAsync: () => Promise<unknown>;
+    replayAsync: () => Promise<unknown>;
+    setOnPlaybackStatusUpdate: (
+      callback: ((status: { isLoaded?: boolean; didJustFinish?: boolean }) => void) | null,
+    ) => void;
+  } | null>(null);
 
   const handleDownload = async () => {
     try {
@@ -149,6 +161,7 @@ export default function DepositReceipt() {
     date?: string;
     successMessage?: string;
     source?: string;
+    playTransferSuccessAudio?: boolean;
   };
 
   const {
@@ -161,6 +174,7 @@ export default function DepositReceipt() {
     date = new Date().toLocaleString(),
     successMessage,
     source,
+    playTransferSuccessAudio = false,
   } = params;
 
   const languageCode = getLanguageCode(language);
@@ -172,6 +186,79 @@ export default function DepositReceipt() {
   };
   const locale = localeByLanguageCode[languageCode] ?? "en-PH";
   const normalizedType = String(type ?? "").trim().toLowerCase();
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const playReceiptAudio = async () => {
+      if (!playTransferSuccessAudio || normalizedType !== "transfer") {
+        return;
+      }
+
+      try {
+        const hasNativeExpoAv = Boolean(
+          (NativeModules as Record<string, unknown>)?.ExponentAV,
+        );
+        if (!hasNativeExpoAv) {
+          return;
+        }
+
+        await refreshAdminTransferSuccessSound().catch(() => {
+          // no-op
+        });
+
+        const av = await import("expo-av");
+        const Audio = av.Audio;
+        if (!Audio || !isMounted) {
+          return;
+        }
+
+        await Audio.setAudioModeAsync({
+          playsInSilentModeIOS: true,
+          shouldDuckAndroid: true,
+          playThroughEarpieceAndroid: false,
+          staysActiveInBackground: false,
+        });
+
+        if (transferSuccessSoundRef.current) {
+          await transferSuccessSoundRef.current.unloadAsync();
+          transferSuccessSoundRef.current = null;
+        }
+
+        const { sound } = await Audio.Sound.createAsync(getTransferSuccessSound(), {
+          shouldPlay: false,
+          volume: 1.0,
+        });
+        transferSuccessSoundRef.current = sound;
+        sound.setOnPlaybackStatusUpdate((status) => {
+          if (status.isLoaded && status.didJustFinish) {
+            sound.unloadAsync().catch(() => {
+              // no-op
+            });
+            if (transferSuccessSoundRef.current === sound) {
+              transferSuccessSoundRef.current = null;
+            }
+          }
+        });
+        await sound.replayAsync();
+      } catch {
+        // Ignore optional sound failures to keep receipt UX uninterrupted.
+      }
+    };
+
+    void playReceiptAudio();
+
+    return () => {
+      isMounted = false;
+      if (transferSuccessSoundRef.current) {
+        transferSuccessSoundRef.current.setOnPlaybackStatusUpdate(null);
+        transferSuccessSoundRef.current.unloadAsync().catch(() => {
+          // no-op
+        });
+        transferSuccessSoundRef.current = null;
+      }
+    };
+  }, [normalizedType, playTransferSuccessAudio]);
 
   const getReceiptTypeLabel = () => {
     if (normalizedType === "transfer") return t("tx.transfer");
