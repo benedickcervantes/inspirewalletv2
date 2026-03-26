@@ -66,11 +66,13 @@ import ChangePasscode from './app/Settings/ChangePasscode';
 import CurrencyCalculator from './app/Settings/CurrencyCalculator';
 import DeleteAccount from './app/Settings/DeleteAccount';
 import HelpCenter from './app/Settings/HelpCenter';
+import LanguageModal from './app/Settings/LanguageModal';
 import PrivacyPolicy from './app/Settings/PrivacyPolicy';
 import Settings from './app/Settings/settings';
 import TermsConditions from './app/Settings/TermsConditions';
 import { IdleTimeoutProvider } from './context/IdleTimeoutContext';
 import { LanguageProvider } from './context/LanguageContext';
+import { LanguageModalProvider } from './context/LanguageModalContext';
 import { SocketProvider } from './context/SocketContext';
 import { UnreadNotificationsProvider } from './context/UnreadNotificationsContext';
 import type { RootStackParamList } from './types/navigation';
@@ -81,16 +83,17 @@ const EwalletReview = require('./app/ServicesFunction/E-Wallet/EwalletReview').d
 export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-    <LanguageProvider>
-      <SocketProvider>
-        <UnreadNotificationsProvider>
-        <IdleTimeoutProvider>
-        <OfflineWrapper>
-          <NavigationContainer ref={navigationRef}>
-            <Stack.Navigator
-              initialRouteName="AuthLoader"
-              screenOptions={{ headerShown: false }}
-            >
+      <LanguageProvider>
+        <LanguageModalProvider>
+          <SocketProvider>
+            <UnreadNotificationsProvider>
+              <IdleTimeoutProvider>
+                <OfflineWrapper>
+                  <NavigationContainer ref={navigationRef}>
+                    <Stack.Navigator
+                      initialRouteName="AuthLoader"
+                      screenOptions={{ headerShown: false }}
+                    >
               <Stack.Screen name="AuthLoader" component={AuthLoader} />
               <Stack.Screen name="Welcome" component={Welcome} />
               <Stack.Screen name="Login" component={Login} />
@@ -187,14 +190,16 @@ export default function App() {
               <Stack.Screen name="WithdrawLocalBConfirm" component={WithdrawLocalBConfirm} />
               <Stack.Screen name="WithdrawEwallet" component={EWalletWithdrawal} />
               <Stack.Screen name="WithdrawEwalletConfirm" component={EWalletConfirm} />
-            </Stack.Navigator>
-            <StatusBar style="auto" />
-          </NavigationContainer>
-        </OfflineWrapper>
-        </IdleTimeoutProvider>
-        </UnreadNotificationsProvider>
-      </SocketProvider>
-    </LanguageProvider>
+                    </Stack.Navigator>
+                    <StatusBar style="auto" />
+                  </NavigationContainer>
+                  <LanguageModal />
+                </OfflineWrapper>
+              </IdleTimeoutProvider>
+            </UnreadNotificationsProvider>
+          </SocketProvider>
+        </LanguageModalProvider>
+      </LanguageProvider>
     </GestureHandlerRootView>
   );
 }
