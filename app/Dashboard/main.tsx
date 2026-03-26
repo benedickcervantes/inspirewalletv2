@@ -1046,7 +1046,14 @@ export default function Dashboard() {
     (tx: Transaction) => {
       const translatedDescription = getTranslatedDescription(tx.description);
       if (translatedDescription) return translatedDescription;
-      return tx.description?.trim() || getTransactionTypeLabel(t, tx.type);
+      const rawDescription = tx.description?.trim();
+      if (
+        rawDescription &&
+        !/^(n\/a|na|null|undefined|-)$/i.test(rawDescription)
+      ) {
+        return rawDescription;
+      }
+      return getTransactionTypeLabel(t, tx.type);
     },
     [getTranslatedDescription, t],
   );

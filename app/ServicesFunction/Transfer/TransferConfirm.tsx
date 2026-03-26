@@ -67,7 +67,7 @@ export default function TransferConfirm() {
   const balanceType = params.balanceType || "";
   const accountNumber = params.accountNumber || "";
   const amount = Number(parseFloat(params.amount || "0")) || 0;
-  const description = params.description || "N/A";
+  const description = (params.description ?? "").trim();
   const recipientName = params.recipientName || "";
   const mainWalletId = params.mainWalletId || "";
 
@@ -328,8 +328,8 @@ export default function TransferConfirm() {
       const transferBody: Record<string, string> = {
         beneficiaryId,
         amount: amount.toFixed(2),
-        description: description || "",
       };
+      if (description) transferBody.description = description;
       if (fromWalletId) transferBody.fromWalletId = fromWalletId;
       transferBody.balanceType = balanceType || "available";
       if (hasPasscode && passcodeToSend) transferBody.passcode = passcodeToSend;
