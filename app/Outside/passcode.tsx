@@ -46,6 +46,7 @@ const WHITE = "#FFFFFF";
 interface MessageModalProps {
   visible: boolean;
   onClose: () => void;
+  onInteract?: () => void;
   title: string;
   message: string;
   type?: string;
@@ -56,6 +57,7 @@ interface MessageModalProps {
 function MessageModal({
   visible,
   onClose,
+  onInteract,
   title,
   message,
   confirmText = "OK",
@@ -64,13 +66,21 @@ function MessageModal({
   if (!visible) return null;
   return (
     <Modal transparent animationType="fade" visible={visible}>
-      <Pressable style={msgStyles.overlay} onPress={onClose}>
+      <Pressable
+        style={msgStyles.overlay}
+        onPress={() => {
+          onInteract?.();
+          onClose();
+        }}
+        onTouchStart={onInteract}
+      >
         <View style={msgStyles.box}>
           <Text style={msgStyles.title}>{title}</Text>
           <Text style={msgStyles.message}>{message}</Text>
           <TouchableOpacity
             style={msgStyles.button}
             onPress={() => {
+              onInteract?.();
               if (onConfirm) onConfirm();
               onClose();
             }}
@@ -134,7 +144,8 @@ interface ModalConfig {
 
 export default function Passcode() {
   const navigation = useNavigation();
-  const { startIdleSession } = useIdleTimeout();
+  const { startIdleSession, registerActivity, getActivityProps } = useIdleTimeout();
+  const activityProps = getActivityProps();
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   const { horizontalPadding, isShortScreen, isSmallScreen } = useResponsive();
@@ -907,6 +918,7 @@ export default function Passcode() {
       <MessageModal
         visible={modalVisible}
         onClose={hideModal}
+        onInteract={registerActivity}
         title={modalConfig.title}
         message={modalConfig.message}
         type={modalConfig.type}
@@ -926,7 +938,11 @@ export default function Passcode() {
             { paddingHorizontal: Math.max(16, horizontalPadding) },
           ]}
           activeOpacity={1}
-          onPress={() => setLanguageModalVisible(false)}
+          onPress={() => {
+            registerActivity();
+            setLanguageModalVisible(false);
+          }}
+          {...activityProps}
         >
           <View
             style={[
@@ -938,6 +954,7 @@ export default function Passcode() {
               },
             ]}
             onStartShouldSetResponder={() => true}
+            {...activityProps}
           >
             <View style={passcodeLanguageStyles.header}>
               <Ionicons
@@ -978,7 +995,10 @@ export default function Passcode() {
                     },
                     language === label && passcodeLanguageStyles.optionSelected,
                   ]}
-                  onPress={() => handleSelectLanguage(label)}
+                  onPress={() => {
+                    registerActivity();
+                    handleSelectLanguage(label);
+                  }}
                   activeOpacity={0.7}
                 >
                   <Text
@@ -1014,7 +1034,10 @@ export default function Passcode() {
                 passcodeLanguageStyles.cancelBtn,
                 isSmallScreen && { marginTop: 8 },
               ]}
-              onPress={() => setLanguageModalVisible(false)}
+              onPress={() => {
+                registerActivity();
+                setLanguageModalVisible(false);
+              }}
             >
               <Text
                 style={[
@@ -1041,10 +1064,15 @@ export default function Passcode() {
             { paddingHorizontal: Math.max(16, horizontalPadding) },
           ]}
           activeOpacity={1}
-          onPress={closeResetModal}
+          onPress={() => {
+            registerActivity();
+            closeResetModal();
+          }}
+          {...activityProps}
         >
           <View
             onStartShouldSetResponder={() => true}
+            {...activityProps}
             style={[
               resetStyles.box,
               {
@@ -1092,7 +1120,10 @@ export default function Passcode() {
                     placeholder={t("auth.emailPlaceholder")}
                     placeholderTextColor="#666"
                     value={resetEmail}
-                    onChangeText={setResetEmail}
+                    onChangeText={(value) => {
+                      registerActivity();
+                      setResetEmail(value);
+                    }}
                     keyboardType="email-address"
                     autoCapitalize="none"
                     autoComplete="email"
@@ -1106,7 +1137,10 @@ export default function Passcode() {
                     placeholderTextColor="#666"
                     secureTextEntry
                     value={resetPassword}
-                    onChangeText={setResetPassword}
+                    onChangeText={(value) => {
+                      registerActivity();
+                      setResetPassword(value);
+                    }}
                     autoComplete="password"
                   />
                 </>
@@ -1123,7 +1157,10 @@ export default function Passcode() {
                     maxLength={4}
                     secureTextEntry
                     value={newPasscode}
-                    onChangeText={setNewPasscode}
+                    onChangeText={(value) => {
+                      registerActivity();
+                      setNewPasscode(value);
+                    }}
                   />
                   <TextInput
                     style={[
@@ -1136,7 +1173,10 @@ export default function Passcode() {
                     maxLength={4}
                     secureTextEntry
                     value={confirmNewPasscode}
-                    onChangeText={setConfirmNewPasscode}
+                    onChangeText={(value) => {
+                      registerActivity();
+                      setConfirmNewPasscode(value);
+                    }}
                   />
                 </>
               )}
@@ -1147,7 +1187,10 @@ export default function Passcode() {
                     resetStyles.cancelBtn,
                     isSmallScreen && { minHeight: 44 },
                   ]}
-                  onPress={closeResetModal}
+                  onPress={() => {
+                    registerActivity();
+                    closeResetModal();
+                  }}
                 >
                   <Text
                     style={[

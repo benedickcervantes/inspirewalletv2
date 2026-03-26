@@ -6,11 +6,12 @@ import {
     StyleSheet,
     Text,
     TextInput,
+    TouchableOpacity,
     useWindowDimensions,
     View,
 } from "react-native";
-import { TouchableOpacity } from "react-native-gesture-handler";
 import { useLanguage } from "../../../context/LanguageContext";
+import { useResponsive } from "../../../utils/responsive";
 import { formatWholeNumbersOnly } from "../../../utils/numberFormat";
 
 const THEME_COLOR = "#E15816";
@@ -51,13 +52,6 @@ export interface TravelProtectFinanInfoProps {
 
 const CURRENCY_OPTIONS = ["PHP", "USD", "EUR", "KRW"];
 
-const CURRENCY_KEY: Record<string, string> = {
-  PHP: "travel.currencyPHP",
-  USD: "travel.currencyUSD",
-  EUR: "travel.currencyEUR",
-  KRW: "travel.currencyKRW",
-};
-
 export default function TravelProtectFinanInfo({
   sourceOfFund,
   sourceOfFundError,
@@ -74,10 +68,13 @@ export default function TravelProtectFinanInfo({
   setCashOnHandError,
 }: TravelProtectFinanInfoProps) {
   const { t } = useLanguage();
-  const { height: windowHeight } = useWindowDimensions();
+  const { height: windowHeight, width: windowWidth } = useWindowDimensions();
+  const { isSmallScreen, isTinyScreen } = useResponsive();
   const modalListMaxHeight = Math.min(420, windowHeight * 0.45);
   const [showSourceOfFundModal, setShowSourceOfFundModal] = useState(false);
   const [showCurrencyModal, setShowCurrencyModal] = useState(false);
+  const isCompactCurrency = isTinyScreen || isSmallScreen || windowWidth < 390;
+  const currencyMinWidth = isTinyScreen ? 96 : isCompactCurrency ? 104 : 112;
 
   return (
     <View style={styles.formCard} pointerEvents="box-none">
@@ -132,17 +129,26 @@ export default function TravelProtectFinanInfo({
         </Text>
         <View style={styles.incomeRow}>
           <TouchableOpacity
-            style={[styles.dropdown, styles.currencyDropdown]}
+            style={[
+              styles.dropdown,
+              styles.currencyDropdown,
+              { minWidth: currencyMinWidth },
+            ]}
             onPress={() => setShowCurrencyModal(true)}
           >
             <Text
               style={[
                 styles.dropdownText,
+              styles.currencyCodeText,
+              isCompactCurrency && styles.currencyCodeTextCompact,
                 !grossMonthlyIncomeCurrency && styles.dropdownPlaceholder,
               ]}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            allowFontScaling={false}
             >
               {grossMonthlyIncomeCurrency
-                ? t(CURRENCY_KEY[grossMonthlyIncomeCurrency])
+                ? grossMonthlyIncomeCurrency
                 : t("travel.selectCurrency")}
             </Text>
             <Ionicons name="chevron-down" size={20} color="#999" />
@@ -296,7 +302,7 @@ export default function TravelProtectFinanInfo({
                     setShowCurrencyModal(false);
                   }}
                 >
-                  <Text style={styles.optionText}>{t(CURRENCY_KEY[opt])}</Text>
+                  <Text style={styles.optionText}>{opt}</Text>
                   {grossMonthlyIncomeCurrency === opt && (
                     <Ionicons
                       name="checkmark-circle"
@@ -457,6 +463,17 @@ const styles = StyleSheet.create({
   currencyDropdown: {
     flex: 0,
     minWidth: 100,
+    paddingHorizontal: 12,
+  },
+  currencyCodeText: {
+    flex: 0,
+    marginRight: 6,
+    fontSize: 15,
+    fontWeight: "600",
+  },
+  currencyCodeTextCompact: {
+    fontSize: 14,
+    marginRight: 4,
   },
   amountInputContainer: {
     flex: 1,
