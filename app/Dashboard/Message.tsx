@@ -720,57 +720,6 @@ export default function Message() {
         </TouchableOpacity>
       </ActivityModal>
 
-      {/* Delete Options Modal */}
-      <ActivityModal
-        visible={showDeleteOptions}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowDeleteOptions(false)}
-      >
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setShowDeleteOptions(false)}
-        >
-          <TouchableOpacity
-            activeOpacity={1}
-            style={styles.deleteModal}
-            onPress={(e) => e.stopPropagation()}
-          >
-            <View style={styles.deleteModalTopBar} />
-            <Text style={styles.deleteModalTitle}>{t("support.deleteMessage")}</Text>
-            <Text style={styles.deleteModalSubtitle}>{t("support.deleteConfirm")}</Text>
-
-            <TouchableOpacity
-              style={styles.deleteModalPrimaryButton}
-              onPress={() => handleDeleteOption(true)}
-            >
-              <Text style={styles.deleteModalPrimaryButtonText}>
-                {t("support.deleteForEveryone")}
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.deleteModalSecondaryButton}
-              onPress={() => handleDeleteOption(false)}
-            >
-              <Text style={styles.deleteModalSecondaryButtonText}>
-                {t("support.deleteForMe")}
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.deleteModalCancelButton}
-              onPress={() => setShowDeleteOptions(false)}
-            >
-              <Text style={styles.deleteModalCancelButtonText}>
-                {t("common.cancel")}
-              </Text>
-            </TouchableOpacity>
-          </TouchableOpacity>
-        </TouchableOpacity>
-      </ActivityModal>
-
       {/* Edit Message Modal */}
       <ActivityModal
         visible={!!editingMessage}
