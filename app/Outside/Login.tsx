@@ -1062,7 +1062,9 @@ export default function Login() {
             onStartShouldSetResponder={() => true}
           >
             <View style={loginLanguageStyles.header}>
-              <Ionicons name="globe-outline" size={isSmallScreen ? 32 : 40} color={GRADIENT_START} />
+              <View style={loginLanguageStyles.mapGlobe}>
+                <Ionicons name="globe-outline" size={50} color="#DE5212" />
+              </View>
               <Text style={[loginLanguageStyles.title, isSmallScreen && { fontSize: 16 }]}>
                 {t("profile.selectLanguage")}
               </Text>
@@ -1100,7 +1102,7 @@ export default function Login() {
                     <Ionicons
                       name="checkmark-circle"
                       size={isSmallScreen ? 20 : 22}
-                      color={GRADIENT_START}
+                      color="#DE5212"
                     />
                   )}
                 </TouchableOpacity>
@@ -1275,7 +1277,7 @@ const styles = StyleSheet.create({
 const loginLanguageStyles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: "transparent",
+    backgroundColor: "rgba(0,0,0,0.45)",
     justifyContent: "center",
     alignItems: "center",
     paddingVertical: 20,
@@ -1285,17 +1287,22 @@ const loginLanguageStyles = StyleSheet.create({
     backgroundColor: WHITE,
     borderRadius: 20,
     padding: 24,
-    ...Platform.select({
-      ios: {
-        shadowColor: GRADIENT_START,
-        shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 0.5,
-        shadowRadius: 24,
-      },
-      android: { elevation: 16 },
-    }),
+    shadowColor: "#DE5212",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.3,
+    shadowRadius: 24,
+    elevation: 16,
   },
   header: { alignItems: "center", marginBottom: 20 },
+  mapGlobe: {
+    width: 70,
+    height: 70,
+    borderRadius: 40,
+    backgroundColor: "rgba(222, 82, 18, 0.1)",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 12,
+  },
   title: { fontSize: 18, fontWeight: "700", color: "#333", marginTop: 12, marginBottom: 4, textAlign: "center" },
   subtitle: { fontSize: 13, color: "#666", textAlign: "center" },
   option: {
@@ -1309,10 +1316,10 @@ const loginLanguageStyles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "transparent",
   },
-  optionSelected: { backgroundColor: "#FFF0E8", borderWidth: 2, borderColor: GRADIENT_START },
+  optionSelected: { backgroundColor: "#FFF0E8", borderWidth: 2, borderColor: "#DE5212" },
   flag: { fontSize: 22, marginRight: 12 },
   optionText: { fontSize: 16, color: "#333", flex: 1 },
-  optionTextSelected: { fontWeight: "600", color: GRADIENT_START },
+  optionTextSelected: { fontWeight: "600", color: "#DE5212" },
   cancelBtn: { marginTop: 12, paddingVertical: 12, alignItems: "center" },
   cancelText: { fontSize: 16, color: "#666" },
 });
