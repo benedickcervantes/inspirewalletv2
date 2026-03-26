@@ -3,19 +3,34 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Alert, Animated, Image, ImageBackground, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
+import {
+    ActivityIndicator,
+    Alert,
+    Animated,
+    Image,
+    ImageBackground,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    useWindowDimensions,
+    View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
-  buyCard,
-  cancelAutoRenewal,
-  getCardCatalog,
-  getMyCardCollection,
-  setActiveCard as setActiveCardApi,
+    buyCard,
+    cancelAutoRenewal,
+    getCardCatalog,
+    getMyCardCollection,
+    renewCard,
+    setActiveCard as setActiveCardApi,
+    verifyPasscode,
 } from "../../configs/api";
 import { useLanguage } from "../../context/LanguageContext";
+import PasscodeModal from "../components/PasscodeModal";
 import { getCardTheme } from "../theme/cardThemes";
 
-import ActivityModal from '../components/ActivityModal';
+import ActivityModal from "../components/ActivityModal";
 interface CardsTabProps {
   userData: {
     firstName?: string;
@@ -84,9 +99,14 @@ export default function CardsTab({
   const [isPurchaseModalVisible, setIsPurchaseModalVisible] = useState(false);
   const [isDesignModalVisible, setIsDesignModalVisible] = useState(false);
   const [isSuccessModalVisible, setIsSuccessModalVisible] = useState(false);
+  const [isCancelPasscodeModalVisible, setIsCancelPasscodeModalVisible] =
+    useState(false);
+  const [cancelPasscode, setCancelPasscode] = useState("");
+  const [hasPasscode, setHasPasscode] = useState(false);
   const [successModalType, setSuccessModalType] = useState<
     "purchase" | "cancelRenewal"
   >("purchase");
+
   const [selectedDesignCard, setSelectedDesignCard] = useState<{
     id?: string;
     title: string;
@@ -124,17 +144,19 @@ export default function CardsTab({
   const goldCatalog = cardCatalog.find((c: any) => c.design === "GOLD_ELITE");
   const isGoldOwned = goldCatalog?.isOwned ?? false;
   const isGoldActive = goldCatalog?.isActive ?? false;
+  const isGoldAutoRenewalCancelled =
+    goldCatalog?.isAutoRenewalCancelled ?? false;
   const goldExpiryDate = goldCatalog?.expiryDate
     ? new Date(goldCatalog.expiryDate)
     : null;
 
-  // Check if Gold Elite is within 3 days of expiry
+  // Check if Gold Elite is within 7 days of expiry so users can renew manually.
   const isGoldRenewalAvailable = (() => {
     if (!isGoldActive || !goldExpiryDate) return false;
     const now = new Date();
     const daysUntilExpiry =
       (goldExpiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
-    return daysUntilExpiry <= 3 && daysUntilExpiry > 0;
+    return daysUntilExpiry <= 7 && daysUntilExpiry > 0;
   })();
 
   // Derive Design Collection state from catalog data
@@ -198,8 +220,17 @@ export default function CardsTab({
       try {
         const storageKey = getActiveCardStorageKey(userData?.accountNumber);
         const cachedDesign = await AsyncStorage.getItem(storageKey);
+        const userJson = await AsyncStorage.getItem("user");
         if (cachedDesign && !activeCard) {
           setActiveCard({ design: cachedDesign });
+        }
+        if (userJson) {
+          try {
+            const user = JSON.parse(userJson) as { hasPasscode?: boolean };
+            setHasPasscode(!!user?.hasPasscode);
+          } catch (parseError) {
+            console.error("Failed to parse stored user", parseError);
+          }
         }
       } catch (e) {
         console.error("Failed to load cached active card", e);
@@ -210,6 +241,72 @@ export default function CardsTab({
     init();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const submitCancelAutoRenewal = async () => {
+    try {
+      setIsLoading(true);
+      const token = await AsyncStorage.getItem("access_token");
+      if (!token) return;
+
+      const res = await cancelAutoRenewal(token, "GOLD_ELITE");
+      if (res.success) {
+        setIsCancelPasscodeModalVisible(false);
+        setCancelPasscode("");
+        setIsPurchaseModalVisible(false);
+        setSuccessModalType("cancelRenewal");
+        setIsSuccessModalVisible(true);
+        await fetchCardsData();
+      } else {
+        Alert.alert("Error", res.error || "Failed to cancel auto-renewal");
+      }
+    } catch (err) {
+      console.error(err);
+      Alert.alert("Error", "Failed to cancel auto-renewal");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCancelRenewalPress = async () => {
+    if (!isGoldActive || isGoldAutoRenewalCancelled) {
+      setIsPurchaseModalVisible(false);
+      return;
+    }
+
+    if (hasPasscode) {
+      setCancelPasscode("");
+      setIsCancelPasscodeModalVisible(true);
+      return;
+    }
+
+    await submitCancelAutoRenewal();
+  };
+
+  const handleCancelRenewalPasscodeConfirm = async () => {
+    if (cancelPasscode.length !== 4) return;
+
+    try {
+      setIsLoading(true);
+      const token = await AsyncStorage.getItem("access_token");
+      if (!token) return;
+
+      const verifyResult = await verifyPasscode(token, cancelPasscode);
+      if (!verifyResult.success) {
+        Alert.alert("Error", verifyResult.error || "Passcode incorrect");
+        setCancelPasscode("");
+        return;
+      }
+    } catch (err) {
+      console.error(err);
+      Alert.alert("Error", "Failed to verify passcode");
+      setCancelPasscode("");
+      return;
+    } finally {
+      setIsLoading(false);
+    }
+
+    await submitCancelAutoRenewal();
+  };
 
   const handleBuyCard = async (designSlug: string, price: number) => {
     if (isBuyingCardsLocked) {
@@ -226,7 +323,17 @@ export default function CardsTab({
       const token = await AsyncStorage.getItem("access_token");
       if (!token) return;
 
-      const res = await buyCard(token, designSlug);
+      let res;
+      if (
+        designSlug === "GOLD_ELITE" &&
+        isGoldActive &&
+        isGoldRenewalAvailable
+      ) {
+        res = await renewCard(token, "GOLD_ELITE");
+      } else {
+        res = await buyCard(token, designSlug);
+      }
+
       if (res.success) {
         setIsDesignModalVisible(false);
         setIsPurchaseModalVisible(false);
@@ -239,7 +346,14 @@ export default function CardsTab({
           await onRefresh();
         }
       } else {
-        alert(res.error || "Failed to purchase card");
+        alert(
+          res.error ||
+            (designSlug === "GOLD_ELITE" &&
+            isGoldActive &&
+            isGoldRenewalAvailable
+              ? "Failed to renew Gold Elite."
+              : "Failed to purchase card"),
+        );
       }
     } catch (e) {
       console.error(e);
@@ -568,7 +682,9 @@ export default function CardsTab({
             <>
               {[0, 1].map((idx) => (
                 <View key={`vip-skeleton-${idx}`} style={styles.cardItem}>
-                  <View style={[styles.cardPreview, styles.cardPreviewSkeleton]} />
+                  <View
+                    style={[styles.cardPreview, styles.cardPreviewSkeleton]}
+                  />
                   <View style={styles.cardInfo}>
                     <View style={styles.cardItemTitleSkeleton} />
                     <View style={styles.cardItemSubtitleSkeleton} />
@@ -580,108 +696,123 @@ export default function CardsTab({
           ) : (
             <>
               <View style={styles.cardItem}>
-            <View style={styles.cardPreview}>
-              <ImageBackground
-                source={require("../../assets/cards/vip_collection/vp2/front.png")}
-                style={styles.cardPreviewImage}
-                imageStyle={styles.cardPreviewImageStyle}
-                resizeMode="cover"
-              >
-                <View style={styles.vipBadge}>
-                  <Text style={styles.vipBadgeText}>{t("ct.vip")}</Text>
-                </View>
-                {!isDiamondOwned && (
-                  <View style={styles.lockedOverlay}>
-                    <Ionicons name="lock-closed" size={30} color="#E0E0E0" />
-                  </View>
-                )}
-              </ImageBackground>
-            </View>
-
-            <View style={styles.cardInfo}>
-              <Text style={styles.cardItemTitle}>{t("ct.diamondElite")}</Text>
-              <Text style={styles.cardItemSubtitle}>{t("ct.deposit10M")}</Text>
-
-              {isDiamondActive ? (
-                <View style={[styles.upgradeButton, styles.claimedButton]}>
-                  <Text
-                    style={[styles.upgradeButtonText, styles.claimedButtonText]}
+                <View style={styles.cardPreview}>
+                  <ImageBackground
+                    source={require("../../assets/cards/vip_collection/vp2/front.png")}
+                    style={styles.cardPreviewImage}
+                    imageStyle={styles.cardPreviewImageStyle}
+                    resizeMode="cover"
                   >
-                    ✓ {t("Already Claimed")}
-                  </Text>
+                    <View style={styles.vipBadge}>
+                      <Text style={styles.vipBadgeText}>{t("ct.vip")}</Text>
+                    </View>
+                    {!isDiamondOwned && (
+                      <View style={styles.lockedOverlay}>
+                        <Ionicons
+                          name="lock-closed"
+                          size={30}
+                          color="#E0E0E0"
+                        />
+                      </View>
+                    )}
+                  </ImageBackground>
                 </View>
-              ) : (
-                <TouchableOpacity
-                  style={[
-                    styles.upgradeButton,
-                    isDiamondEligible && styles.activeUpgradeButton,
-                  ]}
-                  onPress={() => {
-                    if (isBuyingCardsLocked) {
-                      onBuyingCardsLockedPress?.();
-                      return;
-                    }
-                    setIsVipModalVisible(true);
-                  }}
-                >
-                  <Text
-                    style={[
-                      styles.upgradeButtonText,
-                      isDiamondEligible && styles.activeUpgradeButtonText,
-                    ]}
-                  >
-                    {isDiamondEligible
-                      ? t("ct.claimCard") || "Claim Card"
-                      : t("ct.upgradeRequired")}
+
+                <View style={styles.cardInfo}>
+                  <Text style={styles.cardItemTitle}>
+                    {t("ct.diamondElite")}
                   </Text>
-                </TouchableOpacity>
-              )}
-            </View>
+                  <Text style={styles.cardItemSubtitle}>
+                    {t("ct.deposit10M")}
+                  </Text>
+
+                  {isDiamondActive ? (
+                    <View style={[styles.upgradeButton, styles.claimedButton]}>
+                      <Text
+                        style={[
+                          styles.upgradeButtonText,
+                          styles.claimedButtonText,
+                        ]}
+                      >
+                        ✓ {t("Already Claimed")}
+                      </Text>
+                    </View>
+                  ) : (
+                    <TouchableOpacity
+                      style={[
+                        styles.upgradeButton,
+                        isDiamondEligible && styles.activeUpgradeButton,
+                      ]}
+                      onPress={() => {
+                        if (isBuyingCardsLocked) {
+                          onBuyingCardsLockedPress?.();
+                          return;
+                        }
+                        setIsVipModalVisible(true);
+                      }}
+                    >
+                      <Text
+                        style={[
+                          styles.upgradeButtonText,
+                          isDiamondEligible && styles.activeUpgradeButtonText,
+                        ]}
+                      >
+                        {isDiamondEligible
+                          ? t("ct.claimCard") || "Claim Card"
+                          : t("ct.upgradeRequired")}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
               </View>
               <View style={styles.cardItem}>
-            <View style={styles.cardPreview}>
-              <ImageBackground
-                source={require("../../assets/cards/vip_collection/vp1/front.png")}
-                style={styles.cardPreviewImage}
-                imageStyle={styles.cardPreviewImageStyle}
-                resizeMode="cover"
-              >
-                <View style={styles.vipBadge}>
-                  <Text style={styles.vipBadgeText}>{t("ct.vip")}</Text>
+                <View style={styles.cardPreview}>
+                  <ImageBackground
+                    source={require("../../assets/cards/vip_collection/vp1/front.png")}
+                    style={styles.cardPreviewImage}
+                    imageStyle={styles.cardPreviewImageStyle}
+                    resizeMode="cover"
+                  >
+                    <View style={styles.vipBadge}>
+                      <Text style={styles.vipBadgeText}>{t("ct.vip")}</Text>
+                    </View>
+                    {!isGoldOwned && (
+                      <View style={styles.lockedOverlay}>
+                        <Ionicons
+                          name="lock-closed"
+                          size={30}
+                          color="#E0E0E0"
+                        />
+                      </View>
+                    )}
+                  </ImageBackground>
                 </View>
-                {!isGoldOwned && (
-                  <View style={styles.lockedOverlay}>
-                    <Ionicons name="lock-closed" size={30} color="#E0E0E0" />
-                  </View>
-                )}
-              </ImageBackground>
-            </View>
-            <View style={styles.cardInfo}>
-              <Text style={styles.cardItemTitle}>{t("ct.goldElite")}</Text>
-              <Text style={styles.cardItemSubtitle}>
-                {t("ct.sub10KMonthly")}
-              </Text>
+                <View style={styles.cardInfo}>
+                  <Text style={styles.cardItemTitle}>{t("ct.goldElite")}</Text>
+                  <Text style={styles.cardItemSubtitle}>
+                    {t("ct.sub10KMonthly")}
+                  </Text>
 
-              <TouchableOpacity
-                style={[
-                  styles.getStartedButton,
-                  isGoldOwned && { backgroundColor: "#E0E0E0" },
-                ]}
-                onPress={() => {
-                  if (isBuyingCardsLocked) {
-                    onBuyingCardsLockedPress?.();
-                    return;
-                  }
-                  setIsPurchaseModalVisible(true);
-                }}
-              >
-                <Text style={styles.getStartedButtonText}>
-                  {isGoldOwned
-                    ? (t("ct.renewPlan") || "Renew Plan")
-                    : t("ct.getStarted")}
-                </Text>
-              </TouchableOpacity>
-            </View>
+                  <TouchableOpacity
+                    style={[
+                      styles.getStartedButton,
+                      isGoldOwned && { backgroundColor: "#E0E0E0" },
+                    ]}
+                    onPress={() => {
+                      if (isBuyingCardsLocked) {
+                        onBuyingCardsLockedPress?.();
+                        return;
+                      }
+                      setIsPurchaseModalVisible(true);
+                    }}
+                  >
+                    <Text style={styles.getStartedButtonText}>
+                      {isGoldOwned
+                        ? t("ct.renewPlan") || "Renew Plan"
+                        : t("ct.getStarted")}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             </>
           )}
@@ -715,7 +846,9 @@ export default function CardsTab({
             <>
               {[0, 1].map((idx) => (
                 <View key={`design-skeleton-${idx}`} style={styles.cardItem}>
-                  <View style={[styles.cardPreview, styles.cardPreviewSkeleton]} />
+                  <View
+                    style={[styles.cardPreview, styles.cardPreviewSkeleton]}
+                  />
                   <View style={styles.cardInfo}>
                     <View style={styles.cardItemTitleSkeleton} />
                     <View style={styles.cardItemSubtitleSkeleton} />
@@ -727,135 +860,150 @@ export default function CardsTab({
           ) : (
             <>
               <View style={styles.cardItem}>
-            <View style={styles.cardPreview}>
-              <ImageBackground
-                source={require("../../assets/cards/design_collection/dc1/front.png")}
-                style={styles.cardPreviewImage}
-                imageStyle={styles.cardPreviewImageStyle}
-                resizeMode="cover"
-              >
-                <View style={styles.premiumGradient}>
-                  <Text style={styles.premiumLabel}>
-                    {t("ct.premiumBadge")}
-                  </Text>
-                </View>
-                <View style={styles.priceBadge}>
-                  <Text style={styles.priceText}>₱ {formatCurrency(250)}</Text>
-                </View>
-                {!isOrangeOwned && (
-                  <View style={styles.lockedOverlay}>
-                    <Ionicons name="lock-closed" size={30} color="#E0E0E0" />
-                  </View>
-                )}
-              </ImageBackground>
-            </View>
-            <View style={styles.cardInfo}>
-              <Text style={styles.cardItemTitle}>{t("ct.orangeElite")}</Text>
-              {isOrangeOwned ? (
-                <View style={styles.upgradeButton}>
-                  <Text style={styles.upgradeButtonText}>
-                    {t("ct.inCollection") || "Lifetime card"}
-                  </Text>
-                </View>
-              ) : (
-                <TouchableOpacity
-                  style={[
-                    styles.upgradeButton,
-                    availableBalance >= 250 && styles.activeUpgradeButton,
-                  ]}
-                  onPress={() => {
-                    if (isBuyingCardsLocked) {
-                      onBuyingCardsLockedPress?.();
-                      return;
-                    }
-                    setSelectedDesignCard({
-                      id: "ORANGE_ELITE",
-                      title: t("ct.orangeElite") || "Orange Elite",
-                      price: 250,
-                      image: require("../../assets/cards/design_collection/dc1/front.png"),
-                      backImage: require("../../assets/cards/design_collection/dc1/back.png"),
-                    });
-                    setIsDesignModalVisible(true);
-                  }}
-                >
-                  <Text
-                    style={[
-                      styles.upgradeButtonText,
-                      availableBalance >= 250 && styles.activeUpgradeButtonText,
-                    ]}
+                <View style={styles.cardPreview}>
+                  <ImageBackground
+                    source={require("../../assets/cards/design_collection/dc1/front.png")}
+                    style={styles.cardPreviewImage}
+                    imageStyle={styles.cardPreviewImageStyle}
+                    resizeMode="cover"
                   >
-                    {t("ct.tapToBuy")}
+                    <View style={styles.premiumGradient}>
+                      <Text style={styles.premiumLabel}>
+                        {t("ct.premiumBadge")}
+                      </Text>
+                    </View>
+                    <View style={styles.priceBadge}>
+                      <Text style={styles.priceText}>
+                        ₱ {formatCurrency(250)}
+                      </Text>
+                    </View>
+                    {!isOrangeOwned && (
+                      <View style={styles.lockedOverlay}>
+                        <Ionicons
+                          name="lock-closed"
+                          size={30}
+                          color="#E0E0E0"
+                        />
+                      </View>
+                    )}
+                  </ImageBackground>
+                </View>
+                <View style={styles.cardInfo}>
+                  <Text style={styles.cardItemTitle}>
+                    {t("ct.orangeElite")}
                   </Text>
-                </TouchableOpacity>
-              )}
-            </View>
+                  {isOrangeOwned ? (
+                    <View style={styles.upgradeButton}>
+                      <Text style={styles.upgradeButtonText}>
+                        {t("ct.inCollection") || "Lifetime card"}
+                      </Text>
+                    </View>
+                  ) : (
+                    <TouchableOpacity
+                      style={[
+                        styles.upgradeButton,
+                        availableBalance >= 250 && styles.activeUpgradeButton,
+                      ]}
+                      onPress={() => {
+                        if (isBuyingCardsLocked) {
+                          onBuyingCardsLockedPress?.();
+                          return;
+                        }
+                        setSelectedDesignCard({
+                          id: "ORANGE_ELITE",
+                          title: t("ct.orangeElite") || "Orange Elite",
+                          price: 250,
+                          image: require("../../assets/cards/design_collection/dc1/front.png"),
+                          backImage: require("../../assets/cards/design_collection/dc1/back.png"),
+                        });
+                        setIsDesignModalVisible(true);
+                      }}
+                    >
+                      <Text
+                        style={[
+                          styles.upgradeButtonText,
+                          availableBalance >= 250 &&
+                            styles.activeUpgradeButtonText,
+                        ]}
+                      >
+                        {t("ct.tapToBuy")}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
               </View>
               <View style={styles.cardItem}>
-            <View style={styles.cardPreview}>
-              <ImageBackground
-                source={require("../../assets/cards/design_collection/dc2/front.png")}
-                style={styles.cardPreviewImage}
-                imageStyle={styles.cardPreviewImageStyle}
-                resizeMode="cover"
-              >
-                <View style={styles.premiumGradientGold}>
-                  <Text style={styles.premiumLabel}>
-                    {t("ct.premiumBadge")}
-                  </Text>
-                </View>
-                <View style={styles.priceBadge}>
-                  <Text style={styles.priceText}>₱ {formatCurrency(5000)}</Text>
-                </View>
-                {!isRoyalOwned && (
-                  <View style={styles.lockedOverlay}>
-                    <Ionicons name="lock-closed" size={30} color="#E0E0E0" />
-                  </View>
-                )}
-              </ImageBackground>
-            </View>
-
-            <View style={styles.cardInfo}>
-              <Text style={styles.cardItemTitle}>{t("ct.royalCurve")}</Text>
-
-              {isRoyalOwned ? (
-                <View style={styles.upgradeButton}>
-                  <Text style={styles.upgradeButtonText}>
-                    {t("ct.inCollection") || "In your collection"}
-                  </Text>
-                </View>
-              ) : (
-                <TouchableOpacity
-                  style={[
-                    styles.upgradeButton,
-                    availableBalance >= 5000 && styles.activeUpgradeButton,
-                  ]}
-                  onPress={() => {
-                    if (isBuyingCardsLocked) {
-                      onBuyingCardsLockedPress?.();
-                      return;
-                    }
-                    setSelectedDesignCard({
-                      id: "ROYAL_CURVE",
-                      title: t("ct.royalCurve") || "Royal Curve",
-                      price: 5000,
-                      image: require("../../assets/cards/design_collection/dc2/front.png"),
-                      backImage: require("../../assets/cards/design_collection/dc2/back.png"),
-                    });
-                    setIsDesignModalVisible(true);
-                  }}
-                >
-                  <Text
-                    style={[
-                      styles.upgradeButtonText,
-                      availableBalance >= 5000 &&
-                        styles.activeUpgradeButtonText,
-                    ]}
+                <View style={styles.cardPreview}>
+                  <ImageBackground
+                    source={require("../../assets/cards/design_collection/dc2/front.png")}
+                    style={styles.cardPreviewImage}
+                    imageStyle={styles.cardPreviewImageStyle}
+                    resizeMode="cover"
                   >
-                    {t("ct.tapToBuy")}
-                  </Text>
-                </TouchableOpacity>
-              )}
-            </View>
+                    <View style={styles.premiumGradientGold}>
+                      <Text style={styles.premiumLabel}>
+                        {t("ct.premiumBadge")}
+                      </Text>
+                    </View>
+                    <View style={styles.priceBadge}>
+                      <Text style={styles.priceText}>
+                        ₱ {formatCurrency(5000)}
+                      </Text>
+                    </View>
+                    {!isRoyalOwned && (
+                      <View style={styles.lockedOverlay}>
+                        <Ionicons
+                          name="lock-closed"
+                          size={30}
+                          color="#E0E0E0"
+                        />
+                      </View>
+                    )}
+                  </ImageBackground>
+                </View>
+
+                <View style={styles.cardInfo}>
+                  <Text style={styles.cardItemTitle}>{t("ct.royalCurve")}</Text>
+
+                  {isRoyalOwned ? (
+                    <View style={styles.upgradeButton}>
+                      <Text style={styles.upgradeButtonText}>
+                        {t("ct.inCollection") || "In your collection"}
+                      </Text>
+                    </View>
+                  ) : (
+                    <TouchableOpacity
+                      style={[
+                        styles.upgradeButton,
+                        availableBalance >= 5000 && styles.activeUpgradeButton,
+                      ]}
+                      onPress={() => {
+                        if (isBuyingCardsLocked) {
+                          onBuyingCardsLockedPress?.();
+                          return;
+                        }
+                        setSelectedDesignCard({
+                          id: "ROYAL_CURVE",
+                          title: t("ct.royalCurve") || "Royal Curve",
+                          price: 5000,
+                          image: require("../../assets/cards/design_collection/dc2/front.png"),
+                          backImage: require("../../assets/cards/design_collection/dc2/back.png"),
+                        });
+                        setIsDesignModalVisible(true);
+                      }}
+                    >
+                      <Text
+                        style={[
+                          styles.upgradeButtonText,
+                          availableBalance >= 5000 &&
+                            styles.activeUpgradeButtonText,
+                        ]}
+                      >
+                        {t("ct.tapToBuy")}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
               </View>
             </>
           )}
@@ -1365,18 +1513,20 @@ export default function CardsTab({
                 </Text>
               </View>
 
-              {isGoldActive && !isGoldRenewalAvailable && (
-                <View style={styles.vipWarningBox}>
-                  <Ionicons name="warning" size={18} color="#F44336" />
-                  <Text style={styles.vipWarningText}>
-                    {t(
-                      "You already have an active Gold Elite plan. Use the renewal option when your plan is expiring soon.",
-                    )}
-                  </Text>
-                </View>
-              )}
+              {isGoldActive &&
+                !isGoldRenewalAvailable &&
+                !isGoldAutoRenewalCancelled && (
+                  <View style={styles.vipWarningBox}>
+                    <Ionicons name="warning" size={18} color="#F44336" />
+                    <Text style={styles.vipWarningText}>
+                      {t(
+                        "You already have an active Gold Elite plan. Use the renewal option when your plan is expiring soon.",
+                      )}
+                    </Text>
+                  </View>
+                )}
 
-              {isGoldRenewalAvailable && (
+              {isGoldRenewalAvailable && !isGoldAutoRenewalCancelled && (
                 <View style={styles.vipWarningBox}>
                   <Ionicons name="alert-circle" size={18} color="#FF9800" />
                   <Text style={styles.vipWarningText}>
@@ -1432,44 +1582,19 @@ export default function CardsTab({
                 { paddingHorizontal: modalPadding },
               ]}
             >
-              <TouchableOpacity
-                style={styles.vipCancelButton}
-                onPress={async () => {
-                  if (isGoldActive) {
-                    try {
-                      setIsLoading(true);
-                      const token = await AsyncStorage.getItem("access_token");
-                      if (!token) return;
-                      const res = await cancelAutoRenewal(token, "GOLD_ELITE");
-                      if (res.success) {
-                        setIsPurchaseModalVisible(false);
-                        setSuccessModalType("cancelRenewal");
-                        setIsSuccessModalVisible(true);
-                        await fetchCardsData();
-                      } else {
-                        Alert.alert(
-                          "Error",
-                          res.error || "Failed to cancel auto-renewal",
-                        );
-                      }
-                    } catch (err) {
-                      console.error(err);
-                      Alert.alert("Error", "Failed to cancel auto-renewal");
-                    } finally {
-                      setIsLoading(false);
-                    }
-                  } else {
-                    setIsPurchaseModalVisible(false);
-                  }
-                }}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.vipCancelButtonText}>
-                  {isGoldActive
-                    ? t("ct.cancelRenewal") || "Cancel Renewal"
-                    : t("ct.cancel")}
-                </Text>
-              </TouchableOpacity>
+              {!(isGoldActive && isGoldAutoRenewalCancelled) && (
+                <TouchableOpacity
+                  style={[styles.vipCancelButton]}
+                  onPress={handleCancelRenewalPress}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.vipCancelButtonText}>
+                    {isGoldActive
+                      ? t("ct.cancelRenewal") || "Cancel Renewal"
+                      : t("ct.cancel")}
+                  </Text>
+                </TouchableOpacity>
+              )}
 
               <TouchableOpacity
                 style={[
@@ -1720,6 +1845,22 @@ export default function CardsTab({
       </ActivityModal>
 
       {/* Success Modal */}
+      <PasscodeModal
+        visible={isCancelPasscodeModalVisible}
+        passcode={cancelPasscode}
+        title={t("withdraw.enterPasscode")}
+        confirmLabel={t("ct.cancelRenewal") || "Cancel Renewal"}
+        cancelLabel={t("common.cancel") || "Cancel"}
+        loading={isLoading}
+        onChangePasscode={setCancelPasscode}
+        onConfirm={handleCancelRenewalPasscodeConfirm}
+        onCancel={() => {
+          if (isLoading) return;
+          setIsCancelPasscodeModalVisible(false);
+          setCancelPasscode("");
+        }}
+      />
+
       <ActivityModal
         animationType="fade"
         transparent={true}
