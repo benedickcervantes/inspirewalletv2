@@ -54,6 +54,7 @@ import {
 import NotificationBadge from "../Notification/NotificationBadge";
 import CardsTab from "./CardsTab";
 import SavingsTab from "./SavingsTab";
+import { computeProjectedTotalDividend } from "./utils/termSavingsFormula";
 import WalletTab from "./WalletTab";
 
 // API returns raw enums; keys for translation (use t() when displaying)
@@ -151,36 +152,16 @@ function computeActiveTimeDepositPrincipalTotal(
 }
 
 function computeDividend(deposits: TimeDeposit[]): number {
-  // Expected dividend = sum per contract (ACTIVE/MATURED only) of dividend from schedule.
-  // For each payout: use only dividend (if principalReturned is set, amount includes principal so subtract it).
+  // Align with admin formula: per-cycle net payout after 20% tax times cycle count.
   const activeOnly = deposits.filter((d) => d.status === "ACTIVE");
   return activeOnly.reduce((total, d) => {
-    const schedule = d.payoutSchedule ?? d.payout_schedule ?? [];
-    const contractDividend = (Array.isArray(schedule) ? schedule : []).reduce(
-      (
-        s: number,
-        p: {
-          amount?: string | number;
-          principalReturned?: string | number;
-          principal_returned?: string;
-        },
-      ) => {
-        const amt =
-          typeof p?.amount === "number"
-            ? p.amount
-            : parseFloat(String(p?.amount ?? 0));
-        const principal = parseFloat(
-          String(p?.principalReturned ?? p?.principal_returned ?? 0),
-        );
-        const dividendOnly = Number.isNaN(amt)
-          ? 0
-          : principal > 0
-            ? Math.max(0, amt - principal)
-            : amt;
-        return s + dividendOnly;
-      },
-      0,
-    );
+    const contractDividend = computeProjectedTotalDividend({
+      amount: d.amount,
+      interestRate: d.interestRate,
+      contractType: d.contractType,
+      payoutSchedule: d.payoutSchedule,
+      payout_schedule: d.payout_schedule,
+    });
     return total + contractDividend;
   }, 0);
 }

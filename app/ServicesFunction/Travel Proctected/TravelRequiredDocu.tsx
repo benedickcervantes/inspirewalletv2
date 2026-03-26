@@ -24,9 +24,9 @@ export interface TravelRequiredDocuProps {
   passportPhotoError?: string;
   governmentIdFrontError?: string;
   governmentIdBackError?: string;
-  onPickPassportPhoto: () => void;
-  onPickGovernmentIdFront: () => void;
-  onPickGovernmentIdBack: () => void;
+  onPickPassportPhoto: (source: "camera" | "library") => void;
+  onPickGovernmentIdFront: (source: "camera" | "library") => void;
+  onPickGovernmentIdBack: (source: "camera" | "library") => void;
   onGovernmentIdTypeChange: (value: string) => void;
   onGovernmentIdNumberChange: (value: string) => void;
 }
@@ -51,6 +51,10 @@ export default function TravelRequiredDocu({
   const { height: windowHeight } = useWindowDimensions();
   const modalListMaxHeight = Math.min(420, windowHeight * 0.45);
   const [showIdTypeModal, setShowIdTypeModal] = useState(false);
+  const [showUploadSourceModal, setShowUploadSourceModal] = useState(false);
+  const [activeUploadTarget, setActiveUploadTarget] = useState<
+    "passport" | "governmentFront" | "governmentBack" | null
+  >(null);
 
   const idTypeOptions = [
     { label: t("banking.idNationalId"), value: "National_ID" },
@@ -64,6 +68,23 @@ export default function TravelRequiredDocu({
   const requiresFrontAndBack = ["National_ID", "Driver_License"].includes(
     governmentIdType,
   );
+  const openUploadSourceModal = (
+    target: "passport" | "governmentFront" | "governmentBack",
+  ) => {
+    setActiveUploadTarget(target);
+    setShowUploadSourceModal(true);
+  };
+  const handleSelectUploadSource = (source: "camera" | "library") => {
+    if (activeUploadTarget === "passport") {
+      onPickPassportPhoto(source);
+    } else if (activeUploadTarget === "governmentFront") {
+      onPickGovernmentIdFront(source);
+    } else if (activeUploadTarget === "governmentBack") {
+      onPickGovernmentIdBack(source);
+    }
+    setShowUploadSourceModal(false);
+    setActiveUploadTarget(null);
+  };
 
   return (
     <View style={[styles.formCard, isSmallScreen && styles.formCardSmall]}>
@@ -94,7 +115,7 @@ export default function TravelRequiredDocu({
             passportPhoto && styles.uploadBoxSuccess,
             passportPhotoError ? styles.uploadBoxError : null,
           ]}
-          onPress={onPickPassportPhoto}
+          onPress={() => openUploadSourceModal("passport")}
         >
           <MaterialCommunityIcons
             name="camera"
@@ -172,7 +193,7 @@ export default function TravelRequiredDocu({
               governmentIdFront && styles.uploadBoxSuccess,
               governmentIdFrontError ? styles.uploadBoxError : null,
             ]}
-            onPress={onPickGovernmentIdFront}
+            onPress={() => openUploadSourceModal("governmentFront")}
           >
             <MaterialCommunityIcons
               name="card-account-details"
@@ -187,7 +208,15 @@ export default function TravelRequiredDocu({
             >
               {governmentIdFront ? t("travel.passportUploaded") : t("kyc.govIdFront")}
             </Text>
-            <Text style={styles.uploadSubtext}>{t("travel.tapToSelectImage")}</Text>
+            <Text style={styles.uploadSubtext}>
+              {requiresFrontAndBack
+                ? t("travel.uploadFrontIdHint", {
+                    defaultValue: "Upload the front side of your government ID",
+                  })
+                : t("travel.uploadSingleIdHint", {
+                    defaultValue: "Upload one clear government ID photo",
+                  })}
+            </Text>
           </TouchableOpacity>
 
           {requiresFrontAndBack ? (
@@ -198,7 +227,7 @@ export default function TravelRequiredDocu({
                 governmentIdBack && styles.uploadBoxSuccess,
                 governmentIdBackError ? styles.uploadBoxError : null,
               ]}
-              onPress={onPickGovernmentIdBack}
+              onPress={() => openUploadSourceModal("governmentBack")}
             >
               <MaterialCommunityIcons
                 name="card-account-details-outline"
@@ -213,7 +242,11 @@ export default function TravelRequiredDocu({
               >
                 {governmentIdBack ? t("travel.passportUploaded") : t("kyc.govIdBack")}
               </Text>
-              <Text style={styles.uploadSubtext}>{t("travel.tapToSelectImage")}</Text>
+              <Text style={styles.uploadSubtext}>
+                {t("travel.uploadBackIdHint", {
+                  defaultValue: "Upload the back side of your government ID",
+                })}
+              </Text>
             </TouchableOpacity>
           ) : null}
         </View>
@@ -272,6 +305,42 @@ export default function TravelRequiredDocu({
                 </TouchableOpacity>
               ))}
             </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        transparent
+        animationType="fade"
+        visible={showUploadSourceModal}
+        onRequestClose={() => setShowUploadSourceModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <TouchableOpacity
+            style={styles.modalBackdrop}
+            activeOpacity={1}
+            onPress={() => setShowUploadSourceModal(false)}
+          />
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>
+              {t("kyc.selectUploadMethod", { defaultValue: "Select Upload Method" })}
+            </Text>
+            <TouchableOpacity
+              style={styles.modalOption}
+              onPress={() => handleSelectUploadSource("camera")}
+            >
+              <Text style={styles.modalOptionText}>
+                {t("kyc.takePhoto", { defaultValue: "Take a Photo" })}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.modalOption}
+              onPress={() => handleSelectUploadSource("library")}
+            >
+              <Text style={styles.modalOptionText}>
+                {t("kyc.chooseFromLibrary", { defaultValue: "Choose from Library" })}
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
