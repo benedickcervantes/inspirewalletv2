@@ -334,6 +334,9 @@ export default function Register() {
         newErrors.lastName = t("register.errorLastName");
       }
       const phoneDigits = phoneNumber.replace(/\D/g, "");
+      if (!phoneDigits) {
+        newErrors.phoneNumber = t("register.errorPhoneRequired");
+      }
       const country = COUNTRY_OPTIONS.find(
         (c) => c.code === selectedCountryCode,
       );
@@ -1005,6 +1008,7 @@ export default function Register() {
                         ]}
                       >
                         {t("register.phoneNumber")}
+                        <Text style={styles.required}>*</Text>
                       </Text>
                       <View style={styles.phoneInputContainer}>
                         <TouchableOpacity

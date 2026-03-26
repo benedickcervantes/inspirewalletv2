@@ -1736,6 +1736,7 @@ const en: TranslationMap = {
   "register.errorFirstName": "Please enter your first name",
   "register.errorLastName": "Please enter your last name",
   "register.phoneNumber": "Phone Number",
+  "register.errorPhoneRequired": "Please enter your phone number",
   "register.errorPhoneInvalid":
     "Please enter a valid {digits}-digit phone number for the selected country.",
   "register.iHaveCompany": "I have a company",
@@ -3532,6 +3533,7 @@ const ko: TranslationMap = {
   "register.errorFirstName": "이름을 입력해 주세요",
   "register.errorLastName": "성을 입력해 주세요",
   "register.phoneNumber": "전화번호",
+  "register.errorPhoneRequired": "전화번호를 입력해 주세요",
   "register.errorPhoneInvalid":
     "선택한 국가의 올바른 {digits}자리 전화번호를 입력해 주세요.",
   "register.iHaveCompany": "회사가 있습니다",
@@ -5328,6 +5330,7 @@ const ja: TranslationMap = {
   "register.errorFirstName": "名を入力してください",
   "register.errorLastName": "姓を入力してください",
   "register.phoneNumber": "電話番号",
+  "register.errorPhoneRequired": "電話番号を入力してください",
   "register.errorPhoneInvalid":
     "選択した国の{digits}桁の電話番号を正しく入力してください。",
   "register.iHaveCompany": "会社があります",
@@ -7093,6 +7096,7 @@ const ar: TranslationMap = {
   "register.errorFirstName": "يرجى إدخال اسمك الأول",
   "register.errorLastName": "يرجى إدخال اسم العائلة",
   "register.phoneNumber": "رقم الهاتف",
+  "register.errorPhoneRequired": "يرجى إدخال رقم هاتفك",
   "register.errorPhoneInvalid":
     "يرجى إدخال رقم هاتف صحيح ({digits} أرقام) للدولة المحددة.",
   "register.iHaveCompany": "لدي شركة",
