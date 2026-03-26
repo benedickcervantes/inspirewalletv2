@@ -16,6 +16,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
+  getOrCreateMainWallet,
+  submitTimeDepositRequest,
   uploadTimeDepositReceiptFile,
 } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
@@ -31,6 +33,8 @@ export default function TimeDepositProof() {
     amount?: string;
     amountInPhp?: number;
     currency?: string;
+    submittedCryptoAmount?: string;
+    cryptoType?: "BTC" | "ETH" | "USDT";
   };
 
   const [loading, setLoading] = useState(false);
@@ -42,8 +46,9 @@ export default function TimeDepositProof() {
   const amount = params.amount || "0";
   const amountInPhp = params.amountInPhp ?? (parseFloat(amount) || 0);
   const currency = params.currency || "PHP";
-  const requestId = params.requestId || "";
   const isCryptoDeposit = depositMethod === "Crypto Deposit";
+  const submittedCryptoAmount = params.submittedCryptoAmount || amount;
+  const cryptoType = params.cryptoType;
   const normalizedCrypto = String(currency).toUpperCase();
 
   const cryptoWalletMap: Record<string, string> = {
@@ -128,10 +133,35 @@ export default function TimeDepositProof() {
         return;
       }
 
-      if (!requestId) {
-        setErrorMessage(t("deposit.missingRequestId"));
+      const body: Record<string, string> = {
+        amount: Number(amountInPhp).toFixed(2),
+        contractPeriod,
+        depositMethod:
+          depositMethod === "Available Balance"
+            ? "available_balance"
+            : "request_amount",
+      };
+      if (isCryptoDeposit && cryptoType && submittedCryptoAmount) {
+        body.cryptoType = cryptoType;
+        body.submittedCryptoAmount = submittedCryptoAmount;
+      }
+
+      if (depositMethod === "Available Balance") {
+        const { success, wallet } = await getOrCreateMainWallet(token);
+        if (!success || !wallet?.id) {
+          setErrorMessage(t("deposit.walletLoadError"));
+          return;
+        }
+        body.walletId = wallet.id as string;
+      }
+
+      const created = await submitTimeDepositRequest(token, body);
+      if (!created.success || !created.data?.id) {
+        setErrorMessage(created.error || t("deposit.submitError"));
         return;
       }
+
+      const generatedRequestId = created.data.id as string;
 
       if (proofUri) {
         const uriLower = proofUri.toLowerCase();
@@ -144,7 +174,7 @@ export default function TimeDepositProof() {
               : "image/jpeg";
         const uploadRes = await uploadTimeDepositReceiptFile(
           token,
-          requestId,
+          generatedRequestId,
           proofUri,
           mimeType,
         );
@@ -157,8 +187,8 @@ export default function TimeDepositProof() {
       }
 
       navigation.navigate("depositProofView", {
-        transactionId: requestId || t("investment.pending"),
-        requestId: requestId || t("investment.pending"),
+        transactionId: generatedRequestId,
+        requestId: generatedRequestId,
         amount,
         amountInPhp,
         currency,
