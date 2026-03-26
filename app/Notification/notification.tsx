@@ -42,6 +42,29 @@ const DETAIL_MODAL_WIDTH = Math.min(SCREEN_WIDTH * 0.86, 420);
 const DETAIL_MODAL_MAX_HEIGHT = SCREEN_HEIGHT * 0.78;
 const NOTIFICATION_PAGE_SIZE = 5;
 
+/**
+ * Format notification messages to add comma separators to amounts
+ * Looks for patterns like "5454.00" or "54554.00" and formats them with commas
+ */
+const formatNotificationMessage = (message: string): string => {
+  if (!message) return message;
+  
+  // Pattern to match amounts in notification messages
+  // Matches numbers with 2 decimal places (e.g., "5454.00", "54554.00")
+  const amountPattern = /\b(\d{4,})\.(\d{2})\b/g;
+  
+  return message.replace(amountPattern, (match) => {
+    const amount = parseFloat(match);
+    if (!Number.isFinite(amount)) return match;
+    
+    return amount.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+      useGrouping: true
+    });
+  });
+};
+
 const Notification = () => {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
@@ -628,7 +651,7 @@ const Notification = () => {
     });
     fields.push({
       label: t("notification.detailMessage") ?? "Message",
-      value: notif.message ?? "—",
+      value: formatNotificationMessage(notif.message ?? "—"),
     });
     fields.push({
       label: t("notification.detailDate") ?? "Date",
@@ -834,7 +857,7 @@ const Notification = () => {
           <View style={styles.divider} />
 
           <Text style={styles.notificationMessage} numberOfLines={3}>
-            {item.message}
+            {formatNotificationMessage(item.message)}
           </Text>
 
           <Text style={styles.timestamp}>
@@ -933,7 +956,7 @@ const Notification = () => {
           <View style={styles.divider} />
 
           <Text style={styles.notificationMessage} numberOfLines={3}>
-            {item.message}
+            {formatNotificationMessage(item.message)}
           </Text>
 
           <Text style={styles.timestamp}>
