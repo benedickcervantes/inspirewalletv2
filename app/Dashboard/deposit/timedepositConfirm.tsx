@@ -17,6 +17,8 @@ export default function TimeDepositConfirm() {
     depositMethod?: string;
     contractPeriod?: string;
     amount?: string;
+    submittedCryptoAmount?: string;
+    cryptoType?: "BTC" | "ETH" | "USDT";
     amountInPhp?: number;
     currency?: string;
   };
@@ -28,6 +30,9 @@ export default function TimeDepositConfirm() {
   const depositMethod = params.depositMethod || "Request Amount";
   const contractPeriod = params.contractPeriod || "";
   const amount = params.amount || "0";
+  const submittedCryptoAmount = params.submittedCryptoAmount || amount;
+  const cryptoType = params.cryptoType;
+  const isCryptoDeposit = depositMethod === "Crypto Deposit";
   const amountInPhp = params.amountInPhp ?? (parseFloat(amount) || 0);
   const currency = params.currency || "PHP";
 
@@ -56,6 +61,10 @@ export default function TimeDepositConfirm() {
           ? "available_balance"
           : "request_amount",
     };
+    if (isCryptoDeposit && cryptoType && submittedCryptoAmount) {
+      body.cryptoType = cryptoType;
+      body.submittedCryptoAmount = submittedCryptoAmount;
+    }
 
     if (depositMethod === "Available Balance") {
       const { success, wallet } = await getOrCreateMainWallet(token);
@@ -168,12 +177,12 @@ export default function TimeDepositConfirm() {
             <View style={styles.amountDisplay}>
               <Text style={styles.amountValue}>
                 {currency === "PHP" ? "₱" : ""}
-                {Number(amount).toLocaleString(undefined, {
+                {Number(isCryptoDeposit ? submittedCryptoAmount : amount).toLocaleString(undefined, {
                   minimumFractionDigits: 2,
                 })}
                 {currency !== "PHP" ? ` ${currency}` : ""}
               </Text>
-              {amountInPhp !== parseFloat(amount) && currency !== "PHP" && (
+              {amountInPhp !== parseFloat(isCryptoDeposit ? submittedCryptoAmount : amount) && currency !== "PHP" && (
                 <Text style={styles.phpEquivalentText}>
                   ≈ ₱
                   {amountInPhp.toLocaleString(undefined, {
@@ -219,7 +228,7 @@ export default function TimeDepositConfirm() {
                 </Text>
                 <Text style={styles.summaryValue}>
                   {currency}{" "}
-                  {parseFloat(amount).toLocaleString(undefined, {
+                  {parseFloat(isCryptoDeposit ? submittedCryptoAmount : amount).toLocaleString(undefined, {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
                   })}

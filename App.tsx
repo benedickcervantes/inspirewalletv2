@@ -180,6 +180,7 @@ function RootNavigator() {
           <Stack.Screen name="TimeDepositProof" component={TimeDepositProof} />
           <Stack.Screen name="topup" component={TopUpBalance} />
           <Stack.Screen name="TopupConfirm" component={TopupConfirm} />
+          <Stack.Screen name="depositProofView" component={DepositReceipt} />
           <Stack.Screen name="depositReceipt" component={DepositReceipt} />
           <Stack.Screen name="Withdraw" component={WithdrawScreen} />
           <Stack.Screen name="WithdrawMethod" component={WithdrawMethodScreen} />

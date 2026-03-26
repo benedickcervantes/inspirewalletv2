@@ -25,6 +25,8 @@ import {
 import { getLanguageCode } from "../../../constants/locales";
 import { useLanguage } from "../../../context/LanguageContext";
 
+const CRYPTO_MARGIN_MULTIPLIER = 0.99;
+
 // ─── Thin separator ───────────────────────────────────────────────────────────
 function Separator({ style }: { style?: object }) {
   return <View style={[sepStyles.line, style]} />;
@@ -154,6 +156,7 @@ export default function DepositReceipt() {
   const params = (route.params || {}) as {
     transactionId?: string;
     amount?: string;
+    amountInPhp?: number;
     currency?: string;
     depositMethod?: string;
     contractPeriod?: string;
@@ -167,6 +170,7 @@ export default function DepositReceipt() {
   const {
     transactionId = t("investment.pending"),
     amount = "0",
+    amountInPhp,
     currency = "PHP",
     depositMethod = "",
     contractPeriod,
@@ -300,6 +304,18 @@ export default function DepositReceipt() {
   ).toLocaleString(locale, { minimumFractionDigits: 2 })}${
     currency !== "PHP" ? ` ${currency}` : ""
   }`;
+  const isCryptoTimeDepositReceipt =
+    normalizedType === "time deposit" &&
+    (depositMethod || "").toLowerCase() === "crypto deposit" &&
+    currency !== "PHP";
+  const hasPhpEquivalent = Number.isFinite(amountInPhp);
+  const phpEquivalentWithMargin =
+    isCryptoTimeDepositReceipt && hasPhpEquivalent
+      ? Number(amountInPhp) * CRYPTO_MARGIN_MULTIPLIER
+      : Number(amountInPhp ?? 0);
+  const formattedPhpEquivalent = hasPhpEquivalent
+    ? `₱${phpEquivalentWithMargin.toLocaleString(locale, { minimumFractionDigits: 2 })}`
+    : "";
 
   const receiptWidth = Math.min(380, width - 32);
 
@@ -398,6 +414,15 @@ export default function DepositReceipt() {
                   <ReceiptRow
                     label={t("deposit.contractPeriod")}
                     value={contractPeriod}
+                  />
+                </>
+              )}
+              {isCryptoTimeDepositReceipt && hasPhpEquivalent && (
+                <>
+                  <Separator />
+                  <ReceiptRow
+                    label="PHP Equivalent"
+                    value={formattedPhpEquivalent}
                   />
                 </>
               )}
