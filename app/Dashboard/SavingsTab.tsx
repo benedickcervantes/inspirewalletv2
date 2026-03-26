@@ -59,6 +59,7 @@ interface SavingsTabProps {
   depositGrowthData: { month: string; amount: number }[];
   deposits: TimeDeposit[];
   formatCurrency: (amount: number) => string;
+  isLoading?: boolean;
   onRefresh?: () => Promise<void>;
   /** Fallback: user's referrer from GET /referrals/tree (when contract has no referrer/commission) */
   userReferrer?: { referralCode?: string; firstName?: string; lastName?: string } | null;
@@ -122,6 +123,7 @@ export default function SavingsTab({
   depositGrowthData,
   deposits,
   formatCurrency,
+  isLoading = false,
   onRefresh,
   userReferrer,
 }: SavingsTabProps) {
@@ -236,13 +238,17 @@ export default function SavingsTab({
           </View>
           <View style={styles.depositInfo}>
             <Text style={[styles.depositLabel, { fontSize: Math.round(14 * fontScale) }]}>{t("investment.timeDeposit")}</Text>
-            <Text
-              style={[styles.depositAmount, { fontSize: Math.round(32 * fontScale) }]}
-              numberOfLines={1}
-              adjustsFontSizeToFit
-            >
-              ₱ {formatCurrency(timeDeposit)}
-            </Text>
+            {isLoading ? (
+              <View style={styles.depositAmountSkeleton} />
+            ) : (
+              <Text
+                style={[styles.depositAmount, { fontSize: Math.round(32 * fontScale) }]}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+              >
+                ₱ {formatCurrency(timeDeposit)}
+              </Text>
+            )}
           </View>
         </ImageBackground>
       </View>
@@ -265,8 +271,9 @@ export default function SavingsTab({
                 numberOfLines={1}
                 adjustsFontSizeToFit
               >
-                ₱ {formatCurrency(dividend)}
+                {isLoading ? "" : `₱ ${formatCurrency(dividend)}`}
               </Text>
+              {isLoading ? <View style={styles.amountWalletAmountSkeleton} /> : null}
               <Text
                 style={[styles.amountWalletHint, { fontSize: isTinyScreen ? 10 : 11 }]}
                 numberOfLines={2}
@@ -302,16 +309,30 @@ export default function SavingsTab({
           </View>
           <View style={[styles.chartContainer, { height: compact ? 120 : 150 }]}>
             <View style={[styles.barsContainer, { height: compact ? 100 : 140 }]}>
-              {depositGrowthData.map((data, index) => {
+              {(isLoading
+                ? Array.from({ length: 12 }).map((_, idx) => ({
+                    month: idx + 1,
+                    amount: 0,
+                  }))
+                : depositGrowthData
+              ).map((data, index) => {
                 const maxBarH = compact ? 80 : 120;
-                const barHeight = (data.amount / maxAmount) * maxBarH;
+                const barHeight = isLoading
+                  ? maxBarH * (0.25 + ((index % 5) * 0.12))
+                  : (data.amount / maxAmount) * maxBarH;
                 return (
                   <View key={index} style={[styles.barWrapper, { minWidth: 0 }]}>
                     <View style={styles.barColumn}>
-                      <View style={[styles.bar, { height: Math.max(barHeight, 4) }]} />
+                      <View
+                        style={[
+                          styles.bar,
+                          isLoading && styles.barSkeleton,
+                          { height: Math.max(barHeight, 4) },
+                        ]}
+                      />
                     </View>
                     <Text style={[styles.barLabel, { fontSize: isTinyScreen ? 8 : 9 }]} numberOfLines={1}>
-                      {data.month}
+                      {isLoading ? " " : data.month}
                     </Text>
                   </View>
                 );
@@ -358,7 +379,24 @@ export default function SavingsTab({
         </View>
 
         <View style={[styles.contractList, { gap: compact ? 8 : 12 }]}>
-          {filteredDeposits.length === 0 ? (
+          {isLoading ? (
+            <>
+              {[0, 1, 2].map((idx) => (
+                <View key={`contract-skeleton-${idx}`} style={[styles.contractCard, { padding: compact ? 12 : 16 }]}>
+                  <View style={[styles.contractCardTop, { marginBottom: compact ? 8 : 12 }]}>
+                    <View style={{ flex: 1 }}>
+                      <View style={styles.contractLineSkeletonWide} />
+                      <View style={styles.contractLineSkeletonShort} />
+                    </View>
+                    <View style={styles.contractBadgeSkeleton} />
+                  </View>
+                  <View style={[styles.contractCardBottom, { paddingTop: compact ? 8 : 12 }]}>
+                    <View style={styles.contractDateSkeleton} />
+                  </View>
+                </View>
+              ))}
+            </>
+          ) : filteredDeposits.length === 0 ? (
             <View style={[styles.emptyState, { paddingVertical: compact ? 24 : 40, paddingHorizontal: compact ? 16 : 24 }]}>
               <Ionicons name="document-text-outline" size={compact ? 40 : 48} color="#CCC" />
               <Text style={[styles.emptyStateText, { fontSize: compact ? 14 : 16 }]}>
@@ -782,6 +820,12 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   depositAmount: { fontSize: 32, fontWeight: "700", color: "#FFFFFF" },
+  depositAmountSkeleton: {
+    width: 170,
+    height: 34,
+    borderRadius: 10,
+    backgroundColor: "rgba(255,255,255,0.45)",
+  },
   amountWalletContainer: { paddingHorizontal: 20, paddingTop: 16 },
   amountWalletCard: {
     backgroundColor: "#FFE8D6",
@@ -806,6 +850,13 @@ const styles = StyleSheet.create({
   amountWalletHeader: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 4 },
   amountWalletLabel: { fontSize: 16, fontWeight: "700", color: "#333" },
   amountWalletAmount: { fontSize: 20, fontWeight: "700", color: "#E15816" },
+  amountWalletAmountSkeleton: {
+    width: 130,
+    height: 22,
+    borderRadius: 8,
+    backgroundColor: "#F4C7A9",
+    marginTop: -22,
+  },
   amountWalletHint: { fontSize: 11, color: "#999", marginTop: 4 },
   amountWalletIcon: { marginLeft: 12 },
   graphContainer: { paddingHorizontal: 20, paddingTop: 16 },
@@ -845,6 +896,9 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 4,
     borderTopRightRadius: 4,
     minHeight: 4,
+  },
+  barSkeleton: {
+    backgroundColor: "rgba(255, 255, 255, 0.6)",
   },
   barLabel: { fontSize: 9, color: "#FFFFFF", marginTop: 4, fontWeight: "600" },
   contractsSection: { paddingHorizontal: 20, paddingTop: 16 },
@@ -911,6 +965,31 @@ const styles = StyleSheet.create({
     borderTopColor: "#F3F4F6",
   },
   contractCardDates: { fontSize: 12, color: "#9CA3AF" },
+  contractLineSkeletonWide: {
+    width: "75%",
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: "#ECECEC",
+    marginBottom: 8,
+  },
+  contractLineSkeletonShort: {
+    width: "45%",
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: "#F1F1F1",
+  },
+  contractBadgeSkeleton: {
+    width: 64,
+    height: 22,
+    borderRadius: 8,
+    backgroundColor: "#EFEFEF",
+  },
+  contractDateSkeleton: {
+    width: "65%",
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: "#F1F1F1",
+  },
   emptyState: {
     alignItems: "center",
     paddingVertical: 40,

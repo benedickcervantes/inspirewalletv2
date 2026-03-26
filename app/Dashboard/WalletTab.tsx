@@ -2,7 +2,6 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
   Animated,
   ImageBackground,
   StyleSheet,
@@ -42,6 +41,7 @@ interface WalletTabProps {
   userData: { firstName?: string; accountNumber?: string } | null;
   availableBalance: number;
   isBalanceLoading: boolean;
+  activeCardDesign?: string | null;
   formatCurrency: (amount: number) => string;
   flipAnimation: Animated.Value;
   isCardFlipped: boolean;
@@ -87,6 +87,7 @@ export default function WalletTab({
   userData,
   availableBalance,
   isBalanceLoading,
+  activeCardDesign,
   formatCurrency,
   flipAnimation,
   isCardFlipped,
@@ -116,7 +117,9 @@ export default function WalletTab({
   const currencyFontSize = Math.round(11 + cardScale * 7);
   const amountFontSize = Math.round(18 + cardScale * 22);
   const [isBalanceVisible, setIsBalanceVisible] = useState(true);
-  const [activeDesign, setActiveDesign] = useState<string | null>(null);
+  const [activeDesign, setActiveDesign] = useState<string | null>(
+    activeCardDesign ?? null,
+  );
 
   const toggleBalanceVisibility = () => {
     setIsBalanceVisible(!isBalanceVisible);
@@ -128,6 +131,10 @@ export default function WalletTab({
 
   // Keep wallet card skin in sync with Cards tab (uses same cached design key).
   useEffect(() => {
+    if (activeCardDesign !== undefined) {
+      setActiveDesign(activeCardDesign ?? null);
+      return;
+    }
     const loadActiveDesign = async () => {
       try {
         const key = getActiveCardStorageKey(userData?.accountNumber);
@@ -139,7 +146,7 @@ export default function WalletTab({
       }
     };
     loadActiveDesign();
-  }, [userData?.accountNumber]);
+  }, [userData?.accountNumber, activeCardDesign]);
 
   const theme = getCardTheme(activeDesign);
 
@@ -246,23 +253,23 @@ export default function WalletTab({
                 >
                   PHP
                 </Text>
-                <Text
-                  style={[
-                    styles.balanceAmount,
-                    { color: theme.primaryText, fontSize: amountFontSize },
-                  ]}
-                  numberOfLines={1}
-                  adjustsFontSizeToFit
-                  minimumFontScale={0.5}
-                >
-                  {isBalanceLoading ? (
-                    <ActivityIndicator size="small" color={theme.primaryText} />
-                  ) : isBalanceVisible ? (
-                    formatCurrency(availableBalance)
-                  ) : (
-                    maskBalance(availableBalance)
-                  )}
-                </Text>
+                {isBalanceLoading ? (
+                  <View style={styles.balanceAmountSkeleton} />
+                ) : (
+                  <Text
+                    style={[
+                      styles.balanceAmount,
+                      { color: theme.primaryText, fontSize: amountFontSize },
+                    ]}
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.5}
+                  >
+                    {isBalanceVisible
+                      ? formatCurrency(availableBalance)
+                      : maskBalance(availableBalance)}
+                  </Text>
+                )}
               </View>
               <View
                 style={[
@@ -479,6 +486,12 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#FFFFFF",
     letterSpacing: 0.5,
+  },
+  balanceAmountSkeleton: {
+    flex: 1,
+    height: 24,
+    borderRadius: 8,
+    backgroundColor: "rgba(255, 255, 255, 0.45)",
   },
   cardSeparator: {
     height: 1.5,
