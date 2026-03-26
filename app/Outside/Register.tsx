@@ -417,11 +417,9 @@ export default function Register() {
       const country = COUNTRY_OPTIONS.find(
         (c) => c.code === selectedCountryCode,
       );
-      if (
-        phoneDigits.length > 0 &&
-        country &&
-        phoneDigits.length !== country.maxLength
-      ) {
+      if (!phoneDigits.length) {
+        newErrors.phoneNumber = t("register.errorPhoneRequired");
+      } else if (country && phoneDigits.length !== country.maxLength) {
         newErrors.phoneNumber = t("register.errorPhoneInvalid").replace(
           "{digits}",
           String(country.maxLength),
@@ -1103,7 +1101,8 @@ export default function Register() {
                           },
                         ]}
                       >
-                        {t("register.phoneNumber")}
+                        {t("register.phoneNumber")}{" "}
+                        <Text style={styles.required}>*</Text>
                       </Text>
                       <View style={styles.phoneInputContainer}>
                         <TouchableOpacity

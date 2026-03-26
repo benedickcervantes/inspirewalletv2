@@ -44,12 +44,13 @@ const SOURCE_OF_FUND_KEY: Record<string, string> = {
   Pension: "banking.sourcePension",
   Other: "banking.sourceOther",
 };
-const CURRENCY_OPTIONS = ["PHP", "USD", "EUR", "KRW"];
+const CURRENCY_OPTIONS = ["PHP", "USD", "EUR", "KRW", "JPY"];
 const CURRENCY_KEY: Record<string, string> = {
   PHP: "banking.currencyPHP",
   USD: "banking.currencyUSD",
   EUR: "banking.currencyEUR",
   KRW: "banking.currencyKRW",
+  JPY: "banking.currencyJPY",
 };
 
 export default function BankingFinancialInfo() {
@@ -94,8 +95,14 @@ export default function BankingFinancialInfo() {
     const newErrors: { [key: string]: string } = {};
     if (!sourceOfFund.trim())
       newErrors.sourceOfFund = t("banking.errorSourceOfFund");
-    if (!grossMonthlyIncome.trim())
+    if (!grossMonthlyIncome.trim()) {
       newErrors.grossMonthlyIncome = t("banking.errorMonthlyIncome");
+    } else {
+      const parsedIncome = Number(grossMonthlyIncome.replace(/,/g, ""));
+      if (Number.isNaN(parsedIncome) || parsedIncome < 1000) {
+        newErrors.grossMonthlyIncome = t("ewallet.incomeInvalid");
+      }
+    }
     if (!grossMonthlyIncomeCurrency)
       newErrors.grossMonthlyIncomeCurrency = t("banking.selectCurrency");
 
@@ -348,6 +355,7 @@ export default function BankingFinancialInfo() {
                     {errors.grossMonthlyIncome}
                   </Text>
                 ) : null}
+                <Text style={styles.helperText}>{t("banking.minimumIncomeGuide")}</Text>
               </View>
             </View>
 
@@ -780,6 +788,12 @@ const styles = StyleSheet.create({
     marginTop: 4,
     marginLeft: 4,
     fontWeight: "500",
+  },
+  helperText: {
+    color: "#6B7280",
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 4,
   },
   incomeRow: {
     flexDirection: "row",
