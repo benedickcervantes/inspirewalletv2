@@ -1925,6 +1925,46 @@ export async function getTransactions(accessToken, opts = {}) {
   }
 }
 
+/**
+ * DELETE /transactions — requires JWT
+ * Delete selected transaction history rows for the authenticated user.
+ * @param {string} accessToken
+ * @param {string[]} ids
+ * @returns {{ success: boolean, deletedCount?: number, error?: string }}
+ */
+export async function deleteTransactions(accessToken, ids = []) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "No token" };
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return { success: false, error: "No transactions selected" };
+  }
+  try {
+    const res = await apiFetch(`${base}/transactions`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ ids }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || "Failed to delete transactions";
+      return { success: false, error: msg };
+    }
+    return {
+      success: true,
+      deletedCount:
+        typeof data.deletedCount === "number" ? data.deletedCount : undefined,
+    };
+  } catch (e) {
+    return { success: false, error: e.message || "Network error" };
+  }
+}
+
 // --- Messaging API (Client) ---
 
 /**
