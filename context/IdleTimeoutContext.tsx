@@ -23,7 +23,7 @@ import { useLanguage } from "./LanguageContext";
 import { navigationRef } from "../lib/navigationRef";
 
 const INACTIVITY_LIMIT_MS = 150 * 1000; // 2 minutes 30 seconds
-const CHECK_INTERVAL_MS = 60 * 1000; // check every minute
+const CHECK_INTERVAL_MS = 5 * 1000; // frequent checks for consistent timeout timing
 const ACTIVITY_PERSIST_THROTTLE_MS = 15 * 1000; // avoid storage write on every touch
 const LAST_ACTIVITY_KEY = "lastActivityAt";
 const IDLE_SESSION_ACTIVE_KEY = "idleSessionActive";
@@ -226,21 +226,11 @@ export const IdleTimeoutProvider: React.FC<{ children: React.ReactNode }> = ({
 
         // Only restore session if both token and session flag exist
         if (sessionActive === "true" && token) {
-          const stored = await AsyncStorage.getItem(LAST_ACTIVITY_KEY);
-          const parsed = stored ? parseInt(stored, 10) : NaN;
           const now = Date.now();
-
-          if (!isNaN(parsed)) {
-            const elapsed = now - parsed;
-            if (elapsed >= INACTIVITY_LIMIT_MS) {
-              // Session expired while app was closed
-              performLogout();
-              return;
-            }
-            lastActivityRef.current = parsed;
-          } else {
-            lastActivityRef.current = now;
-          }
+          // Start with a fresh inactivity window on app startup/reopen.
+          lastActivityRef.current = now;
+          lastPersistedActivityRef.current = now;
+          await AsyncStorage.setItem(LAST_ACTIVITY_KEY, String(now)).catch(() => { });
           setIsSessionActive(true);
         }
       } catch {
@@ -298,31 +288,18 @@ export const IdleTimeoutProvider: React.FC<{ children: React.ReactNode }> = ({
           return;
         }
 
-        // When coming back to foreground, compare elapsed time immediately
+        // When coming back to foreground, give a fresh 2:30 inactivity window.
+        // This prevents "remaining few seconds" expirations after returning.
         if (
           (prevState === "inactive" || prevState === "background") &&
           nextState === "active"
         ) {
-          let last = lastActivityRef.current;
-          try {
-            const stored = await AsyncStorage.getItem(LAST_ACTIVITY_KEY);
-            const parsed = stored ? parseInt(stored, 10) : NaN;
-            if (!isNaN(parsed)) last = parsed;
-          } catch {
-            // ignore and just use ref
-          }
-
           const now = Date.now();
-          const elapsed = now - last;
-          if (elapsed >= INACTIVITY_LIMIT_MS) {
-            await performLogout();
-          } else {
-            // still within window – update activity to now
-            lastActivityRef.current = now;
-            await AsyncStorage.setItem(LAST_ACTIVITY_KEY, String(now)).catch(
-              () => { },
-            );
-          }
+          lastActivityRef.current = now;
+          lastPersistedActivityRef.current = now;
+          await AsyncStorage.setItem(LAST_ACTIVITY_KEY, String(now)).catch(
+            () => { },
+          );
         }
       },
     );

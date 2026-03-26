@@ -33,6 +33,7 @@ import {
     normalizeLanguage,
     SUPPORTED_LANGUAGES,
 } from "../../constants/locales";
+import { useIdleTimeout } from "../../context/IdleTimeoutContext";
 import { useLanguage } from "../../context/LanguageContext";
 import type { NavProp } from "../../types/navigation";
 import { useResponsive } from "../../utils/responsive";
@@ -133,6 +134,7 @@ interface ModalConfig {
 
 export default function Passcode() {
   const navigation = useNavigation();
+  const { startIdleSession } = useIdleTimeout();
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   const { horizontalPadding, isShortScreen, isSmallScreen } = useResponsive();
@@ -203,6 +205,11 @@ export default function Passcode() {
   const { t, language: contextLanguage, setLanguage } = useLanguage();
   const language = normalizeLanguage(contextLanguage ?? DEFAULT_LANGUAGE);
   const [verifyingPasscode, setVerifyingPasscode] = useState(false);
+
+  const goToMainWithSession = async () => {
+    await startIdleSession();
+    (navigation as unknown as NavProp).replace("Main");
+  };
 
   // Biometric state
   const [hasBiometricToken, setHasBiometricToken] = useState(false);
@@ -312,7 +319,7 @@ export default function Passcode() {
             }
           }
           await AsyncStorage.setItem("passcodeLoginComplete", "true");
-          (navigation as unknown as NavProp).replace("Main");
+          await goToMainWithSession();
         } else {
           setError(result.error || t("passcode.biometricLoginFailed"));
           setVerifyingPasscode(false);
@@ -390,7 +397,7 @@ export default function Passcode() {
       if (result.success) {
         setPasscode("");
         AsyncStorage.setItem("passcodeLoginComplete", "true").catch(() => {});
-        (navigation as unknown as NavProp).replace("Main");
+        await goToMainWithSession();
       } else {
         setVerifyingPasscode(false);
         setError(t("passcode.incorrect"));
@@ -486,7 +493,7 @@ export default function Passcode() {
       setNewPasscode("");
       setConfirmNewPasscode("");
       setResetStep("auth");
-      (navigation as unknown as NavProp).replace("Main");
+      await goToMainWithSession();
     }
   };
 

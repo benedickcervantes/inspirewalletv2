@@ -5,6 +5,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { registerIndieID } from 'native-notify';
 import { useEffect, useRef, useState } from "react";
 import { getMe, login } from "../../configs/api";
+import { useIdleTimeout } from "../../context/IdleTimeoutContext";
 import { useLanguage } from "../../context/LanguageContext";
 import type { RootStackParamList } from "../../types/navigation";
 import Loader from "../Loader/Loader";
@@ -16,6 +17,7 @@ type ScreenName = keyof RootStackParamList;
 export default function AuthLoader() {
   const navigation = useNavigation();
   const { t } = useLanguage();
+  const { startIdleSession } = useIdleTimeout();
   const [loading, setLoading] = useState(true);
   const hasInitializedRef = useRef(false);
   const navigationHandledRef = useRef(false);
@@ -44,6 +46,10 @@ export default function AuthLoader() {
     const handleAuthAndRedirect = async () => {
       if (navigationHandledRef.current) return;
       const startTime = Date.now();
+      const goToMainWithSession = async () => {
+        await startIdleSession();
+        goTo("Main");
+      };
 
       try {
         let accessToken = await AsyncStorage.getItem("access_token");
@@ -116,7 +122,11 @@ export default function AuthLoader() {
           await AsyncStorage.setItem("user", JSON.stringify(retryResult.user));
           const silentUser = retryResult.user as { hasPasscode?: boolean };
           await waitMinSplash(startTime);
-          goTo(silentUser?.hasPasscode ? "Passcode" : "Main");
+          if (silentUser?.hasPasscode) {
+            goTo("Passcode");
+          } else {
+            await goToMainWithSession();
+          }
           return;
         }
 
@@ -146,7 +156,7 @@ export default function AuthLoader() {
 
         if (passcodeLoginComplete === "true") {
           await waitMinSplash(startTime);
-          goTo("Main");
+          await goToMainWithSession();
           return;
         }
 
@@ -157,7 +167,7 @@ export default function AuthLoader() {
         }
 
         await waitMinSplash(startTime);
-        goTo("Main");
+        await goToMainWithSession();
       } catch (error) {
         console.error("Error in auth handling:", error);
         try {
@@ -169,7 +179,7 @@ export default function AuthLoader() {
     };
 
     handleAuthAndRedirect();
-  }, [navigation]);
+  }, [navigation, startIdleSession]);
 
   if (!loading) return null;
 
