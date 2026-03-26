@@ -204,7 +204,7 @@ export default function AgentDashboard() {
     setError(null);
     try {
       const meRes = await getMe(accessToken);
-      if (meRes.success && meRes.user && !meRes.user.isAgent) {
+      if (meRes.success && meRes.user && !(meRes.user as any).isAgent) {
         setShowAccessRestrictedModal(true);
         return false;
       }

@@ -21,6 +21,7 @@ export default function DepositProofView() {
   const params = (route.params || {}) as {
     requestId?: string;
     amount?: string;
+    amountInPhp?: number;
     currency?: string;
     depositMethod?: string;
     contractPeriod?: string;
@@ -29,18 +30,24 @@ export default function DepositProofView() {
   };
 
   const requestId = params.requestId || t("investment.pending");
-  const amount = params.amount || "0";
+  const rawAmount = params.amount || "0";
+  const amountInPhp = params.amountInPhp;
   const currency = params.currency || "PHP";
   const depositMethod = params.depositMethod || "-";
   const contractPeriod = params.contractPeriod || "";
   const type = params.type || t("tx.deposit");
   const proofUri = params.proofUri || null;
 
-  const formattedAmount = `${currency === "PHP" ? "₱" : ""}${Number(
-    amount,
-  ).toLocaleString(undefined, { minimumFractionDigits: 2 })}${
-    currency !== "PHP" ? ` ${currency}` : ""
-  }`;
+  const isCryptoDeposit = ["BTC", "ETH", "USDT"].includes(currency);
+  const displayAmount = isCryptoDeposit && amountInPhp 
+    ? amountInPhp 
+    : Number(rawAmount);
+
+  const formattedAmount = `₱ ${displayAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
+  
+  const cryptoSubtitle = isCryptoDeposit 
+    ? `Funded with ${rawAmount} ${currency}` 
+    : null;
 
   return (
     <View style={styles.container}>
@@ -91,7 +98,12 @@ export default function DepositProofView() {
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>{t("deposit.amount")}</Text>
-              <Text style={styles.infoValue}>{formattedAmount}</Text>
+              <View style={styles.infoValueContainer}>
+                <Text style={styles.infoValue}>{formattedAmount}</Text>
+                {cryptoSubtitle && (
+                  <Text style={styles.cryptoSubtitleText}>{cryptoSubtitle}</Text>
+                )}
+              </View>
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>{t("deposit.depositMethod")}</Text>
@@ -221,7 +233,16 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "600",
     color: "#333",
+    textAlign: "right",
+  },
+  infoValueContainer: {
     flex: 1.2,
+    alignItems: "flex-end",
+  },
+  cryptoSubtitleText: {
+    fontSize: 11,
+    color: "#666",
+    marginTop: 2,
     textAlign: "right",
   },
   proofImage: {

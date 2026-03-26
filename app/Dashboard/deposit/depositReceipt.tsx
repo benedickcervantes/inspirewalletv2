@@ -5,7 +5,6 @@ import React, { useEffect, useRef } from "react";
 import {
   Alert,
   Image,
-  NativeModules,
   ScrollView,
   SafeAreaView,
   StyleSheet,
@@ -19,6 +18,7 @@ import ViewShot from "react-native-view-shot";
 import * as MediaLibrary from "expo-media-library";
 import * as Sharing from "expo-sharing";
 import {
+  DEFAULT_TRANSFER_SUCCESS_SOUND,
   getTransferSuccessSound,
   refreshAdminTransferSuccessSound,
 } from "../../../constants/adminAudio";
@@ -105,7 +105,8 @@ export default function DepositReceipt() {
   const viewShotRef = useRef<ViewShot>(null);
   const transferSuccessSoundRef = useRef<{
     unloadAsync: () => Promise<unknown>;
-    replayAsync: () => Promise<unknown>;
+    playAsync: () => Promise<unknown>;
+    setPositionAsync?: (millis: number) => Promise<unknown>;
     setOnPlaybackStatusUpdate: (
       callback: ((status: { isLoaded?: boolean; didJustFinish?: boolean }) => void) | null,
     ) => void;
@@ -200,13 +201,6 @@ export default function DepositReceipt() {
       }
 
       try {
-        const hasNativeExpoAv = Boolean(
-          (NativeModules as Record<string, unknown>)?.ExponentAV,
-        );
-        if (!hasNativeExpoAv) {
-          return;
-        }
-
         await refreshAdminTransferSuccessSound().catch(() => {
           // no-op
         });
@@ -222,6 +216,8 @@ export default function DepositReceipt() {
           shouldDuckAndroid: true,
           playThroughEarpieceAndroid: false,
           staysActiveInBackground: false,
+        }).catch(() => {
+          // Continue playback even if mode setup fails on some runtimes.
         });
 
         if (transferSuccessSoundRef.current) {
@@ -229,10 +225,25 @@ export default function DepositReceipt() {
           transferSuccessSoundRef.current = null;
         }
 
-        const { sound } = await Audio.Sound.createAsync(getTransferSuccessSound(), {
-          shouldPlay: false,
-          volume: 1.0,
-        });
+        let sound: {
+          unloadAsync: () => Promise<unknown>;
+          playAsync: () => Promise<unknown>;
+          setPositionAsync?: (millis: number) => Promise<unknown>;
+          setOnPlaybackStatusUpdate: (
+            callback: ((status: { isLoaded?: boolean; didJustFinish?: boolean }) => void) | null,
+          ) => void;
+        };
+        try {
+          ({ sound } = await Audio.Sound.createAsync(getTransferSuccessSound(), {
+            shouldPlay: false,
+            volume: 1.0,
+          }));
+        } catch {
+          ({ sound } = await Audio.Sound.createAsync(DEFAULT_TRANSFER_SUCCESS_SOUND, {
+            shouldPlay: false,
+            volume: 1.0,
+          }));
+        }
         transferSuccessSoundRef.current = sound;
         sound.setOnPlaybackStatusUpdate((status) => {
           if (status.isLoaded && status.didJustFinish) {
@@ -244,7 +255,12 @@ export default function DepositReceipt() {
             }
           }
         });
-        await sound.replayAsync();
+        if (typeof sound.setPositionAsync === "function") {
+          await sound.setPositionAsync(0).catch(() => {
+            // no-op
+          });
+        }
+        await sound.playAsync();
       } catch {
         // Ignore optional sound failures to keep receipt UX uninterrupted.
       }
@@ -309,10 +325,7 @@ export default function DepositReceipt() {
     (depositMethod || "").toLowerCase() === "crypto deposit" &&
     currency !== "PHP";
   const hasPhpEquivalent = Number.isFinite(amountInPhp);
-  const phpEquivalentWithMargin =
-    isCryptoTimeDepositReceipt && hasPhpEquivalent
-      ? Number(amountInPhp) * CRYPTO_MARGIN_MULTIPLIER
-      : Number(amountInPhp ?? 0);
+  const phpEquivalentWithMargin = Number(amountInPhp ?? 0);
   const formattedPhpEquivalent = hasPhpEquivalent
     ? `₱${phpEquivalentWithMargin.toLocaleString(locale, { minimumFractionDigits: 2 })}`
     : "";
