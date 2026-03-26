@@ -5,16 +5,16 @@ import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-    ActivityIndicator,
-    Modal,
-    Platform,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    useWindowDimensions,
-    View,
+  ActivityIndicator,
+  Modal,
+  Platform,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Path } from "react-native-svg";
@@ -630,6 +630,19 @@ export default function HistoryScreen() {
       date: formatDateTime(selectedTransaction) || new Date().toLocaleString(),
       source: "history",
     });
+  };
+
+  const canViewReceipt = (tx: Transaction | null) => {
+    if (!tx) return false;
+    const normalizedDescription = String(tx.description ?? "").toLowerCase();
+    if (
+      normalizedDescription.includes("request") ||
+      normalizedDescription.includes("pending") ||
+      normalizedDescription.includes("rejected")
+    ) {
+      return false;
+    }
+    return true;
   };
 
   const handleLoadMore = () => {
@@ -1448,15 +1461,24 @@ export default function HistoryScreen() {
                 </Text>
               </View>
 
-              <TouchableOpacity
-                style={styles.detailModalViewReceiptButton}
-                onPress={handleViewReceipt}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.detailModalViewReceiptButtonText}>
-                  {t("View Receipt") ?? "View Receipt"}
-                </Text>
-              </TouchableOpacity>
+              {canViewReceipt(selectedTransaction) ? (
+                <TouchableOpacity
+                  style={styles.detailModalViewReceiptButton}
+                  onPress={handleViewReceipt}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.detailModalViewReceiptButtonText}>
+                    {t("View Receipt") ?? "View Receipt"}
+                  </Text>
+                </TouchableOpacity>
+              ) : (
+                <View style={styles.receiptPendingHint}>
+                  <Ionicons name="time-outline" size={16} color="#A86A45" />
+                  <Text style={styles.receiptPendingHintText}>
+                    Receipt will be available once admin approves this request.
+                  </Text>
+                </View>
+              )}
 
               <TouchableOpacity
                 style={styles.detailModalCloseButton}
@@ -2036,5 +2058,23 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700",
     color: "#E15816",
+  },
+  receiptPendingHint: {
+    marginTop: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    backgroundColor: "#FFF5F0",
+    borderWidth: 1,
+    borderColor: "#FFD8C2",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  receiptPendingHintText: {
+    flex: 1,
+    fontSize: 13,
+    color: "#A86A45",
+    fontWeight: "500",
   },
 });
