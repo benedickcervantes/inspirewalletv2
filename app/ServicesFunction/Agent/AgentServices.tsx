@@ -1,13 +1,20 @@
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Animated, Keyboard, KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View, type TextStyle } from "react-native";
+import { ActivityIndicator, Animated, Keyboard, KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, type TextStyle } from "react-native";
 import { useLanguage } from "../../../context/LanguageContext";
 import { isServiceUnderMaintenance } from "../../../lib/maintenance";
 import type { RootStackParamList } from "../../../types/navigation";
 
 import ActivityModal from '../../components/ActivityModal';
+import {
+  applyAgentRequest,
+  getReferralCode,
+  getMe,
+  lookupReferralCode,
+} from "../../../configs/api";
 // Static theme - no backend
 const THEME_COLOR = "#E15816";
 
@@ -16,9 +23,7 @@ interface AgentUser {
   id: string;
   firstName: string;
   lastName: string;
-  emailAddress: string;
-  agentCode: string;
-  agentNumber: string;
+  referralCode: string;
 }
 
 type ModalType = "success" | "error" | "warning" | "info";
@@ -196,7 +201,6 @@ export default function AgentServices() {
     >();
   const { t, language } = useLanguage();
   const [isUnderMaintenance, setIsUnderMaintenance] = useState(false);
-  const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
   const [checkingMaintenance, setCheckingMaintenance] = useState(true);
 
   // Check maintenance status on focus
@@ -207,8 +211,8 @@ export default function AgentServices() {
         try {
           const isMaintenance = await isServiceUnderMaintenance("agent");
           setIsUnderMaintenance(isMaintenance);
-          if (isMaintenance) {
-            setShowMaintenanceModal(true);
+          if (!isMaintenance) {
+            await loadCurrentUser();
           }
         } catch (error) {
           console.error("Error checking maintenance:", error);
@@ -217,17 +221,14 @@ export default function AgentServices() {
         }
       };
       checkMaintenance();
-    }, []),
+    }, [loadCurrentUser]),
   );
 
-  // Static mock user data
-  const [firstName, setFirstName] = useState("Juan");
-  const [lastName, setLastName] = useState("Dela Cruz");
-  const [fullName, setFullName] = useState("Juan Dela Cruz");
+  const [fullName, setFullName] = useState("");
+  const [accessToken, setAccessToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [agentNumber, setAgentNumber] = useState("");
+  const [referralCode, setReferralCode] = useState("");
   const [hierarchicalAgentCode, setHierarchicalAgentCode] = useState("");
-  const [isGeneratingAgentCode, setIsGeneratingAgentCode] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<AgentUser[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -250,7 +251,7 @@ export default function AgentServices() {
     navigation.setOptions({
       headerShown: true,
       headerTitle: t("agentRequest.header.title"),
-      headerTransparent: true,
+      headerTransparent: false,
     });
   }, [language, navigation, t]);
 
@@ -261,6 +262,68 @@ export default function AgentServices() {
       }
     };
   }, []);
+
+  const loadCurrentUser = useCallback(async () => {
+    try {
+      const token = await AsyncStorage.getItem("access_token");
+      if (!token) {
+        showModal({
+          title: t("agentRequest.modals.accessRestricted.title"),
+          message: t("agentRequest.modals.accessRestricted.message"),
+          type: "warning",
+          onConfirm: () => {
+            hideModal();
+            navigation.navigate("Main");
+          },
+        });
+        return;
+      }
+      setAccessToken(token);
+
+      const meRes = await getMe(token);
+      if (!meRes.success || !meRes.user) {
+        throw new Error(meRes.error || t("agentRequest.modals.error.message"));
+      }
+
+      const user = meRes.user as {
+        firstName?: string;
+        lastName?: string;
+        isAgent?: boolean;
+      };
+      const composedName = [user.firstName, user.lastName]
+        .filter(Boolean)
+        .join(" ")
+        .trim();
+      setFullName(composedName);
+
+      const codeRes = await getReferralCode(token);
+      if (codeRes.success && codeRes.referralCode) {
+        setReferralCode(codeRes.referralCode);
+        setHierarchicalAgentCode(codeRes.referralCode);
+      }
+
+      if (user.isAgent) {
+        showModal({
+          title: t("agentRequest.modals.alreadyAgent.title"),
+          message: t("agentRequest.modals.alreadyAgent.message"),
+          type: "info",
+          onConfirm: () => {
+            hideModal();
+            navigation.goBack();
+          },
+        });
+      }
+    } catch (error) {
+      showModal({
+        title: t("agentRequest.modals.error.title"),
+        message:
+          error instanceof Error
+            ? error.message
+            : t("agentRequest.modals.error.message"),
+        type: "error",
+      });
+    }
+  }, [navigation, t]);
 
   const showModal = (config: Partial<ModalConfig>) => {
     setModalConfig({
@@ -281,77 +344,31 @@ export default function AgentServices() {
     setModalVisible(false);
   };
 
-  // Static: Generate random 5-character alphanumeric agent code
-  const generateRandomAgentCode = (): string => {
-    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    let result = "";
-    for (let i = 0; i < 5; i++) {
-      result += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return result;
-  };
-
-  // Static: Generate unique agent code (no backend check)
-  const generateUniqueAgentCode = () => {
-    setIsGeneratingAgentCode(true);
-
-    setTimeout(() => {
-      const newCode = generateRandomAgentCode();
-      let finalHierarchicalCode = newCode;
-
-      if (
-        selectedUser &&
-        selectedUser.agentCode &&
-        selectedUser.agentCode !== "Not an agent"
-      ) {
-        const agentCodeParts = selectedUser.agentCode.split("-");
-        const zeroIndex = agentCodeParts.findIndex((part) => part === "00000");
-        if (zeroIndex !== -1) {
-          agentCodeParts[zeroIndex] = newCode;
-          finalHierarchicalCode = agentCodeParts.join("-");
-        }
-      }
-
-      setAgentNumber(newCode);
-      setHierarchicalAgentCode(finalHierarchicalCode);
-      showModal({
-        title: t("agentRequest.modals.agentNumberGenerated.title"),
-        message: t("agentRequest.modals.agentNumberGenerated.message").replace(
-          "{agentNumber}",
-          newCode,
-        ),
-        type: "success",
-      });
-      setIsGeneratingAgentCode(false);
-    }, 800);
-  };
-
-  // Static: Mock search - returns empty (no backend)
-  const searchUsers = (searchTerm: string) => {
+  const searchUsers = async (searchTerm: string) => {
     if (!searchTerm.trim()) {
       setSearchResults([]);
       return;
     }
 
     setIsSearching(true);
-    setTimeout(() => {
-      // Static mock: optionally show demo agent if user types "12345"
-      if (searchTerm.trim() === "12345") {
-        const mockAgent: AgentUser = {
-          id: "mock-1",
-          firstName: "Jane",
-          lastName: "Smith",
-          emailAddress: "jane@example.com",
-          agentCode: "12345-00000",
-          agentNumber: "12345",
-        };
-        setSearchResults([mockAgent]);
-        selectUser(mockAgent);
-      } else {
+    try {
+      const lookup = await lookupReferralCode(searchTerm.trim());
+      if (!lookup.success || !lookup.exists || !lookup.referralCode || !lookup.userId) {
         setSearchResults([]);
+        return;
       }
+
+      const foundAgent: AgentUser = {
+        id: lookup.userId,
+        firstName: lookup.firstName || "",
+        lastName: lookup.lastName || "",
+        referralCode: lookup.referralCode,
+      };
+      setSearchResults([foundAgent]);
+      selectUser(foundAgent);
+    } finally {
       setIsSearching(false);
-    }, 500);
+    }
   };
 
   const handleSearchChange = (text: string) => {
@@ -378,24 +395,17 @@ export default function AgentServices() {
       message: t("agentRequest.modals.agentFound.message")
         .replace("{firstName}", user.firstName)
         .replace("{lastName}", user.lastName)
-        .replace("{agentNumber}", user.agentNumber),
+        .replace("{agentNumber}", user.referralCode),
       type: "success",
     });
 
-    if (agentNumber && user.agentCode && user.agentCode !== "Not an agent") {
-      const agentCodeParts = user.agentCode.split("-");
-      const zeroIndex = agentCodeParts.findIndex((part) => part === "00000");
-      if (zeroIndex !== -1) {
-        agentCodeParts[zeroIndex] = agentNumber;
-        const fallbackCode = agentCodeParts.join("-");
-        setHierarchicalAgentCode(fallbackCode);
-      }
+    if (referralCode && user.referralCode) {
+      setHierarchicalAgentCode(referralCode);
     }
   };
 
-  // Static: Show success modal without backend submit
-  const submitAgentRequest = () => {
-    if (!agentNumber) {
+  const submitAgentRequest = async () => {
+    if (!referralCode) {
       showModal({
         title: t("agentRequest.modals.missingAgentNumber.title"),
         message: t("agentRequest.modals.missingAgentNumber.message"),
@@ -403,16 +413,30 @@ export default function AgentServices() {
       });
       return;
     }
+    if (!accessToken) {
+      showModal({
+        title: t("agentRequest.modals.accessRestricted.title"),
+        message: t("agentRequest.modals.accessRestricted.message"),
+        type: "warning",
+      });
+      return;
+    }
 
     setLoading(true);
-
-    setTimeout(() => {
-      const mockRequestId = "REQ-" + Math.random().toString(36).slice(2, 10);
+    try {
+      const result = await applyAgentRequest(accessToken, {
+        parentReferralCode: selectedUser?.referralCode,
+      });
+      if (!result.success) {
+        throw new Error(
+          result.error || t("agentRequest.modals.error.submitFailed"),
+        );
+      }
       showModal({
         title: t("agentRequest.modals.requestSubmitted.title"),
         message: t("agentRequest.modals.requestSubmitted.message").replace(
           "{requestId}",
-          mockRequestId,
+          result.referralCode || referralCode,
         ),
         type: "success",
         onConfirm: () => {
@@ -420,8 +444,18 @@ export default function AgentServices() {
           navigation.navigate("Main");
         },
       });
+    } catch (error) {
+      showModal({
+        title: t("agentRequest.modals.error.title"),
+        message:
+          error instanceof Error
+            ? error.message
+            : t("agentRequest.modals.error.submitFailed"),
+        type: "error",
+      });
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   if (checkingMaintenance) {
@@ -534,7 +568,7 @@ export default function AgentServices() {
                 </View>
               </View>
 
-              {/* Agent Number Generation Section */}
+              {/* Referral Code Section */}
               <View style={styles.formSection}>
                 <Text style={[styles.subsectionTitle, getRTLStyles(language)]}>
                   {t("agentRequest.content.form.agentNumber.title")}
@@ -548,40 +582,22 @@ export default function AgentServices() {
                     <View
                       style={[
                         styles.agentCodeDisplay,
-                        !agentNumber && styles.agentCodeDisplayEmpty,
+                        !referralCode && styles.agentCodeDisplayEmpty,
                       ]}
                     >
                       <Text
                         style={[
                           styles.agentCodeText,
-                          !agentNumber && styles.agentCodeTextEmpty,
+                          !referralCode && styles.agentCodeTextEmpty,
                           getRTLStyles(language),
                         ]}
                       >
-                        {agentNumber ||
+                        {referralCode ||
                           t(
                             "agentRequest.content.form.agentNumber.placeholder",
                           )}
                       </Text>
                     </View>
-                    <TouchableOpacity
-                      style={[
-                        styles.generateButton,
-                        isGeneratingAgentCode && styles.generateButtonDisabled,
-                      ]}
-                      onPress={generateUniqueAgentCode}
-                      disabled={isGeneratingAgentCode}
-                    >
-                      {isGeneratingAgentCode ? (
-                        <ActivityIndicator size="small" color="white" />
-                      ) : (
-                        <Text style={styles.generateButtonText}>
-                          {t(
-                            "agentRequest.content.form.agentNumber.generateButton",
-                          )}
-                        </Text>
-                      )}
-                    </TouchableOpacity>
                   </View>
                   <Text style={[styles.agentCodeHint, getRTLStyles(language)]}>
                     {t("agentRequest.content.form.agentNumber.hint")}
@@ -652,7 +668,7 @@ export default function AgentServices() {
                         {t(
                           "agentRequest.content.form.parentAgent.parentAgentCode",
                         )}{" "}
-                        {selectedUser.agentCode}
+                        {selectedUser.referralCode}
                       </Text>
                       {hierarchicalAgentCode ? (
                         <Text
@@ -899,7 +915,6 @@ const styles = StyleSheet.create({
   },
   androidSafeArea: {
     flex: 1,
-    paddingTop: Platform.OS === "android" ? (StatusBar.currentHeight ?? 0) : 0,
   },
   scrollContainer: {
     padding: 16,
