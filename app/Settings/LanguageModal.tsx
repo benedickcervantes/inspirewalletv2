@@ -88,7 +88,7 @@ export default function LanguageModal() {
 const styles = StyleSheet.create({
   languageModalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.45)",
+    backgroundColor: "rgba(0,0,0,0.46)",
     justifyContent: "center",
     alignItems: "center",
     paddingVertical: 20,
