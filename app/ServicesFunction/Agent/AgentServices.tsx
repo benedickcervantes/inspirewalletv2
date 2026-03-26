@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Animated, Keyboard, KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, type TextStyle } from "react-native";
 import { useLanguage } from "../../../context/LanguageContext";
@@ -395,7 +396,8 @@ export default function AgentServices() {
       message: t("agentRequest.modals.agentFound.message")
         .replace("{firstName}", user.firstName)
         .replace("{lastName}", user.lastName)
-        .replace("{agentNumber}", user.referralCode),
+        .replace("{agentNumber}", user.referralCode)
+        .replace("{referralCode}", user.referralCode),
       type: "success",
     });
 
@@ -407,8 +409,8 @@ export default function AgentServices() {
   const submitAgentRequest = async () => {
     if (!referralCode) {
       showModal({
-        title: t("agentRequest.modals.missingAgentNumber.title"),
-        message: t("agentRequest.modals.missingAgentNumber.message"),
+        title: "Missing Referral Code",
+        message: "Referral code is required before submitting your request.",
         type: "warning",
       });
       return;
@@ -436,7 +438,7 @@ export default function AgentServices() {
         title: t("agentRequest.modals.requestSubmitted.title"),
         message: t("agentRequest.modals.requestSubmitted.message").replace(
           "{requestId}",
-          result.referralCode || referralCode,
+          result.requestId || result.referralCode || referralCode,
         ),
         type: "success",
         onConfirm: () => {
@@ -507,30 +509,36 @@ export default function AgentServices() {
           >
             {/* Header Card */}
             <View style={styles.headerCard}>
-              <View style={styles.headerContent}>
-                <Ionicons
-                  name="person-add"
-                  size={32}
-                  color={THEME_COLOR}
-                  style={styles.headerIcon}
-                />
-                <View style={styles.headerTextContainer}>
-                  <Text style={[styles.headerTitle, getRTLStyles(language)]}>
-                    {t("agentRequest.content.headerTitle")}
-                  </Text>
-                  <Text style={[styles.headerSubtitle, getRTLStyles(language)]}>
-                    {t("agentRequest.content.headerSubtitle")}
-                  </Text>
+              <LinearGradient
+                colors={["#E25A17", "#F28934"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.headerGradient}
+              >
+                <View style={styles.headerContent}>
+                  <Ionicons
+                    name="person-add"
+                    size={30}
+                    color="#FFFFFF"
+                    style={styles.headerIcon}
+                  />
+                  <View style={styles.headerTextContainer}>
+                    <Text style={[styles.headerTitle, getRTLStyles(language)]}>
+                      {t("agentRequest.content.headerTitle")}
+                    </Text>
+                    <Text style={[styles.headerSubtitle, getRTLStyles(language)]}>
+                      {t("agentRequest.content.headerSubtitle")}
+                    </Text>
+                  </View>
                 </View>
-              </View>
+              </LinearGradient>
             </View>
-
-            {/* Info Card */}
+            
             <View style={styles.infoCard}>
               <View style={styles.infoHeader}>
                 <Ionicons
                   name="information-circle"
-                  size={24}
+                  size={22}
                   color={THEME_COLOR}
                 />
                 <Text style={[styles.infoTitle, getRTLStyles(language)]}>
@@ -571,12 +579,12 @@ export default function AgentServices() {
               {/* Referral Code Section */}
               <View style={styles.formSection}>
                 <Text style={[styles.subsectionTitle, getRTLStyles(language)]}>
-                  {t("agentRequest.content.form.agentNumber.title")}
+                  Agent Code
                 </Text>
 
                 <View style={styles.inputGroup}>
                   <Text style={[styles.inputLabel, getRTLStyles(language)]}>
-                    {t("agentRequest.content.form.agentNumber.generateLabel")}
+                    Generate Agent Code
                   </Text>
                   <View style={styles.agentCodeContainer}>
                     <View
@@ -593,14 +601,12 @@ export default function AgentServices() {
                         ]}
                       >
                         {referralCode ||
-                          t(
-                            "agentRequest.content.form.agentNumber.placeholder",
-                          )}
+                          "Agent code will appear here"}
                       </Text>
                     </View>
                   </View>
                   <Text style={[styles.agentCodeHint, getRTLStyles(language)]}>
-                    {t("agentRequest.content.form.agentNumber.hint")}
+                    This is your agent code.
                   </Text>
                 </View>
               </View>
@@ -608,7 +614,7 @@ export default function AgentServices() {
               {/* Agent Search Section */}
               <View style={styles.formSection}>
                 <Text style={[styles.subsectionTitle, getRTLStyles(language)]}>
-                  {t("agentRequest.content.form.parentAgent.title")}
+                  Referral Code (optional)
                 </Text>
 
                 <View style={styles.inputGroup}>
@@ -665,9 +671,7 @@ export default function AgentServices() {
                           getRTLStyles(language),
                         ]}
                       >
-                        {t(
-                          "agentRequest.content.form.parentAgent.parentAgentCode",
-                        )}{" "}
+                        Referral Code:{" "}
                         {selectedUser.referralCode}
                       </Text>
                       {hierarchicalAgentCode ? (
@@ -677,9 +681,7 @@ export default function AgentServices() {
                             getRTLStyles(language),
                           ]}
                         >
-                          {t(
-                            "agentRequest.content.form.parentAgent.yourAgentCode",
-                          )}{" "}
+                          Your Referral Code:{" "}
                           {hierarchicalAgentCode}
                         </Text>
                       ) : null}
@@ -869,7 +871,7 @@ const styles = StyleSheet.create({
     flex: 1,
     width: "100%",
     height: "100%",
-    backgroundColor: "#f8f9fa",
+    backgroundColor: "#F5F5F5",
   },
   inlineLoadingScreen: {
     flex: 1,
@@ -921,17 +923,17 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   headerCard: {
-    backgroundColor: "rgba(255, 255, 255, 0.95)",
-    borderRadius: 20,
-    padding: 20,
+    borderRadius: 16,
+    overflow: "hidden",
     marginBottom: 16,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
     elevation: 6,
-    borderLeftWidth: 5,
-    borderLeftColor: THEME_COLOR,
+  },
+  headerGradient: {
+    padding: 18,
   },
   headerContent: {
     flexDirection: "row",
@@ -939,7 +941,7 @@ const styles = StyleSheet.create({
   },
   headerIcon: {
     marginRight: 16,
-    backgroundColor: "rgba(229, 88, 22, 0.1)",
+    backgroundColor: "rgba(255,255,255,0.2)",
     borderRadius: 20,
     padding: 8,
   },
@@ -947,23 +949,26 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headerTitle: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: THEME_COLOR,
+    fontSize: 19,
+    fontWeight: "700",
+    color: "#FFFFFF",
     marginBottom: 4,
   },
   headerSubtitle: {
-    fontSize: 14,
-    color: "#666",
+    fontSize: 13,
+    color: "rgba(255,255,255,0.9)",
     fontWeight: "500",
   },
   infoCard: {
-    backgroundColor: "rgba(255, 235, 238, 0.9)",
-    borderRadius: 16,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
     padding: 16,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: THEME_COLOR,
+    marginBottom: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 3,
   },
   infoHeader: {
     flexDirection: "row",
@@ -971,26 +976,26 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   infoTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
+    fontSize: 16,
+    fontWeight: "700",
     color: THEME_COLOR,
     marginLeft: 8,
   },
   infoText: {
     fontSize: 14,
-    color: "#333",
-    lineHeight: 22,
+    color: "#4B5563",
+    lineHeight: 21,
   },
   formCard: {
-    backgroundColor: "rgba(255, 255, 255, 0.95)",
-    borderRadius: 20,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
     padding: 20,
     marginBottom: 20,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 3,
   },
   sectionTitle: {
     fontSize: 20,
@@ -1005,11 +1010,11 @@ const styles = StyleSheet.create({
   subsectionTitle: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#333",
+    color: "#1F2937",
     marginBottom: 16,
     paddingBottom: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: "rgba(254, 125, 72, 0.2)",
+    borderBottomWidth: 1.2,
+    borderBottomColor: "#F3F4F6",
   },
   inputGroup: {
     marginBottom: 16,
@@ -1021,10 +1026,10 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   readOnlyInput: {
-    backgroundColor: "#f8f9fa",
-    borderWidth: 2,
-    borderColor: "#e0e0e0",
-    borderRadius: 12,
+    backgroundColor: "#F9FAFB",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    borderRadius: 10,
     padding: 14,
   },
   readOnlyText: {
@@ -1039,10 +1044,10 @@ const styles = StyleSheet.create({
   },
   agentCodeDisplay: {
     flex: 1,
-    backgroundColor: "white",
-    borderWidth: 2,
-    borderColor: "#e0e0e0",
-    borderRadius: 12,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    borderRadius: 10,
     padding: 14,
     justifyContent: "center",
   },
@@ -1093,10 +1098,10 @@ const styles = StyleSheet.create({
     position: "relative",
   },
   searchInput: {
-    backgroundColor: "white",
-    borderWidth: 2,
-    borderColor: "#e0e0e0",
-    borderRadius: 12,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    borderRadius: 10,
     padding: 14,
     paddingRight: 50,
     fontSize: 16,
@@ -1158,9 +1163,14 @@ const styles = StyleSheet.create({
   },
   submitButton: {
     backgroundColor: THEME_COLOR,
-    borderRadius: 16,
-    padding: 18,
-    marginHorizontal: 20,
+    borderRadius: 12,
+    padding: 16,
+    marginHorizontal: 16,
+    shadowColor: "#E15816",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.24,
+    shadowRadius: 10,
+    elevation: 6,
   },
   submitButtonDisabled: {
     backgroundColor: "#999",
