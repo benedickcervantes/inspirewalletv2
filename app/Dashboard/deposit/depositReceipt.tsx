@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation, useRoute } from "@react-navigation/native";
+import { Audio } from "expo-av";
 import { LinearGradient } from "expo-linear-gradient";
 import * as MediaLibrary from "expo-media-library";
 import * as Sharing from "expo-sharing";
@@ -219,8 +220,6 @@ export default function DepositReceipt() {
           // no-op
         });
 
-        const av = await import("expo-av");
-        const Audio = av.Audio;
         if (!Audio || !isMounted) {
           return;
         }
