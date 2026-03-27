@@ -153,9 +153,12 @@ export default function Placeholder() {
           };
           setUserData(merged);
 
+          const normalizedRole = String(u.role ?? "").toLowerCase();
           const isAgentUser =
             u.isAgent === true ||
-            String(u.role ?? "").toLowerCase() === "agent";
+            normalizedRole === "agent" ||
+            normalizedRole === "master_agent" ||
+            normalizedRole === "consultant_agent";
           if (isAgentUser) {
             const tree =
               referralTreeResult && referralTreeResult.success
@@ -200,10 +203,14 @@ export default function Placeholder() {
             ),
           });
 
+          const normalizedRole = String(
+            (data as { role?: string })?.role ?? "",
+          ).toLowerCase();
           const isAgentUser =
             data?.isAgent === true ||
-            String((data as { role?: string })?.role ?? "").toLowerCase() ===
-              "agent";
+            normalizedRole === "agent" ||
+            normalizedRole === "master_agent" ||
+            normalizedRole === "consultant_agent";
           setAgentHierarchyRole(isAgentUser ? "agent" : null);
         }
       }
@@ -688,7 +695,12 @@ export default function Placeholder() {
       ? `${userData.firstName} ${userData.lastName}`
       : userData?.displayName || userData?.name || t("common.user");
   const email = userData?.email || "user@example.com";
-  const isAgent = userData?.isAgent || userData?.role === "agent" || false;
+  const normalizedUserRole = String(userData?.role ?? "").toLowerCase();
+  const isAgent =
+    userData?.isAgent === true ||
+    normalizedUserRole === "agent" ||
+    normalizedUserRole === "master_agent" ||
+    normalizedUserRole === "consultant_agent";
   const isPremium =
     userData?.isPremium || userData?.accountLevel === "premium" || false;
   const normalizedPersonalKycStatus = String(
@@ -902,7 +914,9 @@ export default function Placeholder() {
 
           {/* Badges */}
           <View style={styles.badgesContainer}>
-            {resolvedAgentRole ? (
+            {loading ? (
+              <View style={styles.roleBadgeSkeleton} />
+            ) : resolvedAgentRole ? (
               <View
                 style={[
                   styles.agentBadge,
@@ -1867,6 +1881,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     gap: 8,
+  },
+  roleBadgeSkeleton: {
+    width: 120,
+    height: 28,
+    borderRadius: 16,
+    backgroundColor: "rgba(255,255,255,0.4)",
   },
   agentBadge: {
     flexDirection: "row",
