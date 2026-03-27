@@ -12,6 +12,8 @@ import ActivityModal from '../../components/ActivityModal';
 const THEME_COLOR = "#E15816";
 const ORANGE_GRADIENT = ["#E25A17", "#F28934"] as const;
 const GREEN_COMPLETE = "#10B981";
+const PHONE_PREFIX = "+63";
+const PHONE_SUFFIX_MAX_LENGTH = 10;
 
 export default function EwalletContactInfo() {
   const navigation =
@@ -50,7 +52,7 @@ export default function EwalletContactInfo() {
 
   const validateMobile = (mobile: string) => {
     const cleaned = mobile.replace(/\D/g, "");
-    return cleaned.length >= 10 && cleaned.length <= 11;
+    return cleaned.length > 0 && cleaned.length <= PHONE_SUFFIX_MAX_LENGTH;
   };
 
   const handleNext = () => {
@@ -74,12 +76,13 @@ export default function EwalletContactInfo() {
     }
 
     setErrors({});
+    const fullPhoneNumber = `${PHONE_PREFIX}${mobileNumber.replace(/\D/g, "")}`;
     navigation.navigate("EwalletPersonalInfo", { 
       selectedProvider,
       applicationData: {
         contactInfo: {
           email: email.trim(),
-          phone: mobileNumber.trim(),
+          phone: fullPhoneNumber,
           landline: landlineNumber.trim(),
         }
       }
@@ -202,17 +205,30 @@ export default function EwalletContactInfo() {
                 <Text style={styles.inputLabel}>
                   {t("banking.mobileNumber")}<Text style={styles.required}>*</Text>
                 </Text>
-                <TextInput
-                  style={[styles.input, errors.mobile && styles.inputError]}
-                  placeholder={t("banking.placeholderMobile")}
-                  placeholderTextColor="#9E9E9E"
-                  value={mobileNumber}
-                  onChangeText={(text) => {
-                    setMobileNumber(text);
-                    if (errors.mobile) setErrors({ ...errors, mobile: undefined });
-                  }}
-                  keyboardType="phone-pad"
-                />
+                <View
+                  style={[
+                    styles.phoneFieldShell,
+                    errors.mobile && styles.phoneFieldShellError,
+                  ]}
+                >
+                  <View style={styles.phonePrefixBox}>
+                    <Ionicons name="call-outline" size={16} color={THEME_COLOR} />
+                    <Text style={styles.phonePrefixText}>{PHONE_PREFIX}</Text>
+                  </View>
+                  <TextInput
+                    style={styles.phoneInput}
+                    placeholder="Enter mobile number"
+                    placeholderTextColor="#9E9E9E"
+                    value={mobileNumber}
+                    onChangeText={(text) => {
+                      const digitsOnly = text.replace(/\D/g, "").slice(0, PHONE_SUFFIX_MAX_LENGTH);
+                      setMobileNumber(digitsOnly);
+                      if (errors.mobile) setErrors({ ...errors, mobile: undefined });
+                    }}
+                    keyboardType="phone-pad"
+                    maxLength={PHONE_SUFFIX_MAX_LENGTH}
+                  />
+                </View>
                 {errors.mobile && <Text style={styles.errorText}>{errors.mobile}</Text>}
               </View>
 
@@ -479,6 +495,47 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingVertical: 14,
     paddingHorizontal: 16,
+    fontSize: 16,
+    color: "#000000",
+  },
+  phoneInputContainer: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  phoneFieldShell: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: "#E0E0E0",
+    borderRadius: 12,
+    backgroundColor: "#FFFFFF",
+    paddingLeft: 12,
+    paddingRight: 2,
+  },
+  phoneFieldShellError: {
+    borderColor: "#EF4444",
+  },
+  phonePrefixBox: {
+    flexDirection: "row",
+    gap: 6,
+    paddingVertical: 14,
+    paddingRight: 10,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRightWidth: 1,
+    borderRightColor: "#E5E7EB",
+  },
+  phonePrefixText: {
+    fontSize: 16,
+    color: "#000000",
+    fontWeight: "600",
+  },
+  phoneInput: {
+    flex: 1,
+    backgroundColor: "transparent",
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 12,
     fontSize: 16,
     color: "#000000",
   },
