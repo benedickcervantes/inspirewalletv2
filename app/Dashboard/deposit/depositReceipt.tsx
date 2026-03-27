@@ -1,22 +1,21 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
-import React, { useEffect, useRef } from "react";
+import * as MediaLibrary from "expo-media-library";
+import * as Sharing from "expo-sharing";
+import { useEffect, useRef, useState } from "react";
 import {
-  Alert,
   Image,
-  ScrollView,
   SafeAreaView,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   useWindowDimensions,
-  View,
+  View
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import ViewShot from "react-native-view-shot";
-import * as MediaLibrary from "expo-media-library";
-import * as Sharing from "expo-sharing";
 import {
   DEFAULT_TRANSFER_SUCCESS_SOUND,
   getTransferSuccessSound,
@@ -24,6 +23,7 @@ import {
 } from "../../../constants/adminAudio";
 import { getLanguageCode } from "../../../constants/locales";
 import { useLanguage } from "../../../context/LanguageContext";
+import ActivityModal from "../../components/ActivityModal";
 
 const CRYPTO_MARGIN_MULTIPLIER = 0.99;
 
@@ -112,28 +112,28 @@ export default function DepositReceipt() {
     ) => void;
   } | null>(null);
 
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
   const handleDownload = async () => {
     try {
       const { status } = await MediaLibrary.requestPermissionsAsync();
       if (status !== "granted") {
-        Alert.alert(
-          t("common.error") || "Error",
-          "Permission to access media library is required to save the receipt."
-        );
+        setErrorMessage("Permission to access media library is required to save the receipt.");
+        setShowErrorModal(true);
         return;
       }
 
       if (viewShotRef.current?.capture) {
         const uri = await viewShotRef.current.capture();
         await MediaLibrary.saveToLibraryAsync(uri);
-        Alert.alert(
-          t("common.success") || "Success",
-          "Receipt saved to your photos successfully."
-        );
+        setShowSuccessModal(true);
       }
     } catch (error) {
       console.error("Failed to download receipt:", error);
-      Alert.alert(t("common.error") || "Error", "Failed to save receipt.");
+      setErrorMessage("Failed to save receipt.");
+      setShowErrorModal(true);
     }
   };
 
@@ -145,12 +145,14 @@ export default function DepositReceipt() {
         if (isAvailable) {
           await Sharing.shareAsync(uri);
         } else {
-          Alert.alert(t("common.error") || "Error", "Sharing is not available on this device.");
+          setErrorMessage("Sharing is not available on this device.");
+          setShowErrorModal(true);
         }
       }
     } catch (error) {
       console.error("Failed to share receipt:", error);
-      Alert.alert(t("common.error") || "Error", "Failed to share receipt.");
+      setErrorMessage("Failed to share receipt.");
+      setShowErrorModal(true);
     }
   };
 
@@ -514,6 +516,72 @@ export default function DepositReceipt() {
             <Text style={styles.doneText}>Done</Text>
           </TouchableOpacity>
         </ScrollView>
+
+        {/* Success Modal */}
+        <ActivityModal
+          visible={showSuccessModal}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setShowSuccessModal(false)}
+        >
+          <View style={modalStyles.overlay}>
+            <View style={modalStyles.container}>
+              <LinearGradient
+                colors={["#C44A0C", "#E06828"]}
+                style={modalStyles.gradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <View style={modalStyles.iconContainer}>
+                  <Ionicons name="checkmark-circle" size={80} color="#FFFFFF" />
+                </View>
+                <Text style={modalStyles.title}>Success</Text>
+                <Text style={modalStyles.message}>
+                  Receipt saved to your photos successfully.
+                </Text>
+                <TouchableOpacity
+                  style={modalStyles.button}
+                  onPress={() => setShowSuccessModal(false)}
+                  activeOpacity={0.85}
+                >
+                  <Text style={modalStyles.buttonText}>OK</Text>
+                </TouchableOpacity>
+              </LinearGradient>
+            </View>
+          </View>
+        </ActivityModal>
+
+        {/* Error Modal */}
+        <ActivityModal
+          visible={showErrorModal}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setShowErrorModal(false)}
+        >
+          <View style={modalStyles.overlay}>
+            <View style={modalStyles.container}>
+              <LinearGradient
+                colors={["#C44A0C", "#E06828"]}
+                style={modalStyles.gradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <View style={modalStyles.iconContainer}>
+                  <Ionicons name="alert-circle" size={80} color="#FFFFFF" />
+                </View>
+                <Text style={modalStyles.title}>Error</Text>
+                <Text style={modalStyles.message}>{errorMessage}</Text>
+                <TouchableOpacity
+                  style={modalStyles.button}
+                  onPress={() => setShowErrorModal(false)}
+                  activeOpacity={0.85}
+                >
+                  <Text style={modalStyles.buttonText}>OK</Text>
+                </TouchableOpacity>
+              </LinearGradient>
+            </View>
+          </View>
+        </ActivityModal>
       </LinearGradient>
     </SafeAreaView>
   );
@@ -774,5 +842,67 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#B8AFA6",
     letterSpacing: 0.4,
+  },
+});
+
+// ─── Modal Styles ─────────────────────────────────────────────────────────────
+const modalStyles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  container: {
+    width: "100%",
+    maxWidth: 400,
+    borderRadius: 20,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  gradient: {
+    padding: 32,
+    alignItems: "center",
+  },
+  iconContainer: {
+    marginBottom: 20,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: "700",
+    color: "#FFFFFF",
+    marginBottom: 16,
+    textAlign: "center",
+  },
+  message: {
+    fontSize: 16,
+    color: "#FFFFFF",
+    textAlign: "center",
+    lineHeight: 24,
+    marginBottom: 32,
+    opacity: 0.95,
+  },
+  button: {
+    backgroundColor: "#FFFFFF",
+    paddingVertical: 14,
+    paddingHorizontal: 48,
+    borderRadius: 28,
+    minWidth: 120,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  buttonText: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#E06828",
+    textAlign: "center",
   },
 });
