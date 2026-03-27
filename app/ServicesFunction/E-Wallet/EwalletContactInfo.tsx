@@ -14,6 +14,7 @@ const ORANGE_GRADIENT = ["#E25A17", "#F28934"] as const;
 const GREEN_COMPLETE = "#10B981";
 const PHONE_PREFIX = "+63";
 const PHONE_SUFFIX_MAX_LENGTH = 10;
+const PH_LANDLINE_LENGTH = 10;
 
 export default function EwalletContactInfo() {
   const navigation =
@@ -28,7 +29,7 @@ export default function EwalletContactInfo() {
   const [email, setEmail] = useState("");
   const [mobileNumber, setMobileNumber] = useState("");
   const [landlineNumber, setLandlineNumber] = useState("");
-  const [errors, setErrors] = useState<{ email?: string; mobile?: string }>({});
+  const [errors, setErrors] = useState<{ email?: string; mobile?: string; landline?: string }>({});
   const [showExitConfirmModal, setShowExitConfirmModal] = useState(false);
 
   const currentStep = 2;
@@ -52,11 +53,21 @@ export default function EwalletContactInfo() {
 
   const validateMobile = (mobile: string) => {
     const cleaned = mobile.replace(/\D/g, "");
-    return cleaned.length > 0 && cleaned.length <= PHONE_SUFFIX_MAX_LENGTH;
+    return cleaned.length === PHONE_SUFFIX_MAX_LENGTH;
+  };
+
+  const validateLandline = (landline: string) => {
+    const cleaned = landline.replace(/\D/g, "");
+    if (!cleaned) return true; // Optional field
+    return (
+      cleaned.length === PH_LANDLINE_LENGTH &&
+      cleaned.startsWith("0") &&
+      cleaned[1] !== "9"
+    );
   };
 
   const handleNext = () => {
-    const newErrors: { email?: string; mobile?: string } = {};
+    const newErrors: { email?: string; mobile?: string; landline?: string } = {};
 
     if (!email.trim()) {
       newErrors.email = t("ewallet.emailRequired");
@@ -68,6 +79,11 @@ export default function EwalletContactInfo() {
       newErrors.mobile = t("ewallet.mobileRequired");
     } else if (!validateMobile(mobileNumber.trim())) {
       newErrors.mobile = t("ewallet.mobileInvalid");
+    }
+
+    if (!validateLandline(landlineNumber.trim())) {
+      newErrors.landline =
+        "Please enter a valid landline number (10 digits, starts with 0).";
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -235,13 +251,19 @@ export default function EwalletContactInfo() {
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>{t("banking.landlineNumber")}</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, errors.landline && styles.inputError]}
                   placeholder={t("banking.placeholderLandline")}
                   placeholderTextColor="#9E9E9E"
                   value={landlineNumber}
-                  onChangeText={setLandlineNumber}
+                  onChangeText={(text) => {
+                    const digitsOnly = text.replace(/\D/g, "").slice(0, PH_LANDLINE_LENGTH);
+                    setLandlineNumber(digitsOnly);
+                    if (errors.landline) setErrors({ ...errors, landline: undefined });
+                  }}
                   keyboardType="phone-pad"
+                  maxLength={PH_LANDLINE_LENGTH}
                 />
+                {errors.landline && <Text style={styles.errorText}>{errors.landline}</Text>}
               </View>
             </View>
 

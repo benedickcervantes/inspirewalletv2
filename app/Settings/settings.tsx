@@ -10,7 +10,6 @@ import { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, Platform, ScrollView, StatusBar, StyleSheet, Text, TextInput, ToastAndroid, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
-  disableBiometric,
   enableBiometric,
   getReferralCode,
   resendVerification,
@@ -286,31 +285,56 @@ const Settings = () => {
 
   const handleToggleBiometric = async () => {
     if (userData?.biometricEnabled) {
-      // Disable biometric
-      const accessToken = await AsyncStorage.getItem("access_token");
-      if (!accessToken) return;
-
+      // Disable locally only to preserve previous setup/token for quick re-enable.
       try {
-        await SecureStore.deleteItemAsync("biometricToken");
-        const res = await disableBiometric(accessToken);
-        if (res.success) {
+        setUserData((prev) =>
+          prev ? { ...prev, biometricEnabled: false } : null,
+        );
+        const userJson = await AsyncStorage.getItem("user");
+        if (userJson) {
+          const user = JSON.parse(userJson);
+          await AsyncStorage.setItem(
+            "user",
+            JSON.stringify({ ...user, biometricEnabled: false }),
+          );
+        }
+      } catch (e) {
+        console.error("Failed to disable biometric", e);
+      }
+    } else {
+      // If biometric token already exists from previous setup, just turn it back on.
+      try {
+        const savedToken = await SecureStore.getItemAsync("biometricToken");
+        if (savedToken) {
+          const authResult = await LocalAuthentication.authenticateAsync({
+            promptMessage: `Authenticate to enable ${biometricType}`,
+            fallbackLabel: "Use Passcode",
+            disableDeviceFallback: false,
+          });
+
+          if (!authResult.success) {
+            setBiometricError("Biometric authentication failed or was cancelled.");
+            return;
+          }
+
           setUserData((prev) =>
-            prev ? { ...prev, biometricEnabled: false } : null,
+            prev ? { ...prev, biometricEnabled: true } : null,
           );
           const userJson = await AsyncStorage.getItem("user");
           if (userJson) {
             const user = JSON.parse(userJson);
             await AsyncStorage.setItem(
               "user",
-              JSON.stringify({ ...user, biometricEnabled: false }),
+              JSON.stringify({ ...user, biometricEnabled: true }),
             );
           }
+          return;
         }
       } catch (e) {
-        console.error("Failed to disable biometric", e);
+        console.error("Failed to re-enable biometric with existing token", e);
       }
-    } else {
-      // Open setup modal
+
+      // First-time setup still requires account password.
       setBiometricPassword("");
       setBiometricError(null);
       setBiometricModalVisible(true);
