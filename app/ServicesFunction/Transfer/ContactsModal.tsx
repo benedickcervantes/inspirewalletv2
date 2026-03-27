@@ -1,11 +1,13 @@
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Contacts from "expo-contacts";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Animated,
   Keyboard,
   KeyboardAvoidingView,
+  PanResponder,
   Platform,
   ScrollView,
   StyleSheet,
@@ -39,6 +41,121 @@ interface ContactsModalProps {
   onSelectContact: (contact: Contact) => void;
 }
 
+interface PendingDeletion {
+  account: SavedAccount;
+  index: number;
+}
+
+function SavedAccountSwipeRow({
+  account,
+  onPress,
+  onSwipeDelete,
+  onSetScrollEnabled,
+}: {
+  account: SavedAccount;
+  onPress: () => void;
+  onSwipeDelete: () => void;
+  onSetScrollEnabled: (enabled: boolean) => void;
+}) {
+  const translateX = useRef(new Animated.Value(0)).current;
+  const isSwipingRef = useRef(false);
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => false,
+      onStartShouldSetPanResponderCapture: () => false,
+
+      // Only claim gesture when horizontal movement is clearly dominant
+      onMoveShouldSetPanResponder: (_, g) =>
+        Math.abs(g.dx) > Math.abs(g.dy) && Math.abs(g.dx) > 8,
+
+      // Capture to prevent ScrollView stealing the gesture once horizontal intent is confirmed
+      onMoveShouldSetPanResponderCapture: (_, g) =>
+        Math.abs(g.dx) > Math.abs(g.dy) && Math.abs(g.dx) > 8,
+
+      onPanResponderGrant: () => {
+        isSwipingRef.current = false;
+      },
+
+      onPanResponderMove: (_, g) => {
+        if (Math.abs(g.dx) > 8) {
+          if (!isSwipingRef.current) {
+            isSwipingRef.current = true;
+            onSetScrollEnabled(false); // disable scroll when swiping starts
+          }
+        }
+        if (g.dx < 0) {
+          translateX.setValue(Math.max(g.dx, -110));
+        } else {
+          translateX.setValue(Math.min(g.dx * 0.25, 18));
+        }
+      },
+
+      onPanResponderRelease: (_, g) => {
+        onSetScrollEnabled(true); // re-enable scroll on release
+        if (g.dx < -70) {
+          Animated.timing(translateX, {
+            toValue: -110,
+            duration: 120,
+            useNativeDriver: true,
+          }).start(() => {
+            onSwipeDelete();
+            translateX.setValue(0);
+          });
+          return;
+        }
+        Animated.spring(translateX, {
+          toValue: 0,
+          useNativeDriver: true,
+          friction: 7,
+        }).start();
+      },
+
+      onPanResponderTerminate: () => {
+        onSetScrollEnabled(true); // re-enable scroll if gesture is stolen
+        isSwipingRef.current = false;
+        Animated.spring(translateX, {
+          toValue: 0,
+          useNativeDriver: true,
+          friction: 7,
+        }).start();
+      },
+    }),
+  ).current;
+
+  return (
+    <View style={styles.swipeRowContainer}>
+      <View style={styles.deleteAction}>
+        <Ionicons name="trash-outline" size={20} color="#FFFFFF" />
+        <Text style={styles.deleteActionText}>Delete</Text>
+      </View>
+      <Animated.View
+        style={[styles.swipeFront, { transform: [{ translateX }] }]}
+        {...panResponder.panHandlers}
+      >
+        <TouchableOpacity
+          style={styles.contactItem}
+          activeOpacity={0.85}
+          onPress={() => {
+            if (!isSwipingRef.current) {
+              onPress();
+            }
+          }}
+        >
+          <View style={styles.contactAvatar}>
+            <Ionicons name="bookmark" size={24} color="#E25A17" />
+          </View>
+          <View style={styles.contactInfo}>
+            <Text style={styles.contactName}>{account.name}</Text>
+            <Text style={styles.contactAccount}>{account.accountNumber}</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color="#999" />
+        </TouchableOpacity>
+      </Animated.View>
+    </View>
+  );
+}
+
 export default function ContactsModal({
   visible,
   onClose,
@@ -53,6 +170,23 @@ export default function ContactsModal({
   const [searchQuery, setSearchQuery] = useState("");
   const [hasContactPermission, setHasContactPermission] = useState(false);
   const [isLoadingDeviceContacts, setIsLoadingDeviceContacts] = useState(false);
+  const [pendingDeletion, setPendingDeletion] = useState<PendingDeletion | null>(
+    null,
+  );
+  const [undoSecondsLeft, setUndoSecondsLeft] = useState(5);
+  const deleteTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Controls whether the ScrollView can scroll — disabled during horizontal swipes
+  const scrollEnabledRef = useRef(true);
+  const [scrollEnabled, setScrollEnabled] = useState(true);
+
+  const handleSetScrollEnabled = (enabled: boolean) => {
+    if (scrollEnabledRef.current !== enabled) {
+      scrollEnabledRef.current = enabled;
+      setScrollEnabled(enabled);
+    }
+  };
 
   useEffect(() => {
     if (visible) {
@@ -72,6 +206,107 @@ export default function ContactsModal({
       loadDeviceContacts();
     }
   }, [activeTab, visible]);
+
+  useEffect(() => {
+    return () => {
+      if (deleteTimeoutRef.current) clearTimeout(deleteTimeoutRef.current);
+      if (countdownRef.current) clearInterval(countdownRef.current);
+    };
+  }, []);
+
+  const normalizePhone = (value: string) =>
+    String(value || "")
+      .replace(/\D/g, "")
+      .replace(/^0+/, "");
+
+  const clearPendingTimers = () => {
+    if (deleteTimeoutRef.current) {
+      clearTimeout(deleteTimeoutRef.current);
+      deleteTimeoutRef.current = null;
+    }
+    if (countdownRef.current) {
+      clearInterval(countdownRef.current);
+      countdownRef.current = null;
+    }
+  };
+
+  const removeMatchingDeviceContacts = async (accountNumber: string) => {
+    try {
+      const { status } = await Contacts.requestPermissionsAsync();
+      if (status !== "granted") return;
+      const target = normalizePhone(accountNumber);
+      if (!target) return;
+
+      const { data } = await Contacts.getContactsAsync({
+        fields: [Contacts.Fields.PhoneNumbers],
+      });
+
+      const matching = data.filter((contact: any) =>
+        (contact.phoneNumbers || []).some((phone: any) => {
+          const normalized = normalizePhone(phone?.number || "");
+          return normalized === target;
+        }),
+      );
+
+      await Promise.all(
+        matching
+          .map((contact: any) => contact?.id)
+          .filter(Boolean)
+          .map((id: string) => Contacts.removeContactAsync(id)),
+      );
+
+      if (matching.length > 0) {
+        await loadDeviceContacts();
+      }
+    } catch (error) {
+      console.warn("Failed to remove contact from device:", error);
+    }
+  };
+
+  const finalizeDeletion = async (account: SavedAccount) => {
+    clearPendingTimers();
+    setPendingDeletion(null);
+    setUndoSecondsLeft(5);
+    await removeMatchingDeviceContacts(account.accountNumber);
+  };
+
+  const handleUndoDelete = () => {
+    if (!pendingDeletion) return;
+    clearPendingTimers();
+    setSavedAccounts((prev) => {
+      const next = [...prev];
+      const insertAt = Math.min(pendingDeletion.index, next.length);
+      next.splice(insertAt, 0, pendingDeletion.account);
+      AsyncStorage.setItem("saved_accounts", JSON.stringify(next)).catch(() => {});
+      return next;
+    });
+    setPendingDeletion(null);
+    setUndoSecondsLeft(5);
+  };
+
+  const handleSwipeDeleteSaved = (account: SavedAccount, index: number) => {
+    if (pendingDeletion) {
+      finalizeDeletion(pendingDeletion.account);
+    }
+
+    setSavedAccounts((prev) => {
+      const next = prev.filter((a) => a.id !== account.id);
+      AsyncStorage.setItem("saved_accounts", JSON.stringify(next)).catch(() => {});
+      return next;
+    });
+
+    setPendingDeletion({ account, index });
+    setUndoSecondsLeft(5);
+    clearPendingTimers();
+
+    countdownRef.current = setInterval(() => {
+      setUndoSecondsLeft((prev) => (prev > 1 ? prev - 1 : 1));
+    }, 1000);
+
+    deleteTimeoutRef.current = setTimeout(() => {
+      finalizeDeletion(account);
+    }, 5000);
+  };
 
   const loadSavedAccounts = async () => {
     let localAccounts: SavedAccount[] = [];
@@ -117,21 +352,19 @@ export default function ContactsModal({
                   item?.identifier ||
                   "",
               ).trim();
-              
+
               console.log(`Beneficiary ${index}: id=${beneficiaryId}, accountIdentifier=${accountIdentifier}`);
-              
-              // Check if we have a phone number mapping for beneficiary ID or wallet ID
+
               const phoneNumber = phoneMapping[beneficiaryId] || phoneMapping[accountIdentifier] || "";
-              
+
               console.log(`Phone number lookup: beneficiaryId=${beneficiaryId} -> ${phoneMapping[beneficiaryId] || "NOT FOUND"}`);
               console.log(`Phone number lookup: accountIdentifier=${accountIdentifier} -> ${phoneMapping[accountIdentifier] || "NOT FOUND"}`);
               console.log(`Final phone number: ${phoneNumber || "NOT FOUND"}`);
-              
-              // Use phone number if available, otherwise use wallet ID
+
               const displayNumber = phoneNumber || accountIdentifier;
-              
+
               if (!displayNumber) return null;
-              
+
               const name = String(
                 item?.nickname ||
                   item?.name ||
@@ -142,9 +375,9 @@ export default function ContactsModal({
                   item?.fullName ||
                   "",
               ).trim();
-              
+
               const id = String(item?.id || displayNumber || `beneficiary-${index}`);
-              
+
               return {
                 id,
                 name: name || t("common.unknown"),
@@ -291,7 +524,6 @@ export default function ContactsModal({
       animationType="slide"
       onRequestClose={handleClose}
     >
-      {/* Overlay tap-to-close area */}
       <View style={styles.modalOverlay}>
         <TouchableOpacity
           style={styles.overlayTouchable}
@@ -299,10 +531,9 @@ export default function ContactsModal({
           onPress={handleClose}
         />
 
-        {/* Modal sheet — does NOT move when keyboard opens */}
         <View style={styles.modalContainer}>
 
-          {/* Header — always visible */}
+          {/* Header */}
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>{t("sendMoney.contacts")}</Text>
             <TouchableOpacity onPress={handleClose}>
@@ -310,7 +541,7 @@ export default function ContactsModal({
             </TouchableOpacity>
           </View>
 
-          {/* Tabs — always visible */}
+          {/* Tabs */}
           <View style={styles.tabContainer}>
             <TouchableOpacity
               style={[styles.tab, activeTab === "saved" && styles.tabActive]}
@@ -351,7 +582,7 @@ export default function ContactsModal({
             </TouchableOpacity>
           </View>
 
-          {/* Search Bar — always visible */}
+          {/* Search Bar */}
           <View style={styles.searchContainer}>
             <Ionicons
               name="search"
@@ -377,11 +608,6 @@ export default function ContactsModal({
             )}
           </View>
 
-          {/*
-            KeyboardAvoidingView wraps ONLY the ScrollView so the list
-            shrinks when the keyboard appears — the header/tabs/search
-            stay anchored and never get pushed off screen.
-          */}
           <KeyboardAvoidingView
             style={styles.keyboardAvoidingContainer}
             behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -393,6 +619,7 @@ export default function ContactsModal({
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
               keyboardDismissMode="on-drag"
+              scrollEnabled={scrollEnabled}
             >
               {activeTab === "saved" ? (
                 filteredSaved.length === 0 ? (
@@ -410,23 +637,21 @@ export default function ContactsModal({
                     </Text>
                   </View>
                 ) : (
-                  filteredSaved.map((account) => (
-                    <TouchableOpacity
+                  filteredSaved.map((account, index) => (
+                    <SavedAccountSwipeRow
                       key={account.id}
-                      style={styles.contactItem}
+                      account={account}
                       onPress={() => handleSelectContact(account)}
-                    >
-                      <View style={styles.contactAvatar}>
-                        <Ionicons name="bookmark" size={24} color="#E25A17" />
-                      </View>
-                      <View style={styles.contactInfo}>
-                        <Text style={styles.contactName}>{account.name}</Text>
-                        <Text style={styles.contactAccount}>
-                          {account.accountNumber}
-                        </Text>
-                      </View>
-                      <Ionicons name="chevron-forward" size={20} color="#999" />
-                    </TouchableOpacity>
+                      onSetScrollEnabled={handleSetScrollEnabled}
+                      onSwipeDelete={() =>
+                        handleSwipeDeleteSaved(
+                          account,
+                          savedAccounts.findIndex((a) => a.id === account.id) >= 0
+                            ? savedAccounts.findIndex((a) => a.id === account.id)
+                            : index,
+                        )
+                      }
+                    />
                   ))
                 )
               ) : isLoadingDeviceContacts ? (
@@ -493,6 +718,20 @@ export default function ContactsModal({
                 ))
               )}
             </ScrollView>
+
+            {activeTab === "saved" && pendingDeletion ? (
+              <View style={styles.undoBar}>
+                <View style={styles.undoBarLeft}>
+                  <Ionicons name="trash-outline" size={18} color="#E25A17" />
+                  <Text style={styles.undoText}>
+                    Account deleted - Undo ({undoSecondsLeft}s)
+                  </Text>
+                </View>
+                <TouchableOpacity onPress={handleUndoDelete}>
+                  <Text style={styles.undoAction}>UNDO</Text>
+                </TouchableOpacity>
+              </View>
+            ) : null}
           </KeyboardAvoidingView>
         </View>
       </View>
@@ -506,7 +745,6 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0, 0, 0, 0.5)",
     justifyContent: "flex-end",
   },
-  // Transparent touchable that fills the space above the sheet
   overlayTouchable: {
     flex: 1,
   },
@@ -514,7 +752,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    // Fixed height — does NOT shift when keyboard opens
     maxHeight: "85%",
     minHeight: "70%",
     paddingTop: 20,
@@ -579,7 +816,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#333",
   },
-  // KeyboardAvoidingView fills remaining space below search bar
   keyboardAvoidingContainer: {
     flex: 1,
   },
@@ -590,6 +826,28 @@ const styles = StyleSheet.create({
   contentContainerInner: {
     paddingBottom: 32,
   },
+  swipeRowContainer: {
+    marginBottom: 12,
+    borderRadius: 12,
+    overflow: "hidden",
+    marginHorizontal: 12,
+  },
+  deleteAction: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "#E25A17",
+    alignItems: "flex-end",
+    justifyContent: "center",
+    paddingRight: 24,
+    gap: 4,
+  },
+  deleteActionText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  swipeFront: {
+    backgroundColor: "#FFFFFF",
+  },
   contactItem: {
     flexDirection: "row",
     alignItems: "center",
@@ -597,7 +855,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     backgroundColor: "#FFFFFF",
     borderRadius: 12,
-    marginBottom: 12,
+    marginBottom: 0,
     borderWidth: 1,
     borderColor: "#F0F0F0",
   },
@@ -654,5 +912,36 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
     color: "#FFFFFF",
+  },
+  undoBar: {
+    marginHorizontal: 16,
+    marginBottom: 12,
+    borderRadius: 12,
+    backgroundColor: "#FFF5F0",
+    borderWidth: 1,
+    borderColor: "#F8D4BF",
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  undoBarLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    flex: 1,
+    paddingRight: 12,
+  },
+  undoText: {
+    color: "#7A3D16",
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  undoAction: {
+    color: "#E25A17",
+    fontSize: 13,
+    fontWeight: "800",
+    letterSpacing: 0.4,
   },
 });
