@@ -440,7 +440,7 @@ export default function AgentServices() {
         title: t("agentRequest.modals.requestSubmitted.title"),
         message: t("agentRequest.modals.requestSubmitted.message").replace(
           "{requestId}",
-          result.requestId || result.referralCode || referralCode,
+          result.referralCode || referralCode,
         ),
         type: "success",
         onConfirm: () => {
