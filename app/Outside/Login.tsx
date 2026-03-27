@@ -6,7 +6,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import * as SecureStore from 'expo-secure-store';
 import { registerIndieID } from 'native-notify';
 import { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Animated, BackHandler, Keyboard, Platform, Pressable, StyleSheet, Text, TextInput, TouchableOpacity, useWindowDimensions, View } from "react-native";
+import { ActivityIndicator, Animated, BackHandler, Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { forgotPassword, login } from "../../configs/api";
@@ -217,6 +217,7 @@ function ForgotPasswordInputModal({
 }: ForgotPasswordInputModalProps) {
   const { t, language } = useLanguage();
   const isRTL = language === "Arabic";
+  const { height: windowHeight } = useWindowDimensions();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.9)).current;
   const [inputEmail, setInputEmail] = useState(initialEmail);
@@ -276,82 +277,115 @@ function ForgotPasswordInputModal({
 
   return (
     <ActivityModal transparent animationType="none" visible={visible}>
-      <Animated.View style={[modalStyles.overlay, { opacity: fadeAnim }]}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={phase === 'sent' ? onClose : undefined} />
-        <Animated.View style={[modalStyles.box, { transform: [{ scale: scaleAnim }] }]}>
-          {phase === 'sent' ? (
-            <>
-              <View style={[modalStyles.iconWrap, { backgroundColor: 'rgba(34,197,94,0.18)' }]}>
-                <Text style={[modalStyles.iconText, { color: '#22c55e' }]}>✓</Text>
-              </View>
-              <Text style={modalStyles.title}>{t("auth.emailSentTitle")}</Text>
-              <Text style={modalStyles.message}>
-                {t("auth.emailSentMessage").replace("{email}", inputEmail.trim())}
-              </Text>
-              <View style={modalStyles.buttonsRow}>
-                <TouchableOpacity style={modalStyles.button} onPress={onClose} activeOpacity={0.8}>
-                  <Text style={modalStyles.buttonText}>{t("auth.backToLogin")}</Text>
-                </TouchableOpacity>
-              </View>
-            </>
-          ) : phase === 'sending' ? (
-            <>
-              <View style={modalStyles.iconWrap}>
-                <Text style={modalStyles.iconText}>…</Text>
-              </View>
-              <Text style={modalStyles.title}>{t("auth.sendingEmail")}</Text>
-              <Text style={modalStyles.message}>{t("auth.sendingEmailMessage").replace("{email}", inputEmail.trim())}</Text>
-              <ActivityIndicator color={GRADIENT_START} size="large" style={{ marginTop: 4 }} />
-            </>
-          ) : (
-            <>
-              <View style={modalStyles.iconWrap}>
-                <Text style={modalStyles.iconText}>🔑</Text>
-              </View>
-              <Text style={modalStyles.title}>{t("auth.forgotPasswordTitle")}</Text>
-              <Text style={[modalStyles.message, { marginBottom: 12 }]}>
-                {t("auth.forgotPasswordMessage")}
-              </Text>
-              {phase === 'error' && (
-                <Text style={forgotInputStyles.errorText}>{errorMsg}</Text>
+      <KeyboardAvoidingView
+        style={styles.flex1}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 16 : 0}
+      >
+        <Animated.View style={[modalStyles.overlay, { opacity: fadeAnim }]}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={phase === 'sent' ? onClose : undefined} />
+          <Animated.View
+            style={[
+              modalStyles.box,
+              forgotInputStyles.responsiveBox,
+              {
+                maxHeight: Math.min(520, windowHeight * 0.82),
+                transform: [{ scale: scaleAnim }],
+              },
+            ]}
+          >
+            <ScrollView
+              contentContainerStyle={forgotInputStyles.scrollContent}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              bounces={false}
+            >
+              {phase === 'sent' ? (
+                <>
+                  <View style={[modalStyles.iconWrap, { backgroundColor: 'rgba(34,197,94,0.18)' }]}>
+                    <Text style={[modalStyles.iconText, { color: '#22c55e' }]}>✓</Text>
+                  </View>
+                  <Text style={modalStyles.title}>{t("auth.emailSentTitle")}</Text>
+                  <Text style={modalStyles.message}>
+                    {t("auth.emailSentMessage").replace("{email}", inputEmail.trim())}
+                  </Text>
+                  <View style={modalStyles.buttonsRow}>
+                    <TouchableOpacity style={modalStyles.button} onPress={onClose} activeOpacity={0.8}>
+                      <Text style={modalStyles.buttonText}>{t("auth.backToLogin")}</Text>
+                    </TouchableOpacity>
+                  </View>
+                </>
+              ) : phase === 'sending' ? (
+                <>
+                  <View style={modalStyles.iconWrap}>
+                    <Text style={modalStyles.iconText}>…</Text>
+                  </View>
+                  <Text style={modalStyles.title}>{t("auth.sendingEmail")}</Text>
+                  <Text style={modalStyles.message}>{t("auth.sendingEmailMessage").replace("{email}", inputEmail.trim())}</Text>
+                  <ActivityIndicator color={GRADIENT_START} size="large" style={{ marginTop: 4 }} />
+                </>
+              ) : (
+                <>
+                  <View style={modalStyles.iconWrap}>
+                    <Text style={modalStyles.iconText}>🔑</Text>
+                  </View>
+                  <Text style={modalStyles.title}>{t("auth.forgotPasswordTitle")}</Text>
+                  <Text style={[modalStyles.message, { marginBottom: 12 }]}>
+                    {t("auth.forgotPasswordMessage")}
+                  </Text>
+                  {phase === 'error' && (
+                    <Text style={forgotInputStyles.errorText}>{errorMsg}</Text>
+                  )}
+                  <TextInput
+                    style={forgotInputStyles.emailInput}
+                    placeholder={t("auth.emailPlaceholder")}
+                    placeholderTextColor="#AAAAAA"
+                    value={inputEmail}
+                    onChangeText={(val) => { setInputEmail(val); if (phase === 'error') setPhase('input'); }}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    autoComplete="email"
+                    editable
+                    returnKeyType="done"
+                  />
+                  <View style={[modalStyles.buttonsRow, { marginTop: 4 }]}>
+                    <TouchableOpacity
+                      style={[modalStyles.button, modalStyles.buttonSecondary]}
+                      onPress={onClose}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={modalStyles.buttonSecondaryText}>{t("common.cancel")}</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={modalStyles.button}
+                      onPress={handleSend}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={modalStyles.buttonText}>{t("auth.sendLink")}</Text>
+                    </TouchableOpacity>
+                  </View>
+                </>
               )}
-              <TextInput
-                style={forgotInputStyles.emailInput}
-                placeholder={t("auth.emailPlaceholder")}
-                placeholderTextColor="#AAAAAA"
-                value={inputEmail}
-                onChangeText={(val) => { setInputEmail(val); if (phase === 'error') setPhase('input'); }}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-                autoComplete="email"
-                editable
-              />
-              <View style={[modalStyles.buttonsRow, { marginTop: 4 }]}>
-                <TouchableOpacity
-                  style={[modalStyles.button, modalStyles.buttonSecondary]}
-                  onPress={onClose}
-                  activeOpacity={0.8}
-                >
-                  <Text style={modalStyles.buttonSecondaryText}>{t("common.cancel")}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={modalStyles.button}
-                  onPress={handleSend}
-                  activeOpacity={0.8}
-                >
-                  <Text style={modalStyles.buttonText}>{t("auth.sendLink")}</Text>
-                </TouchableOpacity>
-              </View>
-            </>
-          )}
+            </ScrollView>
+          </Animated.View>
         </Animated.View>
-      </Animated.View>
+      </KeyboardAvoidingView>
     </ActivityModal>
   );
 }
 
 const forgotInputStyles = StyleSheet.create({
+  responsiveBox: {
+    width: "100%",
+    maxWidth: 360,
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: "center",
+  },
   emailInput: {
     width: '100%',
     borderWidth: 1.5,
