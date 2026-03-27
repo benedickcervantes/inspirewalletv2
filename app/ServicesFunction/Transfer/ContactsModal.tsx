@@ -2,18 +2,22 @@ import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Contacts from "expo-contacts";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { getBeneficiaries } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
 
-import ActivityModal from '../../components/ActivityModal';
-const width = (() => {
-  try {
-    return require("react-native").Dimensions?.get?.("window")?.width ?? 375;
-  } catch {
-    return 375;
-  }
-})();
+import ActivityModal from "../../components/ActivityModal";
 
 interface Contact {
   id: string;
@@ -35,7 +39,11 @@ interface ContactsModalProps {
   onSelectContact: (contact: Contact) => void;
 }
 
-export default function ContactsModal({ visible, onClose, onSelectContact }: ContactsModalProps) {
+export default function ContactsModal({
+  visible,
+  onClose,
+  onSelectContact,
+}: ContactsModalProps) {
   const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<"saved" | "device">("saved");
   const [savedAccounts, setSavedAccounts] = useState<SavedAccount[]>([]);
@@ -45,7 +53,6 @@ export default function ContactsModal({ visible, onClose, onSelectContact }: Con
   const [searchQuery, setSearchQuery] = useState("");
   const [hasContactPermission, setHasContactPermission] = useState(false);
   const [isLoadingDeviceContacts, setIsLoadingDeviceContacts] = useState(false);
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   useEffect(() => {
     if (visible) {
@@ -61,30 +68,10 @@ export default function ContactsModal({ visible, onClose, onSelectContact }: Con
   useEffect(() => {
     if (!visible) return;
     if (activeTab !== "device") return;
-    // Ensure device list is fresh when user switches tabs.
     if (deviceContacts.length === 0 && !isLoadingDeviceContacts) {
       loadDeviceContacts();
     }
   }, [activeTab, visible]);
-
-  useEffect(() => {
-    if (!visible) return;
-
-    const showEvent = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
-    const hideEvent = Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
-
-    const showSub = Keyboard.addListener(showEvent, (e) => {
-      setKeyboardHeight(e.endCoordinates?.height ?? 0);
-    });
-    const hideSub = Keyboard.addListener(hideEvent, () => {
-      setKeyboardHeight(0);
-    });
-
-    return () => {
-      showSub.remove();
-      hideSub.remove();
-    };
-  }, [visible]);
 
   const loadSavedAccounts = async () => {
     let localAccounts: SavedAccount[] = [];
@@ -102,37 +89,66 @@ export default function ContactsModal({ visible, onClose, onSelectContact }: Con
       console.error("Error reading local saved accounts:", error);
     }
 
+    // Load phone number mapping
+    let phoneMapping: Record<string, string> = {};
+    try {
+      const mappingData = await AsyncStorage.getItem("beneficiary_phone_mapping");
+      if (mappingData) {
+        phoneMapping = JSON.parse(mappingData);
+        console.log("Phone mapping loaded:", phoneMapping);
+      }
+    } catch (error) {
+      console.warn("Error loading phone mapping:", error);
+    }
+
     let backendAccounts: SavedAccount[] = [];
     try {
       const accessToken = await AsyncStorage.getItem("access_token");
       if (accessToken) {
         const beneficiariesRes = await getBeneficiaries(accessToken);
         if (beneficiariesRes.success && Array.isArray(beneficiariesRes.beneficiaries)) {
+          console.log("Beneficiaries from backend:", JSON.stringify(beneficiariesRes.beneficiaries, null, 2));
           backendAccounts = beneficiariesRes.beneficiaries
             .map((item: any, index: number) => {
+              const beneficiaryId = String(item?.id || "").trim();
               const accountIdentifier = String(
-                  item?.accountNumber ||
-                  item?.recipientAccountNumber ||
-                  item?.recipient?.accountNumber ||
-                  item?.recipient?.user?.accountNumber ||
-                  item?.accountIdentifier ||
+                item?.accountIdentifier ||
                   item?.walletId ||
                   item?.identifier ||
                   "",
               ).trim();
+              
+              console.log(`Beneficiary ${index}: id=${beneficiaryId}, accountIdentifier=${accountIdentifier}`);
+              
+              // Check if we have a phone number mapping for beneficiary ID or wallet ID
+              const phoneNumber = phoneMapping[beneficiaryId] || phoneMapping[accountIdentifier] || "";
+              
+              console.log(`Phone number lookup: beneficiaryId=${beneficiaryId} -> ${phoneMapping[beneficiaryId] || "NOT FOUND"}`);
+              console.log(`Phone number lookup: accountIdentifier=${accountIdentifier} -> ${phoneMapping[accountIdentifier] || "NOT FOUND"}`);
+              console.log(`Final phone number: ${phoneNumber || "NOT FOUND"}`);
+              
+              // Use phone number if available, otherwise use wallet ID
+              const displayNumber = phoneNumber || accountIdentifier;
+              
+              if (!displayNumber) return null;
+              
               const name = String(
                 item?.nickname ||
                   item?.name ||
                   item?.recipientName ||
+                  item?.recipient?.user?.fullName ||
+                  item?.recipient?.user?.name ||
+                  item?.recipient?.fullName ||
                   item?.fullName ||
                   "",
               ).trim();
-              const id = String(item?.id || accountIdentifier || `beneficiary-${index}`);
-              if (!accountIdentifier) return null;
+              
+              const id = String(item?.id || displayNumber || `beneficiary-${index}`);
+              
               return {
                 id,
                 name: name || t("common.unknown"),
-                accountNumber: accountIdentifier,
+                accountNumber: displayNumber,
               } as SavedAccount;
             })
             .filter(Boolean) as SavedAccount[];
@@ -156,7 +172,6 @@ export default function ContactsModal({ visible, onClose, onSelectContact }: Con
       });
       const mergedAccounts = Array.from(mergedMap.values());
 
-      // Keep local cache in sync so Saved Accounts is available offline.
       await AsyncStorage.setItem("saved_accounts", JSON.stringify(mergedAccounts));
 
       setSavedAccounts(mergedAccounts);
@@ -198,8 +213,10 @@ export default function ContactsModal({ visible, onClose, onSelectContact }: Con
         const contacts: Contact[] = data.map((contact: any, index: number) => ({
           id: contact.id || `contact-${index}`,
           name: contact.name || t("common.unknown"),
-          phoneNumbers: contact.phoneNumbers?.map((phone: any) => phone.number || "") || [],
-          accountNumber: contact.phoneNumbers?.[0]?.number?.replace(/\D/g, "") || "",
+          phoneNumbers:
+            contact.phoneNumbers?.map((phone: any) => phone.number || "") || [],
+          accountNumber:
+            contact.phoneNumbers?.[0]?.number?.replace(/\D/g, "") || "",
           type: "device" as const,
         }));
         setDeviceContacts(contacts);
@@ -228,16 +245,18 @@ export default function ContactsModal({ visible, onClose, onSelectContact }: Con
     }
 
     if (activeTab === "saved") {
-      const filtered = savedAccounts.filter((account) =>
-        account.name.toLowerCase().includes(searchLower) ||
-        account.accountNumber.includes(searchLower)
+      const filtered = savedAccounts.filter(
+        (account) =>
+          account.name.toLowerCase().includes(searchLower) ||
+          account.accountNumber.includes(searchLower),
       );
       setFilteredSaved(filtered);
     } else {
-      const filtered = deviceContacts.filter((contact) =>
-        contact.name.toLowerCase().includes(searchLower) ||
-        contact.phoneNumbers?.some(phone => phone.includes(searchLower)) ||
-        contact.accountNumber.includes(searchLower)
+      const filtered = deviceContacts.filter(
+        (contact) =>
+          contact.name.toLowerCase().includes(searchLower) ||
+          contact.phoneNumbers?.some((phone) => phone.includes(searchLower)) ||
+          contact.accountNumber.includes(searchLower),
       );
       setFilteredDevice(filtered);
     }
@@ -262,7 +281,6 @@ export default function ContactsModal({ visible, onClose, onSelectContact }: Con
   const handleClose = () => {
     Keyboard.dismiss();
     setSearchQuery("");
-    setKeyboardHeight(0);
     onClose();
   };
 
@@ -273,20 +291,18 @@ export default function ContactsModal({ visible, onClose, onSelectContact }: Con
       animationType="slide"
       onRequestClose={handleClose}
     >
+      {/* Overlay tap-to-close area */}
       <View style={styles.modalOverlay}>
-        <KeyboardAvoidingView
-          style={styles.keyboardAvoidingContainer}
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
-          keyboardVerticalOffset={Platform.OS === "ios" ? 20 : 0}
-        >
-        <View
-          style={[
-            styles.modalContainer,
-            Platform.OS === "android" &&
-              keyboardHeight > 0 && { marginBottom: Math.max(8, keyboardHeight - 24) },
-          ]}
-        >
-          {/* Header */}
+        <TouchableOpacity
+          style={styles.overlayTouchable}
+          activeOpacity={1}
+          onPress={handleClose}
+        />
+
+        {/* Modal sheet — does NOT move when keyboard opens */}
+        <View style={styles.modalContainer}>
+
+          {/* Header — always visible */}
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>{t("sendMoney.contacts")}</Text>
             <TouchableOpacity onPress={handleClose}>
@@ -294,7 +310,7 @@ export default function ContactsModal({ visible, onClose, onSelectContact }: Con
             </TouchableOpacity>
           </View>
 
-          {/* Tabs */}
+          {/* Tabs — always visible */}
           <View style={styles.tabContainer}>
             <TouchableOpacity
               style={[styles.tab, activeTab === "saved" && styles.tabActive]}
@@ -305,7 +321,12 @@ export default function ContactsModal({ visible, onClose, onSelectContact }: Con
                 size={20}
                 color={activeTab === "saved" ? "#E25A17" : "#999"}
               />
-              <Text style={[styles.tabText, activeTab === "saved" && styles.tabTextActive]}>
+              <Text
+                style={[
+                  styles.tabText,
+                  activeTab === "saved" && styles.tabTextActive,
+                ]}
+              >
                 {t("sendMoney.savedAccounts")}
               </Text>
             </TouchableOpacity>
@@ -319,18 +340,32 @@ export default function ContactsModal({ visible, onClose, onSelectContact }: Con
                 size={20}
                 color={activeTab === "device" ? "#E25A17" : "#999"}
               />
-              <Text style={[styles.tabText, activeTab === "device" && styles.tabTextActive]}>
+              <Text
+                style={[
+                  styles.tabText,
+                  activeTab === "device" && styles.tabTextActive,
+                ]}
+              >
                 {t("sendMoney.deviceContacts")}
               </Text>
             </TouchableOpacity>
           </View>
 
-          {/* Search Bar */}
+          {/* Search Bar — always visible */}
           <View style={styles.searchContainer}>
-            <Ionicons name="search" size={20} color="#999" style={styles.searchIcon} />
+            <Ionicons
+              name="search"
+              size={20}
+              color="#999"
+              style={styles.searchIcon}
+            />
             <TextInput
               style={styles.searchInput}
-              placeholder={activeTab === "saved" ? t("sendMoney.searchSavedPlaceholder") : t("sendMoney.searchDevicePlaceholder")}
+              placeholder={
+                activeTab === "saved"
+                  ? t("sendMoney.searchSavedPlaceholder")
+                  : t("sendMoney.searchDevicePlaceholder")
+              }
               placeholderTextColor="#999"
               value={searchQuery}
               onChangeText={handleSearch}
@@ -342,103 +377,128 @@ export default function ContactsModal({ visible, onClose, onSelectContact }: Con
             )}
           </View>
 
-          {/* Content */}
-          <ScrollView
-            style={styles.contentContainer}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-            keyboardDismissMode="on-drag"
+          {/*
+            KeyboardAvoidingView wraps ONLY the ScrollView so the list
+            shrinks when the keyboard appears — the header/tabs/search
+            stay anchored and never get pushed off screen.
+          */}
+          <KeyboardAvoidingView
+            style={styles.keyboardAvoidingContainer}
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            keyboardVerticalOffset={Platform.OS === "ios" ? 20 : 0}
           >
-            {activeTab === "saved" ? (
-              filteredSaved.length === 0 ? (
+            <ScrollView
+              style={styles.contentContainer}
+              contentContainerStyle={styles.contentContainerInner}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="on-drag"
+            >
+              {activeTab === "saved" ? (
+                filteredSaved.length === 0 ? (
+                  <View style={styles.emptyState}>
+                    <Ionicons name="bookmark-outline" size={64} color="#CCC" />
+                    <Text style={styles.emptyStateTitle}>
+                      {searchQuery
+                        ? t("sendMoney.noContactsFound")
+                        : t("sendMoney.noSavedAccounts")}
+                    </Text>
+                    <Text style={styles.emptyStateText}>
+                      {searchQuery
+                        ? t("sendMoney.tryDifferentSearch")
+                        : t("sendMoney.saveAccountsInstruction")}
+                    </Text>
+                  </View>
+                ) : (
+                  filteredSaved.map((account) => (
+                    <TouchableOpacity
+                      key={account.id}
+                      style={styles.contactItem}
+                      onPress={() => handleSelectContact(account)}
+                    >
+                      <View style={styles.contactAvatar}>
+                        <Ionicons name="bookmark" size={24} color="#E25A17" />
+                      </View>
+                      <View style={styles.contactInfo}>
+                        <Text style={styles.contactName}>{account.name}</Text>
+                        <Text style={styles.contactAccount}>
+                          {account.accountNumber}
+                        </Text>
+                      </View>
+                      <Ionicons name="chevron-forward" size={20} color="#999" />
+                    </TouchableOpacity>
+                  ))
+                )
+              ) : isLoadingDeviceContacts ? (
                 <View style={styles.emptyState}>
-                  <Ionicons name="bookmark-outline" size={64} color="#CCC" />
+                  <ActivityIndicator size="large" color="#E25A17" />
                   <Text style={styles.emptyStateTitle}>
-                    {searchQuery ? t("sendMoney.noContactsFound") : t("sendMoney.noSavedAccounts")}
+                    {t("common.loading")}
+                  </Text>
+                  <Text style={styles.emptyStateText}>
+                    {t("sendMoney.loadingContacts") ||
+                      "Loading device contacts..."}
+                  </Text>
+                </View>
+              ) : !hasContactPermission ? (
+                <View style={styles.emptyState}>
+                  <Ionicons
+                    name="lock-closed-outline"
+                    size={64}
+                    color="#CCC"
+                  />
+                  <Text style={styles.emptyStateTitle}>
+                    {t("sendMoney.permissionRequiredTitle")}
+                  </Text>
+                  <Text style={styles.emptyStateText}>
+                    {t("sendMoney.grantContactsPermission")}
+                  </Text>
+                  <TouchableOpacity
+                    style={styles.permissionButton}
+                    onPress={loadDeviceContacts}
+                  >
+                    <Text style={styles.permissionButtonText}>
+                      {t("sendMoney.grantPermission")}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              ) : filteredDevice.length === 0 ? (
+                <View style={styles.emptyState}>
+                  <Ionicons name="people-outline" size={64} color="#CCC" />
+                  <Text style={styles.emptyStateTitle}>
+                    {searchQuery ? "No contacts found" : "No Contacts"}
                   </Text>
                   <Text style={styles.emptyStateText}>
                     {searchQuery
-                      ? t("sendMoney.tryDifferentSearch")
-                      : t("sendMoney.saveAccountsInstruction")}
+                      ? "Try a different search term"
+                      : "No contacts available on your device"}
                   </Text>
                 </View>
               ) : (
-                filteredSaved.map((account) => (
+                filteredDevice.map((contact) => (
                   <TouchableOpacity
-                    key={account.id}
+                    key={contact.id}
                     style={styles.contactItem}
-                    onPress={() => handleSelectContact(account)}
+                    onPress={() => handleSelectContact(contact)}
                   >
                     <View style={styles.contactAvatar}>
-                      <Ionicons name="bookmark" size={24} color="#E25A17" />
+                      <Ionicons name="person" size={24} color="#E25A17" />
                     </View>
                     <View style={styles.contactInfo}>
-                      <Text style={styles.contactName}>{account.name}</Text>
-                      <Text style={styles.contactAccount}>{account.accountNumber}</Text>
+                      <Text style={styles.contactName}>{contact.name}</Text>
+                      <Text style={styles.contactAccount}>
+                        {contact.phoneNumbers?.[0] ||
+                          contact.accountNumber ||
+                          t("sendMoney.noPhone")}
+                      </Text>
                     </View>
                     <Ionicons name="chevron-forward" size={20} color="#999" />
                   </TouchableOpacity>
                 ))
-              )
-            ) : isLoadingDeviceContacts ? (
-              <View style={styles.emptyState}>
-                <ActivityIndicator size="large" color="#E25A17" />
-                <Text style={styles.emptyStateTitle}>{t("common.loading")}</Text>
-                <Text style={styles.emptyStateText}>
-                  {t("sendMoney.loadingContacts") || "Loading device contacts..."}
-                </Text>
-              </View>
-            ) : !hasContactPermission ? (
-              <View style={styles.emptyState}>
-                <Ionicons name="lock-closed-outline" size={64} color="#CCC" />
-                <Text style={styles.emptyStateTitle}>{t("sendMoney.permissionRequiredTitle")}</Text>
-                <Text style={styles.emptyStateText}>
-                  {t("sendMoney.grantContactsPermission")}
-                </Text>
-                <TouchableOpacity
-                  style={styles.permissionButton}
-                  onPress={loadDeviceContacts}
-                >
-                  <Text style={styles.permissionButtonText}>{t("sendMoney.grantPermission")}</Text>
-                </TouchableOpacity>
-              </View>
-            ) : filteredDevice.length === 0 ? (
-              <View style={styles.emptyState}>
-                <Ionicons name="people-outline" size={64} color="#CCC" />
-                <Text style={styles.emptyStateTitle}>
-                  {searchQuery ? "No contacts found" : "No Contacts"}
-                </Text>
-                <Text style={styles.emptyStateText}>
-                  {searchQuery
-                    ? "Try a different search term"
-                    : "No contacts available on your device"}
-                </Text>
-              </View>
-            ) : (
-              filteredDevice.map((contact) => (
-                <TouchableOpacity
-                  key={contact.id}
-                  style={styles.contactItem}
-                  onPress={() => handleSelectContact(contact)}
-                >
-                  <View style={styles.contactAvatar}>
-                    <Ionicons name="person" size={24} color="#E25A17" />
-                  </View>
-                  <View style={styles.contactInfo}>
-                    <Text style={styles.contactName}>{contact.name}</Text>
-                    <Text style={styles.contactAccount}>
-                      {contact.phoneNumbers?.[0] ||
-                        contact.accountNumber ||
-                        t("sendMoney.noPhone")}
-                    </Text>
-                  </View>
-                  <Ionicons name="chevron-forward" size={20} color="#999" />
-                </TouchableOpacity>
-              ))
-            )}
-          </ScrollView>
+              )}
+            </ScrollView>
+          </KeyboardAvoidingView>
         </View>
-        </KeyboardAvoidingView>
       </View>
     </ActivityModal>
   );
@@ -450,15 +510,16 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0, 0, 0, 0.5)",
     justifyContent: "flex-end",
   },
-  keyboardAvoidingContainer: {
-    width: "100%",
-    justifyContent: "flex-end",
+  // Transparent touchable that fills the space above the sheet
+  overlayTouchable: {
+    flex: 1,
   },
   modalContainer: {
     backgroundColor: "#FFFFFF",
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    maxHeight: "92%",
+    // Fixed height — does NOT shift when keyboard opens
+    maxHeight: "85%",
     minHeight: "70%",
     paddingTop: 20,
   },
@@ -522,10 +583,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#333",
   },
+  // KeyboardAvoidingView fills remaining space below search bar
+  keyboardAvoidingContainer: {
+    flex: 1,
+  },
   contentContainer: {
     flex: 1,
-    paddingHorizontal: 24,
-    paddingBottom: 28,
+    paddingHorizontal: 4,
+  },
+  contentContainerInner: {
+    paddingBottom: 32,
   },
   contactItem: {
     flexDirection: "row",
@@ -593,6 +660,3 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
   },
 });
-
-
-

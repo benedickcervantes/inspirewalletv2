@@ -9,10 +9,10 @@ import { ActivityIndicator, ScrollView, Share, StyleSheet, Text, TouchableOpacit
 import QRCode from "react-native-qrcode-svg";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
-  createBeneficiary,
-  getMe,
-  getOrCreateMainWallet,
-  submitTransfer,
+    createBeneficiary,
+    getMe,
+    getOrCreateMainWallet,
+    submitTransfer,
 } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
 import PasscodeModal from "../../components/PasscodeModal";
@@ -21,7 +21,7 @@ import ContactsModal from "./ContactsModal";
 import QRScanner from "./QRScanner";
 
 import {
-  refreshAdminTransferSuccessSound,
+    refreshAdminTransferSuccessSound,
 } from "../../../constants/adminAudio";
 import ActivityModal from '../../components/ActivityModal';
 
@@ -272,7 +272,7 @@ export default function TransferConfirm() {
         balanceType === "available" ? (wallet.id as string) : undefined;
       const beneficiaryBody: Record<string, string> = {
         nickname: recipientName || t("common.unknown"),
-        accountIdentifier: mainWalletId,
+        accountIdentifier: mainWalletId, // Backend needs wallet ID to process transfer
         type: "WALLET_ID",
       };
       if (hasPasscode && passcodeToSend)
@@ -286,6 +286,7 @@ export default function TransferConfirm() {
           await refreshHasPasscode();
           setShowPasscodeModal(true);
         } else {
+          setShowPasscodeModal(false);
           setErrorMessage(msg);
           setShowErrorModal(true);
         }
@@ -300,6 +301,33 @@ export default function TransferConfirm() {
         setIsProcessing(false);
         return;
       }
+      
+      // Save phone number mapping locally for display purposes
+      // Map both beneficiary ID and wallet ID to phone number
+      try {
+        if (accountNumber) {
+          console.log(`Saving phone mapping for beneficiary ${beneficiaryId}: ${accountNumber}`);
+          console.log(`Also mapping wallet ${mainWalletId}: ${accountNumber}`);
+          const mappingKey = "beneficiary_phone_mapping";
+          const existingMapping = await AsyncStorage.getItem(mappingKey);
+          let mapping: Record<string, string> = {};
+          if (existingMapping) {
+            try {
+              mapping = JSON.parse(existingMapping);
+            } catch {
+              mapping = {};
+            }
+          }
+          // Map both beneficiary ID and wallet ID to phone number
+          if (beneficiaryId) mapping[beneficiaryId] = accountNumber;
+          if (mainWalletId) mapping[mainWalletId] = accountNumber;
+          await AsyncStorage.setItem(mappingKey, JSON.stringify(mapping));
+          console.log("Phone mapping saved successfully:", mapping);
+        }
+      } catch (e) {
+        console.warn("Failed to save phone mapping:", e);
+      }
+      
       const transferBody: Record<string, string> = {
         beneficiaryId,
         amount: amount.toFixed(2),
@@ -353,6 +381,7 @@ export default function TransferConfirm() {
           await refreshHasPasscode();
           setShowPasscodeModal(true);
         } else {
+          setShowPasscodeModal(false);
           setErrorMessage(msg);
           setShowErrorModal(true);
         }
@@ -360,6 +389,7 @@ export default function TransferConfirm() {
       }
     } catch (error) {
       console.error("Error processing transfer:", error);
+      setShowPasscodeModal(false);
       setErrorMessage(t("sendMoney.transferFailed"));
       setShowErrorModal(true);
       if (passcodeToSend) setPasscode("");
@@ -377,9 +407,9 @@ export default function TransferConfirm() {
     await doTransfer();
   };
 
-  const handlePasscodeConfirm = () => {
+  const handlePasscodeConfirm = async () => {
     if (passcode.length !== 4) return;
-    doTransfer(passcode);
+    await doTransfer(passcode);
   };
 
   const handleSaveContactChoice = async (shouldSave: boolean) => {
