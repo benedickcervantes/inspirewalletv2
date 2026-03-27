@@ -3,16 +3,14 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { getOrCreateMainWallet } from "../../../configs/api";
 import {
-  getAvailableCurrencies,
   getStockInvestmentMinAmount,
 } from "../../../configs/currencies";
 import { useLanguage } from "../../../context/LanguageContext";
-import ActivityModal from '../../components/ActivityModal';
 import {
   formatAmountWithCommas,
   unformatNumberString,
@@ -21,13 +19,9 @@ import {
 export default function StockInvestment() {
   const navigation = useNavigation();
   const { t } = useLanguage();
-  const [selectedCurrency, setSelectedCurrency] = useState("PHP");
-  const [showCurrencyModal, setShowCurrencyModal] = useState(false);
+  const selectedCurrency = "PHP";
   const [amount, setAmount] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [currencies, setCurrencies] = useState<
-    { code: string; name: string; flag: string; symbol: string }[]
-  >([]);
   const [isLoadingCurrencies, setIsLoadingCurrencies] = useState(true);
   const [minAmount, setMinAmount] = useState(2000000); // Default fallback
   const [availableBalance, setAvailableBalance] = useState<number | null>(null);
@@ -38,15 +32,13 @@ export default function StockInvestment() {
       try {
         setIsLoadingCurrencies(true);
         const accessToken = await AsyncStorage.getItem("access_token");
-        const [availableCurrencies, minStockAmount, walletResult] =
+        const [minStockAmount, walletResult] =
           await Promise.all([
-            getAvailableCurrencies(),
             getStockInvestmentMinAmount(),
             accessToken
               ? getOrCreateMainWallet(accessToken)
               : Promise.resolve({ success: false, wallet: null }),
           ]);
-        setCurrencies(availableCurrencies);
         setMinAmount(minStockAmount);
         if (
           walletResult.success &&
@@ -60,9 +52,6 @@ export default function StockInvestment() {
       } catch (error) {
         console.error("Failed to load configuration:", error);
         // Fallback to defaults if fetch fails
-        setCurrencies([
-          { code: "PHP", name: "Philippine Peso", flag: "🇵🇭", symbol: "₱" },
-        ]);
         setMinAmount(2000000);
       } finally {
         setIsLoadingCurrencies(false);
@@ -109,13 +98,39 @@ export default function StockInvestment() {
   const parsedAmountNum = parseFloat(unformatNumberString(amount).trim()) || 0;
   const stocksToReceive =
     parsedAmountNum > 0 && minAmount > 0 ? parsedAmountNum / minAmount : 0;
+  const truncateToDecimals = (value: number, decimals: number) => {
+    if (!Number.isFinite(value) || decimals < 0) {
+      return value;
+    }
+    const factor = 10 ** decimals;
+    return Math.trunc(value * factor) / factor;
+  };
+  const conversionDecimalPlaces = (() => {
+    const minAmountString = String(minAmount);
+    if (!minAmountString.includes(".")) {
+      return 0;
+    }
+    return minAmountString.split(".")[1].length;
+  })();
+  const stocksToReceiveDecimalPlaces = (() => {
+    const minDigits = conversionDecimalPlaces;
+    let digits = minDigits;
+    while (
+      digits < 8 &&
+      stocksToReceive > 0 &&
+      truncateToDecimals(stocksToReceive, digits) === 0
+    ) {
+      digits += 1;
+    }
+    return digits;
+  })();
+  const displayedStocksToReceive = truncateToDecimals(
+    stocksToReceive,
+    stocksToReceiveDecimalPlaces
+  );
 
   const getSelectedCurrency = () => {
-    if (currencies.length === 0) {
-      // Fallback when currencies are still loading
-      return { code: "PHP", name: "Philippine Peso", flag: "🇵🇭", symbol: "₱" };
-    }
-    return currencies.find((c) => c.code === selectedCurrency) || currencies[0];
+    return { code: "PHP", name: "Philippine Peso", flag: "🇵🇭", symbol: "₱" };
   };
 
   return (
@@ -136,6 +151,7 @@ export default function StockInvestment() {
           </TouchableOpacity>
 
           <Text style={styles.headerTitle}>{t("deposit.depositRequest")}</Text>
+          <View style={styles.headerSpacer} />
 
         </LinearGradient>
 
@@ -173,44 +189,6 @@ export default function StockInvestment() {
           <View style={styles.formCard}>
             <View style={styles.leftBorder} />
 
-            {/* Select Currency */}
-            <View style={styles.formSection}>
-              <View style={styles.sectionHeader}>
-                <View style={styles.iconBox}>
-                  <MaterialCommunityIcons
-                    name="currency-usd"
-                    size={20}
-                    color="#E25A17"
-                  />
-                </View>
-                <Text style={styles.sectionTitle}>
-                  {t("deposit.selectCurrency")}
-                </Text>
-              </View>
-
-              <TouchableOpacity
-                style={styles.currencySelector}
-                onPress={() => setShowCurrencyModal(true)}
-                disabled={isLoadingCurrencies}
-              >
-                {isLoadingCurrencies ? (
-                  <ActivityIndicator size="small" color="#E25A17" />
-                ) : (
-                  <>
-                    <View style={styles.flagContainer}>
-                      <Text style={styles.flagEmoji}>
-                        {getSelectedCurrency().flag}
-                      </Text>
-                    </View>
-                    <Text style={styles.currencyText}>
-                      {getSelectedCurrency().code}
-                    </Text>
-                    <Ionicons name="chevron-down" size={20} color="#999" />
-                  </>
-                )}
-              </TouchableOpacity>
-            </View>
-
             {/* Stock Rate Info Box */}
             <View style={styles.infoBox}>
               <View style={styles.infoIconContainer}>
@@ -236,9 +214,9 @@ export default function StockInvestment() {
                 {parsedAmountNum > 0 && (
                   <Text style={styles.stocksPreview}>
                     {t("deposit.youWillReceive")}
-                    {stocksToReceive.toLocaleString(undefined, {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 4,
+                    {displayedStocksToReceive.toLocaleString(undefined, {
+                      minimumFractionDigits: stocksToReceiveDecimalPlaces,
+                      maximumFractionDigits: stocksToReceiveDecimalPlaces,
                     })}{" "}
                     {t("deposit.stock")}
                   </Text>
@@ -308,56 +286,6 @@ export default function StockInvestment() {
 
           <View style={styles.bottomPadding} />
         </KeyboardAwareScrollView>
-
-        {/* Currency Selector Modal */}
-        <ActivityModal
-          visible={showCurrencyModal}
-          transparent={true}
-          animationType="slide"
-          onRequestClose={() => setShowCurrencyModal(false)}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContainer}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>
-                  {t("deposit.selectCurrency")}
-                </Text>
-                <TouchableOpacity onPress={() => setShowCurrencyModal(false)}>
-                  <Ionicons name="close" size={24} color="#333" />
-                </TouchableOpacity>
-              </View>
-              <ScrollView style={styles.modalContent}>
-                {currencies.map((currency) => (
-                  <TouchableOpacity
-                    key={currency.code}
-                    style={[
-                      styles.currencyOption,
-                      selectedCurrency === currency.code &&
-                        styles.currencyOptionSelected,
-                    ]}
-                    onPress={() => {
-                      setSelectedCurrency(currency.code);
-                      setShowCurrencyModal(false);
-                    }}
-                  >
-                    <Text style={styles.currencyFlag}>{currency.flag}</Text>
-                    <View style={styles.currencyInfo}>
-                      <Text style={styles.currencyCode}>{currency.code}</Text>
-                      <Text style={styles.currencyName}>{currency.name}</Text>
-                    </View>
-                    {selectedCurrency === currency.code && (
-                      <Ionicons
-                        name="checkmark-circle"
-                        size={24}
-                        color="#E25A17"
-                      />
-                    )}
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </View>
-          </View>
-        </ActivityModal>
       </SafeAreaView>
     </View>
   );
@@ -374,7 +302,6 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
     paddingHorizontal: 16,
     paddingVertical: 16,
   },
@@ -390,6 +317,10 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     flex: 1,
     textAlign: "center",
+  },
+  headerSpacer: {
+    width: 40,
+    height: 40,
   },
   progressContainer: {
     paddingVertical: 20,
@@ -483,26 +414,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#333",
   },
-  currencySelector: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#F9F9F9",
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-  },
-  flagContainer: {
-    marginRight: 8,
-  },
-  flagEmoji: {
-    fontSize: 20,
-  },
-  currencyText: {
-    flex: 1,
-    fontSize: 14,
-    color: "#333",
-    fontWeight: "500",
-  },
   amountInput: {
     flexDirection: "row",
     alignItems: "center",
@@ -556,63 +467,6 @@ const styles = StyleSheet.create({
   },
   bottomPadding: {
     height: Platform.OS === "android" ? 10 : 28,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    justifyContent: "flex-end",
-  },
-  modalContainer: {
-    backgroundColor: "#FFFFFF",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    maxHeight: "70%",
-  },
-  modalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: "#F0F0F0",
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#333",
-  },
-  modalContent: {
-    padding: 16,
-  },
-  currencyOption: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 8,
-    backgroundColor: "#F9F9F9",
-  },
-  currencyOptionSelected: {
-    backgroundColor: "#FFF5F0",
-    borderWidth: 1,
-    borderColor: "#E25A17",
-  },
-  currencyFlag: {
-    fontSize: 32,
-    marginRight: 16,
-  },
-  currencyInfo: {
-    flex: 1,
-  },
-  currencyCode: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#333",
-    marginBottom: 2,
-  },
-  currencyName: {
-    fontSize: 13,
-    color: "#666",
   },
   alertOverlay: {
     flex: 1,
