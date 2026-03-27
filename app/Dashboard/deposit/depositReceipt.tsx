@@ -166,6 +166,10 @@ export default function DepositReceipt() {
     successMessage?: string;
     source?: string;
     playTransferSuccessAudio?: boolean;
+    senderName?: string;
+    senderAccount?: string;
+    recipientName?: string;
+    recipientAccount?: string;
   };
 
   const {
@@ -180,6 +184,10 @@ export default function DepositReceipt() {
     successMessage,
     source,
     playTransferSuccessAudio = false,
+    senderName = "",
+    senderAccount = "",
+    recipientName = "",
+    recipientAccount = "",
   } = params;
 
   const languageCode = getLanguageCode(language);
@@ -421,6 +429,30 @@ export default function DepositReceipt() {
               />
               <Separator />
               <ReceiptRow label={getMethodKey()} value={getMethodLabel()} />
+              {normalizedType === "transfer" && senderName ? (
+                <>
+                  <Separator />
+                  <ReceiptRow label="Sender Name" value={senderName} />
+                </>
+              ) : null}
+              {normalizedType === "transfer" && senderAccount ? (
+                <>
+                  <Separator />
+                  <ReceiptRow label="Sender Account" value={senderAccount} />
+                </>
+              ) : null}
+              {normalizedType === "transfer" && recipientName ? (
+                <>
+                  <Separator />
+                  <ReceiptRow label="Receiver Name" value={recipientName} />
+                </>
+              ) : null}
+              {normalizedType === "transfer" && recipientAccount ? (
+                <>
+                  <Separator />
+                  <ReceiptRow label="Receiver Account" value={recipientAccount} />
+                </>
+              ) : null}
               {contractPeriod && (
                 <>
                   <Separator />

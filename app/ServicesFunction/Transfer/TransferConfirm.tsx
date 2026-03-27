@@ -108,6 +108,46 @@ export default function TransferConfirm() {
     }
   };
 
+  const saveTransferReceiptDetails = async (details: {
+    transactionId: string;
+    senderName: string;
+    senderAccount: string;
+    recipientName: string;
+    recipientAccount: string;
+  }) => {
+    try {
+      const txId = String(details.transactionId || "").trim();
+      if (!txId) return;
+
+      const storageKey = "transfer_receipt_details_by_txid";
+      const existingRaw = await AsyncStorage.getItem(storageKey);
+      let existing: Record<string, unknown> = {};
+      if (existingRaw) {
+        try {
+          const parsed = JSON.parse(existingRaw);
+          existing =
+            parsed && typeof parsed === "object" && !Array.isArray(parsed)
+              ? parsed
+              : {};
+        } catch {
+          existing = {};
+        }
+      }
+
+      existing[txId] = {
+        senderName: details.senderName || "",
+        senderAccount: details.senderAccount || "",
+        recipientName: details.recipientName || "",
+        recipientAccount: details.recipientAccount || "",
+        updatedAt: Date.now(),
+      };
+
+      await AsyncStorage.setItem(storageKey, JSON.stringify(existing));
+    } catch (error) {
+      console.warn("Failed to save transfer receipt details:", error);
+    }
+  };
+
   const isAccountAlreadySaved = async (account: string) => {
     try {
       const normalizedTarget = String(account || "")
@@ -346,6 +386,10 @@ export default function TransferConfirm() {
           transactionId: txId,
           amount: amount.toString(),
           currency: "PHP",
+          senderName: userName || t("common.user"),
+          senderAccount: userAccountNumber || t("common.na"),
+          recipientName: recipientName || t("common.unknown"),
+          recipientAccount: accountNumber || t("common.na"),
           depositMethod:
             balanceType === "agent"
               ? t("sendMoney.agentWallet")
@@ -363,6 +407,14 @@ export default function TransferConfirm() {
           date: new Date().toLocaleString(),
           playTransferSuccessAudio: true,
         };
+
+        await saveTransferReceiptDetails({
+          transactionId: txId,
+          senderName: userName || t("common.user"),
+          senderAccount: userAccountNumber || t("common.na"),
+          recipientName: recipientName || t("common.unknown"),
+          recipientAccount: accountNumber || t("common.na"),
+        });
 
         if ((verifiedAccountNumber || "").trim()) {
           const alreadySaved = await isAccountAlreadySaved(verifiedAccountNumber);

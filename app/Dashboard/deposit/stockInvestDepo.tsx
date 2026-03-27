@@ -12,11 +12,11 @@ import {
   getStockInvestmentMinAmount,
 } from "../../../configs/currencies";
 import { useLanguage } from "../../../context/LanguageContext";
-import ActivityModal from '../../components/ActivityModal';
 import {
   formatAmountWithCommas,
   unformatNumberString,
 } from "../../../utils/numberFormat";
+import ActivityModal from '../../components/ActivityModal';
 
 export default function StockInvestment() {
   const navigation = useNavigation();
