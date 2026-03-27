@@ -15,7 +15,7 @@ import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { doc, getDoc } from "firebase/firestore";
 import { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, Alert, AppState, KeyboardAvoidingView, Platform, ScrollView, StatusBar, StyleSheet, Text, TextInput, ToastAndroid, TouchableOpacity, useWindowDimensions, View } from "react-native";
+import { ActivityIndicator, Alert, AppState, Keyboard, Platform, ScrollView, StatusBar, StyleSheet, Text, TextInput, ToastAndroid, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import {
     SafeAreaView,
     useSafeAreaInsets,
@@ -120,6 +120,8 @@ export default function Placeholder() {
   const [referralLoading, setReferralLoading] = useState(false);
   const [referralError, setReferralError] = useState<string | null>(null);
   const [copySuccess, setCopySuccess] = useState(false);
+  const [accountCopySuccess, setAccountCopySuccess] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   const fetchUserData = useCallback(async () => {
     try {
@@ -247,10 +249,39 @@ export default function Placeholder() {
     loadReferralCode();
   }, [loadReferralCode, referralCode, referralLoading, t]);
 
+  const handleCopyAccountNumber = useCallback(async () => {
+    const valueToCopy = userData?.accountNumber || userData?.id || "000053126300";
+    if (!valueToCopy) return;
+    await Clipboard.setStringAsync(valueToCopy);
+    setAccountCopySuccess(true);
+    setTimeout(() => setAccountCopySuccess(false), 1500);
+    if (Platform.OS === "android") {
+      ToastAndroid.show(t("settings.copySuccess"), ToastAndroid.SHORT);
+    }
+  }, [t, userData]);
+
   useEffect(() => {
     fetchUserData();
     loadReferralCode();
   }, [fetchUserData, loadReferralCode]);
+
+  useEffect(() => {
+    const showEvent = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+    const hideEvent = Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
+
+    const showSub = Keyboard.addListener(showEvent, (event) => {
+      const nextHeight = event.endCoordinates?.height ?? 0;
+      setKeyboardHeight(nextHeight);
+    });
+    const hideSub = Keyboard.addListener(hideEvent, () => {
+      setKeyboardHeight(0);
+    });
+
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   // Refetch when profile screen is focused (e.g. after submitting company KYC)
   // so company name row shows Unverified/Verified badge.
@@ -763,12 +794,6 @@ export default function Placeholder() {
       : isPersonalKycRejected
         ? t("kycCompany.rejected")
         : "Not Verified";
-  const referrerName =
-    userData?.referrerName ??
-    userData?.agentReferrer ??
-    userData?.referredBy ??
-    null;
-  const agentReferrer = referrerName ?? t("common.notProvided");
   const language = normalizeLanguage(userData?.language ?? contextLanguage);
 
   const handleSelectLanguage = async (selectedLabel: string) => {
@@ -1100,7 +1125,9 @@ export default function Placeholder() {
             icon="card-outline"
             label={t("profile.accountNumber")}
             value={accountNumber}
-            editable
+            showCopyButton
+            onCopy={handleCopyAccountNumber}
+            copySuccess={accountCopySuccess}
             isLoading={loading}
           />
           <DetailItem
@@ -1139,16 +1166,6 @@ export default function Placeholder() {
             verifyButtonLabel={
               isPersonalKycRejected ? t("profile.resubmit") : t("profile.verify")
             }
-            isLoading={loading}
-          />
-          {/* Company KYC status (if available) */}
-          {/* This row can be wired to real backend data in the future by reusing getCompanyKycStatus */}
-          <DetailItem
-            icon="people-outline"
-            label={t("profile.agentReferrer")}
-            value={agentReferrer}
-            badge={referrerName ? t("profile.referred") : undefined}
-            badgeColor={referrerName ? "#FFD700" : undefined}
             isLoading={loading}
           />
           <DetailItem
@@ -1206,11 +1223,16 @@ export default function Placeholder() {
 
       {/* Name Edit Modal */}
       <ActivityModal visible={showNameModal} transparent animationType="slide">
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          style={styles.modalOverlay}
-        >
-          <View style={styles.modalContent}>
+        <View style={styles.modalOverlay}>
+          <View
+            style={[
+              styles.modalContent,
+              {
+                marginBottom: Math.max(0, keyboardHeight - insets.bottom),
+                paddingBottom: Math.max(insets.bottom, 12) + 8,
+              },
+            ]}
+          >
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>{t("profile.editName")}</Text>
               <TouchableOpacity
@@ -1285,16 +1307,21 @@ export default function Placeholder() {
               )}
             </TouchableOpacity>
           </View>
-        </KeyboardAvoidingView>
+        </View>
       </ActivityModal>
 
       {/* Phone Edit Modal */}
       <ActivityModal visible={showPhoneModal} transparent animationType="slide">
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          style={styles.modalOverlay}
-        >
-          <View style={styles.modalContent}>
+        <View style={styles.modalOverlay}>
+          <View
+            style={[
+              styles.modalContent,
+              {
+                marginBottom: Math.max(0, keyboardHeight - insets.bottom),
+                paddingBottom: Math.max(insets.bottom, 12) + 8,
+              },
+            ]}
+          >
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>{t("profile.editContactNumber")}</Text>
               <TouchableOpacity
@@ -1347,16 +1374,21 @@ export default function Placeholder() {
               )}
             </TouchableOpacity>
           </View>
-        </KeyboardAvoidingView>
+        </View>
       </ActivityModal>
 
       {/* Contact Links Edit Modal */}
       <ActivityModal visible={showContactLinksModal} transparent animationType="fade">
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
-          style={styles.modalOverlay}
-        >
-          <View style={styles.modalContent}>
+        <View style={styles.modalOverlay}>
+          <View
+            style={[
+              styles.modalContent,
+              {
+                marginBottom: Math.max(0, keyboardHeight - insets.bottom),
+                paddingBottom: Math.max(insets.bottom, 12) + 8,
+              },
+            ]}
+          >
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>{t("profile.editContactLinks")}</Text>
               <TouchableOpacity
@@ -1484,7 +1516,7 @@ export default function Placeholder() {
               )}
             </TouchableOpacity>
           </View>
-        </KeyboardAvoidingView>
+        </View>
       </ActivityModal>
 
       {/* Language Modal - matches Register language options (transparent overlay + outer glow) */}
@@ -1647,6 +1679,9 @@ interface DetailItemProps {
   onVerifyPress?: () => void;
   verifyButtonLabel?: string;
   onEdit?: () => void;
+  onCopy?: () => void;
+  showCopyButton?: boolean;
+  copySuccess?: boolean;
   isPlaceholder?: boolean;
   isLoading?: boolean;
 }
@@ -1672,6 +1707,9 @@ function DetailItem({
   showVerifyButton,
   onVerifyPress,
   verifyButtonLabel = "Verify",
+  onCopy,
+  showCopyButton = false,
+  copySuccess = false,
   isPlaceholder = false,
   isLoading = false,
 }: DetailItemProps) {
@@ -1734,6 +1772,20 @@ function DetailItem({
             activeOpacity={0.7}
           >
             <Ionicons name="create-outline" size={22} color="#E15816" />
+          </TouchableOpacity>
+        )}
+        {!isLoading && showCopyButton && onCopy && (
+          <TouchableOpacity
+            style={styles.copyButton}
+            onPress={onCopy}
+            hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+            activeOpacity={0.7}
+          >
+            <Ionicons
+              name={copySuccess ? "checkmark-outline" : "copy-outline"}
+              size={18}
+              color={THEME_COLOR}
+            />
           </TouchableOpacity>
         )}
       </View>
@@ -1954,6 +2006,14 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  copyButton: {
+    padding: 12,
+    marginLeft: 4,
+    minWidth: 44,
+    minHeight: 44,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   languageModalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.6)",
@@ -2112,7 +2172,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFF",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    paddingBottom: Platform.OS === "ios" ? 34 : 20,
+    paddingBottom: 20,
     maxHeight: "80%",
   },
   modalHeader: {

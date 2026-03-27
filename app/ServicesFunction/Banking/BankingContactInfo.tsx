@@ -12,6 +12,8 @@ import ActivityModal from '../../components/ActivityModal';
 const THEME_COLOR = "#E15816";
 const ORANGE_GRADIENT = ["#E25A17", "#F28934"] as const;
 const GREEN_COMPLETE = "#10B981";
+const PH_MOBILE_LENGTH = 11;
+const PH_LANDLINE_LENGTH = 10;
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 const isValidEmail = (email: string) =>
   EMAIL_REGEX.test((email || "").trim().toLowerCase());
@@ -20,6 +22,21 @@ const filterEmailInput = (text: string) =>
   text.replace(/[^A-Za-z0-9.@\-_]/g, "");
 
 const filterPhoneInput = (text: string) => text.replace(/[^0-9]/g, "");
+
+const isValidMobile = (mobile: string) => {
+  const cleaned = filterPhoneInput(mobile);
+  return cleaned.length === PH_MOBILE_LENGTH && cleaned.startsWith("09");
+};
+
+const isValidLandline = (landline: string) => {
+  const cleaned = filterPhoneInput(landline);
+  if (!cleaned) return true; // Optional field
+  return (
+    cleaned.length === PH_LANDLINE_LENGTH &&
+    cleaned.startsWith("0") &&
+    cleaned[1] !== "9"
+  );
+};
 
 export default function BankingContactInfo() {
   const { t } = useLanguage();
@@ -64,8 +81,19 @@ export default function BankingContactInfo() {
       newErrors.email = t("banking.errorEmail");
     }
 
-    if (!mobileNumber.trim()) {
+    const cleanedMobile = filterPhoneInput(mobileNumber.trim());
+    const cleanedLandline = filterPhoneInput(landlineNumber.trim());
+
+    if (!cleanedMobile) {
       newErrors.mobileNumber = t("banking.errorMobile");
+    } else if (!isValidMobile(cleanedMobile)) {
+      newErrors.mobileNumber =
+        "Please enter a valid mobile number (11 digits, starts with 09).";
+    }
+
+    if (!isValidLandline(cleanedLandline)) {
+      newErrors.landlineNumber =
+        "Please enter a valid landline number (10 digits, starts with 0).";
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -80,8 +108,8 @@ export default function BankingContactInfo() {
       applicationData: {
         contactInfo: {
           email: email.trim(),
-          mobileNumber: mobileNumber.trim(),
-          landlineNumber: landlineNumber.trim() || undefined,
+          mobileNumber: cleanedMobile,
+          landlineNumber: cleanedLandline || undefined,
         },
       },
     });
@@ -255,7 +283,7 @@ export default function BankingContactInfo() {
                   placeholderTextColor="#9E9E9E"
                   value={mobileNumber}
                   onChangeText={(text) => {
-                    setMobileNumber(filterPhoneInput(text));
+                    setMobileNumber(filterPhoneInput(text).slice(0, PH_MOBILE_LENGTH));
                     if (errors.mobileNumber) {
                       setErrors((prev) => {
                         const { mobileNumber, ...rest } = prev;
@@ -264,6 +292,7 @@ export default function BankingContactInfo() {
                     }
                   }}
                   keyboardType="phone-pad"
+                  maxLength={PH_MOBILE_LENGTH}
                 />
                 {errors.mobileNumber && (
                   <Text style={styles.errorText}>{errors.mobileNumber}</Text>
@@ -279,11 +308,23 @@ export default function BankingContactInfo() {
                   placeholder={t("banking.placeholderLandline")}
                   placeholderTextColor="#9E9E9E"
                   value={landlineNumber}
-                  onChangeText={(text) =>
-                    setLandlineNumber(filterPhoneInput(text))
-                  }
+                  onChangeText={(text) => {
+                    setLandlineNumber(
+                      filterPhoneInput(text).slice(0, PH_LANDLINE_LENGTH),
+                    );
+                    if (errors.landlineNumber) {
+                      setErrors((prev) => {
+                        const { landlineNumber, ...rest } = prev;
+                        return rest;
+                      });
+                    }
+                  }}
                   keyboardType="phone-pad"
+                  maxLength={PH_LANDLINE_LENGTH}
                 />
+                {errors.landlineNumber && (
+                  <Text style={styles.errorText}>{errors.landlineNumber}</Text>
+                )}
               </View>
             </View>
 

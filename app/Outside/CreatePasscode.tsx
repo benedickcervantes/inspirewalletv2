@@ -228,6 +228,13 @@ export default function CreatePasscode() {
     setLanguageModalVisible(false);
   };
 
+  const handleStartOver = () => {
+    setStep('create');
+    setPin('');
+    setConfirmPin('');
+    setError('');
+  };
+
   return (
     <>
       <LinearGradient
@@ -275,23 +282,6 @@ export default function CreatePasscode() {
             {step === 'create' ? t('passcode.createInstruction') : t('passcode.confirmInstruction')}
           </Text>
 
-          {step === 'confirm' ? (
-            <TouchableOpacity
-              style={styles.startOverLink}
-              onPress={() => {
-                setStep('create');
-                setPin('');
-                setConfirmPin('');
-                setError('');
-              }}
-              disabled={loading}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="arrow-back" size={18} color={WHITE} />
-              <Text style={styles.startOverText}>{t('passcode.startOver')}</Text>
-            </TouchableOpacity>
-          ) : null}
-
           <View style={[styles.padContainer, { width: padWidth, maxWidth: maxPadWidth }]}>
             {[['1', '2', '3'], ['4', '5', '6'], ['7', '8', '9']].map((row, ri) => (
               <View key={ri} style={styles.padRow}>
@@ -309,7 +299,18 @@ export default function CreatePasscode() {
               </View>
             ))}
             <View style={styles.padRowLast}>
-              <View style={{ width: btnSize }} />
+              {step === 'confirm' ? (
+                <TouchableOpacity
+                  style={[styles.startOverButton, { width: btnSize, height: btnSize, borderRadius: btnSize / 2 }]}
+                  onPress={handleStartOver}
+                  disabled={loading}
+                  activeOpacity={0.8}
+                >
+                  <Ionicons name="arrow-back" size={24} color={WHITE} />
+                </TouchableOpacity>
+              ) : (
+                <View style={{ width: btnSize }} />
+              )}
               <TouchableOpacity
                 style={[styles.padButton, { width: btnSize, height: btnSize, borderRadius: btnSize / 2 }]}
                 onPress={() => handlePress('0')}
@@ -464,19 +465,6 @@ const styles = StyleSheet.create({
     marginTop: 4,
     textAlign: 'center',
   },
-  startOverLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    marginBottom: 20,
-  },
-  startOverText: {
-    fontSize: 16,
-    color: WHITE,
-    fontWeight: '600',
-    textDecorationLine: 'underline',
-  },
   padContainer: {
     marginTop: 8,
     marginBottom: 24,
@@ -494,6 +482,13 @@ const styles = StyleSheet.create({
   },
   padButton: {
     backgroundColor: 'rgba(255,255,255,0.28)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  startOverButton: {
+    backgroundColor: 'transparent',
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.65)',
     justifyContent: 'center',
     alignItems: 'center',
   },

@@ -150,6 +150,8 @@ export function lookupReferralCode(code: string): Promise<{
   firstName?: string;
   lastName?: string;
   name?: string;
+  isAgent?: boolean;
+  agentRole?: string;
   error?: string;
 }>;
 export function getMe(accessToken: string): Promise<{

@@ -3,11 +3,11 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Image, Keyboard, KeyboardAvoidingView, Linking, Platform, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
-import Svg, { Circle, Path } from "react-native-svg";
 import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
+import Svg, { Path } from "react-native-svg";
 import {
   deleteMessage,
   editMessage,
@@ -95,6 +95,7 @@ export default function Message() {
   const [error, setError] = useState<string | null>(null);
   const [isOnline, setIsOnline] = useState(false);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [isUnderMaintenance, setIsUnderMaintenance] = useState(false);
   const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
   const [showTicketCreation, setShowTicketCreation] = useState(false);
@@ -297,11 +298,17 @@ export default function Message() {
   useEffect(() => {
     const showSub = Keyboard.addListener(
       Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
-      () => setKeyboardVisible(true),
+      (event) => {
+        setKeyboardVisible(true);
+        setKeyboardHeight(event.endCoordinates?.height ?? 80);
+      },
     );
     const hideSub = Keyboard.addListener(
       Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
-      () => setKeyboardVisible(false),
+      () => {
+        setKeyboardVisible(false);
+        setKeyboardHeight(0);
+      },
     );
     return () => {
       showSub.remove();
@@ -424,7 +431,7 @@ export default function Message() {
       ) : (
         <KeyboardAvoidingView
           style={styles.keyboardView}
-          behavior={undefined}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
           keyboardVerticalOffset={0}
         >
           <ScrollView
@@ -435,6 +442,8 @@ export default function Message() {
               messages.length === 0 && styles.messagesContentEmpty,
             ]}
             showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
             refreshControl={
               <RefreshControl
                 refreshing={refreshing}
@@ -581,9 +590,16 @@ export default function Message() {
             style={[
               styles.inputBar,
               {
-                paddingBottom: keyboardVisible
-                  ? 8
-                  : Math.max(insets.bottom, 16),
+                marginBottom:
+                  Platform.OS === "android"
+                    ? Math.max(0, keyboardHeight)
+                    :0,
+                paddingBottom:
+                  Platform.OS === "ios"
+                    ? keyboardVisible
+                      ? 8
+                      : Math.max(insets.bottom, 16)
+                    : 20,
               },
             ]}
           >
