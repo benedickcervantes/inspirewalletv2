@@ -2,13 +2,13 @@ import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import * as Contacts from "expo-contacts";
-import * as FileSystem from "expo-file-system/legacy";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Sharing from "expo-sharing";
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, Share, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import QRCode from "react-native-qrcode-svg";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import ViewShot from "react-native-view-shot";
 import {
     getOrCreateMainWallet,
     getRecipientByAccountNumber,
@@ -237,7 +237,7 @@ export default function TransferRecipient() {
   const [userAccountNumber, setUserAccountNumber] = useState("");
   const [userName, setUserName] = useState("");
   const [showQRScanner, setShowQRScanner] = useState(false);
-  const qrRef = useRef<any | null>(null);
+  const viewShotRef = useRef<ViewShot | null>(null);
 
   useEffect(() => {
     fetchBalance();
@@ -408,13 +408,12 @@ export default function TransferRecipient() {
       if (!canShare) {
         await Share.share({
           message:
-            `${t("sendMoney.shareQrFallbackText") || "Here is my wallet account number"}: ` +
-            userAccountNumber,
+            `${t("sendMoney.shareQrFallbackText") || "Here is my wallet account number"} (${userName}): ${userAccountNumber}`,
         });
         return;
       }
 
-      if (!qrRef.current || typeof qrRef.current.toDataURL !== "function") {
+      if (!viewShotRef.current || typeof viewShotRef.current.capture !== "function") {
         alert(
           t("sendMoney.qrNotReady") ||
             "QR code is not ready yet. Please try again.",
@@ -422,35 +421,10 @@ export default function TransferRecipient() {
         return;
       }
 
-      qrRef.current.toDataURL(async (data: string) => {
-        try {
-          const baseDir =
-            FileSystem.cacheDirectory || FileSystem.documentDirectory;
-          if (!baseDir) {
-            await Share.share({
-              message:
-                `${t("sendMoney.shareQrFallbackText") || "Here is my wallet account number"}: ` +
-                userAccountNumber,
-            });
-            return;
-          }
-          const fileUri = `${baseDir}my-qr-${Date.now()}.png`;
-
-          await FileSystem.writeAsStringAsync(fileUri, data, {
-            encoding: FileSystem.EncodingType.Base64,
-          });
-
-          await Sharing.shareAsync(fileUri, {
-            mimeType: "image/png",
-            dialogTitle: t("sendMoney.shareQr") || "Share my QR",
-          });
-        } catch (error) {
-          console.error("Error sharing QR code:", error);
-          alert(
-            t("sendMoney.errorShareQr") ||
-              "Failed to share QR code. Please try again.",
-          );
-        }
+      const fileUri = await viewShotRef.current.capture();
+      await Sharing.shareAsync(fileUri, {
+        mimeType: "image/png",
+        dialogTitle: t("sendMoney.shareQr") || "Share my QR",
       });
     } catch (error) {
       console.error("Error preparing QR share:", error);
@@ -756,13 +730,12 @@ export default function TransferRecipient() {
                 {t("sendMoney.shareQrInstruction")}
               </Text>
 
-              <View style={styles.qrUserInfoCard}>
-                <Text style={styles.qrUserName}>{userName}</Text>
-                <Text style={styles.qrUserAccount}>
+              <View style={styles.qrDisplayCard}>
+                <Text style={styles.qrDisplayName}>{userName}</Text>
+                <Text style={styles.qrDisplayAccount}>
                   {userAccountNumber || t("common.na")}
                 </Text>
-
-                <View style={styles.qrCodeWrapper}>
+                <View style={styles.qrDisplayCodeWrapper}>
                   {userAccountNumber ? (
                     <QRCode
                       value={buildInspireTransferQrPayload(userAccountNumber)}
@@ -774,9 +747,6 @@ export default function TransferRecipient() {
                       logoBackgroundColor="transparent"
                       logoMargin={2}
                       logoBorderRadius={8}
-                      getRef={(ref) => {
-                        qrRef.current = ref;
-                      }}
                     />
                   ) : (
                     <View style={styles.qrPlaceholder}>
@@ -787,13 +757,43 @@ export default function TransferRecipient() {
                     </View>
                   )}
                 </View>
-
-                <View style={styles.secureCodeBadge}>
+                <View style={styles.qrDisplaySecureBadge}>
                   <Ionicons name="shield-checkmark" size={16} color="#4CAF50" />
-                  <Text style={styles.secureCodeText}>
+                  <Text style={styles.qrDisplaySecureText}>
                     {t("sendMoney.secureTransferCode")}
                   </Text>
                 </View>
+              </View>
+              <View style={styles.hiddenShareCaptureContainer} pointerEvents="none">
+                <ViewShot
+                  ref={viewShotRef}
+                  options={{ format: "png", quality: 1, result: "tmpfile" }}
+                  style={styles.shareCardCapture}
+                >
+                  <View style={styles.shareCardHeader}>
+                    <Text style={styles.shareCardHeaderTitle}>Inspire Wallet</Text>
+                    <Text style={styles.shareCardSubtitle}>Scan to transfer</Text>
+                  </View>
+                  <View style={styles.qrUserInfoCard}>
+                    <View style={styles.qrCodeWrapper}>
+                      <QRCode
+                        value={buildInspireTransferQrPayload(userAccountNumber)}
+                        size={210}
+                        color="#E25A17"
+                        backgroundColor="#FFFFFF"
+                        logo={require("../../../assets/images/TranferLogo.png")}
+                        logoSize={40}
+                        logoBackgroundColor="transparent"
+                        logoMargin={2}
+                        logoBorderRadius={8}
+                      />
+                    </View>
+                    <Text style={styles.qrUserName}>{userName}</Text>
+                    <Text style={styles.qrUserIdText}>
+                      User ID: {userAccountNumber || t("common.na")}
+                    </Text>
+                  </View>
+                </ViewShot>
               </View>
 
               <TouchableOpacity
@@ -1260,25 +1260,25 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     lineHeight: 20,
   },
-  qrUserInfoCard: {
+  qrDisplayCard: {
     backgroundColor: "#e3d7d2ff",
     borderRadius: 20,
     padding: 24,
     alignItems: "center",
     marginBottom: 20,
   },
-  qrUserName: {
+  qrDisplayName: {
     fontSize: 20,
     fontWeight: "700",
     color: "#333",
     marginBottom: 4,
   },
-  qrUserAccount: {
+  qrDisplayAccount: {
     fontSize: 16,
     color: "#666",
     marginBottom: 24,
   },
-  qrCodeWrapper: {
+  qrDisplayCodeWrapper: {
     backgroundColor: "#FFFFFF",
     padding: 20,
     borderRadius: 16,
@@ -1288,6 +1288,78 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 3,
+  },
+  qrDisplaySecureBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  qrDisplaySecureText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#4CAF50",
+  },
+  hiddenShareCaptureContainer: {
+    position: "absolute",
+    left: -9999,
+    top: -9999,
+    opacity: 0,
+  },
+  shareCardCapture: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "#F1D7C7",
+    overflow: "hidden",
+    width: 340,
+  },
+  shareCardHeader: {
+    borderBottomWidth: 1,
+    borderBottomColor: "#F2DFD3",
+    alignItems: "center",
+    paddingTop: 18,
+    paddingBottom: 12,
+    paddingHorizontal: 20,
+    backgroundColor: "#FFF7F2",
+  },
+  shareCardHeaderTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#E25A17",
+  },
+  shareCardSubtitle: {
+    marginTop: 2,
+    fontSize: 12,
+    color: "#8A8A8A",
+  },
+  qrUserInfoCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 0,
+    margin: 0,
+    paddingTop: 18,
+    paddingBottom: 24,
+    paddingHorizontal: 24,
+    alignItems: "center",
+  },
+  qrUserName: {
+    fontSize: 24,
+    fontWeight: "700",
+    color: "#2D2D2D",
+    marginBottom: 4,
+    textAlign: "center",
+  },
+  qrCodeWrapper: {
+    backgroundColor: "#FFFFFF",
+    padding: 12,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "#F0DCCC",
+    marginBottom: 20,
+    shadowColor: "#E25A17",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.16,
+    shadowRadius: 10,
+    elevation: 4,
   },
   qrPlaceholder: {
     alignItems: "center",
@@ -1300,15 +1372,11 @@ const styles = StyleSheet.create({
     marginTop: 12,
     textAlign: "center",
   },
-  secureCodeBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  secureCodeText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#4CAF50",
+  qrUserIdText: {
+    fontSize: 13,
+    color: "#8A8A8A",
+    textAlign: "center",
+    fontWeight: "500",
   },
   shareQRButton: {
     borderRadius: 28,
