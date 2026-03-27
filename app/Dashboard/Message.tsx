@@ -1,8 +1,10 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as ImagePicker from "expo-image-picker";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Image, Keyboard, KeyboardAvoidingView, Linking, Platform, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Animated, Image, Keyboard, KeyboardAvoidingView, Linking, Platform, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { PinchGestureHandler, State } from "react-native-gesture-handler";
 import {
   SafeAreaView,
   useSafeAreaInsets,
@@ -13,6 +15,7 @@ import {
   editMessage,
   getMessages,
   sendMessage,
+  uploadSupportAttachment,
 } from "../../configs/api";
 import { useLanguage } from "../../context/LanguageContext";
 import { subscribeToConnectionStatus } from "../../lib/connectionStatus";
@@ -30,6 +33,7 @@ interface ApiMessage {
   status: "SENT" | "READ";
   senderName?: string;
   direction?: "ADMIN_TO_USER" | "USER_TO_ADMIN";
+  attachment?: { name: string; url: string; type: string; size?: number };
 }
 
 interface DisplayMessage {
@@ -39,6 +43,13 @@ interface DisplayMessage {
   timestamp: Date;
   status: "SENT" | "READ";
   isEdited?: boolean;
+  attachment?: { name: string; url: string; type: string; size?: number };
+}
+
+interface LocalAttachment {
+  uri: string;
+  type?: string;
+  name: string;
 }
 
 function DeleteFunctionIcon() {
@@ -76,11 +87,21 @@ function mapApiToDisplay(api: ApiMessage[]): DisplayMessage[] {
     isSent: m.direction === "USER_TO_ADMIN",
     timestamp: new Date(m.createdAt),
     status: m.status ?? "SENT",
+    attachment: m.attachment,
     // Backend does not yet persist an "edited" flag, but we can infer
     // from a common convention if needed later.
     isEdited: /\(edited\)$/.test(m.content),
   }));
   return mapped.reverse();
+}
+
+function isImageAttachment(type?: string, name?: string) {
+  const mime = String(type || "").toLowerCase();
+  if (mime.startsWith("image/")) return true;
+  const file = String(name || "").toLowerCase();
+  return [".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".svg"].some((ext) =>
+    file.endsWith(ext),
+  );
 }
 
 export default function Message() {
@@ -112,7 +133,14 @@ export default function Message() {
   const [editText, setEditText] = useState("");
   const [ticketSelected, setTicketSelected] = useState(false);
   const [ticketListRefreshKey, setTicketListRefreshKey] = useState(0);
+  const [selectedAttachment, setSelectedAttachment] =
+    useState<LocalAttachment | null>(null);
+  const [previewImage, setPreviewImage] = useState<{ url: string; name: string } | null>(null);
   const { t, language } = useLanguage();
+  const baseScale = useRef(new Animated.Value(1)).current;
+  const pinchScale = useRef(new Animated.Value(1)).current;
+  const scale = useRef(Animated.multiply(baseScale, pinchScale)).current;
+  const lastScale = useRef(1);
 
   // Debug ticket selection
   useEffect(() => {
@@ -182,7 +210,7 @@ export default function Message() {
 
   const handleSend = useCallback(async () => {
     const trimmed = message.trim();
-    if (!trimmed || sending) return;
+    if ((!trimmed && !selectedAttachment) || sending) return;
 
     const accessToken = await AsyncStorage.getItem("access_token");
     if (!accessToken) {
@@ -191,11 +219,31 @@ export default function Message() {
     }
 
     setSending(true);
-    const result = await sendMessage(accessToken, trimmed);
+    let payloadContent = trimmed;
+    if (selectedAttachment) {
+      const uploaded = await uploadSupportAttachment(
+        accessToken,
+        selectedAttachment.uri,
+        selectedAttachment.type || "image/jpeg",
+      );
+      if (!uploaded.success || !uploaded.data) {
+        setSending(false);
+        setError(uploaded.error || t("support.failedToSend"));
+        return;
+      }
+      payloadContent = JSON.stringify({
+        v: 1,
+        text: trimmed,
+        attachment: uploaded.data,
+      });
+    }
+
+    const result = await sendMessage(accessToken, payloadContent);
     setSending(false);
 
     if (result.success) {
       setMessage("");
+      setSelectedAttachment(null);
       await fetchMessages();
       setTimeout(() => {
         scrollRef.current?.scrollToEnd({ animated: true });
@@ -203,7 +251,27 @@ export default function Message() {
     } else {
       setError(result.error || t("support.failedToSend"));
     }
-  }, [message, sending, fetchMessages]);
+  }, [message, selectedAttachment, sending, fetchMessages, t]);
+
+  const handlePickAttachment = useCallback(async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      setError("Permission to access photos is required.");
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsMultipleSelection: false,
+      quality: 0.9,
+    });
+    if (result.canceled || !result.assets?.[0]) return;
+    const asset = result.assets[0];
+    setSelectedAttachment({
+      uri: asset.uri,
+      type: asset.mimeType || "image/jpeg",
+      name: asset.fileName || "attachment.jpg",
+    });
+  }, []);
 
   const handleLongPress = useCallback((msg: DisplayMessage) => {
     if (!msg.isSent) return; // Only allow actions on sent messages
@@ -527,6 +595,46 @@ export default function Message() {
 
                       return (
                         <>
+                          {msg.attachment && (
+                            <TouchableOpacity
+                              activeOpacity={0.85}
+                              onPress={() => {
+                                if (isImageAttachment(msg.attachment?.type, msg.attachment?.name)) {
+                                  setPreviewImage({
+                                    url: msg.attachment?.url || "",
+                                    name: msg.attachment?.name || "Image",
+                                  });
+                                  lastScale.current = 1;
+                                  baseScale.setValue(1);
+                                  pinchScale.setValue(1);
+                                  return;
+                                }
+                                Linking.openURL(msg.attachment?.url || "").catch(() => undefined);
+                              }}
+                              style={styles.attachmentWrap}
+                            >
+                              {isImageAttachment(msg.attachment.type, msg.attachment.name) ? (
+                                <Image
+                                  source={{ uri: msg.attachment.url }}
+                                  style={styles.attachmentImage}
+                                  resizeMode="cover"
+                                />
+                              ) : (
+                                <View style={styles.fileAttachment}>
+                                  <Ionicons name="attach" size={16} color={msg.isSent ? "#FFF" : "#333"} />
+                                  <Text
+                                    numberOfLines={1}
+                                    style={[
+                                      styles.fileAttachmentText,
+                                      msg.isSent ? styles.bubbleTextSent : styles.bubbleTextReceived,
+                                    ]}
+                                  >
+                                    {msg.attachment.name}
+                                  </Text>
+                                </View>
+                              )}
+                            </TouchableOpacity>
+                          )}
                           <Text
                             style={[
                               styles.bubbleText,
@@ -603,6 +711,14 @@ export default function Message() {
               },
             ]}
           >
+            <TouchableOpacity
+              style={styles.attachButton}
+              onPress={handlePickAttachment}
+              activeOpacity={0.8}
+              disabled={sending}
+            >
+              <Ionicons name="attach" size={20} color="#666" />
+            </TouchableOpacity>
             <TextInput
               style={styles.input}
               placeholder={t("support.typeMessage")}
@@ -617,11 +733,12 @@ export default function Message() {
             <TouchableOpacity
               style={[
                 styles.sendButton,
-                (!message.trim() || sending) && styles.sendButtonDisabled,
+                ((!message.trim() && !selectedAttachment) || sending) &&
+                  styles.sendButtonDisabled,
               ]}
               onPress={handleSend}
               activeOpacity={0.7}
-              disabled={!message.trim() || sending}
+              disabled={(!message.trim() && !selectedAttachment) || sending}
             >
               {sending ? (
                 <Image
@@ -633,11 +750,21 @@ export default function Message() {
                 <MaterialCommunityIcons
                   name="send"
                   size={22}
-                  color={message.trim() ? "#FFFFFF" : "#999"}
+                  color={message.trim() || selectedAttachment ? "#FFFFFF" : "#999"}
                 />
               )}
             </TouchableOpacity>
           </View>
+          {selectedAttachment && (
+            <View style={styles.selectedAttachmentBar}>
+              <Text style={styles.selectedAttachmentText} numberOfLines={1}>
+                Attached: {selectedAttachment.name}
+              </Text>
+              <TouchableOpacity onPress={() => setSelectedAttachment(null)} activeOpacity={0.75}>
+                <Ionicons name="close-circle" size={20} color="#666" />
+              </TouchableOpacity>
+            </View>
+          )}
         </KeyboardAvoidingView>
       )}
 
@@ -794,6 +921,70 @@ export default function Message() {
             </TouchableOpacity>
           </TouchableOpacity>
         </KeyboardAvoidingView>
+      </ActivityModal>
+
+      <ActivityModal
+        visible={!!previewImage}
+        transparent
+        animationType="fade"
+        onRequestClose={() => {
+          setPreviewImage(null);
+          lastScale.current = 1;
+          baseScale.setValue(1);
+          pinchScale.setValue(1);
+        }}
+      >
+        <View style={styles.imagePreviewOverlay}>
+          <TouchableOpacity
+            style={styles.imagePreviewBackdrop}
+            activeOpacity={1}
+            onPress={() => setPreviewImage(null)}
+          />
+          <View style={styles.imagePreviewContent}>
+            <View style={styles.imagePreviewHeader}>
+              <Text style={styles.imagePreviewTitle} numberOfLines={1}>
+                {previewImage?.name || "Image"}
+              </Text>
+              <TouchableOpacity
+                onPress={() => {
+                  setPreviewImage(null);
+                  lastScale.current = 1;
+                  baseScale.setValue(1);
+                  pinchScale.setValue(1);
+                }}
+                style={styles.imagePreviewCloseBtn}
+              >
+                <Ionicons name="close" size={22} color="#FFF" />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.imagePreviewImageWrap}>
+              {!!previewImage?.url && (
+                <PinchGestureHandler
+                  onGestureEvent={Animated.event(
+                    [{ nativeEvent: { scale: pinchScale } }],
+                    { useNativeDriver: true },
+                  )}
+                  onHandlerStateChange={(event) => {
+                    if (event.nativeEvent.oldState === State.ACTIVE) {
+                      let next = lastScale.current * event.nativeEvent.scale;
+                      if (!Number.isFinite(next)) next = 1;
+                      next = Math.max(1, Math.min(next, 4));
+                      lastScale.current = next;
+                      baseScale.setValue(next);
+                      pinchScale.setValue(1);
+                    }
+                  }}
+                >
+                  <Animated.Image
+                    source={{ uri: previewImage.url }}
+                    style={[styles.imagePreviewImage, { transform: [{ scale }] }]}
+                    resizeMode="contain"
+                  />
+                </PinchGestureHandler>
+              )}
+            </View>
+          </View>
+        </View>
       </ActivityModal>
     </SafeAreaView>
   );
@@ -1011,6 +1202,31 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 22,
   },
+  attachmentWrap: {
+    marginBottom: 8,
+    borderRadius: 12,
+    overflow: "hidden",
+  },
+  attachmentImage: {
+    width: 220,
+    height: 180,
+    borderRadius: 12,
+    backgroundColor: "#DDD",
+  },
+  fileAttachment: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 10,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    maxWidth: 220,
+  },
+  fileAttachmentText: {
+    fontSize: 13,
+    flexShrink: 1,
+  },
   bubbleTextSent: {
     color: "#FFFFFF",
   },
@@ -1078,6 +1294,15 @@ const styles = StyleSheet.create({
     borderTopColor: "#E0E0E0",
     gap: 10,
   },
+  attachButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#F0F0F0",
+    marginBottom: 3,
+  },
   input: {
     flex: 1,
     backgroundColor: "#F0F0F0",
@@ -1099,6 +1324,69 @@ const styles = StyleSheet.create({
   },
   sendButtonDisabled: {
     backgroundColor: "#E8E8E8",
+  },
+  selectedAttachmentBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#FFFFFF",
+    borderTopWidth: 1,
+    borderTopColor: "#ECECEC",
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  selectedAttachmentText: {
+    fontSize: 13,
+    color: "#444",
+    flex: 1,
+    marginRight: 10,
+  },
+  imagePreviewOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.88)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  imagePreviewBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  imagePreviewContent: {
+    width: "100%",
+    height: "100%",
+    paddingTop: 48,
+    paddingHorizontal: 12,
+    paddingBottom: 24,
+  },
+  imagePreviewHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
+  imagePreviewTitle: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "600",
+    flex: 1,
+    marginRight: 12,
+  },
+  imagePreviewCloseBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255,255,255,0.18)",
+  },
+  imagePreviewImageWrap: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    overflow: "hidden",
+  },
+  imagePreviewImage: {
+    width: "100%",
+    height: "100%",
   },
   modalOverlay: {
     flex: 1,

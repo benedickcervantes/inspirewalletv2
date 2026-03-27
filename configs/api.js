@@ -2035,6 +2035,52 @@ export async function sendMessage(accessToken, content) {
 }
 
 /**
+ * POST /messages/upload-attachment — requires JWT
+ * Upload a support chat attachment and get a public URL.
+ * @param {string} accessToken
+ * @param {string} fileUri
+ * @param {string} [mimeType]
+ * @returns {{ success: boolean, data?: { name: string, url: string, type: string, size?: number }, error?: string }}
+ */
+export async function uploadSupportAttachment(
+  accessToken,
+  fileUri,
+  mimeType = "image/jpeg",
+) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
+  if (!fileUri) return { success: false, error: "No file selected" };
+
+  try {
+    const formData = new FormData();
+    await appendImageFile(formData, fileUri, "support-attachment", mimeType);
+    const apiKey = process.env.EXPO_PUBLIC_API_KEY;
+    const headers = {
+      Authorization: `Bearer ${accessToken}`,
+    };
+    if (apiKey) headers["x-api-key"] = apiKey;
+
+    const res = await _originalFetch(`${base}/messages/upload-attachment`, {
+      method: "POST",
+      headers,
+      body: formData,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data?.data) {
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || `Upload failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    return { success: true, data: data.data };
+  } catch (e) {
+    if (__DEV__) console.error("[Support Attachment Upload] Error", e);
+    return { success: false, error: e.message || "Network error" };
+  }
+}
+
+/**
  * GET /messages — requires JWT
  * List the current user's support messages. Ordered newest first.
  * @param {string} accessToken
