@@ -96,6 +96,18 @@ interface Transaction {
   description?: string;
   timestamp?: { toDate?: () => Date };
   createdAt?: string;
+  senderName?: string;
+  senderAccount?: string;
+  recipientName?: string;
+  recipientAccount?: string;
+}
+
+interface StoredTransferReceiptDetails {
+  senderName?: string;
+  senderAccount?: string;
+  recipientName?: string;
+  recipientAccount?: string;
+  updatedAt?: number;
 }
 
 interface RawApiTransaction {
@@ -104,6 +116,23 @@ interface RawApiTransaction {
   amount?: unknown;
   createdAt?: unknown;
   description?: unknown;
+  senderName?: unknown;
+  senderAccount?: unknown;
+  senderAccountNumber?: unknown;
+  recipientName?: unknown;
+  recipientAccount?: unknown;
+  recipientAccountNumber?: unknown;
+  fromName?: unknown;
+  fromAccount?: unknown;
+  fromAccountNumber?: unknown;
+  toName?: unknown;
+  toAccount?: unknown;
+  toAccountNumber?: unknown;
+  sender?: { name?: unknown; accountNumber?: unknown };
+  recipient?: { name?: unknown; accountNumber?: unknown };
+  receiver?: { name?: unknown; accountNumber?: unknown };
+  fromUser?: { fullName?: unknown; accountNumber?: unknown };
+  toUser?: { fullName?: unknown; accountNumber?: unknown };
 }
 
 interface RawApiWallet {
@@ -114,6 +143,65 @@ interface RawApiWallet {
 const CURRENCY_SYMBOL = "₱";
 const ORANGE_GRADIENT: readonly [string, string] = ["#E25A17", "#F28934"];
 const ITEMS_PER_PAGE = 10; // moved outside component
+
+const normalizeTextValue = (value: unknown): string => {
+  const text = String(value ?? "").trim();
+  if (!text || text.toLowerCase() === "undefined" || text.toLowerCase() === "null") {
+    return "";
+  }
+  return text;
+};
+
+const pickFirstText = (...values: unknown[]): string => {
+  for (const value of values) {
+    const normalized = normalizeTextValue(value);
+    if (normalized) return normalized;
+  }
+  return "";
+};
+
+const resolveTransferParties = (
+  raw: Record<string, unknown>,
+): Pick<Transaction, "senderName" | "senderAccount" | "recipientName" | "recipientAccount"> => {
+  const senderObj = (raw.sender as Record<string, unknown> | undefined) || {};
+  const recipientObj =
+    (raw.recipient as Record<string, unknown> | undefined) ||
+    (raw.receiver as Record<string, unknown> | undefined) ||
+    {};
+  const fromUser = (raw.fromUser as Record<string, unknown> | undefined) || {};
+  const toUser = (raw.toUser as Record<string, unknown> | undefined) || {};
+
+  return {
+    senderName: pickFirstText(
+      raw.senderName,
+      raw.fromName,
+      senderObj.name,
+      fromUser.fullName,
+    ),
+    senderAccount: pickFirstText(
+      raw.senderAccount,
+      raw.senderAccountNumber,
+      raw.fromAccount,
+      raw.fromAccountNumber,
+      senderObj.accountNumber,
+      fromUser.accountNumber,
+    ),
+    recipientName: pickFirstText(
+      raw.recipientName,
+      raw.toName,
+      recipientObj.name,
+      toUser.fullName,
+    ),
+    recipientAccount: pickFirstText(
+      raw.recipientAccount,
+      raw.recipientAccountNumber,
+      raw.toAccount,
+      raw.toAccountNumber,
+      recipientObj.accountNumber,
+      toUser.accountNumber,
+    ),
+  };
+};
 
 const DeleteIcon = ({
   color = "#FFF",
@@ -360,6 +448,9 @@ export default function HistoryScreen() {
   const [showDeleteOptions, setShowDeleteOptions] = useState(false);
   const [selectedTransaction, setSelectedTransaction] =
     useState<Transaction | null>(null);
+  const [transferReceiptMap, setTransferReceiptMap] = useState<
+    Record<string, StoredTransferReceiptDetails>
+  >({});
   const [showDetailModal, setShowDetailModal] = useState(false);
 
   // Ref for unsubscribe function to avoid stale closure
@@ -423,6 +514,24 @@ export default function HistoryScreen() {
     return "swap-horizontal";
   };
 
+  const loadStoredTransferReceiptDetails = useCallback(async () => {
+    try {
+      const raw = await AsyncStorage.getItem("transfer_receipt_details_by_txid");
+      if (!raw) {
+        setTransferReceiptMap({});
+        return;
+      }
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+        setTransferReceiptMap({});
+        return;
+      }
+      setTransferReceiptMap(parsed as Record<string, StoredTransferReceiptDetails>);
+    } catch {
+      setTransferReceiptMap({});
+    }
+  }, []);
+
   const fetchTransactions = useCallback(
     async (
       loadMore = false,
@@ -466,19 +575,26 @@ export default function HistoryScreen() {
         if (txRes.success && Array.isArray(txRes.transactions)) {
           const mapped: Transaction[] = (
             txRes.transactions as RawApiTransaction[]
-          ).map((tx) => ({
-            id: String(tx.id ?? ""),
-            type: String(tx.type ?? ""),
-            amount: (() => {
+          ).map((tx) => {
+            const parties = resolveTransferParties(tx as unknown as Record<string, unknown>);
+            return {
+              id: String(tx.id ?? ""),
+              type: String(tx.type ?? ""),
+              amount: (() => {
               const a = parseFloat(String(tx.amount ?? 0));
               return Number.isNaN(a) ? 0 : a;
-            })(),
-            description: String(tx.description ?? ""),
-            timestamp: {
-              toDate: () => new Date(String(tx.createdAt ?? "")),
-            },
-            createdAt: String(tx.createdAt ?? ""),
-          }));
+              })(),
+              description: String(tx.description ?? ""),
+              timestamp: {
+                toDate: () => new Date(String(tx.createdAt ?? "")),
+              },
+              createdAt: String(tx.createdAt ?? ""),
+              senderName: parties.senderName,
+              senderAccount: parties.senderAccount,
+              recipientName: parties.recipientName,
+              recipientAccount: parties.recipientAccount,
+            };
+          });
 
           // ✅ Append when loading more, replace otherwise
           setTransactions((prev) => (loadMore ? [...prev, ...mapped] : mapped));
@@ -504,6 +620,10 @@ export default function HistoryScreen() {
   );
 
   useEffect(() => {
+    loadStoredTransferReceiptDetails();
+  }, [loadStoredTransferReceiptDetails]);
+
+  useEffect(() => {
     let cancelled = false;
 
     const init = async () => {
@@ -525,21 +645,28 @@ export default function HistoryScreen() {
         firebaseUser.uid,
         (list: TransactionDoc[]) => {
           if (cancelled) return;
-          const mapped: Transaction[] = list.map((d) => ({
-            id: d.id,
-            type: String(d.type ?? ""),
-            amount: parseFloat(String(d.amount ?? 0)) || 0,
-            description: String(d.description ?? ""),
-            timestamp: {
-              toDate: () =>
-                d.createdAt?.toMillis
-                  ? new Date(d.createdAt.toMillis())
-                  : new Date(),
-            },
-            createdAt: d.createdAt?.toMillis
-              ? new Date(d.createdAt.toMillis()).toISOString()
-              : "",
-          }));
+          const mapped: Transaction[] = list.map((d) => {
+            const parties = resolveTransferParties(d as unknown as Record<string, unknown>);
+            return {
+              id: d.id,
+              type: String(d.type ?? ""),
+              amount: parseFloat(String(d.amount ?? 0)) || 0,
+              description: String(d.description ?? ""),
+              timestamp: {
+                toDate: () =>
+                  d.createdAt?.toMillis
+                    ? new Date(d.createdAt.toMillis())
+                    : new Date(),
+              },
+              createdAt: d.createdAt?.toMillis
+                ? new Date(d.createdAt.toMillis()).toISOString()
+                : "",
+              senderName: parties.senderName,
+              senderAccount: parties.senderAccount,
+              recipientName: parties.recipientName,
+              recipientAccount: parties.recipientAccount,
+            };
+          });
           setTransactions(mapped);
           setLoading(false);
         },
@@ -587,8 +714,7 @@ export default function HistoryScreen() {
     let receiptType = "Deposit";
     if (rawType.includes("transfer")) receiptType = "Transfer";
     else if (rawType.includes("withdraw")) receiptType = "Withdrawal";
-
-    (navigation as unknown as NavProp).navigate("depositReceipt", {
+    const receiptParams: Record<string, unknown> = {
       transactionId: selectedTransaction.id || t("investment.pending"),
       amount: String(selectedTransaction.amount ?? 0),
       currency: "PHP",
@@ -596,12 +722,45 @@ export default function HistoryScreen() {
       successMessage: getTransactionDisplayName(selectedTransaction),
       date: formatDateTime(selectedTransaction) || new Date().toLocaleString(),
       source: "history",
-    });
+    };
+
+    if (receiptType === "Transfer") {
+      const txId = String(selectedTransaction.id || "").trim();
+      const stored = txId ? transferReceiptMap[txId] : undefined;
+
+      receiptParams.senderName =
+        selectedTransaction.senderName ||
+        stored?.senderName ||
+        t("common.na");
+      receiptParams.senderAccount =
+        selectedTransaction.senderAccount ||
+        stored?.senderAccount ||
+        t("common.na");
+      receiptParams.recipientName =
+        selectedTransaction.recipientName ||
+        stored?.recipientName ||
+        t("common.na");
+      receiptParams.recipientAccount =
+        selectedTransaction.recipientAccount ||
+        stored?.recipientAccount ||
+        t("common.na");
+    }
+
+    (navigation as unknown as NavProp).navigate("depositReceipt", receiptParams);
   };
 
   const canViewReceipt = (tx: Transaction | null) => {
     if (!tx) return false;
     const normalizedDescription = String(tx.description ?? "").toLowerCase();
+    const normalizedType = String(tx.type ?? "").toUpperCase();
+
+    const isTimeDepositRequest =
+      normalizedType === "TIME_DEPOSIT" ||
+      normalizedDescription.includes("time deposit");
+    if (isTimeDepositRequest && !normalizedDescription.includes("approved")) {
+      return false;
+    }
+
     if (
       normalizedDescription.includes("request") ||
       normalizedDescription.includes("pending") ||

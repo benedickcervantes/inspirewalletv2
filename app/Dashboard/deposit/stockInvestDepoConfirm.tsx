@@ -6,8 +6,8 @@ import { useState } from "react";
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
-  getOrCreateMainWallet,
-  submitStockInvestmentRequest,
+    getOrCreateMainWallet,
+    submitStockInvestmentRequest,
 } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
 import { unformatNumberString } from "../../../utils/numberFormat";
@@ -26,6 +26,7 @@ export default function StockInvestmentConfirm() {
   const [showAlertModal, setShowAlertModal] = useState(false);
   const [alertConfig, setAlertConfig] = useState({ title: "", message: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isRequestSubmitted, setIsRequestSubmitted] = useState(false);
 
   const currency = params.currency || "PHP";
   const amount = params.amount || "0";
@@ -37,6 +38,7 @@ export default function StockInvestmentConfirm() {
     if (isSubmitting) return;
 
     setIsSubmitting(true);
+    setIsRequestSubmitted(false);
     setAlertConfig({ title: "", message: "" });
 
     try {
@@ -70,17 +72,12 @@ export default function StockInvestmentConfirm() {
 
       if (result.success) {
         setAlertConfig({
-          title: t("deposit.success"),
-          message: t("deposit.stockSubmitted"),
+          title: "Request Submitted",
+          message:
+            "Your request is now on process. Please wait for admin to process and approve your request. Your balance will be deducted once admin approves your request. You will receive a notification and an email regarding this update.",
         });
+        setIsRequestSubmitted(true);
         setShowAlertModal(true);
-        setTimeout(() => {
-          setShowAlertModal(false);
-          (navigation as any).reset({
-            index: 0,
-            routes: [{ name: "Main" }],
-          });
-        }, 2000);
       } else {
         setAlertConfig({
           title: t("deposit.error"),
@@ -229,7 +226,8 @@ export default function StockInvestmentConfirm() {
                 style={styles.alertButton}
                 onPress={() => {
                   setShowAlertModal(false);
-                  if (alertConfig.title === t("deposit.success")) {
+                  if (isRequestSubmitted) {
+                    setIsRequestSubmitted(false);
                     (navigation as any).reset({
                       index: 0,
                       routes: [{ name: "Main" }],

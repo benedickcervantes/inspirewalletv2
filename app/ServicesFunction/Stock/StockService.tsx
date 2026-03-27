@@ -6,11 +6,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, AppState, AppStateStatus, FlatList, Platform, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
-    getStockInvestmentDepositRequests,
-    getStockMarketplaceListings,
-    getStockSellRequests,
-    getWallets,
-    purchaseStockListing,
+  getStockInvestmentDepositRequests,
+  getStockMarketplaceListings,
+  getStockSellRequests,
+  getWallets,
+  purchaseStockListing,
 } from "../../../configs/api";
 import { getStockInvestmentMinAmount } from "../../../configs/currencies";
 import { getLanguageCode } from "../../../constants/locales";
@@ -869,7 +869,7 @@ export default function StockService() {
           visible={showAlert}
           transparent
           animationType="fade"
-          onRequestClose={() => setShowAlert(false)}
+          onRequestClose={() => {}}
         >
           <View style={styles.alertOverlay}>
             <LinearGradient

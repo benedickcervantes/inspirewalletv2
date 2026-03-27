@@ -59,7 +59,7 @@ const newAr = `
 // we can do simple array split and insert.
 
 const insertTranslations = (langStr, newContent) => {
-  const marker = `const ${langStr}: TranslationMap = {`;
+  const marker = Object.keys(newContent).length > 0 ? `const ${langStr}: TranslationMap = {` : "";
   if (!marker) return content;
   
   if (content.includes(`"deposit.missingRequestId":`)) {
