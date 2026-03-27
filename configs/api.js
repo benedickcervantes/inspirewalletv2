@@ -309,7 +309,22 @@ function parseTimeDepositsResponse(data) {
     list = Array.isArray(raw) ? raw : (raw?.items ?? raw?.data);
     if (list && !Array.isArray(list)) list = [];
   }
-  return Array.isArray(list) ? list : [];
+  if (!Array.isArray(list)) return [];
+  // Normalize note fields so app can consistently render rejection notes.
+  return list.map((item) => {
+    if (!item || typeof item !== "object") return item;
+    const note =
+      item.adminNotes ??
+      item.admin_notes ??
+      item.notes ??
+      item.rejectionReason ??
+      item.rejection_reason ??
+      null;
+    return {
+      ...item,
+      adminNotes: note,
+    };
+  });
 }
 
 /**

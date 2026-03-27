@@ -41,6 +41,11 @@ interface TimeDeposit {
   amount: string | number;
   interestRate: string;
   status: "PENDING" | "ACTIVE" | "MATURED" | "CANCELLED";
+  adminNotes?: string | null;
+  admin_notes?: string | null;
+  notes?: string | null;
+  rejectionReason?: string | null;
+  rejection_reason?: string | null;
   startDate: string | null;
   maturityDate: string | null;
   projectedStartDate: string;
@@ -200,6 +205,26 @@ export default function SavingsTab({
     if (status === "MATURED") return "#2563EB";
     if (status === "PENDING") return "#D97706";
     return "#6B7280";
+  };
+
+  const getFormalRejectionMessage = (adminNotes?: string | null) => {
+    const trimmed = String(adminNotes ?? "").trim();
+    if (!trimmed) {
+      return "Your term savings request has been rejected after administrative review because the submitted request details did not meet the current approval requirements.";
+    }
+    return "Your term savings request has been rejected after administrative review because the submitted request details did not meet the current approval requirements. Please review the admin notes below and submit a new request after correcting the issue.";
+  };
+
+  const getResolvedAdminNote = (dep: TimeDeposit): string | null => {
+    const raw =
+      dep.adminNotes ??
+      dep.admin_notes ??
+      dep.notes ??
+      dep.rejectionReason ??
+      dep.rejection_reason ??
+      null;
+    const trimmed = String(raw ?? "").trim();
+    return trimmed ? trimmed : null;
   };
 
   return (
@@ -575,6 +600,28 @@ export default function SavingsTab({
                     </Text>
                   </View>
 
+                  {selectedContract.status === "CANCELLED" && (
+                    <>
+                      <View style={styles.rejectionBox}>
+                        <Text style={styles.rejectionTitle}>Reason for Rejection</Text>
+                        <Text style={styles.rejectionMessage}>
+                          {getFormalRejectionMessage(getResolvedAdminNote(selectedContract))}
+                        </Text>
+                      </View>
+                      <View style={styles.rejectionBox}>
+                        <Text style={styles.rejectionTitle}>Admin Notes</Text>
+                        <Text style={styles.rejectionMessage}>
+                          {String(
+                            getResolvedAdminNote(selectedContract) ??
+                              "No additional admin notes were provided.",
+                          )}
+                        </Text>
+                      </View>
+                    </>
+                  )}
+
+                  {selectedContract.status !== "CANCELLED" && (
+                    <>
                   <View style={styles.modalDetailRow}>
                     <Text style={styles.modalDetailLabel}>{t("investment.amount")}</Text>
                     <Text style={styles.modalDetailValue}>
@@ -756,6 +803,8 @@ export default function SavingsTab({
                       <Text style={styles.contractRequestButtonText}>Request Original Copy</Text>
                     </TouchableOpacity>
                   </View>
+                    </>
+                  )}
                 </ScrollView>
               </>
             )}
@@ -1072,6 +1121,32 @@ const styles = StyleSheet.create({
   },
   modalDetailLabel: { fontSize: 14, color: "#6B7280" },
   modalDetailValue: { fontSize: 15, fontWeight: "600", color: "#1F2937" },
+  modalDetailValueMultiline: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#1F2937",
+    flex: 1,
+    textAlign: "right",
+  },
+  rejectionBox: {
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#FECACA",
+    backgroundColor: "#FEF2F2",
+    padding: 14,
+    marginBottom: 12,
+  },
+  rejectionTitle: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#991B1B",
+    marginBottom: 6,
+  },
+  rejectionMessage: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: "#7F1D1D",
+  },
   payoutSectionTitle: {
     fontSize: 16,
     fontWeight: "700",
