@@ -9,15 +9,15 @@ import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Animated, BackHandler, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
-    login,
-    resetPasscode,
-    verifyBiometric,
-    verifyPasscode,
+  login,
+  resetPasscode,
+  verifyBiometric,
+  verifyPasscode,
 } from "../../configs/api";
 import {
-    DEFAULT_LANGUAGE,
-    normalizeLanguage,
-    SUPPORTED_LANGUAGES,
+  DEFAULT_LANGUAGE,
+  normalizeLanguage,
+  SUPPORTED_LANGUAGES,
 } from "../../constants/locales";
 import { useIdleTimeout } from "../../context/IdleTimeoutContext";
 import { useLanguage } from "../../context/LanguageContext";
@@ -137,52 +137,63 @@ export default function Passcode() {
   const { width, height } = useWindowDimensions();
   const { horizontalPadding, isShortScreen, isSmallScreen } = useResponsive();
   const isSmallPhone = width < 380;
+  const isLargeScreen = width >= 768;
   const compact = isShortScreen || height < 650;
   const tiny = height < 600;
-  const btnSize =
-    width >= 768
-      ? 80
-      : tiny
-        ? 40
-        : compact
-          ? Math.min(56, Math.max(46, width * 0.18))
-          : Math.min(72, Math.max(52, width * 0.22));
-  const delBtnSize =
-    width >= 768
-      ? 80
-      : tiny
-        ? 40
-        : compact
-          ? Math.min(56, Math.max(46, width * 0.18))
-          : Math.min(72, Math.max(52, width * 0.22));
-  const padWidth = width >= 768 ? "65%" : width < 340 ? "92%" : "88%";
-  const maxPadWidth =
-    width >= 768 ? 420 : Math.min(360, width - horizontalPadding * 2);
-  const logoWidth = tiny
-    ? 88
-    : compact
-      ? Math.min(140, Math.max(100, width * 0.38))
-      : Math.min(200, Math.max(160, width * 0.52));
+  
+  // Responsive button sizes
+  const btnSize = isLargeScreen
+    ? 90
+    : tiny
+      ? Math.min(60, Math.max(50, width * 0.14))
+      : compact
+        ? Math.min(70, Math.max(58, width * 0.17))
+        : Math.min(80, Math.max(64, width * 0.20));
+  
+  const delBtnSize = btnSize;
+  
+  // Responsive container width
+  const padWidth = isLargeScreen ? "70%" : width < 340 ? "95%" : "90%";
+  const maxPadWidth = isLargeScreen ? 480 : Math.min(380, width - horizontalPadding * 2);
+  
+  // Responsive logo size
+  const logoWidth = isLargeScreen
+    ? 240
+    : tiny
+      ? Math.min(100, Math.max(80, width * 0.30))
+      : compact
+        ? Math.min(140, Math.max(110, width * 0.36))
+        : Math.min(180, Math.max(140, width * 0.45));
   const logoHeight = Math.round(logoWidth * (72 / 200));
-  const dotSize = tiny ? 14 : compact ? 18 : isSmallPhone ? 20 : 22;
-  const dotGap = tiny ? 10 : compact ? 14 : isSmallPhone ? 20 : 24;
-  const enterTextSize = tiny ? 13 : compact ? 15 : isSmallPhone ? 16 : 18;
-  const padButtonTextSize = tiny ? 18 : compact ? 22 : isSmallPhone ? 26 : 30;
-  const logoTopMargin = tiny
-    ? 4
-    : compact
-      ? Math.min(12, Math.round(height * 0.02))
-      : Math.min(40, Math.round(height * 0.04));
-  const backspaceIconSize = tiny ? 16 : compact ? 20 : isSmallPhone ? 24 : 28;
-  const logoWrapMarginBottom = tiny ? 6 : compact ? 12 : 32;
-  const dotsWrapMarginBottom = tiny ? 6 : compact ? 10 : 20;
-  const enterTextMarginBottom = tiny ? 8 : compact ? 16 : 40;
-  const padRowMarginBottom = tiny ? 4 : compact ? 10 : 20;
-  const bottomRowMarginTop = tiny ? 4 : compact ? 8 : 16;
-  const layoutScale = Math.max(
-    0.88,
-    Math.min(1.12, Math.min(width / 390, height / 844)),
-  );
+  
+  // Responsive dot size
+  const dotSize = isLargeScreen ? 26 : tiny ? 16 : compact ? 20 : isSmallPhone ? 22 : 24;
+  const dotGap = isLargeScreen ? 28 : tiny ? 12 : compact ? 16 : isSmallPhone ? 20 : 24;
+  
+  // Responsive text sizes
+  const enterTextSize = isLargeScreen ? 22 : tiny ? 14 : compact ? 16 : isSmallPhone ? 17 : 19;
+  const padButtonTextSize = isLargeScreen ? 36 : tiny ? 22 : compact ? 26 : isSmallPhone ? 28 : 32;
+  
+  // Responsive margins
+  const logoTopMargin = isLargeScreen
+    ? 20
+    : tiny
+      ? Math.min(8, Math.round(height * 0.01))
+      : compact
+        ? Math.min(16, Math.round(height * 0.02))
+        : Math.min(32, Math.round(height * 0.04));
+  
+  const backspaceIconSize = isLargeScreen ? 32 : tiny ? 18 : compact ? 22 : isSmallPhone ? 26 : 30;
+  const logoWrapMarginBottom = isLargeScreen ? 40 : tiny ? 8 : compact ? 14 : 28;
+  const dotsWrapMarginBottom = isLargeScreen ? 24 : tiny ? 8 : compact ? 12 : 18;
+  const enterTextMarginBottom = isLargeScreen ? 48 : tiny ? 12 : compact ? 20 : 36;
+  const padRowMarginBottom = isLargeScreen ? 24 : tiny ? 6 : compact ? 12 : 18;
+  const bottomRowMarginTop = isLargeScreen ? 20 : tiny ? 6 : compact ? 10 : 14;
+  
+  // Layout scale for overall adjustment
+  const layoutScale = isLargeScreen
+    ? 1.0
+    : Math.max(0.85, Math.min(1.1, Math.min(width / 390, height / 844)));
 
   const [passcode, setPasscode] = useState("");
   const [error, setError] = useState("");
@@ -580,7 +591,7 @@ export default function Passcode() {
                 {
                   transform: [{ scale: layoutScale }],
                   width: "100%",
-                  maxWidth: 460,
+                  maxWidth: isLargeScreen ? 520 : 460,
                 },
               ]}
             >
@@ -614,6 +625,7 @@ export default function Passcode() {
                   <Text
                     style={[
                       styles.needsAuthTitle,
+                      isLargeScreen && { fontSize: 26 },
                       isSmallScreen && { fontSize: 20 },
                       compact && { fontSize: 18, marginBottom: 12 },
                       tiny && { fontSize: 16, marginBottom: 8 },
@@ -624,6 +636,7 @@ export default function Passcode() {
                   <Text
                     style={[
                       styles.needsAuthMessage,
+                      isLargeScreen && { fontSize: 17, lineHeight: 26 },
                       isSmallScreen && { fontSize: 15 },
                       compact && { marginBottom: 20, lineHeight: 22 },
                       tiny && {
@@ -638,6 +651,7 @@ export default function Passcode() {
                   <View
                     style={[
                       styles.needsAuthButtons,
+                      isLargeScreen && { maxWidth: 320, gap: 14 },
                       isSmallScreen && { maxWidth: 260 },
                       compact && { gap: 10 },
                       tiny && { gap: 8 },
@@ -647,6 +661,7 @@ export default function Passcode() {
                       style={[
                         styles.needsAuthBtn,
                         styles.needsAuthBtnSecondary,
+                        isLargeScreen && { minHeight: 56, paddingVertical: 16 },
                         isSmallScreen && { minHeight: 48 },
                         tiny && { minHeight: 40, paddingVertical: 10 },
                       ]}
@@ -657,6 +672,7 @@ export default function Passcode() {
                       <Text
                         style={[
                           styles.needsAuthBtnText,
+                          isLargeScreen && { fontSize: 18 },
                           isSmallScreen && { fontSize: 16 },
                           tiny && { fontSize: 14 },
                         ]}
@@ -668,6 +684,7 @@ export default function Passcode() {
                       style={[
                         styles.needsAuthBtn,
                         styles.needsAuthBtnPrimary,
+                        isLargeScreen && { minHeight: 56, paddingVertical: 16 },
                         isSmallScreen && { minHeight: 48 },
                         tiny && { minHeight: 40, paddingVertical: 10 },
                       ]}
@@ -678,6 +695,7 @@ export default function Passcode() {
                       <Text
                         style={[
                           styles.needsAuthBtnText,
+                          isLargeScreen && { fontSize: 18 },
                           isSmallScreen && { fontSize: 16 },
                           tiny && { fontSize: 14 },
                         ]}
@@ -693,6 +711,7 @@ export default function Passcode() {
                     <Text
                       style={[
                         styles.errorText,
+                        isLargeScreen && { fontSize: 16, marginBottom: 18 },
                         compact && { marginBottom: 14, paddingVertical: 8 },
                         tiny && {
                           marginBottom: 6,
@@ -789,7 +808,7 @@ export default function Passcode() {
                     <View
                       style={[
                         styles.padRowLast,
-                        { marginBottom: tiny ? 4 : compact ? 8 : 20 },
+                        { marginBottom: isLargeScreen ? 24 : tiny ? 4 : compact ? 8 : 16 },
                       ]}
                     >
                       {hasBiometricToken ? (
@@ -867,6 +886,7 @@ export default function Passcode() {
                       style={[
                         styles.bottomButton,
                         styles.bottomButtonPrimary,
+                        isLargeScreen && { minHeight: 56, paddingVertical: 16 },
                         isSmallScreen && { minHeight: 48 },
                         tiny && { minHeight: 40, paddingVertical: 8 },
                       ]}
@@ -877,19 +897,34 @@ export default function Passcode() {
                       <Text
                         style={[
                           styles.bottomButtonTextPrimary,
+                          isLargeScreen && { fontSize: 18 },
                           isSmallScreen && { fontSize: 16 },
+                          tiny && { fontSize: 14 },
                         ]}
                       >
                         {t("passcode.useEmail")}
                       </Text>
                     </TouchableOpacity>
                     <TouchableOpacity
-                      style={[styles.forgotLinkWrap, tiny && { marginTop: 4 }]}
+                      style={[
+                        styles.forgotLinkWrap,
+                        isLargeScreen && { paddingVertical: 14, marginBottom: 40 },
+                        Platform.OS === 'ios' && { 
+                          paddingVertical: 16, 
+                          marginBottom: Math.max(32, insets.bottom + 16)
+                        },
+                        tiny && { 
+                          marginTop: 4, 
+                          paddingVertical: 10, 
+                          marginBottom: Platform.OS === 'ios' ? Math.max(28, insets.bottom + 12) : 8 
+                        }
+                      ]}
                       onPress={() => setResetModalVisible(true)}
                     >
                       <Text
                         style={[
                           styles.forgotLink,
+                          isLargeScreen && { fontSize: 17 },
                           isSmallScreen && { fontSize: 15 },
                           tiny && { fontSize: 13 },
                         ]}
@@ -1405,7 +1440,7 @@ const styles = StyleSheet.create({
   bottomRow: {
     width: "100%",
     maxWidth: "100%",
-    marginTop: 16,
+    marginTop: 8,
     alignSelf: "stretch",
     alignItems: "stretch",
     gap: 16,
@@ -1414,10 +1449,10 @@ const styles = StyleSheet.create({
     width: "100%",
     alignSelf: "stretch",
     paddingVertical: 16,
-    borderRadius: 999,
+    borderRadius: 99,
     alignItems: "center",
     justifyContent: "center",
-    minHeight: 52,
+    minHeight: 5,
   },
   bottomButtonPrimary: {
     backgroundColor: GRADIENT_START,
@@ -1428,10 +1463,11 @@ const styles = StyleSheet.create({
     color: WHITE,
   },
   forgotLinkWrap: {
-    paddingVertical: 8,
+    paddingVertical: 12,
     paddingHorizontal: 4,
     width: "100%",
     alignItems: "center",
+    marginBottom: Platform.OS === 'ios' ? 32 : 8,
   },
   forgotLink: {
     fontSize: 16,

@@ -8,9 +8,9 @@ import { ActivityIndicator, Platform, ScrollView, StatusBar, StyleSheet, Text, T
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Path } from "react-native-svg";
 import {
-  deleteTransactions,
-  getOrCreateMainWallet,
-  getTransactions,
+    deleteTransactions,
+    getOrCreateMainWallet,
+    getTransactions,
 } from "../../configs/api";
 import type { TransactionDoc } from "../../configs/firebase";
 import { auth, subscribeToTransactions } from "../../configs/firebase";
@@ -658,13 +658,19 @@ export default function HistoryScreen() {
   const getVisiblePages = () => {
     const pages: (number | string)[] = [];
     const maxVisible = 3;
+    
+    // Always show at least 3 pages if there's more data available
+    const minPagesToShow = hasMore ? 3 : totalPagesCount;
 
-    if (totalPagesCount <= maxVisible) {
+    if (totalPagesCount <= maxVisible && !hasMore) {
       for (let i = 1; i <= totalPagesCount; i++) pages.push(i);
     } else {
       if (currentPage <= 2) {
-        pages.push(1, 2, 3);
-      } else if (currentPage >= totalPagesCount - 1) {
+        // Show pages 1, 2, 3 when on first or second page
+        for (let i = 1; i <= Math.max(maxVisible, minPagesToShow); i++) {
+          pages.push(i);
+        }
+      } else if (currentPage >= totalPagesCount - 1 && !hasMore) {
         pages.push(totalPagesCount - 2, totalPagesCount - 1, totalPagesCount);
       } else {
         pages.push(currentPage - 1, currentPage, currentPage + 1);
