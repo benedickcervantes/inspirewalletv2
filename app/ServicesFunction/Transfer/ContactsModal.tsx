@@ -435,10 +435,6 @@ export default function ContactsModal({
                   <Text style={styles.emptyStateTitle}>
                     {t("common.loading")}
                   </Text>
-                  <Text style={styles.emptyStateText}>
-                    {t("sendMoney.loadingContacts") ||
-                      "Loading device contacts..."}
-                  </Text>
                 </View>
               ) : !hasContactPermission ? (
                 <View style={styles.emptyState}>
