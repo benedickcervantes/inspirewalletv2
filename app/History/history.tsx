@@ -558,6 +558,7 @@ export default function HistoryScreen() {
     if (isSelectMode) {
       setIsSelectMode(false);
       setSelectedIds(new Set());
+      setShowDeleteOptions(false);
     } else {
       (navigation as unknown as NavProp).goBack();
     }
@@ -572,7 +573,6 @@ export default function HistoryScreen() {
         newSelected.add(tx.id);
       }
       setSelectedIds(newSelected);
-      setShowDeleteOptions(newSelected.size > 0);
     } else {
       setSelectedTransaction(tx);
       setShowDetailModal(true);
@@ -671,9 +671,19 @@ export default function HistoryScreen() {
   };
 
   const handleDeleteClick = () => {
-    setIsSelectMode(!isSelectMode);
-    if (isSelectMode) {
+    if (!isSelectMode) {
+      setIsSelectMode(true);
       setSelectedIds(new Set());
+      setShowDeleteOptions(false);
+      return;
+    }
+
+    if (selectedIds.size > 0) {
+      setShowDeleteOptions(true);
+    } else {
+      setIsSelectMode(false);
+      setSelectedIds(new Set());
+      setShowDeleteOptions(false);
     }
   };
 
@@ -1656,7 +1666,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   selectAllButton: {
-    alignSelf: "flex-end",
+    alignSelf: "center",
     paddingHorizontal: 12,
     paddingVertical: 8,
     marginBottom: 12,
@@ -1664,11 +1674,15 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
     borderColor: "#E15816",
+    minWidth: 140,
+    justifyContent: "center",
+    alignItems: "center",
   },
   selectAllButtonText: {
     fontSize: 13,
     fontWeight: "600",
     color: "#E15816",
+    textAlign: "center",
   },
   paginationContainer: {
     paddingHorizontal: 16,

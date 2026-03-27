@@ -1105,6 +1105,7 @@ const Notification = () => {
             disabled={deleteLoading || allNotificationIds.length === 0}
             style={[
               styles.deleteActionButton,
+              styles.deleteActionButtonCompact,
               allNotificationIds.length === 0 &&
                 styles.deleteActionButtonDisabled,
             ]}
@@ -1125,7 +1126,7 @@ const Notification = () => {
           <TouchableOpacity
             onPress={handleDeleteAll}
             disabled={deleteLoading}
-            style={styles.deleteActionButton}
+            style={[styles.deleteActionButton, styles.deleteActionButtonCompact]}
           >
             {deleteLoading ? (
               <ActivityIndicator size="small" color="#E25A17" />
@@ -1140,17 +1141,21 @@ const Notification = () => {
             disabled={deleteLoading || selectedIds.size === 0}
             style={[
               styles.deleteActionButton,
+              styles.deleteActionButtonWide,
               selectedIds.size === 0 && styles.deleteActionButtonDisabled,
             ]}
           >
             <Text
+              numberOfLines={1}
+              ellipsizeMode="tail"
               style={[
                 styles.deleteActionText,
                 selectedIds.size === 0 && styles.deleteActionTextDisabled,
               ]}
             >
-              {t("notification.deleteSelected")}{" "}
-              {selectedIds.size > 0 ? `(${selectedIds.size})` : ""}
+              {`${t("notification.deleteSelected")}${
+                selectedIds.size > 0 ? ` (${selectedIds.size})` : ""
+              }`}
             </Text>
           </TouchableOpacity>
         </View>
@@ -1445,26 +1450,37 @@ const styles = StyleSheet.create({
   },
   deleteActionBar: {
     flexDirection: "row",
-    justifyContent: "flex-end",
+    justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 16,
+    paddingHorizontal: 10,
     paddingVertical: 10,
     backgroundColor: "#FFFFFF",
     borderBottomWidth: 1,
     borderBottomColor: "#EEE",
-    gap: 12,
+    gap: 6,
   },
   deleteActionButton: {
+    flex: 1,
+    minWidth: 0,
+    alignItems: "center",
+    justifyContent: "center",
     paddingVertical: 6,
-    paddingHorizontal: 14,
+    paddingHorizontal: 6,
+  },
+  deleteActionButtonCompact: {
+    flex: 0.8,
+  },
+  deleteActionButtonWide: {
+    flex: 1.4,
   },
   deleteActionButtonDisabled: {
     opacity: 0.5,
   },
   deleteActionText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "600",
     color: "#E25A17",
+    textAlign: "center",
   },
   deleteActionTextDisabled: {
     color: "#999",
