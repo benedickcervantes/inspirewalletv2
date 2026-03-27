@@ -1,10 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import * as MediaLibrary from "expo-media-library";
 import * as Sharing from "expo-sharing";
 import { useEffect, useRef, useState } from "react";
 import {
+  Alert,
   Image,
   SafeAreaView,
   ScrollView,
@@ -12,7 +14,7 @@ import {
   Text,
   TouchableOpacity,
   useWindowDimensions,
-  View
+  View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import ViewShot from "react-native-view-shot";
@@ -21,9 +23,9 @@ import {
   getTransferSuccessSound,
   refreshAdminTransferSuccessSound,
 } from "../../../constants/adminAudio";
+import { getTransactions } from "../../../configs/api";
 import { getLanguageCode } from "../../../constants/locales";
 import { useLanguage } from "../../../context/LanguageContext";
-import ActivityModal from "../../components/ActivityModal";
 
 const CRYPTO_MARGIN_MULTIPLIER = 0.99;
 
@@ -112,28 +114,28 @@ export default function DepositReceipt() {
     ) => void;
   } | null>(null);
 
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [showErrorModal, setShowErrorModal] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
-
   const handleDownload = async () => {
     try {
       const { status } = await MediaLibrary.requestPermissionsAsync();
       if (status !== "granted") {
-        setErrorMessage("Permission to access media library is required to save the receipt.");
-        setShowErrorModal(true);
+        Alert.alert(
+          t("common.error") || "Error",
+          "Permission to access media library is required to save the receipt."
+        );
         return;
       }
 
       if (viewShotRef.current?.capture) {
         const uri = await viewShotRef.current.capture();
         await MediaLibrary.saveToLibraryAsync(uri);
-        setShowSuccessModal(true);
+        Alert.alert(
+          t("common.success") || "Success",
+          "Receipt saved to your photos successfully."
+        );
       }
     } catch (error) {
       console.error("Failed to download receipt:", error);
-      setErrorMessage("Failed to save receipt.");
-      setShowErrorModal(true);
+      Alert.alert(t("common.error") || "Error", "Failed to save receipt.");
     }
   };
 
@@ -145,14 +147,12 @@ export default function DepositReceipt() {
         if (isAvailable) {
           await Sharing.shareAsync(uri);
         } else {
-          setErrorMessage("Sharing is not available on this device.");
-          setShowErrorModal(true);
+          Alert.alert(t("common.error") || "Error", "Sharing is not available on this device.");
         }
       }
     } catch (error) {
       console.error("Failed to share receipt:", error);
-      setErrorMessage("Failed to share receipt.");
-      setShowErrorModal(true);
+      Alert.alert(t("common.error") || "Error", "Failed to share receipt.");
     }
   };
 
@@ -172,6 +172,7 @@ export default function DepositReceipt() {
     senderAccount?: string;
     recipientName?: string;
     recipientAccount?: string;
+    status?: string;
   };
 
   const {
@@ -190,7 +191,10 @@ export default function DepositReceipt() {
     senderAccount = "",
     recipientName = "",
     recipientAccount = "",
+    status = "",
   } = params;
+
+  const [liveStatus, setLiveStatus] = useState<string>(String(status || ""));
 
   const languageCode = getLanguageCode(language);
   const localeByLanguageCode: Record<string, string> = {
@@ -290,6 +294,48 @@ export default function DepositReceipt() {
     };
   }, [normalizedType, playTransferSuccessAudio]);
 
+  useEffect(() => {
+    let mounted = true;
+
+    const refreshLatestStatus = async () => {
+      if (source !== "history") return;
+      const id = String(transactionId || "").trim();
+      if (!id || id === t("investment.pending")) return;
+
+      try {
+        const token = await AsyncStorage.getItem("access_token");
+        if (!token) return;
+
+        const response = await getTransactions(token, { limit: 200 });
+        if (!response?.success || !Array.isArray(response.transactions)) return;
+
+        const hit = response.transactions.find((tx: any) => {
+          const txId = String(tx?.id ?? tx?.transactionId ?? "").trim();
+          return txId === id;
+        }) as Record<string, unknown> | undefined;
+
+        if (!mounted || !hit) return;
+
+        const nextStatus = String(
+          hit["status"] ?? hit["requestStatus"] ?? hit["request_status"] ?? "",
+        ).trim();
+        if (nextStatus) {
+          setLiveStatus(nextStatus);
+        }
+      } catch {
+        // Keep fallback status from route params when refresh fails.
+      }
+    };
+
+    void refreshLatestStatus();
+    const unsubscribe = navigation.addListener?.("focus", refreshLatestStatus);
+
+    return () => {
+      mounted = false;
+      if (typeof unsubscribe === "function") unsubscribe();
+    };
+  }, [navigation, source, t, transactionId]);
+
   const getReceiptTypeLabel = () => {
     if (normalizedType === "transfer") return t("tx.transfer");
     if (normalizedType === "withdrawal") return t("tx.withdraw");
@@ -315,6 +361,22 @@ export default function DepositReceipt() {
     if (normalizedType === "withdrawal") return t("withdraw.withdrawalMethod");
     return t("deposit.depositMethod");
   };
+
+  const normalizedStatus = String(liveStatus || "").trim().toLowerCase();
+  const isSuccessfulStatus =
+    !normalizedStatus ||
+    normalizedStatus === "successful" ||
+    normalizedStatus === "success" ||
+    normalizedStatus === "approved" ||
+    normalizedStatus === "active" ||
+    normalizedStatus === "completed" ||
+    normalizedStatus === "matured";
+  const statusLabel = isSuccessfulStatus
+    ? "Successful"
+    : normalizedStatus
+      ? normalizedStatus.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+      : "Successful";
+  const statusColor = isSuccessfulStatus ? "#1A7A36" : "#B54708";
 
   const handleClose = () => {
     if (source === "history") {
@@ -396,7 +458,9 @@ export default function DepositReceipt() {
             <View style={styles.statusBar}>
               <View style={styles.statusBadge}>
                 <View style={styles.statusDot} />
-                <Text style={styles.statusText}>TRANSACTION SUCCESSFUL</Text>
+                <Text style={styles.statusText}>
+                  {isSuccessfulStatus ? "TRANSACTION SUCCESSFUL" : "TRANSACTION UPDATE"}
+                </Text>
               </View>
               <Text style={styles.receiptNo}>
                 #{String(transactionId).slice(-8).toUpperCase()}
@@ -476,9 +540,9 @@ export default function DepositReceipt() {
               <Separator />
               <ReceiptRow
                 label="Status"
-                value="Successful"
+                value={statusLabel}
                 valueBold
-                valueColor="#1A7A36"
+                valueColor={statusColor}
               />
             </View>
 
@@ -548,72 +612,6 @@ export default function DepositReceipt() {
             <Text style={styles.doneText}>Done</Text>
           </TouchableOpacity>
         </ScrollView>
-
-        {/* Success Modal */}
-        <ActivityModal
-          visible={showSuccessModal}
-          transparent={true}
-          animationType="fade"
-          onRequestClose={() => setShowSuccessModal(false)}
-        >
-          <View style={modalStyles.overlay}>
-            <View style={modalStyles.container}>
-              <LinearGradient
-                colors={["#C44A0C", "#E06828"]}
-                style={modalStyles.gradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <View style={modalStyles.iconContainer}>
-                  <Ionicons name="checkmark-circle" size={80} color="#FFFFFF" />
-                </View>
-                <Text style={modalStyles.title}>Success</Text>
-                <Text style={modalStyles.message}>
-                  Receipt saved to your photos successfully.
-                </Text>
-                <TouchableOpacity
-                  style={modalStyles.button}
-                  onPress={() => setShowSuccessModal(false)}
-                  activeOpacity={0.85}
-                >
-                  <Text style={modalStyles.buttonText}>OK</Text>
-                </TouchableOpacity>
-              </LinearGradient>
-            </View>
-          </View>
-        </ActivityModal>
-
-        {/* Error Modal */}
-        <ActivityModal
-          visible={showErrorModal}
-          transparent={true}
-          animationType="fade"
-          onRequestClose={() => setShowErrorModal(false)}
-        >
-          <View style={modalStyles.overlay}>
-            <View style={modalStyles.container}>
-              <LinearGradient
-                colors={["#C44A0C", "#E06828"]}
-                style={modalStyles.gradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <View style={modalStyles.iconContainer}>
-                  <Ionicons name="alert-circle" size={80} color="#FFFFFF" />
-                </View>
-                <Text style={modalStyles.title}>Error</Text>
-                <Text style={modalStyles.message}>{errorMessage}</Text>
-                <TouchableOpacity
-                  style={modalStyles.button}
-                  onPress={() => setShowErrorModal(false)}
-                  activeOpacity={0.85}
-                >
-                  <Text style={modalStyles.buttonText}>OK</Text>
-                </TouchableOpacity>
-              </LinearGradient>
-            </View>
-          </View>
-        </ActivityModal>
       </LinearGradient>
     </SafeAreaView>
   );
@@ -814,30 +812,25 @@ const styles = StyleSheet.create({
   downloadBtn: {
     flex: 1,
     minWidth: 0,
-    borderRadius: 12,
-    overflow: "hidden",
-    shadowColor: "#C44A0C",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.38,
-    shadowRadius: 12,
-    elevation: 8,
   },
   downloadGrad: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 6,
-    paddingVertical: 15,
+    paddingVertical: 16,
     paddingHorizontal: 10,
+    borderRadius: 12,
   },
   downloadText: {
     fontSize: 12,
+    lineHeight: 16,
     fontWeight: "700",
     color: "#FFFFFF",
     letterSpacing: 0.2,
     flexShrink: 1,
-    includeFontPadding: false,
     textAlign: "center",
+    textAlignVertical: "center",
   },
   shareBtn: {
     width: 140,
@@ -874,67 +867,5 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#B8AFA6",
     letterSpacing: 0.4,
-  },
-});
-
-// ─── Modal Styles ─────────────────────────────────────────────────────────────
-const modalStyles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.6)",
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-  },
-  container: {
-    width: "100%",
-    maxWidth: 400,
-    borderRadius: 20,
-    overflow: "hidden",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    elevation: 10,
-  },
-  gradient: {
-    padding: 32,
-    alignItems: "center",
-  },
-  iconContainer: {
-    marginBottom: 20,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: "700",
-    color: "#FFFFFF",
-    marginBottom: 16,
-    textAlign: "center",
-  },
-  message: {
-    fontSize: 16,
-    color: "#FFFFFF",
-    textAlign: "center",
-    lineHeight: 24,
-    marginBottom: 32,
-    opacity: 0.95,
-  },
-  button: {
-    backgroundColor: "#FFFFFF",
-    paddingVertical: 14,
-    paddingHorizontal: 48,
-    borderRadius: 28,
-    minWidth: 120,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  buttonText: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#E06828",
-    textAlign: "center",
   },
 });
