@@ -5,14 +5,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
-import { ActivityIndicator, Alert, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Alert, Modal, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { submitAccountDeletionRequest } from '../../configs/api';
 import { useLanguage } from '../../context/LanguageContext';
 import type { NavProp } from '../../types/navigation';
 import AccountDeletionModal from '../AccountDeletion/AccountDeletionModal';
-import { TouchableOpacity } from "react-native-gesture-handler";
-
-import ActivityModal from '../components/ActivityModal';
 const REASON_KEYS = ['delete.reasonNoLonger', 'delete.reasonBetter', 'delete.reasonPrivacy', 'delete.reasonExpensive', 'delete.reasonTechnical', 'delete.reasonOther'] as const;
 
 type Step = 'confirm' | 'reason' | 'done';
@@ -89,7 +86,12 @@ const DeleteAccount = () => {
         </View>
       </LinearGradient>
 
-      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        style={styles.scroll}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+      >
         {step === 'confirm' && (
           <View style={styles.card}>
             <View style={styles.iconWrapper}>
@@ -166,21 +168,21 @@ const DeleteAccount = () => {
         )}
       </ScrollView>
 
-      <ActivityModal
+      <Modal
         visible={showReasonModal}
         transparent
         animationType="slide"
         onRequestClose={() => setShowReasonModal(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
+        <Pressable style={styles.modalOverlay} onPress={() => setShowReasonModal(false)}>
+          <Pressable style={styles.modalContainer} onPress={() => {}}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>{t('delete.selectReasonTitle')}</Text>
               <TouchableOpacity onPress={() => setShowReasonModal(false)}>
                 <Ionicons name="close" size={24} color="#333" />
               </TouchableOpacity>
             </View>
-            <ScrollView style={styles.modalContent}>
+            <ScrollView style={styles.modalContent} keyboardShouldPersistTaps="handled">
               {REASON_KEYS.map((key) => (
                 <TouchableOpacity
                   key={key}
@@ -195,12 +197,12 @@ const DeleteAccount = () => {
                 </TouchableOpacity>
               ))}
             </ScrollView>
-          </View>
-        </View>
-      </ActivityModal>
+          </Pressable>
+        </Pressable>
+      </Modal>
 
       {/* Request Submitted Success Modal */}
-      <ActivityModal
+      <Modal
         visible={showSuccessModal}
         transparent
         animationType="fade"
@@ -224,7 +226,7 @@ const DeleteAccount = () => {
             </TouchableOpacity>
           </LinearGradient>
         </View>
-      </ActivityModal>
+      </Modal>
       <AccountDeletionModal />
     </SafeAreaView>
   );

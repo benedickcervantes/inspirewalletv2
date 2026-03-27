@@ -1,14 +1,15 @@
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-gesture-handler';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
 import { navigationRef } from './lib/navigationRef';
 
 import AuthLoader from './app/AuthLoader';
 import AgentDashboard from './app/Dashboard/AgentDashboard';
 import DepositScreen from './app/Dashboard/deposit/deposit';
+import DepositProofView from './app/Dashboard/deposit/depositProofView';
 import DepositReceipt from './app/Dashboard/deposit/depositReceipt';
 import StockInvestment from './app/Dashboard/deposit/stockInvestDepo';
 import StockInvestmentConfirm from './app/Dashboard/deposit/stockInvestDepoConfirm';
@@ -38,23 +39,23 @@ import Passcode from './app/Outside/passcode';
 import Register from './app/Outside/Register';
 import Welcome from './app/Outside/Welcome';
 import Placeholder from './app/Placeholder';
+import AgentServices from './app/ServicesFunction/Agent/AgentServices';
 import BankingAddressInfo from './app/ServicesFunction/Banking/BankingAdressinfo';
 import BankingContactInfo from './app/ServicesFunction/Banking/BankingContactInfo';
 import BankingFinancialInfo from './app/ServicesFunction/Banking/BankingFinancialInfo';
 import BankingPersonalInfo from './app/ServicesFunction/Banking/BankingPersonalInfo';
 import BankingRequiredInfo from './app/ServicesFunction/Banking/BankingRequiredInfo';
 import BankingService from './app/ServicesFunction/Banking/BankingService';
-import AgentServices from './app/ServicesFunction/Agent/AgentServices';
 import EwalletAddressInfo from './app/ServicesFunction/E-Wallet/EwalletAddressInfo';
 import EwalletContactInfo from './app/ServicesFunction/E-Wallet/EwalletContactInfo';
 import EwalletFinancialInfo from './app/ServicesFunction/E-Wallet/EwalletFinancialinfo';
 import EwalletPersonalInfo from './app/ServicesFunction/E-Wallet/EwalletPersonalInfo';
 import EwalletService from './app/ServicesFunction/E-Wallet/EwalletService';
+import BlackC from './app/ServicesFunction/Pcards/BlackC';
 import DepositCrypto from './app/ServicesFunction/Play&Earn/depositCrypto';
 import DepositCryptoEth from './app/ServicesFunction/Play&Earn/depositCryptoEth';
 import DepositCryptoUSDT from './app/ServicesFunction/Play&Earn/depositCryptoUSDT';
 import PlayEarnServices from './app/ServicesFunction/Play&Earn/Play&earnServices';
-import BlackC from './app/ServicesFunction/Pcards/BlackC';
 import StockBuy from './app/ServicesFunction/Stock/StockBuy';
 import StockSell from './app/ServicesFunction/Stock/StockSell';
 import StockService from './app/ServicesFunction/Stock/StockService';
@@ -71,8 +72,7 @@ import LanguageModal from './app/Settings/LanguageModal';
 import PrivacyPolicy from './app/Settings/PrivacyPolicy';
 import Settings from './app/Settings/settings';
 import TermsConditions from './app/Settings/TermsConditions';
-import { IdleTimeoutProvider } from './context/IdleTimeoutContext';
-import { useIdleTimeout } from './context/IdleTimeoutContext';
+import { IdleTimeoutProvider, useIdleTimeout } from './context/IdleTimeoutContext';
 import { LanguageProvider } from './context/LanguageContext';
 import { LanguageModalProvider } from './context/LanguageModalContext';
 import { SocketProvider } from './context/SocketContext';
@@ -182,7 +182,7 @@ function RootNavigator() {
           <Stack.Screen name="TimeDepositProof" component={TimeDepositProof} />
           <Stack.Screen name="topup" component={TopUpBalance} />
           <Stack.Screen name="TopupConfirm" component={TopupConfirm} />
-          <Stack.Screen name="depositProofView" component={DepositReceipt} />
+          <Stack.Screen name="depositProofView" component={DepositProofView} />
           <Stack.Screen name="depositReceipt" component={DepositReceipt} />
           <Stack.Screen name="Withdraw" component={WithdrawScreen} />
           <Stack.Screen name="WithdrawMethod" component={WithdrawMethodScreen} />

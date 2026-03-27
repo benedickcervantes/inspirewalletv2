@@ -150,6 +150,8 @@ export function lookupReferralCode(code: string): Promise<{
   firstName?: string;
   lastName?: string;
   name?: string;
+  isAgent?: boolean;
+  agentRole?: string;
   error?: string;
 }>;
 export function getMe(accessToken: string): Promise<{
@@ -192,6 +194,15 @@ export function sendMessage(
   accessToken: string,
   content: string,
 ): Promise<{ success: boolean; id?: string; error?: string }>;
+export function uploadSupportAttachment(
+  accessToken: string,
+  fileUri: string,
+  mimeType?: string,
+): Promise<{
+  success: boolean;
+  data?: { name: string; url: string; type: string; size?: number };
+  error?: string;
+}>;
 export function getMessages(
   accessToken: string,
   opts?: { page?: number; limit?: number },
@@ -204,6 +215,7 @@ export function getMessages(
     status: string;
     senderName?: string;
     direction?: "ADMIN_TO_USER" | "USER_TO_ADMIN";
+    attachment?: { name: string; url: string; type: string; size?: number };
   }[];
   pagination?: {
     total?: number;

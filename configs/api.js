@@ -1133,7 +1133,7 @@ export async function register(body) {
 /**
  * GET /auth/referral/lookup?code=XXXXX
  * @param {string} code
- * @returns {{ success: boolean, exists?: boolean, referralCode?: string, userId?: string, firstName?: string, lastName?: string, name?: string, error?: string }}
+ * @returns {{ success: boolean, exists?: boolean, referralCode?: string, userId?: string, firstName?: string, lastName?: string, name?: string, isAgent?: boolean, agentRole?: string, error?: string }}
  */
 export async function lookupReferralCode(code) {
   const base = getBaseUrl();
@@ -1166,6 +1166,9 @@ export async function lookupReferralCode(code) {
         typeof data.firstName === "string" ? data.firstName : undefined,
       lastName: typeof data.lastName === "string" ? data.lastName : undefined,
       name: typeof data.name === "string" ? data.name : undefined,
+      isAgent: data.isAgent === true,
+      agentRole:
+        typeof data.agentRole === "string" ? data.agentRole : undefined,
     };
   } catch (e) {
     return {
@@ -1684,22 +1687,49 @@ export async function applyAgentRequest(accessToken, body = {}) {
   if (!accessToken) return { success: false, error: "No token" };
 
   try {
-    const parentReferralCode = String(body.parentReferralCode || "")
+    const parentReferralCodeRaw = String(body.parentReferralCode || "")
       .trim()
       .toUpperCase();
+    const parentReferralCode = parentReferralCodeRaw.replace(/[^A-Z0-9]/g, "");
+    if (parentReferralCode && parentReferralCode.length !== 5) {
+      return {
+        success: false,
+        error: "Parent referral code must be exactly 5 alphanumeric characters",
+      };
+    }
 
-    const res = await apiFetch(`${base}/referrals/apply-agent`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
-      },
-      body: JSON.stringify({
-        ...(parentReferralCode ? { parentReferralCode } : {}),
-      }),
+    const request = async (payload) =>
+      apiFetch(`${base}/referrals/apply-agent`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+    let res = await request({
+      ...(parentReferralCode ? { parentReferralCode } : {}),
     });
+    let data = await res.json().catch(() => ({}));
 
-    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const firstMsg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || "";
+      // Compatibility: some older backends validate legacy field name `parentReferralcode`
+      // and legacy charset (A-Z2-9). Retry once with legacy payload.
+      if (/parentReferralcode/i.test(String(firstMsg))) {
+        const legacyCode = parentReferralCodeRaw.replace(/[^A-Z2-9]/g, "");
+        if (!legacyCode || legacyCode.length === 5) {
+          res = await request({
+            ...(legacyCode ? { parentReferralcode: legacyCode } : {}),
+          });
+          data = await res.json().catch(() => ({}));
+        }
+      }
+    }
+
     if (!res.ok) {
       const msg = Array.isArray(data.message)
         ? data.message[0]
@@ -2000,6 +2030,52 @@ export async function sendMessage(accessToken, content) {
     return { success: true, id: data.id };
   } catch (e) {
     if (__DEV__) console.error("[Messages API] Error", e);
+    return { success: false, error: e.message || "Network error" };
+  }
+}
+
+/**
+ * POST /messages/upload-attachment — requires JWT
+ * Upload a support chat attachment and get a public URL.
+ * @param {string} accessToken
+ * @param {string} fileUri
+ * @param {string} [mimeType]
+ * @returns {{ success: boolean, data?: { name: string, url: string, type: string, size?: number }, error?: string }}
+ */
+export async function uploadSupportAttachment(
+  accessToken,
+  fileUri,
+  mimeType = "image/jpeg",
+) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
+  if (!fileUri) return { success: false, error: "No file selected" };
+
+  try {
+    const formData = new FormData();
+    await appendImageFile(formData, fileUri, "support-attachment", mimeType);
+    const apiKey = process.env.EXPO_PUBLIC_API_KEY;
+    const headers = {
+      Authorization: `Bearer ${accessToken}`,
+    };
+    if (apiKey) headers["x-api-key"] = apiKey;
+
+    const res = await _originalFetch(`${base}/messages/upload-attachment`, {
+      method: "POST",
+      headers,
+      body: formData,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data?.data) {
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || `Upload failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    return { success: true, data: data.data };
+  } catch (e) {
+    if (__DEV__) console.error("[Support Attachment Upload] Error", e);
     return { success: false, error: e.message || "Network error" };
   }
 }

@@ -38,6 +38,7 @@ export default function StockSell() {
   const [stockRate, setStockRate] = useState(STOCK_RATE_DEFAULT);
   const [showAlertModal, setShowAlertModal] = useState(false);
   const [alertConfig, setAlertConfig] = useState({ title: "", message: "" });
+  const [navigateAfterAlert, setNavigateAfterAlert] = useState(false);
 
   useEffect(() => {
     getStockInvestmentMinAmount().then((rate) => setStockRate(rate));
@@ -140,15 +141,10 @@ export default function StockSell() {
           title: t("stock.requestSubmittedTitle"),
           message: t("stock.requestSubmittedMessage"),
         });
+        setNavigateAfterAlert(true);
         setShowAlertModal(true);
-        setTimeout(() => {
-          setShowAlertModal(false);
-          (navigation as any).reset({
-            index: 1,
-            routes: [{ name: "Main" }, { name: "Stockholder" }],
-          });
-        }, 2000);
       } else {
+        setNavigateAfterAlert(false);
         setAlertConfig({
           title: t("stock.submissionFailedTitle"),
           message: result.error ?? t("stock.submissionFailed"),
@@ -160,6 +156,7 @@ export default function StockSell() {
         title: t("common.error"),
         message: t("stock.unexpectedError"),
       });
+      setNavigateAfterAlert(false);
       setShowAlertModal(true);
     } finally {
       setIsLoading(false);
@@ -632,7 +629,7 @@ export default function StockSell() {
           visible={showAlertModal}
           transparent
           animationType="fade"
-          onRequestClose={() => setShowAlertModal(false)}
+          onRequestClose={() => {}}
         >
           <View style={styles.alertOverlay}>
             <LinearGradient
@@ -651,7 +648,16 @@ export default function StockSell() {
               <Text style={styles.alertMessage}>{alertConfig.message}</Text>
               <TouchableOpacity
                 style={styles.alertButton}
-                onPress={() => setShowAlertModal(false)}
+                onPress={() => {
+                  setShowAlertModal(false);
+                  if (navigateAfterAlert) {
+                    setNavigateAfterAlert(false);
+                    (navigation as any).reset({
+                      index: 1,
+                      routes: [{ name: "Main" }, { name: "Stockholder" }],
+                    });
+                  }
+                }}
               >
                 <Text style={styles.alertButtonText}>{t("common.ok")}</Text>
               </TouchableOpacity>

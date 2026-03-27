@@ -8,9 +8,9 @@ import { ActivityIndicator, Platform, ScrollView, StatusBar, StyleSheet, Text, T
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Path } from "react-native-svg";
 import {
-  deleteTransactions,
-  getOrCreateMainWallet,
-  getTransactions,
+    deleteTransactions,
+    getOrCreateMainWallet,
+    getTransactions,
 } from "../../configs/api";
 import type { TransactionDoc } from "../../configs/firebase";
 import { auth, subscribeToTransactions } from "../../configs/firebase";
@@ -96,6 +96,18 @@ interface Transaction {
   description?: string;
   timestamp?: { toDate?: () => Date };
   createdAt?: string;
+  senderName?: string;
+  senderAccount?: string;
+  recipientName?: string;
+  recipientAccount?: string;
+}
+
+interface StoredTransferReceiptDetails {
+  senderName?: string;
+  senderAccount?: string;
+  recipientName?: string;
+  recipientAccount?: string;
+  updatedAt?: number;
 }
 
 interface RawApiTransaction {
@@ -104,6 +116,23 @@ interface RawApiTransaction {
   amount?: unknown;
   createdAt?: unknown;
   description?: unknown;
+  senderName?: unknown;
+  senderAccount?: unknown;
+  senderAccountNumber?: unknown;
+  recipientName?: unknown;
+  recipientAccount?: unknown;
+  recipientAccountNumber?: unknown;
+  fromName?: unknown;
+  fromAccount?: unknown;
+  fromAccountNumber?: unknown;
+  toName?: unknown;
+  toAccount?: unknown;
+  toAccountNumber?: unknown;
+  sender?: { name?: unknown; accountNumber?: unknown };
+  recipient?: { name?: unknown; accountNumber?: unknown };
+  receiver?: { name?: unknown; accountNumber?: unknown };
+  fromUser?: { fullName?: unknown; accountNumber?: unknown };
+  toUser?: { fullName?: unknown; accountNumber?: unknown };
 }
 
 interface RawApiWallet {
@@ -114,6 +143,65 @@ interface RawApiWallet {
 const CURRENCY_SYMBOL = "₱";
 const ORANGE_GRADIENT: readonly [string, string] = ["#E25A17", "#F28934"];
 const ITEMS_PER_PAGE = 10; // moved outside component
+
+const normalizeTextValue = (value: unknown): string => {
+  const text = String(value ?? "").trim();
+  if (!text || text.toLowerCase() === "undefined" || text.toLowerCase() === "null") {
+    return "";
+  }
+  return text;
+};
+
+const pickFirstText = (...values: unknown[]): string => {
+  for (const value of values) {
+    const normalized = normalizeTextValue(value);
+    if (normalized) return normalized;
+  }
+  return "";
+};
+
+const resolveTransferParties = (
+  raw: Record<string, unknown>,
+): Pick<Transaction, "senderName" | "senderAccount" | "recipientName" | "recipientAccount"> => {
+  const senderObj = (raw.sender as Record<string, unknown> | undefined) || {};
+  const recipientObj =
+    (raw.recipient as Record<string, unknown> | undefined) ||
+    (raw.receiver as Record<string, unknown> | undefined) ||
+    {};
+  const fromUser = (raw.fromUser as Record<string, unknown> | undefined) || {};
+  const toUser = (raw.toUser as Record<string, unknown> | undefined) || {};
+
+  return {
+    senderName: pickFirstText(
+      raw.senderName,
+      raw.fromName,
+      senderObj.name,
+      fromUser.fullName,
+    ),
+    senderAccount: pickFirstText(
+      raw.senderAccount,
+      raw.senderAccountNumber,
+      raw.fromAccount,
+      raw.fromAccountNumber,
+      senderObj.accountNumber,
+      fromUser.accountNumber,
+    ),
+    recipientName: pickFirstText(
+      raw.recipientName,
+      raw.toName,
+      recipientObj.name,
+      toUser.fullName,
+    ),
+    recipientAccount: pickFirstText(
+      raw.recipientAccount,
+      raw.recipientAccountNumber,
+      raw.toAccount,
+      raw.toAccountNumber,
+      recipientObj.accountNumber,
+      toUser.accountNumber,
+    ),
+  };
+};
 
 const DeleteIcon = ({
   color = "#FFF",
@@ -360,6 +448,9 @@ export default function HistoryScreen() {
   const [showDeleteOptions, setShowDeleteOptions] = useState(false);
   const [selectedTransaction, setSelectedTransaction] =
     useState<Transaction | null>(null);
+  const [transferReceiptMap, setTransferReceiptMap] = useState<
+    Record<string, StoredTransferReceiptDetails>
+  >({});
   const [showDetailModal, setShowDetailModal] = useState(false);
 
   // Ref for unsubscribe function to avoid stale closure
@@ -423,6 +514,24 @@ export default function HistoryScreen() {
     return "swap-horizontal";
   };
 
+  const loadStoredTransferReceiptDetails = useCallback(async () => {
+    try {
+      const raw = await AsyncStorage.getItem("transfer_receipt_details_by_txid");
+      if (!raw) {
+        setTransferReceiptMap({});
+        return;
+      }
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+        setTransferReceiptMap({});
+        return;
+      }
+      setTransferReceiptMap(parsed as Record<string, StoredTransferReceiptDetails>);
+    } catch {
+      setTransferReceiptMap({});
+    }
+  }, []);
+
   const fetchTransactions = useCallback(
     async (
       loadMore = false,
@@ -466,19 +575,26 @@ export default function HistoryScreen() {
         if (txRes.success && Array.isArray(txRes.transactions)) {
           const mapped: Transaction[] = (
             txRes.transactions as RawApiTransaction[]
-          ).map((tx) => ({
-            id: String(tx.id ?? ""),
-            type: String(tx.type ?? ""),
-            amount: (() => {
+          ).map((tx) => {
+            const parties = resolveTransferParties(tx as unknown as Record<string, unknown>);
+            return {
+              id: String(tx.id ?? ""),
+              type: String(tx.type ?? ""),
+              amount: (() => {
               const a = parseFloat(String(tx.amount ?? 0));
               return Number.isNaN(a) ? 0 : a;
-            })(),
-            description: String(tx.description ?? ""),
-            timestamp: {
-              toDate: () => new Date(String(tx.createdAt ?? "")),
-            },
-            createdAt: String(tx.createdAt ?? ""),
-          }));
+              })(),
+              description: String(tx.description ?? ""),
+              timestamp: {
+                toDate: () => new Date(String(tx.createdAt ?? "")),
+              },
+              createdAt: String(tx.createdAt ?? ""),
+              senderName: parties.senderName,
+              senderAccount: parties.senderAccount,
+              recipientName: parties.recipientName,
+              recipientAccount: parties.recipientAccount,
+            };
+          });
 
           // ✅ Append when loading more, replace otherwise
           setTransactions((prev) => (loadMore ? [...prev, ...mapped] : mapped));
@@ -504,6 +620,10 @@ export default function HistoryScreen() {
   );
 
   useEffect(() => {
+    loadStoredTransferReceiptDetails();
+  }, [loadStoredTransferReceiptDetails]);
+
+  useEffect(() => {
     let cancelled = false;
 
     const init = async () => {
@@ -525,21 +645,28 @@ export default function HistoryScreen() {
         firebaseUser.uid,
         (list: TransactionDoc[]) => {
           if (cancelled) return;
-          const mapped: Transaction[] = list.map((d) => ({
-            id: d.id,
-            type: String(d.type ?? ""),
-            amount: parseFloat(String(d.amount ?? 0)) || 0,
-            description: String(d.description ?? ""),
-            timestamp: {
-              toDate: () =>
-                d.createdAt?.toMillis
-                  ? new Date(d.createdAt.toMillis())
-                  : new Date(),
-            },
-            createdAt: d.createdAt?.toMillis
-              ? new Date(d.createdAt.toMillis()).toISOString()
-              : "",
-          }));
+          const mapped: Transaction[] = list.map((d) => {
+            const parties = resolveTransferParties(d as unknown as Record<string, unknown>);
+            return {
+              id: d.id,
+              type: String(d.type ?? ""),
+              amount: parseFloat(String(d.amount ?? 0)) || 0,
+              description: String(d.description ?? ""),
+              timestamp: {
+                toDate: () =>
+                  d.createdAt?.toMillis
+                    ? new Date(d.createdAt.toMillis())
+                    : new Date(),
+              },
+              createdAt: d.createdAt?.toMillis
+                ? new Date(d.createdAt.toMillis()).toISOString()
+                : "",
+              senderName: parties.senderName,
+              senderAccount: parties.senderAccount,
+              recipientName: parties.recipientName,
+              recipientAccount: parties.recipientAccount,
+            };
+          });
           setTransactions(mapped);
           setLoading(false);
         },
@@ -587,8 +714,7 @@ export default function HistoryScreen() {
     let receiptType = "Deposit";
     if (rawType.includes("transfer")) receiptType = "Transfer";
     else if (rawType.includes("withdraw")) receiptType = "Withdrawal";
-
-    (navigation as unknown as NavProp).navigate("depositReceipt", {
+    const receiptParams: Record<string, unknown> = {
       transactionId: selectedTransaction.id || t("investment.pending"),
       amount: String(selectedTransaction.amount ?? 0),
       currency: "PHP",
@@ -596,12 +722,45 @@ export default function HistoryScreen() {
       successMessage: getTransactionDisplayName(selectedTransaction),
       date: formatDateTime(selectedTransaction) || new Date().toLocaleString(),
       source: "history",
-    });
+    };
+
+    if (receiptType === "Transfer") {
+      const txId = String(selectedTransaction.id || "").trim();
+      const stored = txId ? transferReceiptMap[txId] : undefined;
+
+      receiptParams.senderName =
+        selectedTransaction.senderName ||
+        stored?.senderName ||
+        t("common.na");
+      receiptParams.senderAccount =
+        selectedTransaction.senderAccount ||
+        stored?.senderAccount ||
+        t("common.na");
+      receiptParams.recipientName =
+        selectedTransaction.recipientName ||
+        stored?.recipientName ||
+        t("common.na");
+      receiptParams.recipientAccount =
+        selectedTransaction.recipientAccount ||
+        stored?.recipientAccount ||
+        t("common.na");
+    }
+
+    (navigation as unknown as NavProp).navigate("depositReceipt", receiptParams);
   };
 
   const canViewReceipt = (tx: Transaction | null) => {
     if (!tx) return false;
     const normalizedDescription = String(tx.description ?? "").toLowerCase();
+    const normalizedType = String(tx.type ?? "").toUpperCase();
+
+    const isTimeDepositRequest =
+      normalizedType === "TIME_DEPOSIT" ||
+      normalizedDescription.includes("time deposit");
+    if (isTimeDepositRequest && !normalizedDescription.includes("approved")) {
+      return false;
+    }
+
     if (
       normalizedDescription.includes("request") ||
       normalizedDescription.includes("pending") ||
@@ -652,16 +811,25 @@ export default function HistoryScreen() {
     }
   };
 
+  const canGoPrevious = currentPage > 1 && !loadingMore;
+  const canGoNext = !loadingMore && (currentPage < totalPagesCount || hasMore);
+
   const getVisiblePages = () => {
     const pages: (number | string)[] = [];
     const maxVisible = 3;
+    
+    // Always show at least 3 pages if there's more data available
+    const minPagesToShow = hasMore ? 3 : totalPagesCount;
 
-    if (totalPagesCount <= maxVisible) {
+    if (totalPagesCount <= maxVisible && !hasMore) {
       for (let i = 1; i <= totalPagesCount; i++) pages.push(i);
     } else {
       if (currentPage <= 2) {
-        pages.push(1, 2, 3);
-      } else if (currentPage >= totalPagesCount - 1) {
+        // Show pages 1, 2, 3 when on first or second page
+        for (let i = 1; i <= Math.max(maxVisible, minPagesToShow); i++) {
+          pages.push(i);
+        }
+      } else if (currentPage >= totalPagesCount - 1 && !hasMore) {
         pages.push(totalPagesCount - 2, totalPagesCount - 1, totalPagesCount);
       } else {
         pages.push(currentPage - 1, currentPage, currentPage + 1);
@@ -836,6 +1004,9 @@ export default function HistoryScreen() {
       setTempStartDate(selectedDate);
       setCustomStartDate(selectedDate.toISOString().split("T")[0]);
     }
+    if (Platform.OS === "android") {
+      setShowCustomDatePicker(true);
+    }
   };
 
   const handleEndDateChange = (event: any, selectedDate?: Date) => {
@@ -843,6 +1014,9 @@ export default function HistoryScreen() {
     if (selectedDate) {
       setTempEndDate(selectedDate);
       setCustomEndDate(selectedDate.toISOString().split("T")[0]);
+    }
+    if (Platform.OS === "android") {
+      setShowCustomDatePicker(true);
     }
   };
 
@@ -887,123 +1061,6 @@ export default function HistoryScreen() {
             >
               <Ionicons name="filter" size={24} color="#FFF" />
             </TouchableOpacity>
-            {showFilterDropdown && (
-              <View style={styles.filterDropdownMenu}>
-                <Text style={styles.filterDropdownTitle}>
-                  {t("history.filterByDate")}
-                </Text>
-                <TouchableOpacity
-                  style={[
-                    styles.filterOption,
-                    selectedFilter === "all" && styles.filterOptionSelected,
-                  ]}
-                  onPress={() => applyDateFilter("all")}
-                >
-                  <View style={styles.filterOptionContent}>
-                    <Text
-                      style={[
-                        styles.filterOptionText,
-                        selectedFilter === "all" &&
-                          styles.filterOptionTextSelected,
-                      ]}
-                    >
-                      {t("history.allTime")}
-                    </Text>
-                    {selectedFilter === "all" && (
-                      <Ionicons name="checkmark" size={18} color="#E15816" />
-                    )}
-                  </View>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    styles.filterOption,
-                    selectedFilter === "today" && styles.filterOptionSelected,
-                  ]}
-                  onPress={() => applyDateFilter("today")}
-                >
-                  <View style={styles.filterOptionContent}>
-                    <Text
-                      style={[
-                        styles.filterOptionText,
-                        selectedFilter === "today" &&
-                          styles.filterOptionTextSelected,
-                      ]}
-                    >
-                      {t("history.today")}
-                    </Text>
-                    {selectedFilter === "today" && (
-                      <Ionicons name="checkmark" size={18} color="#E15816" />
-                    )}
-                  </View>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    styles.filterOption,
-                    selectedFilter === "week" && styles.filterOptionSelected,
-                  ]}
-                  onPress={() => applyDateFilter("week")}
-                >
-                  <View style={styles.filterOptionContent}>
-                    <Text
-                      style={[
-                        styles.filterOptionText,
-                        selectedFilter === "week" &&
-                          styles.filterOptionTextSelected,
-                      ]}
-                    >
-                      {t("history.thisWeek")}
-                    </Text>
-                    {selectedFilter === "week" && (
-                      <Ionicons name="checkmark" size={18} color="#E15816" />
-                    )}
-                  </View>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    styles.filterOption,
-                    selectedFilter === "month" && styles.filterOptionSelected,
-                  ]}
-                  onPress={() => applyDateFilter("month")}
-                >
-                  <View style={styles.filterOptionContent}>
-                    <Text
-                      style={[
-                        styles.filterOptionText,
-                        selectedFilter === "month" &&
-                          styles.filterOptionTextSelected,
-                      ]}
-                    >
-                      {t("history.thisMonth")}
-                    </Text>
-                    {selectedFilter === "month" && (
-                      <Ionicons name="checkmark" size={18} color="#E15816" />
-                    )}
-                  </View>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    styles.filterOption,
-                    selectedFilter === "custom" && styles.filterOptionSelected,
-                  ]}
-                  onPress={() => applyDateFilter("custom")}
-                >
-                  <View style={styles.filterOptionContent}>
-                    <Text
-                      style={[
-                        styles.filterOptionText,
-                        selectedFilter === "custom" &&
-                          styles.filterOptionTextSelected,
-                      ]}
-                    >
-                      {t("history.customRange")}
-                    </Text>
-                    {selectedFilter === "custom" && (
-                      <Ionicons name="checkmark" size={18} color="#E15816" />
-                    )}
-                  </View>
-                </TouchableOpacity>
-              </View>
-            )}
           </View>
           <TouchableOpacity
             style={styles.headerIconButton}
@@ -1124,18 +1181,17 @@ export default function HistoryScreen() {
                 <TouchableOpacity
                   style={[
                     styles.paginationArrow,
-                    currentPage > 1 && styles.paginationArrowEnabled,
-                    (currentPage === 1 || loadingMore) &&
-                      styles.paginationArrowDisabled,
+                    canGoPrevious && styles.paginationArrowEnabled,
+                    !canGoPrevious && styles.paginationArrowDisabled,
                   ]}
                   onPress={handlePreviousPage}
-                  disabled={currentPage === 1 || loadingMore}
+                  disabled={!canGoPrevious}
                   activeOpacity={0.7}
                 >
                   <Ionicons
                     name="chevron-back"
                     size={20}
-                    color={currentPage === 1 ? "#CCC" : "#E15816"}
+                    color={canGoPrevious ? "#E15816" : "#CCC"}
                   />
                 </TouchableOpacity>
 
@@ -1166,28 +1222,17 @@ export default function HistoryScreen() {
                 <TouchableOpacity
                   style={[
                     styles.paginationArrow,
-                    hasMore &&
-                      currentPage < totalPagesCount &&
-                      styles.paginationArrowEnabled,
-                    (!hasMore ||
-                      currentPage >= totalPagesCount ||
-                      loadingMore) &&
-                      styles.paginationArrowDisabled,
+                    canGoNext && styles.paginationArrowEnabled,
+                    !canGoNext && styles.paginationArrowDisabled,
                   ]}
                   onPress={handleNextPage}
-                  disabled={
-                    !hasMore || currentPage >= totalPagesCount || loadingMore
-                  }
+                  disabled={!canGoNext}
                   activeOpacity={0.7}
                 >
                   <Ionicons
                     name="chevron-forward"
                     size={20}
-                    color={
-                      !hasMore || currentPage >= totalPagesCount
-                        ? "#CCC"
-                        : "#E15816"
-                    }
+                    color={canGoNext ? "#E15816" : "#CCC"}
                   />
                 </TouchableOpacity>
               </View>
@@ -1195,9 +1240,6 @@ export default function HistoryScreen() {
             {loadingMore && (
               <View style={styles.paginationLoading}>
                 <ActivityIndicator size="small" color="#E15816" />
-                <Text style={styles.paginationLoadingText}>
-                  {t("history.loadingMore")}
-                </Text>
               </View>
             )}
           </View>
@@ -1206,114 +1248,308 @@ export default function HistoryScreen() {
 
       {/* Custom Date Picker Modal */}
       <ActivityModal
+        visible={showFilterDropdown}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowFilterDropdown(false)}
+      >
+        <TouchableOpacity
+          style={styles.filterDropdownOverlay}
+          activeOpacity={1}
+          onPress={() => setShowFilterDropdown(false)}
+        >
+          <TouchableOpacity
+            activeOpacity={1}
+            onPress={(e) => e.stopPropagation()}
+            style={[
+              styles.filterDropdownMenu,
+              { marginTop: insets.top + 52, marginRight: headerPaddingHorizontal },
+            ]}
+          >
+            <Text style={styles.filterDropdownTitle}>
+              {t("history.filterByDate")}
+            </Text>
+            <TouchableOpacity
+              style={[
+                styles.filterOption,
+                selectedFilter === "all" && styles.filterOptionSelected,
+              ]}
+              onPress={() => applyDateFilter("all")}
+            >
+              <View style={styles.filterOptionContent}>
+                <Text
+                  style={[
+                    styles.filterOptionText,
+                    selectedFilter === "all" &&
+                      styles.filterOptionTextSelected,
+                  ]}
+                >
+                  {t("history.allTime")}
+                </Text>
+                {selectedFilter === "all" && (
+                  <Ionicons name="checkmark" size={18} color="#E15816" />
+                )}
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.filterOption,
+                selectedFilter === "today" && styles.filterOptionSelected,
+              ]}
+              onPress={() => applyDateFilter("today")}
+            >
+              <View style={styles.filterOptionContent}>
+                <Text
+                  style={[
+                    styles.filterOptionText,
+                    selectedFilter === "today" &&
+                      styles.filterOptionTextSelected,
+                  ]}
+                >
+                  {t("history.today")}
+                </Text>
+                {selectedFilter === "today" && (
+                  <Ionicons name="checkmark" size={18} color="#E15816" />
+                )}
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.filterOption,
+                selectedFilter === "week" && styles.filterOptionSelected,
+              ]}
+              onPress={() => applyDateFilter("week")}
+            >
+              <View style={styles.filterOptionContent}>
+                <Text
+                  style={[
+                    styles.filterOptionText,
+                    selectedFilter === "week" &&
+                      styles.filterOptionTextSelected,
+                  ]}
+                >
+                  {t("history.thisWeek")}
+                </Text>
+                {selectedFilter === "week" && (
+                  <Ionicons name="checkmark" size={18} color="#E15816" />
+                )}
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.filterOption,
+                selectedFilter === "month" && styles.filterOptionSelected,
+              ]}
+              onPress={() => applyDateFilter("month")}
+            >
+              <View style={styles.filterOptionContent}>
+                <Text
+                  style={[
+                    styles.filterOptionText,
+                    selectedFilter === "month" &&
+                      styles.filterOptionTextSelected,
+                  ]}
+                >
+                  {t("history.thisMonth")}
+                </Text>
+                {selectedFilter === "month" && (
+                  <Ionicons name="checkmark" size={18} color="#E15816" />
+                )}
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.filterOption,
+                selectedFilter === "custom" && styles.filterOptionSelected,
+              ]}
+              onPress={() => applyDateFilter("custom")}
+            >
+              <View style={styles.filterOptionContent}>
+                <Text
+                  style={[
+                    styles.filterOptionText,
+                    selectedFilter === "custom" &&
+                      styles.filterOptionTextSelected,
+                  ]}
+                >
+                  {t("history.customRange")}
+                </Text>
+                {selectedFilter === "custom" && (
+                  <Ionicons name="checkmark" size={18} color="#E15816" />
+                )}
+              </View>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </ActivityModal>
+
+      {/* Custom Date Picker Modal */}
+      <ActivityModal
         visible={showCustomDatePicker}
         transparent
         animationType="fade"
         onRequestClose={() => setShowCustomDatePicker(false)}
       >
+        <View style={styles.modalOverlay}>
+          <TouchableOpacity
+            style={styles.modalBackdrop}
+            activeOpacity={1}
+            onPress={() => setShowCustomDatePicker(false)}
+          />
+          <View style={styles.filterModal}>
+            <View style={styles.modalHeader}>
+              <View style={styles.modalIconContainer}>
+                <Ionicons name="calendar-outline" size={28} color="#E15816" />
+              </View>
+              <Text style={styles.filterModalTitle}>
+                {t("history.selectDateRange")}
+              </Text>
+              <Text style={styles.filterModalSubtitle}>
+                {t("history.chooseDatesSubtitle")}
+              </Text>
+            </View>
+            <View style={styles.customDateSection}>
+              <View style={styles.dateInputContainer}>
+                <Text style={styles.dateLabel}>{t("history.startDate")}</Text>
+                <TouchableOpacity
+                  style={styles.dateInputButton}
+                  onPress={() => {
+                    if (Platform.OS === "android") {
+                      setShowCustomDatePicker(false);
+                    }
+                    setShowStartDatePicker(true);
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons
+                    name="calendar-outline"
+                    size={20}
+                    color="#E15816"
+                  />
+                  <Text
+                    style={[
+                      styles.dateInputText,
+                      !customStartDate && styles.dateInputPlaceholder,
+                    ]}
+                  >
+                    {customStartDate || t("history.selectStartDate")}
+                  </Text>
+                  <Ionicons name="chevron-down" size={20} color="#687076" />
+                </TouchableOpacity>
+              </View>
+              <View style={styles.dateInputContainer}>
+                <Text style={styles.dateLabel}>{t("history.endDate")}</Text>
+                <TouchableOpacity
+                  style={styles.dateInputButton}
+                  onPress={() => {
+                    if (Platform.OS === "android") {
+                      setShowCustomDatePicker(false);
+                    }
+                    setShowEndDatePicker(true);
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons
+                    name="calendar-outline"
+                    size={20}
+                    color="#E15816"
+                  />
+                  <Text
+                    style={[
+                      styles.dateInputText,
+                      !customEndDate && styles.dateInputPlaceholder,
+                    ]}
+                  >
+                    {customEndDate || t("history.selectEndDate")}
+                  </Text>
+                  <Ionicons name="chevron-down" size={20} color="#687076" />
+                </TouchableOpacity>
+              </View>
+              <TouchableOpacity
+                style={styles.applyCustomButton}
+                onPress={applyCustomDateRange}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.applyCustomButtonText}>
+                  {t("history.applyFilter")}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </ActivityModal>
+
+      {/* Date Pickers */}
+      <ActivityModal
+        visible={showStartDatePicker}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowStartDatePicker(false)}
+      >
         <TouchableOpacity
-          style={styles.modalOverlay}
+          style={styles.pickerModalOverlay}
           activeOpacity={1}
-          onPress={() => setShowCustomDatePicker(false)}
+          onPress={() => setShowStartDatePicker(false)}
         >
           <TouchableOpacity
             activeOpacity={1}
             onPress={(e) => e.stopPropagation()}
+            style={styles.pickerModalContainer}
           >
-            <View style={styles.filterModal}>
-              <View style={styles.modalHeader}>
-                <View style={styles.modalIconContainer}>
-                  <Ionicons name="calendar-outline" size={28} color="#E15816" />
-                </View>
-                <Text style={styles.filterModalTitle}>
-                  {t("history.selectDateRange")}
-                </Text>
-                <Text style={styles.filterModalSubtitle}>
-                  {t("history.chooseDatesSubtitle")}
-                </Text>
-              </View>
-              <View style={styles.customDateSection}>
-                <View style={styles.dateInputContainer}>
-                  <Text style={styles.dateLabel}>{t("history.startDate")}</Text>
-                  <TouchableOpacity
-                    style={styles.dateInputButton}
-                    onPress={() => setShowStartDatePicker(true)}
-                    activeOpacity={0.7}
-                  >
-                    <Ionicons
-                      name="calendar-outline"
-                      size={20}
-                      color="#E15816"
-                    />
-                    <Text
-                      style={[
-                        styles.dateInputText,
-                        !customStartDate && styles.dateInputPlaceholder,
-                      ]}
-                    >
-                      {customStartDate || t("history.selectStartDate")}
-                    </Text>
-                    <Ionicons name="chevron-down" size={20} color="#687076" />
-                  </TouchableOpacity>
-                </View>
-                <View style={styles.dateInputContainer}>
-                  <Text style={styles.dateLabel}>{t("history.endDate")}</Text>
-                  <TouchableOpacity
-                    style={styles.dateInputButton}
-                    onPress={() => setShowEndDatePicker(true)}
-                    activeOpacity={0.7}
-                  >
-                    <Ionicons
-                      name="calendar-outline"
-                      size={20}
-                      color="#E15816"
-                    />
-                    <Text
-                      style={[
-                        styles.dateInputText,
-                        !customEndDate && styles.dateInputPlaceholder,
-                      ]}
-                    >
-                      {customEndDate || t("history.selectEndDate")}
-                    </Text>
-                    <Ionicons name="chevron-down" size={20} color="#687076" />
-                  </TouchableOpacity>
-                </View>
-                <TouchableOpacity
-                  style={styles.applyCustomButton}
-                  onPress={applyCustomDateRange}
-                  activeOpacity={0.8}
-                >
-                  <Text style={styles.applyCustomButtonText}>
-                    {t("history.applyFilter")}
-                  </Text>
-                </TouchableOpacity>
-              </View>
+            <DateTimePicker
+              value={tempStartDate}
+              mode="date"
+              display={Platform.OS === "ios" ? "spinner" : "default"}
+              onChange={handleStartDateChange}
+              maximumDate={new Date()}
+            />
+            <View style={styles.pickerActions}>
+              <TouchableOpacity
+                style={styles.pickerDoneButton}
+                onPress={() => setShowStartDatePicker(false)}
+              >
+                <Text style={styles.pickerDoneText}>{t("common.close")}</Text>
+              </TouchableOpacity>
             </View>
           </TouchableOpacity>
         </TouchableOpacity>
       </ActivityModal>
 
-      {/* Date Pickers */}
-      {showStartDatePicker && (
-        <DateTimePicker
-          value={tempStartDate}
-          mode="date"
-          display={Platform.OS === "ios" ? "spinner" : "default"}
-          onChange={handleStartDateChange}
-          maximumDate={new Date()}
-        />
-      )}
-      {showEndDatePicker && (
-        <DateTimePicker
-          value={tempEndDate}
-          mode="date"
-          display={Platform.OS === "ios" ? "spinner" : "default"}
-          onChange={handleEndDateChange}
-          maximumDate={new Date()}
-          minimumDate={customStartDate ? new Date(customStartDate) : undefined}
-        />
-      )}
+      <ActivityModal
+        visible={showEndDatePicker}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowEndDatePicker(false)}
+      >
+        <TouchableOpacity
+          style={styles.pickerModalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowEndDatePicker(false)}
+        >
+          <TouchableOpacity
+            activeOpacity={1}
+            onPress={(e) => e.stopPropagation()}
+            style={styles.pickerModalContainer}
+          >
+            <DateTimePicker
+              value={tempEndDate}
+              mode="date"
+              display={Platform.OS === "ios" ? "spinner" : "default"}
+              onChange={handleEndDateChange}
+              maximumDate={new Date()}
+              minimumDate={customStartDate ? new Date(customStartDate) : undefined}
+            />
+            <View style={styles.pickerActions}>
+              <TouchableOpacity
+                style={styles.pickerDoneButton}
+                onPress={() => setShowEndDatePicker(false)}
+              >
+                <Text style={styles.pickerDoneText}>{t("common.close")}</Text>
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </ActivityModal>
 
       {/* Delete Options Modal */}
       {isSelectMode && selectedIds.size > 0 && (
@@ -1506,6 +1742,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingVertical: 16,
+    position: "relative",
+    zIndex: 20,
+    elevation: 20,
   },
   headerLeft: {
     minWidth: 80,
@@ -1531,6 +1770,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     minWidth: 80,
+    zIndex: 30,
+    elevation: 30,
   },
   headerIconButton: {
     width: 40,
@@ -1562,11 +1803,11 @@ const styles = StyleSheet.create({
   },
   filterDropdownContainer: {
     position: "relative",
+    zIndex: 40,
+    elevation: 40,
   },
   filterDropdownMenu: {
-    position: "absolute",
-    top: 50,
-    right: 0,
+    alignSelf: "flex-end",
     backgroundColor: "#FFFFFF",
     borderRadius: 16,
     paddingVertical: 8,
@@ -1575,9 +1816,46 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.15,
     shadowRadius: 16,
-    elevation: 10,
-    zIndex: 1000,
+    zIndex: 9999,
+    elevation: 9999,
     minWidth: 180,
+  },
+  filterDropdownOverlay: {
+    flex: 1,
+    backgroundColor: "transparent",
+    paddingHorizontal: 0,
+  },
+  pickerModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.35)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  pickerModalContainer: {
+    width: "100%",
+    maxWidth: 360,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    paddingTop: 8,
+    paddingBottom: 12,
+    paddingHorizontal: 8,
+  },
+  pickerActions: {
+    marginTop: 4,
+    alignItems: "flex-end",
+    paddingHorizontal: 8,
+  },
+  pickerDoneButton: {
+    backgroundColor: "#E15816",
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+  },
+  pickerDoneText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "700",
   },
   filterDropdownTitle: {
     fontWeight: "700",
@@ -1780,6 +2058,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     padding: 20,
+  },
+  modalBackdrop: {
+    ...StyleSheet.absoluteFillObject,
   },
   filterModal: {
     backgroundColor: "#FFFFFF",
