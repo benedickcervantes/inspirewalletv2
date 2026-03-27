@@ -1,30 +1,30 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
-    useFocusEffect,
-    useNavigation,
-    useRoute,
+  useFocusEffect,
+  useNavigation,
+  useRoute,
 } from "@react-navigation/native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Animated, AppState, Image, Linking, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import {
-    SafeAreaView,
-    useSafeAreaInsets,
+  SafeAreaView,
+  useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import {
-    getActiveAnnouncements,
-    getCompanyKycStatus,
-    getMe,
-    getNotifications,
-    getOrCreateMainWallet,
-    getPersonalKycStatus,
-    getReferralTree,
-    getTimeDeposits,
-    getTransactions,
+  getActiveAnnouncements,
+  getCompanyKycStatus,
+  getMe,
+  getNotifications,
+  getOrCreateMainWallet,
+  getPersonalKycStatus,
+  getReferralTree,
+  getTimeDeposits,
+  getTransactions,
 } from "../../configs/api";
 import {
-    languageChoiceDoneKey,
-    SUPPORTED_LANGUAGES,
+  languageChoiceDoneKey,
+  SUPPORTED_LANGUAGES,
 } from "../../constants/locales";
 import { useIdleTimeout } from "../../context/IdleTimeoutContext";
 import { useLanguage } from "../../context/LanguageContext";
@@ -36,8 +36,8 @@ import type { NavProp } from "../../types/navigation";
 import { useResponsive } from "../../utils/responsive";
 import AccountDeletionModal from "../AccountDeletion/AccountDeletionModal";
 import {
-    AnnouncementModal,
-    type AnnouncementItem,
+  AnnouncementModal,
+  type AnnouncementItem,
 } from "../AnnouncementModal/AnnouncementModal";
 import NotificationBadge from "../Notification/NotificationBadge";
 import CardsTab from "./CardsTab";
@@ -947,17 +947,38 @@ export default function Dashboard() {
     }, [fetchMaintenanceStatus, refetchJwtData]),
   );
 
-  useEffect(() => {
-    if (activeTab !== "Cards" && isCardFlipped) {
-      Animated.spring(flipAnimation, {
-        toValue: 0,
-        friction: 8,
-        tension: 10,
-        useNativeDriver: true,
-      }).start();
+  const resetCardToFront = useCallback(
+    (animate = false) => {
+      if (!isCardFlipped) {
+        if (!animate) {
+          flipAnimation.stopAnimation();
+          flipAnimation.setValue(0);
+        }
+        return;
+      }
+
+      if (animate) {
+        Animated.spring(flipAnimation, {
+          toValue: 0,
+          friction: 8,
+          tension: 10,
+          useNativeDriver: true,
+        }).start();
+      } else {
+        flipAnimation.stopAnimation();
+        flipAnimation.setValue(0);
+      }
+
       setIsCardFlipped(false);
+    },
+    [flipAnimation, isCardFlipped],
+  );
+
+  useEffect(() => {
+    if (activeTab !== "Cards") {
+      resetCardToFront(false);
     }
-  }, [activeTab]);
+  }, [activeTab, resetCardToFront]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -1488,7 +1509,12 @@ export default function Dashboard() {
                       minHeight: isSmallScreen ? 40 : 46,
                     },
                   ]}
-                  onPress={() => setActiveTab(tab)}
+                  onPress={() => {
+                    if (tab !== "Cards") {
+                      resetCardToFront(false);
+                    }
+                    setActiveTab(tab);
+                  }}
                 >
                   <Text
                     style={[
