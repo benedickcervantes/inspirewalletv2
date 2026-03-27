@@ -9,7 +9,9 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Path } from "react-native-svg";
 import {
     deleteTransactions,
-    getOrCreateMainWallet,
+  getStockInvestmentDepositRequests,
+  getTimeDeposits,
+  getTopUpDepositRequests,
     getTransactions,
 } from "../../configs/api";
 import type { TransactionDoc } from "../../configs/firebase";
@@ -93,6 +95,7 @@ interface Transaction {
   id: string;
   type?: string;
   amount?: number;
+  status?: string;
   description?: string;
   timestamp?: { toDate?: () => Date };
   createdAt?: string;
@@ -114,6 +117,9 @@ interface RawApiTransaction {
   id?: unknown;
   type?: unknown;
   amount?: unknown;
+  status?: unknown;
+  requestStatus?: unknown;
+  request_status?: unknown;
   createdAt?: unknown;
   description?: unknown;
   senderName?: unknown;
@@ -138,6 +144,19 @@ interface RawApiTransaction {
 interface RawApiWallet {
   id?: string;
   balance?: number | string;
+}
+
+interface RawDepositRequestLike {
+  id?: unknown;
+  amount?: unknown;
+  status?: unknown;
+  createdAt?: unknown;
+  updatedAt?: unknown;
+  requestType?: unknown;
+  contractType?: unknown;
+  contractPeriod?: unknown;
+  type?: unknown;
+  description?: unknown;
 }
 
 const CURRENCY_SYMBOL = "₱";
@@ -552,28 +571,30 @@ export default function HistoryScreen() {
       }
 
       try {
-        const { success, wallet } = await getOrCreateMainWallet(accessToken);
-        const w = wallet as RawApiWallet | undefined;
-        const walletId = w?.id;
-
         const queryParams: {
           walletId?: string;
           limit: number;
           startDate?: string;
           endDate?: string;
         } = {
-          walletId,
-          limit: loadMore ? currentCount + ITEMS_PER_PAGE : ITEMS_PER_PAGE,
+          // Fetch a broad history scope instead of a single wallet-only feed.
+          // Time deposit requests/updates may not be tied to main walletId.
+          limit: 500,
         };
 
         if (startDate) queryParams.startDate = startDate.toISOString();
         if (endDate) queryParams.endDate = endDate.toISOString();
 
         const txRes = await getTransactions(accessToken, queryParams);
+        const [topUpRes, timeDepositRes, stockRes] = await Promise.all([
+          getTopUpDepositRequests(accessToken),
+          getTimeDeposits(accessToken),
+          getStockInvestmentDepositRequests(accessToken),
+        ]);
 
         // ✅ Ensure transactions is an array before mapping
         if (txRes.success && Array.isArray(txRes.transactions)) {
-          const mapped: Transaction[] = (
+          const mappedApiTransactions: Transaction[] = (
             txRes.transactions as RawApiTransaction[]
           ).map((tx) => {
             const parties = resolveTransferParties(tx as unknown as Record<string, unknown>);
@@ -585,6 +606,9 @@ export default function HistoryScreen() {
               return Number.isNaN(a) ? 0 : a;
               })(),
               description: String(tx.description ?? ""),
+              status: String(
+                tx.status ?? tx.requestStatus ?? tx.request_status ?? "",
+              ),
               timestamp: {
                 toDate: () => new Date(String(tx.createdAt ?? "")),
               },
@@ -596,12 +620,74 @@ export default function HistoryScreen() {
             };
           });
 
-          // ✅ Append when loading more, replace otherwise
-          setTransactions((prev) => (loadMore ? [...prev, ...mapped] : mapped));
-          setHasMore(
-            mapped.length >=
-              (loadMore ? currentCount + ITEMS_PER_PAGE : ITEMS_PER_PAGE),
+          const mapRequestStatusDescription = (
+            requestLabel: string,
+            rawStatus: unknown,
+          ) => {
+            const s = String(rawStatus ?? "").trim().toLowerCase();
+            if (s === "approved" || s === "active" || s === "completed" || s === "matured") {
+              return `${requestLabel} Approved`;
+            }
+            if (s === "rejected" || s === "cancelled" || s === "canceled") {
+              return `${requestLabel} Rejected`;
+            }
+            return `${requestLabel} Requested`;
+          };
+
+          const mapDepositRequestsToTransactions = (
+            list: unknown[] | undefined,
+            type: string,
+            requestLabel: string,
+          ): Transaction[] => {
+            if (!Array.isArray(list)) return [];
+            return list.map((raw) => {
+              const item = (raw ?? {}) as RawDepositRequestLike;
+              const id = String(item.id ?? "").trim();
+              const createdAt = String(item.createdAt ?? item.updatedAt ?? "").trim();
+              const amountParsed = parseFloat(String(item.amount ?? 0));
+              const amount = Number.isNaN(amountParsed) ? 0 : amountParsed;
+              return {
+                id: id || `${type}-${Math.random().toString(36).slice(2)}`,
+                type,
+                amount,
+                status: String(item.status ?? ""),
+                description: mapRequestStatusDescription(requestLabel, item.status),
+                timestamp: {
+                  toDate: () => (createdAt ? new Date(createdAt) : new Date()),
+                },
+                createdAt,
+              };
+            });
+          };
+
+          const mappedTopUpRequests = topUpRes.success
+            ? mapDepositRequestsToTransactions(topUpRes.requests, "TOP_UP", "Top-up")
+            : [];
+          const mappedTimeDepositRequests = timeDepositRes.success
+            ? mapDepositRequestsToTransactions(timeDepositRes.deposits, "TIME_DEPOSIT", "Time deposit")
+            : [];
+          const mappedStockRequests = stockRes.success
+            ? mapDepositRequestsToTransactions(stockRes.requests, "STOCK_BUY", "Stock investment")
+            : [];
+
+          const mergedById = new Map<string, Transaction>();
+          [...mappedTopUpRequests, ...mappedTimeDepositRequests, ...mappedStockRequests, ...mappedApiTransactions].forEach(
+            (tx) => {
+              const key = String(tx.id ?? "").trim();
+              if (!key) return;
+              mergedById.set(key, tx);
+            },
           );
+
+          const mapped = Array.from(mergedById.values()).sort((a, b) => {
+            const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+            const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+            return bTime - aTime;
+          });
+
+          // Keep one canonical dataset and paginate client-side.
+          setTransactions(mapped);
+          setHasMore(false);
           setTotalPages(Math.max(1, Math.ceil(mapped.length / ITEMS_PER_PAGE)));
         } else {
           // If no transactions or invalid response, set empty array
@@ -717,6 +803,7 @@ export default function HistoryScreen() {
     const receiptParams: Record<string, unknown> = {
       transactionId: selectedTransaction.id || t("investment.pending"),
       amount: String(selectedTransaction.amount ?? 0),
+      status: selectedTransaction.status || "",
       currency: "PHP",
       type: receiptType,
       successMessage: getTransactionDisplayName(selectedTransaction),
@@ -753,6 +840,20 @@ export default function HistoryScreen() {
     if (!tx) return false;
     const normalizedDescription = String(tx.description ?? "").toLowerCase();
     const normalizedType = String(tx.type ?? "").toUpperCase();
+    const normalizedStatus = String(tx.status ?? "").toLowerCase();
+
+    const isApprovedStatus =
+      normalizedStatus === "approved" ||
+      normalizedStatus === "active" ||
+      normalizedStatus === "completed" ||
+      normalizedStatus === "matured";
+    const isRejectedStatus =
+      normalizedStatus === "rejected" ||
+      normalizedStatus === "cancelled" ||
+      normalizedStatus === "canceled";
+
+    if (isRejectedStatus) return false;
+    if (isApprovedStatus) return true;
 
     const isTimeDepositRequest =
       normalizedType === "TIME_DEPOSIT" ||
@@ -762,9 +863,14 @@ export default function HistoryScreen() {
     }
 
     if (
-      normalizedDescription.includes("request") ||
       normalizedDescription.includes("pending") ||
       normalizedDescription.includes("rejected")
+    ) {
+      return false;
+    }
+    if (
+      normalizedDescription.includes("request") &&
+      !normalizedDescription.includes("approved")
     ) {
       return false;
     }
@@ -817,24 +923,18 @@ export default function HistoryScreen() {
   const getVisiblePages = () => {
     const pages: (number | string)[] = [];
     const maxVisible = 3;
-    
-    // Always show at least 3 pages if there's more data available
-    const minPagesToShow = hasMore ? 3 : totalPagesCount;
+    let start = Math.max(1, currentPage - 1);
+    let end = start + maxVisible - 1;
 
-    if (totalPagesCount <= maxVisible && !hasMore) {
-      for (let i = 1; i <= totalPagesCount; i++) pages.push(i);
-    } else {
-      if (currentPage <= 2) {
-        // Show pages 1, 2, 3 when on first or second page
-        for (let i = 1; i <= Math.max(maxVisible, minPagesToShow); i++) {
-          pages.push(i);
-        }
-      } else if (currentPage >= totalPagesCount - 1 && !hasMore) {
-        pages.push(totalPagesCount - 2, totalPagesCount - 1, totalPagesCount);
-      } else {
-        pages.push(currentPage - 1, currentPage, currentPage + 1);
-      }
+    if (!hasMore) {
+      end = Math.min(totalPagesCount, end);
+      start = Math.max(1, end - maxVisible + 1);
     }
+
+    for (let i = start; i <= end; i += 1) {
+      pages.push(i);
+    }
+
     return pages;
   };
 
