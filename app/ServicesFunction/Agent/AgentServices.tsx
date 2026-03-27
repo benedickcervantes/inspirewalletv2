@@ -25,6 +25,8 @@ interface AgentUser {
   firstName: string;
   lastName: string;
   referralCode: string;
+  isAgent: boolean;
+  agentRole?: string;
 }
 
 type ModalType = "success" | "error" | "warning" | "info";
@@ -361,11 +363,25 @@ export default function AgentServices() {
         return;
       }
 
+      if (lookup.isAgent !== true) {
+        setSelectedUser(null);
+        setSearchResults([]);
+        showModal({
+          title: "Invalid Referral Code",
+          message:
+            "This referral code belongs to an investor account and is not valid. Please enter a referral code from an Agent or Master Agent.",
+          type: "warning",
+        });
+        return;
+      }
+
       const foundAgent: AgentUser = {
         id: lookup.userId,
         firstName: lookup.firstName || "",
         lastName: lookup.lastName || "",
         referralCode: lookup.referralCode,
+        isAgent: true,
+        agentRole: lookup.agentRole,
       };
       setSearchResults([foundAgent]);
       selectUser(foundAgent);
@@ -421,6 +437,15 @@ export default function AgentServices() {
       showModal({
         title: t("agentRequest.modals.accessRestricted.title"),
         message: t("agentRequest.modals.accessRestricted.message"),
+        type: "warning",
+      });
+      return;
+    }
+    if (searchQuery.trim() && !selectedUser) {
+      showModal({
+        title: "Invalid Referral Code",
+        message:
+          "Only Agent or Master Agent referral codes are allowed. Investor referral codes are not valid.",
         type: "warning",
       });
       return;
@@ -683,7 +708,7 @@ export default function AgentServices() {
                             getRTLStyles(language),
                           ]}
                         >
-                          Your Referral Code:{" "}
+                          Your Agent Code:{" "}
                           {hierarchicalAgentCode}
                         </Text>
                       ) : null}
@@ -692,7 +717,8 @@ export default function AgentServices() {
 
                   {searchQuery &&
                     searchResults.length === 0 &&
-                    !isSearching && (
+                    !isSearching &&
+                    !selectedUser && (
                       <View style={styles.noResultsContainer}>
                         <Text
                           style={[styles.noResultsText, getRTLStyles(language)]}
