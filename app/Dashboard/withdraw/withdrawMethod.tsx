@@ -78,12 +78,15 @@ export default function WithdrawRequest() {
 
         {/* Progress Steps */}
         <View style={styles.progressContainer}>
-          <View style={styles.progressBar}>
-            <View style={styles.progressFilled} />
+          <View style={styles.stepIndicator}>
+            <View style={[styles.stepCircle, styles.stepActive]}>
+              <Ionicons name="checkmark" size={16} color="#FFFFFF" />
+            </View>
+            <View style={[styles.stepLine, styles.stepLineActive]} />
+            <View style={[styles.stepCircle, styles.stepActive]} />
+            <View style={styles.stepLine} />
+            <View style={styles.stepCircle} />
           </View>
-          <Text style={styles.progressText}>
-            {t("withdraw.stepIndicator").replace("{step}", "2")}
-          </Text>
         </View>
 
         <ScrollView
@@ -231,28 +234,34 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   progressContainer: {
-    paddingVertical: 20,
-    paddingHorizontal: 20,
-    backgroundColor: "#F5F5F5",
+    paddingVertical: 24,
+    paddingHorizontal: 60,
+    backgroundColor: "#FFFFFF",
+  },
+  stepIndicator: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  stepCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#E0E0E0",
+    justifyContent: "center",
     alignItems: "center",
   },
-  progressBar: {
-    width: "100%",
-    height: 4,
-    backgroundColor: "#E0E0E0",
-    borderRadius: 2,
-    overflow: "hidden",
-    marginBottom: 8,
-  },
-  progressFilled: {
-    width: "40%",
-    height: "100%",
+  stepActive: {
     backgroundColor: "#E25A17",
   },
-  progressText: {
-    fontSize: 14,
-    color: "#E25A17",
-    fontWeight: "600",
+  stepLine: {
+    flex: 1,
+    height: 2,
+    backgroundColor: "#E0E0E0",
+    marginHorizontal: 8,
+  },
+  stepLineActive: {
+    backgroundColor: "#E25A17",
   },
   scrollView: {
     flex: 1,
