@@ -74,6 +74,10 @@ export function createRealtimeConnection(accessToken, handlers = {}) {
       handlers.onAccountDeletionRejected?.(payload);
     });
 
+    socket.on('MAINTENANCE_UPDATED', (payload) => {
+      handlers.onMaintenanceUpdated?.(payload);
+    });
+
     socket.on('connect', () => {
       handlers.onConnect?.();
     });

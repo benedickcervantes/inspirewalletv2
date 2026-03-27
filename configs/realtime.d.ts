@@ -13,6 +13,11 @@ export interface RealtimeHandlers {
   onTicketCreated?: () => void;
   onAccountDeletionApproved?: () => void;
   onAccountDeletionRejected?: (payload?: { adminNotes?: string | null }) => void;
+  onMaintenanceUpdated?: (payload?: {
+    serviceId?: string;
+    isUnderMaintenance?: boolean;
+    isHidden?: boolean;
+  }) => void;
   onConnect?: () => void;
   onDisconnect?: (reason?: string) => void;
   onError?: (err?: unknown) => void;

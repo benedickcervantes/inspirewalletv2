@@ -31,7 +31,7 @@ import { useLanguage } from "../../context/LanguageContext";
 import { useSocket } from "../../context/SocketContext";
 import { useUnreadNotifications } from "../../context/UnreadNotificationsContext";
 import { setConnectionStatus } from "../../lib/connectionStatus";
-import { getMaintenanceStatus } from "../../lib/maintenance";
+import { getMaintenanceStatus, getVisibilityStatus } from "../../lib/maintenance";
 import type { NavProp } from "../../types/navigation";
 import { useResponsive } from "../../utils/responsive";
 import AccountDeletionModal from "../AccountDeletion/AccountDeletionModal";
@@ -276,6 +276,9 @@ export default function Dashboard() {
   const [maintenanceStatus, setMaintenanceStatus] = useState<
     Record<string, boolean>
   >({});
+  const [hiddenServiceStatus, setHiddenServiceStatus] = useState<
+    Record<string, boolean>
+  >({});
   const [isMaintenanceLoading, setIsMaintenanceLoading] = useState(true);
   const [selectedMaintenanceService, setSelectedMaintenanceService] = useState<
     string | null
@@ -327,9 +330,13 @@ export default function Dashboard() {
   const fetchMaintenanceStatus = useCallback(async () => {
     setIsMaintenanceLoading(true);
     try {
-      const status = await getMaintenanceStatus();
-      setMaintenanceStatus(status);
-      return status;
+      const [maintenance, visibility] = await Promise.all([
+        getMaintenanceStatus(),
+        getVisibilityStatus(),
+      ]);
+      setMaintenanceStatus(maintenance);
+      setHiddenServiceStatus(visibility);
+      return maintenance;
     } finally {
       setIsMaintenanceLoading(false);
     }
@@ -892,9 +899,14 @@ export default function Dashboard() {
       void refetchJwtData();
     };
 
+    const handleMaintenanceUpdated = () => {
+      void fetchMaintenanceStatus();
+    };
+
     if (socket && isSocketConnected) {
       socket.on("WALLET_UPDATE", handleWalletUpdate);
       socket.on("TRANSACTION_CREATED", handleTransactionCreated);
+      socket.on("MAINTENANCE_UPDATED", handleMaintenanceUpdated);
     }
 
     return () => {
@@ -904,9 +916,11 @@ export default function Dashboard() {
       if (socket && isSocketConnected) {
         socket.off("WALLET_UPDATE", handleWalletUpdate);
         socket.off("TRANSACTION_CREATED", handleTransactionCreated);
+        socket.off("MAINTENANCE_UPDATED", handleMaintenanceUpdated);
       }
     };
   }, [
+    fetchMaintenanceStatus,
     isSocketConnected,
     getSocket,
     refetchJwtData,
@@ -1839,6 +1853,11 @@ export default function Dashboard() {
                         ? (maintenanceStatus.physical_cards ??
                           maintenanceStatus.pcard)
                         : maintenanceStatus[serviceId];
+                    const isHidden =
+                      item.route === "PCard"
+                        ? (hiddenServiceStatus.physical_cards ??
+                          hiddenServiceStatus.pcard)
+                        : hiddenServiceStatus[serviceId];
                     const isEwalletLockedByDeposit =
                       item.route === "EwalletService" && isBankingServiceLocked;
                     const isTradingLockedByKyc =
@@ -1856,6 +1875,10 @@ export default function Dashboard() {
                       isMaintenanceBlocked ||
                       isEwalletLockedByDeposit ||
                       isTradingLockedByKyc;
+
+                    if (isHidden) {
+                      return null;
+                    }
 
                     const menuKey =
                       item.route === "EwalletService"

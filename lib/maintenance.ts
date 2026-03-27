@@ -10,6 +10,7 @@ export type ServiceId =
   | 'task'
   | 'agent'
   | 'trading'
+  | 'crypto_deposit'
   | 'pcard'
   | 'physical_cards';
 
@@ -37,6 +38,7 @@ export async function getMaintenanceStatus(): Promise<MaintenanceStatusMap> {
       task: Boolean(data.task),
       agent: Boolean(data.agent),
       trading: Boolean(data.trading),
+      crypto_deposit: Boolean(data.crypto_deposit),
       physical_cards: physicalCards,
       pcard: physicalCards,
     };
@@ -50,6 +52,49 @@ export async function getMaintenanceStatus(): Promise<MaintenanceStatusMap> {
       task: false,
       agent: false,
       trading: false,
+      crypto_deposit: false,
+      physical_cards: false,
+      pcard: false,
+    };
+  }
+}
+
+/**
+ * Get visibility status for all services (true = hidden).
+ */
+export async function getVisibilityStatus(): Promise<MaintenanceStatusMap> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/maintenance/visibility`, {
+      headers: {
+        'x-api-key': API_KEY || '',
+      },
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    const data = (await response.json()) as Record<string, boolean>;
+    const physicalCards = Boolean(data.physical_cards ?? data.pcard ?? false);
+    return {
+      stock: Boolean(data.stock),
+      ewallet: Boolean(data.ewallet),
+      message: Boolean(data.message),
+      task: Boolean(data.task),
+      agent: Boolean(data.agent),
+      trading: Boolean(data.trading),
+      crypto_deposit: Boolean(data.crypto_deposit),
+      physical_cards: physicalCards,
+      pcard: physicalCards,
+    };
+  } catch (error) {
+    console.error('[Maintenance] Failed to fetch visibility status:', error);
+    return {
+      stock: false,
+      ewallet: false,
+      message: false,
+      task: false,
+      agent: false,
+      trading: false,
+      crypto_deposit: false,
       physical_cards: false,
       pcard: false,
     };

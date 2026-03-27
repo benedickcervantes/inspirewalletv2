@@ -1,16 +1,19 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { auth, doc, firestore, getDoc } from "../../../configs/firebase";
 import { useLanguage } from "../../../context/LanguageContext";
+import { useSocket } from "../../../context/SocketContext";
+import { getVisibilityStatus } from "../../../lib/maintenance";
 
 import ActivityModal from '../../components/ActivityModal';
 export default function TimeDeposit() {
   const navigation = useNavigation();
   const { t } = useLanguage();
+  const { getSocket, isConnected: isSocketConnected } = useSocket();
   const [currentStep, setCurrentStep] = useState(1);
   const [depositMethod, setDepositMethod] = useState("Request Amount");
   const [contractPeriod, setContractPeriod] = useState("");
@@ -19,6 +22,7 @@ export default function TimeDeposit() {
   );
   const [availableBalance, setAvailableBalance] = useState(0);
   const [showAlertModal, setShowAlertModal] = useState(false);
+  const [isCryptoDepositHidden, setIsCryptoDepositHidden] = useState(false);
   const [alertConfig, setAlertConfig] = useState<{
     title: string;
     message: string;
@@ -27,6 +31,53 @@ export default function TimeDeposit() {
   useEffect(() => {
     fetchUserData();
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      let isMounted = true;
+      const syncVisibility = async () => {
+        const visibility = await getVisibilityStatus();
+        const hidden = Boolean(visibility.crypto_deposit);
+        if (isMounted) {
+          setIsCryptoDepositHidden(hidden);
+          if (hidden && depositMethod === "Crypto Deposit") {
+            setDepositMethod("Request Amount");
+          }
+        }
+      };
+      void syncVisibility();
+      return () => {
+        isMounted = false;
+      };
+    }, [depositMethod]),
+  );
+
+  useEffect(() => {
+    const socket = getSocket();
+    if (!socket || !isSocketConnected) return;
+
+    const handleMaintenanceUpdated = (payload?: {
+      serviceId?: string;
+      isHidden?: boolean;
+    }) => {
+      if (payload?.serviceId && payload.serviceId !== "crypto_deposit") return;
+      void (async () => {
+        const visibility = await getVisibilityStatus();
+        const hidden = Boolean(visibility.crypto_deposit);
+        setIsCryptoDepositHidden(hidden);
+        if (hidden) {
+          setDepositMethod((prev) =>
+            prev === "Crypto Deposit" ? "Request Amount" : prev,
+          );
+        }
+      })();
+    };
+
+    socket.on("MAINTENANCE_UPDATED", handleMaintenanceUpdated);
+    return () => {
+      socket.off("MAINTENANCE_UPDATED", handleMaintenanceUpdated);
+    };
+  }, [getSocket, isSocketConnected]);
 
   const fetchUserData = async () => {
     try {
@@ -170,20 +221,22 @@ export default function TimeDeposit() {
                 </Text>
               </TouchableOpacity>
 
-              <TouchableOpacity
-                style={[
-                  styles.radioOption,
-                  depositMethod === "Crypto Deposit" &&
-                    styles.radioOptionSelected,
-                ]}
-                onPress={() => setDepositMethod("Crypto Deposit")}>
-                <View style={styles.radioCircle}>
-                  {depositMethod === "Crypto Deposit" && (
-                    <View style={styles.radioInner} />
-                  )}
-                </View>
-                <Text style={styles.radioLabel}>Crypto Deposit</Text>
-              </TouchableOpacity>
+              {!isCryptoDepositHidden && (
+                <TouchableOpacity
+                  style={[
+                    styles.radioOption,
+                    depositMethod === "Crypto Deposit" &&
+                      styles.radioOptionSelected,
+                  ]}
+                  onPress={() => setDepositMethod("Crypto Deposit")}>
+                  <View style={styles.radioCircle}>
+                    {depositMethod === "Crypto Deposit" && (
+                      <View style={styles.radioInner} />
+                    )}
+                  </View>
+                  <Text style={styles.radioLabel}>Crypto Deposit</Text>
+                </TouchableOpacity>
+              )}
             </View>
 
             {/* Contract Period */}
