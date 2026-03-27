@@ -179,6 +179,10 @@ export default function Passcode() {
   const enterTextMarginBottom = tiny ? 8 : compact ? 16 : 40;
   const padRowMarginBottom = tiny ? 4 : compact ? 10 : 20;
   const bottomRowMarginTop = tiny ? 4 : compact ? 8 : 16;
+  const layoutScale = Math.max(
+    0.88,
+    Math.min(1.12, Math.min(width / 390, height / 844)),
+  );
 
   const [passcode, setPasscode] = useState("");
   const [error, setError] = useState("");
@@ -245,8 +249,11 @@ export default function Passcode() {
         } else {
           // Check for biometric token and support
           try {
+            const userJson = await AsyncStorage.getItem("user");
+            const user = userJson ? JSON.parse(userJson) : null;
+            const biometricEnabled = !!user?.biometricEnabled;
             const token = await SecureStore.getItemAsync("biometricToken");
-            if (token) {
+            if (token && biometricEnabled) {
               const compatible = await LocalAuthentication.hasHardwareAsync();
               const enrolled = await LocalAuthentication.isEnrolledAsync();
               if (compatible && enrolled) {
@@ -566,21 +573,17 @@ export default function Passcode() {
               />
             </TouchableOpacity>
           </View>
-          <ScrollView
-            style={styles.scroll}
-            contentContainerStyle={[
-              styles.scrollContent,
-              (compact || tiny) && {
-                paddingVertical: tiny ? 4 : 12,
-                paddingBottom: tiny ? 12 : 24,
-                flexGrow: 1,
-                justifyContent: "center",
-              },
-            ]}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-          >
-            <View style={styles.centerContent}>
+          <View style={styles.contentFrame}>
+            <View
+              style={[
+                styles.centerContent,
+                {
+                  transform: [{ scale: layoutScale }],
+                  width: "100%",
+                  maxWidth: 460,
+                },
+              ]}
+            >
               <View
                 style={[
                   styles.logoWrap,
@@ -898,7 +901,7 @@ export default function Passcode() {
                 </>
               )}
             </View>
-          </ScrollView>
+          </View>
         </LinearGradient>
       )}
 
@@ -1261,8 +1264,15 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingBottom: 40,
   },
-  centerContent: {
+  contentFrame: {
     flex: 1,
+    width: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingTop: 72,
+    paddingBottom: 12,
+  },
+  centerContent: {
     alignItems: "center",
     justifyContent: "center",
     width: "100%",
