@@ -693,12 +693,17 @@ const Settings = () => {
     modalHeader: { marginBottom: scaled(16) },
     modalTitle: { fontSize: scaled(18) },
     modalSubtitle: { fontSize: scaled(14), marginBottom: scaled(12) },
+    otpInputWrapper: {
+      marginBottom: scaled(12),
+      borderRadius: scaled(8),
+    },
     otpInput: {
       paddingHorizontal: scaled(16),
       paddingVertical: scaled(14),
       fontSize: scaled(18),
-      marginBottom: scaled(12),
-      borderRadius: scaled(8),
+    },
+    otpPlaceholderText: {
+      fontSize: scaled(18),
     },
     modalButton: {
       borderRadius: scaled(8),
@@ -1160,19 +1165,36 @@ const Settings = () => {
                   >
                     {t("settings.enterCodeSentTo")} {userData?.email}
                   </Text>
-                  <TextInput
-                    style={[styles.otpInput, r.otpInput]}
-                    placeholder={t("settings.otpPlaceholder")}
-                    placeholderTextColor="#999"
-                    value={emailOtp}
-                    onChangeText={(val) => {
-                      registerActivity();
-                      setEmailOtp(val.replace(/\D/g, "").slice(0, 6));
-                      setEmailVerifyError(null);
-                    }}
-                    keyboardType="number-pad"
-                    maxLength={6}
-                  />
+                  <View style={[styles.otpInputWrapper, r.otpInputWrapper]}>
+                    <TextInput
+                      style={[styles.otpInput, r.otpInput]}
+                      placeholder=""
+                      value={emailOtp}
+                      onChangeText={(val) => {
+                        registerActivity();
+                        setEmailOtp(val.replace(/\D/g, "").slice(0, 6));
+                        setEmailVerifyError(null);
+                      }}
+                      keyboardType="number-pad"
+                      maxLength={6}
+                      underlineColorAndroid="transparent"
+                    />
+                    {emailOtp.length === 0 ? (
+                      <View
+                        style={styles.otpPlaceholderOverlay}
+                        pointerEvents="none"
+                      >
+                        <Text
+                          style={[
+                            styles.otpPlaceholderText,
+                            r.otpPlaceholderText,
+                          ]}
+                        >
+                          {t("settings.otpPlaceholder")}
+                        </Text>
+                      </View>
+                    ) : null}
+                  </View>
                   {emailVerifyError ? (
                     <Text
                       style={[styles.referralErrorText, r.referralErrorText]}
@@ -1493,16 +1515,30 @@ const styles = StyleSheet.create({
     color: "#666",
     marginBottom: 12,
   },
-  otpInput: {
+  otpInputWrapper: {
+    position: "relative",
     borderWidth: 1,
     borderColor: "#E0E0E0",
     borderRadius: 8,
+    marginBottom: 12,
+  },
+  otpInput: {
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 18,
     letterSpacing: 8,
     textAlign: "center",
-    marginBottom: 12,
+    borderWidth: 0,
+    backgroundColor: "transparent",
+  },
+  otpPlaceholderOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  otpPlaceholderText: {
+    fontSize: 18,
+    color: "#999",
   },
   modalButton: {
     backgroundColor: "#F38B35",
