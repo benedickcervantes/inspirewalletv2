@@ -1,6 +1,9 @@
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
+import React, { lazy, Suspense } from 'react';
+import { ActivityIndicator, View } from 'react-native';
 import 'react-native-gesture-handler';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
@@ -31,7 +34,6 @@ import History from './app/History/history';
 import KYCAddressInformation from './app/KYC/KYCAddressInformation';
 import KYCcompany from './app/KYC/KYCcompany';
 import KYCVerification from './app/KYC/KYCVerification';
-import NotificationScreen from './app/Notification/notification';
 import CreatePasscode from './app/Outside/CreatePasscode';
 import Login from './app/Outside/Login';
 import OfflineWrapper from './app/Outside/OfflineWrapper';
@@ -82,6 +84,33 @@ import type { RootStackParamList } from './types/navigation';
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const EwalletReview = require('./app/ServicesFunction/E-Wallet/EwalletReview').default;
 
+const LazyNotificationScreen = lazy(() => import('./app/Notification/notification')) as React.LazyExoticComponent<
+  React.ComponentType<NativeStackScreenProps<RootStackParamList, 'Notification'>>
+>;
+
+function NotificationScreenGateway(
+  props: NativeStackScreenProps<RootStackParamList, 'Notification'>,
+) {
+  return (
+    <Suspense
+      fallback={
+        <View
+          style={{
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: '#F5F5F5',
+          }}
+        >
+          <ActivityIndicator size="large" color="#E25A17" />
+        </View>
+      }
+    >
+      <LazyNotificationScreen {...props} />
+    </Suspense>
+  );
+}
+
 function RootNavigator() {
   const { registerActivity } = useIdleTimeout();
 
@@ -118,7 +147,7 @@ function RootNavigator() {
           <Stack.Screen name="KYCVerification" component={KYCVerification} />
           <Stack.Screen name="KYCcompany" component={KYCcompany} />
           <Stack.Screen name="KYCAddressInformation" component={KYCAddressInformation} />
-          <Stack.Screen name="Notification" component={NotificationScreen} />
+          <Stack.Screen name="Notification" component={NotificationScreenGateway} />
           <Stack.Screen name="Settings" component={Settings} />
           <Stack.Screen name="ChangePasscode" component={ChangePasscode} />
           <Stack.Screen name="Aboutus" component={Aboutus} />
