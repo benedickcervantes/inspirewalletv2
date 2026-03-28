@@ -278,7 +278,7 @@ function ForgotPasswordInputModal({
   return (
     <ActivityModal transparent animationType="none" visible={visible}>
       <KeyboardAvoidingView
-        style={styles.flex1}
+        style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={Platform.OS === "ios" ? 16 : 0}
       >
@@ -295,6 +295,7 @@ function ForgotPasswordInputModal({
             ]}
           >
             <ScrollView
+              style={{ width: "100%" }}
               contentContainerStyle={forgotInputStyles.scrollContent}
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
@@ -383,8 +384,7 @@ const forgotInputStyles = StyleSheet.create({
     paddingVertical: 20,
   },
   scrollContent: {
-    flexGrow: 1,
-    justifyContent: "center",
+    alignItems: "center",
   },
   emailInput: {
     width: '100%',

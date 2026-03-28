@@ -6,7 +6,7 @@ import {
     useRoute,
 } from "@react-navigation/native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Animated, AppState, Image, Linking, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Animated, AppState, Image, Linking, RefreshControl, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import {
     SafeAreaView,
     useSafeAreaInsets,
@@ -230,6 +230,7 @@ export default function Dashboard() {
   const qaLabelSize = width < 360 ? 8 : isSmallScreen ? 9 : 11;
   const qaIconSize = width < 360 ? 18 : isSmallScreen ? 20 : 24;
   const carouselWidth = width - horizontalPadding * 2;
+  const [refreshing, setRefreshing] = useState(false);
   const [userData, setUserData] = useState<Record<string, unknown> | null>(
     null,
   );
@@ -1182,6 +1183,12 @@ export default function Dashboard() {
   const shouldShowServiceContainersSkeleton =
     isBalanceLoading || isMaintenanceLoading;
 
+  const onDashboardRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refetchJwtData();
+    setRefreshing(false);
+  }, [refetchJwtData]);
+
   return (
     <>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
@@ -1429,6 +1436,14 @@ export default function Dashboard() {
 
         <ScrollView
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onDashboardRefresh}
+              colors={["#E15816"]}
+              tintColor={"#E15816"}
+            />
+          }
           onScrollBeginDrag={() => {
             isUserScrollingRef.current = true;
             lastScrollAtRef.current = Date.now();

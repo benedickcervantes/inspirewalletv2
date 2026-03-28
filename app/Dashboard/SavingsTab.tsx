@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useRef, useState } from "react";
-import { ImageBackground, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
+import { ImageBackground, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLanguage } from "../../context/LanguageContext";
 import { useResponsive } from "../../utils/responsive";
@@ -143,7 +143,6 @@ export default function SavingsTab({
   const [contractPage, setContractPage] = useState(1);
   const [selectedContract, setSelectedContract] = useState<TimeDeposit | null>(null);
   const [showContractComingSoonModal, setShowContractComingSoonModal] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
   const contractsSectionYRef = useRef(0);
   const isInitialPageMount = useRef(true);
@@ -184,13 +183,6 @@ export default function SavingsTab({
     1,
     ...depositGrowthData.map((d) => d.amount)
   );
-
-  const handleRefresh = async () => {
-    if (!onRefresh) return;
-    setRefreshing(true);
-    await onRefresh();
-    setRefreshing(false);
-  };
 
   const formatDateSafe = (
     dateStr: string | null | undefined,
@@ -238,13 +230,6 @@ export default function SavingsTab({
       ref={scrollViewRef}
       style={styles.container}
       showsVerticalScrollIndicator={false}
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={handleRefresh}
-          tintColor="#E25A17"
-        />
-      }
     >
       <View style={[styles.cardContainer, { paddingHorizontal: horizontalPadding }]}>
         <ImageBackground
@@ -814,30 +799,24 @@ export default function SavingsTab({
             )}
           </View>
         </View>
-      </ActivityModal>
-
-      <ActivityModal
-        visible={showContractComingSoonModal}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowContractComingSoonModal(false)}
-      >
-        <View style={styles.confirmationOverlay}>
-          <View style={[styles.confirmationCard, { marginBottom: insets.bottom > 0 ? insets.bottom : 16 }]}>
-            <Ionicons name="time-outline" size={28} color="#E25A17" />
-            <Text style={styles.confirmationTitle}>Coming Soon</Text>
-            <Text style={styles.confirmationMessage}>
-              Contract request is not available yet. This feature will be enabled once contract processing is ready.
-            </Text>
-            <TouchableOpacity
-              style={styles.confirmationButton}
-              onPress={() => setShowContractComingSoonModal(false)}
-              activeOpacity={0.85}
-            >
-              <Text style={styles.confirmationButtonText}>OK</Text>
-            </TouchableOpacity>
+        {showContractComingSoonModal && (
+          <View style={[StyleSheet.absoluteFill, styles.confirmationOverlay, { zIndex: 999 }]}>
+            <View style={[styles.confirmationCard, { marginBottom: insets.bottom > 0 ? insets.bottom : 16 }]}>
+              <Ionicons name="time-outline" size={28} color="#E25A17" />
+              <Text style={styles.confirmationTitle}>{t("investment.processingRequestTitle")}</Text>
+              <Text style={styles.confirmationMessage}>
+                {t("investment.processingRequestMessage")}
+              </Text>
+              <TouchableOpacity
+                style={styles.confirmationButton}
+                onPress={() => setShowContractComingSoonModal(false)}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.confirmationButtonText}>OK</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
+        )}
       </ActivityModal>
     </ScrollView>
   );
