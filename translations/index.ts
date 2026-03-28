@@ -583,6 +583,22 @@ const en: TranslationMap = {
   "settings.biometricSubtitle": "Use {type} for faster and secure login",
   "settings.enableBiometric": "Enable {type}",
   "settings.biometricConfirmPrompt": "Authenticate with {type} to continue",
+  "settings.biometricEnablePasswordSubtitle":
+    "Enter your account password to turn on {type} login.",
+  "settings.enableBiometricPasswordPlaceholder": "Enter your account password",
+  "settings.showPassword": "Show password",
+  "settings.hidePassword": "Hide password",
+  "settings.biometricLocalAuthFailed":
+    "Biometric authentication failed or was cancelled.",
+  "settings.biometricPasswordMinLength":
+    "Password must be at least 6 characters.",
+  "settings.biometricInvalidCredentials":
+    "Invalid credentials. Please check your email and password.",
+  "settings.biometricEnableServerError":
+    "Could not enable biometric login. Please try again.",
+  "settings.biometricPasswordRequired": "Please enter your account password.",
+  "settings.biometricEmailMissing":
+    "We could not load your email. Please sign out and sign in again, then try enabling biometrics.",
   "settings.biometricSetupSubtitle":
     "Please enter your password to confirm linking this device to your account for {type} login.",
   "settings.passwordPlaceholder": "Enter your password",
@@ -2423,6 +2439,23 @@ const ko: TranslationMap = {
     "빠르고 안전한 로그인을 위해 {type}을(를) 사용하세요.",
   "settings.enableBiometric": "{type} 활성화",
   "settings.biometricConfirmPrompt": "{type}로 인증하여 계속하세요",
+  "settings.biometricEnablePasswordSubtitle":
+    "{type} 로그인을 켜려면 계정 비밀번호를 입력하세요.",
+  "settings.enableBiometricPasswordPlaceholder": "계정 비밀번호 입력",
+  "settings.showPassword": "비밀번호 표시",
+  "settings.hidePassword": "비밀번호 숨기기",
+  "settings.biometricLocalAuthFailed":
+    "생체 인증에 실패했거나 취소되었습니다.",
+  "settings.biometricPasswordMinLength":
+    "비밀번호는 최소 6자 이상이어야 합니다.",
+  "settings.enable": "활성화",
+  "settings.biometricInvalidCredentials":
+    "이메일 또는 비밀번호가 올바르지 않습니다. 다시 시도하세요.",
+  "settings.biometricEnableServerError":
+    "생체 인증 로그인을 켤 수 없습니다. 다시 시도하세요.",
+  "settings.biometricPasswordRequired": "계정 비밀번호를 입력하세요.",
+  "settings.biometricEmailMissing":
+    "이메일을 불러올 수 없습니다. 로그아웃 후 다시 로그인한 뒤 생체 인증을 켜 보세요.",
   "settings.biometricSetupSubtitle":
     "{type} 로그인을 위해 기기 연결을 확인하려면 비밀번호를 입력하세요.",
   "passcode.headerTitle": "패스코드 변경",
@@ -4237,6 +4270,23 @@ const ja: TranslationMap = {
     "より速く安全にログインするために{type}を使用してください。",
   "settings.enableBiometric": "{type} を有効にする",
   "settings.biometricConfirmPrompt": "続行するには{type}で認証してください",
+  "settings.biometricEnablePasswordSubtitle":
+    "{type}ログインを有効にするには、アカウントのパスワードを入力してください。",
+  "settings.enableBiometricPasswordPlaceholder": "アカウントのパスワードを入力",
+  "settings.showPassword": "パスワードを表示",
+  "settings.hidePassword": "パスワードを隠す",
+  "settings.biometricLocalAuthFailed":
+    "生体認証に失敗したか、キャンセルされました。",
+  "settings.biometricPasswordMinLength":
+    "パスワードは6文字以上である必要があります。",
+  "settings.enable": "有効にする",
+  "settings.biometricInvalidCredentials":
+    "メールアドレスまたはパスワードが正しくありません。もう一度お試しください。",
+  "settings.biometricEnableServerError":
+    "生体認証ログインを有効にできませんでした。もう一度お試しください。",
+  "settings.biometricPasswordRequired": "アカウントのパスワードを入力してください。",
+  "settings.biometricEmailMissing":
+    "メールアドレスを読み込めませんでした。一度ログアウトしてから再度ログインし、生体認証を有効にしてください。",
   "settings.biometricSetupSubtitle":
     "{type} ログインのためにこのデバイスのアカウント連携を確認するため、パスワードを入力してください。",
   "settings.deleteAccount": "アカウント削除",
@@ -6072,6 +6122,23 @@ const ar: TranslationMap = {
     "استخدم {type} لتسجيل الدخول بشكل أسرع وأكثر أمانًا",
   "settings.enableBiometric": "تمكين {type}",
   "settings.biometricConfirmPrompt": "تأكيد باستخدام {type} للمتابعة",
+  "settings.biometricEnablePasswordSubtitle":
+    "أدخل كلمة مرور حسابك لتفعيل تسجيل الدخول بـ {type}.",
+  "settings.enableBiometricPasswordPlaceholder": "أدخل كلمة مرور حسابك",
+  "settings.showPassword": "إظهار كلمة المرور",
+  "settings.hidePassword": "إخفاء كلمة المرور",
+  "settings.biometricLocalAuthFailed":
+    "فشلت المصادقة البيومترية أو تم إلغاؤها.",
+  "settings.biometricPasswordMinLength":
+    "يجب أن تتكون كلمة المرور من 6 أحرف على الأقل.",
+  "settings.enable": "تفعيل",
+  "settings.biometricInvalidCredentials":
+    "بيانات الاعتماد غير صحيحة. تحقق من بريدك وكلمة المرور.",
+  "settings.biometricEnableServerError":
+    "تعذر تفعيل تسجيل الدخول البيومتري. حاول مرة أخرى.",
+  "settings.biometricPasswordRequired": "يرجى إدخال كلمة مرور حسابك.",
+  "settings.biometricEmailMissing":
+    "تعذر تحميل بريدك. سجّل الخروج ثم أعد تسجيل الدخول وحاول تفعيل البيومتري مرة أخرى.",
   "settings.biometricSetupSubtitle":
     "يرجى إدخال كلمة المرور لتأكيد ربط هذا الجهاز بحسابك لتسجيل الدخول باستخدام {type}.",
   "settings.deleteAccount": "حذف الحساب",
