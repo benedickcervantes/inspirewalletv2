@@ -2,7 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Dimensions,
@@ -29,7 +29,6 @@ import { auth } from "../../configs/firebase";
 import { useLanguage } from "../../context/LanguageContext";
 import { useUnreadNotifications } from "../../context/UnreadNotificationsContext";
 import ActivityModal from "../components/ActivityModal";
-import Loader from "../Loader/Loader";
 import notificationService, {
   type NotificationItem,
 } from "./notificationService";
@@ -52,6 +51,32 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 const DETAIL_MODAL_WIDTH = Math.min(SCREEN_WIDTH * 0.86, 420);
 const DETAIL_MODAL_MAX_HEIGHT = SCREEN_HEIGHT * 0.78;
 const NOTIFICATION_PAGE_SIZE = 5;
+const SKELETON_PLACEHOLDER_COUNT = 6;
+const LOAD_MORE_THROTTLE_MS = 450;
+
+function NotificationCardSkeleton({ index }: { index: number }) {
+  return (
+    <View
+      style={[styles.notificationCard, styles.skeletonCard]}
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+    >
+      <View style={styles.cardContent}>
+        <View style={[styles.iconContainer, styles.skeletonIcon]} />
+        <View style={styles.skeletonTextCol}>
+          <View
+            style={[
+              styles.skeletonLine,
+              { width: index % 2 === 0 ? "72%" : "58%" },
+            ]}
+          />
+          <View style={[styles.skeletonLine, styles.skeletonLineShort]} />
+          <View style={[styles.skeletonLine, { width: "40%" }]} />
+        </View>
+      </View>
+    </View>
+  );
+}
 
 /**
  * Format notification messages to add comma separators to amounts
@@ -106,6 +131,10 @@ const Notification = () => {
   const [handledReferralNotificationKeys, setHandledReferralNotificationKeys] =
     useState<Set<string>>(new Set());
   const [visibleCount, setVisibleCount] = useState(NOTIFICATION_PAGE_SIZE);
+
+  /** Full-list skeleton only before the first successful hydration (not load-more / resubscribe). */
+  const backendInitialFetchDoneRef = useRef(false);
+  const firebaseHydratedUidRef = useRef<string | null>(null);
 
   const loadHandledReferralNotificationKeys = async () => {
     try {
@@ -200,40 +229,56 @@ const Notification = () => {
     return key ? t(key) : (title ?? "");
   };
 
-  const fetchBackendNotifications = useCallback(async () => {
-    try {
-      setLoading(true);
-      const accessToken = await AsyncStorage.getItem("access_token");
-      if (!accessToken) return;
+  const fetchBackendNotifications = useCallback(
+    async (options?: { isRefresh?: boolean }) => {
+      const isRefresh = Boolean(options?.isRefresh);
+      const blockUi =
+        !isRefresh && !backendInitialFetchDoneRef.current;
+      try {
+        if (blockUi) setLoading(true);
+        const accessToken = await AsyncStorage.getItem("access_token");
+        if (!accessToken) {
+          setLoading(false);
+          setRefreshing(false);
+          if (blockUi) backendInitialFetchDoneRef.current = true;
+          return;
+        }
 
-      const result = await getNotifications(accessToken, { limit: 50 });
-      if (result.success && result.data) {
-        const storedHandledKeysRaw = await AsyncStorage.getItem(
-          HANDLED_REFERRAL_NOTIFICATION_KEYS_KEY,
-        );
-        const storedHandledKeys = new Set<string>(
-          storedHandledKeysRaw
-            ? (JSON.parse(storedHandledKeysRaw) as string[])
-            : [],
-        );
-        const list = (result.data as NotificationItemBackend[]).map((item) => ({
-          ...item,
-          referralHandled: isHandledReferralNotification(
-            item,
-            storedHandledKeys,
-          ),
-        }));
-        setBackendNotifications(list);
-        const unread = list.filter((n) => !n.isRead).length;
-        setUnreadCount(unread);
+        const result = await getNotifications(accessToken, { limit: 50 });
+        if (result.success && result.data) {
+          const storedHandledKeysRaw = await AsyncStorage.getItem(
+            HANDLED_REFERRAL_NOTIFICATION_KEYS_KEY,
+          );
+          const storedHandledKeys = new Set<string>(
+            storedHandledKeysRaw
+              ? (JSON.parse(storedHandledKeysRaw) as string[])
+              : [],
+          );
+          const list = (result.data as NotificationItemBackend[]).map(
+            (item) => ({
+              ...item,
+              referralHandled: isHandledReferralNotification(
+                item,
+                storedHandledKeys,
+              ),
+            }),
+          );
+          setBackendNotifications(list);
+          const unread = list.filter((n) => !n.isRead).length;
+          setUnreadCount(unread);
+        }
+      } catch (error) {
+        console.error("Error fetching notifications:", error);
+      } finally {
+        if (blockUi) {
+          setLoading(false);
+          backendInitialFetchDoneRef.current = true;
+        }
+        setRefreshing(false);
       }
-    } catch (error) {
-      console.error("Error fetching notifications:", error);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [setUnreadCount]);
+    },
+    [setUnreadCount],
+  );
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -272,16 +317,23 @@ const Notification = () => {
 
   useEffect(() => {
     if (!user) {
+      firebaseHydratedUidRef.current = null;
       setLoading(false);
       return;
     }
 
-    setLoading(true);
+    const uid = user.uid;
+    const alreadyHydratedForUser = firebaseHydratedUidRef.current === uid;
+    if (!alreadyHydratedForUser) {
+      setLoading(true);
+    }
+
     const unsubscribe = notificationService.subscribeToNotifications(
-      user.uid,
+      uid,
       (notificationsList: NotificationItem[]) => {
         setNotifications(notificationsList);
         setLoading(false);
+        firebaseHydratedUidRef.current = uid;
         setRefreshing(false);
       },
     );
@@ -296,7 +348,7 @@ const Notification = () => {
   const handleRefresh = () => {
     setRefreshing(true);
     if (useBackend) {
-      fetchBackendNotifications();
+      fetchBackendNotifications({ isRefresh: true });
     } else {
       setTimeout(() => setRefreshing(false), 1000);
     }
@@ -356,6 +408,16 @@ const Notification = () => {
   const hasMoreNotifications = useBackend
     ? orderedBackendNotifications.length > visibleCount
     : orderedFirebaseNotifications.length > visibleCount;
+
+  const lastLoadMoreAtRef = useRef(0);
+  const handleLazyLoadMore = useCallback(() => {
+    if (!hasMoreNotifications || loading) return;
+    const now = Date.now();
+    if (now - lastLoadMoreAtRef.current < LOAD_MORE_THROTTLE_MS) return;
+    lastLoadMoreAtRef.current = now;
+    setVisibleCount((prev) => prev + NOTIFICATION_PAGE_SIZE);
+  }, [hasMoreNotifications, loading]);
+
   const allNotificationIds = useMemo(
     () =>
       useBackend
@@ -363,10 +425,6 @@ const Notification = () => {
         : orderedFirebaseNotifications.map((n) => n.id),
     [useBackend, orderedBackendNotifications, orderedFirebaseNotifications],
   );
-
-  const handleLoadMore = () => {
-    setVisibleCount((prev) => prev + NOTIFICATION_PAGE_SIZE);
-  };
 
   const handleReadAll = async () => {
     if (unreadCount === 0 || readAllLoading) return;
@@ -998,11 +1056,10 @@ const Notification = () => {
 
   const renderLoadMoreFooter = () => {
     if (!hasMoreNotifications || loading) return null;
-
     return (
       <TouchableOpacity
         style={styles.loadMoreButton}
-        onPress={handleLoadMore}
+        onPress={handleLazyLoadMore}
         activeOpacity={0.85}
       >
         <Text style={styles.loadMoreText}>
@@ -1047,11 +1104,6 @@ const Notification = () => {
     );
   }
 
-  // While loading notifications, remove the header to keep the loader uniform.
-  if (loading) {
-    return <Loader text={t("common.loading")} />;
-  }
-
   return (
     <View
       style={[
@@ -1080,6 +1132,7 @@ const Notification = () => {
             <TouchableOpacity
               style={styles.refreshButton}
               onPress={toggleSelectMode}
+              disabled={loading}
               accessibilityRole="button"
               accessibilityLabel={t("notification.cancel")}
             >
@@ -1089,6 +1142,7 @@ const Notification = () => {
             <TouchableOpacity
               style={styles.refreshButton}
               onPress={toggleSelectMode}
+              disabled={loading}
               accessibilityRole="button"
               accessibilityLabel={t("notification.select")}
             >
@@ -1098,7 +1152,7 @@ const Notification = () => {
         </View>
       </LinearGradient>
 
-      {selectMode && (
+      {selectMode && !loading && (
         <View style={styles.deleteActionBar}>
           <TouchableOpacity
             onPress={handleSelectAll}
@@ -1161,7 +1215,7 @@ const Notification = () => {
         </View>
       )}
 
-      {unreadCount > 0 && !selectMode && (
+      {unreadCount > 0 && !selectMode && !loading && (
         <View style={styles.readAllBar}>
           <TouchableOpacity
             onPress={handleReadAll}
@@ -1179,7 +1233,19 @@ const Notification = () => {
         </View>
       )}
 
-      {useBackend ? (
+      {loading && !refreshing ? (
+        <ScrollView
+          contentContainerStyle={[
+            styles.listContent,
+            { paddingBottom: contentBottomPadding },
+          ]}
+          showsVerticalScrollIndicator={false}
+        >
+          {Array.from({ length: SKELETON_PLACEHOLDER_COUNT }, (_, i) => (
+            <NotificationCardSkeleton key={`sk-${i}`} index={i} />
+          ))}
+        </ScrollView>
+      ) : useBackend ? (
         <FlatList<NotificationItemBackend>
           data={visibleBackendNotifications}
           renderItem={renderBackendNotification}
@@ -1192,6 +1258,8 @@ const Notification = () => {
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={renderEmptyState}
           ListFooterComponent={renderLoadMoreFooter}
+          onEndReached={handleLazyLoadMore}
+          onEndReachedThreshold={0.35}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -1215,6 +1283,8 @@ const Notification = () => {
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={renderEmptyState}
           ListFooterComponent={renderLoadMoreFooter}
+          onEndReached={handleLazyLoadMore}
+          onEndReachedThreshold={0.35}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -1637,6 +1707,25 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "700",
     color: "#E25A17",
+  },
+  skeletonCard: {
+    borderLeftWidth: 0,
+  },
+  skeletonIcon: {
+    backgroundColor: "#E8E8E8",
+  },
+  skeletonTextCol: {
+    flex: 1,
+    gap: 10,
+  },
+  skeletonLine: {
+    height: 14,
+    borderRadius: 6,
+    backgroundColor: "#E8E8E8",
+    maxWidth: "100%",
+  },
+  skeletonLineShort: {
+    width: "92%",
   },
   // Delete confirmation modal - modern white card
   alertOverlay: {
