@@ -1,15 +1,16 @@
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import * as Clipboard from "expo-clipboard";
 import { LinearGradient } from "expo-linear-gradient";
 import * as LocalAuthentication from "expo-local-authentication";
 import * as SecureStore from "expo-secure-store";
 import { unregisterIndieDevice } from "native-notify";
 import { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, Platform, ScrollView, StatusBar, StyleSheet, Text, TextInput, ToastAndroid, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Alert, Platform, ScrollView, StatusBar, StyleSheet, Text, TextInput, ToastAndroid, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
+  disableBiometric,
   enableBiometric,
   getReferralCode,
   resendVerification,
@@ -18,6 +19,7 @@ import {
 import { useIdleTimeout } from "../../context/IdleTimeoutContext";
 import { useLanguage } from "../../context/LanguageContext";
 import { useLanguageModal } from "../../context/LanguageModalContext";
+import { authenticateWithDeviceBiometrics } from "../../utils/biometricAuth";
 import { useResponsive } from "../../utils/responsive";
 import AccountDeletionModal from "../AccountDeletion/AccountDeletionModal";
 import ActivityModal from '../components/ActivityModal';
@@ -54,6 +56,7 @@ const Settings = () => {
   const [biometricPassword, setBiometricPassword] = useState("");
   const [biometricLoading, setBiometricLoading] = useState(false);
   const [biometricError, setBiometricError] = useState<string | null>(null);
+  const [biometricToggleBusy, setBiometricToggleBusy] = useState(false);
 
   // Language state
   const { language } = useLanguage();
@@ -61,21 +64,51 @@ const Settings = () => {
 
   const loadUser = useCallback(async () => {
     const userJson = await AsyncStorage.getItem("user");
+    let hasBioToken = false;
+    try {
+      hasBioToken = !!(await SecureStore.getItemAsync("biometricToken"));
+    } catch {
+      hasBioToken = false;
+    }
+
     if (userJson) {
       try {
-        const user = JSON.parse(userJson) as UserData;
+        const user = JSON.parse(userJson) as UserData & Record<string, unknown>;
+        // Other screens often overwrite `user` with API payloads that omit biometricEnabled.
+        const explicit = user.biometricEnabled;
+        let biometricEnabled: boolean;
+        if (explicit === false) {
+          biometricEnabled = false;
+        } else if (explicit === true) {
+          biometricEnabled = true;
+        } else {
+          biometricEnabled = hasBioToken;
+        }
+        if (
+          hasBioToken &&
+          explicit !== false &&
+          explicit !== true
+        ) {
+          try {
+            await AsyncStorage.setItem(
+              "user",
+              JSON.stringify({ ...user, biometricEnabled: true }),
+            );
+          } catch {
+            /* ignore */
+          }
+        }
         setUserData({
           email: user.email,
           emailVerified: user.emailVerified,
-          biometricEnabled: user.biometricEnabled || false, // Handle legacy data
+          biometricEnabled,
         });
       } catch (_) {}
     } else {
-      // If no user data in AsyncStorage, set empty user object so we don't show loading screen
       setUserData({
         email: undefined,
         emailVerified: false,
-        biometricEnabled: false,
+        biometricEnabled: hasBioToken,
       });
     }
   }, []);
@@ -116,6 +149,12 @@ const Settings = () => {
 
     checkAuth();
   }, [loadUser, navigation]);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadUser();
+    }, [loadUser]),
+  );
 
   useEffect(() => {
     loadReferralCode();
@@ -283,10 +322,40 @@ const Settings = () => {
     closeEmailVerifyModal();
   };
 
+  const showBiometricMessage = (message: string) => {
+    if (Platform.OS === "android") {
+      ToastAndroid.show(message, ToastAndroid.LONG);
+    } else {
+      Alert.alert(t("settings.title"), message);
+    }
+  };
+
   const handleToggleBiometric = async () => {
+    if (biometricToggleBusy || biometricLoading) return;
+
     if (userData?.biometricEnabled) {
-      // Disable locally only to preserve previous setup/token for quick re-enable.
+      setBiometricToggleBusy(true);
+      setBiometricError(null);
       try {
+        const accessToken = await AsyncStorage.getItem("access_token");
+        if (!accessToken) {
+          showBiometricMessage(t("settings.unexpectedError"));
+          return;
+        }
+        const res = await disableBiometric(accessToken);
+        if (!res.success) {
+          showBiometricMessage(
+            res.error || "Could not disable biometric login on the server.",
+          );
+          return;
+        }
+        try {
+          await SecureStore.deleteItemAsync("biometricToken");
+        } catch {
+          /* ignore missing key */
+        }
+        await AsyncStorage.removeItem("biometricEmail");
+
         setUserData((prev) =>
           prev ? { ...prev, biometricEnabled: false } : null,
         );
@@ -300,16 +369,23 @@ const Settings = () => {
         }
       } catch (e) {
         console.error("Failed to disable biometric", e);
+        showBiometricMessage(t("settings.unexpectedError"));
+      } finally {
+        setBiometricToggleBusy(false);
       }
     } else {
-      // If biometric token already exists from previous setup, just turn it back on.
+      // If we still have a device token from before a successful disable, the server may
+      // still have biometrics enabled — verifyBiometric on Passcode remains authoritative.
+      // Re-enabling here only restores local UI + passcode button; invalid tokens fail at verify.
       try {
         const savedToken = await SecureStore.getItemAsync("biometricToken");
         if (savedToken) {
-          const authResult = await LocalAuthentication.authenticateAsync({
-            promptMessage: `Authenticate to enable ${biometricType}`,
-            fallbackLabel: "Use Passcode",
-            disableDeviceFallback: false,
+          const authResult = await authenticateWithDeviceBiometrics({
+            promptMessage: t("settings.biometricConfirmPrompt", {
+              type: biometricType,
+            }),
+            fallbackLabel: t("passcode.useFallback"),
+            cancelLabel: t("common.cancel"),
           });
 
           if (!authResult.success) {
@@ -334,7 +410,6 @@ const Settings = () => {
         console.error("Failed to re-enable biometric with existing token", e);
       }
 
-      // First-time setup still requires account password.
       setBiometricPassword("");
       setBiometricError(null);
       setBiometricModalVisible(true);
@@ -358,10 +433,12 @@ const Settings = () => {
 
     try {
       // 1. Authenticate with local biometrics first
-      const authResult = await LocalAuthentication.authenticateAsync({
-        promptMessage: `Authenticate to enable ${biometricType}`,
-        fallbackLabel: "Use Passcode",
-        disableDeviceFallback: false,
+      const authResult = await authenticateWithDeviceBiometrics({
+        promptMessage: t("settings.biometricConfirmPrompt", {
+          type: biometricType,
+        }),
+        fallbackLabel: t("passcode.useFallback"),
+        cancelLabel: t("common.cancel"),
       });
 
       if (!authResult.success) {
@@ -797,6 +874,7 @@ const Settings = () => {
               <TouchableOpacity
                 style={[styles.optionItem, r.optionItem]}
                 onPress={handleToggleBiometric}
+                disabled={biometricToggleBusy || biometricLoading}
               >
                 <View style={styles.optionLeft}>
                   <View style={[styles.iconContainer, r.iconContainer]}>
@@ -821,19 +899,23 @@ const Settings = () => {
                     </Text>
                   </View>
                 </View>
-                <View
-                  style={[
-                    styles.toggleSwitch,
-                    userData?.biometricEnabled && styles.toggleSwitchActive,
-                  ]}
-                >
+                {biometricToggleBusy ? (
+                  <ActivityIndicator size="small" color="#F38B35" />
+                ) : (
                   <View
                     style={[
-                      styles.toggleThumb,
-                      userData?.biometricEnabled && styles.toggleThumbActive,
+                      styles.toggleSwitch,
+                      userData?.biometricEnabled && styles.toggleSwitchActive,
                     ]}
-                  />
-                </View>
+                  >
+                    <View
+                      style={[
+                        styles.toggleThumb,
+                        userData?.biometricEnabled && styles.toggleThumbActive,
+                      ]}
+                    />
+                  </View>
+                )}
               </TouchableOpacity>
             )}
           </View>

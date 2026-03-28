@@ -1,11 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import * as LocalAuthentication from "expo-local-authentication";
 import * as SecureStore from "expo-secure-store";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Animated, BackHandler, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
@@ -22,6 +22,7 @@ import {
 import { useIdleTimeout } from "../../context/IdleTimeoutContext";
 import { useLanguage } from "../../context/LanguageContext";
 import type { NavProp } from "../../types/navigation";
+import { authenticateWithDeviceBiometrics } from "../../utils/biometricAuth";
 import { useResponsive } from "../../utils/responsive";
 import Loader from "../Loader/Loader";
 
@@ -228,6 +229,56 @@ export default function Passcode() {
   const [hasBiometricToken, setHasBiometricToken] = useState(false);
   const [biometricType, setBiometricType] = useState<string>("Biometrics");
 
+  /** Server + SecureStore are source of truth; cached user may be cleared after idle/sign-out. */
+  const refreshBiometricAvailability = useCallback(async () => {
+    try {
+      const token = await SecureStore.getItemAsync("biometricToken");
+      if (!token) {
+        setHasBiometricToken(false);
+        return;
+      }
+      const userJson = await AsyncStorage.getItem("user");
+      const user = userJson ? JSON.parse(userJson) : null;
+      if (user && user.biometricEnabled === false) {
+        setHasBiometricToken(false);
+        return;
+      }
+      const compatible = await LocalAuthentication.hasHardwareAsync();
+      const enrolled = await LocalAuthentication.isEnrolledAsync();
+      if (!compatible || !enrolled) {
+        setHasBiometricToken(false);
+        return;
+      }
+      setHasBiometricToken(true);
+      const supportedTypes =
+        await LocalAuthentication.supportedAuthenticationTypesAsync();
+      if (
+        supportedTypes.includes(
+          LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION,
+        )
+      ) {
+        setBiometricType("Face ID");
+      } else if (
+        supportedTypes.includes(
+          LocalAuthentication.AuthenticationType.FINGERPRINT,
+        )
+      ) {
+        setBiometricType(
+          Platform.OS === "ios" ? "Touch ID" : "fingerprint",
+        );
+      } else if (
+        supportedTypes.includes(LocalAuthentication.AuthenticationType.IRIS)
+      ) {
+        setBiometricType("Iris");
+      } else {
+        setBiometricType("Biometrics");
+      }
+    } catch (e) {
+      console.error("Biometric init error:", e);
+      setHasBiometricToken(false);
+    }
+  }, []);
+
   const shakeAnim = useRef(new Animated.Value(0)).current;
 
   const showModal = (config: Partial<ModalConfig>) => {
@@ -254,54 +305,36 @@ export default function Passcode() {
 
     const loadPasscode = async () => {
       const accessToken = await AsyncStorage.getItem("access_token");
-      if (!cancelled) {
-        if (!accessToken) {
-          setNeedsAuth(true);
-        } else {
-          // Check for biometric token and support
-          try {
-            const userJson = await AsyncStorage.getItem("user");
-            const user = userJson ? JSON.parse(userJson) : null;
-            const biometricEnabled = !!user?.biometricEnabled;
-            const token = await SecureStore.getItemAsync("biometricToken");
-            if (token && biometricEnabled) {
-              const compatible = await LocalAuthentication.hasHardwareAsync();
-              const enrolled = await LocalAuthentication.isEnrolledAsync();
-              if (compatible && enrolled) {
-                setHasBiometricToken(true);
-                const supportedTypes =
-                  await LocalAuthentication.supportedAuthenticationTypesAsync();
-                if (
-                  supportedTypes.includes(
-                    LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION,
-                  )
-                ) {
-                  setBiometricType("Face ID");
-                } else if (
-                  supportedTypes.includes(
-                    LocalAuthentication.AuthenticationType.FINGERPRINT,
-                  )
-                ) {
-                  setBiometricType(
-                    Platform.OS === "ios" ? "Touch ID" : "fingerprint",
-                  );
-                }
-              }
-            }
-          } catch (e) {
-            console.error("Biometric init error:", e);
-          }
-        }
-        // If access token exists, show passcode entry screen (don't redirect to Main)
-        setLoadingPasscode(false);
+      if (cancelled) return;
+      if (!accessToken) {
+        setNeedsAuth(true);
+        setHasBiometricToken(false);
+      } else {
+        setNeedsAuth(false);
+        await refreshBiometricAvailability();
       }
+      setLoadingPasscode(false);
     };
 
     loadPasscode();
     return () => {
       cancelled = true;
     };
-  }, [navigation]);
+  }, [navigation, refreshBiometricAvailability]);
+
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      (async () => {
+        const accessToken = await AsyncStorage.getItem("access_token");
+        if (!accessToken || !active) return;
+        await refreshBiometricAvailability();
+      })();
+      return () => {
+        active = false;
+      };
+    }, [refreshBiometricAvailability]),
+  );
 
   // Handle Biometric Login Flow
   const handleBiometricAuth = async () => {
@@ -314,10 +347,10 @@ export default function Passcode() {
         throw new Error(t("passcode.noTokenFound"));
       }
 
-      const authResult = await LocalAuthentication.authenticateAsync({
+      const authResult = await authenticateWithDeviceBiometrics({
         promptMessage: t("passcode.biometricPrompt", { type: biometricType }),
         fallbackLabel: t("passcode.useFallback"),
-        disableDeviceFallback: false,
+        cancelLabel: t("common.cancel"),
       });
 
       if (authResult.success) {

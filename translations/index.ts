@@ -582,6 +582,7 @@ const en: TranslationMap = {
   "settings.biometricLogin": "{type} Login",
   "settings.biometricSubtitle": "Use {type} for faster and secure login",
   "settings.enableBiometric": "Enable {type}",
+  "settings.biometricConfirmPrompt": "Authenticate with {type} to continue",
   "settings.biometricSetupSubtitle":
     "Please enter your password to confirm linking this device to your account for {type} login.",
   "settings.passwordPlaceholder": "Enter your password",
@@ -2421,6 +2422,7 @@ const ko: TranslationMap = {
   "settings.biometricSubtitle":
     "빠르고 안전한 로그인을 위해 {type}을(를) 사용하세요.",
   "settings.enableBiometric": "{type} 활성화",
+  "settings.biometricConfirmPrompt": "{type}로 인증하여 계속하세요",
   "settings.biometricSetupSubtitle":
     "{type} 로그인을 위해 기기 연결을 확인하려면 비밀번호를 입력하세요.",
   "passcode.headerTitle": "패스코드 변경",
@@ -4234,6 +4236,7 @@ const ja: TranslationMap = {
   "settings.biometricSubtitle":
     "より速く安全にログインするために{type}を使用してください。",
   "settings.enableBiometric": "{type} を有効にする",
+  "settings.biometricConfirmPrompt": "続行するには{type}で認証してください",
   "settings.biometricSetupSubtitle":
     "{type} ログインのためにこのデバイスのアカウント連携を確認するため、パスワードを入力してください。",
   "settings.deleteAccount": "アカウント削除",
@@ -6068,6 +6071,7 @@ const ar: TranslationMap = {
   "settings.biometricSubtitle":
     "استخدم {type} لتسجيل الدخول بشكل أسرع وأكثر أمانًا",
   "settings.enableBiometric": "تمكين {type}",
+  "settings.biometricConfirmPrompt": "تأكيد باستخدام {type} للمتابعة",
   "settings.biometricSetupSubtitle":
     "يرجى إدخال كلمة المرور لتأكيد ربط هذا الجهاز بحسابك لتسجيل الدخول باستخدام {type}.",
   "settings.deleteAccount": "حذف الحساب",
