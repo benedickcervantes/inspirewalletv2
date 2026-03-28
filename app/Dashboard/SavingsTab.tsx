@@ -192,8 +192,14 @@ export default function SavingsTab({
     setRefreshing(false);
   };
 
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString("en-US", {
+  const formatDateSafe = (
+    dateStr: string | null | undefined,
+    fallback = "—",
+  ): string => {
+    if (dateStr == null || String(dateStr).trim() === "") return fallback;
+    const d = new Date(dateStr);
+    if (Number.isNaN(d.getTime())) return fallback;
+    return d.toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
       day: "numeric",
@@ -499,13 +505,9 @@ export default function SavingsTab({
                     style={[styles.contractCardDates, { fontSize: compact ? 11 : 12, flex: 1, minWidth: 0 }]}
                     numberOfLines={1}
                   >
-                    {dep.startDate
-                      ? formatDate(dep.startDate)
-                      : formatDate(dep.projectedStartDate)}
+                    {formatDateSafe(dep.startDate ?? dep.projectedStartDate)}
                     {" → "}
-                    {dep.maturityDate
-                      ? formatDate(dep.maturityDate)
-                      : formatDate(dep.projectedMaturityDate)}
+                    {formatDateSafe(dep.maturityDate ?? dep.projectedMaturityDate)}
                   </Text>
                   <Ionicons name="chevron-forward" size={16} color="#9CA3AF" style={{ marginLeft: 4 }} />
                 </View>
@@ -654,24 +656,26 @@ export default function SavingsTab({
                     <View style={styles.modalDetailRow}>
                       <Text style={styles.modalDetailLabel}>{t("investment.created")}</Text>
                       <Text style={styles.modalDetailValue}>
-                        {formatDate(selectedContract.createdAt)}
+                        {formatDateSafe(selectedContract.createdAt)}
                       </Text>
                     </View>
                   )}
                   <View style={styles.modalDetailRow}>
                     <Text style={styles.modalDetailLabel}>{t("investment.startDate")}</Text>
                     <Text style={styles.modalDetailValue}>
-                      {selectedContract.startDate
-                        ? formatDate(selectedContract.startDate)
-                        : formatDate(selectedContract.projectedStartDate)}
+                      {formatDateSafe(
+                        selectedContract.startDate ??
+                          selectedContract.projectedStartDate,
+                      )}
                     </Text>
                   </View>
                   <View style={styles.modalDetailRow}>
                     <Text style={styles.modalDetailLabel}>{t("investment.maturityDate")}</Text>
                     <Text style={styles.modalDetailValue}>
-                      {selectedContract.maturityDate
-                        ? formatDate(selectedContract.maturityDate)
-                        : formatDate(selectedContract.projectedMaturityDate)}
+                      {formatDateSafe(
+                        selectedContract.maturityDate ??
+                          selectedContract.projectedMaturityDate,
+                      )}
                     </Text>
                   </View>
                   <View style={styles.modalDetailRow}>
@@ -738,7 +742,7 @@ export default function SavingsTab({
                         </View>
                         <View style={styles.payoutItemRight}>
                           <Text style={styles.payoutDate}>
-                            {payout.expectedDate ? formatDate(payout.expectedDate) : "—"}
+                            {formatDateSafe(payout.expectedDate)}
                           </Text>
                           <Text style={styles.payoutAmount}>
                             ₱ {formatCurrency(parseAmount(payout.amount))}
