@@ -57,6 +57,7 @@ const Settings = () => {
   const [biometricLoading, setBiometricLoading] = useState(false);
   const [biometricError, setBiometricError] = useState<string | null>(null);
   const [biometricToggleBusy, setBiometricToggleBusy] = useState(false);
+  const [biometricShowPassword, setBiometricShowPassword] = useState(false);
 
   // Language state
   const { language } = useLanguage();
@@ -70,6 +71,10 @@ const Settings = () => {
     } catch {
       hasBioToken = false;
     }
+
+    const lastLoggedEmail = (await AsyncStorage.getItem("lastLoggedEmail"))
+      ?.trim()
+      .toLowerCase();
 
     if (userJson) {
       try {
@@ -98,15 +103,20 @@ const Settings = () => {
             /* ignore */
           }
         }
+        const emailFromUser =
+          typeof user.email === "string" && user.email.trim()
+            ? user.email.trim()
+            : "";
+        const resolvedEmail = emailFromUser || lastLoggedEmail || undefined;
         setUserData({
-          email: user.email,
+          email: resolvedEmail,
           emailVerified: user.emailVerified,
           biometricEnabled,
         });
       } catch (_) {}
     } else {
       setUserData({
-        email: undefined,
+        email: lastLoggedEmail || undefined,
         emailVerified: false,
         biometricEnabled: hasBioToken,
       });
@@ -389,7 +399,7 @@ const Settings = () => {
           });
 
           if (!authResult.success) {
-            setBiometricError("Biometric authentication failed or was cancelled.");
+            setBiometricError(t("settings.biometricLocalAuthFailed"));
             return;
           }
 
@@ -412,19 +422,45 @@ const Settings = () => {
 
       setBiometricPassword("");
       setBiometricError(null);
+      setBiometricShowPassword(false);
       setBiometricModalVisible(true);
     }
   };
 
   const handleEnableBiometric = async () => {
     const trimmedPassword = biometricPassword.trim();
-    if (!trimmedPassword || !userData?.email) {
-      setBiometricError("Please enter your existing login password.");
+    const lastLogged = (await AsyncStorage.getItem("lastLoggedEmail"))
+      ?.trim()
+      .toLowerCase();
+    let accountEmail =
+      (userData?.email && userData.email.trim().toLowerCase()) || lastLogged || "";
+
+    if (!accountEmail) {
+      try {
+        const raw = await AsyncStorage.getItem("user");
+        if (raw) {
+          const u = JSON.parse(raw) as { email?: string };
+          if (u?.email && String(u.email).trim()) {
+            accountEmail = String(u.email).trim().toLowerCase();
+          }
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+
+    if (!trimmedPassword) {
+      setBiometricError(t("settings.biometricPasswordRequired"));
+      return;
+    }
+
+    if (!accountEmail) {
+      setBiometricError(t("settings.biometricEmailMissing"));
       return;
     }
 
     if (trimmedPassword.length < 6) {
-      setBiometricError("Password must be at least 6 characters.");
+      setBiometricError(t("settings.biometricPasswordMinLength"));
       return;
     }
 
@@ -442,7 +478,7 @@ const Settings = () => {
       });
 
       if (!authResult.success) {
-        setBiometricError("Biometric authentication failed or was cancelled.");
+        setBiometricError(t("settings.biometricLocalAuthFailed"));
         setBiometricLoading(false);
         return;
       }
@@ -453,39 +489,48 @@ const Settings = () => {
 
       const res = await enableBiometric(
         accessToken,
-        userData.email,
+        accountEmail,
         trimmedPassword,
       );
 
       if (res.success && res.token) {
         // 3. Store token securely
         await SecureStore.setItemAsync("biometricToken", res.token);
-        await AsyncStorage.setItem(
-          "biometricEmail",
-          userData.email.toLowerCase(),
-        );
+        await AsyncStorage.setItem("biometricEmail", accountEmail);
 
         // 4. Update UI state
         setUserData((prev) =>
-          prev ? { ...prev, biometricEnabled: true } : null,
+          prev
+            ? { ...prev, email: accountEmail, biometricEnabled: true }
+            : null,
         );
 
-        // 5. Update async storage
+        // 5. Update async storage (preserve email if API-cached user dropped it)
         const userJson = await AsyncStorage.getItem("user");
         if (userJson) {
-          const user = JSON.parse(userJson);
+          const user = JSON.parse(userJson) as Record<string, unknown>;
           await AsyncStorage.setItem(
             "user",
-            JSON.stringify({ ...user, biometricEnabled: true }),
+            JSON.stringify({
+              ...user,
+              email: user.email || accountEmail,
+              biometricEnabled: true,
+            }),
           );
         }
 
+        setBiometricShowPassword(false);
         setBiometricModalVisible(false);
       } else {
-        setBiometricError(
-          res.error ||
-            "Failed to enable biometric authentication on the server.",
-        );
+        const raw = (res.error || "").trim();
+        const lower = raw.toLowerCase();
+        if (!raw) {
+          setBiometricError(t("settings.biometricEnableServerError"));
+        } else if (lower === "invalid credentials") {
+          setBiometricError(t("settings.biometricInvalidCredentials"));
+        } else {
+          setBiometricError(raw);
+        }
       }
     } catch (e: any) {
       setBiometricError(e.message || "An unexpected error occurred.");
@@ -679,6 +724,25 @@ const Settings = () => {
       fontSize: scaled(16),
       marginBottom: scaled(16),
       borderRadius: scaled(8),
+    },
+    biometricPasswordRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      borderWidth: 1,
+      borderColor: "#E0E0E0",
+      borderRadius: scaled(8),
+      marginBottom: scaled(16),
+    },
+    biometricPasswordField: {
+      flex: 1,
+      paddingHorizontal: scaled(16),
+      paddingVertical: scaled(14),
+      fontSize: scaled(16),
+      color: "#333",
+    },
+    biometricEyeButton: {
+      paddingHorizontal: scaled(12),
+      paddingVertical: scaled(12),
     },
   };
 
@@ -1165,7 +1229,10 @@ const Settings = () => {
           visible={biometricModalVisible}
           transparent
           animationType="slide"
-          onRequestClose={() => setBiometricModalVisible(false)}
+          onRequestClose={() => {
+            setBiometricShowPassword(false);
+            setBiometricModalVisible(false);
+          }}
         >
           <View style={[styles.modalOverlay, r.modalOverlay]} {...activityProps}>
             <View style={[styles.emailVerifyModalContent, r.modalContent]} {...activityProps}>
@@ -1179,6 +1246,7 @@ const Settings = () => {
                 <TouchableOpacity
                   onPress={() => {
                     registerActivity();
+                    setBiometricShowPassword(false);
                     setBiometricModalVisible(false);
                   }}
                   hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
@@ -1191,22 +1259,53 @@ const Settings = () => {
                 style={[styles.modalSubtitle, r.modalSubtitle]}
                 numberOfLines={3}
               >
-                Enter your account password to turn on {biometricType} login.
+                {t("settings.biometricEnablePasswordSubtitle", {
+                  type: biometricType,
+                })}
               </Text>
 
-              <TextInput
-                style={[styles.passwordInput, r.passwordInput]}
-                placeholder="Enter account password"
-                placeholderTextColor="#999"
-                value={biometricPassword}
-                onChangeText={(val) => {
-                  registerActivity();
-                  setBiometricPassword(val);
-                  setBiometricError(null);
-                }}
-                secureTextEntry
-                autoCapitalize="none"
-              />
+              <View style={[styles.biometricPasswordRow, r.biometricPasswordRow]}>
+                <TextInput
+                  style={[styles.biometricPasswordField, r.biometricPasswordField]}
+                  placeholder={t("settings.enableBiometricPasswordPlaceholder", {
+                    type: biometricType,
+                  })}
+                  placeholderTextColor="#999"
+                  value={biometricPassword}
+                  onChangeText={(val) => {
+                    registerActivity();
+                    setBiometricPassword(val);
+                    setBiometricError(null);
+                  }}
+                  secureTextEntry={!biometricShowPassword}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  autoComplete="password"
+                  editable={!biometricLoading}
+                />
+                <TouchableOpacity
+                  style={[styles.biometricEyeButton, r.biometricEyeButton]}
+                  onPress={() => {
+                    registerActivity();
+                    setBiometricShowPassword((s) => !s);
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    biometricShowPassword
+                      ? t("settings.hidePassword")
+                      : t("settings.showPassword")
+                  }
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  <Ionicons
+                    name={
+                      biometricShowPassword ? "eye-off-outline" : "eye-outline"
+                    }
+                    size={r.iconSizeSmall}
+                    color="#666"
+                  />
+                </TouchableOpacity>
+              </View>
 
               {biometricError ? (
                 <Text
@@ -1503,6 +1602,25 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 16,
     color: "#333",
+  },
+  biometricPasswordRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  biometricPasswordField: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 16,
+    color: "#333",
+  },
+  biometricEyeButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 12,
   },
 });
 
