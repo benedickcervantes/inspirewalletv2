@@ -31,6 +31,7 @@ import PasscodeModal from "../components/PasscodeModal";
 import { getCardTheme } from "../theme/cardThemes";
 
 import ActivityModal from "../components/ActivityModal";
+
 interface CardsTabProps {
   userData: {
     firstName?: string;
