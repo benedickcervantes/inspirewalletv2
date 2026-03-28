@@ -14,7 +14,7 @@
       "infoPlist": {
         "NSContactsUsageDescription": "This app needs access to your contacts to help you select recipients for transfers.",
         "ITSAppUsesNonExemptEncryption": false,
-        "NSFaceIDUsageDescription": "This app uses Face ID to provide secure and fast access to your wallet."
+        "NSFaceIDUsageDescription": "Allow InspireWallet to use Face ID for secure login."
       }
     },
     "android": {

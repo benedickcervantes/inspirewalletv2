@@ -721,17 +721,24 @@ export default function Login() {
         return;
       }
 
-      // ** FIX for Biometric cross-login **
+      // Clear biometric token only when switching to a different account — not when
+      // lastLoggedEmail is missing (e.g. after Welcome/Login purge) but the same user
+      // re-authenticates; use biometricEmail from enrollment as a fallback.
       try {
-        const oldEmail = await AsyncStorage.getItem('lastLoggedEmail');
+        const lastEmail = await AsyncStorage.getItem("lastLoggedEmail");
+        const enrolledEmail = await AsyncStorage.getItem("biometricEmail");
         const currentEmail = trimmedEmail.toLowerCase();
+        const priorAccountEmail =
+          lastEmail?.toLowerCase() ?? enrolledEmail?.toLowerCase() ?? null;
 
-        // If the user logging in has a different email, or no past email is known, clear the old biometric token
-        if (!oldEmail || oldEmail.toLowerCase() !== currentEmail) {
-          await SecureStore.deleteItemAsync('biometricToken');
-          await AsyncStorage.removeItem('biometricEmail');
+        if (
+          priorAccountEmail &&
+          priorAccountEmail !== currentEmail
+        ) {
+          await SecureStore.deleteItemAsync("biometricToken");
+          await AsyncStorage.removeItem("biometricEmail");
         }
-        await AsyncStorage.setItem('lastLoggedEmail', currentEmail);
+        await AsyncStorage.setItem("lastLoggedEmail", currentEmail);
       } catch (e) {
         console.warn("Failed to check biometricToken mismatch", e);
       }
