@@ -1101,6 +1101,7 @@ export default function Placeholder() {
               isCompanyKycRejected ? t("profile.resubmit") : t("profile.verify")
             }
             isLoading={loading}
+            showBadgeSkeletonWhileLoading
           />
           <DetailItem
             icon="call-outline"
@@ -1181,6 +1182,7 @@ export default function Placeholder() {
               isPersonalKycRejected ? t("profile.resubmit") : t("profile.verify")
             }
             isLoading={loading}
+            showBadgeSkeletonWhileLoading
           />
           <DetailItem
             icon="language-outline"
@@ -1698,6 +1700,8 @@ interface DetailItemProps {
   copySuccess?: boolean;
   isPlaceholder?: boolean;
   isLoading?: boolean;
+  /** Show pill skeleton while loading when badge text is not yet defined (e.g. KYC / company row). */
+  showBadgeSkeletonWhileLoading?: boolean;
 }
 
 const toSentenceCase = (text?: string): string | undefined => {
@@ -1726,6 +1730,7 @@ function DetailItem({
   copySuccess = false,
   isPlaceholder = false,
   isLoading = false,
+  showBadgeSkeletonWhileLoading = false,
 }: DetailItemProps) {
   const onEditHandler = onEditPress ?? onEdit;
   const handlePress = editable && onEditHandler ? onEditHandler : undefined;
@@ -1755,7 +1760,12 @@ function DetailItem({
             {value}
           </Text>
         )}
-        {normalizedBadge && (
+        {isLoading &&
+          (Boolean(badge && String(badge).trim()) ||
+            showBadgeSkeletonWhileLoading) && (
+            <View style={styles.badgeSkeleton} />
+          )}
+        {!isLoading && normalizedBadge && (
           <View style={[styles.badge, { backgroundColor: badgeColor }]}>
             <Text style={styles.badgeTextSmall}>{normalizedBadge}</Text>
             {verified && (
@@ -2137,6 +2147,14 @@ const styles = StyleSheet.create({
     height: 18,
     borderRadius: 8,
     backgroundColor: "#E5E5E5",
+  },
+  badgeSkeleton: {
+    minWidth: 72,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: "#E5E5E5",
+    marginLeft: 8,
+    alignSelf: "center",
   },
   successOverlay: {
     flex: 1,
