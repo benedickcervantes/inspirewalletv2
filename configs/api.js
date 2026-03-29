@@ -3143,3 +3143,107 @@ export async function getCompanyKycStatus(accessToken) {
     return { success: false, error: e.message || "Network error" };
   }
 }
+
+/**
+ * Fetch the current user's reward points history (paginated).
+ * GET /reward-points
+ */
+export async function getRewardPointsHistory(accessToken, page = 1, limit = 20, type = null) {
+  const url = buildUrl(`/reward-points?page=${page}&limit=${limit}${type ? `&type=${type}` : ""}`);
+  if (!url) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
+  try {
+    const res = await apiFetch(url, {
+      method: "GET",
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    // Return the full response so the screen can access both data[] and pagination
+    return { success: true, data: data };
+  } catch (e) {
+    if (__DEV__) console.error("[RewardPoints API] getHistory Error", e);
+    return { success: false, error: e.message || "Network error" };
+  }
+}
+
+/**
+ * Fetch the current user's total reward points balance.
+ * GET /reward-points/total
+ */
+export async function getRewardPointsTotal(accessToken) {
+  const url = buildUrl("/reward-points/total");
+  if (!url) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
+  try {
+    const res = await apiFetch(url, {
+      method: "GET",
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    return { success: true, total: data.data?.total ?? 0 };
+  } catch (e) {
+    if (__DEV__) console.error("[RewardPoints API] getTotal Error", e);
+    return { success: false, error: e.message || "Network error" };
+  }
+}
+
+/**
+ * Redeem all reward points to available balance (requires passcode).
+ * POST /reward-points/redeem
+ */
+export async function redeemRewardPoints(accessToken, passcode) {
+  const url = buildUrl("/reward-points/redeem");
+  if (!url) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
+  try {
+    const res = await apiFetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ passcode }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    return { success: true, data: data.data ?? data };
+  } catch (e) {
+    if (__DEV__) console.error("[RewardPoints API] redeem Error", e);
+    return { success: false, error: e.message || "Network error" };
+  }
+}
+
+/**
+ * Fetch the current reward campaign configuration.
+ * GET /reward-points/campaign-config
+ */
+export async function getRewardCampaignConfig(accessToken) {
+  const url = buildUrl("/reward-points/campaign-config");
+  if (!url) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
+  try {
+    const res = await apiFetch(url, {
+      method: "GET",
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      return { success: false, error: data.message || "Failed to fetch config" };
+    }
+    return { success: true, data: data.data ?? data };
+  } catch (e) {
+    if (__DEV__) console.error("[RewardPoints API] getConfig Error", e);
+    return { success: false, error: e.message || "Network error" };
+  }
+}
