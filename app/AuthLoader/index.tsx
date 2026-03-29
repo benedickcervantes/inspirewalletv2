@@ -144,19 +144,12 @@ export default function AuthLoader() {
         }
 
         const registrationPasscodePending = await AsyncStorage.getItem("registrationPasscodePending");
-        const passcodeLoginComplete = await AsyncStorage.getItem("passcodeLoginComplete");
         const user = result.user as { hasPasscode?: boolean };
 
         if (registrationPasscodePending === "true") {
           await AsyncStorage.setItem("user", JSON.stringify(result.user));
           await waitMinSplash(startTime);
           goTo("CreatePasscode");
-          return;
-        }
-
-        if (passcodeLoginComplete === "true") {
-          await waitMinSplash(startTime);
-          await goToMainWithSession();
           return;
         }
 
