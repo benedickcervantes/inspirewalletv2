@@ -1138,6 +1138,11 @@ export default function Dashboard() {
       labelText: "Inspire Card",
       route: "PCard",
     },
+    {
+      icon: "star-circle-outline",
+      labelText: "Rewards",
+      route: "RewardPoints",
+    },
   ];
 
   const handleFirstTimeLanguageSelect = (label: string) => {
