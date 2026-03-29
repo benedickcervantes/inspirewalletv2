@@ -6,6 +6,8 @@
 export type TranslationMap = Record<string, string>;
 
 const en: TranslationMap = {
+  "investment.processingRequestTitle": "Processing Request",
+  "investment.processingRequestMessage": "This contract feature is currently in processing. It could take 7 to 10 days to reflect. Thank you for your understanding.",
   "kyc.takePhoto": "Take a Photo",
   "kyc.chooseFromLibrary": "Choose from Library",
   "kyc.selectUploadMethod": "Select Upload Method",
@@ -2005,6 +2007,8 @@ const en: TranslationMap = {
 };
 
 const ko: TranslationMap = {
+  "investment.processingRequestTitle": "처리 중인 요청",
+  "investment.processingRequestMessage": "이 계약 기능은 현재 처리 중입니다. 시스템에 반영되기까지 7~10일이 소요될 수 있습니다. 귀하의 양해에 감사드립니다.",
   "kyc.takePhoto": "사진 찍기",
   "kyc.chooseFromLibrary": "라이브러리에서 선택",
   "kyc.selectUploadMethod": "업로드 방법 선택",
@@ -3834,6 +3838,8 @@ const ko: TranslationMap = {
 };
 
 const ja: TranslationMap = {
+  "investment.processingRequestTitle": "リクエスト処理中",
+  "investment.processingRequestMessage": "この契約機能は現在処理中です。反映されるまでに7〜10日かかる場合があります。ご理解のほどよろしくお願いいたします。",
   "kyc.takePhoto": "写真を撮る",
   "kyc.chooseFromLibrary": "ライブラリから選択",
   "kyc.selectUploadMethod": "アップロード方法を選択",
@@ -5665,6 +5671,8 @@ const ja: TranslationMap = {
 };
 
 const ar: TranslationMap = {
+  "investment.processingRequestTitle": "قيد معالجة الطلب",
+  "investment.processingRequestMessage": "ميزة العقد هذه قيد المعالجة حاليًا. قد يستغرق الأمر من 7 إلى 10 أيام حتى ينعكس. شكرا لتفهمك.",
   "kyc.takePhoto": "التقاط صورة",
   "kyc.chooseFromLibrary": "اختر من المكتبة",
   "kyc.selectUploadMethod": "حدد طريقة التحميل",

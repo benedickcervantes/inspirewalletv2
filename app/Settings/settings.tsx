@@ -113,7 +113,7 @@ const Settings = () => {
           emailVerified: user.emailVerified,
           biometricEnabled,
         });
-      } catch (_) {}
+      } catch {}
     } else {
       setUserData({
         email: lastLoggedEmail || undefined,
@@ -135,7 +135,7 @@ const Settings = () => {
       } else if (result.error) {
         setReferralError(result.error);
       }
-    } catch (_) {
+    } catch {
       setReferralError(t("settings.failedToLoadReferral"));
     } finally {
       setReferralLoading(false);
@@ -235,7 +235,7 @@ const Settings = () => {
 
       // Clear user data
       await AsyncStorage.removeItem("user");
-    } catch (_) {}
+    } catch {}
 
     // Navigate to Passcode screen
     (navigation as any).reset({
@@ -287,7 +287,7 @@ const Settings = () => {
       } else {
         setEmailVerifyError(result.error || t("settings.verificationFailed"));
       }
-    } catch (_) {
+    } catch {
       setEmailVerifyError(t("settings.unexpectedError"));
     } finally {
       setEmailVerifyLoading(false);
@@ -307,7 +307,7 @@ const Settings = () => {
       } else {
         setEmailVerifyError(result.error || t("settings.failedToResend"));
       }
-    } catch (_) {
+    } catch {
       setEmailVerifyError(t("settings.failedToResend"));
     } finally {
       setResendLoading(false);
@@ -731,8 +731,8 @@ const Settings = () => {
       borderRadius: scaled(8),
     },
     biometricPasswordRow: {
-      flexDirection: "row",
-      alignItems: "center",
+      flexDirection: "row" as const,
+      alignItems: "center" as const,
       borderWidth: 1,
       borderColor: "#E0E0E0",
       borderRadius: scaled(8),

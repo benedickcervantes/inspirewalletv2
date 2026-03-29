@@ -181,9 +181,23 @@ export default function SendMoney() {
       const userJson = await AsyncStorage.getItem("user");
       if (userJson) {
         const user = JSON.parse(userJson) as { accountNumber?: string; firstName?: string; lastName?: string };
-        setUserAccountNumber(user?.accountNumber || "");
         const fullName = [user?.firstName, user?.lastName].filter(Boolean).join(" ");
         setUserName(fullName || t("common.user"));
+
+        if (user?.accountNumber) {
+          setUserAccountNumber(user.accountNumber);
+        } else {
+          const accessToken = await AsyncStorage.getItem("access_token");
+          if (accessToken) {
+            const { success, wallet } = await getOrCreateMainWallet(accessToken);
+            if (success && (wallet as any)?.accountNumber) {
+              const accountNum = String((wallet as any).accountNumber);
+              setUserAccountNumber(accountNum);
+              const updatedUser = { ...user, accountNumber: accountNum };
+              await AsyncStorage.setItem("user", JSON.stringify(updatedUser));
+            }
+          }
+        }
       }
     } catch (error) {
       console.error("Error loading user account number:", error);

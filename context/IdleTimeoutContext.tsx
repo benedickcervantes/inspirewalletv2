@@ -64,15 +64,17 @@ export const IdleTimeoutProvider: React.FC<{ children: React.ReactNode }> = ({
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.9)).current;
 
+  const registerActivityRef = useRef<() => void>(() => {});
+
   // Global touch interceptor to reset the idle timer on user actions
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponderCapture: () => {
-        registerActivity();
+        registerActivityRef.current();
         return false;
       },
       onMoveShouldSetPanResponderCapture: () => {
-        registerActivity();
+        registerActivityRef.current();
         return false;
       },
     })
@@ -118,7 +120,7 @@ export const IdleTimeoutProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, []);
 
-  const performLogout = useCallback(async () => {
+  const performLogout = useCallback(async (skipModal: boolean = false) => {
     if (hasLoggedOutRef.current) return;
     hasLoggedOutRef.current = true;
 
@@ -131,21 +133,30 @@ export const IdleTimeoutProvider: React.FC<{ children: React.ReactNode }> = ({
 
     await clearAuthData();
 
-    // Show the modal instead of navigating immediately
-    setShowModal(true);
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        tension: 100,
-        friction: 8,
-        useNativeDriver: true,
-      }),
-    ]).start();
+    if (skipModal) {
+      if (navigationRef.isReady()) {
+        navigationRef.reset({
+          index: 0,
+          routes: [{ name: "Passcode" }],
+        });
+      }
+    } else {
+      // Show the modal instead of navigating immediately
+      setShowModal(true);
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          tension: 100,
+          friction: 8,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
   }, [clearAuthData, fadeAnim, scaleAnim]);
 
   const handleModalDismiss = useCallback(() => {
@@ -217,6 +228,10 @@ export const IdleTimeoutProvider: React.FC<{ children: React.ReactNode }> = ({
       AsyncStorage.setItem(LAST_ACTIVITY_KEY, String(now)).catch(() => { });
     }
   }, [isSessionActive]);
+
+  useEffect(() => {
+    registerActivityRef.current = registerActivity;
+  }, [registerActivity]);
 
   const getActivityProps = useCallback(
     () => ({
@@ -300,20 +315,22 @@ export const IdleTimeoutProvider: React.FC<{ children: React.ReactNode }> = ({
 
         if (!isSessionActive) return;
 
-        // When going inactive/background, DO NOT treat it as user activity.
-        // We keep the existing lastActivity so time away contributes to inactivity.
-        if (nextState === "inactive" || nextState === "background") {
-          // Persist whatever the last known activity time is (best-effort),
-          // in case the app is killed while backgrounded.
+        // When going into the background, immediately lock the app
+        if (nextState === "background") {
+          performLogout(true);
+          return;
+        }
+
+        if (nextState === "inactive") {
           const last = lastActivityRef.current;
           await AsyncStorage.setItem(LAST_ACTIVITY_KEY, String(last)).catch(() => { });
           return;
         }
 
-        // When coming back to foreground, give a fresh 2:30 inactivity window.
-        // This prevents "remaining few seconds" expirations after returning.
+        // When coming back to foreground from inactive state, give a fresh 2:30 inactivity window.
+        // This prevents "remaining few seconds" expirations after returning from transient inactive.
         if (
-          (prevState === "inactive" || prevState === "background") &&
+          prevState === "inactive" &&
           nextState === "active"
         ) {
           const now = Date.now();
