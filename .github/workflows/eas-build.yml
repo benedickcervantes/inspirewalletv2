@@ -28,5 +28,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run EAS Build
+      - name: Run EAS Build (Production)
         run: eas build --platform all --profile production --non-interactive
+
+      - name: Submit iOS Build to App Store
+        run: eas submit -p ios --latest --profile production --non-interactive
+
+      - name: Run EAS Build (Android Preview)
+        run: eas build --platform android --profile preview --non-interactive
