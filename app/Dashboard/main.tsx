@@ -1140,7 +1140,7 @@ export default function Dashboard() {
     },
     {
       icon: "star-circle-outline",
-      labelText: "Rewards",
+      labelKey: "dashboard.rewards",
       route: "RewardPoints",
     },
   ];
