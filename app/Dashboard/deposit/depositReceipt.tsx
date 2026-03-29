@@ -586,7 +586,7 @@ export default function DepositReceipt() {
                   ellipsizeMode="tail"
                   allowFontScaling={false}
                 >
-                  Download Receipt
+                  {t("history.downloadReceipt")}
                 </Text>
               </LinearGradient>
             </TouchableOpacity>
@@ -598,7 +598,7 @@ export default function DepositReceipt() {
               onPress={handleShare}
             >
               <Ionicons name="share-social-outline" size={19} color="#E06828" />
-              <Text style={styles.shareText}>Share</Text>
+              <Text style={styles.shareText}>{t("history.shareReceipt")}</Text>
             </TouchableOpacity>
           </View>
 
@@ -608,7 +608,7 @@ export default function DepositReceipt() {
             onPress={handleClose}
             activeOpacity={0.75}
           >
-            <Text style={styles.doneText}>Done</Text>
+            <Text style={styles.doneText}>{t("history.receiptDone")}</Text>
           </TouchableOpacity>
         </ScrollView>
       </LinearGradient>

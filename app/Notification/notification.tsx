@@ -223,6 +223,9 @@ const Notification = () => {
       "subscription expired": "notification.titleSubscriptionExpired",
       "your stock was sold!": "notification.titleYourStockWasSold",
       "stock purchase successful": "notification.titleStockPurchaseSuccessful",
+      "reward points credited": "notification.titleRewardPointsCredited",
+      "points redeemed!": "notification.titlePointsRedeemed",
+      "reward points earned!": "notification.titleRewardPointsEarned",
     };
 
     const key = titleKeyMap[normalized];

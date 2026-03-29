@@ -65,9 +65,11 @@ function SkeletonTransactionRow() {
   );
 }
 
+const MIN_REDEEM_POINTS = 1000;
+
 export default function RewardPointsHistory() {
   const navigation = useNavigation<NavProp>();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
 
@@ -156,7 +158,7 @@ export default function RewardPointsHistory() {
   };
 
   const handleRedeemPress = () => {
-    if (totalPoints < 1000) {
+    if (totalPoints < MIN_REDEEM_POINTS) {
       setShowNotEnoughModal(true);
     } else {
       setPasscode("");
@@ -167,7 +169,7 @@ export default function RewardPointsHistory() {
 
   const handleConfirmRedeem = async () => {
     if (!passcode || passcode.length < 4) {
-      setRedeemError("Please enter your 4-digit passcode.");
+      setRedeemError(t("rewardPoints.passcodeTooShort"));
       return;
     }
     setIsRedeeming(true);
@@ -175,33 +177,37 @@ export default function RewardPointsHistory() {
     try {
       const token = tokenRef.current;
       if (!token) {
-        setRedeemError("Not authenticated.");
+        setRedeemError(t("rewardPoints.notAuthenticated"));
         return;
       }
       const res = await redeemRewardPoints(token, passcode);
+      const pts = totalPoints.toLocaleString();
       if (res.success) {
         setShowRedeemModal(false);
         setPasscode("");
         Alert.alert(
-          "Points Redeemed!",
-          `You have successfully converted ${totalPoints} points to ₱${totalPoints} available balance.`,
-          [{ text: "OK", onPress: () => void loadData(1) }],
+          t("rewardPoints.redeemSuccessTitle"),
+          t("rewardPoints.redeemSuccessMessage", { points: pts, amount: pts }),
+          [{ text: t("common.ok"), onPress: () => void loadData(1) }],
         );
       } else {
-        setRedeemError(res.error ?? "Redemption failed. Please try again.");
+        setRedeemError(res.error ?? t("rewardPoints.redemptionFailed"));
       }
     } catch (e) {
-      setRedeemError("An error occurred. Please try again.");
+      setRedeemError(t("rewardPoints.genericError"));
     } finally {
       setIsRedeeming(false);
     }
   };
 
+  const dateLocale =
+    language === "Korean" ? "ko-KR" : language === "Japanese" ? "ja-JP" : language === "Arabic" ? "ar-SA" : "en-PH";
+
   const formatDate = (dateStr: string) => {
     if (!dateStr) return "";
     try {
       const d = new Date(dateStr);
-      return d.toLocaleDateString("en-PH", {
+      return d.toLocaleDateString(dateLocale, {
         year: "numeric",
         month: "short",
         day: "numeric",
@@ -215,7 +221,7 @@ export default function RewardPointsHistory() {
 
   const renderItem = (item: RewardTransaction) => {
     const isEarned = item.type === "EARNED";
-    const pointsLabel = isEarned ? `+${item.points}` : `${item.points}`;
+    const pointsLabel = isEarned ? `+${item.points}` : String(item.points);
     const iconName = isEarned ? "star" : "arrow-up-circle";
     const iconColor = isEarned ? "#F28934" : "#3B82F6";
     const pointColor = isEarned ? "#16A34A" : "#2563EB";
@@ -227,7 +233,7 @@ export default function RewardPointsHistory() {
         </View>
         <View style={styles.txMiddle}>
           <Text style={styles.txType} numberOfLines={1}>
-            {isEarned ? "Transfer Reward" : "Converted to Balance"}
+            {isEarned ? t("rewardPoints.typeEarned") : t("rewardPoints.typeRedeemed")}
           </Text>
           {item.description ? (
             <Text style={styles.txDesc} numberOfLines={2}>{item.description}</Text>
@@ -235,8 +241,12 @@ export default function RewardPointsHistory() {
           <Text style={styles.txDate}>{formatDate(item.createdAt)}</Text>
         </View>
         <View style={styles.txRight}>
-          <Text style={[styles.txPoints, { color: pointColor }]}>{pointsLabel} pts</Text>
-          <Text style={styles.txBalance}>Balance: {item.balanceAfter} pts</Text>
+          <Text style={[styles.txPoints, { color: pointColor }]}>
+            {t("rewardPoints.pointsWithUnit", { value: pointsLabel })}
+          </Text>
+          <Text style={styles.txBalance}>
+            {t("rewardPoints.balanceAfter", { points: String(item.balanceAfter) })}
+          </Text>
         </View>
       </View>
     );
@@ -259,13 +269,13 @@ export default function RewardPointsHistory() {
           >
             <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Reward Points</Text>
+          <Text style={styles.headerTitle}>{t("rewardPoints.title")}</Text>
           <View style={{ width: 40 }} />
         </View>
 
         {/* Points balance card */}
         <View style={styles.balanceCard}>
-          <Text style={styles.balanceLabel}>Your Points Balance</Text>
+          <Text style={styles.balanceLabel}>{t("rewardPoints.yourBalance")}</Text>
           {isLoading ? (
             <View style={{ alignItems: "center", gap: 8, marginVertical: 8 }}>
               <View style={styles.skeletonBalanceAmount} />
@@ -273,7 +283,7 @@ export default function RewardPointsHistory() {
           ) : (
             <Text style={styles.balanceAmount}>{totalPoints.toLocaleString()}</Text>
           )}
-          <Text style={styles.balanceSubLabel}>1 point = ₱1.00</Text>
+          <Text style={styles.balanceSubLabel}>{t("rewardPoints.onePointEquals")}</Text>
         </View>
 
         {/* Campaign info pill */}
@@ -283,7 +293,10 @@ export default function RewardPointsHistory() {
           <View style={styles.campaignPill}>
             <MaterialCommunityIcons name="star-circle" size={14} color="#F28934" />
             <Text style={styles.campaignPillText}>
-              Earn {campaignConfig.percentage}% points on transfers · Max ₱{campaignConfig.maxDailyAmount.toLocaleString()}/day
+              {t("rewardPoints.campaignPill", {
+                percentage: String(campaignConfig.percentage),
+                maxDaily: campaignConfig.maxDailyAmount.toLocaleString(),
+              })}
             </Text>
           </View>
         ) : null}
@@ -294,7 +307,7 @@ export default function RewardPointsHistory() {
             styles.redeemBtn,
             isLoading
               ? styles.redeemBtnDisabled
-              : totalPoints >= 1000
+              : totalPoints >= MIN_REDEEM_POINTS
                 ? styles.redeemBtnActive
                 : styles.redeemBtnDisabled,
           ]}
@@ -304,15 +317,15 @@ export default function RewardPointsHistory() {
           <MaterialCommunityIcons
             name="cash-plus"
             size={18}
-            color={!isLoading && totalPoints >= 1000 ? "#FFFFFF" : "#9CA3AF"}
+            color={!isLoading && totalPoints >= MIN_REDEEM_POINTS ? "#FFFFFF" : "#9CA3AF"}
           />
           <Text
             style={[
               styles.redeemBtnText,
-              !isLoading && totalPoints >= 1000 ? styles.redeemBtnTextActive : styles.redeemBtnTextDisabled,
+              !isLoading && totalPoints >= MIN_REDEEM_POINTS ? styles.redeemBtnTextActive : styles.redeemBtnTextDisabled,
             ]}
           >
-            Transfer to Available Balance
+            {t("rewardPoints.redeemButton")}
           </Text>
         </TouchableOpacity>
       </LinearGradient>
@@ -330,9 +343,11 @@ export default function RewardPointsHistory() {
         }}
       >
         <View style={styles.listHeader}>
-          <Text style={styles.listHeaderTitle}>Points History</Text>
+          <Text style={styles.listHeaderTitle}>{t("rewardPoints.historyTitle")}</Text>
           {!isLoading && (
-            <Text style={styles.listHeaderCount}>{totalCount} transactions</Text>
+            <Text style={styles.listHeaderCount}>
+              {t("rewardPoints.transactionsCount", { count: String(totalCount) })}
+            </Text>
           )}
         </View>
 
@@ -345,9 +360,11 @@ export default function RewardPointsHistory() {
         ) : transactions.length === 0 ? (
           <View style={styles.emptyState}>
             <MaterialCommunityIcons name="star-outline" size={48} color="#D1D5DB" />
-            <Text style={styles.emptyText}>No reward transactions yet</Text>
+            <Text style={styles.emptyText}>{t("rewardPoints.emptyTitle")}</Text>
             <Text style={styles.emptySubText}>
-              Transfer ₱{campaignConfig?.minEligibleAmount?.toLocaleString() ?? "1,000"}+ to start earning points!
+              {t("rewardPoints.emptySubtitle", {
+                min: campaignConfig?.minEligibleAmount?.toLocaleString() ?? "1,000",
+              })}
             </Text>
           </View>
         ) : (
@@ -357,7 +374,7 @@ export default function RewardPointsHistory() {
               <ActivityIndicator color="#E25A17" size="small" style={{ marginVertical: 16 }} />
             )}
             {!hasMore && transactions.length > 0 && (
-              <Text style={styles.endText}>You've seen all transactions</Text>
+              <Text style={styles.endText}>{t("rewardPoints.allTransactionsLoaded")}</Text>
             )}
           </>
         )}
@@ -375,13 +392,14 @@ export default function RewardPointsHistory() {
             <View style={styles.modalIconRow}>
               <MaterialCommunityIcons name="cash-plus" size={32} color="#E25A17" />
             </View>
-            <Text style={styles.modalTitle}>Convert Points to Balance</Text>
+            <Text style={styles.modalTitle}>{t("rewardPoints.convertTitle")}</Text>
             <Text style={styles.modalBody}>
-              Convert{" "}
-              <Text style={styles.modalHighlight}>{totalPoints.toLocaleString()} points</Text> to{" "}
-              <Text style={styles.modalHighlight}>₱{totalPoints.toLocaleString()}</Text> available balance?
+              {t("rewardPoints.convertBody", {
+                points: totalPoints.toLocaleString(),
+                amount: totalPoints.toLocaleString(),
+              })}
             </Text>
-            <Text style={styles.modalPasscodeLabel}>Enter your passcode to confirm</Text>
+            <Text style={styles.modalPasscodeLabel}>{t("rewardPoints.enterPasscode")}</Text>
             <TextInput
               style={styles.passcodeInput}
               value={passcode}
@@ -389,7 +407,7 @@ export default function RewardPointsHistory() {
               keyboardType="number-pad"
               maxLength={6}
               secureTextEntry
-              placeholder="••••"
+              placeholder={t("rewardPoints.passcodePlaceholder")}
               placeholderTextColor="#9CA3AF"
             />
             {!!redeemError && (
@@ -401,7 +419,7 @@ export default function RewardPointsHistory() {
                 onPress={() => setShowRedeemModal(false)}
                 disabled={isRedeeming}
               >
-                <Text style={styles.modalCancelText}>Cancel</Text>
+                <Text style={styles.modalCancelText}>{t("common.cancel")}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.modalConfirmBtn, isRedeeming && styles.modalConfirmBtnDisabled]}
@@ -411,7 +429,7 @@ export default function RewardPointsHistory() {
                 {isRedeeming ? (
                   <ActivityIndicator color="#FFFFFF" size="small" />
                 ) : (
-                  <Text style={styles.modalConfirmText}>Confirm</Text>
+                  <Text style={styles.modalConfirmText}>{t("rewardPoints.confirm")}</Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -431,23 +449,25 @@ export default function RewardPointsHistory() {
             <View style={styles.modalIconRow}>
               <MaterialCommunityIcons name="star-outline" size={32} color="#F59E0B" />
             </View>
-            <Text style={styles.modalTitle}>Not Enough Points</Text>
+            <Text style={styles.modalTitle}>{t("rewardPoints.notEnoughTitle")}</Text>
             <Text style={styles.modalBody}>
-              You need at least{" "}
-              <Text style={styles.modalHighlight}>1,000 points</Text> to redeem.{"\n\n"}
-              You currently have{" "}
-              <Text style={[styles.modalHighlight, { color: "#E25A17" }]}>
-                {totalPoints.toLocaleString()} points
-              </Text>
-              .{"\n\n"}
-              Keep transferring to earn more points!
+              {t("rewardPoints.notEnoughBody", {
+                minPoints: MIN_REDEEM_POINTS.toLocaleString(),
+                current: totalPoints.toLocaleString(),
+              })}
             </Text>
             {campaignConfig?.enabled && (
               <View style={styles.campaignInfoBox}>
                 <Text style={styles.campaignInfoText}>
-                  Every ₱{campaignConfig.minEligibleAmount.toLocaleString()} transfer earns{" "}
-                  {Math.floor(campaignConfig.minEligibleAmount * campaignConfig.percentage / 100)} points.
-                  Max ₱{campaignConfig.maxDailyAmount.toLocaleString()}/day.
+                  {t("rewardPoints.campaignInfo", {
+                    min: campaignConfig.minEligibleAmount.toLocaleString(),
+                    earned: String(
+                      Math.floor(
+                        (campaignConfig.minEligibleAmount * campaignConfig.percentage) / 100,
+                      ),
+                    ),
+                    max: campaignConfig.maxDailyAmount.toLocaleString(),
+                  })}
                 </Text>
               </View>
             )}
@@ -455,7 +475,7 @@ export default function RewardPointsHistory() {
               style={styles.modalSingleBtn}
               onPress={() => setShowNotEnoughModal(false)}
             >
-              <Text style={styles.modalSingleBtnText}>Got It</Text>
+              <Text style={styles.modalSingleBtnText}>{t("rewardPoints.gotIt")}</Text>
             </TouchableOpacity>
           </View>
         </View>

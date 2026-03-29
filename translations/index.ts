@@ -337,6 +337,43 @@ const en: TranslationMap = {
   "dashboard.kycPendingTitle": "KYC under review",
   "dashboard.kycPendingMessage":
     "You have already submitted your personal KYC. Please wait for an administrator to review and approve it. Locked features will unlock once your KYC is verified.",
+  "dashboard.rewards": "Rewards",
+
+  // Reward Points
+  "rewardPoints.title": "Reward Points",
+  "rewardPoints.yourBalance": "Your Points Balance",
+  "rewardPoints.onePointEquals": "1 point = ₱1.00",
+  "rewardPoints.campaignPill":
+    "Earn {percentage}% points on transfers · Max ₱{maxDaily}/day",
+  "rewardPoints.redeemButton": "Transfer to Available Balance",
+  "rewardPoints.historyTitle": "Points History",
+  "rewardPoints.transactionsCount": "{count} transactions",
+  "rewardPoints.typeEarned": "Transfer Reward",
+  "rewardPoints.typeRedeemed": "Converted to Balance",
+  "rewardPoints.pointsWithUnit": "{value} pts",
+  "rewardPoints.balanceAfter": "Balance: {points} pts",
+  "rewardPoints.emptyTitle": "No reward transactions yet",
+  "rewardPoints.emptySubtitle": "Transfer ₱{min}+ to start earning points!",
+  "rewardPoints.allTransactionsLoaded": "You've seen all transactions",
+  "rewardPoints.convertTitle": "Convert Points to Balance",
+  "rewardPoints.convertBody":
+    "Convert {points} points to ₱{amount} available balance?",
+  "rewardPoints.enterPasscode": "Enter your passcode to confirm",
+  "rewardPoints.passcodePlaceholder": "••••",
+  "rewardPoints.confirm": "Confirm",
+  "rewardPoints.redeemSuccessTitle": "Points Redeemed!",
+  "rewardPoints.redeemSuccessMessage":
+    "You have successfully converted {points} points to ₱{amount} available balance.",
+  "rewardPoints.passcodeTooShort": "Please enter your 4-digit passcode.",
+  "rewardPoints.notAuthenticated": "Not authenticated.",
+  "rewardPoints.redemptionFailed": "Redemption failed. Please try again.",
+  "rewardPoints.genericError": "An error occurred. Please try again.",
+  "rewardPoints.notEnoughTitle": "Not Enough Points",
+  "rewardPoints.notEnoughBody":
+    "You need at least {minPoints} points to redeem.\n\nYou currently have {current} points.\n\nKeep transferring to earn more points!",
+  "rewardPoints.campaignInfo":
+    "Every ₱{min} transfer earns {earned} points. Max ₱{max}/day.",
+  "rewardPoints.gotIt": "Got It",
 
   // Withdraw
   "withdraw.fromAvailableBalance": "Withdraw from available balance",
@@ -994,8 +1031,21 @@ const en: TranslationMap = {
   "history.stockSaleListing": "Stock sale: listing {listingId}",
   "history.stockSoldListing": "Stock sold: listing {listingId}",
   "history.stockPurchasedListing": "Stock purchased: listing {listingId}",
+  "history.planSubscriptionCommission": "Plan Subscription Commission",
+  "history.approvedPlanSubscription":
+    "Approved Plan Subscription: {planName} (85% Trading Deposit)",
+  "history.travelProtectionFee":
+    "Travel Protection Fee - Application {applicationId}",
+  "history.physicalCardApplicationFee": "Physical Card Application Fee",
+  "history.stockSoldAdminApproved": "Stock sold (admin approved): {count} stocks",
   "history.resultText": "Result {count}/{total}",
   "history.loadMore": "Load More",
+  "history.viewReceipt": "View Receipt",
+  "history.receiptPendingHint":
+    "Receipt will be available once admin approves this request.",
+  "history.downloadReceipt": "Download Receipt",
+  "history.shareReceipt": "Share",
+  "history.receiptDone": "Done",
 
   "tickets.status.OPEN": "OPEN",
   "tickets.status.IN_PROGRESS": "IN PROGRESS",
@@ -1149,6 +1199,9 @@ const en: TranslationMap = {
   "notification.titleSubscriptionExpired": "Subscription Expired",
   "notification.titleYourStockWasSold": "Your Stock Was Sold!",
   "notification.titleStockPurchaseSuccessful": "Stock Purchase Successful",
+  "notification.titleRewardPointsCredited": "Reward Points Credited",
+  "notification.titlePointsRedeemed": "Points Redeemed!",
+  "notification.titleRewardPointsEarned": "Reward Points Earned!",
 
   // Cards tab
   "ct.yourInspireCard": "Your Inspire Card",
@@ -2245,6 +2298,44 @@ const ko: TranslationMap = {
   "dashboard.withdraw": "출금",
   "dashboard.createdByInspire": "Inspire 제작",
   "dashboard.availableBalance": "사용 가능 잔액",
+  "dashboard.rewards": "리워드",
+
+  // Reward Points
+  "rewardPoints.title": "리워드 포인트",
+  "rewardPoints.yourBalance": "보유 포인트",
+  "rewardPoints.onePointEquals": "1포인트 = ₱1.00",
+  "rewardPoints.campaignPill":
+    "송금 시 포인트 {percentage}% 적립 · 일 최대 ₱{maxDaily}",
+  "rewardPoints.redeemButton": "가용 잔액으로 이체",
+  "rewardPoints.historyTitle": "포인트 내역",
+  "rewardPoints.transactionsCount": "거래 {count}건",
+  "rewardPoints.typeEarned": "송금 리워드",
+  "rewardPoints.typeRedeemed": "잔액으로 전환",
+  "rewardPoints.pointsWithUnit": "{value} pts",
+  "rewardPoints.balanceAfter": "잔액: {points} pts",
+  "rewardPoints.emptyTitle": "아직 리워드 거래가 없습니다",
+  "rewardPoints.emptySubtitle": "₱{min} 이상 송금으로 포인트 적립을 시작하세요!",
+  "rewardPoints.allTransactionsLoaded": "모든 거래를 확인했습니다",
+  "rewardPoints.convertTitle": "포인트를 잔액으로 전환",
+  "rewardPoints.convertBody":
+    "{points}포인트를 가용 잔액 ₱{amount}으로 전환할까요?",
+  "rewardPoints.enterPasscode": "확인하려면 패스코드를 입력하세요",
+  "rewardPoints.passcodePlaceholder": "••••",
+  "rewardPoints.confirm": "확인",
+  "rewardPoints.redeemSuccessTitle": "전환 완료!",
+  "rewardPoints.redeemSuccessMessage":
+    "{points}포인트가 가용 잔액 ₱{amount}으로 전환되었습니다.",
+  "rewardPoints.passcodeTooShort": "4자리 패스코드를 입력해 주세요.",
+  "rewardPoints.notAuthenticated": "로그인이 필요합니다.",
+  "rewardPoints.redemptionFailed": "전환에 실패했습니다. 다시 시도해 주세요.",
+  "rewardPoints.genericError": "오류가 발생했습니다. 다시 시도해 주세요.",
+  "rewardPoints.notEnoughTitle": "포인트 부족",
+  "rewardPoints.notEnoughBody":
+    "전환하려면 최소 {minPoints}포인트가 필요합니다.\n\n현재 {current}포인트입니다.\n\n송금을 계속해 포인트를 모으세요!",
+  "rewardPoints.campaignInfo":
+    "₱{min} 송금마다 {earned}포인트 적립. 일 최대 ₱{max}.",
+  "rewardPoints.gotIt": "확인",
+
   "withdraw.fromAvailableBalance": "가용 잔액에서 출금",
   "withdraw.agentWithdrawal": "에이전트 출금",
   "withdraw.fromAgentWallet": "에이전트 지갑에서 출금",
@@ -2874,8 +2965,20 @@ const ko: TranslationMap = {
   "history.stockSaleListing": "주식 매도: 상장 {listingId}",
   "history.stockSoldListing": "주식 매도 완료: 상장 {listingId}",
   "history.stockPurchasedListing": "주식 매수 완료: 상장 {listingId}",
+  "history.planSubscriptionCommission": "플랜 구독 커미션",
+  "history.approvedPlanSubscription":
+    "플랜 구독 승인: {planName} (85% 트레이딩 예치금)",
+  "history.travelProtectionFee": "여행 보호 수수료 - 신청 {applicationId}",
+  "history.physicalCardApplicationFee": "실물 카드 신청 수수료",
+  "history.stockSoldAdminApproved": "관리자 승인 후 주식 매도: {count}주",
   "history.resultText": "결과 {count}/{total}",
   "history.loadMore": "더 보기",
+  "history.viewReceipt": "영수증 보기",
+  "history.receiptPendingHint":
+    "관리자가 이 요청을 승인하면 영수증을 확인할 수 있습니다.",
+  "history.downloadReceipt": "영수증 다운로드",
+  "history.shareReceipt": "공유",
+  "history.receiptDone": "완료",
 
   "tickets.status.OPEN": "열림",
   "tickets.status.IN_PROGRESS": "진행 중",
@@ -3015,6 +3118,9 @@ const ko: TranslationMap = {
   "notification.titleSubscriptionExpired": "구독 만료됨",
   "notification.titleYourStockWasSold": "회원님의 주식이 매도되었습니다!",
   "notification.titleStockPurchaseSuccessful": "주식 매수 완료",
+  "notification.titleRewardPointsCredited": "리워드 포인트 적립",
+  "notification.titlePointsRedeemed": "포인트 전환 완료!",
+  "notification.titleRewardPointsEarned": "리워드 포인트 획득!",
   "ct.yourInspireCard": "Inspire 카드",
   "ct.defaultCard": "기본 카드",
   "ct.viewDetails": "상세 보기",
@@ -4073,6 +4179,44 @@ const ja: TranslationMap = {
   "dashboard.withdraw": "出金",
   "dashboard.createdByInspire": "Inspire 作成",
   "dashboard.availableBalance": "利用可能残高",
+  "dashboard.rewards": "リワード",
+
+  // Reward Points
+  "rewardPoints.title": "リワードポイント",
+  "rewardPoints.yourBalance": "保有ポイント",
+  "rewardPoints.onePointEquals": "1ポイント = ₱1.00",
+  "rewardPoints.campaignPill":
+    "送金で{percentage}%ポイント · 1日最大 ₱{maxDaily}",
+  "rewardPoints.redeemButton": "利用可能残高へ振替",
+  "rewardPoints.historyTitle": "ポイント履歴",
+  "rewardPoints.transactionsCount": "{count}件の取引",
+  "rewardPoints.typeEarned": "送金リワード",
+  "rewardPoints.typeRedeemed": "残高へ交換",
+  "rewardPoints.pointsWithUnit": "{value} pts",
+  "rewardPoints.balanceAfter": "残高: {points} pts",
+  "rewardPoints.emptyTitle": "まだリワード取引がありません",
+  "rewardPoints.emptySubtitle": "₱{min}以上の送金でポイントを貯めましょう！",
+  "rewardPoints.allTransactionsLoaded": "すべての取引を表示しました",
+  "rewardPoints.convertTitle": "ポイントを残高に交換",
+  "rewardPoints.convertBody":
+    "{points}ポイントを利用可能残高 ₱{amount} に交換しますか？",
+  "rewardPoints.enterPasscode": "パスコードを入力して確認",
+  "rewardPoints.passcodePlaceholder": "••••",
+  "rewardPoints.confirm": "確定",
+  "rewardPoints.redeemSuccessTitle": "交換完了！",
+  "rewardPoints.redeemSuccessMessage":
+    "{points}ポイントを利用可能残高 ₱{amount} に交換しました。",
+  "rewardPoints.passcodeTooShort": "4桁のパスコードを入力してください。",
+  "rewardPoints.notAuthenticated": "認証されていません。",
+  "rewardPoints.redemptionFailed": "交換に失敗しました。もう一度お試しください。",
+  "rewardPoints.genericError": "エラーが発生しました。もう一度お試しください。",
+  "rewardPoints.notEnoughTitle": "ポイント不足",
+  "rewardPoints.notEnoughBody":
+    "交換には少なくとも{minPoints}ポイントが必要です。\n\n現在{current}ポイントです。\n\n送金を続けてポイントを貯めましょう！",
+  "rewardPoints.campaignInfo":
+    "₱{min}の送金ごとに{earned}ポイント。1日最大 ₱{max}。",
+  "rewardPoints.gotIt": "了解",
+
   "withdraw.fromAvailableBalance": "利用可能な残高から引き出す",
   "withdraw.agentWithdrawal": "代理店出金",
   "withdraw.fromAgentWallet": "エージェントウォレットから引き出す",
@@ -4644,6 +4788,12 @@ const ja: TranslationMap = {
   "history.stockSaleListing": "株式売却: リスティング {listingId}",
   "history.stockSoldListing": "株式売却完了: リスティング {listingId}",
   "history.stockPurchasedListing": "株式購入完了: リスティング {listingId}",
+  "history.planSubscriptionCommission": "プラン購読コミッション",
+  "history.approvedPlanSubscription":
+    "プラン購読承認: {planName}（85% トレーディング預け金）",
+  "history.travelProtectionFee": "旅行保護手数料 - 申請 {applicationId}",
+  "history.physicalCardApplicationFee": "物理カード申請手数料",
+  "history.stockSoldAdminApproved": "管理者承認による株式売却: {count}株",
   "history.resultText": "結果 {count}/{total}",
   "passcode.headerTitle": "パスコード変更",
   "passcode.stepIndicator": "ステップ {step}/3",
@@ -4692,6 +4842,12 @@ const ja: TranslationMap = {
   "passcode.invalidPasscodeLength": "パスコードは4桁である必要があります。",
   "passcode.resetInfoMessage": "パスコードが正常にリセットされました。",
   "history.loadMore": "もっと見る",
+  "history.viewReceipt": "領収書を表示",
+  "history.receiptPendingHint":
+    "管理者がこのリクエストを承認すると領収書を確認できます。",
+  "history.downloadReceipt": "領収書をダウンロード",
+  "history.shareReceipt": "共有",
+  "history.receiptDone": "完了",
 
   "tickets.status.OPEN": "未解決",
   "tickets.status.IN_PROGRESS": "進行中",
@@ -4833,6 +4989,9 @@ const ja: TranslationMap = {
   "notification.titleSubscriptionExpired": "サブスクリプション期限切れ",
   "notification.titleYourStockWasSold": "あなたの株式が売却されました！",
   "notification.titleStockPurchaseSuccessful": "株式購入が完了しました",
+  "notification.titleRewardPointsCredited": "リワードポイント付与",
+  "notification.titlePointsRedeemed": "ポイント交換完了！",
+  "notification.titleRewardPointsEarned": "リワードポイント獲得！",
   "ct.yourInspireCard": "Inspireカード",
   "ct.defaultCard": "デフォルトカード",
   "ct.viewDetails": "詳細を見る",
@@ -5908,6 +6067,44 @@ const ar: TranslationMap = {
   "dashboard.withdraw": "سحب",
   "dashboard.createdByInspire": "صُنع بواسطة Inspire",
   "dashboard.availableBalance": "الرصيد المتاح",
+  "dashboard.rewards": "المكافآت",
+
+  // Reward Points
+  "rewardPoints.title": "نقاط المكافآت",
+  "rewardPoints.yourBalance": "رصيد نقاطك",
+  "rewardPoints.onePointEquals": "1 نقطة = ₱1.00",
+  "rewardPoints.campaignPill":
+    "اربح {percentage}% نقاط على التحويلات · حد أقصى ₱{maxDaily}/يوم",
+  "rewardPoints.redeemButton": "تحويل إلى الرصيد المتاح",
+  "rewardPoints.historyTitle": "سجل النقاط",
+  "rewardPoints.transactionsCount": "{count} معاملات",
+  "rewardPoints.typeEarned": "مكافأة تحويل",
+  "rewardPoints.typeRedeemed": "تحويل إلى الرصيد",
+  "rewardPoints.pointsWithUnit": "{value} نقطة",
+  "rewardPoints.balanceAfter": "الرصيد: {points} نقطة",
+  "rewardPoints.emptyTitle": "لا توجد معاملات مكافآت بعد",
+  "rewardPoints.emptySubtitle": "حوّل ₱{min}+ لبدء كسب النقاط!",
+  "rewardPoints.allTransactionsLoaded": "لقد شاهدت جميع المعاملات",
+  "rewardPoints.convertTitle": "تحويل النقاط إلى الرصيد",
+  "rewardPoints.convertBody":
+    "تحويل {points} نقطة إلى ₱{amount} في الرصيد المتاح؟",
+  "rewardPoints.enterPasscode": "أدخل رمز المرور للتأكيد",
+  "rewardPoints.passcodePlaceholder": "••••",
+  "rewardPoints.confirm": "تأكيد",
+  "rewardPoints.redeemSuccessTitle": "تم استبدال النقاط!",
+  "rewardPoints.redeemSuccessMessage":
+    "تم تحويل {points} نقطة بنجاح إلى ₱{amount} في الرصيد المتاح.",
+  "rewardPoints.passcodeTooShort": "يرجى إدخال رمز المرور المكون من 4 أرقام.",
+  "rewardPoints.notAuthenticated": "غير مصادق.",
+  "rewardPoints.redemptionFailed": "فشل الاستبدال. يرجى المحاولة مرة أخرى.",
+  "rewardPoints.genericError": "حدث خطأ. يرجى المحاولة مرة أخرى.",
+  "rewardPoints.notEnoughTitle": "نقاط غير كافية",
+  "rewardPoints.notEnoughBody":
+    "تحتاج إلى {minPoints} نقطة على الأقل للاستبدال.\n\nلديك حالياً {current} نقطة.\n\nواصل التحويل لكسب المزيد من النقاط!",
+  "rewardPoints.campaignInfo":
+    "كل تحويل ₱{min} يكسب {earned} نقطة. حد أقصى ₱{max}/يوم.",
+  "rewardPoints.gotIt": "حسناً",
+
   "withdraw.fromAvailableBalance": "اسحب من رصيدك المتاح",
   "withdraw.agentWithdrawal": "سحب وكيل",
   "withdraw.fromAgentWallet": "اسحب من محفظة الوكيل",
@@ -5983,6 +6180,12 @@ const ar: TranslationMap = {
   "history.totalIncome": "إجمالي الدخل",
   "history.currentTransactions": "المعاملات الحالية",
   "history.loadMore": "تحميل المزيد",
+  "history.viewReceipt": "عرض الإيصال",
+  "history.receiptPendingHint":
+    "سيصبح الإيصال متاحاً بعد أن يوافق المشرف على هذا الطلب.",
+  "history.downloadReceipt": "تنزيل الإيصال",
+  "history.shareReceipt": "مشاركة",
+  "history.receiptDone": "تم",
   "history.freeDefaultCard": "بطاقة افتراضية مجانية",
   "history.createdAccount": "إنشاء الحساب",
   "history.withdrawalRequested": "تم طلب السحب",
@@ -6004,6 +6207,13 @@ const ar: TranslationMap = {
   "history.stockSaleListing": "بيع أسهم: الإدراج {listingId}",
   "history.stockSoldListing": "تم بيع الأسهم: الإدراج {listingId}",
   "history.stockPurchasedListing": "تم شراء الأسهم: الإدراج {listingId}",
+  "history.planSubscriptionCommission": "عمولة اشتراك الخطة",
+  "history.approvedPlanSubscription":
+    "تمت الموافقة على اشتراك الخطة: {planName} (85% إيداع التداول)",
+  "history.travelProtectionFee":
+    "رسوم حماية السفر - الطلب {applicationId}",
+  "history.physicalCardApplicationFee": "رسوم طلب البطاقة الفعلية",
+  "history.stockSoldAdminApproved": "بيع الأسهم (موافق عليه من الإدارة): {count} أسهم",
   "investment.timeDeposit": "الادخار لأجل",
   "investment.amountWalletLabel": "الأرباح المتوقعة",
   "investment.amountWalletHint": "إجمالي الأرباح المتوقعة من جميع العقود",
@@ -6649,6 +6859,9 @@ const ar: TranslationMap = {
   "notification.titleSubscriptionExpired": "انتهت صلاحية الاشتراك",
   "notification.titleYourStockWasSold": "تم بيع أسهمك!",
   "notification.titleStockPurchaseSuccessful": "تمت عملية شراء الأسهم بنجاح",
+  "notification.titleRewardPointsCredited": "تم إضافة نقاط المكافآت",
+  "notification.titlePointsRedeemed": "تم استبدال النقاط!",
+  "notification.titleRewardPointsEarned": "تم كسب نقاط المكافآت!",
   "ct.yourInspireCard": "بطاقة Inspire الخاصة بك",
   "ct.defaultCard": "البطاقة الافتراضية",
   "ct.viewDetails": "عرض التفاصيل",

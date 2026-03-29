@@ -68,6 +68,8 @@ const INCOME_TYPES = [
 const TRANSACTION_DESCRIPTION_KEYS: Record<string, string> = {
   "Free Default Card": "history.freeDefaultCard",
   "Created Account": "history.createdAccount",
+  "Physical Card Application Fee": "history.physicalCardApplicationFee",
+  "Plan Subscription Commission": "history.planSubscriptionCommission",
   "Withdrawal Requested": "history.withdrawalRequested",
   "Withdrawal Approved": "history.withdrawalApproved",
   "Withdrawal Rejected": "history.withdrawalRejected",
@@ -293,6 +295,36 @@ export default function HistoryScreen() {
 
     const exactKey = TRANSACTION_DESCRIPTION_KEYS[normalized];
     if (exactKey) return t(exactKey);
+
+    // Travel protection fee (e.g. "Travel Protection Fee - Application ABC123")
+    const travelProtectionFeeMatch = normalized.match(
+      /^Travel Protection Fee - Application\s+(.+)$/i,
+    );
+    if (travelProtectionFeeMatch?.[1]) {
+      return t("history.travelProtectionFee", {
+        applicationId: travelProtectionFeeMatch[1].trim(),
+      });
+    }
+
+    // Approved plan subscription (e.g. "Approved Plan Subscription: Gold Elite (85% Trading Deposit)")
+    const approvedPlanSubscriptionMatch = normalized.match(
+      /^Approved Plan Subscription:\s*(.+?)\s*\(85% Trading Deposit\)$/i,
+    );
+    if (approvedPlanSubscriptionMatch?.[1]) {
+      return t("history.approvedPlanSubscription", {
+        planName: approvedPlanSubscriptionMatch[1].trim(),
+      });
+    }
+
+    // Admin-approved stock sold (e.g. "Stock sold (admin approved): 10 stocks")
+    const stockSoldAdminApprovedMatch = normalized.match(
+      /^Stock sold \(admin approved\):\s*(.+?)\s+stocks?$/i,
+    );
+    if (stockSoldAdminApprovedMatch?.[1]) {
+      return t("history.stockSoldAdminApproved", {
+        count: stockSoldAdminApprovedMatch[1].trim(),
+      });
+    }
 
     const topUpApprovedMatch = normalized.match(
       /^Top[- ]up approved:\s*request\s+(.+)$/i,
@@ -1803,14 +1835,14 @@ export default function HistoryScreen() {
                   activeOpacity={0.8}
                 >
                   <Text style={styles.detailModalViewReceiptButtonText}>
-                    {t("View Receipt") ?? "View Receipt"}
+                    {t("history.viewReceipt")}
                   </Text>
                 </TouchableOpacity>
               ) : (
                 <View style={styles.receiptPendingHint}>
                   <Ionicons name="time-outline" size={16} color="#A86A45" />
                   <Text style={styles.receiptPendingHintText}>
-                    Receipt will be available once admin approves this request.
+                    {t("history.receiptPendingHint")}
                   </Text>
                 </View>
               )}
