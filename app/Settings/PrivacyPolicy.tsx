@@ -1,5 +1,6 @@
 import {
-  Ionicons } from '@expo/vector-icons';
+  Ionicons
+} from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Linking from 'expo-linking';
@@ -10,9 +11,9 @@ import {
   Text,
   View,
 } from "react-native";
+import { TouchableOpacity } from "react-native-gesture-handler";
 import { useLanguage } from '../../context/LanguageContext';
 import type { NavProp } from '../../types/navigation';
-import { TouchableOpacity } from "react-native-gesture-handler";
 
 const SECTIONS = [
   { headingKey: 'privacy.h1', headingOrange: true, bodyKey: 'privacy.b1' },
@@ -23,7 +24,7 @@ const SECTIONS = [
   { headingKey: 'privacy.h6', bodyKey: 'privacy.b6' },
   { headingKey: 'privacy.h7', bodyKey: 'privacy.b7' },
   { headingKey: 'privacy.h8', bodyKey: 'privacy.b8' },
-  { headingKey: 'privacy.h9', introKey: 'privacy.i9', email: 'info@inspireholdings.ph' },
+  { headingKey: 'privacy.h9', introKey: 'privacy.i9', email: 'info@inspire-alliance.com' },
 ];
 
 const PrivacyPolicy = () => {

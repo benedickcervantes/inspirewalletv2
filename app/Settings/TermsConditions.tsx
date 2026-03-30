@@ -1,18 +1,19 @@
 import {
-  Ionicons } from '@expo/vector-icons';
+    Ionicons
+} from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Linking from 'expo-linking';
 import {
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
+    SafeAreaView,
+    ScrollView,
+    StyleSheet,
+    Text,
+    View,
 } from "react-native";
+import { TouchableOpacity } from "react-native-gesture-handler";
 import { useLanguage } from '../../context/LanguageContext';
 import type { NavProp } from '../../types/navigation';
-import { TouchableOpacity } from "react-native-gesture-handler";
 
 const SECTIONS = [
   { headingKey: 'terms.h1', bodyKey: 'terms.b1' },
@@ -24,7 +25,7 @@ const SECTIONS = [
   { headingKey: 'terms.h7', bodyKey: 'terms.b7' },
   { headingKey: 'terms.h8', bodyKey: 'terms.b8' },
   { headingKey: 'terms.h9', bodyKey: 'terms.b9' },
-  { headingKey: 'terms.h10', introKey: 'terms.i10', contactTextKey: 'terms.contactText', contactUrl: 'tel:0253221002' },
+  { headingKey: 'terms.h10', introKey: 'terms.i10', contactTextKey: 'terms.contactText', contactUrl: 'https://inspire-alliance.com' },
 ];
 
 const TermsConditions = () => {
