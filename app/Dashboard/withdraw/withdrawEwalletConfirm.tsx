@@ -3,7 +3,14 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useState } from "react";
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+    ActivityIndicator,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
     getOrCreateMainWallet,
@@ -12,7 +19,7 @@ import {
 import { useLanguage } from "../../../context/LanguageContext";
 import PasscodeModal from "../../components/PasscodeModal";
 
-import ActivityModal from '../../components/ActivityModal';
+import ActivityModal from "../../components/ActivityModal";
 const getEwalletTransactionFee = (amount: number) => {
   if (Number.isNaN(amount) || amount <= 0) return 0;
   if (amount <= 10000) return 25;
@@ -39,6 +46,7 @@ export default function EWalletConfirm() {
     accountName?: string;
     amount?: string;
     email?: string;
+    type?: string;
   };
   const [showAlertModal, setShowAlertModal] = useState(false);
   const [alertConfig, setAlertConfig] = useState<{
@@ -56,6 +64,7 @@ export default function EWalletConfirm() {
   const accountName = params.accountName || "";
   const amount = params.amount || "0";
   const email = params.email || "";
+  const withdrawalType = params.type || "available-balance";
   const parsedAmount = parseFloat(amount);
   const transactionFee = getEwalletTransactionFee(parsedAmount);
   const netWithdrawalAmount = Math.max(
@@ -101,10 +110,15 @@ export default function EWalletConfirm() {
         setIsSubmitting(false);
         return;
       }
+      const source =
+        withdrawalType === "agent-withdrawal"
+          ? "agent_commission"
+          : "available_balance";
       const body: Record<string, string | undefined> = {
         walletId: wallet.id as string,
         amount: String(parseFloat(amount)),
         method: "e_wallet",
+        source,
         email: email || undefined,
         walletType: walletType.toLowerCase() as "gcash" | "maya",
         accountNumber,
@@ -297,7 +311,6 @@ export default function EWalletConfirm() {
                 </Text>
               </View>
             </View>
-
           </View>
 
           {/* Withdrawal Amount Card */}
@@ -313,10 +326,13 @@ export default function EWalletConfirm() {
               </Text>
             </View>
             <Text style={styles.feeNoteText}>
-              {`E-wallet transaction fee: PHP ${transactionFee.toLocaleString("en-US", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}.`}
+              {`E-wallet transaction fee: PHP ${transactionFee.toLocaleString(
+                "en-US",
+                {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                },
+              )}.`}
             </Text>
           </View>
 
