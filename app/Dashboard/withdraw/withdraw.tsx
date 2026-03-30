@@ -91,7 +91,11 @@ export default function WithdrawType() {
           <View style={styles.titleContainer}>
             <Text style={styles.title}>{t("withdraw.selectType")}</Text>
             <Text style={styles.subtitle}>
-              {t("withdraw.fromAvailableBalance")}
+              {t(
+                selectedType === "agent-withdrawal"
+                  ? "withdraw.fromAgentWallet"
+                  : "withdraw.fromAvailableBalance",
+              )}
             </Text>
           </View>
 
