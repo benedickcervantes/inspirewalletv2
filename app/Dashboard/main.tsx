@@ -42,6 +42,11 @@ import { useIdleTimeout } from "../../context/IdleTimeoutContext";
 import { useLanguage } from "../../context/LanguageContext";
 import { useSocket } from "../../context/SocketContext";
 import { useUnreadNotifications } from "../../context/UnreadNotificationsContext";
+import {
+  ANNOUNCEMENTS_SHOWN_FOR_LOGIN_SESSION_KEY,
+  ensureAnnouncementLoginSessionId,
+  markAnnouncementsShownForCurrentLoginSession,
+} from "../../lib/announcementLoginSession";
 import { setConnectionStatus } from "../../lib/connectionStatus";
 import {
   getMaintenanceStatus,
@@ -225,6 +230,8 @@ function getTransactionTypeLabel(
 
 export default function Dashboard() {
   const navigation = useNavigation();
+  const navigationRef = useRef(navigation);
+  navigationRef.current = navigation;
   const route = useRoute();
   const { t, setLanguage } = useLanguage();
   const { registerActivity } = useIdleTimeout();
@@ -257,6 +264,25 @@ export default function Dashboard() {
   const [announcements, setAnnouncements] = useState<AnnouncementItem[]>([]);
   const [announcementIndex, setAnnouncementIndex] = useState(0);
   const [announcementVisible, setAnnouncementVisible] = useState(false);
+  const announcementsRef = useRef<AnnouncementItem[]>([]);
+  announcementsRef.current = announcements;
+  /** Set true as soon as the user finishes the queue so a overlapping dashboard init cannot reopen the modal before AsyncStorage updates. */
+  const announcementsConsumedForSessionRef = useRef(false);
+
+  const sealAnnouncementSessionIfDone = useCallback((nextIndex: number) => {
+    if (nextIndex >= announcementsRef.current.length) {
+      if (announcementsConsumedForSessionRef.current) return;
+      announcementsConsumedForSessionRef.current = true;
+      void (async () => {
+        await markAnnouncementsShownForCurrentLoginSession();
+        setAnnouncementVisible(false);
+        setAnnouncementIndex(0);
+        setAnnouncements([]);
+      })();
+    } else {
+      setAnnouncementIndex(nextIndex);
+    }
+  }, []);
   const [recentTransactions, setRecentTransactions] = useState<Transaction[]>(
     [],
   );
@@ -393,7 +419,7 @@ export default function Dashboard() {
     const init = async () => {
       const accessToken = await AsyncStorage.getItem("access_token");
       if (!accessToken) {
-        (navigation as unknown as NavProp).replace("Welcome");
+        (navigationRef.current as unknown as NavProp).replace("Welcome");
         return;
       }
 
@@ -585,15 +611,30 @@ export default function Dashboard() {
       }
 
       if (annRes?.success && Array.isArray(annRes.data) && annRes.data.length) {
+        const sessionId = await ensureAnnouncementLoginSessionId();
+        const shownFor = await AsyncStorage.getItem(
+          ANNOUNCEMENTS_SHOWN_FOR_LOGIN_SESSION_KEY,
+        );
+        let shouldShowAnnouncements = shownFor !== sessionId;
+        if (announcementsConsumedForSessionRef.current) {
+          shouldShowAnnouncements = false;
+        }
+
         const list = (annRes.data as AnnouncementItem[]).map((a) => ({
           id: a.id,
           title: (a as { title?: string }).title ?? "Announcement",
           message: (a as { message?: string }).message ?? "",
           imageUrl: (a as { imageUrl?: string | null }).imageUrl ?? null,
         }));
-        setAnnouncements(list);
-        setAnnouncementIndex(0);
-        setAnnouncementVisible(true);
+
+        if (shouldShowAnnouncements) {
+          setAnnouncements(list);
+          setAnnouncementIndex(0);
+          setAnnouncementVisible(true);
+        } else {
+          setAnnouncements([]);
+          setAnnouncementVisible(false);
+        }
       } else {
         setAnnouncements([]);
         setAnnouncementVisible(false);
@@ -601,21 +642,23 @@ export default function Dashboard() {
     };
 
     init();
-  }, [fetchMaintenanceStatus, navigation]);
+    // Intentionally omit `navigation` from deps — its identity changes often and
+    // re-ran init was reopening the announcement modal after dismiss (race with AsyncStorage).
+  }, [fetchMaintenanceStatus]);
 
   useEffect(() => {
     if (!announcementVisible) return;
     if (!announcements.length) return;
     const timer = setTimeout(() => {
-      const next = announcementIndex + 1;
-      if (next >= announcements.length) {
-        setAnnouncementVisible(false);
-      } else {
-        setAnnouncementIndex(next);
-      }
+      sealAnnouncementSessionIfDone(announcementIndex + 1);
     }, 10000);
     return () => clearTimeout(timer);
-  }, [announcementVisible, announcementIndex, announcements.length]);
+  }, [
+    announcementVisible,
+    announcementIndex,
+    announcements.length,
+    sealAnnouncementSessionIfDone,
+  ]);
 
   const syncAvailableBalanceOnly = useCallback(async () => {
     const accessToken = await AsyncStorage.getItem("access_token");
@@ -1214,14 +1257,7 @@ export default function Dashboard() {
       <AnnouncementModal
         visible={announcementVisible && announcements.length > 0}
         announcement={announcements[announcementIndex] ?? null}
-        onClose={() => {
-          const next = announcementIndex + 1;
-          if (next >= announcements.length) {
-            setAnnouncementVisible(false);
-          } else {
-            setAnnouncementIndex(next);
-          }
-        }}
+        onClose={() => sealAnnouncementSessionIfDone(announcementIndex + 1)}
       />
       <ActivityModal
         visible={selectedMaintenanceService !== null}

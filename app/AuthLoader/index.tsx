@@ -5,6 +5,10 @@ import * as SplashScreen from 'expo-splash-screen';
 import { registerIndieID } from 'native-notify';
 import { useEffect, useRef, useState } from "react";
 import { getMe, login } from "../../configs/api";
+import {
+  ANNOUNCEMENT_SESSION_ASYNC_KEYS,
+  startNewAnnouncementLoginSession,
+} from "../../lib/announcementLoginSession";
 import { useIdleTimeout } from "../../context/IdleTimeoutContext";
 import { useLanguage } from "../../context/LanguageContext";
 import type { RootStackParamList } from "../../types/navigation";
@@ -77,6 +81,7 @@ export default function AuthLoader() {
             if (res.success && res.access_token) {
               await AsyncStorage.setItem("access_token", res.access_token);
               await AsyncStorage.setItem("user", JSON.stringify(res.user || {}));
+              await startNewAnnouncementLoginSession();
               await AsyncStorage.removeItem("passcodeLoginComplete");
               // Refresh the timestamp so the 2-day window resets on each successful auto-login
               await AsyncStorage.setItem("savedPasswordAt", String(Date.now()));
@@ -105,7 +110,13 @@ export default function AuthLoader() {
           // Token expired — try silent re-login
           const newToken = await trySilentLogin();
           if (!newToken) {
-            await AsyncStorage.multiRemove(["access_token", "user", "passcodeLoginComplete", "registrationPasscodePending"]);
+            await AsyncStorage.multiRemove([
+              "access_token",
+              "user",
+              "passcodeLoginComplete",
+              "registrationPasscodePending",
+              ...ANNOUNCEMENT_SESSION_ASYNC_KEYS,
+            ]);
             await waitMinSplash(startTime);
             goTo("Welcome");
             return;
@@ -113,7 +124,13 @@ export default function AuthLoader() {
           // Re-run getMe with the fresh token
           const retryResult = await getMe(newToken);
           if (!retryResult.success || !retryResult.user) {
-            await AsyncStorage.multiRemove(["access_token", "user", "passcodeLoginComplete", "registrationPasscodePending"]);
+            await AsyncStorage.multiRemove([
+              "access_token",
+              "user",
+              "passcodeLoginComplete",
+              "registrationPasscodePending",
+              ...ANNOUNCEMENT_SESSION_ASYNC_KEYS,
+            ]);
             await waitMinSplash(startTime);
             goTo("Welcome");
             return;
@@ -164,7 +181,13 @@ export default function AuthLoader() {
       } catch (error) {
         console.error("Error in auth handling:", error);
         try {
-          await AsyncStorage.multiRemove(["access_token", "user", "passcodeLoginComplete", "registrationPasscodePending"]);
+          await AsyncStorage.multiRemove([
+            "access_token",
+            "user",
+            "passcodeLoginComplete",
+            "registrationPasscodePending",
+            ...ANNOUNCEMENT_SESSION_ASYNC_KEYS,
+          ]);
         } catch (_) { }
         await waitMinSplash(startTime);
         goTo("Welcome");

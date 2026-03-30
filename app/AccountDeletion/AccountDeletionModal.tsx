@@ -11,6 +11,7 @@ import {
     subscribeToAccountDeletionApproved,
     subscribeToAccountDeletionRejected,
 } from '../../lib/accountDeletionEvents';
+import { ANNOUNCEMENT_SESSION_ASYNC_KEYS } from '../../lib/announcementLoginSession';
 import { navigateToWelcome } from '../../lib/navigationRef';
 import { TouchableOpacity } from "react-native-gesture-handler";
 
@@ -61,6 +62,7 @@ export default function AccountDeletionModal() {
         'user',
         'passcodeLoginComplete',
         'registrationPasscodePending',
+        ...ANNOUNCEMENT_SESSION_ASYNC_KEYS,
       ]);
     } catch (_) {}
     navigateToWelcome();
