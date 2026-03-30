@@ -1,43 +1,58 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
-    useFocusEffect,
-    useNavigation,
-    useRoute,
+  useFocusEffect,
+  useNavigation,
+  useRoute,
 } from "@react-navigation/native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Animated, AppState, Image, Linking, RefreshControl, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import {
-    SafeAreaView,
-    useSafeAreaInsets,
+  Animated,
+  AppState,
+  Image,
+  Linking,
+  RefreshControl,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import {
-    getActiveAnnouncements,
-    getCompanyKycStatus,
-    getMe,
-    getNotifications,
-    getOrCreateMainWallet,
-    getPersonalKycStatus,
-    getReferralTree,
-    getTimeDeposits,
-    getTransactions,
+  getActiveAnnouncements,
+  getCompanyKycStatus,
+  getMe,
+  getNotifications,
+  getOrCreateMainWallet,
+  getPersonalKycStatus,
+  getReferralTree,
+  getTimeDeposits,
+  getTransactions,
 } from "../../configs/api";
 import {
-    languageChoiceDoneKey,
-    SUPPORTED_LANGUAGES,
+  languageChoiceDoneKey,
+  SUPPORTED_LANGUAGES,
 } from "../../constants/locales";
 import { useIdleTimeout } from "../../context/IdleTimeoutContext";
 import { useLanguage } from "../../context/LanguageContext";
 import { useSocket } from "../../context/SocketContext";
 import { useUnreadNotifications } from "../../context/UnreadNotificationsContext";
 import { setConnectionStatus } from "../../lib/connectionStatus";
-import { getMaintenanceStatus, getVisibilityStatus } from "../../lib/maintenance";
+import {
+  getMaintenanceStatus,
+  getVisibilityStatus,
+} from "../../lib/maintenance";
 import type { NavProp } from "../../types/navigation";
 import { useResponsive } from "../../utils/responsive";
 import AccountDeletionModal from "../AccountDeletion/AccountDeletionModal";
 import {
-    AnnouncementModal,
-    type AnnouncementItem,
+  AnnouncementModal,
+  type AnnouncementItem,
 } from "../AnnouncementModal/AnnouncementModal";
 import NotificationBadge from "../Notification/NotificationBadge";
 import CardsTab from "./CardsTab";
@@ -45,7 +60,7 @@ import SavingsTab from "./SavingsTab";
 import { computeProjectedTotalDividend } from "./utils/termSavingsFormula";
 import WalletTab from "./WalletTab";
 
-import ActivityModal from '../components/ActivityModal';
+import ActivityModal from "../components/ActivityModal";
 // API returns raw enums; keys for translation (use t() when displaying)
 const TRANSACTION_TYPE_KEYS: Record<string, string> = {
   TOP_UP: "tx.deposit",
@@ -583,7 +598,6 @@ export default function Dashboard() {
         setAnnouncements([]);
         setAnnouncementVisible(false);
       }
-
     };
 
     init();
@@ -1363,7 +1377,10 @@ export default function Dashboard() {
         onRequestClose={() => {}}
       >
         <View style={styles.languageModalOverlay} {...modalActivityProps}>
-          <View style={styles.languageModalContentOuter} {...modalActivityProps}>
+          <View
+            style={styles.languageModalContentOuter}
+            {...modalActivityProps}
+          >
             <View style={styles.languageModalHeader}>
               <View style={styles.languageMapGlobe}>
                 <Ionicons name="globe-outline" size={40} color="#DE5212" />
@@ -1414,8 +1431,8 @@ export default function Dashboard() {
                 ellipsizeMode="tail"
               >
                 {userData?.firstName || userData?.fullName ? (
-                  ((userData?.firstName as string) ||
-                    (userData?.fullName as string)) as string
+                  (((userData?.firstName as string) ||
+                    (userData?.fullName as string)) as string)
                 ) : (
                   <View style={styles.userNameSkeleton} />
                 )}
@@ -1477,22 +1494,22 @@ export default function Dashboard() {
             ]}
           >
             {(["Wallet", "Investment", "Cards"] as const).map((tab) => {
-                const isActive = activeTab === tab;
-                const label = t(
-                  tab === "Wallet"
-                    ? "dashboard.wallet"
-                    : tab === "Investment"
-                      ? "dashboard.investment"
-                      : "dashboard.cards",
+              const isActive = activeTab === tab;
+              const label = t(
+                tab === "Wallet"
+                  ? "dashboard.wallet"
+                  : tab === "Investment"
+                    ? "dashboard.investment"
+                    : "dashboard.cards",
+              );
+              const baseHorizontalPadding =
+                width < 360 ? 6 : width < 400 ? 9 : 12;
+              const activeHorizontalPadding =
+                width < 360 ? 8 : width < 400 ? 11 : 14;
+              const hasWideLabel =
+                /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uac00-\ud7af]/.test(
+                  label,
                 );
-                const baseHorizontalPadding =
-                  width < 360 ? 6 : width < 400 ? 9 : 12;
-                const activeHorizontalPadding =
-                  width < 360 ? 8 : width < 400 ? 11 : 14;
-                const hasWideLabel =
-                  /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uac00-\ud7af]/.test(
-                    label,
-                  );
               const compactLabelThreshold = hasWideLabel ? 7 : 12;
               const veryLongLabelThreshold = hasWideLabel ? 10 : 16;
               const isCompactLabel = label.length >= compactLabelThreshold;
@@ -1550,9 +1567,6 @@ export default function Dashboard() {
               isBalanceLoading={isBalanceLoading}
               activeCardDesign={activeCardDesign}
               formatCurrency={formatCurrency}
-              flipAnimation={flipAnimation}
-              isCardFlipped={isCardFlipped}
-              flipCard={flipCard}
               isWithdrawalLocked={isKycRestrictedUser}
               onWithdrawalLockedPress={openKycGateModal}
             />
