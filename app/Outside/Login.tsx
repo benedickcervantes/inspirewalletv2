@@ -10,6 +10,10 @@ import { ActivityIndicator, Animated, BackHandler, Keyboard, KeyboardAvoidingVie
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { forgotPassword, login } from "../../configs/api";
+import {
+  ANNOUNCEMENT_SESSION_ASYNC_KEYS,
+  startNewAnnouncementLoginSession,
+} from "../../lib/announcementLoginSession";
 import { useLanguage } from "../../context/LanguageContext";
 import { useLanguageModal } from "../../context/LanguageModalContext";
 import type { NavProp } from "../../types/navigation";
@@ -624,6 +628,7 @@ export default function Login() {
           "user",
           "passcodeLoginComplete",
           "registrationPasscodePending",
+          ...ANNOUNCEMENT_SESSION_ASYNC_KEYS,
         ]);
         const savedEmail = await AsyncStorage.getItem("lastLoggedEmail");
         if (savedEmail) {
@@ -745,6 +750,7 @@ export default function Login() {
 
       await AsyncStorage.setItem("access_token", result.access_token || "");
       await AsyncStorage.setItem("user", JSON.stringify(result.user || {}));
+      await startNewAnnouncementLoginSession();
       await AsyncStorage.removeItem("passcodeLoginComplete");
 
       // Save password securely for silent auto-login on next app launch.
