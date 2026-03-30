@@ -82,7 +82,7 @@
     "eslint": "^9.39.2",
     "eslint-config-expo": "^10.0.0",
     "eslint-plugin-react": "^7.37.5",
-    "expo-module-scripts": "^3.0.5",
+    "expo-module-scripts": "^55.0.2",
     "metro-react-native-babel-transformer": "^0.77.0",
     "patch-package": "^8.0.1",
     "typescript": "^5.9.3"
@@ -92,7 +92,8 @@
     "react-dom": "19.1.0",
     "minimatch": ">=10.2.1",
     "undici": ">6.22.0",
-    "@tootallnate/once": ">=3.0.1"
+    "@tootallnate/once": ">=3.0.1",
+    "glob": "^11.0.0"
   },
   "private": true
 }
