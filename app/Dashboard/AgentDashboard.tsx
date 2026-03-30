@@ -9,6 +9,8 @@ import {
     Platform,
     RefreshControl,
     ScrollView,
+    TextInput,
+    Alert,
     Share,
     StyleSheet,
     Text,
@@ -20,6 +22,7 @@ import {
 import QRCode from "react-native-qrcode-svg";
 import { SafeAreaView } from "react-native-safe-area-context";
 import ActivityModal from "../components/ActivityModal";
+import PasscodeModal from "../components/PasscodeModal";
 import {
     generateReferralCode,
     getMe,
@@ -29,9 +32,11 @@ import {
     getReferralTreeList,
     getReferralTree,
     getTransactions,
+    transferAgentCommissionToAvailable,
 } from "../../configs/api";
 import { useLanguage } from "../../context/LanguageContext";
 import type { RootStackParamList } from "../../types/navigation";
+import { formatAmountWithCommas, unformatNumberString } from "../../utils/numberFormat";
 
 interface CommissionTransaction {
   id: string;
@@ -83,7 +88,16 @@ export default function AgentDashboard() {
   const [initialLoad, setInitialLoad] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [agentCommission, setAgentCommission] = useState(0);
+  const [mainWalletId, setMainWalletId] = useState<string | null>(null);
   const [currencySymbol, setCurrencySymbol] = useState("₱");
+
+  const [convertAmount, setConvertAmount] = useState<string>("");
+  const [convertError, setConvertError] = useState<string | null>(null);
+  const [showConvertPasscodeModal, setShowConvertPasscodeModal] =
+    useState(false);
+  const [convertPasscode, setConvertPasscode] = useState<string>("");
+  const [isConverting, setIsConverting] = useState(false);
+
   const [referralCode, setReferralCode] = useState<string | null>(null);
   const [referralUrl, setReferralUrl] = useState<string | null>(null);
   const [directReferralCount, setDirectReferralCount] = useState(0);
@@ -117,6 +131,15 @@ export default function AgentDashboard() {
 
   const formatCurrency = (amount: number) =>
     amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const convertAmountPlain = unformatNumberString(convertAmount).trim();
+  const convertAmountNum = parseFloat(convertAmountPlain);
+  const isConvertAmountValid =
+    /^\d+(\.\d{1,2})?$/.test(convertAmountPlain) &&
+    Number.isFinite(convertAmountNum) &&
+    convertAmountNum > 0 &&
+    convertAmountNum <= agentCommission;
+  const isConvertButtonDisabled =
+    !mainWalletId || agentCommission <= 0 || !isConvertAmountValid || isConverting;
   const pendingCommissionCount = pendingAgentCommissions.length;
   const showingPendingCommissionList = detailSectionView === "pending";
   const showingDirectReferralsList = detailSectionView === "direct_referrals";
@@ -233,6 +256,8 @@ export default function AgentDashboard() {
         const wallet = walletRes.wallet as Record<string, unknown>;
         const commission = parseFloat(String(wallet.agentCommission ?? 0));
         setAgentCommission(Number.isNaN(commission) ? 0 : commission);
+        const id = wallet.id;
+        setMainWalletId(typeof id === "string" ? id : null);
         const curr = wallet.currency as Record<string, string> | undefined;
         if (curr?.symbol) setCurrencySymbol(curr.symbol);
         const pending = Array.isArray(wallet.pendingAgentCommissions)
@@ -254,6 +279,7 @@ export default function AgentDashboard() {
           : [];
         setPendingAgentCommissions(pending);
       } else {
+        setMainWalletId(null);
         setPendingAgentCommissions([]);
       }
 
@@ -473,6 +499,101 @@ export default function AgentDashboard() {
     navigation.replace("AgentApplication");
   };
 
+  const handleStartConvert = () => {
+    setConvertError(null);
+
+    if (!mainWalletId) {
+      setConvertError(t("agent.failedToLoad"));
+      return;
+    }
+
+    if (!isConvertAmountValid) {
+      if (!convertAmountPlain) {
+        setConvertError(t("deposit.enterAmount"));
+        return;
+      }
+      if (Number.isFinite(convertAmountNum) && convertAmountNum > agentCommission) {
+        setConvertError(t("agent.convertInsufficientCommission"));
+        return;
+      }
+      setConvertError(t("deposit.invalidAmount") ?? "Invalid amount");
+      return;
+    }
+
+    // Reset and open passcode modal
+    setConvertPasscode("");
+    setShowConvertPasscodeModal(true);
+  };
+
+  const handleConvertPasscodeConfirm = async () => {
+    const accessToken = await AsyncStorage.getItem("access_token");
+    if (!accessToken) {
+      setIsConverting(false);
+      setShowConvertPasscodeModal(false);
+      setConvertPasscode("");
+      setConvertError(t("agent.notAuthenticated"));
+      return;
+    }
+
+    if (!mainWalletId) {
+      setIsConverting(false);
+      setShowConvertPasscodeModal(false);
+      setConvertPasscode("");
+      setConvertError(t("agent.failedToLoad"));
+      return;
+    }
+
+    const payloadAmount = unformatNumberString(convertAmount).trim();
+    if (!isConvertAmountValid || !payloadAmount) {
+      setIsConverting(false);
+      setShowConvertPasscodeModal(false);
+      setConvertPasscode("");
+      setConvertError(t("deposit.invalidAmount") ?? "Invalid amount");
+      return;
+    }
+
+    setIsConverting(true);
+    try {
+      const res = await transferAgentCommissionToAvailable(accessToken, {
+        walletId: mainWalletId,
+        amount: payloadAmount,
+        passcode: convertPasscode,
+      });
+
+      if (!res.success) {
+        throw new Error(res.error || "Transfer to available balance failed");
+      }
+
+      const successMsg = t("agent.convertSuccess");
+      if (Platform.OS === "android") {
+        ToastAndroid.show(successMsg, ToastAndroid.SHORT);
+      } else {
+        Alert.alert(successMsg);
+      }
+
+      setShowConvertPasscodeModal(false);
+      setConvertPasscode("");
+      setConvertAmount("");
+      setConvertError(null);
+
+      // Reload data so commission + pending list are accurate
+      await fetchData();
+    } catch (e) {
+      const msg =
+        e instanceof Error
+          ? e.message
+          : t("agent.convertFailed") ?? "Transfer to available balance failed";
+      if (Platform.OS === "android") {
+        ToastAndroid.show(msg, ToastAndroid.SHORT);
+      } else {
+        Alert.alert(msg);
+      }
+      setConvertError(null);
+    } finally {
+      setIsConverting(false);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
@@ -561,6 +682,64 @@ export default function AgentDashboard() {
               {t("agent.commissionHint")}
             </Text>
           </View>
+
+          {agentCommission > 0 && (
+            <View style={styles.convertCard}>
+              <View style={styles.convertHeader}>
+                <Ionicons name="swap-horizontal" size={22} color="#E25A17" />
+                <Text style={styles.convertTitle}>
+                  {t("agent.convertCommissionTitle")}
+                </Text>
+              </View>
+
+              <View
+                style={[
+                  styles.convertInputRow,
+                  convertError && styles.convertInputRowError,
+                ]}
+              >
+                <Text style={styles.convertCurrencySymbol}>{currencySymbol}</Text>
+                <TextInput
+                  style={styles.convertInput}
+                  placeholder={t("deposit.enterAmount")}
+                  placeholderTextColor="#999"
+                  keyboardType="numeric"
+                  value={convertAmount}
+                  onChangeText={(text) => {
+                    setConvertError(null);
+                    setConvertAmount(formatAmountWithCommas(text));
+                  }}
+                />
+              </View>
+
+              <Text style={styles.convertMaxHint}>
+                Available: {currencySymbol} {formatCurrency(agentCommission)}
+              </Text>
+
+              {convertError && <Text style={styles.errorText}>{convertError}</Text>}
+
+              <TouchableOpacity
+                style={[
+                  styles.convertButton,
+                  isConvertButtonDisabled && styles.convertButtonDisabled,
+                ]}
+                onPress={handleStartConvert}
+                disabled={isConvertButtonDisabled}
+                activeOpacity={0.85}
+              >
+                <LinearGradient
+                  colors={["#E25A17", "#F28934"]}
+                  style={styles.convertButtonGradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                >
+                  <Text style={styles.convertButtonText}>
+                    {isConverting ? "..." : t("agent.convertButton")}
+                  </Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
+          )}
 
           {/* Referral Code & Share */}
           <View style={[styles.referralCard, isXSScreen && styles.cardCompact]}>
@@ -976,6 +1155,22 @@ export default function AgentDashboard() {
         </ScrollView>
       </SafeAreaView>
 
+      <PasscodeModal
+        visible={showConvertPasscodeModal}
+        passcode={convertPasscode}
+        title={t("withdraw.enterPasscode")}
+        confirmLabel={t("withdraw.confirm")}
+        cancelLabel={t("common.cancel")}
+        loading={isConverting}
+        onChangePasscode={setConvertPasscode}
+        onConfirm={handleConvertPasscodeConfirm}
+        onCancel={() => {
+          setShowConvertPasscodeModal(false);
+          setConvertPasscode("");
+          setConvertError(null);
+        }}
+      />
+
       <ActivityModal
         visible={showAccessRestrictedModal}
         transparent
@@ -1128,6 +1323,61 @@ const styles = StyleSheet.create({
   commissionAmount: { fontSize: 28, fontWeight: "700", color: "#1F2937" },
   commissionAmountCompact: { fontSize: 22 },
   commissionHint: { fontSize: 12, color: "#9CA3AF", marginTop: 6 },
+  convertCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  convertHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 12,
+  },
+  convertTitle: { fontSize: 14, color: "#1F2937", fontWeight: "600" },
+  convertInputRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    backgroundColor: "#F9FAFB",
+  },
+  convertInputRowError: { borderColor: "#F59E0B" },
+  convertCurrencySymbol: { fontWeight: "800", color: "#E25A17", fontSize: 14 },
+  convertInput: {
+    flex: 1,
+    fontSize: 16,
+    color: "#1F2937",
+    paddingVertical: 0,
+  },
+  convertMaxHint: {
+    marginTop: 10,
+    marginBottom: 6,
+    fontSize: 12,
+    color: "#6B7280",
+  },
+  convertButton: {
+    marginTop: 12,
+    borderRadius: 10,
+    overflow: "hidden",
+  },
+  convertButtonDisabled: { opacity: 0.55 },
+  convertButtonGradient: {
+    height: 50,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  convertButtonText: { color: "#FFFFFF", fontWeight: "800", fontSize: 15 },
   cardCompact: { padding: 14, marginBottom: 12 },
   textCompact: { fontSize: 12 },
   referralCard: {

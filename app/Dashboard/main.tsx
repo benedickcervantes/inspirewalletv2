@@ -257,6 +257,7 @@ export default function Dashboard() {
     null,
   );
   const [availableBalance, setAvailableBalance] = useState(0);
+  const [agentCommission, setAgentCommission] = useState(0);
   const [isBalanceLoading, setIsBalanceLoading] = useState(true);
   const [timeDeposit, setTimeDeposit] = useState(0);
   const [deposits, setDeposits] = useState<TimeDeposit[]>([]);
@@ -501,6 +502,7 @@ export default function Dashboard() {
       }
 
       setAvailableBalance(0);
+      setAgentCommission(0);
       setTimeDeposit(0);
       setDeposits([]);
       setUnreadNotifications(0);
@@ -515,6 +517,10 @@ export default function Dashboard() {
       if (success && w?.balance != null) {
         const bal = parseFloat(String(w.balance));
         setAvailableBalance(Number.isNaN(bal) ? 0 : bal);
+      }
+      if (success && (w as any)?.agentCommission != null) {
+        const ac = parseFloat(String((w as any).agentCommission));
+        setAgentCommission(Number.isNaN(ac) ? 0 : ac);
       }
       setIsBalanceLoading(false);
 
@@ -669,6 +675,10 @@ export default function Dashboard() {
     if (walletSuccess && w?.balance != null) {
       const bal = parseFloat(String(w.balance));
       setAvailableBalance(Number.isNaN(bal) ? 0 : bal);
+    }
+    if (walletSuccess && (w as any)?.agentCommission != null) {
+      const ac = parseFloat(String((w as any).agentCommission));
+      setAgentCommission(Number.isNaN(ac) ? 0 : ac);
     }
     return w;
   }, []);
@@ -940,13 +950,24 @@ export default function Dashboard() {
     const handleWalletUpdate = (payload: {
       walletId?: string;
       balance?: number | string;
+      agentCommission?: number | string;
     }) => {
-      if (
-        payload?.walletId === mainWalletIdRef.current &&
-        payload?.balance != null
-      ) {
+      if (payload?.walletId !== mainWalletIdRef.current) return;
+
+      let didAffectAvailable = false;
+
+      if (payload?.balance != null) {
         const bal = parseFloat(String(payload.balance));
         setAvailableBalance(Number.isNaN(bal) ? 0 : bal);
+        didAffectAvailable = true;
+      }
+
+      if (payload?.agentCommission != null) {
+        const ac = parseFloat(String(payload.agentCommission));
+        setAgentCommission(Number.isNaN(ac) ? 0 : ac);
+      }
+
+      if (didAffectAvailable) {
         void syncTimeDepositsOnly();
         void refetchJwtData();
       }
@@ -1601,6 +1622,7 @@ export default function Dashboard() {
               userData={userData}
               availableBalance={availableBalance}
               isBalanceLoading={isBalanceLoading}
+              agentCommission={agentCommission}
               activeCardDesign={activeCardDesign}
               formatCurrency={formatCurrency}
               isWithdrawalLocked={isKycRestrictedUser}

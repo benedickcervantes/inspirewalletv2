@@ -40,6 +40,7 @@ interface WalletTabProps {
   userData: { firstName?: string; accountNumber?: string } | null;
   availableBalance: number;
   isBalanceLoading: boolean;
+  agentCommission?: number;
   activeCardDesign?: string | null;
   formatCurrency: (amount: number) => string;
   isWithdrawalLocked?: boolean;
@@ -356,6 +357,7 @@ export default function WalletTab({
                       {t("dashboard.withdraw")}
                     </Text>
                   </TouchableOpacity>
+
                 </>
               )}
             </View>
