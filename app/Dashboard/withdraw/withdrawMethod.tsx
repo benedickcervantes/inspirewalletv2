@@ -1,5 +1,5 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useState } from "react";
 import {
@@ -15,9 +15,12 @@ import { useLanguage } from "../../../context/LanguageContext";
 
 export default function WithdrawRequest() {
   const navigation = useNavigation();
+  const route = useRoute();
   const { t } = useLanguage();
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const withdrawalType = (route.params as { type?: string })?.type || "available-balance";
 
   const withdrawalMethods = [
     {
@@ -48,9 +51,9 @@ export default function WithdrawRequest() {
 
     // Navigate to next step based on selected method
     if (selectedMethod === "local-bank") {
-      navigation.navigate("WithdrawBank");
+      navigation.navigate("WithdrawBank", { type: withdrawalType });
     } else if (selectedMethod === "e-wallet") {
-      navigation.navigate("WithdrawEwallet");
+      navigation.navigate("WithdrawEwallet", { type: withdrawalType });
     }
   };
 

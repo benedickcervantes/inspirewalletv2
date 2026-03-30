@@ -1,6 +1,6 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { doc, getDoc } from "firebase/firestore";
 import { useCallback, useEffect, useState } from "react";
@@ -55,6 +55,7 @@ const getLocalBankTransactionFee = (amount: number, isUnionBank: boolean) => {
 
 export default function BankWithdrawal() {
   const navigation = useNavigation();
+  const route = useRoute();
   const { t } = useLanguage();
   const [accountNumber, setAccountNumber] = useState("");
   const [accountHolderName, setAccountHolderName] = useState("");
@@ -70,6 +71,12 @@ export default function BankWithdrawal() {
     null,
   );
   const [availableBalance, setAvailableBalance] = useState(0);
+  const [agentCommission, setAgentCommission] = useState(0);
+  
+  const withdrawalType = (route.params as { type?: string })?.type || "available-balance";
+  const isAgentWithdrawal = withdrawalType === "agent-withdrawal";
+  const displayBalance = isAgentWithdrawal ? agentCommission : availableBalance;
+  
   const normalizedBankName = bankName.trim().toUpperCase();
   const hasSelectedBank = normalizedBankName.length > 0;
   const isUnionBank = normalizedBankName === "UNIONBANK";
@@ -123,9 +130,15 @@ export default function BankWithdrawal() {
         const accessToken = await AsyncStorage.getItem("access_token");
         if (!accessToken) return;
         const { success, wallet } = await getOrCreateMainWallet(accessToken);
-        if (success && wallet?.balance != null) {
-          const bal = parseFloat(String(wallet.balance));
-          setAvailableBalance(Number.isNaN(bal) ? 0 : bal);
+        if (success && wallet) {
+          if (wallet.balance != null) {
+            const bal = parseFloat(String(wallet.balance));
+            setAvailableBalance(Number.isNaN(bal) ? 0 : bal);
+          }
+          if (wallet.agentCommission != null) {
+            const commission = parseFloat(String(wallet.agentCommission));
+            setAgentCommission(Number.isNaN(commission) ? 0 : commission);
+          }
         }
       } catch (error) {
         console.error(
@@ -160,7 +173,7 @@ export default function BankWithdrawal() {
         newErrors.withdrawalAmount = t("withdraw.validation.invalidAmount");
       } else {
         const walletBalance =
-          availableBalance || (userData?.availBalanceAmount as number) || 0;
+          displayBalance || (userData?.availBalanceAmount as number) || 0;
         if (amountNum > walletBalance) {
           newErrors.withdrawalAmount = t(
             "withdraw.validation.insufficient",
@@ -192,6 +205,7 @@ export default function BankWithdrawal() {
       branchName,
       amount: unformatNumberString(withdrawalAmount),
       email: emailAddress,
+      type: withdrawalType,
     });
   };
 

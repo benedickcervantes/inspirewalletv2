@@ -3,7 +3,14 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useState } from "react";
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+    ActivityIndicator,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
     getOrCreateMainWallet,
@@ -12,10 +19,13 @@ import {
 import { useLanguage } from "../../../context/LanguageContext";
 import PasscodeModal from "../../components/PasscodeModal";
 
-import ActivityModal from '../../components/ActivityModal';
+import ActivityModal from "../../components/ActivityModal";
 const BANK_FEE_THRESHOLD = 100000;
 
-const getLocalBankTransactionFee = (amountValue: number, isUnionBank: boolean) => {
+const getLocalBankTransactionFee = (
+  amountValue: number,
+  isUnionBank: boolean,
+) => {
   if (Number.isNaN(amountValue) || amountValue <= 0) return 0;
   if (isUnionBank) return amountValue > BANK_FEE_THRESHOLD ? 250 : 0;
   return amountValue > BANK_FEE_THRESHOLD ? 150 : 50;
@@ -33,6 +43,7 @@ export default function WithdrawLocalBConfirm() {
     branchName?: string;
     amount?: string;
     email?: string;
+    type?: string;
   };
   const [showAlertModal, setShowAlertModal] = useState(false);
   const [alertConfig, setAlertConfig] = useState<{
@@ -51,6 +62,7 @@ export default function WithdrawLocalBConfirm() {
   const branchName = params?.branchName || "";
   const amount = params?.amount || "0";
   const email = params?.email || "";
+  const withdrawalType = params?.type || "available-balance";
   const parsedAmount = parseFloat(amount);
   const isUnionBank = bankName.trim().toUpperCase() === "UNIONBANK";
   const transactionFee = getLocalBankTransactionFee(parsedAmount, isUnionBank);
@@ -97,10 +109,15 @@ export default function WithdrawLocalBConfirm() {
         setIsSubmitting(false);
         return;
       }
+      const source =
+        withdrawalType === "agent-withdrawal"
+          ? "agent_commission"
+          : "available_balance";
       const body: Record<string, string | undefined> = {
         walletId: wallet.id as string,
         amount: String(parseFloat(amount)),
         method: "local_bank",
+        source,
         email: email || undefined,
         accountNumber,
         accountHolderName,
@@ -305,7 +322,6 @@ export default function WithdrawLocalBConfirm() {
                 </Text>
               </View>
             </View>
-
           </View>
 
           {/* Withdrawal Amount Card */}

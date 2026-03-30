@@ -7,7 +7,8 @@ export type TranslationMap = Record<string, string>;
 
 const en: TranslationMap = {
   "investment.processingRequestTitle": "Processing Request",
-  "investment.processingRequestMessage": "This contract feature is currently in processing. It could take 7 to 10 days to reflect. Thank you for your understanding.",
+  "investment.processingRequestMessage":
+    "This contract feature is currently in processing. It could take 7 to 10 days to reflect. Thank you for your understanding.",
   "kyc.takePhoto": "Take a Photo",
   "kyc.chooseFromLibrary": "Choose from Library",
   "kyc.selectUploadMethod": "Select Upload Method",
@@ -721,8 +722,7 @@ const en: TranslationMap = {
   "agent.shareMessagePrefix": "Join InspireWallet with my referral code:",
   "agent.shareTitle": "Referral Code",
   "agent.commission": "Agent Commission",
-  "agent.commissionHint":
-    "Earned from referred clients' approved term savings",
+  "agent.commissionHint": "Earned from referred clients' approved term savings",
   "agent.yourReferralCode": "Your Referral Code",
   "agent.share": "Share",
   "agent.directReferrals": "Direct Referrals",
@@ -1037,7 +1037,8 @@ const en: TranslationMap = {
   "history.travelProtectionFee":
     "Travel Protection Fee - Application {applicationId}",
   "history.physicalCardApplicationFee": "Physical Card Application Fee",
-  "history.stockSoldAdminApproved": "Stock sold (admin approved): {count} stocks",
+  "history.stockSoldAdminApproved":
+    "Stock sold (admin approved): {count} stocks",
   "history.resultText": "Result {count}/{total}",
   "history.loadMore": "Load More",
   "history.viewReceipt": "View Receipt",
@@ -1138,7 +1139,7 @@ const en: TranslationMap = {
   "terms.h10": "Contact",
   "terms.i10":
     "For questions or concerns regarding these terms, please contact us at",
-  "terms.contactText": "inspireholdings.ph: (02) 5322 1002",
+  "terms.contactText": "Inspire Alliance Fund Group Inc.",
 
   // Notification
   "notification.title": "Notifications",
@@ -2061,7 +2062,8 @@ const en: TranslationMap = {
 
 const ko: TranslationMap = {
   "investment.processingRequestTitle": "처리 중인 요청",
-  "investment.processingRequestMessage": "이 계약 기능은 현재 처리 중입니다. 시스템에 반영되기까지 7~10일이 소요될 수 있습니다. 귀하의 양해에 감사드립니다.",
+  "investment.processingRequestMessage":
+    "이 계약 기능은 현재 처리 중입니다. 시스템에 반영되기까지 7~10일이 소요될 수 있습니다. 귀하의 양해에 감사드립니다.",
   "kyc.takePhoto": "사진 찍기",
   "kyc.chooseFromLibrary": "라이브러리에서 선택",
   "kyc.selectUploadMethod": "업로드 방법 선택",
@@ -2314,7 +2316,8 @@ const ko: TranslationMap = {
   "rewardPoints.pointsWithUnit": "{value} pts",
   "rewardPoints.balanceAfter": "잔액: {points} pts",
   "rewardPoints.emptyTitle": "아직 리워드 거래가 없습니다",
-  "rewardPoints.emptySubtitle": "₱{min} 이상 송금으로 포인트 적립을 시작하세요!",
+  "rewardPoints.emptySubtitle":
+    "₱{min} 이상 송금으로 포인트 적립을 시작하세요!",
   "rewardPoints.allTransactionsLoaded": "모든 거래를 확인했습니다",
   "rewardPoints.convertTitle": "포인트를 잔액으로 전환",
   "rewardPoints.convertBody":
@@ -2539,8 +2542,7 @@ const ko: TranslationMap = {
   "settings.enableBiometricPasswordPlaceholder": "계정 비밀번호 입력",
   "settings.showPassword": "비밀번호 표시",
   "settings.hidePassword": "비밀번호 숨기기",
-  "settings.biometricLocalAuthFailed":
-    "생체 인증에 실패했거나 취소되었습니다.",
+  "settings.biometricLocalAuthFailed": "생체 인증에 실패했거나 취소되었습니다.",
   "settings.biometricPasswordMinLength":
     "비밀번호는 최소 6자 이상이어야 합니다.",
   "settings.enable": "활성화",
@@ -3062,7 +3064,7 @@ const ko: TranslationMap = {
     "당사는 언제든 본 약관을 수정할 수 있습니다. 중요한 변경 사항은 앱 또는 이메일로 안내합니다. 변경 후에도 앱을 계속 이용하면 새 약관에 동의한 것으로 봅니다.",
   "terms.h10": "문의",
   "terms.i10": "본 약관에 대한 문의나 불만 사항은 다음으로 연락해 주세요.",
-  "terms.contactText": "inspireholdings.ph: (02) 5322 1002",
+  "terms.contactText": "Inspire Alliance Fund Group Inc.",
   "notification.title": "알림",
   "notification.loginToView": "알림을 보려면 로그인하세요",
   "notification.noNotifications": "알림이 없습니다",
@@ -3945,7 +3947,8 @@ const ko: TranslationMap = {
 
 const ja: TranslationMap = {
   "investment.processingRequestTitle": "リクエスト処理中",
-  "investment.processingRequestMessage": "この契約機能は現在処理中です。反映されるまでに7〜10日かかる場合があります。ご理解のほどよろしくお願いいたします。",
+  "investment.processingRequestMessage":
+    "この契約機能は現在処理中です。反映されるまでに7〜10日かかる場合があります。ご理解のほどよろしくお願いいたします。",
   "kyc.takePhoto": "写真を撮る",
   "kyc.chooseFromLibrary": "ライブラリから選択",
   "kyc.selectUploadMethod": "アップロード方法を選択",
@@ -4208,7 +4211,8 @@ const ja: TranslationMap = {
     "{points}ポイントを利用可能残高 ₱{amount} に交換しました。",
   "rewardPoints.passcodeTooShort": "4桁のパスコードを入力してください。",
   "rewardPoints.notAuthenticated": "認証されていません。",
-  "rewardPoints.redemptionFailed": "交換に失敗しました。もう一度お試しください。",
+  "rewardPoints.redemptionFailed":
+    "交換に失敗しました。もう一度お試しください。",
   "rewardPoints.genericError": "エラーが発生しました。もう一度お試しください。",
   "rewardPoints.notEnoughTitle": "ポイント不足",
   "rewardPoints.notEnoughBody":
@@ -4434,7 +4438,8 @@ const ja: TranslationMap = {
     "メールアドレスまたはパスワードが正しくありません。もう一度お試しください。",
   "settings.biometricEnableServerError":
     "生体認証ログインを有効にできませんでした。もう一度お試しください。",
-  "settings.biometricPasswordRequired": "アカウントのパスワードを入力してください。",
+  "settings.biometricPasswordRequired":
+    "アカウントのパスワードを入力してください。",
   "settings.biometricEmailMissing":
     "メールアドレスを読み込めませんでした。一度ログアウトしてから再度ログインし、生体認証を有効にしてください。",
   "settings.biometricSetupSubtitle":
@@ -4462,7 +4467,8 @@ const ja: TranslationMap = {
   "agent.referredClientsSubtitle":
     "承認済み期間設定型プランを保有する紹介先（手数料発生）",
   "agent.commissionFromClient": "紹介先からの手数料",
-  "agent.emptyReferredClients": "承認済み期間設定型プランの紹介先はまだありません",
+  "agent.emptyReferredClients":
+    "承認済み期間設定型プランの紹介先はまだありません",
   "agent.emptyReferredClientsHint":
     "紹介先が期間設定型プランを作成し承認されると、手数料が発生しここに表示されます。",
   "agent.pendingCommission": "保留中の手数料",
@@ -4934,7 +4940,7 @@ const ja: TranslationMap = {
     "当社はいつでも本規約を変更できるものとします。重要な変更はアプリまたはメールでお知らせします。変更後もアプリを利用し続けることで、新規約に同意したものとみなされます。",
   "terms.h10": "お問い合わせ",
   "terms.i10": "本規約に関するご質問・ご要望は以下までご連絡ください。",
-  "terms.contactText": "inspireholdings.ph: (02) 5322 1002",
+  "terms.contactText": "Inspire Alliance Fund Group Inc.",
   "notification.title": "通知",
   "notification.loginToView": "通知を表示するにはログインしてください",
   "notification.noNotifications": "通知はまだありません",
@@ -5063,7 +5069,8 @@ const ja: TranslationMap = {
   "ct.eligibleTitle": "対象となっています！",
   "ct.eligibleDesc":
     "₱10,000,000以上の期間設定型プランがあります。下のボタンをタップしてダイヤモンドエリートカードを請求してください。",
-  "ct.needWarningText": "単一の期間設定型プラン契約で₱10,000,000以上が必要です。",
+  "ct.needWarningText":
+    "単一の期間設定型プラン契約で₱10,000,000以上が必要です。",
   "ct.howToGetCard": "このカードを入手する方法",
   "ct.diamond.name": "ダイヤモンドエリート",
   "ct.goldName": "ゴールドエリート",
@@ -5831,7 +5838,8 @@ const ja: TranslationMap = {
 
 const ar: TranslationMap = {
   "investment.processingRequestTitle": "قيد معالجة الطلب",
-  "investment.processingRequestMessage": "ميزة العقد هذه قيد المعالجة حاليًا. قد يستغرق الأمر من 7 إلى 10 أيام حتى ينعكس. شكرا لتفهمك.",
+  "investment.processingRequestMessage":
+    "ميزة العقد هذه قيد المعالجة حاليًا. قد يستغرق الأمر من 7 إلى 10 أيام حتى ينعكس. شكرا لتفهمك.",
   "kyc.takePhoto": "التقاط صورة",
   "kyc.chooseFromLibrary": "اختر من المكتبة",
   "kyc.selectUploadMethod": "حدد طريقة التحميل",
@@ -6210,10 +6218,10 @@ const ar: TranslationMap = {
   "history.planSubscriptionCommission": "عمولة اشتراك الخطة",
   "history.approvedPlanSubscription":
     "تمت الموافقة على اشتراك الخطة: {planName} (85% إيداع التداول)",
-  "history.travelProtectionFee":
-    "رسوم حماية السفر - الطلب {applicationId}",
+  "history.travelProtectionFee": "رسوم حماية السفر - الطلب {applicationId}",
   "history.physicalCardApplicationFee": "رسوم طلب البطاقة الفعلية",
-  "history.stockSoldAdminApproved": "بيع الأسهم (موافق عليه من الإدارة): {count} أسهم",
+  "history.stockSoldAdminApproved":
+    "بيع الأسهم (موافق عليه من الإدارة): {count} أسهم",
   "investment.timeDeposit": "الادخار لأجل",
   "investment.amountWalletLabel": "الأرباح المتوقعة",
   "investment.amountWalletHint": "إجمالي الأرباح المتوقعة من جميع العقود",
@@ -6804,7 +6812,7 @@ const ar: TranslationMap = {
     "قد نعدّل هذه الشروط في أي وقت. سنخبرك بالتغييرات المهمة عبر التطبيق أو البريد. استمرارك في استخدام التطبيق بعد التعديلات يعني قبولك للشروط الجديدة.",
   "terms.h10": "الاتصال",
   "terms.i10": "للاستفسارات أو المخاوف بخصوص هذه الشروط، يرجى الاتصال بنا على",
-  "terms.contactText": "inspireholdings.ph: (02) 5322 1002",
+  "terms.contactText": "Inspire Alliance Fund Group Inc.",
   "notification.title": "الإشعارات",
   "notification.loginToView": "يرجى تسجيل الدخول لعرض الإشعارات",
   "notification.noNotifications": "لا توجد إشعارات بعد",
@@ -6933,8 +6941,7 @@ const ar: TranslationMap = {
   "ct.eligibleTitle": "أنت مؤهل!",
   "ct.eligibleDesc":
     "لديك ادخار لأجل بقيمة ₱10,000,000 أو أكثر. انقر الزر أدناه للمطالبة ببطاقة دايموند إيليت.",
-  "ct.needWarningText":
-    "تحتاج إلى ₱10,000,000 أو أكثر في عقد ادخار لأجل واحد.",
+  "ct.needWarningText": "تحتاج إلى ₱10,000,000 أو أكثر في عقد ادخار لأجل واحد.",
   "ct.howToGetCard": "كيفية الحصول على هذه البطاقة",
   "ct.diamond.name": "دايموند إيليت",
   "ct.goldName": "جولد إيليت",
