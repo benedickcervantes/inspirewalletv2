@@ -2,13 +2,12 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { useEffect, useState } from "react";
 import {
-  Animated,
-  ImageBackground,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
+    ImageBackground,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    useWindowDimensions,
+    View,
 } from "react-native";
 import { SvgXml } from "react-native-svg";
 import { useLanguage } from "../../context/LanguageContext";
@@ -43,9 +42,6 @@ interface WalletTabProps {
   isBalanceLoading: boolean;
   activeCardDesign?: string | null;
   formatCurrency: (amount: number) => string;
-  flipAnimation: Animated.Value;
-  isCardFlipped: boolean;
-  flipCard: () => void;
   isWithdrawalLocked?: boolean;
   onWithdrawalLockedPress?: () => void;
 }
@@ -89,9 +85,6 @@ export default function WalletTab({
   isBalanceLoading,
   activeCardDesign,
   formatCurrency,
-  flipAnimation,
-  isCardFlipped,
-  flipCard,
   isWithdrawalLocked = false,
   onWithdrawalLockedPress,
 }: WalletTabProps) {
@@ -150,24 +143,6 @@ export default function WalletTab({
 
   const theme = getCardTheme(activeDesign);
 
-  const frontInterpolate = flipAnimation.interpolate({
-    inputRange: [0, 180],
-    outputRange: ["0deg", "180deg"],
-  });
-
-  const backInterpolate = flipAnimation.interpolate({
-    inputRange: [0, 180],
-    outputRange: ["180deg", "360deg"],
-  });
-
-  const frontAnimatedStyle = {
-    transform: [{ rotateY: frontInterpolate }],
-  };
-
-  const backAnimatedStyle = {
-    transform: [{ rotateY: backInterpolate }],
-  };
-
   return (
     <View
       style={[
@@ -175,7 +150,7 @@ export default function WalletTab({
         { marginHorizontal: horizontalPadding, height: containerHeight },
       ]}
     >
-      <Animated.View style={[styles.cardFace, frontAnimatedStyle]}>
+      <View style={[styles.cardFace]}>
         <ImageBackground
           source={getDesignFrontImage(activeDesign || undefined)}
           style={[
@@ -199,12 +174,7 @@ export default function WalletTab({
               },
             ]}
           >
-            <TouchableOpacity
-              onPress={flipCard}
-              activeOpacity={1}
-              disabled={true}
-              style={[styles.cardFlipArea, { flex: 0 }]}
-            >
+            <View style={[styles.cardFlipArea, { flex: 0 }]}>
               <View
                 style={[
                   styles.balanceHeader,
@@ -280,7 +250,7 @@ export default function WalletTab({
                   },
                 ]}
               />
-            </TouchableOpacity>
+            </View>
 
             <View
               style={[
@@ -374,7 +344,8 @@ export default function WalletTab({
                     <Text
                       style={[
                         styles.cardButtonWithdrawText,
-                        isWithdrawalLocked && styles.cardButtonWithdrawTextLocked,
+                        isWithdrawalLocked &&
+                          styles.cardButtonWithdrawTextLocked,
                         {
                           color: theme.withdrawButtonText,
                           fontSize: Math.round(14 * fontScale),
@@ -390,28 +361,7 @@ export default function WalletTab({
             </View>
           </View>
         </ImageBackground>
-      </Animated.View>
-
-      <Animated.View
-        style={[styles.cardFace, styles.cardBack, backAnimatedStyle]}
-        pointerEvents="none"
-      >
-        <TouchableOpacity
-          onPress={flipCard}
-          activeOpacity={1}
-          style={styles.cardBackTouchable}
-        >
-          <ImageBackground
-            source={getDesignBackImage(activeDesign || undefined)}
-            style={[
-              styles.balanceCard,
-              { width: cardWidth, height: cardHeight },
-            ]}
-            imageStyle={styles.balanceCardImage}
-            resizeMode="cover"
-          />
-        </TouchableOpacity>
-      </Animated.View>
+      </View>
     </View>
   );
 }
