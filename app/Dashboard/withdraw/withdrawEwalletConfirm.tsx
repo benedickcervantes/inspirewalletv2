@@ -2,7 +2,7 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
-import React, { useState } from "react";
+import { useState } from "react";
 import {
     ActivityIndicator,
     ScrollView,
@@ -56,7 +56,6 @@ export default function EWalletConfirm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPasscodeModal, setShowPasscodeModal] = useState(false);
   const [passcode, setPasscode] = useState("");
-  const [hasPasscode, setHasPasscode] = useState(false);
 
   const method = params.method || "e-wallet";
   const walletType = params.walletType || "";
@@ -72,23 +71,21 @@ export default function EWalletConfirm() {
     (Number.isNaN(parsedAmount) ? 0 : parsedAmount) - transactionFee,
   );
 
-  React.useEffect(() => {
-    (async () => {
-      const userJson = await AsyncStorage.getItem("user");
-      if (userJson) {
-        try {
-          const user = JSON.parse(userJson) as { hasPasscode?: boolean };
-          setHasPasscode(!!user?.hasPasscode);
-        } catch (_) {}
-      }
-    })();
-  }, []);
-
   const submitWithdrawal = async (passcodeToSend?: string) => {
     if (isSubmitting) return;
     setIsSubmitting(true);
     setAlertConfig({ title: "", message: "" });
     try {
+      const amountNum = parseFloat(amount);
+      if (Number.isNaN(amountNum) || amountNum <= 0) {
+        setAlertConfig({
+          title: t("common.error"),
+          message: t("withdraw.validation.invalidAmount"),
+        });
+        setShowAlertModal(true);
+        return;
+      }
+
       const accessToken = await AsyncStorage.getItem("access_token");
       if (!accessToken) {
         setAlertConfig({
@@ -116,7 +113,7 @@ export default function EWalletConfirm() {
           : "available_balance";
       const body: Record<string, string | undefined> = {
         walletId: wallet.id as string,
-        amount: String(parseFloat(amount)),
+        amount: amountNum.toFixed(2),
         method: "e_wallet",
         source,
         email: email || undefined,
@@ -124,7 +121,9 @@ export default function EWalletConfirm() {
         accountNumber,
         accountName,
       };
-      if (hasPasscode && passcodeToSend) body.passcode = passcodeToSend;
+      if (passcodeToSend && /^\d{4}$/.test(passcodeToSend)) {
+        body.passcode = passcodeToSend;
+      }
       const result = await submitWithdrawalRequest(accessToken, body);
 
       if (result.success) {
@@ -134,7 +133,8 @@ export default function EWalletConfirm() {
         const txId = (result.data as any)?.id || t("investment.pending");
         (navigation as any).navigate("depositReceipt", {
           transactionId: txId,
-          amount: amount.toString(),
+          // Receipt should reflect net amount after transaction fee.
+          amount: String(netWithdrawalAmount),
           currency: "PHP",
           depositMethod: t("withdraw.ewallet"),
           type: "Withdrawal",
@@ -164,12 +164,9 @@ export default function EWalletConfirm() {
     }
   };
 
-  const handleConfirm = async () => {
-    if (hasPasscode) {
-      setShowPasscodeModal(true);
-      return;
-    }
-    await submitWithdrawal();
+  const handleConfirm = () => {
+    // Backend requires a passcode for withdrawal requests.
+    setShowPasscodeModal(true);
   };
 
   const handlePasscodeConfirm = () => {

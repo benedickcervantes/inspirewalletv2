@@ -172,8 +172,12 @@ export default function BankWithdrawal() {
       if (amountNum <= 0) {
         newErrors.withdrawalAmount = t("withdraw.validation.invalidAmount");
       } else {
-        const walletBalance =
-          displayBalance || (userData?.availBalanceAmount as number) || 0;
+        // For agent withdrawals, never fall back to available balance.
+        const walletBalance = isAgentWithdrawal
+          ? agentCommission
+          : displayBalance ||
+            (userData?.availBalanceAmount as number) ||
+            0;
         if (amountNum > walletBalance) {
           newErrors.withdrawalAmount = t(
             "withdraw.validation.insufficient",
@@ -261,10 +265,16 @@ export default function BankWithdrawal() {
             {/* Title */}
             <View style={styles.titleContainer}>
               <Text style={styles.title}>
-                {t("dashboard.availableBalance")}
+                {isAgentWithdrawal
+                  ? t("withdraw.agentWithdrawal")
+                  : t("dashboard.availableBalance")}
               </Text>
               <Text style={styles.subtitle}>
-                {t("withdraw.fromAvailableBalance")}
+                {t(
+                  isAgentWithdrawal
+                    ? "withdraw.fromAgentWallet"
+                    : "withdraw.fromAvailableBalance",
+                )}
               </Text>
             </View>
 
