@@ -38,17 +38,15 @@ export default function DepositProofView() {
   const proofUri = params.proofUri || null;
 
   const isCryptoDeposit = ["BTC", "ETH", "USDT"].includes(currency);
-  const displayAmount = isCryptoDeposit && amountInPhp
-    ? amountInPhp
+  const hasPhpEquivalent = Number.isFinite(amountInPhp);
+  const shouldUsePhpEquivalent = hasPhpEquivalent && currency !== "PHP";
+  const displayAmount = shouldUsePhpEquivalent
+    ? Number(amountInPhp)
     : Number(rawAmount);
 
   const formattedAmount = `₱ ${displayAmount.toLocaleString(undefined, {
     minimumFractionDigits: 2,
   })}`;
-
-  const cryptoSubtitle = isCryptoDeposit
-    ? `Funded with ${rawAmount} ${currency}`
-    : null;
 
   return (
     <View style={styles.container}>
@@ -101,12 +99,6 @@ export default function DepositProofView() {
               {/* Amount */}
               <Text style={styles.heroLabel}>{type}</Text>
               <Text style={styles.heroAmount}>{formattedAmount}</Text>
-              {cryptoSubtitle && (
-                <View style={styles.cryptoPill}>
-                  <Ionicons name="logo-bitcoin" size={12} color="#FFFFFF" />
-                  <Text style={styles.cryptoPillText}>{cryptoSubtitle}</Text>
-                </View>
-              )}
 
               {/* Bottom decorative circles */}
               <View style={styles.heroCircle1} />
@@ -139,7 +131,6 @@ export default function DepositProofView() {
             <InfoRow
               label={t("deposit.amount")}
               value={formattedAmount}
-              subValue={cryptoSubtitle}
               highlight
             />
             <InfoRow label={t("deposit.depositMethod")} value={depositMethod} />

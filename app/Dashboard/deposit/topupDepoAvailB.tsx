@@ -184,6 +184,7 @@ export default function TopUpBalance() {
       navigation.navigate("TopupConfirm", {
         currency: selectedCurrency,
         amount: unformatNumberString(amount),
+        amountInPhp: Number(amountToSubmit),
         currencySymbol: selectedCurrencyData.symbol,
         requestId: result.data.id,
       });
