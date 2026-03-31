@@ -361,6 +361,15 @@ const Notification = () => {
     ? backendNotifications.filter((n) => !n.isRead).length
     : notifications.filter((n) => !n.read).length;
 
+  useEffect(() => {
+    // Keep global badge count in sync with what this screen currently knows.
+    if (useBackend) {
+      setUnreadCount(backendNotifications.filter((n) => !n.isRead).length);
+      return;
+    }
+    setUnreadCount(notifications.filter((n) => !n.read).length);
+  }, [backendNotifications, notifications, setUnreadCount, useBackend]);
+
   const getBackendCreatedAtMs = (item: NotificationItemBackend): number => {
     const parsed = new Date(item.createdAt).getTime();
     return Number.isFinite(parsed) ? parsed : 0;
