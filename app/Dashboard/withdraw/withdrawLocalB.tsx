@@ -9,11 +9,11 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { getOrCreateMainWallet } from "../../../configs/api";
 import { auth, firestore } from "../../../configs/firebase";
 import { useLanguage } from "../../../context/LanguageContext";
-import ActivityModal from '../../components/ActivityModal';
 import {
     formatAmountWithCommas,
     unformatNumberString,
 } from "../../../utils/numberFormat";
+import ActivityModal from '../../components/ActivityModal';
 
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 const isValidEmail = (email: string) =>
