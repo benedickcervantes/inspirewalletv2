@@ -19,6 +19,7 @@ import {
     unformatNumberString,
 } from "../../../utils/numberFormat";
 import { useResponsive } from "../../../utils/responsive";
+import { useIdleTimeout } from "../../../context/IdleTimeoutContext";
 import Loader from "../../Loader/Loader";
 import ContactsModal from "./ContactsModal";
 import QRScanner from "./QRScanner";
@@ -214,6 +215,7 @@ export default function TransferRecipient() {
   const route = useRoute();
   const insets = useSafeAreaInsets();
   const { horizontalPadding } = useResponsive();
+  const { registerActivity } = useIdleTimeout();
   const params = (route.params || {}) as {
     balanceType?: string;
     scannedAccount?: string;
@@ -241,7 +243,6 @@ export default function TransferRecipient() {
 
   useEffect(() => {
     fetchBalance();
-    loadContacts();
     loadUserAccountNumber();
     loadMostRecentRecipientIntoField();
   }, []);
@@ -277,6 +278,16 @@ export default function TransferRecipient() {
     } catch (error) {
       console.error("Error loading contacts:", error);
     }
+  };
+
+  const handleOpenContactsModal = async () => {
+    registerActivity();
+    // Requesting contacts permission on Android can trigger app-state changes.
+    // Load contacts only when user explicitly opens the picker.
+    if (contacts.length === 0) {
+      await loadContacts();
+    }
+    setShowContactsModal(true);
   };
 
   const loadUserAccountNumber = async () => {
@@ -516,7 +527,7 @@ export default function TransferRecipient() {
 
             <TouchableOpacity
               style={styles.quickActionButton}
-              onPress={() => setShowContactsModal(true)}
+              onPress={handleOpenContactsModal}
             >
               <View style={styles.quickActionIcon}>
                 <Ionicons name="people" size={28} color="#E25A17" />
@@ -575,7 +586,7 @@ export default function TransferRecipient() {
                 />
                 <TouchableOpacity
                   style={styles.contactsButton}
-                  onPress={() => setShowContactsModal(true)}
+                  onPress={handleOpenContactsModal}
                 >
                   <Text style={styles.contactsButtonText}>
                     {t("sendMoney.showContacts")}

@@ -20,6 +20,10 @@ import { useLanguage } from "../../../context/LanguageContext";
 import PasscodeModal from "../../components/PasscodeModal";
 
 import ActivityModal from "../../components/ActivityModal";
+import {
+    MIN_WITHDRAWAL_PHP,
+    parseWithdrawalAmountInput,
+} from "../../../utils/withdrawalAmount";
 const getEwalletTransactionFee = (amount: number) => {
   if (Number.isNaN(amount) || amount <= 0) return 0;
   if (amount <= 10000) return 25;
@@ -76,11 +80,35 @@ export default function EWalletConfirm() {
     setIsSubmitting(true);
     setAlertConfig({ title: "", message: "" });
     try {
-      const amountNum = parseFloat(amount);
-      if (Number.isNaN(amountNum) || amountNum <= 0) {
+      const parsedSubmit = parseWithdrawalAmountInput(amount);
+      if (!parsedSubmit.ok || parsedSubmit.value <= 0) {
         setAlertConfig({
           title: t("common.error"),
-          message: t("withdraw.validation.invalidAmount"),
+          message: t("withdraw.validation.invalidAmountFormat"),
+        });
+        setShowAlertModal(true);
+        return;
+      }
+      const amountNum = parsedSubmit.value;
+      if (amountNum < MIN_WITHDRAWAL_PHP) {
+        setAlertConfig({
+          title: t("common.error"),
+          message: t("withdraw.validation.minAmount").replace(
+            "{min}",
+            MIN_WITHDRAWAL_PHP.toFixed(2),
+          ),
+        });
+        setShowAlertModal(true);
+        return;
+      }
+      const submitFee = getEwalletTransactionFee(amountNum);
+      if (amountNum <= submitFee) {
+        setAlertConfig({
+          title: t("common.error"),
+          message: t("withdraw.validation.amountMustExceedFee").replace(
+            "{fee}",
+            submitFee.toFixed(2),
+          ),
         });
         setShowAlertModal(true);
         return;

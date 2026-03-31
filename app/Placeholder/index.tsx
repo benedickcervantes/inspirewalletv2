@@ -15,7 +15,7 @@ import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { doc, getDoc } from "firebase/firestore";
 import { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, Alert, AppState, Keyboard, Platform, ScrollView, StatusBar, StyleSheet, Text, TextInput, ToastAndroid, TouchableOpacity, useWindowDimensions, View } from "react-native";
+import { ActivityIndicator, AppState, Keyboard, Platform, ScrollView, StatusBar, StyleSheet, Text, TextInput, ToastAndroid, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import {
     SafeAreaView,
     useSafeAreaInsets,
@@ -102,6 +102,26 @@ export default function Placeholder() {
   const [passcode, setPasscode] = useState("");
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [profileNoticeVisible, setProfileNoticeVisible] = useState(false);
+  const [profileNoticeTitle, setProfileNoticeTitle] = useState("");
+  const [profileNoticeMessage, setProfileNoticeMessage] = useState("");
+  const [profileNoticeSeverity, setProfileNoticeSeverity] = useState<
+    "error" | "warning"
+  >("error");
+
+  const showProfileNotice = useCallback(
+    (
+      title: string,
+      message: string,
+      severity: "error" | "warning" = "error",
+    ) => {
+      setProfileNoticeTitle(title);
+      setProfileNoticeMessage(message);
+      setProfileNoticeSeverity(severity);
+      setProfileNoticeVisible(true);
+    },
+    [],
+  );
   const [agentHierarchyRole, setAgentHierarchyRole] =
     useState<AgentHierarchyRole | null>(null);
   const [companyKycView, setCompanyKycView] = useState<{
@@ -492,12 +512,16 @@ export default function Placeholder() {
     const firstName = editFirstName.trim();
     const lastName = editLastName.trim();
     if (!firstName || !lastName) {
-      Alert.alert("Validation", "First name and last name are required.");
+      showProfileNotice(
+        "Validation",
+        "First name and last name are required.",
+        "warning",
+      );
       return;
     }
     const accessToken = await AsyncStorage.getItem("access_token");
     if (!accessToken) {
-      Alert.alert("Error", "Not authenticated.");
+      showProfileNotice("Error", "Not authenticated.");
       return;
     }
     setSaving(true);
@@ -505,7 +529,11 @@ export default function Placeholder() {
     if (editMiddleName.trim()) body.middleName = editMiddleName.trim();
     if (hasPasscode) {
       if (!passcode || !/^\d{4}$/.test(passcode)) {
-        Alert.alert("Passcode Required", "Enter your 4-digit passcode.");
+        showProfileNotice(
+          "Passcode Required",
+          "Enter your 4-digit passcode.",
+          "warning",
+        );
         setSaving(false);
         return;
       }
@@ -520,26 +548,37 @@ export default function Placeholder() {
       setSuccessMessage("Your name has been updated successfully.");
       setShowSuccessModal(true);
     } else {
-      Alert.alert("Error", result.error || "Failed to update profile.");
+      showProfileNotice(
+        "Error",
+        result.error || "Failed to update profile.",
+      );
     }
   };
 
   const handleSavePhone = async () => {
     const phone = editPhone.trim();
     if (!phone) {
-      Alert.alert("Validation", "Contact number is required.");
+      showProfileNotice(
+        "Validation",
+        "Contact number is required.",
+        "warning",
+      );
       return;
     }
     const accessToken = await AsyncStorage.getItem("access_token");
     if (!accessToken) {
-      Alert.alert("Error", "Not authenticated.");
+      showProfileNotice("Error", "Not authenticated.");
       return;
     }
     setSaving(true);
     const body: Record<string, string> = { phone };
     if (hasPasscode) {
       if (!passcode || !/^\d{4}$/.test(passcode)) {
-        Alert.alert("Passcode Required", "Enter your 4-digit passcode.");
+        showProfileNotice(
+          "Passcode Required",
+          "Enter your 4-digit passcode.",
+          "warning",
+        );
         setSaving(false);
         return;
       }
@@ -554,14 +593,17 @@ export default function Placeholder() {
       setSuccessMessage("Your contact number has been updated successfully.");
       setShowSuccessModal(true);
     } else {
-      Alert.alert("Error", result.error || "Failed to update profile.");
+      showProfileNotice(
+        "Error",
+        result.error || "Failed to update profile.",
+      );
     }
   };
 
   const handleSaveContactLinks = async () => {
     const accessToken = await AsyncStorage.getItem("access_token");
     if (!accessToken) {
-      Alert.alert("Error", "Not authenticated.");
+      showProfileNotice("Error", "Not authenticated.");
       return;
     }
     const body: Record<string, string> = {};
@@ -574,13 +616,21 @@ export default function Placeholder() {
       body.whatsappLink = normalizeMessagingLink(whatsapp, "whatsapp");
 
     if (!body.lineAccountLink && !body.viberLink && !body.whatsappLink) {
-      Alert.alert("Validation", "Please enter at least one contact link.");
+      showProfileNotice(
+        "Validation",
+        "Please enter at least one contact link.",
+        "warning",
+      );
       return;
     }
 
     if (hasPasscode) {
       if (!passcode || !/^\d{4}$/.test(passcode)) {
-        Alert.alert("Passcode Required", "Enter your 4-digit passcode.");
+        showProfileNotice(
+          "Passcode Required",
+          "Enter your 4-digit passcode.",
+          "warning",
+        );
         return;
       }
       body.passcode = passcode;
@@ -596,7 +646,10 @@ export default function Placeholder() {
       setSuccessMessage("Your contact links have been updated successfully.");
       setShowSuccessModal(true);
     } else {
-      Alert.alert("Error", result.error || "Failed to update profile.");
+      showProfileNotice(
+        "Error",
+        result.error || "Failed to update profile.",
+      );
     }
   };
 
@@ -640,7 +693,7 @@ export default function Placeholder() {
       const asset = result.assets[0];
       const decoded = await decodeQrImage(asset.uri, provider, asset.mimeType);
       if (!decoded.success) {
-        Alert.alert(
+        showProfileNotice(
           "QR Decode Failed",
           decoded.error || "Unable to read QR code from image.",
         );
@@ -649,9 +702,10 @@ export default function Placeholder() {
 
       const raw = (decoded.normalizedLink || decoded.text || "").trim();
       if (!raw) {
-        Alert.alert(
+        showProfileNotice(
           "No QR Found",
           "No QR code found in the selected image. Please try a clearer QR.",
+          "warning",
         );
         return;
       }
@@ -666,7 +720,10 @@ export default function Placeholder() {
       }
     } catch (error) {
       console.log("Error decoding contact QR:", error);
-      Alert.alert("Error", "Something went wrong while reading the QR code.");
+      showProfileNotice(
+        "Error",
+        "Something went wrong while reading the QR code.",
+      );
     } finally {
       setIsProcessingContactQR(false);
     }
@@ -1621,6 +1678,39 @@ export default function Placeholder() {
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
+      </ActivityModal>
+
+      {/* Profile notice (replaces system Alert — same card style as success / settings modals) */}
+      <ActivityModal
+        visible={profileNoticeVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setProfileNoticeVisible(false)}
+      >
+        <View style={styles.successOverlay}>
+          <View style={styles.successContent}>
+            <Ionicons
+              name={
+                profileNoticeSeverity === "warning"
+                  ? "warning"
+                  : "alert-circle"
+              }
+              size={40}
+              color={
+                profileNoticeSeverity === "warning" ? "#F59E0B" : "#EF4444"
+              }
+              style={{ marginBottom: 8 }}
+            />
+            <Text style={styles.successTitle}>{profileNoticeTitle}</Text>
+            <Text style={styles.successMessage}>{profileNoticeMessage}</Text>
+            <TouchableOpacity
+              style={styles.successButton}
+              onPress={() => setProfileNoticeVisible(false)}
+            >
+              <Text style={styles.successButtonText}>{t("common.ok")}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </ActivityModal>
 
       {/* Success Modal */}

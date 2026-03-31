@@ -17,6 +17,7 @@ export default function TopUpConfirm() {
   const params = (route.params || {}) as {
     currency?: string;
     amount?: string;
+    amountInPhp?: number;
     currencySymbol?: string;
     requestId?: string;
   };
@@ -32,6 +33,7 @@ export default function TopUpConfirm() {
 
   const currency = params.currency || "PHP";
   const amount = params.amount || "0";
+  const amountInPhp = params.amountInPhp;
   const currencySymbol = params.currencySymbol || "₱";
 
   useEffect(() => {
@@ -155,6 +157,7 @@ export default function TopUpConfirm() {
         transactionId: newRequestId || t("investment.pending"),
         requestId: newRequestId || t("investment.pending"),
         amount,
+        amountInPhp,
         currency,
         depositMethod: t("deposit.topUpBalance"),
         type: "Top Up",

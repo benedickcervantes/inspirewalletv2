@@ -296,6 +296,25 @@ export default function HistoryScreen() {
     const exactKey = TRANSACTION_DESCRIPTION_KEYS[normalized];
     if (exactKey) return t(exactKey);
 
+    // Deposit request status descriptions from backend/history mappers.
+    const topUpStatusMatch = normalized.match(/^Top[- ]?up\s+(Requested|Approved|Rejected)$/i);
+    if (topUpStatusMatch?.[1]) {
+      const status = topUpStatusMatch[1].toLowerCase();
+      if (status === "requested") return t("notification.titleTopUpRequested");
+      if (status === "approved") return t("notification.titleTopUpApproved");
+      if (status === "rejected") return t("notification.titleTopUpRejected");
+    }
+
+    const termSavingsStatusMatch = normalized.match(
+      /^(?:Time deposit|Term savings)\s+(Requested|Approved|Rejected)$/i,
+    );
+    if (termSavingsStatusMatch?.[1]) {
+      const status = termSavingsStatusMatch[1].toLowerCase();
+      if (status === "requested") return t("notification.titleTimeDepositRequested");
+      if (status === "approved") return t("notification.titleTimeDepositApproved");
+      if (status === "rejected") return t("notification.titleTimeDepositRejected");
+    }
+
     // Travel protection fee (e.g. "Travel Protection Fee - Application ABC123")
     const travelProtectionFeeMatch = normalized.match(
       /^Travel Protection Fee - Application\s+(.+)$/i,
@@ -696,7 +715,7 @@ export default function HistoryScreen() {
             ? mapDepositRequestsToTransactions(topUpRes.requests, "TOP_UP", "Top-up")
             : [];
           const mappedTimeDepositRequests = timeDepositRes.success
-            ? mapDepositRequestsToTransactions(timeDepositRes.deposits, "TIME_DEPOSIT", "Time deposit")
+            ? mapDepositRequestsToTransactions(timeDepositRes.deposits, "TIME_DEPOSIT", "Term savings")
             : [];
           const mappedStockRequests = stockRes.success
             ? mapDepositRequestsToTransactions(stockRes.requests, "STOCK_BUY", "Stock investment")
@@ -889,7 +908,8 @@ export default function HistoryScreen() {
 
     const isTimeDepositRequest =
       normalizedType === "TIME_DEPOSIT" ||
-      normalizedDescription.includes("time deposit");
+      normalizedDescription.includes("time deposit") ||
+      normalizedDescription.includes("term savings");
     if (isTimeDepositRequest && !normalizedDescription.includes("approved")) {
       return false;
     }

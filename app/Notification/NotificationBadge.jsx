@@ -11,7 +11,7 @@ import notificationService from './notificationService';
  * otherwise uses Firebase (notificationService).
  * Refetches on app focus so every activity is reflected.
  */
-const NotificationBadge = () => {
+const NotificationBadge = ({ hidden = false }) => {
   const { unreadCount: backendUnreadCount, refetchUnreadCount } =
     useUnreadNotifications();
   const [firebaseUnreadCount, setFirebaseUnreadCount] = useState(0);
@@ -84,7 +84,7 @@ const NotificationBadge = () => {
 
   const unreadCount = useBackend ? backendUnreadCount : firebaseUnreadCount;
 
-  if (unreadCount === 0) {
+  if (hidden || unreadCount === 0) {
     return null;
   }
 
