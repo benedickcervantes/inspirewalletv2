@@ -19,6 +19,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { getOrCreateMainWallet } from "../../../configs/api";
 import { auth, firestore } from "../../../configs/firebase";
 import { useLanguage } from "../../../context/LanguageContext";
+import ActivityModal from '../../components/ActivityModal';
 import {
     formatAmountWithCommas,
     unformatNumberString,
@@ -69,6 +70,7 @@ export default function EWalletWithdrawal() {
   );
   const [availableBalance, setAvailableBalance] = useState(0);
   const [agentCommission, setAgentCommission] = useState(0);
+  const [showMinimumBalanceWarning, setShowMinimumBalanceWarning] = useState(false);
   
   const withdrawalType = (route.params as { type?: string })?.type || "available-balance";
   const isAgentWithdrawal = withdrawalType === "agent-withdrawal";
@@ -201,6 +203,17 @@ export default function EWalletWithdrawal() {
     }
 
     setErrors({});
+
+    // Check minimum balance requirement
+    const amountNum = parseFloat(unformatNumberString(withdrawalAmount).trim());
+    const currentBalance = isAgentWithdrawal ? agentCommission : availableBalance;
+    const remainingBalance = currentBalance - amountNum;
+    const minimumRequiredBalance = 1000;
+
+    if (remainingBalance < minimumRequiredBalance) {
+      setShowMinimumBalanceWarning(true);
+      return;
+    }
 
     navigation.navigate("WithdrawEwalletConfirm", {
       method: "e-wallet",
@@ -503,6 +516,62 @@ export default function EWalletWithdrawal() {
             <View style={styles.bottomPadding} />
           </ScrollView>
         </KeyboardAvoidingView>
+
+        {/* Minimum Balance Warning Modal */}
+        <ActivityModal
+          visible={showMinimumBalanceWarning}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setShowMinimumBalanceWarning(false)}
+        >
+          <View style={styles.minimumBalanceOverlay}>
+            <View style={styles.minimumBalanceModal}>
+              <View style={styles.minimumBalanceIconContainer}>
+                <Ionicons name="warning" size={48} color="#E25A17" />
+              </View>
+              <Text style={styles.minimumBalanceTitle}>
+                Cannot Withdraw
+              </Text>
+              <Text style={styles.minimumBalanceMessage}>
+                You must maintain a minimum balance of ₱1,000 to keep your account active.
+              </Text>
+              <View style={styles.minimumBalanceDetails}>
+                <View style={styles.minimumBalanceDetailRow}>
+                  <Text style={styles.minimumBalanceDetailLabel}>
+                    Required Minimum
+                  </Text>
+                  <Text style={styles.minimumBalanceDetailValue}>₱1,000</Text>
+                </View>
+                <View style={styles.minimumBalanceDetailRow}>
+                  <Text style={styles.minimumBalanceDetailLabel}>
+                    Current Balance
+                  </Text>
+                  <Text style={styles.minimumBalanceDetailValue}>
+                    ₱{(isAgentWithdrawal ? agentCommission : availableBalance).toLocaleString("en-PH", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </Text>
+                </View>
+              </View>
+              <TouchableOpacity
+                style={styles.minimumBalanceButton}
+                onPress={() => setShowMinimumBalanceWarning(false)}
+              >
+                <LinearGradient
+                  colors={["#E25A17", "#F28934"]}
+                  style={styles.minimumBalanceGradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                >
+                  <Text style={styles.minimumBalanceButtonText}>
+                    Understood
+                  </Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </ActivityModal>
       </SafeAreaView>
     </View>
   );
@@ -751,5 +820,74 @@ const styles = StyleSheet.create({
   },
   bottomPadding: {
     height: 40,
+  },
+  minimumBalanceOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 24,
+  },
+  minimumBalanceModal: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    padding: 24,
+    alignItems: "center",
+    maxWidth: 320,
+  },
+  minimumBalanceIconContainer: {
+    marginBottom: 16,
+  },
+  minimumBalanceTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#E25A17",
+    marginBottom: 12,
+    textAlign: "center",
+  },
+  minimumBalanceMessage: {
+    fontSize: 14,
+    color: "#666",
+    textAlign: "center",
+    marginBottom: 24,
+    lineHeight: 20,
+  },
+  minimumBalanceDetails: {
+    backgroundColor: "#F5F5F5",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 24,
+    width: "100%",
+  },
+  minimumBalanceDetailRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginVertical: 8,
+  },
+  minimumBalanceDetailLabel: {
+    fontSize: 13,
+    color: "#999",
+    fontWeight: "500",
+  },
+  minimumBalanceDetailValue: {
+    fontSize: 14,
+    color: "#333",
+    fontWeight: "700",
+  },
+  minimumBalanceButton: {
+    borderRadius: 12,
+    overflow: "hidden",
+    width: "100%",
+  },
+  minimumBalanceGradient: {
+    paddingVertical: 14,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  minimumBalanceButtonText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#FFFFFF",
   },
 });
