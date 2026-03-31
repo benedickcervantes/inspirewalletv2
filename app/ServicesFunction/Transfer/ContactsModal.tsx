@@ -17,6 +17,7 @@ import {
   View,
 } from "react-native";
 import { getBeneficiaries } from "../../../configs/api";
+import { useIdleTimeout } from "../../../context/IdleTimeoutContext";
 import { useLanguage } from "../../../context/LanguageContext";
 
 import ActivityModal from "../../components/ActivityModal";
@@ -162,6 +163,7 @@ export default function ContactsModal({
   onSelectContact,
 }: ContactsModalProps) {
   const { t } = useLanguage();
+  const { runWithSystemPromptGuard, registerActivity } = useIdleTimeout();
   const [activeTab, setActiveTab] = useState<"saved" | "device">("saved");
   const [savedAccounts, setSavedAccounts] = useState<SavedAccount[]>([]);
   const [deviceContacts, setDeviceContacts] = useState<Contact[]>([]);
@@ -232,7 +234,9 @@ export default function ContactsModal({
 
   const removeMatchingDeviceContacts = async (accountNumber: string) => {
     try {
-      const { status } = await Contacts.requestPermissionsAsync();
+      const { status } = await runWithSystemPromptGuard(() =>
+        Contacts.requestPermissionsAsync(),
+      );
       if (status !== "granted") return;
       const target = normalizePhone(accountNumber);
       if (!target) return;
@@ -428,8 +432,11 @@ export default function ContactsModal({
 
   const loadDeviceContacts = async () => {
     try {
+      registerActivity();
       setIsLoadingDeviceContacts(true);
-      const { status } = await Contacts.requestPermissionsAsync();
+      const { status } = await runWithSystemPromptGuard(() =>
+        Contacts.requestPermissionsAsync(),
+      );
       if (status !== "granted") {
         setHasContactPermission(false);
         setDeviceContacts([]);
@@ -496,6 +503,7 @@ export default function ContactsModal({
   };
 
   const handleSelectContact = (contact: Contact | SavedAccount) => {
+    registerActivity();
     const rawAccount =
       (contact as Contact)?.accountNumber ||
       (contact as Contact)?.phoneNumbers?.[0] ||
@@ -512,6 +520,7 @@ export default function ContactsModal({
   };
 
   const handleClose = () => {
+    registerActivity();
     Keyboard.dismiss();
     setSearchQuery("");
     onClose();
@@ -545,7 +554,10 @@ export default function ContactsModal({
           <View style={styles.tabContainer}>
             <TouchableOpacity
               style={[styles.tab, activeTab === "saved" && styles.tabActive]}
-              onPress={() => setActiveTab("saved")}
+              onPress={() => {
+                registerActivity();
+                setActiveTab("saved");
+              }}
             >
               <Ionicons
                 name="bookmark"
@@ -564,7 +576,10 @@ export default function ContactsModal({
 
             <TouchableOpacity
               style={[styles.tab, activeTab === "device" && styles.tabActive]}
-              onPress={() => setActiveTab("device")}
+              onPress={() => {
+                registerActivity();
+                setActiveTab("device");
+              }}
             >
               <Ionicons
                 name="phone-portrait"
@@ -676,7 +691,10 @@ export default function ContactsModal({
                   </Text>
                   <TouchableOpacity
                     style={styles.permissionButton}
-                    onPress={loadDeviceContacts}
+                    onPress={() => {
+                      registerActivity();
+                      void loadDeviceContacts();
+                    }}
                   >
                     <Text style={styles.permissionButtonText}>
                       {t("sendMoney.grantPermission")}
