@@ -442,6 +442,13 @@ const en: TranslationMap = {
   "withdraw.validation.walletType": "Please select an e-wallet type",
   "withdraw.validation.walletAccNumber": "Wallet account number is required",
   "withdraw.validation.walletAccName": "Wallet account name is required",
+  "withdraw.validation.invalidAmountFormat":
+    "Enter a valid amount with up to 2 decimal places (e.g. 25.00).",
+  "withdraw.validation.minAmount": "Minimum withdrawal is ₱{min}.",
+  "withdraw.validation.amountMustExceedFee":
+    "Withdrawal must be greater than the fee (₱{fee}) so you receive a positive amount.",
+  "withdraw.validation.walletNumberMustStartWith9":
+    "Enter a 10-digit mobile number starting with 9 (e.g. 9XXXXXXXXX).",
 
   // Transaction types
   "tx.deposit": "Deposit",
@@ -2397,6 +2404,13 @@ const ko: TranslationMap = {
   "withdraw.validation.walletType": "전자 지갑 유형을 선택하세요",
   "withdraw.validation.walletAccNumber": "지갑 계좌 번호가 필요합니다",
   "withdraw.validation.walletAccName": "지갑 계좌 명의가 필요합니다",
+  "withdraw.validation.invalidAmountFormat":
+    "유효한 금액을 소수점 이하 최대 2자리까지 입력하세요 (예: 25.00).",
+  "withdraw.validation.minAmount": "최소 출금 금액은 ₱{min}입니다.",
+  "withdraw.validation.amountMustExceedFee":
+    "수수료(₱{fee})보다 큰 금액을 입력해야 실제 수령액이 있습니다.",
+  "withdraw.validation.walletNumberMustStartWith9":
+    "9로 시작하는 10자리 휴대전화 번호를 입력하세요 (예: 9XXXXXXXXX).",
   "tx.deposit": "입금",
   "tx.withdraw": "출금",
   "tx.transfer": "송금",
@@ -4287,6 +4301,13 @@ const ja: TranslationMap = {
   "withdraw.validation.walletType": "電子マネータイプを選択してください",
   "withdraw.validation.walletAccNumber": "ウォレット口座番号は必須です",
   "withdraw.validation.walletAccName": "ウォレット口座名義は必須です",
+  "withdraw.validation.invalidAmountFormat":
+    "有効な金額を小数点以下最大2桁で入力してください（例: 25.00）。",
+  "withdraw.validation.minAmount": "最低出金額は ₱{min} です。",
+  "withdraw.validation.amountMustExceedFee":
+    "手数料（₱{fee}）を超える金額にしてください。正の受取額になる必要があります。",
+  "withdraw.validation.walletNumberMustStartWith9":
+    "9で始まる10桁の携帯番号を入力してください（例: 9XXXXXXXXX）。",
   "tx.deposit": "入金",
   "tx.withdraw": "出金",
   "tx.transfer": "送金",
@@ -6180,6 +6201,13 @@ const ar: TranslationMap = {
   "withdraw.validation.walletType": "يرجى اختيار نوع المحفظة الإلكترونية",
   "withdraw.validation.walletAccNumber": "رقم حساب المحفظة مطلوب",
   "withdraw.validation.walletAccName": "اسم حساب المحفظة مطلوب",
+  "withdraw.validation.invalidAmountFormat":
+    "أدخل مبلغًا صالحًا حتى منزلتين عشريتين (مثل 25.00).",
+  "withdraw.validation.minAmount": "الحد الأدنى للسحب هو ₱{min}.",
+  "withdraw.validation.amountMustExceedFee":
+    "يجب أن يكون المبلغ أكبر من الرسم (₱{fee}) لتصلك قيمة موجبة.",
+  "withdraw.validation.walletNumberMustStartWith9":
+    "أدخل رقم جوال مكونًا من 10 أرقام يبدأ بـ 9 (مثل 9XXXXXXXXX).",
   "tx.deposit": "إيداع",
   "tx.withdraw": "سحب",
   "tx.transfer": "تحويل",

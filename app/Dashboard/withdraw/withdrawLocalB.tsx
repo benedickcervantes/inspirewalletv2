@@ -14,6 +14,10 @@ import {
     formatAmountWithCommas,
     unformatNumberString,
 } from "../../../utils/numberFormat";
+import {
+    MIN_WITHDRAWAL_PHP,
+    parseWithdrawalAmountInput,
+} from "../../../utils/withdrawalAmount";
 
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 const isValidEmail = (email: string) =>
@@ -164,24 +168,35 @@ export default function BankWithdrawal() {
     if (!branchName.trim())
       newErrors.branchName = t("withdraw.validation.branchName");
 
-    const amountStr = unformatNumberString(withdrawalAmount).trim();
-    if (!amountStr) {
-      newErrors.withdrawalAmount = t("withdraw.validation.amount");
+    const parsed = parseWithdrawalAmountInput(withdrawalAmount);
+    if (!parsed.ok || parsed.value <= 0) {
+      newErrors.withdrawalAmount = parsed.value <= 0 && parsed.ok
+        ? t("withdraw.validation.invalidAmount")
+        : t("withdraw.validation.invalidAmountFormat");
     } else {
-      const amountNum = parseFloat(amountStr);
-      if (amountNum <= 0) {
-        newErrors.withdrawalAmount = t("withdraw.validation.invalidAmount");
+      const amountNum = parsed.value;
+      if (amountNum < MIN_WITHDRAWAL_PHP) {
+        newErrors.withdrawalAmount = t("withdraw.validation.minAmount").replace(
+          "{min}",
+          MIN_WITHDRAWAL_PHP.toFixed(2),
+        );
       } else {
-        // For agent withdrawals, never fall back to available balance.
-        const walletBalance = isAgentWithdrawal
-          ? agentCommission
-          : displayBalance ||
-            (userData?.availBalanceAmount as number) ||
-            0;
-        if (amountNum > walletBalance) {
+        const feeForAmount = getLocalBankTransactionFee(amountNum, isUnionBank);
+        if (feeForAmount > 0 && amountNum <= feeForAmount) {
           newErrors.withdrawalAmount = t(
-            "withdraw.validation.insufficient",
-          ).replace("{balance}", walletBalance.toLocaleString());
+            "withdraw.validation.amountMustExceedFee",
+          ).replace("{fee}", feeForAmount.toFixed(2));
+        } else {
+          const walletBalance = isAgentWithdrawal
+            ? agentCommission
+            : displayBalance ||
+              (userData?.availBalanceAmount as number) ||
+              0;
+          if (amountNum > walletBalance) {
+            newErrors.withdrawalAmount = t(
+              "withdraw.validation.insufficient",
+            ).replace("{balance}", walletBalance.toLocaleString());
+          }
         }
       }
     }
@@ -201,13 +216,16 @@ export default function BankWithdrawal() {
     setErrors({});
 
     // Navigate to confirm screen with data
+    const { value: confirmedAmount } = parseWithdrawalAmountInput(
+      withdrawalAmount,
+    );
     navigation.navigate("WithdrawLocalBConfirm", {
       method: "local-bank",
       accountNumber: accountNumberDigits,
       accountHolderName,
       bankName,
       branchName,
-      amount: unformatNumberString(withdrawalAmount),
+      amount: confirmedAmount.toFixed(2),
       email: emailAddress,
       type: withdrawalType,
     });

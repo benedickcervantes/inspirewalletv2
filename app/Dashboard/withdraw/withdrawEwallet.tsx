@@ -23,6 +23,10 @@ import {
     formatAmountWithCommas,
     unformatNumberString,
 } from "../../../utils/numberFormat";
+import {
+    MIN_WITHDRAWAL_PHP,
+    parseWithdrawalAmountInput,
+} from "../../../utils/withdrawalAmount";
 
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 const isValidEmail = (email: string) =>
@@ -163,27 +167,42 @@ export default function EWalletWithdrawal() {
       newErrors.accountNumber = t("withdraw.validation.walletAccNumber");
     else if (trimmedAccountNumber.length !== 10)
       newErrors.accountNumber = t("withdraw.mobileInvalid");
+    else if (!trimmedAccountNumber.startsWith("9"))
+      newErrors.accountNumber = t(
+        "withdraw.validation.walletNumberMustStartWith9",
+      );
     if (!accountName.trim())
       newErrors.accountName = t("withdraw.validation.walletAccName");
 
-    const amountStr = unformatNumberString(withdrawalAmount).trim();
-    if (!amountStr) {
-      newErrors.withdrawalAmount = t("withdraw.validation.amount");
+    const parsed = parseWithdrawalAmountInput(withdrawalAmount);
+    if (!parsed.ok || parsed.value <= 0) {
+      newErrors.withdrawalAmount = parsed.value <= 0 && parsed.ok
+        ? t("withdraw.validation.invalidAmount")
+        : t("withdraw.validation.invalidAmountFormat");
     } else {
-      const amountNum = parseFloat(amountStr);
-      if (isNaN(amountNum) || amountNum <= 0) {
-        newErrors.withdrawalAmount = t("withdraw.validation.invalidAmount");
+      const amountNum = parsed.value;
+      if (amountNum < MIN_WITHDRAWAL_PHP) {
+        newErrors.withdrawalAmount = t("withdraw.validation.minAmount").replace(
+          "{min}",
+          MIN_WITHDRAWAL_PHP.toFixed(2),
+        );
       } else {
-        // For agent withdrawals, never fall back to available balance.
-        const walletBalance = isAgentWithdrawal
-          ? agentCommission
-          : displayBalance ||
-            (userData?.availBalanceAmount as number) ||
-            0;
-        if (amountNum > walletBalance) {
+        const feeForAmount = getEwalletTransactionFee(amountNum);
+        if (amountNum <= feeForAmount) {
           newErrors.withdrawalAmount = t(
-            "withdraw.validation.insufficient",
-          ).replace("{balance}", walletBalance.toLocaleString());
+            "withdraw.validation.amountMustExceedFee",
+          ).replace("{fee}", feeForAmount.toFixed(2));
+        } else {
+          const walletBalance = isAgentWithdrawal
+            ? agentCommission
+            : displayBalance ||
+              (userData?.availBalanceAmount as number) ||
+              0;
+          if (amountNum > walletBalance) {
+            newErrors.withdrawalAmount = t(
+              "withdraw.validation.insufficient",
+            ).replace("{balance}", walletBalance.toLocaleString());
+          }
         }
       }
     }
@@ -202,12 +221,15 @@ export default function EWalletWithdrawal() {
 
     setErrors({});
 
+    const { value: confirmedAmount } = parseWithdrawalAmountInput(
+      withdrawalAmount,
+    );
     navigation.navigate("WithdrawEwalletConfirm", {
       method: "e-wallet",
       walletType: selectedWallet,
       accountNumber: prefixedAccountNumber,
       accountName,
-      amount: unformatNumberString(withdrawalAmount),
+      amount: confirmedAmount.toFixed(2),
       email: emailAddress,
       type: withdrawalType,
     });
