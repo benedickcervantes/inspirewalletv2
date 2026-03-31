@@ -104,6 +104,10 @@ export default function CardsTab({
   const [isPurchaseModalVisible, setIsPurchaseModalVisible] = useState(false);
   const [isDesignModalVisible, setIsDesignModalVisible] = useState(false);
   const [isSuccessModalVisible, setIsSuccessModalVisible] = useState(false);
+  const [isCardSelectionNoticeVisible, setIsCardSelectionNoticeVisible] =
+    useState(false);
+  const [cardSelectionNoticeMessage, setCardSelectionNoticeMessage] =
+    useState("");
   const [isCancelPasscodeModalVisible, setIsCancelPasscodeModalVisible] =
     useState(false);
   const [cancelPasscode, setCancelPasscode] = useState("");
@@ -548,7 +552,13 @@ export default function CardsTab({
       } else {
         // Backend did not persist active card; re-sync to avoid reverting on refresh.
         await fetchCardsData();
-        Alert.alert("Error", res.error || "Failed to change active card.");
+        const errorMessage = res.error || "Failed to change active card.";
+        if (/only active cards can be selected/i.test(errorMessage)) {
+          setCardSelectionNoticeMessage(errorMessage);
+          setIsCardSelectionNoticeVisible(true);
+        } else {
+          Alert.alert("Error", errorMessage);
+        }
       }
     } catch (e) {
       console.error("Failed to set active card", e);
@@ -575,6 +585,7 @@ export default function CardsTab({
   };
 
   const theme = getCardTheme(activeCard?.design as string | null | undefined);
+  const cardSkeletonColor = "rgba(255, 255, 255, 0.35)";
   const fullName = [userData?.firstName, userData?.lastName]
     .filter(Boolean)
     .join(" ")
@@ -639,7 +650,7 @@ export default function CardsTab({
                     <View
                       style={[
                         styles.cardTextSkeleton,
-                        { width: 150, backgroundColor: theme.skeletonBackground },
+                        { width: 150, backgroundColor: cardSkeletonColor },
                       ]}
                     />
                   )}
@@ -659,7 +670,7 @@ export default function CardsTab({
                     <View
                       style={[
                         styles.cardTextSkeleton,
-                        { width: 120, backgroundColor: theme.skeletonBackground },
+                        { width: 120, backgroundColor: cardSkeletonColor },
                       ]}
                     />
                   )}
@@ -693,7 +704,7 @@ export default function CardsTab({
                     <View
                       style={[
                         styles.cardBalanceAmountSkeleton,
-                        { backgroundColor: theme.skeletonBackground },
+                        { backgroundColor: cardSkeletonColor },
                       ]}
                     />
                   ) : (
@@ -1992,6 +2003,31 @@ export default function CardsTab({
                 </Text>
               </TouchableOpacity>
             </LinearGradient>
+          </View>
+        </View>
+      </ActivityModal>
+      <ActivityModal
+        animationType="fade"
+        transparent={true}
+        visible={isCardSelectionNoticeVisible}
+        onRequestClose={() => setIsCardSelectionNoticeVisible(false)}
+      >
+        <View style={styles.selectionNoticeOverlay}>
+          <View style={styles.selectionNoticeContent}>
+            <Text style={styles.selectionNoticeTitle}>
+              {t("common.notice") || "Notice"}
+            </Text>
+            <Text style={styles.selectionNoticeMessage}>
+              {cardSelectionNoticeMessage}
+            </Text>
+            <TouchableOpacity
+              style={styles.selectionNoticeButton}
+              onPress={() => setIsCardSelectionNoticeVisible(false)}
+            >
+              <Text style={styles.selectionNoticeButtonText}>
+                {t("common.ok") || "OK"}
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
       </ActivityModal>
@@ -3423,5 +3459,47 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: "#E15816",
+  },
+  selectionNoticeOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 24,
+  },
+  selectionNoticeContent: {
+    width: "100%",
+    maxWidth: 340,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 22,
+    alignItems: "center",
+  },
+  selectionNoticeTitle: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#333333",
+    marginBottom: 10,
+    textAlign: "center",
+  },
+  selectionNoticeMessage: {
+    fontSize: 14,
+    color: "#666666",
+    textAlign: "center",
+    lineHeight: 20,
+    marginBottom: 18,
+  },
+  selectionNoticeButton: {
+    width: "100%",
+    backgroundColor: "#E15816",
+    borderRadius: 10,
+    paddingVertical: 11,
+    alignItems: "center",
+  },
+  selectionNoticeButtonText: {
+    color: "#FFFFFF",
+    fontSize: 15,
+    fontWeight: "700",
   },
 });
