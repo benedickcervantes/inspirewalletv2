@@ -309,6 +309,10 @@ export default function Dashboard() {
     unreadCount: unreadNotifications,
     setUnreadCount: setUnreadNotifications,
   } = useUnreadNotifications();
+  const [notificationBadgeDismissed, setNotificationBadgeDismissed] =
+    useState(false);
+  const [dismissedUnreadSnapshot, setDismissedUnreadSnapshot] =
+    useState<number>(0);
   const [userReferrer, setUserReferrer] = useState<{
     referralCode?: string;
     firstName?: string;
@@ -1041,6 +1045,19 @@ export default function Dashboard() {
   );
 
   useEffect(() => {
+    if (!notificationBadgeDismissed) return;
+    // Show the header badge again only when unread count increases
+    // after the user has opened the notification page.
+    if (unreadNotifications > dismissedUnreadSnapshot) {
+      setNotificationBadgeDismissed(false);
+    }
+  }, [
+    notificationBadgeDismissed,
+    unreadNotifications,
+    dismissedUnreadSnapshot,
+  ]);
+
+  useEffect(() => {
     if (activeTab !== "Cards" && isCardFlipped) {
       Animated.spring(flipAnimation, {
         toValue: 0,
@@ -1499,10 +1516,14 @@ export default function Dashboard() {
           <View style={styles.headerRight}>
             <TouchableOpacity
               style={styles.iconButton}
-              onPress={() => navigation.navigate("Notification")}
+              onPress={() => {
+                setDismissedUnreadSnapshot(unreadNotifications);
+                setNotificationBadgeDismissed(true);
+                navigation.navigate("Notification");
+              }}
             >
               <Ionicons name="notifications" size={24} color="#E15816" />
-              <NotificationBadge />
+              <NotificationBadge hidden={notificationBadgeDismissed} />
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.iconButton}
