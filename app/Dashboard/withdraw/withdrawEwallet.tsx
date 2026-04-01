@@ -23,6 +23,11 @@ import {
   formatAmountWithCommas,
   unformatNumberString,
 } from "../../../utils/numberFormat";
+import {
+  MIN_REMAINING_WALLET_BALANCE_PHP,
+  MIN_WITHDRAWAL_PHP,
+  parseWithdrawalAmountInput,
+} from "../../../utils/withdrawalAmount";
 import ActivityModal from '../../components/ActivityModal';
 
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -70,11 +75,17 @@ export default function EWalletWithdrawal() {
   );
   const [availableBalance, setAvailableBalance] = useState(0);
   const [agentCommission, setAgentCommission] = useState(0);
-  const [showMinimumBalanceWarning, setShowMinimumBalanceWarning] = useState(false);
+  const [minBalanceBlockReason, setMinBalanceBlockReason] = useState<
+    "below_min" | "remaining" | null
+  >(null);
   
   const withdrawalType = (route.params as { type?: string })?.type || "available-balance";
   const isAgentWithdrawal = withdrawalType === "agent-withdrawal";
   const displayBalance = isAgentWithdrawal ? agentCommission : availableBalance;
+  const minBalanceModalBalanceStr = displayBalance.toLocaleString("en-PH", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
   
   const parsedWithdrawalAmount = parseFloat(
     unformatNumberString(withdrawalAmount).trim(),
@@ -219,17 +230,22 @@ export default function EWalletWithdrawal() {
 
     setErrors({});
 
-    // Check minimum balance requirement
-    const amountNum = parseFloat(unformatNumberString(withdrawalAmount).trim());
     const currentBalance = isAgentWithdrawal ? agentCommission : availableBalance;
-    const remainingBalance = currentBalance - amountNum;
-    const minimumRequiredBalance = 1000;
+    const parsedAmount = parseWithdrawalAmountInput(withdrawalAmount);
+    const amountNum = parsedAmount.ok ? parsedAmount.value : 0;
 
-    if (remainingBalance < minimumRequiredBalance) {
-      setShowMinimumBalanceWarning(true);
+    if (currentBalance < MIN_REMAINING_WALLET_BALANCE_PHP) {
+      setMinBalanceBlockReason("below_min");
       return;
     }
 
+    const remainingBalance = currentBalance - amountNum;
+    if (remainingBalance < MIN_REMAINING_WALLET_BALANCE_PHP) {
+      setMinBalanceBlockReason("remaining");
+      return;
+    }
+
+    const { value: confirmedAmount } = parsedAmount;
     navigation.navigate("WithdrawEwalletConfirm", {
       method: "e-wallet",
       walletType: selectedWallet,
@@ -532,59 +548,46 @@ export default function EWalletWithdrawal() {
           </ScrollView>
         </KeyboardAvoidingView>
 
-        {/* Minimum Balance Warning Modal */}
+        {/* Minimum balance: same alert pattern as withdraw confirm / withdraw type */}
         <ActivityModal
-          visible={showMinimumBalanceWarning}
+          visible={minBalanceBlockReason !== null}
           transparent
-          animationType="fade"
-          onRequestClose={() => setShowMinimumBalanceWarning(false)}
+          animationType="slide"
+          onRequestClose={() => setMinBalanceBlockReason(null)}
         >
-          <View style={styles.minimumBalanceOverlay}>
-            <View style={styles.minimumBalanceModal}>
-              <View style={styles.minimumBalanceIconContainer}>
-                <Ionicons name="warning" size={48} color="#E25A17" />
-              </View>
-              <Text style={styles.minimumBalanceTitle}>
-                Cannot Withdraw
+          <View style={styles.alertOverlay}>
+            <LinearGradient
+              colors={["#E15816", "#F48F38"]}
+              style={styles.alertContainer}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 0, y: 1 }}
+            >
+              <Text style={styles.alertTitle}>
+                {t("withdraw.minimumBalanceBlockedTitle")}
               </Text>
-              <Text style={styles.minimumBalanceMessage}>
-                You must maintain a minimum balance of ₱1,000 to keep your account active.
+              <Text style={styles.alertMessage}>
+                {(minBalanceBlockReason === "below_min"
+                  ? t("withdraw.minimumBalanceWalletBelow")
+                  : t("withdraw.minimumBalanceAfterWithdraw")) +
+                  "\n\n" +
+                  t("withdraw.minimumBalanceModalDetails", {
+                    min: MIN_REMAINING_WALLET_BALANCE_PHP.toLocaleString(
+                      "en-PH",
+                      {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      },
+                    ),
+                    balance: minBalanceModalBalanceStr,
+                  })}
               </Text>
-              <View style={styles.minimumBalanceDetails}>
-                <View style={styles.minimumBalanceDetailRow}>
-                  <Text style={styles.minimumBalanceDetailLabel}>
-                    Required Minimum
-                  </Text>
-                  <Text style={styles.minimumBalanceDetailValue}>₱1,000</Text>
-                </View>
-                <View style={styles.minimumBalanceDetailRow}>
-                  <Text style={styles.minimumBalanceDetailLabel}>
-                    Current Balance
-                  </Text>
-                  <Text style={styles.minimumBalanceDetailValue}>
-                    ₱{(isAgentWithdrawal ? agentCommission : availableBalance).toLocaleString("en-PH", {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
-                  </Text>
-                </View>
-              </View>
               <TouchableOpacity
-                style={styles.minimumBalanceButton}
-                onPress={() => setShowMinimumBalanceWarning(false)}
+                style={styles.alertButton}
+                onPress={() => setMinBalanceBlockReason(null)}
               >
-                <LinearGradient
-                  colors={["#E25A17", "#F28934"]}
-                  style={styles.minimumBalanceGradient}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                >
-                  <Text style={styles.minimumBalanceButtonText}>
-                    Understood
-                  </Text>
-                </LinearGradient>
+                <Text style={styles.alertButtonText}>{t("common.ok")}</Text>
               </TouchableOpacity>
-            </View>
+            </LinearGradient>
           </View>
         </ActivityModal>
       </SafeAreaView>
@@ -836,73 +839,46 @@ const styles = StyleSheet.create({
   bottomPadding: {
     height: 40,
   },
-  minimumBalanceOverlay: {
+  alertOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 24,
   },
-  minimumBalanceModal: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 20,
+  alertContainer: {
+    borderRadius: 12,
     padding: 24,
-    alignItems: "center",
-    maxWidth: 320,
+    width: "85%",
+    maxWidth: 400,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
-  minimumBalanceIconContainer: {
-    marginBottom: 16,
-  },
-  minimumBalanceTitle: {
+  alertTitle: {
     fontSize: 20,
     fontWeight: "700",
-    color: "#E25A17",
-    marginBottom: 12,
-    textAlign: "center",
-  },
-  minimumBalanceMessage: {
-    fontSize: 14,
-    color: "#666",
-    textAlign: "center",
-    marginBottom: 24,
-    lineHeight: 20,
-  },
-  minimumBalanceDetails: {
-    backgroundColor: "#F5F5F5",
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 24,
-    width: "100%",
-  },
-  minimumBalanceDetailRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginVertical: 8,
-  },
-  minimumBalanceDetailLabel: {
-    fontSize: 13,
-    color: "#999",
-    fontWeight: "500",
-  },
-  minimumBalanceDetailValue: {
-    fontSize: 14,
-    color: "#333",
-    fontWeight: "700",
-  },
-  minimumBalanceButton: {
-    borderRadius: 12,
-    overflow: "hidden",
-    width: "100%",
-  },
-  minimumBalanceGradient: {
-    paddingVertical: 14,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  minimumBalanceButtonText: {
-    fontSize: 16,
-    fontWeight: "700",
     color: "#FFFFFF",
+    marginBottom: 12,
+  },
+  alertMessage: {
+    fontSize: 16,
+    color: "#FFFFFF",
+    lineHeight: 24,
+    marginBottom: 24,
+    opacity: 0.95,
+  },
+  alertButton: {
+    alignSelf: "flex-end",
+    backgroundColor: "#FFFFFF",
+    paddingVertical: 10,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+  },
+  alertButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#E15816",
   },
 });
