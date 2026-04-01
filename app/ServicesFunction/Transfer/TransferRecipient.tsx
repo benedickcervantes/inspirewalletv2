@@ -5,7 +5,18 @@ import * as Contacts from "expo-contacts";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Sharing from "expo-sharing";
 import { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, Share, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import {
+    ActivityIndicator,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    Share,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
+} from "react-native";
 import QRCode from "react-native-qrcode-svg";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import ViewShot from "react-native-view-shot";
@@ -13,18 +24,18 @@ import {
     getOrCreateMainWallet,
     getRecipientByAccountNumber,
 } from "../../../configs/api";
+import { useIdleTimeout } from "../../../context/IdleTimeoutContext";
 import { useLanguage } from "../../../context/LanguageContext";
 import {
     formatAmountWithCommas,
     unformatNumberString,
 } from "../../../utils/numberFormat";
 import { useResponsive } from "../../../utils/responsive";
-import { useIdleTimeout } from "../../../context/IdleTimeoutContext";
 import Loader from "../../Loader/Loader";
 import ContactsModal from "./ContactsModal";
 import QRScanner from "./QRScanner";
 
-import ActivityModal from '../../components/ActivityModal';
+import ActivityModal from "../../components/ActivityModal";
 const width = (() => {
   try {
     return require("react-native").Dimensions?.get?.("window")?.width ?? 375;
@@ -42,7 +53,14 @@ interface Contact {
 
 const INSPIRE_TRANSFER_QR_PREFIX = "INSPIREWALLET:TRANSFER:";
 
-const normalizeAccountNumber = (value: string): string => value.replace(/\D/g, "");
+const normalizeAccountNumber = (value: string): string =>
+  value.replace(/\D/g, "");
+
+const clampAccountNumber = (value: string): string =>
+  normalizeAccountNumber(value).slice(0, 12);
+
+const formatAccountNumberForDisplay = (value: string): string =>
+  clampAccountNumber(value).replace(/(\d{4})(?=\d)/g, "$1 ");
 
 const isValidAccountNumber = (value: string): boolean =>
   /^\d{12}$/.test(normalizeAccountNumber(value));
@@ -66,7 +84,9 @@ const parseInspireTransferQrPayload = (raw: string): string | null => {
   // Preferred Inspire Wallet transfer QR format.
   if (text.startsWith(INSPIRE_TRANSFER_QR_PREFIX)) {
     const account = text.slice(INSPIRE_TRANSFER_QR_PREFIX.length).trim();
-    return isValidAccountNumber(account) ? normalizeAccountNumber(account) : null;
+    return isValidAccountNumber(account)
+      ? normalizeAccountNumber(account)
+      : null;
   }
 
   // Optional JSON format support for future-proofing.
@@ -255,10 +275,14 @@ export default function TransferRecipient() {
       if (!raw) return;
       const saved = JSON.parse(raw) as Array<{ accountNumber?: string }>;
       const mostRecent = saved?.[0]?.accountNumber;
-      if (mostRecent) setAccountNumber(String(mostRecent));
+      if (mostRecent) setAccountNumber(clampAccountNumber(String(mostRecent)));
     } catch (e) {
       console.warn("Failed to load recent recipient:", e);
     }
+  };
+
+  const handleAccountNumberChange = (text: string) => {
+    setAccountNumber(clampAccountNumber(text));
   };
 
   const fetchBalance = async () => {
@@ -309,7 +333,8 @@ export default function TransferRecipient() {
         } else {
           const accessToken = await AsyncStorage.getItem("access_token");
           if (accessToken) {
-            const { success, wallet } = await getOrCreateMainWallet(accessToken);
+            const { success, wallet } =
+              await getOrCreateMainWallet(accessToken);
             if (success && (wallet as any)?.accountNumber) {
               const accountNum = String((wallet as any).accountNumber);
               setUserAccountNumber(accountNum);
@@ -404,7 +429,7 @@ export default function TransferRecipient() {
       contact.accountNumber ||
       contact.phoneNumbers?.[0]?.replace(/\D/g, "") ||
       "";
-    setAccountNumber(accountNum);
+    setAccountNumber(clampAccountNumber(accountNum));
     setShowContactsModal(false);
     setContactSearchQuery("");
   };
@@ -418,7 +443,7 @@ export default function TransferRecipient() {
       return;
     }
 
-    setAccountNumber(parsedAccount);
+    setAccountNumber(clampAccountNumber(parsedAccount));
     setShowQRScanner(false);
   };
 
@@ -432,13 +457,15 @@ export default function TransferRecipient() {
       const canShare = await Sharing.isAvailableAsync();
       if (!canShare) {
         await Share.share({
-          message:
-            `${t("sendMoney.shareQrFallbackText") || "Here is my wallet account number"} (${userName}): ${userAccountNumber}`,
+          message: `${t("sendMoney.shareQrFallbackText") || "Here is my wallet account number"} (${userName}): ${userAccountNumber}`,
         });
         return;
       }
 
-      if (!viewShotRef.current || typeof viewShotRef.current.capture !== "function") {
+      if (
+        !viewShotRef.current ||
+        typeof viewShotRef.current.capture !== "function"
+      ) {
         alert(
           t("sendMoney.qrNotReady") ||
             "QR code is not ready yet. Please try again.",
@@ -580,8 +607,8 @@ export default function TransferRecipient() {
                   style={styles.input}
                   placeholder={t("sendMoney.placeholderAccountNumber")}
                   placeholderTextColor="#CCC"
-                  value={accountNumber}
-                  onChangeText={setAccountNumber}
+                  value={formatAccountNumberForDisplay(accountNumber)}
+                  onChangeText={handleAccountNumberChange}
                   keyboardType="numeric"
                 />
                 <TouchableOpacity
@@ -728,7 +755,7 @@ export default function TransferRecipient() {
             contact.accountNumber ||
             contact.phoneNumbers?.[0]?.replace(/\D/g, "") ||
             "";
-          setAccountNumber(accountNum);
+          setAccountNumber(clampAccountNumber(accountNum));
           setShowContactsModal(false);
           setContactSearchQuery("");
         }}
@@ -789,15 +816,22 @@ export default function TransferRecipient() {
                   </Text>
                 </View>
               </View>
-              <View style={styles.hiddenShareCaptureContainer} pointerEvents="none">
+              <View
+                style={styles.hiddenShareCaptureContainer}
+                pointerEvents="none"
+              >
                 <ViewShot
                   ref={viewShotRef}
                   options={{ format: "png", quality: 1, result: "tmpfile" }}
                   style={styles.shareCardCapture}
                 >
                   <View style={styles.shareCardHeader}>
-                    <Text style={styles.shareCardHeaderTitle}>Inspire Wallet</Text>
-                    <Text style={styles.shareCardSubtitle}>Scan to transfer</Text>
+                    <Text style={styles.shareCardHeaderTitle}>
+                      Inspire Wallet
+                    </Text>
+                    <Text style={styles.shareCardSubtitle}>
+                      Scan to transfer
+                    </Text>
                   </View>
                   <View style={styles.qrUserInfoCard}>
                     <View style={styles.qrCodeWrapper}>
@@ -1438,6 +1472,3 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
 });
-
-
-
