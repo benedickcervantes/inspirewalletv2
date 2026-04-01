@@ -5,7 +5,6 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Modal,
   Platform,
   ScrollView,
@@ -85,6 +84,8 @@ export default function RewardPointsHistory() {
   // Redeem modal state
   const [showRedeemModal, setShowRedeemModal] = useState(false);
   const [showNotEnoughModal, setShowNotEnoughModal] = useState(false);
+  const [showRedeemSuccessModal, setShowRedeemSuccessModal] = useState(false);
+  const [redeemedPointsLabel, setRedeemedPointsLabel] = useState("0");
   const [passcode, setPasscode] = useState("");
   const [isRedeeming, setIsRedeeming] = useState(false);
   const [redeemError, setRedeemError] = useState("");
@@ -185,11 +186,8 @@ export default function RewardPointsHistory() {
       if (res.success) {
         setShowRedeemModal(false);
         setPasscode("");
-        Alert.alert(
-          t("rewardPoints.redeemSuccessTitle"),
-          t("rewardPoints.redeemSuccessMessage", { points: pts, amount: pts }),
-          [{ text: t("common.ok"), onPress: () => void loadData(1) }],
-        );
+        setRedeemedPointsLabel(pts);
+        setShowRedeemSuccessModal(true);
       } else {
         setRedeemError(res.error ?? t("rewardPoints.redemptionFailed"));
       }
@@ -198,6 +196,11 @@ export default function RewardPointsHistory() {
     } finally {
       setIsRedeeming(false);
     }
+  };
+
+  const handleCloseSuccessModal = () => {
+    setShowRedeemSuccessModal(false);
+    void loadData(1);
   };
 
   const dateLocale =
@@ -476,6 +479,35 @@ export default function RewardPointsHistory() {
               onPress={() => setShowNotEnoughModal(false)}
             >
               <Text style={styles.modalSingleBtnText}>{t("rewardPoints.gotIt")}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Redeem Success Modal */}
+      <Modal
+        visible={showRedeemSuccessModal}
+        transparent
+        animationType="fade"
+        onRequestClose={handleCloseSuccessModal}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalIconRow}>
+              <MaterialCommunityIcons name="check-circle-outline" size={32} color="#16A34A" />
+            </View>
+            <Text style={styles.modalTitle}>{t("rewardPoints.redeemSuccessTitle")}</Text>
+            <Text style={styles.modalBody}>
+              {t("rewardPoints.redeemSuccessMessage", {
+                points: redeemedPointsLabel,
+                amount: redeemedPointsLabel,
+              })}
+            </Text>
+            <TouchableOpacity
+              style={styles.modalSingleBtn}
+              onPress={handleCloseSuccessModal}
+            >
+              <Text style={styles.modalSingleBtnText}>{t("common.ok")}</Text>
             </TouchableOpacity>
           </View>
         </View>
