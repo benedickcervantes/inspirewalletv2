@@ -196,10 +196,48 @@ export default function BlackC() {
       const requestResult = await submitPhysicalCardRequest(accessToken, body);
       if (!requestResult.success) {
         setSubmitting(false);
-        Alert.alert(
-          t("common.error"),
-          requestResult.error || t("pcard.applyError"),
-        );
+        const errorMsg = requestResult.error || t("pcard.applyError");
+        
+        // Log for debugging
+        console.log("[PhysicalCard] Error response:", requestResult);
+        console.log("[PhysicalCard] Error message:", errorMsg);
+        
+        // Check if this is a time deposit requirement error (case-insensitive)
+        const lowerMsg = String(errorMsg).toLowerCase();
+        console.log("[PhysicalCard] Lowercase message:", lowerMsg);
+        console.log("[PhysicalCard] Contains 'time deposit':", lowerMsg.includes("time deposit"));
+        console.log("[PhysicalCard] Contains 'term savings':", lowerMsg.includes("term savings"));
+        console.log("[PhysicalCard] Contains 'minimum total':", lowerMsg.includes("minimum total"));
+        
+        if (lowerMsg.includes("time deposit") || lowerMsg.includes("term savings") || lowerMsg.includes("minimum total")) {
+          console.log("[PhysicalCard] Showing requirement alert");
+          closeApplyModal();
+          Keyboard.dismiss();
+          setTimeout(() => {
+            Alert.alert("Term Savings Requirement", errorMsg, [
+              {
+                text: "OK",
+                onPress: () => {
+                  navigation.goBack();
+                },
+              },
+            ]);
+          }, 300);
+        } else {
+          console.log("[PhysicalCard] Showing error alert");
+          closeApplyModal();
+          Keyboard.dismiss();
+          setTimeout(() => {
+            Alert.alert(t("common.error"), errorMsg, [
+              {
+                text: "OK",
+                onPress: () => {
+                  navigation.goBack();
+                },
+              },
+            ]);
+          }, 300);
+        }
         return;
       }
 
@@ -224,7 +262,7 @@ export default function BlackC() {
       }
     } catch {
       setSubmitting(false);
-      Alert.alert(t("common.error"), t("auth.unexpectedError"));
+      Alert.alert(t("common.error"), t("auth.unexpectedError"), [{ text: "OK" }]);
     }
   };
 
@@ -447,7 +485,7 @@ export default function BlackC() {
               >
                 <View style={styles.paymentAmountCard}>
                   <Text style={styles.paymentAmountLabel}>Amount to pay</Text>
-                  <Text style={styles.paymentAmountValue}>₱1000</Text>
+                  <Text style={styles.paymentAmountValue}>₱250</Text>
                 </View>
                 <Text style={styles.modalTitle}>{t("pcard.modalTitle")}</Text>
                 <Text style={styles.modalHint}>{t("pcard.modalHint")}</Text>

@@ -1050,14 +1050,18 @@ export async function submitPhysicalCardRequest(accessToken, body) {
       body: JSON.stringify(body || {}),
     });
     const data = await res.json().catch(() => ({}));
+    console.log("[API] Physical card response status:", res.status);
+    console.log("[API] Physical card response data:", data);
     if (!res.ok) {
       const msg = Array.isArray(data.message)
         ? data.message[0]
         : data.message || data.error || "Failed to submit physical card request";
+      console.log("[API] Physical card error message extracted:", msg);
       return { success: false, error: msg };
     }
     return { success: true, data };
   } catch (e) {
+    console.log("[API] Physical card exception:", e);
     return { success: false, error: e.message || "Network error" };
   }
 }
