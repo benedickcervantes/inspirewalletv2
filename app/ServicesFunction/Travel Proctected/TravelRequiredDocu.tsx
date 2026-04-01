@@ -1,10 +1,19 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useState } from "react";
-import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, useWindowDimensions, View } from "react-native";
+import {
+    Image,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    useWindowDimensions,
+    View,
+} from "react-native";
 import { useLanguage } from "../../../context/LanguageContext";
 import { useResponsive } from "../../../utils/responsive";
 
-import ActivityModal from '../../components/ActivityModal';
+import ActivityModal from "../../components/ActivityModal";
 const THEME_COLOR = "#E15816";
 
 export interface TravelRequiredDocuProps {
@@ -109,24 +118,44 @@ export default function TravelRequiredDocu({
           ]}
           onPress={() => openUploadSourceModal("passport")}
         >
-          <MaterialCommunityIcons
-            name="camera"
-            size={40}
-            color={passportPhoto ? "#10B981" : THEME_COLOR}
-          />
-          <Text
-            style={[
-              styles.uploadText,
-              passportPhoto && styles.uploadTextSuccess,
-            ]}
-          >
-            {passportPhoto
-              ? t("travel.passportUploaded")
-              : t("travel.uploadPassport")}
-          </Text>
-          <Text style={styles.uploadSubtext}>
-            {t("travel.tapToSelectImage")}
-          </Text>
+          {passportPhoto ? (
+            <View style={styles.uploadPreviewRow}>
+              <Image
+                source={{ uri: passportPhoto }}
+                style={styles.uploadThumbnailLeft}
+                resizeMode="cover"
+              />
+              <View style={styles.uploadedRight}>
+                <View style={styles.uploadStatusRow}>
+                  <MaterialCommunityIcons
+                    name="check-circle"
+                    size={16}
+                    color="#10B981"
+                  />
+                  <Text style={styles.uploadSuccessMessage}>
+                    {t("kyc.uploaded")}
+                  </Text>
+                </View>
+                <Text style={styles.uploadResubmitText}>
+                  Tap photo again to resubmit
+                </Text>
+              </View>
+            </View>
+          ) : (
+            <MaterialCommunityIcons
+              name="camera"
+              size={40}
+              color={THEME_COLOR}
+            />
+          )}
+          {!passportPhoto ? (
+            <Text style={styles.uploadText}>{t("travel.uploadPassport")}</Text>
+          ) : null}
+          {!passportPhoto ? (
+            <Text style={styles.uploadSubtext}>
+              {t("travel.tapToSelectImage")}
+            </Text>
+          ) : null}
         </TouchableOpacity>
         {passportPhotoError ? (
           <Text style={styles.errorText}>{passportPhotoError}</Text>
@@ -153,14 +182,19 @@ export default function TravelRequiredDocu({
           >
             {selectedIdTypeLabel}
           </Text>
-          <MaterialCommunityIcons name="chevron-down" size={22} color="#9E9E9E" />
+          <MaterialCommunityIcons
+            name="chevron-down"
+            size={22}
+            color="#9E9E9E"
+          />
         </TouchableOpacity>
       </View>
 
       {/* Government ID Number */}
       <View style={styles.inputGroup} pointerEvents="box-none">
         <Text style={styles.inputLabel}>
-          {t("travel.governmentIdNumber")} <Text style={styles.required}>*</Text>
+          {t("travel.governmentIdNumber")}{" "}
+          <Text style={styles.required}>*</Text>
         </Text>
         <TextInput
           style={styles.textInput}
@@ -181,64 +215,107 @@ export default function TravelRequiredDocu({
           <TouchableOpacity
             style={[
               styles.uploadBox,
-              styles.uploadBoxCompact,
               governmentIdFront && styles.uploadBoxSuccess,
               governmentIdFrontError ? styles.uploadBoxError : null,
             ]}
             onPress={() => openUploadSourceModal("governmentFront")}
           >
-            <MaterialCommunityIcons
-              name="card-account-details"
-              size={40}
-              color={governmentIdFront ? "#10B981" : THEME_COLOR}
-            />
-            <Text
-              style={[
-                styles.uploadText,
-                governmentIdFront && styles.uploadTextSuccess,
-              ]}
-            >
-              {governmentIdFront ? t("travel.passportUploaded") : t("kyc.govIdFront")}
-            </Text>
-            <Text style={styles.uploadSubtext}>
-              {requiresFrontAndBack
-                ? t("travel.uploadFrontIdHint", {
-                    defaultValue: "Upload the front side of your government ID",
-                  })
-                : t("travel.uploadSingleIdHint", {
-                    defaultValue: "Upload one clear government ID photo",
-                  })}
-            </Text>
+            {governmentIdFront ? (
+              <View style={styles.uploadPreviewRow}>
+                <Image
+                  source={{ uri: governmentIdFront }}
+                  style={styles.uploadThumbnailLeft}
+                  resizeMode="cover"
+                />
+                <View style={styles.uploadedRight}>
+                  <View style={styles.uploadStatusRow}>
+                    <MaterialCommunityIcons
+                      name="check-circle"
+                      size={16}
+                      color="#10B981"
+                    />
+                    <Text style={styles.uploadSuccessMessage}>
+                      {t("kyc.uploaded")}
+                    </Text>
+                  </View>
+                  <Text style={styles.uploadResubmitText}>
+                    Tap photo again to resubmit
+                  </Text>
+                </View>
+              </View>
+            ) : (
+              <MaterialCommunityIcons
+                name="card-account-details"
+                size={40}
+                color={THEME_COLOR}
+              />
+            )}
+            {!governmentIdFront ? (
+              <Text style={styles.uploadText}>{t("kyc.govIdFront")}</Text>
+            ) : null}
+            {!governmentIdFront ? (
+              <Text style={styles.uploadSubtext}>
+                {requiresFrontAndBack
+                  ? t("travel.uploadFrontIdHint", {
+                      defaultValue:
+                        "Upload the front side of your government ID",
+                    })
+                  : t("travel.uploadSingleIdHint", {
+                      defaultValue: "Upload one clear government ID photo",
+                    })}
+              </Text>
+            ) : null}
           </TouchableOpacity>
 
           {requiresFrontAndBack ? (
             <TouchableOpacity
               style={[
                 styles.uploadBox,
-                styles.uploadBoxCompact,
                 governmentIdBack && styles.uploadBoxSuccess,
                 governmentIdBackError ? styles.uploadBoxError : null,
               ]}
               onPress={() => openUploadSourceModal("governmentBack")}
             >
-              <MaterialCommunityIcons
-                name="card-account-details-outline"
-                size={40}
-                color={governmentIdBack ? "#10B981" : THEME_COLOR}
-              />
-              <Text
-                style={[
-                  styles.uploadText,
-                  governmentIdBack && styles.uploadTextSuccess,
-                ]}
-              >
-                {governmentIdBack ? t("travel.passportUploaded") : t("kyc.govIdBack")}
-              </Text>
-              <Text style={styles.uploadSubtext}>
-                {t("travel.uploadBackIdHint", {
-                  defaultValue: "Upload the back side of your government ID",
-                })}
-              </Text>
+              {governmentIdBack ? (
+                <View style={styles.uploadPreviewRow}>
+                  <Image
+                    source={{ uri: governmentIdBack }}
+                    style={styles.uploadThumbnailLeft}
+                    resizeMode="cover"
+                  />
+                  <View style={styles.uploadedRight}>
+                    <View style={styles.uploadStatusRow}>
+                      <MaterialCommunityIcons
+                        name="check-circle"
+                        size={16}
+                        color="#10B981"
+                      />
+                      <Text style={styles.uploadSuccessMessage}>
+                        {t("kyc.uploaded")}
+                      </Text>
+                    </View>
+                    <Text style={styles.uploadResubmitText}>
+                      Tap photo again to resubmit
+                    </Text>
+                  </View>
+                </View>
+              ) : (
+                <MaterialCommunityIcons
+                  name="card-account-details-outline"
+                  size={40}
+                  color={THEME_COLOR}
+                />
+              )}
+              {!governmentIdBack ? (
+                <Text style={styles.uploadText}>{t("kyc.govIdBack")}</Text>
+              ) : null}
+              {!governmentIdBack ? (
+                <Text style={styles.uploadSubtext}>
+                  {t("travel.uploadBackIdHint", {
+                    defaultValue: "Upload the back side of your government ID",
+                  })}
+                </Text>
+              ) : null}
             </TouchableOpacity>
           ) : null}
         </View>
@@ -266,7 +343,10 @@ export default function TravelRequiredDocu({
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>{t("banking.selectIdType")}</Text>
             <ScrollView
-              style={[styles.modalOptionsList, { maxHeight: modalListMaxHeight }]}
+              style={[
+                styles.modalOptionsList,
+                { maxHeight: modalListMaxHeight },
+              ]}
               showsVerticalScrollIndicator={false}
               nestedScrollEnabled
               keyboardShouldPersistTaps="handled"
@@ -276,7 +356,8 @@ export default function TravelRequiredDocu({
                   key={option.value}
                   style={[
                     styles.modalOption,
-                    governmentIdType === option.value && styles.modalOptionActive,
+                    governmentIdType === option.value &&
+                      styles.modalOptionActive,
                   ]}
                   onPress={() => {
                     onGovernmentIdTypeChange(option.value);
@@ -286,13 +367,18 @@ export default function TravelRequiredDocu({
                   <Text
                     style={[
                       styles.modalOptionText,
-                      governmentIdType === option.value && styles.modalOptionTextActive,
+                      governmentIdType === option.value &&
+                        styles.modalOptionTextActive,
                     ]}
                   >
                     {option.label}
                   </Text>
                   {governmentIdType === option.value ? (
-                    <MaterialCommunityIcons name="check-circle" size={20} color={THEME_COLOR} />
+                    <MaterialCommunityIcons
+                      name="check-circle"
+                      size={20}
+                      color={THEME_COLOR}
+                    />
                   ) : null}
                 </TouchableOpacity>
               ))}
@@ -315,7 +401,9 @@ export default function TravelRequiredDocu({
           />
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>
-              {t("kyc.selectUploadMethod", { defaultValue: "Select Upload Method" })}
+              {t("kyc.selectUploadMethod", {
+                defaultValue: "Select Upload Method",
+              })}
             </Text>
             <TouchableOpacity
               style={styles.modalOption}
@@ -330,7 +418,9 @@ export default function TravelRequiredDocu({
               onPress={() => handleSelectUploadSource("library")}
             >
               <Text style={styles.modalOptionText}>
-                {t("kyc.chooseFromLibrary", { defaultValue: "Choose from Library" })}
+                {t("kyc.chooseFromLibrary", {
+                  defaultValue: "Choose from Library",
+                })}
               </Text>
             </TouchableOpacity>
           </View>
@@ -433,17 +523,15 @@ const styles = StyleSheet.create({
     backgroundColor: "#F9F9F9",
   },
   uploadBox: {
-    backgroundColor: "#F9F9F9",
+    backgroundColor: "rgba(225, 88, 22, 0.08)",
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: "#E0E0E0",
-    borderStyle: "dashed",
-    paddingVertical: 32,
+    borderColor: "rgba(225, 88, 22, 0.25)",
+    paddingVertical: 24,
+    paddingHorizontal: 16,
     alignItems: "center",
     justifyContent: "center",
-  },
-  uploadBoxCompact: {
-    paddingVertical: 24,
+    minHeight: 140,
   },
   idUploadColumn: {
     flexDirection: "column",
@@ -462,6 +550,47 @@ const styles = StyleSheet.create({
   },
   uploadTextSuccess: {
     color: "#10B981",
+  },
+  uploadThumbnail: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 12,
+    marginBottom: 0,
+  },
+  uploadPreviewRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    width: "100%",
+    gap: 16,
+  },
+  uploadThumbnailLeft: {
+    width: 100,
+    height: 100,
+    borderRadius: 12,
+    backgroundColor: "#E0E0E0",
+  },
+  uploadedRight: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  uploadStatusRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+  },
+  uploadSuccessMessage: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#10B981",
+    textAlign: "center",
+  },
+  uploadResubmitText: {
+    marginTop: 6,
+    fontSize: 12,
+    color: "#6B7280",
+    textAlign: "center",
   },
   uploadSubtext: {
     fontSize: 12,
