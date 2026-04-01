@@ -139,6 +139,15 @@ const getInvalidInspireQrMessage = (t: (key: string) => string): string => {
   return fallback;
 };
 
+const getQrScannedSuccessMessage = (t: (key: string) => string): string => {
+  const translated = t("sendMoney.qrScannedSuccess");
+  const fallback = "QR scanned successfully.";
+  if (translated && translated !== "sendMoney.qrScannedSuccess") {
+    return translated;
+  }
+  return fallback;
+};
+
 // Reusable function to fetch user balance by type (backend only)
 export const fetchBalanceByType = async (balanceType: string) => {
   const accessToken = await AsyncStorage.getItem("access_token");
@@ -255,6 +264,7 @@ export default function TransferRecipient() {
   const [contactSearchQuery, setContactSearchQuery] = useState("");
   const [showAlertModal, setShowAlertModal] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
+  const [alertType, setAlertType] = useState<"error" | "success">("error");
   const [showQRModal, setShowQRModal] = useState(false);
   const [userAccountNumber, setUserAccountNumber] = useState("");
   const [userName, setUserName] = useState("");
@@ -371,6 +381,7 @@ export default function TransferRecipient() {
       Number(availableBalance) || 0,
     );
     if (!validation.isValid && validation.messageKey) {
+      setAlertType("error");
       setAlertMessage(t(validation.messageKey));
       setShowAlertModal(true);
       return;
@@ -379,6 +390,7 @@ export default function TransferRecipient() {
     try {
       const accessToken = await AsyncStorage.getItem("access_token");
       if (!accessToken) {
+        setAlertType("error");
         setAlertMessage(t("sendMoney.loginRequired"));
         setShowAlertModal(true);
         setIsLoading(false);
@@ -389,6 +401,7 @@ export default function TransferRecipient() {
         accountNumber,
       );
       if (!recipientResult.success || !recipientResult.data) {
+        setAlertType("error");
         setAlertMessage(
           recipientResult.error || t("sendMoney.errorRecipientNotFound"),
         );
@@ -416,6 +429,7 @@ export default function TransferRecipient() {
       });
     } catch (error) {
       console.error("Error verifying recipient:", error);
+      setAlertType("error");
       setAlertMessage("sendMoney.errorVerifyingRecipient");
       setShowAlertModal(true);
     } finally {
@@ -437,6 +451,7 @@ export default function TransferRecipient() {
   const handleQRScan = (scannedData: string) => {
     const parsedAccount = parseInspireTransferQrPayload(scannedData);
     if (!parsedAccount) {
+      setAlertType("error");
       setAlertMessage(getInvalidInspireQrMessage(t));
       setShowAlertModal(true);
       setShowQRScanner(false);
@@ -444,7 +459,9 @@ export default function TransferRecipient() {
     }
 
     setAccountNumber(clampAccountNumber(parsedAccount));
-    setShowQRScanner(false);
+    setAlertType("success");
+    setAlertMessage(getQrScannedSuccessMessage(t));
+    setShowAlertModal(true);
   };
 
   const handleShareQr = async () => {
@@ -724,9 +741,21 @@ export default function TransferRecipient() {
               end={{ x: 1, y: 1 }}
             >
               <View style={styles.iconContainer}>
-                <Ionicons name="alert-circle" size={80} color="#FFFFFF" />
+                <Ionicons
+                  name={
+                    alertType === "success"
+                      ? "checkmark-circle"
+                      : "alert-circle"
+                  }
+                  size={80}
+                  color="#FFFFFF"
+                />
               </View>
-              <Text style={styles.modalTitle}>{t("sendMoney.alert")}</Text>
+              <Text style={styles.modalTitle}>
+                {alertType === "success"
+                  ? t("common.success")
+                  : t("sendMoney.alert")}
+              </Text>
               <Text style={styles.modalMessage}>
                 {alertMessage.startsWith("sendMoney.")
                   ? t(alertMessage)
