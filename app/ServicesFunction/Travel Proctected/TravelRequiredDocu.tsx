@@ -50,6 +50,10 @@ export default function TravelRequiredDocu({
   const { t } = useLanguage();
   const { isSmallScreen } = useResponsive();
   const { height: windowHeight } = useWindowDimensions();
+  const tWithFallback = (key: string, fallback: string) => {
+    const translated = t(key);
+    return translated === key ? fallback : translated;
+  };
   const modalListMaxHeight = Math.min(420, windowHeight * 0.45);
   const [showIdTypeModal, setShowIdTypeModal] = useState(false);
   const [showUploadSourceModal, setShowUploadSourceModal] = useState(false);
@@ -256,13 +260,14 @@ export default function TravelRequiredDocu({
             {!governmentIdFront ? (
               <Text style={styles.uploadSubtext}>
                 {requiresFrontAndBack
-                  ? t("travel.uploadFrontIdHint", {
-                      defaultValue:
-                        "Upload the front side of your government ID",
-                    })
-                  : t("travel.uploadSingleIdHint", {
-                      defaultValue: "Upload one clear government ID photo",
-                    })}
+                  ? tWithFallback(
+                      "travel.uploadFrontIdHint",
+                      "Upload the front side of your government ID",
+                    )
+                  : tWithFallback(
+                      "travel.uploadSingleIdHint",
+                      "Upload one clear government ID photo",
+                    )}
               </Text>
             ) : null}
           </TouchableOpacity>
@@ -311,9 +316,10 @@ export default function TravelRequiredDocu({
               ) : null}
               {!governmentIdBack ? (
                 <Text style={styles.uploadSubtext}>
-                  {t("travel.uploadBackIdHint", {
-                    defaultValue: "Upload the back side of your government ID",
-                  })}
+                  {tWithFallback(
+                    "travel.uploadBackIdHint",
+                    "Upload the back side of your government ID",
+                  )}
                 </Text>
               ) : null}
             </TouchableOpacity>
