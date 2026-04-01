@@ -1,6 +1,9 @@
 /** Minimum gross withdrawal amount in PHP (must cover typical e-wallet fee tier). */
 export const MIN_WITHDRAWAL_PHP = 25;
 
+/** PHP that must stay in available balance or agent commission after a withdrawal. */
+export const MIN_REMAINING_WALLET_BALANCE_PHP = 1000;
+
 /**
  * Parses formatted withdrawal input (may include commas).
  * Rejects incomplete values like "", ".", "1.", or more than 2 decimal places.

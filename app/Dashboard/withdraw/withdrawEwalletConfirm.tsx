@@ -21,6 +21,7 @@ import PasscodeModal from "../../components/PasscodeModal";
 
 import ActivityModal from "../../components/ActivityModal";
 import {
+    MIN_REMAINING_WALLET_BALANCE_PHP,
     MIN_WITHDRAWAL_PHP,
     parseWithdrawalAmountInput,
 } from "../../../utils/withdrawalAmount";
@@ -139,6 +140,37 @@ export default function EWalletConfirm() {
         withdrawalType === "agent-withdrawal"
           ? "agent_commission"
           : "available_balance";
+      const w = wallet as Record<string, unknown>;
+      const rawSourceBal =
+        source === "agent_commission" ? w.agentCommission : w.balance;
+      const bal = parseFloat(String(rawSourceBal ?? "0"));
+      if (Number.isNaN(bal)) {
+        setAlertConfig({
+          title: t("common.error"),
+          message: t("withdraw.errorLoadWallet"),
+        });
+        setShowAlertModal(true);
+        setIsSubmitting(false);
+        return;
+      }
+      if (bal < MIN_REMAINING_WALLET_BALANCE_PHP) {
+        setAlertConfig({
+          title: t("withdraw.minimumBalanceBlockedTitle"),
+          message: t("withdraw.minimumBalanceWalletBelow"),
+        });
+        setShowAlertModal(true);
+        setIsSubmitting(false);
+        return;
+      }
+      if (bal - amountNum < MIN_REMAINING_WALLET_BALANCE_PHP) {
+        setAlertConfig({
+          title: t("withdraw.minimumBalanceBlockedTitle"),
+          message: t("withdraw.minimumBalanceAfterWithdraw"),
+        });
+        setShowAlertModal(true);
+        setIsSubmitting(false);
+        return;
+      }
       const body: Record<string, string | undefined> = {
         walletId: wallet.id as string,
         amount: amountNum.toFixed(2),
