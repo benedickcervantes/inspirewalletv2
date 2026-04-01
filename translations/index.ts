@@ -419,6 +419,9 @@ const en: TranslationMap = {
   "withdraw.placeholder.accNumber": "Enter account number",
   "withdraw.placeholder.accHolder": "e.g. Juan Dela Cruz",
   "withdraw.placeholder.bankName": "e.g. Security Bank",
+  "withdraw.placeholder.customBankName": "Enter your bank name",
+  "withdraw.bankNameOtherHint":
+    "You chose Other — type the full name of your bank below.",
   "withdraw.placeholder.branchName": "e.g. Makati Branch",
   "withdraw.placeholder.email": "e.g. name@example.com",
   "withdraw.placeholder.walletAccNumber": "Enter wallet account number",
@@ -445,6 +448,13 @@ const en: TranslationMap = {
   "withdraw.validation.invalidAmountFormat":
     "Enter a valid amount with up to 2 decimal places (e.g. 25.00).",
   "withdraw.validation.minAmount": "Minimum withdrawal is ₱{min}.",
+  "withdraw.minimumBalanceBlockedTitle": "Cannot Withdraw",
+  "withdraw.minimumBalanceWalletBelow":
+    "Your balance is below ₱1,000. Withdrawals are not available until your balance is at least ₱1,000.",
+  "withdraw.minimumBalanceAfterWithdraw":
+    "You must keep at least ₱1,000 after this withdrawal. Try a smaller amount or add funds first.",
+  "withdraw.minimumBalanceModalDetails":
+    "Required minimum: ₱{min}\nCurrent balance: ₱{balance}",
   "withdraw.validation.amountMustExceedFee":
     "Withdrawal must be greater than the fee (₱{fee}) so you receive a positive amount.",
   "withdraw.validation.walletNumberMustStartWith9":
