@@ -15,7 +15,6 @@ import {
 } from "../../../utils/numberFormat";
 import {
     MIN_REMAINING_WALLET_BALANCE_PHP,
-    MIN_WITHDRAWAL_PHP,
     parseWithdrawalAmountInput,
 } from "../../../utils/withdrawalAmount";
 import ActivityModal from '../../components/ActivityModal';
@@ -51,6 +50,11 @@ const BANK_OPTIONS = [
 ];
 
 const BANK_FEE_THRESHOLD = 100000;
+const LOCAL_BANK_MIN_WITHDRAWAL_PHP = 50;
+const UNIONBANK_MIN_WITHDRAWAL_PHP = 1;
+
+const getLocalBankMinimumWithdrawal = (isUnionBank: boolean) =>
+  isUnionBank ? UNIONBANK_MIN_WITHDRAWAL_PHP : LOCAL_BANK_MIN_WITHDRAWAL_PHP;
 
 const getLocalBankTransactionFee = (amount: number, isUnionBank: boolean) => {
   if (Number.isNaN(amount) || amount <= 0) return 0;
@@ -110,6 +114,63 @@ export default function BankWithdrawal() {
       });
     }
   };
+
+  const getWithdrawalAmountError = useCallback(
+    (amountInput: string, unionBankSelected: boolean): string | undefined => {
+      const parsed = parseWithdrawalAmountInput(amountInput);
+      if (!parsed.ok || parsed.value <= 0) {
+        return parsed.value <= 0 && parsed.ok
+          ? t("withdraw.validation.invalidAmount")
+          : t("withdraw.validation.invalidAmountFormat");
+      }
+
+      const amountNum = parsed.value;
+      const minimumWithdrawal = getLocalBankMinimumWithdrawal(unionBankSelected);
+      if (amountNum < minimumWithdrawal) {
+        return t("withdraw.validation.minAmount").replace(
+          "{min}",
+          minimumWithdrawal.toFixed(2),
+        );
+      }
+
+      const feeForAmount = getLocalBankTransactionFee(amountNum, unionBankSelected);
+      if (feeForAmount > 0 && amountNum <= feeForAmount) {
+        return t("withdraw.validation.amountMustExceedFee").replace(
+          "{fee}",
+          feeForAmount.toFixed(2),
+        );
+      }
+
+      const walletBalance = isAgentWithdrawal
+        ? agentCommission
+        : displayBalance || (userData?.availBalanceAmount as number) || 0;
+      if (amountNum > walletBalance) {
+        return t("withdraw.validation.insufficient").replace(
+          "{balance}",
+          walletBalance.toLocaleString(),
+        );
+      }
+
+      return undefined;
+    },
+    [t, isAgentWithdrawal, agentCommission, displayBalance, userData],
+  );
+
+  useEffect(() => {
+    if (!errors.withdrawalAmount) return;
+
+    const nextAmountError = getWithdrawalAmountError(withdrawalAmount, isUnionBank);
+    setErrors((prev) => {
+      if (!prev.withdrawalAmount) return prev;
+      if (nextAmountError) {
+        if (prev.withdrawalAmount === nextAmountError) return prev;
+        return { ...prev, withdrawalAmount: nextAmountError };
+      }
+
+      const { withdrawalAmount: _withdrawalAmount, ...rest } = prev;
+      return rest;
+    });
+  }, [isUnionBank, withdrawalAmount, errors.withdrawalAmount, getWithdrawalAmountError]);
 
   const fetchUserData = useCallback(async () => {
     if (!auth || !firestore) return;
@@ -188,37 +249,12 @@ export default function BankWithdrawal() {
     if (!branchName.trim())
       newErrors.branchName = t("withdraw.validation.branchName");
 
-    const parsed = parseWithdrawalAmountInput(withdrawalAmount);
-    if (!parsed.ok || parsed.value <= 0) {
-      newErrors.withdrawalAmount = parsed.value <= 0 && parsed.ok
-        ? t("withdraw.validation.invalidAmount")
-        : t("withdraw.validation.invalidAmountFormat");
-    } else {
-      const amountNum = parsed.value;
-      if (amountNum < MIN_WITHDRAWAL_PHP) {
-        newErrors.withdrawalAmount = t("withdraw.validation.minAmount").replace(
-          "{min}",
-          MIN_WITHDRAWAL_PHP.toFixed(2),
-        );
-      } else {
-        const feeForAmount = getLocalBankTransactionFee(amountNum, isUnionBank);
-        if (feeForAmount > 0 && amountNum <= feeForAmount) {
-          newErrors.withdrawalAmount = t(
-            "withdraw.validation.amountMustExceedFee",
-          ).replace("{fee}", feeForAmount.toFixed(2));
-        } else {
-          const walletBalance = isAgentWithdrawal
-            ? agentCommission
-            : displayBalance ||
-              (userData?.availBalanceAmount as number) ||
-              0;
-          if (amountNum > walletBalance) {
-            newErrors.withdrawalAmount = t(
-              "withdraw.validation.insufficient",
-            ).replace("{balance}", walletBalance.toLocaleString());
-          }
-        }
-      }
+    const withdrawalAmountError = getWithdrawalAmountError(
+      withdrawalAmount,
+      isUnionBank,
+    );
+    if (withdrawalAmountError) {
+      newErrors.withdrawalAmount = withdrawalAmountError;
     }
 
     const email = emailAddress.trim();

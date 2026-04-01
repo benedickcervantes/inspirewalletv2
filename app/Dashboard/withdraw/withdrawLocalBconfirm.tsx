@@ -22,10 +22,14 @@ import PasscodeModal from "../../components/PasscodeModal";
 import ActivityModal from "../../components/ActivityModal";
 import {
     MIN_REMAINING_WALLET_BALANCE_PHP,
-    MIN_WITHDRAWAL_PHP,
     parseWithdrawalAmountInput,
 } from "../../../utils/withdrawalAmount";
 const BANK_FEE_THRESHOLD = 100000;
+const LOCAL_BANK_MIN_WITHDRAWAL_PHP = 50;
+const UNIONBANK_MIN_WITHDRAWAL_PHP = 1;
+
+const getLocalBankMinimumWithdrawal = (isUnionBank: boolean) =>
+  isUnionBank ? UNIONBANK_MIN_WITHDRAWAL_PHP : LOCAL_BANK_MIN_WITHDRAWAL_PHP;
 
 const getLocalBankTransactionFee = (
   amountValue: number,
@@ -90,12 +94,13 @@ export default function WithdrawLocalBConfirm() {
         return;
       }
       const amountNum = parsedSubmit.value;
-      if (amountNum < MIN_WITHDRAWAL_PHP) {
+      const minimumWithdrawal = getLocalBankMinimumWithdrawal(isUnionBank);
+      if (amountNum < minimumWithdrawal) {
         setAlertConfig({
           title: t("common.error"),
           message: t("withdraw.validation.minAmount").replace(
             "{min}",
-            MIN_WITHDRAWAL_PHP.toFixed(2),
+            minimumWithdrawal.toFixed(2),
           ),
         });
         setShowAlertModal(true);
