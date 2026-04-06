@@ -2016,6 +2016,7 @@ export default function Dashboard() {
                       AgentRequest: "agent",
                       PlayEarn: "trading",
                       PCard: "physical_cards",
+                      RewardPoints: "reward_points",
                     };
                     const serviceId =
                       routeToServiceMap[item.route] || item.route.toLowerCase();

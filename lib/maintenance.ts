@@ -11,6 +11,7 @@ export type ServiceId =
   | 'agent'
   | 'trading'
   | 'crypto_deposit'
+  | 'reward_points'
   | 'pcard'
   | 'physical_cards';
 
@@ -39,6 +40,7 @@ export async function getMaintenanceStatus(): Promise<MaintenanceStatusMap> {
       agent: Boolean(data.agent),
       trading: Boolean(data.trading),
       crypto_deposit: Boolean(data.crypto_deposit),
+      reward_points: Boolean(data.reward_points),
       physical_cards: physicalCards,
       pcard: physicalCards,
     };
@@ -53,6 +55,7 @@ export async function getMaintenanceStatus(): Promise<MaintenanceStatusMap> {
       agent: false,
       trading: false,
       crypto_deposit: false,
+      reward_points: false,
       physical_cards: false,
       pcard: false,
     };
@@ -82,6 +85,7 @@ export async function getVisibilityStatus(): Promise<MaintenanceStatusMap> {
       agent: Boolean(data.agent),
       trading: Boolean(data.trading),
       crypto_deposit: Boolean(data.crypto_deposit),
+      reward_points: Boolean(data.reward_points),
       physical_cards: physicalCards,
       pcard: physicalCards,
     };
@@ -95,6 +99,7 @@ export async function getVisibilityStatus(): Promise<MaintenanceStatusMap> {
       agent: false,
       trading: false,
       crypto_deposit: false,
+      reward_points: false,
       physical_cards: false,
       pcard: false,
     };
