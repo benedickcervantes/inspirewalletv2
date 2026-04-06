@@ -1286,7 +1286,7 @@ export default function Dashboard() {
     },
     {
       icon: "credit-card",
-      labelText: "Inspire Card",
+      labelKey: "dashboard.inspireCard",
       route: "PCard",
     },
     {

@@ -320,6 +320,7 @@ const en: TranslationMap = {
   "dashboard.withdraw": "Withdraw",
   "dashboard.createdByInspire": "Created by Inspire",
   "dashboard.availableBalance": "Available Balance",
+  "dashboard.inspireCard": "Inspire Card",
   "dashboard.loadingDashboard": "LOADING DASHBOARD...",
   "dashboard.loadingAgent": "LOADING AGENT...",
   "dashboard.loadingSupport": "LOADING SUPPORT...",
@@ -1292,6 +1293,9 @@ const en: TranslationMap = {
   "ct.yourBalance": "Your Balance:",
   "ct.claimCard": "Claim Card",
   "ct.alreadyClaimed": "Already Claimed",
+  "ct.alreadyHavePlanTitle": "Already Have Plan",
+  "ct.alreadyHavePlanMessage":
+    "You already have an active Gold Elite plan. Please use the renewal option when your plan is expiring soon.",
   "ct.renewPlan": "Renew Plan",
   "ct.buyCard": "Buy Card",
   "ct.buy": "Buy",
@@ -2322,6 +2326,7 @@ const ko: TranslationMap = {
   "dashboard.withdraw": "출금",
   "dashboard.createdByInspire": "Inspire 제작",
   "dashboard.availableBalance": "사용 가능 잔액",
+  "dashboard.inspireCard": "인스파이어 카드",
   "dashboard.rewards": "리워드",
 
   // Reward Points
@@ -3217,6 +3222,9 @@ const ko: TranslationMap = {
   "ct.yourBalance": "내 잔액:",
   "ct.claimCard": "카드 수령",
   "ct.alreadyClaimed": "이미 수령함",
+  "ct.alreadyHavePlanTitle": "이미 플랜이 있습니다",
+  "ct.alreadyHavePlanMessage":
+    "이미 활성화된 골드 엘리트 플랜이 있습니다. 플랜 만료가 가까워질 때 갱신 옵션을 이용해 주세요.",
   "ct.renewPlan": "플랜 갱신",
   "ct.buyCard": "카드 구매",
   "ct.buy": "구매",
@@ -4216,6 +4224,7 @@ const ja: TranslationMap = {
   "dashboard.withdraw": "出金",
   "dashboard.createdByInspire": "Inspire 作成",
   "dashboard.availableBalance": "利用可能残高",
+  "dashboard.inspireCard": "インスパイアカード",
   "dashboard.rewards": "リワード",
 
   // Reward Points
@@ -5104,6 +5113,9 @@ const ja: TranslationMap = {
   "ct.yourBalance": "残高:",
   "ct.claimCard": "カードを請求",
   "ct.alreadyClaimed": "請求済み",
+  "ct.alreadyHavePlanTitle": "すでにプランがあります",
+  "ct.alreadyHavePlanMessage":
+    "すでに有効なゴールドエリートプランがあります。期限が近づいた際に更新オプションをご利用ください。",
   "ct.renewPlan": "プランを更新",
   "ct.buyCard": "カードを購入",
   "ct.buy": "購入",
@@ -6121,6 +6133,7 @@ const ar: TranslationMap = {
   "dashboard.withdraw": "سحب",
   "dashboard.createdByInspire": "صُنع بواسطة Inspire",
   "dashboard.availableBalance": "الرصيد المتاح",
+  "dashboard.inspireCard": "بطاقة إنسباير",
   "dashboard.rewards": "المكافآت",
 
   // Reward Points
@@ -6988,6 +7001,9 @@ const ar: TranslationMap = {
   "ct.yourBalance": "رصيدك:",
   "ct.claimCard": "استلام البطاقة",
   "ct.alreadyClaimed": "تم الاستلام مسبقاً",
+  "ct.alreadyHavePlanTitle": "لديك خطة بالفعل",
+  "ct.alreadyHavePlanMessage":
+    "لديك بالفعل خطة جولد إيليت نشطة. يرجى استخدام خيار التجديد عند اقتراب انتهاء خطتك.",
   "ct.renewPlan": "تجديد الخطة",
   "ct.buyCard": "شراء البطاقة",
   "ct.buy": "شراء",

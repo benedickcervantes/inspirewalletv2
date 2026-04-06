@@ -821,7 +821,7 @@ export default function CardsTab({
                           styles.claimedButtonText,
                         ]}
                       >
-                        ✓ {t("Already Claimed")}
+                        ✓ {t("ct.alreadyClaimed")}
                       </Text>
                     </View>
                   ) : (
@@ -1712,11 +1712,9 @@ export default function CardsTab({
                   }
                   if (isGoldActive && !isGoldRenewalAvailable) {
                     Alert.alert(
-                      t("Already Have Plan"),
-                      t(
-                        "You already have an active Gold Elite plan. Please use the renewal option when your plan is expiring soon.",
-                      ),
-                      [{ text: "OK" }],
+                      t("ct.alreadyHavePlanTitle"),
+                      t("ct.alreadyHavePlanMessage"),
+                      [{ text: t("common.ok") }],
                     );
                     return;
                   }
@@ -1744,7 +1742,7 @@ export default function CardsTab({
                     />
                   )}
                   <Text style={styles.vipBuyButtonText}>
-                    {isGoldActive ? t("Renew Now") : t("ct.buyCard")}
+                    {isGoldActive ? t("goldElite.renewNow") : t("ct.buyCard")}
                   </Text>
                 </View>
               </TouchableOpacity>
