@@ -53,6 +53,26 @@ const DETAIL_MODAL_MAX_HEIGHT = SCREEN_HEIGHT * 0.78;
 const NOTIFICATION_PAGE_SIZE = 5;
 const SKELETON_PLACEHOLDER_COUNT = 6;
 const LOAD_MORE_THROTTLE_MS = 450;
+const THEME = {
+  primary: "#E15816",
+  primarySoft: "#FFF5F0",
+  primarySoftAlt: "#FFE8D6",
+  textPrimary: "#333333",
+  textSecondary: "#666666",
+  textMuted: "#999999",
+  surface: "#FFFFFF",
+  background: "#F5F5F5",
+  border: "#ECECEC",
+};
+
+/**
+ * Persist notification hydration state between screen mounts so re-opening this
+ * page behaves like Dashboard (show cached content, refresh in background).
+ */
+let backendNotificationCache: NotificationItemBackend[] = [];
+let firebaseNotificationCache: NotificationItem[] = [];
+let backendNotificationHydratedCache = false;
+const firebaseHydratedUidCache = new Set<string>();
 
 function NotificationCardSkeleton({ index }: { index: number }) {
   return (
@@ -106,11 +126,15 @@ const Notification = () => {
   const insets = useSafeAreaInsets();
   const { t } = useLanguage();
   const { setUnreadCount } = useUnreadNotifications();
-  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [notifications, setNotifications] = useState<NotificationItem[]>(
+    firebaseNotificationCache,
+  );
   const [backendNotifications, setBackendNotifications] = useState<
     NotificationItemBackend[]
-  >([]);
-  const [loading, setLoading] = useState(true);
+  >(backendNotificationCache);
+  const [loading, setLoading] = useState(
+    !backendNotificationHydratedCache && firebaseNotificationCache.length === 0,
+  );
   const [refreshing, setRefreshing] = useState(false);
   const [readAllLoading, setReadAllLoading] = useState(false);
   const [user, setUser] = useState<{ uid: string } | null>(null);
@@ -133,7 +157,7 @@ const Notification = () => {
   const [visibleCount, setVisibleCount] = useState(NOTIFICATION_PAGE_SIZE);
 
   /** Full-list skeleton only before the first successful hydration (not load-more / resubscribe). */
-  const backendInitialFetchDoneRef = useRef(false);
+  const backendInitialFetchDoneRef = useRef(backendNotificationHydratedCache);
   const firebaseHydratedUidRef = useRef<string | null>(null);
 
   const loadHandledReferralNotificationKeys = async () => {
@@ -267,6 +291,8 @@ const Notification = () => {
             }),
           );
           setBackendNotifications(list);
+          backendNotificationCache = list;
+          backendNotificationHydratedCache = true;
           const unread = list.filter((n) => !n.isRead).length;
           setUnreadCount(unread);
         }
@@ -276,6 +302,7 @@ const Notification = () => {
         if (blockUi) {
           setLoading(false);
           backendInitialFetchDoneRef.current = true;
+          backendNotificationHydratedCache = true;
         }
         setRefreshing(false);
       }
@@ -289,6 +316,9 @@ const Notification = () => {
       const accessToken = await AsyncStorage.getItem("access_token");
       if (accessToken) {
         setUseBackend(true);
+        if (backendNotificationHydratedCache) {
+          setLoading(false);
+        }
         fetchBackendNotifications();
       } else if (auth) {
         const unsubscribeAuth = auth.onAuthStateChanged((currentUser) => {
@@ -321,12 +351,15 @@ const Notification = () => {
   useEffect(() => {
     if (!user) {
       firebaseHydratedUidRef.current = null;
-      setLoading(false);
+      if (backendNotificationHydratedCache || firebaseNotificationCache.length) {
+        setLoading(false);
+      }
       return;
     }
 
     const uid = user.uid;
-    const alreadyHydratedForUser = firebaseHydratedUidRef.current === uid;
+    const alreadyHydratedForUser =
+      firebaseHydratedUidRef.current === uid || firebaseHydratedUidCache.has(uid);
     if (!alreadyHydratedForUser) {
       setLoading(true);
     }
@@ -335,8 +368,10 @@ const Notification = () => {
       uid,
       (notificationsList: NotificationItem[]) => {
         setNotifications(notificationsList);
+        firebaseNotificationCache = notificationsList;
         setLoading(false);
         firebaseHydratedUidRef.current = uid;
+        firebaseHydratedUidCache.add(uid);
         setRefreshing(false);
       },
     );
@@ -884,7 +919,7 @@ const Notification = () => {
             <Ionicons
               name={selectedIds.has(item.id) ? "checkbox" : "checkbox-outline"}
               size={28}
-              color={selectedIds.has(item.id) ? "#E25A17" : "#999"}
+              color={selectedIds.has(item.id) ? THEME.primary : "#999"}
             />
           </TouchableOpacity>
         ) : (
@@ -902,7 +937,7 @@ const Notification = () => {
                 ) as "information-circle"
               }
               size={24}
-              color="#E25A17"
+              color={THEME.primary}
             />
           </View>
         )}
@@ -982,7 +1017,7 @@ const Notification = () => {
             <Ionicons
               name={selectedIds.has(item.id) ? "checkbox" : "checkbox-outline"}
               size={28}
-              color={selectedIds.has(item.id) ? "#E25A17" : "#999"}
+              color={selectedIds.has(item.id) ? THEME.primary : "#999"}
             />
           </TouchableOpacity>
         ) : (
@@ -1000,7 +1035,7 @@ const Notification = () => {
                 ) as "information-circle"
               }
               size={24}
-              color="#E25A17"
+              color={THEME.primary}
             />
           </View>
         )}
@@ -1095,7 +1130,7 @@ const Notification = () => {
         ]}
       >
         <LinearGradient
-          colors={["#E25A17", "#F28934"]}
+          colors={[THEME.primary, "#F28934"]}
           style={styles.header}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
@@ -1127,7 +1162,7 @@ const Notification = () => {
       ]}
     >
       <LinearGradient
-        colors={["#E25A17", "#F28934"]}
+        colors={[THEME.primary, "#F28934"]}
         style={styles.header}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
@@ -1195,7 +1230,7 @@ const Notification = () => {
             style={[styles.deleteActionButton, styles.deleteActionButtonCompact]}
           >
             {deleteLoading ? (
-              <ActivityIndicator size="small" color="#E25A17" />
+              <ActivityIndicator size="small" color={THEME.primary} />
             ) : (
               <Text style={styles.deleteActionText}>
                 {t("notification.deleteAll")}
@@ -1235,7 +1270,7 @@ const Notification = () => {
             style={styles.readAllButton}
           >
             {readAllLoading ? (
-              <ActivityIndicator size="small" color="#E25A17" />
+              <ActivityIndicator size="small" color={THEME.primary} />
             ) : (
               <Text style={styles.readAllText}>
                 {t("notification.readAll")}
@@ -1276,8 +1311,8 @@ const Notification = () => {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={handleRefresh}
-              colors={["#E25A17"]}
-              tintColor="#E25A17"
+              colors={[THEME.primary]}
+              tintColor={THEME.primary}
             />
           }
         />
@@ -1301,8 +1336,8 @@ const Notification = () => {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={handleRefresh}
-              colors={["#E25A17"]}
-              tintColor="#E25A17"
+              colors={[THEME.primary]}
+              tintColor={THEME.primary}
             />
           }
         />
@@ -1365,7 +1400,7 @@ const Notification = () => {
           >
             <View style={styles.detailModal}>
               <LinearGradient
-                colors={["#E15816", "#F28934"]}
+                colors={[THEME.primary, "#F28934"]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.detailHeader}
@@ -1491,7 +1526,7 @@ const Notification = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F5F5F5",
+    backgroundColor: THEME.background,
   },
   header: {
     flexDirection: "row",
@@ -1536,9 +1571,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 10,
     paddingVertical: 10,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: THEME.surface,
     borderBottomWidth: 1,
-    borderBottomColor: "#EEE",
+    borderBottomColor: THEME.border,
     gap: 6,
   },
   deleteActionButton: {
@@ -1561,7 +1596,7 @@ const styles = StyleSheet.create({
   deleteActionText: {
     fontSize: 13,
     fontWeight: "600",
-    color: "#E25A17",
+    color: THEME.primary,
     textAlign: "center",
   },
   deleteActionTextDisabled: {
@@ -1572,9 +1607,9 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
     paddingHorizontal: 16,
     paddingVertical: 8,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: THEME.surface,
     borderBottomWidth: 1,
-    borderBottomColor: "#EEE",
+    borderBottomColor: THEME.border,
   },
   readAllButton: {
     minWidth: 80,
@@ -1586,7 +1621,7 @@ const styles = StyleSheet.create({
   readAllText: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#E25A17",
+    color: THEME.primary,
   },
   listContent: {
     padding: 16,
@@ -1595,22 +1630,24 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   notificationCard: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: THEME.surface,
     borderRadius: 16,
     marginBottom: 16,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.08,
-    shadowRadius: 8,
+    shadowRadius: 7,
     elevation: 3,
+    borderWidth: 1,
+    borderColor: "#F3F3F3",
   },
   unreadCard: {
     borderLeftWidth: 4,
-    borderLeftColor: "#E25A17",
+    borderLeftColor: THEME.primary,
   },
   selectedCard: {
     borderWidth: 2,
-    borderColor: "#E25A17",
+    borderColor: THEME.primary,
     backgroundColor: "#FFF9F5",
   },
   selectCheckbox: {
@@ -1632,13 +1669,13 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: "#FFF5F0",
+    backgroundColor: THEME.primarySoft,
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
   },
   unreadIconContainer: {
-    backgroundColor: "#FFE8D6",
+    backgroundColor: THEME.primarySoftAlt,
   },
   textContainer: {
     flex: 1,
@@ -1652,11 +1689,11 @@ const styles = StyleSheet.create({
   notificationTitle: {
     fontSize: 16,
     fontWeight: "700",
-    color: "#333",
+    color: THEME.textPrimary,
     flex: 1,
   },
   newBadge: {
-    backgroundColor: "#FFE8D6",
+    backgroundColor: THEME.primarySoftAlt,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 4,
@@ -1664,22 +1701,22 @@ const styles = StyleSheet.create({
   newBadgeText: {
     fontSize: 10,
     fontWeight: "700",
-    color: "#E25A17",
+    color: THEME.primary,
   },
   divider: {
     height: 1,
-    backgroundColor: "#E25A17",
+    backgroundColor: "#F6D5C2",
     marginBottom: 8,
   },
   notificationMessage: {
     fontSize: 14,
-    color: "#666",
+    color: THEME.textSecondary,
     lineHeight: 20,
     marginBottom: 8,
   },
   timestamp: {
     fontSize: 12,
-    color: "#999",
+    color: THEME.textMuted,
   },
   chevron: {
     alignSelf: "center",
@@ -1694,13 +1731,13 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 18,
     fontWeight: "600",
-    color: "#666",
+    color: THEME.textSecondary,
     marginTop: 16,
     textAlign: "center",
   },
   emptySubtext: {
     fontSize: 14,
-    color: "#999",
+    color: THEME.textMuted,
     marginTop: 8,
     textAlign: "center",
   },
@@ -1708,9 +1745,9 @@ const styles = StyleSheet.create({
     marginTop: 4,
     marginBottom: 8,
     alignSelf: "center",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: THEME.surface,
     borderWidth: 1,
-    borderColor: "#E25A17",
+    borderColor: THEME.primary,
     borderRadius: 999,
     paddingVertical: 10,
     paddingHorizontal: 18,
@@ -1718,7 +1755,7 @@ const styles = StyleSheet.create({
   loadMoreText: {
     fontSize: 14,
     fontWeight: "700",
-    color: "#E25A17",
+    color: THEME.primary,
   },
   skeletonCard: {
     borderLeftWidth: 0,
@@ -1749,7 +1786,7 @@ const styles = StyleSheet.create({
   alertContainer: {
     width: DETAIL_MODAL_WIDTH,
     maxWidth: DETAIL_MODAL_WIDTH,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: THEME.surface,
     borderRadius: 18,
     paddingVertical: 20,
     paddingHorizontal: 20,
@@ -1793,7 +1830,7 @@ const styles = StyleSheet.create({
     color: "#555555",
   },
   alertConfirmButton: {
-    backgroundColor: "#E15816",
+    backgroundColor: THEME.primary,
     paddingVertical: 10,
     paddingHorizontal: 24,
     borderRadius: 10,
@@ -1817,7 +1854,7 @@ const styles = StyleSheet.create({
     maxWidth: DETAIL_MODAL_WIDTH,
   },
   detailModal: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: THEME.surface,
     borderRadius: 18,
     paddingVertical: 18,
     paddingHorizontal: 18,
@@ -1890,7 +1927,7 @@ const styles = StyleSheet.create({
   detailLabel: {
     fontSize: 11,
     fontWeight: "700",
-    color: "#E15816",
+    color: THEME.primary,
     marginBottom: 4,
     textTransform: "uppercase",
     letterSpacing: 0.5,
