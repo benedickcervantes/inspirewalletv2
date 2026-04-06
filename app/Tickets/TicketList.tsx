@@ -1,8 +1,9 @@
+import { THEME_ORANGE } from "@/constants/theme";
 import { subscribeToNewTicketMessage, subscribeToTicketCreated } from "@/lib/ticketingEvents";
 import { listUserTickets, type Ticket } from "@/lib/tickets";
-import { useFocusEffect } from "@react-navigation/native";
-import React, { useEffect, useState } from "react";
-import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import React, { useCallback, useEffect, useState } from "react";
+import { Platform, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useLanguage } from "../../context/LanguageContext";
 import TicketDetail from "./TicketDetail";
 
@@ -22,43 +23,12 @@ function TicketList({ accessToken, onTicketSelected, refreshTrigger }: TicketLis
   const [totalPages, setTotalPages] = useState(1);
   const { t, language } = useLanguage();
 
-  // Debug selected ticket changes
-  useEffect(() => {
-    console.log("[TicketList] selectedTicket changed:", selectedTicket ? selectedTicket.id : "null");
-  }, [selectedTicket]);
-
-  useEffect(() => {
-    loadTickets();
-  }, [page]);
-
-  useEffect(() => {
-    if (refreshTrigger != null && refreshTrigger > 0) loadTickets();
-  }, [refreshTrigger]);
-
-  useFocusEffect(
-    React.useCallback(() => {
-      loadTickets();
-    }, [])
-  );
-
-  // Setup WebSocket listeners for real-time ticket updates
-  useEffect(() => {
-    if (!accessToken) return;
-
-    const unsubscribe = subscribeToNewTicketMessage(() => {
-      loadTickets();
-    });
-    const unsubscribeCreated = subscribeToTicketCreated(() => {
-      loadTickets();
-    });
-
-    return () => {
-      unsubscribe();
-      unsubscribeCreated();
-    };
-  }, [accessToken]);
-
-  const loadTickets = async () => {
+  const loadTickets = useCallback(async () => {
+    if (!accessToken) {
+      setLoading(false);
+      setRefreshing(false);
+      return;
+    }
     if (page === 1) setLoading(true);
     try {
       const data = await listUserTickets(accessToken, {
@@ -66,43 +36,77 @@ function TicketList({ accessToken, onTicketSelected, refreshTrigger }: TicketLis
         limit: 10,
       });
       setTickets(data.tickets);
-      setTotalPages(data.pagination.pages);
+      setTotalPages(Math.max(1, data.pagination?.pages ?? 1));
     } catch (error) {
       console.error("Error loading tickets:", error);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [accessToken, page]);
 
-  const handleRefresh = async () => {
+  useEffect(() => {
+    void loadTickets();
+  }, [loadTickets]);
+
+  useEffect(() => {
+    if (refreshTrigger != null && refreshTrigger > 0) {
+      void loadTickets();
+    }
+  }, [refreshTrigger, loadTickets]);
+
+  // Setup WebSocket listeners for real-time ticket updates
+  useEffect(() => {
+    if (!accessToken) return;
+
+    const unsubscribe = subscribeToNewTicketMessage(() => {
+      void loadTickets();
+    });
+    const unsubscribeCreated = subscribeToTicketCreated(() => {
+      void loadTickets();
+    });
+
+    return () => {
+      unsubscribe();
+      unsubscribeCreated();
+    };
+  }, [accessToken, loadTickets]);
+
+  const handleRefresh = useCallback(() => {
     setRefreshing(true);
-    setPage(1);
-    await loadTickets();
-  };
+    if (page !== 1) {
+      setPage(1);
+      return;
+    }
+    void loadTickets();
+  }, [page, loadTickets]);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
+  /** Soft chips aligned with TicketCreation / Support — avoids solid orange on orange clash with priority */
+  const getStatusBadgeStyle = (status: string) => {
+    switch (String(status).toUpperCase()) {
       case "OPEN":
+        return { bg: "rgba(225, 88, 22, 0.12)", text: "#C2410C" };
       case "IN_PROGRESS":
+        return { bg: "rgba(245, 158, 11, 0.12)", text: "#B45309" };
       case "RESOLVED":
+        return { bg: "rgba(34, 197, 94, 0.12)", text: "#15803D" };
       case "CLOSED":
-        return "#E15816";
+        return { bg: "rgba(107, 114, 128, 0.12)", text: "#4B5563" };
       default:
-        return "#E15816";
+        return { bg: "rgba(225, 88, 22, 0.12)", text: "#C2410C" };
     }
   };
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
+  const getPriorityBadgeStyle = (priority: string) => {
+    switch (String(priority).toUpperCase()) {
       case "HIGH":
-        return "#ef4444";
+        return { bg: "rgba(239, 68, 68, 0.12)", text: "#DC2626" };
       case "MEDIUM":
-        return "#f97316";
+        return { bg: "rgba(245, 158, 11, 0.12)", text: "#B45309" };
       case "LOW":
-        return "#22c55e";
+        return { bg: "rgba(34, 197, 94, 0.12)", text: "#16A34A" };
       default:
-        return "#3b82f6";
+        return { bg: "rgba(59, 130, 246, 0.12)", text: "#2563EB" };
     }
   };
 
@@ -120,8 +124,14 @@ function TicketList({ accessToken, onTicketSelected, refreshTrigger }: TicketLis
     <>
     <ScrollView
       style={styles.container}
+      contentContainerStyle={styles.scrollContent}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={handleRefresh}
+          tintColor={THEME_ORANGE}
+          colors={Platform.OS === "android" ? [THEME_ORANGE] : undefined}
+        />
       }
     >
       {loading && !tickets.length ? (
@@ -139,60 +149,51 @@ function TicketList({ accessToken, onTicketSelected, refreshTrigger }: TicketLis
         </View>
       ) : tickets.length > 0 ? (
         <View style={styles.ticketsList}>
-          {tickets.map((ticket: Ticket) => (
-            <TouchableOpacity
-              key={ticket.id}
-              style={[
-                styles.ticketCard,
-                { borderLeftColor: getStatusColor(ticket.status) },
-              ]}
-              onPress={() => {
-                console.log("[TicketList] Ticket clicked:", ticket.id, ticket.title);
-                setSelectedTicket(ticket);
-                onTicketSelected?.(true);
-                console.log("[TicketList] Selected ticket set");
-              }}
-            >
-              <View style={styles.ticketHeader}>
-                <Text style={styles.ticketTitle} numberOfLines={2}>
-                  {ticket.title}
-                </Text>
-                <View
-                  style={[
-                    styles.statusBadge,
-                    { backgroundColor: getStatusColor(ticket.status) },
-                  ]}
-                >
-                  <Text style={styles.statusText}>{t(`tickets.status.${ticket.status}`)}</Text>
+          {tickets.map((ticket: Ticket) => {
+            const statusStyle = getStatusBadgeStyle(ticket.status);
+            const priorityStyle = getPriorityBadgeStyle(ticket.priority);
+            return (
+              <TouchableOpacity
+                key={ticket.id}
+                style={styles.ticketCard}
+                activeOpacity={0.85}
+                onPress={() => {
+                  setSelectedTicket(ticket);
+                  onTicketSelected?.(true);
+                }}
+              >
+                <View style={styles.ticketHeader}>
+                  <Text style={styles.ticketTitle} numberOfLines={2}>
+                    {ticket.title}
+                  </Text>
+                  <View style={[styles.statusBadge, { backgroundColor: statusStyle.bg }]}>
+                    <Text style={[styles.statusText, { color: statusStyle.text }]}>
+                      {t(`tickets.status.${ticket.status}`)}
+                    </Text>
+                  </View>
                 </View>
-              </View>
 
-              <Text style={styles.ticketDescription} numberOfLines={2}>
-                {ticket.description}
-              </Text>
-
-              <View style={styles.ticketFooter}>
-                <View
-                  style={[
-                    styles.priorityBadge,
-                    { backgroundColor: getPriorityColor(ticket.priority) },
-                  ]}
-                >
-                  <Text style={styles.priorityText}>{t(`tickets.priority.${ticket.priority}`)}</Text>
-                </View>
-                <Text style={styles.dateText}>
-                  {formatDate(ticket.createdAt)}
+                <Text style={styles.ticketDescription} numberOfLines={2}>
+                  {ticket.description ?? ""}
                 </Text>
-              </View>
-            </TouchableOpacity>
-          ))}
+
+                <View style={styles.ticketFooter}>
+                  <View style={[styles.priorityBadge, { backgroundColor: priorityStyle.bg }]}>
+                    <Text style={[styles.priorityText, { color: priorityStyle.text }]}>
+                      {t(`tickets.priority.${ticket.priority}`)}
+                    </Text>
+                  </View>
+                  <Text style={styles.dateText}>{formatDate(ticket.createdAt)}</Text>
+                </View>
+              </TouchableOpacity>
+            );
+          })}
         </View>
       ) : (
         <View style={styles.centerContent}>
+          <MaterialCommunityIcons name="ticket-outline" size={56} color="#CCC" />
           <Text style={styles.emptyText}>{t("tickets.noTickets")}</Text>
-          <Text style={styles.emptySubText}>
-            {t("tickets.getStarted")}
-          </Text>
+          <Text style={styles.emptySubText}>{t("tickets.getStarted")}</Text>
         </View>
       )}
 
@@ -256,13 +257,18 @@ export default TicketList;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#E8E8E8",
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 96,
   },
   centerContent: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     paddingVertical: 40,
+    paddingHorizontal: 32,
   },
   loadingText: {
     fontSize: 16,
@@ -270,14 +276,22 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   skeletonContainer: {
-    padding: 12,
+    paddingHorizontal: 16,
+    paddingTop: 16,
     gap: 12,
   },
   skeletonCard: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 18,
     gap: 10,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    elevation: 3,
   },
   skeletonLineLong: {
     height: 14,
@@ -311,59 +325,67 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 18,
-    fontWeight: "600",
-    color: "#333",
+    fontWeight: "700",
+    color: "#111827",
+    marginTop: 16,
     marginBottom: 8,
+    textAlign: "center",
   },
   emptySubText: {
     fontSize: 14,
-    color: "#999",
+    color: "#6B7280",
+    textAlign: "center",
+    lineHeight: 22,
   },
   ticketsList: {
-    padding: 12,
-    gap: 12,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    gap: 0,
   },
   ticketCard: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 8,
-    borderLeftWidth: 4,
-    borderLeftColor: "#3b82f6",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 18,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
     elevation: 3,
   },
   ticketHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
-    marginBottom: 8,
+    marginBottom: 10,
+    gap: 12,
   },
   ticketTitle: {
     fontSize: 16,
-    fontWeight: "600",
-    color: "#333",
+    fontWeight: "700",
+    color: "#111827",
     flex: 1,
-    marginRight: 8,
+    minWidth: 0,
+    lineHeight: 22,
   },
   statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+    flexShrink: 0,
   },
   statusText: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: "#fff",
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 0.3,
   },
   ticketDescription: {
     fontSize: 14,
-    color: "#666",
-    marginBottom: 12,
-    lineHeight: 20,
+    color: "#6B7280",
+    marginBottom: 14,
+    lineHeight: 22,
   },
   ticketFooter: {
     flexDirection: "row",
@@ -371,31 +393,35 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   priorityBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
   },
   priorityText: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: "#fff",
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 0.2,
   },
   dateText: {
     fontSize: 12,
-    color: "#999",
+    color: "#9CA3AF",
+    fontWeight: "500",
   },
   pagination: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    paddingVertical: 16,
-    gap: 12,
+    paddingVertical: 20,
+    paddingHorizontal: 16,
+    gap: 14,
   },
   paginationButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    backgroundColor: "#E15816",
-    borderRadius: 6,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    backgroundColor: THEME_ORANGE,
+    borderRadius: 12,
+    minWidth: 96,
+    alignItems: "center",
   },
   paginationText: {
     color: "#fff",
@@ -404,8 +430,8 @@ const styles = StyleSheet.create({
   },
   pageIndicator: {
     fontSize: 14,
-    color: "#666",
-    fontWeight: "500",
+    color: "#374151",
+    fontWeight: "600",
   },
   disabled: {
     opacity: 0.5,

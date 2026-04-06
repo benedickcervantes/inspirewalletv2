@@ -1234,17 +1234,25 @@ export default function HistoryScreen() {
             <Text style={styles.summaryLabel}>
               {t("history.totalSpent").toUpperCase()}
             </Text>
-            <Text style={styles.summaryValue}>
-              {CURRENCY_SYMBOL} {formatCurrency(totalSpent)}
-            </Text>
+            {loading ? (
+              <View style={styles.summaryValueSkeleton} />
+            ) : (
+              <Text style={styles.summaryValue}>
+                {CURRENCY_SYMBOL} {formatCurrency(totalSpent)}
+              </Text>
+            )}
           </View>
           <View style={styles.summaryCard}>
             <Text style={styles.summaryLabel}>
               {t("history.totalIncome").toUpperCase()}
             </Text>
-            <Text style={styles.summaryValue}>
-              {CURRENCY_SYMBOL} {formatCurrency(totalIncome)}
-            </Text>
+            {loading ? (
+              <View style={styles.summaryValueSkeleton} />
+            ) : (
+              <Text style={styles.summaryValue}>
+                {CURRENCY_SYMBOL} {formatCurrency(totalIncome)}
+              </Text>
+            )}
           </View>
         </View>
 
@@ -1252,7 +1260,7 @@ export default function HistoryScreen() {
           {t("history.currentTransactions").toUpperCase()}
         </Text>
 
-        {isSelectMode && (
+        {!loading && isSelectMode && (
           <TouchableOpacity
             style={styles.selectAllButton}
             onPress={() => {
@@ -1275,46 +1283,67 @@ export default function HistoryScreen() {
         )}
 
         <View style={styles.transactionList}>
-          {paginatedTransactions.map((tx) => (
-            <TouchableOpacity
-              key={tx.id}
-              style={[
-                styles.transactionItem,
-                selectedIds.has(tx.id) && styles.transactionItemSelected,
-              ]}
-              onPress={() => handleTransactionPress(tx)}
-              activeOpacity={0.7}
-            >
-              {isSelectMode && (
-                <View style={styles.checkbox}>
-                  {selectedIds.has(tx.id) && (
-                    <Ionicons name="checkmark" size={16} color="#E15816" />
-                  )}
+          {loading
+            ? Array.from({ length: 6 }).map((_, i) => (
+                <View
+                  key={`history-skeleton-${i}`}
+                  style={[
+                    styles.transactionItem,
+                    styles.transactionSkeletonRow,
+                    i === 5 && styles.transactionSkeletonRowLast,
+                  ]}
+                >
+                  <View style={styles.transactionSkeletonIcon} />
+                  <View style={styles.transactionSkeletonDetails}>
+                    <View style={styles.transactionSkeletonLineWide} />
+                    <View style={styles.transactionSkeletonLineNarrow} />
+                  </View>
+                  <View style={styles.transactionSkeletonAmount} />
                 </View>
-              )}
-              <View style={styles.transactionIcon}>
-                <Ionicons
-                  name={
-                    getTransactionIcon(tx) as keyof typeof Ionicons.glyphMap
-                  }
-                  size={22}
-                  color="#E15816"
-                />
-              </View>
-              <View style={styles.transactionDetails}>
-                <Text style={styles.transactionName}>
-                  {getTransactionDisplayName(tx)}
-                </Text>
-                <Text style={styles.transactionDate}>{formatDateTime(tx)}</Text>
-              </View>
-              <Text style={styles.transactionAmount}>
-                {CURRENCY_SYMBOL} {formatCurrency(tx.amount ?? 0)}
-              </Text>
-            </TouchableOpacity>
-          ))}
+              ))
+            : paginatedTransactions.map((tx) => (
+                <TouchableOpacity
+                  key={tx.id}
+                  style={[
+                    styles.transactionItem,
+                    selectedIds.has(tx.id) && styles.transactionItemSelected,
+                  ]}
+                  onPress={() => handleTransactionPress(tx)}
+                  activeOpacity={0.7}
+                >
+                  {isSelectMode && (
+                    <View style={styles.checkbox}>
+                      {selectedIds.has(tx.id) && (
+                        <Ionicons name="checkmark" size={16} color="#E15816" />
+                      )}
+                    </View>
+                  )}
+                  <View style={styles.transactionIcon}>
+                    <Ionicons
+                      name={
+                        getTransactionIcon(tx) as keyof typeof Ionicons.glyphMap
+                      }
+                      size={22}
+                      color="#E15816"
+                    />
+                  </View>
+                  <View style={styles.transactionDetails}>
+                    <Text style={styles.transactionName}>
+                      {getTransactionDisplayName(tx)}
+                    </Text>
+                    <Text style={styles.transactionDate}>
+                      {formatDateTime(tx)}
+                    </Text>
+                  </View>
+                  <Text style={styles.transactionAmount}>
+                    {CURRENCY_SYMBOL} {formatCurrency(tx.amount ?? 0)}
+                  </Text>
+                </TouchableOpacity>
+              ))}
         </View>
 
-        {displayTransactions.length > 0 &&
+        {!loading &&
+          displayTransactions.length > 0 &&
           !hasMore &&
           currentPage >= totalPagesCount && (
             <View style={styles.endOfListContainer}>
@@ -1325,7 +1354,7 @@ export default function HistoryScreen() {
       </ScrollView>
 
       {/* Pagination Bar */}
-      {displayTransactions.length > 0 && (
+      {displayTransactions.length > 0 && !loading && (
         <View style={styles.paginationContainer}>
           <View style={styles.paginationCard}>
             <View style={styles.paginationRow}>
@@ -2030,6 +2059,51 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "700",
     color: "#E15816",
+  },
+  summaryValueSkeleton: {
+    height: 24,
+    width: "85%",
+    maxWidth: 160,
+    borderRadius: 8,
+    backgroundColor: "#E8E8E8",
+    marginTop: 2,
+  },
+  transactionSkeletonRow: {
+    borderBottomColor: "#F5F5F5",
+  },
+  transactionSkeletonRowLast: {
+    borderBottomWidth: 0,
+  },
+  transactionSkeletonIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    backgroundColor: "#E9E9E9",
+    marginRight: 12,
+  },
+  transactionSkeletonDetails: {
+    flex: 1,
+    justifyContent: "center",
+    gap: 8,
+    paddingRight: 8,
+  },
+  transactionSkeletonLineWide: {
+    width: "72%",
+    height: 14,
+    borderRadius: 6,
+    backgroundColor: "#ECECEC",
+  },
+  transactionSkeletonLineNarrow: {
+    width: "48%",
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: "#F1F1F1",
+  },
+  transactionSkeletonAmount: {
+    width: 72,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: "#E8E8E8",
   },
   sectionTitle: {
     fontSize: 14,

@@ -128,6 +128,10 @@ export function deleteTransactions(
   ids: string[],
 ): Promise<{ success: boolean; deletedCount?: number; error?: string }>;
 
+export function getTopUpDepositRequests(
+  accessToken: string,
+): Promise<{ success: boolean; requests?: unknown[]; error?: string }>;
+
 export function getStockInvestmentDepositRequests(
   accessToken: string,
 ): Promise<{ success: boolean; requests?: unknown[]; error?: string }>;
