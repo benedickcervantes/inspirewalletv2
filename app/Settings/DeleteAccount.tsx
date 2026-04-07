@@ -9,7 +9,6 @@ import { ActivityIndicator, Alert, Modal, Pressable, SafeAreaView, ScrollView, S
 import { submitAccountDeletionRequest } from '../../configs/api';
 import { useLanguage } from '../../context/LanguageContext';
 import type { NavProp } from '../../types/navigation';
-import AccountDeletionModal from '../AccountDeletion/AccountDeletionModal';
 const REASON_KEYS = ['delete.reasonNoLonger', 'delete.reasonBetter', 'delete.reasonPrivacy', 'delete.reasonExpensive', 'delete.reasonTechnical', 'delete.reasonOther'] as const;
 
 type Step = 'confirm' | 'reason' | 'done';
@@ -227,7 +226,6 @@ const DeleteAccount = () => {
           </LinearGradient>
         </View>
       </Modal>
-      <AccountDeletionModal />
     </SafeAreaView>
   );
 };

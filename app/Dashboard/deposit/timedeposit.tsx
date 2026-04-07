@@ -7,9 +7,14 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { auth, doc, firestore, getDoc } from "../../../configs/firebase";
 import { useLanguage } from "../../../context/LanguageContext";
 import { useSocket } from "../../../context/SocketContext";
-import { getVisibilityStatus } from "../../../lib/maintenance";
+import {
+  getVisibilityStatus,
+  isOperationUnderMaintenance,
+} from "../../../lib/maintenance";
 
-import ActivityModal from '../../components/ActivityModal';
+import ActivityModal from "../../components/ActivityModal";
+import FeatureMaintenanceModal from "../../components/FeatureMaintenanceModal";
+
 export default function TimeDeposit() {
   const navigation = useNavigation();
   const { t } = useLanguage();
@@ -27,6 +32,8 @@ export default function TimeDeposit() {
     title: string;
     message: string;
   }>({ title: "", message: "" });
+  const [showFeatureMaintenanceModal, setShowFeatureMaintenanceModal] =
+    useState(false);
 
   useEffect(() => {
     fetchUserData();
@@ -50,6 +57,23 @@ export default function TimeDeposit() {
         isMounted = false;
       };
     }, [depositMethod]),
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false;
+      void (async () => {
+        const offline = await isOperationUnderMaintenance(
+          "op_deposit_time_deposit",
+        );
+        if (!cancelled) {
+          setShowFeatureMaintenanceModal(offline);
+        }
+      })();
+      return () => {
+        cancelled = true;
+      };
+    }, []),
   );
 
   useEffect(() => {
@@ -105,7 +129,15 @@ export default function TimeDeposit() {
     { labelKey: "deposit.contract2Years", value: "2 Years" },
   ];
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
+    const offline = await isOperationUnderMaintenance(
+      "op_deposit_time_deposit",
+    );
+    if (offline) {
+      setShowFeatureMaintenanceModal(true);
+      return;
+    }
+
     if (!contractPeriod) {
       setAlertConfig({
         title: t("deposit.selectContract"),
@@ -272,7 +304,7 @@ export default function TimeDeposit() {
           {/* Continue Button */}
           <TouchableOpacity
             style={styles.continueButton}
-            onPress={handleContinue}>
+            onPress={() => void handleContinue()}>
             <LinearGradient
               colors={["#E25A17", "#F28934"]}
               style={styles.continueGradient}
@@ -308,6 +340,14 @@ export default function TimeDeposit() {
             </LinearGradient>
           </View>
         </ActivityModal>
+
+        <FeatureMaintenanceModal
+          visible={showFeatureMaintenanceModal}
+          onDismiss={() => {
+            setShowFeatureMaintenanceModal(false);
+            navigation.goBack();
+          }}
+        />
       </SafeAreaView>
     </View>
   );

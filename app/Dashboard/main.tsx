@@ -54,7 +54,6 @@ import {
 } from "../../lib/maintenance";
 import type { NavProp } from "../../types/navigation";
 import { useResponsive } from "../../utils/responsive";
-import AccountDeletionModal from "../AccountDeletion/AccountDeletionModal";
 import {
     AnnouncementModal,
     type AnnouncementItem,
@@ -2251,7 +2250,6 @@ export default function Dashboard() {
           </View>
         </ScrollView>
       </SafeAreaView>
-      <AccountDeletionModal />
     </>
   );
 }

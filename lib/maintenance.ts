@@ -16,6 +16,72 @@ export type ServiceId =
   | 'physical_cards';
 
 type MaintenanceStatusMap = Record<ServiceId, boolean>;
+export type GlobalMaintenanceMode = {
+  isEnabled: boolean;
+  message: string;
+  updatedAt?: string;
+};
+
+/** Keys aligned with admin Operational Security / backend `ServiceId` for deposit & withdrawal flows. */
+export type OperationMaintenanceKey =
+  | 'op_deposit_time_deposit'
+  | 'op_deposit_stock_investment'
+  | 'op_deposit_top_up_available_balance'
+  | 'op_withdrawal_agent_wallet'
+  | 'op_withdrawal_available_balance'
+  | 'op_withdrawal_local_bank'
+  | 'op_withdrawal_e_wallet';
+
+export type WithdrawalFlowSource = 'agent-withdrawal' | 'available-balance';
+export type WithdrawalFlowMethod = 'local_bank' | 'e_wallet';
+
+/**
+ * True if the withdrawal source (agent vs available) or payout method (bank vs e-wallet) is offline.
+ */
+export async function isWithdrawalCombinationUnderMaintenance(params: {
+  source: WithdrawalFlowSource;
+  method: WithdrawalFlowMethod;
+}): Promise<boolean> {
+  const sourceKey: OperationMaintenanceKey =
+    params.source === 'agent-withdrawal'
+      ? 'op_withdrawal_agent_wallet'
+      : 'op_withdrawal_available_balance';
+  const methodKey: OperationMaintenanceKey =
+    params.method === 'local_bank'
+      ? 'op_withdrawal_local_bank'
+      : 'op_withdrawal_e_wallet';
+  const [sourceOff, methodOff] = await Promise.all([
+    isOperationUnderMaintenance(sourceKey),
+    isOperationUnderMaintenance(methodKey),
+  ]);
+  return sourceOff || methodOff;
+}
+
+/**
+ * True when this operation is OFFLINE (blocked) in admin.
+ */
+export async function isOperationUnderMaintenance(
+  key: OperationMaintenanceKey,
+): Promise<boolean> {
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/maintenance/status/${encodeURIComponent(key)}`,
+      {
+        headers: {
+          'x-api-key': API_KEY || '',
+        },
+      },
+    );
+    if (!response.ok) {
+      return false;
+    }
+    const data = (await response.json()) as { isUnderMaintenance?: boolean };
+    return Boolean(data.isUnderMaintenance);
+  } catch (error) {
+    console.error(`[Maintenance] Failed to check operation ${key}:`, error);
+    return false;
+  }
+}
 
 /**
  * Get maintenance status for all services
@@ -163,5 +229,42 @@ export async function getCachedMaintenanceStatus(): Promise<MaintenanceStatusMap
   } catch (error) {
     console.error('[Maintenance] Failed to get cached status:', error);
     return null;
+  }
+}
+
+/**
+ * Check global maintenance mode for mobile app blocking flow.
+ */
+export async function getGlobalMaintenanceMode(): Promise<GlobalMaintenanceMode> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/settings/maintenance`, {
+      method: 'GET',
+      headers: {
+        'x-api-key': API_KEY || '',
+      },
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    const payload = (await response.json()) as {
+      success?: boolean;
+      data?: { isEnabled?: boolean; message?: string; updatedAt?: string };
+    };
+    const data = payload?.data ?? {};
+    return {
+      isEnabled: Boolean(data.isEnabled),
+      message:
+        data.message?.trim() ||
+        'The app is currently under maintenance. Please try again later.',
+      updatedAt: data.updatedAt,
+    };
+  } catch (error) {
+    console.error('[Maintenance] Failed to fetch global maintenance mode:', error);
+    // Network errors should not hard-block users by default.
+    return {
+      isEnabled: false,
+      message: 'The app is currently under maintenance. Please try again later.',
+    };
   }
 }

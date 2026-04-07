@@ -20,6 +20,8 @@ import { useLanguage } from "../../../context/LanguageContext";
 import PasscodeModal from "../../components/PasscodeModal";
 
 import ActivityModal from "../../components/ActivityModal";
+import FeatureMaintenanceModal from "../../components/FeatureMaintenanceModal";
+import { isWithdrawalCombinationUnderMaintenance } from "../../../lib/maintenance";
 import {
     MIN_REMAINING_WALLET_BALANCE_PHP,
     MIN_WITHDRAWAL_PHP,
@@ -61,6 +63,7 @@ export default function EWalletConfirm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPasscodeModal, setShowPasscodeModal] = useState(false);
   const [passcode, setPasscode] = useState("");
+  const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
 
   const method = params.method || "e-wallet";
   const walletType = params.walletType || "";
@@ -171,6 +174,20 @@ export default function EWalletConfirm() {
         setIsSubmitting(false);
         return;
       }
+
+      const offline = await isWithdrawalCombinationUnderMaintenance({
+        source:
+          withdrawalType === "agent-withdrawal"
+            ? "agent-withdrawal"
+            : "available-balance",
+        method: "e_wallet",
+      });
+      if (offline) {
+        setShowPasscodeModal(false);
+        setShowMaintenanceModal(true);
+        return;
+      }
+
       const body: Record<string, string | undefined> = {
         walletId: wallet.id as string,
         amount: amountNum.toFixed(2),
@@ -462,6 +479,14 @@ export default function EWalletConfirm() {
             </LinearGradient>
           </View>
         </ActivityModal>
+
+        <FeatureMaintenanceModal
+          visible={showMaintenanceModal}
+          onDismiss={() => {
+            setShowMaintenanceModal(false);
+            navigation.goBack();
+          }}
+        />
       </SafeAreaView>
     </View>
   );
