@@ -26,6 +26,9 @@ const en: TranslationMap = {
   "dashboard.underMaintenance": "Under maintenance",
   "dashboard.maintenanceMessage":
     "This service is currently under maintenance. We're working hard to bring you an improved experience. Please check back soon!",
+  "maintenance.featureInMaintenanceTitle": "Maintenance mode",
+  "maintenance.featureInMaintenanceMessage":
+    "This feature is currently in maintenance mode. Please try again later.",
   "dashboard.gotIt": "Got it",
   "pcard.title": "Premium Card Holder",
   "pcard.subtitle":
@@ -2824,6 +2827,9 @@ const ko: TranslationMap = {
   "dashboard.underMaintenance": "점검 중",
   "dashboard.maintenanceMessage":
     "현재 이 서비스는 점검 중입니다. 더 나은 경험을 제공하기 위해 작업하고 있습니다. 잠시 후 다시 확인해 주세요!",
+  "maintenance.featureInMaintenanceTitle": "점검 모드",
+  "maintenance.featureInMaintenanceMessage":
+    "이 기능은 현재 점검 중입니다. 나중에 다시 시도해 주세요.",
   "dashboard.gotIt": "확인",
   "pcard.title": "프리미엄 카드 홀더",
   "pcard.subtitle": "P-Card 앞면과 뒷면을 보려면 탭하여 뒤집으세요.",
@@ -4657,6 +4663,9 @@ const ja: TranslationMap = {
   "dashboard.underMaintenance": "メンテナンス中",
   "dashboard.maintenanceMessage":
     "現在このサービスはメンテナンス中です。より良い体験をお届けするために作業しています。しばらくしてからもう一度お試しください。",
+  "maintenance.featureInMaintenanceTitle": "メンテナンス中",
+  "maintenance.featureInMaintenanceMessage":
+    "この機能は現在メンテナンス中です。しばらくしてから再度お試しください。",
   "dashboard.gotIt": "了解",
   "pcard.title": "プレミアムカードホルダー",
   "pcard.subtitle": "Pカードの表裏を表示するにはタップしてめくります。",
@@ -6591,6 +6600,9 @@ const ar: TranslationMap = {
   "dashboard.underMaintenance": "تحت الصيانة",
   "dashboard.maintenanceMessage":
     "هذه الخدمة قيد الصيانة حالياً. نحن نعمل على تحسين تجربتك. يرجى المحاولة مرة أخرى قريباً!",
+  "maintenance.featureInMaintenanceTitle": "وضع الصيانة",
+  "maintenance.featureInMaintenanceMessage":
+    "هذه الميزة قيد الصيانة حالياً. يرجى المحاولة لاحقاً.",
   "dashboard.gotIt": "حسنًا",
   "pcard.title": "حامل البطاقة المميزة",
   "pcard.subtitle": "اعرض وجهي بطاقة P-Card — اضغط للقلب.",
