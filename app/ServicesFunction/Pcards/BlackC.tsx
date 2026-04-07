@@ -485,7 +485,7 @@ export default function BlackC() {
               >
                 <View style={styles.paymentAmountCard}>
                   <Text style={styles.paymentAmountLabel}>Amount to pay</Text>
-                  <Text style={styles.paymentAmountValue}>₱250</Text>
+                  <Text style={styles.paymentAmountValue}>₱1000</Text>
                 </View>
                 <Text style={styles.modalTitle}>{t("pcard.modalTitle")}</Text>
                 <Text style={styles.modalHint}>{t("pcard.modalHint")}</Text>
