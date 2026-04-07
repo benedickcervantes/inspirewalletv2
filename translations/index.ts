@@ -379,6 +379,120 @@ const en: TranslationMap = {
   "rewardPoints.campaignInfo":
     "Every ₱{min} transfer earns {earned} points. Max ₱{max}/day.",
   "rewardPoints.gotIt": "Got It",
+  "rewardPoints.termsLink": "Wallet service & campaign policy",
+  "rewardPoints.termsScreenTitle": "Terms & conditions",
+  "rewardPoints.terms.mainTitle": "Terms and Conditions",
+  "rewardPoints.terms.subtitle": "Wallet Service & Campaign Policy",
+  "rewardPoints.terms.notice":
+    "Please review before using Reward Points services.",
+  "rewardPoints.terms.section1.title": "1. Introduction",
+  "rewardPoints.terms.section1.body1":
+    "These Terms and Conditions (\"Terms\") govern your use of the Wallet Service (\"Service\") provided by Inspire Holdings Inc. (\"Company\").",
+  "rewardPoints.terms.section1.body2":
+    "By using this Service, you agree to comply with all terms stated herein.",
+  "rewardPoints.terms.section2.title": "2. Eligibility",
+  "rewardPoints.terms.section2.item1":
+    "Users must complete identity verification (KYC).",
+  "rewardPoints.terms.section2.item2":
+    "Users must provide accurate and valid information.",
+  "rewardPoints.terms.section2.item3":
+    "The Company reserves the right to reject or suspend any account.",
+  "rewardPoints.terms.section3.title": "3. Wallet Usage",
+  "rewardPoints.terms.section3.item1":
+    "Users may send, receive, and manage funds within the wallet.",
+  "rewardPoints.terms.section3.item2":
+    "All transactions must comply with applicable laws and regulations.",
+  "rewardPoints.terms.section3.item3":
+    "The Company may impose limits, restrictions, or monitoring at any time.",
+  "rewardPoints.terms.section4.title": "4. Campaign Rewards",
+  "rewardPoints.terms.section4.eligibilityTitle": "4.1 Eligibility Rules",
+  "rewardPoints.terms.section4.eligibilityItem1":
+    "Rewards are granted only for legitimate transactions.",
+  "rewardPoints.terms.section4.eligibilityItem2":
+    "Only one transaction per day per user pair is eligible.",
+  "rewardPoints.terms.section4.eligibilityItem3":
+    "Repeated transactions with the same user will not earn rewards.",
+  "rewardPoints.terms.section4.restrictionsTitle": "4.2 Restrictions",
+  "rewardPoints.terms.section4.restrictionsItem1":
+    "Circular transactions (A -> B -> A) are prohibited.",
+  "rewardPoints.terms.section4.restrictionsItem2":
+    "Use of multiple or related accounts is prohibited.",
+  "rewardPoints.terms.section4.restrictionsItem3":
+    "Any artificial manipulation of rewards is prohibited.",
+  "rewardPoints.terms.section4.adjustmentTitle": "4.3 Reward Adjustment",
+  "rewardPoints.terms.section4.adjustmentBody":
+    "The Company reserves the right to:",
+  "rewardPoints.terms.section4.adjustmentItem1": "Cancel rewards.",
+  "rewardPoints.terms.section4.adjustmentItem2": "Adjust reward amounts.",
+  "rewardPoints.terms.section4.adjustmentItem3":
+    "Modify or terminate campaigns at any time.",
+  "rewardPoints.terms.section5.title": "5. Maintenance Balance Requirement",
+  "rewardPoints.terms.section5.item1":
+    "Users must maintain a minimum balance of PHP 1,000.",
+  "rewardPoints.terms.section5.item2":
+    "Accounts below this threshold may not be eligible for rewards.",
+  "rewardPoints.terms.section6.title": "6. Transaction Limits",
+  "rewardPoints.terms.section6.item1":
+    "Daily eligible transaction limit: PHP 10,000.",
+  "rewardPoints.terms.section6.item2":
+    "Additional limits may be applied without prior notice.",
+  "rewardPoints.terms.section7.title": "7. Monitoring and Compliance",
+  "rewardPoints.terms.section7.body1":
+    "The Company reserves the right to monitor all activities including:",
+  "rewardPoints.terms.section7.item1": "Transaction patterns.",
+  "rewardPoints.terms.section7.item2":
+    "Suspicious or unusual behavior.",
+  "rewardPoints.terms.section7.item3":
+    "KYC duplication (name, ID, device, IP, phone number).",
+  "rewardPoints.terms.section7.body2":
+    "Accounts suspected of violating these Terms may be:",
+  "rewardPoints.terms.section7.item4": "Restricted.",
+  "rewardPoints.terms.section7.item5": "Suspended.",
+  "rewardPoints.terms.section7.item6": "Permanently terminated.",
+  "rewardPoints.terms.section8.title": "8. Notifications",
+  "rewardPoints.terms.section8.body1":
+    "Users will receive notifications via:",
+  "rewardPoints.terms.section8.item1": "In-app messages.",
+  "rewardPoints.terms.section8.item2": "Email.",
+  "rewardPoints.terms.section8.item3":
+    "SMS (for important alerts).",
+  "rewardPoints.terms.section8.body2":
+    "Notifications may include:",
+  "rewardPoints.terms.section8.item4": "Transaction confirmation.",
+  "rewardPoints.terms.section8.item5": "Reward status.",
+  "rewardPoints.terms.section8.item6": "Reasons for ineligibility.",
+  "rewardPoints.terms.section8.item7": "Warnings or account notices.",
+  "rewardPoints.terms.section9.title": "9. Fees",
+  "rewardPoints.terms.section9.item1":
+    "Certain transactions may be subject to fees (e.g., withdrawal fees).",
+  "rewardPoints.terms.section9.item2":
+    "All applicable fees will be disclosed within the Service.",
+  "rewardPoints.terms.section10.title": "10. Risk Disclosure",
+  "rewardPoints.terms.section10.body1": "Users acknowledge that:",
+  "rewardPoints.terms.section10.item1":
+    "Service availability may be affected by system maintenance or external factors.",
+  "rewardPoints.terms.section10.item2":
+    "Delays or interruptions may occur.",
+  "rewardPoints.terms.section10.item3":
+    "The Company is not liable for losses caused by system issues beyond reasonable control.",
+  "rewardPoints.terms.section11.title": "11. Limitation of Liability",
+  "rewardPoints.terms.section11.body1":
+    "The Company shall not be liable for:",
+  "rewardPoints.terms.section11.item1":
+    "User misuse or violation of Terms.",
+  "rewardPoints.terms.section11.item2":
+    "Unauthorized access due to user negligence.",
+  "rewardPoints.terms.section11.item3":
+    "External system failures or force majeure events.",
+  "rewardPoints.terms.section12.title": "12. Amendments",
+  "rewardPoints.terms.section12.body1":
+    "The Company reserves the right to update or modify these Terms at any time. Continued use of the Service constitutes acceptance of updated Terms.",
+  "rewardPoints.terms.section13.title": "13. Governing Law",
+  "rewardPoints.terms.section13.body1":
+    "These Terms shall be governed by the laws applicable in the Philippines.",
+  "rewardPoints.terms.section14.title": "14. Contact",
+  "rewardPoints.terms.section14.body1":
+    "For inquiries, please contact customer support.",
 
   // Withdraw
   "withdraw.fromAvailableBalance": "Withdraw from available balance",
@@ -2368,6 +2482,116 @@ const ko: TranslationMap = {
   "rewardPoints.campaignInfo":
     "₱{min} 송금마다 {earned}포인트 적립. 일 최대 ₱{max}.",
   "rewardPoints.gotIt": "확인",
+  "rewardPoints.termsLink": "지갑 서비스 및 캠페인 정책",
+  "rewardPoints.termsScreenTitle": "이용 약관",
+  "rewardPoints.terms.mainTitle": "이용 약관",
+  "rewardPoints.terms.subtitle": "지갑 서비스 및 캠페인 정책",
+  "rewardPoints.terms.notice":
+    "리워드 포인트 서비스를 이용하기 전에 반드시 확인해 주세요.",
+  "rewardPoints.terms.section1.title": "1. 소개",
+  "rewardPoints.terms.section1.body1":
+    "본 이용 약관(\"약관\")은 Inspire Holdings Inc.(\"회사\")가 제공하는 지갑 서비스(\"서비스\") 이용에 적용됩니다.",
+  "rewardPoints.terms.section1.body2":
+    "본 서비스를 이용함으로써, 귀하는 본 약관의 모든 조항을 준수하는 데 동의합니다.",
+  "rewardPoints.terms.section2.title": "2. 이용 자격",
+  "rewardPoints.terms.section2.item1":
+    "사용자는 본인 확인(KYC)을 완료해야 합니다.",
+  "rewardPoints.terms.section2.item2":
+    "사용자는 정확하고 유효한 정보를 제공해야 합니다.",
+  "rewardPoints.terms.section2.item3":
+    "회사는 계정을 거절하거나 정지할 권리를 보유합니다.",
+  "rewardPoints.terms.section3.title": "3. 지갑 이용",
+  "rewardPoints.terms.section3.item1":
+    "사용자는 지갑 내에서 자금을 송금, 수취 및 관리할 수 있습니다.",
+  "rewardPoints.terms.section3.item2":
+    "모든 거래는 관련 법률 및 규정을 준수해야 합니다.",
+  "rewardPoints.terms.section3.item3":
+    "회사는 언제든지 한도, 제한 또는 모니터링을 적용할 수 있습니다.",
+  "rewardPoints.terms.section4.title": "4. 캠페인 리워드",
+  "rewardPoints.terms.section4.eligibilityTitle": "4.1 적격 규정",
+  "rewardPoints.terms.section4.eligibilityItem1":
+    "리워드는 정상적인 거래에만 지급됩니다.",
+  "rewardPoints.terms.section4.eligibilityItem2":
+    "사용자 쌍당 하루 1건의 거래만 적격으로 인정됩니다.",
+  "rewardPoints.terms.section4.eligibilityItem3":
+    "동일 사용자와의 반복 거래는 리워드 대상이 아닙니다.",
+  "rewardPoints.terms.section4.restrictionsTitle": "4.2 제한 사항",
+  "rewardPoints.terms.section4.restrictionsItem1":
+    "순환 거래(A -> B -> A)는 금지됩니다.",
+  "rewardPoints.terms.section4.restrictionsItem2":
+    "다중 계정 또는 연관 계정 사용은 금지됩니다.",
+  "rewardPoints.terms.section4.restrictionsItem3":
+    "리워드를 인위적으로 조작하는 행위는 금지됩니다.",
+  "rewardPoints.terms.section4.adjustmentTitle": "4.3 리워드 조정",
+  "rewardPoints.terms.section4.adjustmentBody":
+    "회사는 다음 권리를 보유합니다:",
+  "rewardPoints.terms.section4.adjustmentItem1": "리워드 취소.",
+  "rewardPoints.terms.section4.adjustmentItem2": "리워드 금액 조정.",
+  "rewardPoints.terms.section4.adjustmentItem3":
+    "캠페인을 언제든지 수정하거나 종료.",
+  "rewardPoints.terms.section5.title": "5. 유지 잔액 요건",
+  "rewardPoints.terms.section5.item1":
+    "사용자는 최소 PHP 1,000 잔액을 유지해야 합니다.",
+  "rewardPoints.terms.section5.item2":
+    "이 기준 미만 계정은 리워드 대상에서 제외될 수 있습니다.",
+  "rewardPoints.terms.section6.title": "6. 거래 한도",
+  "rewardPoints.terms.section6.item1":
+    "일일 적격 거래 한도: PHP 10,000.",
+  "rewardPoints.terms.section6.item2":
+    "추가 한도는 사전 고지 없이 적용될 수 있습니다.",
+  "rewardPoints.terms.section7.title": "7. 모니터링 및 준수",
+  "rewardPoints.terms.section7.body1":
+    "회사는 다음을 포함한 모든 활동을 모니터링할 권리가 있습니다:",
+  "rewardPoints.terms.section7.item1": "거래 패턴.",
+  "rewardPoints.terms.section7.item2": "의심스럽거나 비정상적인 행위.",
+  "rewardPoints.terms.section7.item3":
+    "KYC 중복(이름, 신분증, 기기, IP, 전화번호).",
+  "rewardPoints.terms.section7.body2":
+    "본 약관 위반이 의심되는 계정은 다음 조치를 받을 수 있습니다:",
+  "rewardPoints.terms.section7.item4": "제한.",
+  "rewardPoints.terms.section7.item5": "정지.",
+  "rewardPoints.terms.section7.item6": "영구 종료.",
+  "rewardPoints.terms.section8.title": "8. 알림",
+  "rewardPoints.terms.section8.body1":
+    "사용자는 다음 채널로 알림을 받습니다:",
+  "rewardPoints.terms.section8.item1": "앱 내 메시지.",
+  "rewardPoints.terms.section8.item2": "이메일.",
+  "rewardPoints.terms.section8.item3": "SMS(중요 알림).",
+  "rewardPoints.terms.section8.body2":
+    "알림에는 다음 내용이 포함될 수 있습니다:",
+  "rewardPoints.terms.section8.item4": "거래 확인.",
+  "rewardPoints.terms.section8.item5": "리워드 상태.",
+  "rewardPoints.terms.section8.item6": "적격 제외 사유.",
+  "rewardPoints.terms.section8.item7": "경고 또는 계정 공지.",
+  "rewardPoints.terms.section9.title": "9. 수수료",
+  "rewardPoints.terms.section9.item1":
+    "일부 거래에는 수수료가 부과될 수 있습니다(예: 출금 수수료).",
+  "rewardPoints.terms.section9.item2":
+    "적용되는 모든 수수료는 서비스 내에 안내됩니다.",
+  "rewardPoints.terms.section10.title": "10. 위험 고지",
+  "rewardPoints.terms.section10.body1": "사용자는 다음 사항을 인지합니다:",
+  "rewardPoints.terms.section10.item1":
+    "서비스 이용 가능성은 시스템 점검 또는 외부 요인의 영향을 받을 수 있습니다.",
+  "rewardPoints.terms.section10.item2": "지연 또는 중단이 발생할 수 있습니다.",
+  "rewardPoints.terms.section10.item3":
+    "회사는 합리적 통제 범위를 벗어난 시스템 이슈로 인한 손실에 대해 책임지지 않습니다.",
+  "rewardPoints.terms.section11.title": "11. 책임의 제한",
+  "rewardPoints.terms.section11.body1":
+    "회사는 다음 사항에 대해 책임을 지지 않습니다:",
+  "rewardPoints.terms.section11.item1": "사용자의 오용 또는 약관 위반.",
+  "rewardPoints.terms.section11.item2":
+    "사용자 과실로 인한 무단 접근.",
+  "rewardPoints.terms.section11.item3":
+    "외부 시스템 장애 또는 불가항력 사건.",
+  "rewardPoints.terms.section12.title": "12. 약관 변경",
+  "rewardPoints.terms.section12.body1":
+    "회사는 언제든지 본 약관을 업데이트하거나 수정할 수 있습니다. 서비스를 계속 이용하는 경우 변경된 약관에 동의한 것으로 간주됩니다.",
+  "rewardPoints.terms.section13.title": "13. 준거법",
+  "rewardPoints.terms.section13.body1":
+    "본 약관은 필리핀에서 적용되는 법률에 따라 해석되고 적용됩니다.",
+  "rewardPoints.terms.section14.title": "14. 문의",
+  "rewardPoints.terms.section14.body1":
+    "문의 사항은 고객센터로 연락해 주세요.",
 
   "withdraw.fromAvailableBalance": "가용 잔액에서 출금",
   "withdraw.agentWithdrawal": "에이전트 출금",
@@ -4269,6 +4493,117 @@ const ja: TranslationMap = {
   "rewardPoints.campaignInfo":
     "₱{min}の送金ごとに{earned}ポイント。1日最大 ₱{max}。",
   "rewardPoints.gotIt": "了解",
+  "rewardPoints.termsLink": "ウォレットサービス・キャンペーン規約",
+  "rewardPoints.termsScreenTitle": "利用規約",
+  "rewardPoints.terms.mainTitle": "利用規約",
+  "rewardPoints.terms.subtitle": "ウォレットサービス・キャンペーンポリシー",
+  "rewardPoints.terms.notice":
+    "リワードポイントサービスを利用する前に、必ずご確認ください。",
+  "rewardPoints.terms.section1.title": "1. はじめに",
+  "rewardPoints.terms.section1.body1":
+    "本利用規約（\"規約\"）は、Inspire Holdings Inc.（\"会社\"）が提供するウォレットサービス（\"サービス\"）の利用に適用されます。",
+  "rewardPoints.terms.section1.body2":
+    "本サービスを利用することで、利用者は本規約のすべての条項に同意したものとみなされます。",
+  "rewardPoints.terms.section2.title": "2. 利用資格",
+  "rewardPoints.terms.section2.item1":
+    "利用者は本人確認（KYC）を完了する必要があります。",
+  "rewardPoints.terms.section2.item2":
+    "利用者は正確かつ有効な情報を提供する必要があります。",
+  "rewardPoints.terms.section2.item3":
+    "会社は任意のアカウントを拒否または停止する権利を有します。",
+  "rewardPoints.terms.section3.title": "3. ウォレットの利用",
+  "rewardPoints.terms.section3.item1":
+    "利用者はウォレット内で送金・受取・資金管理を行うことができます。",
+  "rewardPoints.terms.section3.item2":
+    "すべての取引は適用される法令に従う必要があります。",
+  "rewardPoints.terms.section3.item3":
+    "会社はいつでも上限、制限、監視を適用する場合があります。",
+  "rewardPoints.terms.section4.title": "4. キャンペーン報酬",
+  "rewardPoints.terms.section4.eligibilityTitle": "4.1 対象条件",
+  "rewardPoints.terms.section4.eligibilityItem1":
+    "報酬は正当な取引に対してのみ付与されます。",
+  "rewardPoints.terms.section4.eligibilityItem2":
+    "1ユーザーペアあたり1日1件の取引のみ対象です。",
+  "rewardPoints.terms.section4.eligibilityItem3":
+    "同一ユーザーとの繰り返し取引は報酬対象外です。",
+  "rewardPoints.terms.section4.restrictionsTitle": "4.2 制限事項",
+  "rewardPoints.terms.section4.restrictionsItem1":
+    "循環取引（A -> B -> A）は禁止されています。",
+  "rewardPoints.terms.section4.restrictionsItem2":
+    "複数アカウントまたは関連アカウントの利用は禁止されています。",
+  "rewardPoints.terms.section4.restrictionsItem3":
+    "報酬の不正操作行為は禁止されています。",
+  "rewardPoints.terms.section4.adjustmentTitle": "4.3 報酬調整",
+  "rewardPoints.terms.section4.adjustmentBody":
+    "会社は以下を行う権利を有します：",
+  "rewardPoints.terms.section4.adjustmentItem1": "報酬の取消。",
+  "rewardPoints.terms.section4.adjustmentItem2": "報酬額の調整。",
+  "rewardPoints.terms.section4.adjustmentItem3":
+    "キャンペーンの変更または終了。",
+  "rewardPoints.terms.section5.title": "5. 維持残高要件",
+  "rewardPoints.terms.section5.item1":
+    "利用者は最低 PHP 1,000 の残高を維持する必要があります。",
+  "rewardPoints.terms.section5.item2":
+    "この基準を下回るアカウントは報酬対象外となる場合があります。",
+  "rewardPoints.terms.section6.title": "6. 取引上限",
+  "rewardPoints.terms.section6.item1":
+    "1日の対象取引上限：PHP 10,000。",
+  "rewardPoints.terms.section6.item2":
+    "追加の上限が事前通知なく適用される場合があります。",
+  "rewardPoints.terms.section7.title": "7. 監視とコンプライアンス",
+  "rewardPoints.terms.section7.body1":
+    "会社は以下を含むすべての活動を監視する権利を有します：",
+  "rewardPoints.terms.section7.item1": "取引パターン。",
+  "rewardPoints.terms.section7.item2": "不審または異常な行動。",
+  "rewardPoints.terms.section7.item3":
+    "KYC重複（氏名、ID、端末、IP、電話番号）。",
+  "rewardPoints.terms.section7.body2":
+    "本規約違反が疑われるアカウントは次の措置対象となる場合があります：",
+  "rewardPoints.terms.section7.item4": "制限。",
+  "rewardPoints.terms.section7.item5": "停止。",
+  "rewardPoints.terms.section7.item6": "永久終了。",
+  "rewardPoints.terms.section8.title": "8. 通知",
+  "rewardPoints.terms.section8.body1":
+    "利用者は以下の方法で通知を受け取ります：",
+  "rewardPoints.terms.section8.item1": "アプリ内メッセージ。",
+  "rewardPoints.terms.section8.item2": "メール。",
+  "rewardPoints.terms.section8.item3": "SMS（重要通知）。",
+  "rewardPoints.terms.section8.body2":
+    "通知には次の内容が含まれる場合があります：",
+  "rewardPoints.terms.section8.item4": "取引確認。",
+  "rewardPoints.terms.section8.item5": "報酬ステータス。",
+  "rewardPoints.terms.section8.item6": "対象外の理由。",
+  "rewardPoints.terms.section8.item7": "警告またはアカウント通知。",
+  "rewardPoints.terms.section9.title": "9. 手数料",
+  "rewardPoints.terms.section9.item1":
+    "一部の取引には手数料が発生する場合があります（例：出金手数料）。",
+  "rewardPoints.terms.section9.item2":
+    "適用されるすべての手数料はサービス内で開示されます。",
+  "rewardPoints.terms.section10.title": "10. リスク開示",
+  "rewardPoints.terms.section10.body1": "利用者は次の点を認識します：",
+  "rewardPoints.terms.section10.item1":
+    "サービス提供はシステム保守または外部要因の影響を受ける場合があります。",
+  "rewardPoints.terms.section10.item2": "遅延または中断が発生する場合があります。",
+  "rewardPoints.terms.section10.item3":
+    "会社は合理的な管理範囲を超えるシステム問題による損失について責任を負いません。",
+  "rewardPoints.terms.section11.title": "11. 責任の制限",
+  "rewardPoints.terms.section11.body1":
+    "会社は以下について責任を負いません：",
+  "rewardPoints.terms.section11.item1":
+    "利用者による不正利用または規約違反。",
+  "rewardPoints.terms.section11.item2":
+    "利用者の過失による不正アクセス。",
+  "rewardPoints.terms.section11.item3":
+    "外部システム障害または不可抗力事由。",
+  "rewardPoints.terms.section12.title": "12. 規約の改定",
+  "rewardPoints.terms.section12.body1":
+    "会社は本規約をいつでも更新または変更する権利を有します。サービスを継続利用した場合、改定後の規約に同意したものとみなされます。",
+  "rewardPoints.terms.section13.title": "13. 準拠法",
+  "rewardPoints.terms.section13.body1":
+    "本規約はフィリピンで適用される法令に準拠します。",
+  "rewardPoints.terms.section14.title": "14. お問い合わせ",
+  "rewardPoints.terms.section14.body1":
+    "お問い合わせはカスタマーサポートまでご連絡ください。",
 
   "withdraw.fromAvailableBalance": "利用可能な残高から引き出す",
   "withdraw.agentWithdrawal": "代理店出金",
@@ -6180,6 +6515,117 @@ const ar: TranslationMap = {
   "rewardPoints.campaignInfo":
     "كل تحويل ₱{min} يكسب {earned} نقطة. حد أقصى ₱{max}/يوم.",
   "rewardPoints.gotIt": "حسناً",
+  "rewardPoints.termsLink": "سياسة المحفظة والحملة",
+  "rewardPoints.termsScreenTitle": "الشروط والأحكام",
+  "rewardPoints.terms.mainTitle": "الشروط والأحكام",
+  "rewardPoints.terms.subtitle": "سياسة خدمة المحفظة والحملة",
+  "rewardPoints.terms.notice":
+    "يرجى المراجعة قبل استخدام خدمات نقاط المكافآت.",
+  "rewardPoints.terms.section1.title": "1. المقدمة",
+  "rewardPoints.terms.section1.body1":
+    "تحكم هذه الشروط والأحكام (\"الشروط\") استخدامك لخدمة المحفظة (\"الخدمة\") المقدمة من Inspire Holdings Inc. (\"الشركة\").",
+  "rewardPoints.terms.section1.body2":
+    "باستخدامك هذه الخدمة، فإنك توافق على الالتزام بجميع الشروط الواردة هنا.",
+  "rewardPoints.terms.section2.title": "2. الأهلية",
+  "rewardPoints.terms.section2.item1":
+    "يجب على المستخدمين إكمال التحقق من الهوية (KYC).",
+  "rewardPoints.terms.section2.item2":
+    "يجب على المستخدمين تقديم معلومات دقيقة وصالحة.",
+  "rewardPoints.terms.section2.item3":
+    "تحتفظ الشركة بالحق في رفض أو تعليق أي حساب.",
+  "rewardPoints.terms.section3.title": "3. استخدام المحفظة",
+  "rewardPoints.terms.section3.item1":
+    "يمكن للمستخدمين إرسال الأموال واستلامها وإدارتها داخل المحفظة.",
+  "rewardPoints.terms.section3.item2":
+    "يجب أن تلتزم جميع المعاملات بالقوانين واللوائح المعمول بها.",
+  "rewardPoints.terms.section3.item3":
+    "قد تفرض الشركة حدودًا أو قيودًا أو مراقبة في أي وقت.",
+  "rewardPoints.terms.section4.title": "4. مكافآت الحملة",
+  "rewardPoints.terms.section4.eligibilityTitle": "4.1 قواعد الأهلية",
+  "rewardPoints.terms.section4.eligibilityItem1":
+    "تُمنح المكافآت فقط للمعاملات المشروعة.",
+  "rewardPoints.terms.section4.eligibilityItem2":
+    "معاملة واحدة فقط يوميًا لكل زوج مستخدمين تكون مؤهلة.",
+  "rewardPoints.terms.section4.eligibilityItem3":
+    "المعاملات المتكررة مع نفس المستخدم لا تكسب مكافآت.",
+  "rewardPoints.terms.section4.restrictionsTitle": "4.2 القيود",
+  "rewardPoints.terms.section4.restrictionsItem1":
+    "المعاملات الدائرية (A -> B -> A) محظورة.",
+  "rewardPoints.terms.section4.restrictionsItem2":
+    "استخدام حسابات متعددة أو مرتبطة محظور.",
+  "rewardPoints.terms.section4.restrictionsItem3":
+    "أي تلاعب مصطنع بالمكافآت محظور.",
+  "rewardPoints.terms.section4.adjustmentTitle": "4.3 تعديل المكافآت",
+  "rewardPoints.terms.section4.adjustmentBody":
+    "تحتفظ الشركة بالحق في:",
+  "rewardPoints.terms.section4.adjustmentItem1": "إلغاء المكافآت.",
+  "rewardPoints.terms.section4.adjustmentItem2": "تعديل مبالغ المكافآت.",
+  "rewardPoints.terms.section4.adjustmentItem3":
+    "تعديل أو إنهاء الحملات في أي وقت.",
+  "rewardPoints.terms.section5.title": "5. متطلب رصيد الصيانة",
+  "rewardPoints.terms.section5.item1":
+    "يجب على المستخدمين الحفاظ على حد أدنى من الرصيد قدره PHP 1,000.",
+  "rewardPoints.terms.section5.item2":
+    "قد لا تكون الحسابات التي تقل عن هذا الحد مؤهلة للمكافآت.",
+  "rewardPoints.terms.section6.title": "6. حدود المعاملات",
+  "rewardPoints.terms.section6.item1":
+    "حد المعاملات اليومية المؤهلة: PHP 10,000.",
+  "rewardPoints.terms.section6.item2":
+    "قد يتم تطبيق حدود إضافية دون إشعار مسبق.",
+  "rewardPoints.terms.section7.title": "7. المراقبة والامتثال",
+  "rewardPoints.terms.section7.body1":
+    "تحتفظ الشركة بالحق في مراقبة جميع الأنشطة بما في ذلك:",
+  "rewardPoints.terms.section7.item1": "أنماط المعاملات.",
+  "rewardPoints.terms.section7.item2": "السلوك المشبوه أو غير المعتاد.",
+  "rewardPoints.terms.section7.item3":
+    "تكرار بيانات KYC (الاسم، الهوية، الجهاز، IP، رقم الهاتف).",
+  "rewardPoints.terms.section7.body2":
+    "قد تكون الحسابات المشتبه بانتهاكها لهذه الشروط عرضة لما يلي:",
+  "rewardPoints.terms.section7.item4": "التقييد.",
+  "rewardPoints.terms.section7.item5": "التعليق.",
+  "rewardPoints.terms.section7.item6": "الإنهاء الدائم.",
+  "rewardPoints.terms.section8.title": "8. الإشعارات",
+  "rewardPoints.terms.section8.body1":
+    "سيتلقى المستخدمون الإشعارات عبر:",
+  "rewardPoints.terms.section8.item1": "رسائل داخل التطبيق.",
+  "rewardPoints.terms.section8.item2": "البريد الإلكتروني.",
+  "rewardPoints.terms.section8.item3": "رسائل SMS (للتنبيهات المهمة).",
+  "rewardPoints.terms.section8.body2":
+    "قد تتضمن الإشعارات:",
+  "rewardPoints.terms.section8.item4": "تأكيد المعاملة.",
+  "rewardPoints.terms.section8.item5": "حالة المكافأة.",
+  "rewardPoints.terms.section8.item6": "أسباب عدم الأهلية.",
+  "rewardPoints.terms.section8.item7": "تحذيرات أو إشعارات حساب.",
+  "rewardPoints.terms.section9.title": "9. الرسوم",
+  "rewardPoints.terms.section9.item1":
+    "قد تخضع بعض المعاملات لرسوم (مثل رسوم السحب).",
+  "rewardPoints.terms.section9.item2":
+    "سيتم الإفصاح عن جميع الرسوم المطبقة داخل الخدمة.",
+  "rewardPoints.terms.section10.title": "10. الإفصاح عن المخاطر",
+  "rewardPoints.terms.section10.body1": "يقر المستخدمون بأن:",
+  "rewardPoints.terms.section10.item1":
+    "قد تتأثر إتاحة الخدمة بصيانة النظام أو عوامل خارجية.",
+  "rewardPoints.terms.section10.item2": "قد تحدث تأخيرات أو انقطاعات.",
+  "rewardPoints.terms.section10.item3":
+    "لا تتحمل الشركة المسؤولية عن الخسائر الناتجة عن مشكلات نظام خارج نطاق السيطرة المعقولة.",
+  "rewardPoints.terms.section11.title": "11. تحديد المسؤولية",
+  "rewardPoints.terms.section11.body1":
+    "لا تتحمل الشركة المسؤولية عن:",
+  "rewardPoints.terms.section11.item1":
+    "سوء استخدام المستخدم أو انتهاك الشروط.",
+  "rewardPoints.terms.section11.item2":
+    "الوصول غير المصرح به بسبب إهمال المستخدم.",
+  "rewardPoints.terms.section11.item3":
+    "أعطال الأنظمة الخارجية أو أحداث القوة القاهرة.",
+  "rewardPoints.terms.section12.title": "12. التعديلات",
+  "rewardPoints.terms.section12.body1":
+    "تحتفظ الشركة بالحق في تحديث أو تعديل هذه الشروط في أي وقت. ويُعد الاستمرار في استخدام الخدمة قبولًا للشروط المحدثة.",
+  "rewardPoints.terms.section13.title": "13. القانون الحاكم",
+  "rewardPoints.terms.section13.body1":
+    "تخضع هذه الشروط للقوانين المعمول بها في الفلبين.",
+  "rewardPoints.terms.section14.title": "14. التواصل",
+  "rewardPoints.terms.section14.body1":
+    "للاستفسارات، يرجى التواصل مع دعم العملاء.",
 
   "withdraw.fromAvailableBalance": "اسحب من رصيدك المتاح",
   "withdraw.agentWithdrawal": "سحب وكيل",

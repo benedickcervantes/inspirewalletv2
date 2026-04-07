@@ -6,7 +6,6 @@ import { useCallback, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Modal,
-  Platform,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -14,7 +13,7 @@ import {
   TextInput,
   TouchableOpacity,
   useWindowDimensions,
-  View,
+  View
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
@@ -22,9 +21,9 @@ import {
   getRewardPointsHistory,
   getRewardPointsTotal,
   redeemRewardPoints,
-} from "../../configs/api";
-import { useLanguage } from "../../context/LanguageContext";
-import type { NavProp } from "../../types/navigation";
+} from "../../../configs/api";
+import { useLanguage } from "../../../context/LanguageContext";
+import type { NavProp } from "../../../types/navigation";
 
 const ORANGE_GRADIENT: readonly [string, string] = ["#E25A17", "#F28934"];
 const ITEMS_PER_PAGE = 20;
@@ -273,7 +272,15 @@ export default function RewardPointsHistory() {
             <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{t("rewardPoints.title")}</Text>
-          <View style={{ width: 40 }} />
+          <TouchableOpacity
+            onPress={() => navigation.navigate("RewardPointsTerms")}
+            style={styles.headerTermsBtn}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel={t("rewardPoints.termsScreenTitle")}
+          >
+            <Ionicons name="document-text-outline" size={24} color="#FFFFFF" />
+          </TouchableOpacity>
         </View>
 
         {/* Points balance card */}
@@ -331,12 +338,16 @@ export default function RewardPointsHistory() {
             {t("rewardPoints.redeemButton")}
           </Text>
         </TouchableOpacity>
+
       </LinearGradient>
 
       {/* Transaction list */}
       <ScrollView
         style={styles.list}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={[
+          styles.listContent,
+          { paddingBottom: Math.max(insets.bottom + 20, 32) },
+        ]}
         showsVerticalScrollIndicator={false}
         onMomentumScrollEnd={({ nativeEvent }) => {
           const { layoutMeasurement, contentOffset, contentSize } = nativeEvent;
@@ -517,26 +528,43 @@ export default function RewardPointsHistory() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#F8F9FA" },
-  header: { paddingBottom: 20, paddingHorizontal: 16 },
+  root: { flex: 1, backgroundColor: "#F3F4F6" },
+  header: { paddingBottom: 22, paddingHorizontal: 16 },
   headerRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: 20,
   },
-  backBtn: { width: 40, height: 40, justifyContent: "center", alignItems: "center" },
-  headerTitle: { fontSize: 18, fontWeight: "700", color: "#FFFFFF" },
-  balanceCard: {
-    backgroundColor: "rgba(255,255,255,0.18)",
-    borderRadius: 16,
-    padding: 16,
+  backBtn: {
+    width: 40,
+    height: 40,
+    justifyContent: "center",
     alignItems: "center",
-    marginBottom: 12,
+    borderRadius: 20,
+    backgroundColor: "rgba(255,255,255,0.16)",
   },
-  balanceLabel: { fontSize: 12, color: "rgba(255,255,255,0.8)", marginBottom: 4 },
-  balanceAmount: { fontSize: 42, fontWeight: "800", color: "#FFFFFF", letterSpacing: 1 },
-  balanceSubLabel: { fontSize: 12, color: "rgba(255,255,255,0.7)", marginTop: 4 },
+  headerTermsBtn: {
+    width: 40,
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 20,
+    backgroundColor: "rgba(255,255,255,0.16)",
+  },
+  headerTitle: { fontSize: 19, fontWeight: "800", color: "#FFFFFF" },
+  balanceCard: {
+    backgroundColor: "rgba(255,255,255,0.2)",
+    borderRadius: 18,
+    padding: 18,
+    alignItems: "center",
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.2)",
+  },
+  balanceLabel: { fontSize: 12, color: "rgba(255,255,255,0.85)", marginBottom: 4, fontWeight: "600" },
+  balanceAmount: { fontSize: 44, fontWeight: "900", color: "#FFFFFF", letterSpacing: 1 },
+  balanceSubLabel: { fontSize: 12, color: "rgba(255,255,255,0.75)", marginTop: 4 },
   campaignPill: {
     flexDirection: "row",
     alignItems: "center",
@@ -547,8 +575,13 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     marginBottom: 12,
     gap: 6,
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
   },
-  campaignPillText: { fontSize: 11, color: "#6B7280", fontWeight: "500" },
+  campaignPillText: { fontSize: 11, color: "#6B7280", fontWeight: "600" },
   redeemBtn: {
     flexDirection: "row",
     alignItems: "center",
@@ -556,33 +589,51 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingVertical: 14,
     gap: 8,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 2,
   },
   redeemBtnActive: { backgroundColor: "#16A34A" },
   redeemBtnDisabled: { backgroundColor: "#F3F4F6", borderWidth: 1, borderColor: "#E5E7EB" },
   redeemBtnText: { fontSize: 15, fontWeight: "700" },
   redeemBtnTextActive: { color: "#FFFFFF" },
   redeemBtnTextDisabled: { color: "#9CA3AF" },
-
-  list: { flex: 1 },
-  listContent: { paddingBottom: 32 },
+  list: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 22,
+    borderTopRightRadius: 22,
+    marginTop: -10,
+  },
+  listContent: { paddingTop: 10 },
   listHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 16,
-    paddingTop: 16,
+    paddingTop: 10,
     paddingBottom: 8,
   },
-  listHeaderTitle: { fontSize: 15, fontWeight: "700", color: "#1F2937" },
+  listHeaderTitle: { fontSize: 17, fontWeight: "800", color: "#1F2937" },
   listHeaderCount: { fontSize: 12, color: "#9CA3AF" },
   txRow: {
     flexDirection: "row",
     alignItems: "flex-start",
-    paddingHorizontal: 16,
+    marginHorizontal: 12,
+    marginBottom: 10,
+    paddingHorizontal: 12,
     paddingVertical: 12,
     backgroundColor: "#FFFFFF",
-    borderBottomWidth: 1,
-    borderBottomColor: "#F3F4F6",
+    borderWidth: 1,
+    borderColor: "#EEF2F7",
+    borderRadius: 14,
+    shadowColor: "#0F172A",
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
   },
   txIconCircle: {
     width: 44,
@@ -599,9 +650,19 @@ const styles = StyleSheet.create({
   txRight: { alignItems: "flex-end", minWidth: 80 },
   txPoints: { fontSize: 16, fontWeight: "700", marginBottom: 2 },
   txBalance: { fontSize: 10, color: "#9CA3AF" },
-  emptyState: { alignItems: "center", paddingTop: 60, paddingHorizontal: 32 },
-  emptyText: { fontSize: 16, fontWeight: "600", color: "#6B7280", marginTop: 16 },
-  emptySubText: { fontSize: 13, color: "#9CA3AF", textAlign: "center", marginTop: 8 },
+  emptyState: {
+    alignItems: "center",
+    marginHorizontal: 16,
+    marginTop: 52,
+    paddingVertical: 36,
+    paddingHorizontal: 20,
+    backgroundColor: "#F9FAFB",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+  },
+  emptyText: { fontSize: 16, fontWeight: "700", color: "#4B5563", marginTop: 14 },
+  emptySubText: { fontSize: 13, color: "#9CA3AF", textAlign: "center", marginTop: 8, lineHeight: 19 },
   endText: { textAlign: "center", color: "#9CA3AF", fontSize: 12, paddingVertical: 16 },
 
   // Skeleton loading
