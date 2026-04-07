@@ -1067,6 +1067,37 @@ export async function submitPhysicalCardRequest(accessToken, body) {
 }
 
 /**
+ * GET /physical-cards/config — requires JWT
+ * Returns physical card fee configuration from backend.
+ * @param {string} accessToken
+ * @returns {{ success: boolean, data?: { fee: number, currency: string }, error?: string }}
+ */
+export async function getPhysicalCardConfig(accessToken) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "No token" };
+  try {
+    const res = await apiFetch(`${base}/physical-cards/config`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || "Failed to fetch physical card config";
+      return { success: false, error: msg };
+    }
+    return { success: true, data };
+  } catch (e) {
+    return { success: false, error: e.message || "Network error" };
+  }
+}
+
+/**
  * Get user's withdrawal requests.
  * GET /withdrawal-requests
  * @param {string} accessToken - Backend JWT

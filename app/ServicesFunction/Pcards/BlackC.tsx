@@ -4,7 +4,7 @@ import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Alert, Animated, Dimensions, Easing, Image, type ImageSourcePropType, Keyboard, KeyboardAvoidingView, Platform, Pressable, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
-import { submitPhysicalCardRequest, updateProfile } from "../../../configs/api";
+import { getPhysicalCardConfig, getWallets, submitPhysicalCardRequest, updateProfile } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
 
 import ActivityModal from '../../components/ActivityModal';
@@ -17,6 +17,8 @@ const GOLD_ACCENT = "#C9A227";
 const MODAL_SCROLL_MAX_H = Math.round(Dimensions.get("window").height * 0.72);
 const FRONT_CARD_IMAGE_CROP_SCALE = 1;
 const BACK_CARD_IMAGE_CROP_SCALE = 1;
+const DEFAULT_PHYSICAL_CARD_FEE = 1000;
+const DEFAULT_PHYSICAL_CARD_CURRENCY = "PHP";
 
 const FRONT_CARD_IMAGE: ImageSourcePropType = require("../../../assets/cards/p-cards/Pcard-front.png");
 const BACK_CARD_IMAGE: ImageSourcePropType = require("../../../assets/cards/p-cards/Pcard-back.png");
@@ -29,6 +31,14 @@ export default function BlackC() {
   const [applyEmail, setApplyEmail] = useState("");
   const [applyPhone, setApplyPhone] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [physicalCardFee, setPhysicalCardFee] = useState(DEFAULT_PHYSICAL_CARD_FEE);
+  const [physicalCardCurrency, setPhysicalCardCurrency] = useState(DEFAULT_PHYSICAL_CARD_CURRENCY);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [feedbackConfig, setFeedbackConfig] = useState({
+    title: "",
+    message: "",
+    closeApplyModalOnOk: false,
+  });
 
   const flipAnim = useRef(new Animated.Value(0)).current;
   const globeAnim = useRef(new Animated.Value(0)).current;
@@ -114,6 +124,15 @@ export default function BlackC() {
     Keyboard.dismiss();
   };
 
+  const showFeedback = (
+    title: string,
+    message: string,
+    closeApplyModalOnOk = false,
+  ) => {
+    setFeedbackConfig({ title, message, closeApplyModalOnOk });
+    setShowFeedbackModal(true);
+  };
+
   /** Prefill name, email, phone from logged-in user (AsyncStorage). */
   useEffect(() => {
     if (!applyModalVisible) return;
@@ -146,6 +165,28 @@ export default function BlackC() {
     })();
   }, [applyModalVisible]);
 
+  useEffect(() => {
+    if (!applyModalVisible) return;
+    (async () => {
+      try {
+        const accessToken = await AsyncStorage.getItem("access_token");
+        if (!accessToken) return;
+        const configRes = await getPhysicalCardConfig(accessToken);
+        if (configRes.success && configRes.data) {
+          const fee = Number(configRes.data.fee);
+          if (Number.isFinite(fee) && fee > 0) {
+            setPhysicalCardFee(fee);
+          }
+          if (typeof configRes.data.currency === "string" && configRes.data.currency.trim()) {
+            setPhysicalCardCurrency(configRes.data.currency.trim());
+          }
+        }
+      } catch {
+        // non-fatal: keep default fee fallback
+      }
+    })();
+  }, [applyModalVisible]);
+
   const splitFullName = (full: string) => {
     const trimmed = full.trim();
     const parts = trimmed.split(/\s+/).filter(Boolean);
@@ -160,21 +201,64 @@ export default function BlackC() {
     const email = applyEmail.trim();
     const phone = applyPhone.trim();
     if (!name) {
-      Alert.alert(t("auth.missingInfo"), t("pcard.enterName"));
+      showFeedback(t("auth.missingInfo"), t("pcard.enterName"));
       return;
     }
     if (!email) {
-      Alert.alert(t("auth.missingInfo"), t("auth.enterEmail"));
+      showFeedback(t("auth.missingInfo"), t("auth.enterEmail"));
       return;
     }
     if (!phone) {
-      Alert.alert(t("auth.missingInfo"), t("pcard.enterPhone"));
+      showFeedback(t("auth.missingInfo"), t("pcard.enterPhone"));
       return;
     }
 
     const accessToken = await AsyncStorage.getItem("access_token");
     if (!accessToken) {
-      Alert.alert(t("common.error"), t("pcard.notAuthenticated"));
+      showFeedback(t("common.error"), t("pcard.notAuthenticated"));
+      return;
+    }
+
+    const configRes = await getPhysicalCardConfig(accessToken);
+    const requiredFee =
+      configRes.success && configRes.data && Number.isFinite(Number(configRes.data.fee)) && Number(configRes.data.fee) > 0
+        ? Number(configRes.data.fee)
+        : physicalCardFee;
+    const feeCurrency =
+      configRes.success && configRes.data && typeof configRes.data.currency === "string" && configRes.data.currency.trim()
+        ? configRes.data.currency.trim()
+        : physicalCardCurrency;
+    if (configRes.success && configRes.data) {
+      setPhysicalCardFee(requiredFee);
+      setPhysicalCardCurrency(feeCurrency);
+    }
+
+    const walletsRes = await getWallets(accessToken);
+    if (!walletsRes?.success) {
+      showFeedback(
+        t("common.error"),
+        walletsRes?.error || "Unable to verify your available balance right now.",
+      );
+      return;
+    }
+
+    const wallets = Array.isArray(walletsRes.wallets) ? walletsRes.wallets : [];
+    const phpWallet = wallets.find(
+      (w: {
+        currency?: { code?: string };
+        currencyCode?: string;
+        balance?: string | number;
+        decryptedBalance?: string | number;
+      }) => (w.currency?.code ?? w.currencyCode) === "PHP",
+    );
+    const availableBalance = phpWallet
+      ? parseFloat(String(phpWallet.balance ?? phpWallet.decryptedBalance ?? "0"))
+      : 0;
+    if (!Number.isFinite(availableBalance) || availableBalance < requiredFee) {
+      showFeedback(
+        t("common.error"),
+        `Insufficient top up available balance. You need at least ${feeCurrency} ${requiredFee.toLocaleString()} to request a physical card.`,
+      );
       return;
     }
 
@@ -195,74 +279,43 @@ export default function BlackC() {
     try {
       const requestResult = await submitPhysicalCardRequest(accessToken, body);
       if (!requestResult.success) {
-        setSubmitting(false);
         const errorMsg = requestResult.error || t("pcard.applyError");
-        
-        // Log for debugging
-        console.log("[PhysicalCard] Error response:", requestResult);
-        console.log("[PhysicalCard] Error message:", errorMsg);
-        
-        // Check if this is a time deposit requirement error (case-insensitive)
+
         const lowerMsg = String(errorMsg).toLowerCase();
-        console.log("[PhysicalCard] Lowercase message:", lowerMsg);
-        console.log("[PhysicalCard] Contains 'time deposit':", lowerMsg.includes("time deposit"));
-        console.log("[PhysicalCard] Contains 'term savings':", lowerMsg.includes("term savings"));
-        console.log("[PhysicalCard] Contains 'minimum total':", lowerMsg.includes("minimum total"));
-        
-        if (lowerMsg.includes("time deposit") || lowerMsg.includes("term savings") || lowerMsg.includes("minimum total")) {
-          console.log("[PhysicalCard] Showing requirement alert");
-          closeApplyModal();
-          Keyboard.dismiss();
-          setTimeout(() => {
-            Alert.alert("Term Savings Requirement", errorMsg, [
-              {
-                text: "OK",
-                onPress: () => {
-                  navigation.goBack();
-                },
-              },
-            ]);
-          }, 300);
+        if (
+          lowerMsg.includes("time deposit") ||
+          lowerMsg.includes("term savings") ||
+          lowerMsg.includes("minimum total")
+        ) {
+          showFeedback("Term Savings Requirement", errorMsg);
         } else {
-          console.log("[PhysicalCard] Showing error alert");
-          closeApplyModal();
-          Keyboard.dismiss();
-          setTimeout(() => {
-            Alert.alert(t("common.error"), errorMsg, [
-              {
-                text: "OK",
-                onPress: () => {
-                  navigation.goBack();
-                },
-              },
-            ]);
-          }, 300);
+          showFeedback(t("common.error"), errorMsg);
         }
         return;
       }
 
-      const result = await updateProfile(accessToken, body);
-      setSubmitting(false);
+      const result = await updateProfile(accessToken, {
+        firstName,
+        lastName,
+        phone,
+      });
       if (result.success && result.user) {
         await AsyncStorage.setItem("user", JSON.stringify(result.user));
-        Alert.alert(t("pcard.applySuccessTitle"), t("pcard.applySuccess"), [
-          { text: t("common.ok"), onPress: closeApplyModal },
-        ]);
+        showFeedback(t("pcard.applySuccessTitle"), t("pcard.applySuccess"), true);
       } else if (result.success) {
-        Alert.alert(t("pcard.applySuccessTitle"), t("pcard.applySuccess"), [
-          { text: t("common.ok"), onPress: closeApplyModal },
-        ]);
+        showFeedback(t("pcard.applySuccessTitle"), t("pcard.applySuccess"), true);
       } else {
-        // Card request is already saved in backend; profile update failed only.
-        Alert.alert(
+        // Card request is already saved in backend; avoid surfacing internal API validation details in success UI.
+        showFeedback(
           t("pcard.applySuccessTitle"),
-          `${t("pcard.applySuccess")}\n\n${result.error || "Profile sync failed."}`,
-          [{ text: t("common.ok"), onPress: closeApplyModal }],
+          t("pcard.applySuccess"),
+          true,
         );
       }
     } catch {
+      showFeedback(t("common.error"), t("auth.unexpectedError"));
+    } finally {
       setSubmitting(false);
-      Alert.alert(t("common.error"), t("auth.unexpectedError"), [{ text: "OK" }]);
     }
   };
 
@@ -485,7 +538,10 @@ export default function BlackC() {
               >
                 <View style={styles.paymentAmountCard}>
                   <Text style={styles.paymentAmountLabel}>Amount to pay</Text>
-                  <Text style={styles.paymentAmountValue}>₱1000</Text>
+                  <Text style={styles.paymentAmountValue}>
+                    {physicalCardCurrency === "PHP" ? "₱" : `${physicalCardCurrency} `}
+                    {physicalCardFee.toLocaleString()}
+                  </Text>
                 </View>
                 <Text style={styles.modalTitle}>{t("pcard.modalTitle")}</Text>
                 <Text style={styles.modalHint}>{t("pcard.modalHint")}</Text>
@@ -557,6 +613,37 @@ export default function BlackC() {
               </ScrollView>
             </View>
           </KeyboardAvoidingView>
+        </View>
+      </ActivityModal>
+
+      <ActivityModal
+        visible={showFeedbackModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => {}}
+      >
+        <View style={styles.feedbackOverlay}>
+          <LinearGradient
+            colors={["#E15816", "#F48F38"]}
+            style={styles.feedbackContainer}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0, y: 1 }}
+          >
+            <Text style={styles.feedbackTitle}>{feedbackConfig.title}</Text>
+            <Text style={styles.feedbackMessage}>{feedbackConfig.message}</Text>
+            <TouchableOpacity
+              style={styles.feedbackButton}
+              onPress={() => {
+                const shouldCloseApplyModal = feedbackConfig.closeApplyModalOnOk;
+                setShowFeedbackModal(false);
+                if (shouldCloseApplyModal) {
+                  closeApplyModal();
+                }
+              }}
+            >
+              <Text style={styles.feedbackButtonText}>{t("common.ok") || "OK"}</Text>
+            </TouchableOpacity>
+          </LinearGradient>
         </View>
       </ActivityModal>
     </View>
@@ -911,5 +998,44 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700",
     color: "#FFFFFF",
+  },
+  feedbackOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.45)",
+    paddingHorizontal: 20,
+  },
+  feedbackContainer: {
+    width: "100%",
+    maxWidth: 360,
+    borderRadius: 18,
+    padding: 22,
+  },
+  feedbackTitle: {
+    fontSize: 21,
+    fontWeight: "700",
+    color: "#FFFFFF",
+    marginBottom: 10,
+  },
+  feedbackMessage: {
+    fontSize: 16,
+    fontWeight: "500",
+    color: "#FFFFFF",
+    lineHeight: 24,
+    marginBottom: 24,
+    opacity: 0.95,
+  },
+  feedbackButton: {
+    alignSelf: "flex-end",
+    backgroundColor: "#FFFFFF",
+    paddingVertical: 10,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+  },
+  feedbackButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: THEME_COLOR,
   },
 });

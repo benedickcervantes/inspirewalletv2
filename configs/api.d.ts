@@ -441,6 +441,14 @@ export function submitPhysicalCardRequest(
   },
 ): Promise<{ success: boolean; data?: unknown; error?: string }>;
 
+export function getPhysicalCardConfig(
+  accessToken: string,
+): Promise<{
+  success: boolean;
+  data?: { fee: number; currency: string };
+  error?: string;
+}>;
+
 // Card Collection API
 export interface CardCatalogItem {
   design: string;
