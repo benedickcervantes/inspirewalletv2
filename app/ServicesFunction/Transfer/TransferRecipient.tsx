@@ -41,6 +41,7 @@ interface Contact {
 }
 
 const INSPIRE_TRANSFER_QR_PREFIX = "INSPIREWALLET:TRANSFER:";
+const MIN_IWALLET_REMAINING_BALANCE = 1000;
 
 const normalizeAccountNumber = (value: string): string => value.replace(/\D/g, "");
 
@@ -180,6 +181,7 @@ export const validateTransferForm = (
   accountNumber: string,
   amount: string,
   availableBalance: number,
+  balanceType?: string,
 ) => {
   if (!accountNumber || !amount) {
     return {
@@ -200,6 +202,17 @@ export const validateTransferForm = (
     return {
       isValid: false,
       messageKey: "sendMoney.insufficientBalance" as const,
+    };
+  }
+
+  if (
+    (balanceType ?? "available") === "available" &&
+    availableBalance - transferAmount < MIN_IWALLET_REMAINING_BALANCE
+  ) {
+    return {
+      isValid: false,
+      messageKey:
+        "You cannot transfer all available balance. Keep at least PHP 1,000 remaining in your iWallet.",
     };
   }
 
@@ -344,6 +357,7 @@ export default function TransferRecipient() {
       accountNumber,
       amount,
       Number(availableBalance) || 0,
+      balanceType,
     );
     if (!validation.isValid && validation.messageKey) {
       setAlertMessage(t(validation.messageKey));
@@ -617,6 +631,13 @@ export default function TransferRecipient() {
                   maximumFractionDigits: 2,
                 })}
               </Text>
+              {(balanceType ?? "available") === "available" && (
+                <Text style={styles.remainingBalanceText}>
+                  Keep at least PHP{" "}
+                  {MIN_IWALLET_REMAINING_BALANCE.toLocaleString("en-PH")} in
+                  your iWallet after transfer.
+                </Text>
+              )}
             </View>
 
             {/* Description */}
@@ -1049,6 +1070,12 @@ const styles = StyleSheet.create({
     color: "#666",
     marginTop: 8,
     fontWeight: "500",
+  },
+  remainingBalanceText: {
+    fontSize: 12,
+    color: "#E25A17",
+    marginTop: 4,
+    fontWeight: "600",
   },
   textArea: {
     height: 100,

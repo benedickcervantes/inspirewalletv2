@@ -31,7 +31,8 @@ import BankWithdrawal from './app/Dashboard/withdraw/withdrawLocalB';
 import WithdrawLocalBConfirm from './app/Dashboard/withdraw/withdrawLocalBconfirm';
 import WithdrawMethodScreen from './app/Dashboard/withdraw/withdrawMethod';
 import History from './app/History/history';
-import RewardPointsHistory from './app/RewardPoints/RewardPointsHistory';
+import RewardPointsHistory from './app/ServicesFunction/RewardPoints/RewardPointsHistory';
+import RewardsTermsCon from './app/ServicesFunction/RewardPoints/RewardsTermsCon';
 import KYCAddressInformation from './app/KYC/KYCAddressInformation';
 import KYCcompany from './app/KYC/KYCcompany';
 import KYCVerification from './app/KYC/KYCVerification';
@@ -170,6 +171,7 @@ function RootNavigator() {
           <Stack.Screen name="Travel" component={TravelProtection} />
           <Stack.Screen name="History" component={History} />
           <Stack.Screen name="RewardPoints" component={RewardPointsHistory} />
+          <Stack.Screen name="RewardPointsTerms" component={RewardsTermsCon} />
           <Stack.Screen name="Maya" component={Placeholder} />
           <Stack.Screen name="EwalletService" component={EwalletService} />
           <Stack.Screen name="EwalletContactInfo" component={EwalletContactInfo} />

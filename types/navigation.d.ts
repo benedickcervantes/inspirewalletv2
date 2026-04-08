@@ -107,6 +107,7 @@ export type RootStackParamList = {
   WithdrawEwallet: undefined;
   WithdrawEwalletConfirm: Record<string, unknown>;
   RewardPoints: undefined;
+  RewardPointsTerms: undefined;
 };
 
 declare global {
