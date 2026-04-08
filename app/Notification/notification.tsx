@@ -5,6 +5,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Dimensions,
   FlatList,
   RefreshControl,
@@ -17,7 +18,9 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   acceptReferralRequest as apiAcceptReferralRequest,
+  approveAdminBalanceTransferFromNotification as apiApproveAdminBalanceTransfer,
   declineReferralRequest as apiDeclineReferralRequest,
+  rejectAdminBalanceTransferFromNotification as apiRejectAdminBalanceTransfer,
   deleteAllNotifications as apiDeleteAllNotifications,
   deleteNotification as apiDeleteNotification,
   deleteNotificationBatch as apiDeleteNotificationBatch,
@@ -42,10 +45,17 @@ interface NotificationItemBackend {
   type?: string;
   referenceId?: string | null;
   referralHandled?: boolean;
+  adminTransferHandled?: boolean;
 }
 
 const HANDLED_REFERRAL_NOTIFICATION_KEYS_KEY =
   "handled_referral_notification_keys";
+
+/** Matches SevenIWalletBackend admin-balance-transfers notification title. */
+const ADMIN_TRANSFER_APPROVAL_TITLE = "Admin Transfer Approval Required";
+
+const HANDLED_ADMIN_BALANCE_TRANSFER_KEYS_KEY =
+  "handled_admin_balance_transfer_notification_keys";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 const DETAIL_MODAL_WIDTH = Math.min(SCREEN_WIDTH * 0.86, 420);
@@ -152,8 +162,14 @@ const Notification = () => {
     NotificationItem | NotificationItemBackend | null
   >(null);
   const [referralActionLoading, setReferralActionLoading] = useState(false);
+  const [balanceTransferActionLoading, setBalanceTransferActionLoading] =
+    useState(false);
   const [handledReferralNotificationKeys, setHandledReferralNotificationKeys] =
     useState<Set<string>>(new Set());
+  const [
+    handledAdminBalanceTransferKeys,
+    setHandledAdminBalanceTransferKeys,
+  ] = useState<Set<string>>(new Set());
   const [visibleCount, setVisibleCount] = useState(NOTIFICATION_PAGE_SIZE);
 
   /** Full-list skeleton only before the first successful hydration (not load-more / resubscribe). */
@@ -178,6 +194,24 @@ const Notification = () => {
     }
   };
 
+  const loadHandledAdminBalanceTransferKeys = async () => {
+    try {
+      const raw = await AsyncStorage.getItem(
+        HANDLED_ADMIN_BALANCE_TRANSFER_KEYS_KEY,
+      );
+      if (!raw) {
+        setHandledAdminBalanceTransferKeys(new Set());
+        return;
+      }
+      const parsed = JSON.parse(raw) as string[];
+      setHandledAdminBalanceTransferKeys(
+        new Set(Array.isArray(parsed) ? parsed : []),
+      );
+    } catch {
+      setHandledAdminBalanceTransferKeys(new Set());
+    }
+  };
+
   const isHandledReferralNotification = (
     item: Pick<
       NotificationItemBackend,
@@ -189,6 +223,20 @@ const Notification = () => {
       item.referralHandled ||
       handledKeys.has(item.id) ||
       (item.referenceId ? handledKeys.has(item.referenceId) : false),
+    );
+  };
+
+  const isHandledAdminBalanceTransferNotification = (
+    item: Pick<
+      NotificationItemBackend,
+      "id" | "referenceId" | "adminTransferHandled"
+    >,
+    handledKeys: Set<string>,
+  ) => {
+    return Boolean(
+      item.adminTransferHandled ||
+        handledKeys.has(item.id) ||
+        (item.referenceId ? handledKeys.has(item.referenceId) : false),
     );
   };
 
@@ -205,6 +253,29 @@ const Notification = () => {
         HANDLED_REFERRAL_NOTIFICATION_KEYS_KEY,
         JSON.stringify(Array.from(next)),
       );
+    } catch {
+      // no-op
+    }
+  };
+
+  const persistHandledAdminBalanceTransferNotification = async (
+    notificationId: string,
+    referenceId?: string | null,
+  ) => {
+    try {
+      const raw = await AsyncStorage.getItem(
+        HANDLED_ADMIN_BALANCE_TRANSFER_KEYS_KEY,
+      );
+      const next = new Set<string>(
+        raw ? (JSON.parse(raw) as string[]) : [],
+      );
+      next.add(notificationId);
+      if (referenceId) next.add(referenceId);
+      await AsyncStorage.setItem(
+        HANDLED_ADMIN_BALANCE_TRANSFER_KEYS_KEY,
+        JSON.stringify(Array.from(next)),
+      );
+      setHandledAdminBalanceTransferKeys(next);
     } catch {
       // no-op
     }
@@ -250,6 +321,8 @@ const Notification = () => {
       "reward points credited": "notification.titleRewardPointsCredited",
       "points redeemed!": "notification.titlePointsRedeemed",
       "reward points earned!": "notification.titleRewardPointsEarned",
+      "admin transfer approval required":
+        "notification.titleAdminTransferApprovalRequired",
     };
 
     const key = titleKeyMap[normalized];
@@ -281,6 +354,14 @@ const Notification = () => {
               ? (JSON.parse(storedHandledKeysRaw) as string[])
               : [],
           );
+          const storedAdminHandledRaw = await AsyncStorage.getItem(
+            HANDLED_ADMIN_BALANCE_TRANSFER_KEYS_KEY,
+          );
+          const storedAdminHandledKeys = new Set<string>(
+            storedAdminHandledRaw
+              ? (JSON.parse(storedAdminHandledRaw) as string[])
+              : [],
+          );
           const list = (result.data as NotificationItemBackend[]).map(
             (item) => ({
               ...item,
@@ -288,6 +369,11 @@ const Notification = () => {
                 item,
                 storedHandledKeys,
               ),
+              adminTransferHandled:
+                isHandledAdminBalanceTransferNotification(
+                  item,
+                  storedAdminHandledKeys,
+                ),
             }),
           );
           setBackendNotifications(list);
@@ -313,6 +399,7 @@ const Notification = () => {
   useEffect(() => {
     const checkAuth = async () => {
       await loadHandledReferralNotificationKeys();
+      await loadHandledAdminBalanceTransferKeys();
       const accessToken = await AsyncStorage.getItem("access_token");
       if (accessToken) {
         setUseBackend(true);
@@ -347,6 +434,20 @@ const Notification = () => {
       ),
     );
   }, [handledReferralNotificationKeys, useBackend]);
+
+  useEffect(() => {
+    if (!useBackend) return;
+    setBackendNotifications((prev) =>
+      prev.map((item) =>
+        isHandledAdminBalanceTransferNotification(
+          item,
+          handledAdminBalanceTransferKeys,
+        )
+          ? { ...item, adminTransferHandled: true }
+          : item,
+      ),
+    );
+  }, [handledAdminBalanceTransferKeys, useBackend]);
 
   useEffect(() => {
     if (!user) {
@@ -836,6 +937,25 @@ const Notification = () => {
     );
   };
 
+  const isPendingAdminBalanceTransferNotification = (
+    notif: NotificationItem | NotificationItemBackend | null,
+  ): boolean => {
+    if (!notif) return false;
+    const isBackend = "isRead" in notif;
+    if (!isBackend) return false;
+    const b = notif as NotificationItemBackend;
+    const titleOk =
+      String(b.title ?? "").trim() === ADMIN_TRANSFER_APPROVAL_TITLE;
+    const typeOk =
+      b.type === "SYSTEM_ALERT" || String(b.type ?? "").toUpperCase() === "SYSTEM_ALERT";
+    return Boolean(
+      titleOk &&
+        typeOk &&
+        b.referenceId &&
+        !b.adminTransferHandled,
+    );
+  };
+
   const handleAcceptReferral = async () => {
     if (!detailModalNotification || !useBackend || referralActionLoading)
       return;
@@ -893,6 +1013,94 @@ const Notification = () => {
       if (__DEV__) console.error("[Referral] Decline error", e);
     } finally {
       setReferralActionLoading(false);
+    }
+  };
+
+  const handleApproveAdminBalanceTransfer = async () => {
+    if (
+      !detailModalNotification ||
+      !useBackend ||
+      balanceTransferActionLoading
+    )
+      return;
+    const id = detailModalNotification.id;
+    setBalanceTransferActionLoading(true);
+    try {
+      const accessToken = await AsyncStorage.getItem("access_token");
+      if (!accessToken) return;
+      const result = await apiApproveAdminBalanceTransfer(accessToken, id);
+      if (result.success) {
+        const refId =
+          "referenceId" in detailModalNotification
+            ? ((detailModalNotification as NotificationItemBackend).referenceId ??
+              null)
+            : null;
+        await persistHandledAdminBalanceTransferNotification(id, refId);
+        setBackendNotifications((prev) =>
+          prev.map((n) =>
+            n.id === id ? { ...n, isRead: true, adminTransferHandled: true } : n,
+          ),
+        );
+        setDetailModalNotification(null);
+        setUnreadCount((prev) => Math.max(0, prev - 1));
+      } else {
+        Alert.alert(
+          t("notification.adminTransferErrorTitle") ?? "Transfer",
+          result.error ?? "Could not approve",
+        );
+      }
+    } catch (e) {
+      if (__DEV__) console.error("[Admin balance transfer] Approve error", e);
+      Alert.alert(
+        t("notification.adminTransferErrorTitle") ?? "Transfer",
+        e instanceof Error ? e.message : "Network error",
+      );
+    } finally {
+      setBalanceTransferActionLoading(false);
+    }
+  };
+
+  const handleRejectAdminBalanceTransfer = async () => {
+    if (
+      !detailModalNotification ||
+      !useBackend ||
+      balanceTransferActionLoading
+    )
+      return;
+    const id = detailModalNotification.id;
+    setBalanceTransferActionLoading(true);
+    try {
+      const accessToken = await AsyncStorage.getItem("access_token");
+      if (!accessToken) return;
+      const result = await apiRejectAdminBalanceTransfer(accessToken, id);
+      if (result.success) {
+        const refId =
+          "referenceId" in detailModalNotification
+            ? ((detailModalNotification as NotificationItemBackend).referenceId ??
+              null)
+            : null;
+        await persistHandledAdminBalanceTransferNotification(id, refId);
+        setBackendNotifications((prev) =>
+          prev.map((n) =>
+            n.id === id ? { ...n, isRead: true, adminTransferHandled: true } : n,
+          ),
+        );
+        setDetailModalNotification(null);
+        setUnreadCount((prev) => Math.max(0, prev - 1));
+      } else {
+        Alert.alert(
+          t("notification.adminTransferErrorTitle") ?? "Transfer",
+          result.error ?? "Could not reject",
+        );
+      }
+    } catch (e) {
+      if (__DEV__) console.error("[Admin balance transfer] Reject error", e);
+      Alert.alert(
+        t("notification.adminTransferErrorTitle") ?? "Transfer",
+        e instanceof Error ? e.message : "Network error",
+      );
+    } finally {
+      setBalanceTransferActionLoading(false);
     }
   };
 
@@ -1502,6 +1710,46 @@ const Notification = () => {
                       ) : (
                         <Text style={styles.referralButtonText}>
                           {t("notification.acceptReferral") ?? "Accept"}
+                        </Text>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                )}
+              {useBackend &&
+                detailModalNotification &&
+                isPendingAdminBalanceTransferNotification(
+                  detailModalNotification,
+                ) && (
+                  <View style={styles.referralActionsRow}>
+                    <TouchableOpacity
+                      style={[
+                        styles.referralButton,
+                        styles.referralDeclineButton,
+                      ]}
+                      onPress={handleRejectAdminBalanceTransfer}
+                      disabled={balanceTransferActionLoading}
+                    >
+                      {balanceTransferActionLoading ? (
+                        <ActivityIndicator size="small" color="#FFF" />
+                      ) : (
+                        <Text style={styles.referralButtonText}>
+                          {t("notification.rejectAdminTransfer") ?? "Reject"}
+                        </Text>
+                      )}
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[
+                        styles.referralButton,
+                        styles.referralAcceptButton,
+                      ]}
+                      onPress={handleApproveAdminBalanceTransfer}
+                      disabled={balanceTransferActionLoading}
+                    >
+                      {balanceTransferActionLoading ? (
+                        <ActivityIndicator size="small" color="#FFF" />
+                      ) : (
+                        <Text style={styles.referralButtonText}>
+                          {t("notification.approveAdminTransfer") ?? "Approve"}
                         </Text>
                       )}
                     </TouchableOpacity>

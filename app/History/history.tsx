@@ -76,6 +76,7 @@ const INCOME_TYPES = [
 ];
 
 const TRANSACTION_DESCRIPTION_KEYS: Record<string, string> = {
+  Transfer: "tx.transfer",
   "Free Default Card": "history.freeDefaultCard",
   "Created Account": "history.createdAccount",
   "Physical Card Application Fee": "history.physicalCardApplicationFee",
@@ -314,6 +315,11 @@ export default function HistoryScreen() {
 
     const exactKey = TRANSACTION_DESCRIPTION_KEYS[normalized];
     if (exactKey) return t(exactKey);
+
+    // Admin-approved manual balance transfer (stored as "Admin-approved balance transfer request <id>")
+    if (/^Admin-approved balance transfer request\b/i.test(normalized)) {
+      return t("tx.transfer");
+    }
 
     // Deposit request status descriptions from backend/history mappers.
     const topUpStatusMatch = normalized.match(

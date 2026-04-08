@@ -2489,6 +2489,64 @@ export async function declineReferralRequest(accessToken, notificationId) {
 }
 
 /**
+ * POST /admin-balance-transfers/:notificationId/approve — requires JWT (sender)
+ */
+export async function approveAdminBalanceTransferFromNotification(
+  accessToken,
+  notificationId,
+) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
+  if (!notificationId) return { success: false, error: "Notification ID required" };
+  try {
+    const url = `${base}/admin-balance-transfers/${encodeURIComponent(notificationId)}/approve`;
+    const res = await apiFetch(url, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || "Failed";
+      return { success: false, error: msg };
+    }
+    return { success: true, data };
+  } catch (e) {
+    if (__DEV__) console.error("[Admin balance transfer] Approve error", e);
+    return { success: false, error: e.message || "Network error" };
+  }
+}
+
+/**
+ * POST /admin-balance-transfers/:notificationId/reject — requires JWT (sender)
+ */
+export async function rejectAdminBalanceTransferFromNotification(
+  accessToken,
+  notificationId,
+) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
+  if (!notificationId) return { success: false, error: "Notification ID required" };
+  try {
+    const url = `${base}/admin-balance-transfers/${encodeURIComponent(notificationId)}/reject`;
+    const res = await apiFetch(url, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || "Failed";
+      return { success: false, error: msg };
+    }
+    return { success: true, data };
+  } catch (e) {
+    if (__DEV__) console.error("[Admin balance transfer] Reject error", e);
+    return { success: false, error: e.message || "Network error" };
+  }
+}
+
+/**
  * PATCH /messages/:id/read — requires JWT
  * Mark a single message as read.
  * @param {string} accessToken

@@ -1153,6 +1153,13 @@ export default function Dashboard() {
       const normalized = description.trim();
       if (!normalized) return null;
 
+      if (/^Admin-approved balance transfer request\b/i.test(normalized)) {
+        return t("tx.transfer");
+      }
+      if (normalized.toLowerCase() === "transfer") {
+        return t("tx.transfer");
+      }
+
       const getTranslatedCardDesign = (designRaw?: string) => {
         if (!designRaw) return "";
         const normalizedDesign = designRaw
