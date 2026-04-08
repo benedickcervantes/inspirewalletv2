@@ -50,7 +50,7 @@ export default function RewardsTermsCon() {
           <Text style={styles.subtitle}>Please review these terms before using the service.</Text>
           <View style={styles.noticePill}>
             <Ionicons name="shield-checkmark-outline" size={14} color="#E15816" />
-            <Text style={styles.noticePillText}>{t("rewardPoints.terms.notice")}</Text>
+            <Text style={styles.noticePillText}>Rewards are subject to verification and policy compliance.</Text>
           </View>
         </View>
 
