@@ -20,12 +20,18 @@ import { useLanguage } from "../../../context/LanguageContext";
 import PasscodeModal from "../../components/PasscodeModal";
 
 import ActivityModal from "../../components/ActivityModal";
+import FeatureMaintenanceModal from "../../components/FeatureMaintenanceModal";
+import { isWithdrawalCombinationUnderMaintenance } from "../../../lib/maintenance";
 import {
     MIN_REMAINING_WALLET_BALANCE_PHP,
-    MIN_WITHDRAWAL_PHP,
     parseWithdrawalAmountInput,
 } from "../../../utils/withdrawalAmount";
 const BANK_FEE_THRESHOLD = 100000;
+const LOCAL_BANK_MIN_WITHDRAWAL_PHP = 50;
+const UNIONBANK_MIN_WITHDRAWAL_PHP = 1;
+
+const getLocalBankMinimumWithdrawal = (isUnionBank: boolean) =>
+  isUnionBank ? UNIONBANK_MIN_WITHDRAWAL_PHP : LOCAL_BANK_MIN_WITHDRAWAL_PHP;
 
 const getLocalBankTransactionFee = (
   amountValue: number,
@@ -58,6 +64,7 @@ export default function WithdrawLocalBConfirm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPasscodeModal, setShowPasscodeModal] = useState(false);
   const [passcode, setPasscode] = useState("");
+  const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
 
   const method = params?.method || "local-bank";
   const accountNumber = params?.accountNumber || "";
@@ -90,12 +97,13 @@ export default function WithdrawLocalBConfirm() {
         return;
       }
       const amountNum = parsedSubmit.value;
-      if (amountNum < MIN_WITHDRAWAL_PHP) {
+      const minimumWithdrawal = getLocalBankMinimumWithdrawal(isUnionBank);
+      if (amountNum < minimumWithdrawal) {
         setAlertConfig({
           title: t("common.error"),
           message: t("withdraw.validation.minAmount").replace(
             "{min}",
-            MIN_WITHDRAWAL_PHP.toFixed(2),
+            minimumWithdrawal.toFixed(2),
           ),
         });
         setShowAlertModal(true);
@@ -170,6 +178,20 @@ export default function WithdrawLocalBConfirm() {
         setIsSubmitting(false);
         return;
       }
+
+      const offline = await isWithdrawalCombinationUnderMaintenance({
+        source:
+          withdrawalType === "agent-withdrawal"
+            ? "agent-withdrawal"
+            : "available-balance",
+        method: "local_bank",
+      });
+      if (offline) {
+        setShowPasscodeModal(false);
+        setShowMaintenanceModal(true);
+        return;
+      }
+
       const body: Record<string, string | undefined> = {
         walletId: wallet.id as string,
         amount: amountNum.toFixed(2),
@@ -463,6 +485,14 @@ export default function WithdrawLocalBConfirm() {
             </LinearGradient>
           </View>
         </ActivityModal>
+
+        <FeatureMaintenanceModal
+          visible={showMaintenanceModal}
+          onDismiss={() => {
+            setShowMaintenanceModal(false);
+            navigation.goBack();
+          }}
+        />
       </SafeAreaView>
     </View>
   );

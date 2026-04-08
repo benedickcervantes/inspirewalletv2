@@ -2,11 +2,17 @@ import { Ionicons } from "@expo/vector-icons";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { LinearGradient } from "expo-linear-gradient";
 import { useState } from "react";
-import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+    ActivityIndicator,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from "react-native";
 import { useLanguage } from "../../../context/LanguageContext";
 import { pickAndDecodeQR } from "../../../utils/qrUtils";
 
-import ActivityModal from '../../components/ActivityModal';
+import ActivityModal from "../../components/ActivityModal";
 const getWindow = () => {
   try {
     return (
@@ -38,10 +44,12 @@ export default function QRScanner({
   const [uploadError, setUploadError] = useState<string | null>(null);
 
   const handleBarCodeScanned = ({ data }: { data: string }) => {
-    if (scanned) return;
+    if (scanned || isProcessing) return;
+    setIsProcessing(true);
     setScanned(true);
     onScan(data);
     setTimeout(() => {
+      setIsProcessing(false);
       setScanned(false);
       onClose();
     }, 500);
@@ -110,6 +118,17 @@ export default function QRScanner({
             barcodeTypes: ["qr"],
           }}
         >
+          {isProcessing && (
+            <View style={styles.processingOverlay}>
+              <View style={styles.processingCard}>
+                <ActivityIndicator size="small" color="#FFFFFF" />
+                <Text style={styles.processingText}>
+                  {t("register.processing") || "Processing..."}
+                </Text>
+              </View>
+            </View>
+          )}
+
           {/* Header */}
           <LinearGradient
             colors={["rgba(0,0,0,0.8)", "transparent"]}
@@ -409,5 +428,28 @@ const styles = StyleSheet.create({
   errorCloseButton: {
     marginLeft: 8,
     padding: 2,
+  },
+  processingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0, 0, 0, 0.35)",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 20,
+  },
+  processingCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.8)",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.2)",
+  },
+  processingText: {
+    marginLeft: 10,
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "600",
   },
 });

@@ -1,63 +1,62 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
-  useFocusEffect,
-  useNavigation,
-  useRoute,
+    useFocusEffect,
+    useNavigation,
+    useRoute,
 } from "@react-navigation/native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  Animated,
-  AppState,
-  Image,
-  Linking,
-  RefreshControl,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Animated,
+    AppState,
+    Image,
+    Linking,
+    RefreshControl,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import {
-  SafeAreaView,
-  useSafeAreaInsets,
+    SafeAreaView,
+    useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import {
-  getActiveAnnouncements,
-  getCompanyKycStatus,
-  getMe,
-  getNotifications,
-  getOrCreateMainWallet,
-  getPersonalKycStatus,
-  getReferralTree,
-  getTimeDeposits,
-  getTransactions,
+    getActiveAnnouncements,
+    getCompanyKycStatus,
+    getMe,
+    getNotifications,
+    getOrCreateMainWallet,
+    getPersonalKycStatus,
+    getReferralTree,
+    getTimeDeposits,
+    getTransactions,
 } from "../../configs/api";
 import {
-  languageChoiceDoneKey,
-  SUPPORTED_LANGUAGES,
+    languageChoiceDoneKey,
+    SUPPORTED_LANGUAGES,
 } from "../../constants/locales";
 import { useIdleTimeout } from "../../context/IdleTimeoutContext";
 import { useLanguage } from "../../context/LanguageContext";
 import { useSocket } from "../../context/SocketContext";
 import { useUnreadNotifications } from "../../context/UnreadNotificationsContext";
 import {
-  ANNOUNCEMENTS_SHOWN_FOR_LOGIN_SESSION_KEY,
-  ensureAnnouncementLoginSessionId,
-  markAnnouncementsShownForCurrentLoginSession,
+    ANNOUNCEMENTS_SHOWN_FOR_LOGIN_SESSION_KEY,
+    ensureAnnouncementLoginSessionId,
+    markAnnouncementsShownForCurrentLoginSession,
 } from "../../lib/announcementLoginSession";
 import { setConnectionStatus } from "../../lib/connectionStatus";
 import {
-  getMaintenanceStatus,
-  getVisibilityStatus,
+    getMaintenanceStatus,
+    getVisibilityStatus,
 } from "../../lib/maintenance";
 import type { NavProp } from "../../types/navigation";
 import { useResponsive } from "../../utils/responsive";
-import AccountDeletionModal from "../AccountDeletion/AccountDeletionModal";
 import {
-  AnnouncementModal,
-  type AnnouncementItem,
+    AnnouncementModal,
+    type AnnouncementItem,
 } from "../AnnouncementModal/AnnouncementModal";
 import NotificationBadge from "../Notification/NotificationBadge";
 import CardsTab from "./CardsTab";
@@ -144,6 +143,9 @@ interface TimeDeposit {
   payoutSchedule?: PayoutScheduleItem[];
   payout_schedule?: PayoutScheduleItem[]; // API may return snake_case
 }
+
+const notificationBadgeDismissSnapshotKey = (identity?: string) =>
+  `notification_badge_dismissed_snapshot_${identity ?? "default"}`;
 
 function computeTimeDepositTotal(deposits: TimeDeposit[]): number {
   return deposits
@@ -313,6 +315,7 @@ export default function Dashboard() {
     useState(false);
   const [dismissedUnreadSnapshot, setDismissedUnreadSnapshot] =
     useState<number>(0);
+  const notificationBadgeDismissKeyRef = useRef<string | null>(null);
   const [userReferrer, setUserReferrer] = useState<{
     referralCode?: string;
     firstName?: string;
@@ -373,6 +376,47 @@ export default function Dashboard() {
     accountNumber
       ? `active_card_design_${accountNumber}`
       : "active_card_design";
+
+  const hydrateNotificationBadgeDismissState = useCallback(
+    async (accountNumber?: string, email?: string) => {
+      const identity =
+        accountNumber?.trim() || email?.trim().toLowerCase() || undefined;
+      const key = notificationBadgeDismissSnapshotKey(identity);
+      notificationBadgeDismissKeyRef.current = key;
+
+      try {
+        const raw = await AsyncStorage.getItem(key);
+        const parsed = raw == null ? NaN : Number(raw);
+
+        if (Number.isFinite(parsed) && parsed >= 0) {
+          setDismissedUnreadSnapshot(parsed);
+          setNotificationBadgeDismissed(true);
+          return;
+        }
+      } catch {
+        // Ignore storage read failures and fall back to default badge state.
+      }
+
+      setDismissedUnreadSnapshot(0);
+      setNotificationBadgeDismissed(false);
+    },
+    [],
+  );
+
+  const persistNotificationBadgeDismissSnapshot = useCallback(
+    async (snapshot: number) => {
+      const key = notificationBadgeDismissKeyRef.current;
+      if (!key) return;
+      await AsyncStorage.setItem(key, String(Math.max(0, snapshot)));
+    },
+    [],
+  );
+
+  const clearNotificationBadgeDismissSnapshot = useCallback(async () => {
+    const key = notificationBadgeDismissKeyRef.current;
+    if (!key) return;
+    await AsyncStorage.removeItem(key);
+  }, []);
 
   const fetchMaintenanceStatus = useCallback(async () => {
     setIsMaintenanceLoading(true);
@@ -505,6 +549,14 @@ export default function Dashboard() {
         }
       }
 
+      const accountNumberFromUser = (user as { accountNumber?: string } | null)
+        ?.accountNumber;
+      const emailFromUser = (user as { email?: string } | null)?.email;
+      await hydrateNotificationBadgeDismissState(
+        accountNumberFromUser,
+        emailFromUser,
+      );
+
       setAvailableBalance(0);
       setAgentCommission(0);
       setTimeDeposit(0);
@@ -537,9 +589,9 @@ export default function Dashboard() {
       }
 
       const walletId = w?.id;
-      const accountNumberFromInit = (user as { accountNumber?: string })
+      const accountNumberForLanguageKey = (user as { accountNumber?: string })
         ?.accountNumber;
-      const accountKey = languageChoiceDoneKey(accountNumberFromInit);
+      const accountKey = languageChoiceDoneKey(accountNumberForLanguageKey);
       const globalKey = languageChoiceDoneKey(undefined);
       const [treeRes, txRes, notifRes, hasChosen, hasChosenGlobal, annRes] =
         await Promise.all([
@@ -604,7 +656,7 @@ export default function Dashboard() {
       if (
         hasChosen !== "true" &&
         hasChosenGlobal === "true" &&
-        accountNumberFromInit
+        accountNumberForLanguageKey
       ) {
         await AsyncStorage.setItem(accountKey, "true");
       }
@@ -1050,8 +1102,11 @@ export default function Dashboard() {
     // after the user has opened the notification page.
     if (unreadNotifications > dismissedUnreadSnapshot) {
       setNotificationBadgeDismissed(false);
+      setDismissedUnreadSnapshot(0);
+      void clearNotificationBadgeDismissSnapshot();
     }
   }, [
+    clearNotificationBadgeDismissSnapshot,
     notificationBadgeDismissed,
     unreadNotifications,
     dismissedUnreadSnapshot,
@@ -1097,6 +1152,13 @@ export default function Dashboard() {
       if (!description) return null;
       const normalized = description.trim();
       if (!normalized) return null;
+
+      if (/^Admin-approved balance transfer request\b/i.test(normalized)) {
+        return t("tx.transfer");
+      }
+      if (normalized.toLowerCase() === "transfer") {
+        return t("tx.transfer");
+      }
 
       const getTranslatedCardDesign = (designRaw?: string) => {
         if (!designRaw) return "";
@@ -1230,7 +1292,7 @@ export default function Dashboard() {
     },
     {
       icon: "credit-card",
-      labelText: "Inspire Card",
+      labelKey: "dashboard.inspireCard",
       route: "PCard",
     },
     {
@@ -1517,8 +1579,10 @@ export default function Dashboard() {
             <TouchableOpacity
               style={styles.iconButton}
               onPress={() => {
-                setDismissedUnreadSnapshot(unreadNotifications);
+                const nextSnapshot = unreadNotifications;
+                setDismissedUnreadSnapshot(nextSnapshot);
                 setNotificationBadgeDismissed(true);
+                void persistNotificationBadgeDismissSnapshot(nextSnapshot);
                 navigation.navigate("Notification");
               }}
             >
@@ -1958,6 +2022,7 @@ export default function Dashboard() {
                       AgentRequest: "agent",
                       PlayEarn: "trading",
                       PCard: "physical_cards",
+                      RewardPoints: "reward_points",
                     };
                     const serviceId =
                       routeToServiceMap[item.route] || item.route.toLowerCase();
@@ -2192,7 +2257,6 @@ export default function Dashboard() {
           </View>
         </ScrollView>
       </SafeAreaView>
-      <AccountDeletionModal />
     </>
   );
 }

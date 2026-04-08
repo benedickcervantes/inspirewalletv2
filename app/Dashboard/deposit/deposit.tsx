@@ -11,13 +11,52 @@ import {
     View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import FeatureMaintenanceModal from "../../components/FeatureMaintenanceModal";
 import { useLanguage } from "../../../context/LanguageContext";
+import {
+  isOperationUnderMaintenance,
+  type OperationMaintenanceKey,
+} from "../../../lib/maintenance";
+
+const depositTypes = [
+  {
+    id: "timedeposit",
+    titleKey: "deposit.timeDeposit",
+    subtitleKey: "deposit.timeDepositMin",
+    icon: "time-outline" as const,
+    route: "/timedeposit",
+  },
+  {
+    id: "stock",
+    titleKey: "deposit.stockInvestment",
+    subtitleKey: "deposit.stockInvestmentMin",
+    icon: "bar-chart-outline" as const,
+    route: "/stockinvestment",
+  },
+  {
+    id: "topup",
+    titleKey: "deposit.topUpBalance",
+    subtitleKey: "deposit.topUpBalance",
+    icon: "wallet-outline" as const,
+    route: "/topup",
+  },
+] as const;
+
+const DEPOSIT_MAINTENANCE_KEY: Record<
+  (typeof depositTypes)[number]["id"],
+  OperationMaintenanceKey
+> = {
+  timedeposit: "op_deposit_time_deposit",
+  stock: "op_deposit_stock_investment",
+  topup: "op_deposit_top_up_available_balance",
+};
 
 export default function DepositIndex() {
   const navigation = useNavigation();
   const { t } = useLanguage();
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
 
   // Reset loading when user navigates back to this screen
   useFocusEffect(
@@ -26,37 +65,25 @@ export default function DepositIndex() {
     }, [])
   );
 
-  const depositTypes = [
-    {
-      id: "timedeposit",
-      titleKey: "deposit.timeDeposit",
-      subtitleKey: "deposit.timeDepositMin",
-      icon: "time-outline" as const,
-      route: "/timedeposit",
-    },
-    {
-      id: "stock",
-      titleKey: "deposit.stockInvestment",
-      subtitleKey: "deposit.stockInvestmentMin",
-      icon: "bar-chart-outline" as const,
-      route: "/stockinvestment",
-    },
-    {
-      id: "topup",
-      titleKey: "deposit.topUpBalance",
-      subtitleKey: "deposit.topUpBalance",
-      icon: "wallet-outline" as const,
-      route: "/topup",
-    },
-  ] as const;
-
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (!selectedType || loading) return;
-    setLoading(true);
     const selected = depositTypes.find((type) => type.id === selectedType);
-    if (selected) {
+    if (!selected) return;
+
+    setLoading(true);
+    try {
+      const key = DEPOSIT_MAINTENANCE_KEY[selected.id];
+      const offline = await isOperationUnderMaintenance(key);
+      if (offline) {
+        setShowMaintenanceModal(true);
+        return;
+      }
       const screenName = selected.route.replace(/^\//, "");
-      (navigation as { navigate: (name: string) => void }).navigate(screenName);
+      (navigation as { navigate: (name: string) => void }).navigate(
+        screenName,
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -158,6 +185,11 @@ export default function DepositIndex() {
 
           <View style={styles.bottomPadding} />
         </ScrollView>
+
+        <FeatureMaintenanceModal
+          visible={showMaintenanceModal}
+          onDismiss={() => setShowMaintenanceModal(false)}
+        />
       </SafeAreaView>
     </View>
   );

@@ -2,9 +2,9 @@
   "expo": {
     "name": "Inspire Wallet",
     "slug": "investor-wallet",
-    "version": "3.0.4",
+    "version": "3.0.5",
     "orientation": "portrait",
-    "icon": "./assets/images/Startup_DONE.jpg",
+    "icon": "./assets/images/app-icon.png",
     "scheme": "inspirewalletv3",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -21,7 +21,7 @@
       "softwareKeyboardLayoutMode": "resize",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/Startup_DONE.jpg"
+        "foregroundImage": "./assets/images/app-icon.png"
       },
       "package": "com.inspire.inspirewallet",
       "edgeToEdgeEnabled": true,
@@ -38,7 +38,7 @@
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/Startup_DONE.jpg"
+      "favicon": "./assets/images/app-icon.png"
     },
     "plugins": [
       "expo-router",

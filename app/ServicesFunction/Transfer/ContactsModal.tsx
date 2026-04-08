@@ -3,18 +3,18 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Contacts from "expo-contacts";
 import { useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
-  Animated,
-  Keyboard,
-  KeyboardAvoidingView,
-  PanResponder,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Animated,
+    Keyboard,
+    KeyboardAvoidingView,
+    PanResponder,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { getBeneficiaries } from "../../../configs/api";
 import { useIdleTimeout } from "../../../context/IdleTimeoutContext";
@@ -46,6 +46,12 @@ interface PendingDeletion {
   account: SavedAccount;
   index: number;
 }
+
+const normalizeAccountNumber = (value: string) =>
+  String(value || "").replace(/\D/g, "");
+
+const isValidAccountNumber = (value: string) =>
+  /^\d{12}$/.test(normalizeAccountNumber(value));
 
 function SavedAccountSwipeRow({
   account,
@@ -172,9 +178,8 @@ export default function ContactsModal({
   const [searchQuery, setSearchQuery] = useState("");
   const [hasContactPermission, setHasContactPermission] = useState(false);
   const [isLoadingDeviceContacts, setIsLoadingDeviceContacts] = useState(false);
-  const [pendingDeletion, setPendingDeletion] = useState<PendingDeletion | null>(
-    null,
-  );
+  const [pendingDeletion, setPendingDeletion] =
+    useState<PendingDeletion | null>(null);
   const [undoSecondsLeft, setUndoSecondsLeft] = useState(5);
   const deleteTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -281,7 +286,9 @@ export default function ContactsModal({
       const next = [...prev];
       const insertAt = Math.min(pendingDeletion.index, next.length);
       next.splice(insertAt, 0, pendingDeletion.account);
-      AsyncStorage.setItem("saved_accounts", JSON.stringify(next)).catch(() => {});
+      AsyncStorage.setItem("saved_accounts", JSON.stringify(next)).catch(
+        () => {},
+      );
       return next;
     });
     setPendingDeletion(null);
@@ -295,7 +302,9 @@ export default function ContactsModal({
 
     setSavedAccounts((prev) => {
       const next = prev.filter((a) => a.id !== account.id);
-      AsyncStorage.setItem("saved_accounts", JSON.stringify(next)).catch(() => {});
+      AsyncStorage.setItem("saved_accounts", JSON.stringify(next)).catch(
+        () => {},
+      );
       return next;
     });
 
@@ -319,7 +328,9 @@ export default function ContactsModal({
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
-          localAccounts = Array.isArray(parsed) ? (parsed as SavedAccount[]) : [];
+          localAccounts = Array.isArray(parsed)
+            ? (parsed as SavedAccount[])
+            : [];
         } catch {
           localAccounts = [];
         }
@@ -331,7 +342,9 @@ export default function ContactsModal({
     // Load phone number mapping
     let phoneMapping: Record<string, string> = {};
     try {
-      const mappingData = await AsyncStorage.getItem("beneficiary_phone_mapping");
+      const mappingData = await AsyncStorage.getItem(
+        "beneficiary_phone_mapping",
+      );
       if (mappingData) {
         phoneMapping = JSON.parse(mappingData);
         console.log("Phone mapping loaded:", phoneMapping);
@@ -345,8 +358,14 @@ export default function ContactsModal({
       const accessToken = await AsyncStorage.getItem("access_token");
       if (accessToken) {
         const beneficiariesRes = await getBeneficiaries(accessToken);
-        if (beneficiariesRes.success && Array.isArray(beneficiariesRes.beneficiaries)) {
-          console.log("Beneficiaries from backend:", JSON.stringify(beneficiariesRes.beneficiaries, null, 2));
+        if (
+          beneficiariesRes.success &&
+          Array.isArray(beneficiariesRes.beneficiaries)
+        ) {
+          console.log(
+            "Beneficiaries from backend:",
+            JSON.stringify(beneficiariesRes.beneficiaries, null, 2),
+          );
           backendAccounts = beneficiariesRes.beneficiaries
             .map((item: any, index: number) => {
               const beneficiaryId = String(item?.id || "").trim();
@@ -357,17 +376,39 @@ export default function ContactsModal({
                   "",
               ).trim();
 
-              console.log(`Beneficiary ${index}: id=${beneficiaryId}, accountIdentifier=${accountIdentifier}`);
+              console.log(
+                `Beneficiary ${index}: id=${beneficiaryId}, accountIdentifier=${accountIdentifier}`,
+              );
 
-              const phoneNumber = phoneMapping[beneficiaryId] || phoneMapping[accountIdentifier] || "";
+              const phoneNumber =
+                phoneMapping[beneficiaryId] ||
+                phoneMapping[accountIdentifier] ||
+                "";
 
-              console.log(`Phone number lookup: beneficiaryId=${beneficiaryId} -> ${phoneMapping[beneficiaryId] || "NOT FOUND"}`);
-              console.log(`Phone number lookup: accountIdentifier=${accountIdentifier} -> ${phoneMapping[accountIdentifier] || "NOT FOUND"}`);
+              console.log(
+                `Phone number lookup: beneficiaryId=${beneficiaryId} -> ${phoneMapping[beneficiaryId] || "NOT FOUND"}`,
+              );
+              console.log(
+                `Phone number lookup: accountIdentifier=${accountIdentifier} -> ${phoneMapping[accountIdentifier] || "NOT FOUND"}`,
+              );
               console.log(`Final phone number: ${phoneNumber || "NOT FOUND"}`);
 
-              const displayNumber = phoneNumber || accountIdentifier;
+              const candidateAccountNumber =
+                phoneNumber ||
+                String(item?.accountNumber || "").trim() ||
+                String(item?.recipient?.accountNumber || "").trim() ||
+                String(
+                  item?.recipient?.mainWallet?.accountNumber || "",
+                ).trim() ||
+                String(item?.recipient?.wallet?.accountNumber || "").trim() ||
+                String(item?.recipientAccountNumber || "").trim() ||
+                "";
 
-              if (!displayNumber) return null;
+              const displayNumber = normalizeAccountNumber(
+                candidateAccountNumber,
+              );
+
+              if (!isValidAccountNumber(displayNumber)) return null;
 
               const name = String(
                 item?.nickname ||
@@ -380,7 +421,9 @@ export default function ContactsModal({
                   "",
               ).trim();
 
-              const id = String(item?.id || displayNumber || `beneficiary-${index}`);
+              const id = String(
+                item?.id || displayNumber || `beneficiary-${index}`,
+              );
 
               return {
                 id,
@@ -398,8 +441,10 @@ export default function ContactsModal({
     try {
       const mergedMap = new Map<string, SavedAccount>();
       [...backendAccounts, ...localAccounts].forEach((acc) => {
-        const acct = String(acc.accountNumber || "").trim();
-        if (!acct) return;
+        const acct = normalizeAccountNumber(
+          String(acc.accountNumber || "").trim(),
+        );
+        if (!isValidAccountNumber(acct)) return;
         const key = acct.replace(/\s+/g, "").toLowerCase();
         mergedMap.set(key, {
           id: String(acc.id || acct),
@@ -409,7 +454,10 @@ export default function ContactsModal({
       });
       const mergedAccounts = Array.from(mergedMap.values());
 
-      await AsyncStorage.setItem("saved_accounts", JSON.stringify(mergedAccounts));
+      await AsyncStorage.setItem(
+        "saved_accounts",
+        JSON.stringify(mergedAccounts),
+      );
 
       setSavedAccounts(mergedAccounts);
       setFilteredSaved(mergedAccounts);
@@ -509,7 +557,10 @@ export default function ContactsModal({
       (contact as Contact)?.phoneNumbers?.[0] ||
       (contact as SavedAccount)?.accountNumber ||
       "";
-    const trimmedRaw = String(rawAccount).trim();
+    const trimmedRaw = normalizeAccountNumber(String(rawAccount).trim());
+    if (!isValidAccountNumber(trimmedRaw)) {
+      return;
+    }
     const selectedContact: Contact = {
       ...(contact as any),
       accountNumber: trimmedRaw,
@@ -541,7 +592,6 @@ export default function ContactsModal({
         />
 
         <View style={styles.modalContainer}>
-
           {/* Header */}
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>{t("sendMoney.contacts")}</Text>
@@ -661,8 +711,11 @@ export default function ContactsModal({
                       onSwipeDelete={() =>
                         handleSwipeDeleteSaved(
                           account,
-                          savedAccounts.findIndex((a) => a.id === account.id) >= 0
-                            ? savedAccounts.findIndex((a) => a.id === account.id)
+                          savedAccounts.findIndex((a) => a.id === account.id) >=
+                            0
+                            ? savedAccounts.findIndex(
+                                (a) => a.id === account.id,
+                              )
                             : index,
                         )
                       }
@@ -678,11 +731,7 @@ export default function ContactsModal({
                 </View>
               ) : !hasContactPermission ? (
                 <View style={styles.emptyState}>
-                  <Ionicons
-                    name="lock-closed-outline"
-                    size={64}
-                    color="#CCC"
-                  />
+                  <Ionicons name="lock-closed-outline" size={64} color="#CCC" />
                   <Text style={styles.emptyStateTitle}>
                     {t("sendMoney.permissionRequiredTitle")}
                   </Text>

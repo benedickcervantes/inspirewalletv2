@@ -33,7 +33,6 @@ import { useLanguage } from "../../context/LanguageContext";
 import { useLanguageModal } from "../../context/LanguageModalContext";
 import { authenticateWithDeviceBiometrics } from "../../utils/biometricAuth";
 import { useResponsive } from "../../utils/responsive";
-import AccountDeletionModal from "../AccountDeletion/AccountDeletionModal";
 import ActivityModal from "../components/ActivityModal";
 interface UserData {
   email?: string;
@@ -1416,7 +1415,6 @@ const Settings = () => {
           </View>
         </ActivityModal>
 
-        <AccountDeletionModal />
       </SafeAreaView>
     </>
   );

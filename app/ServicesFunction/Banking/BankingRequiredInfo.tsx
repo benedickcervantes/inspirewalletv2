@@ -7,10 +7,11 @@ import * as FileSystem from "expo-file-system/legacy";
 import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useState } from "react";
-import { Alert, Image, Platform, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Image, Platform, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { submitBankingApplication } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
 import type { RootStackParamList } from "../../../types/navigation";
+import { unformatNumberString } from "../../../utils/numberFormat";
 
 import ActivityModal from '../../components/ActivityModal';
 const THEME_COLOR = "#E15816";
@@ -80,15 +81,23 @@ export default function BankingRequiredInfo() {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showExitConfirmModal, setShowExitConfirmModal] = useState(false);
+  const [showMessageModal, setShowMessageModal] = useState(false);
+  const [messageModalTitle, setMessageModalTitle] = useState("");
+  const [messageModalBody, setMessageModalBody] = useState("");
 
   const currentStep = 6;
+  const openMessageModal = (title: string, message: string) => {
+    setMessageModalTitle(title);
+    setMessageModalBody(message);
+    setShowMessageModal(true);
+  };
 
   const pickPassportPhoto = async () => {
     try {
       const permissionResult =
         await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (permissionResult.granted === false) {
-        Alert.alert(t("banking.permissionRequired"), t("banking.allowPhotos"));
+        openMessageModal(t("banking.permissionRequired"), t("banking.allowPhotos"));
         return;
       }
 
@@ -104,7 +113,7 @@ export default function BankingRequiredInfo() {
       }
     } catch (error) {
       console.error("Error picking passport photo:", error);
-      Alert.alert(t("banking.error"), t("banking.failedToPickImage"));
+      openMessageModal(t("banking.error"), t("banking.failedToPickImage"));
     }
   };
 
@@ -113,7 +122,7 @@ export default function BankingRequiredInfo() {
       const permissionResult =
         await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (permissionResult.granted === false) {
-        Alert.alert(t("banking.permissionRequired"), t("banking.allowPhotos"));
+        openMessageModal(t("banking.permissionRequired"), t("banking.allowPhotos"));
         return;
       }
 
@@ -128,7 +137,7 @@ export default function BankingRequiredInfo() {
       }
     } catch (error) {
       console.error("Error picking image:", error);
-      Alert.alert(t("banking.error"), t("banking.failedToPickImage"));
+      openMessageModal(t("banking.error"), t("banking.failedToPickImage"));
     }
   };
 
@@ -175,7 +184,7 @@ export default function BankingRequiredInfo() {
     const { contactInfo, personalInfo, addressInfo, financialInfo } =
       applicationData;
     if (!contactInfo || !personalInfo || !addressInfo || !financialInfo) {
-      Alert.alert(t("banking.error"), t("banking.submitFailed"));
+      openMessageModal(t("banking.error"), t("banking.submitFailed"));
       navigation.navigate("Main");
       return;
     }
@@ -184,7 +193,7 @@ export default function BankingRequiredInfo() {
     try {
       const accessToken = await AsyncStorage.getItem("access_token");
       if (!accessToken) {
-        Alert.alert(t("banking.error"), t("banking.submitFailed"));
+        openMessageModal(t("banking.error"), t("banking.submitFailed"));
         setIsSubmitting(false);
         return;
       }
@@ -199,6 +208,9 @@ export default function BankingRequiredInfo() {
       let passportPhotoBase64: string | undefined;
       let idFrontBase64: string | undefined;
       let idBackBase64: string | undefined;
+      const normalizedGrossMonthlyIncome = unformatNumberString(
+        String(financialInfo.grossMonthlyIncome ?? "").trim(),
+      );
       if (idType === "Passport" && passportPhoto) {
         passportPhotoBase64 = await uriToBase64DataUrl(passportPhoto);
       } else if (
@@ -212,7 +224,7 @@ export default function BankingRequiredInfo() {
       const payload: Record<string, unknown> = {
         bank: selectedBank,
         sourceOfFund: financialInfo.sourceOfFund,
-        grossMonthlyIncome: financialInfo.grossMonthlyIncome,
+        grossMonthlyIncome: normalizedGrossMonthlyIncome,
         grossMonthlyIncomeCurrency: financialInfo.grossMonthlyIncomeCurrency,
         idType,
         personalInfo: {
@@ -240,14 +252,14 @@ export default function BankingRequiredInfo() {
       if (result.success) {
         setShowSuccessModal(true);
       } else {
-        Alert.alert(
+        openMessageModal(
           t("banking.error"),
           result.error ?? t("banking.submitFailed"),
         );
       }
     } catch (error) {
       console.error("Error submitting banking application:", error);
-      Alert.alert(t("banking.error"), t("banking.submitFailed"));
+      openMessageModal(t("banking.error"), t("banking.submitFailed"));
     } finally {
       setIsSubmitting(false);
     }
@@ -750,6 +762,37 @@ export default function BankingRequiredInfo() {
                   style={[styles.exitModalButtonText, styles.exitModalDiscardButtonText]}
                 >
                   {t("common.discardExit")}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </ActivityModal>
+      <ActivityModal
+        transparent
+        animationType="fade"
+        visible={showMessageModal}
+        onRequestClose={() => setShowMessageModal(false)}
+      >
+        <View style={styles.exitModalOverlay}>
+          <View style={styles.exitModalContainer}>
+            <View style={styles.exitModalIconWrap}>
+              <Ionicons name="alert-circle-outline" size={28} color={THEME_COLOR} />
+            </View>
+            <Text style={styles.exitModalTitle}>{messageModalTitle}</Text>
+            <Text style={styles.exitModalMessage}>{messageModalBody}</Text>
+            <View style={styles.exitModalButtons}>
+              <TouchableOpacity
+                style={[styles.exitModalButton, styles.exitModalKeepEditingButton]}
+                onPress={() => setShowMessageModal(false)}
+              >
+                <Text
+                  style={[
+                    styles.exitModalButtonText,
+                    styles.exitModalKeepEditingButtonText,
+                  ]}
+                >
+                  {t("common.ok")}
                 </Text>
               </TouchableOpacity>
             </View>

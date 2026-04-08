@@ -1,6 +1,6 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
@@ -11,7 +11,9 @@ import {
   submitTopUpRequest,
 } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
-import ActivityModal from '../../components/ActivityModal';
+import ActivityModal from "../../components/ActivityModal";
+import FeatureMaintenanceModal from "../../components/FeatureMaintenanceModal";
+import { isOperationUnderMaintenance } from "../../../lib/maintenance";
 import {
   formatAmountWithCommas,
   unformatNumberString,
@@ -29,8 +31,27 @@ export default function TopUpBalance() {
   const [phpEquivalent, setPhpEquivalent] = useState(0);
   const [isConverting, setIsConverting] = useState(false);
   const [convertError, setConvertError] = useState<string | null>(null);
+  const [showFeatureMaintenanceModal, setShowFeatureMaintenanceModal] =
+    useState(false);
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false;
+      void (async () => {
+        const offline = await isOperationUnderMaintenance(
+          "op_deposit_top_up_available_balance",
+        );
+        if (!cancelled) {
+          setShowFeatureMaintenanceModal(offline);
+        }
+      })();
+      return () => {
+        cancelled = true;
+      };
+    }, []),
+  );
 
   const currencies = [
     { code: "PHP", name: "Philippine Peso", flag: "🇵🇭", symbol: "₱" },
@@ -128,7 +149,15 @@ export default function TopUpBalance() {
     }
 
     setErrors({});
-    
+
+    const offline = await isOperationUnderMaintenance(
+      "op_deposit_top_up_available_balance",
+    );
+    if (offline) {
+      setShowFeatureMaintenanceModal(true);
+      return;
+    }
+
     try {
       setIsSubmitting(true);
       const accessToken = await AsyncStorage.getItem("access_token");
@@ -369,7 +398,7 @@ export default function TopUpBalance() {
           {/* Continue Button */}
           <TouchableOpacity
             style={styles.continueButton}
-            onPress={handleContinue}
+            onPress={() => void handleContinue()}
             disabled={isSubmitting}
           >
             <LinearGradient
@@ -439,6 +468,14 @@ export default function TopUpBalance() {
             </View>
           </View>
         </ActivityModal>
+
+        <FeatureMaintenanceModal
+          visible={showFeatureMaintenanceModal}
+          onDismiss={() => {
+            setShowFeatureMaintenanceModal(false);
+            navigation.goBack();
+          }}
+        />
       </SafeAreaView>
     </View>
   );

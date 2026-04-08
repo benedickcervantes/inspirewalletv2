@@ -3,15 +3,18 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useState } from "react";
 import {
-    Image,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import FeatureMaintenanceModal from "../../components/FeatureMaintenanceModal";
 import { useLanguage } from "../../../context/LanguageContext";
+import { isOperationUnderMaintenance } from "../../../lib/maintenance";
 
 export default function WithdrawRequest() {
   const navigation = useNavigation();
@@ -19,6 +22,8 @@ export default function WithdrawRequest() {
   const { t } = useLanguage();
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [checkingMaintenance, setCheckingMaintenance] = useState(false);
+  const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
 
   const withdrawalType = (route.params as { type?: string })?.type || "available-balance";
 
@@ -39,7 +44,7 @@ export default function WithdrawRequest() {
     },
   ];
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (!selectedMethod) {
       setErrors({
         selectedMethod: t("withdraw.validation.method"),
@@ -49,11 +54,32 @@ export default function WithdrawRequest() {
 
     setErrors({});
 
-    // Navigate to next step based on selected method
-    if (selectedMethod === "local-bank") {
-      navigation.navigate("WithdrawBank", { type: withdrawalType });
-    } else if (selectedMethod === "e-wallet") {
-      navigation.navigate("WithdrawEwallet", { type: withdrawalType });
+    setCheckingMaintenance(true);
+    try {
+      const sourceKey =
+        withdrawalType === "agent-withdrawal"
+          ? "op_withdrawal_agent_wallet"
+          : "op_withdrawal_available_balance";
+      const methodKey =
+        selectedMethod === "local-bank"
+          ? "op_withdrawal_local_bank"
+          : "op_withdrawal_e_wallet";
+      const [sourceOff, methodOff] = await Promise.all([
+        isOperationUnderMaintenance(sourceKey),
+        isOperationUnderMaintenance(methodKey),
+      ]);
+      if (sourceOff || methodOff) {
+        setShowMaintenanceModal(true);
+        return;
+      }
+
+      if (selectedMethod === "local-bank") {
+        navigation.navigate("WithdrawBank", { type: withdrawalType });
+      } else if (selectedMethod === "e-wallet") {
+        navigation.navigate("WithdrawEwallet", { type: withdrawalType });
+      }
+    } finally {
+      setCheckingMaintenance(false);
     }
   };
 
@@ -181,7 +207,8 @@ export default function WithdrawRequest() {
 
             <TouchableOpacity
               style={styles.continueButton}
-              onPress={handleContinue}
+              onPress={() => void handleContinue()}
+              disabled={checkingMaintenance}
             >
               <LinearGradient
                 colors={["#E25A17", "#F28934"]}
@@ -189,16 +216,27 @@ export default function WithdrawRequest() {
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
               >
-                <Text style={styles.continueText}>
-                  {t("withdraw.continue")}
-                </Text>
-                <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
+                {checkingMaintenance ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <>
+                    <Text style={styles.continueText}>
+                      {t("withdraw.continue")}
+                    </Text>
+                    <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
+                  </>
+                )}
               </LinearGradient>
             </TouchableOpacity>
           </View>
 
           <View style={styles.bottomPadding} />
         </ScrollView>
+
+        <FeatureMaintenanceModal
+          visible={showMaintenanceModal}
+          onDismiss={() => setShowMaintenanceModal(false)}
+        />
       </SafeAreaView>
     </View>
   );
