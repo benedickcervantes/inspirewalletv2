@@ -22,7 +22,7 @@ import {
   getRewardPointsHistory,
   getRewardPointsTotal,
   redeemRewardPoints,
-} from "../../../configs/api";
+} from "../../../configs/rewardPointsApi";
 import { useLanguage } from "../../../context/LanguageContext";
 import type { NavProp } from "../../../types/navigation";
 
@@ -351,7 +351,7 @@ export default function RewardPointsHistory() {
           <View style={styles.skCampaignPill} />
         ) : campaignConfig?.enabled ? (
           <View style={styles.campaignPill}>
-            <MaterialCommunityIcons name="lightning-bolt" size={12} color="#E25A17" />
+            <MaterialCommunityIcons name="lightning-bolt" size={12} color="#E15816" />
             <Text style={styles.campaignPillText}>
               {t("rewardPoints.campaignPill", {
                 percentage: String(campaignConfig.percentage),
@@ -371,7 +371,7 @@ export default function RewardPointsHistory() {
             <MaterialCommunityIcons
               name="cash-fast"
               size={16}
-              color={canRedeem ? "#16A34A" : "#9CA3AF"}
+              color={canRedeem ? "#E15816" : "#9CA3AF"}
             />
           </View>
           <Text style={[styles.redeemBtnText, canRedeem ? styles.redeemTextOn : styles.redeemTextOff]}>
@@ -382,7 +382,7 @@ export default function RewardPointsHistory() {
               <View style={styles.readyBadge}>
                 <Text style={styles.readyBadgeText}>{t("rewardPoints.readyLabel") ?? "Ready"}</Text>
               </View>
-              <Ionicons name="chevron-forward" size={15} color="rgba(22,163,74,0.45)" />
+              <Ionicons name="chevron-forward" size={15} color="rgba(225,88,22,0.45)" />
             </>
           )}
         </TouchableOpacity>
@@ -392,7 +392,7 @@ export default function RewardPointsHistory() {
           <Svg width={width} height={28} viewBox={`0 0 ${width} 28`} preserveAspectRatio="none">
             <Path
               d={`M0,28 L0,14 Q${width * 0.13},0 ${width * 0.25},10 T${width * 0.5},5 T${width * 0.76},12 T${width},3 L${width},28 Z`}
-              fill="#F7F5F2"
+              fill="#F5F5F5"
             />
           </Svg>
         </View>
@@ -724,13 +724,13 @@ const styles = StyleSheet.create({
     width: 30, height: 30, borderRadius: 9,
     justifyContent: "center", alignItems: "center",
   },
-  redeemIconOn: { backgroundColor: "#F0FDF4" },
+  redeemIconOn: { backgroundColor: "#FFF5F0" },
   redeemIconOff: { backgroundColor: "rgba(255,255,255,0.12)" },
   redeemBtnText: { fontSize: 14, fontWeight: "700", flex: 1 },
   redeemTextOn: { color: "#E15816" },
   redeemTextOff: { color: "rgba(255,255,255,0.5)" },
   readyBadge: {
-    backgroundColor: "#F0FDF4", borderWidth: 1, borderColor: "#BBF7D0",
+    backgroundColor: "#FFF5F0", borderWidth: 1, borderColor: "#FFE4D6",
     borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3,
   },
   readyBadgeText: { fontSize: 10, fontWeight: "700", color: "#E15816" },
@@ -854,7 +854,7 @@ const styles = StyleSheet.create({
   },
   sheetIconCircle: {
     width: 58, height: 58, borderRadius: 18,
-    backgroundColor: "#FFF3E0",
+    backgroundColor: "#FFF5F0",
     justifyContent: "center", alignItems: "center",
   },
   modalTitle: {
@@ -873,7 +873,7 @@ const styles = StyleSheet.create({
     width: "100%", borderWidth: 1.5, borderColor: "#E5E7EB",
     borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14,
     fontSize: 24, textAlign: "center", letterSpacing: 10,
-    marginBottom: 10, color: "#1A1208", backgroundColor: "#FAFAF8",
+    marginBottom: 10, color: "#333333", backgroundColor: "#FAFAF8",
   },
   passcodeErr: { borderColor: "#EF4444" },
   redeemError: {

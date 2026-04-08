@@ -290,6 +290,14 @@ export function declineReferralRequest(
   accessToken: string,
   notificationId: string,
 ): Promise<{ success: boolean; data?: unknown; error?: string }>;
+export function approveAdminBalanceTransferFromNotification(
+  accessToken: string,
+  notificationId: string,
+): Promise<{ success: boolean; data?: unknown; error?: string }>;
+export function rejectAdminBalanceTransferFromNotification(
+  accessToken: string,
+  notificationId: string,
+): Promise<{ success: boolean; data?: unknown; error?: string }>;
 export function markAllMessagesAsRead(
   accessToken: string,
 ): Promise<{ success: boolean; count?: number; error?: string }>;
