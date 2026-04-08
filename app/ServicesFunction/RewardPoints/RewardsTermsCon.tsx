@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLanguage } from "../../../context/LanguageContext";
 import type { NavProp } from "../../../types/navigation";
 
-const ORANGE_GRADIENT: readonly [string, string] = ["#E25A17", "#F28934"];
+const ORANGE_GRADIENT: readonly [string, string] = ["#DE5212", "#E15816"];
 
 function Rule() {
   return <View style={styles.rule} />;
@@ -51,7 +51,7 @@ export default function RewardsTermsCon() {
           <Text style={styles.mainTitle}>{t("rewardPoints.terms.mainTitle")}</Text>
           <Text style={styles.subtitle}>{t("rewardPoints.terms.subtitle")}</Text>
           <View style={styles.noticePill}>
-            <Ionicons name="shield-checkmark-outline" size={14} color="#C2410C" />
+            <Ionicons name="shield-checkmark-outline" size={14} color="#E15816" />
             <Text style={styles.noticePillText}>{t("rewardPoints.terms.notice")}</Text>
           </View>
         </View>
@@ -231,26 +231,40 @@ export default function RewardsTermsCon() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#F3F4F6" },
+  root: { flex: 1, backgroundColor: "#F5F5F5" },
   header: { paddingBottom: 16, paddingHorizontal: 16 },
   headerRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
   },
-  backBtn: { width: 40, height: 40, justifyContent: "center", alignItems: "center" },
+  backBtn: {
+    width: 40,
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 12,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.28)",
+  },
   headerTitle: { fontSize: 18, fontWeight: "700", color: "#FFFFFF" },
   scroll: { flex: 1 },
-  scrollContent: { paddingHorizontal: 16, paddingTop: 14, paddingBottom: 40, gap: 10 },
+  scrollContent: { paddingHorizontal: 16, paddingTop: 14, paddingBottom: 40, gap: 12 },
   heroCard: {
-    backgroundColor: "#FFF7ED",
+    backgroundColor: "#FFF5F0",
     borderWidth: 1,
-    borderColor: "#FED7AA",
-    borderRadius: 14,
-    padding: 14,
+    borderColor: "#FFE4D6",
+    borderRadius: 16,
+    padding: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 2,
   },
-  mainTitle: { fontSize: 18, fontWeight: "800", color: "#9A3412", marginBottom: 4 },
-  subtitle: { fontSize: 13, fontWeight: "600", color: "#9A3412", marginBottom: 10 },
+  mainTitle: { fontSize: 18, fontWeight: "800", color: "#E15816", marginBottom: 4 },
+  subtitle: { fontSize: 13, fontWeight: "600", color: "#666666", marginBottom: 10 },
   noticePill: {
     flexDirection: "row",
     alignItems: "center",
@@ -259,25 +273,32 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
     paddingHorizontal: 10,
     gap: 6,
+    borderWidth: 1,
+    borderColor: "#FFE4D6",
   },
-  noticePillText: { fontSize: 11, color: "#7C2D12", fontWeight: "600", flex: 1 },
+  noticePillText: { fontSize: 11, color: "#666666", fontWeight: "600", flex: 1 },
   sectionCard: {
     backgroundColor: "#FFFFFF",
-    borderRadius: 14,
+    borderRadius: 16,
     padding: 14,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
+    borderColor: "#F0F0F0",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
   },
-  sectionTitle: { fontSize: 15, fontWeight: "800", color: "#1F2937", marginBottom: 8 },
-  subHeading: { fontSize: 13, fontWeight: "700", color: "#374151", marginTop: 8, marginBottom: 4 },
-  body: { fontSize: 13, color: "#4B5563", lineHeight: 20, marginBottom: 8 },
+  sectionTitle: { fontSize: 15, fontWeight: "800", color: "#333333", marginBottom: 8 },
+  subHeading: { fontSize: 13, fontWeight: "700", color: "#E15816", marginTop: 8, marginBottom: 4 },
+  body: { fontSize: 13, color: "#666666", lineHeight: 20, marginBottom: 8 },
   rule: {
     height: 1,
-    backgroundColor: "#F1F5F9",
+    backgroundColor: "#F0F0F0",
     marginVertical: 8,
   },
   bulletBlock: { marginBottom: 2 },
   bulletRow: { flexDirection: "row", alignItems: "flex-start", marginBottom: 5, paddingRight: 8 },
-  bulletMark: { fontSize: 13, color: "#6B7280", marginRight: 8, lineHeight: 20, width: 12 },
-  bulletText: { flex: 1, fontSize: 13, color: "#4B5563", lineHeight: 20 },
+  bulletMark: { fontSize: 13, color: "#E15816", marginRight: 8, lineHeight: 20, width: 12 },
+  bulletText: { flex: 1, fontSize: 13, color: "#666666", lineHeight: 20 },
 });

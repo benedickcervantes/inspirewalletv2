@@ -13,9 +13,10 @@ import {
   TextInput,
   TouchableOpacity,
   useWindowDimensions,
-  View
+  View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import Svg, { Path } from "react-native-svg";
 import {
   getRewardCampaignConfig,
   getRewardPointsHistory,
@@ -25,9 +26,14 @@ import {
 import { useLanguage } from "../../../context/LanguageContext";
 import type { NavProp } from "../../../types/navigation";
 
-const ORANGE_GRADIENT: readonly [string, string] = ["#E25A17", "#F28934"];
+// ─── constants ─────────────────────────────────────────────────────────────────
+const GRADIENT: readonly [string, string, string, string] = [
+  "#DE5212", "#E15816", "#E8752A", "#F5A54A",
+];
 const ITEMS_PER_PAGE = 20;
+const MIN_REDEEM_POINTS = 1000;
 
+// ─── types ─────────────────────────────────────────────────────────────────────
 interface RewardTransaction {
   id: string;
   points: number;
@@ -46,25 +52,27 @@ interface CampaignConfig {
   minEligibleAmount: number;
 }
 
-function SkeletonTransactionRow() {
+type FilterType = "ALL" | "EARNED" | "REDEEMED";
+
+// ─── skeleton ──────────────────────────────────────────────────────────────────
+function SkeletonRow() {
   return (
-    <View style={styles.txRow}>
-      <View style={[styles.txIconCircle, styles.skeletonBase, { backgroundColor: "#F3F4F6" }]} />
-      <View style={styles.txMiddle}>
-        <View style={[styles.skeletonLine, { width: "55%", marginBottom: 7 }]} />
-        <View style={[styles.skeletonLine, { width: "80%", height: 10, marginBottom: 5 }]} />
-        <View style={[styles.skeletonLine, { width: "38%", height: 10 }]} />
+    <View style={styles.txCard}>
+      <View style={[styles.txIcon, { backgroundColor: "#F3F4F6" }]} />
+      <View style={{ flex: 1, gap: 6 }}>
+        <View style={[styles.skLine, { width: "40%" }]} />
+        <View style={[styles.skLine, { width: "68%", height: 10 }]} />
+        <View style={[styles.skLine, { width: "32%", height: 10 }]} />
       </View>
-      <View style={styles.txRight}>
-        <View style={[styles.skeletonLine, { width: 52, marginBottom: 6 }]} />
-        <View style={[styles.skeletonLine, { width: 44, height: 10 }]} />
+      <View style={{ alignItems: "flex-end", gap: 5 }}>
+        <View style={[styles.skLine, { width: 54 }]} />
+        <View style={[styles.skLine, { width: 38, height: 10 }]} />
       </View>
     </View>
   );
 }
 
-const MIN_REDEEM_POINTS = 1000;
-
+// ─── component ─────────────────────────────────────────────────────────────────
 export default function RewardPointsHistory() {
   const navigation = useNavigation<NavProp>();
   const { t, language } = useLanguage();
@@ -73,14 +81,15 @@ export default function RewardPointsHistory() {
 
   const [transactions, setTransactions] = useState<RewardTransaction[]>([]);
   const [totalPoints, setTotalPoints] = useState(0);
+  const [monthlyEarned, setMonthlyEarned] = useState(0);
   const [campaignConfig, setCampaignConfig] = useState<CampaignConfig | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
+  const [filter, setFilter] = useState<FilterType>("ALL");
 
-  // Redeem modal state
   const [showRedeemModal, setShowRedeemModal] = useState(false);
   const [showNotEnoughModal, setShowNotEnoughModal] = useState(false);
   const [showRedeemSuccessModal, setShowRedeemSuccessModal] = useState(false);
@@ -128,15 +137,26 @@ export default function RewardPointsHistory() {
 
         setTransactions((prev) => (append ? [...prev, ...items] : items));
         setCurrentPage(page);
+
+        if (!append) {
+          const now = new Date();
+          const earned = items
+            .filter((i) => {
+              const d = new Date(i.createdAt);
+              return (
+                i.type === "EARNED" &&
+                d.getMonth() === now.getMonth() &&
+                d.getFullYear() === now.getFullYear()
+              );
+            })
+            .reduce((sum, i) => sum + i.points, 0);
+          setMonthlyEarned(earned);
+        }
       }
 
-      if (totalRes?.success) {
-        setTotalPoints(totalRes.total ?? 0);
-      }
-
-      if (configRes?.success && configRes.data) {
+      if (totalRes?.success) setTotalPoints(totalRes.total ?? 0);
+      if (configRes?.success && configRes.data)
         setCampaignConfig(configRes.data as CampaignConfig);
-      }
     } catch (e) {
       if (__DEV__) console.error("[RewardPoints] loadData error", e);
     } finally {
@@ -145,26 +165,15 @@ export default function RewardPointsHistory() {
     }
   }, []);
 
-  useFocusEffect(
-    useCallback(() => {
-      void loadData(1);
-    }, [loadData]),
-  );
+  useFocusEffect(useCallback(() => { void loadData(1); }, [loadData]));
 
   const handleLoadMore = () => {
-    if (!isLoadingMore && hasMore) {
-      void loadData(currentPage + 1, true);
-    }
+    if (!isLoadingMore && hasMore) void loadData(currentPage + 1, true);
   };
 
   const handleRedeemPress = () => {
-    if (totalPoints < MIN_REDEEM_POINTS) {
-      setShowNotEnoughModal(true);
-    } else {
-      setPasscode("");
-      setRedeemError("");
-      setShowRedeemModal(true);
-    }
+    if (totalPoints < MIN_REDEEM_POINTS) setShowNotEnoughModal(true);
+    else { setPasscode(""); setRedeemError(""); setShowRedeemModal(true); }
   };
 
   const handleConfirmRedeem = async () => {
@@ -176,10 +185,7 @@ export default function RewardPointsHistory() {
     setRedeemError("");
     try {
       const token = tokenRef.current;
-      if (!token) {
-        setRedeemError(t("rewardPoints.notAuthenticated"));
-        return;
-      }
+      if (!token) { setRedeemError(t("rewardPoints.notAuthenticated")); return; }
       const res = await redeemRewardPoints(token, passcode);
       const pts = totalPoints.toLocaleString();
       if (res.success) {
@@ -190,7 +196,7 @@ export default function RewardPointsHistory() {
       } else {
         setRedeemError(res.error ?? t("rewardPoints.redemptionFailed"));
       }
-    } catch (e) {
+    } catch {
       setRedeemError(t("rewardPoints.genericError"));
     } finally {
       setIsRedeeming(false);
@@ -203,51 +209,69 @@ export default function RewardPointsHistory() {
   };
 
   const dateLocale =
-    language === "Korean" ? "ko-KR" : language === "Japanese" ? "ja-JP" : language === "Arabic" ? "ar-SA" : "en-PH";
+    language === "Korean" ? "ko-KR"
+    : language === "Japanese" ? "ja-JP"
+    : language === "Arabic" ? "ar-SA"
+    : "en-PH";
 
   const formatDate = (dateStr: string) => {
     if (!dateStr) return "";
     try {
-      const d = new Date(dateStr);
-      return d.toLocaleDateString(dateLocale, {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
+      return new Date(dateStr).toLocaleDateString(dateLocale, {
+        year: "numeric", month: "short", day: "numeric",
+        hour: "2-digit", minute: "2-digit",
       });
-    } catch {
-      return dateStr;
-    }
+    } catch { return dateStr; }
   };
+
+  const filteredTransactions = transactions.filter(
+    (tx) => filter === "ALL" || tx.type === filter,
+  );
+
+  const canRedeem = !isLoading && totalPoints >= MIN_REDEEM_POINTS;
 
   const renderItem = (item: RewardTransaction) => {
     const isEarned = item.type === "EARNED";
-    const pointsLabel = isEarned ? `+${item.points}` : String(item.points);
-    const iconName = isEarned ? "star" : "arrow-up-circle";
-    const iconColor = isEarned ? "#F28934" : "#3B82F6";
-    const pointColor = isEarned ? "#16A34A" : "#2563EB";
+    const pointsLabel = isEarned
+      ? `+${item.points.toLocaleString()}`
+      : `-${item.points.toLocaleString()}`;
+    const iconName = isEarned ? "star-four-points" : "arrow-top-right";
+    const iconBg = isEarned ? "#FFF5F0" : "#F5F5F5";
+    const iconColor = isEarned ? "#E15816" : "#666666";
+    const pointColor = isEarned ? "#E15816" : "#666666";
+    const pillBg = isEarned ? "#FFF5F0" : "#F2F2F2";
+    const pillText = isEarned ? "#DE5212" : "#666666";
+    const accentStart = isEarned ? "#E15816" : "#CCCCCC";
+    const accentEnd = isEarned ? "#F5A54A" : "#E5E5E5";
+    const typeLabel = isEarned
+      ? t("rewardPoints.typeEarned")
+      : t("rewardPoints.typeRedeemed");
 
     return (
-      <View key={item.id} style={styles.txRow}>
-        <View style={[styles.txIconCircle, { backgroundColor: isEarned ? "#FFF3E0" : "#EFF6FF" }]}>
-          <MaterialCommunityIcons name={iconName as any} size={22} color={iconColor} />
+      <View key={item.id} style={styles.txCard}>
+        <LinearGradient
+          colors={[accentStart, accentEnd]}
+          style={styles.txAccentBar}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0, y: 1 }}
+        />
+        <View style={[styles.txIcon, { backgroundColor: iconBg }]}>
+          <MaterialCommunityIcons name={iconName as any} size={18} color={iconColor} />
         </View>
-        <View style={styles.txMiddle}>
-          <Text style={styles.txType} numberOfLines={1}>
-            {isEarned ? t("rewardPoints.typeEarned") : t("rewardPoints.typeRedeemed")}
-          </Text>
+        <View style={styles.txBody}>
+          <View style={[styles.txTypePill, { backgroundColor: pillBg }]}>
+            <Text style={[styles.txTypePillText, { color: pillText }]}>{typeLabel}</Text>
+          </View>
           {item.description ? (
-            <Text style={styles.txDesc} numberOfLines={2}>{item.description}</Text>
+            <Text style={styles.txDesc} numberOfLines={1}>{item.description}</Text>
           ) : null}
           <Text style={styles.txDate}>{formatDate(item.createdAt)}</Text>
         </View>
         <View style={styles.txRight}>
-          <Text style={[styles.txPoints, { color: pointColor }]}>
-            {t("rewardPoints.pointsWithUnit", { value: pointsLabel })}
-          </Text>
-          <Text style={styles.txBalance}>
-            {t("rewardPoints.balanceAfter", { points: String(item.balanceAfter) })}
+          <Text style={[styles.txPts, { color: pointColor }]}>{pointsLabel}</Text>
+          <Text style={styles.txPtsUnit}>pts</Text>
+          <Text style={styles.txBal}>
+            {t("rewardPoints.balanceAfter", { points: item.balanceAfter.toLocaleString() })}
           </Text>
         </View>
       </View>
@@ -256,52 +280,78 @@ export default function RewardPointsHistory() {
 
   return (
     <View style={styles.root}>
-      <StatusBar barStyle="light-content" backgroundColor="#E25A17" />
+      <StatusBar barStyle="light-content" backgroundColor="#DE5212" />
 
-      {/* Header */}
+      {/* ══ HEADER ════════════════════════════════════════════════════════════ */}
       <LinearGradient
-        colors={ORANGE_GRADIENT}
-        style={[styles.header, { paddingTop: Math.max(insets.top + 8, 20) }]}
+        colors={GRADIENT}
+        start={{ x: 0.1, y: 0 }}
+        end={{ x: 0.9, y: 1 }}
+        style={[styles.header, { paddingTop: Math.max(insets.top + 10, 26) }]}
       >
-        <View style={styles.headerRow}>
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            style={styles.backBtn}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+        <View style={styles.orb1} pointerEvents="none" />
+        <View style={styles.orb2} pointerEvents="none" />
+
+        {/* nav bar */}
+        <View style={styles.navRow}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconBtn} activeOpacity={0.75}>
+            <Ionicons name="arrow-back" size={20} color="#fff" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>{t("rewardPoints.title")}</Text>
+          <Text style={styles.navTitle}>{t("rewardPoints.title")}</Text>
           <TouchableOpacity
             onPress={() => navigation.navigate("RewardPointsTerms")}
-            style={styles.headerTermsBtn}
-            activeOpacity={0.7}
+            style={styles.iconBtn}
+            activeOpacity={0.75}
             accessibilityRole="button"
             accessibilityLabel={t("rewardPoints.termsScreenTitle")}
           >
-            <Ionicons name="document-text-outline" size={24} color="#FFFFFF" />
+            <Ionicons name="document-text-outline" size={20} color="#fff" />
           </TouchableOpacity>
         </View>
 
-        {/* Points balance card */}
-        <View style={styles.balanceCard}>
-          <Text style={styles.balanceLabel}>{t("rewardPoints.yourBalance")}</Text>
+        {/* balance card */}
+        <View style={styles.balCard}>
+          <Text style={styles.balLabel}>{t("rewardPoints.yourBalance")}</Text>
           {isLoading ? (
-            <View style={{ alignItems: "center", gap: 8, marginVertical: 8 }}>
-              <View style={styles.skeletonBalanceAmount} />
-            </View>
+            <View style={styles.skBalAmount} />
           ) : (
-            <Text style={styles.balanceAmount}>{totalPoints.toLocaleString()}</Text>
+            <View style={styles.balRow}>
+              <Text style={styles.balAmount}>{totalPoints.toLocaleString()}</Text>
+              <Text style={styles.balUnit}>pts</Text>
+            </View>
           )}
-          <Text style={styles.balanceSubLabel}>{t("rewardPoints.onePointEquals")}</Text>
+          <View style={styles.balDivider} />
+          <Text style={styles.balSub}>{t("rewardPoints.onePointEquals")}</Text>
         </View>
 
-        {/* Campaign info pill */}
+        {/* stats row */}
         {isLoading ? (
-          <View style={styles.skeletonCampaignPill} />
+          <View style={styles.skStatsRow}>
+            {[0, 1, 2].map((i) => <View key={i} style={styles.skStatPill} />)}
+          </View>
+        ) : (
+          <View style={styles.statsRow}>
+            <View style={styles.statPill}>
+              <Text style={styles.statVal}>+{monthlyEarned.toLocaleString()}</Text>
+              <Text style={styles.statLbl}>{t("This Month") ?? "This month"}</Text>
+            </View>
+            <View style={styles.statPill}>
+              <Text style={styles.statVal}>₱{totalPoints.toLocaleString()}</Text>
+              <Text style={styles.statLbl}>{t("Total Value") ?? "Total value"}</Text>
+            </View>
+            <View style={styles.statPill}>
+              <Text style={styles.statVal}>{totalCount}</Text>
+              <Text style={styles.statLbl}>{t("Transactions") ?? "Transactions"}</Text>
+            </View>
+          </View>
+        )}
+
+        {/* campaign pill */}
+        {isLoading ? (
+          <View style={styles.skCampaignPill} />
         ) : campaignConfig?.enabled ? (
           <View style={styles.campaignPill}>
-            <MaterialCommunityIcons name="star-circle" size={14} color="#F28934" />
+            <MaterialCommunityIcons name="lightning-bolt" size={12} color="#E25A17" />
             <Text style={styles.campaignPillText}>
               {t("rewardPoints.campaignPill", {
                 percentage: String(campaignConfig.percentage),
@@ -311,71 +361,109 @@ export default function RewardPointsHistory() {
           </View>
         ) : null}
 
-        {/* Redeem button */}
+        {/* redeem button */}
         <TouchableOpacity
-          style={[
-            styles.redeemBtn,
-            isLoading
-              ? styles.redeemBtnDisabled
-              : totalPoints >= MIN_REDEEM_POINTS
-                ? styles.redeemBtnActive
-                : styles.redeemBtnDisabled,
-          ]}
+          style={[styles.redeemBtn, canRedeem ? styles.redeemBtnOn : styles.redeemBtnOff]}
           onPress={isLoading ? undefined : handleRedeemPress}
-          activeOpacity={isLoading ? 1 : 0.85}
+          activeOpacity={canRedeem ? 0.8 : 1}
         >
-          <MaterialCommunityIcons
-            name="cash-plus"
-            size={18}
-            color={!isLoading && totalPoints >= MIN_REDEEM_POINTS ? "#FFFFFF" : "#9CA3AF"}
-          />
-          <Text
-            style={[
-              styles.redeemBtnText,
-              !isLoading && totalPoints >= MIN_REDEEM_POINTS ? styles.redeemBtnTextActive : styles.redeemBtnTextDisabled,
-            ]}
-          >
+          <View style={[styles.redeemIconWrap, canRedeem ? styles.redeemIconOn : styles.redeemIconOff]}>
+            <MaterialCommunityIcons
+              name="cash-fast"
+              size={16}
+              color={canRedeem ? "#16A34A" : "#9CA3AF"}
+            />
+          </View>
+          <Text style={[styles.redeemBtnText, canRedeem ? styles.redeemTextOn : styles.redeemTextOff]}>
             {t("rewardPoints.redeemButton")}
           </Text>
+          {canRedeem && (
+            <>
+              <View style={styles.readyBadge}>
+                <Text style={styles.readyBadgeText}>{t("rewardPoints.readyLabel") ?? "Ready"}</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={15} color="rgba(22,163,74,0.45)" />
+            </>
+          )}
         </TouchableOpacity>
 
+        {/* wave divider */}
+        <View style={{ marginHorizontal: -18, marginBottom: -1 }}>
+          <Svg width={width} height={28} viewBox={`0 0 ${width} 28`} preserveAspectRatio="none">
+            <Path
+              d={`M0,28 L0,14 Q${width * 0.13},0 ${width * 0.25},10 T${width * 0.5},5 T${width * 0.76},12 T${width},3 L${width},28 Z`}
+              fill="#F7F5F2"
+            />
+          </Svg>
+        </View>
       </LinearGradient>
 
-      {/* Transaction list */}
+      {/* ══ TRANSACTION LIST ══════════════════════════════════════════════════ */}
       <ScrollView
         style={styles.list}
         contentContainerStyle={[
           styles.listContent,
-          { paddingBottom: Math.max(insets.bottom + 20, 32) },
+          { paddingBottom: Math.max(insets.bottom + 28, 40) },
         ]}
         showsVerticalScrollIndicator={false}
         onMomentumScrollEnd={({ nativeEvent }) => {
           const { layoutMeasurement, contentOffset, contentSize } = nativeEvent;
-          if (layoutMeasurement.height + contentOffset.y >= contentSize.height - 80) {
+          if (layoutMeasurement.height + contentOffset.y >= contentSize.height - 80)
             handleLoadMore();
-          }
         }}
       >
-        <View style={styles.listHeader}>
-          <Text style={styles.listHeaderTitle}>{t("rewardPoints.historyTitle")}</Text>
+        {/* section header */}
+        <View style={styles.listHead}>
+          <View style={styles.listHeadLeft}>
+            <LinearGradient
+              colors={["#E15816", "#F5A54A"]}
+              style={styles.listAccentBar}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 0, y: 1 }}
+            />
+            <Text style={styles.listHeadTitle}>{t("rewardPoints.historyTitle")}</Text>
+          </View>
           {!isLoading && (
-            <Text style={styles.listHeaderCount}>
-              {t("rewardPoints.transactionsCount", { count: String(totalCount) })}
-            </Text>
+            <View style={styles.countBadge}>
+              <Text style={styles.countBadgeText}>
+                {t("rewardPoints.transactionsCount", { count: String(totalCount) })}
+              </Text>
+            </View>
           )}
         </View>
 
-        {isLoading ? (
-          <>
-            {[0, 1, 2, 3, 4, 5].map((i) => (
-              <SkeletonTransactionRow key={i} />
+        {/* filter chips */}
+        {!isLoading && transactions.length > 0 && (
+          <View style={styles.filterRow}>
+            {(["ALL", "EARNED", "REDEEMED"] as FilterType[]).map((f) => (
+              <TouchableOpacity
+                key={f}
+                style={[styles.filterChip, filter === f ? styles.filterOn : styles.filterOff]}
+                onPress={() => setFilter(f)}
+                activeOpacity={0.75}
+              >
+                <Text style={[styles.filterChipText, filter === f ? styles.filterTextOn : styles.filterTextOff]}>
+                  {f === "ALL"
+                    ? t("All") ?? "All"
+                    : f === "EARNED"
+                    ? t("rewardPoints.typeEarned")
+                    : t("rewardPoints.typeRedeemed")}
+                </Text>
+              </TouchableOpacity>
             ))}
-          </>
-        ) : transactions.length === 0 ? (
-          <View style={styles.emptyState}>
-            <MaterialCommunityIcons name="star-outline" size={48} color="#D1D5DB" />
-            <Text style={styles.emptyText}>{t("rewardPoints.emptyTitle")}</Text>
-            <Text style={styles.emptySubText}>
+          </View>
+        )}
+
+        {/* rows */}
+        {isLoading ? (
+          <>{[0, 1, 2, 3, 4, 5].map((i) => <SkeletonRow key={i} />)}</>
+        ) : filteredTransactions.length === 0 ? (
+          <View style={styles.empty}>
+            <View style={styles.emptyIconWrap}>
+              <MaterialCommunityIcons name="star-outline" size={34} color="#E15816" />
+            </View>
+            <Text style={styles.emptyTitle}>{t("rewardPoints.emptyTitle")}</Text>
+            <Text style={styles.emptySub}>
               {t("rewardPoints.emptySubtitle", {
                 min: campaignConfig?.minEligibleAmount?.toLocaleString() ?? "1,000",
               })}
@@ -383,29 +471,37 @@ export default function RewardPointsHistory() {
           </View>
         ) : (
           <>
-            {transactions.map(renderItem)}
+            {filteredTransactions.map(renderItem)}
             {isLoadingMore && (
-              <ActivityIndicator color="#E25A17" size="small" style={{ marginVertical: 16 }} />
+              <ActivityIndicator color="#E15816" size="small" style={{ marginVertical: 18 }} />
             )}
-            {!hasMore && transactions.length > 0 && (
-              <Text style={styles.endText}>{t("rewardPoints.allTransactionsLoaded")}</Text>
+            {!hasMore && filteredTransactions.length > 0 && (
+              <View style={styles.endRow}>
+                <View style={styles.endLine} />
+                <Text style={styles.endText}>{t("rewardPoints.allTransactionsLoaded")}</Text>
+                <View style={styles.endLine} />
+              </View>
             )}
           </>
         )}
       </ScrollView>
 
-      {/* Redeem Confirmation Modal */}
+      {/* ══ REDEEM MODAL ══════════════════════════════════════════════════════ */}
       <Modal
         visible={showRedeemModal}
         transparent
-        animationType="fade"
+        animationType="slide"
         onRequestClose={() => setShowRedeemModal(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalIconRow}>
-              <MaterialCommunityIcons name="cash-plus" size={32} color="#E25A17" />
-            </View>
+        <View style={styles.sheetOverlay}>
+          <TouchableOpacity style={{ flex: 1 }} activeOpacity={1} onPress={() => setShowRedeemModal(false)} />
+          <View style={styles.sheet}>
+            <View style={styles.sheetHandle} />
+            <LinearGradient colors={["#FFF5F0", "#FFFFFF"]} style={styles.sheetBanner}>
+              <View style={styles.sheetIconCircle}>
+                <MaterialCommunityIcons name="cash-fast" size={26} color="#E15816" />
+              </View>
+            </LinearGradient>
             <Text style={styles.modalTitle}>{t("rewardPoints.convertTitle")}</Text>
             <Text style={styles.modalBody}>
               {t("rewardPoints.convertBody", {
@@ -413,55 +509,54 @@ export default function RewardPointsHistory() {
                 amount: totalPoints.toLocaleString(),
               })}
             </Text>
-            <Text style={styles.modalPasscodeLabel}>{t("rewardPoints.enterPasscode")}</Text>
+            <Text style={styles.passcodeLabel}>{t("rewardPoints.enterPasscode")}</Text>
             <TextInput
-              style={styles.passcodeInput}
+              style={[styles.passcodeInput, redeemError ? styles.passcodeErr : null]}
               value={passcode}
               onChangeText={setPasscode}
               keyboardType="number-pad"
               maxLength={6}
               secureTextEntry
-              placeholder={t("rewardPoints.passcodePlaceholder")}
-              placeholderTextColor="#9CA3AF"
+              placeholder="• • • • • •"
+              placeholderTextColor="#D1D5DB"
             />
-            {!!redeemError && (
-              <Text style={styles.redeemError}>{redeemError}</Text>
-            )}
+            {!!redeemError && <Text style={styles.redeemError}>{redeemError}</Text>}
             <View style={styles.modalBtnRow}>
               <TouchableOpacity
-                style={styles.modalCancelBtn}
+                style={styles.cancelBtn}
                 onPress={() => setShowRedeemModal(false)}
                 disabled={isRedeeming}
               >
-                <Text style={styles.modalCancelText}>{t("common.cancel")}</Text>
+                <Text style={styles.cancelBtnText}>{t("common.cancel")}</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.modalConfirmBtn, isRedeeming && styles.modalConfirmBtnDisabled]}
+                style={[styles.confirmBtn, isRedeeming && styles.confirmBtnDisabled]}
                 onPress={() => void handleConfirmRedeem()}
                 disabled={isRedeeming}
               >
-                {isRedeeming ? (
-                  <ActivityIndicator color="#FFFFFF" size="small" />
-                ) : (
-                  <Text style={styles.modalConfirmText}>{t("rewardPoints.confirm")}</Text>
-                )}
+                {isRedeeming
+                  ? <ActivityIndicator color="#fff" size="small" />
+                  : <Text style={styles.confirmBtnText}>{t("rewardPoints.confirm")}</Text>
+                }
               </TouchableOpacity>
             </View>
           </View>
         </View>
       </Modal>
 
-      {/* Not Enough Points Modal */}
+      {/* ══ NOT ENOUGH MODAL ══════════════════════════════════════════════════ */}
       <Modal
         visible={showNotEnoughModal}
         transparent
-        animationType="fade"
+        animationType="slide"
         onRequestClose={() => setShowNotEnoughModal(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalIconRow}>
-              <MaterialCommunityIcons name="star-outline" size={32} color="#F59E0B" />
+        <View style={styles.sheetOverlay}>
+          <TouchableOpacity style={{ flex: 1 }} activeOpacity={1} onPress={() => setShowNotEnoughModal(false)} />
+          <View style={styles.sheet}>
+            <View style={styles.sheetHandle} />
+            <View style={[styles.sheetIconCircle, { backgroundColor: "#FFFBEB", marginTop: 18, marginBottom: 4 }]}>
+              <MaterialCommunityIcons name="star-half-full" size={26} color="#F59E0B" />
             </View>
             <Text style={styles.modalTitle}>{t("rewardPoints.notEnoughTitle")}</Text>
             <Text style={styles.modalBody}>
@@ -472,6 +567,7 @@ export default function RewardPointsHistory() {
             </Text>
             {campaignConfig?.enabled && (
               <View style={styles.campaignInfoBox}>
+                <MaterialCommunityIcons name="lightning-bolt" size={13} color="#92400E" style={{ marginBottom: 4 }} />
                 <Text style={styles.campaignInfoText}>
                   {t("rewardPoints.campaignInfo", {
                     min: campaignConfig.minEligibleAmount.toLocaleString(),
@@ -485,28 +581,43 @@ export default function RewardPointsHistory() {
                 </Text>
               </View>
             )}
-            <TouchableOpacity
-              style={styles.modalSingleBtn}
-              onPress={() => setShowNotEnoughModal(false)}
-            >
-              <Text style={styles.modalSingleBtnText}>{t("rewardPoints.gotIt")}</Text>
+            {/* progress toward minimum */}
+            <View style={styles.progressTrack}>
+              <LinearGradient
+                colors={["#E15816", "#F5A54A"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={[
+                  styles.progressFill,
+                  { width: `${Math.min(100, (totalPoints / MIN_REDEEM_POINTS) * 100)}%` as any },
+                ]}
+              />
+            </View>
+            <Text style={styles.progressLabel}>
+              {totalPoints.toLocaleString()} / {MIN_REDEEM_POINTS.toLocaleString()} pts
+            </Text>
+            <TouchableOpacity style={styles.singleBtn} onPress={() => setShowNotEnoughModal(false)}>
+              <Text style={styles.singleBtnText}>{t("rewardPoints.gotIt")}</Text>
             </TouchableOpacity>
           </View>
         </View>
       </Modal>
 
-      {/* Redeem Success Modal */}
+      {/* ══ SUCCESS MODAL ═════════════════════════════════════════════════════ */}
       <Modal
         visible={showRedeemSuccessModal}
         transparent
-        animationType="fade"
+        animationType="slide"
         onRequestClose={handleCloseSuccessModal}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalIconRow}>
-              <MaterialCommunityIcons name="check-circle-outline" size={32} color="#16A34A" />
-            </View>
+        <View style={styles.sheetOverlay}>
+          <View style={styles.sheet}>
+            <View style={styles.sheetHandle} />
+            <LinearGradient colors={["#F0FDF4", "#FFFFFF"]} style={styles.sheetBanner}>
+              <View style={[styles.sheetIconCircle, { backgroundColor: "#DCFCE7" }]}>
+                <MaterialCommunityIcons name="check-circle" size={26} color="#16A34A" />
+              </View>
+            </LinearGradient>
             <Text style={styles.modalTitle}>{t("rewardPoints.redeemSuccessTitle")}</Text>
             <Text style={styles.modalBody}>
               {t("rewardPoints.redeemSuccessMessage", {
@@ -514,11 +625,8 @@ export default function RewardPointsHistory() {
                 amount: redeemedPointsLabel,
               })}
             </Text>
-            <TouchableOpacity
-              style={styles.modalSingleBtn}
-              onPress={handleCloseSuccessModal}
-            >
-              <Text style={styles.modalSingleBtnText}>{t("common.ok")}</Text>
+            <TouchableOpacity style={styles.singleBtn} onPress={handleCloseSuccessModal}>
+              <Text style={styles.singleBtnText}>{t("common.ok")}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -527,249 +635,282 @@ export default function RewardPointsHistory() {
   );
 }
 
+// ─── styles ────────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#F3F4F6" },
-  header: { paddingBottom: 22, paddingHorizontal: 16 },
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 20,
+  root: { flex: 1, backgroundColor: "#F5F5F5" },
+
+  // header
+  header: { paddingBottom: 0, paddingHorizontal: 18, overflow: "hidden" },
+  orb1: {
+    position: "absolute", width: 280, height: 280, borderRadius: 140,
+    backgroundColor: "rgba(255,255,255,0.12)", top: -90, right: -70,
   },
-  backBtn: {
-    width: 40,
-    height: 40,
-    justifyContent: "center",
-    alignItems: "center",
-    borderRadius: 20,
-    backgroundColor: "rgba(255,255,255,0.16)",
+  orb2: {
+    position: "absolute", width: 130, height: 130, borderRadius: 65,
+    backgroundColor: "rgba(255,245,240,0.2)", bottom: 50, left: -30,
   },
-  headerTermsBtn: {
-    width: 40,
-    height: 40,
-    justifyContent: "center",
-    alignItems: "center",
-    borderRadius: 20,
-    backgroundColor: "rgba(255,255,255,0.16)",
+  navRow: {
+    flexDirection: "row", alignItems: "center",
+    justifyContent: "space-between", marginBottom: 20,
   },
-  headerTitle: { fontSize: 19, fontWeight: "800", color: "#FFFFFF" },
-  balanceCard: {
-    backgroundColor: "rgba(255,255,255,0.2)",
-    borderRadius: 18,
-    padding: 18,
-    alignItems: "center",
-    marginBottom: 14,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.2)",
+  iconBtn: {
+    width: 36, height: 36, borderRadius: 11,
+    backgroundColor: "rgba(255,255,255,0.22)",
+    borderWidth: 1, borderColor: "rgba(255,255,255,0.28)",
+    justifyContent: "center", alignItems: "center",
   },
-  balanceLabel: { fontSize: 12, color: "rgba(255,255,255,0.85)", marginBottom: 4, fontWeight: "600" },
-  balanceAmount: { fontSize: 44, fontWeight: "900", color: "#FFFFFF", letterSpacing: 1 },
-  balanceSubLabel: { fontSize: 12, color: "rgba(255,255,255,0.75)", marginTop: 4 },
+  navTitle: { fontSize: 16, fontWeight: "700", color: "#FFFFFF", letterSpacing: 0.2 },
+
+  // balance card
+  balCard: {
+    backgroundColor: "rgba(255,255,255,0.18)",
+    borderWidth: 1, borderColor: "rgba(255,255,255,0.28)",
+    borderRadius: 22, paddingVertical: 20, paddingHorizontal: 20,
+    alignItems: "center", marginBottom: 14,
+  },
+  balLabel: {
+    fontSize: 10, fontWeight: "600", color: "rgba(255,255,255,0.7)",
+    letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 10,
+  },
+  balRow: { flexDirection: "row", alignItems: "flex-end", gap: 6, marginBottom: 14 },
+  balAmount: {
+    fontSize: 54, fontWeight: "900", color: "#fff",
+    letterSpacing: -2, lineHeight: 58,
+  },
+  balUnit: { fontSize: 15, fontWeight: "700", color: "rgba(255,255,255,0.5)", marginBottom: 7 },
+  balDivider: {
+    width: 28, height: 2, borderRadius: 1,
+    backgroundColor: "rgba(255,255,255,0.28)", marginBottom: 12,
+  },
+  balSub: { fontSize: 11, color: "rgba(255,255,255,0.75)", fontWeight: "500" },
+
+  // stats row
+  statsRow: { flexDirection: "row", gap: 8, marginBottom: 14 },
+  statPill: {
+    flex: 1, backgroundColor: "rgba(255,255,255,0.16)",
+    borderWidth: 1, borderColor: "rgba(255,255,255,0.24)",
+    borderRadius: 14, paddingVertical: 10, alignItems: "center",
+  },
+  statVal: { fontSize: 16, fontWeight: "800", color: "#fff", letterSpacing: -0.3 },
+  statLbl: { fontSize: 10, color: "rgba(255,255,255,0.75)", fontWeight: "500", marginTop: 2 },
+
+  // campaign pill
   campaignPill: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    alignSelf: "center",
-    marginBottom: 12,
-    gap: 6,
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+    flexDirection: "row", alignItems: "center",
+    backgroundColor: "#fff", borderRadius: 22,
+    paddingHorizontal: 13, paddingVertical: 7,
+    alignSelf: "center", marginBottom: 14, gap: 5,
+    shadowColor: "#E15816", shadowOpacity: 0.18,
+    shadowRadius: 10, shadowOffset: { width: 0, height: 3 }, elevation: 4,
   },
-  campaignPillText: { fontSize: 11, color: "#6B7280", fontWeight: "600" },
+  campaignPillText: { fontSize: 11, color: "#666666", fontWeight: "600" },
+
+  // redeem button
   redeemBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: 12,
-    paddingVertical: 14,
-    gap: 8,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 2,
+    flexDirection: "row", alignItems: "center",
+    borderRadius: 16, paddingVertical: 13, paddingHorizontal: 15,
+    gap: 10, marginBottom: 4,
   },
-  redeemBtnActive: { backgroundColor: "#16A34A" },
-  redeemBtnDisabled: { backgroundColor: "#F3F4F6", borderWidth: 1, borderColor: "#E5E7EB" },
-  redeemBtnText: { fontSize: 15, fontWeight: "700" },
-  redeemBtnTextActive: { color: "#FFFFFF" },
-  redeemBtnTextDisabled: { color: "#9CA3AF" },
-  list: {
-    flex: 1,
-    backgroundColor: "#FFFFFF",
-    borderTopLeftRadius: 22,
-    borderTopRightRadius: 22,
-    marginTop: -10,
+  redeemBtnOn: {
+    backgroundColor: "#fff",
+    shadowColor: "#000", shadowOpacity: 0.12,
+    shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 5,
   },
-  listContent: { paddingTop: 10 },
-  listHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingTop: 10,
-    paddingBottom: 8,
+  redeemBtnOff: {
+    backgroundColor: "rgba(255,255,255,0.14)",
+    borderWidth: 1, borderColor: "rgba(255,255,255,0.2)",
   },
-  listHeaderTitle: { fontSize: 17, fontWeight: "800", color: "#1F2937" },
-  listHeaderCount: { fontSize: 12, color: "#9CA3AF" },
-  txRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    marginHorizontal: 12,
-    marginBottom: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "#EEF2F7",
-    borderRadius: 14,
-    shadowColor: "#0F172A",
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 1,
+  redeemIconWrap: {
+    width: 30, height: 30, borderRadius: 9,
+    justifyContent: "center", alignItems: "center",
   },
-  txIconCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 12,
+  redeemIconOn: { backgroundColor: "#F0FDF4" },
+  redeemIconOff: { backgroundColor: "rgba(255,255,255,0.12)" },
+  redeemBtnText: { fontSize: 14, fontWeight: "700", flex: 1 },
+  redeemTextOn: { color: "#E15816" },
+  redeemTextOff: { color: "rgba(255,255,255,0.5)" },
+  readyBadge: {
+    backgroundColor: "#F0FDF4", borderWidth: 1, borderColor: "#BBF7D0",
+    borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3,
   },
-  txMiddle: { flex: 1 },
-  txType: { fontSize: 14, fontWeight: "600", color: "#1F2937", marginBottom: 2 },
-  txDesc: { fontSize: 12, color: "#6B7280", marginBottom: 2 },
-  txDate: { fontSize: 11, color: "#9CA3AF" },
-  txRight: { alignItems: "flex-end", minWidth: 80 },
-  txPoints: { fontSize: 16, fontWeight: "700", marginBottom: 2 },
-  txBalance: { fontSize: 10, color: "#9CA3AF" },
-  emptyState: {
-    alignItems: "center",
-    marginHorizontal: 16,
-    marginTop: 52,
-    paddingVertical: 36,
-    paddingHorizontal: 20,
-    backgroundColor: "#F9FAFB",
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-  },
-  emptyText: { fontSize: 16, fontWeight: "700", color: "#4B5563", marginTop: 14 },
-  emptySubText: { fontSize: 13, color: "#9CA3AF", textAlign: "center", marginTop: 8, lineHeight: 19 },
-  endText: { textAlign: "center", color: "#9CA3AF", fontSize: 12, paddingVertical: 16 },
+  readyBadgeText: { fontSize: 10, fontWeight: "700", color: "#E15816" },
 
-  // Skeleton loading
-  skeletonBase: {
-    backgroundColor: "#F3F4F6",
+  // list
+  list: { flex: 1, backgroundColor: "#F5F5F5" },
+  listContent: { paddingTop: 0 },
+  listHead: {
+    flexDirection: "row", justifyContent: "space-between",
+    alignItems: "center", paddingHorizontal: 16,
+    paddingTop: 18, paddingBottom: 12,
   },
-  skeletonLine: {
-    height: 14,
-    borderRadius: 7,
-    backgroundColor: "#E5E7EB",
+  listHeadLeft: { flexDirection: "row", alignItems: "center", gap: 8 },
+  listAccentBar: { width: 4, height: 18, borderRadius: 2 },
+  listHeadTitle: { fontSize: 15, fontWeight: "800", color: "#333333", letterSpacing: 0.1 },
+  countBadge: {
+    backgroundColor: "#FFF5F0", borderRadius: 10,
+    paddingHorizontal: 10, paddingVertical: 4,
   },
-  skeletonBalanceAmount: {
-    width: 140,
-    height: 48,
-    borderRadius: 12,
-    backgroundColor: "rgba(255,255,255,0.35)",
+  countBadgeText: { fontSize: 10, color: "#E15816", fontWeight: "700" },
+
+  // filter chips
+  filterRow: { flexDirection: "row", gap: 7, paddingHorizontal: 16, marginBottom: 12 },
+  filterChip: { borderRadius: 20, paddingHorizontal: 14, paddingVertical: 7 },
+  filterOn: { backgroundColor: "#E15816" },
+  filterOff: { backgroundColor: "#EEEEEE" },
+  filterChipText: { fontSize: 12, fontWeight: "600" },
+  filterTextOn: { color: "#fff" },
+  filterTextOff: { color: "#666666" },
+
+  // transaction card
+  txCard: {
+    flexDirection: "row", alignItems: "center",
+    marginHorizontal: 14, marginBottom: 8,
+    paddingLeft: 16, paddingRight: 13, paddingVertical: 13,
+    backgroundColor: "#fff",
+    borderRadius: 16, borderWidth: 1, borderColor: "#F0F0F0",
+    shadowColor: "#000000", shadowOpacity: 0.06,
+    shadowRadius: 8, shadowOffset: { width: 0, height: 2 },
+    elevation: 1, overflow: "hidden", gap: 11,
   },
-  skeletonCampaignPill: {
-    width: 220,
-    height: 30,
-    borderRadius: 20,
-    backgroundColor: "rgba(255,255,255,0.35)",
-    alignSelf: "center",
-    marginBottom: 12,
+  txAccentBar: {
+    position: "absolute", left: 0, top: 0, bottom: 0,
+    width: 3, borderRadius: 2,
+  },
+  txIcon: {
+    width: 40, height: 40, borderRadius: 13,
+    justifyContent: "center", alignItems: "center", flexShrink: 0,
+  },
+  txBody: { flex: 1, gap: 3, minWidth: 0 },
+  txTypePill: {
+    alignSelf: "flex-start", borderRadius: 6,
+    paddingHorizontal: 7, paddingVertical: 2, marginBottom: 1,
+  },
+  txTypePillText: { fontSize: 10, fontWeight: "700", letterSpacing: 0.3 },
+  txDesc: { fontSize: 11, color: "#666666" },
+  txDate: { fontSize: 10, color: "#999999" },
+  txRight: { alignItems: "flex-end", gap: 1, flexShrink: 0 },
+  txPts: { fontSize: 17, fontWeight: "800", letterSpacing: -0.3, lineHeight: 20 },
+  txPtsUnit: { fontSize: 9, fontWeight: "600", color: "#999999" },
+  txBal: { fontSize: 9, color: "#B3B3B3", marginTop: 4 },
+
+  // empty state
+  empty: {
+    alignItems: "center", marginHorizontal: 16, marginTop: 44,
+    paddingVertical: 40, paddingHorizontal: 24,
+    backgroundColor: "#fff", borderRadius: 20,
+    borderWidth: 1, borderColor: "#F0F0F0",
+  },
+  emptyIconWrap: {
+    width: 68, height: 68, borderRadius: 22,
+    backgroundColor: "#FFF5F0",
+    justifyContent: "center", alignItems: "center", marginBottom: 14,
+  },
+  emptyTitle: { fontSize: 15, fontWeight: "700", color: "#333333", marginBottom: 6 },
+  emptySub: { fontSize: 13, color: "#9CA3AF", textAlign: "center", lineHeight: 20 },
+
+  // end of list
+  endRow: {
+    flexDirection: "row", alignItems: "center",
+    paddingHorizontal: 22, paddingVertical: 22, gap: 10,
+  },
+  endLine: { flex: 1, height: 1, backgroundColor: "#E5E5E5" },
+  endText: { fontSize: 11, color: "#999999", fontWeight: "500" },
+
+  // skeleton
+  skLine: { height: 14, borderRadius: 7, backgroundColor: "#EDECEA" },
+  skBalAmount: {
+    width: 140, height: 56, borderRadius: 12,
+    backgroundColor: "rgba(255,255,255,0.25)", marginVertical: 4,
+  },
+  skStatsRow: { flexDirection: "row", gap: 8, marginBottom: 14 },
+  skStatPill: {
+    flex: 1, height: 58, borderRadius: 14,
+    backgroundColor: "rgba(255,255,255,0.15)",
+  },
+  skCampaignPill: {
+    width: 200, height: 32, borderRadius: 20,
+    backgroundColor: "rgba(255,255,255,0.18)",
+    alignSelf: "center", marginBottom: 14,
   },
 
-  // Modals
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "center",
+  // modals / sheet
+  sheetOverlay: {
+    flex: 1, backgroundColor: "rgba(0,0,0,0.48)", justifyContent: "flex-end",
+  },
+  sheet: {
+    backgroundColor: "#fff",
+    borderTopLeftRadius: 28, borderTopRightRadius: 28,
+    paddingHorizontal: 24, paddingBottom: 36,
     alignItems: "center",
-    paddingHorizontal: 24,
   },
-  modalContent: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 20,
-    padding: 24,
-    width: "100%",
-    maxWidth: 360,
+  sheetHandle: {
+    width: 36, height: 4, borderRadius: 2,
+    backgroundColor: "#E5E7EB", marginTop: 12, marginBottom: 2,
   },
-  modalIconRow: { alignItems: "center", marginBottom: 12 },
+  sheetBanner: {
+    width: "100%", alignItems: "center",
+    paddingVertical: 18, borderRadius: 16,
+    marginTop: 10, marginBottom: 6,
+  },
+  sheetIconCircle: {
+    width: 58, height: 58, borderRadius: 18,
+    backgroundColor: "#FFF3E0",
+    justifyContent: "center", alignItems: "center",
+  },
   modalTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#1F2937",
-    textAlign: "center",
-    marginBottom: 8,
+    fontSize: 19, fontWeight: "800", color: "#333333",
+    textAlign: "center", marginBottom: 8, letterSpacing: -0.3,
   },
   modalBody: {
-    fontSize: 14,
-    color: "#4B5563",
-    textAlign: "center",
-    lineHeight: 22,
-    marginBottom: 16,
+    fontSize: 14, color: "#6B7280",
+    textAlign: "center", lineHeight: 22, marginBottom: 20,
   },
-  modalHighlight: { fontWeight: "700", color: "#16A34A" },
-  modalPasscodeLabel: {
-    fontSize: 13,
-    color: "#6B7280",
-    marginBottom: 8,
-    textAlign: "center",
+  passcodeLabel: {
+    fontSize: 11, color: "#9CA3AF", fontWeight: "600",
+    letterSpacing: 0.7, textTransform: "uppercase", marginBottom: 10,
   },
   passcodeInput: {
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-    borderRadius: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 20,
-    textAlign: "center",
-    letterSpacing: 8,
-    marginBottom: 8,
-    color: "#1F2937",
+    width: "100%", borderWidth: 1.5, borderColor: "#E5E7EB",
+    borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14,
+    fontSize: 24, textAlign: "center", letterSpacing: 10,
+    marginBottom: 10, color: "#1A1208", backgroundColor: "#FAFAF8",
   },
-  redeemError: { color: "#EF4444", fontSize: 12, textAlign: "center", marginBottom: 8 },
-  modalBtnRow: { flexDirection: "row", gap: 12, marginTop: 4 },
-  modalCancelBtn: {
-    flex: 1,
-    paddingVertical: 13,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-    alignItems: "center",
+  passcodeErr: { borderColor: "#EF4444" },
+  redeemError: {
+    color: "#EF4444", fontSize: 12, fontWeight: "500",
+    textAlign: "center", marginBottom: 8,
   },
-  modalCancelText: { color: "#6B7280", fontWeight: "600", fontSize: 15 },
-  modalConfirmBtn: {
-    flex: 1,
-    paddingVertical: 13,
-    borderRadius: 10,
-    backgroundColor: "#16A34A",
-    alignItems: "center",
+  modalBtnRow: { flexDirection: "row", gap: 12, marginTop: 8, width: "100%" },
+  cancelBtn: {
+    flex: 1, paddingVertical: 14, borderRadius: 14,
+    borderWidth: 1.5, borderColor: "#E5E7EB", alignItems: "center",
   },
-  modalConfirmBtnDisabled: { backgroundColor: "#9CA3AF" },
-  modalConfirmText: { color: "#FFFFFF", fontWeight: "700", fontSize: 15 },
+  cancelBtnText: { color: "#6B7280", fontWeight: "700", fontSize: 15 },
+  confirmBtn: {
+    flex: 1, paddingVertical: 14, borderRadius: 14,
+    backgroundColor: "#E15816", alignItems: "center",
+  },
+  confirmBtnDisabled: { backgroundColor: "#D1D5DB" },
+  confirmBtnText: { color: "#fff", fontWeight: "700", fontSize: 15 },
+  singleBtn: {
+    width: "100%", paddingVertical: 14, borderRadius: 14,
+    backgroundColor: "#E15816", alignItems: "center", marginTop: 6,
+  },
+  singleBtnText: { color: "#fff", fontWeight: "700", fontSize: 15, letterSpacing: 0.2 },
   campaignInfoBox: {
     backgroundColor: "#FFF7ED",
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 16,
+    borderRadius: 12, borderWidth: 1, borderColor: "#FDE68A",
+    padding: 14, marginBottom: 16,
+    width: "100%", alignItems: "center",
   },
   campaignInfoText: { fontSize: 12, color: "#92400E", textAlign: "center", lineHeight: 18 },
-  modalSingleBtn: {
-    paddingVertical: 13,
-    borderRadius: 10,
-    backgroundColor: "#E25A17",
-    alignItems: "center",
+  progressTrack: {
+    width: "100%", height: 8, borderRadius: 4,
+    backgroundColor: "#F3EDE5", marginBottom: 6, overflow: "hidden",
   },
-  modalSingleBtnText: { color: "#FFFFFF", fontWeight: "700", fontSize: 15 },
+  progressFill: { height: "100%", borderRadius: 4 },
+  progressLabel: {
+    fontSize: 11, color: "#9CA3AF", fontWeight: "600",
+    marginBottom: 16, textAlign: "center",
+  },
 });
