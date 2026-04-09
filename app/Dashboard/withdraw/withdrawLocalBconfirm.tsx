@@ -2,8 +2,15 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
-import React, { useState } from "react";
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useState } from "react";
+import {
+    ActivityIndicator,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
     getOrCreateMainWallet,
@@ -12,10 +19,24 @@ import {
 import { useLanguage } from "../../../context/LanguageContext";
 import PasscodeModal from "../../components/PasscodeModal";
 
-import ActivityModal from '../../components/ActivityModal';
+import ActivityModal from "../../components/ActivityModal";
+import FeatureMaintenanceModal from "../../components/FeatureMaintenanceModal";
+import { isWithdrawalCombinationUnderMaintenance } from "../../../lib/maintenance";
+import {
+    MIN_REMAINING_WALLET_BALANCE_PHP,
+    parseWithdrawalAmountInput,
+} from "../../../utils/withdrawalAmount";
 const BANK_FEE_THRESHOLD = 100000;
+const LOCAL_BANK_MIN_WITHDRAWAL_PHP = 50;
+const UNIONBANK_MIN_WITHDRAWAL_PHP = 1;
 
-const getLocalBankTransactionFee = (amountValue: number, isUnionBank: boolean) => {
+const getLocalBankMinimumWithdrawal = (isUnionBank: boolean) =>
+  isUnionBank ? UNIONBANK_MIN_WITHDRAWAL_PHP : LOCAL_BANK_MIN_WITHDRAWAL_PHP;
+
+const getLocalBankTransactionFee = (
+  amountValue: number,
+  isUnionBank: boolean,
+) => {
   if (Number.isNaN(amountValue) || amountValue <= 0) return 0;
   if (isUnionBank) return amountValue > BANK_FEE_THRESHOLD ? 250 : 0;
   return amountValue > BANK_FEE_THRESHOLD ? 150 : 50;
@@ -33,6 +54,7 @@ export default function WithdrawLocalBConfirm() {
     branchName?: string;
     amount?: string;
     email?: string;
+    type?: string;
   };
   const [showAlertModal, setShowAlertModal] = useState(false);
   const [alertConfig, setAlertConfig] = useState<{
@@ -42,7 +64,7 @@ export default function WithdrawLocalBConfirm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPasscodeModal, setShowPasscodeModal] = useState(false);
   const [passcode, setPasscode] = useState("");
-  const [hasPasscode, setHasPasscode] = useState(false);
+  const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
 
   const method = params?.method || "local-bank";
   const accountNumber = params?.accountNumber || "";
@@ -51,6 +73,7 @@ export default function WithdrawLocalBConfirm() {
   const branchName = params?.branchName || "";
   const amount = params?.amount || "0";
   const email = params?.email || "";
+  const withdrawalType = params?.type || "available-balance";
   const parsedAmount = parseFloat(amount);
   const isUnionBank = bankName.trim().toUpperCase() === "UNIONBANK";
   const transactionFee = getLocalBankTransactionFee(parsedAmount, isUnionBank);
@@ -59,23 +82,46 @@ export default function WithdrawLocalBConfirm() {
     (Number.isNaN(parsedAmount) ? 0 : parsedAmount) - transactionFee,
   );
 
-  React.useEffect(() => {
-    (async () => {
-      const userJson = await AsyncStorage.getItem("user");
-      if (userJson) {
-        try {
-          const user = JSON.parse(userJson) as { hasPasscode?: boolean };
-          setHasPasscode(!!user?.hasPasscode);
-        } catch (_) {}
-      }
-    })();
-  }, []);
-
   const submitWithdrawal = async (passcodeToSend?: string) => {
     if (isSubmitting) return;
     setIsSubmitting(true);
     setAlertConfig({ title: "", message: "" });
     try {
+      const parsedSubmit = parseWithdrawalAmountInput(amount);
+      if (!parsedSubmit.ok || parsedSubmit.value <= 0) {
+        setAlertConfig({
+          title: t("common.error"),
+          message: t("withdraw.validation.invalidAmountFormat"),
+        });
+        setShowAlertModal(true);
+        return;
+      }
+      const amountNum = parsedSubmit.value;
+      const minimumWithdrawal = getLocalBankMinimumWithdrawal(isUnionBank);
+      if (amountNum < minimumWithdrawal) {
+        setAlertConfig({
+          title: t("common.error"),
+          message: t("withdraw.validation.minAmount").replace(
+            "{min}",
+            minimumWithdrawal.toFixed(2),
+          ),
+        });
+        setShowAlertModal(true);
+        return;
+      }
+      const submitFee = getLocalBankTransactionFee(amountNum, isUnionBank);
+      if (submitFee > 0 && amountNum <= submitFee) {
+        setAlertConfig({
+          title: t("common.error"),
+          message: t("withdraw.validation.amountMustExceedFee").replace(
+            "{fee}",
+            submitFee.toFixed(2),
+          ),
+        });
+        setShowAlertModal(true);
+        return;
+      }
+
       const accessToken = await AsyncStorage.getItem("access_token");
       if (!accessToken) {
         setAlertConfig({
@@ -97,17 +143,69 @@ export default function WithdrawLocalBConfirm() {
         setIsSubmitting(false);
         return;
       }
+      const source =
+        withdrawalType === "agent-withdrawal"
+          ? "agent_commission"
+          : "available_balance";
+      const w = wallet as Record<string, unknown>;
+      const rawSourceBal =
+        source === "agent_commission" ? w.agentCommission : w.balance;
+      const bal = parseFloat(String(rawSourceBal ?? "0"));
+      if (Number.isNaN(bal)) {
+        setAlertConfig({
+          title: t("common.error"),
+          message: t("withdraw.errorLoadWallet"),
+        });
+        setShowAlertModal(true);
+        setIsSubmitting(false);
+        return;
+      }
+      if (bal < MIN_REMAINING_WALLET_BALANCE_PHP) {
+        setAlertConfig({
+          title: t("withdraw.minimumBalanceBlockedTitle"),
+          message: t("withdraw.minimumBalanceWalletBelow"),
+        });
+        setShowAlertModal(true);
+        setIsSubmitting(false);
+        return;
+      }
+      if (bal - amountNum < MIN_REMAINING_WALLET_BALANCE_PHP) {
+        setAlertConfig({
+          title: t("withdraw.minimumBalanceBlockedTitle"),
+          message: t("withdraw.minimumBalanceAfterWithdraw"),
+        });
+        setShowAlertModal(true);
+        setIsSubmitting(false);
+        return;
+      }
+
+      const offline = await isWithdrawalCombinationUnderMaintenance({
+        source:
+          withdrawalType === "agent-withdrawal"
+            ? "agent-withdrawal"
+            : "available-balance",
+        method: "local_bank",
+      });
+      if (offline) {
+        setShowPasscodeModal(false);
+        setShowMaintenanceModal(true);
+        return;
+      }
+
       const body: Record<string, string | undefined> = {
         walletId: wallet.id as string,
-        amount: String(parseFloat(amount)),
+        amount: amountNum.toFixed(2),
         method: "local_bank",
+        source,
         email: email || undefined,
         accountNumber,
         accountHolderName,
         bankName,
         branchName: branchName || undefined,
       };
-      if (hasPasscode && passcodeToSend) body.passcode = passcodeToSend;
+      if (passcodeToSend && /^\d{4}$/.test(passcodeToSend)) {
+        body.passcode = passcodeToSend;
+      }
       const result = await submitWithdrawalRequest(accessToken, body);
 
       if (result.success) {
@@ -117,7 +215,8 @@ export default function WithdrawLocalBConfirm() {
         const txId = (result.data as any)?.id || t("investment.pending");
         (navigation as any).navigate("depositReceipt", {
           transactionId: txId,
-          amount: amount.toString(),
+          // Receipt should reflect net amount after transaction fee.
+          amount: String(netWithdrawalAmount),
           currency: "PHP",
           depositMethod: t("withdraw.bankTransfer"),
           type: "Withdrawal",
@@ -147,12 +246,9 @@ export default function WithdrawLocalBConfirm() {
     }
   };
 
-  const handleConfirm = async () => {
-    if (hasPasscode) {
-      setShowPasscodeModal(true);
-      return;
-    }
-    await submitWithdrawal();
+  const handleConfirm = () => {
+    // Backend requires a passcode for withdrawal requests.
+    setShowPasscodeModal(true);
   };
 
   const handlePasscodeConfirm = () => {
@@ -305,7 +401,6 @@ export default function WithdrawLocalBConfirm() {
                 </Text>
               </View>
             </View>
-
           </View>
 
           {/* Withdrawal Amount Card */}
@@ -390,6 +485,14 @@ export default function WithdrawLocalBConfirm() {
             </LinearGradient>
           </View>
         </ActivityModal>
+
+        <FeatureMaintenanceModal
+          visible={showMaintenanceModal}
+          onDismiss={() => {
+            setShowMaintenanceModal(false);
+            navigation.goBack();
+          }}
+        />
       </SafeAreaView>
     </View>
   );

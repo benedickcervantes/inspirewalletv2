@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
+import * as MediaLibrary from "expo-media-library";
 import * as Sharing from "expo-sharing";
 import { doc, getDoc } from "firebase/firestore";
 import { useEffect, useRef, useState } from "react";
@@ -251,6 +252,44 @@ export default function SendMoney() {
       alert(
         t("sendMoney.errorShareQr") ||
           "Failed to share QR code. Please try again.",
+      );
+    }
+  };
+
+  const handleDownloadQr = async () => {
+    try {
+      if (!userAccountNumber) {
+        alert(t("sendMoney.noAccountNumber") || "No account number to download.");
+        return;
+      }
+
+      const { status } = await MediaLibrary.requestPermissionsAsync();
+      if (status !== "granted") {
+        alert(
+          t("sendMoney.mediaPermissionRequired") ||
+            "Permission to access media library is required to save the QR code.",
+        );
+        return;
+      }
+
+      if (!viewShotRef.current || typeof viewShotRef.current.capture !== "function") {
+        alert(
+          t("sendMoney.qrNotReady") ||
+            "QR code is not ready yet. Please try again.",
+        );
+        return;
+      }
+
+      const fileUri = await viewShotRef.current.capture();
+      await MediaLibrary.saveToLibraryAsync(fileUri);
+      alert(
+        t("sendMoney.qrDownloaded") || "QR code saved to your photos successfully.",
+      );
+    } catch (error) {
+      console.error("Error downloading QR code:", error);
+      alert(
+        t("sendMoney.errorDownloadQr") ||
+          "Failed to save QR code. Please try again.",
       );
     }
   };
@@ -560,20 +599,32 @@ export default function SendMoney() {
                 </ViewShot>
               </View>
 
-              <TouchableOpacity
-                style={styles.shareQRButton}
-                onPress={handleShareQr}
-              >
-                <LinearGradient
-                  colors={["#E25A17", "#F28934"]}
-                  style={styles.shareQRGradient}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
+              <View style={styles.qrActionsColumn}>
+                <TouchableOpacity
+                  style={styles.downloadQRButton}
+                  onPress={handleDownloadQr}
                 >
-                  <Ionicons name="share-social" size={20} color="#FFFFFF" />
-                  <Text style={styles.shareQRButtonText}>{t("sendMoney.shareQr")}</Text>
-                </LinearGradient>
-              </TouchableOpacity>
+                  <View style={styles.downloadQRContent}>
+                    <Ionicons name="download-outline" size={20} color="#E25A17" />
+                    <Text style={styles.downloadQRButtonText}>Download QR</Text>
+                  </View>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.shareQRButton}
+                  onPress={handleShareQr}
+                >
+                  <LinearGradient
+                    colors={["#E25A17", "#F28934"]}
+                    style={styles.shareQRGradient}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                  >
+                    <Ionicons name="share-social" size={20} color="#FFFFFF" />
+                    <Text style={styles.shareQRButtonText}>{t("sendMoney.shareQr")}</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              </View>
 
               <View style={styles.qrInfoFooter}>
                 <Ionicons name="information-circle-outline" size={16} color="#8B4A4A" />
@@ -1126,15 +1177,42 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontWeight: "500",
   },
+  qrActionsColumn: {
+    marginBottom: 16,
+    gap: 10,
+  },
   shareQRButton: {
     borderRadius: 28,
     overflow: "hidden",
-    marginBottom: 16,
     shadowColor: "#E25A17",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 6,
+  },
+  downloadQRButton: {
+    borderRadius: 28,
+    overflow: "hidden",
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#F1C5A8",
+    shadowColor: "#E25A17",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  downloadQRContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 16,
+    gap: 8,
+  },
+  downloadQRButtonText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#E25A17",
   },
   shareQRGradient: {
     flexDirection: "row",

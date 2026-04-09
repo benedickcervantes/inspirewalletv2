@@ -1,129 +1,84 @@
-import { useNavigation } from "@react-navigation/native";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { useLanguage } from "../../context/LanguageContext";
+import React from 'react';
+import {
+  BackHandler,
+  Modal,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
-import ActivityModal from '../components/ActivityModal';
-const THEME_COLOR = "#E15816";
-
-interface MaintenanceModalProps {
+type MaintenanceModalProps = {
   visible: boolean;
-  onClose: () => void;
-}
+  message: string;
+};
 
-export function MaintenanceModal({ visible, onClose }: MaintenanceModalProps) {
-  const navigation = useNavigation();
-  const { t } = useLanguage();
-
-  const handleGoBack = () => {
-    onClose();
-    try {
-      if (navigation.canGoBack?.()) {
-        navigation.goBack();
-      }
-    } catch (error) {
-      console.log("Navigation back not available");
-    }
+export default function MaintenanceModal({
+  visible,
+  message,
+}: MaintenanceModalProps) {
+  const handleCloseApp = () => {
+    BackHandler.exitApp();
   };
 
   return (
-    <ActivityModal
-      visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={handleGoBack}
-    >
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
-          <View style={styles.header}>
-            <View style={styles.iconCircle}>
-              <MaterialCommunityIcons
-                name="tools"
-                size={22}
-                color="#FFFFFF"
-              />
-            </View>
-            <Text style={styles.title}>{t("dashboard.underMaintenance")}</Text>
-          </View>
-          <Text style={styles.modalMessage}>
-            {t("dashboard.maintenanceMessage")}
-          </Text>
-          <TouchableOpacity
-            style={styles.modalButton}
-            onPress={handleGoBack}
-          >
-            <Text style={styles.modalButtonText}>{t("common.goBack")}</Text>
+    <Modal visible={visible} transparent={false} animationType="fade">
+      <View style={styles.container}>
+        <View style={styles.card}>
+          <Text style={styles.title}>System Maintenance</Text>
+          <Text style={styles.message}>{message}</Text>
+          <TouchableOpacity style={styles.button} onPress={handleCloseApp}>
+            <Text style={styles.buttonText}>OK</Text>
           </TouchableOpacity>
         </View>
       </View>
-    </ActivityModal>
+    </Modal>
   );
 }
 
-export default MaintenanceModal;
-
 const styles = StyleSheet.create({
-  modalOverlay: {
+  container: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    justifyContent: "center",
-    alignItems: "center",
+    backgroundColor: '#F5F5F5',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
   },
-  modalContent: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 20,
-    padding: 28,
-    alignItems: "center",
-    width: "80%",
-    maxWidth: 320,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  header: {
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  iconCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: THEME_COLOR,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 10,
-    shadowColor: THEME_COLOR,
+  card: {
+    width: '100%',
+    maxWidth: 420,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 22,
+    shadowColor: '#000000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
     elevation: 4,
   },
   title: {
-    fontSize: 16,
-    fontWeight: "800",
-    color: "#333",
-    textAlign: "center",
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#D9531E',
+    marginBottom: 10,
+    textAlign: 'center',
   },
-  modalMessage: {
-    fontSize: 14,
-    color: "#666",
-    textAlign: "center",
-    marginBottom: 24,
-    lineHeight: 20,
+  message: {
+    fontSize: 15,
+    lineHeight: 22,
+    color: '#333333',
+    textAlign: 'center',
+    marginBottom: 20,
   },
-  modalButton: {
-    backgroundColor: THEME_COLOR,
-    paddingVertical: 12,
-    paddingHorizontal: 32,
+  button: {
+    backgroundColor: '#DE5212',
     borderRadius: 10,
-    width: "100%",
+    paddingVertical: 12,
+    alignItems: 'center',
   },
-  modalButtonText: {
-    color: "#FFFFFF",
+  buttonText: {
+    color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: "600",
-    textAlign: "center",
+    fontWeight: '700',
   },
 });

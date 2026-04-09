@@ -16,6 +16,7 @@ import {
   lookupReferralCode,
   register as registerApi,
 } from "../../configs/api";
+import { startNewAnnouncementLoginSession } from "../../lib/announcementLoginSession";
 import { useLanguage } from "../../context/LanguageContext";
 import { useLanguageModal } from "../../context/LanguageModalContext";
 import type { NavProp } from "../../types/navigation";
@@ -527,6 +528,7 @@ export default function Register() {
 
       await AsyncStorage.setItem("access_token", result.access_token || "");
       await AsyncStorage.setItem("user", JSON.stringify(result.user || {}));
+      await startNewAnnouncementLoginSession();
       await AsyncStorage.setItem("registrationPasscodePending", "true");
       (navigation as unknown as NavProp).replace("CreatePasscode");
     } catch {

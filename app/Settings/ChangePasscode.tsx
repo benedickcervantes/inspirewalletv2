@@ -14,6 +14,7 @@ const GRADIENT_START = "#E15816";
 const GRADIENT_END = "#F48F38";
 const WHITE = "#FFFFFF";
 const TEXT_MUTED = "rgba(255,255,255,0.85)";
+const NEW_PASSCODE_DIFFERENT_ERROR = "New passcode must be different.";
 
 interface MessageModalProps {
   visible: boolean;
@@ -117,7 +118,9 @@ export default function ChangePasscode() {
   const { t } = useLanguage();
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
+  const isCompactHeight = height < 760;
+  const headerTopOffset = Math.max(6, Math.min(14, isCompactHeight ? 8 : 12));
   const btnSize = width >= 768 ? 80 : Math.min(72, Math.max(56, width * 0.22));
   const delBtnSize =
     width >= 768 ? 80 : Math.min(72, Math.max(56, width * 0.22));
@@ -259,6 +262,12 @@ export default function ChangePasscode() {
       if (step === "current") {
         await verifyCurrentAndAdvance(next);
       } else if (step === "new") {
+        if (next === currentPasscode) {
+          setError(NEW_PASSCODE_DIFFERENT_ERROR);
+          setNewPasscode("");
+          triggerShake();
+          return;
+        }
         setStep("confirm");
         setConfirmPasscode("");
       } else {
@@ -274,6 +283,15 @@ export default function ChangePasscode() {
   };
 
   const submitChange = async () => {
+    if (newPasscode === currentPasscode) {
+      setError(NEW_PASSCODE_DIFFERENT_ERROR);
+      setStep("new");
+      setNewPasscode("");
+      setConfirmPasscode("");
+      triggerShake();
+      return;
+    }
+
     const accessToken = await AsyncStorage.getItem("access_token");
     if (!accessToken) {
       showModal({
@@ -332,7 +350,7 @@ export default function ChangePasscode() {
           { paddingTop: insets.top, paddingBottom: insets.bottom },
         ]}
       >
-        <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
+        <View style={[styles.header, { paddingTop: headerTopOffset }]}>
           <TouchableOpacity
             onPress={() => (navigation as unknown as NavProp).goBack()}
             style={styles.backBtn}
@@ -344,7 +362,12 @@ export default function ChangePasscode() {
           <View style={styles.backBtn} />
         </View>
 
-        <View style={styles.stepIndicatorWrap}>
+        <View
+          style={[
+            styles.stepIndicatorWrap,
+            { marginBottom: isCompactHeight ? 12 : 18 },
+          ]}
+        >
           <Text style={styles.stepLabel}>
             {t("passcode.stepIndicator").replace("{step}", String(stepIndex))}
           </Text>
@@ -358,14 +381,40 @@ export default function ChangePasscode() {
           </View>
         </View>
 
-        <View style={styles.centerContent}>
-          <View style={styles.contentCard}>
-            {error ? (
-              <View style={styles.errorWrap}>
-                <Ionicons name="warning-outline" size={20} color={WHITE} />
-                <Text style={styles.errorText}>{error}</Text>
-              </View>
-            ) : null}
+        <View
+          style={[
+            styles.centerContent,
+            {
+              justifyContent: isCompactHeight ? "flex-start" : "center",
+              paddingTop: isCompactHeight ? 8 : 0,
+            },
+          ]}
+        >
+          <View
+            style={[
+              styles.contentCard,
+              {
+                paddingVertical: isCompactHeight ? 24 : 32,
+              },
+            ]}
+          >
+            <View
+              style={[
+                styles.errorSlot,
+                error ? styles.errorBoxVisible : styles.errorBoxHidden,
+              ]}
+            >
+              <Text
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                style={[
+                  styles.errorInlineText,
+                  !error && styles.errorInlineTextHidden,
+                ]}
+              >
+                {error || " "}
+              </Text>
+            </View>
 
             <Animated.View
               style={[
@@ -384,7 +433,14 @@ export default function ChangePasscode() {
               ))}
             </Animated.View>
 
-            <Text style={styles.instructionText}>{instruction}</Text>
+            <Text
+              style={[
+                styles.instructionText,
+                { marginBottom: isCompactHeight ? 24 : 32 },
+              ]}
+            >
+              {instruction}
+            </Text>
 
             <View
               style={[
@@ -503,7 +559,7 @@ const styles = StyleSheet.create({
   },
   stepIndicatorWrap: {
     alignItems: "center",
-    marginBottom: 8,
+    marginBottom: 18,
   },
   stepLabel: {
     fontSize: 13,
@@ -535,6 +591,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     width: "100%",
     paddingHorizontal: 20,
+    paddingTop: 0,
   },
   contentCard: {
     width: "100%",
@@ -545,22 +602,35 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     alignItems: "center",
   },
-  errorWrap: {
-    flexDirection: "row",
-    alignItems: "center",
-    alignSelf: "stretch",
-    backgroundColor: "rgba(255,255,255,0.22)",
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+  errorSlot: {
+    alignSelf: "center",
+    minHeight: 34,
     borderRadius: 12,
-    marginBottom: 24,
-    gap: 10,
+    justifyContent: "center",
+    paddingHorizontal: 10,
+    maxWidth: "92%",
+    marginBottom: 8,
   },
-  errorText: {
-    flex: 1,
-    color: WHITE,
-    fontSize: 15,
-    fontWeight: "600",
+  errorBoxVisible: {
+    backgroundColor: "rgba(255,255,255,0.18)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.45)",
+  },
+  errorBoxHidden: {
+    backgroundColor: "transparent",
+    borderWidth: 0,
+  },
+  errorInlineText: {
+    textAlign: "center",
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "700",
+    textShadowColor: "rgba(0,0,0,0.25)",
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 1,
+  },
+  errorInlineTextHidden: {
+    color: "transparent",
   },
   dotsWrap: {
     flexDirection: "row",

@@ -1,19 +1,25 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { doc, getDoc } from "firebase/firestore";
 import { useCallback, useEffect, useState } from "react";
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { getOrCreateMainWallet } from "../../../configs/api";
 import { auth, firestore } from "../../../configs/firebase";
 import { useLanguage } from "../../../context/LanguageContext";
-import ActivityModal from '../../components/ActivityModal';
 import {
     formatAmountWithCommas,
     unformatNumberString,
 } from "../../../utils/numberFormat";
+import {
+    MIN_REMAINING_WALLET_BALANCE_PHP,
+    parseWithdrawalAmountInput,
+} from "../../../utils/withdrawalAmount";
+import ActivityModal from '../../components/ActivityModal';
+import FeatureMaintenanceModal from "../../components/FeatureMaintenanceModal";
+import { isWithdrawalCombinationUnderMaintenance } from "../../../lib/maintenance";
 
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 const isValidEmail = (email: string) =>
@@ -46,6 +52,11 @@ const BANK_OPTIONS = [
 ];
 
 const BANK_FEE_THRESHOLD = 100000;
+const LOCAL_BANK_MIN_WITHDRAWAL_PHP = 50;
+const UNIONBANK_MIN_WITHDRAWAL_PHP = 1;
+
+const getLocalBankMinimumWithdrawal = (isUnionBank: boolean) =>
+  isUnionBank ? UNIONBANK_MIN_WITHDRAWAL_PHP : LOCAL_BANK_MIN_WITHDRAWAL_PHP;
 
 const getLocalBankTransactionFee = (amount: number, isUnionBank: boolean) => {
   if (Number.isNaN(amount) || amount <= 0) return 0;
@@ -55,6 +66,7 @@ const getLocalBankTransactionFee = (amount: number, isUnionBank: boolean) => {
 
 export default function BankWithdrawal() {
   const navigation = useNavigation();
+  const route = useRoute();
   const { t } = useLanguage();
   const [accountNumber, setAccountNumber] = useState("");
   const [accountHolderName, setAccountHolderName] = useState("");
@@ -70,6 +82,21 @@ export default function BankWithdrawal() {
     null,
   );
   const [availableBalance, setAvailableBalance] = useState(0);
+  const [agentCommission, setAgentCommission] = useState(0);
+  const [minBalanceBlockReason, setMinBalanceBlockReason] = useState<
+    "below_min" | "remaining" | null
+  >(null);
+  const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
+  const [checkingMaintenance, setCheckingMaintenance] = useState(false);
+
+  const withdrawalType = (route.params as { type?: string })?.type || "available-balance";
+  const isAgentWithdrawal = withdrawalType === "agent-withdrawal";
+  const displayBalance = isAgentWithdrawal ? agentCommission : availableBalance;
+  const minBalanceModalBalanceStr = displayBalance.toLocaleString("en-PH", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+  
   const normalizedBankName = bankName.trim().toUpperCase();
   const hasSelectedBank = normalizedBankName.length > 0;
   const isUnionBank = normalizedBankName === "UNIONBANK";
@@ -91,6 +118,63 @@ export default function BankWithdrawal() {
       });
     }
   };
+
+  const getWithdrawalAmountError = useCallback(
+    (amountInput: string, unionBankSelected: boolean): string | undefined => {
+      const parsed = parseWithdrawalAmountInput(amountInput);
+      if (!parsed.ok || parsed.value <= 0) {
+        return parsed.value <= 0 && parsed.ok
+          ? t("withdraw.validation.invalidAmount")
+          : t("withdraw.validation.invalidAmountFormat");
+      }
+
+      const amountNum = parsed.value;
+      const minimumWithdrawal = getLocalBankMinimumWithdrawal(unionBankSelected);
+      if (amountNum < minimumWithdrawal) {
+        return t("withdraw.validation.minAmount").replace(
+          "{min}",
+          minimumWithdrawal.toFixed(2),
+        );
+      }
+
+      const feeForAmount = getLocalBankTransactionFee(amountNum, unionBankSelected);
+      if (feeForAmount > 0 && amountNum <= feeForAmount) {
+        return t("withdraw.validation.amountMustExceedFee").replace(
+          "{fee}",
+          feeForAmount.toFixed(2),
+        );
+      }
+
+      const walletBalance = isAgentWithdrawal
+        ? agentCommission
+        : displayBalance || (userData?.availBalanceAmount as number) || 0;
+      if (amountNum > walletBalance) {
+        return t("withdraw.validation.insufficient").replace(
+          "{balance}",
+          walletBalance.toLocaleString(),
+        );
+      }
+
+      return undefined;
+    },
+    [t, isAgentWithdrawal, agentCommission, displayBalance, userData],
+  );
+
+  useEffect(() => {
+    if (!errors.withdrawalAmount) return;
+
+    const nextAmountError = getWithdrawalAmountError(withdrawalAmount, isUnionBank);
+    setErrors((prev) => {
+      if (!prev.withdrawalAmount) return prev;
+      if (nextAmountError) {
+        if (prev.withdrawalAmount === nextAmountError) return prev;
+        return { ...prev, withdrawalAmount: nextAmountError };
+      }
+
+      const { withdrawalAmount: _withdrawalAmount, ...rest } = prev;
+      return rest;
+    });
+  }, [isUnionBank, withdrawalAmount, errors.withdrawalAmount, getWithdrawalAmountError]);
 
   const fetchUserData = useCallback(async () => {
     if (!auth || !firestore) return;
@@ -123,9 +207,15 @@ export default function BankWithdrawal() {
         const accessToken = await AsyncStorage.getItem("access_token");
         if (!accessToken) return;
         const { success, wallet } = await getOrCreateMainWallet(accessToken);
-        if (success && wallet?.balance != null) {
-          const bal = parseFloat(String(wallet.balance));
-          setAvailableBalance(Number.isNaN(bal) ? 0 : bal);
+        if (success && wallet) {
+          if (wallet.balance != null) {
+            const bal = parseFloat(String(wallet.balance));
+            setAvailableBalance(Number.isNaN(bal) ? 0 : bal);
+          }
+          if (wallet.agentCommission != null) {
+            const commission = parseFloat(String(wallet.agentCommission));
+            setAgentCommission(Number.isNaN(commission) ? 0 : commission);
+          }
         }
       } catch (error) {
         console.error(
@@ -138,7 +228,25 @@ export default function BankWithdrawal() {
     fetchWalletBalance();
   }, []);
 
-  const handleContinue = () => {
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false;
+      void (async () => {
+        const offline = await isWithdrawalCombinationUnderMaintenance({
+          source: isAgentWithdrawal ? "agent-withdrawal" : "available-balance",
+          method: "local_bank",
+        });
+        if (!cancelled) {
+          setShowMaintenanceModal(offline);
+        }
+      })();
+      return () => {
+        cancelled = true;
+      };
+    }, [isAgentWithdrawal]),
+  );
+
+  const handleContinue = async () => {
     const newErrors: Record<string, string> = {};
     const accountNumberDigits = filterPhoneInput(accountNumber);
 
@@ -146,27 +254,29 @@ export default function BankWithdrawal() {
       newErrors.accountNumber = t("withdraw.validation.accNumber");
     if (!accountHolderName.trim())
       newErrors.accountHolderName = t("withdraw.validation.accName");
-    if (!bankName.trim())
+    const bankNameTrimmed = bankName.trim();
+    const reservedOtherLabels = new Set([
+      "OTHERS",
+      "OTHER",
+      OTHER_BANK_OPTION.toUpperCase(),
+    ]);
+    if (!bankNameTrimmed) {
       newErrors.bankName = t("withdraw.validation.bankName");
+    } else if (
+      isOtherBank &&
+      reservedOtherLabels.has(bankNameTrimmed.toUpperCase())
+    ) {
+      newErrors.bankName = t("withdraw.validation.bankName");
+    }
     if (!branchName.trim())
       newErrors.branchName = t("withdraw.validation.branchName");
 
-    const amountStr = unformatNumberString(withdrawalAmount).trim();
-    if (!amountStr) {
-      newErrors.withdrawalAmount = t("withdraw.validation.amount");
-    } else {
-      const amountNum = parseFloat(amountStr);
-      if (amountNum <= 0) {
-        newErrors.withdrawalAmount = t("withdraw.validation.invalidAmount");
-      } else {
-        const walletBalance =
-          availableBalance || (userData?.availBalanceAmount as number) || 0;
-        if (amountNum > walletBalance) {
-          newErrors.withdrawalAmount = t(
-            "withdraw.validation.insufficient",
-          ).replace("{balance}", walletBalance.toLocaleString());
-        }
-      }
+    const withdrawalAmountError = getWithdrawalAmountError(
+      withdrawalAmount,
+      isUnionBank,
+    );
+    if (withdrawalAmountError) {
+      newErrors.withdrawalAmount = withdrawalAmountError;
     }
 
     const email = emailAddress.trim();
@@ -183,15 +293,46 @@ export default function BankWithdrawal() {
 
     setErrors({});
 
+    const currentBalance = isAgentWithdrawal ? agentCommission : availableBalance;
+    const parsedAmount = parseWithdrawalAmountInput(withdrawalAmount);
+    const amountNum = parsedAmount.ok ? parsedAmount.value : 0;
+
+    if (currentBalance < MIN_REMAINING_WALLET_BALANCE_PHP) {
+      setMinBalanceBlockReason("below_min");
+      return;
+    }
+
+    const remainingBalance = currentBalance - amountNum;
+    if (remainingBalance < MIN_REMAINING_WALLET_BALANCE_PHP) {
+      setMinBalanceBlockReason("remaining");
+      return;
+    }
+
+    setCheckingMaintenance(true);
+    try {
+      const offline = await isWithdrawalCombinationUnderMaintenance({
+        source: isAgentWithdrawal ? "agent-withdrawal" : "available-balance",
+        method: "local_bank",
+      });
+      if (offline) {
+        setShowMaintenanceModal(true);
+        return;
+      }
+    } finally {
+      setCheckingMaintenance(false);
+    }
+
     // Navigate to confirm screen with data
+    const { value: confirmedAmount } = parsedAmount;
     navigation.navigate("WithdrawLocalBConfirm", {
       method: "local-bank",
       accountNumber: accountNumberDigits,
       accountHolderName,
-      bankName,
+      bankName: bankNameTrimmed,
       branchName,
-      amount: unformatNumberString(withdrawalAmount),
+      amount: confirmedAmount.toFixed(2),
       email: emailAddress,
+      type: withdrawalType,
     });
   };
 
@@ -247,10 +388,16 @@ export default function BankWithdrawal() {
             {/* Title */}
             <View style={styles.titleContainer}>
               <Text style={styles.title}>
-                {t("dashboard.availableBalance")}
+                {isAgentWithdrawal
+                  ? t("withdraw.agentWithdrawal")
+                  : t("dashboard.availableBalance")}
               </Text>
               <Text style={styles.subtitle}>
-                {t("withdraw.fromAvailableBalance")}
+                {t(
+                  isAgentWithdrawal
+                    ? "withdraw.fromAgentWallet"
+                    : "withdraw.fromAvailableBalance",
+                )}
               </Text>
             </View>
 
@@ -333,16 +480,22 @@ export default function BankWithdrawal() {
                     <Ionicons name="chevron-down" size={18} color="#999" />
                   </TouchableOpacity>
                 ) : (
-                  <TextInput
-                    style={[styles.input, errors.bankName && styles.inputError]}
-                    placeholder={t("withdraw.placeholder.bankName")}
-                    placeholderTextColor="#CCC"
-                    value={bankName}
-                    onChangeText={(text) => {
-                      setBankName(capitalizeWords(text));
-                      clearBankNameError();
-                    }}
-                  />
+                  <>
+                    <Text style={styles.bankOtherHint}>
+                      {t("withdraw.bankNameOtherHint")}
+                    </Text>
+                    <TextInput
+                      style={[styles.input, errors.bankName && styles.inputError]}
+                      placeholder={t("withdraw.placeholder.customBankName")}
+                      placeholderTextColor="#CCC"
+                      value={bankName}
+                      autoCorrect={false}
+                      onChangeText={(text) => {
+                        setBankName(capitalizeWords(text));
+                        clearBankNameError();
+                      }}
+                    />
+                  </>
                 )}
 
                 <TouchableOpacity
@@ -529,7 +682,8 @@ export default function BankWithdrawal() {
             {/* Continue Button */}
             <TouchableOpacity
               style={styles.continueButton}
-              onPress={handleContinue}
+              onPress={() => void handleContinue()}
+              disabled={checkingMaintenance}
             >
               <LinearGradient
                 colors={["#E25A17", "#F28934"]}
@@ -537,10 +691,16 @@ export default function BankWithdrawal() {
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
               >
-                <Text style={styles.continueText}>
-                  {t("withdraw.continue")}
-                </Text>
-                <Ionicons name="play" size={20} color="#FFFFFF" />
+                {checkingMaintenance ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <>
+                    <Text style={styles.continueText}>
+                      {t("withdraw.continue")}
+                    </Text>
+                    <Ionicons name="play" size={20} color="#FFFFFF" />
+                  </>
+                )}
               </LinearGradient>
             </TouchableOpacity>
 
@@ -587,7 +747,58 @@ export default function BankWithdrawal() {
               </View>
             </View>
           </ActivityModal>
+
+          {/* Minimum balance: same alert pattern as withdraw confirm / withdraw type */}
+          <ActivityModal
+            visible={minBalanceBlockReason !== null}
+            transparent
+            animationType="slide"
+            onRequestClose={() => setMinBalanceBlockReason(null)}
+          >
+            <View style={styles.alertOverlay}>
+              <LinearGradient
+                colors={["#E15816", "#F48F38"]}
+                style={styles.alertContainer}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 0, y: 1 }}
+              >
+                <Text style={styles.alertTitle}>
+                  {t("withdraw.minimumBalanceBlockedTitle")}
+                </Text>
+                <Text style={styles.alertMessage}>
+                  {(minBalanceBlockReason === "below_min"
+                    ? t("withdraw.minimumBalanceWalletBelow")
+                    : t("withdraw.minimumBalanceAfterWithdraw")) +
+                    "\n\n" +
+                    t("withdraw.minimumBalanceModalDetails", {
+                      min: MIN_REMAINING_WALLET_BALANCE_PHP.toLocaleString(
+                        "en-PH",
+                        {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        },
+                      ),
+                      balance: minBalanceModalBalanceStr,
+                    })}
+                </Text>
+                <TouchableOpacity
+                  style={styles.alertButton}
+                  onPress={() => setMinBalanceBlockReason(null)}
+                >
+                  <Text style={styles.alertButtonText}>{t("common.ok")}</Text>
+                </TouchableOpacity>
+              </LinearGradient>
+            </View>
+          </ActivityModal>
         </KeyboardAvoidingView>
+
+        <FeatureMaintenanceModal
+          visible={showMaintenanceModal}
+          onDismiss={() => {
+            setShowMaintenanceModal(false);
+            navigation.goBack();
+          }}
+        />
       </SafeAreaView>
     </View>
   );
@@ -730,6 +941,12 @@ const styles = StyleSheet.create({
     color: "#333",
     marginBottom: 8,
   },
+  bankOtherHint: {
+    fontSize: 12,
+    color: "#666",
+    marginBottom: 8,
+    lineHeight: 18,
+  },
   labelWithIcon: {
     flexDirection: "row",
     alignItems: "center",
@@ -865,5 +1082,47 @@ const styles = StyleSheet.create({
   },
   bottomPadding: {
     height: 40,
+  },
+  alertOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  alertContainer: {
+    borderRadius: 12,
+    padding: 24,
+    width: "85%",
+    maxWidth: 400,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  alertTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#FFFFFF",
+    marginBottom: 12,
+  },
+  alertMessage: {
+    fontSize: 16,
+    color: "#FFFFFF",
+    lineHeight: 24,
+    marginBottom: 24,
+    opacity: 0.95,
+  },
+  alertButton: {
+    alignSelf: "flex-end",
+    backgroundColor: "#FFFFFF",
+    paddingVertical: 10,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+  },
+  alertButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#E15816",
   },
 });

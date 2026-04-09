@@ -5,7 +5,18 @@ import * as Contacts from "expo-contacts";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Sharing from "expo-sharing";
 import { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, Share, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import {
+    ActivityIndicator,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    Share,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
+} from "react-native";
 import QRCode from "react-native-qrcode-svg";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import ViewShot from "react-native-view-shot";
@@ -13,6 +24,7 @@ import {
     getOrCreateMainWallet,
     getRecipientByAccountNumber,
 } from "../../../configs/api";
+import { useIdleTimeout } from "../../../context/IdleTimeoutContext";
 import { useLanguage } from "../../../context/LanguageContext";
 import {
     formatAmountWithCommas,
@@ -23,7 +35,7 @@ import Loader from "../../Loader/Loader";
 import ContactsModal from "./ContactsModal";
 import QRScanner from "./QRScanner";
 
-import ActivityModal from '../../components/ActivityModal';
+import ActivityModal from "../../components/ActivityModal";
 const width = (() => {
   try {
     return require("react-native").Dimensions?.get?.("window")?.width ?? 375;
@@ -40,8 +52,16 @@ interface Contact {
 }
 
 const INSPIRE_TRANSFER_QR_PREFIX = "INSPIREWALLET:TRANSFER:";
+const MIN_IWALLET_REMAINING_BALANCE = 1000;
 
-const normalizeAccountNumber = (value: string): string => value.replace(/\D/g, "");
+const normalizeAccountNumber = (value: string): string =>
+  value.replace(/\D/g, "");
+
+const clampAccountNumber = (value: string): string =>
+  normalizeAccountNumber(value).slice(0, 12);
+
+const formatAccountNumberForDisplay = (value: string): string =>
+  clampAccountNumber(value).replace(/(\d{4})(?=\d)/g, "$1 ");
 
 const isValidAccountNumber = (value: string): boolean =>
   /^\d{12}$/.test(normalizeAccountNumber(value));
@@ -65,7 +85,9 @@ const parseInspireTransferQrPayload = (raw: string): string | null => {
   // Preferred Inspire Wallet transfer QR format.
   if (text.startsWith(INSPIRE_TRANSFER_QR_PREFIX)) {
     const account = text.slice(INSPIRE_TRANSFER_QR_PREFIX.length).trim();
-    return isValidAccountNumber(account) ? normalizeAccountNumber(account) : null;
+    return isValidAccountNumber(account)
+      ? normalizeAccountNumber(account)
+      : null;
   }
 
   // Optional JSON format support for future-proofing.
@@ -113,6 +135,15 @@ const getInvalidInspireQrMessage = (t: (key: string) => string): string => {
     translated !== "sendMoney.invalidInspireQr" &&
     translated !== "sendMoney.invalidInspireQR"
   ) {
+    return translated;
+  }
+  return fallback;
+};
+
+const getQrScannedSuccessMessage = (t: (key: string) => string): string => {
+  const translated = t("sendMoney.qrScannedSuccess");
+  const fallback = "QR scanned successfully.";
+  if (translated && translated !== "sendMoney.qrScannedSuccess") {
     return translated;
   }
   return fallback;
@@ -179,6 +210,7 @@ export const validateTransferForm = (
   accountNumber: string,
   amount: string,
   availableBalance: number,
+  balanceType?: string,
 ) => {
   if (!accountNumber || !amount) {
     return {
@@ -202,6 +234,17 @@ export const validateTransferForm = (
     };
   }
 
+  if (
+    (balanceType ?? "available") === "available" &&
+    availableBalance - transferAmount < MIN_IWALLET_REMAINING_BALANCE
+  ) {
+    return {
+      isValid: false,
+      messageKey:
+        "You cannot transfer all available balance. Keep at least PHP 1,000 remaining in your iWallet.",
+    };
+  }
+
   return {
     isValid: true,
     messageKey: null,
@@ -214,6 +257,7 @@ export default function TransferRecipient() {
   const route = useRoute();
   const insets = useSafeAreaInsets();
   const { horizontalPadding } = useResponsive();
+  const { registerActivity } = useIdleTimeout();
   const params = (route.params || {}) as {
     balanceType?: string;
     scannedAccount?: string;
@@ -233,6 +277,7 @@ export default function TransferRecipient() {
   const [contactSearchQuery, setContactSearchQuery] = useState("");
   const [showAlertModal, setShowAlertModal] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
+  const [alertType, setAlertType] = useState<"error" | "success">("error");
   const [showQRModal, setShowQRModal] = useState(false);
   const [userAccountNumber, setUserAccountNumber] = useState("");
   const [userName, setUserName] = useState("");
@@ -241,7 +286,6 @@ export default function TransferRecipient() {
 
   useEffect(() => {
     fetchBalance();
-    loadContacts();
     loadUserAccountNumber();
     loadMostRecentRecipientIntoField();
   }, []);
@@ -254,10 +298,14 @@ export default function TransferRecipient() {
       if (!raw) return;
       const saved = JSON.parse(raw) as Array<{ accountNumber?: string }>;
       const mostRecent = saved?.[0]?.accountNumber;
-      if (mostRecent) setAccountNumber(String(mostRecent));
+      if (mostRecent) setAccountNumber(clampAccountNumber(String(mostRecent)));
     } catch (e) {
       console.warn("Failed to load recent recipient:", e);
     }
+  };
+
+  const handleAccountNumberChange = (text: string) => {
+    setAccountNumber(clampAccountNumber(text));
   };
 
   const fetchBalance = async () => {
@@ -279,6 +327,16 @@ export default function TransferRecipient() {
     }
   };
 
+  const handleOpenContactsModal = async () => {
+    registerActivity();
+    // Requesting contacts permission on Android can trigger app-state changes.
+    // Load contacts only when user explicitly opens the picker.
+    if (contacts.length === 0) {
+      await loadContacts();
+    }
+    setShowContactsModal(true);
+  };
+
   const loadUserAccountNumber = async () => {
     try {
       const userJson = await AsyncStorage.getItem("user");
@@ -298,7 +356,8 @@ export default function TransferRecipient() {
         } else {
           const accessToken = await AsyncStorage.getItem("access_token");
           if (accessToken) {
-            const { success, wallet } = await getOrCreateMainWallet(accessToken);
+            const { success, wallet } =
+              await getOrCreateMainWallet(accessToken);
             if (success && (wallet as any)?.accountNumber) {
               const accountNum = String((wallet as any).accountNumber);
               setUserAccountNumber(accountNum);
@@ -333,8 +392,10 @@ export default function TransferRecipient() {
       accountNumber,
       amount,
       Number(availableBalance) || 0,
+      balanceType,
     );
     if (!validation.isValid && validation.messageKey) {
+      setAlertType("error");
       setAlertMessage(t(validation.messageKey));
       setShowAlertModal(true);
       return;
@@ -343,6 +404,7 @@ export default function TransferRecipient() {
     try {
       const accessToken = await AsyncStorage.getItem("access_token");
       if (!accessToken) {
+        setAlertType("error");
         setAlertMessage(t("sendMoney.loginRequired"));
         setShowAlertModal(true);
         setIsLoading(false);
@@ -353,6 +415,7 @@ export default function TransferRecipient() {
         accountNumber,
       );
       if (!recipientResult.success || !recipientResult.data) {
+        setAlertType("error");
         setAlertMessage(
           recipientResult.error || t("sendMoney.errorRecipientNotFound"),
         );
@@ -380,6 +443,7 @@ export default function TransferRecipient() {
       });
     } catch (error) {
       console.error("Error verifying recipient:", error);
+      setAlertType("error");
       setAlertMessage("sendMoney.errorVerifyingRecipient");
       setShowAlertModal(true);
     } finally {
@@ -393,7 +457,7 @@ export default function TransferRecipient() {
       contact.accountNumber ||
       contact.phoneNumbers?.[0]?.replace(/\D/g, "") ||
       "";
-    setAccountNumber(accountNum);
+    setAccountNumber(clampAccountNumber(accountNum));
     setShowContactsModal(false);
     setContactSearchQuery("");
   };
@@ -401,14 +465,17 @@ export default function TransferRecipient() {
   const handleQRScan = (scannedData: string) => {
     const parsedAccount = parseInspireTransferQrPayload(scannedData);
     if (!parsedAccount) {
+      setAlertType("error");
       setAlertMessage(getInvalidInspireQrMessage(t));
       setShowAlertModal(true);
       setShowQRScanner(false);
       return;
     }
 
-    setAccountNumber(parsedAccount);
-    setShowQRScanner(false);
+    setAccountNumber(clampAccountNumber(parsedAccount));
+    setAlertType("success");
+    setAlertMessage(getQrScannedSuccessMessage(t));
+    setShowAlertModal(true);
   };
 
   const handleShareQr = async () => {
@@ -421,13 +488,15 @@ export default function TransferRecipient() {
       const canShare = await Sharing.isAvailableAsync();
       if (!canShare) {
         await Share.share({
-          message:
-            `${t("sendMoney.shareQrFallbackText") || "Here is my wallet account number"} (${userName}): ${userAccountNumber}`,
+          message: `${t("sendMoney.shareQrFallbackText") || "Here is my wallet account number"} (${userName}): ${userAccountNumber}`,
         });
         return;
       }
 
-      if (!viewShotRef.current || typeof viewShotRef.current.capture !== "function") {
+      if (
+        !viewShotRef.current ||
+        typeof viewShotRef.current.capture !== "function"
+      ) {
         alert(
           t("sendMoney.qrNotReady") ||
             "QR code is not ready yet. Please try again.",
@@ -516,7 +585,7 @@ export default function TransferRecipient() {
 
             <TouchableOpacity
               style={styles.quickActionButton}
-              onPress={() => setShowContactsModal(true)}
+              onPress={handleOpenContactsModal}
             >
               <View style={styles.quickActionIcon}>
                 <Ionicons name="people" size={28} color="#E25A17" />
@@ -569,13 +638,13 @@ export default function TransferRecipient() {
                   style={styles.input}
                   placeholder={t("sendMoney.placeholderAccountNumber")}
                   placeholderTextColor="#CCC"
-                  value={accountNumber}
-                  onChangeText={setAccountNumber}
+                  value={formatAccountNumberForDisplay(accountNumber)}
+                  onChangeText={handleAccountNumberChange}
                   keyboardType="numeric"
                 />
                 <TouchableOpacity
                   style={styles.contactsButton}
-                  onPress={() => setShowContactsModal(true)}
+                  onPress={handleOpenContactsModal}
                 >
                   <Text style={styles.contactsButtonText}>
                     {t("sendMoney.showContacts")}
@@ -606,6 +675,13 @@ export default function TransferRecipient() {
                   maximumFractionDigits: 2,
                 })}
               </Text>
+              {(balanceType ?? "available") === "available" && (
+                <Text style={styles.remainingBalanceText}>
+                  Keep at least PHP{" "}
+                  {MIN_IWALLET_REMAINING_BALANCE.toLocaleString("en-PH")} in
+                  your iWallet after transfer.
+                </Text>
+              )}
             </View>
 
             {/* Description */}
@@ -686,9 +762,21 @@ export default function TransferRecipient() {
               end={{ x: 1, y: 1 }}
             >
               <View style={styles.iconContainer}>
-                <Ionicons name="alert-circle" size={80} color="#FFFFFF" />
+                <Ionicons
+                  name={
+                    alertType === "success"
+                      ? "checkmark-circle"
+                      : "alert-circle"
+                  }
+                  size={80}
+                  color="#FFFFFF"
+                />
               </View>
-              <Text style={styles.modalTitle}>{t("sendMoney.alert")}</Text>
+              <Text style={styles.modalTitle}>
+                {alertType === "success"
+                  ? t("common.success")
+                  : t("sendMoney.alert")}
+              </Text>
               <Text style={styles.modalMessage}>
                 {alertMessage.startsWith("sendMoney.")
                   ? t(alertMessage)
@@ -717,7 +805,7 @@ export default function TransferRecipient() {
             contact.accountNumber ||
             contact.phoneNumbers?.[0]?.replace(/\D/g, "") ||
             "";
-          setAccountNumber(accountNum);
+          setAccountNumber(clampAccountNumber(accountNum));
           setShowContactsModal(false);
           setContactSearchQuery("");
         }}
@@ -778,15 +866,22 @@ export default function TransferRecipient() {
                   </Text>
                 </View>
               </View>
-              <View style={styles.hiddenShareCaptureContainer} pointerEvents="none">
+              <View
+                style={styles.hiddenShareCaptureContainer}
+                pointerEvents="none"
+              >
                 <ViewShot
                   ref={viewShotRef}
                   options={{ format: "png", quality: 1, result: "tmpfile" }}
                   style={styles.shareCardCapture}
                 >
                   <View style={styles.shareCardHeader}>
-                    <Text style={styles.shareCardHeaderTitle}>Inspire Wallet</Text>
-                    <Text style={styles.shareCardSubtitle}>Scan to transfer</Text>
+                    <Text style={styles.shareCardHeaderTitle}>
+                      Inspire Wallet
+                    </Text>
+                    <Text style={styles.shareCardSubtitle}>
+                      Scan to transfer
+                    </Text>
                   </View>
                   <View style={styles.qrUserInfoCard}>
                     <View style={styles.qrCodeWrapper}>
@@ -1038,6 +1133,12 @@ const styles = StyleSheet.create({
     color: "#666",
     marginTop: 8,
     fontWeight: "500",
+  },
+  remainingBalanceText: {
+    fontSize: 12,
+    color: "#E25A17",
+    marginTop: 4,
+    fontWeight: "600",
   },
   textArea: {
     height: 100,
@@ -1427,6 +1528,3 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
 });
-
-
-

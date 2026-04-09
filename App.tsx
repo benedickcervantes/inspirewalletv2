@@ -2,8 +2,8 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
-import React, { lazy, Suspense } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import React, { lazy, Suspense, useEffect, useState } from 'react';
+import { ActivityIndicator, AppState, type AppStateStatus, View } from 'react-native';
 import 'react-native-gesture-handler';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
@@ -31,7 +31,8 @@ import BankWithdrawal from './app/Dashboard/withdraw/withdrawLocalB';
 import WithdrawLocalBConfirm from './app/Dashboard/withdraw/withdrawLocalBconfirm';
 import WithdrawMethodScreen from './app/Dashboard/withdraw/withdrawMethod';
 import History from './app/History/history';
-import RewardPointsHistory from './app/RewardPoints/RewardPointsHistory';
+import RewardPointsHistory from './app/ServicesFunction/RewardPoints/RewardPointsHistory';
+import RewardsTermsCon from './app/ServicesFunction/RewardPoints/RewardsTermsCon';
 import KYCAddressInformation from './app/KYC/KYCAddressInformation';
 import KYCcompany from './app/KYC/KYCcompany';
 import KYCVerification from './app/KYC/KYCVerification';
@@ -78,8 +79,11 @@ import TermsConditions from './app/Settings/TermsConditions';
 import { IdleTimeoutProvider, useIdleTimeout } from './context/IdleTimeoutContext';
 import { LanguageProvider } from './context/LanguageContext';
 import { LanguageModalProvider } from './context/LanguageModalContext';
+import AccountDeletionModal from './app/AccountDeletion/AccountDeletionModal';
+import MaintenanceModal from './app/MaintenanceModal';
 import { SocketProvider } from './context/SocketContext';
 import { UnreadNotificationsProvider } from './context/UnreadNotificationsContext';
+import { getGlobalMaintenanceMode } from './lib/maintenance';
 import type { RootStackParamList } from './types/navigation';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -170,6 +174,7 @@ function RootNavigator() {
           <Stack.Screen name="Travel" component={TravelProtection} />
           <Stack.Screen name="History" component={History} />
           <Stack.Screen name="RewardPoints" component={RewardPointsHistory} />
+          <Stack.Screen name="RewardPointsTerms" component={RewardsTermsCon} />
           <Stack.Screen name="Maya" component={Placeholder} />
           <Stack.Screen name="EwalletService" component={EwalletService} />
           <Stack.Screen name="EwalletContactInfo" component={EwalletContactInfo} />
@@ -230,6 +235,34 @@ function RootNavigator() {
 }
 
 export default function App() {
+  const [maintenanceVisible, setMaintenanceVisible] = useState(false);
+  const [maintenanceMessage, setMaintenanceMessage] = useState(
+    'The app is currently under maintenance. Please try again later.',
+  );
+
+  useEffect(() => {
+    const checkMaintenance = async () => {
+      const mode = await getGlobalMaintenanceMode();
+      setMaintenanceVisible(mode.isEnabled);
+      setMaintenanceMessage(mode.message);
+    };
+
+    void checkMaintenance();
+
+    const appStateSubscription = AppState.addEventListener(
+      'change',
+      (state: AppStateStatus) => {
+        if (state === 'active') {
+          void checkMaintenance();
+        }
+      },
+    );
+
+    return () => {
+      appStateSubscription.remove();
+    };
+  }, []);
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <LanguageProvider>
@@ -238,6 +271,12 @@ export default function App() {
             <UnreadNotificationsProvider>
               <IdleTimeoutProvider>
                 <RootNavigator />
+                {/* Inside IdleTimeoutProvider: ActivityModal uses useIdleTimeout(). */}
+                <AccountDeletionModal />
+                <MaintenanceModal
+                  visible={maintenanceVisible}
+                  message={maintenanceMessage}
+                />
               </IdleTimeoutProvider>
             </UnreadNotificationsProvider>
           </SocketProvider>

@@ -2,13 +2,13 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { useEffect, useState } from "react";
 import {
-  Animated,
-  ImageBackground,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
+    ImageBackground,
+    Modal,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    useWindowDimensions,
+    View,
 } from "react-native";
 import { SvgXml } from "react-native-svg";
 import { useLanguage } from "../../context/LanguageContext";
@@ -41,11 +41,9 @@ interface WalletTabProps {
   userData: { firstName?: string; accountNumber?: string } | null;
   availableBalance: number;
   isBalanceLoading: boolean;
+  agentCommission?: number;
   activeCardDesign?: string | null;
   formatCurrency: (amount: number) => string;
-  flipAnimation: Animated.Value;
-  isCardFlipped: boolean;
-  flipCard: () => void;
   isWithdrawalLocked?: boolean;
   onWithdrawalLockedPress?: () => void;
 }
@@ -89,9 +87,6 @@ export default function WalletTab({
   isBalanceLoading,
   activeCardDesign,
   formatCurrency,
-  flipAnimation,
-  isCardFlipped,
-  flipCard,
   isWithdrawalLocked = false,
   onWithdrawalLockedPress,
 }: WalletTabProps) {
@@ -117,12 +112,24 @@ export default function WalletTab({
   const currencyFontSize = Math.round(11 + cardScale * 7);
   const amountFontSize = Math.round(18 + cardScale * 22);
   const [isBalanceVisible, setIsBalanceVisible] = useState(true);
+  const [showMinimumBalanceWarning, setShowMinimumBalanceWarning] = useState(false);
   const [activeDesign, setActiveDesign] = useState<string | null>(
     activeCardDesign ?? null,
   );
 
   const toggleBalanceVisibility = () => {
     setIsBalanceVisible(!isBalanceVisible);
+  };
+
+  const handleWithdrawPress = () => {
+    if (isWithdrawalLocked) {
+      onWithdrawalLockedPress?.();
+    } else if (availableBalance <= 1000) {
+      // Show warning if balance is at or below minimum required (1000)
+      setShowMinimumBalanceWarning(true);
+    } else {
+      navigation.navigate("Withdraw");
+    }
   };
 
   const maskBalance = (balance: number) => {
@@ -150,24 +157,6 @@ export default function WalletTab({
 
   const theme = getCardTheme(activeDesign);
 
-  const frontInterpolate = flipAnimation.interpolate({
-    inputRange: [0, 180],
-    outputRange: ["0deg", "180deg"],
-  });
-
-  const backInterpolate = flipAnimation.interpolate({
-    inputRange: [0, 180],
-    outputRange: ["180deg", "360deg"],
-  });
-
-  const frontAnimatedStyle = {
-    transform: [{ rotateY: frontInterpolate }],
-  };
-
-  const backAnimatedStyle = {
-    transform: [{ rotateY: backInterpolate }],
-  };
-
   return (
     <View
       style={[
@@ -175,7 +164,7 @@ export default function WalletTab({
         { marginHorizontal: horizontalPadding, height: containerHeight },
       ]}
     >
-      <Animated.View style={[styles.cardFace, frontAnimatedStyle]}>
+      <View style={[styles.cardFace]}>
         <ImageBackground
           source={getDesignFrontImage(activeDesign || undefined)}
           style={[
@@ -199,12 +188,7 @@ export default function WalletTab({
               },
             ]}
           >
-            <TouchableOpacity
-              onPress={flipCard}
-              activeOpacity={1}
-              disabled={true}
-              style={[styles.cardFlipArea, { flex: 0 }]}
-            >
+            <View style={[styles.cardFlipArea, { flex: 0 }]}>
               <View
                 style={[
                   styles.balanceHeader,
@@ -280,7 +264,7 @@ export default function WalletTab({
                   },
                 ]}
               />
-            </TouchableOpacity>
+            </View>
 
             <View
               style={[
@@ -355,13 +339,7 @@ export default function WalletTab({
                         gap: Math.round(7 * spacingScale),
                       },
                     ]}
-                    onPress={() => {
-                      if (isWithdrawalLocked) {
-                        onWithdrawalLockedPress?.();
-                      } else {
-                        navigation.navigate("Withdraw");
-                      }
-                    }}
+                    onPress={handleWithdrawPress}
                     activeOpacity={0.7}
                   >
                     <SvgXml
@@ -374,7 +352,8 @@ export default function WalletTab({
                     <Text
                       style={[
                         styles.cardButtonWithdrawText,
-                        isWithdrawalLocked && styles.cardButtonWithdrawTextLocked,
+                        isWithdrawalLocked &&
+                          styles.cardButtonWithdrawTextLocked,
                         {
                           color: theme.withdrawButtonText,
                           fontSize: Math.round(14 * fontScale),
@@ -385,33 +364,63 @@ export default function WalletTab({
                       {t("dashboard.withdraw")}
                     </Text>
                   </TouchableOpacity>
+
                 </>
               )}
             </View>
           </View>
         </ImageBackground>
-      </Animated.View>
+      </View>
 
-      <Animated.View
-        style={[styles.cardFace, styles.cardBack, backAnimatedStyle]}
-        pointerEvents="none"
+      {/* Minimum Balance Warning Modal */}
+      <Modal
+        visible={showMinimumBalanceWarning}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowMinimumBalanceWarning(false)}
       >
-        <TouchableOpacity
-          onPress={flipCard}
-          activeOpacity={1}
-          style={styles.cardBackTouchable}
-        >
-          <ImageBackground
-            source={getDesignBackImage(activeDesign || undefined)}
-            style={[
-              styles.balanceCard,
-              { width: cardWidth, height: cardHeight },
-            ]}
-            imageStyle={styles.balanceCardImage}
-            resizeMode="cover"
-          />
-        </TouchableOpacity>
-      </Animated.View>
+        <View style={styles.minimumBalanceOverlay}>
+          <View style={styles.minimumBalanceModal}>
+            <View style={styles.minimumBalanceIconContainer}>
+              <Text style={styles.minimumBalanceIcon}>⚠️</Text>
+            </View>
+            <Text style={styles.minimumBalanceTitle}>
+              Cannot Withdraw
+            </Text>
+            <Text style={styles.minimumBalanceMessage}>
+              You must maintain a minimum balance of ₱1,000 to keep your account active.
+            </Text>
+            <View style={styles.minimumBalanceDetails}>
+              <View style={styles.minimumBalanceDetailRow}>
+                <Text style={styles.minimumBalanceDetailLabel}>
+                  Required Minimum
+                </Text>
+                <Text style={styles.minimumBalanceDetailValue}>₱1,000</Text>
+              </View>
+              <View style={styles.minimumBalanceDetailRow}>
+                <Text style={styles.minimumBalanceDetailLabel}>
+                  Current Balance
+                </Text>
+                <Text style={styles.minimumBalanceDetailValue}>
+                  ₱{availableBalance.toLocaleString("en-PH", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </Text>
+              </View>
+            </View>
+            <TouchableOpacity
+              style={styles.minimumBalanceButton}
+              onPress={() => setShowMinimumBalanceWarning(false)}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.minimumBalanceButtonText}>
+                Understood
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -555,5 +564,75 @@ const styles = StyleSheet.create({
     height: 10,
     borderRadius: 5,
     backgroundColor: "rgba(255, 255, 255, 0.55)",
+  },
+  minimumBalanceOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 24,
+  },
+  minimumBalanceModal: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    padding: 24,
+    alignItems: "center",
+    maxWidth: 320,
+  },
+  minimumBalanceIconContainer: {
+    marginBottom: 16,
+  },
+  minimumBalanceIcon: {
+    fontSize: 48,
+  },
+  minimumBalanceTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#E25A17",
+    marginBottom: 12,
+    textAlign: "center",
+  },
+  minimumBalanceMessage: {
+    fontSize: 14,
+    color: "#666",
+    textAlign: "center",
+    marginBottom: 24,
+    lineHeight: 20,
+  },
+  minimumBalanceDetails: {
+    backgroundColor: "#F5F5F5",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 24,
+    width: "100%",
+  },
+  minimumBalanceDetailRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginVertical: 8,
+  },
+  minimumBalanceDetailLabel: {
+    fontSize: 13,
+    color: "#999",
+    fontWeight: "500",
+  },
+  minimumBalanceDetailValue: {
+    fontSize: 14,
+    color: "#333",
+    fontWeight: "700",
+  },
+  minimumBalanceButton: {
+    backgroundColor: "#E25A17",
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    width: "100%",
+    alignItems: "center",
+  },
+  minimumBalanceButtonText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#FFFFFF",
   },
 });

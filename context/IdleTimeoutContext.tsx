@@ -11,6 +11,7 @@ import {
   Animated,
   AppState,
   AppStateStatus,
+  Platform,
   PanResponder,
   useWindowDimensions,
   Modal,
@@ -22,9 +23,10 @@ import {
 import { useLanguage } from "./LanguageContext";
 import { navigationRef } from "../lib/navigationRef";
 
-const INACTIVITY_LIMIT_MS = 150 * 1000; // 2 minutes 30 seconds
+const INACTIVITY_LIMIT_MS = 180 * 1000; // 3 minutes
 const CHECK_INTERVAL_MS = 5 * 1000; // frequent checks for consistent timeout timing
 const ACTIVITY_PERSIST_THROTTLE_MS = 15 * 1000; // avoid storage write on every touch
+const BACKGROUND_LOCK_DELAY_MS = 30000; // avoid false locks from permission/system prompts on Android
 const LAST_ACTIVITY_KEY = "lastActivityAt";
 const IDLE_SESSION_ACTIVE_KEY = "idleSessionActive";
 
@@ -42,6 +44,7 @@ interface IdleTimeoutContextValue {
   getActivityProps: () => IdleActivityProps;
   startIdleSession: () => void;
   stopIdleSession: () => void;
+  runWithSystemPromptGuard: <T>(operation: () => Promise<T>) => Promise<T>;
   isSessionActive: boolean;
 }
 
@@ -58,6 +61,10 @@ export const IdleTimeoutProvider: React.FC<{ children: React.ReactNode }> = ({
   const appStateRef = useRef<AppStateStatus>(AppState.currentState);
   const hasLoggedOutRef = useRef(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const backgroundLogoutTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+  const systemPromptDepthRef = useRef(0);
   const [isSessionActive, setIsSessionActive] = useState(false);
 
   const [showModal, setShowModal] = useState(false);
@@ -120,6 +127,28 @@ export const IdleTimeoutProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, []);
 
+  const clearBackgroundLogoutTimer = useCallback(() => {
+    if (backgroundLogoutTimerRef.current) {
+      clearTimeout(backgroundLogoutTimerRef.current);
+      backgroundLogoutTimerRef.current = null;
+    }
+  }, []);
+
+  const runWithSystemPromptGuard = useCallback(
+    async <T,>(operation: () => Promise<T>): Promise<T> => {
+      systemPromptDepthRef.current += 1;
+      try {
+        return await operation();
+      } finally {
+        systemPromptDepthRef.current = Math.max(0, systemPromptDepthRef.current - 1);
+        if (appStateRef.current === "active") {
+          registerActivityRef.current();
+        }
+      }
+    },
+    [],
+  );
+
   const performLogout = useCallback(async (skipModal: boolean = false) => {
     if (hasLoggedOutRef.current) return;
     hasLoggedOutRef.current = true;
@@ -130,6 +159,7 @@ export const IdleTimeoutProvider: React.FC<{ children: React.ReactNode }> = ({
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
+    clearBackgroundLogoutTimer();
 
     await clearAuthData();
 
@@ -157,7 +187,7 @@ export const IdleTimeoutProvider: React.FC<{ children: React.ReactNode }> = ({
         }),
       ]).start();
     }
-  }, [clearAuthData, fadeAnim, scaleAnim]);
+  }, [clearAuthData, clearBackgroundLogoutTimer, fadeAnim, scaleAnim]);
 
   const handleModalDismiss = useCallback(() => {
     Animated.parallel([
@@ -189,6 +219,7 @@ export const IdleTimeoutProvider: React.FC<{ children: React.ReactNode }> = ({
       // Reset the logout flag for new session
       hasLoggedOutRef.current = false;
     }
+    clearBackgroundLogoutTimer();
     const now = Date.now();
     lastActivityRef.current = now;
     lastPersistedActivityRef.current = now;
@@ -199,7 +230,7 @@ export const IdleTimeoutProvider: React.FC<{ children: React.ReactNode }> = ({
     } catch {
       // ignore
     }
-  }, []);
+  }, [clearBackgroundLogoutTimer]);
 
   // Stop idle session - called on manual logout
   const stopIdleSession = useCallback(async () => {
@@ -208,13 +239,14 @@ export const IdleTimeoutProvider: React.FC<{ children: React.ReactNode }> = ({
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
+    clearBackgroundLogoutTimer();
     try {
       await AsyncStorage.removeItem(IDLE_SESSION_ACTIVE_KEY);
       await AsyncStorage.removeItem(LAST_ACTIVITY_KEY);
     } catch {
       // ignore
     }
-  }, []);
+  }, [clearBackgroundLogoutTimer]);
 
   // Exposed to screens/components to mark explicit user activity
   const registerActivity = useCallback(() => {
@@ -315,9 +347,28 @@ export const IdleTimeoutProvider: React.FC<{ children: React.ReactNode }> = ({
 
         if (!isSessionActive) return;
 
-        // When going into the background, immediately lock the app
+        // On Android, many permission/system flows transiently push app state to background.
+        // Avoid forcing Passcode on these transitions; rely on inactivity timer instead.
+        if (Platform.OS === "android" && nextState === "background") {
+          clearBackgroundLogoutTimer();
+          return;
+        }
+
+        // On iOS (and other platforms), keep background lock behavior with a grace delay.
         if (nextState === "background") {
-          performLogout(true);
+          if (systemPromptDepthRef.current > 0) {
+            return;
+          }
+          clearBackgroundLogoutTimer();
+          backgroundLogoutTimerRef.current = setTimeout(() => {
+            if (
+              appStateRef.current === "background" &&
+              isSessionActive &&
+              !hasLoggedOutRef.current
+            ) {
+              void performLogout(true);
+            }
+          }, BACKGROUND_LOCK_DELAY_MS);
           return;
         }
 
@@ -330,9 +381,10 @@ export const IdleTimeoutProvider: React.FC<{ children: React.ReactNode }> = ({
         // When coming back to foreground from inactive state, give a fresh 2:30 inactivity window.
         // This prevents "remaining few seconds" expirations after returning from transient inactive.
         if (
-          prevState === "inactive" &&
+          (prevState === "inactive" || prevState === "background") &&
           nextState === "active"
         ) {
+          clearBackgroundLogoutTimer();
           const now = Date.now();
           lastActivityRef.current = now;
           lastPersistedActivityRef.current = now;
@@ -344,13 +396,14 @@ export const IdleTimeoutProvider: React.FC<{ children: React.ReactNode }> = ({
     );
 
     return () => {
+      clearBackgroundLogoutTimer();
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
       subscription.remove();
     };
-  }, [isSessionActive, performLogout]);
+  }, [clearBackgroundLogoutTimer, isSessionActive, performLogout]);
 
   return (
     <IdleTimeoutContext.Provider
@@ -359,6 +412,7 @@ export const IdleTimeoutProvider: React.FC<{ children: React.ReactNode }> = ({
         getActivityProps,
         startIdleSession,
         stopIdleSession,
+        runWithSystemPromptGuard,
         isSessionActive,
       }}
     >

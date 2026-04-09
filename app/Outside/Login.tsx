@@ -3,20 +3,39 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
-import * as SecureStore from 'expo-secure-store';
-import { registerIndieID } from 'native-notify';
+import * as SecureStore from "expo-secure-store";
+import { registerIndieID } from "native-notify";
 import { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Animated, BackHandler, Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, useWindowDimensions, View } from "react-native";
+import {
+    ActivityIndicator,
+    Animated,
+    BackHandler,
+    Keyboard,
+    KeyboardAvoidingView,
+    Platform,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    useWindowDimensions,
+    View,
+} from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { forgotPassword, login } from "../../configs/api";
 import { useLanguage } from "../../context/LanguageContext";
 import { useLanguageModal } from "../../context/LanguageModalContext";
+import {
+    ANNOUNCEMENT_SESSION_ASYNC_KEYS,
+    startNewAnnouncementLoginSession,
+} from "../../lib/announcementLoginSession";
 import type { NavProp } from "../../types/navigation";
 import { useResponsive } from "../../utils/responsive";
 import Loader from "../Loader/Loader";
 
-import ActivityModal from '../components/ActivityModal';
+import ActivityModal from "../components/ActivityModal";
 const GRADIENT_START = "#E15816";
 const GRADIENT_END = "#F48F38";
 const WHITE = "#FFFFFF";
@@ -88,9 +107,7 @@ function PasswordResetRequiredModal({
       if (result.success) {
         setPhase("sent");
       } else {
-        setErrorMsg(
-          result.error || t("login.resetEmailFailed"),
-        );
+        setErrorMsg(result.error || t("login.resetEmailFailed"));
         setPhase("error");
       }
     } catch {
@@ -221,8 +238,10 @@ function ForgotPasswordInputModal({
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.9)).current;
   const [inputEmail, setInputEmail] = useState(initialEmail);
-  const [phase, setPhase] = useState<'input' | 'sending' | 'sent' | 'error'>('input');
-  const [errorMsg, setErrorMsg] = useState('');
+  const [phase, setPhase] = useState<"input" | "sending" | "sent" | "error">(
+    "input",
+  );
+  const [errorMsg, setErrorMsg] = useState("");
 
   const mapForgotPasswordError = (message?: string) => {
     if (!message) return "";
@@ -237,16 +256,33 @@ function ForgotPasswordInputModal({
   useEffect(() => {
     if (visible) {
       setInputEmail(initialEmail);
-      setPhase('input');
-      setErrorMsg('');
+      setPhase("input");
+      setErrorMsg("");
       Animated.parallel([
-        Animated.timing(fadeAnim, { toValue: 1, duration: 200, useNativeDriver: true }),
-        Animated.spring(scaleAnim, { toValue: 1, tension: 100, friction: 8, useNativeDriver: true }),
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          tension: 100,
+          friction: 8,
+          useNativeDriver: true,
+        }),
       ]).start();
     } else {
       Animated.parallel([
-        Animated.timing(fadeAnim, { toValue: 0, duration: 150, useNativeDriver: true }),
-        Animated.timing(scaleAnim, { toValue: 0.9, duration: 150, useNativeDriver: true }),
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 0.9,
+          duration: 150,
+          useNativeDriver: true,
+        }),
       ]).start();
     }
   }, [visible]);
@@ -257,21 +293,23 @@ function ForgotPasswordInputModal({
     const trimmed = inputEmail.trim();
     if (!trimmed) {
       setErrorMsg(t("auth.pleaseEnterEmail"));
-      setPhase('error');
+      setPhase("error");
       return;
     }
-    setPhase('sending');
+    setPhase("sending");
     try {
       const result = await forgotPassword(trimmed);
       if (result.success) {
-        setPhase('sent');
+        setPhase("sent");
       } else {
-        setErrorMsg(mapForgotPasswordError(result.error) || t("login.resetEmailFailed"));
-        setPhase('error');
+        setErrorMsg(
+          mapForgotPasswordError(result.error) || t("login.resetEmailFailed"),
+        );
+        setPhase("error");
       }
     } catch {
       setErrorMsg(t("auth.networkError"));
-      setPhase('error');
+      setPhase("error");
     }
   };
 
@@ -283,7 +321,10 @@ function ForgotPasswordInputModal({
         keyboardVerticalOffset={Platform.OS === "ios" ? 16 : 0}
       >
         <Animated.View style={[modalStyles.overlay, { opacity: fadeAnim }]}>
-          <Pressable style={StyleSheet.absoluteFill} onPress={phase === 'sent' ? onClose : undefined} />
+          <Pressable
+            style={StyleSheet.absoluteFill}
+            onPress={phase === "sent" ? onClose : undefined}
+          />
           <Animated.View
             style={[
               modalStyles.box,
@@ -301,40 +342,71 @@ function ForgotPasswordInputModal({
               keyboardShouldPersistTaps="handled"
               bounces={false}
             >
-              {phase === 'sent' ? (
+              {phase === "sent" ? (
                 <>
-                  <View style={[modalStyles.iconWrap, { backgroundColor: 'rgba(34,197,94,0.18)' }]}>
-                    <Text style={[modalStyles.iconText, { color: '#22c55e' }]}>✓</Text>
+                  <View
+                    style={[
+                      modalStyles.iconWrap,
+                      { backgroundColor: "rgba(34,197,94,0.18)" },
+                    ]}
+                  >
+                    <Text style={[modalStyles.iconText, { color: "#22c55e" }]}>
+                      ✓
+                    </Text>
                   </View>
-                  <Text style={modalStyles.title}>{t("auth.emailSentTitle")}</Text>
+                  <Text style={modalStyles.title}>
+                    {t("auth.emailSentTitle")}
+                  </Text>
                   <Text style={modalStyles.message}>
-                    {t("auth.emailSentMessage").replace("{email}", inputEmail.trim())}
+                    {t("auth.emailSentMessage").replace(
+                      "{email}",
+                      inputEmail.trim(),
+                    )}
                   </Text>
                   <View style={modalStyles.buttonsRow}>
-                    <TouchableOpacity style={modalStyles.button} onPress={onClose} activeOpacity={0.8}>
-                      <Text style={modalStyles.buttonText}>{t("auth.backToLogin")}</Text>
+                    <TouchableOpacity
+                      style={modalStyles.button}
+                      onPress={onClose}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={modalStyles.buttonText}>
+                        {t("auth.backToLogin")}
+                      </Text>
                     </TouchableOpacity>
                   </View>
                 </>
-              ) : phase === 'sending' ? (
+              ) : phase === "sending" ? (
                 <>
                   <View style={modalStyles.iconWrap}>
                     <Text style={modalStyles.iconText}>…</Text>
                   </View>
-                  <Text style={modalStyles.title}>{t("auth.sendingEmail")}</Text>
-                  <Text style={modalStyles.message}>{t("auth.sendingEmailMessage").replace("{email}", inputEmail.trim())}</Text>
-                  <ActivityIndicator color={GRADIENT_START} size="large" style={{ marginTop: 4 }} />
+                  <Text style={modalStyles.title}>
+                    {t("auth.sendingEmail")}
+                  </Text>
+                  <Text style={modalStyles.message}>
+                    {t("auth.sendingEmailMessage").replace(
+                      "{email}",
+                      inputEmail.trim(),
+                    )}
+                  </Text>
+                  <ActivityIndicator
+                    color={GRADIENT_START}
+                    size="large"
+                    style={{ marginTop: 4 }}
+                  />
                 </>
               ) : (
                 <>
                   <View style={modalStyles.iconWrap}>
                     <Text style={modalStyles.iconText}>🔑</Text>
                   </View>
-                  <Text style={modalStyles.title}>{t("auth.forgotPasswordTitle")}</Text>
+                  <Text style={modalStyles.title}>
+                    {t("auth.forgotPasswordTitle")}
+                  </Text>
                   <Text style={[modalStyles.message, { marginBottom: 12 }]}>
                     {t("auth.forgotPasswordMessage")}
                   </Text>
-                  {phase === 'error' && (
+                  {phase === "error" && (
                     <Text style={forgotInputStyles.errorText}>{errorMsg}</Text>
                   )}
                   <TextInput
@@ -342,7 +414,10 @@ function ForgotPasswordInputModal({
                     placeholder={t("auth.emailPlaceholder")}
                     placeholderTextColor="#AAAAAA"
                     value={inputEmail}
-                    onChangeText={(val) => { setInputEmail(val); if (phase === 'error') setPhase('input'); }}
+                    onChangeText={(val) => {
+                      setInputEmail(val);
+                      if (phase === "error") setPhase("input");
+                    }}
                     keyboardType="email-address"
                     autoCapitalize="none"
                     autoCorrect={false}
@@ -356,14 +431,18 @@ function ForgotPasswordInputModal({
                       onPress={onClose}
                       activeOpacity={0.8}
                     >
-                      <Text style={modalStyles.buttonSecondaryText}>{t("common.cancel")}</Text>
+                      <Text style={modalStyles.buttonSecondaryText}>
+                        {t("common.cancel")}
+                      </Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={modalStyles.button}
                       onPress={handleSend}
                       activeOpacity={0.8}
                     >
-                      <Text style={modalStyles.buttonText}>{t("auth.sendLink")}</Text>
+                      <Text style={modalStyles.buttonText}>
+                        {t("auth.sendLink")}
+                      </Text>
                     </TouchableOpacity>
                   </View>
                 </>
@@ -387,23 +466,23 @@ const forgotInputStyles = StyleSheet.create({
     alignItems: "center",
   },
   emailInput: {
-    width: '100%',
+    width: "100%",
     borderWidth: 1.5,
-    borderColor: '#E0E0E0',
+    borderColor: "#E0E0E0",
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 13,
     fontSize: 15,
-    color: '#333',
+    color: "#333",
     marginBottom: 16,
-    backgroundColor: '#FAFAFA',
-    textAlign: 'left',
+    backgroundColor: "#FAFAFA",
+    textAlign: "left",
   },
   errorText: {
     fontSize: 13,
-    color: '#E53E3E',
+    color: "#E53E3E",
     marginBottom: 10,
-    textAlign: 'center',
+    textAlign: "center",
   },
 });
 
@@ -602,8 +681,13 @@ export default function Login() {
   const navigation = useNavigation();
   const route = useRoute();
   const insets = useSafeAreaInsets();
-  const { scale, verticalScale, horizontalPadding, isShortScreen, isSmallScreen } =
-    useResponsive();
+  const {
+    scale,
+    verticalScale,
+    horizontalPadding,
+    isShortScreen,
+    isSmallScreen,
+  } = useResponsive();
   const { height: windowHeight } = useWindowDimensions();
   const fromSignOut = (route.params as { fromSignOut?: boolean } | undefined)
     ?.fromSignOut;
@@ -624,6 +708,7 @@ export default function Login() {
           "user",
           "passcodeLoginComplete",
           "registrationPasscodePending",
+          ...ANNOUNCEMENT_SESSION_ASYNC_KEYS,
         ]);
         const savedEmail = await AsyncStorage.getItem("lastLoggedEmail");
         if (savedEmail) {
@@ -731,10 +816,7 @@ export default function Login() {
         const priorAccountEmail =
           lastEmail?.toLowerCase() ?? enrolledEmail?.toLowerCase() ?? null;
 
-        if (
-          priorAccountEmail &&
-          priorAccountEmail !== currentEmail
-        ) {
+        if (priorAccountEmail && priorAccountEmail !== currentEmail) {
           await SecureStore.deleteItemAsync("biometricToken");
           await AsyncStorage.removeItem("biometricEmail");
         }
@@ -745,6 +827,7 @@ export default function Login() {
 
       await AsyncStorage.setItem("access_token", result.access_token || "");
       await AsyncStorage.setItem("user", JSON.stringify(result.user || {}));
+      await startNewAnnouncementLoginSession();
       await AsyncStorage.removeItem("passcodeLoginComplete");
 
       // Save password securely for silent auto-login on next app launch.
@@ -803,8 +886,12 @@ export default function Login() {
   // Responsive logo/form sizes for smaller screens
   const logoWidth = isSmallScreen ? scale(220) : scale(260);
   const logoHeight = isSmallScreen ? scale(118) : scale(140);
-  const logoMarginBottom = isShortScreen ? verticalScale(20) : verticalScale(32);
-  const formPaddingBottom = isShortScreen ? verticalScale(60) : verticalScale(100);
+  const logoMarginBottom = isShortScreen
+    ? verticalScale(20)
+    : verticalScale(32);
+  const formPaddingBottom = isShortScreen
+    ? verticalScale(60)
+    : verticalScale(100);
 
   return (
     <>
@@ -826,10 +913,7 @@ export default function Login() {
           ]}
         >
           <View
-            style={[
-              styles.header,
-              { paddingHorizontal: horizontalPadding },
-            ]}
+            style={[styles.header, { paddingHorizontal: horizontalPadding }]}
           >
             {fromSignOut ? (
               <View
@@ -884,7 +968,12 @@ export default function Login() {
               {
                 paddingHorizontal: horizontalPadding,
                 paddingBottom: formPaddingBottom,
-                minHeight: isWeb ? undefined : Math.max(400, windowHeight - insets.top - insets.bottom - 160),
+                minHeight: isWeb
+                  ? undefined
+                  : Math.max(
+                      400,
+                      windowHeight - insets.top - insets.bottom - 160,
+                    ),
               },
             ]}
             showsVerticalScrollIndicator={false}
@@ -896,9 +985,7 @@ export default function Login() {
             keyboardOpeningTime={0}
             viewIsInsideTabBar={false}
           >
-            <View
-              style={[styles.logoWrap, { marginBottom: logoMarginBottom }]}
-            >
+            <View style={[styles.logoWrap, { marginBottom: logoMarginBottom }]}>
               <Image
                 source={require("../../assets/images/InpireLogo.png")}
                 style={[styles.logo, { width: logoWidth, height: logoHeight }]}
@@ -910,7 +997,10 @@ export default function Login() {
 
             <View style={[styles.form, isShortScreen && { gap: 0 }]}>
               <TextInput
-                style={[styles.input, isShortScreen && { minHeight: 48, paddingVertical: 12 }]}
+                style={[
+                  styles.input,
+                  isShortScreen && { minHeight: 48, paddingVertical: 12 },
+                ]}
                 placeholder={t("auth.emailPlaceholder")}
                 placeholderTextColor="rgba(255,255,255,0.85)"
                 value={email}
@@ -922,9 +1012,14 @@ export default function Login() {
                 autoComplete="email"
               />
 
-              <View style={[styles.passwordRow, isShortScreen && { minHeight: 48 }]}>
+              <View
+                style={[styles.passwordRow, isShortScreen && { minHeight: 48 }]}
+              >
                 <TextInput
-                  style={[styles.passwordInput, isShortScreen && { paddingVertical: 12 }]}
+                  style={[
+                    styles.passwordInput,
+                    isShortScreen && { paddingVertical: 12 },
+                  ]}
                   placeholder={t("auth.passwordPlaceholder")}
                   placeholderTextColor="rgba(255,255,255,0.85)"
                   value={password}
@@ -948,40 +1043,6 @@ export default function Login() {
               </View>
 
               <TouchableOpacity
-                style={[styles.passcodeLinkWrap, isShortScreen && { marginBottom: 16 }]}
-                onPress={async () => {
-                  const token = await AsyncStorage.getItem("access_token");
-                  const userJson = await AsyncStorage.getItem("user");
-                  const user = userJson
-                    ? (JSON.parse(userJson) as { hasPasscode?: boolean })
-                    : null;
-                  if (token && user?.hasPasscode) {
-                    (navigation as unknown as NavProp).replace("Passcode");
-                  } else if (!token) {
-                    showModal({
-                      title: t("auth.passcodeLoginTitle"),
-                      message: t("auth.passcodeLoginMessage"),
-                      type: "info",
-                      confirmText: t("common.ok"),
-                      secondaryText: t("auth.register"),
-                      onSecondary: () =>
-                        (navigation as unknown as NavProp).replace("Register"),
-                    });
-                  } else {
-                    showModal({
-                      title: t("auth.noPasscodeSetTitle"),
-                      message: t("auth.noPasscodeSetMessage"),
-                      type: "info",
-                    });
-                  }
-                }}
-              >
-                <Text style={styles.passcodeLinkText}>
-                  {t("auth.usePasscodeInstead")}
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
                 style={[
                   styles.loginButton,
                   isShortScreen && { minHeight: 48 },
@@ -1002,7 +1063,9 @@ export default function Login() {
                 style={styles.forgotWrap}
                 onPress={() => setForgotModalVisible(true)}
               >
-                <Text style={styles.forgotText}>{t("auth.forgotPassword")}</Text>
+                <Text style={styles.forgotText}>
+                  {t("auth.forgotPassword")}
+                </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -1041,7 +1104,7 @@ export default function Login() {
           setResetModalVisible(false);
           pendingNavRef.current = null;
           // Clear password so the user must type their new password on next attempt
-          setPassword('');
+          setPassword("");
         }}
         email={resetModalEmail}
       />

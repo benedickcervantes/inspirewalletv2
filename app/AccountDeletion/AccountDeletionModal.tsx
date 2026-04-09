@@ -5,14 +5,20 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { unregisterIndieDevice } from 'native-notify';
 import { useEffect,
   useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { useLanguage } from '../../context/LanguageContext';
 import {
     subscribeToAccountDeletionApproved,
     subscribeToAccountDeletionRejected,
 } from '../../lib/accountDeletionEvents';
+import { ANNOUNCEMENT_SESSION_ASYNC_KEYS } from '../../lib/announcementLoginSession';
 import { navigateToWelcome } from '../../lib/navigationRef';
-import { TouchableOpacity } from "react-native-gesture-handler";
 
 import ActivityModal from '../components/ActivityModal';
 type ModalState = 'none' | 'approved' | 'rejected';
@@ -61,6 +67,7 @@ export default function AccountDeletionModal() {
         'user',
         'passcodeLoginComplete',
         'registrationPasscodePending',
+        ...ANNOUNCEMENT_SESSION_ASYNC_KEYS,
       ]);
     } catch (_) {}
     navigateToWelcome();
@@ -85,13 +92,17 @@ export default function AccountDeletionModal() {
             <Ionicons name="checkmark-circle" size={56} color="#FFFFFF" style={styles.icon} />
             <Text style={styles.title}>{t('delete.approvedTitle')}</Text>
             <Text style={styles.message}>{t('delete.approvedMessage')}</Text>
-            <TouchableOpacity
-              style={styles.button}
-              onPress={handleApprovedClose}
-              activeOpacity={0.8}
+            <Pressable
+              style={({ pressed }) => [
+                styles.button,
+                styles.buttonApproved,
+                pressed && styles.buttonPressed,
+              ]}
+              onPress={() => void handleApprovedClose()}
+              android_ripple={{ color: 'rgba(0,0,0,0.12)' }}
             >
               <Text style={styles.buttonText}>{t('common.ok')}</Text>
-            </TouchableOpacity>
+            </Pressable>
           </LinearGradient>
         </View>
       </ActivityModal>
@@ -121,13 +132,17 @@ export default function AccountDeletionModal() {
               </ScrollView>
             </View>
           ) : null}
-          <TouchableOpacity
-            style={[styles.button, styles.rejectedButton]}
+          <Pressable
+            style={({ pressed }) => [
+              styles.button,
+              styles.rejectedButton,
+              pressed && styles.buttonPressed,
+            ]}
             onPress={handleRejectedClose}
-            activeOpacity={0.8}
+            android_ripple={{ color: 'rgba(255,255,255,0.2)' }}
           >
             <Text style={[styles.buttonText, { color: '#FFFFFF' }]}>{t('common.ok')}</Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
       </View>
     </ActivityModal>
@@ -185,11 +200,20 @@ const styles = StyleSheet.create({
     opacity: 0.95,
   },
   button: {
-    alignSelf: 'flex-end',
     backgroundColor: '#FFFFFF',
-    paddingVertical: 10,
+    paddingVertical: 14,
     paddingHorizontal: 24,
     borderRadius: 8,
+    minHeight: 48,
+    justifyContent: 'center',
+  },
+  /** Full-width tap target — avoids RNGH/Modal issues and small hit areas on phones. */
+  buttonApproved: {
+    alignSelf: 'stretch',
+    alignItems: 'center',
+  },
+  buttonPressed: {
+    opacity: 0.85,
   },
   rejectedButton: {
     alignSelf: 'stretch',

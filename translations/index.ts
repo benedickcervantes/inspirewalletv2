@@ -7,7 +7,8 @@ export type TranslationMap = Record<string, string>;
 
 const en: TranslationMap = {
   "investment.processingRequestTitle": "Processing Request",
-  "investment.processingRequestMessage": "This contract feature is currently in processing. It could take 7 to 10 days to reflect. Thank you for your understanding.",
+  "investment.processingRequestMessage":
+    "This contract feature is currently in processing. It could take 7 to 10 days to reflect. Thank you for your understanding.",
   "kyc.takePhoto": "Take a Photo",
   "kyc.chooseFromLibrary": "Choose from Library",
   "kyc.selectUploadMethod": "Select Upload Method",
@@ -25,6 +26,9 @@ const en: TranslationMap = {
   "dashboard.underMaintenance": "Under maintenance",
   "dashboard.maintenanceMessage":
     "This service is currently under maintenance. We're working hard to bring you an improved experience. Please check back soon!",
+  "maintenance.featureInMaintenanceTitle": "Maintenance mode",
+  "maintenance.featureInMaintenanceMessage":
+    "This feature is currently in maintenance mode. Please try again later.",
   "dashboard.gotIt": "Got it",
   "pcard.title": "Premium Card Holder",
   "pcard.subtitle":
@@ -319,6 +323,7 @@ const en: TranslationMap = {
   "dashboard.withdraw": "Withdraw",
   "dashboard.createdByInspire": "Created by Inspire",
   "dashboard.availableBalance": "Available Balance",
+  "dashboard.inspireCard": "Inspire Card",
   "dashboard.loadingDashboard": "LOADING DASHBOARD...",
   "dashboard.loadingAgent": "LOADING AGENT...",
   "dashboard.loadingSupport": "LOADING SUPPORT...",
@@ -378,6 +383,120 @@ const en: TranslationMap = {
   "rewardPoints.campaignInfo":
     "Every ₱{min} transfer earns {earned} points. Max ₱{max}/day.",
   "rewardPoints.gotIt": "Got It",
+  "rewardPoints.termsLink": "Wallet service & campaign policy",
+  "rewardPoints.termsScreenTitle": "Terms & conditions",
+  "rewardPoints.terms.mainTitle": "Terms and Conditions",
+  "rewardPoints.terms.subtitle": "Wallet Service & Campaign Policy",
+  "rewardPoints.terms.notice":
+    "Please review before using Reward Points services.",
+  "rewardPoints.terms.section1.title": "1. Introduction",
+  "rewardPoints.terms.section1.body1":
+    "These Terms and Conditions (\"Terms\") govern your use of the Wallet Service (\"Service\") provided by Inspire Holdings Inc. (\"Company\").",
+  "rewardPoints.terms.section1.body2":
+    "By using this Service, you agree to comply with all terms stated herein.",
+  "rewardPoints.terms.section2.title": "2. Eligibility",
+  "rewardPoints.terms.section2.item1":
+    "Users must complete identity verification (KYC).",
+  "rewardPoints.terms.section2.item2":
+    "Users must provide accurate and valid information.",
+  "rewardPoints.terms.section2.item3":
+    "The Company reserves the right to reject or suspend any account.",
+  "rewardPoints.terms.section3.title": "3. Wallet Usage",
+  "rewardPoints.terms.section3.item1":
+    "Users may send, receive, and manage funds within the wallet.",
+  "rewardPoints.terms.section3.item2":
+    "All transactions must comply with applicable laws and regulations.",
+  "rewardPoints.terms.section3.item3":
+    "The Company may impose limits, restrictions, or monitoring at any time.",
+  "rewardPoints.terms.section4.title": "4. Campaign Rewards",
+  "rewardPoints.terms.section4.eligibilityTitle": "4.1 Eligibility Rules",
+  "rewardPoints.terms.section4.eligibilityItem1":
+    "Rewards are granted only for legitimate transactions.",
+  "rewardPoints.terms.section4.eligibilityItem2":
+    "Only one transaction per day per user pair is eligible.",
+  "rewardPoints.terms.section4.eligibilityItem3":
+    "Repeated transactions with the same user will not earn rewards.",
+  "rewardPoints.terms.section4.restrictionsTitle": "4.2 Restrictions",
+  "rewardPoints.terms.section4.restrictionsItem1":
+    "Circular transactions (A -> B -> A) are prohibited.",
+  "rewardPoints.terms.section4.restrictionsItem2":
+    "Use of multiple or related accounts is prohibited.",
+  "rewardPoints.terms.section4.restrictionsItem3":
+    "Any artificial manipulation of rewards is prohibited.",
+  "rewardPoints.terms.section4.adjustmentTitle": "4.3 Reward Adjustment",
+  "rewardPoints.terms.section4.adjustmentBody":
+    "The Company reserves the right to:",
+  "rewardPoints.terms.section4.adjustmentItem1": "Cancel rewards.",
+  "rewardPoints.terms.section4.adjustmentItem2": "Adjust reward amounts.",
+  "rewardPoints.terms.section4.adjustmentItem3":
+    "Modify or terminate campaigns at any time.",
+  "rewardPoints.terms.section5.title": "5. Maintenance Balance Requirement",
+  "rewardPoints.terms.section5.item1":
+    "Users must maintain a minimum balance of PHP 1,000.",
+  "rewardPoints.terms.section5.item2":
+    "Accounts below this threshold may not be eligible for rewards.",
+  "rewardPoints.terms.section6.title": "6. Transaction Limits",
+  "rewardPoints.terms.section6.item1":
+    "Daily eligible transaction limit: PHP 10,000.",
+  "rewardPoints.terms.section6.item2":
+    "Additional limits may be applied without prior notice.",
+  "rewardPoints.terms.section7.title": "7. Monitoring and Compliance",
+  "rewardPoints.terms.section7.body1":
+    "The Company reserves the right to monitor all activities including:",
+  "rewardPoints.terms.section7.item1": "Transaction patterns.",
+  "rewardPoints.terms.section7.item2":
+    "Suspicious or unusual behavior.",
+  "rewardPoints.terms.section7.item3":
+    "KYC duplication (name, ID, device, IP, phone number).",
+  "rewardPoints.terms.section7.body2":
+    "Accounts suspected of violating these Terms may be:",
+  "rewardPoints.terms.section7.item4": "Restricted.",
+  "rewardPoints.terms.section7.item5": "Suspended.",
+  "rewardPoints.terms.section7.item6": "Permanently terminated.",
+  "rewardPoints.terms.section8.title": "8. Notifications",
+  "rewardPoints.terms.section8.body1":
+    "Users will receive notifications via:",
+  "rewardPoints.terms.section8.item1": "In-app messages.",
+  "rewardPoints.terms.section8.item2": "Email.",
+  "rewardPoints.terms.section8.item3":
+    "SMS (for important alerts).",
+  "rewardPoints.terms.section8.body2":
+    "Notifications may include:",
+  "rewardPoints.terms.section8.item4": "Transaction confirmation.",
+  "rewardPoints.terms.section8.item5": "Reward status.",
+  "rewardPoints.terms.section8.item6": "Reasons for ineligibility.",
+  "rewardPoints.terms.section8.item7": "Warnings or account notices.",
+  "rewardPoints.terms.section9.title": "9. Fees",
+  "rewardPoints.terms.section9.item1":
+    "Certain transactions may be subject to fees (e.g., withdrawal fees).",
+  "rewardPoints.terms.section9.item2":
+    "All applicable fees will be disclosed within the Service.",
+  "rewardPoints.terms.section10.title": "10. Risk Disclosure",
+  "rewardPoints.terms.section10.body1": "Users acknowledge that:",
+  "rewardPoints.terms.section10.item1":
+    "Service availability may be affected by system maintenance or external factors.",
+  "rewardPoints.terms.section10.item2":
+    "Delays or interruptions may occur.",
+  "rewardPoints.terms.section10.item3":
+    "The Company is not liable for losses caused by system issues beyond reasonable control.",
+  "rewardPoints.terms.section11.title": "11. Limitation of Liability",
+  "rewardPoints.terms.section11.body1":
+    "The Company shall not be liable for:",
+  "rewardPoints.terms.section11.item1":
+    "User misuse or violation of Terms.",
+  "rewardPoints.terms.section11.item2":
+    "Unauthorized access due to user negligence.",
+  "rewardPoints.terms.section11.item3":
+    "External system failures or force majeure events.",
+  "rewardPoints.terms.section12.title": "12. Amendments",
+  "rewardPoints.terms.section12.body1":
+    "The Company reserves the right to update or modify these Terms at any time. Continued use of the Service constitutes acceptance of updated Terms.",
+  "rewardPoints.terms.section13.title": "13. Governing Law",
+  "rewardPoints.terms.section13.body1":
+    "These Terms shall be governed by the laws applicable in the Philippines.",
+  "rewardPoints.terms.section14.title": "14. Contact",
+  "rewardPoints.terms.section14.body1":
+    "For inquiries, please contact customer support.",
 
   // Withdraw
   "withdraw.fromAvailableBalance": "Withdraw from available balance",
@@ -422,6 +541,9 @@ const en: TranslationMap = {
   "withdraw.placeholder.accNumber": "Enter account number",
   "withdraw.placeholder.accHolder": "e.g. Juan Dela Cruz",
   "withdraw.placeholder.bankName": "e.g. Security Bank",
+  "withdraw.placeholder.customBankName": "Enter your bank name",
+  "withdraw.bankNameOtherHint":
+    "You chose Other — type the full name of your bank below.",
   "withdraw.placeholder.branchName": "e.g. Makati Branch",
   "withdraw.placeholder.email": "e.g. name@example.com",
   "withdraw.placeholder.walletAccNumber": "Enter wallet account number",
@@ -445,6 +567,20 @@ const en: TranslationMap = {
   "withdraw.validation.walletType": "Please select an e-wallet type",
   "withdraw.validation.walletAccNumber": "Wallet account number is required",
   "withdraw.validation.walletAccName": "Wallet account name is required",
+  "withdraw.validation.invalidAmountFormat":
+    "Enter a valid amount with up to 2 decimal places (e.g. 25.00).",
+  "withdraw.validation.minAmount": "Minimum withdrawal is ₱{min}.",
+  "withdraw.minimumBalanceBlockedTitle": "Cannot Withdraw",
+  "withdraw.minimumBalanceWalletBelow":
+    "Your balance is below ₱1,000. Withdrawals are not available until your balance is at least ₱1,000.",
+  "withdraw.minimumBalanceAfterWithdraw":
+    "You must keep at least ₱1,000 after this withdrawal. Try a smaller amount or add funds first.",
+  "withdraw.minimumBalanceModalDetails":
+    "Required minimum: ₱{min}\nCurrent balance: ₱{balance}",
+  "withdraw.validation.amountMustExceedFee":
+    "Withdrawal must be greater than the fee (₱{fee}) so you receive a positive amount.",
+  "withdraw.validation.walletNumberMustStartWith9":
+    "Enter a 10-digit mobile number starting with 9 (e.g. 9XXXXXXXXX).",
 
   // Transaction types
   "tx.deposit": "Deposit",
@@ -725,8 +861,12 @@ const en: TranslationMap = {
   "agent.shareMessagePrefix": "Join InspireWallet with my referral code:",
   "agent.shareTitle": "Referral Code",
   "agent.commission": "Agent Commission",
-  "agent.commissionHint":
-    "Earned from referred clients' approved term savings",
+  "agent.commissionHint": "Earned from referred clients' approved term savings",
+  "agent.convertCommissionTitle": "Transfer to available balance",
+  "agent.convertButton": "TRANSFER TO AVAILABLE BALANCE",
+  "agent.convertInsufficientCommission": "Insufficient agent commission balance",
+  "agent.convertSuccess": "Agent commission transferred to available balance",
+  "agent.convertFailed": "Transfer to available balance failed. Please try again.",
   "agent.yourReferralCode": "Your Referral Code",
   "agent.share": "Share",
   "agent.directReferrals": "Direct Referrals",
@@ -1041,7 +1181,8 @@ const en: TranslationMap = {
   "history.travelProtectionFee":
     "Travel Protection Fee - Application {applicationId}",
   "history.physicalCardApplicationFee": "Physical Card Application Fee",
-  "history.stockSoldAdminApproved": "Stock sold (admin approved): {count} stocks",
+  "history.stockSoldAdminApproved":
+    "Stock sold (admin approved): {count} stocks",
   "history.resultText": "Result {count}/{total}",
   "history.loadMore": "Load More",
   "history.viewReceipt": "View Receipt",
@@ -1142,7 +1283,7 @@ const en: TranslationMap = {
   "terms.h10": "Contact",
   "terms.i10":
     "For questions or concerns regarding these terms, please contact us at",
-  "terms.contactText": "inspireholdings.ph: (02) 5322 1002",
+  "terms.contactText": "Inspire Alliance Fund Group Inc.",
 
   // Notification
   "notification.title": "Notifications",
@@ -1168,6 +1309,11 @@ const en: TranslationMap = {
   "notification.close": "Close",
   "notification.acceptReferral": "Accept",
   "notification.declineReferral": "Decline",
+  "notification.approveAdminTransfer": "Approve",
+  "notification.rejectAdminTransfer": "Reject",
+  "notification.adminTransferErrorTitle": "Balance transfer",
+  "notification.titleAdminTransferApprovalRequired":
+    "Admin transfer approval required",
   "notification.read": "Read",
   "notification.unread": "Unread",
   "notification.noDate": "—",
@@ -1273,6 +1419,9 @@ const en: TranslationMap = {
   "ct.yourBalance": "Your Balance:",
   "ct.claimCard": "Claim Card",
   "ct.alreadyClaimed": "Already Claimed",
+  "ct.alreadyHavePlanTitle": "Already Have Plan",
+  "ct.alreadyHavePlanMessage":
+    "You already have an active Gold Elite plan. Please use the renewal option when your plan is expiring soon.",
   "ct.renewPlan": "Renew Plan",
   "ct.buyCard": "Buy Card",
   "ct.buy": "Buy",
@@ -2065,7 +2214,8 @@ const en: TranslationMap = {
 
 const ko: TranslationMap = {
   "investment.processingRequestTitle": "처리 중인 요청",
-  "investment.processingRequestMessage": "이 계약 기능은 현재 처리 중입니다. 시스템에 반영되기까지 7~10일이 소요될 수 있습니다. 귀하의 양해에 감사드립니다.",
+  "investment.processingRequestMessage":
+    "이 계약 기능은 현재 처리 중입니다. 시스템에 반영되기까지 7~10일이 소요될 수 있습니다. 귀하의 양해에 감사드립니다.",
   "kyc.takePhoto": "사진 찍기",
   "kyc.chooseFromLibrary": "라이브러리에서 선택",
   "kyc.selectUploadMethod": "업로드 방법 선택",
@@ -2302,6 +2452,7 @@ const ko: TranslationMap = {
   "dashboard.withdraw": "출금",
   "dashboard.createdByInspire": "Inspire 제작",
   "dashboard.availableBalance": "사용 가능 잔액",
+  "dashboard.inspireCard": "인스파이어 카드",
   "dashboard.rewards": "리워드",
 
   // Reward Points
@@ -2322,7 +2473,8 @@ const ko: TranslationMap = {
   "rewardPoints.pointsWithUnit": "{value} pts",
   "rewardPoints.balanceAfter": "잔액: {points} pts",
   "rewardPoints.emptyTitle": "아직 리워드 거래가 없습니다",
-  "rewardPoints.emptySubtitle": "₱{min} 이상 송금으로 포인트 적립을 시작하세요!",
+  "rewardPoints.emptySubtitle":
+    "₱{min} 이상 송금으로 포인트 적립을 시작하세요!",
   "rewardPoints.allTransactionsLoaded": "모든 거래를 확인했습니다",
   "rewardPoints.convertTitle": "포인트를 잔액으로 전환",
   "rewardPoints.convertBody":
@@ -2343,6 +2495,116 @@ const ko: TranslationMap = {
   "rewardPoints.campaignInfo":
     "₱{min} 송금마다 {earned}포인트 적립. 일 최대 ₱{max}.",
   "rewardPoints.gotIt": "확인",
+  "rewardPoints.termsLink": "지갑 서비스 및 캠페인 정책",
+  "rewardPoints.termsScreenTitle": "이용 약관",
+  "rewardPoints.terms.mainTitle": "이용 약관",
+  "rewardPoints.terms.subtitle": "지갑 서비스 및 캠페인 정책",
+  "rewardPoints.terms.notice":
+    "리워드 포인트 서비스를 이용하기 전에 반드시 확인해 주세요.",
+  "rewardPoints.terms.section1.title": "1. 소개",
+  "rewardPoints.terms.section1.body1":
+    "본 이용 약관(\"약관\")은 Inspire Holdings Inc.(\"회사\")가 제공하는 지갑 서비스(\"서비스\") 이용에 적용됩니다.",
+  "rewardPoints.terms.section1.body2":
+    "본 서비스를 이용함으로써, 귀하는 본 약관의 모든 조항을 준수하는 데 동의합니다.",
+  "rewardPoints.terms.section2.title": "2. 이용 자격",
+  "rewardPoints.terms.section2.item1":
+    "사용자는 본인 확인(KYC)을 완료해야 합니다.",
+  "rewardPoints.terms.section2.item2":
+    "사용자는 정확하고 유효한 정보를 제공해야 합니다.",
+  "rewardPoints.terms.section2.item3":
+    "회사는 계정을 거절하거나 정지할 권리를 보유합니다.",
+  "rewardPoints.terms.section3.title": "3. 지갑 이용",
+  "rewardPoints.terms.section3.item1":
+    "사용자는 지갑 내에서 자금을 송금, 수취 및 관리할 수 있습니다.",
+  "rewardPoints.terms.section3.item2":
+    "모든 거래는 관련 법률 및 규정을 준수해야 합니다.",
+  "rewardPoints.terms.section3.item3":
+    "회사는 언제든지 한도, 제한 또는 모니터링을 적용할 수 있습니다.",
+  "rewardPoints.terms.section4.title": "4. 캠페인 리워드",
+  "rewardPoints.terms.section4.eligibilityTitle": "4.1 적격 규정",
+  "rewardPoints.terms.section4.eligibilityItem1":
+    "리워드는 정상적인 거래에만 지급됩니다.",
+  "rewardPoints.terms.section4.eligibilityItem2":
+    "사용자 쌍당 하루 1건의 거래만 적격으로 인정됩니다.",
+  "rewardPoints.terms.section4.eligibilityItem3":
+    "동일 사용자와의 반복 거래는 리워드 대상이 아닙니다.",
+  "rewardPoints.terms.section4.restrictionsTitle": "4.2 제한 사항",
+  "rewardPoints.terms.section4.restrictionsItem1":
+    "순환 거래(A -> B -> A)는 금지됩니다.",
+  "rewardPoints.terms.section4.restrictionsItem2":
+    "다중 계정 또는 연관 계정 사용은 금지됩니다.",
+  "rewardPoints.terms.section4.restrictionsItem3":
+    "리워드를 인위적으로 조작하는 행위는 금지됩니다.",
+  "rewardPoints.terms.section4.adjustmentTitle": "4.3 리워드 조정",
+  "rewardPoints.terms.section4.adjustmentBody":
+    "회사는 다음 권리를 보유합니다:",
+  "rewardPoints.terms.section4.adjustmentItem1": "리워드 취소.",
+  "rewardPoints.terms.section4.adjustmentItem2": "리워드 금액 조정.",
+  "rewardPoints.terms.section4.adjustmentItem3":
+    "캠페인을 언제든지 수정하거나 종료.",
+  "rewardPoints.terms.section5.title": "5. 유지 잔액 요건",
+  "rewardPoints.terms.section5.item1":
+    "사용자는 최소 PHP 1,000 잔액을 유지해야 합니다.",
+  "rewardPoints.terms.section5.item2":
+    "이 기준 미만 계정은 리워드 대상에서 제외될 수 있습니다.",
+  "rewardPoints.terms.section6.title": "6. 거래 한도",
+  "rewardPoints.terms.section6.item1":
+    "일일 적격 거래 한도: PHP 10,000.",
+  "rewardPoints.terms.section6.item2":
+    "추가 한도는 사전 고지 없이 적용될 수 있습니다.",
+  "rewardPoints.terms.section7.title": "7. 모니터링 및 준수",
+  "rewardPoints.terms.section7.body1":
+    "회사는 다음을 포함한 모든 활동을 모니터링할 권리가 있습니다:",
+  "rewardPoints.terms.section7.item1": "거래 패턴.",
+  "rewardPoints.terms.section7.item2": "의심스럽거나 비정상적인 행위.",
+  "rewardPoints.terms.section7.item3":
+    "KYC 중복(이름, 신분증, 기기, IP, 전화번호).",
+  "rewardPoints.terms.section7.body2":
+    "본 약관 위반이 의심되는 계정은 다음 조치를 받을 수 있습니다:",
+  "rewardPoints.terms.section7.item4": "제한.",
+  "rewardPoints.terms.section7.item5": "정지.",
+  "rewardPoints.terms.section7.item6": "영구 종료.",
+  "rewardPoints.terms.section8.title": "8. 알림",
+  "rewardPoints.terms.section8.body1":
+    "사용자는 다음 채널로 알림을 받습니다:",
+  "rewardPoints.terms.section8.item1": "앱 내 메시지.",
+  "rewardPoints.terms.section8.item2": "이메일.",
+  "rewardPoints.terms.section8.item3": "SMS(중요 알림).",
+  "rewardPoints.terms.section8.body2":
+    "알림에는 다음 내용이 포함될 수 있습니다:",
+  "rewardPoints.terms.section8.item4": "거래 확인.",
+  "rewardPoints.terms.section8.item5": "리워드 상태.",
+  "rewardPoints.terms.section8.item6": "적격 제외 사유.",
+  "rewardPoints.terms.section8.item7": "경고 또는 계정 공지.",
+  "rewardPoints.terms.section9.title": "9. 수수료",
+  "rewardPoints.terms.section9.item1":
+    "일부 거래에는 수수료가 부과될 수 있습니다(예: 출금 수수료).",
+  "rewardPoints.terms.section9.item2":
+    "적용되는 모든 수수료는 서비스 내에 안내됩니다.",
+  "rewardPoints.terms.section10.title": "10. 위험 고지",
+  "rewardPoints.terms.section10.body1": "사용자는 다음 사항을 인지합니다:",
+  "rewardPoints.terms.section10.item1":
+    "서비스 이용 가능성은 시스템 점검 또는 외부 요인의 영향을 받을 수 있습니다.",
+  "rewardPoints.terms.section10.item2": "지연 또는 중단이 발생할 수 있습니다.",
+  "rewardPoints.terms.section10.item3":
+    "회사는 합리적 통제 범위를 벗어난 시스템 이슈로 인한 손실에 대해 책임지지 않습니다.",
+  "rewardPoints.terms.section11.title": "11. 책임의 제한",
+  "rewardPoints.terms.section11.body1":
+    "회사는 다음 사항에 대해 책임을 지지 않습니다:",
+  "rewardPoints.terms.section11.item1": "사용자의 오용 또는 약관 위반.",
+  "rewardPoints.terms.section11.item2":
+    "사용자 과실로 인한 무단 접근.",
+  "rewardPoints.terms.section11.item3":
+    "외부 시스템 장애 또는 불가항력 사건.",
+  "rewardPoints.terms.section12.title": "12. 약관 변경",
+  "rewardPoints.terms.section12.body1":
+    "회사는 언제든지 본 약관을 업데이트하거나 수정할 수 있습니다. 서비스를 계속 이용하는 경우 변경된 약관에 동의한 것으로 간주됩니다.",
+  "rewardPoints.terms.section13.title": "13. 준거법",
+  "rewardPoints.terms.section13.body1":
+    "본 약관은 필리핀에서 적용되는 법률에 따라 해석되고 적용됩니다.",
+  "rewardPoints.terms.section14.title": "14. 문의",
+  "rewardPoints.terms.section14.body1":
+    "문의 사항은 고객센터로 연락해 주세요.",
 
   "withdraw.fromAvailableBalance": "가용 잔액에서 출금",
   "withdraw.agentWithdrawal": "에이전트 출금",
@@ -2397,6 +2659,13 @@ const ko: TranslationMap = {
   "withdraw.validation.walletType": "전자 지갑 유형을 선택하세요",
   "withdraw.validation.walletAccNumber": "지갑 계좌 번호가 필요합니다",
   "withdraw.validation.walletAccName": "지갑 계좌 명의가 필요합니다",
+  "withdraw.validation.invalidAmountFormat":
+    "유효한 금액을 소수점 이하 최대 2자리까지 입력하세요 (예: 25.00).",
+  "withdraw.validation.minAmount": "최소 출금 금액은 ₱{min}입니다.",
+  "withdraw.validation.amountMustExceedFee":
+    "수수료(₱{fee})보다 큰 금액을 입력해야 실제 수령액이 있습니다.",
+  "withdraw.validation.walletNumberMustStartWith9":
+    "9로 시작하는 10자리 휴대전화 번호를 입력하세요 (예: 9XXXXXXXXX).",
   "tx.deposit": "입금",
   "tx.withdraw": "출금",
   "tx.transfer": "송금",
@@ -2547,8 +2816,7 @@ const ko: TranslationMap = {
   "settings.enableBiometricPasswordPlaceholder": "계정 비밀번호 입력",
   "settings.showPassword": "비밀번호 표시",
   "settings.hidePassword": "비밀번호 숨기기",
-  "settings.biometricLocalAuthFailed":
-    "생체 인증에 실패했거나 취소되었습니다.",
+  "settings.biometricLocalAuthFailed": "생체 인증에 실패했거나 취소되었습니다.",
   "settings.biometricPasswordMinLength":
     "비밀번호는 최소 6자 이상이어야 합니다.",
   "settings.enable": "활성화",
@@ -2614,6 +2882,11 @@ const ko: TranslationMap = {
   "agent.shareTitle": "추천 코드",
   "agent.commission": "에이전트 수수료",
   "agent.commissionHint": "추천 고객의 승인된 정기 저축에서 발생",
+  "agent.convertCommissionTitle": "에이전트 수수료 전환",
+  "agent.convertButton": "전환",
+  "agent.convertInsufficientCommission": "에이전트 수수료 잔액이 부족합니다",
+  "agent.convertSuccess": "에이전트 수수료가 사용 가능 잔액으로 전환되었습니다",
+  "agent.convertFailed": "전환에 실패했습니다. 다시 시도해 주세요",
   "agent.yourReferralCode": "내 추천 코드",
   "agent.share": "공유",
   "agent.directReferrals": "직접 추천",
@@ -2796,6 +3069,9 @@ const ko: TranslationMap = {
   "dashboard.underMaintenance": "점검 중",
   "dashboard.maintenanceMessage":
     "현재 이 서비스는 점검 중입니다. 더 나은 경험을 제공하기 위해 작업하고 있습니다. 잠시 후 다시 확인해 주세요!",
+  "maintenance.featureInMaintenanceTitle": "점검 모드",
+  "maintenance.featureInMaintenanceMessage":
+    "이 기능은 현재 점검 중입니다. 나중에 다시 시도해 주세요.",
   "dashboard.gotIt": "확인",
   "pcard.title": "프리미엄 카드 홀더",
   "pcard.subtitle": "P-Card 앞면과 뒷면을 보려면 탭하여 뒤집으세요.",
@@ -3070,7 +3346,7 @@ const ko: TranslationMap = {
     "당사는 언제든 본 약관을 수정할 수 있습니다. 중요한 변경 사항은 앱 또는 이메일로 안내합니다. 변경 후에도 앱을 계속 이용하면 새 약관에 동의한 것으로 봅니다.",
   "terms.h10": "문의",
   "terms.i10": "본 약관에 대한 문의나 불만 사항은 다음으로 연락해 주세요.",
-  "terms.contactText": "inspireholdings.ph: (02) 5322 1002",
+  "terms.contactText": "Inspire Alliance Fund Group Inc.",
   "notification.title": "알림",
   "notification.loginToView": "알림을 보려면 로그인하세요",
   "notification.noNotifications": "알림이 없습니다",
@@ -3092,6 +3368,11 @@ const ko: TranslationMap = {
   "notification.close": "닫기",
   "notification.acceptReferral": "수락",
   "notification.declineReferral": "거절",
+  "notification.approveAdminTransfer": "승인",
+  "notification.rejectAdminTransfer": "거절",
+  "notification.adminTransferErrorTitle": "잔액 이전",
+  "notification.titleAdminTransferApprovalRequired":
+    "관리자 이체 승인 필요",
   "notification.read": "읽음",
   "notification.unread": "읽지 않음",
   "notification.noDate": "—",
@@ -3189,6 +3470,9 @@ const ko: TranslationMap = {
   "ct.yourBalance": "내 잔액:",
   "ct.claimCard": "카드 수령",
   "ct.alreadyClaimed": "이미 수령함",
+  "ct.alreadyHavePlanTitle": "이미 플랜이 있습니다",
+  "ct.alreadyHavePlanMessage":
+    "이미 활성화된 골드 엘리트 플랜이 있습니다. 플랜 만료가 가까워질 때 갱신 옵션을 이용해 주세요.",
   "ct.renewPlan": "플랜 갱신",
   "ct.buyCard": "카드 구매",
   "ct.buy": "구매",
@@ -3953,7 +4237,8 @@ const ko: TranslationMap = {
 
 const ja: TranslationMap = {
   "investment.processingRequestTitle": "リクエスト処理中",
-  "investment.processingRequestMessage": "この契約機能は現在処理中です。反映されるまでに7〜10日かかる場合があります。ご理解のほどよろしくお願いいたします。",
+  "investment.processingRequestMessage":
+    "この契約機能は現在処理中です。反映されるまでに7〜10日かかる場合があります。ご理解のほどよろしくお願いいたします。",
   "kyc.takePhoto": "写真を撮る",
   "kyc.chooseFromLibrary": "ライブラリから選択",
   "kyc.selectUploadMethod": "アップロード方法を選択",
@@ -4187,6 +4472,7 @@ const ja: TranslationMap = {
   "dashboard.withdraw": "出金",
   "dashboard.createdByInspire": "Inspire 作成",
   "dashboard.availableBalance": "利用可能残高",
+  "dashboard.inspireCard": "インスパイアカード",
   "dashboard.rewards": "リワード",
 
   // Reward Points
@@ -4220,7 +4506,8 @@ const ja: TranslationMap = {
     "{points}ポイントを利用可能残高 ₱{amount} に交換しました。",
   "rewardPoints.passcodeTooShort": "4桁のパスコードを入力してください。",
   "rewardPoints.notAuthenticated": "認証されていません。",
-  "rewardPoints.redemptionFailed": "交換に失敗しました。もう一度お試しください。",
+  "rewardPoints.redemptionFailed":
+    "交換に失敗しました。もう一度お試しください。",
   "rewardPoints.genericError": "エラーが発生しました。もう一度お試しください。",
   "rewardPoints.notEnoughTitle": "ポイント不足",
   "rewardPoints.notEnoughBody":
@@ -4228,6 +4515,117 @@ const ja: TranslationMap = {
   "rewardPoints.campaignInfo":
     "₱{min}の送金ごとに{earned}ポイント。1日最大 ₱{max}。",
   "rewardPoints.gotIt": "了解",
+  "rewardPoints.termsLink": "ウォレットサービス・キャンペーン規約",
+  "rewardPoints.termsScreenTitle": "利用規約",
+  "rewardPoints.terms.mainTitle": "利用規約",
+  "rewardPoints.terms.subtitle": "ウォレットサービス・キャンペーンポリシー",
+  "rewardPoints.terms.notice":
+    "リワードポイントサービスを利用する前に、必ずご確認ください。",
+  "rewardPoints.terms.section1.title": "1. はじめに",
+  "rewardPoints.terms.section1.body1":
+    "本利用規約（\"規約\"）は、Inspire Holdings Inc.（\"会社\"）が提供するウォレットサービス（\"サービス\"）の利用に適用されます。",
+  "rewardPoints.terms.section1.body2":
+    "本サービスを利用することで、利用者は本規約のすべての条項に同意したものとみなされます。",
+  "rewardPoints.terms.section2.title": "2. 利用資格",
+  "rewardPoints.terms.section2.item1":
+    "利用者は本人確認（KYC）を完了する必要があります。",
+  "rewardPoints.terms.section2.item2":
+    "利用者は正確かつ有効な情報を提供する必要があります。",
+  "rewardPoints.terms.section2.item3":
+    "会社は任意のアカウントを拒否または停止する権利を有します。",
+  "rewardPoints.terms.section3.title": "3. ウォレットの利用",
+  "rewardPoints.terms.section3.item1":
+    "利用者はウォレット内で送金・受取・資金管理を行うことができます。",
+  "rewardPoints.terms.section3.item2":
+    "すべての取引は適用される法令に従う必要があります。",
+  "rewardPoints.terms.section3.item3":
+    "会社はいつでも上限、制限、監視を適用する場合があります。",
+  "rewardPoints.terms.section4.title": "4. キャンペーン報酬",
+  "rewardPoints.terms.section4.eligibilityTitle": "4.1 対象条件",
+  "rewardPoints.terms.section4.eligibilityItem1":
+    "報酬は正当な取引に対してのみ付与されます。",
+  "rewardPoints.terms.section4.eligibilityItem2":
+    "1ユーザーペアあたり1日1件の取引のみ対象です。",
+  "rewardPoints.terms.section4.eligibilityItem3":
+    "同一ユーザーとの繰り返し取引は報酬対象外です。",
+  "rewardPoints.terms.section4.restrictionsTitle": "4.2 制限事項",
+  "rewardPoints.terms.section4.restrictionsItem1":
+    "循環取引（A -> B -> A）は禁止されています。",
+  "rewardPoints.terms.section4.restrictionsItem2":
+    "複数アカウントまたは関連アカウントの利用は禁止されています。",
+  "rewardPoints.terms.section4.restrictionsItem3":
+    "報酬の不正操作行為は禁止されています。",
+  "rewardPoints.terms.section4.adjustmentTitle": "4.3 報酬調整",
+  "rewardPoints.terms.section4.adjustmentBody":
+    "会社は以下を行う権利を有します：",
+  "rewardPoints.terms.section4.adjustmentItem1": "報酬の取消。",
+  "rewardPoints.terms.section4.adjustmentItem2": "報酬額の調整。",
+  "rewardPoints.terms.section4.adjustmentItem3":
+    "キャンペーンの変更または終了。",
+  "rewardPoints.terms.section5.title": "5. 維持残高要件",
+  "rewardPoints.terms.section5.item1":
+    "利用者は最低 PHP 1,000 の残高を維持する必要があります。",
+  "rewardPoints.terms.section5.item2":
+    "この基準を下回るアカウントは報酬対象外となる場合があります。",
+  "rewardPoints.terms.section6.title": "6. 取引上限",
+  "rewardPoints.terms.section6.item1":
+    "1日の対象取引上限：PHP 10,000。",
+  "rewardPoints.terms.section6.item2":
+    "追加の上限が事前通知なく適用される場合があります。",
+  "rewardPoints.terms.section7.title": "7. 監視とコンプライアンス",
+  "rewardPoints.terms.section7.body1":
+    "会社は以下を含むすべての活動を監視する権利を有します：",
+  "rewardPoints.terms.section7.item1": "取引パターン。",
+  "rewardPoints.terms.section7.item2": "不審または異常な行動。",
+  "rewardPoints.terms.section7.item3":
+    "KYC重複（氏名、ID、端末、IP、電話番号）。",
+  "rewardPoints.terms.section7.body2":
+    "本規約違反が疑われるアカウントは次の措置対象となる場合があります：",
+  "rewardPoints.terms.section7.item4": "制限。",
+  "rewardPoints.terms.section7.item5": "停止。",
+  "rewardPoints.terms.section7.item6": "永久終了。",
+  "rewardPoints.terms.section8.title": "8. 通知",
+  "rewardPoints.terms.section8.body1":
+    "利用者は以下の方法で通知を受け取ります：",
+  "rewardPoints.terms.section8.item1": "アプリ内メッセージ。",
+  "rewardPoints.terms.section8.item2": "メール。",
+  "rewardPoints.terms.section8.item3": "SMS（重要通知）。",
+  "rewardPoints.terms.section8.body2":
+    "通知には次の内容が含まれる場合があります：",
+  "rewardPoints.terms.section8.item4": "取引確認。",
+  "rewardPoints.terms.section8.item5": "報酬ステータス。",
+  "rewardPoints.terms.section8.item6": "対象外の理由。",
+  "rewardPoints.terms.section8.item7": "警告またはアカウント通知。",
+  "rewardPoints.terms.section9.title": "9. 手数料",
+  "rewardPoints.terms.section9.item1":
+    "一部の取引には手数料が発生する場合があります（例：出金手数料）。",
+  "rewardPoints.terms.section9.item2":
+    "適用されるすべての手数料はサービス内で開示されます。",
+  "rewardPoints.terms.section10.title": "10. リスク開示",
+  "rewardPoints.terms.section10.body1": "利用者は次の点を認識します：",
+  "rewardPoints.terms.section10.item1":
+    "サービス提供はシステム保守または外部要因の影響を受ける場合があります。",
+  "rewardPoints.terms.section10.item2": "遅延または中断が発生する場合があります。",
+  "rewardPoints.terms.section10.item3":
+    "会社は合理的な管理範囲を超えるシステム問題による損失について責任を負いません。",
+  "rewardPoints.terms.section11.title": "11. 責任の制限",
+  "rewardPoints.terms.section11.body1":
+    "会社は以下について責任を負いません：",
+  "rewardPoints.terms.section11.item1":
+    "利用者による不正利用または規約違反。",
+  "rewardPoints.terms.section11.item2":
+    "利用者の過失による不正アクセス。",
+  "rewardPoints.terms.section11.item3":
+    "外部システム障害または不可抗力事由。",
+  "rewardPoints.terms.section12.title": "12. 規約の改定",
+  "rewardPoints.terms.section12.body1":
+    "会社は本規約をいつでも更新または変更する権利を有します。サービスを継続利用した場合、改定後の規約に同意したものとみなされます。",
+  "rewardPoints.terms.section13.title": "13. 準拠法",
+  "rewardPoints.terms.section13.body1":
+    "本規約はフィリピンで適用される法令に準拠します。",
+  "rewardPoints.terms.section14.title": "14. お問い合わせ",
+  "rewardPoints.terms.section14.body1":
+    "お問い合わせはカスタマーサポートまでご連絡ください。",
 
   "withdraw.fromAvailableBalance": "利用可能な残高から引き出す",
   "withdraw.agentWithdrawal": "代理店出金",
@@ -4285,6 +4683,13 @@ const ja: TranslationMap = {
   "withdraw.validation.walletType": "電子マネータイプを選択してください",
   "withdraw.validation.walletAccNumber": "ウォレット口座番号は必須です",
   "withdraw.validation.walletAccName": "ウォレット口座名義は必須です",
+  "withdraw.validation.invalidAmountFormat":
+    "有効な金額を小数点以下最大2桁で入力してください（例: 25.00）。",
+  "withdraw.validation.minAmount": "最低出金額は ₱{min} です。",
+  "withdraw.validation.amountMustExceedFee":
+    "手数料（₱{fee}）を超える金額にしてください。正の受取額になる必要があります。",
+  "withdraw.validation.walletNumberMustStartWith9":
+    "9で始まる10桁の携帯番号を入力してください（例: 9XXXXXXXXX）。",
   "tx.deposit": "入金",
   "tx.withdraw": "出金",
   "tx.transfer": "送金",
@@ -4446,7 +4851,8 @@ const ja: TranslationMap = {
     "メールアドレスまたはパスワードが正しくありません。もう一度お試しください。",
   "settings.biometricEnableServerError":
     "生体認証ログインを有効にできませんでした。もう一度お試しください。",
-  "settings.biometricPasswordRequired": "アカウントのパスワードを入力してください。",
+  "settings.biometricPasswordRequired":
+    "アカウントのパスワードを入力してください。",
   "settings.biometricEmailMissing":
     "メールアドレスを読み込めませんでした。一度ログアウトしてから再度ログインし、生体認証を有効にしてください。",
   "settings.biometricSetupSubtitle":
@@ -4462,6 +4868,11 @@ const ja: TranslationMap = {
   "agent.shareTitle": "紹介コード",
   "agent.commission": "エージェント手数料",
   "agent.commissionHint": "紹介したお客様の承認済み期間設定型プランから発生",
+  "agent.convertCommissionTitle": "エージェント手数料を換金",
+  "agent.convertButton": "変換",
+  "agent.convertInsufficientCommission": "エージェント手数料の残高が不足しています",
+  "agent.convertSuccess": "エージェント手数料が利用可能残高に変換されました",
+  "agent.convertFailed": "変換に失敗しました。もう一度お試しください。",
   "agent.yourReferralCode": "あなたの紹介コード",
   "agent.share": "共有",
   "agent.directReferrals": "直接紹介",
@@ -4474,7 +4885,8 @@ const ja: TranslationMap = {
   "agent.referredClientsSubtitle":
     "承認済み期間設定型プランを保有する紹介先（手数料発生）",
   "agent.commissionFromClient": "紹介先からの手数料",
-  "agent.emptyReferredClients": "承認済み期間設定型プランの紹介先はまだありません",
+  "agent.emptyReferredClients":
+    "承認済み期間設定型プランの紹介先はまだありません",
   "agent.emptyReferredClientsHint":
     "紹介先が期間設定型プランを作成し承認されると、手数料が発生しここに表示されます。",
   "agent.pendingCommission": "保留中の手数料",
@@ -4617,6 +5029,9 @@ const ja: TranslationMap = {
   "dashboard.underMaintenance": "メンテナンス中",
   "dashboard.maintenanceMessage":
     "現在このサービスはメンテナンス中です。より良い体験をお届けするために作業しています。しばらくしてからもう一度お試しください。",
+  "maintenance.featureInMaintenanceTitle": "メンテナンス中",
+  "maintenance.featureInMaintenanceMessage":
+    "この機能は現在メンテナンス中です。しばらくしてから再度お試しください。",
   "dashboard.gotIt": "了解",
   "pcard.title": "プレミアムカードホルダー",
   "pcard.subtitle": "Pカードの表裏を表示するにはタップしてめくります。",
@@ -4946,7 +5361,7 @@ const ja: TranslationMap = {
     "当社はいつでも本規約を変更できるものとします。重要な変更はアプリまたはメールでお知らせします。変更後もアプリを利用し続けることで、新規約に同意したものとみなされます。",
   "terms.h10": "お問い合わせ",
   "terms.i10": "本規約に関するご質問・ご要望は以下までご連絡ください。",
-  "terms.contactText": "inspireholdings.ph: (02) 5322 1002",
+  "terms.contactText": "Inspire Alliance Fund Group Inc.",
   "notification.title": "通知",
   "notification.loginToView": "通知を表示するにはログインしてください",
   "notification.noNotifications": "通知はまだありません",
@@ -4967,6 +5382,11 @@ const ja: TranslationMap = {
   "notification.close": "閉じる",
   "notification.acceptReferral": "承諾",
   "notification.declineReferral": "辞退",
+  "notification.approveAdminTransfer": "承認",
+  "notification.rejectAdminTransfer": "却下",
+  "notification.adminTransferErrorTitle": "残高振替",
+  "notification.titleAdminTransferApprovalRequired":
+    "管理者振替の承認が必要です",
   "notification.read": "既読",
   "notification.unread": "未読",
   "notification.noDate": "—",
@@ -5064,6 +5484,9 @@ const ja: TranslationMap = {
   "ct.yourBalance": "残高:",
   "ct.claimCard": "カードを請求",
   "ct.alreadyClaimed": "請求済み",
+  "ct.alreadyHavePlanTitle": "すでにプランがあります",
+  "ct.alreadyHavePlanMessage":
+    "すでに有効なゴールドエリートプランがあります。期限が近づいた際に更新オプションをご利用ください。",
   "ct.renewPlan": "プランを更新",
   "ct.buyCard": "カードを購入",
   "ct.buy": "購入",
@@ -5075,7 +5498,8 @@ const ja: TranslationMap = {
   "ct.eligibleTitle": "対象となっています！",
   "ct.eligibleDesc":
     "₱10,000,000以上の期間設定型プランがあります。下のボタンをタップしてダイヤモンドエリートカードを請求してください。",
-  "ct.needWarningText": "単一の期間設定型プラン契約で₱10,000,000以上が必要です。",
+  "ct.needWarningText":
+    "単一の期間設定型プラン契約で₱10,000,000以上が必要です。",
   "ct.howToGetCard": "このカードを入手する方法",
   "ct.diamond.name": "ダイヤモンドエリート",
   "ct.goldName": "ゴールドエリート",
@@ -5843,7 +6267,8 @@ const ja: TranslationMap = {
 
 const ar: TranslationMap = {
   "investment.processingRequestTitle": "قيد معالجة الطلب",
-  "investment.processingRequestMessage": "ميزة العقد هذه قيد المعالجة حاليًا. قد يستغرق الأمر من 7 إلى 10 أيام حتى ينعكس. شكرا لتفهمك.",
+  "investment.processingRequestMessage":
+    "ميزة العقد هذه قيد المعالجة حاليًا. قد يستغرق الأمر من 7 إلى 10 أيام حتى ينعكس. شكرا لتفهمك.",
   "kyc.takePhoto": "التقاط صورة",
   "kyc.chooseFromLibrary": "اختر من المكتبة",
   "kyc.selectUploadMethod": "حدد طريقة التحميل",
@@ -6079,6 +6504,7 @@ const ar: TranslationMap = {
   "dashboard.withdraw": "سحب",
   "dashboard.createdByInspire": "صُنع بواسطة Inspire",
   "dashboard.availableBalance": "الرصيد المتاح",
+  "dashboard.inspireCard": "بطاقة إنسباير",
   "dashboard.rewards": "المكافآت",
 
   // Reward Points
@@ -6120,6 +6546,117 @@ const ar: TranslationMap = {
   "rewardPoints.campaignInfo":
     "كل تحويل ₱{min} يكسب {earned} نقطة. حد أقصى ₱{max}/يوم.",
   "rewardPoints.gotIt": "حسناً",
+  "rewardPoints.termsLink": "سياسة المحفظة والحملة",
+  "rewardPoints.termsScreenTitle": "الشروط والأحكام",
+  "rewardPoints.terms.mainTitle": "الشروط والأحكام",
+  "rewardPoints.terms.subtitle": "سياسة خدمة المحفظة والحملة",
+  "rewardPoints.terms.notice":
+    "يرجى المراجعة قبل استخدام خدمات نقاط المكافآت.",
+  "rewardPoints.terms.section1.title": "1. المقدمة",
+  "rewardPoints.terms.section1.body1":
+    "تحكم هذه الشروط والأحكام (\"الشروط\") استخدامك لخدمة المحفظة (\"الخدمة\") المقدمة من Inspire Holdings Inc. (\"الشركة\").",
+  "rewardPoints.terms.section1.body2":
+    "باستخدامك هذه الخدمة، فإنك توافق على الالتزام بجميع الشروط الواردة هنا.",
+  "rewardPoints.terms.section2.title": "2. الأهلية",
+  "rewardPoints.terms.section2.item1":
+    "يجب على المستخدمين إكمال التحقق من الهوية (KYC).",
+  "rewardPoints.terms.section2.item2":
+    "يجب على المستخدمين تقديم معلومات دقيقة وصالحة.",
+  "rewardPoints.terms.section2.item3":
+    "تحتفظ الشركة بالحق في رفض أو تعليق أي حساب.",
+  "rewardPoints.terms.section3.title": "3. استخدام المحفظة",
+  "rewardPoints.terms.section3.item1":
+    "يمكن للمستخدمين إرسال الأموال واستلامها وإدارتها داخل المحفظة.",
+  "rewardPoints.terms.section3.item2":
+    "يجب أن تلتزم جميع المعاملات بالقوانين واللوائح المعمول بها.",
+  "rewardPoints.terms.section3.item3":
+    "قد تفرض الشركة حدودًا أو قيودًا أو مراقبة في أي وقت.",
+  "rewardPoints.terms.section4.title": "4. مكافآت الحملة",
+  "rewardPoints.terms.section4.eligibilityTitle": "4.1 قواعد الأهلية",
+  "rewardPoints.terms.section4.eligibilityItem1":
+    "تُمنح المكافآت فقط للمعاملات المشروعة.",
+  "rewardPoints.terms.section4.eligibilityItem2":
+    "معاملة واحدة فقط يوميًا لكل زوج مستخدمين تكون مؤهلة.",
+  "rewardPoints.terms.section4.eligibilityItem3":
+    "المعاملات المتكررة مع نفس المستخدم لا تكسب مكافآت.",
+  "rewardPoints.terms.section4.restrictionsTitle": "4.2 القيود",
+  "rewardPoints.terms.section4.restrictionsItem1":
+    "المعاملات الدائرية (A -> B -> A) محظورة.",
+  "rewardPoints.terms.section4.restrictionsItem2":
+    "استخدام حسابات متعددة أو مرتبطة محظور.",
+  "rewardPoints.terms.section4.restrictionsItem3":
+    "أي تلاعب مصطنع بالمكافآت محظور.",
+  "rewardPoints.terms.section4.adjustmentTitle": "4.3 تعديل المكافآت",
+  "rewardPoints.terms.section4.adjustmentBody":
+    "تحتفظ الشركة بالحق في:",
+  "rewardPoints.terms.section4.adjustmentItem1": "إلغاء المكافآت.",
+  "rewardPoints.terms.section4.adjustmentItem2": "تعديل مبالغ المكافآت.",
+  "rewardPoints.terms.section4.adjustmentItem3":
+    "تعديل أو إنهاء الحملات في أي وقت.",
+  "rewardPoints.terms.section5.title": "5. متطلب رصيد الصيانة",
+  "rewardPoints.terms.section5.item1":
+    "يجب على المستخدمين الحفاظ على حد أدنى من الرصيد قدره PHP 1,000.",
+  "rewardPoints.terms.section5.item2":
+    "قد لا تكون الحسابات التي تقل عن هذا الحد مؤهلة للمكافآت.",
+  "rewardPoints.terms.section6.title": "6. حدود المعاملات",
+  "rewardPoints.terms.section6.item1":
+    "حد المعاملات اليومية المؤهلة: PHP 10,000.",
+  "rewardPoints.terms.section6.item2":
+    "قد يتم تطبيق حدود إضافية دون إشعار مسبق.",
+  "rewardPoints.terms.section7.title": "7. المراقبة والامتثال",
+  "rewardPoints.terms.section7.body1":
+    "تحتفظ الشركة بالحق في مراقبة جميع الأنشطة بما في ذلك:",
+  "rewardPoints.terms.section7.item1": "أنماط المعاملات.",
+  "rewardPoints.terms.section7.item2": "السلوك المشبوه أو غير المعتاد.",
+  "rewardPoints.terms.section7.item3":
+    "تكرار بيانات KYC (الاسم، الهوية، الجهاز، IP، رقم الهاتف).",
+  "rewardPoints.terms.section7.body2":
+    "قد تكون الحسابات المشتبه بانتهاكها لهذه الشروط عرضة لما يلي:",
+  "rewardPoints.terms.section7.item4": "التقييد.",
+  "rewardPoints.terms.section7.item5": "التعليق.",
+  "rewardPoints.terms.section7.item6": "الإنهاء الدائم.",
+  "rewardPoints.terms.section8.title": "8. الإشعارات",
+  "rewardPoints.terms.section8.body1":
+    "سيتلقى المستخدمون الإشعارات عبر:",
+  "rewardPoints.terms.section8.item1": "رسائل داخل التطبيق.",
+  "rewardPoints.terms.section8.item2": "البريد الإلكتروني.",
+  "rewardPoints.terms.section8.item3": "رسائل SMS (للتنبيهات المهمة).",
+  "rewardPoints.terms.section8.body2":
+    "قد تتضمن الإشعارات:",
+  "rewardPoints.terms.section8.item4": "تأكيد المعاملة.",
+  "rewardPoints.terms.section8.item5": "حالة المكافأة.",
+  "rewardPoints.terms.section8.item6": "أسباب عدم الأهلية.",
+  "rewardPoints.terms.section8.item7": "تحذيرات أو إشعارات حساب.",
+  "rewardPoints.terms.section9.title": "9. الرسوم",
+  "rewardPoints.terms.section9.item1":
+    "قد تخضع بعض المعاملات لرسوم (مثل رسوم السحب).",
+  "rewardPoints.terms.section9.item2":
+    "سيتم الإفصاح عن جميع الرسوم المطبقة داخل الخدمة.",
+  "rewardPoints.terms.section10.title": "10. الإفصاح عن المخاطر",
+  "rewardPoints.terms.section10.body1": "يقر المستخدمون بأن:",
+  "rewardPoints.terms.section10.item1":
+    "قد تتأثر إتاحة الخدمة بصيانة النظام أو عوامل خارجية.",
+  "rewardPoints.terms.section10.item2": "قد تحدث تأخيرات أو انقطاعات.",
+  "rewardPoints.terms.section10.item3":
+    "لا تتحمل الشركة المسؤولية عن الخسائر الناتجة عن مشكلات نظام خارج نطاق السيطرة المعقولة.",
+  "rewardPoints.terms.section11.title": "11. تحديد المسؤولية",
+  "rewardPoints.terms.section11.body1":
+    "لا تتحمل الشركة المسؤولية عن:",
+  "rewardPoints.terms.section11.item1":
+    "سوء استخدام المستخدم أو انتهاك الشروط.",
+  "rewardPoints.terms.section11.item2":
+    "الوصول غير المصرح به بسبب إهمال المستخدم.",
+  "rewardPoints.terms.section11.item3":
+    "أعطال الأنظمة الخارجية أو أحداث القوة القاهرة.",
+  "rewardPoints.terms.section12.title": "12. التعديلات",
+  "rewardPoints.terms.section12.body1":
+    "تحتفظ الشركة بالحق في تحديث أو تعديل هذه الشروط في أي وقت. ويُعد الاستمرار في استخدام الخدمة قبولًا للشروط المحدثة.",
+  "rewardPoints.terms.section13.title": "13. القانون الحاكم",
+  "rewardPoints.terms.section13.body1":
+    "تخضع هذه الشروط للقوانين المعمول بها في الفلبين.",
+  "rewardPoints.terms.section14.title": "14. التواصل",
+  "rewardPoints.terms.section14.body1":
+    "للاستفسارات، يرجى التواصل مع دعم العملاء.",
 
   "withdraw.fromAvailableBalance": "اسحب من رصيدك المتاح",
   "withdraw.agentWithdrawal": "سحب وكيل",
@@ -6173,6 +6710,13 @@ const ar: TranslationMap = {
   "withdraw.validation.walletType": "يرجى اختيار نوع المحفظة الإلكترونية",
   "withdraw.validation.walletAccNumber": "رقم حساب المحفظة مطلوب",
   "withdraw.validation.walletAccName": "اسم حساب المحفظة مطلوب",
+  "withdraw.validation.invalidAmountFormat":
+    "أدخل مبلغًا صالحًا حتى منزلتين عشريتين (مثل 25.00).",
+  "withdraw.validation.minAmount": "الحد الأدنى للسحب هو ₱{min}.",
+  "withdraw.validation.amountMustExceedFee":
+    "يجب أن يكون المبلغ أكبر من الرسم (₱{fee}) لتصلك قيمة موجبة.",
+  "withdraw.validation.walletNumberMustStartWith9":
+    "أدخل رقم جوال مكونًا من 10 أرقام يبدأ بـ 9 (مثل 9XXXXXXXXX).",
   "tx.deposit": "إيداع",
   "tx.withdraw": "سحب",
   "tx.transfer": "تحويل",
@@ -6226,10 +6770,10 @@ const ar: TranslationMap = {
   "history.planSubscriptionCommission": "عمولة اشتراك الخطة",
   "history.approvedPlanSubscription":
     "تمت الموافقة على اشتراك الخطة: {planName} (85% إيداع التداول)",
-  "history.travelProtectionFee":
-    "رسوم حماية السفر - الطلب {applicationId}",
+  "history.travelProtectionFee": "رسوم حماية السفر - الطلب {applicationId}",
   "history.physicalCardApplicationFee": "رسوم طلب البطاقة الفعلية",
-  "history.stockSoldAdminApproved": "بيع الأسهم (موافق عليه من الإدارة): {count} أسهم",
+  "history.stockSoldAdminApproved":
+    "بيع الأسهم (موافق عليه من الإدارة): {count} أسهم",
   "investment.timeDeposit": "الادخار لأجل",
   "investment.amountWalletLabel": "الأرباح المتوقعة",
   "investment.amountWalletHint": "إجمالي الأرباح المتوقعة من جميع العقود",
@@ -6386,6 +6930,11 @@ const ar: TranslationMap = {
   "agent.shareTitle": "رمز الإحالة",
   "agent.commission": "عمولة الوكيل",
   "agent.commissionHint": "من ودائع الإحالة المعتمدة للعملاء المُحالين",
+  "agent.convertCommissionTitle": "تحويل عمولة الوكيل",
+  "agent.convertButton": "تحويل",
+  "agent.convertInsufficientCommission": "رصيد عمولة الوكيل غير كافٍ",
+  "agent.convertSuccess": "تم تحويل عمولة الوكيل إلى الرصيد المتاح",
+  "agent.convertFailed": "فشل التحويل. يرجى المحاولة مرة أخرى",
   "agent.yourReferralCode": "رمز الإحالة الخاص بك",
   "agent.share": "مشاركة",
   "agent.directReferrals": "الإحالات المباشرة",
@@ -6541,6 +7090,9 @@ const ar: TranslationMap = {
   "dashboard.underMaintenance": "تحت الصيانة",
   "dashboard.maintenanceMessage":
     "هذه الخدمة قيد الصيانة حالياً. نحن نعمل على تحسين تجربتك. يرجى المحاولة مرة أخرى قريباً!",
+  "maintenance.featureInMaintenanceTitle": "وضع الصيانة",
+  "maintenance.featureInMaintenanceMessage":
+    "هذه الميزة قيد الصيانة حالياً. يرجى المحاولة لاحقاً.",
   "dashboard.gotIt": "حسنًا",
   "pcard.title": "حامل البطاقة المميزة",
   "pcard.subtitle": "اعرض وجهي بطاقة P-Card — اضغط للقلب.",
@@ -6820,7 +7372,7 @@ const ar: TranslationMap = {
     "قد نعدّل هذه الشروط في أي وقت. سنخبرك بالتغييرات المهمة عبر التطبيق أو البريد. استمرارك في استخدام التطبيق بعد التعديلات يعني قبولك للشروط الجديدة.",
   "terms.h10": "الاتصال",
   "terms.i10": "للاستفسارات أو المخاوف بخصوص هذه الشروط، يرجى الاتصال بنا على",
-  "terms.contactText": "inspireholdings.ph: (02) 5322 1002",
+  "terms.contactText": "Inspire Alliance Fund Group Inc.",
   "notification.title": "الإشعارات",
   "notification.loginToView": "يرجى تسجيل الدخول لعرض الإشعارات",
   "notification.noNotifications": "لا توجد إشعارات بعد",
@@ -6841,6 +7393,11 @@ const ar: TranslationMap = {
   "notification.close": "إغلاق",
   "notification.acceptReferral": "قبول",
   "notification.declineReferral": "رفض",
+  "notification.approveAdminTransfer": "موافقة",
+  "notification.rejectAdminTransfer": "رفض",
+  "notification.adminTransferErrorTitle": "تحويل الرصيد",
+  "notification.titleAdminTransferApprovalRequired":
+    "مطلوب موافقة على تحويل من المسؤول",
   "notification.read": "مقروء",
   "notification.unread": "غير مقروء",
   "notification.noDate": "—",
@@ -6938,6 +7495,9 @@ const ar: TranslationMap = {
   "ct.yourBalance": "رصيدك:",
   "ct.claimCard": "استلام البطاقة",
   "ct.alreadyClaimed": "تم الاستلام مسبقاً",
+  "ct.alreadyHavePlanTitle": "لديك خطة بالفعل",
+  "ct.alreadyHavePlanMessage":
+    "لديك بالفعل خطة جولد إيليت نشطة. يرجى استخدام خيار التجديد عند اقتراب انتهاء خطتك.",
   "ct.renewPlan": "تجديد الخطة",
   "ct.buyCard": "شراء البطاقة",
   "ct.buy": "شراء",
@@ -6949,8 +7509,7 @@ const ar: TranslationMap = {
   "ct.eligibleTitle": "أنت مؤهل!",
   "ct.eligibleDesc":
     "لديك ادخار لأجل بقيمة ₱10,000,000 أو أكثر. انقر الزر أدناه للمطالبة ببطاقة دايموند إيليت.",
-  "ct.needWarningText":
-    "تحتاج إلى ₱10,000,000 أو أكثر في عقد ادخار لأجل واحد.",
+  "ct.needWarningText": "تحتاج إلى ₱10,000,000 أو أكثر في عقد ادخار لأجل واحد.",
   "ct.howToGetCard": "كيفية الحصول على هذه البطاقة",
   "ct.diamond.name": "دايموند إيليت",
   "ct.goldName": "جولد إيليت",

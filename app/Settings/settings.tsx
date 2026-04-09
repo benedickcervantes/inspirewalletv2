@@ -7,7 +7,19 @@ import * as LocalAuthentication from "expo-local-authentication";
 import * as SecureStore from "expo-secure-store";
 import { unregisterIndieDevice } from "native-notify";
 import { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, Alert, Platform, ScrollView, StatusBar, StyleSheet, Text, TextInput, ToastAndroid, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  Alert,
+  Platform,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  ToastAndroid,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   disableBiometric,
@@ -21,8 +33,7 @@ import { useLanguage } from "../../context/LanguageContext";
 import { useLanguageModal } from "../../context/LanguageModalContext";
 import { authenticateWithDeviceBiometrics } from "../../utils/biometricAuth";
 import { useResponsive } from "../../utils/responsive";
-import AccountDeletionModal from "../AccountDeletion/AccountDeletionModal";
-import ActivityModal from '../components/ActivityModal';
+import ActivityModal from "../components/ActivityModal";
 interface UserData {
   email?: string;
   emailVerified?: boolean;
@@ -32,7 +43,8 @@ interface UserData {
 const Settings = () => {
   const navigation = useNavigation();
   const { t } = useLanguage();
-  const { stopIdleSession, registerActivity, getActivityProps } = useIdleTimeout();
+  const { stopIdleSession, registerActivity, getActivityProps } =
+    useIdleTimeout();
   const activityProps = getActivityProps();
   const { width: screenWidth, scale: scaleFn } = useResponsive();
   const scaled = (n: number) => Math.round(scaleFn(n));
@@ -48,6 +60,7 @@ const Settings = () => {
   const [emailVerifyError, setEmailVerifyError] = useState<string | null>(null);
   const [emailVerifySuccess, setEmailVerifySuccess] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
+  const [resendCountdown, setResendCountdown] = useState<number>(0);
 
   // Biometric state
   const [hasBiometricHardware, setHasBiometricHardware] = useState(false);
@@ -89,11 +102,7 @@ const Settings = () => {
         } else {
           biometricEnabled = hasBioToken;
         }
-        if (
-          hasBioToken &&
-          explicit !== false &&
-          explicit !== true
-        ) {
+        if (hasBioToken && explicit !== false && explicit !== true) {
           try {
             await AsyncStorage.setItem(
               "user",
@@ -304,6 +313,8 @@ const Settings = () => {
       if (result.success) {
         setEmailVerifyError(null);
         setEmailOtp("");
+        // Start 60-second countdown
+        setResendCountdown(60);
       } else {
         setEmailVerifyError(result.error || t("settings.failedToResend"));
       }
@@ -313,6 +324,17 @@ const Settings = () => {
       setResendLoading(false);
     }
   };
+
+  // Countdown timer effect
+  useEffect(() => {
+    if (resendCountdown <= 0) return;
+
+    const timer = setTimeout(() => {
+      setResendCountdown(resendCountdown - 1);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [resendCountdown]);
 
   const openEmailVerifyModal = () => {
     setEmailVerifyModalVisible(true);
@@ -433,7 +455,9 @@ const Settings = () => {
       ?.trim()
       .toLowerCase();
     let accountEmail =
-      (userData?.email && userData.email.trim().toLowerCase()) || lastLogged || "";
+      (userData?.email && userData.email.trim().toLowerCase()) ||
+      lastLogged ||
+      "";
 
     if (!accountEmail) {
       try {
@@ -1100,8 +1124,14 @@ const Settings = () => {
           animationType="fade"
           onRequestClose={closeEmailVerifyModal}
         >
-          <View style={[styles.modalOverlay, r.modalOverlay]} {...activityProps}>
-            <View style={[styles.emailVerifyModalContent, r.modalContent]} {...activityProps}>
+          <View
+            style={[styles.modalOverlay, r.modalOverlay]}
+            {...activityProps}
+          >
+            <View
+              style={[styles.emailVerifyModalContent, r.modalContent]}
+              {...activityProps}
+            >
               <View style={[styles.modalHeader, r.modalHeader]}>
                 <Text
                   style={[styles.modalTitle, r.modalTitle]}
@@ -1228,15 +1258,21 @@ const Settings = () => {
                       registerActivity();
                       handleResendVerification();
                     }}
-                    disabled={resendLoading}
+                    disabled={resendLoading || resendCountdown > 0}
                   >
                     {resendLoading ? (
                       <ActivityIndicator size="small" color="#F38B35" />
                     ) : (
                       <Text
-                        style={[styles.resendButtonText, r.resendButtonText]}
+                        style={[
+                          styles.resendButtonText,
+                          r.resendButtonText,
+                          resendCountdown > 0 && styles.resendButtonDisabled,
+                        ]}
                       >
-                        {t("settings.resendVerificationEmail")}
+                        {resendCountdown > 0
+                          ? `${t("settings.resendVerificationEmail")} (${resendCountdown}s)`
+                          : t("settings.resendVerificationEmail")}
                       </Text>
                     )}
                   </TouchableOpacity>
@@ -1256,8 +1292,14 @@ const Settings = () => {
             setBiometricModalVisible(false);
           }}
         >
-          <View style={[styles.modalOverlay, r.modalOverlay]} {...activityProps}>
-            <View style={[styles.emailVerifyModalContent, r.modalContent]} {...activityProps}>
+          <View
+            style={[styles.modalOverlay, r.modalOverlay]}
+            {...activityProps}
+          >
+            <View
+              style={[styles.emailVerifyModalContent, r.modalContent]}
+              {...activityProps}
+            >
               <View style={[styles.modalHeader, r.modalHeader]}>
                 <Text
                   style={[styles.modalTitle, r.modalTitle]}
@@ -1286,12 +1328,20 @@ const Settings = () => {
                 })}
               </Text>
 
-              <View style={[styles.biometricPasswordRow, r.biometricPasswordRow]}>
+              <View
+                style={[styles.biometricPasswordRow, r.biometricPasswordRow]}
+              >
                 <TextInput
-                  style={[styles.biometricPasswordField, r.biometricPasswordField]}
-                  placeholder={t("settings.enableBiometricPasswordPlaceholder", {
-                    type: biometricType,
-                  })}
+                  style={[
+                    styles.biometricPasswordField,
+                    r.biometricPasswordField,
+                  ]}
+                  placeholder={t(
+                    "settings.enableBiometricPasswordPlaceholder",
+                    {
+                      type: biometricType,
+                    },
+                  )}
                   placeholderTextColor="#999"
                   value={biometricPassword}
                   onChangeText={(val) => {
@@ -1365,7 +1415,6 @@ const Settings = () => {
           </View>
         </ActivityModal>
 
-        <AccountDeletionModal />
       </SafeAreaView>
     </>
   );
@@ -1581,6 +1630,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#F38B35",
     fontWeight: "500",
+  },
+  resendButtonDisabled: {
+    color: "#CCCCCC",
+    opacity: 0.6,
   },
   emailVerifySuccess: {
     alignItems: "center",

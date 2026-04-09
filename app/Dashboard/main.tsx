@@ -6,7 +6,19 @@ import {
     useRoute,
 } from "@react-navigation/native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Animated, AppState, Image, Linking, RefreshControl, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+    Animated,
+    AppState,
+    Image,
+    Linking,
+    RefreshControl,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from "react-native";
 import {
     SafeAreaView,
     useSafeAreaInsets,
@@ -30,11 +42,18 @@ import { useIdleTimeout } from "../../context/IdleTimeoutContext";
 import { useLanguage } from "../../context/LanguageContext";
 import { useSocket } from "../../context/SocketContext";
 import { useUnreadNotifications } from "../../context/UnreadNotificationsContext";
+import {
+    ANNOUNCEMENTS_SHOWN_FOR_LOGIN_SESSION_KEY,
+    ensureAnnouncementLoginSessionId,
+    markAnnouncementsShownForCurrentLoginSession,
+} from "../../lib/announcementLoginSession";
 import { setConnectionStatus } from "../../lib/connectionStatus";
-import { getMaintenanceStatus, getVisibilityStatus } from "../../lib/maintenance";
+import {
+    getMaintenanceStatus,
+    getVisibilityStatus,
+} from "../../lib/maintenance";
 import type { NavProp } from "../../types/navigation";
 import { useResponsive } from "../../utils/responsive";
-import AccountDeletionModal from "../AccountDeletion/AccountDeletionModal";
 import {
     AnnouncementModal,
     type AnnouncementItem,
@@ -45,7 +64,7 @@ import SavingsTab from "./SavingsTab";
 import { computeProjectedTotalDividend } from "./utils/termSavingsFormula";
 import WalletTab from "./WalletTab";
 
-import ActivityModal from '../components/ActivityModal';
+import ActivityModal from "../components/ActivityModal";
 // API returns raw enums; keys for translation (use t() when displaying)
 const TRANSACTION_TYPE_KEYS: Record<string, string> = {
   TOP_UP: "tx.deposit",
@@ -124,6 +143,9 @@ interface TimeDeposit {
   payoutSchedule?: PayoutScheduleItem[];
   payout_schedule?: PayoutScheduleItem[]; // API may return snake_case
 }
+
+const notificationBadgeDismissSnapshotKey = (identity?: string) =>
+  `notification_badge_dismissed_snapshot_${identity ?? "default"}`;
 
 function computeTimeDepositTotal(deposits: TimeDeposit[]): number {
   return deposits
@@ -210,6 +232,8 @@ function getTransactionTypeLabel(
 
 export default function Dashboard() {
   const navigation = useNavigation();
+  const navigationRef = useRef(navigation);
+  navigationRef.current = navigation;
   const route = useRoute();
   const { t, setLanguage } = useLanguage();
   const { registerActivity } = useIdleTimeout();
@@ -235,6 +259,7 @@ export default function Dashboard() {
     null,
   );
   const [availableBalance, setAvailableBalance] = useState(0);
+  const [agentCommission, setAgentCommission] = useState(0);
   const [isBalanceLoading, setIsBalanceLoading] = useState(true);
   const [timeDeposit, setTimeDeposit] = useState(0);
   const [deposits, setDeposits] = useState<TimeDeposit[]>([]);
@@ -242,6 +267,25 @@ export default function Dashboard() {
   const [announcements, setAnnouncements] = useState<AnnouncementItem[]>([]);
   const [announcementIndex, setAnnouncementIndex] = useState(0);
   const [announcementVisible, setAnnouncementVisible] = useState(false);
+  const announcementsRef = useRef<AnnouncementItem[]>([]);
+  announcementsRef.current = announcements;
+  /** Set true as soon as the user finishes the queue so a overlapping dashboard init cannot reopen the modal before AsyncStorage updates. */
+  const announcementsConsumedForSessionRef = useRef(false);
+
+  const sealAnnouncementSessionIfDone = useCallback((nextIndex: number) => {
+    if (nextIndex >= announcementsRef.current.length) {
+      if (announcementsConsumedForSessionRef.current) return;
+      announcementsConsumedForSessionRef.current = true;
+      void (async () => {
+        await markAnnouncementsShownForCurrentLoginSession();
+        setAnnouncementVisible(false);
+        setAnnouncementIndex(0);
+        setAnnouncements([]);
+      })();
+    } else {
+      setAnnouncementIndex(nextIndex);
+    }
+  }, []);
   const [recentTransactions, setRecentTransactions] = useState<Transaction[]>(
     [],
   );
@@ -267,6 +311,11 @@ export default function Dashboard() {
     unreadCount: unreadNotifications,
     setUnreadCount: setUnreadNotifications,
   } = useUnreadNotifications();
+  const [notificationBadgeDismissed, setNotificationBadgeDismissed] =
+    useState(false);
+  const [dismissedUnreadSnapshot, setDismissedUnreadSnapshot] =
+    useState<number>(0);
+  const notificationBadgeDismissKeyRef = useRef<string | null>(null);
   const [userReferrer, setUserReferrer] = useState<{
     referralCode?: string;
     firstName?: string;
@@ -328,6 +377,47 @@ export default function Dashboard() {
       ? `active_card_design_${accountNumber}`
       : "active_card_design";
 
+  const hydrateNotificationBadgeDismissState = useCallback(
+    async (accountNumber?: string, email?: string) => {
+      const identity =
+        accountNumber?.trim() || email?.trim().toLowerCase() || undefined;
+      const key = notificationBadgeDismissSnapshotKey(identity);
+      notificationBadgeDismissKeyRef.current = key;
+
+      try {
+        const raw = await AsyncStorage.getItem(key);
+        const parsed = raw == null ? NaN : Number(raw);
+
+        if (Number.isFinite(parsed) && parsed >= 0) {
+          setDismissedUnreadSnapshot(parsed);
+          setNotificationBadgeDismissed(true);
+          return;
+        }
+      } catch {
+        // Ignore storage read failures and fall back to default badge state.
+      }
+
+      setDismissedUnreadSnapshot(0);
+      setNotificationBadgeDismissed(false);
+    },
+    [],
+  );
+
+  const persistNotificationBadgeDismissSnapshot = useCallback(
+    async (snapshot: number) => {
+      const key = notificationBadgeDismissKeyRef.current;
+      if (!key) return;
+      await AsyncStorage.setItem(key, String(Math.max(0, snapshot)));
+    },
+    [],
+  );
+
+  const clearNotificationBadgeDismissSnapshot = useCallback(async () => {
+    const key = notificationBadgeDismissKeyRef.current;
+    if (!key) return;
+    await AsyncStorage.removeItem(key);
+  }, []);
+
   const fetchMaintenanceStatus = useCallback(async () => {
     setIsMaintenanceLoading(true);
     try {
@@ -378,7 +468,7 @@ export default function Dashboard() {
     const init = async () => {
       const accessToken = await AsyncStorage.getItem("access_token");
       if (!accessToken) {
-        (navigation as unknown as NavProp).replace("Welcome");
+        (navigationRef.current as unknown as NavProp).replace("Welcome");
         return;
       }
 
@@ -459,7 +549,16 @@ export default function Dashboard() {
         }
       }
 
+      const accountNumberFromUser = (user as { accountNumber?: string } | null)
+        ?.accountNumber;
+      const emailFromUser = (user as { email?: string } | null)?.email;
+      await hydrateNotificationBadgeDismissState(
+        accountNumberFromUser,
+        emailFromUser,
+      );
+
       setAvailableBalance(0);
+      setAgentCommission(0);
       setTimeDeposit(0);
       setDeposits([]);
       setUnreadNotifications(0);
@@ -475,6 +574,10 @@ export default function Dashboard() {
         const bal = parseFloat(String(w.balance));
         setAvailableBalance(Number.isNaN(bal) ? 0 : bal);
       }
+      if (success && (w as any)?.agentCommission != null) {
+        const ac = parseFloat(String((w as any).agentCommission));
+        setAgentCommission(Number.isNaN(ac) ? 0 : ac);
+      }
       setIsBalanceLoading(false);
 
       if (tdRes.success && Array.isArray(tdRes.deposits)) {
@@ -486,9 +589,9 @@ export default function Dashboard() {
       }
 
       const walletId = w?.id;
-      const accountNumberFromInit = (user as { accountNumber?: string })
+      const accountNumberForLanguageKey = (user as { accountNumber?: string })
         ?.accountNumber;
-      const accountKey = languageChoiceDoneKey(accountNumberFromInit);
+      const accountKey = languageChoiceDoneKey(accountNumberForLanguageKey);
       const globalKey = languageChoiceDoneKey(undefined);
       const [treeRes, txRes, notifRes, hasChosen, hasChosenGlobal, annRes] =
         await Promise.all([
@@ -553,7 +656,7 @@ export default function Dashboard() {
       if (
         hasChosen !== "true" &&
         hasChosenGlobal === "true" &&
-        accountNumberFromInit
+        accountNumberForLanguageKey
       ) {
         await AsyncStorage.setItem(accountKey, "true");
       }
@@ -570,38 +673,54 @@ export default function Dashboard() {
       }
 
       if (annRes?.success && Array.isArray(annRes.data) && annRes.data.length) {
+        const sessionId = await ensureAnnouncementLoginSessionId();
+        const shownFor = await AsyncStorage.getItem(
+          ANNOUNCEMENTS_SHOWN_FOR_LOGIN_SESSION_KEY,
+        );
+        let shouldShowAnnouncements = shownFor !== sessionId;
+        if (announcementsConsumedForSessionRef.current) {
+          shouldShowAnnouncements = false;
+        }
+
         const list = (annRes.data as AnnouncementItem[]).map((a) => ({
           id: a.id,
           title: (a as { title?: string }).title ?? "Announcement",
           message: (a as { message?: string }).message ?? "",
           imageUrl: (a as { imageUrl?: string | null }).imageUrl ?? null,
         }));
-        setAnnouncements(list);
-        setAnnouncementIndex(0);
-        setAnnouncementVisible(true);
+
+        if (shouldShowAnnouncements) {
+          setAnnouncements(list);
+          setAnnouncementIndex(0);
+          setAnnouncementVisible(true);
+        } else {
+          setAnnouncements([]);
+          setAnnouncementVisible(false);
+        }
       } else {
         setAnnouncements([]);
         setAnnouncementVisible(false);
       }
-
     };
 
     init();
-  }, [fetchMaintenanceStatus, navigation]);
+    // Intentionally omit `navigation` from deps — its identity changes often and
+    // re-ran init was reopening the announcement modal after dismiss (race with AsyncStorage).
+  }, [fetchMaintenanceStatus]);
 
   useEffect(() => {
     if (!announcementVisible) return;
     if (!announcements.length) return;
     const timer = setTimeout(() => {
-      const next = announcementIndex + 1;
-      if (next >= announcements.length) {
-        setAnnouncementVisible(false);
-      } else {
-        setAnnouncementIndex(next);
-      }
+      sealAnnouncementSessionIfDone(announcementIndex + 1);
     }, 10000);
     return () => clearTimeout(timer);
-  }, [announcementVisible, announcementIndex, announcements.length]);
+  }, [
+    announcementVisible,
+    announcementIndex,
+    announcements.length,
+    sealAnnouncementSessionIfDone,
+  ]);
 
   const syncAvailableBalanceOnly = useCallback(async () => {
     const accessToken = await AsyncStorage.getItem("access_token");
@@ -612,6 +731,10 @@ export default function Dashboard() {
     if (walletSuccess && w?.balance != null) {
       const bal = parseFloat(String(w.balance));
       setAvailableBalance(Number.isNaN(bal) ? 0 : bal);
+    }
+    if (walletSuccess && (w as any)?.agentCommission != null) {
+      const ac = parseFloat(String((w as any).agentCommission));
+      setAgentCommission(Number.isNaN(ac) ? 0 : ac);
     }
     return w;
   }, []);
@@ -883,13 +1006,24 @@ export default function Dashboard() {
     const handleWalletUpdate = (payload: {
       walletId?: string;
       balance?: number | string;
+      agentCommission?: number | string;
     }) => {
-      if (
-        payload?.walletId === mainWalletIdRef.current &&
-        payload?.balance != null
-      ) {
+      if (payload?.walletId !== mainWalletIdRef.current) return;
+
+      let didAffectAvailable = false;
+
+      if (payload?.balance != null) {
         const bal = parseFloat(String(payload.balance));
         setAvailableBalance(Number.isNaN(bal) ? 0 : bal);
+        didAffectAvailable = true;
+      }
+
+      if (payload?.agentCommission != null) {
+        const ac = parseFloat(String(payload.agentCommission));
+        setAgentCommission(Number.isNaN(ac) ? 0 : ac);
+      }
+
+      if (didAffectAvailable) {
         void syncTimeDepositsOnly();
         void refetchJwtData();
       }
@@ -963,6 +1097,22 @@ export default function Dashboard() {
   );
 
   useEffect(() => {
+    if (!notificationBadgeDismissed) return;
+    // Show the header badge again only when unread count increases
+    // after the user has opened the notification page.
+    if (unreadNotifications > dismissedUnreadSnapshot) {
+      setNotificationBadgeDismissed(false);
+      setDismissedUnreadSnapshot(0);
+      void clearNotificationBadgeDismissSnapshot();
+    }
+  }, [
+    clearNotificationBadgeDismissSnapshot,
+    notificationBadgeDismissed,
+    unreadNotifications,
+    dismissedUnreadSnapshot,
+  ]);
+
+  useEffect(() => {
     if (activeTab !== "Cards" && isCardFlipped) {
       Animated.spring(flipAnimation, {
         toValue: 0,
@@ -1002,6 +1152,13 @@ export default function Dashboard() {
       if (!description) return null;
       const normalized = description.trim();
       if (!normalized) return null;
+
+      if (/^Admin-approved balance transfer request\b/i.test(normalized)) {
+        return t("tx.transfer");
+      }
+      if (normalized.toLowerCase() === "transfer") {
+        return t("tx.transfer");
+      }
 
       const getTranslatedCardDesign = (designRaw?: string) => {
         if (!designRaw) return "";
@@ -1135,7 +1292,7 @@ export default function Dashboard() {
     },
     {
       icon: "credit-card",
-      labelText: "Inspire Card",
+      labelKey: "dashboard.inspireCard",
       route: "PCard",
     },
     {
@@ -1200,14 +1357,7 @@ export default function Dashboard() {
       <AnnouncementModal
         visible={announcementVisible && announcements.length > 0}
         announcement={announcements[announcementIndex] ?? null}
-        onClose={() => {
-          const next = announcementIndex + 1;
-          if (next >= announcements.length) {
-            setAnnouncementVisible(false);
-          } else {
-            setAnnouncementIndex(next);
-          }
-        }}
+        onClose={() => sealAnnouncementSessionIfDone(announcementIndex + 1)}
       />
       <ActivityModal
         visible={selectedMaintenanceService !== null}
@@ -1363,7 +1513,10 @@ export default function Dashboard() {
         onRequestClose={() => {}}
       >
         <View style={styles.languageModalOverlay} {...modalActivityProps}>
-          <View style={styles.languageModalContentOuter} {...modalActivityProps}>
+          <View
+            style={styles.languageModalContentOuter}
+            {...modalActivityProps}
+          >
             <View style={styles.languageModalHeader}>
               <View style={styles.languageMapGlobe}>
                 <Ionicons name="globe-outline" size={40} color="#DE5212" />
@@ -1414,8 +1567,8 @@ export default function Dashboard() {
                 ellipsizeMode="tail"
               >
                 {userData?.firstName || userData?.fullName ? (
-                  ((userData?.firstName as string) ||
-                    (userData?.fullName as string)) as string
+                  (((userData?.firstName as string) ||
+                    (userData?.fullName as string)) as string)
                 ) : (
                   <View style={styles.userNameSkeleton} />
                 )}
@@ -1425,10 +1578,16 @@ export default function Dashboard() {
           <View style={styles.headerRight}>
             <TouchableOpacity
               style={styles.iconButton}
-              onPress={() => navigation.navigate("Notification")}
+              onPress={() => {
+                const nextSnapshot = unreadNotifications;
+                setDismissedUnreadSnapshot(nextSnapshot);
+                setNotificationBadgeDismissed(true);
+                void persistNotificationBadgeDismissSnapshot(nextSnapshot);
+                navigation.navigate("Notification");
+              }}
             >
               <Ionicons name="notifications" size={24} color="#E15816" />
-              <NotificationBadge />
+              <NotificationBadge hidden={notificationBadgeDismissed} />
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.iconButton}
@@ -1477,22 +1636,22 @@ export default function Dashboard() {
             ]}
           >
             {(["Wallet", "Investment", "Cards"] as const).map((tab) => {
-                const isActive = activeTab === tab;
-                const label = t(
-                  tab === "Wallet"
-                    ? "dashboard.wallet"
-                    : tab === "Investment"
-                      ? "dashboard.investment"
-                      : "dashboard.cards",
+              const isActive = activeTab === tab;
+              const label = t(
+                tab === "Wallet"
+                  ? "dashboard.wallet"
+                  : tab === "Investment"
+                    ? "dashboard.investment"
+                    : "dashboard.cards",
+              );
+              const baseHorizontalPadding =
+                width < 360 ? 6 : width < 400 ? 9 : 12;
+              const activeHorizontalPadding =
+                width < 360 ? 8 : width < 400 ? 11 : 14;
+              const hasWideLabel =
+                /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uac00-\ud7af]/.test(
+                  label,
                 );
-                const baseHorizontalPadding =
-                  width < 360 ? 6 : width < 400 ? 9 : 12;
-                const activeHorizontalPadding =
-                  width < 360 ? 8 : width < 400 ? 11 : 14;
-                const hasWideLabel =
-                  /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uac00-\ud7af]/.test(
-                    label,
-                  );
               const compactLabelThreshold = hasWideLabel ? 7 : 12;
               const veryLongLabelThreshold = hasWideLabel ? 10 : 16;
               const isCompactLabel = label.length >= compactLabelThreshold;
@@ -1548,11 +1707,9 @@ export default function Dashboard() {
               userData={userData}
               availableBalance={availableBalance}
               isBalanceLoading={isBalanceLoading}
+              agentCommission={agentCommission}
               activeCardDesign={activeCardDesign}
               formatCurrency={formatCurrency}
-              flipAnimation={flipAnimation}
-              isCardFlipped={isCardFlipped}
-              flipCard={flipCard}
               isWithdrawalLocked={isKycRestrictedUser}
               onWithdrawalLockedPress={openKycGateModal}
             />
@@ -1865,6 +2022,7 @@ export default function Dashboard() {
                       AgentRequest: "agent",
                       PlayEarn: "trading",
                       PCard: "physical_cards",
+                      RewardPoints: "reward_points",
                     };
                     const serviceId =
                       routeToServiceMap[item.route] || item.route.toLowerCase();
@@ -2099,7 +2257,6 @@ export default function Dashboard() {
           </View>
         </ScrollView>
       </SafeAreaView>
-      <AccountDeletionModal />
     </>
   );
 }

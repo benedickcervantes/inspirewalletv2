@@ -898,6 +898,51 @@ export async function submitWithdrawalRequest(accessToken, body) {
 }
 
 /**
+ * Convert agent commission balance into available balance.
+ * POST /agent-commission/transfer-to-available
+ * @param {string} accessToken - Backend JWT
+ * @param {Object} body - { walletId, amount, description?, passcode? }
+ * @returns {Promise<{ success: boolean, data?: object, error?: string }>}
+ */
+export async function transferAgentCommissionToAvailable(accessToken, body) {
+  const url = buildUrl("/agent-commission/transfer-to-available");
+  if (!url)
+    return {
+      success: false,
+      error:
+        "Backend URL not configured. Set EXPO_PUBLIC_WALLET_BACKEND_URL in .env and restart the app.",
+    };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
+  try {
+    if (__DEV__) console.log("[AgentCommission API] POST", url, body);
+    const res = await apiFetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (__DEV__)
+      console.log("[AgentCommission API] Response", res.status, data);
+    if (!res.ok) {
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || `Request failed (${res.status})`;
+      return { success: false, error: msg };
+    }
+    return { success: true, data: data.data ?? data };
+  } catch (e) {
+    if (__DEV__) console.error("[AgentCommission API] Error", e);
+    return {
+      success: false,
+      error: e.message || "Network error. Is the backend running?",
+    };
+  }
+}
+
+/**
  * Submit a banking application via the backend.
  * POST /applications/banking
  * Body: JSON with base64-encoded images (see FRONTEND-BANKING-EWALLET-INTEGRATION.md).
@@ -1005,10 +1050,45 @@ export async function submitPhysicalCardRequest(accessToken, body) {
       body: JSON.stringify(body || {}),
     });
     const data = await res.json().catch(() => ({}));
+    console.log("[API] Physical card response status:", res.status);
+    console.log("[API] Physical card response data:", data);
     if (!res.ok) {
       const msg = Array.isArray(data.message)
         ? data.message[0]
         : data.message || data.error || "Failed to submit physical card request";
+      console.log("[API] Physical card error message extracted:", msg);
+      return { success: false, error: msg };
+    }
+    return { success: true, data };
+  } catch (e) {
+    console.log("[API] Physical card exception:", e);
+    return { success: false, error: e.message || "Network error" };
+  }
+}
+
+/**
+ * GET /physical-cards/config — requires JWT
+ * Returns physical card fee configuration from backend.
+ * @param {string} accessToken
+ * @returns {{ success: boolean, data?: { fee: number, currency: string }, error?: string }}
+ */
+export async function getPhysicalCardConfig(accessToken) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "No token" };
+  try {
+    const res = await apiFetch(`${base}/physical-cards/config`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || data.error || "Failed to fetch physical card config";
       return { success: false, error: msg };
     }
     return { success: true, data };
@@ -2404,6 +2484,64 @@ export async function declineReferralRequest(accessToken, notificationId) {
     return { success: true, data };
   } catch (e) {
     if (__DEV__) console.error("[Referral API] Error", e);
+    return { success: false, error: e.message || "Network error" };
+  }
+}
+
+/**
+ * POST /admin-balance-transfers/:notificationId/approve — requires JWT (sender)
+ */
+export async function approveAdminBalanceTransferFromNotification(
+  accessToken,
+  notificationId,
+) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
+  if (!notificationId) return { success: false, error: "Notification ID required" };
+  try {
+    const url = `${base}/admin-balance-transfers/${encodeURIComponent(notificationId)}/approve`;
+    const res = await apiFetch(url, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || "Failed";
+      return { success: false, error: msg };
+    }
+    return { success: true, data };
+  } catch (e) {
+    if (__DEV__) console.error("[Admin balance transfer] Approve error", e);
+    return { success: false, error: e.message || "Network error" };
+  }
+}
+
+/**
+ * POST /admin-balance-transfers/:notificationId/reject — requires JWT (sender)
+ */
+export async function rejectAdminBalanceTransferFromNotification(
+  accessToken,
+  notificationId,
+) {
+  const base = getBaseUrl();
+  if (!base) return { success: false, error: "Backend URL not configured" };
+  if (!accessToken) return { success: false, error: "Not authenticated" };
+  if (!notificationId) return { success: false, error: "Notification ID required" };
+  try {
+    const url = `${base}/admin-balance-transfers/${encodeURIComponent(notificationId)}/reject`;
+    const res = await apiFetch(url, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(data.message) ? data.message[0] : data.message || data.error || "Failed";
+      return { success: false, error: msg };
+    }
+    return { success: true, data };
+  } catch (e) {
+    if (__DEV__) console.error("[Admin balance transfer] Reject error", e);
     return { success: false, error: e.message || "Network error" };
   }
 }
