@@ -333,15 +333,15 @@ export default function RewardPointsHistory() {
           <View style={styles.statsRow}>
             <View style={styles.statPill}>
               <Text style={styles.statVal}>+{monthlyEarned.toLocaleString()}</Text>
-              <Text style={styles.statLbl}>{t("This Month") ?? "This month"}</Text>
+              <Text style={styles.statLbl}>{t("rewardPoints.thisMonth")}</Text>
             </View>
             <View style={styles.statPill}>
               <Text style={styles.statVal}>₱{totalPoints.toLocaleString()}</Text>
-              <Text style={styles.statLbl}>{t("Total Value") ?? "Total value"}</Text>
+              <Text style={styles.statLbl}>{t("rewardPoints.totalValue")}</Text>
             </View>
             <View style={styles.statPill}>
               <Text style={styles.statVal}>{totalCount}</Text>
-              <Text style={styles.statLbl}>{t("Transactions") ?? "Transactions"}</Text>
+              <Text style={styles.statLbl}>{t("rewardPoints.transactionsLabel")}</Text>
             </View>
           </View>
         )}
@@ -380,7 +380,7 @@ export default function RewardPointsHistory() {
           {canRedeem && (
             <>
               <View style={styles.readyBadge}>
-                <Text style={styles.readyBadgeText}>{t("rewardPoints.readyLabel") ?? "Ready"}</Text>
+                <Text style={styles.readyBadgeText}>{t("rewardPoints.readyLabel")}</Text>
               </View>
               <Ionicons name="chevron-forward" size={15} color="rgba(225,88,22,0.45)" />
             </>
