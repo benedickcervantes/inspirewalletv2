@@ -2,16 +2,12 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
-import React, { useState } from "react";
+import { useState } from "react";
 import {
     ActivityIndicator,
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
     ScrollView,
     StyleSheet,
     Text,
-    TextInput,
     TouchableOpacity,
     View,
 } from "react-native";
@@ -21,7 +17,16 @@ import {
     submitWithdrawalRequest,
 } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
+import PasscodeModal from "../../components/PasscodeModal";
 
+import ActivityModal from "../../components/ActivityModal";
+import FeatureMaintenanceModal from "../../components/FeatureMaintenanceModal";
+import { isWithdrawalCombinationUnderMaintenance } from "../../../lib/maintenance";
+import {
+    MIN_REMAINING_WALLET_BALANCE_PHP,
+    MIN_WITHDRAWAL_PHP,
+    parseWithdrawalAmountInput,
+} from "../../../utils/withdrawalAmount";
 const getEwalletTransactionFee = (amount: number) => {
   if (Number.isNaN(amount) || amount <= 0) return 0;
   if (amount <= 10000) return 25;
@@ -48,6 +53,7 @@ export default function EWalletConfirm() {
     accountName?: string;
     amount?: string;
     email?: string;
+    type?: string;
   };
   const [showAlertModal, setShowAlertModal] = useState(false);
   const [alertConfig, setAlertConfig] = useState<{
@@ -57,7 +63,7 @@ export default function EWalletConfirm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPasscodeModal, setShowPasscodeModal] = useState(false);
   const [passcode, setPasscode] = useState("");
-  const [hasPasscode, setHasPasscode] = useState(false);
+  const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
 
   const method = params.method || "e-wallet";
   const walletType = params.walletType || "";
@@ -65,6 +71,7 @@ export default function EWalletConfirm() {
   const accountName = params.accountName || "";
   const amount = params.amount || "0";
   const email = params.email || "";
+  const withdrawalType = params.type || "available-balance";
   const parsedAmount = parseFloat(amount);
   const transactionFee = getEwalletTransactionFee(parsedAmount);
   const netWithdrawalAmount = Math.max(
@@ -72,23 +79,45 @@ export default function EWalletConfirm() {
     (Number.isNaN(parsedAmount) ? 0 : parsedAmount) - transactionFee,
   );
 
-  React.useEffect(() => {
-    (async () => {
-      const userJson = await AsyncStorage.getItem("user");
-      if (userJson) {
-        try {
-          const user = JSON.parse(userJson) as { hasPasscode?: boolean };
-          setHasPasscode(!!user?.hasPasscode);
-        } catch (_) {}
-      }
-    })();
-  }, []);
-
   const submitWithdrawal = async (passcodeToSend?: string) => {
     if (isSubmitting) return;
     setIsSubmitting(true);
     setAlertConfig({ title: "", message: "" });
     try {
+      const parsedSubmit = parseWithdrawalAmountInput(amount);
+      if (!parsedSubmit.ok || parsedSubmit.value <= 0) {
+        setAlertConfig({
+          title: t("common.error"),
+          message: t("withdraw.validation.invalidAmountFormat"),
+        });
+        setShowAlertModal(true);
+        return;
+      }
+      const amountNum = parsedSubmit.value;
+      if (amountNum < MIN_WITHDRAWAL_PHP) {
+        setAlertConfig({
+          title: t("common.error"),
+          message: t("withdraw.validation.minAmount").replace(
+            "{min}",
+            MIN_WITHDRAWAL_PHP.toFixed(2),
+          ),
+        });
+        setShowAlertModal(true);
+        return;
+      }
+      const submitFee = getEwalletTransactionFee(amountNum);
+      if (amountNum <= submitFee) {
+        setAlertConfig({
+          title: t("common.error"),
+          message: t("withdraw.validation.amountMustExceedFee").replace(
+            "{fee}",
+            submitFee.toFixed(2),
+          ),
+        });
+        setShowAlertModal(true);
+        return;
+      }
+
       const accessToken = await AsyncStorage.getItem("access_token");
       if (!accessToken) {
         setAlertConfig({
@@ -110,16 +139,68 @@ export default function EWalletConfirm() {
         setIsSubmitting(false);
         return;
       }
+      const source =
+        withdrawalType === "agent-withdrawal"
+          ? "agent_commission"
+          : "available_balance";
+      const w = wallet as Record<string, unknown>;
+      const rawSourceBal =
+        source === "agent_commission" ? w.agentCommission : w.balance;
+      const bal = parseFloat(String(rawSourceBal ?? "0"));
+      if (Number.isNaN(bal)) {
+        setAlertConfig({
+          title: t("common.error"),
+          message: t("withdraw.errorLoadWallet"),
+        });
+        setShowAlertModal(true);
+        setIsSubmitting(false);
+        return;
+      }
+      if (bal < MIN_REMAINING_WALLET_BALANCE_PHP) {
+        setAlertConfig({
+          title: t("withdraw.minimumBalanceBlockedTitle"),
+          message: t("withdraw.minimumBalanceWalletBelow"),
+        });
+        setShowAlertModal(true);
+        setIsSubmitting(false);
+        return;
+      }
+      if (bal - amountNum < MIN_REMAINING_WALLET_BALANCE_PHP) {
+        setAlertConfig({
+          title: t("withdraw.minimumBalanceBlockedTitle"),
+          message: t("withdraw.minimumBalanceAfterWithdraw"),
+        });
+        setShowAlertModal(true);
+        setIsSubmitting(false);
+        return;
+      }
+
+      const offline = await isWithdrawalCombinationUnderMaintenance({
+        source:
+          withdrawalType === "agent-withdrawal"
+            ? "agent-withdrawal"
+            : "available-balance",
+        method: "e_wallet",
+      });
+      if (offline) {
+        setShowPasscodeModal(false);
+        setShowMaintenanceModal(true);
+        return;
+      }
+
       const body: Record<string, string | undefined> = {
         walletId: wallet.id as string,
-        amount: String(parseFloat(amount)),
+        amount: amountNum.toFixed(2),
         method: "e_wallet",
+        source,
         email: email || undefined,
         walletType: walletType.toLowerCase() as "gcash" | "maya",
         accountNumber,
         accountName,
       };
-      if (hasPasscode && passcodeToSend) body.passcode = passcodeToSend;
+      if (passcodeToSend && /^\d{4}$/.test(passcodeToSend)) {
+        body.passcode = passcodeToSend;
+      }
       const result = await submitWithdrawalRequest(accessToken, body);
 
       if (result.success) {
@@ -129,7 +210,8 @@ export default function EWalletConfirm() {
         const txId = (result.data as any)?.id || t("investment.pending");
         (navigation as any).navigate("depositReceipt", {
           transactionId: txId,
-          amount: amount.toString(),
+          // Receipt should reflect net amount after transaction fee.
+          amount: String(netWithdrawalAmount),
           currency: "PHP",
           depositMethod: t("withdraw.ewallet"),
           type: "Withdrawal",
@@ -159,12 +241,9 @@ export default function EWalletConfirm() {
     }
   };
 
-  const handleConfirm = async () => {
-    if (hasPasscode) {
-      setShowPasscodeModal(true);
-      return;
-    }
-    await submitWithdrawal();
+  const handleConfirm = () => {
+    // Backend requires a passcode for withdrawal requests.
+    setShowPasscodeModal(true);
   };
 
   const handlePasscodeConfirm = () => {
@@ -306,7 +385,6 @@ export default function EWalletConfirm() {
                 </Text>
               </View>
             </View>
-
           </View>
 
           {/* Withdrawal Amount Card */}
@@ -322,10 +400,13 @@ export default function EWalletConfirm() {
               </Text>
             </View>
             <Text style={styles.feeNoteText}>
-              {`E-wallet transaction fee: PHP ${transactionFee.toLocaleString("en-US", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}.`}
+              {`E-wallet transaction fee: PHP ${transactionFee.toLocaleString(
+                "en-US",
+                {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                },
+              )}.`}
             </Text>
           </View>
 
@@ -357,101 +438,24 @@ export default function EWalletConfirm() {
           <View style={styles.bottomPadding} />
         </ScrollView>
 
-        {/* Passcode modal - outer glow (palit sa dark overlay), loading + Confirm */}
-        <Modal
+        {/* Shared passcode modal */}
+        <PasscodeModal
           visible={showPasscodeModal}
-          transparent
-          animationType="slide"
-          onRequestClose={() => !isSubmitting && setShowPasscodeModal(false)}
-        >
-          <KeyboardAvoidingView
-            style={styles.passcodeModalOverlay}
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
-            keyboardVerticalOffset={Platform.OS === "ios" ? 40 : 0}
-          >
-            <View style={styles.passcodeOverlay}>
-              <View style={styles.passcodeModalContent}>
-                <Text style={styles.passcodeModalTitle}>
-                  {t("withdraw.enterPasscode")}
-                </Text>
-                <TextInput
-                  style={styles.passcodeInput}
-                  value={passcode}
-                  onChangeText={(val) =>
-                    setPasscode(val.replace(/\D/g, "").slice(0, 4))
-                  }
-                  placeholder=""
-                  maxLength={4}
-                  keyboardType="number-pad"
-                  editable={!isSubmitting}
-                  autoFocus
-                  selectTextOnFocus={false}
-                  autoComplete="off"
-                  caretHidden={false}
-                  selectionColor="#E25A17"
-                  underlineColorAndroid="transparent"
-                />
-                <View style={styles.passcodeIndicatorRow}>
-                  {[0, 1, 2, 3].map((index) => (
-                    <View
-                      key={`passcode-indicator-${index}`}
-                      style={[
-                        styles.passcodeIndicatorBox,
-                        index < passcode.length &&
-                          styles.passcodeIndicatorBoxFilled,
-                      ]}
-                    >
-                      {index < passcode.length ? (
-                        <View style={styles.passcodeIndicatorDot} />
-                      ) : null}
-                    </View>
-                  ))}
-                </View>
-                <View style={styles.passcodeModalButtons}>
-                  <TouchableOpacity
-                    style={[
-                      styles.passcodeModalButton,
-                      styles.passcodeModalButtonCancel,
-                    ]}
-                    onPress={() => {
-                      setShowPasscodeModal(false);
-                      setPasscode("");
-                    }}
-                    disabled={isSubmitting}
-                  >
-                    <Text style={styles.passcodeModalButtonCancelText}>
-                      {t("common.cancel")}
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[
-                      styles.passcodeModalButton,
-                      styles.passcodeModalButtonConfirm,
-                    ]}
-                    onPress={handlePasscodeConfirm}
-                    disabled={isSubmitting || passcode.length !== 4}
-                  >
-                    <LinearGradient
-                      colors={["#E25A17", "#F28934"]}
-                      style={styles.passcodeModalButtonGradient}
-                    >
-                      {isSubmitting ? (
-                        <ActivityIndicator size="small" color="#FFFFFF" />
-                      ) : (
-                        <Text style={styles.passcodeModalButtonConfirmText}>
-                          {t("withdraw.confirm")}
-                        </Text>
-                      )}
-                    </LinearGradient>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </View>
-          </KeyboardAvoidingView>
-        </Modal>
+          passcode={passcode}
+          title={t("withdraw.enterPasscode")}
+          confirmLabel={t("withdraw.confirm")}
+          cancelLabel={t("common.cancel")}
+          loading={isSubmitting}
+          onChangePasscode={setPasscode}
+          onConfirm={handlePasscodeConfirm}
+          onCancel={() => {
+            setShowPasscodeModal(false);
+            setPasscode("");
+          }}
+        />
 
         {/* Custom Alert Modal */}
-        <Modal
+        <ActivityModal
           visible={showAlertModal}
           transparent={true}
           animationType="fade"
@@ -474,7 +478,15 @@ export default function EWalletConfirm() {
               </TouchableOpacity>
             </LinearGradient>
           </View>
-        </Modal>
+        </ActivityModal>
+
+        <FeatureMaintenanceModal
+          visible={showMaintenanceModal}
+          onDismiss={() => {
+            setShowMaintenanceModal(false);
+            navigation.goBack();
+          }}
+        />
       </SafeAreaView>
     </View>
   );
@@ -754,7 +766,8 @@ const styles = StyleSheet.create({
     fontSize: 18,
     textAlign: "center",
     writingDirection: "ltr",
-    letterSpacing: 8,
+    // NOTE: secureTextEntry + letterSpacing can render as blank spaces on Android.
+    letterSpacing: 0,
     marginBottom: 20,
     shadowColor: "transparent",
     shadowOffset: { width: 0, height: 0 },
