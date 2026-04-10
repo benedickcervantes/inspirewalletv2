@@ -97,6 +97,7 @@ interface Transaction {
   id: string;
   type?: string;
   amount?: number;
+  processingFee?: number;
   status?: string;
   description?: string;
   timestamp?: { toDate?: () => Date };
@@ -112,6 +113,7 @@ interface StoredTransferReceiptDetails {
   senderAccount?: string;
   recipientName?: string;
   recipientAccount?: string;
+  processingFee?: number;
   updatedAt?: number;
 }
 
@@ -119,17 +121,46 @@ interface RawApiTransaction {
   id?: unknown;
   type?: unknown;
   amount?: unknown;
+  fee?: unknown;
+  processingFee?: unknown;
+  processing_fee?: unknown;
+  transferFee?: unknown;
+  transfer_fee?: unknown;
   status?: unknown;
   requestStatus?: unknown;
   request_status?: unknown;
   createdAt?: unknown;
   description?: unknown;
   senderName?: unknown;
+  sender_name?: unknown;
   senderAccount?: unknown;
+  sender_account?: unknown;
   senderAccountNumber?: unknown;
+  sender_account_number?: unknown;
   recipientName?: unknown;
+  recipient_name?: unknown;
   recipientAccount?: unknown;
+  recipient_account?: unknown;
   recipientAccountNumber?: unknown;
+  recipient_account_number?: unknown;
+  receiverName?: unknown;
+  receiver_name?: unknown;
+  recieverName?: unknown;
+  reciever_name?: unknown;
+  receiverAccount?: unknown;
+  receiver_account?: unknown;
+  receiverAccountNumber?: unknown;
+  receiver_account_number?: unknown;
+  recieverAccount?: unknown;
+  reciever_account?: unknown;
+  recieverAccountNumber?: unknown;
+  reciever_account_number?: unknown;
+  from_name?: unknown;
+  from_account?: unknown;
+  from_account_number?: unknown;
+  to_name?: unknown;
+  to_account?: unknown;
+  to_account_number?: unknown;
   fromName?: unknown;
   fromAccount?: unknown;
   fromAccountNumber?: unknown;
@@ -139,7 +170,23 @@ interface RawApiTransaction {
   sender?: { name?: unknown; accountNumber?: unknown };
   recipient?: { name?: unknown; accountNumber?: unknown };
   receiver?: { name?: unknown; accountNumber?: unknown };
-  fromUser?: { fullName?: unknown; accountNumber?: unknown };
+  reciever?: { name?: unknown; accountNumber?: unknown };
+  beneficiary?: {
+    name?: unknown;
+    fullName?: unknown;
+    accountNumber?: unknown;
+    accountNo?: unknown;
+    account_number?: unknown;
+  };
+  fromUser?: {
+    fullName?: unknown;
+    name?: unknown;
+    firstName?: unknown;
+    lastName?: unknown;
+    accountNumber?: unknown;
+    accountNo?: unknown;
+    account_number?: unknown;
+  };
   toUser?: { fullName?: unknown; accountNumber?: unknown };
 }
 
@@ -188,38 +235,95 @@ const resolveTransferParties = (
   const recipientObj =
     (raw.recipient as Record<string, unknown> | undefined) ||
     (raw.receiver as Record<string, unknown> | undefined) ||
+    (raw.reciever as Record<string, unknown> | undefined) ||
+    (raw.beneficiary as Record<string, unknown> | undefined) ||
     {};
   const fromUser = (raw.fromUser as Record<string, unknown> | undefined) || {};
+  const fromUserFullName = [fromUser.firstName, fromUser.lastName]
+    .map((part) => normalizeTextValue(part))
+    .filter(Boolean)
+    .join(" ");
   const toUser = (raw.toUser as Record<string, unknown> | undefined) || {};
 
   return {
     senderName: pickFirstText(
       raw.senderName,
+      raw.sender_name,
       raw.fromName,
+      raw.from_name,
       senderObj.name,
+      senderObj.fullName,
       fromUser.fullName,
+      fromUser.name,
+      fromUserFullName,
+      raw.userFullName,
+      raw.userName,
+      raw.fullName,
+      raw.name,
     ),
     senderAccount: pickFirstText(
       raw.senderAccount,
+      raw.sender_account,
       raw.senderAccountNumber,
+      raw.sender_account_number,
       raw.fromAccount,
+      raw.from_account,
       raw.fromAccountNumber,
+      raw.from_account_number,
       senderObj.accountNumber,
+      senderObj.accountNo,
+      senderObj.account_number,
       fromUser.accountNumber,
+      fromUser.accountNo,
+      fromUser.account_number,
+      raw.userAccountNumber,
+      raw.user_account_number,
+      raw.accountNumber,
+      raw.accountNo,
+      raw.account_number,
     ),
     recipientName: pickFirstText(
       raw.recipientName,
+      raw.recipient_name,
+      raw.receiverName,
+      raw.receiver_name,
+      raw.recieverName,
+      raw.reciever_name,
       raw.toName,
+      raw.to_name,
       recipientObj.name,
+      recipientObj.fullName,
       toUser.fullName,
+      raw.beneficiaryName,
+      raw.beneficiary_name,
+      raw.beneficiaryFullName,
+      raw.beneficiary_full_name,
     ),
     recipientAccount: pickFirstText(
       raw.recipientAccount,
+      raw.recipient_account,
       raw.recipientAccountNumber,
+      raw.recipient_account_number,
+      raw.receiverAccount,
+      raw.receiver_account,
+      raw.receiverAccountNumber,
+      raw.receiver_account_number,
+      raw.recieverAccount,
+      raw.reciever_account,
+      raw.recieverAccountNumber,
+      raw.reciever_account_number,
       raw.toAccount,
+      raw.to_account,
       raw.toAccountNumber,
+      raw.to_account_number,
       recipientObj.accountNumber,
+      recipientObj.accountNo,
+      recipientObj.account_number,
       toUser.accountNumber,
+      raw.beneficiaryAccount,
+      raw.beneficiary_account,
+      raw.beneficiaryAccountNumber,
+      raw.beneficiary_account_number,
     ),
   };
 };
@@ -656,6 +760,17 @@ export default function HistoryScreen() {
               const a = parseFloat(String(tx.amount ?? 0));
               return Number.isNaN(a) ? 0 : a;
               })(),
+              processingFee: (() => {
+                const feeValue =
+                  tx.processingFee ??
+                  tx.processing_fee ??
+                  tx.transferFee ??
+                  tx.transfer_fee ??
+                  tx.fee ??
+                  0;
+                const parsedFee = parseFloat(String(feeValue));
+                return Number.isNaN(parsedFee) ? 0 : parsedFee;
+              })(),
               description: String(tx.description ?? ""),
               status: String(
                 tx.status ?? tx.requestStatus ?? tx.request_status ?? "",
@@ -788,6 +903,18 @@ export default function HistoryScreen() {
               id: d.id,
               type: String(d.type ?? ""),
               amount: parseFloat(String(d.amount ?? 0)) || 0,
+              processingFee: (() => {
+                const rawDoc = d as unknown as Record<string, unknown>;
+                const feeValue =
+                  rawDoc.processingFee ??
+                  rawDoc.processing_fee ??
+                  rawDoc.transferFee ??
+                  rawDoc.transfer_fee ??
+                  rawDoc.fee ??
+                  0;
+                const parsedFee = parseFloat(String(feeValue));
+                return Number.isNaN(parsedFee) ? 0 : parsedFee;
+              })(),
               description: String(d.description ?? ""),
               timestamp: {
                 toDate: () =>
@@ -882,6 +1009,9 @@ export default function HistoryScreen() {
         selectedTransaction.recipientAccount ||
         stored?.recipientAccount ||
         t("common.na");
+      receiptParams.processingFee = String(
+        selectedTransaction.processingFee ?? stored?.processingFee ?? 0,
+      );
     }
 
     (navigation as unknown as NavProp).navigate("depositReceipt", receiptParams);

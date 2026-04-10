@@ -114,6 +114,7 @@ export default function TransferConfirm() {
     senderAccount: string;
     recipientName: string;
     recipientAccount: string;
+    processingFee: number;
   }) => {
     try {
       const txId = String(details.transactionId || "").trim();
@@ -139,6 +140,7 @@ export default function TransferConfirm() {
         senderAccount: details.senderAccount || "",
         recipientName: details.recipientName || "",
         recipientAccount: details.recipientAccount || "",
+        processingFee: details.processingFee || 0,
         updatedAt: Date.now(),
       };
 
@@ -385,6 +387,7 @@ export default function TransferConfirm() {
         const receiptParams = {
           transactionId: txId,
           amount: amount.toString(),
+          processingFee: processingFee.toString(),
           currency: "PHP",
           senderName: userName || t("common.user"),
           senderAccount: userAccountNumber || t("common.na"),
@@ -414,6 +417,7 @@ export default function TransferConfirm() {
           senderAccount: userAccountNumber || t("common.na"),
           recipientName: recipientName || t("common.unknown"),
           recipientAccount: accountNumber || t("common.na"),
+          processingFee,
         });
 
         if ((verifiedAccountNumber || "").trim()) {
