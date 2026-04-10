@@ -780,30 +780,14 @@ export default function AgentDashboard() {
           <View style={[styles.referralCard, isXSScreen && styles.cardCompact]}>
             <Text style={[styles.sectionTitle, isXSScreen && styles.sectionTitleCompact]}>{t("agent.yourReferralCode")}</Text>
 
-            <ViewShot
-              ref={referralQrRef}
-              options={{ format: "png", quality: 1, result: "tmpfile" }}
-              collapsable={false}
-            >
-              <View style={styles.qrCaptureContainer} collapsable={false}>
-                {referralUrl && (
-                  <View style={[styles.qrCodeContainer, isXSScreen && styles.qrCodeContainerCompact]}>
-                    <QRCode
-                      value={referralUrl}
-                      size={qrSize}
-                      color="#1F2937"
-                      backgroundColor="#FFFFFF"
-                    />
-                  </View>
-                )}
-
-                <View style={[styles.referralCodeRow, stackReferralShare && styles.referralCodeColumn]}>
-                  <View style={[styles.referralCodeBox, stackReferralShare && styles.referralCodeBoxFull]}>
-                    <Text style={[styles.referralCodeText, isXSScreen && styles.referralCodeTextCompact]} numberOfLines={1} ellipsizeMode="middle">
-                      {referralCode || "—"}
-                    </Text>
-                  </View>
-                </View>
+            {referralUrl && (
+              <View style={[styles.qrCodeContainer, isXSScreen && styles.qrCodeContainerCompact]}>
+                <QRCode
+                  value={referralUrl ?? undefined}
+                  size={qrSize}
+                  color="#1F2937"
+                  backgroundColor="#FFFFFF"
+                />
               </View>
             </ViewShot>
 
