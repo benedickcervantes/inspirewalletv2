@@ -126,6 +126,16 @@ interface StoredTransferReceiptDetails {
   updatedAt?: number;
 }
 
+interface StoredUserLike {
+  fullName?: unknown;
+  name?: unknown;
+  firstName?: unknown;
+  lastName?: unknown;
+  accountNumber?: unknown;
+  accountNo?: unknown;
+  account_number?: unknown;
+}
+
 interface RawApiTransaction {
   id?: unknown;
   type?: unknown;
@@ -136,20 +146,52 @@ interface RawApiTransaction {
   createdAt?: unknown;
   description?: unknown;
   senderName?: unknown;
+  sender_name?: unknown;
   senderAccount?: unknown;
+  sender_account?: unknown;
   senderAccountNumber?: unknown;
+  sender_account_number?: unknown;
   recipientName?: unknown;
+  recipient_name?: unknown;
+  receiverName?: unknown;
+  receiver_name?: unknown;
+  recieverName?: unknown;
+  reciever_name?: unknown;
   recipientAccount?: unknown;
+  recipient_account?: unknown;
   recipientAccountNumber?: unknown;
+  recipient_account_number?: unknown;
+  receiverAccount?: unknown;
+  receiver_account?: unknown;
+  receiverAccountNumber?: unknown;
+  receiver_account_number?: unknown;
+  recieverAccount?: unknown;
+  reciever_account?: unknown;
+  recieverAccountNumber?: unknown;
+  reciever_account_number?: unknown;
   fromName?: unknown;
+  from_name?: unknown;
   fromAccount?: unknown;
+  from_account?: unknown;
   fromAccountNumber?: unknown;
+  from_account_number?: unknown;
   toName?: unknown;
+  to_name?: unknown;
   toAccount?: unknown;
+  to_account?: unknown;
   toAccountNumber?: unknown;
+  to_account_number?: unknown;
   sender?: { name?: unknown; accountNumber?: unknown };
   recipient?: { name?: unknown; accountNumber?: unknown };
   receiver?: { name?: unknown; accountNumber?: unknown };
+  reciever?: { name?: unknown; accountNumber?: unknown };
+  beneficiary?: {
+    name?: unknown;
+    fullName?: unknown;
+    accountNumber?: unknown;
+    accountNo?: unknown;
+    account_number?: unknown;
+  };
   fromUser?: { fullName?: unknown; accountNumber?: unknown };
   toUser?: { fullName?: unknown; accountNumber?: unknown };
 }
@@ -206,6 +248,8 @@ const resolveTransferParties = (
   const recipientObj =
     (raw.recipient as Record<string, unknown> | undefined) ||
     (raw.receiver as Record<string, unknown> | undefined) ||
+    (raw.reciever as Record<string, unknown> | undefined) ||
+    (raw.beneficiary as Record<string, unknown> | undefined) ||
     {};
   const fromUser = (raw.fromUser as Record<string, unknown> | undefined) || {};
   const toUser = (raw.toUser as Record<string, unknown> | undefined) || {};
@@ -213,31 +257,78 @@ const resolveTransferParties = (
   return {
     senderName: pickFirstText(
       raw.senderName,
+      raw.sender_name,
       raw.fromName,
+      raw.from_name,
       senderObj.name,
+      senderObj.fullName,
       fromUser.fullName,
+      raw.userFullName,
+      raw.userName,
+      raw.fullName,
+      raw.name,
     ),
     senderAccount: pickFirstText(
       raw.senderAccount,
+      raw.sender_account,
       raw.senderAccountNumber,
+      raw.sender_account_number,
       raw.fromAccount,
+      raw.from_account,
       raw.fromAccountNumber,
+      raw.from_account_number,
       senderObj.accountNumber,
+      senderObj.accountNo,
+      senderObj.account_number,
       fromUser.accountNumber,
+      raw.userAccountNumber,
+      raw.user_account_number,
+      raw.accountNumber,
+      raw.accountNo,
+      raw.account_number,
     ),
     recipientName: pickFirstText(
       raw.recipientName,
+      raw.recipient_name,
+      raw.receiverName,
+      raw.receiver_name,
+      raw.recieverName,
+      raw.reciever_name,
       raw.toName,
+      raw.to_name,
       recipientObj.name,
+      recipientObj.fullName,
       toUser.fullName,
+      raw.beneficiaryName,
+      raw.beneficiary_name,
+      raw.beneficiaryFullName,
+      raw.beneficiary_full_name,
     ),
     recipientAccount: pickFirstText(
       raw.recipientAccount,
+      raw.recipient_account,
       raw.recipientAccountNumber,
+      raw.recipient_account_number,
+      raw.receiverAccount,
+      raw.receiver_account,
+      raw.receiverAccountNumber,
+      raw.receiver_account_number,
+      raw.recieverAccount,
+      raw.reciever_account,
+      raw.recieverAccountNumber,
+      raw.reciever_account_number,
       raw.toAccount,
+      raw.to_account,
       raw.toAccountNumber,
+      raw.to_account_number,
       recipientObj.accountNumber,
+      recipientObj.accountNo,
+      recipientObj.account_number,
       toUser.accountNumber,
+      raw.beneficiaryAccount,
+      raw.beneficiary_account,
+      raw.beneficiaryAccountNumber,
+      raw.beneficiary_account_number,
     ),
   };
 };
@@ -555,6 +646,10 @@ export default function HistoryScreen() {
     Record<string, StoredTransferReceiptDetails>
   >({});
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [currentUserTransferParty, setCurrentUserTransferParty] = useState<{
+    name: string;
+    account: string;
+  }>({ name: "", account: "" });
 
   // Ref for unsubscribe function to avoid stale closure
   const unsubRef = useRef<(() => void) | null>(null);
@@ -636,6 +731,32 @@ export default function HistoryScreen() {
       );
     } catch {
       setTransferReceiptMap({});
+    }
+  }, []);
+
+  const loadCurrentUserTransferParty = useCallback(async () => {
+    try {
+      const rawUser = await AsyncStorage.getItem("user");
+      if (!rawUser) {
+        setCurrentUserTransferParty({ name: "", account: "" });
+        return;
+      }
+      const parsed = JSON.parse(rawUser) as StoredUserLike;
+      const fullNameFromParts = [parsed.firstName, parsed.lastName]
+        .map((part) => normalizeTextValue(part))
+        .filter(Boolean)
+        .join(" ");
+
+      setCurrentUserTransferParty({
+        name: pickFirstText(parsed.fullName, parsed.name, fullNameFromParts),
+        account: pickFirstText(
+          parsed.accountNumber,
+          parsed.accountNo,
+          parsed.account_number,
+        ),
+      });
+    } catch {
+      setCurrentUserTransferParty({ name: "", account: "" });
     }
   }, []);
 
@@ -856,6 +977,10 @@ export default function HistoryScreen() {
   }, [loadStoredTransferReceiptDetails]);
 
   useEffect(() => {
+    loadCurrentUserTransferParty();
+  }, [loadCurrentUserTransferParty]);
+
+  useEffect(() => {
     let cancelled = false;
 
     const init = async () => {
@@ -968,10 +1093,14 @@ export default function HistoryScreen() {
         : undefined;
 
       receiptParams.senderName =
-        selectedTransaction.senderName || stored?.senderName || t("common.na");
+        selectedTransaction.senderName ||
+        stored?.senderName ||
+        currentUserTransferParty.name ||
+        t("common.na");
       receiptParams.senderAccount =
         selectedTransaction.senderAccount ||
         stored?.senderAccount ||
+        currentUserTransferParty.account ||
         t("common.na");
       receiptParams.recipientName =
         selectedTransaction.recipientName ||

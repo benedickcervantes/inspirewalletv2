@@ -55,6 +55,7 @@ export default function EWalletConfirm() {
     amount?: string;
     email?: string;
     type?: string;
+    firstWithdrawalFree?: boolean;
   };
   const [showAlertModal, setShowAlertModal] = useState(false);
   const [alertConfig, setAlertConfig] = useState<{
@@ -74,8 +75,11 @@ export default function EWalletConfirm() {
   const email = params.email || "";
   const withdrawalType = params.type || "available-balance";
   const isAgentWithdrawal = withdrawalType === "agent-withdrawal";
+  const isFirstWithdrawalFree = params.firstWithdrawalFree === true;
   const parsedAmount = parseFloat(amount);
-  const transactionFee = getEwalletTransactionFee(parsedAmount);
+  const transactionFee = isFirstWithdrawalFree
+    ? 0
+    : getEwalletTransactionFee(parsedAmount);
   const netWithdrawalAmount = Math.max(
     0,
     (Number.isNaN(parsedAmount) ? 0 : parsedAmount) - transactionFee,
@@ -110,7 +114,9 @@ export default function EWalletConfirm() {
         setShowAlertModal(true);
         return;
       }
-      const submitFee = getEwalletTransactionFee(amountNum);
+      const submitFee = isFirstWithdrawalFree
+        ? 0
+        : getEwalletTransactionFee(amountNum);
       if (amountNum <= submitFee) {
         setAlertConfig({
           title: t("common.error"),

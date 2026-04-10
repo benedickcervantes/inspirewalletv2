@@ -32,6 +32,7 @@ import {
 } from "../../../utils/numberFormat";
 import { useResponsive } from "../../../utils/responsive";
 import { useTransferProcessingFeesConfig } from "../../../hooks/useTransferProcessingFeesConfig";
+import { useFirstTransactionFeeWaiver } from "../../../hooks/useFirstTransactionFeeWaiver";
 import Loader from "../../Loader/Loader";
 import ContactsModal from "./ContactsModal";
 import QRScanner from "./QRScanner";
@@ -218,6 +219,7 @@ export const validateTransferForm = (
   availableBalance: number,
   balanceType?: string,
   feeConfig: TransferProcessingFeesConfig = DEFAULT_TRANSFER_PROCESSING_FEES_CONFIG,
+  isFirstTransferFree = false,
 ) => {
   if (!accountNumber || !amount) {
     return {
@@ -234,10 +236,9 @@ export const validateTransferForm = (
     };
   }
 
-  const processingFee = computeTransferProcessingFeePhp(
-    transferAmount,
-    feeConfig,
-  );
+  const processingFee = isFirstTransferFree
+    ? 0
+    : computeTransferProcessingFeePhp(transferAmount, feeConfig);
   const totalDebit = transferAmount + processingFee;
 
   if (totalDebit > availableBalance) {
@@ -297,6 +298,8 @@ export default function TransferRecipient() {
   const [showQRScanner, setShowQRScanner] = useState(false);
   const viewShotRef = useRef<ViewShot | null>(null);
   const feeConfig = useTransferProcessingFeesConfig();
+  const { isFirstTransactionFree: isFirstTransferFree } =
+    useFirstTransactionFeeWaiver("transfer");
 
   const transferAmountPreview = useMemo(() => {
     const n = parseFloat(unformatNumberString(amount));
@@ -304,8 +307,10 @@ export default function TransferRecipient() {
   }, [amount]);
   const previewProcessingFee = useMemo(
     () =>
-      computeTransferProcessingFeePhp(transferAmountPreview, feeConfig),
-    [transferAmountPreview, feeConfig],
+      isFirstTransferFree
+        ? 0
+        : computeTransferProcessingFeePhp(transferAmountPreview, feeConfig),
+    [transferAmountPreview, feeConfig, isFirstTransferFree],
   );
 
   useEffect(() => {
@@ -418,6 +423,7 @@ export default function TransferRecipient() {
       Number(availableBalance) || 0,
       balanceType,
       feeConfig,
+      isFirstTransferFree,
     );
     if (!validation.isValid && validation.messageKey) {
       setAlertType("error");

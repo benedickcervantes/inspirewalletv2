@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useTransferProcessingFeesConfig } from "../../../hooks/useTransferProcessingFeesConfig";
+import { useFirstTransactionFeeWaiver } from "../../../hooks/useFirstTransactionFeeWaiver";
 import * as FileSystem from "expo-file-system/legacy";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Sharing from "expo-sharing";
@@ -192,7 +193,12 @@ export default function TransferConfirm() {
   const [pendingReceiptParams, setPendingReceiptParams] = useState<Record<string, unknown> | null>(null);
   const qrRef = useRef<any | null>(null);
   const feeConfig = useTransferProcessingFeesConfig();
-  const processingFee = computeTransferProcessingFeePhp(amount, feeConfig);
+  const { isFirstTransactionFree: isFirstTransferFreeByHistory } =
+    useFirstTransactionFeeWaiver("transfer");
+  const isFirstTransferFree = isFirstTransferFreeByHistory;
+  const processingFee = isFirstTransferFree
+    ? 0
+    : computeTransferProcessingFeePhp(amount, feeConfig);
 
   useEffect(() => {
     loadBalance();
@@ -214,9 +220,11 @@ export default function TransferConfirm() {
   }, []);
 
   useEffect(() => {
-    const fee = computeTransferProcessingFeePhp(amount, feeConfig);
+    const fee = isFirstTransferFree
+      ? 0
+      : computeTransferProcessingFeePhp(amount, feeConfig);
     setNewBalance(Math.max(0, currentBalance - amount - fee));
-  }, [currentBalance, amount, feeConfig]);
+  }, [currentBalance, amount, feeConfig, isFirstTransferFree]);
 
   const refreshHasPasscode = async (): Promise<boolean> => {
     try {

@@ -9,6 +9,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { getOrCreateMainWallet } from "../../../configs/api";
 import { auth, firestore } from "../../../configs/firebase";
 import { useLanguage } from "../../../context/LanguageContext";
+import { useFirstTransactionFeeWaiver } from "../../../hooks/useFirstTransactionFeeWaiver";
 import {
     formatAmountWithCommas,
     unformatNumberString,
@@ -108,6 +109,9 @@ export default function BankWithdrawal() {
     parsedWithdrawalAmount,
     isUnionBank,
   );
+  const { isFirstTransactionFree: isFirstWithdrawalFree } =
+    useFirstTransactionFeeWaiver("withdrawal");
+  const effectiveTransactionFee = isFirstWithdrawalFree ? 0 : transactionFee;
   const hasValidAmount =
     !Number.isNaN(parsedWithdrawalAmount) && parsedWithdrawalAmount > 0;
 
@@ -141,7 +145,9 @@ export default function BankWithdrawal() {
         );
       }
 
-      const feeForAmount = getLocalBankTransactionFee(amountNum, unionBankSelected);
+      const feeForAmount = isFirstWithdrawalFree
+        ? 0
+        : getLocalBankTransactionFee(amountNum, unionBankSelected);
       if (feeForAmount > 0 && amountNum <= feeForAmount) {
         return t("withdraw.validation.amountMustExceedFee").replace(
           "{fee}",
@@ -161,7 +167,14 @@ export default function BankWithdrawal() {
 
       return undefined;
     },
-    [t, isAgentWithdrawal, agentCommission, displayBalance, userData],
+    [
+      t,
+      isAgentWithdrawal,
+      agentCommission,
+      displayBalance,
+      userData,
+      isFirstWithdrawalFree,
+    ],
   );
 
   useEffect(() => {
@@ -337,6 +350,7 @@ export default function BankWithdrawal() {
       amount: confirmedAmount.toFixed(2),
       email: emailAddress,
       type: withdrawalType,
+      firstWithdrawalFree: isFirstWithdrawalFree,
     });
   };
 
@@ -529,14 +543,14 @@ export default function BankWithdrawal() {
                   <Text
                     style={[
                       styles.processingFeeNote,
-                      transactionFee === 0
+                      effectiveTransactionFee === 0
                         ? styles.freeFeeText
                         : styles.paidFeeText,
                     ]}
                   >
-                    {transactionFee === 0
-                      ? "UNIONBANK transaction is free."
-                      : `A processing fee of PHP ${transactionFee.toLocaleString("en-US", {
+                    {effectiveTransactionFee === 0
+                      ? "This withdrawal transaction is free."
+                      : `A processing fee of PHP ${effectiveTransactionFee.toLocaleString("en-US", {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })} applies for this bank.`}
