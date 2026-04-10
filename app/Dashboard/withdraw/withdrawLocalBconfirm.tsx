@@ -2,7 +2,7 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
     ActivityIndicator,
     ScrollView,
@@ -17,6 +17,10 @@ import {
     submitWithdrawalRequest,
 } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
+import {
+    isEligibleForFirstTransactionFreeFee,
+    markFirstTransactionFeeWaived,
+} from "../../../utils/firstTransactionFee";
 import PasscodeModal from "../../components/PasscodeModal";
 
 import ActivityModal from "../../components/ActivityModal";
@@ -56,7 +60,7 @@ export default function WithdrawLocalBConfirm() {
     amount?: string;
     email?: string;
     type?: string;
-    firstWithdrawalFree?: boolean;
+    isFirstTransactionFree?: boolean;
   };
   const [showAlertModal, setShowAlertModal] = useState(false);
   const [alertConfig, setAlertConfig] = useState<{
@@ -67,6 +71,9 @@ export default function WithdrawLocalBConfirm() {
   const [showPasscodeModal, setShowPasscodeModal] = useState(false);
   const [passcode, setPasscode] = useState("");
   const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
+  const [isFirstTransactionFree, setIsFirstTransactionFree] = useState(
+    Boolean(params.isFirstTransactionFree),
+  );
 
   const method = params?.method || "local-bank";
   const accountNumber = params?.accountNumber || "";
@@ -76,16 +83,22 @@ export default function WithdrawLocalBConfirm() {
   const amount = params?.amount || "0";
   const email = params?.email || "";
   const withdrawalType = params?.type || "available-balance";
-  const isFirstWithdrawalFree = params?.firstWithdrawalFree === true;
   const parsedAmount = parseFloat(amount);
   const isUnionBank = bankName.trim().toUpperCase() === "UNIONBANK";
-  const transactionFee = isFirstWithdrawalFree
+  const transactionFee = isFirstTransactionFree
     ? 0
     : getLocalBankTransactionFee(parsedAmount, isUnionBank);
   const netWithdrawalAmount = Math.max(
     0,
     (Number.isNaN(parsedAmount) ? 0 : parsedAmount) - transactionFee,
   );
+
+  useEffect(() => {
+    void (async () => {
+      const eligible = await isEligibleForFirstTransactionFreeFee();
+      setIsFirstTransactionFree(eligible);
+    })();
+  }, []);
 
   const submitWithdrawal = async (passcodeToSend?: string) => {
     if (isSubmitting) return;
@@ -118,7 +131,7 @@ export default function WithdrawLocalBConfirm() {
         setShowAlertModal(true);
         return;
       }
-      const submitFee = isFirstWithdrawalFree
+      const submitFee = isFirstTransactionFree
         ? 0
         : getLocalBankTransactionFee(amountNum, isUnionBank);
       if (submitFee > 0 && amountNum <= submitFee) {
@@ -220,6 +233,10 @@ export default function WithdrawLocalBConfirm() {
       const result = await submitWithdrawalRequest(accessToken, body);
 
       if (result.success) {
+        if (isFirstTransactionFree) {
+          await markFirstTransactionFeeWaived();
+          setIsFirstTransactionFree(false);
+        }
         setShowPasscodeModal(false);
         setPasscode("");
 

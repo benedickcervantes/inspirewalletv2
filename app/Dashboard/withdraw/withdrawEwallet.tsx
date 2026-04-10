@@ -20,7 +20,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { getOrCreateMainWallet } from "../../../configs/api";
 import { auth, firestore } from "../../../configs/firebase";
 import { useLanguage } from "../../../context/LanguageContext";
-import { useFirstTransactionFeeWaiver } from "../../../hooks/useFirstTransactionFeeWaiver";
+import { isEligibleForFirstTransactionFreeFee } from "../../../utils/firstTransactionFee";
 import {
   formatAmountWithCommas,
   unformatNumberString,
@@ -85,6 +85,7 @@ export default function EWalletWithdrawal() {
   >(null);
   const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
   const [checkingMaintenance, setCheckingMaintenance] = useState(false);
+  const [isFirstTransactionFree, setIsFirstTransactionFree] = useState(false);
 
   const withdrawalType = (route.params as { type?: string })?.type || "available-balance";
   const isAgentWithdrawal = withdrawalType === "agent-withdrawal";
@@ -97,10 +98,9 @@ export default function EWalletWithdrawal() {
   const parsedWithdrawalAmount = parseFloat(
     unformatNumberString(withdrawalAmount).trim(),
   );
-  const transactionFee = getEwalletTransactionFee(parsedWithdrawalAmount);
-  const { isFirstTransactionFree: isFirstWithdrawalFree } =
-    useFirstTransactionFeeWaiver("withdrawal");
-  const effectiveTransactionFee = isFirstWithdrawalFree ? 0 : transactionFee;
+  const transactionFee = isFirstTransactionFree
+    ? 0
+    : getEwalletTransactionFee(parsedWithdrawalAmount);
   const hasValidAmount =
     !Number.isNaN(parsedWithdrawalAmount) && parsedWithdrawalAmount > 0;
 
@@ -145,6 +145,13 @@ export default function EWalletWithdrawal() {
   useEffect(() => {
     fetchUserData();
   }, [fetchUserData]);
+
+  useEffect(() => {
+    void (async () => {
+      const eligible = await isEligibleForFirstTransactionFreeFee();
+      setIsFirstTransactionFree(eligible);
+    })();
+  }, []);
 
   useEffect(() => {
     const fetchWalletBalance = async () => {
@@ -227,7 +234,7 @@ export default function EWalletWithdrawal() {
           minGross.toFixed(2),
         );
       } else {
-        const feeForAmount = isFirstWithdrawalFree
+        const feeForAmount = isFirstTransactionFree
           ? 0
           : getEwalletTransactionFee(amountNum);
         if (amountNum <= feeForAmount) {
@@ -301,7 +308,7 @@ export default function EWalletWithdrawal() {
       amount: confirmedAmount.toFixed(2),
       email: emailAddress,
       type: withdrawalType,
-      firstWithdrawalFree: isFirstWithdrawalFree,
+      isFirstTransactionFree,
     });
   };
 
@@ -531,7 +538,7 @@ export default function EWalletWithdrawal() {
               )}
               {hasValidAmount && (
                 <Text style={styles.feeNoteText}>
-                  {`E-wallet transaction fee: PHP ${effectiveTransactionFee.toLocaleString(
+                  {`E-wallet transaction fee: PHP ${transactionFee.toLocaleString(
                     "en-US",
                     {
                       minimumFractionDigits: 2,

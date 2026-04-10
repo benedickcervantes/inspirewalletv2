@@ -9,7 +9,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { getOrCreateMainWallet } from "../../../configs/api";
 import { auth, firestore } from "../../../configs/firebase";
 import { useLanguage } from "../../../context/LanguageContext";
-import { useFirstTransactionFeeWaiver } from "../../../hooks/useFirstTransactionFeeWaiver";
+import { isEligibleForFirstTransactionFreeFee } from "../../../utils/firstTransactionFee";
 import {
     formatAmountWithCommas,
     unformatNumberString,
@@ -90,6 +90,7 @@ export default function BankWithdrawal() {
   >(null);
   const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
   const [checkingMaintenance, setCheckingMaintenance] = useState(false);
+  const [isFirstTransactionFree, setIsFirstTransactionFree] = useState(false);
 
   const withdrawalType = (route.params as { type?: string })?.type || "available-balance";
   const isAgentWithdrawal = withdrawalType === "agent-withdrawal";
@@ -105,13 +106,9 @@ export default function BankWithdrawal() {
   const parsedWithdrawalAmount = parseFloat(
     unformatNumberString(withdrawalAmount).trim(),
   );
-  const transactionFee = getLocalBankTransactionFee(
-    parsedWithdrawalAmount,
-    isUnionBank,
-  );
-  const { isFirstTransactionFree: isFirstWithdrawalFree } =
-    useFirstTransactionFeeWaiver("withdrawal");
-  const effectiveTransactionFee = isFirstWithdrawalFree ? 0 : transactionFee;
+  const transactionFee = isFirstTransactionFree
+    ? 0
+    : getLocalBankTransactionFee(parsedWithdrawalAmount, isUnionBank);
   const hasValidAmount =
     !Number.isNaN(parsedWithdrawalAmount) && parsedWithdrawalAmount > 0;
 
@@ -145,7 +142,7 @@ export default function BankWithdrawal() {
         );
       }
 
-      const feeForAmount = isFirstWithdrawalFree
+      const feeForAmount = isFirstTransactionFree
         ? 0
         : getLocalBankTransactionFee(amountNum, unionBankSelected);
       if (feeForAmount > 0 && amountNum <= feeForAmount) {
@@ -173,7 +170,7 @@ export default function BankWithdrawal() {
       agentCommission,
       displayBalance,
       userData,
-      isFirstWithdrawalFree,
+      isFirstTransactionFree,
     ],
   );
 
@@ -217,6 +214,13 @@ export default function BankWithdrawal() {
   useEffect(() => {
     fetchUserData();
   }, [fetchUserData]);
+
+  useEffect(() => {
+    void (async () => {
+      const eligible = await isEligibleForFirstTransactionFreeFee();
+      setIsFirstTransactionFree(eligible);
+    })();
+  }, []);
 
   useEffect(() => {
     const fetchWalletBalance = async () => {
@@ -350,7 +354,7 @@ export default function BankWithdrawal() {
       amount: confirmedAmount.toFixed(2),
       email: emailAddress,
       type: withdrawalType,
-      firstWithdrawalFree: isFirstWithdrawalFree,
+      isFirstTransactionFree,
     });
   };
 
@@ -543,14 +547,16 @@ export default function BankWithdrawal() {
                   <Text
                     style={[
                       styles.processingFeeNote,
-                      effectiveTransactionFee === 0
+                      transactionFee === 0
                         ? styles.freeFeeText
                         : styles.paidFeeText,
                     ]}
                   >
-                    {effectiveTransactionFee === 0
-                      ? "This withdrawal transaction is free."
-                      : `A processing fee of PHP ${effectiveTransactionFee.toLocaleString("en-US", {
+                    {transactionFee === 0
+                      ? isFirstTransactionFree
+                        ? "First transaction is free."
+                        : "UNIONBANK transaction is free."
+                      : `A processing fee of PHP ${transactionFee.toLocaleString("en-US", {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })} applies for this bank.`}
