@@ -52,6 +52,8 @@ export type RootStackParamList = {
     recipientName: string;
     recipientId: string;
     mainWalletId?: string;
+    isInHierarchy?: boolean;
+    hierarchyReason?: string;
   };
   Bdo: undefined;
   Message: undefined;
