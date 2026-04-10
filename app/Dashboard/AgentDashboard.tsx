@@ -4,7 +4,8 @@ import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import * as Clipboard from "expo-clipboard";
 import { LinearGradient } from "expo-linear-gradient";
-import { useCallback, useState } from "react";
+import * as MediaLibrary from "expo-media-library";
+import { useCallback, useRef, useState } from "react";
 import {
     Platform,
     RefreshControl,
@@ -21,6 +22,7 @@ import {
 } from "react-native";
 import QRCode from "react-native-qrcode-svg";
 import { SafeAreaView } from "react-native-safe-area-context";
+import ViewShot from "react-native-view-shot";
 import ActivityModal from "../components/ActivityModal";
 import PasscodeModal from "../components/PasscodeModal";
 import {
@@ -118,6 +120,7 @@ export default function AgentDashboard() {
     useState<DetailSectionView>("earned");
   const [error, setError] = useState<string | null>(null);
   const [copySuccess, setCopySuccess] = useState(false);
+  const [isDownloadingQr, setIsDownloadingQr] = useState(false);
   const [downlinePage, setDownlinePage] = useState(1);
   const [directListPage, setDirectListPage] = useState(1);
   const [networkListPage, setNetworkListPage] = useState(1);
@@ -127,6 +130,8 @@ export default function AgentDashboard() {
   const [listLoading, setListLoading] = useState(false);
   const [showAccessRestrictedModal, setShowAccessRestrictedModal] =
     useState(false);
+  const [showQrSavedModal, setShowQrSavedModal] = useState(false);
+  const referralQrRef = useRef<ViewShot | null>(null);
   const showInlineCopyBanner = copySuccess && Platform.OS === "ios";
 
   const formatCurrency = (amount: number) =>
@@ -427,6 +432,36 @@ export default function AgentDashboard() {
       });
     } catch {
       // User cancelled or share failed
+    }
+  };
+
+  const handleDownloadReferralQr = async () => {
+    if (!referralCode || !referralQrRef.current || isDownloadingQr) return;
+    setIsDownloadingQr(true);
+    try {
+      const permission = await MediaLibrary.requestPermissionsAsync(true);
+      if (!permission.granted) {
+        Alert.alert(
+          "Permission Required",
+          "Please allow photo access so we can save your referral QR to Photos.",
+        );
+        return;
+      }
+
+      const capturedUri = await referralQrRef.current.capture?.();
+      if (!capturedUri) {
+        Alert.alert("Download Failed", "Unable to generate QR image right now.");
+        return;
+      }
+
+      await MediaLibrary.saveToLibraryAsync(capturedUri);
+      setShowQrSavedModal(true);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unknown error";
+      Alert.alert("Download Failed", `Unable to save your referral QR.\n${message}`);
+    } finally {
+      setIsDownloadingQr(false);
     }
   };
 
@@ -744,24 +779,45 @@ export default function AgentDashboard() {
           {/* Referral Code & Share */}
           <View style={[styles.referralCard, isXSScreen && styles.cardCompact]}>
             <Text style={[styles.sectionTitle, isXSScreen && styles.sectionTitleCompact]}>{t("agent.yourReferralCode")}</Text>
-            
-            {referralUrl && (
-              <View style={[styles.qrCodeContainer, isXSScreen && styles.qrCodeContainerCompact]}>
-                <QRCode
-                  value={referralUrl}
-                  size={qrSize}
-                  color="#1F2937"
-                  backgroundColor="#FFFFFF"
-                />
-              </View>
-            )}
 
-            <View style={[styles.referralCodeRow, stackReferralShare && styles.referralCodeColumn]}>
-              <View style={[styles.referralCodeBox, stackReferralShare && styles.referralCodeBoxFull]}>
-                <Text style={[styles.referralCodeText, isXSScreen && styles.referralCodeTextCompact]} numberOfLines={1} ellipsizeMode="middle">
-                  {referralCode || "—"}
-                </Text>
+            <ViewShot
+              ref={referralQrRef}
+              options={{ format: "png", quality: 1, result: "tmpfile" }}
+              collapsable={false}
+            >
+              <View style={styles.qrCaptureContainer} collapsable={false}>
+                {referralUrl && (
+                  <View style={[styles.qrCodeContainer, isXSScreen && styles.qrCodeContainerCompact]}>
+                    <QRCode
+                      value={referralUrl}
+                      size={qrSize}
+                      color="#1F2937"
+                      backgroundColor="#FFFFFF"
+                    />
+                  </View>
+                )}
+
+                <View style={[styles.referralCodeRow, stackReferralShare && styles.referralCodeColumn]}>
+                  <View style={[styles.referralCodeBox, stackReferralShare && styles.referralCodeBoxFull]}>
+                    <Text style={[styles.referralCodeText, isXSScreen && styles.referralCodeTextCompact]} numberOfLines={1} ellipsizeMode="middle">
+                      {referralCode || "—"}
+                    </Text>
+                  </View>
+                </View>
               </View>
+            </ViewShot>
+
+            <View style={[styles.referralActionRow, stackReferralShare && styles.referralCodeColumn]}>
+              <TouchableOpacity
+                style={[styles.downloadButton, stackReferralShare && styles.shareButtonFull]}
+                onPress={handleDownloadReferralQr}
+                disabled={!referralCode || isDownloadingQr}
+              >
+                <Ionicons name="download-outline" size={isXSScreen ? 20 : 22} color="#FFFFFF" />
+                <Text style={[styles.shareButtonText, isXSScreen && styles.textCompact]}>
+                  {isDownloadingQr ? "Saving..." : "Download"}
+                </Text>
+              </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.shareButton, stackReferralShare && styles.shareButtonFull]}
                 onPress={handleShareReferralCode}
@@ -1209,6 +1265,37 @@ export default function AgentDashboard() {
           </View>
         </View>
       </ActivityModal>
+
+      <ActivityModal
+        visible={showQrSavedModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowQrSavedModal(false)}
+      >
+        <View style={styles.restrictedModalOverlay}>
+          <View style={styles.restrictedModalCard}>
+            <View style={styles.restrictedModalHeader}>
+              <View style={[styles.restrictedModalIconCircle, styles.savedModalIconCircle]}>
+                <Ionicons name="checkmark" size={20} color="#FFFFFF" />
+              </View>
+              <Text style={styles.restrictedModalTitle}>QR Saved</Text>
+            </View>
+            <Text style={styles.restrictedModalMessage}>
+              Your referral QR has been saved to your gallery.
+            </Text>
+            <View style={styles.restrictedModalActions}>
+              <TouchableOpacity
+                onPress={() => setShowQrSavedModal(false)}
+                style={[styles.restrictedModalButton, styles.restrictedModalButtonPrimary]}
+              >
+                <Text style={styles.restrictedModalButtonPrimaryText}>
+                  {t("common.ok")}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </ActivityModal>
     </View>
   );
 }
@@ -1393,9 +1480,11 @@ const styles = StyleSheet.create({
   },
   sectionTitle: { fontSize: 16, fontWeight: "600", color: "#1F2937", marginBottom: 12 },
   sectionTitleCompact: { fontSize: 14, marginBottom: 10 },
+  qrCaptureContainer: { backgroundColor: "#FFFFFF" },
   qrCodeContainer: { alignItems: "center", marginVertical: 16 },
   qrCodeContainerCompact: { marginVertical: 12 },
   referralCodeRow: { flexDirection: "row", alignItems: "center", gap: 12 },
+  referralActionRow: { flexDirection: "row", alignItems: "center", gap: 12, marginTop: 12 },
   referralCodeColumn: { flexDirection: "column", alignItems: "stretch" },
   referralCodeBox: {
     flex: 1,
@@ -1419,6 +1508,19 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 8,
+    flex: 1,
+    justifyContent: "center",
+  },
+  downloadButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#059669",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    flex: 1,
+    justifyContent: "center",
   },
   shareButtonFull: { width: "100%", justifyContent: "center" },
   referralCodeTextCompact: { fontSize: 15, letterSpacing: 1 },
@@ -1595,6 +1697,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 4,
+  },
+  savedModalIconCircle: {
+    backgroundColor: "#10B981",
+    shadowColor: "#10B981",
   },
   restrictedModalTitle: {
     fontSize: 16,
