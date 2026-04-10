@@ -15,6 +15,7 @@ import {
 } from "../../../utils/numberFormat";
 import {
     MIN_REMAINING_WALLET_BALANCE_PHP,
+    MIN_WITHDRAWAL_AVAILABLE_BALANCE_PHP,
     parseWithdrawalAmountInput,
 } from "../../../utils/withdrawalAmount";
 import ActivityModal from '../../components/ActivityModal';
@@ -129,7 +130,10 @@ export default function BankWithdrawal() {
       }
 
       const amountNum = parsed.value;
-      const minimumWithdrawal = getLocalBankMinimumWithdrawal(unionBankSelected);
+      const baseMin = getLocalBankMinimumWithdrawal(unionBankSelected);
+      const minimumWithdrawal = isAgentWithdrawal
+        ? baseMin
+        : Math.max(MIN_WITHDRAWAL_AVAILABLE_BALANCE_PHP, baseMin);
       if (amountNum < minimumWithdrawal) {
         return t("withdraw.validation.minAmount").replace(
           "{min}",
