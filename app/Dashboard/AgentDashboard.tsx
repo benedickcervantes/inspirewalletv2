@@ -781,15 +781,19 @@ export default function AgentDashboard() {
             <Text style={[styles.sectionTitle, isXSScreen && styles.sectionTitleCompact]}>{t("agent.yourReferralCode")}</Text>
 
             {referralUrl && (
-              <View style={[styles.qrCodeContainer, isXSScreen && styles.qrCodeContainerCompact]}>
+              <ViewShot
+                ref={referralQrRef}
+                options={{ format: "png", quality: 0.95 }}
+                style={[styles.qrCodeContainer, isXSScreen && styles.qrCodeContainerCompact]}
+              >
                 <QRCode
                   value={referralUrl ?? undefined}
                   size={qrSize}
                   color="#1F2937"
                   backgroundColor="#FFFFFF"
                 />
-              </View>
-            </ViewShot>
+              </ViewShot>
+            )}
 
             <View style={[styles.referralActionRow, stackReferralShare && styles.referralCodeColumn]}>
               <TouchableOpacity
