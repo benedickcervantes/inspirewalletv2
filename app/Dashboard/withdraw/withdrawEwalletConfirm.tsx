@@ -24,6 +24,7 @@ import FeatureMaintenanceModal from "../../components/FeatureMaintenanceModal";
 import { isWithdrawalCombinationUnderMaintenance } from "../../../lib/maintenance";
 import {
     MIN_REMAINING_WALLET_BALANCE_PHP,
+    MIN_WITHDRAWAL_AVAILABLE_BALANCE_PHP,
     MIN_WITHDRAWAL_PHP,
     parseWithdrawalAmountInput,
 } from "../../../utils/withdrawalAmount";
@@ -72,6 +73,7 @@ export default function EWalletConfirm() {
   const amount = params.amount || "0";
   const email = params.email || "";
   const withdrawalType = params.type || "available-balance";
+  const isAgentWithdrawal = withdrawalType === "agent-withdrawal";
   const parsedAmount = parseFloat(amount);
   const transactionFee = getEwalletTransactionFee(parsedAmount);
   const netWithdrawalAmount = Math.max(
@@ -94,12 +96,15 @@ export default function EWalletConfirm() {
         return;
       }
       const amountNum = parsedSubmit.value;
-      if (amountNum < MIN_WITHDRAWAL_PHP) {
+      const minGross = isAgentWithdrawal
+        ? MIN_WITHDRAWAL_PHP
+        : MIN_WITHDRAWAL_AVAILABLE_BALANCE_PHP;
+      if (amountNum < minGross) {
         setAlertConfig({
           title: t("common.error"),
           message: t("withdraw.validation.minAmount").replace(
             "{min}",
-            MIN_WITHDRAWAL_PHP.toFixed(2),
+            minGross.toFixed(2),
           ),
         });
         setShowAlertModal(true);

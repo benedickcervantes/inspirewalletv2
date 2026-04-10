@@ -24,6 +24,7 @@ import FeatureMaintenanceModal from "../../components/FeatureMaintenanceModal";
 import { isWithdrawalCombinationUnderMaintenance } from "../../../lib/maintenance";
 import {
     MIN_REMAINING_WALLET_BALANCE_PHP,
+    MIN_WITHDRAWAL_AVAILABLE_BALANCE_PHP,
     parseWithdrawalAmountInput,
 } from "../../../utils/withdrawalAmount";
 const BANK_FEE_THRESHOLD = 100000;
@@ -97,7 +98,11 @@ export default function WithdrawLocalBConfirm() {
         return;
       }
       const amountNum = parsedSubmit.value;
-      const minimumWithdrawal = getLocalBankMinimumWithdrawal(isUnionBank);
+      const baseMin = getLocalBankMinimumWithdrawal(isUnionBank);
+      const minimumWithdrawal =
+        withdrawalType === "agent-withdrawal"
+          ? baseMin
+          : Math.max(MIN_WITHDRAWAL_AVAILABLE_BALANCE_PHP, baseMin);
       if (amountNum < minimumWithdrawal) {
         setAlertConfig({
           title: t("common.error"),

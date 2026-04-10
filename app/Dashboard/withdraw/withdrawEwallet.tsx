@@ -26,6 +26,7 @@ import {
 } from "../../../utils/numberFormat";
 import {
   MIN_REMAINING_WALLET_BALANCE_PHP,
+  MIN_WITHDRAWAL_AVAILABLE_BALANCE_PHP,
   MIN_WITHDRAWAL_PHP,
   parseWithdrawalAmountInput,
 } from "../../../utils/withdrawalAmount";
@@ -213,10 +214,13 @@ export default function EWalletWithdrawal() {
         : t("withdraw.validation.invalidAmountFormat");
     } else {
       const amountNum = parsed.value;
-      if (amountNum < MIN_WITHDRAWAL_PHP) {
+      const minGross = isAgentWithdrawal
+        ? MIN_WITHDRAWAL_PHP
+        : MIN_WITHDRAWAL_AVAILABLE_BALANCE_PHP;
+      if (amountNum < minGross) {
         newErrors.withdrawalAmount = t("withdraw.validation.minAmount").replace(
           "{min}",
-          MIN_WITHDRAWAL_PHP.toFixed(2),
+          minGross.toFixed(2),
         );
       } else {
         const feeForAmount = getEwalletTransactionFee(amountNum);
