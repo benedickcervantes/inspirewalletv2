@@ -120,6 +120,7 @@ export default function TransferConfirm() {
     senderAccount: string;
     recipientName: string;
     recipientAccount: string;
+    processingFee: number;
   }) => {
     try {
       const txId = String(details.transactionId || "").trim();
@@ -145,6 +146,9 @@ export default function TransferConfirm() {
         senderAccount: details.senderAccount || "",
         recipientName: details.recipientName || "",
         recipientAccount: details.recipientAccount || "",
+        processingFee: Number.isFinite(details.processingFee)
+          ? details.processingFee
+          : 0,
         updatedAt: Date.now(),
       };
 
@@ -223,9 +227,11 @@ export default function TransferConfirm() {
   }, []);
 
   useEffect(() => {
-    const fee = computeTransferProcessingFeePhp(amount, feeConfig);
+    const fee = isFirstTransactionFree
+      ? 0
+      : computeTransferProcessingFeePhp(amount, feeConfig);
     setNewBalance(Math.max(0, currentBalance - amount - fee));
-  }, [currentBalance, amount, feeConfig]);
+  }, [currentBalance, amount, feeConfig, isFirstTransactionFree]);
 
   const refreshHasPasscode = async (): Promise<boolean> => {
     try {
@@ -285,18 +291,54 @@ export default function TransferConfirm() {
 
   const loadUserAccountNumber = async () => {
     try {
+      const accessToken = await AsyncStorage.getItem("access_token");
+      let apiUser: {
+        accountNumber?: string;
+        accountNo?: string;
+        account_number?: string;
+        firstName?: string;
+        lastName?: string;
+        fullName?: string;
+        name?: string;
+      } | null = null;
+      if (accessToken) {
+        const me = await getMe(accessToken);
+        if (me.success && me.user) {
+          apiUser = me.user as {
+            accountNumber?: string;
+            accountNo?: string;
+            account_number?: string;
+            firstName?: string;
+            lastName?: string;
+            fullName?: string;
+            name?: string;
+          };
+          await AsyncStorage.setItem("user", JSON.stringify(me.user));
+        }
+      }
+
       const userJson = await AsyncStorage.getItem("user");
       if (userJson) {
         const user = JSON.parse(userJson) as {
           accountNumber?: string;
+          accountNo?: string;
+          account_number?: string;
           firstName?: string;
           lastName?: string;
+          fullName?: string;
+          name?: string;
         };
-        setUserAccountNumber(user?.accountNumber || "");
-        const fullName = [user?.firstName, user?.lastName]
+        const merged = { ...user, ...(apiUser || {}) };
+        const fullName = [merged?.firstName, merged?.lastName]
           .filter(Boolean)
           .join(" ");
-        setUserName(fullName || t("common.user"));
+        const resolvedName =
+          fullName || merged?.fullName || merged?.name || t("common.user");
+        const resolvedAccount =
+          merged?.accountNumber || merged?.accountNo || merged?.account_number || "";
+
+        setUserName(resolvedName);
+        setUserAccountNumber(resolvedAccount);
       }
     } catch (error) {
       console.error("Error loading user account number:", error);
@@ -406,6 +448,7 @@ export default function TransferConfirm() {
         const receiptParams = {
           transactionId: txId,
           amount: amount.toString(),
+          processingFee: processingFee,
           currency: "PHP",
           senderName: userName || t("common.user"),
           senderAccount: userAccountNumber || t("common.na"),
@@ -435,6 +478,7 @@ export default function TransferConfirm() {
           senderAccount: userAccountNumber || t("common.na"),
           recipientName: recipientName || t("common.unknown"),
           recipientAccount: accountNumber || t("common.na"),
+          processingFee: processingFee,
         });
 
         if ((verifiedAccountNumber || "").trim()) {
@@ -696,11 +740,12 @@ export default function TransferConfirm() {
           </Text>
           {amount > 0 && (
             <Text style={styles.detailsFeeCaption}>
-              {t("sendMoney.processingFee")}: PHP{" "}
-              {processingFee.toLocaleString("en-PH", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
+              {isFirstTransactionFree
+                ? "First transaction fee waived: PHP 0.00"
+                : `${t("sendMoney.processingFee")}: PHP ${processingFee.toLocaleString("en-PH", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}`}
             </Text>
           )}
           <View style={styles.detailsRowColumn}>
@@ -776,11 +821,12 @@ export default function TransferConfirm() {
                 {t("sendMoney.processingFee")}
               </Text>
               <Text style={styles.transferAmountValue}>
-                -
-                {processingFee.toLocaleString("en-PH", {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
+                {isFirstTransactionFree
+                  ? "Waived (0.00)"
+                  : `-${processingFee.toLocaleString("en-PH", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}`}
               </Text>
             </View>
           )}

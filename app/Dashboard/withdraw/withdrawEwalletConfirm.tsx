@@ -406,10 +406,12 @@ export default function EWalletConfirm() {
               <View style={styles.detailContent}>
                 <Text style={styles.detailLabel}>Transaction Fee</Text>
                 <Text style={styles.detailValue}>
-                  {`PHP ${transactionFee.toLocaleString("en-US", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}`}
+                  {isFirstTransactionFree
+                    ? "First transaction fee waived (PHP 0.00)"
+                    : `PHP ${transactionFee.toLocaleString("en-US", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}`}
                 </Text>
               </View>
             </View>
@@ -428,13 +430,15 @@ export default function EWalletConfirm() {
               </Text>
             </View>
             <Text style={styles.feeNoteText}>
-              {`E-wallet transaction fee: PHP ${transactionFee.toLocaleString(
-                "en-US",
-                {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                },
-              )}.`}
+              {isFirstTransactionFree
+                ? "First transaction fee waived. No e-wallet transaction fee applied."
+                : `E-wallet transaction fee: PHP ${transactionFee.toLocaleString(
+                    "en-US",
+                    {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    },
+                  )}.`}
             </Text>
           </View>
 
