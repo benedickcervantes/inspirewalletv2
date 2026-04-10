@@ -2859,6 +2859,28 @@ export async function getStockRate() {
 }
 
 /**
+ * GET /system-settings/transfer-processing-fees — no auth. Tiered transfer fees (PHP).
+ * @returns {Promise<{ success: boolean, data?: { brackets: Array<{maxAmount,feePhp}>, overflowFeePhp }, error?: string }>}
+ */
+export async function getTransferProcessingFees() {
+  const url = buildUrl('/system-settings/transfer-processing-fees');
+  if (!url) return { success: false, error: 'Backend URL not configured' };
+  try {
+    const res = await apiFetch(url, { method: 'GET', headers: { 'Content-Type': 'application/json' } });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok || !body.success || !body.data || !Array.isArray(body.data.brackets)) {
+      return {
+        success: false,
+        error: body.message || body.error || 'Failed to load transfer processing fees',
+      };
+    }
+    return { success: true, data: body.data };
+  } catch (e) {
+    return { success: false, error: e.message || 'Network error' };
+  }
+}
+
+/**
  * Fetch all active stock sell listings in the marketplace (excludes own listings).
  * GET /deposit-requests/stock-sell/marketplace
  * @param {string} accessToken - Backend JWT

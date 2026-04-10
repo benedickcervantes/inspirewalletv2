@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation, useRoute } from "@react-navigation/native";
+import { useTransferProcessingFeesConfig } from "../../../hooks/useTransferProcessingFeesConfig";
 import * as FileSystem from "expo-file-system/legacy";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Sharing from "expo-sharing";
@@ -19,6 +20,7 @@ import PasscodeModal from "../../components/PasscodeModal";
 import Loader from "../../Loader/Loader";
 import ContactsModal from "./ContactsModal";
 import QRScanner from "./QRScanner";
+import { computeTransferProcessingFeePhp } from "./transferProcessingFee";
 
 import {
     refreshAdminTransferSuccessSound,
@@ -189,6 +191,9 @@ export default function TransferConfirm() {
   const [showSaveContactModal, setShowSaveContactModal] = useState(false);
   const [pendingReceiptParams, setPendingReceiptParams] = useState<Record<string, unknown> | null>(null);
   const qrRef = useRef<any | null>(null);
+  const feeConfig = useTransferProcessingFeesConfig();
+  const processingFee = computeTransferProcessingFeePhp(amount, feeConfig);
+
   useEffect(() => {
     loadBalance();
     loadUserAccountNumber();
@@ -207,6 +212,11 @@ export default function TransferConfirm() {
 
     return () => undefined;
   }, []);
+
+  useEffect(() => {
+    const fee = computeTransferProcessingFeePhp(amount, feeConfig);
+    setNewBalance(Math.max(0, currentBalance - amount - fee));
+  }, [currentBalance, amount, feeConfig]);
 
   const refreshHasPasscode = async (): Promise<boolean> => {
     try {
@@ -255,11 +265,9 @@ export default function TransferConfirm() {
             : NaN;
         const balanceNum = Number.isNaN(agentBal) ? 0 : agentBal;
         setCurrentBalance(balanceNum);
-        setNewBalance(Math.max(0, balanceNum - amount));
       } else if (wallet?.balance != null) {
         const balanceNum = parseFloat(String(wallet.balance)) || 0;
         setCurrentBalance(balanceNum);
-        setNewBalance(Math.max(0, balanceNum - amount));
       }
     } catch (error) {
       console.error("Error fetching balance:", error);
@@ -673,6 +681,15 @@ export default function TransferConfirm() {
               maximumFractionDigits: 2,
             })}
           </Text>
+          {amount > 0 && (
+            <Text style={styles.detailsFeeCaption}>
+              {t("sendMoney.processingFee")}: PHP{" "}
+              {processingFee.toLocaleString("en-PH", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
+            </Text>
+          )}
           <View style={styles.detailsRowColumn}>
             <Text style={styles.detailsRowLabel}>{t("sendMoney.from")}</Text>
             <View style={styles.detailsRowValueWrap}>
@@ -740,6 +757,20 @@ export default function TransferConfirm() {
               })}
             </Text>
           </View>
+          {amount > 0 && (
+            <View style={styles.transferFeeRow}>
+              <Text style={styles.transferAmountLabel}>
+                {t("sendMoney.processingFee")}
+              </Text>
+              <Text style={styles.transferAmountValue}>
+                -
+                {processingFee.toLocaleString("en-PH", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </Text>
+            </View>
+          )}
         </View>
 
         {/* Confirm Button */}
@@ -1141,6 +1172,13 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: "700",
     color: "#FFFFFF",
+    marginBottom: 8,
+  },
+  detailsFeeCaption: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#FFFFFF",
+    opacity: 0.95,
     marginBottom: 16,
   },
   detailsRow: {
@@ -1225,6 +1263,12 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     borderTopWidth: 1,
     borderTopColor: "#F0F0F0",
+  },
+  transferFeeRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingTop: 10,
   },
   transferAmountLabel: {
     fontSize: 15,

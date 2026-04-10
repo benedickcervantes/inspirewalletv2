@@ -4,7 +4,7 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import * as Contacts from "expo-contacts";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Sharing from "expo-sharing";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
     ActivityIndicator,
     KeyboardAvoidingView,
@@ -31,9 +31,15 @@ import {
     unformatNumberString,
 } from "../../../utils/numberFormat";
 import { useResponsive } from "../../../utils/responsive";
+import { useTransferProcessingFeesConfig } from "../../../hooks/useTransferProcessingFeesConfig";
 import Loader from "../../Loader/Loader";
 import ContactsModal from "./ContactsModal";
 import QRScanner from "./QRScanner";
+import {
+    computeTransferProcessingFeePhp,
+    DEFAULT_TRANSFER_PROCESSING_FEES_CONFIG,
+    type TransferProcessingFeesConfig,
+} from "./transferProcessingFee";
 
 import ActivityModal from "../../components/ActivityModal";
 const width = (() => {
@@ -211,6 +217,7 @@ export const validateTransferForm = (
   amount: string,
   availableBalance: number,
   balanceType?: string,
+  feeConfig: TransferProcessingFeesConfig = DEFAULT_TRANSFER_PROCESSING_FEES_CONFIG,
 ) => {
   if (!accountNumber || !amount) {
     return {
@@ -227,16 +234,22 @@ export const validateTransferForm = (
     };
   }
 
-  if (transferAmount > availableBalance) {
+  const processingFee = computeTransferProcessingFeePhp(
+    transferAmount,
+    feeConfig,
+  );
+  const totalDebit = transferAmount + processingFee;
+
+  if (totalDebit > availableBalance) {
     return {
       isValid: false,
-      messageKey: "sendMoney.insufficientBalance" as const,
+      messageKey: "sendMoney.insufficientForTransferAndFee" as const,
     };
   }
 
   if (
     (balanceType ?? "available") === "available" &&
-    availableBalance - transferAmount < MIN_IWALLET_REMAINING_BALANCE
+    availableBalance - totalDebit < MIN_IWALLET_REMAINING_BALANCE
   ) {
     return {
       isValid: false,
@@ -283,6 +296,17 @@ export default function TransferRecipient() {
   const [userName, setUserName] = useState("");
   const [showQRScanner, setShowQRScanner] = useState(false);
   const viewShotRef = useRef<ViewShot | null>(null);
+  const feeConfig = useTransferProcessingFeesConfig();
+
+  const transferAmountPreview = useMemo(() => {
+    const n = parseFloat(unformatNumberString(amount));
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  }, [amount]);
+  const previewProcessingFee = useMemo(
+    () =>
+      computeTransferProcessingFeePhp(transferAmountPreview, feeConfig),
+    [transferAmountPreview, feeConfig],
+  );
 
   useEffect(() => {
     fetchBalance();
@@ -393,6 +417,7 @@ export default function TransferRecipient() {
       amount,
       Number(availableBalance) || 0,
       balanceType,
+      feeConfig,
     );
     if (!validation.isValid && validation.messageKey) {
       setAlertType("error");
@@ -675,6 +700,23 @@ export default function TransferRecipient() {
                   maximumFractionDigits: 2,
                 })}
               </Text>
+              {transferAmountPreview > 0 && (
+                <Text style={styles.processingFeeHint}>
+                  {t("sendMoney.processingFee")}: PHP{" "}
+                  {previewProcessingFee.toLocaleString("en-PH", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}{" "}
+                  · {t("sendMoney.totalDebit")}: PHP{" "}
+                  {(transferAmountPreview + previewProcessingFee).toLocaleString(
+                    "en-PH",
+                    {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    },
+                  )}
+                </Text>
+              )}
               {(balanceType ?? "available") === "available" && (
                 <Text style={styles.remainingBalanceText}>
                   Keep at least PHP{" "}
@@ -1133,6 +1175,13 @@ const styles = StyleSheet.create({
     color: "#666",
     marginTop: 8,
     fontWeight: "500",
+  },
+  processingFeeHint: {
+    fontSize: 12,
+    color: "#555",
+    marginTop: 6,
+    fontWeight: "600",
+    lineHeight: 17,
   },
   remainingBalanceText: {
     fontSize: 12,

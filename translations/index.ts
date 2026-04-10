@@ -1773,6 +1773,10 @@ const en: TranslationMap = {
   "sendMoney.currentBalance": "Current Balance",
   "sendMoney.newBalance": "New Balance",
   "sendMoney.transferAmount": "Transfer Amount",
+  "sendMoney.processingFee": "Processing fee",
+  "sendMoney.totalDebit": "Total deducted",
+  "sendMoney.insufficientForTransferAndFee":
+    "Insufficient balance for the transfer amount and processing fee",
   "sendMoney.confirm": "Confirm",
   "sendMoney.transferComplete": "Transfer Complete!",
   "sendMoney.transferSuccessMessage":
@@ -3810,6 +3814,10 @@ const ko: TranslationMap = {
   "sendMoney.currentBalance": "현재 잔액",
   "sendMoney.newBalance": "새 잔액",
   "sendMoney.transferAmount": "송금 금액",
+  "sendMoney.processingFee": "처리 수수료",
+  "sendMoney.totalDebit": "총 차감",
+  "sendMoney.insufficientForTransferAndFee":
+    "송금액과 처리 수수료를 합친 금액이 잔액보다 큽니다",
   "sendMoney.confirm": "확인",
   "sendMoney.transferComplete": "송금 완료!",
   "sendMoney.transferSuccessMessage":
@@ -5829,6 +5837,10 @@ const ja: TranslationMap = {
   "sendMoney.currentBalance": "現在の残高",
   "sendMoney.newBalance": "新しい残高",
   "sendMoney.transferAmount": "送金金額",
+  "sendMoney.processingFee": "手数料",
+  "sendMoney.totalDebit": "合計差し引き",
+  "sendMoney.insufficientForTransferAndFee":
+    "送金額と手数料の合計が残高を超えています",
   "sendMoney.confirm": "確認",
   "sendMoney.transferComplete": "送金完了！",
   "sendMoney.transferSuccessMessage": "PHP {amount}を{name}様へ送金しました。",
@@ -7835,6 +7847,10 @@ const ar: TranslationMap = {
   "sendMoney.currentBalance": "الرصيد الحالي",
   "sendMoney.newBalance": "الرصيد الجديد",
   "sendMoney.transferAmount": "مبلغ التحويل",
+  "sendMoney.processingFee": "رسوم المعالجة",
+  "sendMoney.totalDebit": "إجمالي الخصم",
+  "sendMoney.insufficientForTransferAndFee":
+    "الرصيد غير كافٍ لمبلغ التحويل ورسوم المعالجة",
   "sendMoney.confirm": "تأكيد",
   "sendMoney.transferComplete": "تم التحويل!",
   "sendMoney.transferSuccessMessage": "تم تحويل PHP {amount} إلى {name} بنجاح.",

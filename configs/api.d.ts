@@ -544,6 +544,22 @@ export function getStockRate(): Promise<{
   error?: string;
 }>;
 
+export interface TransferProcessingFeeBracket {
+  maxAmount: number;
+  feePhp: number;
+}
+
+export interface TransferProcessingFeesData {
+  brackets: TransferProcessingFeeBracket[];
+  overflowFeePhp: number;
+}
+
+export function getTransferProcessingFees(): Promise<{
+  success: boolean;
+  data?: TransferProcessingFeesData;
+  error?: string;
+}>;
+
 export interface StockMarketplaceListing {
   id: string;
   stocksToSell: number;

@@ -78,6 +78,10 @@ export function createRealtimeConnection(accessToken, handlers = {}) {
       handlers.onMaintenanceUpdated?.(payload);
     });
 
+    socket.on('TRANSFER_PROCESSING_FEES_UPDATED', (payload) => {
+      handlers.onTransferProcessingFeesUpdated?.(payload);
+    });
+
     socket.on('connect', () => {
       handlers.onConnect?.();
     });
