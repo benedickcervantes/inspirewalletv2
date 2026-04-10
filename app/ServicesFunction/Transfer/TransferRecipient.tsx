@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation, useRoute } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import * as Contacts from "expo-contacts";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Sharing from "expo-sharing";
@@ -43,6 +44,7 @@ import {
 } from "./transferProcessingFee";
 
 import ActivityModal from "../../components/ActivityModal";
+import type { RootStackParamList } from "../../../types/navigation";
 const width = (() => {
   try {
     return require("react-native").Dimensions?.get?.("window")?.width ?? 375;
@@ -267,7 +269,8 @@ export const validateTransferForm = (
 
 export default function TransferRecipient() {
   const { t } = useLanguage();
-  const navigation = useNavigation();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList, "TransferRecipient">>();
   const route = useRoute();
   const insets = useSafeAreaInsets();
   const { horizontalPadding } = useResponsive();
@@ -459,6 +462,8 @@ export default function TransferRecipient() {
         firstName?: string;
         lastName?: string;
         accountNumber?: string;
+        isInHierarchy?: boolean;
+        hierarchyReason?: string;
       };
       const recipientName =
         [data.firstName, data.lastName].filter(Boolean).join(" ") ||
@@ -471,6 +476,8 @@ export default function TransferRecipient() {
         recipientName,
         recipientId: "",
         mainWalletId: data.mainWalletId ?? "",
+        isInHierarchy: data.isInHierarchy,
+        hierarchyReason: data.hierarchyReason,
       });
     } catch (error) {
       console.error("Error verifying recipient:", error);
@@ -653,6 +660,16 @@ export default function TransferRecipient() {
           <Text style={styles.stepSubtitle}>
             {t("sendMoney.enterRecipientAndAmount")}
           </Text>
+          <View style={styles.rewardNoticeCard}>
+            <Ionicons
+              name="information-circle-outline"
+              size={18}
+              color="#E25A17"
+            />
+            <Text style={styles.rewardNoticeText}>
+              Reward points apply only for transfers within your hierarchy.
+            </Text>
+          </View>
 
           {/* Form */}
           <View style={styles.formContainer}>
@@ -1121,6 +1138,24 @@ const styles = StyleSheet.create({
     color: "#666",
     textAlign: "center",
     marginBottom: 24,
+  },
+  rewardNoticeCard: {
+    flexDirection: "row",
+    gap: 8,
+    backgroundColor: "#FFF7ED",
+    borderColor: "#FED7AA",
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginBottom: 14,
+  },
+  rewardNoticeText: {
+    flex: 1,
+    fontSize: 12,
+    lineHeight: 17,
+    color: "#7C2D12",
+    fontWeight: "500",
   },
   formContainer: {
     marginBottom: 24,

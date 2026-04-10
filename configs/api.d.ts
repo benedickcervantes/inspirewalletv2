@@ -31,10 +31,13 @@ export function getRecipientByAccountNumber(
 ): Promise<{
   success: boolean;
   data?: {
+    userId?: string;
     mainWalletId?: string;
     firstName?: string;
     lastName?: string;
     accountNumber?: string;
+    isInHierarchy?: boolean;
+    hierarchyReason?: string;
   };
   error?: string;
   notFound?: boolean;

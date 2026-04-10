@@ -60,6 +60,8 @@ export default function TransferConfirm() {
     recipientName?: string;
     recipientId?: string;
     mainWalletId?: string;
+    isInHierarchy?: boolean;
+    hierarchyReason?: string;
   };
   const balanceType = params.balanceType || "";
   const accountNumber = params.accountNumber || "";
@@ -68,6 +70,9 @@ export default function TransferConfirm() {
   const description = (params.description ?? "").trim();
   const recipientName = params.recipientName || "";
   const mainWalletId = params.mainWalletId || "";
+  const isInHierarchy =
+    typeof params.isInHierarchy === "boolean" ? params.isInHierarchy : undefined;
+  const hierarchyReason = params.hierarchyReason || "";
 
   const saveRecentRecipient = async (recipient: {
     name: string;
@@ -391,6 +396,9 @@ export default function TransferConfirm() {
       if (description) transferBody.description = description;
       if (fromWalletId) transferBody.fromWalletId = fromWalletId;
       transferBody.balanceType = balanceType || "available";
+      if (typeof isInHierarchy === "boolean") {
+        transferBody.isInHierarchy = String(isInHierarchy);
+      }
       if (hasPasscode && passcodeToSend) transferBody.passcode = passcodeToSend;
       const result = await submitTransfer(accessToken, transferBody);
       if (result.success) {
@@ -668,6 +676,29 @@ export default function TransferConfirm() {
               <Text style={styles.recipientAccount}>{accountNumber}</Text>
             </View>
           </View>
+        </View>
+        <View
+          style={[
+            styles.rewardNoticeCard,
+            isInHierarchy === false
+              ? styles.rewardNoticeCardWarning
+              : styles.rewardNoticeCardInfo,
+          ]}
+        >
+          <Ionicons
+            name={
+              isInHierarchy === false
+                ? "warning-outline"
+                : "information-circle-outline"
+            }
+            size={18}
+            color={isInHierarchy === false ? "#B45309" : "#E25A17"}
+          />
+          <Text style={styles.rewardNoticeText}>
+            {isInHierarchy === false
+              ? `This transfer is outside your hierarchy, so no reward points will be earned.${hierarchyReason ? ` ${hierarchyReason}` : ""}`
+              : "Reward points apply only for transfers within your hierarchy."}
+          </Text>
         </View>
 
         {/* Transfer Details Card */}
@@ -1126,6 +1157,30 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 8,
     elevation: 3,
+  },
+  rewardNoticeCard: {
+    flexDirection: "row",
+    gap: 8,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginBottom: 12,
+    borderWidth: 1,
+  },
+  rewardNoticeCardInfo: {
+    backgroundColor: "#FFF7ED",
+    borderColor: "#FED7AA",
+  },
+  rewardNoticeCardWarning: {
+    backgroundColor: "#FFFBEB",
+    borderColor: "#FCD34D",
+  },
+  rewardNoticeText: {
+    flex: 1,
+    fontSize: 12,
+    lineHeight: 17,
+    color: "#7C2D12",
+    fontWeight: "500",
   },
   recipientLabel: {
     fontSize: 13,
