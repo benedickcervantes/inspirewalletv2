@@ -178,6 +178,7 @@ export default function DepositReceipt() {
     senderAccount?: string;
     recipientName?: string;
     recipientAccount?: string;
+    processingFee?: string | number;
     status?: string;
   };
 
@@ -197,6 +198,7 @@ export default function DepositReceipt() {
     senderAccount = "",
     recipientName = "",
     recipientAccount = "",
+    processingFee = 0,
     status = "",
   } = params;
 
@@ -413,6 +415,23 @@ export default function DepositReceipt() {
   ).toLocaleString(locale, { minimumFractionDigits: 2 })}${
     currency !== "PHP" ? ` ${currency}` : ""
   }`;
+  const parsedTransferAmount = Number(amount);
+  const parsedProcessingFee = Number(processingFee ?? 0);
+  const transferAmount = Number.isFinite(parsedTransferAmount)
+    ? parsedTransferAmount
+    : 0;
+  const transferProcessingFee = Number.isFinite(parsedProcessingFee)
+    ? parsedProcessingFee
+    : 0;
+  const transferTotalDebit = transferAmount + transferProcessingFee;
+  const formattedTransferFee = `₱${transferProcessingFee.toLocaleString(locale, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+  const formattedTransferTotalDebit = `₱${transferTotalDebit.toLocaleString(locale, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
   const isCryptoTimeDepositReceipt =
     normalizedType === "time deposit" &&
     (depositMethod || "").toLowerCase() === "crypto deposit" &&
@@ -517,6 +536,20 @@ export default function DepositReceipt() {
                 />
                 <Separator />
                 <ReceiptRow label={getMethodKey()} value={getMethodLabel()} />
+                {normalizedType === "transfer" ? (
+                  <>
+                    <Separator />
+                    <ReceiptRow
+                      label="Transfer Amount"
+                      value={`₱${transferAmount.toLocaleString(locale, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}`}
+                    />
+                    <Separator />
+                    <ReceiptRow label="Processing Fee" value={formattedTransferFee} />
+                  </>
+                ) : null}
                 {normalizedType === "transfer" && senderName ? (
                   <>
                     <Separator />
@@ -576,7 +609,11 @@ export default function DepositReceipt() {
               {/* ── Total summary ── */}
               <View style={styles.totalSection}>
                 <Text style={styles.totalLabel}>TOTAL</Text>
-                <Text style={styles.totalValue}>{formattedAmount}</Text>
+                <Text style={styles.totalValue}>
+                  {normalizedType === "transfer"
+                    ? formattedTransferTotalDebit
+                    : formattedAmount}
+                </Text>
               </View>
 
               {/* ── Footer strip ── */}

@@ -420,7 +420,9 @@ export default function WithdrawLocalBConfirm() {
               <View style={styles.detailContent}>
                 <Text style={styles.detailLabel}>Transaction Fee</Text>
                 <Text style={styles.detailValue}>
-                  {transactionFee === 0
+                  {isFirstTransactionFree
+                    ? "First transaction fee waived (PHP 0.00)"
+                    : transactionFee === 0
                     ? "Free"
                     : `PHP ${transactionFee.toLocaleString("en-US", {
                         minimumFractionDigits: 2,
