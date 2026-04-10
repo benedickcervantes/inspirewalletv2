@@ -5,7 +5,6 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Dimensions,
   FlatList,
   RefreshControl,
@@ -153,11 +152,16 @@ const Notification = () => {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showInfoModal, setShowInfoModal] = useState(false);
   const [deleteModalConfig, setDeleteModalConfig] = useState<{
     title: string;
     message: string;
     onConfirm: () => void | Promise<void>;
   }>({ title: "", message: "", onConfirm: () => {} });
+  const [infoModalConfig, setInfoModalConfig] = useState<{
+    title: string;
+    message: string;
+  }>({ title: "", message: "" });
   const [detailModalNotification, setDetailModalNotification] = useState<
     NotificationItem | NotificationItemBackend | null
   >(null);
@@ -527,21 +531,29 @@ const Notification = () => {
 
   const orderedBackendNotifications = useMemo(
     () =>
-      [...backendNotifications].sort((a, b) => {
-        const unreadPriority = Number(a.isRead) - Number(b.isRead); // unread first
-        if (unreadPriority !== 0) return unreadPriority;
-        return getBackendCreatedAtMs(b) - getBackendCreatedAtMs(a);
-      }),
+      backendNotifications
+        .map((item, index) => ({ item, index }))
+        .sort((a, b) => {
+          const dateDiff =
+            getBackendCreatedAtMs(b.item) - getBackendCreatedAtMs(a.item);
+          if (dateDiff !== 0) return dateDiff;
+          return a.index - b.index;
+        })
+        .map(({ item }) => item),
     [backendNotifications],
   );
 
   const orderedFirebaseNotifications = useMemo(
     () =>
-      [...notifications].sort((a, b) => {
-        const unreadPriority = Number(!!a.read) - Number(!!b.read); // unread first
-        if (unreadPriority !== 0) return unreadPriority;
-        return getFirebaseTimestampMs(b) - getFirebaseTimestampMs(a);
-      }),
+      notifications
+        .map((item, index) => ({ item, index }))
+        .sort((a, b) => {
+          const dateDiff =
+            getFirebaseTimestampMs(b.item) - getFirebaseTimestampMs(a.item);
+          if (dateDiff !== 0) return dateDiff;
+          return a.index - b.index;
+        })
+        .map(({ item }) => item),
     [notifications],
   );
 
@@ -978,9 +990,20 @@ const Notification = () => {
         );
         setDetailModalNotification(null);
         setUnreadCount((prev) => Math.max(0, prev - 1));
+      } else {
+        setInfoModalConfig({
+          title: t("notification.adminTransferErrorTitle") ?? "Transfer",
+          message: result.error ?? "Action failed",
+        });
+        setShowInfoModal(true);
       }
     } catch (e) {
       if (__DEV__) console.error("[Referral] Accept error", e);
+      setInfoModalConfig({
+        title: t("notification.adminTransferErrorTitle") ?? "Transfer",
+        message: e instanceof Error ? e.message : "Network error",
+      });
+      setShowInfoModal(true);
     } finally {
       setReferralActionLoading(false);
     }
@@ -1008,9 +1031,20 @@ const Notification = () => {
         );
         setDetailModalNotification(null);
         setUnreadCount((prev) => Math.max(0, prev - 1));
+      } else {
+        setInfoModalConfig({
+          title: t("notification.adminTransferErrorTitle") ?? "Transfer",
+          message: result.error ?? "Action failed",
+        });
+        setShowInfoModal(true);
       }
     } catch (e) {
       if (__DEV__) console.error("[Referral] Decline error", e);
+      setInfoModalConfig({
+        title: t("notification.adminTransferErrorTitle") ?? "Transfer",
+        message: e instanceof Error ? e.message : "Network error",
+      });
+      setShowInfoModal(true);
     } finally {
       setReferralActionLoading(false);
     }
@@ -1044,17 +1078,19 @@ const Notification = () => {
         setDetailModalNotification(null);
         setUnreadCount((prev) => Math.max(0, prev - 1));
       } else {
-        Alert.alert(
-          t("notification.adminTransferErrorTitle") ?? "Transfer",
-          result.error ?? "Could not approve",
-        );
+        setInfoModalConfig({
+          title: t("notification.adminTransferErrorTitle") ?? "Transfer",
+          message: result.error ?? "Could not approve",
+        });
+        setShowInfoModal(true);
       }
     } catch (e) {
       if (__DEV__) console.error("[Admin balance transfer] Approve error", e);
-      Alert.alert(
-        t("notification.adminTransferErrorTitle") ?? "Transfer",
-        e instanceof Error ? e.message : "Network error",
-      );
+      setInfoModalConfig({
+        title: t("notification.adminTransferErrorTitle") ?? "Transfer",
+        message: e instanceof Error ? e.message : "Network error",
+      });
+      setShowInfoModal(true);
     } finally {
       setBalanceTransferActionLoading(false);
     }
@@ -1088,17 +1124,19 @@ const Notification = () => {
         setDetailModalNotification(null);
         setUnreadCount((prev) => Math.max(0, prev - 1));
       } else {
-        Alert.alert(
-          t("notification.adminTransferErrorTitle") ?? "Transfer",
-          result.error ?? "Could not reject",
-        );
+        setInfoModalConfig({
+          title: t("notification.adminTransferErrorTitle") ?? "Transfer",
+          message: result.error ?? "Could not reject",
+        });
+        setShowInfoModal(true);
       }
     } catch (e) {
       if (__DEV__) console.error("[Admin balance transfer] Reject error", e);
-      Alert.alert(
-        t("notification.adminTransferErrorTitle") ?? "Transfer",
-        e instanceof Error ? e.message : "Network error",
-      );
+      setInfoModalConfig({
+        title: t("notification.adminTransferErrorTitle") ?? "Transfer",
+        message: e instanceof Error ? e.message : "Network error",
+      });
+      setShowInfoModal(true);
     } finally {
       setBalanceTransferActionLoading(false);
     }
@@ -1583,6 +1621,30 @@ const Notification = () => {
                     {t("notification.delete")}
                   </Text>
                 )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </ActivityModal>
+
+      <ActivityModal
+        visible={showInfoModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowInfoModal(false)}
+      >
+        <View style={styles.alertOverlay}>
+          <View style={styles.alertContainer}>
+            <Text style={styles.alertTitle}>{infoModalConfig.title}</Text>
+            <Text style={styles.alertMessage}>{infoModalConfig.message}</Text>
+            <View style={styles.alertButtonRow}>
+              <TouchableOpacity
+                style={styles.alertConfirmButton}
+                onPress={() => setShowInfoModal(false)}
+              >
+                <Text style={styles.alertConfirmButtonText}>
+                  {t("notification.close") ?? "Close"}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
