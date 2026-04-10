@@ -744,11 +744,11 @@ export default function AgentDashboard() {
           {/* Referral Code & Share */}
           <View style={[styles.referralCard, isXSScreen && styles.cardCompact]}>
             <Text style={[styles.sectionTitle, isXSScreen && styles.sectionTitleCompact]}>{t("agent.yourReferralCode")}</Text>
-            
+
             {referralUrl && (
               <View style={[styles.qrCodeContainer, isXSScreen && styles.qrCodeContainerCompact]}>
                 <QRCode
-                  value={referralUrl}
+                  value={referralUrl ?? undefined}
                   size={qrSize}
                   color="#1F2937"
                   backgroundColor="#FFFFFF"
