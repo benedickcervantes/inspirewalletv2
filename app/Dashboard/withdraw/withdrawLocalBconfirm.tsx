@@ -56,6 +56,7 @@ export default function WithdrawLocalBConfirm() {
     amount?: string;
     email?: string;
     type?: string;
+    firstWithdrawalFree?: boolean;
   };
   const [showAlertModal, setShowAlertModal] = useState(false);
   const [alertConfig, setAlertConfig] = useState<{
@@ -75,9 +76,12 @@ export default function WithdrawLocalBConfirm() {
   const amount = params?.amount || "0";
   const email = params?.email || "";
   const withdrawalType = params?.type || "available-balance";
+  const isFirstWithdrawalFree = params?.firstWithdrawalFree === true;
   const parsedAmount = parseFloat(amount);
   const isUnionBank = bankName.trim().toUpperCase() === "UNIONBANK";
-  const transactionFee = getLocalBankTransactionFee(parsedAmount, isUnionBank);
+  const transactionFee = isFirstWithdrawalFree
+    ? 0
+    : getLocalBankTransactionFee(parsedAmount, isUnionBank);
   const netWithdrawalAmount = Math.max(
     0,
     (Number.isNaN(parsedAmount) ? 0 : parsedAmount) - transactionFee,
@@ -114,7 +118,9 @@ export default function WithdrawLocalBConfirm() {
         setShowAlertModal(true);
         return;
       }
-      const submitFee = getLocalBankTransactionFee(amountNum, isUnionBank);
+      const submitFee = isFirstWithdrawalFree
+        ? 0
+        : getLocalBankTransactionFee(amountNum, isUnionBank);
       if (submitFee > 0 && amountNum <= submitFee) {
         setAlertConfig({
           title: t("common.error"),

@@ -20,6 +20,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { getOrCreateMainWallet } from "../../../configs/api";
 import { auth, firestore } from "../../../configs/firebase";
 import { useLanguage } from "../../../context/LanguageContext";
+import { useFirstTransactionFeeWaiver } from "../../../hooks/useFirstTransactionFeeWaiver";
 import {
   formatAmountWithCommas,
   unformatNumberString,
@@ -97,6 +98,9 @@ export default function EWalletWithdrawal() {
     unformatNumberString(withdrawalAmount).trim(),
   );
   const transactionFee = getEwalletTransactionFee(parsedWithdrawalAmount);
+  const { isFirstTransactionFree: isFirstWithdrawalFree } =
+    useFirstTransactionFeeWaiver("withdrawal");
+  const effectiveTransactionFee = isFirstWithdrawalFree ? 0 : transactionFee;
   const hasValidAmount =
     !Number.isNaN(parsedWithdrawalAmount) && parsedWithdrawalAmount > 0;
 
@@ -223,7 +227,9 @@ export default function EWalletWithdrawal() {
           minGross.toFixed(2),
         );
       } else {
-        const feeForAmount = getEwalletTransactionFee(amountNum);
+        const feeForAmount = isFirstWithdrawalFree
+          ? 0
+          : getEwalletTransactionFee(amountNum);
         if (amountNum <= feeForAmount) {
           newErrors.withdrawalAmount = t(
             "withdraw.validation.amountMustExceedFee",
@@ -295,6 +301,7 @@ export default function EWalletWithdrawal() {
       amount: confirmedAmount.toFixed(2),
       email: emailAddress,
       type: withdrawalType,
+      firstWithdrawalFree: isFirstWithdrawalFree,
     });
   };
 
@@ -524,7 +531,7 @@ export default function EWalletWithdrawal() {
               )}
               {hasValidAmount && (
                 <Text style={styles.feeNoteText}>
-                  {`E-wallet transaction fee: PHP ${transactionFee.toLocaleString(
+                  {`E-wallet transaction fee: PHP ${effectiveTransactionFee.toLocaleString(
                     "en-US",
                     {
                       minimumFractionDigits: 2,
