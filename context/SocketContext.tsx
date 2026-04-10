@@ -3,6 +3,7 @@ import React, { createContext, useContext, useEffect, useRef, useState } from 'r
 import { createRealtimeConnection, startHeartbeat } from '../configs/realtime';
 import { notifyAccountDeletionApproved, notifyAccountDeletionRejected } from '../lib/accountDeletionEvents';
 import { notifyNewSupportMessage } from '../lib/messagingEvents';
+import { notifyTransferProcessingFeesUpdated } from '../lib/transferProcessingFeesEvents';
 import { notifyNewTicketMessage, notifyTicketMessagesRead, notifyTicketCreated } from '../lib/ticketingEvents';
 
 interface SocketContextType {
@@ -78,6 +79,9 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             },
             onAccountDeletionRejected: (payload?: { adminNotes?: string | null }) => {
                 notifyAccountDeletionRejected(payload?.adminNotes);
+            },
+            onTransferProcessingFeesUpdated: (payload: unknown) => {
+                notifyTransferProcessingFeesUpdated(payload);
             },
             onWalletUpdate: (payload: any) => {
                 // We could also notify here if there was a wallet events lib

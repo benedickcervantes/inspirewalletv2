@@ -19,12 +19,12 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import ViewShot from "react-native-view-shot";
+import { getTransactions } from "../../../configs/api";
 import {
   DEFAULT_TRANSFER_SUCCESS_SOUND,
   getTransferSuccessSound,
   refreshAdminTransferSuccessSound,
 } from "../../../constants/adminAudio";
-import { getTransactions } from "../../../configs/api";
 import { getLanguageCode } from "../../../constants/locales";
 import { useLanguage } from "../../../context/LanguageContext";
 
@@ -111,7 +111,9 @@ export default function DepositReceipt() {
     playAsync: () => Promise<unknown>;
     setPositionAsync?: (millis: number) => Promise<unknown>;
     setOnPlaybackStatusUpdate: (
-      callback: ((status: { isLoaded?: boolean; didJustFinish?: boolean }) => void) | null,
+      callback:
+        | ((status: { isLoaded?: boolean; didJustFinish?: boolean }) => void)
+        | null,
     ) => void;
   } | null>(null);
 
@@ -121,7 +123,7 @@ export default function DepositReceipt() {
       if (status !== "granted") {
         Alert.alert(
           t("common.error") || "Error",
-          "Permission to access media library is required to save the receipt."
+          "Permission to access media library is required to save the receipt.",
         );
         return;
       }
@@ -131,7 +133,7 @@ export default function DepositReceipt() {
         await MediaLibrary.saveToLibraryAsync(uri);
         Alert.alert(
           t("common.success") || "Success",
-          "Receipt saved to your photos successfully."
+          "Receipt saved to your photos successfully.",
         );
       }
     } catch (error) {
@@ -148,7 +150,10 @@ export default function DepositReceipt() {
         if (isAvailable) {
           await Sharing.shareAsync(uri);
         } else {
-          Alert.alert(t("common.error") || "Error", "Sharing is not available on this device.");
+          Alert.alert(
+            t("common.error") || "Error",
+            "Sharing is not available on this device.",
+          );
         }
       }
     } catch (error) {
@@ -160,7 +165,6 @@ export default function DepositReceipt() {
   const params = (route.params || {}) as {
     transactionId?: string;
     amount?: string;
-    processingFee?: string | number;
     amountInPhp?: number;
     currency?: string;
     depositMethod?: string;
@@ -174,13 +178,13 @@ export default function DepositReceipt() {
     senderAccount?: string;
     recipientName?: string;
     recipientAccount?: string;
+    processingFee?: string | number;
     status?: string;
   };
 
   const {
     transactionId = t("investment.pending"),
     amount = "0",
-    processingFee = 0,
     amountInPhp,
     currency = "PHP",
     depositMethod = "",
@@ -194,6 +198,7 @@ export default function DepositReceipt() {
     senderAccount = "",
     recipientName = "",
     recipientAccount = "",
+    processingFee = 0,
     status = "",
   } = params;
 
@@ -207,7 +212,9 @@ export default function DepositReceipt() {
     ar: "ar-SA",
   };
   const locale = localeByLanguageCode[languageCode] ?? "en-PH";
-  const normalizedType = String(type ?? "").trim().toLowerCase();
+  const normalizedType = String(type ?? "")
+    .trim()
+    .toLowerCase();
 
   useEffect(() => {
     let isMounted = true;
@@ -245,19 +252,30 @@ export default function DepositReceipt() {
           playAsync: () => Promise<unknown>;
           setPositionAsync?: (millis: number) => Promise<unknown>;
           setOnPlaybackStatusUpdate: (
-            callback: ((status: { isLoaded?: boolean; didJustFinish?: boolean }) => void) | null,
+            callback:
+              | ((status: {
+                  isLoaded?: boolean;
+                  didJustFinish?: boolean;
+                }) => void)
+              | null,
           ) => void;
         };
         try {
-          ({ sound } = await Audio.Sound.createAsync(getTransferSuccessSound(), {
-            shouldPlay: false,
-            volume: 1.0,
-          }));
+          ({ sound } = await Audio.Sound.createAsync(
+            getTransferSuccessSound(),
+            {
+              shouldPlay: false,
+              volume: 1.0,
+            },
+          ));
         } catch {
-          ({ sound } = await Audio.Sound.createAsync(DEFAULT_TRANSFER_SUCCESS_SOUND, {
-            shouldPlay: false,
-            volume: 1.0,
-          }));
+          ({ sound } = await Audio.Sound.createAsync(
+            DEFAULT_TRANSFER_SUCCESS_SOUND,
+            {
+              shouldPlay: false,
+              volume: 1.0,
+            },
+          ));
         }
         transferSuccessSoundRef.current = sound;
         sound.setOnPlaybackStatusUpdate((status) => {
@@ -363,7 +381,9 @@ export default function DepositReceipt() {
     return t("deposit.depositMethod");
   };
 
-  const normalizedStatus = String(liveStatus || "").trim().toLowerCase();
+  const normalizedStatus = String(liveStatus || "")
+    .trim()
+    .toLowerCase();
   const isSuccessfulStatus =
     !normalizedStatus ||
     normalizedStatus === "successful" ||
@@ -375,7 +395,9 @@ export default function DepositReceipt() {
   const statusLabel = isSuccessfulStatus
     ? "Successful"
     : normalizedStatus
-      ? normalizedStatus.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+      ? normalizedStatus
+          .replace(/_/g, " ")
+          .replace(/\b\w/g, (c) => c.toUpperCase())
       : "Successful";
   const statusColor = isSuccessfulStatus ? "#1A7A36" : "#B54708";
 
@@ -389,20 +411,27 @@ export default function DepositReceipt() {
   };
 
   const formattedAmount = `${currency === "PHP" ? "₱" : ""}${Number(
-    amount
+    amount,
   ).toLocaleString(locale, { minimumFractionDigits: 2 })}${
     currency !== "PHP" ? ` ${currency}` : ""
   }`;
-  const numericProcessingFee = Number(processingFee) || 0;
-  const formattedProcessingFee = `${currency === "PHP" ? "₱" : ""}${numericProcessingFee.toLocaleString(
-    locale,
-    { minimumFractionDigits: 2 },
-  )}${currency !== "PHP" ? ` ${currency}` : ""}`;
-  const transferTotalAmount = Number(amount) + numericProcessingFee;
-  const formattedTransferTotal = `${currency === "PHP" ? "₱" : ""}${transferTotalAmount.toLocaleString(
-    locale,
-    { minimumFractionDigits: 2 },
-  )}${currency !== "PHP" ? ` ${currency}` : ""}`;
+  const parsedTransferAmount = Number(amount);
+  const parsedProcessingFee = Number(processingFee ?? 0);
+  const transferAmount = Number.isFinite(parsedTransferAmount)
+    ? parsedTransferAmount
+    : 0;
+  const transferProcessingFee = Number.isFinite(parsedProcessingFee)
+    ? parsedProcessingFee
+    : 0;
+  const transferTotalDebit = transferAmount + transferProcessingFee;
+  const formattedTransferFee = `₱${transferProcessingFee.toLocaleString(locale, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+  const formattedTransferTotalDebit = `₱${transferTotalDebit.toLocaleString(locale, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
   const isCryptoTimeDepositReceipt =
     normalizedType === "time deposit" &&
     (depositMethod || "").toLowerCase() === "crypto deposit" &&
@@ -440,159 +469,163 @@ export default function DepositReceipt() {
             style={{ backgroundColor: "transparent" }}
           >
             <View style={[styles.card, { width: receiptWidth }]}>
+              {/* ── Brand header ── */}
+              <LinearGradient
+                colors={["#C44A0C", "#E06828"]}
+                style={styles.headerBand}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                {/* Decorative circles */}
+                <View style={styles.deco1} />
+                <View style={styles.deco2} />
 
-            {/* ── Brand header ── */}
-            <LinearGradient
-              colors={["#C44A0C", "#E06828"]}
-              style={styles.headerBand}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-            >
-              {/* Decorative circles */}
-              <View style={styles.deco1} />
-              <View style={styles.deco2} />
-
-              <View style={styles.headerInner}>
-                <Image
-                  source={require("../../../assets/images/InpireLogo.png")}
-                  style={styles.logo}
-                  resizeMode="contain"
-                />
-                <View style={styles.headerMeta}>
-                  <Text style={styles.headerLabel}>OFFICIAL RECEIPT</Text>
-                  <Text style={styles.headerDateText}>{date}</Text>
+                <View style={styles.headerInner}>
+                  <Image
+                    source={require("../../../assets/images/InpireLogo.png")}
+                    style={styles.logo}
+                    resizeMode="contain"
+                  />
+                  <View style={styles.headerMeta}>
+                    <Text style={styles.headerLabel}>OFFICIAL RECEIPT</Text>
+                    <Text style={styles.headerDateText}>{date}</Text>
+                  </View>
                 </View>
-              </View>
-            </LinearGradient>
+              </LinearGradient>
 
-            {/* ── Status badge ── */}
-            <View style={styles.statusBar}>
-              <View style={styles.statusBadge}>
-                <View style={styles.statusDot} />
-                <Text style={styles.statusText}>
-                  {isSuccessfulStatus ? "TRANSACTION SUCCESSFUL" : "TRANSACTION UPDATE"}
+              {/* ── Status badge ── */}
+              <View style={styles.statusBar}>
+                <View style={styles.statusBadge}>
+                  <View style={styles.statusDot} />
+                  <Text style={styles.statusText}>
+                    {isSuccessfulStatus
+                      ? "TRANSACTION SUCCESSFUL"
+                      : "TRANSACTION UPDATE"}
+                  </Text>
+                </View>
+                <Text style={styles.receiptNo}>
+                  #{String(transactionId).slice(-8).toUpperCase()}
                 </Text>
               </View>
-              <Text style={styles.receiptNo}>
-                #{String(transactionId).slice(-8).toUpperCase()}
-              </Text>
+
+              <Separator style={{ marginHorizontal: 20 }} />
+
+              {/* ── Amount hero ── */}
+              <View style={styles.amountBlock}>
+                <Text style={styles.txTypeTag}>
+                  {getReceiptTypeLabel().toUpperCase()}
+                </Text>
+                <Text style={styles.amountFigure}>{formattedAmount}</Text>
+                <Text style={styles.amountCaption}>{getSuccessSubtitle()}</Text>
+              </View>
+
+              <Separator style={{ marginHorizontal: 20 }} />
+
+              {/* ── Transaction details ── */}
+              <View style={styles.detailsSection}>
+                <Text style={styles.sectionLabel}>TRANSACTION DETAILS</Text>
+
+                <ReceiptRow
+                  label={t("history.id") || "Transaction ID"}
+                  value={transactionId}
+                />
+                <Separator />
+                <ReceiptRow
+                  label={t("history.date") || "Date & Time"}
+                  value={date}
+                />
+                <Separator />
+                <ReceiptRow label={getMethodKey()} value={getMethodLabel()} />
+                {normalizedType === "transfer" ? (
+                  <>
+                    <Separator />
+                    <ReceiptRow
+                      label="Transfer Amount"
+                      value={`₱${transferAmount.toLocaleString(locale, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}`}
+                    />
+                    <Separator />
+                    <ReceiptRow label="Processing Fee" value={formattedTransferFee} />
+                  </>
+                ) : null}
+                {normalizedType === "transfer" && senderName ? (
+                  <>
+                    <Separator />
+                    <ReceiptRow label="Sender Name" value={senderName} />
+                  </>
+                ) : null}
+                {normalizedType === "transfer" && senderAccount ? (
+                  <>
+                    <Separator />
+                    <ReceiptRow label="Sender Account" value={senderAccount} />
+                  </>
+                ) : null}
+                {normalizedType === "transfer" && recipientName ? (
+                  <>
+                    <Separator />
+                    <ReceiptRow label="Recipient Name" value={recipientName} />
+                  </>
+                ) : null}
+                {normalizedType === "transfer" && recipientAccount ? (
+                  <>
+                    <Separator />
+                    <ReceiptRow
+                      label="Recipient Account"
+                      value={recipientAccount}
+                    />
+                  </>
+                ) : null}
+                {contractPeriod && (
+                  <>
+                    <Separator />
+                    <ReceiptRow
+                      label={t("deposit.contractPeriod")}
+                      value={contractPeriod}
+                    />
+                  </>
+                )}
+                {isCryptoTimeDepositReceipt && hasPhpEquivalent && (
+                  <>
+                    <Separator />
+                    <ReceiptRow
+                      label="PHP Equivalent"
+                      value={formattedPhpEquivalent}
+                    />
+                  </>
+                )}
+                <Separator />
+                <ReceiptRow
+                  label="Status"
+                  value={statusLabel}
+                  valueBold
+                  valueColor={statusColor}
+                />
+              </View>
+
+              <Separator style={{ marginHorizontal: 20 }} />
+
+              {/* ── Total summary ── */}
+              <View style={styles.totalSection}>
+                <Text style={styles.totalLabel}>TOTAL</Text>
+                <Text style={styles.totalValue}>
+                  {normalizedType === "transfer"
+                    ? formattedTransferTotalDebit
+                    : formattedAmount}
+                </Text>
+              </View>
+
+              {/* ── Footer strip ── */}
+              <View style={styles.footerStrip}>
+                <Text style={styles.footerMain}>
+                  Thank you for using Inpire Financial Services
+                </Text>
+                <Text style={styles.footerSub}>
+                  Please keep this receipt for your records
+                </Text>
+              </View>
             </View>
-
-            <Separator style={{ marginHorizontal: 20 }} />
-
-            {/* ── Amount hero ── */}
-            <View style={styles.amountBlock}>
-              <Text style={styles.txTypeTag}>
-                {getReceiptTypeLabel().toUpperCase()}
-              </Text>
-              <Text style={styles.amountFigure}>{formattedAmount}</Text>
-              <Text style={styles.amountCaption}>{getSuccessSubtitle()}</Text>
-            </View>
-
-            <Separator style={{ marginHorizontal: 20 }} />
-
-            {/* ── Transaction details ── */}
-            <View style={styles.detailsSection}>
-              <Text style={styles.sectionLabel}>TRANSACTION DETAILS</Text>
-
-              <ReceiptRow
-                label={t("history.id") || "Transaction ID"}
-                value={transactionId}
-              />
-              <Separator />
-              <ReceiptRow
-                label={t("history.date") || "Date & Time"}
-                value={date}
-              />
-              <Separator />
-              <ReceiptRow label={getMethodKey()} value={getMethodLabel()} />
-              {normalizedType === "transfer" ? (
-                <>
-                  <Separator />
-                  <ReceiptRow
-                    label={t("history.amount") || "Amount"}
-                    value={formattedAmount}
-                  />
-                  <Separator />
-                  <ReceiptRow
-                    label={t("sendMoney.processingFee") || "Processing Fee"}
-                    value={formattedProcessingFee}
-                  />
-                </>
-              ) : null}
-              {normalizedType === "transfer" && senderName ? (
-                <>
-                  <Separator />
-                  <ReceiptRow label="Sender Name" value={senderName} />
-                </>
-              ) : null}
-              {normalizedType === "transfer" && senderAccount ? (
-                <>
-                  <Separator />
-                  <ReceiptRow label="Sender Account" value={senderAccount} />
-                </>
-              ) : null}
-              {normalizedType === "transfer" && recipientName ? (
-                <>
-                  <Separator />
-                  <ReceiptRow label="Receiver Name" value={recipientName} />
-                </>
-              ) : null}
-              {normalizedType === "transfer" && recipientAccount ? (
-                <>
-                  <Separator />
-                  <ReceiptRow label="Receiver Account" value={recipientAccount} />
-                </>
-              ) : null}
-              {contractPeriod && (
-                <>
-                  <Separator />
-                  <ReceiptRow
-                    label={t("deposit.contractPeriod")}
-                    value={contractPeriod}
-                  />
-                </>
-              )}
-              {isCryptoTimeDepositReceipt && hasPhpEquivalent && (
-                <>
-                  <Separator />
-                  <ReceiptRow
-                    label="PHP Equivalent"
-                    value={formattedPhpEquivalent}
-                  />
-                </>
-              )}
-              <Separator />
-              <ReceiptRow
-                label="Status"
-                value={statusLabel}
-                valueBold
-                valueColor={statusColor}
-              />
-            </View>
-
-            <Separator style={{ marginHorizontal: 20 }} />
-
-            {/* ── Total summary ── */}
-            <View style={styles.totalSection}>
-              <Text style={styles.totalLabel}>TOTAL</Text>
-              <Text style={styles.totalValue}>
-                {normalizedType === "transfer"
-                  ? formattedTransferTotal
-                  : formattedAmount}
-              </Text>
-            </View>
-
-            {/* ── Footer strip ── */}
-            <View style={styles.footerStrip}>
-              <Text style={styles.footerMain}>
-                Thank you for using Inpire Financial Services
-              </Text>
-              <Text style={styles.footerSub}>
-                Please keep this receipt for your records
-              </Text>
-            </View>
-          </View>
           </ViewShot>
 
           {/* ═══════════════ ACTION BUTTONS ═══════════════ */}

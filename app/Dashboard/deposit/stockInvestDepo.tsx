@@ -1,8 +1,8 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -16,7 +16,9 @@ import {
   formatAmountWithCommas,
   unformatNumberString,
 } from "../../../utils/numberFormat";
-import ActivityModal from '../../components/ActivityModal';
+import ActivityModal from "../../components/ActivityModal";
+import FeatureMaintenanceModal from "../../components/FeatureMaintenanceModal";
+import { isOperationUnderMaintenance } from "../../../lib/maintenance";
 
 export default function StockInvestment() {
   const navigation = useNavigation();
@@ -31,6 +33,25 @@ export default function StockInvestment() {
   const [isLoadingCurrencies, setIsLoadingCurrencies] = useState(true);
   const [minAmount, setMinAmount] = useState(2000000); // Default fallback
   const [availableBalance, setAvailableBalance] = useState<number | null>(null);
+  const [showFeatureMaintenanceModal, setShowFeatureMaintenanceModal] =
+    useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false;
+      void (async () => {
+        const offline = await isOperationUnderMaintenance(
+          "op_deposit_stock_investment",
+        );
+        if (!cancelled) {
+          setShowFeatureMaintenanceModal(offline);
+        }
+      })();
+      return () => {
+        cancelled = true;
+      };
+    }, []),
+  );
 
   // Fetch currencies, minimum amount, and wallet balance on mount
   useEffect(() => {
@@ -71,7 +92,15 @@ export default function StockInvestment() {
     loadConfig();
   }, []);
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
+    const offline = await isOperationUnderMaintenance(
+      "op_deposit_stock_investment",
+    );
+    if (offline) {
+      setShowFeatureMaintenanceModal(true);
+      return;
+    }
+
     const newErrors: Record<string, string> = {};
     const amountStr = unformatNumberString(amount).trim();
 
@@ -293,7 +322,7 @@ export default function StockInvestment() {
           {/* Continue Button */}
           <TouchableOpacity
             style={styles.continueButton}
-            onPress={handleContinue}
+            onPress={() => void handleContinue()}
           >
             <LinearGradient
               colors={["#E25A17", "#F28934"]}
@@ -358,6 +387,14 @@ export default function StockInvestment() {
             </View>
           </View>
         </ActivityModal>
+
+        <FeatureMaintenanceModal
+          visible={showFeatureMaintenanceModal}
+          onDismiss={() => {
+            setShowFeatureMaintenanceModal(false);
+            navigation.goBack();
+          }}
+        />
       </SafeAreaView>
     </View>
   );

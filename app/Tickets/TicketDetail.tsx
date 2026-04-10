@@ -5,7 +5,6 @@ import {
   ActivityIndicator,
   Keyboard,
   KeyboardAvoidingView,
-  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -423,24 +422,6 @@ function TicketDetail({
     fetchMessages();
   };
 
-  // Helper function to handle API errors consistently
-  const handleApiError = (error: any, context: string) => {
-    let errorMessage = t("common.error");
-
-    if (error instanceof Error) {
-      if (error.name === "AbortError") {
-        errorMessage = t("common.timeout");
-      } else {
-        errorMessage = error.message;
-      }
-    } else if (typeof error === "string") {
-      errorMessage = error;
-    }
-
-    console.error(`[TicketDetail] ${context} error:`, error);
-    return errorMessage;
-  };
-
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <View style={styles.header}>
@@ -519,9 +500,9 @@ function TicketDetail({
                     ]}
                   >
                     <View style={{ flex: 1, minWidth: 0 }}>
-                      {!msg.isCustomer && msg.sender && (
+                      {!msg.isCustomer && (
                         <Text style={[styles.senderName, isSmallScreen && styles.senderNameSmall]}>
-                          {`${msg.sender.firstName} ${msg.sender.lastName}`}
+                          {getSenderName(msg)}
                         </Text>
                       )}
                       <View

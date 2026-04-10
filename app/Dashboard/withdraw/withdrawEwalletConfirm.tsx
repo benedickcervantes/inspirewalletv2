@@ -2,7 +2,7 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
     ActivityIndicator,
     ScrollView,
@@ -17,11 +17,18 @@ import {
     submitWithdrawalRequest,
 } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
+import {
+    isEligibleForFirstTransactionFreeFee,
+    markFirstTransactionFeeWaived,
+} from "../../../utils/firstTransactionFee";
 import PasscodeModal from "../../components/PasscodeModal";
 
 import ActivityModal from "../../components/ActivityModal";
+import FeatureMaintenanceModal from "../../components/FeatureMaintenanceModal";
+import { isWithdrawalCombinationUnderMaintenance } from "../../../lib/maintenance";
 import {
     MIN_REMAINING_WALLET_BALANCE_PHP,
+    MIN_WITHDRAWAL_AVAILABLE_BALANCE_PHP,
     MIN_WITHDRAWAL_PHP,
     parseWithdrawalAmountInput,
 } from "../../../utils/withdrawalAmount";
@@ -52,6 +59,7 @@ export default function EWalletConfirm() {
     amount?: string;
     email?: string;
     type?: string;
+    isFirstTransactionFree?: boolean;
   };
   const [showAlertModal, setShowAlertModal] = useState(false);
   const [alertConfig, setAlertConfig] = useState<{
@@ -61,6 +69,10 @@ export default function EWalletConfirm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPasscodeModal, setShowPasscodeModal] = useState(false);
   const [passcode, setPasscode] = useState("");
+  const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
+  const [isFirstTransactionFree, setIsFirstTransactionFree] = useState(
+    Boolean(params.isFirstTransactionFree),
+  );
 
   const method = params.method || "e-wallet";
   const walletType = params.walletType || "";
@@ -69,12 +81,22 @@ export default function EWalletConfirm() {
   const amount = params.amount || "0";
   const email = params.email || "";
   const withdrawalType = params.type || "available-balance";
+  const isAgentWithdrawal = withdrawalType === "agent-withdrawal";
   const parsedAmount = parseFloat(amount);
-  const transactionFee = getEwalletTransactionFee(parsedAmount);
+  const transactionFee = isFirstTransactionFree
+    ? 0
+    : getEwalletTransactionFee(parsedAmount);
   const netWithdrawalAmount = Math.max(
     0,
     (Number.isNaN(parsedAmount) ? 0 : parsedAmount) - transactionFee,
   );
+
+  useEffect(() => {
+    void (async () => {
+      const eligible = await isEligibleForFirstTransactionFreeFee();
+      setIsFirstTransactionFree(eligible);
+    })();
+  }, []);
 
   const submitWithdrawal = async (passcodeToSend?: string) => {
     if (isSubmitting) return;
@@ -91,18 +113,23 @@ export default function EWalletConfirm() {
         return;
       }
       const amountNum = parsedSubmit.value;
-      if (amountNum < MIN_WITHDRAWAL_PHP) {
+      const minGross = isAgentWithdrawal
+        ? MIN_WITHDRAWAL_PHP
+        : MIN_WITHDRAWAL_AVAILABLE_BALANCE_PHP;
+      if (amountNum < minGross) {
         setAlertConfig({
           title: t("common.error"),
           message: t("withdraw.validation.minAmount").replace(
             "{min}",
-            MIN_WITHDRAWAL_PHP.toFixed(2),
+            minGross.toFixed(2),
           ),
         });
         setShowAlertModal(true);
         return;
       }
-      const submitFee = getEwalletTransactionFee(amountNum);
+      const submitFee = isFirstTransactionFree
+        ? 0
+        : getEwalletTransactionFee(amountNum);
       if (amountNum <= submitFee) {
         setAlertConfig({
           title: t("common.error"),
@@ -171,6 +198,20 @@ export default function EWalletConfirm() {
         setIsSubmitting(false);
         return;
       }
+
+      const offline = await isWithdrawalCombinationUnderMaintenance({
+        source:
+          withdrawalType === "agent-withdrawal"
+            ? "agent-withdrawal"
+            : "available-balance",
+        method: "e_wallet",
+      });
+      if (offline) {
+        setShowPasscodeModal(false);
+        setShowMaintenanceModal(true);
+        return;
+      }
+
       const body: Record<string, string | undefined> = {
         walletId: wallet.id as string,
         amount: amountNum.toFixed(2),
@@ -187,6 +228,10 @@ export default function EWalletConfirm() {
       const result = await submitWithdrawalRequest(accessToken, body);
 
       if (result.success) {
+        if (isFirstTransactionFree) {
+          await markFirstTransactionFeeWaived();
+          setIsFirstTransactionFree(false);
+        }
         setShowPasscodeModal(false);
         setPasscode("");
 
@@ -361,10 +406,12 @@ export default function EWalletConfirm() {
               <View style={styles.detailContent}>
                 <Text style={styles.detailLabel}>Transaction Fee</Text>
                 <Text style={styles.detailValue}>
-                  {`PHP ${transactionFee.toLocaleString("en-US", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}`}
+                  {isFirstTransactionFree
+                    ? "First transaction fee waived (PHP 0.00)"
+                    : `PHP ${transactionFee.toLocaleString("en-US", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}`}
                 </Text>
               </View>
             </View>
@@ -383,13 +430,15 @@ export default function EWalletConfirm() {
               </Text>
             </View>
             <Text style={styles.feeNoteText}>
-              {`E-wallet transaction fee: PHP ${transactionFee.toLocaleString(
-                "en-US",
-                {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                },
-              )}.`}
+              {isFirstTransactionFree
+                ? "First transaction fee waived. No e-wallet transaction fee applied."
+                : `E-wallet transaction fee: PHP ${transactionFee.toLocaleString(
+                    "en-US",
+                    {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    },
+                  )}.`}
             </Text>
           </View>
 
@@ -462,6 +511,14 @@ export default function EWalletConfirm() {
             </LinearGradient>
           </View>
         </ActivityModal>
+
+        <FeatureMaintenanceModal
+          visible={showMaintenanceModal}
+          onDismiss={() => {
+            setShowMaintenanceModal(false);
+            navigation.goBack();
+          }}
+        />
       </SafeAreaView>
     </View>
   );

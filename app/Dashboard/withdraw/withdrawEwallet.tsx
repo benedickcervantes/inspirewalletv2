@@ -1,10 +1,11 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { doc, getDoc } from "firebase/firestore";
 import { useCallback, useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -19,16 +20,20 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { getOrCreateMainWallet } from "../../../configs/api";
 import { auth, firestore } from "../../../configs/firebase";
 import { useLanguage } from "../../../context/LanguageContext";
+import { isEligibleForFirstTransactionFreeFee } from "../../../utils/firstTransactionFee";
 import {
   formatAmountWithCommas,
   unformatNumberString,
 } from "../../../utils/numberFormat";
 import {
   MIN_REMAINING_WALLET_BALANCE_PHP,
+  MIN_WITHDRAWAL_AVAILABLE_BALANCE_PHP,
   MIN_WITHDRAWAL_PHP,
   parseWithdrawalAmountInput,
 } from "../../../utils/withdrawalAmount";
 import ActivityModal from '../../components/ActivityModal';
+import FeatureMaintenanceModal from "../../components/FeatureMaintenanceModal";
+import { isWithdrawalCombinationUnderMaintenance } from "../../../lib/maintenance";
 
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 const isValidEmail = (email: string) =>
@@ -78,7 +83,10 @@ export default function EWalletWithdrawal() {
   const [minBalanceBlockReason, setMinBalanceBlockReason] = useState<
     "below_min" | "remaining" | null
   >(null);
-  
+  const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
+  const [checkingMaintenance, setCheckingMaintenance] = useState(false);
+  const [isFirstTransactionFree, setIsFirstTransactionFree] = useState(false);
+
   const withdrawalType = (route.params as { type?: string })?.type || "available-balance";
   const isAgentWithdrawal = withdrawalType === "agent-withdrawal";
   const displayBalance = isAgentWithdrawal ? agentCommission : availableBalance;
@@ -90,7 +98,9 @@ export default function EWalletWithdrawal() {
   const parsedWithdrawalAmount = parseFloat(
     unformatNumberString(withdrawalAmount).trim(),
   );
-  const transactionFee = getEwalletTransactionFee(parsedWithdrawalAmount);
+  const transactionFee = isFirstTransactionFree
+    ? 0
+    : getEwalletTransactionFee(parsedWithdrawalAmount);
   const hasValidAmount =
     !Number.isNaN(parsedWithdrawalAmount) && parsedWithdrawalAmount > 0;
 
@@ -137,6 +147,13 @@ export default function EWalletWithdrawal() {
   }, [fetchUserData]);
 
   useEffect(() => {
+    void (async () => {
+      const eligible = await isEligibleForFirstTransactionFreeFee();
+      setIsFirstTransactionFree(eligible);
+    })();
+  }, []);
+
+  useEffect(() => {
     const fetchWalletBalance = async () => {
       try {
         const accessToken = await AsyncStorage.getItem("access_token");
@@ -163,7 +180,25 @@ export default function EWalletWithdrawal() {
     fetchWalletBalance();
   }, []);
 
-  const handleContinue = () => {
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false;
+      void (async () => {
+        const offline = await isWithdrawalCombinationUnderMaintenance({
+          source: isAgentWithdrawal ? "agent-withdrawal" : "available-balance",
+          method: "e_wallet",
+        });
+        if (!cancelled) {
+          setShowMaintenanceModal(offline);
+        }
+      })();
+      return () => {
+        cancelled = true;
+      };
+    }, [isAgentWithdrawal]),
+  );
+
+  const handleContinue = async () => {
     const newErrors: Record<string, string> = {};
     const trimmedAccountNumber = accountNumber.trim();
     const prefixedAccountNumber = `${PH_PHONE_PREFIX}${trimmedAccountNumber}`;
@@ -190,13 +225,18 @@ export default function EWalletWithdrawal() {
         : t("withdraw.validation.invalidAmountFormat");
     } else {
       const amountNum = parsed.value;
-      if (amountNum < MIN_WITHDRAWAL_PHP) {
+      const minGross = isAgentWithdrawal
+        ? MIN_WITHDRAWAL_PHP
+        : MIN_WITHDRAWAL_AVAILABLE_BALANCE_PHP;
+      if (amountNum < minGross) {
         newErrors.withdrawalAmount = t("withdraw.validation.minAmount").replace(
           "{min}",
-          MIN_WITHDRAWAL_PHP.toFixed(2),
+          minGross.toFixed(2),
         );
       } else {
-        const feeForAmount = getEwalletTransactionFee(amountNum);
+        const feeForAmount = isFirstTransactionFree
+          ? 0
+          : getEwalletTransactionFee(amountNum);
         if (amountNum <= feeForAmount) {
           newErrors.withdrawalAmount = t(
             "withdraw.validation.amountMustExceedFee",
@@ -245,6 +285,20 @@ export default function EWalletWithdrawal() {
       return;
     }
 
+    setCheckingMaintenance(true);
+    try {
+      const offline = await isWithdrawalCombinationUnderMaintenance({
+        source: isAgentWithdrawal ? "agent-withdrawal" : "available-balance",
+        method: "e_wallet",
+      });
+      if (offline) {
+        setShowMaintenanceModal(true);
+        return;
+      }
+    } finally {
+      setCheckingMaintenance(false);
+    }
+
     const { value: confirmedAmount } = parsedAmount;
     navigation.navigate("WithdrawEwalletConfirm", {
       method: "e-wallet",
@@ -254,6 +308,7 @@ export default function EWalletWithdrawal() {
       amount: confirmedAmount.toFixed(2),
       email: emailAddress,
       type: withdrawalType,
+      isFirstTransactionFree,
     });
   };
 
@@ -529,7 +584,8 @@ export default function EWalletWithdrawal() {
             {/* Continue Button */}
             <TouchableOpacity
               style={styles.continueButton}
-              onPress={handleContinue}
+              onPress={() => void handleContinue()}
+              disabled={checkingMaintenance}
             >
               <LinearGradient
                 colors={["#E25A17", "#F28934"]}
@@ -537,10 +593,16 @@ export default function EWalletWithdrawal() {
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
               >
-                <Text style={styles.continueText}>
-                  {t("withdraw.continue")}
-                </Text>
-                <Ionicons name="play" size={20} color="#FFFFFF" />
+                {checkingMaintenance ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <>
+                    <Text style={styles.continueText}>
+                      {t("withdraw.continue")}
+                    </Text>
+                    <Ionicons name="play" size={20} color="#FFFFFF" />
+                  </>
+                )}
               </LinearGradient>
             </TouchableOpacity>
 
@@ -590,6 +652,14 @@ export default function EWalletWithdrawal() {
             </LinearGradient>
           </View>
         </ActivityModal>
+
+        <FeatureMaintenanceModal
+          visible={showMaintenanceModal}
+          onDismiss={() => {
+            setShowMaintenanceModal(false);
+            navigation.goBack();
+          }}
+        />
       </SafeAreaView>
     </View>
   );

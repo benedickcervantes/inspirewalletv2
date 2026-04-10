@@ -5,8 +5,8 @@ import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import * as LocalAuthentication from "expo-local-authentication";
 import * as SecureStore from "expo-secure-store";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Animated, BackHandler, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, useWindowDimensions, View } from "react-native";
+import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
+import { ActivityIndicator, Animated, BackHandler, Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   login,
@@ -51,43 +51,61 @@ function MessageModal({
   confirmText = "OK",
   onConfirm,
 }: MessageModalProps) {
+  const { width } = useWindowDimensions();
+  const { isTinyScreen, horizontalPadding } = useResponsive();
   if (!visible) return null;
+  const padH = Math.max(12, horizontalPadding);
   return (
     <ActivityModal transparent animationType="fade" visible={visible}>
-      <Pressable
-        style={msgStyles.overlay}
-        onPress={() => {
-          onInteract?.();
-          onClose();
-        }}
-        onTouchStart={onInteract}
+      <KeyboardAvoidingView
+        style={msgStyles.keyboardRoot}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        enabled={Platform.OS === "ios"}
       >
-        <View style={msgStyles.box}>
-          <Text style={msgStyles.title}>{title}</Text>
-          <Text style={msgStyles.message}>{message}</Text>
-          <TouchableOpacity
-            style={msgStyles.button}
-            onPress={() => {
-              onInteract?.();
-              if (onConfirm) onConfirm();
-              onClose();
-            }}
+        <Pressable
+          style={[msgStyles.overlay, { paddingHorizontal: padH, paddingVertical: isTinyScreen ? 12 : 24 }]}
+          onPress={() => {
+            onInteract?.();
+            onClose();
+          }}
+          onTouchStart={onInteract}
+        >
+          <View
+            style={[
+              msgStyles.box,
+              isTinyScreen && { padding: 20, borderRadius: 16, maxWidth: Math.min(340, width - padH * 2) },
+            ]}
           >
-            <Text style={msgStyles.buttonText}>{confirmText}</Text>
-          </TouchableOpacity>
-        </View>
-      </Pressable>
+            <Text style={[msgStyles.title, isTinyScreen && { fontSize: 17, marginBottom: 8 }]}>
+              {title}
+            </Text>
+            <Text style={[msgStyles.message, isTinyScreen && { fontSize: 14, marginBottom: 18, lineHeight: 20 }]}>
+              {message}
+            </Text>
+            <TouchableOpacity
+              style={[msgStyles.button, isTinyScreen && { paddingVertical: 12 }]}
+              onPress={() => {
+                onInteract?.();
+                if (onConfirm) onConfirm();
+                onClose();
+              }}
+            >
+              <Text style={[msgStyles.buttonText, isTinyScreen && { fontSize: 15 }]}>{confirmText}</Text>
+            </TouchableOpacity>
+          </View>
+        </Pressable>
+      </KeyboardAvoidingView>
     </ActivityModal>
   );
 }
 
 const msgStyles = StyleSheet.create({
+  keyboardRoot: { flex: 1 },
   overlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.6)",
     justifyContent: "center",
     alignItems: "center",
-    padding: 24,
   },
   box: {
     backgroundColor: WHITE,
@@ -122,6 +140,153 @@ const msgStyles = StyleSheet.create({
   buttonText: { color: WHITE, fontSize: 16, fontWeight: "600" },
 });
 
+const RESET_PIN_FIELD_BG = "#f9f9f9";
+const PIN_LENGTH = 4;
+
+const toAsciiDigit = (char: string): string | null => {
+  if (char >= "0" && char <= "9") return char;
+  const code = char.codePointAt(0);
+  if (code === undefined) return null;
+
+  // Support common Unicode decimal ranges produced by non-English keypads.
+  if (code >= 0x0660 && code <= 0x0669) return String(code - 0x0660);
+  if (code >= 0x06f0 && code <= 0x06f9) return String(code - 0x06f0);
+  if (code >= 0x0966 && code <= 0x096f) return String(code - 0x0966);
+  if (code >= 0xff10 && code <= 0xff19) return String(code - 0xff10);
+  return null;
+};
+
+const normalizePinDigits = (value: string): string => {
+  const normalized = value.normalize("NFKC");
+  let out = "";
+  for (const char of normalized) {
+    const digit = toAsciiDigit(char);
+    if (!digit) continue;
+    out += digit;
+    if (out.length === PIN_LENGTH) break;
+  }
+  return out;
+};
+
+type ResetPinDigitFieldProps = {
+  value: string;
+  onChangeDigits: (digits: string) => void;
+  placeholder: string;
+  returnKeyType: "next" | "done";
+  isSmallScreen: boolean;
+  isTinyScreen: boolean;
+  /** When user taps IME Next/Done (Android) or hardware action. iOS `number-pad` has no return key. */
+  onSubmitEditing?: () => void;
+  blurOnSubmit?: boolean;
+  /** After 4 digits, move focus (works on all platforms). */
+  onPinFilled?: () => void;
+};
+
+/** Numeric keypad; bullets on an opaque overlay — Android still paints digits when `color` is transparent under the previous layout. */
+const ResetPinDigitField = forwardRef<TextInput, ResetPinDigitFieldProps>(
+  function ResetPinDigitField(
+    {
+      value,
+      onChangeDigits,
+      placeholder,
+      returnKeyType,
+      isSmallScreen,
+      isTinyScreen,
+      onSubmitEditing,
+      blurOnSubmit = returnKeyType === "done",
+      onPinFilled,
+    },
+    ref,
+  ) {
+  const pv = isTinyScreen ? 9 : isSmallScreen ? 10 : 12;
+  const ph = isTinyScreen ? 12 : 16;
+  const fs = isTinyScreen ? 14 : isSmallScreen ? 15 : 16;
+  /** Android `number-pad` often omits IME Next/Done; `phone-pad` still yields digits and shows the action key. */
+  const keyboardType =
+    Platform.OS === "android" ? "phone-pad" : "number-pad";
+  return (
+    <View
+      style={[
+        resetPinDigitStyles.shell,
+        { minHeight: pv * 2 + fs + 6 },
+      ]}
+    >
+      <TextInput
+        ref={ref}
+        style={[
+          StyleSheet.absoluteFillObject,
+          {
+            paddingHorizontal: ph,
+            paddingVertical: pv,
+            fontSize: fs,
+            /** Match field bg so any Android glyph peek-through is invisible. */
+            color: RESET_PIN_FIELD_BG,
+          },
+        ]}
+        selectionColor="transparent"
+        underlineColorAndroid="transparent"
+        value={value}
+        onChangeText={(v) => {
+          const d = normalizePinDigits(v);
+          onChangeDigits(d);
+          if (d.length === PIN_LENGTH && onPinFilled) {
+            queueMicrotask(() => onPinFilled());
+          }
+        }}
+        keyboardType={keyboardType}
+        maxLength={PIN_LENGTH}
+        caretHidden
+        autoCorrect={false}
+        spellCheck={false}
+        importantForAutofill="no"
+        returnKeyType={returnKeyType}
+        onSubmitEditing={onSubmitEditing}
+        blurOnSubmit={blurOnSubmit}
+        enablesReturnKeyAutomatically
+      />
+      <View
+        pointerEvents="none"
+        collapsable={false}
+        style={[
+          StyleSheet.absoluteFillObject,
+          {
+            zIndex: 1,
+            backgroundColor: RESET_PIN_FIELD_BG,
+            paddingHorizontal: ph,
+            paddingVertical: pv,
+            justifyContent: "center",
+          },
+        ]}
+      >
+        <Text
+          style={{
+            fontSize: fs,
+            color: value.length > 0 ? "#333" : "#666",
+            letterSpacing: value.length > 0 ? 4 : 0,
+          }}
+        >
+          {value.length > 0 ? "\u2022".repeat(value.length) : placeholder}
+        </Text>
+      </View>
+    </View>
+  );
+});
+
+ResetPinDigitField.displayName = "ResetPinDigitField";
+
+const resetPinDigitStyles = StyleSheet.create({
+  shell: {
+    borderWidth: 2,
+    borderColor: "rgba(225,88,22,0.3)",
+    borderRadius: 12,
+    backgroundColor: RESET_PIN_FIELD_BG,
+    marginBottom: 16,
+    position: "relative",
+    justifyContent: "center",
+    overflow: "hidden",
+  },
+});
+
 interface ModalConfig {
   title: string;
   message: string;
@@ -136,7 +301,7 @@ export default function Passcode() {
   const activityProps = getActivityProps();
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
-  const { horizontalPadding, isShortScreen, isSmallScreen } = useResponsive();
+  const { horizontalPadding, isShortScreen, isSmallScreen, isTinyScreen } = useResponsive();
   const isSmallPhone = width < 380;
   const isLargeScreen = width >= 768;
   const compact = isShortScreen || height < 650;
@@ -216,6 +381,7 @@ export default function Passcode() {
   const [loadingPasscode, setLoadingPasscode] = useState(true);
   const [needsAuth, setNeedsAuth] = useState(false);
   const [languageModalVisible, setLanguageModalVisible] = useState(false);
+  const [resetKeyboardHeight, setResetKeyboardHeight] = useState(0);
   const { t, language: contextLanguage, setLanguage } = useLanguage();
   const language = normalizeLanguage(contextLanguage ?? DEFAULT_LANGUAGE);
   const [verifyingPasscode, setVerifyingPasscode] = useState(false);
@@ -280,6 +446,8 @@ export default function Passcode() {
   }, []);
 
   const shakeAnim = useRef(new Animated.Value(0)).current;
+  const newPinFieldRef = useRef<TextInput>(null);
+  const confirmPinFieldRef = useRef<TextInput>(null);
 
   const showModal = (config: Partial<ModalConfig>) => {
     setModalConfig({
@@ -491,19 +659,31 @@ export default function Passcode() {
         });
         return;
       }
-      if (newPasscode !== confirmNewPasscode) {
-        showModal({
-          title: t("passcode.mismatchTitle"),
-          message: t("passcode.passcodesDoNotMatch"),
-          type: "error",
-        });
-        return;
+      const normalizedNewPasscode = normalizePinDigits(newPasscode);
+      const normalizedConfirmPasscode = normalizePinDigits(confirmNewPasscode);
+      if (
+        normalizedNewPasscode !== newPasscode ||
+        normalizedConfirmPasscode !== confirmNewPasscode
+      ) {
+        setNewPasscode(normalizedNewPasscode);
+        setConfirmNewPasscode(normalizedConfirmPasscode);
       }
-      if (newPasscode.length !== 4 || !/^\d{4}$/.test(newPasscode)) {
+      if (
+        normalizedNewPasscode.length !== PIN_LENGTH ||
+        normalizedConfirmPasscode.length !== PIN_LENGTH
+      ) {
         showModal({
           title: t("passcode.invalidTitle"),
           message: t("passcode.invalidPasscodeLength"),
           type: "warning",
+        });
+        return;
+      }
+      if (normalizedNewPasscode !== normalizedConfirmPasscode) {
+        showModal({
+          title: t("passcode.mismatchTitle"),
+          message: t("passcode.passcodesDoNotMatch"),
+          type: "error",
         });
         return;
       }
@@ -521,7 +701,7 @@ export default function Passcode() {
         });
         return;
       }
-      const result = await resetPasscode(accessToken, newPasscode);
+      const result = await resetPasscode(accessToken, normalizedNewPasscode);
       setResetLoading(false);
       if (!result.success) {
         showModal({
@@ -553,13 +733,52 @@ export default function Passcode() {
   };
 
   const closeResetModal = () => {
+    Keyboard.dismiss();
     setResetModalVisible(false);
     setResetStep("auth");
     setResetEmail("");
     setResetPassword("");
     setNewPasscode("");
     setConfirmNewPasscode("");
+    setResetKeyboardHeight(0);
   };
+
+  useEffect(() => {
+    if (!resetModalVisible) {
+      setResetKeyboardHeight(0);
+      return;
+    }
+    const showEvent = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+    const hideEvent = Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
+    const showSub = Keyboard.addListener(showEvent, (e) => {
+      setResetKeyboardHeight(e.endCoordinates?.height ?? 0);
+    });
+    const hideSub = Keyboard.addListener(hideEvent, () => {
+      setResetKeyboardHeight(0);
+    });
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+      setResetKeyboardHeight(0);
+    };
+  }, [resetModalVisible]);
+
+  const modalEdgePad = Math.max(12, horizontalPadding);
+  /** Modal window often stays full-height on Android; subtract keyboard so ScrollView can shrink above it. */
+  const resetScrollMaxHeight =
+    resetKeyboardHeight > 0
+      ? Math.max(
+          200,
+          height - resetKeyboardHeight - insets.top - insets.bottom - 40,
+        )
+      : isShortScreen
+        ? Math.min(height * 0.72, height - (isTinyScreen ? 48 : 72))
+        : undefined;
+
+  const resetModalKeyboardPad =
+    Platform.OS === "android" && resetKeyboardHeight > 0
+      ? resetKeyboardHeight
+      : 0;
 
   return (
     <>
@@ -990,40 +1209,51 @@ export default function Passcode() {
         animationType="fade"
         onRequestClose={() => setLanguageModalVisible(false)}
       >
-        <TouchableOpacity
-          style={[
-            passcodeLanguageStyles.overlay,
-            { paddingHorizontal: Math.max(16, horizontalPadding) },
-          ]}
-          activeOpacity={1}
-          onPress={() => {
-            registerActivity();
-            setLanguageModalVisible(false);
-          }}
-          {...activityProps}
+        <KeyboardAvoidingView
+          style={passcodeLanguageStyles.keyboardRoot}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          keyboardVerticalOffset={Platform.OS === "ios" ? insets.top : 0}
         >
-          <View
+          <TouchableOpacity
             style={[
-              passcodeLanguageStyles.content,
+              passcodeLanguageStyles.overlay,
               {
-                maxWidth: Math.min(360, width - 32),
-                maxHeight: isShortScreen ? height * 0.85 : undefined,
-                padding: isSmallScreen ? 18 : 24,
+                paddingHorizontal: modalEdgePad,
+                paddingVertical: isTinyScreen ? 8 : isShortScreen ? 12 : 20,
               },
             ]}
-            onStartShouldSetResponder={() => true}
+            activeOpacity={1}
+            onPress={() => {
+              registerActivity();
+              setLanguageModalVisible(false);
+            }}
             {...activityProps}
           >
+            <View
+              style={[
+                passcodeLanguageStyles.content,
+                {
+                  maxWidth: Math.min(360, width - modalEdgePad * 2),
+                  maxHeight:
+                    isShortScreen || isTinyScreen
+                      ? height * (isTinyScreen ? 0.78 : 0.85)
+                      : undefined,
+                  padding: isTinyScreen ? 14 : isSmallScreen ? 18 : 24,
+                },
+              ]}
+              onStartShouldSetResponder={() => true}
+              {...activityProps}
+            >
             <View style={passcodeLanguageStyles.header}>
               <Ionicons
                 name="globe-outline"
-                size={isSmallScreen ? 32 : 40}
+                size={isTinyScreen ? 28 : isSmallScreen ? 32 : 40}
                 color={GRADIENT_START}
               />
               <Text
                 style={[
                   passcodeLanguageStyles.title,
-                  isSmallScreen && { fontSize: 16 },
+                  (isSmallScreen || isTinyScreen) && { fontSize: isTinyScreen ? 15 : 16 },
                 ]}
               >
                 {t("profile.selectLanguage")}
@@ -1031,14 +1261,18 @@ export default function Passcode() {
               <Text
                 style={[
                   passcodeLanguageStyles.subtitle,
-                  isSmallScreen && { fontSize: 12 },
+                  (isSmallScreen || isTinyScreen) && { fontSize: isTinyScreen ? 11 : 12 },
                 ]}
               >
                 {t("profile.defaultIsEnglish")}
               </Text>
             </View>
             <ScrollView
-              style={isShortScreen ? { maxHeight: 200 } : undefined}
+              style={
+                isShortScreen || isTinyScreen
+                  ? { maxHeight: isTinyScreen ? 160 : 200 }
+                  : undefined
+              }
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
             >
@@ -1047,9 +1281,9 @@ export default function Passcode() {
                   key={label}
                   style={[
                     passcodeLanguageStyles.option,
-                    isSmallScreen && {
-                      paddingVertical: 12,
-                      paddingHorizontal: 14,
+                    (isSmallScreen || isTinyScreen) && {
+                      paddingVertical: isTinyScreen ? 10 : 12,
+                      paddingHorizontal: isTinyScreen ? 12 : 14,
                     },
                     language === label && passcodeLanguageStyles.optionSelected,
                   ]}
@@ -1062,7 +1296,7 @@ export default function Passcode() {
                   <Text
                     style={[
                       passcodeLanguageStyles.flag,
-                      isSmallScreen && { fontSize: 20 },
+                      (isSmallScreen || isTinyScreen) && { fontSize: isTinyScreen ? 18 : 20 },
                     ]}
                   >
                     {flag}
@@ -1070,7 +1304,7 @@ export default function Passcode() {
                   <Text
                     style={[
                       passcodeLanguageStyles.optionText,
-                      isSmallScreen && { fontSize: 15 },
+                      (isSmallScreen || isTinyScreen) && { fontSize: isTinyScreen ? 14 : 15 },
                       language === label &&
                         passcodeLanguageStyles.optionTextSelected,
                     ]}
@@ -1080,7 +1314,7 @@ export default function Passcode() {
                   {language === label && (
                     <Ionicons
                       name="checkmark-circle"
-                      size={isSmallScreen ? 20 : 22}
+                      size={isTinyScreen ? 18 : isSmallScreen ? 20 : 22}
                       color={GRADIENT_START}
                     />
                   )}
@@ -1090,7 +1324,7 @@ export default function Passcode() {
             <TouchableOpacity
               style={[
                 passcodeLanguageStyles.cancelBtn,
-                isSmallScreen && { marginTop: 8 },
+                (isSmallScreen || isTinyScreen) && { marginTop: isTinyScreen ? 6 : 8 },
               ]}
               onPress={() => {
                 registerActivity();
@@ -1100,14 +1334,15 @@ export default function Passcode() {
               <Text
                 style={[
                   passcodeLanguageStyles.cancelText,
-                  isSmallScreen && { fontSize: 15 },
+                  (isSmallScreen || isTinyScreen) && { fontSize: isTinyScreen ? 14 : 15 },
                 ]}
               >
                 {t("common.cancel")}
               </Text>
             </TouchableOpacity>
           </View>
-        </TouchableOpacity>
+          </TouchableOpacity>
+        </KeyboardAvoidingView>
       </ActivityModal>
 
       <ActivityModal
@@ -1116,41 +1351,62 @@ export default function Passcode() {
         visible={resetModalVisible}
         onRequestClose={closeResetModal}
       >
-        <TouchableOpacity
+        <KeyboardAvoidingView
           style={[
-            resetStyles.overlay,
-            { paddingHorizontal: Math.max(16, horizontalPadding) },
+            resetStyles.keyboardRoot,
+            resetModalKeyboardPad > 0 && { paddingBottom: resetModalKeyboardPad },
           ]}
-          activeOpacity={1}
-          onPress={() => {
-            registerActivity();
-            closeResetModal();
-          }}
-          {...activityProps}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          keyboardVerticalOffset={Platform.OS === "ios" ? insets.top : 0}
         >
+          <TouchableOpacity
+            style={[
+              resetStyles.overlay,
+              {
+                paddingHorizontal: modalEdgePad,
+                paddingVertical: isTinyScreen ? 8 : 16,
+                justifyContent: "center",
+              },
+            ]}
+            activeOpacity={1}
+            onPress={() => {
+              registerActivity();
+              closeResetModal();
+            }}
+            {...activityProps}
+          >
           <View
             onStartShouldSetResponder={() => true}
             {...activityProps}
             style={[
               resetStyles.box,
               {
-                maxWidth: Math.min(400, width - 32),
-                maxHeight: isShortScreen ? height * 0.9 : undefined,
-                padding: isSmallScreen ? 18 : 24,
+                maxWidth: Math.min(400, width - modalEdgePad * 2),
+                maxHeight:
+                  resetKeyboardHeight > 0
+                    ? undefined
+                    : isShortScreen || isTinyScreen
+                      ? height * (isTinyScreen ? 0.88 : 0.9)
+                      : undefined,
+                padding: isTinyScreen ? 14 : isSmallScreen ? 18 : 24,
               },
             ]}
           >
             <ScrollView
-              style={isShortScreen ? { maxHeight: height * 0.7 } : undefined}
+              style={resetScrollMaxHeight !== undefined ? { maxHeight: resetScrollMaxHeight } : undefined}
+              contentContainerStyle={{
+                paddingBottom: resetKeyboardHeight > 0 ? 20 : 0,
+              }}
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="on-drag"
               bounces={false}
             >
               <Text
                 style={[
                   resetStyles.title,
-                  isSmallScreen && { fontSize: 20 },
-                  isShortScreen && { fontSize: 20, marginBottom: 10 },
+                  (isSmallScreen || isTinyScreen) && { fontSize: isTinyScreen ? 18 : 20 },
+                  (isShortScreen || isTinyScreen) && { marginBottom: isTinyScreen ? 8 : 10 },
                 ]}
               >
                 {resetStep === "auth"
@@ -1160,8 +1416,8 @@ export default function Passcode() {
               <Text
                 style={[
                   resetStyles.message,
-                  isSmallScreen && { fontSize: 15 },
-                  isShortScreen && { marginBottom: 16 },
+                  (isSmallScreen || isTinyScreen) && { fontSize: isTinyScreen ? 14 : 15 },
+                  (isShortScreen || isTinyScreen) && { marginBottom: isTinyScreen ? 12 : 16 },
                 ]}
               >
                 {resetStep === "auth"
@@ -1173,7 +1429,11 @@ export default function Passcode() {
                   <TextInput
                     style={[
                       resetStyles.input,
-                      isSmallScreen && { paddingVertical: 10, fontSize: 15 },
+                      (isSmallScreen || isTinyScreen) && {
+                        paddingVertical: isTinyScreen ? 9 : 10,
+                        fontSize: isTinyScreen ? 14 : 15,
+                        paddingHorizontal: isTinyScreen ? 12 : 16,
+                      },
                     ]}
                     placeholder={t("auth.emailPlaceholder")}
                     placeholderTextColor="#666"
@@ -1185,11 +1445,16 @@ export default function Passcode() {
                     keyboardType="email-address"
                     autoCapitalize="none"
                     autoComplete="email"
+                    returnKeyType="next"
                   />
                   <TextInput
                     style={[
                       resetStyles.input,
-                      isSmallScreen && { paddingVertical: 10, fontSize: 15 },
+                      (isSmallScreen || isTinyScreen) && {
+                        paddingVertical: isTinyScreen ? 9 : 10,
+                        fontSize: isTinyScreen ? 14 : 15,
+                        paddingHorizontal: isTinyScreen ? 12 : 16,
+                      },
                     ]}
                     placeholder={t("auth.passwordPlaceholder")}
                     placeholderTextColor="#666"
@@ -1200,50 +1465,54 @@ export default function Passcode() {
                       setResetPassword(value);
                     }}
                     autoComplete="password"
+                    returnKeyType="next"
                   />
                 </>
               ) : (
                 <>
-                  <TextInput
-                    style={[
-                      resetStyles.input,
-                      isSmallScreen && { paddingVertical: 10, fontSize: 15 },
-                    ]}
-                    placeholder={t("passcode.newPasscodePlaceholder")}
-                    placeholderTextColor="#666"
-                    keyboardType="numeric"
-                    maxLength={4}
-                    secureTextEntry
+                  <ResetPinDigitField
+                    ref={newPinFieldRef}
                     value={newPasscode}
-                    onChangeText={(value) => {
+                    onChangeDigits={(digits) => {
                       registerActivity();
-                      setNewPasscode(value);
+                      setNewPasscode(digits);
                     }}
+                    placeholder={t("passcode.newPasscodePlaceholder")}
+                    returnKeyType="next"
+                    blurOnSubmit={false}
+                    onSubmitEditing={() =>
+                      confirmPinFieldRef.current?.focus()
+                    }
+                    onPinFilled={() => confirmPinFieldRef.current?.focus()}
+                    isSmallScreen={isSmallScreen}
+                    isTinyScreen={isTinyScreen}
                   />
-                  <TextInput
-                    style={[
-                      resetStyles.input,
-                      isSmallScreen && { paddingVertical: 10, fontSize: 15 },
-                    ]}
-                    placeholder={t("passcode.confirmPasscodePlaceholder")}
-                    placeholderTextColor="#666"
-                    keyboardType="numeric"
-                    maxLength={4}
-                    secureTextEntry
+                  <ResetPinDigitField
+                    ref={confirmPinFieldRef}
                     value={confirmNewPasscode}
-                    onChangeText={(value) => {
+                    onChangeDigits={(digits) => {
                       registerActivity();
-                      setConfirmNewPasscode(value);
+                      setConfirmNewPasscode(digits);
                     }}
+                    placeholder={t("passcode.confirmPasscodePlaceholder")}
+                    returnKeyType="done"
+                    onSubmitEditing={() => Keyboard.dismiss()}
+                    isSmallScreen={isSmallScreen}
+                    isTinyScreen={isTinyScreen}
                   />
                 </>
               )}
-              <View style={[resetStyles.buttons, isSmallScreen && { gap: 10 }]}>
+              <View
+                style={[
+                  resetStyles.buttons,
+                  (isSmallScreen || isTinyScreen) && { gap: isTinyScreen ? 8 : 10 },
+                ]}
+              >
                 <TouchableOpacity
                   style={[
                     resetStyles.btn,
                     resetStyles.cancelBtn,
-                    isSmallScreen && { minHeight: 44 },
+                    (isSmallScreen || isTinyScreen) && { minHeight: isTinyScreen ? 42 : 44 },
                   ]}
                   onPress={() => {
                     registerActivity();
@@ -1253,7 +1522,7 @@ export default function Passcode() {
                   <Text
                     style={[
                       resetStyles.cancelBtnText,
-                      isSmallScreen && { fontSize: 15 },
+                      (isSmallScreen || isTinyScreen) && { fontSize: isTinyScreen ? 14 : 15 },
                     ]}
                   >
                     {t("common.cancel")}
@@ -1263,7 +1532,7 @@ export default function Passcode() {
                   style={[
                     resetStyles.btn,
                     resetStyles.confirmBtn,
-                    isSmallScreen && { minHeight: 44 },
+                    (isSmallScreen || isTinyScreen) && { minHeight: isTinyScreen ? 42 : 44 },
                   ]}
                   onPress={handleResetPasscode}
                   disabled={resetLoading}
@@ -1274,7 +1543,7 @@ export default function Passcode() {
                     <Text
                       style={[
                         resetStyles.confirmBtnText,
-                        isSmallScreen && { fontSize: 15 },
+                        (isSmallScreen || isTinyScreen) && { fontSize: isTinyScreen ? 14 : 15 },
                       ]}
                     >
                       {resetStep === "auth"
@@ -1287,6 +1556,7 @@ export default function Passcode() {
             </ScrollView>
           </View>
         </TouchableOpacity>
+        </KeyboardAvoidingView>
       </ActivityModal>
     </>
   );
@@ -1337,7 +1607,7 @@ const styles = StyleSheet.create({
     width: "100%",
     justifyContent: "center",
     alignItems: "center",
-    paddingTop: 72,
+    paddingTop: 80,
     paddingBottom: 12,
   },
   centerContent: {
@@ -1513,11 +1783,12 @@ const styles = StyleSheet.create({
 });
 
 const resetStyles = StyleSheet.create({
+  keyboardRoot: { flex: 1 },
   overlay: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "transparent",
+    backgroundColor: "rgba(0,0,0,0.6)",
     paddingVertical: 20,
   },
   box: {
@@ -1579,9 +1850,10 @@ const resetStyles = StyleSheet.create({
 });
 
 const passcodeLanguageStyles = StyleSheet.create({
+  keyboardRoot: { flex: 1 },
   overlay: {
     flex: 1,
-    backgroundColor: "transparent",
+    backgroundColor: "rgba(0,0,0,0.6)",
     justifyContent: "center",
     alignItems: "center",
     paddingVertical: 20,

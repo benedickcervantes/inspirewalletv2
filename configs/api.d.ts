@@ -31,10 +31,13 @@ export function getRecipientByAccountNumber(
 ): Promise<{
   success: boolean;
   data?: {
+    userId?: string;
     mainWalletId?: string;
     firstName?: string;
     lastName?: string;
     accountNumber?: string;
+    isInHierarchy?: boolean;
+    hierarchyReason?: string;
   };
   error?: string;
   notFound?: boolean;
@@ -127,6 +130,10 @@ export function deleteTransactions(
   accessToken: string,
   ids: string[],
 ): Promise<{ success: boolean; deletedCount?: number; error?: string }>;
+
+export function getTopUpDepositRequests(
+  accessToken: string,
+): Promise<{ success: boolean; requests?: unknown[]; error?: string }>;
 
 export function getStockInvestmentDepositRequests(
   accessToken: string,
@@ -286,6 +293,14 @@ export function declineReferralRequest(
   accessToken: string,
   notificationId: string,
 ): Promise<{ success: boolean; data?: unknown; error?: string }>;
+export function approveAdminBalanceTransferFromNotification(
+  accessToken: string,
+  notificationId: string,
+): Promise<{ success: boolean; data?: unknown; error?: string }>;
+export function rejectAdminBalanceTransferFromNotification(
+  accessToken: string,
+  notificationId: string,
+): Promise<{ success: boolean; data?: unknown; error?: string }>;
 export function markAllMessagesAsRead(
   accessToken: string,
 ): Promise<{ success: boolean; count?: number; error?: string }>;
@@ -437,6 +452,14 @@ export function submitPhysicalCardRequest(
   },
 ): Promise<{ success: boolean; data?: unknown; error?: string }>;
 
+export function getPhysicalCardConfig(
+  accessToken: string,
+): Promise<{
+  success: boolean;
+  data?: { fee: number; currency: string };
+  error?: string;
+}>;
+
 // Card Collection API
 export interface CardCatalogItem {
   design: string;
@@ -521,6 +544,22 @@ export function getStockSellRequests(
 export function getStockRate(): Promise<{
   success: boolean;
   phpPerStock: number;
+  error?: string;
+}>;
+
+export interface TransferProcessingFeeBracket {
+  maxAmount: number;
+  feePhp: number;
+}
+
+export interface TransferProcessingFeesData {
+  brackets: TransferProcessingFeeBracket[];
+  overflowFeePhp: number;
+}
+
+export function getTransferProcessingFees(): Promise<{
+  success: boolean;
+  data?: TransferProcessingFeesData;
   error?: string;
 }>;
 
@@ -639,3 +678,34 @@ export function getCompanyKycStatus(
   } | null;
   error?: string;
 }>;
+
+export interface RewardPointsHistoryResponse {
+  data?: Record<string, unknown>[];
+  pagination?: {
+    total?: number;
+    page?: number;
+    limit?: number;
+    totalPages?: number;
+  };
+  [key: string]: unknown;
+}
+
+export function getRewardPointsHistory(
+  accessToken: string,
+  page?: number,
+  limit?: number,
+  type?: string | null,
+): Promise<{ success: boolean; data?: RewardPointsHistoryResponse; error?: string }>;
+
+export function getRewardPointsTotal(
+  accessToken: string,
+): Promise<{ success: boolean; total?: number; error?: string }>;
+
+export function redeemRewardPoints(
+  accessToken: string,
+  passcode: string,
+): Promise<{ success: boolean; data?: unknown; error?: string }>;
+
+export function getRewardCampaignConfig(
+  accessToken: string,
+): Promise<{ success: boolean; data?: unknown; error?: string }>;

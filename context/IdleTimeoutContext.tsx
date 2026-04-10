@@ -23,7 +23,7 @@ import {
 import { useLanguage } from "./LanguageContext";
 import { navigationRef } from "../lib/navigationRef";
 
-const INACTIVITY_LIMIT_MS = 150 * 1000; // 2 minutes 30 seconds
+const INACTIVITY_LIMIT_MS = 180 * 1000; // 3 minutes
 const CHECK_INTERVAL_MS = 5 * 1000; // frequent checks for consistent timeout timing
 const ACTIVITY_PERSIST_THROTTLE_MS = 15 * 1000; // avoid storage write on every touch
 const BACKGROUND_LOCK_DELAY_MS = 30000; // avoid false locks from permission/system prompts on Android

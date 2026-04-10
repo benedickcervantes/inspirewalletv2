@@ -2,15 +2,26 @@ import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useState } from "react";
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import ActivityModal from "../../components/ActivityModal";
+import FeatureMaintenanceModal from "../../components/FeatureMaintenanceModal";
 import { useLanguage } from "../../../context/LanguageContext";
+import { isOperationUnderMaintenance } from "../../../lib/maintenance";
 
-import ActivityModal from '../../components/ActivityModal';
 export default function WithdrawType() {
   const navigation = useNavigation();
   const { t } = useLanguage();
   const [selectedType, setSelectedType] = useState<string | null>(null);
+  const [checkingMaintenance, setCheckingMaintenance] = useState(false);
+  const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
   const [showAlertModal, setShowAlertModal] = useState(false);
   const [alertConfig, setAlertConfig] = useState<{
     title: string;
@@ -32,7 +43,7 @@ export default function WithdrawType() {
     },
   ];
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (!selectedType) {
       setAlertConfig({
         title: t("sendMoney.selectionRequired"),
@@ -42,8 +53,21 @@ export default function WithdrawType() {
       return;
     }
 
-    // Navigate to withdrawal method selection when that screen exists
-    navigation.navigate("WithdrawMethod", { type: selectedType });
+    setCheckingMaintenance(true);
+    try {
+      const key =
+        selectedType === "agent-withdrawal"
+          ? "op_withdrawal_agent_wallet"
+          : "op_withdrawal_available_balance";
+      const offline = await isOperationUnderMaintenance(key);
+      if (offline) {
+        setShowMaintenanceModal(true);
+        return;
+      }
+      navigation.navigate("WithdrawMethod", { type: selectedType });
+    } finally {
+      setCheckingMaintenance(false);
+    }
   };
 
   return (
@@ -142,7 +166,8 @@ export default function WithdrawType() {
           {/* Continue Button */}
           <TouchableOpacity
             style={styles.continueButton}
-            onPress={handleContinue}
+            onPress={() => void handleContinue()}
+            disabled={checkingMaintenance}
           >
             <LinearGradient
               colors={["#E25A17", "#F28934"]}
@@ -150,8 +175,16 @@ export default function WithdrawType() {
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
             >
-              <Text style={styles.continueText}>{t("sendMoney.continue")}</Text>
-              <Ionicons name="play" size={20} color="#FFFFFF" />
+              {checkingMaintenance ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <>
+                  <Text style={styles.continueText}>
+                    {t("sendMoney.continue")}
+                  </Text>
+                  <Ionicons name="play" size={20} color="#FFFFFF" />
+                </>
+              )}
             </LinearGradient>
           </TouchableOpacity>
 
@@ -183,6 +216,11 @@ export default function WithdrawType() {
             </LinearGradient>
           </View>
         </ActivityModal>
+
+        <FeatureMaintenanceModal
+          visible={showMaintenanceModal}
+          onDismiss={() => setShowMaintenanceModal(false)}
+        />
       </SafeAreaView>
     </View>
   );

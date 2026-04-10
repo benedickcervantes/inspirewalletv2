@@ -1,16 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { SUPPORTED_LANGUAGES } from "../../constants/locales";
 import { useIdleTimeout } from "../../context/IdleTimeoutContext";
 import { useLanguage } from "../../context/LanguageContext";
 import { useLanguageModal } from "../../context/LanguageModalContext";
 
 import ActivityModal from '../components/ActivityModal';
-const SUPPORTED_LANGUAGES = [
-  { label: "English", flag: "🇺🇸" },
-  { label: "Arabic", flag: "🇸🇦" },
-  { label: "Japanese", flag: "🇯🇵" },
-  { label: "Korean", flag: "🇰🇷" },
-];
 
 export default function LanguageModal() {
   const { t, language, setLanguage } = useLanguage();

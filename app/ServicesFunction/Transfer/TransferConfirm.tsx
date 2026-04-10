@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation, useRoute } from "@react-navigation/native";
+import { useTransferProcessingFeesConfig } from "../../../hooks/useTransferProcessingFeesConfig";
 import * as FileSystem from "expo-file-system/legacy";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Sharing from "expo-sharing";
@@ -15,10 +16,15 @@ import {
     submitTransfer,
 } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
+import {
+  isEligibleForFirstTransactionFreeFee,
+  markFirstTransactionFeeWaived,
+} from "../../../utils/firstTransactionFee";
 import PasscodeModal from "../../components/PasscodeModal";
 import Loader from "../../Loader/Loader";
 import ContactsModal from "./ContactsModal";
 import QRScanner from "./QRScanner";
+import { computeTransferProcessingFeePhp } from "./transferProcessingFee";
 
 import {
     refreshAdminTransferSuccessSound,
@@ -140,7 +146,9 @@ export default function TransferConfirm() {
         senderAccount: details.senderAccount || "",
         recipientName: details.recipientName || "",
         recipientAccount: details.recipientAccount || "",
-        processingFee: details.processingFee || 0,
+        processingFee: Number.isFinite(details.processingFee)
+          ? details.processingFee
+          : 0,
         updatedAt: Date.now(),
       };
 
@@ -190,7 +198,13 @@ export default function TransferConfirm() {
   const [showContactsModal, setShowContactsModal] = useState(false);
   const [showSaveContactModal, setShowSaveContactModal] = useState(false);
   const [pendingReceiptParams, setPendingReceiptParams] = useState<Record<string, unknown> | null>(null);
+  const [isFirstTransactionFree, setIsFirstTransactionFree] = useState(false);
   const qrRef = useRef<any | null>(null);
+  const feeConfig = useTransferProcessingFeesConfig();
+  const processingFee = isFirstTransactionFree
+    ? 0
+    : computeTransferProcessingFeePhp(amount, feeConfig);
+
   useEffect(() => {
     loadBalance();
     loadUserAccountNumber();
@@ -205,10 +219,19 @@ export default function TransferConfirm() {
           setHasPasscode(!!user?.hasPasscode);
         } catch (_) {}
       }
+      const eligible = await isEligibleForFirstTransactionFreeFee();
+      setIsFirstTransactionFree(eligible);
     })();
 
     return () => undefined;
   }, []);
+
+  useEffect(() => {
+    const fee = isFirstTransactionFree
+      ? 0
+      : computeTransferProcessingFeePhp(amount, feeConfig);
+    setNewBalance(Math.max(0, currentBalance - amount - fee));
+  }, [currentBalance, amount, feeConfig, isFirstTransactionFree]);
 
   const refreshHasPasscode = async (): Promise<boolean> => {
     try {
@@ -257,11 +280,9 @@ export default function TransferConfirm() {
             : NaN;
         const balanceNum = Number.isNaN(agentBal) ? 0 : agentBal;
         setCurrentBalance(balanceNum);
-        setNewBalance(Math.max(0, balanceNum - amount));
       } else if (wallet?.balance != null) {
         const balanceNum = parseFloat(String(wallet.balance)) || 0;
         setCurrentBalance(balanceNum);
-        setNewBalance(Math.max(0, balanceNum - amount));
       }
     } catch (error) {
       console.error("Error fetching balance:", error);
@@ -270,18 +291,54 @@ export default function TransferConfirm() {
 
   const loadUserAccountNumber = async () => {
     try {
+      const accessToken = await AsyncStorage.getItem("access_token");
+      let apiUser: {
+        accountNumber?: string;
+        accountNo?: string;
+        account_number?: string;
+        firstName?: string;
+        lastName?: string;
+        fullName?: string;
+        name?: string;
+      } | null = null;
+      if (accessToken) {
+        const me = await getMe(accessToken);
+        if (me.success && me.user) {
+          apiUser = me.user as {
+            accountNumber?: string;
+            accountNo?: string;
+            account_number?: string;
+            firstName?: string;
+            lastName?: string;
+            fullName?: string;
+            name?: string;
+          };
+          await AsyncStorage.setItem("user", JSON.stringify(me.user));
+        }
+      }
+
       const userJson = await AsyncStorage.getItem("user");
       if (userJson) {
         const user = JSON.parse(userJson) as {
           accountNumber?: string;
+          accountNo?: string;
+          account_number?: string;
           firstName?: string;
           lastName?: string;
+          fullName?: string;
+          name?: string;
         };
-        setUserAccountNumber(user?.accountNumber || "");
-        const fullName = [user?.firstName, user?.lastName]
+        const merged = { ...user, ...(apiUser || {}) };
+        const fullName = [merged?.firstName, merged?.lastName]
           .filter(Boolean)
           .join(" ");
-        setUserName(fullName || t("common.user"));
+        const resolvedName =
+          fullName || merged?.fullName || merged?.name || t("common.user");
+        const resolvedAccount =
+          merged?.accountNumber || merged?.accountNo || merged?.account_number || "";
+
+        setUserName(resolvedName);
+        setUserAccountNumber(resolvedAccount);
       }
     } catch (error) {
       console.error("Error loading user account number:", error);
@@ -380,6 +437,10 @@ export default function TransferConfirm() {
       if (hasPasscode && passcodeToSend) transferBody.passcode = passcodeToSend;
       const result = await submitTransfer(accessToken, transferBody);
       if (result.success) {
+        if (isFirstTransactionFree) {
+          await markFirstTransactionFeeWaived();
+          setIsFirstTransactionFree(false);
+        }
         setShowPasscodeModal(false);
         setPasscode("");
 
@@ -387,7 +448,7 @@ export default function TransferConfirm() {
         const receiptParams = {
           transactionId: txId,
           amount: amount.toString(),
-          processingFee: processingFee.toString(),
+          processingFee: processingFee,
           currency: "PHP",
           senderName: userName || t("common.user"),
           senderAccount: userAccountNumber || t("common.na"),
@@ -417,7 +478,7 @@ export default function TransferConfirm() {
           senderAccount: userAccountNumber || t("common.na"),
           recipientName: recipientName || t("common.unknown"),
           recipientAccount: accountNumber || t("common.na"),
-          processingFee,
+          processingFee: processingFee,
         });
 
         if ((verifiedAccountNumber || "").trim()) {
@@ -677,6 +738,16 @@ export default function TransferConfirm() {
               maximumFractionDigits: 2,
             })}
           </Text>
+          {amount > 0 && (
+            <Text style={styles.detailsFeeCaption}>
+              {isFirstTransactionFree
+                ? "First transaction fee waived: PHP 0.00"
+                : `${t("sendMoney.processingFee")}: PHP ${processingFee.toLocaleString("en-PH", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}`}
+            </Text>
+          )}
           <View style={styles.detailsRowColumn}>
             <Text style={styles.detailsRowLabel}>{t("sendMoney.from")}</Text>
             <View style={styles.detailsRowValueWrap}>
@@ -744,6 +815,21 @@ export default function TransferConfirm() {
               })}
             </Text>
           </View>
+          {amount > 0 && (
+            <View style={styles.transferFeeRow}>
+              <Text style={styles.transferAmountLabel}>
+                {t("sendMoney.processingFee")}
+              </Text>
+              <Text style={styles.transferAmountValue}>
+                {isFirstTransactionFree
+                  ? "Waived (0.00)"
+                  : `-${processingFee.toLocaleString("en-PH", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}`}
+              </Text>
+            </View>
+          )}
         </View>
 
         {/* Confirm Button */}
@@ -1145,6 +1231,13 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: "700",
     color: "#FFFFFF",
+    marginBottom: 8,
+  },
+  detailsFeeCaption: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#FFFFFF",
+    opacity: 0.95,
     marginBottom: 16,
   },
   detailsRow: {
@@ -1229,6 +1322,12 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     borderTopWidth: 1,
     borderTopColor: "#F0F0F0",
+  },
+  transferFeeRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingTop: 10,
   },
   transferAmountLabel: {
     fontSize: 15,

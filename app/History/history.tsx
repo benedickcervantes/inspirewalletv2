@@ -4,14 +4,24 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Platform, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
+import {
+    ActivityIndicator,
+    Platform,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    useWindowDimensions,
+    View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Path } from "react-native-svg";
 import {
     deleteTransactions,
-  getStockInvestmentDepositRequests,
-  getTimeDeposits,
-  getTopUpDepositRequests,
+    getStockInvestmentDepositRequests,
+    getTimeDeposits,
+    getTopUpDepositRequests,
     getTransactions,
 } from "../../configs/api";
 import type { TransactionDoc } from "../../configs/firebase";
@@ -20,7 +30,7 @@ import { getLanguageCode } from "../../constants/locales";
 import { useLanguage } from "../../context/LanguageContext";
 import type { NavProp } from "../../types/navigation";
 
-import ActivityModal from '../components/ActivityModal';
+import ActivityModal from "../components/ActivityModal";
 const TRANSACTION_TYPE_KEYS: Record<string, string> = {
   TOP_UP: "tx.deposit",
   PAYMENT: "tx.withdraw",
@@ -66,6 +76,7 @@ const INCOME_TYPES = [
 ];
 
 const TRANSACTION_DESCRIPTION_KEYS: Record<string, string> = {
+  Transfer: "tx.transfer",
   "Free Default Card": "history.freeDefaultCard",
   "Created Account": "history.createdAccount",
   "Physical Card Application Fee": "history.physicalCardApplicationFee",
@@ -117,15 +128,20 @@ interface StoredTransferReceiptDetails {
   updatedAt?: number;
 }
 
+interface StoredUserLike {
+  fullName?: unknown;
+  name?: unknown;
+  firstName?: unknown;
+  lastName?: unknown;
+  accountNumber?: unknown;
+  accountNo?: unknown;
+  account_number?: unknown;
+}
+
 interface RawApiTransaction {
   id?: unknown;
   type?: unknown;
   amount?: unknown;
-  fee?: unknown;
-  processingFee?: unknown;
-  processing_fee?: unknown;
-  transferFee?: unknown;
-  transfer_fee?: unknown;
   status?: unknown;
   requestStatus?: unknown;
   request_status?: unknown;
@@ -139,14 +155,14 @@ interface RawApiTransaction {
   sender_account_number?: unknown;
   recipientName?: unknown;
   recipient_name?: unknown;
-  recipientAccount?: unknown;
-  recipient_account?: unknown;
-  recipientAccountNumber?: unknown;
-  recipient_account_number?: unknown;
   receiverName?: unknown;
   receiver_name?: unknown;
   recieverName?: unknown;
   reciever_name?: unknown;
+  recipientAccount?: unknown;
+  recipient_account?: unknown;
+  recipientAccountNumber?: unknown;
+  recipient_account_number?: unknown;
   receiverAccount?: unknown;
   receiver_account?: unknown;
   receiverAccountNumber?: unknown;
@@ -155,18 +171,18 @@ interface RawApiTransaction {
   reciever_account?: unknown;
   recieverAccountNumber?: unknown;
   reciever_account_number?: unknown;
-  from_name?: unknown;
-  from_account?: unknown;
-  from_account_number?: unknown;
-  to_name?: unknown;
-  to_account?: unknown;
-  to_account_number?: unknown;
   fromName?: unknown;
+  from_name?: unknown;
   fromAccount?: unknown;
+  from_account?: unknown;
   fromAccountNumber?: unknown;
+  from_account_number?: unknown;
   toName?: unknown;
+  to_name?: unknown;
   toAccount?: unknown;
+  to_account?: unknown;
   toAccountNumber?: unknown;
+  to_account_number?: unknown;
   sender?: { name?: unknown; accountNumber?: unknown };
   recipient?: { name?: unknown; accountNumber?: unknown };
   receiver?: { name?: unknown; accountNumber?: unknown };
@@ -178,16 +194,18 @@ interface RawApiTransaction {
     accountNo?: unknown;
     account_number?: unknown;
   };
-  fromUser?: {
-    fullName?: unknown;
-    name?: unknown;
-    firstName?: unknown;
-    lastName?: unknown;
-    accountNumber?: unknown;
-    accountNo?: unknown;
-    account_number?: unknown;
-  };
+  fromUser?: { fullName?: unknown; accountNumber?: unknown };
   toUser?: { fullName?: unknown; accountNumber?: unknown };
+  processingFee?: unknown;
+  processing_fee?: unknown;
+  fee?: unknown;
+  feeAmount?: unknown;
+  fee_amount?: unknown;
+  transferFee?: unknown;
+  transfer_fee?: unknown;
+  charge?: unknown;
+  chargeAmount?: unknown;
+  charge_amount?: unknown;
 }
 
 interface RawApiWallet {
@@ -214,7 +232,11 @@ const ITEMS_PER_PAGE = 10; // moved outside component
 
 const normalizeTextValue = (value: unknown): string => {
   const text = String(value ?? "").trim();
-  if (!text || text.toLowerCase() === "undefined" || text.toLowerCase() === "null") {
+  if (
+    !text ||
+    text.toLowerCase() === "undefined" ||
+    text.toLowerCase() === "null"
+  ) {
     return "";
   }
   return text;
@@ -228,9 +250,21 @@ const pickFirstText = (...values: unknown[]): string => {
   return "";
 };
 
+const pickFirstNumber = (...values: unknown[]): number | undefined => {
+  for (const value of values) {
+    if (value === null || value === undefined) continue;
+    const parsed = Number(String(value).replace(/,/g, ""));
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return undefined;
+};
+
 const resolveTransferParties = (
   raw: Record<string, unknown>,
-): Pick<Transaction, "senderName" | "senderAccount" | "recipientName" | "recipientAccount"> => {
+): Pick<
+  Transaction,
+  "senderName" | "senderAccount" | "recipientName" | "recipientAccount"
+> => {
   const senderObj = (raw.sender as Record<string, unknown> | undefined) || {};
   const recipientObj =
     (raw.recipient as Record<string, unknown> | undefined) ||
@@ -239,10 +273,6 @@ const resolveTransferParties = (
     (raw.beneficiary as Record<string, unknown> | undefined) ||
     {};
   const fromUser = (raw.fromUser as Record<string, unknown> | undefined) || {};
-  const fromUserFullName = [fromUser.firstName, fromUser.lastName]
-    .map((part) => normalizeTextValue(part))
-    .filter(Boolean)
-    .join(" ");
   const toUser = (raw.toUser as Record<string, unknown> | undefined) || {};
 
   return {
@@ -254,8 +284,6 @@ const resolveTransferParties = (
       senderObj.name,
       senderObj.fullName,
       fromUser.fullName,
-      fromUser.name,
-      fromUserFullName,
       raw.userFullName,
       raw.userName,
       raw.fullName,
@@ -274,8 +302,6 @@ const resolveTransferParties = (
       senderObj.accountNo,
       senderObj.account_number,
       fromUser.accountNumber,
-      fromUser.accountNo,
-      fromUser.account_number,
       raw.userAccountNumber,
       raw.user_account_number,
       raw.accountNumber,
@@ -388,7 +414,9 @@ export default function HistoryScreen() {
         .replace(/[_-]+/g, " ")
         .replace(/\s+/g, " ")
         .split(" ")
-        .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .map(
+          (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase(),
+        )
         .join(" ");
     };
 
@@ -400,8 +428,15 @@ export default function HistoryScreen() {
     const exactKey = TRANSACTION_DESCRIPTION_KEYS[normalized];
     if (exactKey) return t(exactKey);
 
+    // Admin-approved manual balance transfer (stored as "Admin-approved balance transfer request <id>")
+    if (/^Admin-approved balance transfer request\b/i.test(normalized)) {
+      return t("tx.transfer");
+    }
+
     // Deposit request status descriptions from backend/history mappers.
-    const topUpStatusMatch = normalized.match(/^Top[- ]?up\s+(Requested|Approved|Rejected)$/i);
+    const topUpStatusMatch = normalized.match(
+      /^Top[- ]?up\s+(Requested|Approved|Rejected)$/i,
+    );
     if (topUpStatusMatch?.[1]) {
       const status = topUpStatusMatch[1].toLowerCase();
       if (status === "requested") return t("notification.titleTopUpRequested");
@@ -414,9 +449,12 @@ export default function HistoryScreen() {
     );
     if (termSavingsStatusMatch?.[1]) {
       const status = termSavingsStatusMatch[1].toLowerCase();
-      if (status === "requested") return t("notification.titleTimeDepositRequested");
-      if (status === "approved") return t("notification.titleTimeDepositApproved");
-      if (status === "rejected") return t("notification.titleTimeDepositRejected");
+      if (status === "requested")
+        return t("notification.titleTimeDepositRequested");
+      if (status === "approved")
+        return t("notification.titleTimeDepositApproved");
+      if (status === "rejected")
+        return t("notification.titleTimeDepositRejected");
     }
 
     // Travel protection fee (e.g. "Travel Protection Fee - Application ABC123")
@@ -584,7 +622,10 @@ export default function HistoryScreen() {
     const translated = getTranslatedDescription(tx.description);
     if (translated) return translated;
     const rawDescription = tx.description?.trim();
-    if (rawDescription && !/^(n\/a|na|null|undefined|-)$/i.test(rawDescription)) {
+    if (
+      rawDescription &&
+      !/^(n\/a|na|null|undefined|-)$/i.test(rawDescription)
+    ) {
       return rawDescription;
     }
     return getTransactionTypeLabel(tx.type);
@@ -626,6 +667,10 @@ export default function HistoryScreen() {
     Record<string, StoredTransferReceiptDetails>
   >({});
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [currentUserTransferParty, setCurrentUserTransferParty] = useState<{
+    name: string;
+    account: string;
+  }>({ name: "", account: "" });
 
   // Ref for unsubscribe function to avoid stale closure
   const unsubRef = useRef<(() => void) | null>(null);
@@ -690,7 +735,9 @@ export default function HistoryScreen() {
 
   const loadStoredTransferReceiptDetails = useCallback(async () => {
     try {
-      const raw = await AsyncStorage.getItem("transfer_receipt_details_by_txid");
+      const raw = await AsyncStorage.getItem(
+        "transfer_receipt_details_by_txid",
+      );
       if (!raw) {
         setTransferReceiptMap({});
         return;
@@ -700,11 +747,68 @@ export default function HistoryScreen() {
         setTransferReceiptMap({});
         return;
       }
-      setTransferReceiptMap(parsed as Record<string, StoredTransferReceiptDetails>);
+      setTransferReceiptMap(
+        parsed as Record<string, StoredTransferReceiptDetails>,
+      );
     } catch {
       setTransferReceiptMap({});
     }
   }, []);
+
+  const loadCurrentUserTransferParty = useCallback(async () => {
+    try {
+      const rawUser = await AsyncStorage.getItem("user");
+      if (!rawUser) {
+        setCurrentUserTransferParty({ name: "", account: "" });
+        return;
+      }
+      const parsed = JSON.parse(rawUser) as StoredUserLike;
+      const fullNameFromParts = [parsed.firstName, parsed.lastName]
+        .map((part) => normalizeTextValue(part))
+        .filter(Boolean)
+        .join(" ");
+
+      setCurrentUserTransferParty({
+        name: pickFirstText(parsed.fullName, parsed.name, fullNameFromParts),
+        account: pickFirstText(
+          parsed.accountNumber,
+          parsed.accountNo,
+          parsed.account_number,
+        ),
+      });
+    } catch {
+      setCurrentUserTransferParty({ name: "", account: "" });
+    }
+  }, []);
+
+  const getStoredTransferReceiptDetails = useCallback(
+    async (txId: string): Promise<StoredTransferReceiptDetails | undefined> => {
+      const normalizedTxId = String(txId || "").trim();
+      if (!normalizedTxId) return undefined;
+
+      const cached = transferReceiptMap[normalizedTxId];
+      if (cached) return cached;
+
+      try {
+        const raw = await AsyncStorage.getItem(
+          "transfer_receipt_details_by_txid",
+        );
+        if (!raw) return undefined;
+
+        const parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+          return undefined;
+        }
+
+        const nextMap = parsed as Record<string, StoredTransferReceiptDetails>;
+        setTransferReceiptMap(nextMap);
+        return nextMap[normalizedTxId];
+      } catch {
+        return undefined;
+      }
+    },
+    [transferReceiptMap],
+  );
 
   const fetchTransactions = useCallback(
     async (
@@ -752,25 +856,28 @@ export default function HistoryScreen() {
           const mappedApiTransactions: Transaction[] = (
             txRes.transactions as RawApiTransaction[]
           ).map((tx) => {
-            const parties = resolveTransferParties(tx as unknown as Record<string, unknown>);
+            const parties = resolveTransferParties(
+              tx as unknown as Record<string, unknown>,
+            );
             return {
               id: String(tx.id ?? ""),
               type: String(tx.type ?? ""),
               amount: (() => {
-              const a = parseFloat(String(tx.amount ?? 0));
-              return Number.isNaN(a) ? 0 : a;
+                const a = parseFloat(String(tx.amount ?? 0));
+                return Number.isNaN(a) ? 0 : a;
               })(),
-              processingFee: (() => {
-                const feeValue =
-                  tx.processingFee ??
-                  tx.processing_fee ??
-                  tx.transferFee ??
-                  tx.transfer_fee ??
-                  tx.fee ??
-                  0;
-                const parsedFee = parseFloat(String(feeValue));
-                return Number.isNaN(parsedFee) ? 0 : parsedFee;
-              })(),
+              processingFee: pickFirstNumber(
+                tx.processingFee,
+                tx.processing_fee,
+                tx.transferFee,
+                tx.transfer_fee,
+                tx.fee,
+                tx.feeAmount,
+                tx.fee_amount,
+                tx.charge,
+                tx.chargeAmount,
+                tx.charge_amount,
+              ),
               description: String(tx.description ?? ""),
               status: String(
                 tx.status ?? tx.requestStatus ?? tx.request_status ?? "",
@@ -790,8 +897,15 @@ export default function HistoryScreen() {
             requestLabel: string,
             rawStatus: unknown,
           ) => {
-            const s = String(rawStatus ?? "").trim().toLowerCase();
-            if (s === "approved" || s === "active" || s === "completed" || s === "matured") {
+            const s = String(rawStatus ?? "")
+              .trim()
+              .toLowerCase();
+            if (
+              s === "approved" ||
+              s === "active" ||
+              s === "completed" ||
+              s === "matured"
+            ) {
               return `${requestLabel} Approved`;
             }
             if (s === "rejected" || s === "cancelled" || s === "canceled") {
@@ -809,7 +923,9 @@ export default function HistoryScreen() {
             return list.map((raw) => {
               const item = (raw ?? {}) as RawDepositRequestLike;
               const id = String(item.id ?? "").trim();
-              const createdAt = String(item.createdAt ?? item.updatedAt ?? "").trim();
+              const createdAt = String(
+                item.createdAt ?? item.updatedAt ?? "",
+              ).trim();
               const amountParsed = parseFloat(String(item.amount ?? 0));
               const amount = Number.isNaN(amountParsed) ? 0 : amountParsed;
               return {
@@ -817,7 +933,10 @@ export default function HistoryScreen() {
                 type,
                 amount,
                 status: String(item.status ?? ""),
-                description: mapRequestStatusDescription(requestLabel, item.status),
+                description: mapRequestStatusDescription(
+                  requestLabel,
+                  item.status,
+                ),
                 timestamp: {
                   toDate: () => (createdAt ? new Date(createdAt) : new Date()),
                 },
@@ -827,23 +946,38 @@ export default function HistoryScreen() {
           };
 
           const mappedTopUpRequests = topUpRes.success
-            ? mapDepositRequestsToTransactions(topUpRes.requests, "TOP_UP", "Top-up")
+            ? mapDepositRequestsToTransactions(
+                topUpRes.requests,
+                "TOP_UP",
+                "Top-up",
+              )
             : [];
           const mappedTimeDepositRequests = timeDepositRes.success
-            ? mapDepositRequestsToTransactions(timeDepositRes.deposits, "TIME_DEPOSIT", "Term savings")
+            ? mapDepositRequestsToTransactions(
+                timeDepositRes.deposits,
+                "TIME_DEPOSIT",
+                "Term savings",
+              )
             : [];
           const mappedStockRequests = stockRes.success
-            ? mapDepositRequestsToTransactions(stockRes.requests, "STOCK_BUY", "Stock investment")
+            ? mapDepositRequestsToTransactions(
+                stockRes.requests,
+                "STOCK_BUY",
+                "Stock investment",
+              )
             : [];
 
           const mergedById = new Map<string, Transaction>();
-          [...mappedTopUpRequests, ...mappedTimeDepositRequests, ...mappedStockRequests, ...mappedApiTransactions].forEach(
-            (tx) => {
-              const key = String(tx.id ?? "").trim();
-              if (!key) return;
-              mergedById.set(key, tx);
-            },
-          );
+          [
+            ...mappedTopUpRequests,
+            ...mappedTimeDepositRequests,
+            ...mappedStockRequests,
+            ...mappedApiTransactions,
+          ].forEach((tx) => {
+            const key = String(tx.id ?? "").trim();
+            if (!key) return;
+            mergedById.set(key, tx);
+          });
 
           const mapped = Array.from(mergedById.values()).sort((a, b) => {
             const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
@@ -876,6 +1010,10 @@ export default function HistoryScreen() {
   }, [loadStoredTransferReceiptDetails]);
 
   useEffect(() => {
+    loadCurrentUserTransferParty();
+  }, [loadCurrentUserTransferParty]);
+
+  useEffect(() => {
     let cancelled = false;
 
     const init = async () => {
@@ -898,23 +1036,25 @@ export default function HistoryScreen() {
         (list: TransactionDoc[]) => {
           if (cancelled) return;
           const mapped: Transaction[] = list.map((d) => {
-            const parties = resolveTransferParties(d as unknown as Record<string, unknown>);
+            const parties = resolveTransferParties(
+              d as unknown as Record<string, unknown>,
+            );
             return {
               id: d.id,
               type: String(d.type ?? ""),
               amount: parseFloat(String(d.amount ?? 0)) || 0,
-              processingFee: (() => {
-                const rawDoc = d as unknown as Record<string, unknown>;
-                const feeValue =
-                  rawDoc.processingFee ??
-                  rawDoc.processing_fee ??
-                  rawDoc.transferFee ??
-                  rawDoc.transfer_fee ??
-                  rawDoc.fee ??
-                  0;
-                const parsedFee = parseFloat(String(feeValue));
-                return Number.isNaN(parsedFee) ? 0 : parsedFee;
-              })(),
+              processingFee: pickFirstNumber(
+                (d as Record<string, unknown>).processingFee,
+                (d as Record<string, unknown>).processing_fee,
+                (d as Record<string, unknown>).transferFee,
+                (d as Record<string, unknown>).transfer_fee,
+                (d as Record<string, unknown>).fee,
+                (d as Record<string, unknown>).feeAmount,
+                (d as Record<string, unknown>).fee_amount,
+                (d as Record<string, unknown>).charge,
+                (d as Record<string, unknown>).chargeAmount,
+                (d as Record<string, unknown>).charge_amount,
+              ),
               description: String(d.description ?? ""),
               timestamp: {
                 toDate: () =>
@@ -970,11 +1110,13 @@ export default function HistoryScreen() {
     }
   };
 
-  const handleViewReceipt = () => {
+  const handleViewReceipt = async () => {
     if (!selectedTransaction) return;
     setShowDetailModal(false);
     setSelectedTransaction(null);
-    const rawType = String(selectedTransaction.type ?? "").trim().toLowerCase();
+    const rawType = String(selectedTransaction.type ?? "")
+      .trim()
+      .toLowerCase();
     let receiptType = "Deposit";
     if (rawType.includes("transfer")) receiptType = "Transfer";
     else if (rawType.includes("withdraw")) receiptType = "Withdrawal";
@@ -991,15 +1133,19 @@ export default function HistoryScreen() {
 
     if (receiptType === "Transfer") {
       const txId = String(selectedTransaction.id || "").trim();
-      const stored = txId ? transferReceiptMap[txId] : undefined;
+      const stored = txId
+        ? await getStoredTransferReceiptDetails(txId)
+        : undefined;
 
       receiptParams.senderName =
-        selectedTransaction.senderName ||
         stored?.senderName ||
+        currentUserTransferParty.name ||
+        selectedTransaction.senderName ||
         t("common.na");
       receiptParams.senderAccount =
-        selectedTransaction.senderAccount ||
         stored?.senderAccount ||
+        currentUserTransferParty.account ||
+        selectedTransaction.senderAccount ||
         t("common.na");
       receiptParams.recipientName =
         selectedTransaction.recipientName ||
@@ -1009,12 +1155,14 @@ export default function HistoryScreen() {
         selectedTransaction.recipientAccount ||
         stored?.recipientAccount ||
         t("common.na");
-      receiptParams.processingFee = String(
-        selectedTransaction.processingFee ?? stored?.processingFee ?? 0,
-      );
+      receiptParams.processingFee =
+        selectedTransaction.processingFee ?? stored?.processingFee ?? 0;
     }
 
-    (navigation as unknown as NavProp).navigate("depositReceipt", receiptParams);
+    (navigation as unknown as NavProp).navigate(
+      "depositReceipt",
+      receiptParams,
+    );
   };
 
   const canViewReceipt = (tx: Transaction | null) => {
@@ -1152,13 +1300,28 @@ export default function HistoryScreen() {
     try {
       const res = await deleteTransactions(accessToken, idsToDelete);
       if (!res.success) {
-        await fetchTransactions(false, 0, dateRange.start ?? undefined, dateRange.end ?? undefined);
+        await fetchTransactions(
+          false,
+          0,
+          dateRange.start ?? undefined,
+          dateRange.end ?? undefined,
+        );
         alert(res.error || t("history.deleteFailed"));
       } else {
-        await fetchTransactions(false, 0, dateRange.start ?? undefined, dateRange.end ?? undefined);
+        await fetchTransactions(
+          false,
+          0,
+          dateRange.start ?? undefined,
+          dateRange.end ?? undefined,
+        );
       }
     } catch {
-      await fetchTransactions(false, 0, dateRange.start ?? undefined, dateRange.end ?? undefined);
+      await fetchTransactions(
+        false,
+        0,
+        dateRange.start ?? undefined,
+        dateRange.end ?? undefined,
+      );
       alert(t("history.deleteFailed"));
     } finally {
       setSelectedIds(new Set());
@@ -1364,17 +1527,25 @@ export default function HistoryScreen() {
             <Text style={styles.summaryLabel}>
               {t("history.totalSpent").toUpperCase()}
             </Text>
-            <Text style={styles.summaryValue}>
-              {CURRENCY_SYMBOL} {formatCurrency(totalSpent)}
-            </Text>
+            {loading ? (
+              <View style={styles.summaryValueSkeleton} />
+            ) : (
+              <Text style={styles.summaryValue}>
+                {CURRENCY_SYMBOL} {formatCurrency(totalSpent)}
+              </Text>
+            )}
           </View>
           <View style={styles.summaryCard}>
             <Text style={styles.summaryLabel}>
               {t("history.totalIncome").toUpperCase()}
             </Text>
-            <Text style={styles.summaryValue}>
-              {CURRENCY_SYMBOL} {formatCurrency(totalIncome)}
-            </Text>
+            {loading ? (
+              <View style={styles.summaryValueSkeleton} />
+            ) : (
+              <Text style={styles.summaryValue}>
+                {CURRENCY_SYMBOL} {formatCurrency(totalIncome)}
+              </Text>
+            )}
           </View>
         </View>
 
@@ -1382,7 +1553,7 @@ export default function HistoryScreen() {
           {t("history.currentTransactions").toUpperCase()}
         </Text>
 
-        {isSelectMode && (
+        {!loading && isSelectMode && (
           <TouchableOpacity
             style={styles.selectAllButton}
             onPress={() => {
@@ -1405,46 +1576,67 @@ export default function HistoryScreen() {
         )}
 
         <View style={styles.transactionList}>
-          {paginatedTransactions.map((tx) => (
-            <TouchableOpacity
-              key={tx.id}
-              style={[
-                styles.transactionItem,
-                selectedIds.has(tx.id) && styles.transactionItemSelected,
-              ]}
-              onPress={() => handleTransactionPress(tx)}
-              activeOpacity={0.7}
-            >
-              {isSelectMode && (
-                <View style={styles.checkbox}>
-                  {selectedIds.has(tx.id) && (
-                    <Ionicons name="checkmark" size={16} color="#E15816" />
-                  )}
+          {loading
+            ? Array.from({ length: 6 }).map((_, i) => (
+                <View
+                  key={`history-skeleton-${i}`}
+                  style={[
+                    styles.transactionItem,
+                    styles.transactionSkeletonRow,
+                    i === 5 && styles.transactionSkeletonRowLast,
+                  ]}
+                >
+                  <View style={styles.transactionSkeletonIcon} />
+                  <View style={styles.transactionSkeletonDetails}>
+                    <View style={styles.transactionSkeletonLineWide} />
+                    <View style={styles.transactionSkeletonLineNarrow} />
+                  </View>
+                  <View style={styles.transactionSkeletonAmount} />
                 </View>
-              )}
-              <View style={styles.transactionIcon}>
-                <Ionicons
-                  name={
-                    getTransactionIcon(tx) as keyof typeof Ionicons.glyphMap
-                  }
-                  size={22}
-                  color="#E15816"
-                />
-              </View>
-              <View style={styles.transactionDetails}>
-                <Text style={styles.transactionName}>
-                  {getTransactionDisplayName(tx)}
-                </Text>
-                <Text style={styles.transactionDate}>{formatDateTime(tx)}</Text>
-              </View>
-              <Text style={styles.transactionAmount}>
-                {CURRENCY_SYMBOL} {formatCurrency(tx.amount ?? 0)}
-              </Text>
-            </TouchableOpacity>
-          ))}
+              ))
+            : paginatedTransactions.map((tx) => (
+                <TouchableOpacity
+                  key={tx.id}
+                  style={[
+                    styles.transactionItem,
+                    selectedIds.has(tx.id) && styles.transactionItemSelected,
+                  ]}
+                  onPress={() => handleTransactionPress(tx)}
+                  activeOpacity={0.7}
+                >
+                  {isSelectMode && (
+                    <View style={styles.checkbox}>
+                      {selectedIds.has(tx.id) && (
+                        <Ionicons name="checkmark" size={16} color="#E15816" />
+                      )}
+                    </View>
+                  )}
+                  <View style={styles.transactionIcon}>
+                    <Ionicons
+                      name={
+                        getTransactionIcon(tx) as keyof typeof Ionicons.glyphMap
+                      }
+                      size={22}
+                      color="#E15816"
+                    />
+                  </View>
+                  <View style={styles.transactionDetails}>
+                    <Text style={styles.transactionName}>
+                      {getTransactionDisplayName(tx)}
+                    </Text>
+                    <Text style={styles.transactionDate}>
+                      {formatDateTime(tx)}
+                    </Text>
+                  </View>
+                  <Text style={styles.transactionAmount}>
+                    {CURRENCY_SYMBOL} {formatCurrency(tx.amount ?? 0)}
+                  </Text>
+                </TouchableOpacity>
+              ))}
         </View>
 
-        {displayTransactions.length > 0 &&
+        {!loading &&
+          displayTransactions.length > 0 &&
           !hasMore &&
           currentPage >= totalPagesCount && (
             <View style={styles.endOfListContainer}>
@@ -1455,7 +1647,7 @@ export default function HistoryScreen() {
       </ScrollView>
 
       {/* Pagination Bar */}
-      {displayTransactions.length > 0 && (
+      {displayTransactions.length > 0 && !loading && (
         <View style={styles.paginationContainer}>
           <View style={styles.paginationCard}>
             <View style={styles.paginationRow}>
@@ -1545,7 +1737,10 @@ export default function HistoryScreen() {
             onPress={(e) => e.stopPropagation()}
             style={[
               styles.filterDropdownMenu,
-              { marginTop: insets.top + 52, marginRight: headerPaddingHorizontal },
+              {
+                marginTop: insets.top + 52,
+                marginRight: headerPaddingHorizontal,
+              },
             ]}
           >
             <Text style={styles.filterDropdownTitle}>
@@ -1562,8 +1757,7 @@ export default function HistoryScreen() {
                 <Text
                   style={[
                     styles.filterOptionText,
-                    selectedFilter === "all" &&
-                      styles.filterOptionTextSelected,
+                    selectedFilter === "all" && styles.filterOptionTextSelected,
                   ]}
                 >
                   {t("history.allTime")}
@@ -1703,11 +1897,7 @@ export default function HistoryScreen() {
                   }}
                   activeOpacity={0.7}
                 >
-                  <Ionicons
-                    name="calendar-outline"
-                    size={20}
-                    color="#E15816"
-                  />
+                  <Ionicons name="calendar-outline" size={20} color="#E15816" />
                   <Text
                     style={[
                       styles.dateInputText,
@@ -1731,11 +1921,7 @@ export default function HistoryScreen() {
                   }}
                   activeOpacity={0.7}
                 >
-                  <Ionicons
-                    name="calendar-outline"
-                    size={20}
-                    color="#E15816"
-                  />
+                  <Ionicons name="calendar-outline" size={20} color="#E15816" />
                   <Text
                     style={[
                       styles.dateInputText,
@@ -1819,7 +2005,9 @@ export default function HistoryScreen() {
               display={Platform.OS === "ios" ? "spinner" : "default"}
               onChange={handleEndDateChange}
               maximumDate={new Date()}
-              minimumDate={customStartDate ? new Date(customStartDate) : undefined}
+              minimumDate={
+                customStartDate ? new Date(customStartDate) : undefined
+              }
             />
             <View style={styles.pickerActions}>
               <TouchableOpacity
@@ -2160,6 +2348,51 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "700",
     color: "#E15816",
+  },
+  summaryValueSkeleton: {
+    height: 24,
+    width: "85%",
+    maxWidth: 160,
+    borderRadius: 8,
+    backgroundColor: "#E8E8E8",
+    marginTop: 2,
+  },
+  transactionSkeletonRow: {
+    borderBottomColor: "#F5F5F5",
+  },
+  transactionSkeletonRowLast: {
+    borderBottomWidth: 0,
+  },
+  transactionSkeletonIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    backgroundColor: "#E9E9E9",
+    marginRight: 12,
+  },
+  transactionSkeletonDetails: {
+    flex: 1,
+    justifyContent: "center",
+    gap: 8,
+    paddingRight: 8,
+  },
+  transactionSkeletonLineWide: {
+    width: "72%",
+    height: 14,
+    borderRadius: 6,
+    backgroundColor: "#ECECEC",
+  },
+  transactionSkeletonLineNarrow: {
+    width: "48%",
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: "#F1F1F1",
+  },
+  transactionSkeletonAmount: {
+    width: 72,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: "#E8E8E8",
   },
   sectionTitle: {
     fontSize: 14,

@@ -2,7 +2,7 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
     ActivityIndicator,
     ScrollView,
@@ -17,15 +17,26 @@ import {
     submitWithdrawalRequest,
 } from "../../../configs/api";
 import { useLanguage } from "../../../context/LanguageContext";
+import {
+    isEligibleForFirstTransactionFreeFee,
+    markFirstTransactionFeeWaived,
+} from "../../../utils/firstTransactionFee";
 import PasscodeModal from "../../components/PasscodeModal";
 
 import ActivityModal from "../../components/ActivityModal";
+import FeatureMaintenanceModal from "../../components/FeatureMaintenanceModal";
+import { isWithdrawalCombinationUnderMaintenance } from "../../../lib/maintenance";
 import {
     MIN_REMAINING_WALLET_BALANCE_PHP,
-    MIN_WITHDRAWAL_PHP,
+    MIN_WITHDRAWAL_AVAILABLE_BALANCE_PHP,
     parseWithdrawalAmountInput,
 } from "../../../utils/withdrawalAmount";
 const BANK_FEE_THRESHOLD = 100000;
+const LOCAL_BANK_MIN_WITHDRAWAL_PHP = 50;
+const UNIONBANK_MIN_WITHDRAWAL_PHP = 1;
+
+const getLocalBankMinimumWithdrawal = (isUnionBank: boolean) =>
+  isUnionBank ? UNIONBANK_MIN_WITHDRAWAL_PHP : LOCAL_BANK_MIN_WITHDRAWAL_PHP;
 
 const getLocalBankTransactionFee = (
   amountValue: number,
@@ -49,6 +60,7 @@ export default function WithdrawLocalBConfirm() {
     amount?: string;
     email?: string;
     type?: string;
+    isFirstTransactionFree?: boolean;
   };
   const [showAlertModal, setShowAlertModal] = useState(false);
   const [alertConfig, setAlertConfig] = useState<{
@@ -58,6 +70,10 @@ export default function WithdrawLocalBConfirm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPasscodeModal, setShowPasscodeModal] = useState(false);
   const [passcode, setPasscode] = useState("");
+  const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
+  const [isFirstTransactionFree, setIsFirstTransactionFree] = useState(
+    Boolean(params.isFirstTransactionFree),
+  );
 
   const method = params?.method || "local-bank";
   const accountNumber = params?.accountNumber || "";
@@ -69,11 +85,20 @@ export default function WithdrawLocalBConfirm() {
   const withdrawalType = params?.type || "available-balance";
   const parsedAmount = parseFloat(amount);
   const isUnionBank = bankName.trim().toUpperCase() === "UNIONBANK";
-  const transactionFee = getLocalBankTransactionFee(parsedAmount, isUnionBank);
+  const transactionFee = isFirstTransactionFree
+    ? 0
+    : getLocalBankTransactionFee(parsedAmount, isUnionBank);
   const netWithdrawalAmount = Math.max(
     0,
     (Number.isNaN(parsedAmount) ? 0 : parsedAmount) - transactionFee,
   );
+
+  useEffect(() => {
+    void (async () => {
+      const eligible = await isEligibleForFirstTransactionFreeFee();
+      setIsFirstTransactionFree(eligible);
+    })();
+  }, []);
 
   const submitWithdrawal = async (passcodeToSend?: string) => {
     if (isSubmitting) return;
@@ -90,18 +115,25 @@ export default function WithdrawLocalBConfirm() {
         return;
       }
       const amountNum = parsedSubmit.value;
-      if (amountNum < MIN_WITHDRAWAL_PHP) {
+      const baseMin = getLocalBankMinimumWithdrawal(isUnionBank);
+      const minimumWithdrawal =
+        withdrawalType === "agent-withdrawal"
+          ? baseMin
+          : Math.max(MIN_WITHDRAWAL_AVAILABLE_BALANCE_PHP, baseMin);
+      if (amountNum < minimumWithdrawal) {
         setAlertConfig({
           title: t("common.error"),
           message: t("withdraw.validation.minAmount").replace(
             "{min}",
-            MIN_WITHDRAWAL_PHP.toFixed(2),
+            minimumWithdrawal.toFixed(2),
           ),
         });
         setShowAlertModal(true);
         return;
       }
-      const submitFee = getLocalBankTransactionFee(amountNum, isUnionBank);
+      const submitFee = isFirstTransactionFree
+        ? 0
+        : getLocalBankTransactionFee(amountNum, isUnionBank);
       if (submitFee > 0 && amountNum <= submitFee) {
         setAlertConfig({
           title: t("common.error"),
@@ -170,6 +202,20 @@ export default function WithdrawLocalBConfirm() {
         setIsSubmitting(false);
         return;
       }
+
+      const offline = await isWithdrawalCombinationUnderMaintenance({
+        source:
+          withdrawalType === "agent-withdrawal"
+            ? "agent-withdrawal"
+            : "available-balance",
+        method: "local_bank",
+      });
+      if (offline) {
+        setShowPasscodeModal(false);
+        setShowMaintenanceModal(true);
+        return;
+      }
+
       const body: Record<string, string | undefined> = {
         walletId: wallet.id as string,
         amount: amountNum.toFixed(2),
@@ -187,6 +233,10 @@ export default function WithdrawLocalBConfirm() {
       const result = await submitWithdrawalRequest(accessToken, body);
 
       if (result.success) {
+        if (isFirstTransactionFree) {
+          await markFirstTransactionFeeWaived();
+          setIsFirstTransactionFree(false);
+        }
         setShowPasscodeModal(false);
         setPasscode("");
 
@@ -370,7 +420,9 @@ export default function WithdrawLocalBConfirm() {
               <View style={styles.detailContent}>
                 <Text style={styles.detailLabel}>Transaction Fee</Text>
                 <Text style={styles.detailValue}>
-                  {transactionFee === 0
+                  {isFirstTransactionFree
+                    ? "First transaction fee waived (PHP 0.00)"
+                    : transactionFee === 0
                     ? "Free"
                     : `PHP ${transactionFee.toLocaleString("en-US", {
                         minimumFractionDigits: 2,
@@ -463,6 +515,14 @@ export default function WithdrawLocalBConfirm() {
             </LinearGradient>
           </View>
         </ActivityModal>
+
+        <FeatureMaintenanceModal
+          visible={showMaintenanceModal}
+          onDismiss={() => {
+            setShowMaintenanceModal(false);
+            navigation.goBack();
+          }}
+        />
       </SafeAreaView>
     </View>
   );
