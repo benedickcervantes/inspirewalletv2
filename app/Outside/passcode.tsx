@@ -141,6 +141,32 @@ const msgStyles = StyleSheet.create({
 });
 
 const RESET_PIN_FIELD_BG = "#f9f9f9";
+const PIN_LENGTH = 4;
+
+const toAsciiDigit = (char: string): string | null => {
+  if (char >= "0" && char <= "9") return char;
+  const code = char.codePointAt(0);
+  if (code === undefined) return null;
+
+  // Support common Unicode decimal ranges produced by non-English keypads.
+  if (code >= 0x0660 && code <= 0x0669) return String(code - 0x0660);
+  if (code >= 0x06f0 && code <= 0x06f9) return String(code - 0x06f0);
+  if (code >= 0x0966 && code <= 0x096f) return String(code - 0x0966);
+  if (code >= 0xff10 && code <= 0xff19) return String(code - 0xff10);
+  return null;
+};
+
+const normalizePinDigits = (value: string): string => {
+  const normalized = value.normalize("NFKC");
+  let out = "";
+  for (const char of normalized) {
+    const digit = toAsciiDigit(char);
+    if (!digit) continue;
+    out += digit;
+    if (out.length === PIN_LENGTH) break;
+  }
+  return out;
+};
 
 type ResetPinDigitFieldProps = {
   value: string;
@@ -182,7 +208,7 @@ const ResetPinDigitField = forwardRef<TextInput, ResetPinDigitFieldProps>(
     <View
       style={[
         resetPinDigitStyles.shell,
-        isSmallScreen || isTinyScreen ? { minHeight: pv * 2 + fs + 6 } : null,
+        { minHeight: pv * 2 + fs + 6 },
       ]}
     >
       <TextInput
@@ -201,14 +227,14 @@ const ResetPinDigitField = forwardRef<TextInput, ResetPinDigitFieldProps>(
         underlineColorAndroid="transparent"
         value={value}
         onChangeText={(v) => {
-          const d = v.replace(/\D/g, "").slice(0, 4);
+          const d = normalizePinDigits(v);
           onChangeDigits(d);
-          if (d.length === 4 && onPinFilled) {
+          if (d.length === PIN_LENGTH && onPinFilled) {
             queueMicrotask(() => onPinFilled());
           }
         }}
         keyboardType={keyboardType}
-        maxLength={4}
+        maxLength={PIN_LENGTH}
         caretHidden
         autoCorrect={false}
         spellCheck={false}
@@ -633,19 +659,31 @@ export default function Passcode() {
         });
         return;
       }
-      if (newPasscode !== confirmNewPasscode) {
-        showModal({
-          title: t("passcode.mismatchTitle"),
-          message: t("passcode.passcodesDoNotMatch"),
-          type: "error",
-        });
-        return;
+      const normalizedNewPasscode = normalizePinDigits(newPasscode);
+      const normalizedConfirmPasscode = normalizePinDigits(confirmNewPasscode);
+      if (
+        normalizedNewPasscode !== newPasscode ||
+        normalizedConfirmPasscode !== confirmNewPasscode
+      ) {
+        setNewPasscode(normalizedNewPasscode);
+        setConfirmNewPasscode(normalizedConfirmPasscode);
       }
-      if (newPasscode.length !== 4 || !/^\d{4}$/.test(newPasscode)) {
+      if (
+        normalizedNewPasscode.length !== PIN_LENGTH ||
+        normalizedConfirmPasscode.length !== PIN_LENGTH
+      ) {
         showModal({
           title: t("passcode.invalidTitle"),
           message: t("passcode.invalidPasscodeLength"),
           type: "warning",
+        });
+        return;
+      }
+      if (normalizedNewPasscode !== normalizedConfirmPasscode) {
+        showModal({
+          title: t("passcode.mismatchTitle"),
+          message: t("passcode.passcodesDoNotMatch"),
+          type: "error",
         });
         return;
       }
@@ -663,7 +701,7 @@ export default function Passcode() {
         });
         return;
       }
-      const result = await resetPasscode(accessToken, newPasscode);
+      const result = await resetPasscode(accessToken, normalizedNewPasscode);
       setResetLoading(false);
       if (!result.success) {
         showModal({
