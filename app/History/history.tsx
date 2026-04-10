@@ -108,6 +108,7 @@ interface Transaction {
   id: string;
   type?: string;
   amount?: number;
+  processingFee?: number;
   status?: string;
   description?: string;
   timestamp?: { toDate?: () => Date };
@@ -123,6 +124,7 @@ interface StoredTransferReceiptDetails {
   senderAccount?: string;
   recipientName?: string;
   recipientAccount?: string;
+  processingFee?: number;
   updatedAt?: number;
 }
 
@@ -194,6 +196,16 @@ interface RawApiTransaction {
   };
   fromUser?: { fullName?: unknown; accountNumber?: unknown };
   toUser?: { fullName?: unknown; accountNumber?: unknown };
+  processingFee?: unknown;
+  processing_fee?: unknown;
+  fee?: unknown;
+  feeAmount?: unknown;
+  fee_amount?: unknown;
+  transferFee?: unknown;
+  transfer_fee?: unknown;
+  charge?: unknown;
+  chargeAmount?: unknown;
+  charge_amount?: unknown;
 }
 
 interface RawApiWallet {
@@ -236,6 +248,15 @@ const pickFirstText = (...values: unknown[]): string => {
     if (normalized) return normalized;
   }
   return "";
+};
+
+const pickFirstNumber = (...values: unknown[]): number | undefined => {
+  for (const value of values) {
+    if (value === null || value === undefined) continue;
+    const parsed = Number(String(value).replace(/,/g, ""));
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return undefined;
 };
 
 const resolveTransferParties = (
@@ -845,6 +866,18 @@ export default function HistoryScreen() {
                 const a = parseFloat(String(tx.amount ?? 0));
                 return Number.isNaN(a) ? 0 : a;
               })(),
+              processingFee: pickFirstNumber(
+                tx.processingFee,
+                tx.processing_fee,
+                tx.transferFee,
+                tx.transfer_fee,
+                tx.fee,
+                tx.feeAmount,
+                tx.fee_amount,
+                tx.charge,
+                tx.chargeAmount,
+                tx.charge_amount,
+              ),
               description: String(tx.description ?? ""),
               status: String(
                 tx.status ?? tx.requestStatus ?? tx.request_status ?? "",
@@ -1010,6 +1043,18 @@ export default function HistoryScreen() {
               id: d.id,
               type: String(d.type ?? ""),
               amount: parseFloat(String(d.amount ?? 0)) || 0,
+              processingFee: pickFirstNumber(
+                (d as Record<string, unknown>).processingFee,
+                (d as Record<string, unknown>).processing_fee,
+                (d as Record<string, unknown>).transferFee,
+                (d as Record<string, unknown>).transfer_fee,
+                (d as Record<string, unknown>).fee,
+                (d as Record<string, unknown>).feeAmount,
+                (d as Record<string, unknown>).fee_amount,
+                (d as Record<string, unknown>).charge,
+                (d as Record<string, unknown>).chargeAmount,
+                (d as Record<string, unknown>).charge_amount,
+              ),
               description: String(d.description ?? ""),
               timestamp: {
                 toDate: () =>
@@ -1093,14 +1138,14 @@ export default function HistoryScreen() {
         : undefined;
 
       receiptParams.senderName =
-        selectedTransaction.senderName ||
         stored?.senderName ||
         currentUserTransferParty.name ||
+        selectedTransaction.senderName ||
         t("common.na");
       receiptParams.senderAccount =
-        selectedTransaction.senderAccount ||
         stored?.senderAccount ||
         currentUserTransferParty.account ||
+        selectedTransaction.senderAccount ||
         t("common.na");
       receiptParams.recipientName =
         selectedTransaction.recipientName ||
@@ -1110,6 +1155,8 @@ export default function HistoryScreen() {
         selectedTransaction.recipientAccount ||
         stored?.recipientAccount ||
         t("common.na");
+      receiptParams.processingFee =
+        selectedTransaction.processingFee ?? stored?.processingFee ?? 0;
     }
 
     (navigation as unknown as NavProp).navigate(
