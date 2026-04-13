@@ -30,6 +30,7 @@ import {
 import { auth } from "../../configs/firebase";
 import { useLanguage } from "../../context/LanguageContext";
 import { useUnreadNotifications } from "../../context/UnreadNotificationsContext";
+import Loader from "../Loader/Loader";
 import ActivityModal from "../components/ActivityModal";
 import notificationService, {
   type NotificationItem,
@@ -60,7 +61,6 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 const DETAIL_MODAL_WIDTH = Math.min(SCREEN_WIDTH * 0.86, 420);
 const DETAIL_MODAL_MAX_HEIGHT = SCREEN_HEIGHT * 0.78;
 const NOTIFICATION_PAGE_SIZE = 5;
-const SKELETON_PLACEHOLDER_COUNT = 6;
 const LOAD_MORE_THROTTLE_MS = 450;
 const THEME = {
   primary: "#E15816",
@@ -82,30 +82,6 @@ let backendNotificationCache: NotificationItemBackend[] = [];
 let firebaseNotificationCache: NotificationItem[] = [];
 let backendNotificationHydratedCache = false;
 const firebaseHydratedUidCache = new Set<string>();
-
-function NotificationCardSkeleton({ index }: { index: number }) {
-  return (
-    <View
-      style={[styles.notificationCard, styles.skeletonCard]}
-      accessibilityElementsHidden
-      importantForAccessibility="no-hide-descendants"
-    >
-      <View style={styles.cardContent}>
-        <View style={[styles.iconContainer, styles.skeletonIcon]} />
-        <View style={styles.skeletonTextCol}>
-          <View
-            style={[
-              styles.skeletonLine,
-              { width: index % 2 === 0 ? "72%" : "58%" },
-            ]}
-          />
-          <View style={[styles.skeletonLine, styles.skeletonLineShort]} />
-          <View style={[styles.skeletonLine, { width: "40%" }]} />
-        </View>
-      </View>
-    </View>
-  );
-}
 
 /**
  * Format notification messages to add comma separators to amounts
@@ -635,7 +611,6 @@ const Notification = () => {
       title: t("notification.delete"),
       message: t("notification.deleteConfirmOne"),
       onConfirm: async () => {
-        setShowDeleteModal(false);
         if (deleteLoading) return;
         setDeleteLoading(true);
         try {
@@ -656,6 +631,7 @@ const Notification = () => {
           console.error("Error deleting notification:", error);
         } finally {
           setDeleteLoading(false);
+          setShowDeleteModal(false);
         }
       },
     });
@@ -671,7 +647,6 @@ const Notification = () => {
       title: t("notification.delete"),
       message: t("notification.deleteConfirmAll"),
       onConfirm: async () => {
-        setShowDeleteModal(false);
         if (deleteLoading) return;
         setDeleteLoading(true);
         try {
@@ -692,6 +667,7 @@ const Notification = () => {
           console.error("Error deleting all notifications:", error);
         } finally {
           setDeleteLoading(false);
+          setShowDeleteModal(false);
         }
       },
     });
@@ -708,7 +684,6 @@ const Notification = () => {
         String(ids.length),
       ),
       onConfirm: async () => {
-        setShowDeleteModal(false);
         if (deleteLoading) return;
         setDeleteLoading(true);
         try {
@@ -731,6 +706,7 @@ const Notification = () => {
           console.error("Error deleting selected notifications:", error);
         } finally {
           setDeleteLoading(false);
+          setShowDeleteModal(false);
         }
       },
     });
@@ -794,41 +770,7 @@ const Notification = () => {
   };
 
   const getNotificationIcon = (type?: string, title?: string): string => {
-    const titleLower = (title ?? "").toLowerCase();
-    const isReferralSignup =
-      titleLower.includes("referral") && titleLower.includes("signup");
-    const isReferralCommission =
-      titleLower.includes("referral") && titleLower.includes("commission");
-    switch (type) {
-      case "referral_request":
-      case "REFERRAL_REQUEST":
-        return "person-add";
-      case "referral_approved":
-        return "checkmark-circle";
-      case "transaction":
-      case "TRANSFER_RECEIVED":
-        return "cash";
-      case "DEPOSIT_APPROVED":
-      case "DEPOSIT_REJECTED":
-      case "WITHDRAWAL_APPROVED":
-      case "WITHDRAWAL_REJECTED":
-        return "wallet";
-      case "TICKET_UPDATE":
-      case "NEW_MESSAGE":
-        return "chatbubble";
-      case "KYC_APPROVED":
-      case "KYC_REJECTED":
-        return "document-text";
-      case "TIME_DEPOSIT_MATURED":
-        return "time";
-      case "SYSTEM_ALERT":
-      case "system":
-        if (isReferralSignup) return "person-add";
-        if (isReferralCommission) return "checkmark-circle";
-        return "notifications";
-      default:
-        return "information-circle";
-    }
+    return "notifications";
   };
 
   const formatTimestamp = (timestamp: NotificationItem["timestamp"]) => {
@@ -1193,10 +1135,6 @@ const Notification = () => {
             <Text style={styles.notificationTitle}>
               {getTranslatedNotificationTitle(item.title)}
             </Text>
-            {item.title?.toLowerCase().includes("referral commission") &&
-              !selectMode && (
-                <Ionicons name="checkmark-circle" size={20} color="#4CAF50" />
-              )}
             {!item.isRead && !selectMode && (
               <View style={styles.newBadge}>
                 <Text style={styles.newBadgeText}>
@@ -1214,12 +1152,6 @@ const Notification = () => {
               </TouchableOpacity>
             )}
           </View>
-
-          <View style={styles.divider} />
-
-          <Text style={styles.notificationMessage} numberOfLines={3}>
-            {formatNotificationMessage(item.message)}
-          </Text>
 
           <Text style={styles.timestamp}>
             {new Date(item.createdAt).toLocaleString("en-US", {
@@ -1291,11 +1223,6 @@ const Notification = () => {
             <Text style={styles.notificationTitle}>
               {getTranslatedNotificationTitle(item.title)}
             </Text>
-            {(item.type === "referral_approved" ||
-              item.title?.toLowerCase().includes("referral commission")) &&
-              !selectMode && (
-                <Ionicons name="checkmark-circle" size={20} color="#4CAF50" />
-              )}
             {!item.read && !selectMode && (
               <View style={styles.newBadge}>
                 <Text style={styles.newBadgeText}>
@@ -1313,12 +1240,6 @@ const Notification = () => {
               </TouchableOpacity>
             )}
           </View>
-
-          <View style={styles.divider} />
-
-          <Text style={styles.notificationMessage} numberOfLines={3}>
-            {formatNotificationMessage(item.message ?? "")}
-          </Text>
 
           <Text style={styles.timestamp}>
             {formatTimestamp(item.timestamp)}
@@ -1527,17 +1448,7 @@ const Notification = () => {
       )}
 
       {loading && !refreshing ? (
-        <ScrollView
-          contentContainerStyle={[
-            styles.listContent,
-            { paddingBottom: contentBottomPadding },
-          ]}
-          showsVerticalScrollIndicator={false}
-        >
-          {Array.from({ length: SKELETON_PLACEHOLDER_COUNT }, (_, i) => (
-            <NotificationCardSkeleton key={`sk-${i}`} index={i} />
-          ))}
-        </ScrollView>
+        <Loader />
       ) : useBackend ? (
         <FlatList<NotificationItemBackend>
           data={visibleBackendNotifications}
@@ -1594,7 +1505,9 @@ const Notification = () => {
         visible={showDeleteModal}
         transparent
         animationType="fade"
-        onRequestClose={() => setShowDeleteModal(false)}
+        onRequestClose={() => {
+          if (!deleteLoading) setShowDeleteModal(false);
+        }}
       >
         <View style={styles.alertOverlay}>
           <View style={styles.alertContainer}>
@@ -1602,15 +1515,22 @@ const Notification = () => {
             <Text style={styles.alertMessage}>{deleteModalConfig.message}</Text>
             <View style={styles.alertButtonRow}>
               <TouchableOpacity
-                style={styles.alertCancelButton}
+                style={[
+                  styles.alertCancelButton,
+                  deleteLoading && styles.alertButtonDisabled,
+                ]}
                 onPress={() => setShowDeleteModal(false)}
+                disabled={deleteLoading}
               >
                 <Text style={styles.alertCancelButtonText}>
                   {t("notification.cancel")}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={styles.alertConfirmButton}
+                style={[
+                  styles.alertConfirmButton,
+                  deleteLoading && styles.alertButtonDisabled,
+                ]}
                 onPress={() => deleteModalConfig.onConfirm()}
                 disabled={deleteLoading}
               >
@@ -1676,29 +1596,7 @@ const Notification = () => {
                 style={styles.detailHeader}
               >
                 <View style={styles.detailHeaderTop}>
-                  <View style={styles.detailHeaderSlotLeft}>
-                    <View style={styles.detailIconWrapper}>
-                      <Ionicons
-                        name={
-                          detailModalNotification &&
-                          "createdAt" in detailModalNotification
-                            ? (getNotificationIcon(
-                                (
-                                  detailModalNotification as NotificationItemBackend
-                                )?.type,
-                                detailModalNotification?.title,
-                              ) as "information-circle")
-                            : (getNotificationIcon(
-                                (detailModalNotification as NotificationItem)
-                                  ?.type ?? "system",
-                                detailModalNotification?.title,
-                              ) as "information-circle")
-                        }
-                        size={28}
-                        color="#FFFFFF"
-                      />
-                    </View>
-                  </View>
+                  <View style={styles.detailHeaderSlotRight} />
                   <Text style={styles.detailTitle} numberOfLines={2}>
                     {getTranslatedNotificationTitle(
                       detailModalNotification?.title,
@@ -2013,17 +1911,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: THEME.primary,
   },
-  divider: {
-    height: 1,
-    backgroundColor: "#F6D5C2",
-    marginBottom: 8,
-  },
-  notificationMessage: {
-    fontSize: 14,
-    color: THEME.textSecondary,
-    lineHeight: 20,
-    marginBottom: 8,
-  },
   timestamp: {
     fontSize: 12,
     color: THEME.textMuted,
@@ -2067,26 +1954,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: THEME.primary,
   },
-  skeletonCard: {
-    borderLeftWidth: 0,
-  },
-  skeletonIcon: {
-    backgroundColor: "#E8E8E8",
-  },
-  skeletonTextCol: {
-    flex: 1,
-    gap: 10,
-  },
-  skeletonLine: {
-    height: 14,
-    borderRadius: 6,
-    backgroundColor: "#E8E8E8",
-    maxWidth: "100%",
-  },
-  skeletonLineShort: {
-    width: "92%",
-  },
-  // Delete confirmation modal - modern white card
+  // Delete confirmation modal - aligned with global modal pattern
   alertOverlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.6)",
@@ -2094,11 +1962,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   alertContainer: {
-    width: DETAIL_MODAL_WIDTH,
-    maxWidth: DETAIL_MODAL_WIDTH,
+    width: "88%",
+    maxWidth: 380,
     backgroundColor: THEME.surface,
     borderRadius: 18,
-    paddingVertical: 20,
+    paddingVertical: 22,
     paddingHorizontal: 20,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
@@ -2114,43 +1982,52 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   alertMessage: {
-    fontSize: 14,
+    fontSize: 15,
     color: "#444444",
-    lineHeight: 20,
-    marginBottom: 20,
+    lineHeight: 21,
+    marginBottom: 18,
     textAlign: "center",
   },
   alertButtonRow: {
     flexDirection: "row",
-    justifyContent: "center",
+    justifyContent: "space-between",
     alignItems: "center",
-    gap: 12,
+    gap: 10,
   },
   alertCancelButton: {
+    flex: 1,
     backgroundColor: "#F5F5F5",
+    minHeight: 44,
     paddingVertical: 10,
-    paddingHorizontal: 18,
+    paddingHorizontal: 16,
     borderRadius: 10,
     borderWidth: 1,
     borderColor: "#DDDDDD",
+    alignItems: "center",
+    justifyContent: "center",
   },
   alertCancelButtonText: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: "600",
     color: "#555555",
   },
   alertConfirmButton: {
+    flex: 1,
     backgroundColor: THEME.primary,
+    minHeight: 44,
     paddingVertical: 10,
-    paddingHorizontal: 24,
+    paddingHorizontal: 16,
     borderRadius: 10,
-    minWidth: 96,
     alignItems: "center",
+    justifyContent: "center",
   },
   alertConfirmButtonText: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: "700",
     color: "#FFFFFF",
+  },
+  alertButtonDisabled: {
+    opacity: 0.7,
   },
   // Detail modal - white card with full notification details
   detailOverlay: {
@@ -2192,21 +2069,9 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     gap: 8,
   },
-  detailHeaderSlotLeft: {
-    width: 44,
-    alignItems: "flex-start",
-  },
   detailHeaderSlotRight: {
     width: 44,
     alignItems: "flex-end",
-  },
-  detailIconWrapper: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "rgba(255,255,255,0.18)",
-    justifyContent: "center",
-    alignItems: "center",
   },
   detailTitle: {
     flex: 1,
