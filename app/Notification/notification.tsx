@@ -27,6 +27,7 @@ import {
   markNotificationAsRead as apiMarkNotificationAsRead,
   getNotifications,
 } from "../../configs/api";
+import { getLanguageCode } from "../../constants/locales";
 import { auth } from "../../configs/firebase";
 import { useLanguage } from "../../context/LanguageContext";
 import { useUnreadNotifications } from "../../context/UnreadNotificationsContext";
@@ -87,7 +88,7 @@ const firebaseHydratedUidCache = new Set<string>();
  * Format notification messages to add comma separators to amounts
  * Looks for patterns like "5454.00" or "54554.00" and formats them with commas
  */
-const formatNotificationMessage = (message: string): string => {
+const formatNotificationMessage = (message: string, locale: string): string => {
   if (!message) return message;
 
   // Pattern to match amounts in notification messages
@@ -98,7 +99,7 @@ const formatNotificationMessage = (message: string): string => {
     const amount = parseFloat(match);
     if (!Number.isFinite(amount)) return match;
 
-    return amount.toLocaleString("en-US", {
+    return amount.toLocaleString(locale, {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
       useGrouping: true,
@@ -109,7 +110,7 @@ const formatNotificationMessage = (message: string): string => {
 const Notification = () => {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { setUnreadCount } = useUnreadNotifications();
   const [notifications, setNotifications] = useState<NotificationItem[]>(
     firebaseNotificationCache,
@@ -151,6 +152,16 @@ const Notification = () => {
     setHandledAdminBalanceTransferKeys,
   ] = useState<Set<string>>(new Set());
   const [visibleCount, setVisibleCount] = useState(NOTIFICATION_PAGE_SIZE);
+  const locale = useMemo(() => {
+    const code = getLanguageCode(language);
+    const localeMap: Record<string, string> = {
+      en: "en-US",
+      ko: "ko-KR",
+      ja: "ja-JP",
+      ar: "ar-SA",
+    };
+    return localeMap[code] ?? "en-US";
+  }, [language]);
 
   /** Full-list skeleton only before the first successful hydration (not load-more / resubscribe). */
   const backendInitialFetchDoneRef = useRef(backendNotificationHydratedCache);
@@ -787,7 +798,7 @@ const Notification = () => {
       minute: "2-digit",
     };
 
-    return date.toLocaleString("en-US", options);
+    return date.toLocaleString(locale, options);
   };
 
   const formatDetailTimestamp = (
@@ -795,7 +806,7 @@ const Notification = () => {
   ): string => {
     if ("createdAt" in notif && notif.createdAt) {
       const val = notif.createdAt as string | number;
-      return new Date(val).toLocaleString("en-US", {
+      return new Date(val).toLocaleString(locale, {
         year: "numeric",
         month: "short",
         day: "numeric",
@@ -806,7 +817,7 @@ const Notification = () => {
     if ("timestamp" in notif && notif.timestamp) {
       return formatTimestamp(notif.timestamp);
     }
-    return t("notification.noDate") ?? "—";
+    return t("notification.noDate");
   };
 
   const getDetailFields = (
@@ -816,30 +827,38 @@ const Notification = () => {
     const fields: { label: string; value: string }[] = [];
 
     fields.push({
-      label: t("notification.detailTitle") ?? "Title",
-      value: getTranslatedNotificationTitle(notif.title) || "—",
+      label: t("notification.detailTitle"),
+      value: getTranslatedNotificationTitle(notif.title) || t("notification.noDate"),
     });
     fields.push({
-      label: t("notification.detailMessage") ?? "Message",
-      value: formatNotificationMessage(notif.message ?? "—"),
+      label: t("notification.detailMessage"),
+      value: formatNotificationMessage(notif.message ?? t("notification.noDate"), locale),
     });
     fields.push({
-      label: t("notification.detailDate") ?? "Date",
+      label: t("notification.detailDate"),
       value: formatDetailTimestamp(notif),
     });
     fields.push({
-      label: t("notification.detailStatus") ?? "Status",
+      label: t("notification.detailStatus"),
       value: isBackend
         ? (notif as NotificationItemBackend).isRead
-          ? (t("notification.read") ?? "Read")
-          : (t("notification.unread") ?? "Unread")
+          ? t("notification.read")
+          : t("notification.unread")
         : (notif as NotificationItem).read
-          ? (t("notification.read") ?? "Read")
-          : (t("notification.unread") ?? "Unread"),
+          ? t("notification.read")
+          : t("notification.unread"),
     });
 
     if (!isBackend) {
       const item = notif as NotificationItem;
+      const getDynamicFieldLabel = (key: string): string => {
+        const translationKey = `notification.detailField.${key}`;
+        const translated = t(translationKey);
+        if (translated !== translationKey) return translated;
+        return key
+          .replace(/([A-Z])/g, " $1")
+          .replace(/^./, (s) => s.toUpperCase());
+      };
       // Include any other non-standard fields
       const skip = new Set([
         "id",
@@ -852,9 +871,7 @@ const Notification = () => {
       ]);
       Object.entries(item).forEach(([key, val]) => {
         if (!skip.has(key) && val != null && typeof val !== "object") {
-          const label = key
-            .replace(/([A-Z])/g, " $1")
-            .replace(/^./, (s) => s.toUpperCase());
+          const label = getDynamicFieldLabel(key);
           fields.push({ label, value: String(val) });
         }
       });
@@ -934,16 +951,16 @@ const Notification = () => {
         setUnreadCount((prev) => Math.max(0, prev - 1));
       } else {
         setInfoModalConfig({
-          title: t("notification.adminTransferErrorTitle") ?? "Transfer",
-          message: result.error ?? "Action failed",
+          title: t("notification.adminTransferErrorTitle"),
+          message: result.error ?? t("notification.actionFailed"),
         });
         setShowInfoModal(true);
       }
     } catch (e) {
       if (__DEV__) console.error("[Referral] Accept error", e);
       setInfoModalConfig({
-        title: t("notification.adminTransferErrorTitle") ?? "Transfer",
-        message: e instanceof Error ? e.message : "Network error",
+        title: t("notification.adminTransferErrorTitle"),
+        message: e instanceof Error ? e.message : t("common.networkError"),
       });
       setShowInfoModal(true);
     } finally {
@@ -975,16 +992,16 @@ const Notification = () => {
         setUnreadCount((prev) => Math.max(0, prev - 1));
       } else {
         setInfoModalConfig({
-          title: t("notification.adminTransferErrorTitle") ?? "Transfer",
-          message: result.error ?? "Action failed",
+          title: t("notification.adminTransferErrorTitle"),
+          message: result.error ?? t("notification.actionFailed"),
         });
         setShowInfoModal(true);
       }
     } catch (e) {
       if (__DEV__) console.error("[Referral] Decline error", e);
       setInfoModalConfig({
-        title: t("notification.adminTransferErrorTitle") ?? "Transfer",
-        message: e instanceof Error ? e.message : "Network error",
+        title: t("notification.adminTransferErrorTitle"),
+        message: e instanceof Error ? e.message : t("common.networkError"),
       });
       setShowInfoModal(true);
     } finally {
@@ -1021,16 +1038,16 @@ const Notification = () => {
         setUnreadCount((prev) => Math.max(0, prev - 1));
       } else {
         setInfoModalConfig({
-          title: t("notification.adminTransferErrorTitle") ?? "Transfer",
-          message: result.error ?? "Could not approve",
+          title: t("notification.adminTransferErrorTitle"),
+          message: result.error ?? t("notification.couldNotApprove"),
         });
         setShowInfoModal(true);
       }
     } catch (e) {
       if (__DEV__) console.error("[Admin balance transfer] Approve error", e);
       setInfoModalConfig({
-        title: t("notification.adminTransferErrorTitle") ?? "Transfer",
-        message: e instanceof Error ? e.message : "Network error",
+        title: t("notification.adminTransferErrorTitle"),
+        message: e instanceof Error ? e.message : t("common.networkError"),
       });
       setShowInfoModal(true);
     } finally {
@@ -1067,16 +1084,16 @@ const Notification = () => {
         setUnreadCount((prev) => Math.max(0, prev - 1));
       } else {
         setInfoModalConfig({
-          title: t("notification.adminTransferErrorTitle") ?? "Transfer",
-          message: result.error ?? "Could not reject",
+          title: t("notification.adminTransferErrorTitle"),
+          message: result.error ?? t("notification.couldNotReject"),
         });
         setShowInfoModal(true);
       }
     } catch (e) {
       if (__DEV__) console.error("[Admin balance transfer] Reject error", e);
       setInfoModalConfig({
-        title: t("notification.adminTransferErrorTitle") ?? "Transfer",
-        message: e instanceof Error ? e.message : "Network error",
+        title: t("notification.adminTransferErrorTitle"),
+        message: e instanceof Error ? e.message : t("common.networkError"),
       });
       setShowInfoModal(true);
     } finally {
@@ -1154,7 +1171,7 @@ const Notification = () => {
           </View>
 
           <Text style={styles.timestamp}>
-            {new Date(item.createdAt).toLocaleString("en-US", {
+            {new Date(item.createdAt).toLocaleString(locale, {
               year: "numeric",
               month: "short",
               day: "numeric",
@@ -1277,7 +1294,7 @@ const Notification = () => {
         activeOpacity={0.85}
       >
         <Text style={styles.loadMoreText}>
-          {t("history.loadMore") ?? "Load More"}
+          {t("history.loadMore")}
         </Text>
       </TouchableOpacity>
     );
@@ -1387,8 +1404,8 @@ const Notification = () => {
             >
               {selectedIds.size === allNotificationIds.length &&
               allNotificationIds.length > 0
-                ? "Unselect All"
-                : "Select All"}
+                ? t("history.deselectAll")
+                : t("history.selectAll")}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -1563,7 +1580,7 @@ const Notification = () => {
                 onPress={() => setShowInfoModal(false)}
               >
                 <Text style={styles.alertConfirmButtonText}>
-                  {t("notification.close") ?? "Close"}
+                  {t("notification.close")}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -1600,7 +1617,7 @@ const Notification = () => {
                   <Text style={styles.detailTitle} numberOfLines={2}>
                     {getTranslatedNotificationTitle(
                       detailModalNotification?.title,
-                    ) || "—"}
+                    ) || t("notification.noDate")}
                   </Text>
                   <View style={styles.detailHeaderSlotRight}>
                     <TouchableOpacity
@@ -1653,7 +1670,7 @@ const Notification = () => {
                         <ActivityIndicator size="small" color="#FFF" />
                       ) : (
                         <Text style={styles.referralButtonText}>
-                          {t("notification.declineReferral") ?? "Decline"}
+                          {t("notification.declineReferral")}
                         </Text>
                       )}
                     </TouchableOpacity>
@@ -1669,7 +1686,7 @@ const Notification = () => {
                         <ActivityIndicator size="small" color="#FFF" />
                       ) : (
                         <Text style={styles.referralButtonText}>
-                          {t("notification.acceptReferral") ?? "Accept"}
+                          {t("notification.acceptReferral")}
                         </Text>
                       )}
                     </TouchableOpacity>
@@ -1693,7 +1710,7 @@ const Notification = () => {
                         <ActivityIndicator size="small" color="#FFF" />
                       ) : (
                         <Text style={styles.referralButtonText}>
-                          {t("notification.rejectAdminTransfer") ?? "Reject"}
+                          {t("notification.rejectAdminTransfer")}
                         </Text>
                       )}
                     </TouchableOpacity>
@@ -1709,7 +1726,7 @@ const Notification = () => {
                         <ActivityIndicator size="small" color="#FFF" />
                       ) : (
                         <Text style={styles.referralButtonText}>
-                          {t("notification.approveAdminTransfer") ?? "Approve"}
+                          {t("notification.approveAdminTransfer")}
                         </Text>
                       )}
                     </TouchableOpacity>
@@ -1720,7 +1737,7 @@ const Notification = () => {
                 onPress={() => setDetailModalNotification(null)}
               >
                 <Text style={styles.detailCloseText}>
-                  {t("notification.close") ?? "Close"}
+                  {t("notification.close")}
                 </Text>
               </TouchableOpacity>
             </View>
