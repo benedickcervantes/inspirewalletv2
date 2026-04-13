@@ -1191,6 +1191,16 @@ const en: TranslationMap = {
   "history.downloadReceipt": "Download Receipt",
   "history.shareReceipt": "Share",
   "history.receiptDone": "Done",
+  "history.receiptSavedMessage":
+    "Receipt saved to your photos successfully.",
+  "history.receiptMediaPermissionMessage":
+    "Permission to access your photo library is required to save the receipt.",
+  "history.receiptSaveFailedMessage":
+    "Could not save the receipt. Please try again.",
+  "history.receiptShareUnavailableMessage":
+    "Sharing is not available on this device.",
+  "history.receiptShareFailedMessage":
+    "Could not share the receipt. Please try again.",
 
   "tickets.status.OPEN": "OPEN",
   "tickets.status.IN_PROGRESS": "IN PROGRESS",
@@ -3267,6 +3277,15 @@ const ko: TranslationMap = {
   "history.downloadReceipt": "영수증 다운로드",
   "history.shareReceipt": "공유",
   "history.receiptDone": "완료",
+  "history.receiptSavedMessage": "영수증이 사진에 성공적으로 저장되었습니다.",
+  "history.receiptMediaPermissionMessage":
+    "영수증을 저장하려면 사진 라이브러리 접근권한이 필요합니다.",
+  "history.receiptSaveFailedMessage":
+    "영수증을 저장할 수 없습니다. 다시 시도해 주세요.",
+  "history.receiptShareUnavailableMessage":
+    "이 기기에서는 공유를 사용할 수 없습니다.",
+  "history.receiptShareFailedMessage":
+    "영수증을 공유할 수 없습니다. 다시 시도해 주세요.",
 
   "tickets.status.OPEN": "열림",
   "tickets.status.IN_PROGRESS": "진행 중",
@@ -5283,6 +5302,16 @@ const ja: TranslationMap = {
   "history.downloadReceipt": "領収書をダウンロード",
   "history.shareReceipt": "共有",
   "history.receiptDone": "完了",
+  "history.receiptSavedMessage":
+    "領収書を写真に正常に保存しました。",
+  "history.receiptMediaPermissionMessage":
+    "領収書を保存するには写真ライブラリへのアクセス許可が必要です。",
+  "history.receiptSaveFailedMessage":
+    "領収書を保存できませんでした。もう一度お試しください。",
+  "history.receiptShareUnavailableMessage":
+    "このデバイスでは共有を利用できません。",
+  "history.receiptShareFailedMessage":
+    "領収書を共有できませんでした。もう一度お試しください。",
 
   "tickets.status.OPEN": "未解決",
   "tickets.status.IN_PROGRESS": "進行中",
@@ -6758,6 +6787,15 @@ const ar: TranslationMap = {
   "history.downloadReceipt": "تنزيل الإيصال",
   "history.shareReceipt": "مشاركة",
   "history.receiptDone": "تم",
+  "history.receiptSavedMessage": "تم حفظ الإيصال في صورك بنجاح.",
+  "history.receiptMediaPermissionMessage":
+    "يلزم الإذن بالوصول إلى مكتبة الصور لحفظ الإيصال.",
+  "history.receiptSaveFailedMessage":
+    "تعذر حفظ الإيصال. يرجى المحاولة مرة أخرى.",
+  "history.receiptShareUnavailableMessage":
+    "المشاركة غير متوفرة على هذا الجهاز.",
+  "history.receiptShareFailedMessage":
+    "تعذر مشاركة الإيصال. يرجى المحاولة مرة أخرى.",
   "history.freeDefaultCard": "بطاقة افتراضية مجانية",
   "history.createdAccount": "إنشاء الحساب",
   "history.withdrawalRequested": "تم طلب السحب",

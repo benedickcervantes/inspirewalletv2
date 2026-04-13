@@ -5,9 +5,8 @@ import { Audio } from "expo-av";
 import { LinearGradient } from "expo-linear-gradient";
 import * as MediaLibrary from "expo-media-library";
 import * as Sharing from "expo-sharing";
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import {
-  Alert,
   Image,
   SafeAreaView,
   ScrollView,
@@ -19,6 +18,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import ViewShot from "react-native-view-shot";
+import ActivityModal from "../../components/ActivityModal";
 import { getTransactions } from "../../../configs/api";
 import {
   DEFAULT_TRANSFER_SUCCESS_SOUND,
@@ -229,28 +229,42 @@ export default function DepositReceipt() {
     ) => void;
   } | null>(null);
 
+  const [receiptFeedback, setReceiptFeedback] = useState<ReceiptFeedback | null>(
+    null,
+  );
+
+  useEffect(() => {
+    return () => setReceiptFeedback(null);
+  }, []);
+
   const handleDownload = async () => {
     try {
       const { status } = await MediaLibrary.requestPermissionsAsync();
       if (status !== "granted") {
-        Alert.alert(
-          t("common.error") || "Error",
-          "Permission to access media library is required to save the receipt.",
-        );
+        setReceiptFeedback({
+          kind: "error",
+          title: t("common.error"),
+          message: t("history.receiptMediaPermissionMessage"),
+        });
         return;
       }
 
       if (viewShotRef.current?.capture) {
         const uri = await viewShotRef.current.capture();
         await MediaLibrary.saveToLibraryAsync(uri);
-        Alert.alert(
-          t("common.success") || "Success",
-          "Receipt saved to your photos successfully.",
-        );
+        setReceiptFeedback({
+          kind: "success",
+          title: t("common.success"),
+          message: t("history.receiptSavedMessage"),
+        });
       }
     } catch (error) {
       console.error("Failed to download receipt:", error);
-      Alert.alert(t("common.error") || "Error", "Failed to save receipt.");
+      setReceiptFeedback({
+        kind: "error",
+        title: t("common.error"),
+        message: t("history.receiptSaveFailedMessage"),
+      });
     }
   };
 
@@ -262,15 +276,20 @@ export default function DepositReceipt() {
         if (isAvailable) {
           await Sharing.shareAsync(uri);
         } else {
-          Alert.alert(
-            t("common.error") || "Error",
-            "Sharing is not available on this device.",
-          );
+          setReceiptFeedback({
+            kind: "error",
+            title: t("common.error"),
+            message: t("history.receiptShareUnavailableMessage"),
+          });
         }
       }
     } catch (error) {
       console.error("Failed to share receipt:", error);
-      Alert.alert(t("common.error") || "Error", "Failed to share receipt.");
+      setReceiptFeedback({
+        kind: "error",
+        title: t("common.error"),
+        message: t("history.receiptShareFailedMessage"),
+      });
     }
   };
 
@@ -586,6 +605,7 @@ export default function DepositReceipt() {
   const receiptWidth = Math.min(380, width - 32);
 
   return (
+    <Fragment>
     <SafeAreaView style={styles.safeArea}>
       <LinearGradient
         colors={["#191410", "#231A11", "#191410"]}
@@ -823,6 +843,60 @@ export default function DepositReceipt() {
         </ScrollView>
       </LinearGradient>
     </SafeAreaView>
+
+    <ActivityModal
+      visible={receiptFeedback !== null}
+      transparent
+      animationType="fade"
+      onRequestClose={() => setReceiptFeedback(null)}
+    >
+      {receiptFeedback ? (
+        <TouchableOpacity
+          style={feedbackModalStyles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setReceiptFeedback(null)}
+        >
+          <TouchableOpacity
+            activeOpacity={1}
+            onPress={(e) => e.stopPropagation()}
+          >
+            <View style={feedbackModalStyles.filterModal}>
+              <View style={feedbackModalStyles.modalHeader}>
+                <View style={feedbackModalStyles.modalIconContainer}>
+                  <Ionicons
+                    name={
+                      receiptFeedback.kind === "success"
+                        ? "checkmark-circle"
+                        : "alert-circle-outline"
+                    }
+                    size={28}
+                    color="#E15816"
+                  />
+                </View>
+                <Text style={feedbackModalStyles.filterModalTitle}>
+                  {receiptFeedback.title}
+                </Text>
+                <Text style={feedbackModalStyles.filterModalSubtitle}>
+                  {receiptFeedback.message}
+                </Text>
+              </View>
+              <View style={feedbackModalStyles.feedbackActions}>
+                <TouchableOpacity
+                  style={feedbackModalStyles.applyCustomButton}
+                  onPress={() => setReceiptFeedback(null)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={feedbackModalStyles.applyCustomButtonText}>
+                    {t("common.ok")}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      ) : null}
+    </ActivityModal>
+    </Fragment>
   );
 }
 
@@ -1076,5 +1150,85 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#B8AFA6",
     letterSpacing: 0.4,
+  },
+});
+
+const feedbackModalStyles = StyleSheet.create({
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  filterModal: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 24,
+    width: "90%",
+    maxWidth: 400,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.25,
+    shadowRadius: 24,
+    elevation: 12,
+    overflow: "hidden",
+  },
+  modalHeader: {
+    backgroundColor: "#FFF5F0",
+    paddingVertical: 24,
+    paddingHorizontal: 24,
+    alignItems: "center",
+    borderBottomWidth: 1,
+    borderBottomColor: "#FFE5D9",
+  },
+  modalIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "#FFFFFF",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 12,
+    shadowColor: "#E15816",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  filterModalTitle: {
+    fontSize: 22,
+    fontWeight: "700",
+    color: "#11181C",
+    marginBottom: 4,
+    textAlign: "center",
+  },
+  filterModalSubtitle: {
+    fontSize: 14,
+    fontWeight: "400",
+    color: "#687076",
+    textAlign: "center",
+  },
+  feedbackActions: {
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 24,
+  },
+  applyCustomButton: {
+    backgroundColor: "#E15816",
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: "center",
+    marginTop: 8,
+    shadowColor: "#E15816",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  applyCustomButtonText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#FFFFFF",
+    letterSpacing: 0.5,
   },
 });
