@@ -30,6 +30,118 @@ import { useLanguage } from "../../../context/LanguageContext";
 
 const CRYPTO_MARGIN_MULTIPLIER = 0.99;
 
+const normalizeTextValue = (value: unknown): string => {
+  const text = String(value ?? "").trim();
+  if (!text) return "";
+  const lowered = text.toLowerCase();
+  if (lowered === "undefined" || lowered === "null") return "";
+  return text;
+};
+
+const pickFirstText = (...values: unknown[]): string => {
+  for (const value of values) {
+    const normalized = normalizeTextValue(value);
+    if (normalized) return normalized;
+  }
+  return "";
+};
+
+const getNameFromParts = (obj: Record<string, unknown>) => {
+  const first = normalizeTextValue(obj.firstName ?? obj.first_name);
+  const last = normalizeTextValue(obj.lastName ?? obj.last_name);
+  return normalizeTextValue([first, last].filter(Boolean).join(" "));
+};
+
+const resolveTransferParties = (
+  raw: Record<string, unknown>,
+): {
+  senderName: string;
+  senderAccount: string;
+  recipientName: string;
+  recipientAccount: string;
+} => {
+  const senderObj = (raw.sender as Record<string, unknown> | undefined) || {};
+  const recipientObj =
+    (raw.recipient as Record<string, unknown> | undefined) ||
+    (raw.receiver as Record<string, unknown> | undefined) ||
+    (raw.reciever as Record<string, unknown> | undefined) ||
+    (raw.beneficiary as Record<string, unknown> | undefined) ||
+    {};
+  const fromUser = (raw.fromUser as Record<string, unknown> | undefined) || {};
+  const toUser = (raw.toUser as Record<string, unknown> | undefined) || {};
+
+  return {
+    senderName: pickFirstText(
+      raw.senderName,
+      raw.sender_name,
+      raw.fromName,
+      raw.from_name,
+      senderObj.name,
+      senderObj.fullName,
+      getNameFromParts(senderObj),
+      fromUser.fullName,
+      fromUser.name,
+      getNameFromParts(fromUser),
+    ),
+    senderAccount: pickFirstText(
+      raw.senderAccount,
+      raw.sender_account,
+      raw.senderAccountNumber,
+      raw.sender_account_number,
+      raw.fromAccount,
+      raw.from_account,
+      raw.fromAccountNumber,
+      raw.from_account_number,
+      senderObj.accountNumber,
+      senderObj.accountNo,
+      senderObj.account_number,
+      fromUser.accountNumber,
+      fromUser.accountNo,
+      fromUser.account_number,
+    ),
+    recipientName: pickFirstText(
+      raw.recipientName,
+      raw.recipient_name,
+      raw.receiverName,
+      raw.receiver_name,
+      raw.recieverName,
+      raw.reciever_name,
+      raw.toName,
+      raw.to_name,
+      recipientObj.name,
+      recipientObj.fullName,
+      getNameFromParts(recipientObj),
+      toUser.fullName,
+      toUser.name,
+      getNameFromParts(toUser),
+    ),
+    recipientAccount: pickFirstText(
+      raw.recipientAccount,
+      raw.recipient_account,
+      raw.recipientAccountNumber,
+      raw.recipient_account_number,
+      raw.receiverAccount,
+      raw.receiver_account,
+      raw.receiverAccountNumber,
+      raw.receiver_account_number,
+      raw.recieverAccount,
+      raw.reciever_account,
+      raw.recieverAccountNumber,
+      raw.reciever_account_number,
+      raw.toAccount,
+      raw.to_account,
+      raw.toAccountNumber,
+      raw.to_account_number,
+      recipientObj.accountNumber,
+      recipientObj.accountNo,
+      recipientObj.account_number,
+      toUser.accountNumber,
+      toUser.accountNo,
+      toUser.account_number,
+    ),
+  };
+};
+
 // ─── Thin separator ───────────────────────────────────────────────────────────
 function Separator({ style }: { style?: object }) {
   return <View style={[sepStyles.line, style]} />;
@@ -203,6 +315,17 @@ export default function DepositReceipt() {
   } = params;
 
   const [liveStatus, setLiveStatus] = useState<string>(String(status || ""));
+  const [liveTransferParties, setLiveTransferParties] = useState<{
+    senderName: string;
+    senderAccount: string;
+    recipientName: string;
+    recipientAccount: string;
+  }>({
+    senderName: "",
+    senderAccount: "",
+    recipientName: "",
+    recipientAccount: "",
+  });
 
   const languageCode = getLanguageCode(language);
   const localeByLanguageCode: Record<string, string> = {
@@ -341,6 +464,8 @@ export default function DepositReceipt() {
         if (nextStatus) {
           setLiveStatus(nextStatus);
         }
+        const resolvedParties = resolveTransferParties(hit);
+        setLiveTransferParties(resolvedParties);
       } catch {
         // Keep fallback status from route params when refresh fails.
       }
@@ -400,6 +525,22 @@ export default function DepositReceipt() {
           .replace(/\b\w/g, (c) => c.toUpperCase())
       : "Successful";
   const statusColor = isSuccessfulStatus ? "#1A7A36" : "#B54708";
+  const effectiveSenderName = pickFirstText(
+    liveTransferParties.senderName,
+    senderName,
+  );
+  const effectiveSenderAccount = pickFirstText(
+    liveTransferParties.senderAccount,
+    senderAccount,
+  );
+  const effectiveRecipientName = pickFirstText(
+    liveTransferParties.recipientName,
+    recipientName,
+  );
+  const effectiveRecipientAccount = pickFirstText(
+    liveTransferParties.recipientAccount,
+    recipientAccount,
+  );
 
   const handleClose = () => {
     if (source === "history") {
@@ -550,30 +691,36 @@ export default function DepositReceipt() {
                     <ReceiptRow label="Processing Fee" value={formattedTransferFee} />
                   </>
                 ) : null}
-                {normalizedType === "transfer" && senderName ? (
+                {normalizedType === "transfer" && effectiveSenderName ? (
                   <>
                     <Separator />
-                    <ReceiptRow label="Sender Name" value={senderName} />
+                    <ReceiptRow label="Sender Name" value={effectiveSenderName} />
                   </>
                 ) : null}
-                {normalizedType === "transfer" && senderAccount ? (
+                {normalizedType === "transfer" && effectiveSenderAccount ? (
                   <>
                     <Separator />
-                    <ReceiptRow label="Sender Account" value={senderAccount} />
+                    <ReceiptRow
+                      label="Sender Account"
+                      value={effectiveSenderAccount}
+                    />
                   </>
                 ) : null}
-                {normalizedType === "transfer" && recipientName ? (
+                {normalizedType === "transfer" && effectiveRecipientName ? (
                   <>
                     <Separator />
-                    <ReceiptRow label="Recipient Name" value={recipientName} />
+                    <ReceiptRow
+                      label="Recipient Name"
+                      value={effectiveRecipientName}
+                    />
                   </>
                 ) : null}
-                {normalizedType === "transfer" && recipientAccount ? (
+                {normalizedType === "transfer" && effectiveRecipientAccount ? (
                   <>
                     <Separator />
                     <ReceiptRow
                       label="Recipient Account"
-                      value={recipientAccount}
+                      value={effectiveRecipientAccount}
                     />
                   </>
                 ) : null}
