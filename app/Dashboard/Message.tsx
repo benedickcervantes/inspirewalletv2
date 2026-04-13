@@ -1,9 +1,9 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useFocusEffect, useIsFocused, useNavigation } from "@react-navigation/native";
 import * as ImagePicker from "expo-image-picker";
-import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Animated, Image, Keyboard, KeyboardAvoidingView, Linking, Platform, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Animated, AppState, AppStateStatus, Image, Keyboard, KeyboardAvoidingView, Linking, Platform, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { PinchGestureHandler, State } from "react-native-gesture-handler";
 import {
   SafeAreaView,
@@ -18,6 +18,7 @@ import {
   uploadSupportAttachment,
 } from "../../configs/api";
 import { useLanguage } from "../../context/LanguageContext";
+import { useSocket } from "../../context/SocketContext";
 import { subscribeToConnectionStatus } from "../../lib/connectionStatus";
 import { isServiceUnderMaintenance } from "../../lib/maintenance";
 import { subscribeToNewSupportMessage } from "../../lib/messagingEvents";
@@ -79,6 +80,32 @@ const formatTime = (date: Date, lang: string) => {
   });
 };
 
+/** Parse outgoing payload for optimistic bubble (plain text or JSON v:1 with attachment). */
+function displayFromOutgoingPayload(payloadContent: string): {
+  text: string;
+  attachment?: DisplayMessage["attachment"];
+} {
+  const trimmed = payloadContent.trim();
+  if (trimmed.startsWith("{")) {
+    try {
+      const p = JSON.parse(trimmed) as {
+        v?: number;
+        text?: string;
+        attachment?: DisplayMessage["attachment"];
+      };
+      if (p?.v === 1 && p.attachment) {
+        return {
+          text: typeof p.text === "string" ? p.text : "",
+          attachment: p.attachment,
+        };
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+  return { text: payloadContent };
+}
+
 function mapApiToDisplay(api: ApiMessage[]): DisplayMessage[] {
   // API returns newest first; we want oldest at top, newest at bottom (chronological)
   const mapped = api.map((m) => ({
@@ -137,6 +164,15 @@ export default function Message() {
     useState<LocalAttachment | null>(null);
   const [previewImage, setPreviewImage] = useState<{ url: string; name: string } | null>(null);
   const { t, language } = useLanguage();
+  const isFocused = useIsFocused();
+  const { isConnected } = useSocket();
+  const isFocusedRef = useRef(isFocused);
+  const prevSocketConnectedRef = useRef(isConnected);
+
+  useEffect(() => {
+    isFocusedRef.current = isFocused;
+  }, [isFocused]);
+
   const baseScale = useRef(new Animated.Value(1)).current;
   const pinchScale = useRef(new Animated.Value(1)).current;
   const scale = useRef(Animated.multiply(baseScale, pinchScale)).current;
@@ -201,7 +237,7 @@ export default function Message() {
     }
     setLoading(false);
     setRefreshing(false);
-  }, []);
+  }, [isUnderMaintenance, t]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -238,17 +274,39 @@ export default function Message() {
       });
     }
 
+    const tempId = `pending-${Date.now()}`;
+    const optimistic = displayFromOutgoingPayload(payloadContent);
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: tempId,
+        text: optimistic.text,
+        isSent: true,
+        timestamp: new Date(),
+        status: "SENT",
+        attachment: optimistic.attachment,
+      },
+    ]);
+    setMessage("");
+    setSelectedAttachment(null);
+    setTimeout(() => {
+      scrollRef.current?.scrollToEnd({ animated: true });
+    }, 50);
+
     const result = await sendMessage(accessToken, payloadContent);
     setSending(false);
 
     if (result.success) {
-      setMessage("");
-      setSelectedAttachment(null);
-      await fetchMessages();
-      setTimeout(() => {
-        scrollRef.current?.scrollToEnd({ animated: true });
-      }, 150);
+      if (result.id) {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === tempId ? { ...m, id: result.id as string } : m,
+          ),
+        );
+      }
+      void fetchMessages();
     } else {
+      setMessages((prev) => prev.filter((m) => m.id !== tempId));
       setError(result.error || t("support.failedToSend"));
     }
   }, [message, selectedAttachment, sending, fetchMessages, t]);
@@ -349,12 +407,46 @@ export default function Message() {
 
   useEffect(() => {
     const unsubscribe = subscribeToNewSupportMessage(() => {
+      if (!isFocusedRef.current) return;
       fetchMessages();
     });
     return () => {
       unsubscribe();
     };
   }, [fetchMessages]);
+
+  // Poll while this screen is visible and WebSocket is down (push fallback).
+  useEffect(() => {
+    if (!isFocused || isUnderMaintenance) return;
+    if (isConnected) return;
+
+    const id = setInterval(() => {
+      fetchMessages();
+    }, 10_000);
+    return () => clearInterval(id);
+  }, [isFocused, isConnected, isUnderMaintenance, fetchMessages]);
+
+  // After reconnect, catch up with the server.
+  useEffect(() => {
+    if (!isFocused || isUnderMaintenance) return;
+    if (isConnected && prevSocketConnectedRef.current === false) {
+      fetchMessages();
+    }
+    prevSocketConnectedRef.current = isConnected;
+  }, [isConnected, isFocused, isUnderMaintenance, fetchMessages]);
+
+  // Refetch when returning to the app with this screen active.
+  useEffect(() => {
+    const sub = AppState.addEventListener(
+      "change",
+      (next: AppStateStatus) => {
+        if (next === "active" && isFocusedRef.current && !isUnderMaintenance) {
+          fetchMessages();
+        }
+      },
+    );
+    return () => sub.remove();
+  }, [fetchMessages, isUnderMaintenance]);
 
   useEffect(() => {
     const unsubscribe = subscribeToConnectionStatus(setIsOnline);
