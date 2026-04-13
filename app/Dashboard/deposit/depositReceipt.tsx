@@ -30,6 +30,12 @@ import { useLanguage } from "../../../context/LanguageContext";
 
 const CRYPTO_MARGIN_MULTIPLIER = 0.99;
 
+type ReceiptFeedback = {
+  kind: "success" | "error";
+  title: string;
+  message: string;
+};
+
 const normalizeTextValue = (value: unknown): string => {
   const text = String(value ?? "").trim();
   if (!text) return "";
