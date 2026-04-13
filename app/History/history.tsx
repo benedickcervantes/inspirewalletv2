@@ -19,6 +19,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Path } from "react-native-svg";
 import {
     deleteTransactions,
+  getMe,
     getStockInvestmentDepositRequests,
     getTimeDeposits,
     getTopUpDepositRequests,
@@ -259,6 +260,17 @@ const pickFirstNumber = (...values: unknown[]): number | undefined => {
   return undefined;
 };
 
+const normalizeAccountIdentifier = (value: unknown): string => {
+  return normalizeTextValue(value).replace(/\s+/g, "").toLowerCase();
+};
+
+const getNameFromParts = (obj: Record<string, unknown>): string => {
+  const first = normalizeTextValue(obj.firstName ?? obj.first_name);
+  const last = normalizeTextValue(obj.lastName ?? obj.last_name);
+  const combined = [first, last].filter(Boolean).join(" ");
+  return normalizeTextValue(combined);
+};
+
 const resolveTransferParties = (
   raw: Record<string, unknown>,
 ): Pick<
@@ -274,16 +286,28 @@ const resolveTransferParties = (
     {};
   const fromUser = (raw.fromUser as Record<string, unknown> | undefined) || {};
   const toUser = (raw.toUser as Record<string, unknown> | undefined) || {};
+  const senderNameFromParts = getNameFromParts(senderObj);
+  const recipientNameFromParts = getNameFromParts(recipientObj);
+  const fromUserNameFromParts = getNameFromParts(fromUser);
+  const toUserNameFromParts = getNameFromParts(toUser);
 
   return {
     senderName: pickFirstText(
       raw.senderName,
       raw.sender_name,
+      raw.senderFullName,
+      raw.sender_full_name,
+      raw.senderFirstName && raw.senderLastName
+        ? `${String(raw.senderFirstName)} ${String(raw.senderLastName)}`
+        : "",
       raw.fromName,
       raw.from_name,
       senderObj.name,
       senderObj.fullName,
+      senderNameFromParts,
       fromUser.fullName,
+      fromUser.name,
+      fromUserNameFromParts,
       raw.userFullName,
       raw.userName,
       raw.fullName,
@@ -301,7 +325,15 @@ const resolveTransferParties = (
       senderObj.accountNumber,
       senderObj.accountNo,
       senderObj.account_number,
+      senderObj.walletId,
+      senderObj.wallet_id,
+      senderObj.accountIdentifier,
+      senderObj.account_identifier,
       fromUser.accountNumber,
+      fromUser.accountNo,
+      fromUser.account_number,
+      fromUser.accountIdentifier,
+      fromUser.account_identifier,
       raw.userAccountNumber,
       raw.user_account_number,
       raw.accountNumber,
@@ -315,11 +347,18 @@ const resolveTransferParties = (
       raw.receiver_name,
       raw.recieverName,
       raw.reciever_name,
+      raw.recipientFullName,
+      raw.recipient_full_name,
+      raw.receiverFullName,
+      raw.receiver_full_name,
       raw.toName,
       raw.to_name,
       recipientObj.name,
       recipientObj.fullName,
+      recipientNameFromParts,
       toUser.fullName,
+      toUser.name,
+      toUserNameFromParts,
       raw.beneficiaryName,
       raw.beneficiary_name,
       raw.beneficiaryFullName,
@@ -345,7 +384,15 @@ const resolveTransferParties = (
       recipientObj.accountNumber,
       recipientObj.accountNo,
       recipientObj.account_number,
+      recipientObj.walletId,
+      recipientObj.wallet_id,
+      recipientObj.accountIdentifier,
+      recipientObj.account_identifier,
       toUser.accountNumber,
+      toUser.accountNo,
+      toUser.account_number,
+      toUser.accountIdentifier,
+      toUser.account_identifier,
       raw.beneficiaryAccount,
       raw.beneficiary_account,
       raw.beneficiaryAccountNumber,
@@ -757,27 +804,53 @@ export default function HistoryScreen() {
 
   const loadCurrentUserTransferParty = useCallback(async () => {
     try {
-      const rawUser = await AsyncStorage.getItem("user");
-      if (!rawUser) {
-        setCurrentUserTransferParty({ name: "", account: "" });
-        return;
+      const accessToken = await AsyncStorage.getItem("access_token");
+      let resolvedUser: StoredUserLike | null = null;
+
+      if (accessToken) {
+        const meRes = await getMe(accessToken);
+        if (meRes?.success && meRes.user) {
+          resolvedUser = meRes.user as StoredUserLike;
+          await AsyncStorage.setItem("user", JSON.stringify(meRes.user));
+        }
       }
-      const parsed = JSON.parse(rawUser) as StoredUserLike;
-      const fullNameFromParts = [parsed.firstName, parsed.lastName]
+
+      if (!resolvedUser) {
+        const rawUser = await AsyncStorage.getItem("user");
+        if (rawUser) {
+          resolvedUser = JSON.parse(rawUser) as StoredUserLike;
+        }
+      }
+
+      if (!resolvedUser) {
+        const emptyParty = { name: "", account: "" };
+        setCurrentUserTransferParty(emptyParty);
+        return emptyParty;
+      }
+
+      const fullNameFromParts = [resolvedUser.firstName, resolvedUser.lastName]
         .map((part) => normalizeTextValue(part))
         .filter(Boolean)
         .join(" ");
 
-      setCurrentUserTransferParty({
-        name: pickFirstText(parsed.fullName, parsed.name, fullNameFromParts),
-        account: pickFirstText(
-          parsed.accountNumber,
-          parsed.accountNo,
-          parsed.account_number,
+      const resolvedParty = {
+        name: pickFirstText(
+          resolvedUser.fullName,
+          resolvedUser.name,
+          fullNameFromParts,
         ),
-      });
+        account: pickFirstText(
+          resolvedUser.accountNumber,
+          resolvedUser.accountNo,
+          resolvedUser.account_number,
+        ),
+      };
+      setCurrentUserTransferParty(resolvedParty);
+      return resolvedParty;
     } catch {
-      setCurrentUserTransferParty({ name: "", account: "" });
+      const emptyParty = { name: "", account: "" };
+      setCurrentUserTransferParty(emptyParty);
+      return emptyParty;
     }
   }, []);
 
@@ -1133,28 +1206,67 @@ export default function HistoryScreen() {
 
     if (receiptType === "Transfer") {
       const txId = String(selectedTransaction.id || "").trim();
+      const latestCurrentUserParty = await loadCurrentUserTransferParty();
+      const normalizedTxType = String(selectedTransaction.type || "")
+        .trim()
+        .toUpperCase();
+      const isTransferIn = normalizedTxType === "TRANSFER_IN";
       const stored = txId
         ? await getStoredTransferReceiptDetails(txId)
         : undefined;
-
-      receiptParams.senderName =
-        stored?.senderName ||
+      const resolvedCurrentUserName =
+        latestCurrentUserParty.name ||
         currentUserTransferParty.name ||
-        selectedTransaction.senderName ||
+        stored?.senderName ||
         t("common.na");
-      receiptParams.senderAccount =
-        stored?.senderAccount ||
+      const resolvedCurrentUserAccount =
+        latestCurrentUserParty.account ||
         currentUserTransferParty.account ||
-        selectedTransaction.senderAccount ||
+        stored?.senderAccount ||
         t("common.na");
-      receiptParams.recipientName =
-        selectedTransaction.recipientName ||
-        stored?.recipientName ||
-        t("common.na");
-      receiptParams.recipientAccount =
-        selectedTransaction.recipientAccount ||
-        stored?.recipientAccount ||
-        t("common.na");
+      const resolvedSenderName = pickFirstText(
+        selectedTransaction.senderName,
+        stored?.senderName,
+      );
+      const resolvedSenderAccount = pickFirstText(
+        selectedTransaction.senderAccount,
+        stored?.senderAccount,
+      );
+      const resolvedRecipientName = pickFirstText(
+        selectedTransaction.recipientName,
+        stored?.recipientName,
+      );
+      const resolvedRecipientAccount = pickFirstText(
+        selectedTransaction.recipientAccount,
+        stored?.recipientAccount,
+      );
+      const normalizedCurrentUserAccount = normalizeAccountIdentifier(
+        resolvedCurrentUserAccount,
+      );
+      const normalizedSenderAccount =
+        normalizeAccountIdentifier(resolvedSenderAccount);
+      const normalizedRecipientAccount = normalizeAccountIdentifier(
+        resolvedRecipientAccount,
+      );
+      const currentUserIsSender =
+        !!normalizedCurrentUserAccount &&
+        normalizedCurrentUserAccount === normalizedSenderAccount;
+      const currentUserIsRecipient =
+        !!normalizedCurrentUserAccount &&
+        normalizedCurrentUserAccount === normalizedRecipientAccount;
+
+      if (currentUserIsRecipient || (!currentUserIsSender && isTransferIn)) {
+        receiptParams.senderName = resolvedSenderName || t("common.na");
+        receiptParams.senderAccount = resolvedSenderAccount || t("common.na");
+        receiptParams.recipientName = resolvedCurrentUserName;
+        receiptParams.recipientAccount = resolvedCurrentUserAccount;
+      } else {
+        receiptParams.senderName = resolvedCurrentUserName || t("common.na");
+        receiptParams.senderAccount = resolvedCurrentUserAccount || t("common.na");
+        receiptParams.recipientName = resolvedRecipientName || t("common.na");
+        receiptParams.recipientAccount =
+          resolvedRecipientAccount || t("common.na");
+      }
       receiptParams.processingFee =
         selectedTransaction.processingFee ?? stored?.processingFee ?? 0;
     }
