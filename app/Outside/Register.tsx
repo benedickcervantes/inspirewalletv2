@@ -230,53 +230,61 @@ export default function Register() {
     return v;
   };
 
-  const isProbablyLink = (value: string): boolean => {
-    const v = value.trim();
-    if (!v) return true; // optional
-    if (v.length > 500) return false;
-    if (/^https?:\/\//i.test(v)) return true;
-    if (/^www\./i.test(v)) return true;
-    // Allow common messaging domains and app schemes after normalization
-    if (
-      /^(line\.me\/|liff\.line\.me\/|wa\.me\/|chat\.whatsapp\.com\/|viber\.me\/|vb\.me\/|invite\.viber\.com\/|chats\.viber\.com\/)/i.test(
-        v,
-      )
-    ) {
-      return true;
+  const MESSAGING_PROVIDER_HOSTS: Record<
+    "line" | "viber" | "whatsapp",
+    string[]
+  > = {
+    line: ["line.me", "liff.line.me"],
+    whatsapp: ["wa.me", "chat.whatsapp.com"],
+    viber: ["viber.me", "vb.me", "invite.viber.com", "chats.viber.com"],
+  };
+
+  const MESSAGING_PROVIDER_SCHEMES: Record<
+    "line" | "viber" | "whatsapp",
+    string
+  > = {
+    line: "line",
+    whatsapp: "whatsapp",
+    viber: "viber",
+  };
+
+  const normalizeForParsing = (raw: string): string => {
+    const v = raw.trim();
+    if (!v) return "";
+    if (/^https?:\/\//i.test(v)) return v;
+    if (/^www\./i.test(v)) return `https://${v}`;
+    if (/^[a-z0-9.-]+\.[a-z]{2,}(\/|$|\?|#)/i.test(v)) {
+      return `https://${v}`;
     }
-    if (/^(viber:\/\/|whatsapp:\/\/|line:\/\/)/i.test(v)) {
-      return true;
-    }
-    return false;
+    return v;
   };
   const detectMessagingProviderFromLink = (
     raw: string,
   ): "line" | "viber" | "whatsapp" | null => {
-    const v = raw.trim().toLowerCase();
+    const v = normalizeForParsing(raw).toLowerCase();
     if (!v) return null;
 
-    if (
-      v.startsWith("line://") ||
-      v.includes("line.me/") ||
-      v.includes("liff.line.me/")
-    ) {
-      return "line";
+    for (const provider of ["line", "viber", "whatsapp"] as const) {
+      if (v.startsWith(`${MESSAGING_PROVIDER_SCHEMES[provider]}://`)) {
+        return provider;
+      }
     }
-    if (
-      v.startsWith("whatsapp://") ||
-      v.includes("wa.me/") ||
-      v.includes("chat.whatsapp.com/")
-    ) {
-      return "whatsapp";
-    }
-    if (
-      v.startsWith("viber://") ||
-      v.includes("viber.me/") ||
-      v.includes("vb.me/") ||
-      v.includes("invite.viber.com/") ||
-      v.includes("chats.viber.com/")
-    ) {
-      return "viber";
+
+    try {
+      const parsed = new URL(v);
+      const protocol = parsed.protocol.toLowerCase();
+      if (protocol !== "http:" && protocol !== "https:") {
+        return null;
+      }
+
+      const host = parsed.hostname.toLowerCase();
+      for (const provider of ["line", "viber", "whatsapp"] as const) {
+        if (MESSAGING_PROVIDER_HOSTS[provider].includes(host)) {
+          return provider;
+        }
+      }
+    } catch {
+      return null;
     }
 
     return null;
@@ -286,7 +294,7 @@ export default function Register() {
     provider: "line" | "viber" | "whatsapp",
   ): boolean => {
     const detected = detectMessagingProviderFromLink(raw);
-    return detected === null || detected === provider;
+    return detected === provider;
   };
 
   const [isCountryModalVisible, setIsCountryModalVisible] = useState(false);
@@ -432,13 +440,16 @@ export default function Register() {
         const requiredContactError = t("register.errorAtLeastOneMessagingContact");
         newErrors.whatsappContact = requiredContactError;
       }
-      if (lineContact.trim() && !isProbablyLink(lineContact)) {
+      if (lineContact.trim() && !isLinkMatchingMessagingProvider(lineContact, "line")) {
         newErrors.lineContact = t("register.invalidLink");
       }
-      if (viberContact.trim() && !isProbablyLink(viberContact)) {
+      if (viberContact.trim() && !isLinkMatchingMessagingProvider(viberContact, "viber")) {
         newErrors.viberContact = t("register.invalidLink");
       }
-      if (whatsappContact.trim() && !isProbablyLink(whatsappContact)) {
+      if (
+        whatsappContact.trim() &&
+        !isLinkMatchingMessagingProvider(whatsappContact, "whatsapp")
+      ) {
         newErrors.whatsappContact = t("register.invalidLink");
       }
       if (isAgent === null) {
